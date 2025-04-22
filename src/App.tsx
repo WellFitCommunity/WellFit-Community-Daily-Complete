@@ -27,7 +27,6 @@ const App = () => (
       <WelcomePage />
 
       <WeatherWidget />
-      <SmartWatchCheckIn />
       <CheckInTracker />
 
       <DailyScripture />
