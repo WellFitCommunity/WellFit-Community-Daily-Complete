@@ -1,45 +1,80 @@
 // File: src/components/CheckInTracker.tsx
-// src/components/CheckInTracker.tsx
 import React, { useState, useEffect } from 'react';
+import {
+  Smile,
+  CalendarCheck,
+  Hospital,
+  AlertCircle,
+  Thermometer,
+  Compass,
+  Calendar as CalendarIcon,
+  CheckCircle
+} from 'lucide-react';
+
+const options = [
+  { label: "I'm feeling great today", icon: Smile },
+  { label: "I'm feeling fine & I have a Dr. Appt today", icon: CalendarCheck },
+  { label: "I'm in the Hospital", icon: Hospital },
+  { label: "I have fallen down & I injured myself", icon: AlertCircle },
+  { label: "I don't feel well", icon: Thermometer },
+  { label: "I need Healthcare Navigation Assistance", icon: Compass },
+  { label: "I will be attending the event today", icon: CalendarIcon },
+];
 
 const CheckInTracker: React.FC = () => {
-  const [checkedIn, setCheckedIn] = useState(false);
-  const [lastCheckIn, setLastCheckIn] = useState<string | null>(null);
+  const [lastChoice, setLastChoice] = useState<string | null>(null);
+  const [activeBtn, setActiveBtn] = useState<number | null>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem('lastCheckIn');
-    if (stored) {
-      setLastCheckIn(stored);
-      setCheckedIn(stored === new Date().toDateString());
-    }
+    if (stored) setLastChoice(stored);
   }, []);
 
-  const handleCheckIn = () => {
-    const today = new Date().toDateString();
-    localStorage.setItem('lastCheckIn', today);
-    setLastCheckIn(today);
-    setCheckedIn(true);
+  const handleClick = (idx: number) => {
+    const choice = options[idx].label;
+    const entry = `${new Date().toLocaleString()}: ${choice}`;
+    localStorage.setItem('lastCheckIn', entry);
+    setLastChoice(entry);
+
+    setActiveBtn(idx);
+    setTimeout(() => setActiveBtn(null), 2000);
   };
 
   return (
-    <section className="bg-white border-2 border-[#8cc63f] p-4 rounded-xl shadow">
-      <h2 className="text-xl font-semibold text-[#003865] mb-2">Daily Check‑In</h2>
-      {checkedIn ? (
-        <p className="text-gray-700">You checked in today. Great job!</p>
-      ) : (
-        <button
-          onClick={handleCheckIn}
-          className="px-4 py-2 bg-[#003865] text-white rounded"
-        >
-          Check In
-        </button>
-      )}
-      {lastCheckIn && (
-        <p className="text-gray-500 text-sm mt-2">
-          Last check‑in: {lastCheckIn}
-        </p>
-      )}
-    </section>
+    <div className="max-w-md mx-auto mt-6">
+      <section className="bg-white border-2 border-wellfitBlue p-6 rounded-2xl shadow-lg">
+        <h2 className="text-2xl font-semibold text-wellfitBlue mb-4 text-center">
+          Daily Check‑In
+        </h2>
+
+        <div className="space-y-3">
+          {options.map(({ label, icon: Icon }, i) => (
+            <button
+              key={i}
+              onClick={() => handleClick(i)}
+              className={`
+                flex items-center w-full px-6 py-3 text-lg rounded-2xl shadow-lg border-2 border-wellfitBlue
+                ${activeBtn === i ? 'bg-wellfitBlue text-white' : 'bg-wellfitGreen text-white'}
+                transition-colors duration-200
+              `}
+            >
+              <Icon className="inline-block w-6 h-6 mr-3" />
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {lastChoice && (
+          <p className="mt-6 text-gray-700 flex items-center">
+            <CheckCircle className="inline-block w-6 h-6 text-green-500 mr-2" />
+            <span>
+              Last check‑in recorded:<br />
+              <strong>{lastChoice}</strong>
+            </span>
+          </p>
+        )}
+      </section>
+    </div>
   );
 };
 
