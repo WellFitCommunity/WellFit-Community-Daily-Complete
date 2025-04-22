@@ -36,8 +36,8 @@ const scriptures = [
 const DailyScripture: React.FC = () => {
   const today = new Date().getDate();
   return (
-    <section className="bg-white border-2 border-wellfitGreen p-6 rounded-xl shadow-md">
-      <h2 className="text-xl font-semibold text-wellfitBlue mb-2">Daily Scripture</h2>
+    <section className="bg-white border-2 border-wellfit-green p-6 rounded-xl shadow-md">
+      <h2 className="text-xl font-semibold text-wellfit-blue mb-2">Daily Scripture</h2>
       <p className="text-gray-800 italic">"{scriptures[today % scriptures.length]}"</p>
     </section>
   );
