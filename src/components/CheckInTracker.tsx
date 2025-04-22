@@ -42,8 +42,8 @@ const CheckInTracker: React.FC = () => {
 
   return (
     <div className="max-w-md mx-auto mt-6">
-      <section className="bg-white border-2 border-wellfitBlue p-6 rounded-2xl shadow-lg">
-        <h2 className="text-2xl font-semibold text-wellfitBlue mb-4 text-center">
+      <section className="bg-white border-2 border-wellfit-blue p-6 rounded-2xl shadow-lg">
+        <h2 className="text-2xl font-semibold text-wellfit-blue mb-4 text-center">
           Daily Check‑In
         </h2>
 
@@ -53,8 +53,8 @@ const CheckInTracker: React.FC = () => {
               key={i}
               onClick={() => handleClick(i)}
               className={`
-                flex items-center w-full px-6 py-3 text-lg rounded-2xl shadow-lg border-2 border-wellfitBlue
-                ${activeBtn === i ? 'bg-wellfitBlue text-white' : 'bg-wellfitGreen text-white'}
+                flex items-center w-full px-6 py-3 text-lg rounded-2xl shadow-lg border-2 border-wellfit-blue
+                ${activeBtn === i ? 'bg-wellfit-blue text-white' : 'bg-wellfit-green text-white'}
                 transition-colors duration-200
               `}
             >
