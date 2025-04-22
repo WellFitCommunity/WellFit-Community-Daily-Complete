@@ -5,8 +5,8 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        wellfitBlue: '#003865',
-        wellfitGreen: '#8cc63f'
+        wellfit-blue: '#003865',
+        wellfit-green: '#8cc63f'
       }
     }
   },
