@@ -27,8 +27,8 @@ const WelcomePage: React.FC = () => {
   };
 
   return (
-    <section className="bg-white border-2 border-wellfitGreen p-6 rounded-xl shadow-md">
-      <h2 className="text-2xl font-semibold text-wellfitBlue mb-4">{getGreeting()}</h2>
+    <section className="bg-white border-2 border-wellfit-green p-6 rounded-xl shadow-md">
+      <h2 className="text-2xl font-semibold text-wellfit-blue mb-4">{getGreeting()}</h2>
 
       {loggedIn ? (
         <p className="text-gray-700">
