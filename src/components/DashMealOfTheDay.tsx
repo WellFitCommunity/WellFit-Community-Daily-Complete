@@ -45,8 +45,8 @@ const DashMealOfTheDay: React.FC = () => {
   const meal = dashMeals[today % dashMeals.length];
 
   return (
-    <section className="bg-white border-2 border-wellfitGreen p-6 rounded-xl shadow-md">
-      <h2 className="text-xl font-semibold text-wellfitBlue mb-2">DASH Meal of the Day</h2>
+    <section className="bg-white border-2 border-wellfit-green p-6 rounded-xl shadow-md">
+      <h2 className="text-xl font-semibold text-wellfit-blue mb-2">DASH Meal of the Day</h2>
       <p className="text-gray-900 font-bold">{meal.name}</p>
       <p className="text-gray-700">{meal.description}</p>
       <ul className="text-sm text-gray-600 mt-2 space-y-1">
