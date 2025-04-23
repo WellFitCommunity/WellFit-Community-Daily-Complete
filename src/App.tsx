@@ -1,48 +1,28 @@
-// File: src/App.tsx
+// src/App.tsx
 import React from 'react';
-
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Header from './components/Header';
 import WelcomePage from './components/WelcomePage';
-
-import WeatherWidget from './components/WeatherWidget';
-import CheckInTracker from './components/CheckInTracker';
-
-import DailyScripture from './components/DailyScripture';
-import TechTip from './components/TechTip';
-import DashMealOfTheDay from './components/DashMealOfTheDay';
-
-import WordFind from './components/WordFind';
-import Sudoku from './components/Sudoku';
-import Crossword from './components/Crossword';
-
-import EmergencyContact from './components/EmergencyContact';
-import AdminPanel from './components/AdminPanel';
-
+import Dashboard from './components/Dashboard';
 import Footer from './components/Footer';
 
-const App = () => (
-  <div className="min-h-screen bg-white text-gray-800">
+const App: React.FC = () => (
+  <div className="min-h-screen bg-gradient-to-b from-white via-gray-50 to-gray-100 p-4">
     <Header />
-    <main className="p-4 space-y-6">
-      <WelcomePage />
+    <Routes>
+      {/* Landing page */}
+      <Route path="/" element={<WelcomePage />} />
 
-      <WeatherWidget />
-      <CheckInTracker />
+      {/* Main app after login */}
+      <Route path="/dashboard" element={<Dashboard />} />
 
-      <DailyScripture />
-      <TechTip />
-      <DashMealOfTheDay />
-
-      <WordFind />
-      <Sudoku />
-      <Crossword />
-
-      <EmergencyContact />
-      <AdminPanel />
-    </main>
+      {/* Catch-all redirects back to welcome */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
     <Footer />
   </div>
 );
 
 export default App;
+
 

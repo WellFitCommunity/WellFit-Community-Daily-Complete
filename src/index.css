@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+/* (Any global overrides below) */
 body {
-  font-family: sans-serif;
+  @apply bg-white text-gray-800;
 }
