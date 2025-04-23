@@ -1,156 +1,131 @@
-import React, { useState, useEffect, useRef } from "react";
-import Confetti from "react-confetti";
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import Confetti from 'react-confetti';
+import { dailyThemes } from '../data/wordThemes';
 
-// Ten daily themes (12 words each)
-const dailyThemes = [
-  ["HEART","EXERCISE","SALMON","OATMEAL","KALE","WALK","STRESS","SLEEP","VITAMIN","TRACK","BLOOD","HYDRATE"],
-  ["CALCIUM","MILK","YOGURT","TOFU","SUNSHINE","WEIGHTS","CHEESE","BROCCOLI","SWIM","YOGA","MAGNESIUM","VITD"],
-  ["WATER","HYDRATE","FLUID","ALOE","CUCUMBER","ELECTROLYTE","DRINK","CUP","MOIST","BALANCE","SWEAT","CLEAR"],
-  ["MINDFUL","MEDITATE","BREATHE","POSITIVE","HAPPY","FOCUS","CALM","YOGA","READ","JOURNAL","SLEEP","REFLECT"],
-  ["PROTEIN","CARBS","VEGAN","FRUITS","NUTRIENT","FIBER","SALAD","GRAINS","OATS","NUTS","YOGURT","LEAN"],
-  ["RUNNING","CYCLING","SWIM","YOGA","WALKING","STRETCH","LIFT","SPRINT","SKIPPING","DANCE","CARDIO","SQUAT"],
-  ["SLEEP","PILLOW","DREAM","NIGHT","REST","ROUTINE","DARK","SILENCE","ALARM","BLINDS","MATTRESS","PEACE"],
-  ["CALM","YOGA","MEDITATE","MUSIC","BREATHE","WALK","NATURE","MASSAGE","LAUGH","JOURNAL","TIMEOUT","REFLECT"],
-  ["VITAMINC","VITD","ZINC","YOGURT","PROBIOTIC","GARLIC","ORANGE","BERRIES","ALMOND","HONEY","ECHINACEA","PREBIOTIC"],
-  ["DIGEST","PROBIOTIC","YOGURT","BANANA","FIBER","GINGER","OATMEAL","LEGUME","APPLE","WHOLEGRAIN","SALAD","ENZYME"],
-];
-const themeNames = [
-  "Heart Health","Strong Bones","Hydration","Mental Wellness","Balanced Eating",
-  "Daily Exercise","Sleep Hygiene","Stress Relief","Immune Support","Digestive Health"
-];
+interface Point {
+  r: number;
+  c: number;
+}
 
-const GRID_SIZE = 12;
-const makeEmptyGrid = () =>
-  Array.from({ length: GRID_SIZE }, () => Array<string>(GRID_SIZE).fill(""));
+const gridSize = 12;
 
 const WordFind: React.FC = () => {
-  const [grid, setGrid] = useState<string[][]>(makeEmptyGrid());
-  const [selection, setSelection] = useState<{ r: number; c: number }[]>([]);
+  const [grid, setGrid] = useState<string[][]>([]);
+  const [words, setWords] = useState<string[]>([]);
+  const [selection, setSelection] = useState<Point[]>([]);
   const [found, setFound] = useState<Set<string>>(new Set());
   const [showConfetti, setShowConfetti] = useState(false);
   const isDragging = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Generate puzzle with collision-safe placement
-  useEffect(() => {
-    const day = new Date().getDate() % dailyThemes.length;
-    const words = dailyThemes[day];
-    const newGrid = makeEmptyGrid();
-    const directions = [
-      { dr: 0, dc: 1 },   // right
-      { dr: 1, dc: 0 },   // down
-      { dr: 1, dc: 1 },   // down-right
-      { dr: -1, dc: 1 },  // up-right
-    ];
+  const day = new Date().getDate() % dailyThemes.length;
+  const { theme, words: dailyWords } = dailyThemes[day];
 
-    words.forEach((w) => {
+  const generateGrid = useCallback(() => {
+    const tempGrid = Array(gridSize).fill(null).map(() => Array(gridSize).fill(''));
+    const placedWords: string[] = [];
+
+    for (const word of dailyWords) {
+      const upper = word.toUpperCase();
+      const len = upper.length;
       let placed = false;
-      while (!placed) {
-        const dir = directions[Math.floor(Math.random() * directions.length)];
-        const r0 = Math.floor(Math.random() * GRID_SIZE);
-        const c0 = Math.floor(Math.random() * GRID_SIZE);
-        const endR = r0 + dir.dr * (w.length - 1);
-        const endC = c0 + dir.dc * (w.length - 1);
+
+      for (let attempt = 0; attempt < 50 && !placed; attempt++) {
+        const dir = Math.floor(Math.random() * 8);
+        const dr = [0, 1, 1, 1, 0, -1, -1, -1][dir];
+        const dc = [1, 1, 0, -1, -1, -1, 0, 1][dir];
+        const r = Math.floor(Math.random() * gridSize);
+        const c = Math.floor(Math.random() * gridSize);
 
         if (
-          endR >= 0 && endR < GRID_SIZE &&
-          endC >= 0 && endC < GRID_SIZE
-        ) {
-          // Check collisions
-          let canPlace = true;
-          for (let i = 0; i < w.length; i++) {
-            const rr = r0 + dir.dr * i;
-            const cc = c0 + dir.dc * i;
-            const existing = newGrid[rr][cc];
-            if (existing && existing !== w[i]) {
-              canPlace = false;
-              break;
-            }
-          }
-          if (canPlace) {
-            for (let i = 0; i < w.length; i++) {
-              newGrid[r0 + dir.dr * i][c0 + dir.dc * i] = w[i];
-            }
-            placed = true;
+          r + dr * (len - 1) < 0 || r + dr * (len - 1) >= gridSize ||
+          c + dc * (len - 1) < 0 || c + dc * (len - 1) >= gridSize
+        ) continue;
+
+        let canPlace = true;
+        for (let i = 0; i < len; i++) {
+          const ch = tempGrid[r + dr * i][c + dc * i];
+          if (ch !== '' && ch !== upper[i]) {
+            canPlace = false;
+            break;
           }
         }
-      }
-    });
 
-    // Fill empty cells
-    const alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    for (let r = 0; r < GRID_SIZE; r++) {
-      for (let c = 0; c < GRID_SIZE; c++) {
-        if (!newGrid[r][c]) {
-          newGrid[r][c] = alpha[Math.floor(Math.random() * alpha.length)];
+        if (canPlace) {
+          for (let i = 0; i < len; i++) {
+            tempGrid[r + dr * i][c + dc * i] = upper[i];
+          }
+          placedWords.push(upper);
+          placed = true;
         }
       }
     }
 
-    setGrid(newGrid);
-  }, []);
-
-  const day = new Date().getDate() % dailyThemes.length;
-  const words = dailyThemes[day];
-
-  // On mouse up, evaluate selection
-  const handleMouseUp = () => {
-    const word = selection.map(p => grid[p.r][p.c]).join("");
-    const rev = word.split("").reverse().join("");
-    let match = "";
-    if (words.includes(word) && !found.has(word)) match = word;
-    else if (words.includes(rev) && !found.has(rev)) match = rev;
-
-    if (match) {
-      setFound(f => new Set(f).add(match));
-      if (found.size + 1 === words.length) setShowConfetti(true);
+    for (let r = 0; r < gridSize; r++) {
+      for (let c = 0; c < gridSize; c++) {
+        if (!tempGrid[r][c]) {
+          tempGrid[r][c] = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+        }
+      }
     }
-    setSelection([]);
-  };
 
-  // Global mouse up listener
+    setGrid(tempGrid);
+    setWords(placedWords);
+  }, [dailyWords]);
+
   useEffect(() => {
-    const up = () => {
-      isDragging.current = false;
-      if (selection.length) handleMouseUp();
-    };
-    window.addEventListener("mouseup", up);
-    return () => window.removeEventListener("mouseup", up);
-  }, [selection, found, grid]);
+    generateGrid();
+  }, [generateGrid]);
+
+  const handleMouseUp = useCallback(() => {
+    if (selection.length > 0) {
+      const coords = selection.map(p => `${p.r},${p.c}`);
+      const word = coords.map(coord => {
+        const [r, c] = coord.split(',').map(Number);
+        return grid[r][c];
+      }).join('');
+
+      const reversed = word.split('').reverse().join('');
+      if (words.includes(word) || words.includes(reversed)) {
+        setFound(prev => new Set([...Array.from(prev), word, reversed]));
+        if (found.size + 1 === words.length) setShowConfetti(true);
+      }
+      setSelection([]);
+    }
+    isDragging.current = false;
+  }, [selection, grid, words, found]);
+
+  useEffect(() => {
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => window.removeEventListener('mouseup', handleMouseUp);
+  }, [handleMouseUp]);
 
   const handleMouseDown = (r: number, c: number) => {
     isDragging.current = true;
     setSelection([{ r, c }]);
   };
+
   const handleMouseEnter = (r: number, c: number) => {
-    if (isDragging.current) {
-      setSelection(sel => [...sel, { r, c }]);
-    }
+    if (!isDragging.current) return;
+    setSelection(prev => [...prev, { r, c }]);
   };
 
   return (
-    <div ref={containerRef} className="p-4">
-      <h2 className="text-xl font-semibold text-wellfit-blue mb-2 text-center">
-        Word Find: {themeNames[day]}
-      </h2>
-
-      {/* Grid */}
-      <div className="grid grid-cols-12 gap-1 select-none mb-4">
+    <div className="text-center" ref={containerRef}>
+      <h2 className="text-xl font-semibold text-wellfit-blue mb-2">🔤 Word Find: {theme}</h2>
+      <div className="grid grid-cols-12 gap-1 select-none">
         {grid.map((row, r) =>
           row.map((letter, c) => {
-            const isSel = selection.some(p => p.r === r && p.c === c);
-            const isFoundChar = Array.from(found).some(w => w.includes(letter));
+            const isSelected = selection.some(p => p.r === r && p.c === c);
+            const key = `${r},${c}`;
             return (
               <div
-                key={`${r}-${c}`}
+                key={key}
+                className={`w-8 h-8 flex items-center justify-center border font-semibold rounded ${
+                  isSelected ? 'bg-wellfit-green text-white' : 'bg-white text-gray-800'
+                }`}
                 onMouseDown={() => handleMouseDown(r, c)}
                 onMouseEnter={() => handleMouseEnter(r, c)}
-                className={`
-                  w-8 h-8 flex items-center justify-center font-mono border
-                  ${isSel ? "bg-wellfit-green text-white" : "bg-white text-black"}
-                  ${isFoundChar ? "opacity-50" : ""}
-                  transition-colors duration-150
-                `}
               >
                 {letter}
               </div>
@@ -159,35 +134,30 @@ const WordFind: React.FC = () => {
         )}
       </div>
 
-      {/* Word Bank */}
-      <div className="p-2 bg-white border-2 border-wellfit-green rounded mb-4">
-        <h3 className="font-semibold text-wellfit-blue mb-2">Word Bank</h3>
-        <ul className="columns-2 gap-2 list-disc list-inside text-gray-800">
-          {words.map(w => (
-            <li
-              key={w}
-              className={`cursor-pointer ${
-                found.has(w) ? "line-through text-gray-400" : ""
-              }`}
-            >
+      <div className="mt-4">
+        <h3 className="text-lg font-semibold mb-2 text-wellfit-blue">🔍 Word Bank</h3>
+        <ul className="grid grid-cols-2 gap-1 text-gray-800">
+          {words.map((w, idx) => (
+            <li key={idx} className={found.has(w) ? 'line-through text-wellfit-green' : ''}>
               {w}
             </li>
           ))}
         </ul>
+        <p className="mt-4 text-sm text-gray-600">
+          Found {found.size} of {words.length} words
+        </p>
+        {showConfetti && (
+          <>
+            <Confetti
+              width={containerRef.current?.clientWidth || 300}
+              height={containerRef.current?.clientHeight || 300}
+            />
+            <p className="mt-4 text-center text-green-700 font-bold">
+              🎉 You found them all! “Every step is progress.” 🎉
+            </p>
+          </>
+        )}
       </div>
-
-      {/* Confetti & Affirmation */}
-      {showConfetti && (
-        <>
-          <Confetti
-            width={containerRef.current?.clientWidth}
-            height={containerRef.current?.clientHeight}
-          />
-          <p className="mt-4 text-center text-wellfit-green font-bold">
-            🎉 You found them all! “Every step is progress.” 🎉
-          </p>
-        </>
-      )}
     </div>
   );
 };
