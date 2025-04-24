@@ -7,8 +7,7 @@ import WeatherWidget from './WeatherWidget';
 import CheckInTracker from './CheckInTracker';
 import DailyScripture from './DailyScripture';
 import TechTip from './TechTip';
-import DashMealOfTheDay from './DashMealOfTheDay';
-import WordFind from './WordFind';
+import DashMealOfTheDay from './DashMealOfTheDay'; // ✅ YES, still needed
 import EmergencyContact from './EmergencyContact';
 import AdminPanel from './AdminPanel';
 
