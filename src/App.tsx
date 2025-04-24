@@ -1,26 +1,29 @@
-// src/App.tsx
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import Header from './components/Header';
-import Footer from './components/Footer';
+import { Routes, Route } from 'react-router-dom';
 import WelcomePage from './components/WelcomePage';
 import Dashboard from './components/Dashboard';
+import WordFind from './components/WordFind';
+import Header from './components/Header';
+import Footer from './components/Footer';
 
-const App: React.FC = () => (
-  // The gradient background lives here:
-  <div className="min-h-screen bg-gradient-to-b from-wellfit-blue to-wellfit-green p-4">
-    <Header />
+const App: React.FC = () => {
+  return (
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-wellfit-blue via-white to-wellfit-green">
+      <Header />
 
-    <Routes>
-      <Route path="/" element={<WelcomePage />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/admin" element={<Navigate to="/admin" replace />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+      <main className="flex-grow p-4">
+        <Routes>
+          <Route path="/" element={<WelcomePage />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/wordfind" element={<WordFind />} />
+        </Routes>
+      </main>
 
-    <Footer />
-  </div>
-);
+      <Footer />
+    </div>
+  );
+};
 
 export default App;
+
 

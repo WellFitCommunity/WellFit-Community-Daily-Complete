@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Confetti from 'react-confetti';
 import { dailyThemes } from '../data/wordThemes';
 
@@ -10,6 +11,7 @@ interface Point {
 const gridSize = 12;
 
 const WordFind: React.FC = () => {
+  const navigate = useNavigate();
   const [grid, setGrid] = useState<string[][]>([]);
   const [words, setWords] = useState<string[]>([]);
   const [selection, setSelection] = useState<Point[]>([]);
@@ -111,7 +113,14 @@ const WordFind: React.FC = () => {
   };
 
   return (
-    <div className="text-center" ref={containerRef}>
+    <div className="min-h-screen p-4 bg-white text-center" ref={containerRef}>
+      <button
+        onClick={() => navigate('/dashboard')}
+        className="mb-4 text-wellfit-blue underline text-sm"
+      >
+        ← Back to Dashboard
+      </button>
+
       <h2 className="text-xl font-semibold text-wellfit-blue mb-2">🔤 Word Find: {theme}</h2>
       <div className="grid grid-cols-12 gap-1 select-none">
         {grid.map((row, r) =>
@@ -159,7 +168,7 @@ const WordFind: React.FC = () => {
         )}
       </div>
     </div>
-  );
-};
+  ); // ✅ closes the return block
+}; // ✅ closes the WordFind function
 
 export default WordFind;
