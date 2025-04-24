@@ -19,6 +19,10 @@ const Dashboard: React.FC = () => {
       <Card><WeatherWidget /></Card>
       <Card><CheckInTracker /></Card>
       <Card><DailyScripture /></Card>
+      <Card>
+        <DashMealOfTheDay />
+      </Card>
+
 
       <Card>
         <button
