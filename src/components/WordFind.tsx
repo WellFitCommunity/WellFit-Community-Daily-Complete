@@ -19,6 +19,7 @@ const WordFind: React.FC = () => {
   const [celebrate, setCelebrate] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Build and place words randomly on mount
   useEffect(() => {
     const themeData = dailyThemes[(new Date().getDate() - 1) % dailyThemes.length];
     const matrix: string[][] = Array.from({ length: ROWS }, () => Array(COLS).fill(''));
@@ -30,7 +31,7 @@ const WordFind: React.FC = () => {
       .slice(0, 8)
       .map(w => w.toUpperCase());
 
-    // place words randomly
+    // place words
     for (const word of list) {
       let placed = false;
       for (let tries = 0; tries < 100 && !placed; tries++) {
@@ -55,15 +56,14 @@ const WordFind: React.FC = () => {
         placedWords.push(word);
         placed = true;
       }
-      if (!placed) console.warn(`Failed to place ${word}`);
     }
     // fill blanks
     for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (!matrix[r][c]) matrix[r][c] = String.fromCharCode(65 + Math.floor(Math.random() * 26));
-
     setGrid(matrix);
     setWords(placedWords);
   }, []);
 
+  // Handle tap selection
   const handleTap = (r: number, c: number) => {
     const next = [...selection, { r, c }];
     const word = next.map(p => grid[p.r][p.c]).join('');
@@ -85,28 +85,52 @@ const WordFind: React.FC = () => {
     <div ref={containerRef} className="p-4 text-center">
       <h2 className="text-2xl font-bold mb-2">{themeData.theme} Word Find</h2>
       <p className="text-sm mb-4">Tap letters to select. Incorrect taps reset.</p>
-      <div className="overflow-x-auto">
-        <div className="inline-grid gap-1 mx-auto" style={{ gridTemplateColumns: `repeat(${COLS}, 2rem)` }}>
-          {grid.map((row, r) => row.map((ch, c) => {
-            const key = `${r},${c}`;
-            const isSel = selection.some(p => p.r === r && p.c === c);
-            return (
-              <div
-                key={key}
-                onClick={() => handleTap(r, c)}
-                className={`w-8 h-8 flex items-center justify-center border rounded cursor-pointer ${isSel ? 'bg-blue-500 text-white' : 'bg-white'}`}
-              >{ch}</div>
-            );
-          }))}
+
+      {/* Responsive grid for mobile */}
+      <div className="overflow-x-auto -mx-4 px-4">
+        <div
+          className="inline-grid gap-1"
+          style={{ gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))` }}
+        >
+          {grid.map((row, r) =>
+            row.map((ch, c) => {
+              const key = `${r},${c}`;
+              const isSel = selection.some(p => p.r === r && p.c === c);
+              return (
+                <div
+                  key={key}
+                  onClick={() => handleTap(r, c)}
+                  className={`border rounded cursor-pointer flex items-center justify-center
+                    w-[calc(100vw/${COLS}-8px)] h-[calc(100vw/${COLS}-8px)] sm:w-8 sm:h-8
+                    text-xs sm:text-base
+                    ${isSel ? 'bg-blue-500 text-white' : 'bg-white text-black'}`}
+                >
+                  {ch}
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
+
+      {/* Word list */}
       <div className="mt-4 text-left mx-auto" style={{ maxWidth: '10rem' }}>
         <h3 className="font-semibold mb-1">Words:</h3>
         <ul>
-          {words.map(w => <li key={w} className={found.has(w) ? 'line-through text-green-600' : ''}>{w}</li>)}
+          {words.map(w => (
+            <li key={w} className={found.has(w) ? 'line-through text-green-600' : ''}>
+              {w}
+            </li>
+          ))}
         </ul>
       </div>
-      {celebrate && <Confetti width={containerRef.current?.clientWidth||300} height={containerRef.current?.clientHeight||300}/>}    
+
+      {celebrate && (
+        <Confetti
+          width={containerRef.current?.clientWidth || 300}
+          height={containerRef.current?.clientHeight || 300}
+        />
+      )}
     </div>
   );
 };
