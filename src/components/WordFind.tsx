@@ -90,7 +90,7 @@ const WordFind: React.FC = () => {
       <div className="overflow-x-auto -mx-4 px-4">
         <div
           className="inline-grid gap-1"
-          style={{ gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))` }}
+          style={{ width: `calc(100vw/${COLS} - 8px)`, height: `calc(100vw/${COLS} - 8px)` }}
         >
           {grid.map((row, r) =>
             row.map((ch, c) => {
