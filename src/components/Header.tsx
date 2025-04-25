@@ -1,46 +1,75 @@
 // src/components/Header.tsx
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Menu } from 'lucide-react';
 
 const Header: React.FC = () => {
-  const navigate = useNavigate();
-
-  // Opens your public website
-  const handleVisitSite = () => {
-    window.open('https://www.theWellFitCommunity.org', '_blank');
-  };
-
-  // Logs the user out and returns to WelcomePage
-  const handleLogout = () => {
-    localStorage.removeItem('phone');
-    localStorage.removeItem('pin');
-    navigate('/');
-  };
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <header className="bg-gradient-to-r from-wellfit-blue to-wellfit-green text-white p-4 flex items-center justify-between rounded-b-xl shadow-lg">
-      <div className="flex items-center">
-        <img src="/logo.png" alt="WellFit Logo" className="h-12 w-auto mr-3" />
-        <div>
-          <h1 className="text-2xl font-bold">WellFit Community Daily</h1>
-          <p className="text-wellfit-green text-sm italic">Strong Seniors. Stronger Community.</p>
+    <header className="bg-[#003865] shadow-md">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+
+          {/* Logo and Title */}
+          <div className="flex items-center">
+            <Link to="/" className="flex items-center">
+              <img src="/logo.png" alt="WellFit Logo" className="h-8 w-8" />
+              <span className="ml-2 text-xl font-bold text-white">WellFit Community</span>
+            </Link>
+          </div>
+
+          {/* Desktop Nav */}
+          <nav className="hidden md:flex space-x-6 items-center">
+            <a
+              href="https://wellfitcommunity.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white hover:text-[#8cc63f] text-sm"
+            >
+              Visit Website
+            </a>
+            <Link
+              to="/logout"
+              className="text-white hover:text-red-400 text-sm"
+            >
+              Logout
+            </Link>
+          </nav>
+
+          {/* Mobile Menu Button */}
+          <div className="md:hidden">
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="p-2 rounded-md text-white hover:text-[#8cc63f] focus:outline-none"
+            >
+              <Menu size={24} />
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="flex items-center space-x-2">
-        <button
-          onClick={handleVisitSite}
-          className="bg-white bg-opacity-20 hover:bg-opacity-40 text-white font-semibold px-4 py-2 rounded transition"
-        >
-          Visit Our Website
-        </button>
-        <button
-          onClick={handleLogout}
-          className="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded transition"
-        >
-          Log Out
-        </button>
-      </div>
+      {/* Mobile Menu */}
+      {menuOpen && (
+        <div className="md:hidden bg-[#003865] shadow-inner">
+          <div className="px-2 pt-2 pb-3 space-y-1">
+            <a
+              href="https://thewellfitcommunity.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block px-3 py-2 rounded-md text-base font-medium text-white hover:text-[#8cc63f]"
+            >
+              Visit Website
+            </a>
+            <Link
+              to="/logout"
+              className="block px-3 py-2 rounded-md text-base font-medium text-white hover:text-red-400"
+            >
+              Logout
+            </Link>
+          </div>
+        </div>
+      )}
     </header>
   );
 };
