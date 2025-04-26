@@ -1,3 +1,4 @@
+// src/components/WelcomeScreen.tsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -8,48 +9,40 @@ const getGreeting = () => {
   return 'Good Evening 🌙';
 };
 
-const WelcomePage: React.FC = () => {
+const WelcomeScreen: React.FC = () => {
   const navigate = useNavigate();
   const [phone, setPhone] = useState('');
-  const [pin, setPin] = useState('');
+  const [pin, setPin]     = useState('');
 
-  // Redirect if already logged in
+  // If they’re already logged in, go straight to dashboard
   useEffect(() => {
-    const ph = localStorage.getItem('phone');
-    const pn = localStorage.getItem('pin');
-    if (ph && pn) navigate('/dashboard');
+    const ph = localStorage.getItem('wellfitPhone');
+    const pn = localStorage.getItem('wellfitPin');
+    if (ph && pn) {
+      navigate('/dashboard', { replace: true });
+    }
   }, [navigate]);
 
-  const handleLogin = () => {
-    if (phone && pin) {
-      localStorage.setItem('phone', phone);
-      localStorage.setItem('pin', pin);
-      navigate('/dashboard');
-    } else {
-      alert('Please enter both phone and PIN.');
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!phone || !pin) {
+      return alert('Please enter both phone and PIN.');
     }
+    // Persist the exact keys RequireAuth expects
+    localStorage.setItem('wellfitPhone', phone);
+    localStorage.setItem('wellfitPin',   pin);
+    navigate('/dashboard', { replace: true });
   };
 
   return (
-    <section className="bg-white border-2 border-wellfit-green p-6 rounded-xl shadow-md max-w-md mx-auto mt-16">
-      {/* Logo */}
-      <div className="flex justify-center mb-4">
-        <img src="/logo.png" alt="WellFit Community Logo" className="h-20" />
-      </div>
-
-      {/* Time-based greeting */}
-      <h2 className="text-2xl font-semibold text-wellfit-blue mb-2 text-center">
-        {getGreeting()}
-      </h2>
-
-      {/* Website welcome message */}
-      <p className="text-gray-700 mb-6 text-center">
-        Welcome to WellFit Community! Strong Seniors. Stronger Community!  
-        Where we help revolutionize aging well. It is our pleasure to serve you as you commit to aging well.
+    <div className="max-w-md mx-auto mt-16 p-8 bg-white rounded-xl shadow-md border-2 border-wellfitGreen text-center">
+      <h1 className="text-3xl font-bold mb-4">Welcome to Our App</h1>
+      <h2 className="text-xl mb-6 text-wellfit-blue">{getGreeting()}</h2>
+      <p className="text-gray-700 mb-6">
+        Strong Seniors. Stronger Community.  We’re thrilled you’re here!
       </p>
 
-      {/* Login form */}
-      <div className="space-y-4">
+      <form onSubmit={handleLogin} className="space-y-4">
         <input
           type="tel"
           placeholder="Phone number"
@@ -59,21 +52,21 @@ const WelcomePage: React.FC = () => {
         />
         <input
           type="password"
-          placeholder="4‑digit PIN"
+          placeholder="4-digit PIN"
           maxLength={4}
           value={pin}
           onChange={e => setPin(e.target.value)}
           className="w-full p-2 border rounded"
         />
         <button
-          onClick={handleLogin}
+          type="submit"
           className="w-full py-2 bg-wellfit-blue text-white font-semibold rounded"
         >
           Log In
         </button>
-      </div>
-    </section>
+      </form>
+    </div>
   );
 };
 
-export default WelcomePage;
+export default WelcomeScreen;

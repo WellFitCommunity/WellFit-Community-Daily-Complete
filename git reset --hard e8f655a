@@ -1,0 +1,52 @@
+[33me8f655a[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Finalize mobile-optimized WordFind and restored header logo
+[33m868f40d[m Optimize WordFind for small phones; restore and sharpen header logo
+[33m81b5185[m Optimize WordFind for mobile; restore header logo and styling
+[33m2b9cd32[m Your message
+[33m5efa43f[m Update Header styling and logo link
+[33m39af81a[m Fix used DashMealOfTheDay to pass Netlify ESLint check
+[33mb0cf615[m Fix remove unsued imports to pass Netlify build
+[33mb7d66dc[m Deploy mobile-optimized WellFit app with PWA support
+[33m37bc156[m Final: Add wordThemes and fix WordFind build for deployment
+[33mc713edb[m Remove unsed isLocalhost to fix CI build error
+[33md72f7e3[m Ready to deploy latest updates
+[33m834d767[m Fix Card component children prop type
+[33m965286d[m Add CSP header configuration
+[33ma97fe34[m Create _headers
+[33m570f351[m Update index.tsx
+[33m8b800ab[m Update WelcomePage.tsx
+[33m3891c65[m Update DashMealOfTheDay.tsx
+[33m3cf5883[m Update DailyScripture.tsx
+[33mc64e2fb[m Update CheckInTracker.tsx
+[33mcb00a8c[m Update tailwind.config.ts
+[33m872de68[m Delete src/components/Weatherwidget.tsx
+[33m4e553af[m Rename CheckinTracker.tsx to CheckInTracker.tsx
+[33m5d8c596[m Update App.tsx
+[33m8609c47[m Update CheckinTracker.tsx
+[33m618811f[m Update DashMealOfTheDay.tsx
+[33m9726625[m Update DailyScripture.tsx
+[33m399e5a7[m Update TechTip.tsx
+[33m29080ac[m Update WelcomePage.tsx
+[33m3beb47f[m Rename Checkintracker.tsx to CheckinTracker.tsx
+[33mc970396[m Update Checkintracker.tsx
+[33m58c63d4[m Create WeatherWidget.tsx
+[33m481db64[m Update App.tsx
+[33m1596072[m Update App.tsx
+[33mcb2ebb6[m Rename checkintracker.tsx to Checkintracker.tsx
+[33mca35df2[m Create AdminPanel.tsx
+[33m00eee3f[m Create Crossword.tsx
+[33m8f14e0c[m Create Sudoku.tsx
+[33mb4ed8b2[m Create checkintracker.tsx
+[33mffceca2[m Create Weatherwidget.tsx
+[33m7ad90c8[m Create Footer.tsx
+[33m85bd25e[m Create EmergencyContact.tsx
+[33m69d0c2e[m Create WordFind.tsx
+[33m1c810da[m Create DashMealOfTheDay.tsx
+[33m8ba725d[m Create TechTip.tsx
+[33m9925a08[m Create DailyScripture.tsx
+[33m36f2048[m Create WelcomePage.tsx
+[33mf225570[m Create Header.tsx
+[33m09d9f00[m Create postcss.config.js
+[33m1bc96b1[m Create tsconfig.json
+[33mb5ecd48[m Update package.json
+[33m0bb51d9[m Create App.tsx
+[33m06d1849[m Add files via upload
