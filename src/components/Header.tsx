@@ -1,78 +1,69 @@
 // src/components/Header.tsx
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 
 const Header: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <header className="bg-[#003865] shadow-md">
+    <header className="bg-gradient-to-r from-wellfit-blue to-wellfit-green shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-
-          {/* Logo and Title */}
-          <div className="flex items-center">
-            <Link to="/" className="flex items-center">
-              <img
-                src="/android-chrome-192x192.png"
-                alt="WellFit Community logo"
-                className="h-8 w-8"
-              />
-              <span className="ml-2 text-xl font-bold text-white">WellFit Community</span>
-            </Link>
+          {/* Logo / Title */}
+          <div className="text-white text-xl font-bold">
+            WellFit Community
           </div>
 
           {/* Desktop Nav */}
-          <nav className="hidden md:flex space-x-6 items-center">
-            <a
-              href="https://www.theWellFitCommunity.org"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-white hover:text-[#8cc63f] text-sm"
-            >
-              Visit Website
-            </a>
-            <Link
-              to="/logout"
-              className="text-white hover:text-red-400 text-sm"
-            >
-              Logout
+          <nav className="hidden md:flex space-x-6">
+            <Link to="/dashboard" className="text-white hover:text-[#8cc63f] transition">
+              Dashboard
+            </Link>
+            <Link to="/wordfind" className="text-white hover:text-[#8cc63f] transition">
+              Word Find
+            </Link>
+            <Link to="/logout" className="text-red-300 hover:text-red-500 transition">
+              Log Out
             </Link>
           </nav>
 
           {/* Mobile Menu Button */}
-          <div className="md:hidden">
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="p-2 rounded-md text-white hover:text-[#8cc63f] focus:outline-none"
-            >
-              <Menu size={24} />
-            </button>
-          </div>
+          <button
+            onClick={() => setMenuOpen(open => !open)}
+            className="md:hidden text-white focus:outline-none"
+            aria-label="Toggle menu"
+          >
+            {menuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Nav */}
       {menuOpen && (
-        <div className="md:hidden bg-[#003865] shadow-inner">
-          <div className="px-2 pt-2 pb-3 space-y-1">
-            <a
-              href="https://www.theWellFitCommunity.org"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block px-3 py-2 rounded-md text-base font-medium text-white hover:text-[#8cc63f]"
-            >
-              Visit Website
-            </a>
-            <Link
-              to="/logout"
-              className="block px-3 py-2 rounded-md text-base font-medium text-white hover:text-red-400"
-            >
-              Logout
-            </Link>
-          </div>
-        </div>
+        <nav className="md:hidden px-4 pb-4 space-y-2">
+          <Link
+            to="/dashboard"
+            onClick={() => setMenuOpen(false)}
+            className="block text-white hover:text-[#8cc63f] transition"
+          >
+            Dashboard
+          </Link>
+          <Link
+            to="/wordfind"
+            onClick={() => setMenuOpen(false)}
+            className="block text-white hover:text-[#8cc63f] transition"
+          >
+            Word Find
+          </Link>
+          <Link
+            to="/logout"
+            onClick={() => setMenuOpen(false)}
+            className="block text-red-300 hover:text-red-500 transition"
+          >
+            Log Out
+          </Link>
+        </nav>
       )}
     </header>
   );
