@@ -1,6 +1,6 @@
 import React from 'react';
 
-interface Meal {
+ export interface Meal {
   name: string;
   calories: number;
   cost: string;
