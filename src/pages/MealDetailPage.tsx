@@ -520,7 +520,7 @@ const MealDetailPage: React.FC = () => {
       {/* Meal stats */}
       <ul className="bg-white border rounded-lg p-4 text-gray-800 mb-6 space-y-1">
         <li><strong>Calories:</strong> {meal.calories}</li>
-        <li><strong>Cost:</strong> ${meal.cost.toFixed(2)}</li>
+        <li><strong>Cost:</strong> ${Number(meal.cost).toFixed(2)}</li>
         <li><strong>Cook Time:</strong> {meal.cookTime}</li>
       </ul>
 
