@@ -13,6 +13,10 @@ import MealDetailPage from './pages/MealDetailPage';
 import LogoutPage from './components/LogoutPage';
 import RequireAuth from './components/RequireAuth';
 
+// ← ADD THIS LINE:
+import SupabaseTest from './components/SupabaseTest';
+
+
 const App: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-wellfit-blue via-white to-wellfit-green">
@@ -22,6 +26,9 @@ const App: React.FC = () => {
         <Routes>
           {/* 1) Unprotected welcome/login */}
           <Route path="/" element={<WelcomePage />} />
+
+          {/* ✅ NEW: Unprotected Supabase Test Route */}
+          <Route path="/supabase-test" element={<SupabaseTest />} />
 
           {/* 2) Protected screens with auth guard */}
           <Route
@@ -51,7 +58,6 @@ const App: React.FC = () => {
             }
           />
 
-          {/* DASH Meal feature */}
           <Route
             path="/meal-of-the-day"
             element={
@@ -75,3 +81,4 @@ const App: React.FC = () => {
 };
 
 export default App;
+
