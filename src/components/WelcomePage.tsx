@@ -1,72 +1,46 @@
-// src/components/WelcomeScreen.tsx
-import React, { useState, useEffect } from 'react';
+// src/components/WelcomePage.tsx
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const getGreeting = () => {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'Good Morning ☀️';
-  if (hour < 18) return 'Good Afternoon 🌤️';
-  return 'Good Evening 🌙';
-};
-
-const WelcomeScreen: React.FC = () => {
+const WelcomePage: React.FC = () => {
   const navigate = useNavigate();
-  const [phone, setPhone] = useState('');
-  const [pin, setPin]     = useState('');
+  const [formData, setFormData] = useState({ hasEmail: false });
 
-  // If they’re already logged in, go straight to dashboard
-  useEffect(() => {
-    const ph = localStorage.getItem('wellfitPhone');
-    const pn = localStorage.getItem('wellfitPin');
-    if (ph && pn) {
-      navigate('/dashboard', { replace: true });
-    }
-  }, [navigate]);
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const target = e.target;
+    const { name, value, type, checked } = target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
+  };
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!phone || !pin) {
-      return alert('Please enter both phone and PIN.');
+  const handleContinue = () => {
+    if (formData.hasEmail) {
+      navigate('/senior-enrollment');
+    } else {
+      navigate('/senior-enrollment');
     }
-    // Persist the exact keys RequireAuth expects
-    localStorage.setItem('wellfitPhone', phone);
-    localStorage.setItem('wellfitPin',   pin);
-    navigate('/dashboard', { replace: true });
   };
 
   return (
-    <div className="max-w-md mx-auto mt-16 p-8 bg-white rounded-xl shadow-md border-2 border-wellfitGreen text-center">
-      <h1 className="text-3xl font-bold mb-4">Welcome to Our App</h1>
-      <h2 className="text-xl mb-6 text-wellfit-blue">{getGreeting()}</h2>
-      <p className="text-gray-700 mb-6">
-        Strong Seniors. Stronger Community.  We’re thrilled you’re here!
+    <div className="flex flex-col items-center justify-center min-h-screen px-4 py-8 bg-white text-center">
+      <img src="/android-chrome-512x512.png" alt="WellFit Community Logo" className="w-28 md:w-36 mb-4" />
+      <h1 className="text-3xl md:text-4xl font-bold text-wellfit-blue">WellFit Community</h1>
+      <p className="text-lg text-gray-700 mt-2 max-w-xl">
+        Welcome to WellFit Community where we are revolutionizing aging WELL! It is our hope that you feel, appreciated and respected as we partner with you in the best years of your life. Thank you for allowing us the privilege of your company. <strong>Strong Seniors, Stronger Community.</strong>
       </p>
 
-      <form onSubmit={handleLogin} className="space-y-4">
-        <input
-          type="tel"
-          placeholder="Phone number"
-          value={phone}
-          onChange={e => setPhone(e.target.value)}
-          className="w-full p-2 border rounded"
-        />
-        <input
-          type="password"
-          placeholder="4-digit PIN"
-          maxLength={4}
-          value={pin}
-          onChange={e => setPin(e.target.value)}
-          className="w-full p-2 border rounded"
-        />
+      <div className="mt-6">
         <button
-          type="submit"
-          className="w-full py-2 bg-wellfit-blue text-white font-semibold rounded"
+          onClick={handleContinue}
+          className="px-6 py-3 bg-[#003865] hover:bg-[#8cc63f] text-white font-semibold rounded-xl shadow-md transition"
         >
-          Log In
+          Continue
         </button>
-      </form>
+      </div>
     </div>
   );
 };
 
-export default WelcomeScreen;
+export default WelcomePage;

@@ -10,13 +10,11 @@ const Header: React.FC = () => {
     <header className="bg-gradient-to-r from-wellfit-blue to-wellfit-green shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo / Title */}
-          <div className="text-white text-xl font-bold">
-            WellFit Community
-          </div>
+          {/* Logo / Title */} 
+          <div className="text-white text-xl font-bold">WellFit Community</div>
 
           {/* Desktop Nav */}
-          <nav className="hidden md:flex space-x-6">
+          <nav className="hidden md:flex items-center space-x-6">
             <Link to="/dashboard" className="text-white hover:text-[#8cc63f] transition">
               Dashboard
             </Link>
@@ -26,6 +24,14 @@ const Header: React.FC = () => {
             <Link to="/logout" className="text-red-300 hover:text-red-500 transition">
               Log Out
             </Link>
+            <a
+              href="https://www.theWellFitCommunity.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white bg-[#8cc63f] px-3 py-1 rounded hover:bg-green-700 transition"
+            >
+              Visit Website
+            </a>
           </nav>
 
           {/* Mobile Menu Button */}
@@ -63,6 +69,14 @@ const Header: React.FC = () => {
           >
             Log Out
           </Link>
+          <a
+            href="https://www.theWellFitCommunity.org"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block text-white bg-[#8cc63f] px-3 py-2 rounded text-center hover:bg-green-700 transition"
+          >
+            Visit Website
+          </a>
         </nav>
       )}
     </header>

@@ -1,57 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
-
-    <!-- Content Security Policy: allow Supabase, local emulator & Codespace -->
-    <meta
-      http-equiv="Content-Security-Policy"
-      content="
-        default-src 'self';
-        connect-src
-          'self'
-          https://xykby3jnvuohtgqbpkikyn.supabase.co
-          http://127.0.0.1:54321
-          https://legendary-space-goggles-g46697v595g4c757-3000.app.github.dev;
-        script-src 'self';
-        style-src 'self' 'unsafe-inline';
-      "
-    />
-
-    <link rel="icon" href="%PUBLIC_URL%/favicon-32x32.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- …the rest of your existing meta tags and title… -->
-
-      <meta name="theme-color" content="#003865" />
-      <meta name="description" content="WellFit Community daily word-find game and resources" />
-    
-      <!-- Open Graph -->
-      <meta property="og:title" content="WellFit Community" />
-      <meta property="og:description" content="Play today’s word-find puzzle and explore our wellness resources." />
-      <meta property="og:image" content="%PUBLIC_URL%/android-chrome-512x512.png" />
-      <meta property="og:url" content="https://www.theWellFitCommunity.org" />
-      <meta property="og:type" content="website" />
-    
-      <!-- Twitter Card -->
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content="WellFit Community" />
-      <meta name="twitter:description" content="Play today’s word-find puzzle and explore our wellness resources." />
-      <meta name="twitter:image" content="%PUBLIC_URL%/android-chrome-512x512.png" />
-    
-      <title>WellFit Community</title>
-    </head>
-    
-
-    <!-- PWA manifest & theme color -->
+    <meta charset="UTF-8" />
     <link rel="manifest" href="/manifest.json" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- App Identity -->
+    <meta name="application-name" content="WellFit Community" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="WellFit Community" />
     <meta name="theme-color" content="#003865" />
 
-    <!-- Icons for Apple -->
-    <link rel="apple-touch-icon" href="/logo192.png" />
+    <!-- Descriptive Meta -->
+    <meta name="description" content="Strong Seniors. Stronger Community. The WellFit app helps you stay healthy, informed, and connected." />
+    <meta name="keywords" content="senior wellness, WellFit Community, health tracking, fitness, RPM, aging well" />
+    <meta name="author" content="WellFit Community" />
 
-    <title>WellFit Community Daily</title>
+    <!-- Social Media -->
+    <meta property="og:title" content="WellFit Community App" />
+    <meta property="og:description" content="Track your wellness, meals, check-ins and more. Built for seniors, with love." />
+    <meta property="og:image" content="/icons/icon-512x512.png" />
+    <meta property="og:url" content="https://yourappurl.com" /> <!-- Update this -->
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- Icons -->
+    <link rel="icon" type="image/png" href="/icons/icon-192x192.png" sizes="192x192" />
+    <link rel="apple-touch-icon" href="/icons/icon-512x512.png" />
+
+    <title>WellFit Community</title>
   </head>
-  <body class="bg-white">
+
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
   </body>
 </html>

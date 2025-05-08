@@ -5,16 +5,25 @@ import './index.css';
 import App from './App';
 import * as serviceWorkerRegistration from './serviceWorkerRegistration';
 
-const root = ReactDOM.createRoot(
-  document.getElementById('root') as HTMLElement
-);
+// ✅ Add these two lines:
+import { SessionContextProvider } from '@supabase/auth-helpers-react';
+import { supabase } from './lib/supabaseClient'; // or './data/lib/supabaseClient'
+
+const rootElement = document.getElementById('root');
+if (!rootElement) throw new Error('Root element not found');
+
+const root = ReactDOM.createRoot(rootElement);
+
 root.render(
   <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <SessionContextProvider supabaseClient={supabase}>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </SessionContextProvider>
   </React.StrictMode>
 );
 
 // Register the service worker to enable PWA capabilities
 serviceWorkerRegistration.register();
+
