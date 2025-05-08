@@ -4,9 +4,10 @@ import { useNavigate } from 'react-router-dom';
 
 const WelcomePage: React.FC = () => {
   const navigate = useNavigate();
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [formData, setFormData] = useState({ hasEmail: false });
 
-  // We define handleChange for future use — suppressed to prevent build failure
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const target = e.target;
@@ -42,4 +43,3 @@ const WelcomePage: React.FC = () => {
 };
 
 export default WelcomePage;
-
