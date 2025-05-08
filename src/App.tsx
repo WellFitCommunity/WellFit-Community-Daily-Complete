@@ -19,9 +19,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const showHeaderFooter = location.pathname !== '/';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-wellfitBlue to-wellfitGreen text-white flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gradient-to-r from-wellfit-blue to-wellfit-green text-white">
       {showHeaderFooter && <Header />}
-      <main className="flex-grow">{children}</main>
+      <main className="flex-grow p-4">{children}</main>
       {showHeaderFooter && <Footer />}
     </div>
   );
