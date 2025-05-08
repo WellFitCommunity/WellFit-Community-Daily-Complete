@@ -1,3 +1,4 @@
+// src/App.tsx
 import React from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 
@@ -36,9 +37,30 @@ const App: React.FC = () => (
       <Route path="/meal/:id" element={<MealDetailPage />} />
 
       {/* Protected pages */}
-      <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
-      <Route path="/checkin" element={<RequireAuth><CheckInTracker /></RequireAuth>} />
-      <Route path="/wordfind" element={<RequireAuth><WordFind /></RequireAuth>} />
+      <Route
+        path="/dashboard"
+        element={
+          <RequireAuth>
+            <Dashboard />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/checkin"
+        element={
+          <RequireAuth>
+            <CheckInTracker />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/wordfind"
+        element={
+          <RequireAuth>
+            <WordFind />
+          </RequireAuth>
+        }
+      />
 
       {/* Admin pages */}
       <Route path="/admin-panel" element={<AdminPanel />} />
@@ -54,4 +76,3 @@ const App: React.FC = () => (
 );
 
 export default App;
-
