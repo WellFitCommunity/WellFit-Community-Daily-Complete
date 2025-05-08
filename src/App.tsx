@@ -1,84 +1,49 @@
-// src/App.tsx
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 import Header from './components/Header';
 import Footer from './components/Footer';
 import WelcomePage from './components/WelcomePage';
+import SeniorEnrollmentPage from './components/SeniorEnrollmentPage';
 import Dashboard from './components/Dashboard';
 import CheckInTracker from './components/CheckInTracker';
 import WordFind from './components/WordFind';
-import DashMealOfTheDay from './components/DashMealOfTheDay';
 import MealDetailPage from './pages/MealDetailPage';
 import LogoutPage from './components/LogoutPage';
 import RequireAuth from './components/RequireAuth';
+import AdminPanel from './components/AdminPanel';
+import AdminProfileEditor from './components/AdminProfileEditor';
 
-// ← ADD THIS LINE:
-import SupabaseTest from './components/SupabaseTest';
+const App: React.FC = () => (
+  <Router>
+    <Header />
+    <main className="flex-grow">
+      <Routes>
+        {/* Unprotected */}
+        <Route path="/" element={<WelcomePage />} />
+        <Route path="/senior-enrollment" element={<SeniorEnrollmentPage />} />
 
+        {/* Public meal detail */}
+        <Route path="/meal/:id" element={<MealDetailPage />} />
 
-const App: React.FC = () => {
-  return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-wellfit-blue via-white to-wellfit-green">
-      <Header />
+        {/* Protected */}
+        <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
+        <Route path="/checkin" element={<RequireAuth><CheckInTracker /></RequireAuth>} />
+        <Route path="/wordfind" element={<RequireAuth><WordFind /></RequireAuth>} />
 
-      <main className="flex-grow">
-        <Routes>
-          {/* 1) Unprotected welcome/login */}
-          <Route path="/" element={<WelcomePage />} />
+        {/* Admin tools */}
+        <Route path="/admin-panel" element={<AdminPanel />} />
+        <Route path="/admin-profile-editor" element={<AdminProfileEditor />} />
 
-          {/* ✅ NEW: Unprotected Supabase Test Route */}
-          <Route path="/supabase-test" element={<SupabaseTest />} />
+        {/* Logout */}
+        <Route path="/logout" element={<LogoutPage />} />
 
-          {/* 2) Protected screens with auth guard */}
-          <Route
-            path="/dashboard"
-            element={
-              <RequireAuth>
-                <Dashboard />
-              </RequireAuth>
-            }
-          />
-
-          <Route
-            path="/checkin"
-            element={
-              <RequireAuth>
-                <CheckInTracker />
-              </RequireAuth>
-            }
-          />
-
-          <Route
-            path="/wordfind"
-            element={
-              <RequireAuth>
-                <WordFind />
-              </RequireAuth>
-            }
-          />
-
-          <Route
-            path="/meal-of-the-day"
-            element={
-              <RequireAuth>
-                <MealDetailPage />
-              </RequireAuth>
-            }
-          />
-
-          {/* 3) Logout flow */}
-          <Route path="/logout" element={<LogoutPage />} />
-
-          {/* 4) Fallback to welcome */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </main>
-
-      <Footer />
-    </div>
-  );
-};
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </main>
+    <Footer />
+  </Router>
+);
 
 export default App;
-

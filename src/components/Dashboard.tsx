@@ -7,9 +7,9 @@ import WeatherWidget from './WeatherWidget';
 import CheckInTracker from './CheckInTracker';
 import DailyScripture from './DailyScripture';
 import TechTip from './TechTip';
-import DashMealOfTheDay from './DashMealOfTheDay'; // ✅ YES, still needed
 import EmergencyContact from './EmergencyContact';
 import AdminPanel from './AdminPanel';
+import DashMealOfTheDay from './DashMealOfTheDay';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -19,10 +19,11 @@ const Dashboard: React.FC = () => {
       <Card><WeatherWidget /></Card>
       <Card><CheckInTracker /></Card>
       <Card><DailyScripture /></Card>
-      <Card>
-        <DashMealOfTheDay />
-      </Card>
 
+      {/* Meal of the Day preview */}
+      <Card>
+        <DashMealOfTheDay onSeeDetails={(id) => navigate(`/meal/${id}`)} />
+      </Card>
 
       <Card>
         <button
@@ -34,7 +35,6 @@ const Dashboard: React.FC = () => {
       </Card>
 
       <Card><TechTip /></Card>
-      {/* Remove WordFind from here, it's on its own page now */}
       <Card><EmergencyContact /></Card>
       <Card><AdminPanel /></Card>
     </main>
@@ -42,4 +42,3 @@ const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
-
