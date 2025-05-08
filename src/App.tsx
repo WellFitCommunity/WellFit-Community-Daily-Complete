@@ -14,17 +14,16 @@ import RequireAuth from './components/RequireAuth';
 import AdminPanel from './components/AdminPanel';
 import AdminProfileEditor from './components/AdminProfileEditor';
 
-// ✅ Layout that shows header/footer on all pages except "/"
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const showHeaderFooter = location.pathname !== '/';
 
   return (
-    <>
+    <div className="min-h-screen bg-gradient-to-br from-wellfitBlue to-wellfitGreen text-white flex flex-col">
       {showHeaderFooter && <Header />}
       <main className="flex-grow">{children}</main>
       {showHeaderFooter && <Footer />}
-    </>
+    </div>
   );
 };
 

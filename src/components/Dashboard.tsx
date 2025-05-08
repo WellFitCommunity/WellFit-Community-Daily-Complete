@@ -27,7 +27,7 @@ const Dashboard: React.FC = () => {
 
       <Card>
         <button
-          className="w-full py-3 text-lg font-semibold bg-wellfit-blue text-white rounded-xl shadow hover:bg-wellfit-green transition"
+          className="w-full py-3 text-lg font-semibold bg-wellfitBlue text-white rounded-xl shadow hover:bg-wellfitGreen transition"
           onClick={() => navigate('/wordfind')}
         >
           🧠 Play Word Find Puzzle
