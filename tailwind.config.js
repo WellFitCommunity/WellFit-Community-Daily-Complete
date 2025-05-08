@@ -3,8 +3,8 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        'wellfit-blue': '#003865',
-        'wellfit-green': '#8cc63f',
+        'wellfitBlue': '#003865',
+        'wellfitGreen': '#8cc63f',
       },
     },
   },

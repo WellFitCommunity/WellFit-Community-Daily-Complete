@@ -1,5 +1,3 @@
-// src/index.tsx
-
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
@@ -9,7 +7,10 @@ import * as serviceWorkerRegistration from './serviceWorkerRegistration';
 
 // ✅ Supabase auth context
 import { SessionContextProvider } from '@supabase/auth-helpers-react';
-import { supabase } from './lib/supabaseClient'; // adjust path if needed
+import { supabase } from './lib/supabaseClient';
+
+// ✅ Corrected ErrorBoundary import
+import ErrorBoundary from './components/ErrorBoundary'; // ✅ matches your actual file location
 
 // ✅ Get the root element safely
 const rootElement = document.getElementById('root');
@@ -21,7 +22,9 @@ root.render(
   <React.StrictMode>
     <SessionContextProvider supabaseClient={supabase}>
       <BrowserRouter>
-        <App />
+        <ErrorBoundary>
+          <App />
+        </ErrorBoundary>
       </BrowserRouter>
     </SessionContextProvider>
   </React.StrictMode>
@@ -29,5 +32,3 @@ root.render(
 
 // ✅ Unregister the service worker to prevent white screen issues
 serviceWorkerRegistration.unregister();
-
-
