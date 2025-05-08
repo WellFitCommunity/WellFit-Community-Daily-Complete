@@ -1,7 +1,9 @@
 // src/App.tsx
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 
+import Header from './components/Header';
+import Footer from './components/Footer';
 import WelcomePage from './components/WelcomePage';
 import SeniorEnrollmentPage from './components/SeniorEnrollmentPage';
 import Dashboard from './components/Dashboard';
@@ -12,26 +14,35 @@ import LogoutPage from './components/LogoutPage';
 import RequireAuth from './components/RequireAuth';
 import AdminPanel from './components/AdminPanel';
 import AdminProfileEditor from './components/AdminProfileEditor';
-// import Header from './components/Header';
-// import Footer from './components/Footer';
+
+const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const location = useLocation();
+  const showHeaderFooter = location.pathname !== '/';
+
+  return (
+    <>
+      {showHeaderFooter && <Header />}
+      <main className="flex-grow">{children}</main>
+      {showHeaderFooter && <Footer />}
+    </>
+  );
+};
 
 const App: React.FC = () => (
   <Router>
-    {/* TEMPORARILY DISABLED FOR DEMO STABILITY */}
-    {/* <Header /> */}
-    <main className="flex-grow">
+    <Layout>
       <Routes>
-        {/* Public routes */}
+        {/* Public pages */}
         <Route path="/" element={<WelcomePage />} />
         <Route path="/senior-enrollment" element={<SeniorEnrollmentPage />} />
         <Route path="/meal/:id" element={<MealDetailPage />} />
 
-        {/* Protected routes */}
+        {/* Protected pages */}
         <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
         <Route path="/checkin" element={<RequireAuth><CheckInTracker /></RequireAuth>} />
         <Route path="/wordfind" element={<RequireAuth><WordFind /></RequireAuth>} />
 
-        {/* Admin tools */}
+        {/* Admin pages */}
         <Route path="/admin-panel" element={<AdminPanel />} />
         <Route path="/admin-profile-editor" element={<AdminProfileEditor />} />
 
@@ -41,8 +52,7 @@ const App: React.FC = () => (
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </main>
-    {/* <Footer /> */}
+    </Layout>
   </Router>
 );
 
