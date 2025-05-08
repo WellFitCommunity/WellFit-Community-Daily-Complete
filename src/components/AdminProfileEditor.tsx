@@ -48,7 +48,7 @@ const AdminProfileEditor: React.FC = () => {
       setSelectedProfile(null);
       setNotes([]);
     }
-  }, [selectedId]);
+  }, [selectedId, profiles]);
 
   const fetchProfiles = async () => {
     const { data, error } = await supabase.from('profiles').select('*').eq('role', 'senior');
