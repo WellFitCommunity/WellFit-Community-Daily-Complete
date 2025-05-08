@@ -16,6 +16,14 @@ const Dashboard: React.FC = () => {
 
   return (
     <main className="space-y-6 mt-4 p-4">
+      {/* Return link */}
+      <button
+        onClick={() => navigate('/senior-enrollment')}
+        className="text-sm text-wellfit-blue underline mb-4"
+      >
+        ← Return to Enrollment
+      </button>
+
       <Card><WeatherWidget /></Card>
       <Card><CheckInTracker /></Card>
       <Card><DailyScripture /></Card>
@@ -27,7 +35,7 @@ const Dashboard: React.FC = () => {
 
       <Card>
         <button
-          className="w-full py-3 text-lg font-semibold bg-wellfitBlue text-white rounded-xl shadow hover:bg-wellfitGreen transition"
+          className="w-full py-3 text-lg font-semibold bg-wellfit-blue text-white rounded-xl shadow hover:bg-wellfit-green transition"
           onClick={() => navigate('/wordfind')}
         >
           🧠 Play Word Find Puzzle
