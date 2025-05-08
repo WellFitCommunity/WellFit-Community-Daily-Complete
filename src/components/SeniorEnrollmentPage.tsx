@@ -1,3 +1,4 @@
+// src/components/SeniorEnrollmentPage.tsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
@@ -29,13 +30,6 @@ const SeniorEnrollmentPage: React.FC = () => {
     },
   });
 
-  // Start preview mode
-  const startPreview = () => {
-    localStorage.setItem('exploreStartTime', Date.now().toString());
-    navigate('/dashboard');
-  };
-
-  // Unified change handler
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const target = e.target as HTMLInputElement | HTMLSelectElement;
     const { name, value, type } = target;
@@ -57,17 +51,28 @@ const SeniorEnrollmentPage: React.FC = () => {
     }
   };
 
-  // Supabase‐connected submit
+  const startPreview = () => {
+    localStorage.setItem('exploreStartTime', Date.now().toString());
+    navigate('/dashboard');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const {
-      full_name, dob, address, phone,
-      email, password, confirmPassword,
-      pin, confirmPin, diagnoses,
-      race, ageRange,
+      full_name,
+      dob,
+      address,
+      phone,
+      email,
+      password,
+      confirmPassword,
+      pin,
+      confirmPin,
+      diagnoses,
+      race,
+      ageRange,
     } = formData;
 
-    // Validate match
     if (useEmail === false && pin !== confirmPin) {
       alert('PINs do not match.');
       return;
@@ -93,7 +98,6 @@ const SeniorEnrollmentPage: React.FC = () => {
       userId = crypto.randomUUID();
     }
 
-    // Upsert profile
     const { error: profileError } = await supabase
       .from('profiles')
       .upsert({
@@ -118,7 +122,6 @@ const SeniorEnrollmentPage: React.FC = () => {
       return;
     }
 
-    // Upsert phone_auth if PIN
     if (!useEmail) {
       const { error: phoneError } = await supabase
         .from('phone_auth')
@@ -129,239 +132,297 @@ const SeniorEnrollmentPage: React.FC = () => {
       }
     }
 
-    // Clear preview & redirect
     localStorage.removeItem('exploreStartTime');
     alert('Enrollment submitted successfully!');
     navigate('/dashboard');
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-6 bg-white rounded-xl shadow space-y-6">
-      <ExploreTimer minutes={15} />
+    <div
+      className="
+        min-h-screen flex items-center justify-center p-8
+        bg-gradient-to-b from-[#003865] via-white to-[#8cc63f]
+      "
+    >
+      <div className="bg-white border-2 border-black max-w-3xl w-full p-8 rounded-lg shadow-lg text-black">
+        <ExploreTimer minutes={15} />
 
-      <h2 className="text-2xl font-bold text-center text-wellfit-blue">Senior Enrollment</h2>
+        <h2 className="text-2xl font-bold text-center text-[#003865] mb-6">
+          Senior Enrollment
+        </h2>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Full Name */}
-        <input
-          name="full_name"
-          placeholder="Full Name"
-          value={formData.full_name}
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
-          required
-        />
+        <form onSubmit={handleSubmit} className="space-y-6">
 
-        {/* Date of Birth */}
-        <input
-          name="dob"
-          type="date"
-          value={formData.dob}
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
-          required
-        />
-
-        {/* Address */}
-        <input
-          name="address"
-          placeholder="Address"
-          value={formData.address}
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
-          required
-        />
-
-        {/* Phone */}
-        <input
-          name="phone"
-          placeholder="Phone Number"
-          value={formData.phone}
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
-          required
-        />
-
-        {/* Secure Login Choice */}
-        <label className="block font-semibold mt-4">
-          Do you have an email address you'd like to use for a more secure login?
-        </label>
-        <div className="flex gap-6 pl-1">
-          <label>
-            <input type="radio" name="useEmail" onChange={() => setUseEmail(true)} /> Yes
-          </label>
-          <label>
-            <input type="radio" name="useEmail" onChange={() => setUseEmail(false)} /> No
-          </label>
-        </div>
-
-        {/* Email/Password Fields */}
-        {useEmail === true && (
-          <>
+          {/* Personal Information */}
+          <div>
+            <h3 className="text-xl font-semibold text-[#003865] mb-2">Personal Information</h3>
+            <label className="block text-black font-semibold text-lg">Full Name</label>
             <input
-              name="email"
-              type="email"
-              placeholder="Email"
-              value={formData.email}
+              name="full_name"
+              placeholder="Full Name"
+              value={formData.full_name}
               onChange={handleChange}
-              className="w-full p-2 border rounded"
+              className="w-full p-3 border-2 border-black rounded text-lg"
               required
             />
+
+            <label className="block text-black font-semibold text-lg">Date of Birth</label>
             <input
-              name="password"
-              type="password"
-              placeholder="Password"
-              value={formData.password}
+              name="dob"
+              type="date"
+              value={formData.dob}
               onChange={handleChange}
-              className="w-full p-2 border rounded"
+              className="w-full p-3 border-2 border-black rounded text-lg"
               required
             />
+
+            <label className="block text-black font-semibold text-lg">Address</label>
             <input
-              name="confirmPassword"
-              type="password"
-              placeholder="Retype Password"
-              value={formData.confirmPassword}
+              name="address"
+              placeholder="Address"
+              value={formData.address}
               onChange={handleChange}
-              className="w-full p-2 border rounded"
+              className="w-full p-3 border-2 border-black rounded text-lg"
               required
             />
-          </>
-        )}
 
-        {/* PIN Fields */}
-        {useEmail === false && (
-          <>
+            <label className="block text-black font-semibold text-lg">Phone Number</label>
             <input
-              name="pin"
-              type="password"
-              placeholder="4-Digit PIN"
-              maxLength={4}
-              value={formData.pin}
+              name="phone"
+              placeholder="Phone Number"
+              value={formData.phone}
               onChange={handleChange}
-              className="w-full p-2 border rounded"
+              className="w-full p-3 border-2 border-black rounded text-lg"
               required
             />
-            <input
-              name="confirmPin"
-              type="password"
-              placeholder="Retype PIN"
-              maxLength={4}
-              value={formData.confirmPin}
+          </div>
+
+          <hr className="border-t-2 border-gray-300" />
+
+          {/* Login Setup */}
+          <div>
+            <h3 className="text-xl font-semibold text-[#003865] mb-2">Login Setup</h3>
+            <fieldset className="space-y-2">
+              <legend className="text-black font-semibold text-lg">Use email for secure login?</legend>
+              <div className="flex gap-6">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="useEmail"
+                    onChange={() => setUseEmail(true)}
+                    className="mr-2"
+                  />{' '}
+                  Yes
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="useEmail"
+                    onChange={() => setUseEmail(false)}
+                    className="mr-2"
+                  />{' '}
+                  No
+                </label>
+              </div>
+            </fieldset>
+
+            {useEmail === true && (
+              <>
+                <label className="block text-black font-semibold text-lg">Email</label>
+                <input
+                  name="email"
+                  type="email"
+                  placeholder="Email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="w-full p-3 border-2 border-black rounded text-lg"
+                  required
+                />
+
+                <label className="block text-black font-semibold text-lg">Password</label>
+                <input
+                  name="password"
+                  type="password"
+                  placeholder="Password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="w-full p-3 border-2 border-black rounded text-lg"
+                  required
+                />
+
+                <label className="block text-black font-semibold text-lg">Confirm Password</label>
+                <input
+                  name="confirmPassword"
+                  type="password"
+                  placeholder="Retype Password"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  className="w-full p-3 border-2 border-black rounded text-lg"
+                  required
+                />
+              </>
+            )}
+
+            {useEmail === false && (
+              <>
+                <label className="block text-black font-semibold text-lg">4‑Digit PIN</label>
+                <input
+                  name="pin"
+                  type="password"
+                  maxLength={4}
+                  placeholder="4‑Digit PIN"
+                  value={formData.pin}
+                  onChange={handleChange}
+                  className="w-full p-3 border-2 border-black rounded text-lg"
+                  required
+                />
+
+                <label className="block text-black font-semibold text-lg">Confirm PIN</label>
+                <input
+                  name="confirmPin"
+                  type="password"
+                  maxLength={4}
+                  placeholder="Retype PIN"
+                  value={formData.confirmPin}
+                  onChange={handleChange}
+                  className="w-full p-3 border-2 border-black rounded text-lg"
+                  required
+                />
+              </>
+            )}
+          </div>
+
+          <hr className="border-t-2 border-gray-300" />
+
+          {/* Demographics */}
+          <div>
+            <h3 className="text-xl font-semibold text-[#003865] mb-2">Demographics</h3>
+            <label className="block text-black font-semibold text-lg">Select Race</label>
+            <select
+              name="race"
+              value={formData.race}
               onChange={handleChange}
-              className="w-full p-2 border rounded"
+              className="w-full p-3 border-2 border-black rounded text-lg"
               required
-            />
-          </>
-        )}
+            >
+              <option value="">Select Race</option>
+              <option value="Black">Black or African American</option>
+              <option value="White">White</option>
+              <option value="Hispanic">Hispanic/Latino</option>
+              <option value="Asian">Asian</option>
+              <option value="Other">Other</option>
+            </select>
 
-        {/* Race */}
-        <select
-          name="race"
-          value={formData.race}
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
-          required
-        >
-          <option value="">Select Race</option>
-          <option value="Black">Black or African American</option>
-          <option value="White">White</option>
-          <option value="Hispanic">Hispanic/Latino</option>
-          <option value="Asian">Asian</option>
-          <option value="Other">Other</option>
-        </select>
+            <label className="block text-black font-semibold text-lg">Select Age Range</label>
+            <select
+              name="ageRange"
+              value={formData.ageRange}
+              onChange={handleChange}
+              className="w-full p-3 border-2 border-black rounded text-lg"
+              required
+            >
+              <option value="">Select Age Range</option>
+              <option value="55-64">55–64</option>
+              <option value="65-74">65–74</option>
+              <option value="75-84">75–84</option>
+              <option value="85+">85+</option>
+            </select>
+          </div>
 
-        {/* Age Range */}
-        <select
-          name="ageRange"
-          value={formData.ageRange}
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
-          required
-        >
-          <option value="">Select Age Range</option>
-          <option value="55-64">55–64</option>
-          <option value="65-74">65–74</option>
-          <option value="75-84">75–84</option>
-          <option value="85+">85+</option>
-        </select>
+          <hr className="border-t-2 border-gray-300" />
 
-        {/* Known Diagnosis */}
-        <fieldset className="border p-3 rounded">
-          <legend className="font-semibold">Known Diagnosis:</legend>
-          <label className="block">
-            <input
-              type="checkbox"
-              name="diabetes"
-              checked={formData.diagnoses.diabetes}
-              onChange={handleChange}
-            />{' '}
-            Diabetes Type I or II
-          </label>
-          <label className="block">
-            <input
-              type="checkbox"
-              name="hypertension"
-              checked={formData.diagnoses.hypertension}
-              onChange={handleChange}
-            />{' '}
-            High Blood Pressure
-          </label>
-          <label className="block">
-            <input
-              type="checkbox"
-              name="chf"
-              checked={formData.diagnoses.chf}
-              onChange={handleChange}
-            />{' '}
-            Congestive Heart Failure (CHF)
-          </label>
-          <label className="block">
-            <input
-              type="checkbox"
-              name="respiratory"
-              checked={formData.diagnoses.respiratory}
-              onChange={handleChange}
-            />{' '}
-            Respiratory Illness (COPD, Asthma)
-          </label>
-          <label className="block">
-            <input
-              type="checkbox"
-              name="allergies"
-              checked={formData.diagnoses.allergies}
-              onChange={handleChange}
-            />{' '}
-            Allergies
-            <input
-              type="text"
-              name="allergyDetails"
-              value={formData.diagnoses.allergyDetails}
-              onChange={handleChange}
-              placeholder="Please list allergies"
-              className="block mt-1 p-1 border rounded w-full"
-            />
-          </label>
-        </fieldset>
+          {/* Known Diagnoses */}
+          <div>
+            <h3 className="text-xl font-semibold text-[#003865] mb-2">Known Diagnoses</h3>
+            <fieldset className="space-y-2">
+              <label className="block text-black">
+                <input
+                  type="checkbox"
+                  name="diabetes"
+                  checked={formData.diagnoses.diabetes}
+                  onChange={handleChange}
+                  className="mr-2"
+                />
+                Diabetes Type I or II
+              </label>
+              <label className="block text-black">
+                <input
+                  type="checkbox"
+                  name="hypertension"
+                  checked={formData.diagnoses.hypertension}
+                  onChange={handleChange}
+                  className="mr-2"
+                />
+                High Blood Pressure
+              </label>
+              <label className="block text-black">
+                <input
+                  type="checkbox"
+                  name="chf"
+                  checked={formData.diagnoses.chf}
+                  onChange={handleChange}
+                  className="mr-2"
+                />
+                CHF
+              </label>
+              <label className="block text-black">
+                <input
+                  type="checkbox"
+                  name="respiratory"
+                  checked={formData.diagnoses.respiratory}
+                  onChange={handleChange}
+                  className="mr-2"
+                />
+                COPD / Asthma
+              </label>
+              <label className="block text-black">
+                <input
+                  type="checkbox"
+                  name="allergies"
+                  checked={formData.diagnoses.allergies}
+                  onChange={handleChange}
+                  className="mr-2"
+                />
+                Allergies
+              </label>
+              {formData.diagnoses.allergies && (
+                <>
+                  <label className="block text-black font-semibold text-lg mt-2">Please list allergies</label>
+                  <input
+                    type="text"
+                    name="allergyDetails"
+                    value={formData.diagnoses.allergyDetails}
+                    onChange={handleChange}
+                    className="w-full p-3 border-2 border-black rounded text-lg"
+                  />
+                </>
+              )}
+            </fieldset>
+          </div>
 
-        {/* Actions */}
-        <div className="flex justify-between">
-          <button
-            type="button"
-            onClick={startPreview}
-            className="text-sm text-gray-500 underline"
-          >
-            Skip for now
-          </button>
-          <button
-            type="submit"
-            className="bg-wellfit-blue hover:bg-wellfit-green text-white font-semibold px-6 py-2 rounded shadow"
-          >
-            Submit
-          </button>
-        </div>
-      </form>
+          <hr className="border-t-2 border-gray-300" />
+
+          {/* Actions */}
+          <div className="flex justify-between items-center">
+            <button
+              type="button"
+              onClick={startPreview}
+              className="text-base text-gray-700 underline"
+            >
+              Skip for now
+            </button>
+            <button
+              type="submit"
+              className="bg-[#003865] hover:bg-[#8cc63f] text-white font-bold px-6 py-3 rounded shadow"
+            >
+              Submit Enrollment
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };
 
 export default SeniorEnrollmentPage;
+
