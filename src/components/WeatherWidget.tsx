@@ -1,9 +1,10 @@
+// src/components/WeatherWidget.tsx
 import React, { useState, useEffect } from 'react';
 
 const API_KEY = '86915dbfdb094fa3bd7120106251304';
 
 interface WeatherData {
-  temp_c: number;
+  temp_f: number;
   condition: string;
   location: string;
 }
@@ -39,7 +40,7 @@ const WeatherWidget: React.FC = () => {
       .then(res => res.json())
       .then(data => {
         setWeather({
-          temp_c: data.current.temp_c,
+          temp_f: data.current.temp_f,
           condition: data.current.condition.text,
           location: data.location.name,
         });
@@ -57,15 +58,15 @@ const WeatherWidget: React.FC = () => {
   };
 
   return (
-    <section className="bg-white border-2 border-wellfit-green p-4 rounded-xl shadow-md max-w-sm mx-auto">
-      <h2 className="text-xl font-semibold text-wellfit-blue mb-2">Current Weather</h2>
+    <section className="bg-white border-2 border-wellfitGreen p-4 rounded-xl shadow-md w-full max-w-sm text-sm text-[#003865]">
+      <h2 className="text-lg font-semibold text-wellfitBlue mb-2">Current Weather</h2>
 
       {error && !useManual && (
         <div className="space-y-2">
           <p className="text-red-500">{error}</p>
           <button
             onClick={() => setUseManual(true)}
-            className="py-2 px-4 bg-wellfit-blue text-white rounded"
+            className="py-2 px-4 bg-wellfitBlue text-white rounded"
           >
             Enter city manually
           </button>
@@ -79,22 +80,22 @@ const WeatherWidget: React.FC = () => {
             placeholder="City name or ZIP"
             value={city}
             onChange={e => setCity(e.target.value)}
-            className="w-full p-2 border rounded"
+            className="w-full p-2 border border-wellfitGreen rounded"
           />
           <button
             onClick={handleManual}
-            className="py-2 px-4 bg-wellfit-blue text-white rounded"
+            className="py-2 px-4 bg-wellfitGreen text-white rounded hover:bg-wellfitBlue"
           >
             Get Weather
           </button>
         </div>
       )}
 
-      {!error && !useManual && !weather && <p>Loading…</p>}
+      {!error && !useManual && !weather && <p>Loading weather…</p>}
 
       {weather && (
-        <p className="text-gray-700">
-          {weather.location}: {weather.temp_c}°C, {weather.condition}
+        <p>
+          {weather.location}: {Math.round(weather.temp_f)}°F, {weather.condition}
         </p>
       )}
     </section>
