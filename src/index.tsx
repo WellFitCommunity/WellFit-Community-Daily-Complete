@@ -1,3 +1,5 @@
+// src/index.tsx
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
@@ -5,15 +7,16 @@ import './index.css';
 import App from './App';
 import * as serviceWorkerRegistration from './serviceWorkerRegistration';
 
-// ✅ Add these two lines:
+// ✅ Supabase auth context
 import { SessionContextProvider } from '@supabase/auth-helpers-react';
-import { supabase } from './lib/supabaseClient'; // or './data/lib/supabaseClient'
+import { supabase } from './lib/supabaseClient'; // adjust path if needed
 
+// ✅ Get the root element safely
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('Root element not found');
 
+// ✅ Create the root and render
 const root = ReactDOM.createRoot(rootElement);
-
 root.render(
   <React.StrictMode>
     <SessionContextProvider supabaseClient={supabase}>
@@ -24,6 +27,7 @@ root.render(
   </React.StrictMode>
 );
 
-// Register the service worker to enable PWA capabilities
-serviceWorkerRegistration.register();
+// ✅ Unregister the service worker to prevent white screen issues
+serviceWorkerRegistration.unregister();
+
 
