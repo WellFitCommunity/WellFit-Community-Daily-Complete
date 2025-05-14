@@ -1,9 +1,4 @@
-// src/components/CheckInTracker.tsx
-// Clean version – removed Excel *import* block and unused handleFile.
-
 import React, { useEffect, useState } from 'react';
-import * as XLSX from 'xlsx';
-import { saveAs } from 'file-saver';
 import { supabase } from '../lib/supabaseClient';
 
 interface CheckIn {
@@ -17,6 +12,7 @@ const STORAGE_KEY = 'wellfitCheckIns';
 export default function CheckInTracker() {
   const [history, setHistory] = useState<CheckIn[]>([]);
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
 
   // Load stored history
   useEffect(() => {
@@ -35,6 +31,14 @@ export default function CheckInTracker() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
   }, [history]);
 
+  // Feedback messages
+  const checkInFeedback: { [label: string]: string } = {
+    '😊 Feeling Great Today': 'Awesome! Enjoy your day. 🌞',
+    '📅 Feeling fine & have a Dr. Appt today': "Don't forget to show your log to the doctor. 🩺",
+    '🏥 In the hospital': 'We’re thinking of you. Please call us if we can help. ❤️',
+    '🧭 Need Healthcare Navigation Assistance': 'Hang tight—we will call you shortly. ☎️',
+  };
+
   // Handle check‑in action
   const handleCheckIn = async (label: string) => {
     const isEmergency =
@@ -43,6 +47,12 @@ export default function CheckInTracker() {
     const timestamp = new Date().toISOString();
     const newEntry: CheckIn = { label, timestamp, is_emergency: isEmergency };
     setHistory((prev) => [...prev, newEntry]);
+
+    // Show info message
+    if (checkInFeedback[label]) {
+      setInfoMessage(checkInFeedback[label]);
+      setTimeout(() => setInfoMessage(null), 5000);
+    }
 
     // Emergency popup
     if (isEmergency) {
@@ -62,44 +72,6 @@ export default function CheckInTracker() {
       label,
       is_emergency: isEmergency,
     });
-  };
-
-  // Export to Excel
-  const exportXlsx = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data, error } = await supabase
-      .from('checkins')
-      .select('*')
-      .eq('user_id', user.id);
-    if (error || !data) return;
-
-    const records = data.map((c: CheckIn, i: number) => ({
-      'Check-In #': i + 1,
-      Activity: c.label,
-      'Timestamp (ISO)': c.timestamp,
-      'Timestamp (Local)': new Date(c.timestamp).toLocaleString(),
-      Emergency: c.is_emergency ? 'Yes' : 'No',
-    }));
-
-    const ws = XLSX.utils.json_to_sheet(records);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'CheckIns');
-
-    const summary = XLSX.utils.aoa_to_sheet([
-      ['Total Check-Ins', data.length],
-      ['Exported At', new Date().toLocaleString()],
-    ]);
-    XLSX.utils.book_append_sheet(wb, summary, 'Summary');
-
-    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-    saveAs(
-      new Blob([wbout], { type: 'application/octet-stream' }),
-      `WellFit-CheckIns_${new Date().toISOString().slice(0, 10)}.xlsx`
-    );
   };
 
   const checkInButtons = [
@@ -136,7 +108,14 @@ export default function CheckInTracker() {
         ))}
       </div>
 
-      {/* History + export */}
+      {/* Feedback Message */}
+      {infoMessage && (
+        <div className="mb-4 p-4 text-white bg-[#003865] rounded text-center font-medium">
+          {infoMessage}
+        </div>
+      )}
+
+      {/* History display */}
       {history.length > 0 && (
         <>
           <h3 className="text-lg font-semibold mb-2 text-center">
@@ -150,12 +129,9 @@ export default function CheckInTracker() {
               </li>
             ))}
           </ul>
-          <button
-            onClick={exportXlsx}
-            className="w-full py-2 mb-4 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition text-sm"
-          >
-            Export History from Supabase (.xlsx)
-          </button>
+          <p className="text-sm text-center text-gray-500 mb-4">
+            🛈 Export feature will be available soon. Please show this screen to your doctor or caregiver.
+          </p>
         </>
       )}
 
