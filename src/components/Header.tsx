@@ -28,7 +28,7 @@ const Header: React.FC = () => {
               href="https://www.theWellFitCommunity.org"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-white bg-[#8cc63f] px-3 py-1 rounded hover:bg-green-700 transition"
+              className="text-wellfit-blue bg-[#8cc63f] px-3 py-1 rounded hover:bg-green-700 transition"
             >
               Visit Website
             </a>
@@ -51,14 +51,14 @@ const Header: React.FC = () => {
           <Link
             to="/dashboard"
             onClick={() => setMenuOpen(false)}
-            className="block text-white hover:text-[#8cc63f] transition"
+            className="block text-wellfit-blue hover:text-[#8cc63f] transition"
           >
             Dashboard
           </Link>
           <Link
             to="/wordfind"
             onClick={() => setMenuOpen(false)}
-            className="block text-white hover:text-[#8cc63f] transition"
+            className="block text-wellfit-blue hover:text-[#8cc63f] transition"
           >
             Word Find
           </Link>
@@ -73,7 +73,7 @@ const Header: React.FC = () => {
             href="https://www.theWellFitCommunity.org"
             target="_blank"
             rel="noopener noreferrer"
-            className="block text-white bg-[#8cc63f] px-3 py-2 rounded text-center hover:bg-green-700 transition"
+            className="block text-wellfit-blue bg-[#8cc63f] px-3 py-2 rounded text-center hover:bg-green-700 transition"
           >
             Visit Website
           </a>

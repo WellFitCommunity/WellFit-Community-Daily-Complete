@@ -1,71 +1,96 @@
 // src/pages/MealDetailPage.tsx
+// Renders white card even during loading / not‑found states.
+
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import PhotoUpload from '../components/PhotoUpload';
 import PhotoGallery from '../components/PhotoGallery';
 
-type Meal = {
+interface Meal {
   id: string;
   name: string;
   description: string;
-  image_url?: string;
-};
+  image_url?: string | null;
+  calories?: number | null;
+  cost?: number | null;
+}
 
-const MealDetailPage: React.FC = () => {
+export default function MealDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [meal, setMeal] = useState<Meal | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!id) return;
-    const fetchMeal = async () => {
-      setLoading(true);
+
+    (async () => {
       const { data, error } = await supabase
         .from('meals')
-        .select('id,name,description,image_url')
+        .select('*')
         .eq('id', id)
         .single();
-      if (error) {
-        console.error('Error fetching meal:', error.message);
-      } else {
-        setMeal(data);
-      }
+
+      if (error) console.error('Error fetching meal:', error.message);
+      setMeal(data as Meal | null);
       setLoading(false);
-    };
-    fetchMeal();
+    })();
   }, [id]);
 
-  if (loading) {
-    return <p className="text-center text-gray-600">Loading...</p>;
-  }
-
-  if (!meal) {
-    return <p className="text-center text-gray-600">No meal found.</p>;
-  }
-
-  // Use stored image_url or fallback to Unsplash
-  const imgSrc = meal.image_url
-    ? meal.image_url
-    : `https://source.unsplash.com/600x400/?${encodeURIComponent(meal.name)}`;
+  // Helper: image source fallback
+  const getImgSrc = (m: Meal) =>
+    m.image_url ||
+    `https://source.unsplash.com/600x400/?${encodeURIComponent(m.name)}`;
 
   return (
-    <div className="max-w-xl mx-auto p-6 space-y-6">
-      <h1 className="text-2xl font-bold text-center text-wellfit-blue">{meal.name}</h1>
-      <img
-        src={imgSrc}
-        alt={meal.name}
-        className="w-full h-64 object-cover rounded-lg shadow-md"
-      />
-      <p className="text-gray-700">{meal.description}</p>
+    <div className="bg-white text-[#003865] rounded-xl shadow-md p-6 max-w-2xl mx-auto mt-8 space-y-6">
+      <button
+        onClick={() => navigate('/dashboard')}
+        className="text-sm text-[#8cc63f] hover:underline"
+      >
+        ← Back to dashboard
+      </button>
 
-      {/* Photo upload and gallery */}
-      <div className="space-y-4">
-        <PhotoUpload context="meal" recordId={meal.id} />
-        <PhotoGallery context="meal" recordId={meal.id} />
-      </div>
+      {/* Loading state */}
+      {loading && <p className="text-center mt-10">Loading…</p>}
+
+      {/* Not‑found state */}
+      {!loading && !meal && (
+        <div className="text-center space-y-3">
+          <p className="text-lg font-semibold text-red-600">Meal not found.</p>
+          <Link to="/dashboard" className="text-blue-500 underline">
+            Back to dashboard
+          </Link>
+        </div>
+      )}
+
+      {/* Successful state */}
+      {meal && (
+        <>
+          <h1 className="text-2xl font-bold text-center">{meal.name}</h1>
+
+          <img
+            src={getImgSrc(meal)}
+            alt={meal.name}
+            className="w-full h-64 object-cover rounded-lg shadow-md"
+          />
+
+          <div className="flex flex-wrap gap-4 text-sm font-medium">
+            {meal.calories && <span>Calories: {meal.calories}</span>}
+            {meal.cost && <span>Cost: ${meal.cost}</span>}
+          </div>
+
+          <p className="whitespace-pre-wrap leading-relaxed text-gray-700">
+            {meal.description}
+          </p>
+
+          <div className="space-y-4">
+            <PhotoUpload context="meal" recordId={meal.id} />
+            <PhotoGallery context="meal" recordId={meal.id} />
+          </div>
+        </>
+      )}
     </div>
   );
-};
-
-export default MealDetailPage;
+}
