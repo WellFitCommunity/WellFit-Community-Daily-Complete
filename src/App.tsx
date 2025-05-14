@@ -1,5 +1,4 @@
-// src/App.tsx
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 
 import Header from './components/Header';
@@ -15,6 +14,9 @@ import RequireAuth from './components/RequireAuth';
 import AdminPanel from './components/AdminPanel';
 import AdminProfileEditor from './components/AdminProfileEditor';
 
+// 👇 NEW import
+import { requestNotificationPermission } from './notificationService';
+
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const showHeaderFooter = location.pathname !== '/';
@@ -28,51 +30,63 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   );
 };
 
-const App: React.FC = () => (
-  <Layout>
-    <Routes>
-      {/* Public pages */}
-      <Route path="/" element={<WelcomePage />} />
-      <Route path="/senior-enrollment" element={<SeniorEnrollmentPage />} />
-      <Route path="/meal/:id" element={<MealDetailPage />} />
+const App: React.FC = () => {
+  // 👇 Add useEffect to request notification token
+  useEffect(() => {
+    requestNotificationPermission().then((token) => {
+      if (token) {
+        console.log('✅ Push token:', token);
+        // Optional: send token to Supabase here
+      }
+    });
+  }, []);
 
-      {/* Protected pages */}
-      <Route
-        path="/dashboard"
-        element={
-          <RequireAuth>
-            <Dashboard />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/checkin"
-        element={
-          <RequireAuth>
-            <CheckInTracker />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/wordfind"
-        element={
-          <RequireAuth>
-            <WordFind />
-          </RequireAuth>
-        }
-      />
+  return (
+    <Layout>
+      <Routes>
+        {/* Public pages */}
+        <Route path="/" element={<WelcomePage />} />
+        <Route path="/senior-enrollment" element={<SeniorEnrollmentPage />} />
+        <Route path="/meal/:id" element={<MealDetailPage />} />
 
-      {/* Admin pages */}
-      <Route path="/admin-panel" element={<AdminPanel />} />
-      <Route path="/admin-profile-editor" element={<AdminProfileEditor />} />
+        {/* Protected pages */}
+        <Route
+          path="/dashboard"
+          element={
+            <RequireAuth>
+              <Dashboard />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/checkin"
+          element={
+            <RequireAuth>
+              <CheckInTracker />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/wordfind"
+          element={
+            <RequireAuth>
+              <WordFind />
+            </RequireAuth>
+          }
+        />
 
-      {/* Logout */}
-      <Route path="/logout" element={<LogoutPage />} />
+        {/* Admin pages */}
+        <Route path="/admin-panel" element={<AdminPanel />} />
+        <Route path="/admin-profile-editor" element={<AdminProfileEditor />} />
 
-      {/* Fallback */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
-  </Layout>
-);
+        {/* Logout */}
+        <Route path="/logout" element={<LogoutPage />} />
+
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Layout>
+  );
+};
 
 export default App;

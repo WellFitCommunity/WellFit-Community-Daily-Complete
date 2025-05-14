@@ -1,33 +1,39 @@
 {
   "name": "wellfit-community-daily",
   "version": "0.1.0",
+  "type": "module",
   "private": true,
   "dependencies": {
     "@supabase/auth-helpers-react": "^0.5.0",
     "@supabase/supabase-js": "^2.49.4",
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
+    "dotenv": "^16.5.0",
     "file-saver": "^2.0.5",
+    "firebase": "^11.7.1",
     "lucide-react": "^0.503.0",
     "react": "^18.2.0",
     "react-confetti": "^6.4.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.14.1",
     "react-scripts": "5.0.1",
-    "typescript": "^4.9.5",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/file-saver": "^2.0.7",
+    "@types/node": "^22.15.17",
     "autoprefixer": "^10.4.13",
     "postcss": "^8.4.21",
-    "tailwindcss": "^3.3.2"
+    "tailwindcss": "^3.3.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "import:meals": "ts-node src/scripts/importMeals.ts"
   },
   "eslintConfig": {
     "extends": [

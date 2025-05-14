@@ -19,7 +19,7 @@ const Dashboard: React.FC = () => {
       {/* Return link */}
       <button
         onClick={() => navigate('/senior-enrollment')}
-        className="text-sm text-wellfit-blue underline mb-4"
+        className="text-sm text-wellfit-green underline mb-4"
       >
         ← Return to Enrollment
       </button>
