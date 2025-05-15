@@ -1,8 +1,8 @@
 // firebase.ts
 import { initializeApp } from 'firebase/app';
-import { getMessaging, getToken, onMessage } from 'firebase/messaging';
+import { getMessaging } from 'firebase/messaging';
 
-// Your web app's Firebase configuration (this is your existing config)
+// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyDLsPYyUQa5WsIS06tKxMSUS7xsPfAF9Zk",
   authDomain: "wellfit-community.firebaseapp.com",
@@ -16,7 +16,14 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Initialize Firebase Cloud Messaging
-const messaging = getMessaging(app);
+// Safe messaging initialization
+let messaging;
+if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+  try {
+    messaging = getMessaging(app);
+  } catch (err) {
+    console.warn("Firebase messaging not supported in this environment:", err);
+  }
+}
 
 export { app, messaging };
