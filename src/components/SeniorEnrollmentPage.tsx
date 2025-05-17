@@ -3,10 +3,12 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import ExploreTimer from '../components/ExploreTimer';
+import bcrypt from 'bcryptjs';
 
 const SeniorEnrollmentPage: React.FC = () => {
   const navigate = useNavigate();
   const [useEmail, setUseEmail] = useState<boolean | null>(null);
+  const [skipCount, setSkipCount] = useState(0);
 
   const [formData, setFormData] = useState({
     full_name: '',
@@ -30,6 +32,11 @@ const SeniorEnrollmentPage: React.FC = () => {
     },
   });
 
+  const hashPin = async (pin: string): Promise<string> => {
+    const salt = await bcrypt.genSalt(10);
+    return await bcrypt.hash(pin, salt);
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const target = e.target as HTMLInputElement | HTMLSelectElement;
     const { name, value, type } = target;
@@ -52,6 +59,11 @@ const SeniorEnrollmentPage: React.FC = () => {
   };
 
   const startPreview = () => {
+    if (skipCount >= 2) {
+      alert('You can only skip enrollment twice. Please complete the form.');
+      return;
+    }
+    setSkipCount(prev => prev + 1);
     localStorage.setItem('exploreStartTime', Date.now().toString());
     navigate('/dashboard');
   };
@@ -123,18 +135,31 @@ const SeniorEnrollmentPage: React.FC = () => {
     }
 
     if (!useEmail) {
-      const { error: phoneError } = await supabase
-        .from('phone_auth')
-        .upsert({ id: userId, phone, pin });
-      if (phoneError) {
-        alert('Error saving phone login: ' + phoneError.message);
+      try {
+        const hashedPin = await hashPin(pin);
+
+        const { error: phoneError } = await supabase
+          .from('phone_auth')
+          .upsert({
+            id: userId,
+            phone,
+            pin_hash: hashedPin,
+          });
+
+        if (phoneError) {
+          alert('Error saving phone login: ' + phoneError.message);
+          return;
+        }
+      } catch (err) {
+        console.error('PIN hashing failed:', err);
+        alert('There was a problem securing your PIN. Please try again.');
         return;
       }
     }
 
     localStorage.removeItem('exploreStartTime');
-    alert('Enrollment submitted successfully!');
-    navigate('/dashboard');
+alert('Enrollment submitted successfully! Proceeding to consent form...');
+navigate('/consent-photo'); // 👈 First consent page
   };
 
   return (
@@ -146,56 +171,50 @@ const SeniorEnrollmentPage: React.FC = () => {
     >
       <div className="bg-white border-2 border-black max-w-3xl w-full p-8 rounded-lg shadow-lg text-black">
         <ExploreTimer minutes={15} />
+        <div className="flex justify-end mb-4">
+          <button
+            type="button"
+            onClick={startPreview}
+            className="text-base text-gray-700 underline"
+          >
+            Skip for now ({2 - skipCount} left)
+          </button>
+        </div>
 
         <h2 className="text-2xl font-bold text-center text-[#003865] mb-6">
           Senior Enrollment
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          <label className="block text-black font-semibold text-lg">Date of Birth</label>
+          <input
+            name="dob"
+            type="date"
+            value={formData.dob}
+            onChange={handleChange}
+            className="w-full p-3 border-2 border-black rounded text-lg"
+            required
+          />
 
-          {/* Personal Information */}
-          <div>
-            <h3 className="text-xl font-semibold text-[#003865] mb-2">Personal Information</h3>
-            <label className="block text-black font-semibold text-lg">Full Name</label>
-            <input
-              name="full_name"
-              placeholder="Full Name"
-              value={formData.full_name}
-              onChange={handleChange}
-              className="w-full p-3 border-2 border-black rounded text-lg"
-              required
-            />
+          <label className="block text-black font-semibold text-lg">Address</label>
+          <input
+            name="address"
+            placeholder="Address"
+            value={formData.address}
+            onChange={handleChange}
+            className="w-full p-3 border-2 border-black rounded text-lg"
+            required
+          />
 
-            <label className="block text-black font-semibold text-lg">Date of Birth</label>
-            <input
-              name="dob"
-              type="date"
-              value={formData.dob}
-              onChange={handleChange}
-              className="w-full p-3 border-2 border-black rounded text-lg"
-              required
-            />
-
-            <label className="block text-black font-semibold text-lg">Address</label>
-            <input
-              name="address"
-              placeholder="Address"
-              value={formData.address}
-              onChange={handleChange}
-              className="w-full p-3 border-2 border-black rounded text-lg"
-              required
-            />
-
-            <label className="block text-black font-semibold text-lg">Phone Number</label>
-            <input
-              name="phone"
-              placeholder="Phone Number"
-              value={formData.phone}
-              onChange={handleChange}
-              className="w-full p-3 border-2 border-black rounded text-lg"
-              required
-            />
-          </div>
+          <label className="block text-black font-semibold text-lg">Phone Number</label>
+          <input
+            name="phone"
+            placeholder="Phone Number"
+            value={formData.phone}
+            onChange={handleChange}
+            className="w-full p-3 border-2 border-black rounded text-lg"
+            required
+          />
 
           <hr className="border-t-2 border-gray-300" />
 
@@ -403,14 +422,7 @@ const SeniorEnrollmentPage: React.FC = () => {
           <hr className="border-t-2 border-gray-300" />
 
           {/* Actions */}
-          <div className="flex justify-between items-center">
-            <button
-              type="button"
-              onClick={startPreview}
-              className="text-base text-gray-700 underline"
-            >
-              Skip for now
-            </button>
+          <div className="flex justify-end">
             <button
               type="submit"
               className="bg-[#003865] hover:bg-[#8cc63f] text-white font-bold px-6 py-3 rounded shadow"
@@ -425,4 +437,3 @@ const SeniorEnrollmentPage: React.FC = () => {
 };
 
 export default SeniorEnrollmentPage;
-
