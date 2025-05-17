@@ -13,6 +13,9 @@ import LogoutPage from './components/LogoutPage';
 import RequireAuth from './components/RequireAuth';
 import AdminPanel from './components/AdminPanel';
 import AdminProfileEditor from './components/AdminProfileEditor';
+import LockScreenUser from './components/LockScreenUser';
+import ConsentPhotoPage from './components/ConsentPhotoPage';
+import ConsentPrivacyPage from './components/ConsentPrivacyPage';
 
 // 👇 NEW import
 import { requestNotificationPermission } from './notificationService';
@@ -42,50 +45,53 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <Layout>
-      <Routes>
-        {/* Public pages */}
-        <Route path="/" element={<WelcomePage />} />
-        <Route path="/senior-enrollment" element={<SeniorEnrollmentPage />} />
-        <Route path="/meal/:id" element={<MealDetailPage />} />
+<Layout>
+  <Routes>
+    {/* Public pages */}
+    <Route path="/" element={<WelcomePage />} />
+    <Route path="/senior-enrollment" element={<SeniorEnrollmentPage />} />
+    <Route path="/meal/:id" element={<MealDetailPage />} />
+    <Route path="/lockscreen" element={<LockScreenUser />} />
+    <Route path="/consent-photo" element={<ConsentPhotoPage />} />
+    <Route path="/consent-privacy" element={<ConsentPrivacyPage />} />
 
-        {/* Protected pages */}
-        <Route
-          path="/dashboard"
-          element={
-            <RequireAuth>
-              <Dashboard />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/checkin"
-          element={
-            <RequireAuth>
-              <CheckInTracker />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/wordfind"
-          element={
-            <RequireAuth>
-              <WordFind />
-            </RequireAuth>
-          }
-        />
+    {/* Protected pages */}
+    <Route
+      path="/dashboard"
+      element={
+        <RequireAuth>
+          <Dashboard />
+        </RequireAuth>
+      }
+    />
+    <Route
+      path="/checkin"
+      element={
+        <RequireAuth>
+          <CheckInTracker />
+        </RequireAuth>
+      }
+    />
+    <Route
+      path="/wordfind"
+      element={
+        <RequireAuth>
+          <WordFind />
+        </RequireAuth>
+      }
+    />
 
-        {/* Admin pages */}
-        <Route path="/admin-panel" element={<AdminPanel />} />
-        <Route path="/admin-profile-editor" element={<AdminProfileEditor />} />
+    {/* Admin pages */}
+    <Route path="/admin-panel" element={<AdminPanel />} />
+    <Route path="/admin-profile-editor" element={<AdminProfileEditor />} />
 
-        {/* Logout */}
-        <Route path="/logout" element={<LogoutPage />} />
+    {/* Logout */}
+    <Route path="/logout" element={<LogoutPage />} />
 
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Layout>
+    {/* Fallback */}
+    <Route path="*" element={<Navigate to="/" replace />} />
+  </Routes>
+</Layout>
   );
 };
 
