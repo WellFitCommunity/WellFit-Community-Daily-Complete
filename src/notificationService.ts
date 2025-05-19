@@ -12,7 +12,7 @@ export const requestNotificationPermission = async (): Promise<string | null> =>
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
       const token = await getToken(messaging, {
-        vapidKey: 'BGpQZaI_BbEm39uj6vWhmKrnPBf8YoYVXM6VRYVuRbV8KJ4Kq5g6YbI4Z8u5RhOdKq4EmRZClOVO5qaBhUnRpBM',
+        vapidKey:process.env.REACT_APP_FIREBASE_VAPID_KEY,
       });
 
       const user_id = localStorage.getItem('user_id'); // Pulls from local login
