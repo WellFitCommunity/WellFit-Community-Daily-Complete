@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import ExploreTimer from '../components/ExploreTimer';
 import bcrypt from 'bcryptjs';
+import { sendWelcomeEmail } from '../utils/sendWelcomeEmail';
+
 
 const SeniorEnrollmentPage: React.FC = () => {
   const navigate = useNavigate();
@@ -101,6 +103,13 @@ const SeniorEnrollmentPage: React.FC = () => {
         alert('Sign-up failed: ' + (signUpError?.message || 'Unknown error.'));
         return;
       }
+      try {
+  await sendWelcomeEmail(email); // or formData.email if that's your variable
+  // Optionally show a "Welcome email sent!" message here
+} catch (err) {
+  console.error("Error sending welcome email:", err);
+  // Optionally: show a message to the admin but DO NOT block registration
+}
       if (!signUpData.session) {
         alert('A confirmation email has been sent. Please confirm your email before continuing.');
         return;
