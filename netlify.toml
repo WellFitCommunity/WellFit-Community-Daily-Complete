@@ -1,18 +1,22 @@
 [build]
   command = "npm run build"
   publish = "build"
+  functions = "netlify/functions"
 
 [secrets]
   omit_keys = [
     "REACT_APP_SUPABASE_URL",
     "REACT_APP_SUPABASE_ANON_KEY",
     "REACT_APP_FIREBASE_VAPID_KEY",
-    "REACT_APP_WEATHER_API_KEY"
+    "REACT_APP_WEATHER_API_KEY",
+    "apiKey"  # <--- Add this string (to help Netlify ignore the Firebase one)
   ]
   omit_paths = [
     "build/static/js/",
-    "dist/components/WeatherWidget.js"
+    "src/firebase.ts"
   ]
+[functions]
+  node_bundler = "esbuild"
 
 [[headers]]
   for = "/*"
