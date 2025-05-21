@@ -9,12 +9,12 @@
     "REACT_APP_SUPABASE_ANON_KEY",
     "REACT_APP_FIREBASE_VAPID_KEY",
     "REACT_APP_WEATHER_API_KEY",
-    "apiKey"  # <--- Add this string (to help Netlify ignore the Firebase one)
+    "apiKey"
   ]
   omit_paths = [
-    "build/static/js/",
-    "src/firebase.ts"
+    "build/static/js/"
   ]
+
 [functions]
   node_bundler = "esbuild"
 

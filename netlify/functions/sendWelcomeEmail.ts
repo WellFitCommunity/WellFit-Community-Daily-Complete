@@ -19,7 +19,7 @@ export const handler: Handler = async (event) => {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: { email: "noreply@yourdomain.com", name: "WellFit Community" },
+      from: { email: "info@thewellfitcommunity.org", name: "WellFit Community" }, // <-- UPDATED
       to: [{ email: to }],
       subject,
       text,
@@ -35,3 +35,4 @@ export const handler: Handler = async (event) => {
 };
 
 export default handler;
+
