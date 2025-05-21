@@ -28,6 +28,7 @@
   "devDependencies": {
     "@types/file-saver": "^2.0.7",
     "@types/node": "^22.15.17",
+    "@vercel/node": "^5.1.16",
     "autoprefixer": "^10.4.13",
     "postcss": "^8.4.21",
     "supabase": "^2.22.12",
