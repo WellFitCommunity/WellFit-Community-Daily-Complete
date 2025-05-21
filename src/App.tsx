@@ -18,7 +18,7 @@ import ConsentPhotoPage from './components/ConsentPhotoPage';
 import ConsentPrivacyPage from './components/ConsentPrivacyPage';
 
 // 👇 NEW import
-import { requestNotificationPermission } from './notificationService';
+import { requestNotificationPermission } from './utils/requestNotificationPermission';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
@@ -36,12 +36,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 const App: React.FC = () => {
   // 👇 Add useEffect to request notification token
   useEffect(() => {
-    requestNotificationPermission().then((token) => {
-      if (token) {
-        console.log('✅ Push token:', token);
-        // Optional: send token to Supabase here
-      }
-    });
+    requestNotificationPermission();
   }, []);
 
   return (
