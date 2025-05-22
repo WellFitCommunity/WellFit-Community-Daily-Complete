@@ -31,4 +31,4 @@ root.render(
 );
 
 // ✅ Unregister the service worker to prevent white screen issues
-serviceWorkerRegistration.unregister();
+serviceWorkerRegistration.register();
