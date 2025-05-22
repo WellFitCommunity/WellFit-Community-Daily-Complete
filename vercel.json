@@ -1,13 +1,14 @@
 {
+  "rewrites": [
+    {
+      "source": "/manifest.json",
+      "destination": "/manifest.json"
+    }
+  ],
   "build": {
     "env": {
       "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
     }
-  },
-  "rewrites": [
-    {
-      "source": "/manifest.json",
-      "destination": "/public/manifest.json"
-    }
-  ]
+  }
 }
+
