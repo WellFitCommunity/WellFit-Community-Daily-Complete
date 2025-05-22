@@ -1,0 +1,20 @@
+# Ignore build output and generated files in GitHub diffs and language stats
+build/** linguist-generated=true
+public/manifest.json linguist-generated=true
+public/service-worker.js linguist-generated=true
+public/android-chrome-*.png linguist-generated=true
+public/favicon*.ico linguist-generated=true
+public/*.webmanifest linguist-generated=true
+
+# Vercel output folders (if manually committed)
+.vercel/output/** linguist-generated=true
+
+# Ignore lock files and logs if you ever commit them
+package-lock.json linguist-generated=true
+yarn.lock linguist-generated=true
+pnpm-lock.yaml linguist-generated=true
+npm-debug.log linguist-generated=true
+
+# Ignore coverage and test results
+coverage/** linguist-generated=true
+test-results/** linguist-generated=true
