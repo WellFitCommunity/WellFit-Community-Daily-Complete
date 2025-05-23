@@ -4,8 +4,6 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        'wellfit-blue': '#003865',   // restore hyphenated names
-        'wellfit-green': '#8cc63f',
       },
     },
   },
