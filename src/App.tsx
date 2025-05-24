@@ -16,6 +16,7 @@ import AdminProfileEditor from './components/AdminProfileEditor';
 import LockScreenUser from './components/LockScreenUser';
 import ConsentPhotoPage from './components/ConsentPhotoPage';
 import ConsentPrivacyPage from './components/ConsentPrivacyPage';
+import TriviaGame from './components/TriviaGame';
 
 // 👇 NEW import
 import { requestNotificationPermission } from './utils/requestNotificationPermission';
@@ -72,6 +73,14 @@ const App: React.FC = () => {
       element={
         <RequireAuth>
           <WordFind />
+        </RequireAuth>
+      }
+    />
+    <Route
+      path="/trivia-game"
+      element={
+        <RequireAuth>
+          <TriviaGame />
         </RequireAuth>
       }
     />

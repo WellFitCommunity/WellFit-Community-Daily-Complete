@@ -1,184 +1,89 @@
-# Supabase CLI
+# WellFit Community Platform - Alpha
 
-[![Coverage Status](https://coveralls.io/repos/github/supabase/cli/badge.svg?branch=main)](https://coveralls.io/github/supabase/cli?branch=main) [![Bitbucket Pipelines](https://img.shields.io/bitbucket/pipelines/supabase-cli/setup-cli/master?style=flat-square&label=Bitbucket%20Canary)](https://bitbucket.org/supabase-cli/setup-cli/pipelines) [![Gitlab Pipeline Status](https://img.shields.io/gitlab/pipeline-status/sweatybridge%2Fsetup-cli?label=Gitlab%20Canary)
-](https://gitlab.com/sweatybridge/setup-cli/-/pipelines)
+Welcome to the WellFit Community Platform! This application is designed to support senior wellness through community engagement, self-reporting, and cognitive activities.
 
-[Supabase](https://supabase.io) is an open source Firebase alternative. We're building the features of Firebase using enterprise-grade open source tools.
+## Core Features
 
-This repository contains all the functionality for Supabase CLI.
+### 1. Onboarding Flow
 
-- [x] Running Supabase locally
-- [x] Managing database migrations
-- [x] Creating and deploying Supabase Functions
-- [x] Generating types directly from your database schema
-- [x] Making authenticated HTTP requests to [Management API](https://supabase.com/docs/reference/api/introduction)
+The platform features a streamlined onboarding process for new users:
 
-## Getting started
+1.  **Enrollment:** Users begin by completing an enrollment form (`SeniorEnrollmentPage`) to provide their basic information.
+2.  **Photo Consent:** After enrollment, users are directed to the Photo Consent page (`/consent-photo`). Here, they provide their full name and a digital signature to consent to the use of their photo and likeness for community wellness purposes within the platform.
+3.  **Privacy Policy Agreement:** Next, users proceed to the Privacy Policy Agreement page (`/consent-privacy`). They must agree to the platform's privacy policy by checking a confirmation box. This step finalizes the consent process, and the signature from the photo consent is associated with this agreement.
+4.  **Dashboard Access:** Upon successful completion of the consent process, users are navigated to their personalized application dashboard (`/dashboard`), gaining access to all platform features.
 
-### Install the CLI
+### 2. Self-Reporting View (Daily Check-in)
 
-Available via [NPM](https://www.npmjs.com) as dev dependency. To install:
+The self-reporting feature allows users to log their daily well-being:
 
-```bash
-npm i supabase --save-dev
-```
+*   **Access:** Users can access this feature from their dashboard via the "📝 My Daily Check-in" link, which navigates to the `/checkin` page (currently `CheckInTracker.tsx`).
+*   **Input Fields:** The enhanced view now includes:
+    *   **Emotional State:** A mandatory dropdown selection (e.g., Happy, Calm, Anxious).
+    *   **Heart Rate:** An optional numeric input for Beats Per Minute (BPM).
+    *   **Pulse Oximeter:** An optional numeric input for SpO2 percentage.
+*   **Data Storage:** These new fields, along with any quick status updates selected by the user (e.g., "😊 Feeling Great Today", "🚨 Fallen down & injured"), are saved to the user's record in the `checkins` table in the Supabase database. *Refer to "Known Issues & Important Notes" regarding necessary database updates.*
 
-To install the beta release channel:
+### 3. Trivia Game System
 
-```bash
-npm i supabase@beta --save-dev
-```
+To promote cognitive engagement, a daily trivia game is available:
 
-When installing with yarn 4, you need to disable experimental fetch with the following nodejs config.
+*   **Access:** Users can play the game via the "🏆 Daily Trivia Challenge" link on their dashboard, which leads to the `/trivia-game` page.
+*   **Format:** The game currently presents 5 questions per session. The selection aims for a mix of difficulties:
+    *   3 Easy questions
+    *   1 Medium question
+    *   1 Hard question
+*   **Question Pool:** Questions are drawn from a predefined list stored in `src/data/triviaQuestions.ts`.
+*   **Cognitive Labels:** Each question is associated with a cognitive label (e.g., Memory Recall, Problem Solving, General Knowledge) to inform users about the skills being exercised.
+*   **Scoring & Affirmation:** At the end of the game, users receive their score and a positive affirmation message.
+*   **Future Enhancement:** A 30-day rotation system for questions is planned to ensure variety and sustained engagement. *Refer to "Known Issues & Important Notes."*
 
-```
-NODE_OPTIONS=--no-experimental-fetch yarn add supabase
-```
+## Known Issues & Important Notes
 
-> **Note**
-For Bun versions below v1.0.17, you must add `supabase` as a [trusted dependency](https://bun.sh/guides/install/trusted) before running `bun add -D supabase`.
+This section outlines critical considerations for the current state of the application.
 
-<details>
-  <summary><b>macOS</b></summary>
+### Database Update for Self-Reporting
 
-  Available via [Homebrew](https://brew.sh). To install:
+*   ❌ **Feature:** Enhanced Self-Reporting Data Storage
+*   ⚠️ **Why it fails or what’s missing:** The application has been updated to collect Emotional State, Heart Rate, and Pulse Oximeter readings. However, these fields will not be saved to the database until the `checkins` table in Supabase is updated with new columns.
+*   ✅ **Suggestions to fix or continue:** Apply the following SQL changes to your Supabase database:
+    ```sql
+    ALTER TABLE public.checkins
+    ADD COLUMN emotional_state TEXT,
+    ADD COLUMN heart_rate INTEGER,
+    ADD COLUMN pulse_oximeter INTEGER;
 
-  ```sh
-  brew install supabase/tap/supabase
-  ```
+    -- Optional: Add comments for clarity
+    COMMENT ON COLUMN public.checkins.emotional_state IS 'User-reported emotional state at the time of check-in.';
+    COMMENT ON COLUMN public.checkins.heart_rate IS 'User-reported heart rate in beats per minute (BPM).';
+    COMMENT ON COLUMN public.checkins.pulse_oximeter IS 'User-reported pulse oximeter reading as a percentage (SpO2).';
+    ```
 
-  To install the beta release channel:
-  
-  ```sh
-  brew install supabase/tap/supabase-beta
-  brew link --overwrite supabase-beta
-  ```
-  
-  To upgrade:
+### Doctor's View & Export Verification
 
-  ```sh
-  brew upgrade supabase
-  ```
-</details>
+*   ❌ **Feature:** Doctor's View and Data Export for new Self-Report fields.
+*   ⚠️ **Why it fails or what’s missing:** The self-reporting form now collects additional data points (Emotional State, Heart Rate, Pulse Oximeter). Verification is needed to ensure these new fields are correctly displayed in any existing Doctor's View interface and are included in data exports.
+*   ✅ **Suggestions to fix or continue:** Manually test the Doctor's View and any data export functionality after applying the database schema changes to confirm the new fields are present and accurate. Update those components if necessary.
 
-<details>
-  <summary><b>Windows</b></summary>
+### Trivia Question Pool & Rotation
 
-  Available via [Scoop](https://scoop.sh). To install:
-
-  ```powershell
-  scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
-  scoop install supabase
-  ```
-
-  To upgrade:
-
-  ```powershell
-  scoop update supabase
-  ```
-</details>
-
-<details>
-  <summary><b>Linux</b></summary>
-
-  Available via [Homebrew](https://brew.sh) and Linux packages.
-
-  #### via Homebrew
-
-  To install:
-
-  ```sh
-  brew install supabase/tap/supabase
-  ```
-
-  To upgrade:
-
-  ```sh
-  brew upgrade supabase
-  ```
-
-  #### via Linux packages
-
-  Linux packages are provided in [Releases](https://github.com/supabase/cli/releases). To install, download the `.apk`/`.deb`/`.rpm`/`.pkg.tar.zst` file depending on your package manager and run the respective commands.
-
-  ```sh
-  sudo apk add --allow-untrusted <...>.apk
-  ```
-
-  ```sh
-  sudo dpkg -i <...>.deb
-  ```
-
-  ```sh
-  sudo rpm -i <...>.rpm
-  ```
-
-  ```sh
-  sudo pacman -U <...>.pkg.tar.zst
-  ```
-</details>
-
-<details>
-  <summary><b>Other Platforms</b></summary>
-
-  You can also install the CLI via [go modules](https://go.dev/ref/mod#go-install) without the help of package managers.
-
-  ```sh
-  go install github.com/supabase/cli@latest
-  ```
-
-  Add a symlink to the binary in `$PATH` for easier access:
-
-  ```sh
-  ln -s "$(go env GOPATH)/bin/cli" /usr/bin/supabase
-  ```
-
-  This works on other non-standard Linux distros.
-</details>
-
-<details>
-  <summary><b>Community Maintained Packages</b></summary>
-
-  Available via [pkgx](https://pkgx.sh/). Package script [here](https://github.com/pkgxdev/pantry/blob/main/projects/supabase.com/cli/package.yml).
-  To install in your working directory:
-
-  ```bash
-  pkgx install supabase
-  ```
-
-  Available via [Nixpkgs](https://nixos.org/). Package script [here](https://github.com/NixOS/nixpkgs/blob/master/pkgs/development/tools/supabase-cli/default.nix).
-</details>
-
-### Run the CLI
-
-```bash
-supabase bootstrap
-```
-
-Or using npx:
-
-```bash
-npx supabase bootstrap
-```
-
-The bootstrap command will guide you through the process of setting up a Supabase project using one of the [starter](https://github.com/supabase-community/supabase-samples/blob/main/samples.json) templates.
-
-## Docs
-
-Command & config reference can be found [here](https://supabase.com/docs/reference/cli/about).
-
-## Breaking changes
-
-We follow semantic versioning for changes that directly impact CLI commands, flags, and configurations.
-
-However, due to dependencies on other service images, we cannot guarantee that schema migrations, seed.sql, and generated types will always work for the same CLI major version. If you need such guarantees, we encourage you to pin a specific version of CLI in package.json.
+*   ❌ **Feature:** Trivia Game 30-Day Rotation
+*   ⚠️ **Why it fails or what’s missing:** The current trivia game uses a small sample of questions and selects them randomly per session. A full 30-day rotating question cycle with a larger question bank is not yet implemented.
+*   ✅ **Suggestions to fix or continue:** Expand the `triviaQuestions.ts` file with a significantly larger pool of questions (at least 150 questions for a 30-day cycle of 5 unique questions per day). Implement a date-based or more sophisticated rotation logic in `TriviaGame.tsx` to ensure question variety and rotation.
 
 ## Developing
 
-To run from source:
+To run from source (assuming a Go backend, which might not be relevant for a React/Supabase app):
 
 ```sh
-# Go >= 1.22
+# Go >= 1.22 (This section might be from a template and may not apply)
+# For React/Vite based projects, typically:
+# npm install
+# npm run dev
+# or
+# yarn
+# yarn dev
 go run . help
 ```
 # Redeploy trigger
+(This section might be from a template and used for CI/CD purposes)

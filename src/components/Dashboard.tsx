@@ -26,6 +26,17 @@ const Dashboard: React.FC = () => {
 
       <Card><WeatherWidget /></Card>
       <Card><CheckInTracker /></Card>
+
+      {/* Daily Check-in Navigation Card */}
+      <Card>
+        <button
+          className="w-full py-3 text-lg font-semibold bg-wellfit-blue text-white rounded-xl shadow hover:bg-wellfit-green transition"
+          onClick={() => navigate('/checkin')}
+        >
+          📝 My Daily Check-in
+        </button>
+      </Card>
+
       <Card><DailyScripture /></Card>
 
       {/* Meal of the Day preview */}
@@ -39,6 +50,16 @@ const Dashboard: React.FC = () => {
           onClick={() => navigate('/wordfind')}
         >
           🧠 Play Word Find Puzzle
+        </button>
+      </Card>
+
+      {/* Trivia Game Navigation Card */}
+      <Card>
+        <button
+          className="w-full py-3 text-lg font-semibold bg-wellfit-purple text-white rounded-xl shadow hover:bg-wellfit-orange transition"
+          onClick={() => navigate('/trivia-game')}
+        >
+          🏆 Daily Trivia Challenge
         </button>
       </Card>
 
