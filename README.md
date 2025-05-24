@@ -1,184 +1,148 @@
-# Supabase CLI
+# Wellfit Community Daily
 
-[![Coverage Status](https://coveralls.io/repos/github/supabase/cli/badge.svg?branch=main)](https://coveralls.io/github/supabase/cli?branch=main) [![Bitbucket Pipelines](https://img.shields.io/bitbucket/pipelines/supabase-cli/setup-cli/master?style=flat-square&label=Bitbucket%20Canary)](https://bitbucket.org/supabase-cli/setup-cli/pipelines) [![Gitlab Pipeline Status](https://img.shields.io/gitlab/pipeline-status/sweatybridge%2Fsetup-cli?label=Gitlab%20Canary)
-](https://gitlab.com/sweatybridge/setup-cli/-/pipelines)
+This application is designed for seniors to log their daily health data and for doctors to view this information.
 
-[Supabase](https://supabase.io) is an open source Firebase alternative. We're building the features of Firebase using enterprise-grade open source tools.
+**This application is deployed exclusively on Vercel.**
 
-This repository contains all the functionality for Supabase CLI.
+## Project Structure
 
-- [x] Running Supabase locally
-- [x] Managing database migrations
-- [x] Creating and deploying Supabase Functions
-- [x] Generating types directly from your database schema
-- [x] Making authenticated HTTP requests to [Management API](https://supabase.com/docs/reference/api/introduction)
+(You can add a brief overview of the project structure here if needed.)
 
-## Getting started
+## Key Features
 
-### Install the CLI
+*   Self-Reporting View for seniors to log:
+    *   Blood Pressure (Systolic + Diastolic)
+    *   Blood Sugar (mg/dL)
+    *   Emotional State (Happy, Calm, Sad, Angry, Anxious, Confused, Tired, Lonely, Grateful, Hopeful)
+    *   Heart Rate (bpm) (optional)
+    *   Pulse Oximeter (SpO2 %) (optional)
+    *   Notes or Symptoms (optional)
+*   Doctor's View (Admin Panel) to:
+    *   Display each user's latest self-report.
+    *   Group by user and filter by tenant.
+    *   View a 45-day reporting history with charts/tables for key metrics.
+    *   Export data as CSV.
+    *   Print data for offline review.
+*   Secure data handling with Supabase RLS for tenant separation.
 
-Available via [NPM](https://www.npmjs.com) as dev dependency. To install:
+## Getting Started
 
-```bash
-npm i supabase --save-dev
-```
+### Prerequisites
 
-To install the beta release channel:
+*   Node.js (specify version if known, e.g., v18 or later)
+*   npm or yarn
+*   Supabase account and project setup
 
-```bash
-npm i supabase@beta --save-dev
-```
+### Installation
 
-When installing with yarn 4, you need to disable experimental fetch with the following nodejs config.
+1.  Clone the repository:
+    ```bash
+    git clone <repository-url>
+    cd <repository-directory>
+    ```
+2.  Install dependencies:
+    ```bash
+    npm install
+    # or
+    # yarn install
+    ```
+3.  Set up environment variables:
+    Create a `.env` file in the project root and add the necessary Supabase URL and anon key:
+    ```env
+    REACT_APP_SUPABASE_URL=your_supabase_url
+    REACT_APP_SUPABASE_ANON_KEY=your_supabase_anon_key
+    # Add any other required environment variables
+    ```
+4.  (Add any Supabase migration/setup steps if applicable, e.g., `npx supabase db push`)
 
-```
-NODE_OPTIONS=--no-experimental-fetch yarn add supabase
-```
-
-> **Note**
-For Bun versions below v1.0.17, you must add `supabase` as a [trusted dependency](https://bun.sh/guides/install/trusted) before running `bun add -D supabase`.
-
-<details>
-  <summary><b>macOS</b></summary>
-
-  Available via [Homebrew](https://brew.sh). To install:
-
-  ```sh
-  brew install supabase/tap/supabase
-  ```
-
-  To install the beta release channel:
-  
-  ```sh
-  brew install supabase/tap/supabase-beta
-  brew link --overwrite supabase-beta
-  ```
-  
-  To upgrade:
-
-  ```sh
-  brew upgrade supabase
-  ```
-</details>
-
-<details>
-  <summary><b>Windows</b></summary>
-
-  Available via [Scoop](https://scoop.sh). To install:
-
-  ```powershell
-  scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
-  scoop install supabase
-  ```
-
-  To upgrade:
-
-  ```powershell
-  scoop update supabase
-  ```
-</details>
-
-<details>
-  <summary><b>Linux</b></summary>
-
-  Available via [Homebrew](https://brew.sh) and Linux packages.
-
-  #### via Homebrew
-
-  To install:
-
-  ```sh
-  brew install supabase/tap/supabase
-  ```
-
-  To upgrade:
-
-  ```sh
-  brew upgrade supabase
-  ```
-
-  #### via Linux packages
-
-  Linux packages are provided in [Releases](https://github.com/supabase/cli/releases). To install, download the `.apk`/`.deb`/`.rpm`/`.pkg.tar.zst` file depending on your package manager and run the respective commands.
-
-  ```sh
-  sudo apk add --allow-untrusted <...>.apk
-  ```
-
-  ```sh
-  sudo dpkg -i <...>.deb
-  ```
-
-  ```sh
-  sudo rpm -i <...>.rpm
-  ```
-
-  ```sh
-  sudo pacman -U <...>.pkg.tar.zst
-  ```
-</details>
-
-<details>
-  <summary><b>Other Platforms</b></summary>
-
-  You can also install the CLI via [go modules](https://go.dev/ref/mod#go-install) without the help of package managers.
-
-  ```sh
-  go install github.com/supabase/cli@latest
-  ```
-
-  Add a symlink to the binary in `$PATH` for easier access:
-
-  ```sh
-  ln -s "$(go env GOPATH)/bin/cli" /usr/bin/supabase
-  ```
-
-  This works on other non-standard Linux distros.
-</details>
-
-<details>
-  <summary><b>Community Maintained Packages</b></summary>
-
-  Available via [pkgx](https://pkgx.sh/). Package script [here](https://github.com/pkgxdev/pantry/blob/main/projects/supabase.com/cli/package.yml).
-  To install in your working directory:
-
-  ```bash
-  pkgx install supabase
-  ```
-
-  Available via [Nixpkgs](https://nixos.org/). Package script [here](https://github.com/NixOS/nixpkgs/blob/master/pkgs/development/tools/supabase-cli/default.nix).
-</details>
-
-### Run the CLI
+### Running Locally
 
 ```bash
-supabase bootstrap
+npm start
+# or
+# yarn start
 ```
+This will typically start the development server at `http://localhost:3000`.
 
-Or using npx:
+## Deployment Notes
 
-```bash
-npx supabase bootstrap
-```
+This application is configured for deployment on Vercel.
 
-The bootstrap command will guide you through the process of setting up a Supabase project using one of the [starter](https://github.com/supabase-community/supabase-samples/blob/main/samples.json) templates.
+### Vercel Build Process
 
-## Docs
+1.  **Connect Git Repository:** Connect your GitHub/GitLab/Bitbucket repository to a new Vercel project.
+2.  **Build Command:** Vercel typically auto-detects Create React App projects. The standard build command is `npm run build` or `yarn build`. This should be configured in the "Build & Development Settings" in Vercel.
+3.  **Output Directory:** The output directory for Create React App is `build`. This should also be correctly configured in Vercel.
+4.  **Environment Variables:** Ensure all necessary environment variables (like `REACT_APP_SUPABASE_URL`, `REACT_APP_SUPABASE_ANON_KEY`, etc.) are set in the Vercel project settings.
 
-Command & config reference can be found [here](https://supabase.com/docs/reference/cli/about).
+The `api/` directory contains serverless functions that will be deployed by Vercel.
+The `public/` directory contains static assets.
 
-## Breaking changes
+## Self-Reporting View Fields
 
-We follow semantic versioning for changes that directly impact CLI commands, flags, and configurations.
+*   `user_id`: Identifier of the user submitting the report.
+*   `timestamp`: Date and time of the report submission.
+*   `tenant_id`: Identifier for the tenant (if using a multi-tenant model).
+*   `blood_pressure_systolic`: Integer value.
+*   `blood_pressure_diastolic`: Integer value.
+*   `blood_sugar_mg_dl`: Integer value.
+*   `emotional_state`: String, one of: Happy, Calm, Sad, Angry, Anxious, Confused, Tired, Lonely, Grateful, Hopeful. (Optional)
+*   `heart_rate_bpm`: Integer value. (Optional)
+*   `pulse_oximeter_spo2_percent`: Integer value. (Optional)
+*   `notes_symptoms`: Text. (Optional)
 
-However, due to dependencies on other service images, we cannot guarantee that schema migrations, seed.sql, and generated types will always work for the same CLI major version. If you need such guarantees, we encourage you to pin a specific version of CLI in package.json.
+### Emotional State Options
 
-## Developing
+*   Happy
+*   Calm
+*   Sad
+*   Angry
+*   Anxious
+*   Confused
+*   Tired
+*   Lonely
+*   Grateful
+*   Hopeful
 
-To run from source:
+## 45-Day Chart Behavior (Doctor's View)
 
-```sh
-# Go >= 1.22
-go run . help
-```
-# Redeploy trigger
+The Doctor's View includes a section displaying a 45-day history for each user's self-reported data.
+*   **Metrics Displayed:** Blood Pressure, Blood Sugar, Heart Rate, Pulse Oximeter, and Emotional State.
+*   **Visualization:**
+    *   Numerical data (Blood Pressure, Blood Sugar, Heart Rate, Pulse Oximeter) are typically shown as line graphs or in tabular format.
+    *   Emotional State may be represented as a bar chart (distribution over time) or as daily label tags.
+*   **No Data:** If a user has no self-reported data within the past 45 days, a message indicating this will be displayed.
+
+## Testing
+
+### User Form (Self-Reporting View)
+
+1.  Navigate to the self-reporting page in the application.
+2.  Fill in the health data fields.
+3.  Submit the form.
+4.  Verify that a confirmation message is shown.
+5.  Check the `self_reports` table in your Supabase database to ensure the data was saved correctly with the correct `user_id` and `timestamp`.
+
+### Doctor’s View Connection & 45-Day History
+
+1.  Access the Admin Panel/Doctor's View.
+2.  Verify that the latest self-report for users is displayed, including the Emotional State.
+3.  Check that users are grouped and can be filtered by tenant (if applicable).
+4.  Navigate to the 45-day reporting history section for a user with recent data.
+5.  Confirm that line graphs or tables correctly display data for Blood Pressure, Blood Sugar, Heart Rate, and Pulse Oximeter.
+6.  Verify that Emotional State is appropriately visualized (e.g., bar chart or tags).
+7.  Test with a user who has no data in the past 45 days to ensure the "no data" message appears.
+
+### CSV Export and Print Functionality
+
+1.  In the Doctor's View, locate the export/print options for the 45-day history.
+2.  **CSV Export:**
+    *   Trigger the CSV export.
+    *   Open the downloaded CSV file.
+    *   Verify that all relevant data for the 45-day period is present and correctly formatted.
+3.  **Print Functionality:**
+    *   Trigger the print function.
+    *   Review the print preview to ensure the data is well-formatted for printing.
+    *   (If possible, print a test page.)
+
+This README now includes the information from the original issue description regarding features, fields, and testing, which seems more appropriate than the Supabase CLI documentation.
