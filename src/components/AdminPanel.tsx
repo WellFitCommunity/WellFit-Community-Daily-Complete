@@ -1,9 +1,12 @@
 // src/components/AdminPanel.tsx
 
+// src/components/AdminPanel.tsx
+
 import React, { useState } from 'react';
 import UsersList from './UsersList';
 import ReportsSection from './ReportsSection';
 import ExportCheckIns from './ExportCheckIns';
+import ApiKeyManager from './ApiKeyManager'; // Import the new component
 
 const AdminPanel: React.FC = () => {
   const [pin, setPin] = useState('');
@@ -26,6 +29,7 @@ const AdminPanel: React.FC = () => {
       <UsersList />
       <ReportsSection />
       <ExportCheckIns />
+      <ApiKeyManager /> {/* Add the ApiKeyManager component here */}
     </section>
   ) : (
     <section className="bg-white border-2 border-[#8cc63f] p-4 rounded-xl shadow">
