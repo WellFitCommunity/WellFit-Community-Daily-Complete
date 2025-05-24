@@ -174,15 +174,34 @@ const DoctorsView: React.FC = () => {
   };
   
   const renderHealthEntryData = (entry: HealthDataEntry) => {
-    // Customize based on entry_type and data structure
-    let displayData = `Type: ${entry.entry_type}`;
-    if (entry.data) {
-      const dataEntries = Object.entries(entry.data)
-        .map(([key, value]) => `${key.replace(/_/g, ' ')}: ${value}`)
-        .join(', ');
-      if (dataEntries) displayData += ` - ${dataEntries}`;
+    if (entry.entry_type === 'self_report' && entry.data) {
+      const { mood, symptoms, activity_description } = entry.data;
+      let reportParts = [];
+      if (mood) {
+        reportParts.push(`Mood: ${mood}`);
+      }
+      if (symptoms) {
+        reportParts.push(`Symptoms: ${symptoms}`);
+      }
+      if (activity_description) {
+        reportParts.push(`Activity: ${activity_description}`);
+      }
+      
+      if (reportParts.length > 0) {
+        return `Self Report - ${reportParts.join(', ')}`;
+      }
+      return "Self Report - (No details provided)"; // Fallback if all fields are empty
+    } else {
+      // Existing generic data rendering logic
+      let displayData = `Type: ${entry.entry_type}`;
+      if (entry.data) {
+        const dataEntries = Object.entries(entry.data)
+          .map(([key, value]) => `${key.replace(/_/g, ' ')}: ${value}`)
+          .join(', ');
+        if (dataEntries) displayData += ` - ${dataEntries}`;
+      }
+      return displayData;
     }
-    return displayData;
   };
 
   if (loading) {

@@ -18,6 +18,8 @@ import AdminProfileEditor from './components/AdminProfileEditor';
 import LockScreenUser from './components/LockScreenUser';
 import ConsentPhotoPage from './components/ConsentPhotoPage';
 import ConsentPrivacyPage from './components/ConsentPrivacyPage';
+import DoctorsView from './components/DoctorsView';
+import SelfReportingPage from './components/SelfReportingPage'; // Added import
 
 // 👇 NEW import
 import { requestNotificationPermission } from './utils/requestNotificationPermission';
@@ -86,6 +88,22 @@ const App: React.FC = () => {
       element={
         <RequireAuth>
           <WordFind />
+        </RequireAuth>
+      }
+    />
+    <Route
+      path="/doctors-view"
+      element={
+        <RequireAuth>
+          <DoctorsView />
+        </RequireAuth>
+      }
+    />
+    <Route
+      path="/self-reporting" // Added route
+      element={
+        <RequireAuth>
+          <SelfReportingPage />
         </RequireAuth>
       }
     />
