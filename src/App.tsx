@@ -1,6 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 
+import { BrandingConfig, getCurrentBranding } from './branding.config';
+import { BrandingContext } from './BrandingContext';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import WelcomePage from './components/WelcomePage';
@@ -16,16 +18,21 @@ import AdminProfileEditor from './components/AdminProfileEditor';
 import LockScreenUser from './components/LockScreenUser';
 import ConsentPhotoPage from './components/ConsentPhotoPage';
 import ConsentPrivacyPage from './components/ConsentPrivacyPage';
+import DoctorsView from './components/DoctorsView';
+import SelfReportingPage from './components/SelfReportingPage'; // Added import
 
 // 👇 NEW import
 import { requestNotificationPermission } from './utils/requestNotificationPermission';
 
-const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const Layout: React.FC<{ children: React.ReactNode; branding: BrandingConfig }> = ({ children, branding }) => {
   const location = useLocation();
   const showHeaderFooter = location.pathname !== '/';
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-r from-wellfit-blue to-wellfit-green text-white">
+    <div 
+      className="min-h-screen flex flex-col text-white"
+      style={{ background: `linear-gradient(to right, ${branding.primaryColor}, ${branding.secondaryColor})` }}
+    >
       {showHeaderFooter && <Header />}
       <main className="flex-grow p-4">{children}</main>
       {showHeaderFooter && <Footer />}
@@ -34,16 +41,25 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 };
 
 const App: React.FC = () => {
+  const [branding, setBranding] = useState<BrandingConfig>(getCurrentBranding());
+
+  useEffect(() => {
+    // Potentially update branding if it can change dynamically, e.g., based on a user setting
+    // For now, it's set once on init based on subdomain
+    setBranding(getCurrentBranding());
+  }, []);
+
   // 👇 Add useEffect to request notification token
   useEffect(() => {
     requestNotificationPermission();
   }, []);
 
   return (
-<Layout>
-  <Routes>
-    {/* Public pages */}
-    <Route path="/" element={<WelcomePage />} />
+<BrandingContext.Provider value={branding}>
+  <Layout branding={branding}>
+    <Routes>
+      {/* Public pages */}
+      <Route path="/" element={<WelcomePage />} />
     <Route path="/senior-enrollment" element={<SeniorEnrollmentPage />} />
     <Route path="/meal/:id" element={<MealDetailPage />} />
     <Route path="/lockscreen" element={<LockScreenUser />} />
@@ -75,6 +91,22 @@ const App: React.FC = () => {
         </RequireAuth>
       }
     />
+    <Route
+      path="/doctors-view"
+      element={
+        <RequireAuth>
+          <DoctorsView />
+        </RequireAuth>
+      }
+    />
+    <Route
+      path="/self-reporting" // Added route
+      element={
+        <RequireAuth>
+          <SelfReportingPage />
+        </RequireAuth>
+      }
+    />
 
     {/* Admin pages */}
     <Route path="/admin-panel" element={<AdminPanel />} />
@@ -84,9 +116,10 @@ const App: React.FC = () => {
     <Route path="/logout" element={<LogoutPage />} />
 
     {/* Fallback */}
-    <Route path="*" element={<Navigate to="/" replace />} />
-  </Routes>
-</Layout>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  </Layout>
+</BrandingContext.Provider>
   );
 };
 
