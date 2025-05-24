@@ -182,3 +182,35 @@ To run from source:
 go run . help
 ```
 # Redeploy trigger
+
+## Project Features
+
+### Doctor's View (`/doctors-view`)
+*   **Purpose:** Allows users (presumably seniors or patients) to see a summary of their recent health check-ins and self-reported data. It also provides a way for them to see if their data has been reviewed by a care team.
+*   **Functionality:**
+    *   Displays the latest check-in notes.
+    *   Shows recent self-reported health entries (mood, symptoms, activity).
+    *   Indicates the review status of these items.
+    *   Includes a feature for the user to submit a question to their care team. This relies on the `user_questions` table in the database.
+
+### Self-Reporting Page (`/self-reporting`)
+*   **Purpose:** Provides a dedicated page for users to easily report on their current health status, including mood, symptoms, and daily activities.
+*   **Senior-Friendly Design:**
+    *   Uses large, readable fonts and clear, simple language.
+    *   Ensures high color contrast for better visibility.
+    *   Features large, easy-to-click buttons and intuitive form elements (e.g., dropdown for mood).
+    *   Overall layout is spacious and uncluttered to reduce cognitive load.
+*   **Brand Integration:** Leverages the application's branding configuration for a consistent look and feel.
+*   **Functionality:**
+    *   Allows selection of mood from predefined options.
+    *   Provides text areas for describing symptoms and activities.
+    *   Submits this information to the `health_entries` table in the database.
+
+### Data Flow: Self-Reporting to Doctor's View
+*   Data entered on the `SelfReportingPage` is saved as a `health_entries` record in the Supabase database with an `entry_type` of `'self_report'`.
+*   The `DoctorsView` page fetches all `health_entries` for the logged-in user and displays them, including those from the `SelfReportingPage`. The view is designed to specifically format these `'self_report'` entries for clarity.
+
+### Important Database Note: `user_questions` Table
+*   A new table, `user_questions`, is required for the "Ask a Question" feature in the Doctor's View.
+*   A migration file (e.g., `supabase/migrations/YYYYMMDDHHMMSS_create_user_questions_table.sql`) has been created.
+*   **Action Required:** To apply this database change, run the command `supabase db push` in your project's Supabase environment. Without this, the "Ask a Question" feature will not function correctly.

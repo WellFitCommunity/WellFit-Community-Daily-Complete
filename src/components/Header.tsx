@@ -43,6 +43,12 @@ const Header: React.FC = () => {
             <Link to="/wordfind" className={`${textColor} hover:${hoverTextColor} transition`}>
               Word Find
             </Link>
+            <Link to="/doctors-view" className={`${textColor} hover:${hoverTextColor} transition`}>
+              Doctor's View
+            </Link>
+            <Link to="/self-reporting" className={`${textColor} hover:${hoverTextColor} transition`}>
+              Self Report
+            </Link>
             <Link to="/logout" className="text-red-300 hover:text-red-500 transition">
               Log Out
             </Link>
@@ -85,6 +91,20 @@ const Header: React.FC = () => {
             className={`block ${textColor} hover:${hoverTextColor} transition`}
           >
             Word Find
+          </Link>
+          <Link
+            to="/doctors-view"
+            onClick={() => setMenuOpen(false)}
+            className={`block ${textColor} hover:${hoverTextColor} transition`}
+          >
+            Doctor's View
+          </Link>
+          <Link
+            to="/self-reporting"
+            onClick={() => setMenuOpen(false)}
+            className={`block ${textColor} hover:${hoverTextColor} transition`}
+          >
+            Self Report
           </Link>
           <Link
             to="/logout"
