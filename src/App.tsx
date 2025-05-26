@@ -29,12 +29,16 @@ const Layout: React.FC<{ children: React.ReactNode; branding: BrandingConfig }> 
   const showHeaderFooter = location.pathname !== '/';
 
   return (
-    <div 
+    <div
       className="min-h-screen flex flex-col text-white"
       style={{ background: `linear-gradient(to right, ${branding.primaryColor}, ${branding.secondaryColor})` }}
     >
       {showHeaderFooter && <Header />}
-      <main className="flex-grow p-4">{children}</main>
+      <main className="flex-grow p-4 flex justify-center items-center">
+        <div className="bg-white text-[#003865] rounded-2xl shadow-2xl p-6 w-full max-w-4xl">
+          {children}
+        </div>
+      </main>
       {showHeaderFooter && <Footer />}
     </div>
   );
@@ -55,71 +59,71 @@ const App: React.FC = () => {
   }, []);
 
   return (
-<BrandingContext.Provider value={branding}>
-  <Layout branding={branding}>
-    <Routes>
-      {/* Public pages */}
-      <Route path="/" element={<WelcomePage />} />
-    <Route path="/senior-enrollment" element={<SeniorEnrollmentPage />} />
-    <Route path="/meal/:id" element={<MealDetailPage />} />
-    <Route path="/lockscreen" element={<LockScreenUser />} />
-    <Route path="/consent-photo" element={<ConsentPhotoPage />} />
-    <Route path="/consent-privacy" element={<ConsentPrivacyPage />} />
+    <BrandingContext.Provider value={branding}>
+      <Layout branding={branding}>
+        <Routes>
+          {/* Public pages */}
+          <Route path="/" element={<WelcomePage />} />
+          <Route path="/senior-enrollment" element={<SeniorEnrollmentPage />} />
+          <Route path="/meal/:id" element={<MealDetailPage />} />
+          <Route path="/lockscreen" element={<LockScreenUser />} />
+          <Route path="/consent-photo" element={<ConsentPhotoPage />} />
+          <Route path="/consent-privacy" element={<ConsentPrivacyPage />} />
 
-    {/* Protected pages */}
-    <Route
-      path="/dashboard"
-      element={
-        <RequireAuth>
-          <Dashboard />
-        </RequireAuth>
-      }
-    />
-    <Route
-      path="/checkin"
-      element={
-        <RequireAuth>
-          <CheckInTracker />
-        </RequireAuth>
-      }
-    />
-    <Route
-      path="/wordfind"
-      element={
-        <RequireAuth>
-          <WordFind />
-        </RequireAuth>
-      }
-    />
-    <Route
-      path="/doctors-view"
-      element={
-        <RequireAuth>
-          <DoctorsView />
-        </RequireAuth>
-      }
-    />
-    <Route
-      path="/self-reporting" // Added route
-      element={
-        <RequireAuth>
-          <SelfReportingPage />
-        </RequireAuth>
-      }
-    />
+          {/* Protected pages */}
+          <Route
+            path="/dashboard"
+            element={
+              <RequireAuth>
+                <Dashboard />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/checkin"
+            element={
+              <RequireAuth>
+                <CheckInTracker />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/wordfind"
+            element={
+              <RequireAuth>
+                <WordFind />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/doctors-view"
+            element={
+              <RequireAuth>
+                <DoctorsView />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/self-reporting" // Added route
+            element={
+              <RequireAuth>
+                <SelfReportingPage />
+              </RequireAuth>
+            }
+          />
 
-    {/* Admin pages */}
-    <Route path="/admin-panel" element={<AdminPanel />} />
-    <Route path="/admin-profile-editor" element={<AdminProfileEditor />} />
+          {/* Admin pages */}
+          <Route path="/admin-panel" element={<AdminPanel />} />
+          <Route path="/admin-profile-editor" element={<AdminProfileEditor />} />
 
-    {/* Logout */}
-    <Route path="/logout" element={<LogoutPage />} />
+          {/* Logout */}
+          <Route path="/logout" element={<LogoutPage />} />
 
-    {/* Fallback */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
-  </Layout>
-</BrandingContext.Provider>
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Layout>
+    </BrandingContext.Provider>
   );
 };
 

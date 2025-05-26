@@ -3,25 +3,21 @@ import { supabase } from '../lib/supabaseClient';
 import { useBranding } from '../BrandingContext';
 import { User } from '@supabase/supabase-js';
 
-// RLS Note: Ensure Row Level Security is enabled on 'check_ins' and 'health_entries' tables.
-// Policies should restrict users to only access their own data.
-// Example policy for 'check_ins': CREATE POLICY "Users can read their own check_ins" ON check_ins FOR SELECT USING (auth.uid() = user_id);
-
 interface CheckInData {
   id: string;
   user_id: string;
   notes: string | null;
-  created_at: string; // TIMESTAMPTZ
-  reviewed_at?: string | null; // TIMESTAMPTZ, nullable
-  reviewed_by_name?: string | null; // TEXT, nullable
+  created_at: string;
+  reviewed_at?: string | null;
+  reviewed_by_name?: string | null;
 }
 
 interface HealthDataEntry {
   id: string;
   user_id: string;
-  entry_type: string; // e.g., 'mood', 'activity', 'symptoms', 'blood_pressure'
-  data: Record<string, any>; // JSONB, e.g., {"value": "good"}, {"level": "high"}, {"details": "headache"}, {"systolic": 120, "diastolic": 80}
-  created_at: string; // TIMESTAMPTZ
+  entry_type: string;
+  data: Record<string, any>;
+  created_at: string;
   reviewed_at?: string | null;
   reviewed_by_name?: string | null;
 }
@@ -30,7 +26,7 @@ interface CareTeamReview {
   status: string;
   reviewed_by_name: string | null;
   reviewed_at: string | null;
-  reviewed_item_type: string; // e.g., 'Check-in' or 'Health Entry'
+  reviewed_item_type: string;
   reviewed_item_date: string | null;
 }
 
@@ -40,35 +36,30 @@ const DoctorsView: React.FC = () => {
   const [latestCheckIn, setLatestCheckIn] = useState<CheckInData | null>(null);
   const [recentHealthEntries, setRecentHealthEntries] = useState<HealthDataEntry[]>([]);
   const [careTeamReview, setCareTeamReview] = useState<CareTeamReview | null>(null);
-  
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isSubmittingQuestion, setIsSubmittingQuestion] = useState<boolean>(false);
   const [questionSubmitFeedback, setQuestionSubmitFeedback] = useState<string | null>(null);
 
-
   const fetchData = useCallback(async (userId: string) => {
     setLoading(true);
-    setError(null); // Clear previous general errors before new fetch
-    // setQuestionSubmitFeedback(null); // Clear question feedback when re-fetching data
+    setError(null);
 
     try {
       const results = await Promise.allSettled([
-        // Fetch Latest Check-in
         supabase
           .from('check_ins')
-          .select('*')
+          .select('id, user_id, notes, created_at, reviewed_at, reviewed_by_name')
           .eq('user_id', userId)
           .order('created_at', { ascending: false })
           .limit(1)
           .single(),
-        // Fetch Recent Health Entries
         supabase
           .from('health_entries')
-          .select('*')
+          .select('id, user_id, entry_type, data, created_at, reviewed_at, reviewed_by_name')
           .eq('user_id', userId)
           .order('created_at', { ascending: false })
-          .limit(3), // Fetch last 3 health entries
+          .limit(3),
       ]);
 
       const [checkInResult, healthEntriesResult] = results;
@@ -77,7 +68,6 @@ const DoctorsView: React.FC = () => {
         setLatestCheckIn(checkInResult.value.data as CheckInData);
       } else if (checkInResult.status === 'rejected' || checkInResult.value.error) {
         console.warn('Error fetching latest check-in:', checkInResult.status === 'rejected' ? checkInResult.reason : checkInResult.value.error);
-        // Don't set global error for individual fetch failure, allow other data to load
       }
 
       if (healthEntriesResult.status === 'fulfilled' && healthEntriesResult.value.data) {
@@ -86,8 +76,6 @@ const DoctorsView: React.FC = () => {
         console.warn('Error fetching recent health entries:', healthEntriesResult.status === 'rejected' ? healthEntriesResult.reason : healthEntriesResult.value.error);
       }
       
-      // Determine Care Team Review Status
-      // Prioritize review status from the latest check-in if available
       const checkInForReview = checkInResult.status === 'fulfilled' ? checkInResult.value.data as CheckInData : null;
       const healthEntriesForReview = healthEntriesResult.status === 'fulfilled' ? healthEntriesResult.value.data as HealthDataEntry[] : [];
       
@@ -102,7 +90,6 @@ const DoctorsView: React.FC = () => {
           reviewed_item_date: checkInForReview.created_at,
         };
       } else {
-        // If check-in isn't reviewed, check the most recent health entry
         const mostRecentReviewedHealthEntry = healthEntriesForReview
           .filter(entry => entry.reviewed_at)
           .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
@@ -146,9 +133,9 @@ const DoctorsView: React.FC = () => {
   useEffect(() => {
     const getUserAndFetchData = async () => {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError) {
+      if (authError?.message) {
         setError('Failed to get user information. Please re-login.');
-        console.error("Auth error:", authError);
+        console.error("Auth error:", authError.message);
         setLoading(false);
         return;
       }
@@ -177,22 +164,14 @@ const DoctorsView: React.FC = () => {
     if (entry.entry_type === 'self_report' && entry.data) {
       const { mood, symptoms, activity_description } = entry.data;
       let reportParts = [];
-      if (mood) {
-        reportParts.push(`Mood: ${mood}`);
-      }
-      if (symptoms) {
-        reportParts.push(`Symptoms: ${symptoms}`);
-      }
-      if (activity_description) {
-        reportParts.push(`Activity: ${activity_description}`);
-      }
+      if (mood) reportParts.push(`Mood: ${mood}`);
+      if (symptoms) reportParts.push(`Symptoms: ${symptoms}`);
+      if (activity_description) reportParts.push(`Activity: ${activity_description}`);
       
-      if (reportParts.length > 0) {
-        return `Self Report - ${reportParts.join(', ')}`;
-      }
-      return "Self Report - (No details provided)"; // Fallback if all fields are empty
+      return reportParts.length > 0 
+        ? `Self Report - ${reportParts.join(', ')}` 
+        : "Self Report - (No details provided)";
     } else {
-      // Existing generic data rendering logic
       let displayData = `Type: ${entry.entry_type}`;
       if (entry.data) {
         const dataEntries = Object.entries(entry.data)
@@ -204,52 +183,48 @@ const DoctorsView: React.FC = () => {
     }
   };
 
-  if (loading) {
-    return <div className="p-4 text-center text-gray-600" style={{ color: branding.secondaryColor }}>Loading doctor's view data...</div>;
-  }
-
-  if (error && !currentUser) { // If error is critical (e.g. no user or initial auth error)
-    return <div className="p-4 text-red-600 bg-red-100 border border-red-400 rounded-md">{error}</div>;
-  }
-  
   const handleQuestionSubmit = async () => {
     if (!currentUser) {
       setQuestionSubmitFeedback('You must be logged in to submit a question.');
       return;
     }
+    
     setIsSubmittingQuestion(true);
     setQuestionSubmitFeedback(null);
 
     try {
       const { error: insertError } = await supabase
-        .from('user_questions') // Ensure this table name matches your migration
+        .from('user_questions')
         .insert({
           user_id: currentUser.id,
           user_email: currentUser.email,
-          // message_content can be defaulted in the DB or set here
-          // status can be defaulted in the DB
+          created_at: new Date().toISOString()
         });
 
       if (insertError) {
-        console.error('Error submitting question:', insertError);
-        setQuestionSubmitFeedback(`Failed to submit question: ${insertError.message}. Please ensure RLS is configured correctly for user_questions table.`);
-      } else {
-        setQuestionSubmitFeedback('Your question has been sent. The care team will get back to you soon.');
+        throw insertError;
       }
-    } catch (e: any) {
-      console.error('Unexpected error submitting question:', e);
-      setQuestionSubmitFeedback('An unexpected error occurred while submitting your question.');
+      setQuestionSubmitFeedback('Your question has been sent. The care team will get back to you soon.');
+    } catch (error: any) {
+      console.error('Error submitting question:', error);
+      setQuestionSubmitFeedback(error.message || 'Failed to submit question. Please try again.');
     } finally {
       setIsSubmittingQuestion(false);
     }
   };
 
+  if (loading) {
+    return <div className="p-4 text-center text-gray-600" style={{ color: branding.secondaryColor }}>Loading doctor's view data...</div>;
+  }
+
+  if (error && !currentUser) {
+    return <div className="p-4 text-red-600 bg-red-100 border border-red-400 rounded-md">{error}</div>;
+  }
+  
   return (
     <div className="p-4 border-gray-200 rounded-lg bg-gray-50 space-y-6">
-      {/* Display general error if it's not a user auth issue already handled */}
       {error && currentUser && <p className="text-red-500 bg-red-100 p-3 rounded-md mb-4">Notice: {error}</p>}
 
-      {/* Latest Check-in */}
       <div>
         <h4 className="font-semibold text-md mb-1" style={{ color: branding.primaryColor }}>Latest Check-in:</h4>
         {latestCheckIn ? (
@@ -265,9 +240,10 @@ const DoctorsView: React.FC = () => {
         )}
       </div>
 
-      {/* Self-reported Health Data */}
       <div>
-        <h4 className="font-semibold text-md mb-1" style={{ color: branding.primaryColor }}>Recent Self-reported Health Data:</h4>
+        <h4 className="font-semibold text-md mb-1" style={{ color: branding.primaryColor }}>
+          Recent Self-reported Health Data ({recentHealthEntries.length})
+        </h4>
         {recentHealthEntries.length > 0 ? (
           <ul className="space-y-2">
             {recentHealthEntries.map(entry => (
@@ -285,7 +261,6 @@ const DoctorsView: React.FC = () => {
         )}
       </div>
 
-      {/* Care Team Review Status */}
       <div>
         <h4 className="font-semibold text-md mb-1" style={{ color: branding.primaryColor }}>Overall Care Team Review Status:</h4>
         {careTeamReview ? (
@@ -301,26 +276,24 @@ const DoctorsView: React.FC = () => {
           </div>
         ) : (
           <p className="text-sm text-gray-500">
-            No specific overall review status available. Check individual items or await care team follow-up. 
-            If `check_ins` or `health_entries` tables do not have `reviewed_at` and `reviewed_by_name` fields, this section cannot populate accurately.
+            Note: This section depends on `reviewed_at` and `reviewed_by_name` fields being present in both `check_ins` and `health_entries`.
           </p>
         )}
       </div>
-       {!loading && !latestCheckIn && recentHealthEntries.length === 0 && !careTeamReview && !error && (
+      
+      {!loading && !latestCheckIn && recentHealthEntries.length === 0 && !careTeamReview && !error && (
          <p className="text-sm text-gray-500 mt-2">No data available yet. Data will appear here once submitted and processed.</p>
-       )}
+      )}
 
-      {/* Question Submission Section */}
-      {currentUser && ( // Only show if user is logged in
+      {currentUser && (
         <div className="mt-6 pt-6 border-t border-gray-300">
           <h4 className="font-semibold text-md mb-2" style={{ color: branding.primaryColor }}>Need Help or Have Questions?</h4>
           <button
             onClick={handleQuestionSubmit}
-            disabled={isSubmittingQuestion || loading} // Disable if main view is loading too
+            disabled={isSubmittingQuestion || loading}
             className="px-6 py-2 text-white font-semibold rounded-md shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-70"
             style={{ 
               backgroundColor: branding.secondaryColor,
-              // Determine text color based on secondaryColor's darkness for better contrast
               color: (() => {
                 try {
                   const color = branding.secondaryColor.startsWith('#') ? branding.secondaryColor.substring(1) : branding.secondaryColor;
@@ -328,14 +301,14 @@ const DoctorsView: React.FC = () => {
                   const g = parseInt(color.substring(2, 4), 16);
                   const b = parseInt(color.substring(4, 6), 16);
                   return (r * 0.299 + g * 0.587 + b * 0.114) > 186 ? '#000000' : '#FFFFFF';
-                } catch (e) { return '#FFFFFF'; } // Default to white on error
+                } catch (e) { return '#FFFFFF'; }
               })()
             }}
           >
             {isSubmittingQuestion ? 'Submitting...' : 'I have a question for my Care Team'}
           </button>
           {questionSubmitFeedback && (
-            <p className={`mt-3 text-sm ${questionSubmitFeedback.startsWith('Failed') || questionSubmitFeedback.startsWith('An unexpected') ? 'text-red-600' : 'text-green-600'}`}>
+            <p className={`mt-3 text-sm ${questionSubmitFeedback.includes('Failed') ? 'text-red-600' : 'text-green-600'}`}>
               {questionSubmitFeedback}
             </p>
           )}
