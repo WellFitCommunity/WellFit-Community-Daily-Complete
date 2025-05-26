@@ -1,10 +1,13 @@
 export interface BrandingConfig {
+  textColor: string;
   appName: string;
   logoUrl: string;
   primaryColor: string;
   secondaryColor: string;
   contactInfo: string;
+  gradient?: string; // Optional but now fully supported
 }
+
 
 export interface TenantBranding extends BrandingConfig {
   subdomain: string;
@@ -12,11 +15,14 @@ export interface TenantBranding extends BrandingConfig {
 
 export const defaultBranding: BrandingConfig = {
   appName: "WellFit Community",
-  logoUrl: "/logo.png",
+  logoUrl: "/android-chrome-512x512.png",
   primaryColor: "#003865",
   secondaryColor: "#8cc63f",
+  textColor: "#ffffff", // ✅ Required to match BrandingConfig
+  gradient: "linear-gradient(to bottom right, #003865, #8cc63f)", // optional, but recommended
   contactInfo: `© ${new Date().getFullYear()} WellFit Community. All rights reserved.`,
 };
+
 
 export const tenantBrandings: TenantBranding[] = [
   // Example:

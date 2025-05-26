@@ -6,14 +6,14 @@ import ExploreTimer from '../components/ExploreTimer';
 import bcrypt from 'bcryptjs';
 import { sendWelcomeEmail } from '../utils/sendWelcomeEmail';
 
-
 const SeniorEnrollmentPage: React.FC = () => {
   const navigate = useNavigate();
   const [useEmail, setUseEmail] = useState<boolean | null>(null);
   const [skipCount, setSkipCount] = useState(0);
 
   const [formData, setFormData] = useState({
-    full_name: '',
+    first_name: '',
+    last_name: '',
     phone: '',
     email: '',
     password: '',
@@ -73,7 +73,8 @@ const SeniorEnrollmentPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const {
-      full_name,
+      first_name,
+      last_name,
       dob,
       address,
       phone,
@@ -104,12 +105,10 @@ const SeniorEnrollmentPage: React.FC = () => {
         return;
       }
       try {
-  await sendWelcomeEmail(email); // or formData.email if that's your variable
-  // Optionally show a "Welcome email sent!" message here
-} catch (err) {
-  console.error("Error sending welcome email:", err);
-  // Optionally: show a message to the admin but DO NOT block registration
-}
+        await sendWelcomeEmail(email);
+      } catch (err) {
+        console.error("Error sending welcome email:", err);
+      }
       if (!signUpData.session) {
         alert('A confirmation email has been sent. Please confirm your email before continuing.');
         return;
@@ -123,7 +122,7 @@ const SeniorEnrollmentPage: React.FC = () => {
       .from('profiles')
       .upsert({
         id: userId,
-        full_name,
+        full_name: `${first_name} ${last_name}`,
         dob,
         address,
         phone,
@@ -167,8 +166,8 @@ const SeniorEnrollmentPage: React.FC = () => {
     }
 
     localStorage.removeItem('exploreStartTime');
-alert('Enrollment submitted successfully! Proceeding to consent form...');
-navigate('/consent-photo'); // 👈 First consent page
+    alert('Enrollment submitted successfully! Proceeding to consent form...');
+    navigate('/consent-photo');
   };
 
   return (
@@ -195,6 +194,26 @@ navigate('/consent-photo'); // 👈 First consent page
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          <label className="block text-black font-semibold text-lg">First Name</label>
+          <input
+            name="first_name"
+            placeholder="First Name"
+            value={formData.first_name}
+            onChange={handleChange}
+            className="w-full p-3 border-2 border-black rounded text-lg"
+            required
+          />
+
+          <label className="block text-black font-semibold text-lg">Last Name</label>
+          <input
+            name="last_name"
+            placeholder="Last Name"
+            value={formData.last_name}
+            onChange={handleChange}
+            className="w-full p-3 border-2 border-black rounded text-lg"
+            required
+          />
+
           <label className="block text-black font-semibold text-lg">Date of Birth</label>
           <input
             name="dob"
@@ -227,7 +246,6 @@ navigate('/consent-photo'); // 👈 First consent page
 
           <hr className="border-t-2 border-gray-300" />
 
-          {/* Login Setup */}
           <div>
             <h3 className="text-xl font-semibold text-[#003865] mb-2">Login Setup</h3>
             <fieldset className="space-y-2">
@@ -322,7 +340,6 @@ navigate('/consent-photo'); // 👈 First consent page
 
           <hr className="border-t-2 border-gray-300" />
 
-          {/* Demographics */}
           <div>
             <h3 className="text-xl font-semibold text-[#003865] mb-2">Demographics</h3>
             <label className="block text-black font-semibold text-lg">Select Race</label>
@@ -359,7 +376,6 @@ navigate('/consent-photo'); // 👈 First consent page
 
           <hr className="border-t-2 border-gray-300" />
 
-          {/* Known Diagnoses */}
           <div>
             <h3 className="text-xl font-semibold text-[#003865] mb-2">Known Diagnoses</h3>
             <fieldset className="space-y-2">
@@ -430,7 +446,6 @@ navigate('/consent-photo'); // 👈 First consent page
 
           <hr className="border-t-2 border-gray-300" />
 
-          {/* Actions */}
           <div className="flex justify-end">
             <button
               type="submit"

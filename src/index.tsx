@@ -10,7 +10,21 @@ import { SessionContextProvider } from '@supabase/auth-helpers-react';
 import { supabase } from './lib/supabaseClient';
 
 // ✅ Corrected ErrorBoundary import
-import ErrorBoundary from './components/ErrorBoundary'; // ✅ matches your actual file location
+import ErrorBoundary from './components/ErrorBoundary';
+
+// ✅ Register Firebase Messaging Service Worker (must be before ReactDOM.createRoot)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/firebase-messaging-sw.js')
+      .then((registration) => {
+        console.log('Firebase Messaging SW registered:', registration.scope);
+      })
+      .catch((err) => {
+        console.warn('Service Worker registration failed:', err);
+      });
+  });
+}
 
 // ✅ Get the root element safely
 const rootElement = document.getElementById('root');
@@ -30,5 +44,5 @@ root.render(
   </React.StrictMode>
 );
 
-// ✅ Unregister the service worker to prevent white screen issues
+// ✅ Register (not unregister) service worker for PWA features (including push)
 serviceWorkerRegistration.register();

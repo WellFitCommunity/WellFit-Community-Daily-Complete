@@ -1,4 +1,3 @@
-// src/components/ConsentPrivacyPage.tsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
@@ -8,6 +7,7 @@ const ConsentPrivacyPage: React.FC = () => {
   const [confirm, setConfirm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [feedback, setFeedback] = useState('');
 
   const handleSubmit = async () => {
     if (!confirm) {
@@ -25,6 +25,7 @@ const ConsentPrivacyPage: React.FC = () => {
 
     setSubmitting(true);
     setError('');
+    setFeedback('');
 
     try {
       const blob = await (await fetch(signatureData)).blob();
@@ -40,10 +41,25 @@ const ConsentPrivacyPage: React.FC = () => {
         return;
       }
 
-      alert('Your consent has been recorded. Thank you!');
+      const { error: dbError } = await supabase.from('photo_consent').insert([
+        {
+          full_name: fullName,
+          file_path: fileName,
+          consented_at: new Date().toISOString(),
+        }
+      ]);
+
+      if (dbError) {
+        setError('Upload succeeded, but database log failed.');
+        setSubmitting(false);
+        return;
+      }
+
+      setFeedback('Your consent has been recorded. Thank you!');
       localStorage.removeItem('photoSignature');
       localStorage.removeItem('fullName');
-      navigate('/dashboard');
+
+      setTimeout(() => navigate('/dashboard'), 2000);
     } catch (err) {
       console.error(err);
       setError('An error occurred while processing your consent.');
@@ -57,7 +73,7 @@ const ConsentPrivacyPage: React.FC = () => {
       <h2 className="text-2xl font-bold text-center text-[#003865] mb-4">Final Privacy & Participation Consent</h2>
 
       <p className="mb-4 text-sm">
-        By checking the box below, you agree to the secure handling of your data for participation in the WellFit Community program. We will never share your personal data without permission. This is not a substitute for medical care.
+        At WellFit Community, Inc., Vital Edge Healthcare Consulting, LLC, and Envision VirtualEdge Group, LLC, we take your privacy seriously and treat your information with care and respect. Our team follows privacy-conscious practices inspired by HIPAA principles, ensuring your health information is stored securely, only shared with trusted individuals as needed, and used solely to support your wellness. We do not sell or misuse your data, and we are committed to protecting your dignity, your safety, and your trust.
       </p>
 
       <label className="flex items-center mb-4">
@@ -78,6 +94,7 @@ const ConsentPrivacyPage: React.FC = () => {
         {submitting ? 'Submitting...' : 'Submit Final Consent'}
       </button>
 
+      {feedback && <p className="text-green-600 text-sm mt-2">{feedback}</p>}
       {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
     </div>
   );
