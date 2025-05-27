@@ -51,6 +51,16 @@ interface ProfileRecord {
   created_at: string;
 }
 
+// New interface for Alert Records
+interface AlertRecord {
+  id: string;
+  user_id: string;
+  user_full_name: string; // To store fetched user name
+  alert_type: string;
+  timestamp: string;
+  details: string | null;
+}
+
 const AdminDashboard: React.FC = () => {
   const branding = useBranding();
   const [photoConsents, setPhotoConsents] = useState<ConsentRecord[]>([]);
@@ -60,24 +70,40 @@ const AdminDashboard: React.FC = () => {
   const [selfReports, setSelfReports] = useState<SelfReportRecord[]>([]);
   const [userQuestions, setUserQuestions] = useState<UserQuestion[]>([]);
   const [profiles, setProfiles] = useState<ProfileRecord[]>([]);
+  const [alertHistory, setAlertHistory] = useState<AlertRecord[]>([]); 
+  const [newAlertCount, setNewAlertCount] = useState(0); // State for new alert notifications
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Initial data fetch
   useEffect(() => {
     const fetchData = async () => {
       setError(null);
       setLoading(true);
+      setNewAlertCount(0); // Reset new alert count on data fetch
       try {
-        const [photoRes, privacyRes, medRes, checkInRes, reportRes, questionRes, profileRes] = await Promise.all([
+        // Fetch all data in parallel
+        const [
+          photoRes, 
+          privacyRes, 
+          medRes, 
+          checkInRes, 
+          reportRes, 
+          questionRes, 
+          profileRes, 
+          alertsRes // Added alerts fetch
+        ] = await Promise.all([
           supabase.from('photo_consent').select('id, full_name, file_path, consented_at'),
           supabase.from('privacy_consent').select('id, full_name, file_path, consented_at'),
           supabase.from('medications').select('id, full_name, medication_name, frequency, updated_at'),
-          supabase.from('check_ins').select('id, full_name, notes, created_at'),
+          supabase.from('check_ins').select('id, full_name, notes, created_at'), // Assuming check_ins table has full_name of the user
           supabase.from('self_reports').select('id, full_name, mood, symptoms, activity, created_at'),
           supabase.from('user_questions').select('id, user_email, message_content, created_at'),
-          supabase.from('profiles').select('id, full_name, address, birthdate, emergency_contact, email, created_at')
+          supabase.from('profiles').select('id, full_name, address, birthdate, emergency_contact, email, created_at'),
+          supabase.from('alerts').select('id, user_id, alert_type, timestamp, details').order('timestamp', { ascending: false }) // Fetch alerts
         ]);
 
+        // Error handling for each response
         if (photoRes.error) throw photoRes.error;
         if (privacyRes.error) throw privacyRes.error;
         if (medRes.error) throw medRes.error;
@@ -85,17 +111,34 @@ const AdminDashboard: React.FC = () => {
         if (reportRes.error) throw reportRes.error;
         if (questionRes.error) throw questionRes.error;
         if (profileRes.error) throw profileRes.error;
+        if (alertsRes.error) throw alertsRes.error; // Handle alerts error
 
+        // Set states for existing data
         setPhotoConsents(photoRes.data || []);
         setPrivacyConsents(privacyRes.data || []);
         setMedications(medRes.data || []);
         setCheckIns(checkInRes.data || []);
         setSelfReports(reportRes.data || []);
         setUserQuestions(questionRes.data || []);
-        setProfiles(profileRes.data || []);
+        
+        const fetchedProfiles = profileRes.data || [];
+        setProfiles(fetchedProfiles);
+
+        // Process and set alert history
+        const rawAlerts = alertsRes.data || [];
+        const processedAlerts: AlertRecord[] = rawAlerts.map(alert => {
+          const userProfile = fetchedProfiles.find(p => p.id === alert.user_id);
+          return {
+            ...alert,
+            user_full_name: userProfile?.full_name || 'Unknown User', // Get user name from profiles
+            timestamp: alert.timestamp
+          };
+        });
+        setAlertHistory(processedAlerts);
+
       } catch (err: any) {
-        console.error(err);
-        setError('Failed to load dashboard records.');
+        console.error("Error during data fetching:", err);
+        setError(`Failed to load dashboard records: ${err.message}`);
       } finally {
         setLoading(false);
       }
@@ -104,11 +147,67 @@ const AdminDashboard: React.FC = () => {
     fetchData();
   }, []);
 
+  // Realtime subscription for new alerts
+  useEffect(() => {
+    // Ensure profiles are loaded before attempting to subscribe or process alerts that need profile data
+    if (!profiles || profiles.length === 0) {
+        // console.log("Profiles not yet loaded, skipping alerts subscription setup.");
+        // return; // Or handle differently if subscription should always be active
+    }
+
+    const channel = supabase
+      .channel('alerts-realtime-channel')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'alerts' },
+        (payload) => {
+          console.log('New alert received:', payload);
+          const newAlert = payload.new as Omit<AlertRecord, 'user_full_name'>; // Type assertion
+
+          // Attempt to find user_full_name from existing profiles state
+          const userProfile = profiles.find(p => p.id === newAlert.user_id);
+          const processedNewAlert: AlertRecord = {
+            ...newAlert,
+            user_full_name: userProfile?.full_name || 'Unknown User', // Fallback
+            timestamp: newAlert.timestamp || new Date().toISOString() // Ensure timestamp exists
+          };
+          
+          setAlertHistory(prevAlerts => [processedNewAlert, ...prevAlerts]);
+          setNewAlertCount(prevCount => prevCount + 1);
+        }
+      )
+      .subscribe((status, err) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('Subscribed to alerts channel!');
+        }
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.error('Alerts subscription error:', err);
+          // Optionally, try to resubscribe or notify user
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+      console.log('Unsubscribed from alerts channel.');
+    };
+  }, [profiles]); // Add profiles to dependency array to re-evaluate if profiles change
+
   const formatDate = (dateString: string) => new Date(dateString).toLocaleString();
 
-  const renderSimpleTable = (title: string, headers: string[], rows: React.ReactNode[][]) => (
+  // Modified to include an optional badge for new items
+  const renderSimpleTable = (title: string, headers: string[], rows: React.ReactNode[][], badgeCount?: number) => (
     <div className="mb-8">
-      <h3 className="text-xl font-semibold mb-2" style={{ color: branding.primaryColor }}>{title}</h3>
+      <div className="flex items-center mb-2">
+        <h3 className="text-xl font-semibold" style={{ color: branding.primaryColor }}>{title}</h3>
+        {badgeCount && badgeCount > 0 && (
+          <span 
+            className="ml-3 px-2.5 py-0.5 rounded-full text-xs font-semibold text-white"
+            style={{ backgroundColor: branding.secondaryColor }} // Use secondaryColor for badge
+          >
+            {badgeCount} New
+          </span>
+        )}
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full border border-gray-300">
           <thead className="bg-gray-100 text-left">
@@ -173,6 +272,17 @@ const AdminDashboard: React.FC = () => {
 
           {renderSimpleTable('Profile Info', ['Name', 'Email', 'Address', 'Birthdate', 'Emergency Contact'],
             profiles.map(p => [p.full_name, p.email, p.address, p.birthdate, p.emergency_contact]))}
+
+          {/* New Table for Emergency Alert History with badge */}
+          {renderSimpleTable('Emergency Alert History', ['User Name', 'Alert Type', 'Timestamp', 'Details'],
+            alertHistory.map(alert => [
+              alert.user_full_name,
+              alert.alert_type,
+              formatDate(alert.timestamp),
+              alert.details || 'N/A'
+            ]),
+            newAlertCount // Pass newAlertCount to display badge
+          )}
         </>
       )}
     </div>
