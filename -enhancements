@@ -1,0 +1,89 @@
+[1mdiff --git a/.firebaserc b/.firebaserc[m
+[1mdeleted file mode 100644[m
+[1mindex bb1c4fb..0000000[m
+[1m--- a/.firebaserc[m
+[1m+++ /dev/null[m
+[36m@@ -1,5 +0,0 @@[m
+[31m-{[m
+[31m-  "projects": {[m
+[31m-    "default": "wellfit-community"[m
+[31m-  }[m
+[31m-}[m
+[1mdiff --git a/README.md b/README.md[m
+[1mindex 861f07a..690ef2e 100644[m
+[1m--- a/README.md[m
+[1m+++ b/README.md[m
+[36m@@ -182,35 +182,3 @@[m [mTo run from source:[m
+ go run . help[m
+ ```[m
+ # Redeploy trigger[m
+[31m-[m
+[31m-## Project Features[m
+[31m-[m
+[31m-### Doctor's View (`/doctors-view`)[m
+[31m-*   **Purpose:** Allows users (presumably seniors or patients) to see a summary of their recent health check-ins and self-reported data. It also provides a way for them to see if their data has been reviewed by a care team.[m
+[31m-*   **Functionality:**[m
+[31m-    *   Displays the latest check-in notes.[m
+[31m-    *   Shows recent self-reported health entries (mood, symptoms, activity).[m
+[31m-    *   Indicates the review status of these items.[m
+[31m-    *   Includes a feature for the user to submit a question to their care team. This relies on the `user_questions` table in the database.[m
+[31m-[m
+[31m-### Self-Reporting Page (`/self-reporting`)[m
+[31m-*   **Purpose:** Provides a dedicated page for users to easily report on their current health status, including mood, symptoms, and daily activities.[m
+[31m-*   **Senior-Friendly Design:**[m
+[31m-    *   Uses large, readable fonts and clear, simple language.[m
+[31m-    *   Ensures high color contrast for better visibility.[m
+[31m-    *   Features large, easy-to-click buttons and intuitive form elements (e.g., dropdown for mood).[m
+[31m-    *   Overall layout is spacious and uncluttered to reduce cognitive load.[m
+[31m-*   **Brand Integration:** Leverages the application's branding configuration for a consistent look and feel.[m
+[31m-*   **Functionality:**[m
+[31m-    *   Allows selection of mood from predefined options.[m
+[31m-    *   Provides text areas for describing symptoms and activities.[m
+[31m-    *   Submits this information to the `health_entries` table in the database.[m
+[31m-[m
+[31m-### Data Flow: Self-Reporting to Doctor's View[m
+[31m-*   Data entered on the `SelfReportingPage` is saved as a `health_entries` record in the Supabase database with an `entry_type` of `'self_report'`.[m
+[31m-*   The `DoctorsView` page fetches all `health_entries` for the logged-in user and displays them, including those from the `SelfReportingPage`. The view is designed to specifically format these `'self_report'` entries for clarity.[m
+[31m-[m
+[31m-### Important Database Note: `user_questions` Table[m
+[31m-*   A new table, `user_questions`, is required for the "Ask a Question" feature in the Doctor's View.[m
+[31m-*   A migration file (e.g., `supabase/migrations/YYYYMMDDHHMMSS_create_user_questions_table.sql`) has been created.[m
+[31m-*   **Action Required:** To apply this database change, run the command `supabase db push` in your project's Supabase environment. Without this, the "Ask a Question" feature will not function correctly.[m
+[1mdiff --git a/firebase-debug.log b/firebase-debug.log[m
+[1mdeleted file mode 100644[m
+[1mindex 40a5c4d..0000000[m
+[1m--- a/firebase-debug.log[m
+[1m+++ /dev/null[m
+[36m@@ -1,38 +0,0 @@[m
+[31m-[debug] [2025-05-23T03:53:49.062Z] ----------------------------------------------------------------------[m
+[31m-[debug] [2025-05-23T03:53:49.064Z] Command:       /usr/local/share/nvm/versions/node/v20.19.0/bin/node /home/codespace/nvm/current/bin/firebase deploy --only functions --debug[m
+[31m-[debug] [2025-05-23T03:53:49.064Z] CLI Version:   14.4.0[m
+[31m-[debug] [2025-05-23T03:53:49.064Z] Platform:      linux[m
+[31m-[debug] [2025-05-23T03:53:49.064Z] Node Version:  v20.19.0[m
+[31m-[debug] [2025-05-23T03:53:49.064Z] Time:          Fri May 23 2025 03:53:49 GMT+0000 (Coordinated Universal Time)[m
+[31m-[debug] [2025-05-23T03:53:49.064Z] Env Overrides: GITHUB_API_URL, GITHUB_API_URL[m
+[31m-[debug] [2025-05-23T03:53:49.065Z] ----------------------------------------------------------------------[m
+[31m-[debug] [m
+[31m-[debug] [2025-05-23T03:53:49.335Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"][m
+[31m-[debug] [2025-05-23T03:53:49.337Z] > authorizing via signed-in user (mdleblanc4@gmail.com)[m
+[31m-[debug] [2025-05-23T03:53:49.337Z] [iam] checking project wellfit-community for permissions ["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"][m
+[31m-[debug] [2025-05-23T03:53:49.338Z] Checked if tokens are valid: false, expires at: 1747972877660[m
+[31m-[debug] [2025-05-23T03:53:49.338Z] Checked if tokens are valid: false, expires at: 1747972877660[m
+[31m-[debug] [2025-05-23T03:53:49.338Z] > refreshing access token with scopes: [][m
+[31m-[debug] [2025-05-23T03:53:49.340Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none][m
+[31m-[debug] [2025-05-23T03:53:49.340Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted][m
+[31m-[debug] [2025-05-23T03:53:49.484Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200[m
+[31m-[debug] [2025-05-23T03:53:49.484Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted][m
+[31m-[debug] [2025-05-23T03:53:49.490Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/wellfit-community:testIamPermissions [none][m
+[31m-[debug] [2025-05-23T03:53:49.490Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/wellfit-community:testIamPermissions x-goog-quota-user=projects/wellfit-community[m
+[31m-[debug] [2025-05-23T03:53:49.490Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/wellfit-community:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}[m
+[31m-[debug] [2025-05-23T03:53:49.725Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/wellfit-community:testIamPermissions 200[m
+[31m-[debug] [2025-05-23T03:53:49.725Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/wellfit-community:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}[m
+[31m-[debug] [2025-05-23T03:53:49.726Z] Checked if tokens are valid: true, expires at: 1747976028485[m
+[31m-[debug] [2025-05-23T03:53:49.726Z] Checked if tokens are valid: true, expires at: 1747976028485[m
+[31m-[debug] [2025-05-23T03:53:49.726Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/wellfit-community/serviceAccounts/wellfit-community@appspot.gserviceaccount.com:testIamPermissions [none][m
+[31m-[debug] [2025-05-23T03:53:49.726Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/wellfit-community/serviceAccounts/wellfit-community@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}[m
+[31m-[debug] [2025-05-23T03:53:50.069Z] <<< [apiv2][status] POST https://iam.googleapis.com/v1/projects/wellfit-community/serviceAccounts/wellfit-community@appspot.gserviceaccount.com:testIamPermissions 200[m
+[31m-[debug] [2025-05-23T03:53:50.070Z] <<< [apiv2][body] POST https://iam.googleapis.com/v1/projects/wellfit-community/serviceAccounts/wellfit-community@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}[m
+[31m-[info] [m
+[31m-[info] === De

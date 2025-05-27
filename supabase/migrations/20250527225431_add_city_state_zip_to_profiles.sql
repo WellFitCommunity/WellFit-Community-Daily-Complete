@@ -1,0 +1,4 @@
+ALTER TABLE profiles
+ADD COLUMN city TEXT,
+ADD COLUMN state TEXT,
+ADD COLUMN zip_code TEXT;
