@@ -5,7 +5,8 @@ import { useSupabaseClient } from '@supabase/auth-helpers-react';
 
 type Profile = {
   id: string;
-  full_name: string;
+  first_name: string;
+  last_name: string;
   phone: string;
   dob?: string;
   address?: string;
@@ -18,7 +19,9 @@ const UsersList: React.FC = () => {
 
   useEffect(() => {
     const fetchProfiles = async () => {
-      const { data, error } = await supabase.from('profiles').select('*');
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, phone, dob, address');
       if (error) {
         console.error('Error fetching profiles:', error.message);
       } else {
@@ -41,7 +44,7 @@ const UsersList: React.FC = () => {
         <ul className="space-y-2">
           {profiles.map((user) => (
             <li key={user.id} className="bg-gray-100 rounded-lg p-3">
-              <div className="font-semibold">{user.full_name}</div>
+              <div className="font-semibold">{user.first_name} {user.last_name}</div>
               <div className="text-sm text-gray-700">{user.phone}</div>
               {user.dob && <div className="text-sm text-gray-500">DOB: {user.dob}</div>}
               {user.address && <div className="text-sm text-gray-500">Address: {user.address}</div>}
@@ -54,3 +57,4 @@ const UsersList: React.FC = () => {
 };
 
 export default UsersList;
+

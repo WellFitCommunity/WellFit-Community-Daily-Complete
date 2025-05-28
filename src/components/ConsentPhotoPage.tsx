@@ -5,7 +5,8 @@ import { useNavigate } from 'react-router-dom';
 
 const ConsentPrivacyPage: React.FC = () => {
   const sigCanvasRef = useRef<SignatureCanvas | null>(null);
-  const [fullName, setFullName] = useState(localStorage.getItem('fullName') || '');
+  const [firstName, setFirstName] = useState(localStorage.getItem('firstName') || '');
+  const [lastName, setLastName] = useState(localStorage.getItem('lastName') || '');
   const [error, setError] = useState('');
   const [feedback, setFeedback] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -16,8 +17,8 @@ const ConsentPrivacyPage: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    if (!fullName.trim()) {
-      setError('Full name is required.');
+    if (!firstName.trim() || !lastName.trim()) {
+      setError('First and last name are required.');
       return;
     }
     if (sigCanvasRef.current?.isEmpty()) {
@@ -32,7 +33,7 @@ const ConsentPrivacyPage: React.FC = () => {
     try {
       const dataUrl = sigCanvasRef.current?.toDataURL();
       const blob = await (await fetch(dataUrl)).blob();
-      const fileName = `privacy-signatures/${fullName.replace(/\s+/g, '_')}_${Date.now()}.png`;
+      const fileName = `privacy-signatures/${firstName}_${lastName}_${Date.now()}.png`;
 
       const { error: uploadError } = await supabase.storage
         .from('consent-signatures')
@@ -46,7 +47,8 @@ const ConsentPrivacyPage: React.FC = () => {
 
       const { error: dbError } = await supabase.from('privacy_consent').insert([
         {
-          full_name: fullName,
+          first_name: firstName,
+          last_name: lastName,
           file_path: fileName,
           signed_at: new Date().toISOString(),
         },
@@ -71,6 +73,7 @@ const ConsentPrivacyPage: React.FC = () => {
   return (
     <div className="max-w-xl mx-auto p-6 bg-white rounded shadow text-black">
       <h2 className="text-2xl font-bold text-center text-[#003865] mb-4">Privacy & Participation Agreement</h2>
+
       <p className="mb-4 text-sm">
         At WellFit Community, Inc., Vital Edge Healthcare Consulting, LLC, and Envision VirtualEdge Group, LLC, we take your privacy seriously and treat your information with care and respect. Our team follows privacy-conscious practices inspired by HIPAA principles, ensuring your health information is stored securely, only shared with trusted individuals as needed, and used solely to support your wellness. We do not sell or misuse your data, and we are committed to protecting your dignity, your safety, and your trust.
       </p>
@@ -79,12 +82,21 @@ const ConsentPrivacyPage: React.FC = () => {
         By signing this agreement, you confirm that you have read and understand how photos, videos, or stories shared through the WellFit Community platform may be used. Your likeness or story may appear in program materials, community newsletters, grant reports, or other wellness-related promotions to highlight the impact of this work. Participation is entirely voluntary and may be withdrawn at any time by contacting our team.
       </p>
 
-      <label htmlFor="fullName" className="block font-semibold mb-2">Full Name</label>
+      <label htmlFor="firstName" className="block font-semibold mb-2">First Name</label>
       <input
-        id="fullName"
+        id="firstName"
         type="text"
-        value={fullName}
-        onChange={e => setFullName(e.target.value)}
+        value={firstName}
+        onChange={e => setFirstName(e.target.value)}
+        className="w-full p-2 border border-gray-400 rounded mb-4"
+      />
+
+      <label htmlFor="lastName" className="block font-semibold mb-2">Last Name</label>
+      <input
+        id="lastName"
+        type="text"
+        value={lastName}
+        onChange={e => setLastName(e.target.value)}
         className="w-full p-2 border border-gray-400 rounded mb-4"
       />
 

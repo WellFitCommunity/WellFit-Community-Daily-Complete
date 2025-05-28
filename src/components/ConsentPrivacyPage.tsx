@@ -16,9 +16,10 @@ const ConsentPrivacyPage: React.FC = () => {
     }
 
     const signatureData = localStorage.getItem('photoSignature');
-    const fullName = localStorage.getItem('fullName');
+    const firstName = localStorage.getItem('firstName');
+    const lastName = localStorage.getItem('lastName');
 
-    if (!signatureData || !fullName) {
+    if (!signatureData || !firstName || !lastName) {
       setError('Missing signature or name from previous step.');
       return;
     }
@@ -29,7 +30,8 @@ const ConsentPrivacyPage: React.FC = () => {
 
     try {
       const blob = await (await fetch(signatureData)).blob();
-      const fileName = `signatures/${fullName.replace(/\s+/g, '_')}_${Date.now()}_final.png`;
+      const fullName = `${firstName} ${lastName}`;
+      const fileName = `signatures/${firstName}_${lastName}_${Date.now()}_final.png`;
 
       const { error: uploadError } = await supabase.storage
         .from('consent-signatures')
@@ -43,7 +45,8 @@ const ConsentPrivacyPage: React.FC = () => {
 
       const { error: dbError } = await supabase.from('photo_consent').insert([
         {
-          full_name: fullName,
+          first_name: firstName,
+          last_name: lastName,
           file_path: fileName,
           consented_at: new Date().toISOString(),
         }
@@ -57,7 +60,8 @@ const ConsentPrivacyPage: React.FC = () => {
 
       setFeedback('Your consent has been recorded. Thank you!');
       localStorage.removeItem('photoSignature');
-      localStorage.removeItem('fullName');
+      localStorage.removeItem('firstName');
+      localStorage.removeItem('lastName');
 
       setTimeout(() => navigate('/dashboard'), 2000);
     } catch (err) {
