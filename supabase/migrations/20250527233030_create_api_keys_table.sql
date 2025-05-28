@@ -1,3 +1,4 @@
+-- migrate: skip
 -- Create the api_keys table
 CREATE TABLE api_keys (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,

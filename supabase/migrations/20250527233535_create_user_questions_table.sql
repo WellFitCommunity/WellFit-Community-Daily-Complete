@@ -1,3 +1,4 @@
+-- migrate:skip
 -- SQL for user_questions table
 -- Please save this content as a new Supabase migration file,
 -- for example: supabase/migrations/YYYYMMDDHHMMSS_create_user_questions_table.sql
