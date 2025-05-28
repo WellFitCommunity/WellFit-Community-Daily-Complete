@@ -6,7 +6,8 @@ const DemographicsPage: React.FC = () => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    full_name: '',
+    first_name: '',
+    last_name: '',
     phone: '',
     pin: '',
     dob: '',
@@ -27,16 +28,12 @@ const DemographicsPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { full_name, phone, pin, dob, address, hasEmail } = formData;
+    const { first_name, last_name, phone, pin, dob, address, hasEmail } = formData;
 
-    // Save email preference to localStorage
     localStorage.setItem('prefersEmail', hasEmail ? 'true' : 'false');
-
-    // Save phone & PIN locally (for fallback use)
     localStorage.setItem('wellfitPhone', phone);
     localStorage.setItem('wellfitPin', pin);
 
-    // Get Supabase user ID if email is being used
     const {
       data: { user },
       error: sessionError,
@@ -44,18 +41,17 @@ const DemographicsPage: React.FC = () => {
 
     const userId = user?.id ?? crypto.randomUUID();
     localStorage.setItem('wellfitUserId', userId);
-    localStorage.setItem('wellfitName', full_name);
+    localStorage.setItem('wellfitName', `${first_name} ${last_name}`);
 
-    // Save to profiles table
     const { error: profileError } = await supabase.from('profiles').upsert({
       id: userId,
-      full_name,
+      first_name,
+      last_name,
       phone,
       dob,
       address,
     });
 
-    // Save to phone_auth table (for local login)
     const { error: phoneAuthError } = await supabase.from('phone_auth').upsert({
       id: userId,
       phone,
@@ -80,7 +76,8 @@ const DemographicsPage: React.FC = () => {
       {success && <p className="text-green-600 text-center">Profile saved!</p>}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <input name="full_name" placeholder="Full Name" value={formData.full_name} onChange={handleChange} className="w-full p-2 border rounded" />
+        <input name="first_name" placeholder="First Name" value={formData.first_name} onChange={handleChange} className="w-full p-2 border rounded" />
+        <input name="last_name" placeholder="Last Name" value={formData.last_name} onChange={handleChange} className="w-full p-2 border rounded" />
         <input name="phone" placeholder="Phone Number" value={formData.phone} onChange={handleChange} className="w-full p-2 border rounded" />
         <input name="pin" placeholder="4-Digit PIN" maxLength={4} value={formData.pin} onChange={handleChange} className="w-full p-2 border rounded" />
         <input name="dob" type="date" placeholder="Date of Birth" value={formData.dob} onChange={handleChange} className="w-full p-2 border rounded" />

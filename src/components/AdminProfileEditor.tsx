@@ -1,10 +1,10 @@
-// src/components/AdminProfileEditor.tsx
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
 interface Profile {
   id: string;
-  full_name: string;
+  first_name: string;
+  last_name: string;
   role: string;
   dob?: string;
   phone?: string;
@@ -34,9 +34,7 @@ const AdminProfileEditor: React.FC = () => {
     fetchProfiles();
     fetchUserId();
     const storedId = localStorage.getItem('selectedSeniorId');
-    if (storedId) {
-      setSelectedId(storedId);
-    }
+    if (storedId) setSelectedId(storedId);
   }, []);
 
   useEffect(() => {
@@ -51,7 +49,10 @@ const AdminProfileEditor: React.FC = () => {
   }, [selectedId, profiles]);
 
   const fetchProfiles = async () => {
-    const { data, error } = await supabase.from('profiles').select('*').eq('role', 'senior');
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, first_name, last_name, role, dob, phone, address')
+      .eq('role', 'senior');
     if (!error && data) setProfiles(data);
   };
 
@@ -95,7 +96,9 @@ const AdminProfileEditor: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-4">
-      <a href="/admin-panel" className="inline-block mb-4 text-sm text-blue-600 hover:underline">← Back to Admin Panel</a>
+      <a href="/admin-panel" className="inline-block mb-4 text-sm text-blue-600 hover:underline">
+        ← Back to Admin Panel
+      </a>
 
       <h2 className="text-xl font-bold mb-4">Admin Profile Editor</h2>
 
@@ -103,14 +106,14 @@ const AdminProfileEditor: React.FC = () => {
         <option value="">Select a Senior</option>
         {profiles.map((profile) => (
           <option key={profile.id} value={profile.id}>
-            {profile.full_name}
+            {profile.first_name} {profile.last_name}
           </option>
         ))}
       </select>
 
       {selectedProfile && (
         <div className="bg-gray-100 p-4 rounded shadow">
-          <h3 className="font-semibold text-lg">{selectedProfile.full_name}</h3>
+          <h3 className="font-semibold text-lg">{selectedProfile.first_name} {selectedProfile.last_name}</h3>
           <p>Role: {selectedProfile.role}</p>
           <p>Date of Birth: {selectedProfile.dob}</p>
           <p>Phone: {selectedProfile.phone}</p>
