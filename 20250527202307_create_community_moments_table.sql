@@ -1,3 +1,4 @@
+-- migrate:skip
 -- SQL for creating the community_moments table
 
 CREATE TABLE IF NOT EXISTS public.community_moments (
