@@ -24,105 +24,24 @@ import SelfReportingPage from './components/SelfReportingPage'; // Added import
 // 👇 NEW import
 import { requestNotificationPermission } from './utils/requestNotificationPermission';
 
-const Layout: React.FC<{ children: React.ReactNode; branding: BrandingConfig }> = ({ children, branding }) => {
-  const location = useLocation();
-  const showHeaderFooter = location.pathname !== '/';
-
-  return (
-    <div
-      className="min-h-screen flex flex-col text-white"
-      style={{ background: `linear-gradient(to right, ${branding.primaryColor}, ${branding.secondaryColor})` }}
-    >
-      {showHeaderFooter && <Header />}
-      <main className="flex-grow p-4 flex justify-center items-center">
-        <div className="bg-white text-[#003865] rounded-2xl shadow-2xl p-6 w-full max-w-4xl">
-          {children}
-        </div>
-      </main>
-      {showHeaderFooter && <Footer />}
-    </div>
-  );
-};
-
 const App: React.FC = () => {
   const [branding, setBranding] = useState<BrandingConfig>(getCurrentBranding());
 
   useEffect(() => {
-    // Potentially update branding if it can change dynamically, e.g., based on a user setting
-    // For now, it's set once on init based on subdomain
     setBranding(getCurrentBranding());
-  }, []);
-
-  // 👇 Add useEffect to request notification token
-  useEffect(() => {
-    requestNotificationPermission();
   }, []);
 
   return (
     <BrandingContext.Provider value={branding}>
-      <Layout branding={branding}>
-        <Routes>
-          {/* Public pages */}
-          <Route path="/" element={<WelcomePage />} />
-          <Route path="/senior-enrollment" element={<SeniorEnrollmentPage />} />
-          <Route path="/meal/:id" element={<MealDetailPage />} />
-          <Route path="/lockscreen" element={<LockScreenUser />} />
-          <Route path="/consent-photo" element={<ConsentPhotoPage />} />
-          <Route path="/consent-privacy" element={<ConsentPrivacyPage />} />
-
-          {/* Protected pages */}
-          <Route
-            path="/dashboard"
-            element={
-              <RequireAuth>
-                <Dashboard />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/checkin"
-            element={
-              <RequireAuth>
-                <CheckInTracker />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/wordfind"
-            element={
-              <RequireAuth>
-                <WordFind />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/doctors-view"
-            element={
-              <RequireAuth>
-                <DoctorsView />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/self-reporting" // Added route
-            element={
-              <RequireAuth>
-                <SelfReportingPage />
-              </RequireAuth>
-            }
-          />
-
-          {/* Admin pages */}
-          <Route path="/admin-panel" element={<AdminPanel />} />
-          <Route path="/admin-profile-editor" element={<AdminProfileEditor />} />
-
-          {/* Logout */}
-          <Route path="/logout" element={<LogoutPage />} />
-
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Layout>
+      <Routes>
+        <Route path="/" element={<WelcomePage />} />
+        {/* Add your other pages here, for example: */}
+        {/* <Route path="/register" element={<RegisterPage />} /> */}
+        {/* <Route path="/demographics" element={<DemographicsPage />} /> */}
+        {/* <Route path="/dashboard" element={<Dashboard />} /> */}
+        {/* ...other routes... */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </BrandingContext.Provider>
   );
 };

@@ -1,3 +1,5 @@
+// src/components/branding.config.ts
+
 export interface BrandingConfig {
   textColor: string;
   appName: string;
@@ -5,9 +7,9 @@ export interface BrandingConfig {
   primaryColor: string;
   secondaryColor: string;
   contactInfo: string;
-  gradient?: string; // Optional but now fully supported
+  gradient?: string;
+  customFooter?: string; // <-- NEW for tenant footers
 }
-
 
 export interface TenantBranding extends BrandingConfig {
   subdomain: string;
@@ -18,27 +20,29 @@ export const defaultBranding: BrandingConfig = {
   logoUrl: "/android-chrome-512x512.png",
   primaryColor: "#003865",
   secondaryColor: "#8cc63f",
-  textColor: "#ffffff", // ✅ Required to match BrandingConfig
-  gradient: "linear-gradient(to bottom right, #003865, #8cc63f)", // optional, but recommended
+  textColor: "#ffffff",
+  gradient: "linear-gradient(to bottom right, #003865, #8cc63f)",
   contactInfo: `© ${new Date().getFullYear()} WellFit Community. All rights reserved.`,
+  // No customFooter here—shows the Alliance default footer!
 };
 
-
 export const tenantBrandings: TenantBranding[] = [
-  // Example:
+  // Example tenant—uncomment and fill in to activate!
   // {
   //   subdomain: "houston",
   //   appName: "WellFit Houston",
   //   logoUrl: "/logos/houston-logo.png",
   //   primaryColor: "#A00000",
   //   secondaryColor: "#00A000",
-  //   contactInfo: "Contact WellFit Houston at ..."
+  //   textColor: "#ffffff",
+  //   gradient: "linear-gradient(to bottom right, #A00000, #00A000)",
+  //   contactInfo: "Contact WellFit Houston at ...",
+  //   customFooter: "© 2025 WellFit Houston. Powered by Houston Senior Services.",
   // }
 ];
 
 export const getCurrentBranding = (): BrandingConfig => {
   if (typeof window === "undefined") {
-    // Return default branding if window is not defined (e.g., during SSR)
     return defaultBranding;
   }
 
