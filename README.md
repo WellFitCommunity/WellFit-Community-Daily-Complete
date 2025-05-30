@@ -77,7 +77,7 @@ Command & config reference can be found [here](https://supabase.com/docs/referen
 
 We follow semantic versioning for changes that directly impact CLI commands, flags, and configurations.
 
-However, due to dependencies on other service images, we cannot guarantee that schema migrations, seed.sql, and generated types will always work for the same CLI major version. If you need such guarantees, we encourage you to pin a specific version of CLI in package.json.
+However, due to dependencies on other service images, we cannot guarantee that schema migrations, seed.sql, and generated types will always work for the same CLI major version. If you need such guarantees, we encourage you to pin a specific version of CLI in .
 
 ## Developing
 
