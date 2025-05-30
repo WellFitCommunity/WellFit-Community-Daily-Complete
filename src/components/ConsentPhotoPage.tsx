@@ -1,9 +1,8 @@
 import React, { useRef, useState } from 'react';
 import SignatureCanvas from 'react-signature-canvas';
-import { supabase } from '../lib/supabaseClient';
 import { useNavigate } from 'react-router-dom';
 
-const ConsentPrivacyPage: React.FC = () => {
+const ConsentPhotoPage: React.FC = () => {
   const sigCanvasRef = useRef<SignatureCanvas | null>(null);
   const [firstName, setFirstName] = useState(localStorage.getItem('firstName') || '');
   const [lastName, setLastName] = useState(localStorage.getItem('lastName') || '');
@@ -63,8 +62,8 @@ const ConsentPrivacyPage: React.FC = () => {
       setFeedback('Privacy consent submitted. Thank you!');
       setTimeout(() => navigate('/dashboard'), 2000);
     } catch (err) {
-      console.error(err);
-      setError('Unexpected error occurred.');
+      console.error('Error saving photo consent data:', err);
+      setError('An unexpected error occurred while saving your consent. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -104,7 +103,7 @@ const ConsentPrivacyPage: React.FC = () => {
       <div className="border border-gray-500 rounded mb-4">
         <SignatureCanvas
           penColor="black"
-          canvasProps={{ width: 500, height: 200, className: 'bg-gray-100' }}
+          canvasProps={{ width: 500, height: 200, className: 'bg-gray-100 w-full' }}
           ref={sigCanvasRef}
         />
       </div>
@@ -114,14 +113,14 @@ const ConsentPrivacyPage: React.FC = () => {
           onClick={handleClear}
           className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500"
         >
-          Clear
+          Clear Signature
         </button>
         <button
           onClick={handleSubmit}
           className="px-4 py-2 bg-[#003865] text-white rounded hover:bg-[#8cc63f]"
           disabled={submitting}
         >
-          {submitting ? 'Submitting...' : 'Submit Final Consent'}
+          {submitting ? 'Saving...' : 'Save and Proceed to Privacy Consent'}
         </button>
       </div>
 
@@ -131,4 +130,4 @@ const ConsentPrivacyPage: React.FC = () => {
   );
 };
 
-export default ConsentPrivacyPage;
+export default ConsentPhotoPage;

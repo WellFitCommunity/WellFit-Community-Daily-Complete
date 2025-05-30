@@ -20,6 +20,7 @@ import ConsentPhotoPage from './components/ConsentPhotoPage';
 import ConsentPrivacyPage from './components/ConsentPrivacyPage';
 import DoctorsView from './components/DoctorsView';
 import SelfReportingPage from './components/SelfReportingPage'; // Added import
+import TriviaGame from './components/TriviaGame';
 
 // 👇 NEW import
 import { requestNotificationPermission } from './utils/requestNotificationPermission';
@@ -32,17 +33,53 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <BrandingContext.Provider value={branding}>
-      <Routes>
-        <Route path="/" element={<WelcomePage />} />
-        {/* Add your other pages here, for example: */}
-        {/* <Route path="/register" element={<RegisterPage />} /> */}
-        {/* <Route path="/demographics" element={<DemographicsPage />} /> */}
-        {/* <Route path="/dashboard" element={<Dashboard />} /> */}
-        {/* ...other routes... */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrandingContext.Provider>
+<Layout>
+  <Routes>
+    {/* Public pages */}
+    <Route path="/" element={<WelcomePage />} />
+    <Route path="/senior-enrollment" element={<SeniorEnrollmentPage />} />
+    <Route path="/meal/:id" element={<MealDetailPage />} />
+    <Route path="/lockscreen" element={<LockScreenUser />} />
+    <Route path="/consent-photo" element={<ConsentPhotoPage />} />
+    <Route path="/consent-privacy" element={<ConsentPrivacyPage />} />
+
+    {/* Protected pages */}
+    <Route
+      path="/dashboard"
+      element={
+        <RequireAuth>
+          <Dashboard />
+        </RequireAuth>
+      }
+    />
+    <Route
+      path="/checkin"
+      element={
+        <RequireAuth>
+          <CheckInTracker />
+        </RequireAuth>
+      }
+    />
+    <Route
+      path="/wordfind"
+      element={
+        <RequireAuth>
+          <WordFind />
+        </RequireAuth>
+      }
+    />
+
+    {/* Admin pages */}
+    <Route path="/admin-panel" element={<AdminPanel />} />
+    <Route path="/admin-profile-editor" element={<AdminProfileEditor />} />
+
+    {/* Logout */}
+    <Route path="/logout" element={<LogoutPage />} />
+
+    {/* Fallback */}
+    <Route path="*" element={<Navigate to="/" replace />} />
+  </Routes>
+</Layout>
   );
 };
 
