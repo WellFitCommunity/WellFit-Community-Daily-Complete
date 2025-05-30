@@ -1,2 +1,0 @@
--- migrate:skip
--- Placeholder migration to satisfy Supabase remote history (20250527225431)
