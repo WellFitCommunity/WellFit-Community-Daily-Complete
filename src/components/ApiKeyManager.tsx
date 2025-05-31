@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
 interface ApiKey {
-  id: string;
+  user_id: string;
   org_name: string;
   api_key: string;
   active: boolean;
@@ -250,7 +250,7 @@ const ApiKeyManager: React.FC = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {apiKeys.map((key) => (
-                <tr key={key.id} className={`hover:bg-gray-50 ${loading && 'opacity-50'}`}>
+                <tr key={key.user_id} className={`hover:bg-gray-50 ${loading && 'opacity-50'}`}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{key.org_name}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">{maskApiKey(key.api_key)}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -265,7 +265,7 @@ const ApiKeyManager: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(key.created_at)}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                     <button
-                      onClick={() => handleToggleKeyStatus(key.id, key.active)}
+                      onClick={() => handleToggleKeyStatus(key.user_id, key.active)}
                       className={`px-3 py-1 text-xs rounded-md ${
                         key.active 
                         ? 'bg-yellow-500 hover:bg-yellow-600 text-white' 
@@ -276,7 +276,7 @@ const ApiKeyManager: React.FC = () => {
                       {key.active ? 'Disable' : 'Enable'}
                     </button>
                     <button
-                      onClick={() => handleRevokeKey(key.id, key.org_name)}
+                      onClick={() => handleRevokeKey(key.user_id, key.org_name)}
                       className="px-3 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded-md disabled:opacity-50"
                       disabled={loading}
                     >

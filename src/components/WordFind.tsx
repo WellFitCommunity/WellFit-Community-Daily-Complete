@@ -88,14 +88,18 @@ const WordFind: React.FC = () => {
   const themeData = dailyThemes[(new Date().getDate() - 1) % dailyThemes.length];
 
   return (
-    <div ref={containerRef} className="p-4 text-center">
+    <div ref={containerRef} className="p-2 sm:p-4 w-full max-w-2xl mx-auto text-center">
       <h2 className="text-2xl font-bold mb-2">{themeData.theme} Word Find</h2>
       <p className="text-sm mb-4">Tap letters to select. Incorrect taps reset.</p>
 
-      <div className="overflow-x-auto -mx-4 px-4">
+      {/* Responsive Grid */}
+      <div className="overflow-x-auto flex justify-center w-full">
         <div
-          className="inline-grid gap-1"
-          style={{ gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))` }}
+          className="inline-grid gap-1 w-full"
+          style={{
+            gridTemplateColumns: `repeat(${COLS}, minmax(28px, 1fr))`,
+            maxWidth: 480,
+          }}
         >
           {grid.map((row, r) =>
             row.map((ch, c) => {
@@ -105,12 +109,15 @@ const WordFind: React.FC = () => {
                 <div
                   key={key}
                   onClick={() => handleTap(r, c)}
-                  className={`border rounded cursor-pointer flex items-center justify-center sm:w-8 sm:h-8 text-xs sm:text-base ${
-                    isSel ? 'bg-blue-500 text-white' : 'bg-white text-black'
-                  }`}
+                  className={`border rounded cursor-pointer flex items-center justify-center
+                    text-xs sm:text-base md:text-lg
+                    ${isSel ? 'bg-blue-500 text-white' : 'bg-white text-black'}
+                  `}
                   style={{
-                    width: `calc(100vw/${COLS} - 8px)`,
-                    height: `calc(100vw/${COLS} - 8px)`,
+                    minWidth: 28,
+                    minHeight: 28,
+                    width: '100%',
+                    aspectRatio: '1 / 1',
                   }}
                 >
                   {ch}
@@ -121,18 +128,32 @@ const WordFind: React.FC = () => {
         </div>
       </div>
 
-      <div className="mt-4 text-left mx-auto" style={{ maxWidth: '10rem' }}>
+      {/* Horizontal Word Bank, responsive & scrollable */}
+      <div className="mt-4 flex flex-col items-center w-full">
         <h3 className="font-semibold mb-1">Words:</h3>
-        <ul>
+        <div
+          className="flex flex-row gap-2 overflow-x-auto pb-2 w-full max-w-xl"
+          style={{ scrollSnapType: 'x mandatory' }}
+        >
           {words.map(w => (
-            <li
+            <div
               key={w}
-              className={found.has(w) ? 'line-through text-green-600' : ''}
+              className={
+                'px-3 py-1 rounded-full border text-base md:text-lg ' +
+                (found.has(w)
+                  ? 'bg-green-100 text-green-600 line-through border-green-400'
+                  : 'bg-gray-100 text-gray-800 border-gray-300')
+              }
+              style={{
+                minWidth: 75,
+                textAlign: 'center',
+                scrollSnapAlign: 'center',
+              }}
             >
               {w}
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       </div>
 
       {celebrate && (

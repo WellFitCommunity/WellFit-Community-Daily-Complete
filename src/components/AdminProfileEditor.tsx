@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
 interface Profile {
-  id: string;
+  user_id: string;
   first_name: string;
   last_name: string;
   role: string;
@@ -12,8 +12,8 @@ interface Profile {
 }
 
 interface AdminNote {
-  id: number;
-  senior_id: string;
+  id: number; // <-- the note's unique ID (should be PK of admin_notes table)
+  senior_id: string; // user_id of the senior this note is about
   created_by: string;
   note: string;
   created_at: string;
@@ -39,7 +39,7 @@ const AdminProfileEditor: React.FC = () => {
 
   useEffect(() => {
     if (selectedId) {
-      const profile = profiles.find(p => p.id === selectedId) || null;
+      const profile = profiles.find(p => p.user_id === selectedId) || null;
       setSelectedProfile(profile);
       fetchNotes(selectedId);
     } else {
@@ -51,7 +51,7 @@ const AdminProfileEditor: React.FC = () => {
   const fetchProfiles = async () => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, first_name, last_name, role, dob, phone, address')
+      .select('user_id, first_name, last_name, role, dob, phone, address')
       .eq('role', 'senior');
     if (!error && data) setProfiles(data);
   };
@@ -105,7 +105,7 @@ const AdminProfileEditor: React.FC = () => {
       <select value={selectedId} onChange={(e) => setSelectedId(e.target.value)} className="w-full p-2 border rounded mb-4">
         <option value="">Select a Senior</option>
         {profiles.map((profile) => (
-          <option key={profile.id} value={profile.id}>
+          <option key={profile.user_id} value={profile.user_id}>
             {profile.first_name} {profile.last_name}
           </option>
         ))}
@@ -174,3 +174,4 @@ const AdminProfileEditor: React.FC = () => {
 };
 
 export default AdminProfileEditor;
+
