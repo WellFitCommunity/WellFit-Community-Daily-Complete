@@ -1,6 +1,8 @@
 import React, { useRef, useState } from 'react';
 import SignatureCanvas from 'react-signature-canvas';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom'; 
+import { supabase } from '../lib/supabaseClient';
+
 
 const ConsentPhotoPage: React.FC = () => {
   const sigCanvasRef = useRef<SignatureCanvas | null>(null);
