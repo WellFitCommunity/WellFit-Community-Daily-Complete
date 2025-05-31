@@ -6,7 +6,6 @@ import { BrandingContext } from './BrandingContext';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import WelcomePage from './components/WelcomePage';
-import SeniorEnrollmentPage from './components/SeniorEnrollmentPage';
 import Dashboard from './components/Dashboard';
 import CheckInTracker from './components/CheckInTracker';
 import WordFind from './components/WordFind';
@@ -20,6 +19,9 @@ import ConsentPhotoPage from './components/ConsentPhotoPage';
 import ConsentPrivacyPage from './components/ConsentPrivacyPage';
 import DoctorsView from './components/DoctorsView';
 import SelfReportingPage from './components/SelfReportingPage'; // Added import
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
+
 
 // 👇 NEW import
 import { requestNotificationPermission } from './utils/requestNotificationPermission';
@@ -41,6 +43,8 @@ const App: React.FC = () => {
         {/* <Route path="/dashboard" element={<Dashboard />} /> */}
         {/* ...other routes... */}
         <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
       </Routes>
     </BrandingContext.Provider>
   );

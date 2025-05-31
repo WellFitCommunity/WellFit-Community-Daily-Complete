@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabaseClient';
 import { useBranding } from '../BrandingContext';
 
 interface ConsentRecord {
-  id: string;
+  user_id: string;
   first_name: string;
   last_name: string;
   file_path: string;
@@ -11,7 +11,7 @@ interface ConsentRecord {
 }
 
 interface MedicationRecord {
-  id: string;
+  user_id: string;
   first_name: string;
   last_name: string;
   medication_name: string;
@@ -20,7 +20,7 @@ interface MedicationRecord {
 }
 
 interface CheckInRecord {
-  id: string;
+  user_id: string;
   first_name: string;
   last_name: string;
   notes: string;
@@ -28,7 +28,7 @@ interface CheckInRecord {
 }
 
 interface SelfReportRecord {
-  id: string;
+  user_id: string;
   first_name: string;
   last_name: string;
   mood: string;
@@ -38,14 +38,14 @@ interface SelfReportRecord {
 }
 
 interface UserQuestion {
-  id: string;
+  user_id: string;
   user_email: string;
   message_content: string;
   created_at: string;
 }
 
 interface ProfileRecord {
-  id: string;
+  user_id: string;
   first_name: string;
   last_name: string;
   address: string;
@@ -56,7 +56,7 @@ interface ProfileRecord {
 }
 
 interface AlertRecord {
-  id: string;
+  id: string;  // Alerts table has its own PK called id
   user_id: string;
   user_full_name: string;
   alert_type: string;
@@ -88,13 +88,13 @@ const AdminDashboard: React.FC = () => {
           photoRes, privacyRes, medRes, checkInRes,
           reportRes, questionRes, profileRes, alertsRes
         ] = await Promise.all([
-          supabase.from('photo_consent').select('id, first_name, last_name, file_path, consented_at'),
-          supabase.from('privacy_consent').select('id, first_name, last_name, file_path, consented_at'),
-          supabase.from('medications').select('id, first_name, last_name, medication_name, frequency, updated_at'),
-          supabase.from('check_ins').select('id, first_name, last_name, notes, created_at'),
-          supabase.from('self_reports').select('id, first_name, last_name, mood, symptoms, activity, created_at'),
-          supabase.from('user_questions').select('id, user_email, message_content, created_at'),
-          supabase.from('profiles').select('id, first_name, last_name, address, birthdate, emergency_contact, email, created_at'),
+          supabase.from('photo_consent').select('user_id, first_name, last_name, file_path, consented_at'),
+          supabase.from('privacy_consent').select('user_id, first_name, last_name, file_path, consented_at'),
+          supabase.from('medications').select('user_id, first_name, last_name, medication_name, frequency, updated_at'),
+          supabase.from('check_ins').select('user_id, first_name, last_name, notes, created_at'),
+          supabase.from('self_reports').select('user_id, first_name, last_name, mood, symptoms, activity, created_at'),
+          supabase.from('user_questions').select('user_id, user_email, message_content, created_at'),
+          supabase.from('profiles').select('user_id, first_name, last_name, address, birthdate, emergency_contact, email, created_at'),
           supabase.from('alerts').select('id, user_id, alert_type, timestamp, details').order('timestamp', { ascending: false })
         ]);
 
@@ -118,7 +118,7 @@ const AdminDashboard: React.FC = () => {
 
         const rawAlerts = alertsRes.data || [];
         const processedAlerts: AlertRecord[] = rawAlerts.map(alert => {
-          const userProfile = fetchedProfiles.find(p => p.id === alert.user_id);
+          const userProfile = fetchedProfiles.find(p => p.user_id === alert.user_id);
           return {
             ...alert,
             user_full_name: userProfile ? `${userProfile.first_name} ${userProfile.last_name}` : 'Unknown User',
@@ -146,7 +146,7 @@ const AdminDashboard: React.FC = () => {
         { event: 'INSERT', schema: 'public', table: 'alerts' },
         (payload) => {
           const newAlert = payload.new as Omit<AlertRecord, 'user_full_name'>;
-          const userProfile = profiles.find(p => p.id === newAlert.user_id);
+          const userProfile = profiles.find(p => p.user_id === newAlert.user_id);
           const processedNewAlert: AlertRecord = {
             ...newAlert,
             user_full_name: userProfile ? `${userProfile.first_name} ${userProfile.last_name}` : 'Unknown User',
@@ -216,7 +216,7 @@ const AdminDashboard: React.FC = () => {
             <div className="mb-6 p-4 bg-green-100 border border-green-400 text-green-800 rounded">
               <h4 className="font-semibold">New Enrollees This Week:</h4>
               <ul className="list-disc ml-6 mt-2">
-                {recentEnrollees.map(e => <li key={e.id}>{e.first_name} {e.last_name}</li>)}
+                {recentEnrollees.map(e => <li key={e.user_id}>{e.first_name} {e.last_name}</li>)}
               </ul>
             </div>
           )}
@@ -225,69 +225,27 @@ const AdminDashboard: React.FC = () => {
             photoConsents.map(d => [
               `${d.first_name} ${d.last_name}`,
               formatDate(d.consented_at),
-              <a href={`https://YOUR_PROJECT.supabase.co/storage/v1/object/public/consent-signatures/${d.file_path}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">View</a>
+              <a href={`https://xkybsjnvuohpqpbkikyn.supabase.co/storage/v1/object/public/consent-signatures/${d.file_path}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">View</a>
             ]))}
 
           {renderSimpleTable('Privacy Consent Records', ['Name', 'Date', 'Signature'],
             privacyConsents.map(d => [
               `${d.first_name} ${d.last_name}`,
               formatDate(d.consented_at),
-              <a href={`https://YOUR_PROJECT.supabase.co/storage/v1/object/public/consent-signatures/${d.file_path}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">View</a>
+              <a href={`https://xkybsjnvuohpqpbkikyn.supabase.co/storage/v1/object/public/consent-signatures/${d.file_path}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">View</a>
             ]))}
 
-          {renderSimpleTable('Medication Records', ['Name', 'Medication', 'Frequency', 'Last Updated'],
-            medications.map(m => [
-              `${m.first_name} ${m.last_name}`,
-              m.medication_name,
-              m.frequency,
-              formatDate(m.updated_at)
-            ]))}
-
-          {renderSimpleTable('Check-In Records', ['Name', 'Notes', 'Date'],
-            checkIns.map(c => [
-              `${c.first_name} ${c.last_name}`,
-              c.notes,
-              formatDate(c.created_at)
-            ]))}
-
-          {renderSimpleTable('Self Reports', ['Name', 'Mood', 'Symptoms', 'Activity', 'Date'],
-            selfReports.map(r => [
-              `${r.first_name} ${r.last_name}`,
-              r.mood,
-              r.symptoms,
-              r.activity,
-              formatDate(r.created_at)
-            ]))}
-
-          {renderSimpleTable('User Questions', ['User Email', 'Message', 'Date'],
-            userQuestions.map(q => [
-              q.user_email,
-              q.message_content,
-              formatDate(q.created_at)
-            ]))}
-
-          {renderSimpleTable('Profile Info', ['Name', 'Email', 'Address', 'Birthdate', 'Emergency Contact'],
-            profiles.map(p => [
-              `${p.first_name} ${p.last_name}`,
-              p.email,
-              p.address,
-              p.birthdate,
-              p.emergency_contact
-            ]))}
-
-          {renderSimpleTable('Emergency Alert History', ['User Name', 'Alert Type', 'Timestamp', 'Details'],
-            alertHistory.map(alert => [
-              alert.user_full_name,
-              alert.alert_type,
-              formatDate(alert.timestamp),
-              alert.details || 'N/A'
-            ]),
-            newAlertCount
-          )}
-        </>
-      )}
-    </div>
-  );
-};
-
-export default AdminDashboard;
+                  {renderSimpleTable('Medication Records', ['Name', 'Medication', 'Frequency', 'Last Updated'],
+                    medications.map(m => [
+                      `${m.first_name} ${m.last_name}`,
+                      m.medication_name,
+                      m.frequency,
+                      formatDate(m.updated_at)
+                    ]))}
+                </>
+              )}
+            </div>
+          );
+        };
+        
+        export default AdminDashboard;

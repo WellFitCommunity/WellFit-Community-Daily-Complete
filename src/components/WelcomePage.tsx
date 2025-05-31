@@ -47,7 +47,10 @@ const WelcomePage: React.FC = () => {
           </label>
         </div>
         <button
-          onClick={() => navigate('/register')}
+          onClick={() => {
+          localStorage.setItem('privacyConsent', 'true');  
+          navigate('/register');
+          }}
           disabled={!agreed}
           className={`mt-2 px-6 py-3 font-semibold rounded-xl shadow-md transition focus:outline-none focus:ring-2 focus:ring-[#003865]
             ${agreed ? 'bg-[#8cc63f] hover:bg-[#003865] text-white' : 'bg-gray-300 text-gray-400 cursor-not-allowed'}
