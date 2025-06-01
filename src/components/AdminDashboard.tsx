@@ -94,7 +94,7 @@ const AdminDashboard: React.FC = () => {
           supabase.from('check_ins').select('user_id, first_name, last_name, notes, created_at'),
           supabase.from('self_reports').select('user_id, first_name, last_name, mood, symptoms, activity, created_at'),
           supabase.from('user_questions').select('user_id, user_email, message_content, created_at'),
-          supabase.from('profiles').select('user_id, first_name, last_name, address, birthdate, emergency_contact, email, created_at'),
+          supabase.from('profiles_with_user_id').select('user_id, first_name, last_name, address, birthdate, emergency_contact, email, created_at'),
           supabase.from('alerts').select('id, user_id, alert_type, timestamp, details').order('timestamp', { ascending: false })
         ]);
 

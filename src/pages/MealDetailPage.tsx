@@ -1,11 +1,19 @@
-// src/pages/MealDetailPage.tsx
-// Renders white card even during loading / not‑found states.
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
+import ImageCarousel from '../components/ImageCarousel';
 import PhotoUpload from '../components/PhotoUpload';
 import PhotoGallery from '../components/PhotoGallery';
+// Import your local recipe arrays
+import recipesWeek1 from '../data/recipesWeek1';
+import recipesWeek2 from '../data/recipesWeek2';
+// ...import recipesWeek3, recipesWeek4, recipesBonus
+
+const allRecipes = [
+  ...recipesWeek1,
+  ...recipesWeek2,
+  // ...add week3, week4, bonus
+];
 
 interface Meal {
   id: string;
@@ -24,7 +32,6 @@ export default function MealDetailPage() {
 
   useEffect(() => {
     if (!id) return;
-
     (async () => {
       const { data, error } = await supabase
         .from('meals')
@@ -38,10 +45,12 @@ export default function MealDetailPage() {
     })();
   }, [id]);
 
-  // Helper: image source fallback
-  const getImgSrc = (m: Meal) =>
-    m.image_url ||
-    `https://source.unsplash.com/600x400/?${encodeURIComponent(m.name)}`;
+  // Match recipe by name
+  const recipe = meal
+    ? allRecipes.find(
+        (r) => r.name.trim().toLowerCase() === meal.name.trim().toLowerCase()
+      )
+    : null;
 
   return (
     <div className="bg-white text-[#003865] rounded-xl shadow-md p-6 max-w-2xl mx-auto mt-8 space-y-6">
@@ -70,11 +79,21 @@ export default function MealDetailPage() {
         <>
           <h1 className="text-2xl font-bold text-center">{meal.name}</h1>
 
-          <img
-            src={getImgSrc(meal)}
-            alt={meal.name}
-            className="w-full h-64 object-cover rounded-lg shadow-md"
-          />
+          {/* Carousel if images, else single img */}
+          {recipe?.images?.length ? (
+            <ImageCarousel images={recipe.images} altText={meal.name} />
+          ) : (
+            <img
+              src={
+                meal.image_url ||
+                `https://source.unsplash.com/600x400/?${encodeURIComponent(
+                  meal.name
+                )}`
+              }
+              alt={meal.name}
+              className="w-full h-64 object-cover rounded-lg shadow-md"
+            />
+          )}
 
           <div className="flex flex-wrap gap-4 text-sm font-medium">
             {meal.calories && <span>Calories: {meal.calories}</span>}
@@ -85,7 +104,26 @@ export default function MealDetailPage() {
             {meal.description}
           </p>
 
-          <div className="space-y-4">
+          {/* Show full recipe if available */}
+          {recipe && (
+            <div>
+              <h2 className="text-lg font-semibold mt-4">Ingredients</h2>
+              <ul className="list-disc ml-6 text-base">
+                {recipe.ingredients.map((ing, idx) => (
+                  <li key={idx}>{ing}</li>
+                ))}
+              </ul>
+
+              <h2 className="text-lg font-semibold mt-4">Directions</h2>
+              <ol className="list-decimal ml-6 text-base">
+                {recipe.steps.map((step, idx) => (
+                  <li key={idx} className="mb-1">{step}</li>
+                ))}
+              </ol>
+            </div>
+          )}
+
+          <div className="space-y-4 mt-6">
             <PhotoUpload context="meal" recordId={meal.id} />
             <PhotoGallery context="meal" recordId={meal.id} />
           </div>

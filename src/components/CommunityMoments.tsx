@@ -1,8 +1,11 @@
+// src/components/CommunityMoments.tsx
+
 import React, { useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import Confetti from 'react-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
 import EmojiPicker from 'emoji-picker-react';
+import { createPortal } from 'react-dom';
 
 const BUCKET = 'community-moments';
 
@@ -72,10 +75,20 @@ const CommunityMoments: React.FC = () => {
     fetchMoments();
   }, []);
 
-  // Handle file input change
+  // Handle file input change (image only, max 5MB)
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setSelectedFile(e.target.files[0]);
+      const file = e.target.files[0];
+      if (!file.type.startsWith('image/')) {
+        setError('Please upload an image file.');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setError('File too large. Max 5MB.');
+        return;
+      }
+      setSelectedFile(file);
+      setError('');
     }
   };
 
@@ -104,6 +117,11 @@ const CommunityMoments: React.FC = () => {
         setUploading(false);
         return;
       }
+      if (!title || !description) {
+        setError('Title and description are required.');
+        setUploading(false);
+        return;
+      }
 
       const filePath = `${user_id}/${Date.now()}_${selectedFile.name}`;
       let { error: uploadError } = await supabase.storage
@@ -111,7 +129,7 @@ const CommunityMoments: React.FC = () => {
         .upload(filePath, selectedFile);
 
       if (uploadError) {
-        setError('File upload failed.');
+        setError('File upload failed. Make sure the file is an image and less than 5MB.');
         setUploading(false);
         return;
       }
@@ -223,7 +241,12 @@ const CommunityMoments: React.FC = () => {
           <div className="grid gap-4 sm:grid-cols-2">
             {featured.map(moment => (
               <div key={moment.id} className="bg-white rounded-xl shadow p-4 flex flex-col items-center border-2 border-[#8cc63f]">
-                <img src={moment.file_url} alt={moment.title} className="w-full max-w-xs rounded mb-2" style={{ fontSize: 24 }} />
+                <img
+                  src={moment.file_url}
+                  alt={moment.title ? moment.title : 'Community photo'}
+                  className="w-full max-w-xs rounded mb-2"
+                  style={{ fontSize: 24 }}
+                />
                 <div className="text-2xl font-bold text-[#003865]">{moment.title} {moment.emoji}</div>
                 <div className="text-lg text-gray-800">{moment.description}</div>
                 {moment.tags && (
@@ -284,15 +307,16 @@ const CommunityMoments: React.FC = () => {
             >
               {emoji || '😊'}
             </motion.button>
-            {showEmojiPicker && (
-              <div className="z-50 absolute bg-white border rounded shadow mt-2">
+            {showEmojiPicker && createPortal(
+              <div className="z-50 fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white border rounded shadow p-2">
                 <EmojiPicker
                   onEmojiClick={handleEmojiClick}
                   searchDisabled
                   height={350}
                   width={320}
                 />
-              </div>
+              </div>,
+              document.body
             )}
             <span className="text-gray-600 text-base ml-3">Tap to choose an emoji</span>
           </div>
@@ -320,7 +344,12 @@ const CommunityMoments: React.FC = () => {
       <div className="grid gap-4 sm:grid-cols-2">
         {regular.map(moment => (
           <div key={moment.id} className="bg-white rounded-xl shadow p-4 flex flex-col items-center">
-            <img src={moment.file_url} alt={moment.title} className="w-full max-w-xs rounded mb-2" style={{ fontSize: 22 }} />
+            <img
+              src={moment.file_url}
+              alt={moment.title ? moment.title : 'Community photo'}
+              className="w-full max-w-xs rounded mb-2"
+              style={{ fontSize: 22 }}
+            />
             <div className="text-2xl font-semibold text-[#003865]">{moment.title} {moment.emoji}</div>
             <div className="text-lg text-gray-800">{moment.description}</div>
             {moment.tags && (

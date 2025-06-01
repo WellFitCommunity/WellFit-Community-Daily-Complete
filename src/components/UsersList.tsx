@@ -20,7 +20,7 @@ const UsersList: React.FC = () => {
   useEffect(() => {
     const fetchProfiles = async () => {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('profiles_with_user_id') // FIXED: Corrected table name
         .select('user_id, first_name, last_name, phone, dob, address'); // FIXED: Now fetches user_id
 
       if (error) {

@@ -50,7 +50,7 @@ const AdminProfileEditor: React.FC = () => {
 
   const fetchProfiles = async () => {
     const { data, error } = await supabase
-      .from('profiles')
+      .from('profiles_with_user_id') // Ensure this table exists and has the correct structure
       .select('user_id, first_name, last_name, role, dob, phone, address')
       .eq('role', 'senior');
     if (!error && data) setProfiles(data);

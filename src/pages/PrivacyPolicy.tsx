@@ -22,7 +22,7 @@ const PrivacyPolicy = () => (
 
     <h2 className="text-xl font-semibold mt-6 mb-2">How We Protect Your Data</h2>
     <p>
-      We store your information in secure, encrypted databases. Only authorized team members and partners have access to your personal data. We follow privacy best practices aligned with HIPAA principles, though we are not a covered entity.
+      We store your information in secure, encrypted databases. Only authorized team members and partners have access to your personal data. We follow privacy best practices aligned with HIPAA principles..
     </p>
 
     <h2 className="text-xl font-semibold mt-6 mb-2">Sharing Your Data</h2>
