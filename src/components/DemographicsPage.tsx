@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+// src/components/DemographicsPage.tsx
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 
 const DemographicsPage: React.FC = () => {
   const navigate = useNavigate();
-
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -14,13 +14,57 @@ const DemographicsPage: React.FC = () => {
     address: '',
     hasEmail: false,
   });
-
+  const [userId, setUserId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  // On mount: Only allow users who aren't onboarded yet
+  useEffect(() => {
+    const checkUserAndOnboarding = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigate('/'); // Not signed in, go to welcome
+        return;
+      }
+      setUserId(user.id);
+
+      // Check if already onboarded
+      const { data: profile, error: profileErr } = await supabase
+        .from('profiles')
+        .select('onboarded, first_name, last_name, phone, dob, address')
+        .eq('id', user.id)
+        .single();
+
+      if (profileErr) {
+        // If no profile exists, that's fine (new user)
+        setLoading(false);
+        return;
+      }
+
+      if (profile?.onboarded) {
+        navigate('/dashboard');
+        return;
+      }
+
+      // Optionally prefill form if info exists
+      setFormData(f => ({
+        ...f,
+        first_name: profile.first_name || '',
+        last_name: profile.last_name || '',
+        phone: profile.phone || '',
+        dob: profile.dob || '',
+        address: profile.address || '',
+      }));
+      setLoading(false);
+    };
+
+    checkUserAndOnboarding();
+  }, [navigate]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
     }));
@@ -28,20 +72,14 @@ const DemographicsPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+
+    if (!userId) {
+      setError('User not authenticated. Please register or log in again.');
+      return;
+    }
+
     const { first_name, last_name, phone, pin, dob, address, hasEmail } = formData;
-
-    localStorage.setItem('prefersEmail', hasEmail ? 'true' : 'false');
-    localStorage.setItem('wellfitPhone', phone);
-    localStorage.setItem('wellfitPin', pin);
-
-    const {
-      data: { user },
-      error: sessionError,
-    } = await supabase.auth.getUser();
-
-    const userId = user?.id ?? crypto.randomUUID();
-    localStorage.setItem('wellfitUserId', userId);
-    localStorage.setItem('wellfitName', `${first_name} ${last_name}`);
 
     const { error: profileError } = await supabase.from('profiles').upsert({
       id: userId,
@@ -50,6 +88,7 @@ const DemographicsPage: React.FC = () => {
       phone,
       dob,
       address,
+      onboarded: true, // Flag user as fully onboarded!
     });
 
     const { error: phoneAuthError } = await supabase.from('phone_auth').upsert({
@@ -62,10 +101,13 @@ const DemographicsPage: React.FC = () => {
       setError(profileError?.message || phoneAuthError?.message || 'Unknown error.');
     } else {
       setSuccess(true);
-      setError(null);
-      hasEmail ? navigate('/supabase-login') : navigate('/dashboard');
+      setTimeout(() => {
+        hasEmail ? navigate('/supabase-login') : navigate('/dashboard');
+      }, 2000);
     }
   };
+
+  if (loading) return <div className="text-center mt-8">Loading...</div>;
 
   return (
     <div className="max-w-xl mx-auto mt-10 p-6 bg-white rounded-xl shadow-md space-y-4">
@@ -73,27 +115,33 @@ const DemographicsPage: React.FC = () => {
       <p className="text-gray-600 text-center">We’ll use this to personalize your WellFit experience.</p>
 
       {error && <p className="text-red-500 text-center">{error}</p>}
-      {success && <p className="text-green-600 text-center">Profile saved!</p>}
+      {success && (
+        <p className="text-green-600 text-center font-bold text-xl my-4">
+          Registration Completed! Redirecting...
+        </p>
+      )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input name="first_name" placeholder="First Name" value={formData.first_name} onChange={handleChange} className="w-full p-2 border rounded" />
-        <input name="last_name" placeholder="Last Name" value={formData.last_name} onChange={handleChange} className="w-full p-2 border rounded" />
-        <input name="phone" placeholder="Phone Number" value={formData.phone} onChange={handleChange} className="w-full p-2 border rounded" />
-        <input name="pin" placeholder="4-Digit PIN" maxLength={4} value={formData.pin} onChange={handleChange} className="w-full p-2 border rounded" />
-        <input name="dob" type="date" placeholder="Date of Birth" value={formData.dob} onChange={handleChange} className="w-full p-2 border rounded" />
-        <input name="address" placeholder="Address" value={formData.address} onChange={handleChange} className="w-full p-2 border rounded" />
+      {!success && (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input name="first_name" placeholder="First Name" value={formData.first_name} onChange={handleChange} className="w-full p-2 border rounded" />
+          <input name="last_name" placeholder="Last Name" value={formData.last_name} onChange={handleChange} className="w-full p-2 border rounded" />
+          <input name="phone" placeholder="Phone Number" value={formData.phone} onChange={handleChange} className="w-full p-2 border rounded" />
+          <input name="pin" placeholder="4-Digit PIN" maxLength={4} value={formData.pin} onChange={handleChange} className="w-full p-2 border rounded" />
+          <input name="dob" type="date" placeholder="Date of Birth" value={formData.dob} onChange={handleChange} className="w-full p-2 border rounded" />
+          <input name="address" placeholder="Address" value={formData.address} onChange={handleChange} className="w-full p-2 border rounded" />
 
-        <div className="flex items-center space-x-2">
-          <input type="checkbox" id="hasEmail" name="hasEmail" checked={formData.hasEmail} onChange={handleChange} />
-          <label htmlFor="hasEmail" className="text-sm text-gray-700">
-            I have an email address and I am willing to use it to log in for security purposes.
-          </label>
-        </div>
+          <div className="flex items-center space-x-2">
+            <input type="checkbox" id="hasEmail" name="hasEmail" checked={formData.hasEmail} onChange={handleChange} />
+            <label htmlFor="hasEmail" className="text-sm text-gray-700">
+              I have an email address and I am willing to use it to log in for security purposes.
+            </label>
+          </div>
 
-        <button type="submit" className="w-full py-2 bg-wellfit-green text-white rounded hover:bg-green-700">
-          Submit
-        </button>
-      </form>
+          <button type="submit" className="w-full py-2 bg-wellfit-green text-white rounded hover:bg-green-700">
+            Submit
+          </button>
+        </form>
+      )}
     </div>
   );
 };

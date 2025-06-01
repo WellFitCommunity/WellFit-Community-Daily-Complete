@@ -39,11 +39,12 @@ const RegisterPage: React.FC = () => {
       return;
     }
     setLoading(true);
-    // TODO: Replace with your actual backend registration logic
-    // Example: Call your Edge Function for registration
     try {
-      // Simulate API call
-      await new Promise((res) => setTimeout(res, 1000));
+      // TODO: Replace with your actual backend registration logic
+      await new Promise((res) => setTimeout(res, 1000)); // Simulate API call
+
+        
+
       setLoading(false);
       navigate('/demographics');
     } catch (e) {
@@ -119,4 +120,3 @@ const RegisterPage: React.FC = () => {
 };
 
 export default RegisterPage;
-

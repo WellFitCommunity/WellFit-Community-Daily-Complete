@@ -48,7 +48,7 @@ const TermsOfService = () => (
     <p>
       For questions, contact: <br />
       <b>WellFit Community, Inc.</b><br />
-      [Your Contact Email/Phone Here]
+      [info@theWellFitCommunity.org/832-315-5110]
     </p>
     <p className="mt-6">
       By continuing to use WellFit Community, you agree to these Terms of Service.
