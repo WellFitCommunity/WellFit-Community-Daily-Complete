@@ -65,7 +65,7 @@ const Dashboard: React.FC = () => {
 
       {/* Meal of the Day preview */}
       <Card>
-        <DashMealOfTheDay onSeeDetails={(id) => navigate(`/meal/${id}`)} />
+        <DashMealOfTheDay />
       </Card>
 
       <Card>
