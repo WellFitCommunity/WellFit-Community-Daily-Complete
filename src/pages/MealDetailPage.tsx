@@ -22,27 +22,44 @@ interface Meal {
   image_url?: string | null;
   calories?: number | null;
   cost?: number | null;
+  // Ensure it matches the 'meals' table structure for Supabase queries
 }
 
-export default function MealDetailPage() {
-  const { id } = useParams<{ id: string }>();
+const MealDetailPage: React.FC = () => { // Added React.FC
+  const { id } = useParams<{ id: string }>(); // id will be string | undefined if not guaranteed by router
   const navigate = useNavigate();
   const [meal, setMeal] = useState<Meal | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!id) return;
-    (async () => {
-      const { data, error } = await supabase
-        .from('meals')
-        .select('*')
-        .eq('id', id)
-        .single();
+    if (!id) {
+      setLoading(false); // Stop loading if no id
+      return;
+    }
+    const fetchMeal = async (): Promise<void> => { // Made into a named async function
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('meals')
+          .select('*')
+          .eq('id', id)
+          .single<Meal>(); // Use generic type for single()
 
-      if (error) console.error('Error fetching meal:', error.message);
-      setMeal(data as Meal | null);
-      setLoading(false);
-    })();
+        if (error) {
+          console.error('Error fetching meal:', error.message);
+          setMeal(null);
+        } else {
+          setMeal(data);
+        }
+      } catch (e) {
+        const error = e instanceof Error ? e : new Error("An unexpected error occurred");
+        console.error('Unexpected error fetching meal:', error.message);
+        setMeal(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMeal();
   }, [id]);
 
   // Match recipe by name
@@ -108,15 +125,15 @@ export default function MealDetailPage() {
           {recipe && (
             <div>
               <h2 className="text-lg font-semibold mt-4">Ingredients</h2>
-              <ul className="list-disc ml-6 text-base">
-                {recipe.ingredients.map((ing, idx) => (
+              <ul className="list-disc ml-6 text-base space-y-1">
+                {recipe.ingredients.map((ing: string, idx: number) => (
                   <li key={idx}>{ing}</li>
                 ))}
               </ul>
 
               <h2 className="text-lg font-semibold mt-4">Directions</h2>
-              <ol className="list-decimal ml-6 text-base">
-                {recipe.steps.map((step, idx) => (
+              <ol className="list-decimal ml-6 text-base space-y-2">
+                {recipe.steps.map((step: string, idx: number) => (
                   <li key={idx} className="mb-1">{step}</li>
                 ))}
               </ol>

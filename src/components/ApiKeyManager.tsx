@@ -20,7 +20,7 @@ const ApiKeyManager: React.FC = () => {
   const [newOrgName, setNewOrgName] = useState<string>('');
   const [generatedKey, setGeneratedKey] = useState<string | null>(null);
 
-  const fetchApiKeys = useCallback(async (showLoading = true) => {
+  const fetchApiKeys = useCallback(async (showLoading: boolean = true): Promise<void> => {
     if (showLoading) setLoading(true);
     // Clear previous specific action feedback, but not general fetch errors
     // setFeedbackMessage(null); 
@@ -35,12 +35,13 @@ const ApiKeyManager: React.FC = () => {
         setError(`Failed to fetch API keys: ${supabaseError.message}. Ensure RLS policies allow select.`);
         setApiKeys([]);
       } else {
-        setApiKeys(data || []);
+        setApiKeys((data as ApiKey[]) || []); // Assert type for data
         setError(null); // Clear previous fetch error if successful
       }
-    } catch (e: any) {
-      console.error('Unexpected error fetching API keys:', e);
-      setError(`An unexpected error occurred: ${e.message}`);
+    } catch (e) {
+      const error = e instanceof Error ? e : new Error('An unexpected error occurred');
+      console.error('Unexpected error fetching API keys:', error);
+      setError(`An unexpected error occurred: ${error.message}`);
       setApiKeys([]);
     } finally {
       if (showLoading) setLoading(false);
@@ -51,7 +52,7 @@ const ApiKeyManager: React.FC = () => {
     fetchApiKeys();
   }, [fetchApiKeys]);
 
-  const handleGenerateKey = async (e: React.FormEvent) => {
+  const handleGenerateKey = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setFeedbackMessage(null);
     setGeneratedKey(null);
@@ -79,15 +80,16 @@ const ApiKeyManager: React.FC = () => {
         setNewOrgName(''); // Clear input
         await fetchApiKeys(false); // Refresh list without full loading spinner
       }
-    } catch (e: any) {
-      console.error('Unexpected error generating key:', e);
-      setFeedbackMessage(`An unexpected error occurred: ${e.message}`);
+    } catch (e) {
+      const error = e instanceof Error ? e : new Error('An unexpected error occurred');
+      console.error('Unexpected error generating key:', error);
+      setFeedbackMessage(`An unexpected error occurred: ${error.message}`);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleToggleKeyStatus = async (keyId: string, currentStatus: boolean) => {
+  const handleToggleKeyStatus = async (keyId: string, currentStatus: boolean): Promise<void> => {
     setFeedbackMessage(null);
     setLoading(true);
     try {
@@ -103,16 +105,16 @@ const ApiKeyManager: React.FC = () => {
         setFeedbackMessage(`Key status updated to ${!currentStatus ? 'Active' : 'Inactive'}.`);
         await fetchApiKeys(false);
       }
-    } catch (e: any)
-    {
-      console.error('Unexpected error toggling key status:', e);
-      setFeedbackMessage(`An unexpected error occurred: ${e.message}`);
+    } catch (e) {
+      const error = e instanceof Error ? e : new Error('An unexpected error occurred');
+      console.error('Unexpected error toggling key status:', error);
+      setFeedbackMessage(`An unexpected error occurred: ${error.message}`);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleRevokeKey = async (keyId: string, orgName: string) => {
+  const handleRevokeKey = async (keyId: string, orgName: string): Promise<void> => {
     setFeedbackMessage(null);
     if (window.confirm(`Are you sure you want to revoke the API key for "${orgName}"? This action cannot be undone.`)) {
       setLoading(true);
@@ -129,25 +131,27 @@ const ApiKeyManager: React.FC = () => {
           setFeedbackMessage(`Key for "${orgName}" has been revoked.`);
           await fetchApiKeys(false);
         }
-      } catch (e: any) {
-        console.error('Unexpected error revoking key:', e);
-        setFeedbackMessage(`An unexpected error occurred: ${e.message}`);
+      } catch (e) {
+        const error = e instanceof Error ? e : new Error('An unexpected error occurred');
+        console.error('Unexpected error revoking key:', error);
+        setFeedbackMessage(`An unexpected error occurred: ${error.message}`);
       } finally {
         setLoading(false);
       }
     }
   };
 
-  const copyToClipboard = (text: string) => {
+  const copyToClipboard = (text: string): void => {
     navigator.clipboard.writeText(text).then(() => {
       setFeedbackMessage('Generated API Key copied to clipboard!');
-    }, (err) => {
+    }, (err: unknown) => { // Typed err
       console.error('Failed to copy text: ', err);
-      setFeedbackMessage('Failed to copy API Key. Please copy it manually.');
+      const message = err instanceof Error ? err.message : "Unknown copy error.";
+      setFeedbackMessage(`Failed to copy API Key: ${message}. Please copy it manually.`);
     });
   };
 
-  const maskApiKey = (key: string) => {
+  const maskApiKey = (key: string): string => {
     if (!key || key.length < 8) return key; // Or return 'Invalid Key'
     // Show first 4, last 4 characters e.g. "ab12...wxyz"
     // If keys have prefixes like "houston-", adjust accordingly or make it more generic
@@ -164,7 +168,7 @@ const ApiKeyManager: React.FC = () => {
     return `${key.substring(0, 4)}...${key.substring(key.length - 4)}`;
   };
 
-  const formatDate = (dateString: string | null) => {
+  const formatDate = (dateString: string | null): string => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleString();
   };
@@ -186,7 +190,7 @@ const ApiKeyManager: React.FC = () => {
               type="text"
               id="orgName"
               value={newOrgName}
-              onChange={(e) => setNewOrgName(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewOrgName(e.target.value)}
               placeholder="E.g., Houston Branch"
               className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
               required

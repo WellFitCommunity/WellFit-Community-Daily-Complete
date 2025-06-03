@@ -3,9 +3,28 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 
+interface DemographicsFormData {
+  first_name: string;
+  last_name: string;
+  phone: string;
+  pin: string;
+  dob: string; // Assuming YYYY-MM-DD format
+  address: string;
+  hasEmail: boolean;
+}
+
+interface ProfileOnboardingData {
+  onboarded?: boolean;
+  first_name?: string | null;
+  last_name?: string | null;
+  phone?: string | null;
+  dob?: string | null;
+  address?: string | null;
+}
+
 const DemographicsPage: React.FC = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<DemographicsFormData>({
     first_name: '',
     last_name: '',
     phone: '',
@@ -21,10 +40,12 @@ const DemographicsPage: React.FC = () => {
 
   // On mount: Only allow users who aren't onboarded yet
   useEffect(() => {
-    const checkUserAndOnboarding = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        navigate('/'); // Not signed in, go to welcome
+    const checkUserAndOnboarding = async (): Promise<void> => {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        console.error('Error fetching user or no user:', userError);
+        navigate('/'); // Not signed in, or error, go to welcome
         return;
       }
       setUserId(user.id);
@@ -34,10 +55,11 @@ const DemographicsPage: React.FC = () => {
         .from('profiles')
         .select('onboarded, first_name, last_name, phone, dob, address')
         .eq('id', user.id)
-        .single();
+        .single<ProfileOnboardingData>();
 
-      if (profileErr) {
-        // If no profile exists, that's fine (new user)
+      if (profileErr && profileErr.code !== 'PGRST116') { // PGRST116: row not found, which is fine for new user
+        console.error("Error fetching profile:", profileErr);
+        // Potentially set an error message for the user
         setLoading(false);
         return;
       }
@@ -48,14 +70,16 @@ const DemographicsPage: React.FC = () => {
       }
 
       // Optionally prefill form if info exists
-      setFormData(f => ({
-        ...f,
-        first_name: profile.first_name || '',
-        last_name: profile.last_name || '',
-        phone: profile.phone || '',
-        dob: profile.dob || '',
-        address: profile.address || '',
-      }));
+      if (profile) {
+        setFormData(f => ({
+          ...f,
+          first_name: profile.first_name || '',
+          last_name: profile.last_name || '',
+          phone: profile.phone || '',
+          dob: profile.dob || '',
+          address: profile.address || '',
+        }));
+      }
       setLoading(false);
     };
 
@@ -70,7 +94,7 @@ const DemographicsPage: React.FC = () => {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setError(null);
 
@@ -123,22 +147,40 @@ const DemographicsPage: React.FC = () => {
 
       {!success && (
         <form onSubmit={handleSubmit} className="space-y-4">
-          <input name="first_name" placeholder="First Name" value={formData.first_name} onChange={handleChange} className="w-full p-2 border rounded" />
-          <input name="last_name" placeholder="Last Name" value={formData.last_name} onChange={handleChange} className="w-full p-2 border rounded" />
-          <input name="phone" placeholder="Phone Number" value={formData.phone} onChange={handleChange} className="w-full p-2 border rounded" />
-          <input name="pin" placeholder="4-Digit PIN" maxLength={4} value={formData.pin} onChange={handleChange} className="w-full p-2 border rounded" />
-          <input name="dob" type="date" placeholder="Date of Birth" value={formData.dob} onChange={handleChange} className="w-full p-2 border rounded" />
-          <input name="address" placeholder="Address" value={formData.address} onChange={handleChange} className="w-full p-2 border rounded" />
-
-          <div className="flex items-center space-x-2">
-            <input type="checkbox" id="hasEmail" name="hasEmail" checked={formData.hasEmail} onChange={handleChange} />
+          <div>
+            <label htmlFor="first_name" className="sr-only">First Name</label>
+            <input id="first_name" name="first_name" placeholder="First Name" value={formData.first_name} onChange={handleChange} className="w-full p-3 border rounded-md focus:ring-2 focus:ring-indigo-500" aria-required="true" />
+          </div>
+          <div>
+            <label htmlFor="last_name" className="sr-only">Last Name</label>
+            <input id="last_name" name="last_name" placeholder="Last Name" value={formData.last_name} onChange={handleChange} className="w-full p-3 border rounded-md focus:ring-2 focus:ring-indigo-500" aria-required="true" />
+          </div>
+          <div>
+            <label htmlFor="phone" className="sr-only">Phone Number</label>
+            <input id="phone" name="phone" type="tel" placeholder="Phone Number" value={formData.phone} onChange={handleChange} className="w-full p-3 border rounded-md focus:ring-2 focus:ring-indigo-500" aria-required="true" />
+          </div>
+          <div>
+            <label htmlFor="pin" className="sr-only">4-Digit PIN</label>
+            <input id="pin" name="pin" type="password" placeholder="Create 4-Digit PIN" maxLength={4} value={formData.pin} onChange={handleChange} className="w-full p-3 border rounded-md focus:ring-2 focus:ring-indigo-500" inputMode="numeric" pattern="[0-9]*" aria-required="true" />
+          </div>
+          <div>
+            <label htmlFor="dob" className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+            <input id="dob" name="dob" type="date" placeholder="Date of Birth" value={formData.dob} onChange={handleChange} className="w-full p-3 border rounded-md focus:ring-2 focus:ring-indigo-500" aria-required="true" />
+          </div>
+          <div>
+            <label htmlFor="address" className="sr-only">Address</label>
+            <input id="address" name="address" placeholder="Full Address" value={formData.address} onChange={handleChange} className="w-full p-3 border rounded-md focus:ring-2 focus:ring-indigo-500" aria-required="true" />
+          </div>
+          
+          <div className="flex items-center space-x-2 pt-2">
+            <input type="checkbox" id="hasEmail" name="hasEmail" checked={formData.hasEmail} onChange={handleChange} className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
             <label htmlFor="hasEmail" className="text-sm text-gray-700">
-              I have an email address and I am willing to use it to log in for security purposes.
+              I have an email and want to use it for login (optional).
             </label>
           </div>
 
-          <button type="submit" className="w-full py-2 bg-wellfit-green text-white rounded hover:bg-green-700">
-            Submit
+          <button type="submit" className="w-full py-3 bg-wellfit-green text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+            Complete Registration
           </button>
         </form>
       )}

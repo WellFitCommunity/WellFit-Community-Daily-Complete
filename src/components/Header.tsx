@@ -9,7 +9,7 @@ const Header: React.FC = () => {
   const branding = useBranding();
 
   // Basic check for dark color to adjust text. This could be more sophisticated.
-  const isPrimaryColorDark = () => {
+  const isPrimaryColorDark = (): boolean => {
     if (!branding.primaryColor) return true;
     const color = branding.primaryColor.startsWith('#') ? branding.primaryColor.substring(1) : branding.primaryColor;
     const r = parseInt(color.substring(0, 2), 16);
@@ -65,8 +65,8 @@ const Header: React.FC = () => {
 
           {/* Mobile Menu Button */}
           <button
-            onClick={() => setMenuOpen(open => !open)}
-            className={`md:hidden ${textColor} focus:outline-none`}
+            onClick={() => setMenuOpen((open: boolean) => !open)}
+            className={`md:hidden ${textColor} focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white`} // Added focus ring
             aria-label="Toggle menu"
           >
             {menuOpen ? <X size={24} /> : <Menu size={24} />}
