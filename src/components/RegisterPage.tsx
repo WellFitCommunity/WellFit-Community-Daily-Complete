@@ -68,7 +68,9 @@ const RegisterPage: React.FC = () => {
               value={phone}
               onChange={e => setPhone(e.target.value)}
               required
-              className="w-full p-3 border-2 border-[#003865] rounded text-lg"
+              aria-required="true"
+              aria-invalid={!!(error && error.toLowerCase().includes('phone'))}
+              className="w-full p-3 border-2 border-[#003865] rounded text-lg focus:ring-2 focus:ring-offset-2 focus:ring-[#8cc63f]"
               autoComplete="tel"
               placeholder="(555) 555-1234"
               inputMode="numeric"
@@ -85,7 +87,9 @@ const RegisterPage: React.FC = () => {
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
-              className="w-full p-3 border-2 border-[#003865] rounded text-lg"
+              aria-required="true"
+              aria-invalid={!!(error && error.toLowerCase().includes('password must be'))}
+              className="w-full p-3 border-2 border-[#003865] rounded text-lg focus:ring-2 focus:ring-offset-2 focus:ring-[#8cc63f]"
               autoComplete="new-password"
               placeholder="Create a password"
             />
@@ -100,12 +104,14 @@ const RegisterPage: React.FC = () => {
               value={confirm}
               onChange={e => setConfirm(e.target.value)}
               required
-              className="w-full p-3 border-2 border-[#003865] rounded text-lg"
+              aria-required="true"
+              aria-invalid={!!(error && error.toLowerCase().includes('match'))}
+              className="w-full p-3 border-2 border-[#003865] rounded text-lg focus:ring-2 focus:ring-offset-2 focus:ring-[#8cc63f]"
               autoComplete="new-password"
               placeholder="Re-enter password"
             />
           </div>
-          {error && <div className="text-red-600 mb-2">{error}</div>}
+          {error && <div role="alert" className="text-red-600 mb-2 font-semibold">{error}</div>}
           <button
             type="submit"
             disabled={loading}

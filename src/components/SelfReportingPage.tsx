@@ -14,20 +14,41 @@ const SelfReportingPage: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // For report log (history)
-  const [selfReports, setSelfReports] = useState<any[]>([]);
+interface SelfReportData { // Raw data from Supabase
+  id: number;
+  created_at: string; // ISO string
+  mood: string;
+  symptoms?: string;
+  activity_description?: string;
+  user_id: string;
+  submitted_by: string; // User ID of who submitted it
+  entry_type: string; // e.g., 'self_report'
+}
 
-  const moodOptions = ['Happy', 'Okay', 'Sad', 'Anxious', 'Tired'];
+interface SelfReportLog extends SelfReportData {
+  source_type: 'self' | 'staff'; // Client-side added field
+}
+
+  const [selfReports, setSelfReports] = useState<SelfReportLog[]>([]);
+
+  const moodOptions: string[] = ['Happy', 'Okay', 'Sad', 'Anxious', 'Tired']; // Explicitly type array
 
   useEffect(() => {
-    const getUser = async () => {
+    const getUser = async (): Promise<void> => {
       setIsLoading(true);
       try {
         const { data: { user }, error } = await supabase.auth.getUser();
-        if (error) setErrorMessage('Error fetching user: ' + error.message);
+        if (error) {
+          setErrorMessage('Error fetching user: ' + error.message);
+          throw error; // Propagate error to stop further execution in try block
+        }
         setCurrentUser(user || null);
-        if (!user) setErrorMessage('You must be logged in to submit a report.');
-      } catch (e: any) {
-        setErrorMessage('Unexpected error: ' + e.message);
+        if (!user) {
+          setErrorMessage('You must be logged in to submit a report.');
+        }
+      } catch (e) {
+        const err = e instanceof Error ? e : new Error('An unexpected error occurred.');
+        setErrorMessage(err.message);
         setCurrentUser(null);
       } finally {
         setIsLoading(false);
@@ -39,29 +60,44 @@ const SelfReportingPage: React.FC = () => {
   // Fetch report log for current user
   useEffect(() => {
     if (!currentUser) return;
-    const fetchReports = async () => {
+    const fetchReports = async (): Promise<void> => {
       setIsLoading(true);
-      const { data, error } = await supabase
-        .from('self_reports')   // <-- Change to your table name
-        .select('*')
-        .eq('user_id', currentUser.id)
-        .order('created_at', { ascending: false });
-      if (error) {
-        setErrorMessage('Error loading reports: ' + error.message);
+      try {
+        const { data, error } = await supabase
+          .from('self_reports')
+          .select('*')
+          .eq('user_id', currentUser.id)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          setErrorMessage('Error loading reports: ' + error.message);
+          setSelfReports([]);
+          throw error;
+        }
+        if (data) {
+          const reports: SelfReportLog[] = data.map((r: SelfReportData) => ({
+            ...r,
+            source_type: r.user_id === r.submitted_by ? 'self' : 'staff'
+          }));
+          setSelfReports(reports);
+        } else {
+          setSelfReports([]);
+        }
+      } catch (e) {
+        // Error message already set or handled by previous throw
+        if (!errorMessage) { // Avoid overwriting specific error from Supabase
+            const err = e instanceof Error ? e : new Error('An unexpected error occurred while fetching reports.');
+            setErrorMessage(err.message);
+        }
         setSelfReports([]);
-      } else {
-        // Add source_type for color coding
-        setSelfReports(data.map((r: any) => ({
-          ...r,
-          source_type: r.user_id === r.submitted_by ? 'self' : 'staff'
-        })));
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
     fetchReports();
-  }, [currentUser]);
+  }, [currentUser, errorMessage]); // Added errorMessage to deps to avoid potential issues if it changes
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setFeedbackMessage(null);
     setErrorMessage(null);
@@ -96,26 +132,33 @@ const SelfReportingPage: React.FC = () => {
       setSymptoms('');
       setActivity('');
       // Reload self-reports log
-      if (currentUser) {
-        const { data } = await supabase
+      if (currentUser) { // This check is good
+        const { data, error: fetchError } = await supabase
           .from('self_reports')
           .select('*')
           .eq('user_id', currentUser.id)
           .order('created_at', { ascending: false });
-        setSelfReports(data.map((r: any) => ({
-          ...r,
-          source_type: r.user_id === r.submitted_by ? 'self' : 'staff'
-        })));
+        
+        if (fetchError) {
+            setErrorMessage('Error reloading reports: ' + fetchError.message);
+        } else if (data) {
+            const reports: SelfReportLog[] = data.map((r: SelfReportData) => ({
+                ...r,
+                source_type: r.user_id === r.submitted_by ? 'self' : 'staff'
+            }));
+            setSelfReports(reports);
+        }
       }
-    } catch (error: any) {
-      setErrorMessage('Error saving report: ' + error.message);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "An unknown error occurred.";
+      setErrorMessage(`Error saving report: ${message}`);
     } finally {
       setIsLoading(false);
     }
   };
 
   // Color helper
-  const colorForSource = (type: string) => {
+  const colorForSource = (type: 'self' | 'staff' | string): string => { // Made type more specific
     if (type === "self") return "#8cc63f";      // WellFit Green
     if (type === "staff") return "#ff9800";     // Orange for staff
     return "#bdbdbd";                           // Default gray
@@ -150,21 +193,71 @@ const SelfReportingPage: React.FC = () => {
         Self Health Report
       </h1>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* (Your form fields here) */}
-        {/* ... */}
+      {/* Form for submitting new report */}
+      <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow">
+        <div>
+          <label htmlFor="mood" className="block text-sm font-medium text-gray-700 mb-1">
+            How are you feeling today?
+          </label>
+          <select
+            id="mood"
+            value={mood}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setMood(e.target.value)}
+            disabled={isLoading}
+            aria-required="true"
+            className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:bg-gray-50"
+          >
+            <option value="" disabled>Select a mood...</option>
+            {moodOptions.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="symptoms" className="block text-sm font-medium text-gray-700 mb-1">
+            Any symptoms you're experiencing? (optional)
+          </label>
+          <textarea
+            id="symptoms"
+            value={symptoms}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setSymptoms(e.target.value)}
+            rows={3}
+            disabled={isLoading}
+            className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:bg-gray-50"
+            placeholder="e.g., headache, fatigue"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="activity" className="block text-sm font-medium text-gray-700 mb-1">
+            Briefly describe your main activity today (optional)
+          </label>
+          <textarea
+            id="activity"
+            value={activity}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setActivity(e.target.value)}
+            rows={3}
+            disabled={isLoading}
+            className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:bg-gray-50"
+            placeholder="e.g., light walk, reading, gardening"
+          />
+        </div>
+        
         {/* Feedback messages */}
         {feedbackMessage && (
-          <p className="text-green-600 bg-green-100 p-3 rounded-lg text-lg text-center">{feedbackMessage}</p>
+          <p role="status" className="text-green-600 bg-green-100 p-3 rounded-lg text-lg text-center font-medium">{feedbackMessage}</p>
         )}
         {errorMessage && !feedbackMessage && (
-          <p className="text-red-600 bg-red-100 p-3 rounded-lg text-lg text-center">{errorMessage}</p>
+          <p role="alert" className="text-red-600 bg-red-100 p-3 rounded-lg text-lg text-center font-medium">{errorMessage}</p>
         )}
 
         <button
           type="submit"
           disabled={isLoading || (!currentUser && !isLoading)}
-          className="w-full text-white font-semibold py-3 px-6 rounded-lg text-xl shadow-md transition-opacity duration-300 disabled:opacity-50"
+          className="w-full text-white font-semibold py-3 px-6 rounded-lg text-xl shadow-md transition-opacity duration-300 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white"
           style={{
             background: branding.gradient || `linear-gradient(to right, ${branding.primaryColor}, ${branding.secondaryColor})`,
             color: 'white',
