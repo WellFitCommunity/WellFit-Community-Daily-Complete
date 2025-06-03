@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // Add useEffect
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 
@@ -10,6 +10,12 @@ const VerifyCodePage: React.FC = () => {
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (localStorage.getItem('wellfitUserId')) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [navigate]);
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();

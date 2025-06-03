@@ -160,6 +160,58 @@ const AdminProfileEditor: React.FC = () => {
             <p>Address: {selectedProfile.address}</p>
           </div>
         )}
+      feature/major-refactor-enhancements-phase1
+        {notes.map((note) => (
+          <div key={note.id} className="border p-2 rounded my-2 bg-white">
+            {editingNoteId === note.id ? (
+              <div>
+                <label htmlFor={`edit-note-textarea-${note.id}`} className="sr-only">Edit note content</label>
+                <textarea
+                  id={`edit-note-textarea-${note.id}`}
+                  value={editingNoteText}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditingNoteText(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  rows={3}
+                  aria-required="true"
+                />
+                <button 
+                  onClick={() => handleEditNote(note.id, editingNoteText)} 
+                  className="mt-2 bg-blue-600 text-white px-4 py-1 rounded-md shadow-sm hover:bg-blue-700 disabled:bg-blue-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  disabled={isLoadingEditNote}
+                >
+                  {isLoadingEditNote ? 'Saving...' : 'Save'}
+                </button>
+                <button 
+                  onClick={() => { setEditingNoteId(null); setEditingNoteText(''); setEditNoteMessage({}); }} 
+                  className="mt-2 ml-2 text-gray-600 px-4 py-1 rounded-md border border-gray-300 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400"
+                  disabled={isLoadingEditNote}
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <div>
+                <p className="whitespace-pre-wrap">{note.note}</p>
+                <p className="text-sm text-gray-500">
+                  Created: {new Date(note.created_at).toLocaleString()} by {note.created_by}
+                  {note.updated_at && ` | Updated: ${new Date(note.updated_at).toLocaleString()} by ${note.updated_by}`}
+                </p>
+                <button
+                  onClick={() => {
+                    setEditingNoteText(note.note);
+                    setEditingNoteId(note.id);
+                    setEditNoteMessage({}); // Clear previous messages when starting edit
+                  }}
+                  className="text-sm text-blue-500 mt-1 hover:underline disabled:text-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  disabled={isLoadingEditNote || isLoadingAddNote} // Disable if any note operation is in progress
+                >
+                  Edit
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+        main
 
         <div className="mt-6">
           <h4 className="text-lg font-bold">Admin Notes</h4>
