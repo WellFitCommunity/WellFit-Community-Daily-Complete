@@ -1,11 +1,11 @@
 import React from 'react';
 import { useBranding } from '../BrandingContext';
 
-const Footer = () => {
+const Footer: React.FC = () => {
   const branding = useBranding();
 
   // Check if the primary color is dark, for contrast
-  const isPrimaryColorDark = () => {
+  const isPrimaryColorDark = (): boolean => {
     if (!branding.primaryColor) return true;
     const color = branding.primaryColor.startsWith('#') ? branding.primaryColor.substring(1) : branding.primaryColor;
     const r = parseInt(color.substring(0, 2), 16);

@@ -60,28 +60,50 @@ const LoginPage: React.FC = () => {
       <h1 className="text-2xl font-bold mb-6" style={{ color: branding.primaryColor }}>
         {branding.appName} - Senior Login
       </h1>
-      <form onSubmit={handleLogin} className="space-y-4">
-        <input
-          type="tel"
-          placeholder="Phone Number"
-          value={phone}
-          onChange={e => setPhone(e.target.value)}
-          className="w-full p-3 border border-gray-300 rounded focus:ring-2"
-          style={{ borderColor: branding.secondaryColor, '--tw-ring-color': branding.primaryColor } as React.CSSProperties}
-        />
-        <input
-          type="password"
-          placeholder="4-digit PIN"
-          value={pin}
-          onChange={e => setPin(e.target.value)}
-          maxLength={4}
-          className="w-full p-3 border border-gray-300 rounded focus:ring-2"
-          style={{ borderColor: branding.secondaryColor, '--tw-ring-color': branding.primaryColor } as React.CSSProperties}
-        />
-        {error && <p className="text-red-500 text-sm">{error}</p>}
+      <form onSubmit={handleLogin} className="space-y-6"> {/* Increased space for labels */}
+        <div>
+          <label htmlFor="phone-input" className="block text-sm font-medium text-gray-700 sr-only"> {/* sr-only for visually hidden label if design prefers placeholders */}
+            Phone Number
+          </label>
+          <input
+            id="phone-input"
+            type="tel"
+            placeholder="Phone Number"
+            value={phone}
+            onChange={e => setPhone(e.target.value)}
+            required
+            aria-required="true"
+            aria-invalid={!!error}
+            className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:outline-none" // Added focus:outline-none for custom ring
+            style={{ borderColor: branding.secondaryColor, '--tw-ring-color': branding.primaryColor } as React.CSSProperties}
+            autoComplete="tel"
+          />
+        </div>
+        <div>
+          <label htmlFor="pin-input" className="block text-sm font-medium text-gray-700 sr-only"> {/* sr-only for visually hidden label */}
+            4-digit PIN
+          </label>
+          <input
+            id="pin-input"
+            type="password" // Use "password" for PINs to mask input
+            placeholder="4-digit PIN"
+            value={pin}
+            onChange={e => setPin(e.target.value)}
+            maxLength={4}
+            required
+            aria-required="true"
+            aria-invalid={!!error}
+            inputMode="numeric" // Helpful for numeric PINs on touch devices
+            pattern="[0-9]*"    // Allow only numbers
+            className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:outline-none" // Added focus:outline-none
+            style={{ borderColor: branding.secondaryColor, '--tw-ring-color': branding.primaryColor } as React.CSSProperties}
+            autoComplete="one-time-code" // More appropriate for PINs than "current-password"
+          />
+        </div>
+        {error && <p role="alert" className="text-red-500 text-sm font-semibold">{error}</p>}
         <button 
           type="submit" 
-          className={`w-full py-3 font-semibold rounded hover:opacity-90 transition-opacity ${primaryButtonTextColor}`}
+          className={`w-full py-3 font-semibold rounded hover:opacity-90 transition-opacity ${primaryButtonTextColor} focus:outline-none focus:ring-2 focus:ring-offset-2`}
           style={{ backgroundColor: branding.primaryColor }}
         >
           Log In

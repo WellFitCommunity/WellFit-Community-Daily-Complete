@@ -7,11 +7,20 @@ interface Contact {
   lastName: string;
   phone: string;
   relationship: string;
-  email: string; // Added email
+  email?: string; // Email can be optional
+}
+
+// Type for the data structure expected from the 'profiles' table query
+interface ProfileCaregiverData {
+  caregiver_first_name?: string | null;
+  caregiver_last_name?: string | null;
+  caregiver_phone?: string | null;
+  caregiver_relationship?: string | null;
+  caregiver_email?: string | null;
 }
 
 const EmergencyContact: React.FC = () => {
-  const branding = useBranding(); // Added
+  const branding = useBranding(); 
   const [contact, setContact] = useState<Contact>({
     firstName: '',
     lastName: '',
@@ -19,74 +28,104 @@ const EmergencyContact: React.FC = () => {
     relationship: '',
     email: '', // Added email
   });
-  const [editing, setEditing] = useState(true);
+  const [editing, setEditing] = useState(false); // Start in view mode or determined by data
   const [expanded, setExpanded] = useState(true);
-  const [userId, setUserId] = useState<string | null>(null); // Added to store user ID
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // Loading and message states
+  const [isLoadingData, setIsLoadingData] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [message, setMessage] = useState<{ type?: 'success' | 'error' | 'info'; text?: string } | null>(null);
 
   // Load user and contact data from Supabase
   useEffect(() => {
-    const fetchUserAndContact = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setUserId(user.id);
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('caregiver_first_name, caregiver_last_name, caregiver_phone, caregiver_relationship, caregiver_email')
-          .eq('id', user.id)
-          .single();
+    const fetchUserAndContact = async (): Promise<void> => { // Added return type
+      setIsLoadingData(true);
+      setMessage(null);
+      try {
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError) throw userError;
 
-        if (error) {
-          console.error('Error fetching contact data:', error);
-          setEditing(true); // Allow editing if fetch fails or no data
-        } else if (profile) {
-          const hasData = profile.caregiver_first_name || profile.caregiver_last_name || profile.caregiver_phone || profile.caregiver_relationship || profile.caregiver_email;
-          setContact({
-            firstName: profile.caregiver_first_name || '',
-            lastName: profile.caregiver_last_name || '',
-            phone: profile.caregiver_phone || '',
-            relationship: profile.caregiver_relationship || '',
-            email: profile.caregiver_email || '',
-          });
-          setEditing(!hasData); // If any field has data, view mode, else edit mode
+        if (user) {
+          setUserId(user.id);
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('caregiver_first_name, caregiver_last_name, caregiver_phone, caregiver_relationship, caregiver_email')
+            .eq('id', user.id)
+            .single<ProfileCaregiverData>(); // Specify return type for single()
+
+          if (profileError && profileError.code !== 'PGRST116') { // PGRST116: 'single' row not found
+            throw profileError;
+          }
+          
+          if (profileData) {
+            const hasData = profileData.caregiver_first_name || profileData.caregiver_last_name || profileData.caregiver_phone || profileData.caregiver_relationship || profileData.caregiver_email;
+            setContact({
+              firstName: profileData.caregiver_first_name || '',
+              lastName: profileData.caregiver_last_name || '',
+              phone: profileData.caregiver_phone || '',
+              relationship: profileData.caregiver_relationship || '',
+              email: profileData.caregiver_email || '',
+            });
+            setEditing(!hasData); // If no data, start in edit mode. Otherwise, view mode.
+          } else {
+            setEditing(true); // No profile, so start in edit mode
+          }
         } else {
-          setEditing(true); // No profile data found, allow editing
+          setMessage({ type: 'info', text: "Please log in to manage emergency contact." });
+          setEditing(false); // Prevent editing if no user
         }
-      } else {
-        // No user logged in, perhaps redirect or show message
-        console.log("No user logged in");
-        setEditing(false); // Prevent editing if no user
+      } catch (error) { // Typed error
+        console.error('Error fetching contact data:', error);
+        const message = error instanceof Error ? error.message : "An unknown error occurred.";
+        setMessage({ type: 'error', text: `Error fetching data: ${message}` });
+        setEditing(true); // Allow editing if fetch fails to enable manual input
+      } finally {
+        setIsLoadingData(false);
       }
     };
 
     fetchUserAndContact();
   }, []);
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<void> => { // Added return type
     if (!userId) {
-      console.error("No user ID available to save contact.");
+      setMessage({ type: 'error', text: "No user ID available. Cannot save." });
+      return;
+    }
+    if (!contact.firstName || !contact.lastName || !contact.phone || !contact.relationship) {
+      setMessage({ type: 'error', text: "All fields (except email) are required to save."});
       return;
     }
 
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        caregiver_first_name: contact.firstName,
-        caregiver_last_name: contact.lastName,
-        caregiver_phone: contact.phone,
-        caregiver_relationship: contact.relationship,
-        caregiver_email: contact.email,
-      })
-      .eq('id', userId);
+    setIsSaving(true);
+    setMessage(null);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          caregiver_first_name: contact.firstName,
+          caregiver_last_name: contact.lastName,
+          caregiver_phone: contact.phone,
+          caregiver_relationship: contact.relationship,
+          caregiver_email: contact.email,
+        })
+        .eq('id', userId);
 
-    if (error) {
-      console.error('Error saving contact data:', error);
-      // Optionally, show an error message to the user
-    } else {
+      if (error) throw error;
+      
+      setMessage({ type: 'success', text: "Contact information saved successfully!" });
       setEditing(false);
+    } catch (error) { // Typed error
+      console.error('Error saving contact data:', error);
+      const message = error instanceof Error ? error.message : "An unknown error occurred.";
+      setMessage({ type: 'error', text: `Error saving data: ${message}` });
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const handle911 = () => {
+  const handle911 = (): void => { // Added return type
     if (window.confirm('Are you sure you want to call 911?')) {
       window.location.href = 'tel:911';
     }
@@ -100,108 +139,132 @@ const EmergencyContact: React.FC = () => {
         </h2>
         <button
           onClick={() => setExpanded(!expanded)}
-          className="text-2xl leading-none text-gray-500 hover:text-gray-700"
-          aria-label={expanded ? 'Collapse' : 'Expand'}
+          className="text-2xl leading-none text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 rounded-sm"
+          aria-label={expanded ? 'Collapse contact form' : 'Expand contact form'}
+          aria-expanded={expanded}
         >
-          {expanded ? '…' : '•••'}
+          {expanded ? '−' : '+'} {/* Using + and - for clearer visual indication */}
         </button>
       </header>
 
       {expanded && (
         <div className="p-4 space-y-4">
-          {editing ? (
+          {isLoadingData ? (
+            <p className="text-center text-gray-600">Loading contact information...</p>
+          ) : editing ? (
             <>
+              {message && message.text && (
+                <div 
+                  role="status"
+                  aria-live={message.type === 'error' ? 'assertive' : 'polite'}
+                  className={`p-3 mb-3 rounded-md text-sm text-white ${
+                  message.type === 'success' ? 'bg-green-500' : 
+                  message.type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+                }`}>
+                  {message.text}
+                </div>
+              )}
               <div>
-                <label className="block text-gray-700">First Name</label>
+                <label htmlFor="ec-firstName" className="block text-sm font-medium text-gray-700">First Name</label>
                 <input
                   type="text"
+                  id="ec-firstName"
                   value={contact.firstName}
-                  onChange={e =>
-                    setContact({ ...contact, firstName: e.target.value })
-                  }
-                  className="w-full p-2 border rounded"
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setContact({ ...contact, firstName: e.target.value })}
+                  className="mt-1 w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+                  disabled={isSaving}
+                  aria-required="true"
                 />
               </div>
               <div>
-                <label className="block text-gray-700">Last Name</label>
+                <label htmlFor="ec-lastName" className="block text-sm font-medium text-gray-700">Last Name</label>
                 <input
                   type="text"
+                  id="ec-lastName"
                   value={contact.lastName}
-                  onChange={e =>
-                    setContact({ ...contact, lastName: e.target.value })
-                  }
-                  className="w-full p-2 border rounded"
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setContact({ ...contact, lastName: e.target.value })}
+                  className="mt-1 w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+                  disabled={isSaving}
+                  aria-required="true"
                 />
               </div>
               <div>
-                <label className="block text-gray-700">Phone Number</label>
+                <label htmlFor="ec-phone" className="block text-sm font-medium text-gray-700">Phone Number</label>
                 <input
                   type="tel"
+                  id="ec-phone"
                   placeholder="000-000-0000"
                   value={contact.phone}
-                  onChange={e =>
-                    setContact({ ...contact, phone: e.target.value })
-                  }
-                  className="w-full p-2 border rounded"
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setContact({ ...contact, phone: e.target.value })}
+                  className="mt-1 w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+                  disabled={isSaving}
+                  aria-required="true"
                 />
               </div>
               <div>
-                <label className="block text-gray-700">Email</label> {/* Added Email Field */}
+                <label htmlFor="ec-email" className="block text-sm font-medium text-gray-700">Email (Optional)</label>
                 <input
                   type="email"
+                  id="ec-email"
                   placeholder="name@example.com"
-                  value={contact.email}
-                  onChange={e =>
-                    setContact({ ...contact, email: e.target.value })
-                  }
-                  className="w-full p-2 border rounded"
+                  value={contact.email || ''} // Ensure value is not null/undefined for controlled input
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setContact({ ...contact, email: e.target.value })}
+                  className="mt-1 w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+                  disabled={isSaving}
                 />
               </div>
               <div>
-                <label className="block text-gray-700">Relationship</label>
+                <label htmlFor="ec-relationship" className="block text-sm font-medium text-gray-700">Relationship</label>
                 <input
                   type="text"
+                  id="ec-relationship"
                   placeholder="son, daughter, spouse, etc."
                   value={contact.relationship}
-                  onChange={e =>
-                    setContact({ ...contact, relationship: e.target.value })
-                  }
-                  className="w-full p-2 border rounded"
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setContact({ ...contact, relationship: e.target.value })}
+                  className="mt-1 w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+                  disabled={isSaving}
+                  aria-required="true"
                 />
               </div>
               <button
                 onClick={handleSave}
-                className="w-full py-2 bg-wellfit-blue text-white font-semibold rounded" // Existing wellfit-blue
-                // style={{ backgroundColor: branding.primaryColor }} // Alternative if directly using branding object
+                disabled={isSaving || !userId}
+                className="w-full py-2 bg-wellfit-blue text-white font-semibold rounded-md shadow-sm hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-wellfit-blue disabled:bg-gray-400"
               >
-                Save Next of Kin
+                {isSaving ? 'Saving...' : 'Save Next of Kin'}
               </button>
             </>
           ) : (
             <>
-              <p className="truncate overflow-hidden whitespace-nowrap">
-                <strong>Name:</strong> {contact.firstName} {contact.lastName}
-              </p>
-              <p className="truncate overflow-hidden whitespace-nowrap">
-                <strong>Phone:</strong> {contact.phone}
-              </p>
-              <p className="truncate overflow-hidden whitespace-nowrap"> {/* Added Email display */}
-                <strong>Email:</strong> {contact.email}
-              </p>
-              <p className="truncate overflow-hidden whitespace-nowrap">
-                <strong>Relationship:</strong> {contact.relationship}
-              </p>
-              <div className="flex space-x-4">
+              {message && message.text && ( // Show messages in view mode too (e.g. after save)
+                <div className={`p-3 mb-3 rounded-md text-sm text-white ${
+                  message.type === 'success' ? 'bg-green-500' : 
+                  message.type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+                }`}>
+                  {message.text}
+                </div>
+              )}
+              {(contact.firstName || contact.lastName) ? (
+                <>
+                  <p className="truncate"><strong>Name:</strong> {contact.firstName} {contact.lastName}</p>
+                  <p className="truncate"><strong>Phone:</strong> {contact.phone}</p>
+                  {contact.email && <p className="truncate"><strong>Email:</strong> {contact.email}</p>}
+                  <p className="truncate"><strong>Relationship:</strong> {contact.relationship}</p>
+                </>
+              ) : (
+                <p className="text-gray-500">No contact information available. Please add a contact.</p>
+              )}
+              <div className="flex space-x-4 mt-4">
                 <button
-                  onClick={() => setEditing(true)}
-                  className="flex-1 py-2 bg-wellfit-green text-white font-semibold rounded" // Existing wellfit-green
-                  // style={{ backgroundColor: branding.secondaryColor }} // Alternative if directly using branding object
+                  onClick={() => { setEditing(true); setMessage(null); }} // Clear message when switching to edit
+                  disabled={!userId || isLoadingData} // Disable if no user or still loading initial data
+                  className="flex-1 py-2 bg-wellfit-green text-white font-semibold rounded-md shadow-sm hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-wellfit-green disabled:bg-gray-400"
                 >
-                  Edit
+                  {contact.firstName || contact.lastName ? 'Edit' : 'Add Contact'}
                 </button>
                 <button
                   onClick={handle911}
-                  className="flex-1 py-2 bg-red-600 text-white font-semibold rounded"
+                  className="flex-1 py-2 bg-red-600 text-white font-semibold rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-600"
                 >
                   Call 911
                 </button>
