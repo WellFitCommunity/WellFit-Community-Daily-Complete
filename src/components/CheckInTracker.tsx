@@ -323,3 +323,4 @@ const CheckInTracker: React.FC = () => { // Added React.FC
   );
 }
 
+export default CheckInTracker;

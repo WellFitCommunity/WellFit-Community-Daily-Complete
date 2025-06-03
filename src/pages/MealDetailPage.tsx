@@ -149,3 +149,5 @@ const MealDetailPage: React.FC = () => { // Added React.FC
     </div>
   );
 }
+
+export default MealDetailPage;
