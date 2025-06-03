@@ -1,4 +1,4 @@
-import { useDemoMode } from "../contexts/DemoModeContext";
+import { useDemoMode } from "../../contexts/DemoModeContext";
 
 export default function DemoBanner() {
   const { demoMode, demoTimeLeft, endDemo } = useDemoMode();

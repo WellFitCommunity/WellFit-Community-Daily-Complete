@@ -1,8 +1,8 @@
 // src/components/RegisterPage.tsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import PageLayout from './PageLayout';
-import Card from './Card';
+import PageLayout from '../components/ui/PageLayout';
+import Card from '../components/ui/Card';
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
