@@ -4,27 +4,27 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { BrandingConfig, getCurrentBranding } from './branding.config';
 import { BrandingContext } from './BrandingContext';
 
-import Header from './components/Header';
-import Footer from './components/Footer';
+import Header from './components/layout/Header';
+import Footer from './components/layout/Footer';
 
-import WelcomePage from './components/WelcomePage';
-import RegisterPage from './components/RegisterPage';
-import VerifyCodePage from './components/VerifyCodePage';
+import WelcomePage from './pages/WelcomePage';
+import RegisterPage from './pages/RegisterPage';
+import VerifyCodePage from './pages/VerifyCodePage';
 
-import Dashboard from './components/Dashboard';
-import CheckInTracker from './components/CheckInTracker';
-import WordFind from './components/WordFind';
+import Dashboard from './pages/DashboardPage';
+import CheckInTracker from './pages/CheckInPage';
+import WordFind from './pages/WordFindPage';
 import MealDetailPage from './pages/MealDetailPage';
-import LogoutPage from './components/LogoutPage';
+import LogoutPage from './pages/LogoutPage';
 
-import RequireAuth from './components/RequireAuth';
-import AdminPanel from './components/AdminPanel';
-import AdminProfileEditor from './components/AdminProfileEditor';
-import LockScreenUser from './components/LockScreenUser';
-import ConsentPhotoPage from './components/ConsentPhotoPage';
-import ConsentPrivacyPage from './components/ConsentPrivacyPage';
-import DoctorsView from './components/DoctorsView';
-import SelfReportingPage from './components/SelfReportingPage';
+import RequireAuth from './components/auth/RequireAuth';
+import AdminPanel from './components/admin/AdminPanel';
+import AdminProfileEditor from './pages/AdminProfileEditorPage';
+import LockScreenUser from './components/auth/LockScreenUser';
+import ConsentPhotoPage from './pages/ConsentPhotoPage';
+import ConsentPrivacyPage from './pages/ConsentPrivacyPage';
+import DoctorsView from './pages/DoctorsViewPage';
+import SelfReportingPage from './pages/SelfReportingPage';
 
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
@@ -32,7 +32,7 @@ import TermsOfService from './pages/TermsOfService';
 // Notifications & Demo Mode (optional)
 import { requestNotificationPermission } from './utils/requestNotificationPermission';
 import { DemoModeProvider } from './contexts/DemoModeContext';
-import DemoBanner from './components/DemoBanner';
+import DemoBanner from './components/layout/DemoBanner';
 
 // Define which routes are "public" (no header)
 const publicRoutes = [

@@ -1,7 +1,7 @@
 // src/components/RequireAuth.tsx
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '../../lib/supabaseClient';
 
 const RequireAuth = ({ children }: { children: JSX.Element }) => {
   const location = useLocation();

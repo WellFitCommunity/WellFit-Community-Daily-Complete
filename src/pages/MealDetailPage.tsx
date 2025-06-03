@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
-import ImageCarousel from '../components/ImageCarousel';
-import PhotoUpload from '../components/PhotoUpload';
-import PhotoGallery from '../components/PhotoGallery';
+import ImageCarousel from '../components/ui/ImageCarousel';
+import PhotoUpload from '../components/features/PhotoUpload';
+import PhotoGallery from '../components/features/PhotoGallery';
 // Import your local recipe arrays
 import recipesWeek1 from '../data/recipesWeek1';
 import recipesWeek2 from '../data/recipesWeek2';

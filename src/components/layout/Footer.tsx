@@ -1,5 +1,5 @@
 import React from 'react';
-import { useBranding } from '../BrandingContext';
+import { useBranding } from '../../BrandingContext';
 
 const Footer = () => {
   const branding = useBranding();

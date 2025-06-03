@@ -2,8 +2,8 @@
 // src/components/WelcomePage.tsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Card from './Card';
-import PageLayout from './PageLayout';
+import Card from '../components/ui/Card';
+import PageLayout from '../components/ui/PageLayout';
 
 const WelcomePage: React.FC = () => {
   const navigate = useNavigate();

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabaseClient'; // Added
-import { useBranding } from '../BrandingContext'; // Added
+import { supabase } from '../../lib/supabaseClient'; // Added
+import { useBranding } from '../../BrandingContext'; // Added
 
 interface Contact {
   firstName: string;
