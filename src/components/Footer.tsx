@@ -17,15 +17,14 @@ const Footer = () => {
 
   const textColor = isPrimaryColorDark() ? 'text-white' : 'text-gray-800';
 
-  // Default powered-by info
+  // Alliance-powered info (NO "and partners" and exactly as you requested)
   const allianceFooter = (
     <>
       <div>
         © {new Date().getFullYear()} {branding.appName}. All rights reserved.
       </div>
       <div className="mt-1">
-        Powered by The Alliance: WellFit Community, Inc., VitalEdge Healthcare Consulting,
-        Envision VirtualEdge Group, and partners.
+        Powered by WellFit Community, Inc., Vital Edge Healthcare Consulting, Envision Virtual Edge Group
       </div>
       <div className="mt-1 text-xs opacity-90">
         {branding.contactInfo || "Contact us at info@thewellfitcommunity.org"}
@@ -44,4 +43,3 @@ const Footer = () => {
 };
 
 export default Footer;
-
