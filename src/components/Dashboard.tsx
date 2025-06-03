@@ -35,7 +35,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <main className="space-y-6 mt-4 p-4">
-      <h1 className="text-3xl font-bold text-center mb-6" style={{ color: branding.primaryColor }}>
+      <h1 className="text-2xl sm:text-3xl font-bold text-center mb-6" style={{ color: branding.primaryColor }}>
         Welcome to {branding.appName} Dashboard
       </h1>
 
@@ -108,7 +108,7 @@ const Dashboard: React.FC = () => {
       </section>
       
       {/* Admin Panel might be better placed at the end or in a separate admin route */}
-      <Card><AdminPanel /></Card> 
+      {/* <Card><AdminPanel /></Card> */}
     </main>
   );
 };

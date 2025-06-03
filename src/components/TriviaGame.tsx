@@ -20,26 +20,67 @@ const TriviaGame: React.FC = () => {
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [gamePhase, setGamePhase] = useState<'loading' | 'playing' | 'finished'>('loading');
 
+  const LOCAL_STORAGE_KEY = 'dailyTriviaSet';
+
+  interface StoredTriviaSet {
+    date: string;
+    questionIds: string[];
+  }
+
   const selectDailyQuestions = () => {
-    const allEasy = triviaQuestions.filter(q => q.difficulty === 'Easy');
-    const allMedium = triviaQuestions.filter(q => q.difficulty === 'Medium');
-    const allHard = triviaQuestions.filter(q => q.difficulty === 'Hard');
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    let dailyQuestions: TriviaQuestion[] = [];
 
-    const shuffledEasy = shuffleArray(allEasy);
-    const shuffledMedium = shuffleArray(allMedium);
-    const shuffledHard = shuffleArray(allHard);
+    try {
+      const storedSetString = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (storedSetString) {
+        const storedSet = JSON.parse(storedSetString) as StoredTriviaSet;
+        if (storedSet.date === today && storedSet.questionIds.length > 0) {
+          // Try to find questions from the main list based on stored IDs
+          const foundQuestions = storedSet.questionIds.map(id =>
+            triviaQuestions.find(q => q.id === id)
+          ).filter(q => q !== undefined) as TriviaQuestion[];
 
-    const dailySet = [
-      ...shuffledEasy.slice(0, 3),
-      ...shuffledMedium.slice(0, 1),
-      ...shuffledHard.slice(0, 1),
-    ];
-    
-    // Further shuffle the final set to mix difficulties
-    const finalDailySet = shuffleArray(dailySet);
+          if (foundQuestions.length === storedSet.questionIds.length) {
+            dailyQuestions = shuffleArray(foundQuestions); // Shuffle the selected daily set
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error reading daily trivia from localStorage:", error);
+      // Proceed to select new questions if localStorage is corrupt or inaccessible
+    }
 
-    if (finalDailySet.length >= 1) { // Check if at least one question was selected
-      setCurrentQuestions(finalDailySet);
+    if (dailyQuestions.length === 0) { // No valid set from localStorage, or it's a new day
+      const allEasy = triviaQuestions.filter(q => q.difficulty === 'Easy');
+      const allMedium = triviaQuestions.filter(q => q.difficulty === 'Medium');
+      const allHard = triviaQuestions.filter(q => q.difficulty === 'Hard');
+
+      const shuffledEasy = shuffleArray(allEasy);
+      const shuffledMedium = shuffleArray(allMedium);
+      const shuffledHard = shuffleArray(allHard);
+
+      // Ensure enough questions are available before slicing
+      const selectedEasy = shuffledEasy.slice(0, 3); // Default 3 Easy
+      const selectedMedium = shuffledMedium.slice(0, 1); // Default 1 Medium
+      const selectedHard = shuffledHard.slice(0, 1); // Default 1 Hard
+
+      const newDailySet = [
+        ...selectedEasy,
+        ...selectedMedium,
+        ...selectedHard,
+      ];
+
+      dailyQuestions = shuffleArray(newDailySet); // Shuffle the final combined set
+
+      if (dailyQuestions.length > 0) {
+        const questionIds = dailyQuestions.map(q => q.id);
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({ date: today, questionIds }));
+      }
+    }
+
+    if (dailyQuestions.length >= 1) {
+      setCurrentQuestions(dailyQuestions);
       setCurrentQuestionIndex(0);
       setScore(0);
       setSelectedAnswer(null);
@@ -93,8 +134,8 @@ const TriviaGame: React.FC = () => {
   };
 
   const handlePlayAgain = () => {
-    setGamePhase('loading');
-    selectDailyQuestions(); // Reselect questions
+    setGamePhase('loading'); // Show loading while questions are (re)selected
+    selectDailyQuestions(); // This will load the same daily set if called on the same day
   };
 
   if (gamePhase === 'loading') {
@@ -138,7 +179,7 @@ const TriviaGame: React.FC = () => {
     <div className="max-w-lg mx-auto p-4 sm:p-6 bg-white rounded-xl shadow-2xl">
       <h1 className="text-2xl sm:text-3xl font-bold text-center text-wellfit-blue mb-2">Daily Trivia Challenge</h1>
       <p className="text-center text-gray-600 mb-1">Question {currentQuestionIndex + 1} of {currentQuestions.length}</p>
-      <p className="text-center text-2xl font-semibold text-wellfit-green mb-6">Score: {score}</p>
+      <p className="text-center text-xl sm:text-2xl font-semibold text-wellfit-green mb-6">Score: {score}</p>
       
       {gamePhase === 'playing' && (
         <div>
