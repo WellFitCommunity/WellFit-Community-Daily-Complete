@@ -204,7 +204,7 @@ const AdminProfileEditor: React.FC = () => {
             ) : (
               <div>
                 <p className="whitespace-pre-wrap">{note.note}</p>
-                <p className="text-xs text-gray-500">
+                <p className="text-sm text-gray-500">
                   Created: {new Date(note.created_at).toLocaleString()} by {note.created_by}
                   {note.updated_at && ` | Updated: ${new Date(note.updated_at).toLocaleString()} by ${note.updated_by}`}
                 </p>

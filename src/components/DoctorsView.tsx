@@ -228,7 +228,7 @@ const DoctorsView: React.FC = () => {
       <div>
         <h4 className="font-semibold text-md mb-1" style={{ color: branding.primaryColor }}>Latest Check-in:</h4>
         {latestCheckIn ? (
-          <div className="text-sm text-gray-700 bg-white p-3 rounded-md shadow-sm">
+          <div className="text-base text-gray-700 bg-white p-3 rounded-md shadow-sm">
             <p><strong>Date:</strong> {formatDateTime(latestCheckIn.created_at)}</p>
             <p><strong>Notes:</strong> {latestCheckIn.notes || "No notes provided."}</p>
             {latestCheckIn.reviewed_at && (
@@ -236,7 +236,7 @@ const DoctorsView: React.FC = () => {
             )}
           </div>
         ) : (
-          <p className="text-sm text-gray-500">No check-in data available.</p>
+          <p className="text-base text-gray-500">No check-in data available.</p>
         )}
       </div>
 
@@ -247,7 +247,7 @@ const DoctorsView: React.FC = () => {
         {recentHealthEntries.length > 0 ? (
           <ul className="space-y-2">
             {recentHealthEntries.map(entry => (
-              <li key={entry.id} className="text-sm text-gray-700 bg-white p-3 rounded-md shadow-sm">
+              <li key={entry.id} className="text-base text-gray-700 bg-white p-3 rounded-md shadow-sm">
                 <p><strong>Date:</strong> {formatDateTime(entry.created_at)}</p>
                 <p>{renderHealthEntryData(entry)}</p>
                  {entry.reviewed_at && (
@@ -257,14 +257,14 @@ const DoctorsView: React.FC = () => {
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-gray-500">No self-reported health data available.</p>
+          <p className="text-base text-gray-500">No self-reported health data available.</p>
         )}
       </div>
 
       <div>
         <h4 className="font-semibold text-md mb-1" style={{ color: branding.primaryColor }}>Overall Care Team Review Status:</h4>
         {careTeamReview ? (
-          <div className="text-sm text-gray-700 bg-white p-3 rounded-md shadow-sm">
+          <div className="text-base text-gray-700 bg-white p-3 rounded-md shadow-sm">
             <p>
               <strong>Status:</strong> {careTeamReview.status}
               {careTeamReview.reviewed_at && careTeamReview.reviewed_by_name && 
@@ -275,14 +275,14 @@ const DoctorsView: React.FC = () => {
             </p>
           </div>
         ) : (
-          <p className="text-sm text-gray-500">
+          <p className="text-base text-gray-500">
             Note: This section depends on `reviewed_at` and `reviewed_by_name` fields being present in both `check_ins` and `health_entries`.
           </p>
         )}
       </div>
       
       {!loading && !latestCheckIn && recentHealthEntries.length === 0 && !careTeamReview && !error && (
-         <p className="text-sm text-gray-500 mt-2">No data available yet. Data will appear here once submitted and processed.</p>
+         <p className="text-base text-gray-500 mt-2">No data available yet. Data will appear here once submitted and processed.</p>
       )}
 
       {currentUser && (

@@ -26,7 +26,7 @@ const Footer: React.FC = () => {
       <div className="mt-1">
         Powered by WellFit Community, Inc., Vital Edge Healthcare Consulting, Envision Virtual Edge Group
       </div>
-      <div className="mt-1 text-xs opacity-90">
+      <div className="mt-1 text-sm opacity-90">
         {branding.contactInfo || "Contact us at info@thewellfitcommunity.org"}
       </div>
     </>
