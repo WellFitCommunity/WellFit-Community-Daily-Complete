@@ -17,13 +17,11 @@ import WordFind from './components/WordFind';
 import MealDetailPage from './pages/MealDetailPage';
 import LogoutPage from './components/LogoutPage';
 
-import RequireAuth from './components/RequireAuth';
-import AdminPanel from './components/AdminPanel';
-import AdminProfileEditor from './components/AdminProfileEditor';
-import LockScreenUser from './components/LockScreenUser';
+import AdminProfileEditor from './components/AdminProfileEditor'; // Added back
 import ConsentPhotoPage from './components/ConsentPhotoPage';
 import ConsentPrivacyPage from './components/ConsentPrivacyPage';
-import DoctorsView from './components/DoctorsView';
+import DoctorsView from './components/DoctorsView'; // Added back
+import RequireAuth from './components/RequireAuth';
 import SelfReportingPage from './components/SelfReportingPage';
 
 import PrivacyPolicy from './pages/PrivacyPolicy';
@@ -33,6 +31,7 @@ import NotFoundPage from './components/NotFoundPage'; // Import NotFoundPage
 // Notifications & Demo Mode (optional)
 import { requestNotificationPermission } from './utils/requestNotificationPermission';
 import { DemoModeProvider } from './contexts/DemoModeContext';
+import { SessionTimeoutProvider } from './contexts/SessionTimeoutContext';
 import DemoBanner from './components/DemoBanner';
 
 // Define which routes are "public" (no header)
@@ -66,11 +65,12 @@ const App: React.FC = () => {
   return (
     <DemoModeProvider>
       <BrandingContext.Provider value={branding}>
-        <DemoBanner />
-        {showHeader && <Header />}
-        <Routes>
-          {/* PUBLIC ROUTES */}
-          <Route path="/" element={<WelcomePage />} />
+        <SessionTimeoutProvider>
+          <DemoBanner />
+          {showHeader && <Header />}
+          <Routes>
+            {/* PUBLIC ROUTES */}
+            <Route path="/" element={<WelcomePage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/verify" element={<VerifyCodePage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
@@ -118,30 +118,6 @@ const App: React.FC = () => {
             }
           />
           <Route
-            path="/admin-panel"
-            element={
-              <RequireAuth>
-                <AdminPanel />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/admin-profile-editor"
-            element={
-              <RequireAuth>
-                <AdminProfileEditor />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/lockscreen"
-            element={
-              <RequireAuth>
-                <LockScreenUser />
-              </RequireAuth>
-            }
-          />
-          <Route
             path="/consent-photo"
             element={
               <RequireAuth>
@@ -158,6 +134,14 @@ const App: React.FC = () => {
             }
           />
           <Route
+            path="/self-reporting"
+            element={
+              <RequireAuth>
+                <SelfReportingPage />
+              </RequireAuth>
+            }
+          />
+          <Route
             path="/doctors-view"
             element={
               <RequireAuth>
@@ -166,10 +150,10 @@ const App: React.FC = () => {
             }
           />
           <Route
-            path="/self-reporting"
+            path="/admin-profile-editor"
             element={
               <RequireAuth>
-                <SelfReportingPage />
+                <AdminProfileEditor />
               </RequireAuth>
             }
           />
@@ -177,6 +161,7 @@ const App: React.FC = () => {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
         <Footer /> {/* Footer appears on every page */}
+        </SessionTimeoutProvider>
       </BrandingContext.Provider>
     </DemoModeProvider>
   );

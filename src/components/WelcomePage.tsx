@@ -10,8 +10,17 @@ const WelcomePage: React.FC = () => {
   const [privacyConsentAgreed, setPrivacyConsentAgreed] = useState(false);
   const [communicationConsentAgreed, setCommunicationConsentAgreed] = useState(false);
 
+  // Effect for redirecting authenticated users
+  useEffect(() => {
+    if (localStorage.getItem('wellfitUserId')) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [navigate]);
+
   // Load consent states from local storage on component mount
   useEffect(() => {
+    // This effect should not run if redirecting, so check auth status again or ensure it's benign.
+    // However, the redirect should happen before these states are set if user is authenticated.
     const storedPrivacyConsent = localStorage.getItem('privacyConsent');
     if (storedPrivacyConsent === 'true') {
       setPrivacyConsentAgreed(true);
@@ -20,7 +29,7 @@ const WelcomePage: React.FC = () => {
     if (storedCommunicationConsent === 'true') {
       setCommunicationConsentAgreed(true);
     }
-  }, []);
+  }, []); // Empty dependency array if these only run on mount and don't depend on navigate
 
   // Update local storage when consent states change
   useEffect(() => {

@@ -189,7 +189,7 @@ interface SelfReportLog extends SelfReportData {
         border: `1px solid ${branding.primaryColor}`,
       }}
     >
-      <h1 className="text-3xl md:text-4xl font-bold mb-6 md:mb-8 text-center" style={{ color: branding.primaryColor }}>
+      <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6 md:mb-8 text-center" style={{ color: branding.primaryColor }}>
         Self Health Report
       </h1>
 
@@ -248,10 +248,10 @@ interface SelfReportLog extends SelfReportData {
         
         {/* Feedback messages */}
         {feedbackMessage && (
-          <p role="status" className="text-green-600 bg-green-100 p-3 rounded-lg text-lg text-center font-medium">{feedbackMessage}</p>
+          <p role="status" className="text-green-600 bg-green-100 p-3 rounded-lg text-base sm:text-lg text-center font-medium">{feedbackMessage}</p>
         )}
         {errorMessage && !feedbackMessage && (
-          <p role="alert" className="text-red-600 bg-red-100 p-3 rounded-lg text-lg text-center font-medium">{errorMessage}</p>
+          <p role="alert" className="text-red-600 bg-red-100 p-3 rounded-lg text-base sm:text-lg text-center font-medium">{errorMessage}</p>
         )}
 
         <button
@@ -270,7 +270,7 @@ interface SelfReportLog extends SelfReportData {
 
       {/* Show previous reports with color-coding */}
       <div className="mt-8">
-        <h2 className="text-xl font-semibold mb-4" style={{ color: branding.primaryColor }}>Your Previous Reports</h2>
+        <h2 className="text-lg sm:text-xl font-semibold mb-4" style={{ color: branding.primaryColor }}>Your Previous Reports</h2>
         {selfReports.length === 0 ? (
           <p style={{ color: branding.textColor }}>No reports yet.</p>
         ) : (

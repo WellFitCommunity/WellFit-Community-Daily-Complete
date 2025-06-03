@@ -39,18 +39,18 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ context, recordId }) => {
 
   return (
     <div className="space-y-2">
-      <label htmlFor="photo-upload-input" className="block font-medium text-gray-700 text-sm">Upload Photo</label>
+      <label htmlFor="photo-upload-input" className="block font-medium text-gray-700 text-base">Upload Photo</label>
       <input
         id="photo-upload-input"
         type="file"
         accept="image/*"
         disabled={uploading}
         onChange={handleFileChange}
-        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600"
+        className="block w-full text-base text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600"
       />
-      {uploading && <p className="text-sm text-gray-600">Uploading…</p>}
+      {uploading && <p className="text-base text-gray-600">Uploading…</p>}
       {message.text && (
-        <p role="status" className={`text-sm ${message.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+        <p role="status" className={`text-base ${message.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
           {message.text}
         </p>
       )}

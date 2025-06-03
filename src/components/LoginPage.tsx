@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // Add useEffect
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useBranding } from '../BrandingContext';
@@ -9,6 +9,12 @@ const LoginPage: React.FC = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const branding = useBranding();
+
+  useEffect(() => {
+    if (localStorage.getItem('wellfitUserId')) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [navigate]);
 
   // Helper to determine if a color is dark (similar to Header/Footer)
   const isColorDark = (colorStr: string) => {
@@ -60,9 +66,9 @@ const LoginPage: React.FC = () => {
       <h1 className="text-2xl font-bold mb-6" style={{ color: branding.primaryColor }}>
         {branding.appName} - Senior Login
       </h1>
-      <form onSubmit={handleLogin} className="space-y-6"> {/* Increased space for labels */}
+      <form onSubmit={handleLogin} className="space-y-4"> {/* Adjusted space for visible labels */}
         <div>
-          <label htmlFor="phone-input" className="block text-sm font-medium text-gray-700 sr-only"> {/* sr-only for visually hidden label if design prefers placeholders */}
+          <label htmlFor="phone-input" className="block text-sm font-medium text-gray-700 mb-1 text-left">
             Phone Number
           </label>
           <input
@@ -80,7 +86,7 @@ const LoginPage: React.FC = () => {
           />
         </div>
         <div>
-          <label htmlFor="pin-input" className="block text-sm font-medium text-gray-700 sr-only"> {/* sr-only for visually hidden label */}
+          <label htmlFor="pin-input" className="block text-sm font-medium text-gray-700 mb-1 text-left">
             4-digit PIN
           </label>
           <input

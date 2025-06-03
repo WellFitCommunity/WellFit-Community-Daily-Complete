@@ -70,7 +70,7 @@ const MealDetailPage: React.FC = () => { // Added React.FC
     : null;
 
   return (
-    <div className="bg-white text-[#003865] rounded-xl shadow-md p-6 max-w-2xl mx-auto mt-8 space-y-6">
+    <div className="bg-white text-[#003865] rounded-xl shadow-md p-4 sm:p-6 max-w-2xl mx-auto mt-8 space-y-6">
       <button
         onClick={() => navigate('/dashboard')}
         className="text-sm text-[#8cc63f] hover:underline"

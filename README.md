@@ -6,7 +6,19 @@ This application is designed for seniors to log their daily health data and for 
 
 ## Project Structure
 
-(You can add a brief overview of the project structure here if needed.)
+The project follows a standard React application structure. Key directories include:
+- `public/`: Contains static assets and the main `index.html` file.
+- `src/`: Contains the main application source code.
+    - `src/components/`: Reusable UI components.
+    - `src/pages/`: Components that represent full pages/routes.
+    - `src/contexts/`: React context providers.
+    - `src/data/`: Static data, such as trivia questions.
+    - `src/firebase/`: Firebase configuration and utility functions.
+    - `src/lib/`: Client libraries, like the Supabase client.
+    - `src/utils/`: General utility functions.
+- `api/`: Potentially for serverless functions (if used with Vercel).
+- `functions/`: Firebase Cloud Functions.
+- `supabase/`: Supabase specific configurations, migrations, and functions.
 
 ## Key Features
 
@@ -17,19 +29,13 @@ This application is designed for seniors to log their daily health data and for 
     *   Heart Rate (bpm) (optional)
     *   Pulse Oximeter (SpO2 %) (optional)
     *   Notes or Symptoms (optional)
-*   Doctor's View (Admin Panel) to:
-    *   Display each user's latest self-report.
-    *   Group by user and filter by tenant.
-    *   View a 45-day reporting history with charts/tables for key metrics.
-    *   Export data as CSV.
-    *   Print data for offline review.
-*   Secure data handling with Supabase RLS for tenant separation.
+*   Secure data handling with Supabase for user data.
 
 ## Getting Started
 
 ### Prerequisites
 
-*   Node.js (specify version if known, e.g., v18 or later)
+*   Node.js (v18 or later recommended)
 *   npm or yarn
 *   Supabase account and project setup
 
@@ -46,28 +52,30 @@ This application is designed for seniors to log their daily health data and for 
     # or
     # yarn install
     ```
+
+### Dependencies
+All necessary production and development dependencies are listed in the `package.json` file. Install them using `npm install` or `yarn install`.
+
 3.  Set up environment variables:
     Create a `.env` file in the project root and add the necessary Supabase URL and anon key:
     ```env
     REACT_APP_SUPABASE_URL=your_supabase_url
     REACT_APP_SUPABASE_ANON_KEY=your_supabase_anon_key
-    # Add any other required environment variables
+    # REACT_APP_ADMIN_SECRET=your_admin_secret_key (if still applicable after LockScreen rework)
+    # Add any other relevant environment variables below:
+    # EXAMPLE_VAR=example_value
     ```
+    Refer to the codebase, particularly `src/config.ts` or similar, and component files for a complete list of environment variables used throughout the application. The `REACT_APP_ADMIN_SECRET` is related to an admin lock screen feature that is undergoing changes.
 4.  (Add any Supabase migration/setup steps if applicable, e.g., `npx supabase db push`)
 
 ### Running Locally
 
 ```bash
-supabase bootstrap
+npm start
+# or
+# yarn start
 ```
-
-Or using npx:
-
-```bash
-npx supabase bootstrap
-```
-
-The bootstrap command will guide you through the process of setting up a Supabase project using one of the [starter](https://github.com/supabase-community/supabase-samples/blob/main/samples.json) templates.
+This will start the development server, typically on `http://localhost:3000`.
 
 ## Docs
 
@@ -78,20 +86,5 @@ Command & config reference can be found [here](https://supabase.com/docs/referen
 We follow semantic versioning for changes that directly impact CLI commands, flags, and configurations.
 
 However, due to dependencies on other service images, we cannot guarantee that schema migrations, seed.sql, and generated types will always work for the same CLI major version. If you need such guarantees, we encourage you to pin a specific version of CLI in .
-
-## Developing
-
-To run from source (assuming a Go backend, which might not be relevant for a React/Supabase app):
-
-```sh
-# Go >= 1.22 (This section might be from a template and may not apply)
-# For React/Vite based projects, typically:
-# npm install
-# npm run dev
-# or
-# yarn
-# yarn dev
-go run . help
-```
 # Redeploy trigger
 (This section might be from a template and used for CI/CD purposes)

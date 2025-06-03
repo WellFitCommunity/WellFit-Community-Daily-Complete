@@ -33,7 +33,7 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({ context, recordId }) => {
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       {urls.map(url => (
         <img key={url} src={url} alt="Uploaded" className="w-full rounded shadow-sm" />
       ))}
