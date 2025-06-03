@@ -28,6 +28,7 @@ import SelfReportingPage from './components/SelfReportingPage';
 
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
+import NotFoundPage from './components/NotFoundPage'; // Import NotFoundPage
 
 // Notifications & Demo Mode (optional)
 import { requestNotificationPermission } from './utils/requestNotificationPermission';
@@ -44,7 +45,7 @@ const publicRoutes = [
 ];
 
 // Helper: Check if current path is public route (handles dynamic params)
-function isPublicRoute(pathname) {
+function isPublicRoute(pathname: string): boolean {
   // For exact matches (static pages)
   if (publicRoutes.includes(pathname)) return true;
   // Add logic here for other patterns if needed
@@ -172,8 +173,8 @@ const App: React.FC = () => {
               </RequireAuth>
             }
           />
-          {/* WILDCARD - fallback to home */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          {/* WILDCARD - Render NotFoundPage */}
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
         <Footer /> {/* Footer appears on every page */}
       </BrandingContext.Provider>

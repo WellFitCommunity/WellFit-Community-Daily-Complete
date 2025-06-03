@@ -2,8 +2,13 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
+import { Session } from '@supabase/supabase-js'; // Import Session type
 
-const RequireAuth = ({ children }: { children: JSX.Element }) => {
+interface RequireAuthProps {
+  children: JSX.Element;
+}
+
+const RequireAuth: React.FC<RequireAuthProps> = ({ children }) => {
   const location = useLocation();
 
   // 1) Preview flag
@@ -14,15 +19,18 @@ const RequireAuth = ({ children }: { children: JSX.Element }) => {
   const pin   = localStorage.getItem('wellfitPin');
 
   // 3) (Optional) Supabase session—for email-based users
-  const [session, setSession] = useState<boolean>(false);
+  const [sessionActive, setSessionActive] = useState<boolean>(false); // Renamed to avoid conflict with imported Session
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(!!session);
+    supabase.auth.getSession().then(({ data: { session: currentSession } }: { data: { session: Session | null } }) => {
+      setSessionActive(!!currentSession);
     });
   }, []);
 
-  // If not a preview, and not phone+PIN, and not logged-in via email, block access
-  if (!isPreview && !(phone && pin) && !session) {
+  // 4) Communication consent
+  const communicationConsentGiven = localStorage.getItem('communicationConsent') === 'true';
+
+  // If communication consent is not given, or if not a preview and not phone+PIN and not logged-in via email, block access
+  if (!communicationConsentGiven || (!isPreview && !(phone && pin) && !sessionActive)) {
     return <Navigate to="/" state={{ from: location }} replace />;
   }
 

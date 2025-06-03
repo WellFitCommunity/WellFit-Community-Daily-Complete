@@ -2,7 +2,13 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
+import { Session, User } from '@supabase/supabase-js'; // Import Session and User
 import bcrypt from 'bcryptjs';
+
+interface PhoneAuthData {
+  pin_hash: string;
+  // Add other fields if they exist in phone_auth table
+}
 
 const LockScreenUser: React.FC = () => {
   const navigate = useNavigate();
@@ -16,19 +22,19 @@ const LockScreenUser: React.FC = () => {
   const [successSound] = useState(() => new Audio('/sounds/success.mp3'));
 
   useEffect(() => {
-    const checkSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data?.session?.user) {
+    const checkSession = async (): Promise<void> => {
+      const { data: { session } }: { data: { session: Session | null } } = await supabase.auth.getSession();
+      if (session?.user) { // Check specifically for user object on session
         setMethod('email');
-        navigate('/dashboard');
+        navigate('/dashboard'); // Navigate if user session exists
       } else {
-        setMethod('phone');
+        setMethod('phone'); // Default to phone if no active email session
       }
     };
     checkSession();
   }, [navigate]);
 
-  const handleUnlock = async () => {
+  const handleUnlock = async (): Promise<void> => {
     setLoading(true);
     setUnlockClicked(true);
     setError('');
@@ -37,10 +43,10 @@ const LockScreenUser: React.FC = () => {
       .from('phone_auth')
       .select('pin_hash')
       .eq('phone', phone)
-      .single();
+      .single<PhoneAuthData>(); // Use generic type
 
-    if (fetchError || !data) {
-      setError('Phone not found.');
+    if (fetchError || !data || !data.pin_hash) { // Check for data.pin_hash
+      setError('Phone not found or PIN not set up.');
       setLoading(false);
       return;
     }
@@ -62,7 +68,7 @@ const LockScreenUser: React.FC = () => {
     setLoading(false);
   };
 
-  const handleFingerprint = async () => {
+  const handleFingerprint = async (): Promise<void> => {
     setFingerprintClicked(true);
     if (!window.PublicKeyCredential) {
       alert('Fingerprint login not supported on this browser.');
@@ -78,7 +84,11 @@ const LockScreenUser: React.FC = () => {
         },
       });
 
-      if (cred) {
+      // Credential type can be PublicKeyCredential or null
+      const pkCred = cred as PublicKeyCredential | null; 
+      if (pkCred) {
+        // Further processing of pkCred, e.g., sending to server for verification
+        // For this example, we'll assume success if a credential is returned.
         const savedPhone = localStorage.getItem('userPhone');
         if (savedPhone) {
           successSound.play();
@@ -113,19 +123,27 @@ const LockScreenUser: React.FC = () => {
           <>
             <input
               type="tel"
+              id="phone-lock"
               placeholder="Phone Number"
               value={phone}
-              onChange={e => setPhone(e.target.value)}
-              className="w-full p-2 border rounded mb-2"
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPhone(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-md mb-3 focus:ring-2 focus:ring-indigo-500"
               required
+              aria-required="true"
             />
+            <label htmlFor="pin-lock" className="sr-only">PIN</label>
             <input
               type="password"
+              id="pin-lock"
               placeholder="Enter 4-digit PIN"
               value={pin}
-              onChange={e => setPin(e.target.value)}
-              className="w-full p-2 border rounded mb-2"
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPin(e.target.value)}
+              maxLength={4}
+              inputMode="numeric"
+              pattern="[0-9]*"
+              className="w-full p-3 border border-gray-300 rounded-md mb-3 focus:ring-2 focus:ring-indigo-500"
               required
+              aria-required="true"
             />
             {error && <p className="text-red-500 mb-2">{error}</p>}
             <button
