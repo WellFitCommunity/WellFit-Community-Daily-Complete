@@ -247,8 +247,8 @@ const CommunityMoments: React.FC = () => {
                   className="w-full max-w-xs rounded mb-2"
                   style={{ fontSize: 24 }}
                 />
-                <div className="text-2xl font-bold text-[#003865]">{moment.title} {moment.emoji}</div>
-                <div className="text-lg text-gray-800">{moment.description}</div>
+                <div className="text-xl sm:text-2xl font-bold text-[#003865]">{moment.title} {moment.emoji}</div>
+                <div className="text-base sm:text-lg text-gray-800">{moment.description}</div>
                 {moment.tags && (
                   <div className="flex flex-wrap gap-1 mt-1">
                     {moment.tags.split(',').map(tag => (
@@ -350,8 +350,8 @@ const CommunityMoments: React.FC = () => {
               className="w-full max-w-xs rounded mb-2"
               style={{ fontSize: 22 }}
             />
-            <div className="text-2xl font-semibold text-[#003865]">{moment.title} {moment.emoji}</div>
-            <div className="text-lg text-gray-800">{moment.description}</div>
+            <div className="text-xl sm:text-2xl font-semibold text-[#003865]">{moment.title} {moment.emoji}</div>
+            <div className="text-base sm:text-lg text-gray-800">{moment.description}</div>
             {moment.tags && (
               <div className="flex flex-wrap gap-1 mt-1">
                 {moment.tags.split(',').map(tag => (
