@@ -6,9 +6,9 @@
   "dependencies": {
     "@hcaptcha/react-hcaptcha": "^1.12.0",
     "@supabase/auth-helpers-react": "^0.5.0",
-    "@supabase/supabase-js": "^2.49.9",
-    "@types/react": "^18.0.0",
-    "@types/react-dom": "^18.0.0",
+    "@supabase/supabase-js": "^2.49.10",
+    "@types/react": "^18.3.23",
+    "@types/react-dom": "^18.2.20",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "ajv-keywords": "^5.1.0",
@@ -33,11 +33,13 @@
     "@types/node": "^22.15.17",
     "@vercel/node": "^5.1.16",
     "autoprefixer": "^10.4.13",
+    "eslint": "^9.0.0",
+    "eslint-plugin-react": "^7.37.5",
     "postcss": "^8.4.21",
-    "supabase": "^2.23.4",
+    "supabase": "^2.24.3",
     "tailwindcss": "^3.3.2",
     "ts-node": "^10.9.2",
-    "typescript": "^5.8.3"
+    "typescript": "^5.1.6"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -45,13 +47,23 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "import:meals": "ts-node src/scripts/importMeals.ts"
+    "import:meals": "ts-node src/scripts/importMeals.ts",
+    "deploy:register": "supabase functions deploy register",
+    "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\""
   },
   "eslintConfig": {
     "extends": [
       "react-app",
       "react-app/jest"
-    ]
+    ],
+    "settings": {
+      "react": {
+        "version": "detect"
+      }
+    },
+    "rules": {
+      "react/react-in-jsx-scope": "off"
+    }
   },
   "browserslist": {
     "production": [

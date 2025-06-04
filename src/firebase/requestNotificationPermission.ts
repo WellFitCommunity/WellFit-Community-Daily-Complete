@@ -3,9 +3,8 @@ import { messaging } from '../firebase';
 
 // This uses the Web Push certificate (VAPID key) from Firebase Cloud Messaging
 const vapidKey = process.env.REACT_APP_FIREBASE_VAPID_KEY;
-
 export const requestNotificationPermission = async () => {
-  if (!messaging || !Notification || Notification.permission === 'denied') {
+  if (!(messaging as Messaging) || !Notification || Notification.permission === 'denied') {
     console.warn('Notifications not supported or permission denied.');
     return null;
   }

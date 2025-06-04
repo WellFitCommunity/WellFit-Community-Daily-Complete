@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useSupabaseClient, SupabaseClient } from '@supabase/auth-helpers-react';
 
 interface MealFormData {

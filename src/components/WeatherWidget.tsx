@@ -1,5 +1,5 @@
 // src/components/WeatherWidget.tsx
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 const API_KEY = process.env.REACT_APP_WEATHER_API_KEY;
 

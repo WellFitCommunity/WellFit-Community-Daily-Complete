@@ -1,6 +1,6 @@
 // src/components/ExportCheckIns.tsx
 
-import React from 'react';
+import * as React from 'react';
 import { saveAs } from 'file-saver';
 
 const ExportCheckIns: React.FC = () => {

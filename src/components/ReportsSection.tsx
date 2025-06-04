@@ -1,6 +1,6 @@
 // src/components/ReportsSection.tsx
 
-import React from 'react';
+import * as React from 'react';
 
 const ReportsSection: React.FC = () => {
   // Simulated data — later replace with live fetch from Supabase
