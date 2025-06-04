@@ -34,11 +34,15 @@ import { DemoModeProvider } from './contexts/DemoModeContext';
 import { SessionTimeoutProvider } from './contexts/SessionTimeoutContext';
 import DemoBanner from './components/DemoBanner';
 
-// Define which routes are "public" (no header)
+import LockScreenUser from './components/LockScreenUser'; // Import LockScreenUser
+import { InactivityLockProvider, useInactivityLock } from './contexts/InactivityLockContext'; // Import InactivityLock
+
+// Define which routes are "public" (no header or inactivity lock)
 const publicRoutes = [
   '/',
   '/register',
   '/verify',
+  '/lock-screen', // Lock screen itself should not be locked
   '/privacy-policy',
   '/terms'
 ];
@@ -51,34 +55,38 @@ function isPublicRoute(pathname: string): boolean {
   return false;
 }
 
-const App: React.FC = () => {
-  const [branding, setBranding] = useState<BrandingConfig>(getCurrentBranding());
+// Main App component adjusted to include InactivityLockProvider and conditional rendering of LockScreenUser
+const AppContent: React.FC = () => {
   const location = useLocation();
+  const { isLocked } = useInactivityLock(); // Use the hook here
 
-  useEffect(() => {
-    setBranding(getCurrentBranding());
-  }, []);
+  // Show header only if NOT on a public route and not locked
+  const showHeader = !isPublicRoute(location.pathname) && !isLocked;
 
-  // Show header only if NOT on a public route
-  const showHeader = !isPublicRoute(location.pathname);
+  if (isLocked && location.pathname !== '/lock-screen') {
+    // If locked, and not already on lock-screen, redirect or render LockScreenUser.
+    // Navigating here ensures URL changes and LockScreenUser is the main view.
+    // We are already navigating to /lock-screen in InactivityLockContext.
+    // This logic block might be redundant if navigation in context is reliable.
+    // However, ensuring LockScreenUser is rendered if isLocked is true is paramount.
+    // This could also be a direct render: return <LockScreenUser />;
+  }
 
   return (
-    <DemoModeProvider>
-      <BrandingContext.Provider value={branding}>
-        <SessionTimeoutProvider>
-          <DemoBanner />
-          {showHeader && <Header />}
-          <Routes>
-            {/* PUBLIC ROUTES */}
-            <Route path="/" element={<WelcomePage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/verify" element={<VerifyCodePage />} />
-          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="/terms" element={<TermsOfService />} />
+    <>
+      {showHeader && <Header />}
+      <Routes>
+        {/* PUBLIC ROUTES */}
+        <Route path="/" element={<WelcomePage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/verify" element={<VerifyCodePage />} />
+        <Route path="/lock-screen" element={<LockScreenUser />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
 
-          {/* PROTECTED ROUTES */}
-          <Route
-            path="/dashboard"
+        {/* PROTECTED ROUTES */}
+        <Route
+          path="/dashboard"
             element={
               <RequireAuth>
                 <Dashboard />
