@@ -1,5 +1,5 @@
 // src/components/RegisterPage.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // Add useEffect
 import { useNavigate } from 'react-router-dom';
 import PageLayout from './PageLayout';
 import Card from './Card';
@@ -11,6 +11,12 @@ const RegisterPage: React.FC = () => {
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (localStorage.getItem('wellfitUserId')) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [navigate]);
 
   // Basic password rules: at least 8 characters
   const isPasswordValid = (pw: string) => pw.length >= 8;

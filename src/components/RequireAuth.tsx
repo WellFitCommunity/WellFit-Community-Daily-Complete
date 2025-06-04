@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
-import { Session } from '@supabase/supabase-js'; // Import Session type
+import { Session } from '@supabase/supabase-js';
 
 interface RequireAuthProps {
   children: JSX.Element;
@@ -10,33 +10,46 @@ interface RequireAuthProps {
 
 const RequireAuth: React.FC<RequireAuthProps> = ({ children }) => {
   const location = useLocation();
+  const [sessionActive, setSessionActive] = useState<boolean | null>(null); // null while loading
 
-  // 1) Preview flag
-  const isPreview = Boolean(localStorage.getItem('exploreStartTime'));
-
-  // 2) Phone+PIN stored locally
-  const phone = localStorage.getItem('wellfitPhone');
-  const pin   = localStorage.getItem('wellfitPin');
-
-  // 3) (Optional) Supabase session—for email-based users
-  const [sessionActive, setSessionActive] = useState<boolean>(false); // Renamed to avoid conflict with imported Session
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session: currentSession } }: { data: { session: Session | null } }) => {
       setSessionActive(!!currentSession);
     });
+
+    // Optional: Listen for auth changes if needed, though getSession is usually enough for a load check
+    // const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+    //   setSessionActive(!!session);
+    // });
+    // return () => authListener?.subscription.unsubscribe();
   }, []);
 
-  // 4) Communication consent
+  const wellfitUserId = localStorage.getItem('wellfitUserId');
   const communicationConsentGiven = localStorage.getItem('communicationConsent') === 'true';
+  const isPreview = Boolean(localStorage.getItem('exploreStartTime')); // Retain preview flag if needed
 
-  // If communication consent is not given, or if not a preview and not phone+PIN and not logged-in via email, block access
-  if (!communicationConsentGiven || (!isPreview && !(phone && pin) && !sessionActive)) {
+  // Wait for session check to complete
+  if (sessionActive === null && !wellfitUserId) {
+    // If no wellfitUserId, we might be relying on Supabase session, so wait for it.
+    // If wellfitUserId exists, we can proceed without waiting for Supabase session check for this logic path.
+    return <div>Loading session...</div>; // Or some loading spinner
+  }
+
+  const isAuthenticated = wellfitUserId || sessionActive;
+
+  if (!communicationConsentGiven) {
+    // If communication consent is not given, always redirect to WelcomePage to re-consent.
+    // This page should ideally not require auth itself.
     return <Navigate to="/" state={{ from: location }} replace />;
   }
 
-  // Otherwise render the protected content
+  if (!isPreview && !isAuthenticated) {
+    // If not in preview mode AND not authenticated (neither wellfitUserId nor Supabase session), redirect to login.
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // If all checks pass (or in preview mode), render the protected content.
   return children;
 };
 
 export default RequireAuth;
-
