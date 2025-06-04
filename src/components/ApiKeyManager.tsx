@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
 interface ApiKey {
-  user_id: string;
+  id: string; // Changed from user_id to id, assuming this is the PK of the api_keys table
   org_name: string;
   api_key: string;
   active: boolean;
@@ -51,6 +51,11 @@ const ApiKeyManager: React.FC = () => {
   useEffect(() => {
     fetchApiKeys();
   }, [fetchApiKeys]);
+
+  // Note: The `user_id` field might still be relevant if your 'api_keys' table
+  // also links to a user who created the key, e.g., `creator_user_id`.
+  // If so, the ApiKey interface should include that too.
+  // For this change, we are assuming the `id` field from the DB is what was previously mapped to `user_id` in the interface.
 
   const handleGenerateKey = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
@@ -254,7 +259,7 @@ const ApiKeyManager: React.FC = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {apiKeys.map((key) => (
-                <tr key={key.user_id} className={`hover:bg-gray-50 ${loading && 'opacity-50'}`}>
+                <tr key={key.id} className={`hover:bg-gray-50 ${loading && 'opacity-50'}`}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{key.org_name}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">{maskApiKey(key.api_key)}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -269,7 +274,7 @@ const ApiKeyManager: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(key.created_at)}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                     <button
-                      onClick={() => handleToggleKeyStatus(key.user_id, key.active)}
+                      onClick={() => handleToggleKeyStatus(key.id, key.active)}
                       className={`px-3 py-1 text-xs rounded-md ${
                         key.active 
                         ? 'bg-yellow-500 hover:bg-yellow-600 text-white' 
@@ -280,7 +285,7 @@ const ApiKeyManager: React.FC = () => {
                       {key.active ? 'Disable' : 'Enable'}
                     </button>
                     <button
-                      onClick={() => handleRevokeKey(key.user_id, key.org_name)}
+                      onClick={() => handleRevokeKey(key.id, key.org_name)}
                       className="px-3 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded-md disabled:opacity-50"
                       disabled={loading}
                     >
