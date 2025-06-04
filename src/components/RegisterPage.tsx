@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabaseClient';
-import logo from '../public/android-chrome-512x512.png';
-// import { sendVerificationSMS, sendVerificationEmail } from '../utils'; // implement for real use
 
-const RegistrationPage: React.FC = () => {
+// No import for the logo—just reference it in the JSX!
+
+const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
 
   // Form state
@@ -38,7 +37,7 @@ const RegistrationPage: React.FC = () => {
     (!email || isEmail(email)) &&
     consent;
 
-  // --- Registration Handler ---
+  // Registration Handler
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -50,34 +49,27 @@ const RegistrationPage: React.FC = () => {
 
     setLoading(true);
     try {
-      // 1. Store user record (unverified for now)
-      const { error: upsertErr } = await supabase
-        .from('profiles')
-        .upsert([
-          {
-            phone,
-            password, // In production, hash this via backend/edge function!
-            first_name: firstName,
-            last_name: lastName,
-            email: email || null,
-            phone_verified: false,
-            email_verified: false,
-            consent: true,
-          },
-        ]);
-      if (upsertErr) throw new Error('Registration failed: ' + upsertErr.message);
+      // Send registration to your Edge Function (NOT directly to Supabase table)
+      const response = await fetch('/functions/v1/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone,
+          password,
+          first_name: firstName,
+          last_name: lastName,
+          email,
+          consent,
+        }),
+      });
+      const result = await response.json();
+      if (!result.success) throw new Error(result.error || 'Registration failed.');
 
-      // 2. Send SMS code (replace with real Twilio or Edge Function call)
-      // const smsRes = await sendVerificationSMS(phone);
-      const smsRes = { success: true }; // Simulated for now
-      if (!smsRes.success) throw new Error('Failed to send verification SMS.');
+      // Simulate sending phone verification code (replace with your real logic!)
       setPhoneSent(true);
 
-      // 3. Send email verification if entered (no block, just send in background)
-      if (email) {
-        // await sendVerificationEmail(email);
-        // Do not block registration or flow!
-      }
+      // Optionally, send verification email in the background
+      // (Do this in your backend for real, if needed)
     } catch (err: any) {
       setError(err.message || 'Error during registration.');
     } finally {
@@ -85,24 +77,30 @@ const RegistrationPage: React.FC = () => {
     }
   };
 
-  // --- Phone Code Verification ---
+  // Phone Code Verification Handler (replace with your real backend logic!)
   const handleVerifyPhone = async () => {
     setError('');
     setLoading(true);
-    // TODO: Replace with real backend code verification
-    if (phoneCode === '123456') {
-      setPhoneVerified(true);
-      await supabase.from('profiles').update({ phone_verified: true }).eq('phone', phone);
-    } else {
-      setError('Invalid phone verification code.');
+    try {
+      // For production: send phone and code to an Edge Function that validates
+      // Here, simulate a 6-digit code (for now use 123456 as the correct code)
+      if (phoneCode === '123456') {
+        setPhoneVerified(true);
+        // Optionally update backend to mark as verified
+      } else {
+        setError('Invalid phone verification code.');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Error verifying code.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
-  // --- Proceed after verification ---
+  // Proceed after verification
   useEffect(() => {
     if (phoneVerified) {
-      // Save state for next page (never store password in localStorage!)
+      // Save minimal info (never password) and go to next step
       localStorage.setItem('phone', phone);
       localStorage.setItem('firstName', firstName);
       localStorage.setItem('lastName', lastName);
@@ -113,7 +111,8 @@ const RegistrationPage: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center min-h-screen bg-gray-50 py-8">
-      <img src={logo} alt="WellFit Logo" className="w-24 h-24 mb-4" />
+      {/* WellFit Logo at the top, no import needed */}
+      <img src="/android-chrome-512x512.png" alt="WellFit Logo" className="w-24 h-24 mb-4" />
       <form
         className="bg-white shadow-lg rounded-lg p-8 max-w-md w-full space-y-4"
         onSubmit={handleRegister}
@@ -253,4 +252,4 @@ const RegistrationPage: React.FC = () => {
   );
 };
 
-export default RegistrationPage;
+export default RegisterPage;
