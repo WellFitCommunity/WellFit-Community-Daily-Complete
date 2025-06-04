@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 
 const DemoModeContext = createContext({
   demoMode: false,
@@ -11,7 +11,7 @@ export function useDemoMode() {
   return useContext(DemoModeContext);
 }
 
-export function DemoModeProvider({ children }) {
+export function DemoModeProvider({ children }: { children: React.ReactNode }) {
   const [demoMode, setDemoMode] = useState(false);
   const [demoTimeLeft, setDemoTimeLeft] = useState(900); // 15 min
 

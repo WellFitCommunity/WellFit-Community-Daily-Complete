@@ -1,6 +1,6 @@
 // src/components/ErrorBoundary.tsx
 
-import React from 'react';
+import * as React from 'react';
 
 interface ErrorBoundaryState {
   hasError: boolean;

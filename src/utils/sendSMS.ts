@@ -1,5 +1,5 @@
 // src/utils/sendSMS.js
-export async function sendSMS(to, message) {
+export async function sendSMS(to: any, message: any) {
   const response = await fetch('/api/send-sms', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

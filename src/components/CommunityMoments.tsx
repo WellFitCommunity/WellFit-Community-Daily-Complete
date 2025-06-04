@@ -1,6 +1,6 @@
 // src/components/CommunityMoments.tsx
 
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import Confetti from 'react-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
