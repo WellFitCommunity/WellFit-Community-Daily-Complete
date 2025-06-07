@@ -1,6 +1,12 @@
+<<<<<<< HEAD:src/components/EmergencyContact.tsx
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient'; // Added
 import { useBranding } from '../BrandingContext'; // Added
+=======
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../../lib/supabaseClient'; // Added
+import { useBranding } from '../../BrandingContext'; // Added
+>>>>>>> 0d60695e000b23b8b168752c2686ce686e47468f:src/components/features/EmergencyContact.tsx
 
 interface Contact {
   firstName: string;

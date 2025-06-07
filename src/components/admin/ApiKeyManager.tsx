@@ -1,5 +1,10 @@
+<<<<<<< HEAD:src/components/ApiKeyManager.tsx
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabaseClient';
+=======
+import React, { useState, useEffect, useCallback } from 'react';
+import { supabase } from '../../lib/supabaseClient';
+>>>>>>> 0d60695e000b23b8b168752c2686ce686e47468f:src/components/admin/ApiKeyManager.tsx
 
 interface ApiKey {
   user_id: string;

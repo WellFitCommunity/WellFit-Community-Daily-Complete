@@ -1,90 +1,143 @@
-# Wellfit Community Daily
+# WellFit Community Daily
 
-This application is designed for seniors to log their daily health data and for doctors to view this information.
+This application is designed for seniors to log their daily health data and for community health workers or doctors to view this information. It facilitates better tracking of well-being and provides timely data for health monitoring.
 
 **This application is deployed exclusively on Vercel.**
 
 ## Project Structure
 
-The project follows a standard React application structure. Key directories include:
-- `public/`: Contains static assets and the main `index.html` file.
-- `src/`: Contains the main application source code.
-    - `src/components/`: Reusable UI components.
-    - `src/pages/`: Components that represent full pages/routes.
-    - `src/contexts/`: React context providers.
-    - `src/data/`: Static data, such as trivia questions.
-    - `src/firebase/`: Firebase configuration and utility functions.
-    - `src/lib/`: Client libraries, like the Supabase client.
-    - `src/utils/`: General utility functions.
-- `api/`: Potentially for serverless functions (if used with Vercel).
-- `functions/`: Firebase Cloud Functions.
-- `supabase/`: Supabase specific configurations, migrations, and functions.
+The frontend codebase (`src` directory) is organized as follows:
+
+*   `src/App.tsx`: Main application component with routing.
+*   `src/index.tsx`: Entry point of the application.
+*   `src/components/`: Contains reusable UI components, organized into subdirectories:
+    *   `auth/`: Authentication-related components.
+    *   `admin/`: Components for the admin panel.
+    *   `dashboard/`: Widgets and elements for the user dashboard.
+    *   `features/`: Components related to specific application features (e.g., photo uploads, emergency contacts).
+    *   `layout/`: Structural components like Header, Footer, DemoBanner.
+    *   `ui/`: Generic, highly reusable UI elements (e.g., Card, PageLayout).
+*   `src/pages/`: Top-level components that act as views for different routes (e.g., `DashboardPage.tsx`, `WelcomePage.tsx`).
+*   `src/contexts/`: React context providers (e.g., `DemoModeContext.tsx`).
+*   `src/data/`: Static data like recipes, trivia questions.
+*   `src/firebase/`: Firebase configuration and utility functions.
+*   `src/lib/`: Core library initializations, like `supabaseClient.ts`.
+*   `src/utils/`: General utility functions.
+*   `src/scripts/`: Standalone scripts (e.g., data import scripts).
+*   `api/`: Serverless functions deployed with Vercel, typically for backend tasks that require secure handling of API keys.
+*   `functions/`: Firebase functions (Note: review if these are still actively used or if `api/` is the primary serverless approach for Vercel).
 
 ## Key Features
 
-*   Self-Reporting View for seniors to log:
-    *   Blood Pressure (Systolic + Diastolic)
-    *   Blood Sugar (mg/dL)
-    *   Emotional State (Happy, Calm, Sad, Angry, Anxious, Confused, Tired, Lonely, Grateful, Hopeful)
-    *   Heart Rate (bpm) (optional)
-    *   Pulse Oximeter (SpO2 %) (optional)
-    *   Notes or Symptoms (optional)
-*   Secure data handling with Supabase for user data.
+*   Self-Reporting View for seniors to log daily health metrics.
+*   Dashboard for users to see an overview of meals, activities, and other information.
+*   Admin Panel for staff/doctors to:
+    *   View user data and reports.
+    *   Manage users and API keys.
+    *   Export data.
+*   Secure data handling with Supabase.
+*   Push notifications for reminders and alerts.
 
-## Getting Started
+## Getting Started (Local Development)
 
 ### Prerequisites
 
 *   Node.js (v18 or later recommended)
-*   npm or yarn
-*   Supabase account and project setup
+*   npm (comes with Node.js) or yarn
+*   Supabase CLI (if you need to manage local Supabase instance or apply migrations) - [Installation Guide](https://supabase.com/docs/guides/cli)
 
 ### Installation
 
-1.  Clone the repository:
+1.  **Clone the repository:**
     ```bash
     git clone <repository-url>
     cd <repository-directory>
     ```
-2.  Install dependencies:
+2.  **Install dependencies:**
     ```bash
     npm install
     # or
     # yarn install
     ```
+3.  **Set up local environment variables:**
+    Create a `.env` file in the project root. This file is for local development ONLY and should not be committed to Git. For Vercel deployment, environment variables must be set in the Vercel project settings.
 
-### Dependencies
-All necessary production and development dependencies are listed in the `package.json` file. Install them using `npm install` or `yarn install`.
+    Copy the example below and replace the placeholder values with your actual keys:
 
-3.  Set up environment variables:
-    Create a `.env` file in the project root and add the necessary Supabase URL and anon key:
     ```env
+    # React App (Client-Side) Variables
     REACT_APP_SUPABASE_URL=your_supabase_url
     REACT_APP_SUPABASE_ANON_KEY=your_supabase_anon_key
-    # REACT_APP_ADMIN_SECRET=your_admin_secret_key (if still applicable after LockScreen rework)
-    # Add any other relevant environment variables below:
-    # EXAMPLE_VAR=example_value
-    ```
-    Refer to the codebase, particularly `src/config.ts` or similar, and component files for a complete list of environment variables used throughout the application. The `REACT_APP_ADMIN_SECRET` is related to an admin lock screen feature that is undergoing changes.
-4.  (Add any Supabase migration/setup steps if applicable, e.g., `npx supabase db push`)
+    REACT_APP_WEATHER_API_KEY=your_openweathermap_api_key
+    REACT_APP_FIREBASE_API_KEY=your_firebase_web_api_key
+    REACT_APP_FIREBASE_VAPID_KEY=your_firebase_vapid_key_for_push_notifications
+    REACT_APP_SUPABASE_EMAIL_ENDPOINT=your_mailer_function_url_for_welcome_email # e.g., Vercel serverless function URL
 
-### Running Locally
+    # Serverless Functions / Scripts Variables (used in `api/` or `functions/` or `src/scripts`)
+    # These might also be needed in your local .env if you run these services/scripts locally.
+    # For Vercel deployment, these are set in the Vercel dashboard.
+
+    SUPABASE_URL=your_supabase_url # Can be the same as REACT_APP_SUPABASE_URL
+    SUPABASE_ANON_KEY=your_supabase_anon_key # Can be the same as REACT_APP_SUPABASE_ANON_KEY
+    SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key # For admin-level backend operations
+
+    MAILERSEND_API_KEY=your_mailersend_api_key # For sending emails via MailerSend
+
+    # Firebase Admin SDK (for Firebase Functions, if used)
+    FIREBASE_PROJECT_ID=your_firebase_project_id
+    FIREBASE_CLIENT_EMAIL=your_firebase_service_account_client_email
+    FIREBASE_PRIVATE_KEY="your_firebase_service_account_private_key_with_newlines_preserved"
+    # Note: For FIREBASE_PRIVATE_KEY, ensure newlines are correctly formatted if copying directly into Vercel.
+    # Often, it's better to use Base64 encoding for multi-line secrets in Vercel.
+    ```
+
+    **Environment Variable Explanations:**
+
+    *   `REACT_APP_SUPABASE_URL`, `SUPABASE_URL`: The URL for your Supabase project.
+    *   `REACT_APP_SUPABASE_ANON_KEY`, `SUPABASE_ANON_KEY`: The public "anonymous" key for your Supabase project.
+    *   `REACT_APP_WEATHER_API_KEY`: API key for a weather service (e.g., OpenWeatherMap) used by the WeatherWidget.
+    *   `REACT_APP_FIREBASE_API_KEY`: Firebase API key for your web app (client-side SDK).
+    *   `REACT_APP_FIREBASE_VAPID_KEY`: VAPID key for Firebase Cloud Messaging (push notifications).
+    *   `REACT_APP_SUPABASE_EMAIL_ENDPOINT`: URL of the serverless function that handles sending welcome emails.
+    *   `SUPABASE_SERVICE_ROLE_KEY`: Supabase service role key for backend operations requiring admin privileges (use with extreme caution).
+    *   `MAILERSEND_API_KEY`: API key for MailerSend service, used for sending emails.
+    *   `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`: Credentials for Firebase Admin SDK, typically used in Firebase Functions for backend tasks.
+
+### Running the Development Server
 
 ```bash
 npm start
 # or
 # yarn start
+# or
+# npm run dev / yarn dev
 ```
-This will start the development server, typically on `http://localhost:3000`.
+This will start the React development server, usually on `http://localhost:3000`.
 
-## Docs
+### Working with Supabase Locally (Optional)
 
-Command & config reference can be found [here](https://supabase.com/docs/reference/cli/about).
+If you need to run a local Supabase instance for backend development (e.g., testing database changes or edge functions):
 
-## Breaking changes
+1.  **Start Supabase services:**
+    ```bash
+    supabase start
+    ```
+2.  **Apply database migrations (if any new ones):**
+    ```bash
+    supabase db reset # Resets local db and applies all migrations
+    # or
+    # supabase migration up # Applies pending migrations
+    ```
+    (Refer to Supabase CLI documentation for more commands.)
 
-We follow semantic versioning for changes that directly impact CLI commands, flags, and configurations.
+## Deployment
 
-However, due to dependencies on other service images, we cannot guarantee that schema migrations, seed.sql, and generated types will always work for the same CLI major version. If you need such guarantees, we encourage you to pin a specific version of CLI in .
-# Redeploy trigger
-(This section might be from a template and used for CI/CD purposes)
+This application is configured for deployment on **Vercel**.
+
+1.  Connect your Git repository to Vercel.
+2.  Configure the Environment Variables listed above in your Vercel project settings. Pay special attention to how multi-line variables like `FIREBASE_PRIVATE_KEY` are handled (Base64 encoding is often a good solution).
+3.  Vercel will typically build and deploy the application automatically upon pushes to the main branch. The build command is usually `npm run build` (from `package.json`).
+
+## Scripts
+
+*   `npm run import:meals`: Runs a script to import meal data. Requires `ts-node` and relevant environment variables (e.g., `SUPABASE_URL`, `SUPABASE_ANON_KEY`) to be configured.

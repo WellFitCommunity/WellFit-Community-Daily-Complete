@@ -1,8 +1,12 @@
 // src/components/LockScreenUser.tsx
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+<<<<<<< HEAD:src/components/LockScreenUser.tsx
 import { supabase } from '../lib/supabaseClient';
 import { Session, User } from '@supabase/supabase-js'; // Import Session and User
+=======
+import { supabase } from '../../lib/supabaseClient';
+>>>>>>> 0d60695e000b23b8b168752c2686ce686e47468f:src/components/auth/LockScreenUser.tsx
 import bcrypt from 'bcryptjs';
 
 interface PhoneAuthData {

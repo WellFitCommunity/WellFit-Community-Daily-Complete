@@ -1,8 +1,8 @@
 // src/components/DashMealOfTheDay.tsx
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabaseClient';
-import { allRecipes } from '../data/allRecipes';
+import { supabase } from '../../lib/supabaseClient';
+import { allRecipes } from '../../data/allRecipes';
 
 type Meal = {
   id: string;
