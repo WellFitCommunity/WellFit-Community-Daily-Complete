@@ -1,8 +1,12 @@
 // src/components/RequireAuth.tsx
 import { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
+<<<<<<< HEAD:src/components/RequireAuth.tsx
 import { supabase } from '../lib/supabaseClient';
 import { Session } from '@supabase/supabase-js';
+=======
+import { supabase } from '../../lib/supabaseClient';
+>>>>>>> 0d60695e000b23b8b168752c2686ce686e47468f:src/components/auth/RequireAuth.tsx
 
 interface RequireAuthProps {
   children: JSX.Element;

@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+<<<<<<< HEAD:src/components/RegisterPage.tsx
 
 // No import for the logo—just reference it in the JSX!
+=======
+import PageLayout from '../components/ui/PageLayout';
+import Card from '../components/ui/Card';
+>>>>>>> 0d60695e000b23b8b168752c2686ce686e47468f:src/pages/RegisterPage.tsx
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();

@@ -1,5 +1,10 @@
+<<<<<<< HEAD:src/components/PhotoUpload.tsx
 import { useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
+=======
+import React, { useState } from 'react';
+import { supabase } from '../../lib/supabaseClient';
+>>>>>>> 0d60695e000b23b8b168752c2686ce686e47468f:src/components/features/PhotoUpload.tsx
 
 interface PhotoUploadProps {
   context: string;   // e.g. "meal"

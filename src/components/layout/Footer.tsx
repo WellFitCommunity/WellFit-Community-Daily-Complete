@@ -1,5 +1,10 @@
+<<<<<<< HEAD:src/components/Footer.tsx
 import * as React from 'react';
 import { useBranding } from '../BrandingContext';
+=======
+import React from 'react';
+import { useBranding } from '../../BrandingContext';
+>>>>>>> 0d60695e000b23b8b168752c2686ce686e47468f:src/components/layout/Footer.tsx
 
 const Footer: React.FC = () => {
   const branding = useBranding();

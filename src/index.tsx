@@ -10,7 +10,7 @@ import { SessionContextProvider } from '@supabase/auth-helpers-react';
 import { supabase } from './lib/supabaseClient';
 
 // ✅ Corrected ErrorBoundary import
-import ErrorBoundary from './components/ErrorBoundary';
+import ErrorBoundary from './ErrorBoundary';
 
 // ✅ Register Firebase Messaging Service Worker (must be before ReactDOM.createRoot)
 if ('serviceWorker' in navigator) {

@@ -4,18 +4,18 @@ import { Routes, Route, useLocation } from 'react-router-dom';
 import { BrandingConfig, getCurrentBranding } from './branding.config';
 import { BrandingContext } from './BrandingContext';
 
-import Header from './components/Header';
-import Footer from './components/Footer';
+import Header from './components/layout/Header';
+import Footer from './components/layout/Footer';
 
-import WelcomePage from './components/WelcomePage';
-import RegisterPage from './components/RegisterPage';
-import VerifyCodePage from './components/VerifyCodePage';
+import WelcomePage from './pages/WelcomePage';
+import RegisterPage from './pages/RegisterPage';
+import VerifyCodePage from './pages/VerifyCodePage';
 
-import Dashboard from './components/Dashboard';
-import CheckInTracker from './components/CheckInTracker';
-import WordFind from './components/WordFind';
+import Dashboard from './pages/DashboardPage';
+import CheckInTracker from './pages/CheckInPage';
+import WordFind from './pages/WordFindPage';
 import MealDetailPage from './pages/MealDetailPage';
-import LogoutPage from './components/LogoutPage';
+import LogoutPage from './pages/LogoutPage';
 
 import AdminProfileEditor from './components/AdminProfileEditor';
 import ConsentPhotoPage from './components/ConsentPhotoPage';

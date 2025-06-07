@@ -1,5 +1,10 @@
+<<<<<<< HEAD:src/components/PhotoGallery.tsx
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
+=======
+import React, { useEffect, useState } from 'react';
+import { supabase } from '../../lib/supabaseClient';
+>>>>>>> 0d60695e000b23b8b168752c2686ce686e47468f:src/components/features/PhotoGallery.tsx
 
 interface PhotoGalleryProps {
   recordId: string;  // the meal.id
