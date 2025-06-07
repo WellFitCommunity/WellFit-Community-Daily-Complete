@@ -1,17 +1,12 @@
 // src/components/LockScreenUser.tsx
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-<<<<<<< HEAD:src/components/LockScreenUser.tsx
-import { supabase } from '../lib/supabaseClient';
-import { Session, User } from '@supabase/supabase-js'; // Import Session and User
-=======
 import { supabase } from '../../lib/supabaseClient';
->>>>>>> 0d60695e000b23b8b168752c2686ce686e47468f:src/components/auth/LockScreenUser.tsx
 import bcrypt from 'bcryptjs';
 
 interface PhoneAuthData {
   pin_hash: string;
-  // Add other fields if they exist in phone_auth table
+  // Add other fields if needed
 }
 
 const LockScreenUser: React.FC = () => {
@@ -26,19 +21,19 @@ const LockScreenUser: React.FC = () => {
   const [successSound] = useState(() => new Audio('/sounds/success.mp3'));
 
   useEffect(() => {
-    const checkSession = async (): Promise<void> => {
-      const { data: { session } }: { data: { session: Session | null } } = await supabase.auth.getSession();
-      if (session?.user) { // Check specifically for user object on session
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
         setMethod('email');
-        navigate('/dashboard'); // Navigate if user session exists
+        navigate('/dashboard');
       } else {
-        setMethod('phone'); // Default to phone if no active email session
+        setMethod('phone');
       }
     };
     checkSession();
   }, [navigate]);
 
-  const handleUnlock = async (): Promise<void> => {
+  const handleUnlock = async () => {
     setLoading(true);
     setUnlockClicked(true);
     setError('');
@@ -47,9 +42,9 @@ const LockScreenUser: React.FC = () => {
       .from('phone_auth')
       .select('pin_hash')
       .eq('phone', phone)
-      .single<PhoneAuthData>(); // Use generic type
+      .single<PhoneAuthData>();
 
-    if (fetchError || !data || !data.pin_hash) { // Check for data.pin_hash
+    if (fetchError || !data?.pin_hash) {
       setError('Phone not found or PIN not set up.');
       setLoading(false);
       return;
@@ -72,13 +67,12 @@ const LockScreenUser: React.FC = () => {
     setLoading(false);
   };
 
-  const handleFingerprint = async (): Promise<void> => {
+  const handleFingerprint = async () => {
     setFingerprintClicked(true);
     if (!window.PublicKeyCredential) {
       alert('Fingerprint login not supported on this browser.');
       return;
     }
-
     try {
       const cred = await navigator.credentials.get({
         publicKey: {
@@ -88,11 +82,8 @@ const LockScreenUser: React.FC = () => {
         },
       });
 
-      // Credential type can be PublicKeyCredential or null
-      const pkCred = cred as PublicKeyCredential | null; 
+      const pkCred = cred as PublicKeyCredential | null;
       if (pkCred) {
-        // Further processing of pkCred, e.g., sending to server for verification
-        // For this example, we'll assume success if a credential is returned.
         const savedPhone = localStorage.getItem('userPhone');
         if (savedPhone) {
           successSound.play();
@@ -130,7 +121,7 @@ const LockScreenUser: React.FC = () => {
               id="phone-lock"
               placeholder="Phone Number"
               value={phone}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPhone(e.target.value)}
+              onChange={e => setPhone(e.target.value)}
               className="w-full p-3 border border-gray-300 rounded-md mb-3 focus:ring-2 focus:ring-indigo-500"
               required
               aria-required="true"
@@ -141,7 +132,7 @@ const LockScreenUser: React.FC = () => {
               id="pin-lock"
               placeholder="Enter 4-digit PIN"
               value={pin}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPin(e.target.value)}
+              onChange={e => setPin(e.target.value)}
               maxLength={4}
               inputMode="numeric"
               pattern="[0-9]*"
@@ -179,4 +170,3 @@ const LockScreenUser: React.FC = () => {
 };
 
 export default LockScreenUser;
-

@@ -18,11 +18,11 @@ import MealDetailPage from './pages/MealDetailPage';
 import LogoutPage from './pages/LogoutPage';
 
 import AdminProfileEditor from './components/AdminProfileEditor';
-import ConsentPhotoPage from './components/ConsentPhotoPage';
-import ConsentPrivacyPage from './components/ConsentPrivacyPage';
-import DoctorsView from './components/DoctorsView';
-import RequireAuth from './components/RequireAuth';
-import SelfReportingPage from './components/SelfReportingPage';
+import ConsentPhotoPage from './pages/ConsentPhotoPage';
+import ConsentPrivacyPage from './pages/ConsentPrivacyPage';
+import DoctorsView from './pages/DoctorsViewPage';
+import RequireAuth from './components/auth/RequireAuth';
+import SelfReportingPage from './pages/SelfReportingPage';
 
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
@@ -30,7 +30,7 @@ import NotFoundPage from './components/NotFoundPage';
 
 import { DemoModeProvider } from './contexts/DemoModeContext';
 import { SessionTimeoutProvider } from './contexts/SessionTimeoutContext';
-import DemoBanner from './components/DemoBanner';
+import DemoBanner from './components/layout/DemoBanner';
 
 // Public routes for which you do NOT want to show the header
 const publicRoutes = [

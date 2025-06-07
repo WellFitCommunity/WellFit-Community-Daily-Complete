@@ -1,11 +1,6 @@
 // src/components/Dashboard.tsx
-<<<<<<< HEAD:src/components/Dashboard.tsx
 import * as React from 'react';
-import Card from './Card';
-=======
-import React from 'react';
 import Card from '../components/ui/Card';
->>>>>>> 0d60695e000b23b8b168752c2686ce686e47468f:src/pages/DashboardPage.tsx
 import { useNavigate } from 'react-router-dom';
 import { useBranding } from '../BrandingContext'; // Import useBranding
 
