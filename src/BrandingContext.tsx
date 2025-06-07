@@ -1,4 +1,4 @@
-import React, { createContext, useContext } from 'react';
+import { createContext, useContext } from 'react';
 import { BrandingConfig, defaultBranding } from './branding.config';
 
 export const BrandingContext = createContext<BrandingConfig>(defaultBranding);

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const ADMIN_KEY = 'WF_ADMIN_KEY'; // localStorage key

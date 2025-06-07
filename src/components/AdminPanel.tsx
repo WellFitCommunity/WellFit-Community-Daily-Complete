@@ -2,7 +2,7 @@
 
 // src/components/AdminPanel.tsx
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import UsersList from './UsersList';
 import ReportsSection from './ReportsSection';
 import ExportCheckIns from './ExportCheckIns';

@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
 interface PhotoUploadProps {
   context: string;   // e.g. "meal"
   recordId: string;  // the meal.id
+  onSuccess?: () => void; // Optional: callback for parent to refresh data/gallery
 }
 
-const PhotoUpload: React.FC<PhotoUploadProps> = ({ context, recordId }) => {
+const MAX_FILE_SIZE_MB = 5;
+
+const PhotoUpload: React.FC<PhotoUploadProps> = ({ context, recordId, onSuccess }) => {
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<{ type?: 'success' | 'error'; text?: string }>({});
   const bucketName = `${context}-photos`;
@@ -14,7 +17,21 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ context, recordId }) => {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
     if (!e.target.files?.length) return;
     setMessage({}); // Clear previous messages
-    const file: File = e.target.files[0]; // Explicitly type File
+    const file: File = e.target.files[0];
+
+    // 1. File type validation
+    if (!file.type.startsWith('image/')) {
+      setMessage({ type: 'error', text: 'Only image files are allowed.' });
+      e.target.value = '';
+      return;
+    }
+    // 2. File size validation (limit to 5MB)
+    if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+      setMessage({ type: 'error', text: `File too large (max ${MAX_FILE_SIZE_MB}MB).` });
+      e.target.value = '';
+      return;
+    }
+
     const ext = file.name.split('.').pop();
     const fileName = `${Date.now()}.${ext}`;
     const filePath = `${recordId}/${fileName}`;
@@ -25,15 +42,21 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ context, recordId }) => {
         .from(bucketName)
         .upload(filePath, file, { upsert: false });
 
-      if (error) throw error; // Supabase error object might have more specific type
+      if (error) throw error;
+
       setMessage({ type: 'success', text: 'Upload successful!' });
+      if (onSuccess) onSuccess();
     } catch (error) {
-      const errMsg = error instanceof Error ? error.message : typeof error === 'string' ? error : 'An unknown error occurred during upload.';
+      const errMsg =
+        error instanceof Error
+          ? error.message
+          : typeof error === 'string'
+          ? error
+          : 'An unknown error occurred during upload.';
       setMessage({ type: 'error', text: `Error uploading: ${errMsg}` });
     } finally {
       setUploading(false);
-      // Clear the file input so the same file can be re-uploaded if needed
-      e.target.value = ''; 
+      e.target.value = '';
     }
   };
 

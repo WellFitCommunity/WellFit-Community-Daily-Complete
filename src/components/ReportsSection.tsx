@@ -34,21 +34,21 @@ const ReportsSection: React.FC = () => {
       if (checkInsError) throw new Error(`Fetching check-ins: ${checkInsError.message}`);
 
       // 2. Meals Prepared (total count from 'meals' table)
-      // Assuming 'meals' table exists. If not, this will error and be caught.
-      const { count: mealsCount, error: mealsError } = await supabase
-        .from('meals')
-        .select('*', { count: 'exact', head: true });
-      if (mealsError) {
-        console.warn("Could not fetch meals count. Table might not exist or RLS prevents access:", mealsError.message);
-        // Allowing partial data, so don't throw, just set to null or a specific value
-        setStats(prevStats => ({ ...prevStats, mealsPrepared: 0 })); // Or null
+      let mealsCount: number | null = null;
+      let mealsErrorMsg = null;
+      try {
+        const { count, error } = await supabase
+          .from('meals')
+          .select('*', { count: 'exact', head: true });
+        mealsCount = count ?? 0;
+        if (error) mealsErrorMsg = error.message;
+      } catch (mealsError: any) {
+        mealsErrorMsg = mealsError?.message ?? 'Unknown meals error';
+        mealsCount = 0;
       }
 
-
       // 3. Tech Tips Viewed (static for now, as no tracking table identified)
-      // const techTipsCount = 30; // Example: if there are 30 tips available
       const techTipsCount = "N/A";
-
 
       // 4. Active Users (distinct users from checkins in the last 7 days)
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -58,23 +58,26 @@ const ReportsSection: React.FC = () => {
         .gte('timestamp', sevenDaysAgo);
       if (activeUsersError) throw new Error(`Fetching active users: ${activeUsersError.message}`);
 
-      const distinctActiveUsers = activeUsersData ? new Set(activeUsersData.map(item => item.user_id)).size : 0;
+      const distinctActiveUsers = activeUsersData ? new Set(activeUsersData.map((item: any) => item.user_id)).size : 0;
 
       setStats({
         totalCheckIns: checkInsCount,
-        mealsPrepared: mealsError ? stats.mealsPrepared : mealsCount, // Keep previous if error, or set to new count
+        mealsPrepared: mealsErrorMsg ? 0 : mealsCount,
         techTipsViewed: techTipsCount,
         activeUsers: distinctActiveUsers,
       });
 
+      if (mealsErrorMsg) {
+        setError("Could not fetch meals count. Table might not exist or RLS prevents access.");
+      }
+
     } catch (e) {
       const err = e as Error;
-      console.error('Error fetching report data:', err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [supabase, stats.mealsPrepared]); // Added stats.mealsPrepared to dependencies for partial update scenario
+  }, [supabase]);
 
   useEffect(() => {
     fetchReportData();
@@ -82,18 +85,18 @@ const ReportsSection: React.FC = () => {
 
   const StatCard: React.FC<{ icon: React.ReactElement; label: string; value: number | string | null; isLoading: boolean }> =
     ({ icon, label, value, isLoading }) => (
-    <div className="bg-gray-50 p-4 rounded-lg shadow flex items-center space-x-3 hover:bg-gray-100 transition-colors">
-      <div className="text-2xl text-wellfit-blue">{icon}</div>
-      <div>
-        <div className="text-sm font-medium text-gray-500">{label}</div>
-        {isLoading ? (
-          <div className="h-6 bg-gray-300 rounded w-12 animate-pulse"></div>
-        ) : (
-          <div className="text-2xl font-bold text-gray-800">{value ?? '...'}</div>
-        )}
+      <div className="bg-gray-50 p-4 rounded-lg shadow flex items-center space-x-3 hover:bg-gray-100 transition-colors">
+        <div className="text-2xl text-wellfit-blue">{icon}</div>
+        <div>
+          <div className="text-sm font-medium text-gray-500">{label}</div>
+          {isLoading ? (
+            <div className="h-6 bg-gray-300 rounded w-12 animate-pulse"></div>
+          ) : (
+            <div className="text-2xl font-bold text-gray-800">{value ?? '...'}</div>
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-6 space-y-6">
