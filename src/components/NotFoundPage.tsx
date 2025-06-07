@@ -1,5 +1,5 @@
 // src/components/NotFoundPage.tsx
-import React from 'react';
+import * as React from 'react';
 import { Link } from 'react-router-dom';
 import Card from './Card';
 import PageLayout from './PageLayout';

@@ -7,7 +7,7 @@ import { saveAs } from 'file-saver';
 
 // Define the structure of the check-in data we expect to work with
 interface CheckInData {
-  id: string; // Or number, depending on your DB schema for checkins PK
+  id: string;
   user_id: string;
   timestamp: string;
   label: string;
@@ -27,13 +27,10 @@ const ExportCheckIns: React.FC = () => {
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Function to fetch check-in data
+  // Fetch check-in data from Supabase
   const fetchCheckInData = async () => {
     setLoading(true);
     setError(null);
-    // Simulate fetching data for now
-    // Replace with actual Supabase query later
-    console.log("Fetching check-in data...");
     try {
       const { data, error: fetchError } = await supabase
         .from('checkins')
@@ -55,21 +52,17 @@ const ExportCheckIns: React.FC = () => {
 
       if (fetchError) throw fetchError;
 
-      // Process the data to flatten the nested profile information
-      const processedData = data.map((item: any) => ({
+      const processedData = (data || []).map((item: any) => ({
         ...item,
         first_name: item.profiles?.first_name,
         last_name: item.profiles?.last_name,
         phone: item.profiles?.phone,
-        profiles: undefined, // Remove the nested profiles object
+        profiles: undefined, // Remove nested profile
       }));
 
-      setCheckInData(processedData as CheckInData[] || []);
-      console.log("Fetched data:", processedData);
-
+      setCheckInData(processedData as CheckInData[]);
     } catch (err) {
       const e = err as Error;
-      console.error('Error fetching check-in data:', e.message);
       setError(`Failed to fetch check-in data: ${e.message}`);
       setCheckInData([]);
     } finally {
@@ -77,13 +70,12 @@ const ExportCheckIns: React.FC = () => {
     }
   };
 
-  // Fetch data on component mount
   useEffect(() => {
     fetchCheckInData();
-  }, [supabase]); // Dependency on supabase client
+  }, [supabase]);
 
-  const processDataForExport = (data: CheckInData[]) => {
-    return data.map(item => ({
+  const processDataForExport = (data: CheckInData[]) => (
+    data.map(item => ({
       'Full Name': `${item.first_name || ''} ${item.last_name || ''}`.trim(),
       'Phone': item.phone || 'N/A',
       'Check-In Date': new Date(item.timestamp).toLocaleDateString(),
@@ -92,18 +84,14 @@ const ExportCheckIns: React.FC = () => {
       'Emotional State': item.emotional_state || 'N/A',
       'Heart Rate (BPM)': item.heart_rate ?? 'N/A',
       'Pulse Oximeter (%)': item.pulse_oximeter ?? 'N/A',
-    }));
-  };
+    }))
+  );
 
   const handleExport = async (format: 'xlsx' | 'ods') => {
-    if (checkInData.length === 0) {
+    if (!checkInData.length) {
       setError("No data available to export. Please fetch data first.");
-      // Or trigger fetchCheckInData() again if appropriate
-      // await fetchCheckInData(); // an option, but be careful with UI loops
-      // if (checkInData.length === 0) return; // check again after fetch attempt
       return;
     }
-
     setExporting(true);
     setError(null);
     try {
@@ -120,16 +108,13 @@ const ExportCheckIns: React.FC = () => {
       const wbout = XLSX.write(workbook, { bookType: format, type: 'array' });
       const blob = new Blob([wbout], { type: fileType });
       saveAs(blob, fileName);
-
     } catch (err) {
       const e = err as Error;
-      console.error(`Error exporting to ${format}:`, e.message);
       setError(`Failed to export to ${format}: ${e.message}`);
     } finally {
       setExporting(false);
     }
   };
-
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-lg space-y-4">
@@ -143,7 +128,7 @@ const ExportCheckIns: React.FC = () => {
           {checkInData.length} check-in record(s) loaded. Ready to export.
         </p>
       )}
-       {checkInData.length === 0 && !loading && !error && (
+      {checkInData.length === 0 && !loading && !error && (
         <p className="text-sm text-gray-600">
           No check-in data found. Try refreshing or check back later.
         </p>

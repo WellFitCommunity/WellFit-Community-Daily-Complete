@@ -1,5 +1,5 @@
 // src/components/WordFind.tsx
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Confetti from 'react-confetti';
 import { dailyThemes } from '../data/wordThemes';
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { triviaQuestions, TriviaQuestion } from '../data/triviaQuestions';
 
 // Helper function to shuffle an array

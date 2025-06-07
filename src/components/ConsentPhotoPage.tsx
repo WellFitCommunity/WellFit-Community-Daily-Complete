@@ -1,8 +1,7 @@
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import SignatureCanvas from 'react-signature-canvas';
 import { useNavigate } from 'react-router-dom'; 
 import { supabase } from '../lib/supabaseClient';
-
 
 const ConsentPhotoPage: React.FC = () => {
   const sigCanvasRef = useRef<SignatureCanvas | null>(null);
@@ -33,8 +32,13 @@ const ConsentPhotoPage: React.FC = () => {
 
     try {
       const dataUrl = sigCanvasRef.current?.toDataURL();
+      if (typeof dataUrl !== "string") {
+        throw new Error("No signature found. Please sign before submitting.");
+      }
       const blob = await (await fetch(dataUrl)).blob();
-      const fileName = `privacy-signatures/${firstName}_${lastName}_${Date.now()}.png`;
+
+      // Construct a unique, human-readable file name
+      const fileName = `photo-signatures/${firstName}_${lastName}_${Date.now()}.png`;
 
       const { error: uploadError } = await supabase.storage
         .from('consent-signatures')

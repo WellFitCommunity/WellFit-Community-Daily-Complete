@@ -1,5 +1,5 @@
 // src/components/Dashboard.tsx
-import React from 'react';
+import * as React from 'react';
 import Card from './Card';
 import { useNavigate } from 'react-router-dom';
 import { useBranding } from '../BrandingContext'; // Import useBranding

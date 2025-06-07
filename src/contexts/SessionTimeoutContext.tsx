@@ -1,5 +1,5 @@
 // src/contexts/SessionTimeoutContext.tsx
-import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient'; // Assuming supabase is used for logout
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 
@@ -8,6 +8,7 @@ const ConsentPrivacyPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [feedback, setFeedback] = useState('');
+  const sigCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const handleSubmit = async () => {
     if (!confirm) {
@@ -15,12 +16,11 @@ const ConsentPrivacyPage: React.FC = () => {
       return;
     }
 
-    const signatureData = localStorage.getItem('photoSignature');
     const firstName = localStorage.getItem('firstName');
     const lastName = localStorage.getItem('lastName');
 
-    if (!signatureData || !firstName || !lastName) {
-      setError('Missing signature or name from previous step.');
+    if (!firstName || !lastName) {
+      setError('Missing name from previous step.');
       return;
     }
 
@@ -29,8 +29,16 @@ const ConsentPrivacyPage: React.FC = () => {
     setFeedback('');
 
     try {
-      const blob = await (await fetch(signatureData)).blob();
-      const fileName = `signatures/${firstName}_${lastName}_${Date.now()}_final.png`;
+      // Get signature data from the canvas
+      const dataUrl = sigCanvasRef.current?.toDataURL();
+      if (typeof dataUrl !== 'string') {
+        throw new Error('No signature found. Please sign before submitting.');
+      }
+      // Convert data URL to Blob
+      const blob = await (await fetch(dataUrl)).blob();
+
+      // Construct a unique file name
+      const fileName = `privacy-signatures/${firstName}_${lastName}_${Date.now()}.png`;
 
       // Upload signature to Supabase Storage
       const { error: uploadError } = await supabase.storage
@@ -60,7 +68,6 @@ const ConsentPrivacyPage: React.FC = () => {
       }
 
       setFeedback('Your consent has been recorded. Thank you!');
-      localStorage.removeItem('photoSignature');
       localStorage.removeItem('firstName');
       localStorage.removeItem('lastName');
 
@@ -88,6 +95,16 @@ const ConsentPrivacyPage: React.FC = () => {
         Your participation in the WellFit Community program is contingent upon this agreement.
         Note: This platform is for wellness community purposes and is not a substitute for professional medical advice or care.
       </p>
+
+      <div className="mb-4">
+        <label className="block mb-2 font-semibold">Signature (draw below):</label>
+        <canvas
+          ref={sigCanvasRef}
+          width={400}
+          height={100}
+          style={{ border: '1px solid #ccc', background: '#f9f9f9' }}
+        />
+      </div>
 
       <label className="flex items-center mb-4">
         <input

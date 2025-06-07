@@ -1,8 +1,8 @@
 // src/components/PageLayout.tsx
-import React from 'react';
+import { ReactNode } from 'react';
 import { useBranding } from '../BrandingContext';
 
-const PageLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const PageLayout = ({ children }: { children: ReactNode }) => {
   const branding = useBranding();
 
   return (

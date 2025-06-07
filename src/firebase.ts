@@ -1,27 +1,29 @@
-// ✅ File: src/firebase.ts
+// src/firebase.ts
 import { initializeApp } from 'firebase/app';
-import { getMessaging } from 'firebase/messaging';
+import { getMessaging, Messaging } from 'firebase/messaging';
 
 const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
-  authDomain: 'wellfit-community.firebaseapp.com',
-  projectId: 'wellfit-community',
-  storageBucket: 'wellfit-community.appspot.com',
-  messagingSenderId: '669875280900',
-  appId: '1:669875280900:web:8269859e1afc3fa4a96951',
-  measurementId: 'G-0CR22423HQ',
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY!,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN!,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID!,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET!,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID!,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID!,
+  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID, // optional
 };
 
 const app = initializeApp(firebaseConfig);
 
-let messaging;
-if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+// --- THIS IS THE IMPORTANT PART ---
+let messaging: Messaging | undefined = undefined;
+if (typeof window !== 'undefined') {
   try {
     messaging = getMessaging(app);
   } catch (err) {
-    console.warn('Firebase messaging not supported:', err);
+    console.warn('Could not initialize messaging:', err);
   }
 }
 
-export { app, messaging };
+export { messaging };
+
 

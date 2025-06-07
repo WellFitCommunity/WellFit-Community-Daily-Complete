@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
-    "target": "es5",
+    "target": "es2017",                          // Use at least es2017 for async/await, etc. (es5 is only for IE11, which is dead)
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "strict": false,
+    "strict": true,                              // STRONGLY recommend 'true' for type safety. Set 'false' ONLY if you keep hitting errors you can't fix.
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "module": "esnext",
@@ -14,9 +14,8 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx",
+    "jsx": "react-jsx",                          // Critical for React 17+ new JSX transform
     "baseUrl": "src"
   },
   "include": ["src"]
 }
-

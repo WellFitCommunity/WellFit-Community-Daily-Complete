@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 const scriptures = [
   "This is the day the Lord has made; let us rejoice and be glad in it. – Psalm 118:24",

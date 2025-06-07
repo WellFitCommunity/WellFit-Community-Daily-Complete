@@ -1,6 +1,6 @@
 // src/components/UsersList.tsx
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSupabaseClient } from '@supabase/auth-helpers-react';
 
 type Profile = {

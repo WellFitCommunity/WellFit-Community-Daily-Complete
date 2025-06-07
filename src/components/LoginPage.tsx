@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; // Add useEffect
+import { useState, useEffect } from 'react'; // Add useEffect
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useBranding } from '../BrandingContext';
