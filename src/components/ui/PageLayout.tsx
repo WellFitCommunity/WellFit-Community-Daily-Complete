@@ -1,11 +1,6 @@
 // src/components/PageLayout.tsx
-<<<<<<< HEAD:src/components/PageLayout.tsx
-import { ReactNode } from 'react';
-import { useBranding } from '../BrandingContext';
-=======
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { useBranding } from '../../BrandingContext';
->>>>>>> 0d60695e000b23b8b168752c2686ce686e47468f:src/components/ui/PageLayout.tsx
 
 const PageLayout = ({ children }: { children: ReactNode }) => {
   const branding = useBranding();
