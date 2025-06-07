@@ -1,6 +1,16 @@
 // src/components/Dashboard.tsx
 import * as React from 'react';
+// Update the import path if Card is located elsewhere, for example:
 import Card from '../components/ui/Card';
+
+// Or, if Card does not exist, create the file at ../components/ui/Card.tsx with a basic Card component:
+
+// Example Card component (if missing):
+// import React from 'react';
+// const Card: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+//   <div className="bg-white rounded-lg shadow p-4 mb-4">{children}</div>
+// );
+// export default Card;
 import { useNavigate } from 'react-router-dom';
 import { useBranding } from '../BrandingContext'; // Import useBranding
 
