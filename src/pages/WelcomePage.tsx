@@ -1,14 +1,11 @@
-
 // src/components/WelcomePage.tsx
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Card from '../components/ui/Card';
 import PageLayout from '../components/ui/PageLayout';
 
 const WelcomePage: React.FC = () => {
   const navigate = useNavigate();
-  const [privacyConsentAgreed, setPrivacyConsentAgreed] = useState(false);
-  const [communicationConsentAgreed, setCommunicationConsentAgreed] = useState(false);
 
   // Effect for redirecting authenticated users
   useEffect(() => {
@@ -16,29 +13,6 @@ const WelcomePage: React.FC = () => {
       navigate('/dashboard', { replace: true });
     }
   }, [navigate]);
-
-  // Load consent states from local storage on component mount
-  useEffect(() => {
-    // This effect should not run if redirecting, so check auth status again or ensure it's benign.
-    // However, the redirect should happen before these states are set if user is authenticated.
-    const storedPrivacyConsent = localStorage.getItem('privacyConsent');
-    if (storedPrivacyConsent === 'true') {
-      setPrivacyConsentAgreed(true);
-    }
-    const storedCommunicationConsent = localStorage.getItem('communicationConsent');
-    if (storedCommunicationConsent === 'true') {
-      setCommunicationConsentAgreed(true);
-    }
-  }, []); // Empty dependency array if these only run on mount and don't depend on navigate
-
-  // Update local storage when consent states change
-  useEffect(() => {
-    localStorage.setItem('privacyConsent', privacyConsentAgreed ? 'true' : 'false');
-  }, [privacyConsentAgreed]);
-
-  useEffect(() => {
-    localStorage.setItem('communicationConsent', communicationConsentAgreed ? 'true' : 'false');
-  }, [communicationConsentAgreed]);
 
   return (
     <PageLayout>
@@ -66,41 +40,9 @@ const WelcomePage: React.FC = () => {
           encryption to protect your data. By continuing, you agree to our Terms of Service and
           Privacy Policy.
         </p>
-        <div className="flex items-center mb-4">
-          <input
-            id="privacyAgree"
-            type="checkbox"
-            checked={privacyConsentAgreed}
-            onChange={() => setPrivacyConsentAgreed(!privacyConsentAgreed)}
-            aria-required="true"
-            className="mr-2 h-4 w-4 text-[#003865] border-gray-300 rounded focus:ring-2 focus:ring-offset-1 focus:ring-[#003865] focus:outline-none"
-          />
-          <label htmlFor="privacyAgree" className="text-base text-[#003865]">
-            I have read and agree to the <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="underline text-[#003865]">Privacy Policy</a> and <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline text-[#003865]">Terms of Service</a>.
-          </label>
-        </div>
-        <div className="flex items-center mb-4">
-          <input
-            id="communicationAgree"
-            type="checkbox"
-            checked={communicationConsentAgreed}
-            onChange={() => setCommunicationConsentAgreed(!communicationConsentAgreed)}
-            aria-required="true"
-            className="mr-2 h-4 w-4 text-[#003865] border-gray-300 rounded focus:ring-2 focus:ring-offset-1 focus:ring-[#003865] focus:outline-none"
-          />
-          <label htmlFor="communicationAgree" className="text-base text-[#003865]">
-            I consent to receive text messages, emails, and all other forms of mediated communication.
-          </label>
-        </div>
         <button
-          onClick={() => {
-          // Note: Local storage is already updated by useEffect hooks
-          navigate('/register');
-          }}
-          disabled={!privacyConsentAgreed || !communicationConsentAgreed}
-          className={`mt-2 px-6 py-3 font-semibold rounded-xl shadow-md transition focus:outline-none focus:ring-2 focus:ring-[#003865]
-            ${privacyConsentAgreed && communicationConsentAgreed ? 'bg-[#8cc63f] hover:bg-[#003865] text-white' : 'bg-gray-300 text-gray-400 cursor-not-allowed'}
-          `}
+          onClick={() => navigate('/register')}
+          className="mt-2 px-6 py-3 font-semibold rounded-xl shadow-md transition focus:outline-none focus:ring-2 focus:ring-[#003865] bg-[#8cc63f] hover:bg-[#003865] text-white"
         >
           Continue
         </button>

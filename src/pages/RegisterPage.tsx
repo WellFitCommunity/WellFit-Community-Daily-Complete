@@ -201,16 +201,16 @@ const RegisterPage: React.FC = () => {
         </label>
         <label className="flex items-center space-x-2">
           <input
-            type="checkbox"
-            checked={consent}
-            onChange={() => setConsent(!consent)}
-            required
-            disabled={phoneSent}
-          />
-          <span>
-            I consent to receive text messages, emails, and other mediated options from WellFit Community.
-          </span>
-        </label>
+           type="checkbox"
+           checked={consent}
+           onChange={() => setConsent(!consent)}
+           required
+           disabled={phoneSent}
+         />
+         <span>
+           I consent to receive SMS notifications and alerts from WellFit Community, Inc. Message frequency varies. Message &amp; data rates may apply. Reply STOP to unsubscribe at any time.
+         </span>
+       </label>
 
         {/* Register button */}
         {!phoneSent && (
