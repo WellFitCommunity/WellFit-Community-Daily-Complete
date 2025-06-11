@@ -1,4 +1,3 @@
-// supabase/functions/register/index.ts
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.42.2';
 import { hash, genSalt } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
@@ -14,34 +13,28 @@ serve(async (req) => {
   }
 
   try {
-    const {
-      phone,
-      password,
-      first_name,
-      last_name,
-      email,
-      consent
-    } = await req.json();
+    const body = await req.json();
 
-    // --- Validation ---
-    if (!phone || !password || !first_name || !last_name) {
-      return new Response(
-        JSON.stringify({ error: 'Missing required fields.' }),
-        { status: 400 }
-      );
+    // --- Explicit field validation with targeted errors ---
+    if (!body.phone || typeof body.phone !== 'string' || body.phone.trim() === '') {
+      return new Response(JSON.stringify({ error: 'Phone is required.' }), { status: 400 });
     }
-
-    // Enforce password min length (match frontend)
-    if (password.length < 6) {
-      return new Response(
-        JSON.stringify({ error: 'Password must be at least 6 characters.' }),
-        { status: 400 }
-      );
+    if (!body.password || typeof body.password !== 'string' || body.password.trim() === '') {
+      return new Response(JSON.stringify({ error: 'Password is required.' }), { status: 400 });
+    }
+    if (!body.first_name || typeof body.first_name !== 'string' || body.first_name.trim() === '') {
+      return new Response(JSON.stringify({ error: 'First name is required.' }), { status: 400 });
+    }
+    if (!body.last_name || typeof body.last_name !== 'string' || body.last_name.trim() === '') {
+      return new Response(JSON.stringify({ error: 'Last name is required.' }), { status: 400 });
+    }
+    if (body.password.length < 6) {
+      return new Response(JSON.stringify({ error: 'Password must be at least 6 characters.' }), { status: 400 });
     }
 
     // Hash the password with bcrypt
     const salt = await genSalt(10);
-    const password_hash = await hash(password, salt);
+    const password_hash = await hash(body.password, salt);
 
     // Connect to Supabase using the service role key
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -50,7 +43,7 @@ serve(async (req) => {
     const { data: existing, error: existingError } = await supabase
       .from('profiles')
       .select('id')
-      .eq('phone', phone)
+      .eq('phone', body.phone)
       .single();
 
     if (existing) {
@@ -61,18 +54,16 @@ serve(async (req) => {
     }
 
     // Insert the new user record (match your full registration flow)
-    const { data, error } = await supabase.from('profiles').insert([
-      {
-        phone,
-        password_hash, // Never store plain password!
-        first_name,
-        last_name,
-        email: email || null,
-        consent: consent === true, // Store as boolean
-        phone_verified: false,
-        email_verified: false
-      }
-    ]);
+    const { data, error } = await supabase.from('profiles').insert([{
+      phone: body.phone,
+      password_hash, // Never store plain password!
+      first_name: body.first_name,
+      last_name: body.last_name,
+      email: body.email || null,
+      consent: body.consent === true, // Store as boolean
+      phone_verified: false,
+      email_verified: false
+    }]);
 
     if (error) {
       return new Response(
@@ -88,7 +79,7 @@ serve(async (req) => {
     );
   } catch (err: any) {
     return new Response(
-      JSON.stringify({ error: 'Server error' }),
+      JSON.stringify({ error: err?.message || 'Server error' }),
       { status: 500 }
     );
   }
