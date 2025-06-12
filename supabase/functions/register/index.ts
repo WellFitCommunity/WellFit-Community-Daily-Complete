@@ -69,6 +69,7 @@ serve(async (req) => {
       last_name: body.last_name,
       email: body.email || null,
       consent: body.consent === true, // Store as boolean
+      // photo_consent: body.photo_consent === true, // REMOVED
       phone_verified: false,
       email_verified: false
     }]);
