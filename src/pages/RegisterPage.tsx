@@ -16,6 +16,7 @@ const RegisterPage: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [email, setEmail] = useState('');
   const [consent, setConsent] = useState(false);
+  const [photoConsent, setPhotoConsent] = useState(false); // NEW
 
   // Verification state
   const [phoneSent, setPhoneSent] = useState(false);
@@ -37,7 +38,8 @@ const RegisterPage: React.FC = () => {
     password.length >= 6 &&
     password === confirmPassword &&
     (!email || isEmail(email)) &&
-    consent;
+    consent &&
+    photoConsent; // UPDATED
 
   // Registration Handler
   const handleRegister = async (e: React.FormEvent) => {
@@ -45,7 +47,7 @@ const RegisterPage: React.FC = () => {
     setError('');
 
     if (!canRegister) {
-      setError('Please complete all required fields and check the consent box.');
+      setError('Please complete all required fields and check all consent boxes.');
       return;
     }
 
@@ -62,6 +64,7 @@ const RegisterPage: React.FC = () => {
           last_name: lastName,
           email,
           consent,
+          photo_consent: photoConsent, // If you want to store this
         }),
       });
       const result = await response.json();
@@ -199,18 +202,51 @@ const RegisterPage: React.FC = () => {
             disabled={phoneSent}
           />
         </label>
+        {/* --- Consent checkboxes --- */}
         <label className="flex items-center space-x-2">
           <input
-           type="checkbox"
-           checked={consent}
-           onChange={() => setConsent(!consent)}
-           required
-           disabled={phoneSent}
-         />
-         <span>
-           I consent to receive SMS notifications and alerts from WellFit Community, Inc. Message frequency varies. Message &amp; data rates may apply. Reply STOP to unsubscribe at any time.
-         </span>
-       </label>
+            type="checkbox"
+            checked={consent}
+            onChange={() => setConsent(!consent)}
+            required
+            disabled={phoneSent}
+          />
+          <span>
+            I consent to receive SMS notifications and alerts from WellFit Community, Inc. Message frequency varies. Message &amp; data rates may apply. Reply STOP to unsubscribe at any time.
+          </span>
+        </label>
+        <label className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            checked={photoConsent}
+            onChange={() => setPhotoConsent(!photoConsent)}
+            required
+            disabled={phoneSent}
+          />
+          <span>
+            I give permission for my photo, video, or story to be used as described in the{' '}
+            <a href="/consent-photo" target="_blank" rel="noopener noreferrer" className="underline text-[#003865]">
+              Photo Consent
+            </a>{' '}
+            form.
+          </span>
+        </label>
+        {/* --- End Consent checkboxes --- */}
+
+        {/* Policy & Terms Links */}
+        <div className="text-xs text-gray-600 mt-2 text-center space-x-2">
+          <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="underline text-[#003865]">
+            Privacy Policy
+          </a>
+          <span>|</span>
+          <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline text-[#003865]">
+            Terms of Service
+          </a>
+          <span>|</span>
+          <a href="/consent-photo" target="_blank" rel="noopener noreferrer" className="underline text-[#003865]">
+            Photo Consent
+          </a>
+        </div>
 
         {/* Register button */}
         {!phoneSent && (
