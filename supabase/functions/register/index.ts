@@ -2,17 +2,25 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.42.2';
 import { hash, genSalt } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 
-// Get environment variables (set in Supabase dashboard or .env)
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-
-// Main handler
 serve(async (req) => {
-  if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
-  }
-
   try {
+    // Move env access inside try/catch!
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      return new Response(
+        JSON.stringify({ error: 'Supabase environment variables not set.' }),
+        { status: 500 }
+      );
+    }
+
+    if (req.method !== 'POST') {
+      return new Response(
+        JSON.stringify({ error: 'Method not allowed' }),
+        { status: 405 }
+      );
+    }
+
     const body = await req.json();
 
     // --- Explicit field validation with targeted errors ---
@@ -78,6 +86,10 @@ serve(async (req) => {
       { status: 201 }
     );
   } catch (err: any) {
+    // Log for debugging
+    console.error('Edge Function Error:', err);
+
+    // Always return valid JSON
     return new Response(
       JSON.stringify({ error: err?.message || 'Server error' }),
       { status: 500 }
