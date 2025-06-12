@@ -64,7 +64,7 @@ const PrivacyPolicy = () => (
     <p>
       For questions or requests, contact:<br />
       <strong>WellFit Community, Inc.</strong><br />
-      [Your Contact Email/Phone Here]
+       Info@thewellfitcommunity.org/832-315-5110
     </p>
 
     <p className="mt-6">
