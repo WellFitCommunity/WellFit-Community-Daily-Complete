@@ -98,4 +98,13 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, user_id: data?.[0]?.id }),_
+      JSON.stringify({ success: true, user_id: data?.[0]?.id }),
+      { status: 201, headers: { "Content-Type": "application/json" } }
+    );
+  } catch (err) {
+    return new Response(
+      JSON.stringify({ error: 'Internal server error', details: err?.message || err }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
+  }
+});
