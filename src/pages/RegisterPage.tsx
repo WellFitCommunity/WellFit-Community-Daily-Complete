@@ -53,7 +53,7 @@ const RegisterPage: React.FC = () => {
     setLoading(true);
     try {
       // Send registration to your Edge Function (NOT directly to Supabase table)
-      const response = await fetch('/functions/v1/register', {
+      const response = await fetch('https://xkybsjnvuohoqppkbkiyn.functions.supabase.co/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
