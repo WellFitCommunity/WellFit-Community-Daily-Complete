@@ -48,30 +48,100 @@ const RegisterPage: React.FC = () => {
     }
 
     setLoading(true);
+    // JULES: Define request body
+    const requestBody = {
+      phone,
+      password,
+      first_name: firstName,
+      last_name: lastName,
+      email,
+      consent,
+    };
+    // JULES: Log request details
+    console.log('Registration Request:', {
+      url: '/functions/v1/register',
+      method: 'POST',
+      body: requestBody,
+    });
     try {
       // Send registration to your Edge Function (NOT directly to Supabase table)
       const response = await fetch('/functions/v1/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          phone,
-          password,
-          first_name: firstName,
-          last_name: lastName,
-          email,
-          consent,
-        }),
+        // JULES: Use defined requestBody
+        body: JSON.stringify(requestBody),
       });
-      const result = await response.json();
-      if (!result.success) throw new Error(result.error || 'Registration failed.');
+      // JULES: Log response status
+      console.log('Registration Response Status:', response.status);
 
-      // Simulate sending phone verification code (replace with your real logic!)
-      setPhoneSent(true);
+      // JULES: Check if response.ok is true
+      if (response.ok) {
+        let result;
+        try {
+          // JULES: Attempt to parse JSON
+          result = await response.json();
+          // JULES: Log parsed result
+          console.log('Registration Response JSON:', result);
+        } catch (parseError: any) {
+          // JULES: Handle JSON parsing error
+          console.error('JSON parsing error:', parseError);
+          setError('Invalid response from server.');
+          setLoading(false); // JULES: Ensure loading is set to false
+          return; // JULES: Exit if parsing fails
+        }
+        // JULES: Check result.success
+        if (!result.success) {
+          // JULES: Prioritize result.error if available and user-friendly, otherwise a generic message.
+          throw new Error(result.error || 'Registration attempt failed. Please check your information.');
+        }
+        // Simulate sending phone verification code (replace with your real logic!)
+        setPhoneSent(true);
+        // Optionally, send verification email in the background
+        // (Do this in your backend for real, if needed)
+      } else {
+        // JULES: Handle non-ok responses (4xx or 5xx errors)
+        // JULES: Check for 5xx server errors
+        if (response.status >= 500) {
+          console.error('Server error:', response.status, response.statusText); // JULES: Log details
+          // JULES: Set user-friendly message for 5xx errors
+          throw new Error('Something went wrong on our end. Please try again later.');
+        }
 
-      // Optionally, send verification email in the background
-      // (Do this in your backend for real, if needed)
+        // JULES: For 4xx errors, try to get details from response body
+        let errorDetails = '';
+        try {
+          const errorResult = await response.json();
+          if (errorResult && errorResult.error) {
+            errorDetails = errorResult.error; // JULES: Assumed to be user-friendly
+          }
+        } catch (jsonError) {
+          // JULES: If JSON parsing fails, try to get text
+          try {
+            errorDetails = await response.text();
+          } catch (textError) {
+            // JULES: If text parsing also fails, log it but don't show raw text to user
+            console.error('Failed to parse error response text:', textError);
+          }
+        }
+        // JULES: Construct and throw error message for 4xx
+        // JULES: Use errorDetails if available, otherwise a more generic message for 4xx
+        const message = errorDetails 
+          ? `Registration failed: ${errorDetails}` 
+          : `Registration failed: ${response.status} ${response.statusText}. Please check your input.`;
+        throw new Error(message);
+      }
     } catch (err: any) {
-      setError(err.message || 'Error during registration.');
+      // JULES: Log the error
+      console.error('Registration Error:', err);
+      // JULES: Handle network error
+      if (err.name === 'TypeError' && err.message === 'Failed to fetch') {
+        // JULES: Updated network error message
+        setError('Could not connect to the server. Please check your internet connection and try again.');
+      } else {
+        // JULES: Use err.message (which might be from the new Error thrown above) or a refined generic error
+        // JULES: Updated generic fallback message
+        setError(err.message || 'An unexpected error occurred during registration. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

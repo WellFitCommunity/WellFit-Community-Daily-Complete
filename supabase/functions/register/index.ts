@@ -1,8 +1,8 @@
-import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.42.2';
 import { hash, genSalt } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 
-serve(async (req) => {
+// This is the ONLY thing you export!
+export default async function handler(req: Request) {
   try {
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -30,6 +30,7 @@ serve(async (req) => {
       );
     }
 
+    // --- REQUIRED FIELDS CHECKS ---
     if (!body.phone || typeof body.phone !== 'string' || body.phone.trim() === '') {
       return new Response(
         JSON.stringify({ error: 'Phone is required.' }),
@@ -54,9 +55,19 @@ serve(async (req) => {
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
-    if (body.password.length < 6) {
+
+    function isValidPassword(pw) {
+      if (!pw || pw.length < 8) return false; // At least 8 characters
+      if (!/[A-Z]/.test(pw)) return false;    // At least 1 uppercase
+      if (!/\d/.test(pw)) return false;       // At least 1 number
+      if (!/[^A-Za-z0-9]/.test(pw)) return false; // At least 1 special char
+      return true;
+    }
+    if (!isValidPassword(body.password)) {
       return new Response(
-        JSON.stringify({ error: 'Password must be at least 6 characters.' }),
+        JSON.stringify({
+          error: 'Password must be at least 8 characters, include 1 capital letter, 1 number, and 1 special character.',
+        }),
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
@@ -107,4 +118,4 @@ serve(async (req) => {
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
-});
+}
