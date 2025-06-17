@@ -1,12 +1,33 @@
-import { useState, useEffect } from 'react'; // Add useEffect
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabaseClient';
 import { useBranding } from '../BrandingContext';
+
+const passwordRules = [
+  {
+    test: (pw: string) => pw.length >= 8,
+    message: 'At least 8 characters',
+  },
+  {
+    test: (pw: string) => /[A-Z]/.test(pw),
+    message: 'At least 1 capital letter',
+  },
+  {
+    test: (pw: string) => /\d/.test(pw),
+    message: 'At least 1 number',
+  },
+  {
+    test: (pw: string) => /[^A-Za-z0-9]/.test(pw),
+    message: 'At least 1 special character',
+  },
+];
+
+const isPhone = (val: string) => /^\d{10,15}$/.test(val.replace(/[^\d]/g, ''));
 
 const LoginPage: React.FC = () => {
   const [phone, setPhone] = useState('');
-  const [pin, setPin] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const branding = useBranding();
 
@@ -16,9 +37,8 @@ const LoginPage: React.FC = () => {
     }
   }, [navigate]);
 
-  // Helper to determine if a color is dark (similar to Header/Footer)
   const isColorDark = (colorStr: string) => {
-    if (!colorStr) return true; // Default to dark if color is not defined
+    if (!colorStr) return true;
     const color = colorStr.startsWith('#') ? colorStr.substring(1) : colorStr;
     const r = parseInt(color.substring(0, 2), 16);
     const g = parseInt(color.substring(2, 4), 16);
@@ -28,30 +48,86 @@ const LoginPage: React.FC = () => {
   };
 
   const primaryButtonTextColor = isColorDark(branding.primaryColor) ? 'text-white' : 'text-gray-800';
-  const titleTextColor = isColorDark(branding.secondaryColor) ? 'text-white' : 'text-gray-800'; // Assuming title bg might be secondary, or just for general contrast
+
+  // Evaluate all password rules
+  const failedRules = passwordRules.filter(rule => !rule.test(password));
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
 
-    if (!phone || !pin) {
-      setError('Please enter both phone number and PIN.');
+    if (!phone || !password) {
+      setError('Please enter both phone number and password.');
       return;
     }
 
-    const { data, error } = await supabase
-      .from('phone_auth')
-      .select('id')
-      .eq('phone', phone)
-      .eq('pin', pin)
-      .single();
+    if (!isPhone(phone)) {
+      setError('Please enter a valid phone number.');
+      return;
+    }
 
-    if (error || !data) {
-      setError('Invalid phone number or PIN.');
-    } else {
-      // Save ID in localStorage
-      localStorage.setItem('wellfitUserId', data.id);
-      setError('');
-      navigate('/demographics');
+    if (failedRules.length > 0) {
+      setError('Password must meet all requirements.');
+      return;
+    }
+
+    setLoading(true);
+
+    const requestBody = { phone, password };
+
+    console.log('// JULES: Attempting login with:', { url: '/functions/v1/login', method: 'POST', body: requestBody });
+
+    try {
+      const response = await fetch('/functions/v1/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      });
+
+      console.log('// JULES: Login response status:', response.status);
+
+      if (response.ok) {
+        let result;
+        try {
+          result = await response.json();
+          console.log('// JULES: Login response data:', result);
+        } catch (jsonError: any) {
+          console.error('// JULES: JSON parsing error:', jsonError);
+          setError('Invalid response from server.');
+          return;
+        }
+
+        if (result && result.success && result.data && result.data.userId) {
+          localStorage.setItem('wellfitUserId', result.data.userId);
+          if (result.data.token) {
+            localStorage.setItem('wellfitUserToken', result.data.token);
+          }
+          setError('');
+          navigate('/demographics');
+        } else {
+          throw new Error(result.error || 'Login failed. Please check your phone number and password.');
+        }
+      } else {
+        const errorText = await response.text();
+        console.error('// JULES: Login error response text:', errorText);
+
+        if (response.status >= 500) {
+          throw new Error('Something went wrong on our end. Please try again later.');
+        } else if (response.status === 401) {
+          throw new Error('Login failed. Please check your phone number and password.');
+        } else {
+          throw new Error(`Login failed: ${response.status} ${response.statusText}. ${errorText ? errorText.substring(0,100) : ''}`);
+        }
+      }
+    } catch (err: any) {
+      console.error('// JULES: Login error:', err);
+      if (err.name === 'TypeError' && err.message.includes('Failed to fetch')) {
+        setError('Could not connect to the server. Please check your internet connection and try again.');
+      } else {
+        setError(err.message || 'An unexpected error occurred during login. Please try again.');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -66,7 +142,7 @@ const LoginPage: React.FC = () => {
       <h1 className="text-2xl font-bold mb-6" style={{ color: branding.primaryColor }}>
         {branding.appName} - Senior Login
       </h1>
-      <form onSubmit={handleLogin} className="space-y-4"> {/* Adjusted space for visible labels */}
+      <form onSubmit={handleLogin} className="space-y-4">
         <div>
           <label htmlFor="phone-input" className="block text-sm font-medium text-gray-700 mb-1 text-left">
             Phone Number
@@ -80,39 +156,51 @@ const LoginPage: React.FC = () => {
             required
             aria-required="true"
             aria-invalid={!!error}
-            className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:outline-none" // Added focus:outline-none for custom ring
+            className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:outline-none"
             style={{ borderColor: branding.secondaryColor, '--tw-ring-color': branding.primaryColor } as React.CSSProperties}
             autoComplete="tel"
           />
         </div>
         <div>
-          <label htmlFor="pin-input" className="block text-sm font-medium text-gray-700 mb-1 text-left">
-            4-digit PIN
+          <label htmlFor="password-input" className="block text-sm font-medium text-gray-700 mb-1 text-left">
+            Password
+            <span className="block text-xs text-gray-500 mt-1">
+              Must be at least 8 characters, with 1 capital letter, 1 number, and 1 special character.
+            </span>
           </label>
           <input
-            id="pin-input"
-            type="password" // Use "password" for PINs to mask input
-            placeholder="4-digit PIN"
-            value={pin}
-            onChange={e => setPin(e.target.value)}
-            maxLength={4}
+            id="password-input"
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
             required
+            minLength={8}
             aria-required="true"
             aria-invalid={!!error}
-            inputMode="numeric" // Helpful for numeric PINs on touch devices
-            pattern="[0-9]*"    // Allow only numbers
-            className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:outline-none" // Added focus:outline-none
+            className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:outline-none"
             style={{ borderColor: branding.secondaryColor, '--tw-ring-color': branding.primaryColor } as React.CSSProperties}
-            autoComplete="one-time-code" // More appropriate for PINs than "current-password"
+            autoComplete="current-password"
           />
+          {password && (
+            <ul className="text-xs text-left mt-2">
+              {passwordRules.map(rule => (
+                <li key={rule.message}
+                    className={rule.test(password) ? 'text-green-600' : 'text-red-500'}>
+                  {rule.test(password) ? '✓' : '✗'} {rule.message}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
         {error && <p role="alert" className="text-red-500 text-sm font-semibold">{error}</p>}
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           className={`w-full py-3 font-semibold rounded hover:opacity-90 transition-opacity ${primaryButtonTextColor} focus:outline-none focus:ring-2 focus:ring-offset-2`}
           style={{ backgroundColor: branding.primaryColor }}
+          disabled={loading}
         >
-          Log In
+          {loading ? 'Logging In...' : 'Log In'}
         </button>
       </form>
     </div>
@@ -120,4 +208,3 @@ const LoginPage: React.FC = () => {
 };
 
 export default LoginPage;
-
