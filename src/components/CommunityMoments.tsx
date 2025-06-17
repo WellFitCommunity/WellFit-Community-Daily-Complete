@@ -188,8 +188,8 @@ const CommunityMoments: React.FC = () => {
     formRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Emoji animation variants
-  const emojiVariants = {
+  // Emoji animation variants (fixed for TypeScript)
+  const emojiVariants: any = {
     hidden: { scale: 0, opacity: 0, rotate: -90 },
     visible: { scale: 1.3, opacity: 1, rotate: 0, transition: { type: 'spring', stiffness: 300 } },
     tap: { scale: 1.6 },
