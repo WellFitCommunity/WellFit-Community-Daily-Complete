@@ -5,6 +5,7 @@
   "private": true,
   "dependencies": {
     "@hcaptcha/react-hcaptcha": "^1.12.0",
+    "@hookform/resolvers": "^3.10.0",
     "@supabase/auth-helpers-react": "^0.5.0",
     "@supabase/supabase-js": "^2.49.10",
     "@types/react": "^18.3.23",
@@ -18,18 +19,26 @@
     "file-saver": "^2.0.5",
     "firebase": "^11.7.3",
     "framer-motion": "^12.15.0",
+    "libphonenumber-js": "^1.12.9",
     "lucide-react": "^0.503.0",
+    "nodemailer": "^7.0.3",
     "react": "^18.3.1",
     "react-confetti": "^6.4.0",
     "react-dom": "^18.3.1",
+    "react-hook-form": "^7.58.1",
     "react-router-dom": "^6.30.1",
     "react-signature-canvas": "^1.1.0-alpha.2",
+    "react-toastify": "^11.0.5",
     "twilio": "^5.7.0",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "yup": "^1.6.1"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/file-saver": "^2.0.7",
     "@types/node": "^22.15.17",
+    "@types/react-toastify": "^4.0.2",
+    "@types/xlsx": "^0.0.35",
     "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "^5.62.0",
     "@vercel/node": "^5.1.16",
@@ -43,22 +52,22 @@
     "eslint-plugin-react-hooks": "^4.6.2",
     "postcss": "^8.4.21",
     "react-scripts": "^5.0.1",
-    "supabase": "^2.24.3",
+    "supabase": "^2.26.9",
     "tailwindcss": "^3.3.2",
     "ts-node": "^10.9.2",
     "typescript": "^4.9.5"
   },
   "scripts": {
     "start": "react-scripts start",
+    "serve:register": "npx supabase functions serve --env-file ./supabase/.env.local --no-verify-jwt",
     "dev": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "import:meals": "ts-node src/scripts/importMeals.ts",
-    "deploy:register": "supabase functions deploy register",
+    "deploy:register": "npx supabase functions deploy register",
     "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\""
   },
- 
   "browserslist": {
     "production": [
       ">0.2%",
