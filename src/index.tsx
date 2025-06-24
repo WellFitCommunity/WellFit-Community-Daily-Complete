@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import './index.css';
 import App from './App';
 import * as serviceWorkerRegistration from './serviceWorkerRegistration';
+import 'react-toastify/dist/ReactToastify.css';
 
 // ✅ Supabase auth context
 import { SessionContextProvider } from '@supabase/auth-helpers-react';
