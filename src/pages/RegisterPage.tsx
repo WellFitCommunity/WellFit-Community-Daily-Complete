@@ -26,7 +26,7 @@ interface FormValues {
 const HCAPTCHA_SITE_KEY = process.env.REACT_APP_HCAPTCHA_SITE_KEY!;
 const API_ENDPOINT =
   process.env.REACT_APP_API_ENDPOINT ||
-  'https://xkybsjnvuohpqpbkikyn.functions.supabase.co/register';
+  'https://xkybsjnvuohpqpbkikyn.functions.supabase.co/v1/register';
 
 const schema = yup
   .object()
@@ -37,14 +37,15 @@ const schema = yup
     lastName: yup
       .string()
       .required('Last name is required.'),
+    // In your Yup schema:
     phone: yup
       .string()
       .required('Phone number is required.')
-      .test(
-        'valid-phone',
-        'Invalid phone number.',
-        value => isValidPhoneNumber(value || '')
-      ),
+      .matches(
+         /^(?:\d{10}|\+1\d{10})$/,
+         'Enter a 10-digit number (e.g. 5551234567) or +1 plus 10 digits (e.g. +15551234567).'
+     ), 
+  
     email: yup
       .string()
       .email('Invalid email address.')
