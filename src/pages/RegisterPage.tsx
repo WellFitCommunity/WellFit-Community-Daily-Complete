@@ -1,273 +1,306 @@
-import React, { useState, useEffect } from 'react';
+import React, { useRef, useState } from 'react';
+import { useForm, SubmitHandler } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
+import HCaptcha from '@hcaptcha/react-hcaptcha';
+import { AsYouType, isValidPhoneNumber } from 'libphonenumber-js';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-// No import for the logo—just reference it in the JSX!
-import PageLayout from '../components/ui/PageLayout';
-import Card from '../components/ui/Card';
+interface FormValues {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email?: string;
+  password: string;
+  confirmPassword: string;
+  consent: boolean;
+  hcaptchaToken: string;
+}
+
+// Environment variables
+const HCAPTCHA_SITE_KEY = process.env.REACT_APP_HCAPTCHA_SITE_KEY || '';
+const API_ENDPOINT =
+  process.env.REACT_APP_API_ENDPOINT ||
+  'https://xkybsjnvuohpqpbkikyn.functions.supabase.co/register';
+
+// Validation schema
+const schema = yup.object<FormValues>().shape({
+  firstName: yup.string().required('First name is required.'),
+  lastName: yup.string().required('Last name is required.'),
+  phone: yup
+    .string()
+    .required('Phone number is required.')
+    .test('valid-phone', 'Invalid phone number.', value =>
+      isValidPhoneNumber(value || '')
+    ),
+  email: yup.string().email('Invalid email address.').nullable().notRequired(),
+  password: yup
+    .string()
+    .required('Password is required.')
+    .min(8, 'At least 8 characters.')
+    .matches(/[A-Z]/, 'One uppercase letter.')
+    .matches(/\d/, 'One number.')
+    .matches(/[^A-Za-z0-9]/, 'One special character.'),
+  confirmPassword: yup
+    .string()
+    .oneOf([yup.ref('password')], 'Passwords must match.')
+    .required('Please confirm your password.'),
+  consent: yup
+    .boolean()
+    .oneOf([true],
+      'You must agree to receive automated messages to proceed.'
+    )
+    .required(),
+  hcaptchaToken: yup.string().required('Captcha verification is required.'),
+});
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
+  const hcaptchaRef = useRef<HCaptcha>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Form state
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [email, setEmail] = useState('');
-  const [consent, setConsent] = useState(false);
-  // REMOVED: const [photoConsent, setPhotoConsent] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    setError,
+    clearErrors,
+    formState: { errors, isSubmitting, isValid, isDirty },
+  } = useForm<FormValues>({
+    resolver: yupResolver(schema),
+    mode: 'onBlur',
+    defaultValues: { consent: false, email: '' },
+  });
 
-  // Verification state
-  const [phoneSent, setPhoneSent] = useState(false);
-  const [phoneCode, setPhoneCode] = useState('');
-  const [phoneVerified, setPhoneVerified] = useState(false);
-
-  // UX state
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  // Validation helpers
-  const isEmail = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
-  const isPhone = (val: string) => /^\d{10,15}$/.test(val.replace(/[^\d]/g, ''));
-
-  const canRegister =
-    firstName.trim() &&
-    lastName.trim() &&
-    isPhone(phone) &&
-    password.length >= 6 &&
-    password === confirmPassword &&
-    (!email || isEmail(email)) &&
-    consent; // REMOVED photoConsent
-
-  // Registration Handler
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-
-    if (!canRegister) {
-      setError('Please complete all required fields and check the consent box.');
-      return;
-    }
-
-    setLoading(true);
+  const onSubmit: SubmitHandler<FormValues> = async data => {
     try {
-      // Send registration to your Edge Function (NOT directly to Supabase table)
-      const response = await fetch('https://xkybsjnvuohoqppkbkiyn.functions.supabase.co/register', {
+      setSubmitError(null);
+      clearErrors();
+
+      const payload = {
+        first_name: data.firstName,
+        last_name: data.lastName,
+        phone: data.phone,
+        email: data.email || null,
+        password: data.password,
+        consent: data.consent,
+        hcaptcha_token: data.hcaptchaToken,
+      };
+
+      const res = await fetch(API_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          phone,
-          password,
-          first_name: firstName,
-          last_name: lastName,
-          email,
-          consent,
-          // REMOVED: photo_consent
-        }),
+        body: JSON.stringify(payload),
       });
-      const result = await response.json();
-      if (!result.success) throw new Error(result.error || 'Registration failed.');
-
-      // Simulate sending phone verification code (replace with your real logic!)
-      setPhoneSent(true);
-
-      // Optionally, send verification email in the background
-      // (Do this in your backend for real, if needed)
-    } catch (err: any) {
-      setError(err.message || 'Error during registration.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Phone Code Verification Handler (replace with your real backend logic!)
-  const handleVerifyPhone = async () => {
-    setError('');
-    setLoading(true);
-    try {
-      // For production: send phone and code to an Edge Function that validates
-      // Here, simulate a 6-digit code (for now use 123456 as the correct code)
-      if (phoneCode === '123456') {
-        setPhoneVerified(true);
-        // Optionally update backend to mark as verified
-      } else {
-        setError('Invalid phone verification code.');
+      const result = await res.json();
+      if (!res.ok) {
+        throw new Error(result.error || 'Registration failed.');
       }
-    } catch (err: any) {
-      setError(err.message || 'Error verifying code.');
-    } finally {
-      setLoading(false);
+
+      toast.success('Registration successful! Please check your email.');
+      navigate('/check-your-email', {
+        state: { userId: result.user_id, email: data.email },
+        replace: true,
+      });
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Unknown error');
+      console.error('Registration error', error);
+      setSubmitError(error.message);
+      setError('root', { type: 'manual', message: error.message });
+      hcaptchaRef.current?.resetCaptcha();
     }
   };
-
-  // Proceed after verification
-  useEffect(() => {
-    if (phoneVerified) {
-      // Save minimal info (never password) and go to next step
-      localStorage.setItem('phone', phone);
-      localStorage.setItem('firstName', firstName);
-      localStorage.setItem('lastName', lastName);
-      if (email) localStorage.setItem('email', email);
-      navigate('/demographics');
-    }
-  }, [phoneVerified, phone, firstName, lastName, email, navigate]);
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-gray-50 py-8">
-      {/* WellFit Logo at the top, no import needed */}
-      <img src="/android-chrome-512x512.png" alt="WellFit Logo" className="w-24 h-24 mb-4" />
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <form
-        className="bg-white shadow-lg rounded-lg p-8 max-w-md w-full space-y-4"
-        onSubmit={handleRegister}
-        autoComplete="on"
+        onSubmit={handleSubmit(onSubmit)}
+        className="bg-white w-full max-w-md p-6 rounded-lg shadow-lg space-y-6"
+        noValidate
       >
-        <h1 className="text-2xl font-bold text-center text-[#003865] mb-2">WellFit Registration</h1>
+        <h2 className="text-2xl font-bold text-center text-[#003865]">
+          WellFit Registration
+        </h2>
 
-        <label className="block text-sm font-medium text-gray-700">
-          First Name
-          <input
-            type="text"
-            className="mt-1 w-full border border-gray-300 rounded p-2"
-            value={firstName}
-            onChange={e => setFirstName(e.target.value)}
-            autoComplete="given-name"
-            required
-            disabled={phoneSent}
-          />
-        </label>
-        <label className="block text-sm font-medium text-gray-700">
-          Last Name
-          <input
-            type="text"
-            className="mt-1 w-full border border-gray-300 rounded p-2"
-            value={lastName}
-            onChange={e => setLastName(e.target.value)}
-            autoComplete="family-name"
-            required
-            disabled={phoneSent}
-          />
-        </label>
-        <label className="block text-sm font-medium text-gray-700">
-          Phone Number
-          <input
-            type="tel"
-            className="mt-1 w-full border border-gray-300 rounded p-2"
-            value={phone}
-            onChange={e => setPhone(e.target.value)}
-            autoComplete="tel"
-            placeholder="e.g. 7135551212"
-            required
-            disabled={phoneSent}
-          />
-        </label>
-        <label className="block text-sm font-medium text-gray-700">
-          Password (min 6 characters)
-          <input
-            type="password"
-            className="mt-1 w-full border border-gray-300 rounded p-2"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            autoComplete="new-password"
-            required
-            minLength={6}
-            disabled={phoneSent}
-          />
-        </label>
-        <label className="block text-sm font-medium text-gray-700">
-          Confirm Password
-          <input
-            type="password"
-            className="mt-1 w-full border border-gray-300 rounded p-2"
-            value={confirmPassword}
-            onChange={e => setConfirmPassword(e.target.value)}
-            autoComplete="new-password"
-            required
-            minLength={6}
-            disabled={phoneSent}
-          />
-          {password && confirmPassword && password !== confirmPassword && (
-            <span className="text-xs text-red-500">Passwords do not match.</span>
-          )}
-        </label>
-        <label className="block text-sm font-medium text-gray-700">
-          Email (optional)
-          <input
-            type="email"
-            className="mt-1 w-full border border-gray-300 rounded p-2"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            autoComplete="email"
-            disabled={phoneSent}
-          />
-        </label>
-        {/* --- Consent checkbox only --- */}
-        <label className="flex items-center space-x-2">
-          <input
-            type="checkbox"
-            checked={consent}
-            onChange={() => setConsent(!consent)}
-            required
-            disabled={phoneSent}
-          />
-          <span>
-            I consent to receive SMS notifications and alerts from WellFit Community, Inc. Message frequency varies. Message &amp; data rates may apply. Reply STOP to unsubscribe at any time.
-          </span>
-        </label>
-        {/* --- End Consent checkbox --- */}
-
-        {/* Policy & Terms Links */}
-        <div className="text-xs text-gray-600 mt-2 text-center space-x-2">
-          <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="underline text-[#003865]">
-            Privacy Policy
-          </a>
-          <span>|</span>
-          <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline text-[#003865]">
-            Terms of Service
-          </a>
-          <span>|</span>
-          <a href="/consent-photo" target="_blank" rel="noopener noreferrer" className="underline text-[#003865]">
-            Photo Consent
-          </a>
-        </div>
-
-        {/* Register button */}
-        {!phoneSent && (
-          <button
-            type="submit"
-            className="w-full py-2 bg-[#003865] text-white rounded hover:bg-[#8cc63f] transition"
-            disabled={!canRegister || loading}
-          >
-            {loading ? 'Registering...' : 'Register'}
-          </button>
-        )}
-
-        {/* Phone code input */}
-        {phoneSent && !phoneVerified && (
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              Enter SMS Code
-              <input
-                type="text"
-                className="mt-1 w-full border border-gray-300 rounded p-2"
-                value={phoneCode}
-                onChange={e => setPhoneCode(e.target.value)}
-                maxLength={6}
-                autoComplete="one-time-code"
-              />
-            </label>
-            <button
-              type="button"
-              className="w-full py-2 bg-[#003865] text-white rounded hover:bg-[#8cc63f] transition"
-              onClick={handleVerifyPhone}
-              disabled={loading || phoneVerified}
-            >
-              Verify Phone
-            </button>
+        {submitError && (
+          <div role="alert" className="text-red-600">
+            {submitError}
           </div>
         )}
 
-        {error && <p className="text-red-600 mt-2">{error}</p>}
+        {/* First Name */}
+        <div>
+          <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
+            First Name*
+          </label>
+          <input
+            id="firstName"
+            {...register('firstName')}
+            className="mt-1 w-full border border-gray-300 p-2 rounded"
+            aria-invalid={errors.firstName ? 'true' : 'false'}
+            aria-describedby="firstName-error"
+          />
+          {errors.firstName && (
+            <p id="firstName-error" className="text-red-600 text-sm mt-1">
+              {errors.firstName.message}
+            </p>
+          )}
+        </div>
+
+        {/* Last Name */}
+        <div>
+          <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
+            Last Name*
+          </label>
+          <input
+            id="lastName"
+            {...register('lastName')}
+            className="mt-1 w-full border border-gray-300 p-2 rounded"
+            aria-invalid={errors.lastName ? 'true' : 'false'}
+            aria-describedby="lastName-error"
+          />
+          {errors.lastName && (
+            <p id="lastName-error" className="text-red-600 text-sm mt-1">
+              {errors.lastName.message}
+            </p>
+          )}
+        </div>
+
+        {/* Phone */}
+        <div>
+          <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+            Phone Number*
+          </label>
+          <input
+            id="phone"
+            {...register('phone')}
+            className="mt-1 w-full border border-gray-300 p-2 rounded"
+            placeholder="+1 (555) 555-5555"
+            aria-invalid={errors.phone ? 'true' : 'false'}
+            aria-describedby="phone-error"
+            onInput={e => {
+              const formatted = new AsYouType().input(e.currentTarget.value);
+              e.currentTarget.value = formatted;
+            }}
+          />
+          {errors.phone && (
+            <p id="phone-error" className="text-red-600 text-sm mt-1">
+              {errors.phone.message}
+            </p>
+          )}
+        </div>
+
+        {/* Email */}
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            Email (optional)
+          </label>
+          <input
+            id="email"
+            {...register('email')}
+            className="mt-1 w-full border border-gray-300 p-2 rounded"
+            aria-invalid={errors.email ? 'true' : 'false'}
+            aria-describedby="email-error"
+          />
+          {errors.email && (
+            <p id="email-error" className="text-red-600 text-sm mt-1">
+              {errors.email.message}
+            </p>
+          )}
+        </div>
+
+        {/* Password */}
+        <div>
+          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+            Password*
+          </label>
+          <input
+            id="password"
+            type="password"
+            {...register('password')}
+            className="mt-1 w-full border border-gray-300 p-2 rounded"
+            aria-invalid={errors.password ? 'true' : 'false'}
+            aria-describedby="password-error"
+          />
+          {errors.password && (
+            <p id="password-error" className="text-red-600 text-sm mt-1">
+              {errors.password.message}
+            </p>
+          )}
+        </div>
+
+        {/* Confirm Password */}
+        <div>
+          <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+            Confirm Password*
+          </label>
+          <input
+            id="confirmPassword"
+            type="password"
+            {...register('confirmPassword')}
+            className="mt-1 w-full border border-gray-300 p-2 rounded"
+            aria-invalid={errors.confirmPassword ? 'true' : 'false'}
+            aria-describedby="confirmPassword-error"
+          />
+          {errors.confirmPassword && (
+            <p id="confirmPassword-error" className="text-red-600 text-sm mt-1">
+              {errors.confirmPassword.message}
+            </p>
+          )}
+        </div>
+
+        {/* Consent */}
+        <div className="mt-4">
+          <label className="flex items-start space-x-2">
+            <input
+              type="checkbox"
+              {...register('consent')}
+              className="mt-1"
+            />
+            <span className="text-sm text-gray-700">
+              I agree to receive recurring automated messages (including SMS and email) from WellFit Community.
+              Message and data rates may apply. Consent is not a condition of purchase.
+            </span>
+          </label>
+          {errors.consent && (
+            <p className="text-red-600 text-sm mt-1" role="alert">
+              {errors.consent.message}
+            </p>
+          )}
+        </div>
+
+        {/* hCaptcha */}
+        <div className="mt-4">
+          <HCaptcha
+            sitekey={HCAPTCHA_SITE_KEY}
+            onVerify={token => {
+              setValue('hcaptchaToken', token);
+              clearErrors('hcaptchaToken');
+            }}
+            onError={() => setError('hcaptchaToken', { type: 'manual', message: 'Captcha verification failed.' })}
+            ref={hcaptchaRef}
+          />
+          {errors.hcaptchaToken && (
+            <p className="text-red-600 text-sm mt-1" role="alert">
+              {errors.hcaptchaToken.message}
+            </p>
+          )}
+        </div>
+
+        {/* Submit Button */}
+        <button
+          type="submit"
+          disabled={isSubmitting || !isValid || !isDirty}
+          className={`w-full py-2 px-4 rounded text-white ${
+            isSubmitting || !isValid || !isDirty
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-[#003865] hover:bg-[#8cc63f]'
+          }`}
+        >
+          {isSubmitting ? 'Processing...' : 'Register'}
+        </button>
       </form>
     </div>
   );
