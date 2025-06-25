@@ -24,9 +24,14 @@ interface FormValues {
 }
 
 const HCAPTCHA_SITE_KEY = process.env.REACT_APP_HCAPTCHA_SITE_KEY!;
-const API_ENDPOINT =
-  process.env.REACT_APP_API_ENDPOINT ||
-  'https://xkybsjnvuohpqpbkikyn.functions.supabase.co/v1/register';
+let API_ENDPOINT = process.env.REACT_APP_API_ENDPOINT;
+
+if (!API_ENDPOINT) {
+  console.warn(
+    'REACT_APP_API_ENDPOINT is not set. Using default fallback. This is not recommended for production.'
+  );
+  API_ENDPOINT = 'https://xkybsjnvuohpqpbkikyn.functions.supabase.co/v1/register';
+}
 
 const schema = yup
   .object()
@@ -81,6 +86,17 @@ const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
   const hcaptchaRef = useRef<HCaptcha>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isCaptchaConfigured, setIsCaptchaConfigured] = useState(true);
+
+  if (!HCAPTCHA_SITE_KEY && isCaptchaConfigured) {
+    console.error('FATAL: REACT_APP_HCAPTCHA_SITE_KEY is not defined. Captcha will not load.');
+    // This component-level state update will trigger a re-render to show the error.
+    // Note: Direct state update during render like this is generally discouraged,
+    // but for a one-time setup check that prevents core functionality, it's a pragmatic approach.
+    // A useEffect with an empty dependency array would be cleaner if this caused issues.
+    // However, since HCAPTCHA_SITE_KEY is a const, this will only run once.
+    setIsCaptchaConfigured(false);
+  }
 
   const {
     register,
@@ -134,12 +150,21 @@ const RegisterPage: React.FC = () => {
         },
         body: JSON.stringify(payload)
       });
-      const result = await res.json();
 
-      if (!res.ok)
-        throw new Error(
-          result.error || 'Registration failed.'
-        );
+      if (!res.ok) {
+        let errorPayload;
+        try {
+          errorPayload = await res.json();
+        } catch (e) {
+          // If response is not JSON, use status text
+          throw new Error(res.statusText || 'Registration failed due to a server error.');
+        }
+        throw new Error(errorPayload?.error || `Registration failed: ${res.statusText}`);
+      }
+
+      // Assuming successful response includes user_id, even if it's not directly in this component's immediate use case after navigation
+      // If it's not guaranteed, this parsing should also be in a try-catch
+      const result = await res.json();
 
       toast.success('Registration successful!');
       navigate('/check-your-email', {
@@ -179,6 +204,15 @@ const RegisterPage: React.FC = () => {
         >
           WellFit Registration
         </h2>
+
+        {!isCaptchaConfigured && (
+          <div
+            role="alert"
+            className="bg-red-100 border-l-4 border-red-700 p-4 text-red-700 font-semibold"
+          >
+            Registration is currently unavailable due to a configuration issue (hCaptcha Site Key missing). Please contact support.
+          </div>
+        )}
 
         {submitError && (
           <div
@@ -399,14 +433,14 @@ const RegisterPage: React.FC = () => {
         {/* Submit */}
         <button
           type="submit"
-          disabled={isSubmitting || !isValid || !isDirty}
+          disabled={!isCaptchaConfigured || isSubmitting || !isValid || !isDirty}
           className={`w-full py-2 px-4 rounded-md text-white font-medium ${
-            isSubmitting || !isValid || !isDirty
+            !isCaptchaConfigured || isSubmitting || !isValid || !isDirty
               ? 'bg-gray-400 cursor-not-allowed'
               : 'bg-[#003865] hover:bg-[#8cc63f] focus:ring-2 focus:ring-offset-2 focus:ring-[#003865]'
           }`}
         >
-          {isSubmitting ? (
+          {!isCaptchaConfigured ? 'Registration Unavailable' : isSubmitting ? (
             <span className="inline-flex items-center">
               <svg
                 className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
