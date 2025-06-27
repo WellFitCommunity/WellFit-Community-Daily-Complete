@@ -46,35 +46,76 @@ const AdminPanel: React.FC = () => {
     } finally {
       setLoading(false);
     }
+    setUpdating(null);
   };
 
-  return authed ? (
-    <section className="bg-white border-2 border-[#8cc63f] p-4 rounded-xl shadow space-y-6">
-      <h2 className="text-xl font-semibold text-[#003865] mb-2">Admin Panel ✅</h2>
+  const exportToExcel = () => {
+  const exportData = profiles.map(({ id, notes, ...rest }) => ({ ...rest, notes }));
+  const ws = XLSX.utils.json_to_sheet(exportData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Profiles');
 
-      <UsersList />
-      <ReportsSection />
-      <ExportCheckIns />
-      <ApiKeyManager /> {/* Add the ApiKeyManager component here */}
-    </section>
-  ) : (
-    <section className="bg-white border-2 border-[#8cc63f] p-4 rounded-xl shadow">
-      <h2 className="text-xl font-semibold text-[#003865] mb-2">Admin Panel 🔒</h2>
-      <input
-        type="password"
-        value={pin}
-        onChange={e => setPin(e.target.value)}
-        placeholder="Enter staff PIN"
-        className="border p-1 rounded"
-      />
+  const binary = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+  const s2ab = (s: string) => {
+    const buf = new ArrayBuffer(s.length);
+    const view = new Uint8Array(buf);
+    for (let i = 0; i < s.length; ++i) view[i] = s.charCodeAt(i) & 0xff;
+    return buf;
+  };
+
+  const blob = new Blob([s2ab(binary)], { type: 'application/octet-stream' });
+  saveAs(blob, 'wellfit_profiles.xlsx');
+};
+
+  return (
+    <div className="p-6 max-w-7xl mx-auto bg-white rounded shadow space-y-4">
+      <h1 className="text-2xl font-bold text-blue-900">Admin Panel</h1>
+
+      {loading && <p>Loading profiles…</p>}
+      {error && <p className="text-red-600">Error: {error}</p>}
+
       <button
-        onClick={handleUnlock}
-        className="ml-2 px-3 py-1 bg-[#003865] text-white rounded"
+        onClick={exportToExcel}
+        className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
       >
-        Unlock
+        Export to Excel
       </button>
-      {error && <p className="text-red-500 mt-2">{error}</p>}
-    </section>
+
+      <table className="min-w-full border mt-4 text-sm">
+        <thead className="bg-gray-100 text-gray-700 uppercase">
+          <tr>
+            <th className="border px-4 py-2">Name</th>
+            <th className="border px-4 py-2">Phone</th>
+            <th className="border px-4 py-2">Email</th>
+            <th className="border px-4 py-2">Consent</th>
+            <th className="border px-4 py-2">Notes</th>
+            <th className="border px-4 py-2">Joined</th>
+          </tr>
+        </thead>
+        <tbody>
+          {profiles.map(profile => (
+            <tr key={profile.id} className="hover:bg-gray-50">
+              <td className="border px-4 py-2">{profile.first_name} {profile.last_name}</td>
+              <td className="border px-4 py-2">{profile.phone}</td>
+              <td className="border px-4 py-2">{profile.email || '—'}</td>
+              <td className="border px-4 py-2">{profile.consent ? '✅' : '❌'}</td>
+              <td className="border px-4 py-2">
+                <textarea
+                  className="w-full border rounded p-1 text-sm"
+                  rows={2}
+                  defaultValue={profile.notes ?? ''}
+                  onBlur={(e) => updateNote(profile.id, e.target.value)}
+                  disabled={updating === profile.id}
+                />
+              </td>
+              <td className="border px-4 py-2 text-gray-400">
+                {new Date(profile.created_at).toLocaleDateString()}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 };
 

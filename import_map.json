@@ -1,0 +1,7 @@
+{
+  "imports": {
+    "https://esm.sh/@supabase/supabase-js@2.42.2": "https://esm.sh/@supabase/supabase-js@2.42.2",
+    "https://deno.land/x/bcrypt@v0.4.1/mod.ts":     "https://deno.land/x/bcrypt@v0.4.1/mod.ts",
+    "https://deno.land/std@0.183.0/http/server.ts":  "https://deno.land/std@0.183.0/http/server.ts"
+  }
+}

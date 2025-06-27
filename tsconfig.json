@@ -1,21 +1,24 @@
 {
   "compilerOptions": {
-    "target": "es2017",                          // Use at least es2017 for async/await, etc. (es5 is only for IE11, which is dead)
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,                              // STRONGLY recommend 'true' for type safety. Set 'false' ONLY if you keep hitting errors you can't fix.
+    "target": "es2017",                          // For async/await support
+    "lib": ["dom", "dom.iterable", "esnext"],    // DOM + modern JS APIs
+    "allowJs": true,                             // Allow JS files alongside TS
+    "skipLibCheck": true,                        // Skip checking declaration files
+    "esModuleInterop": true,                     // Interop for CommonJS modules
+    "allowSyntheticDefaultImports": true,        // Default imports from modules without defaults
+    "strict": true,                              // Enable all strict type-checking options
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
-    "module": "esnext",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "react-jsx",                          // Critical for React 17+ new JSX transform
-    "baseUrl": "src"
+    "module": "esnext",                          // Modern ES modules
+    "moduleResolution": "node",                  // Resolve modules like Node.js
+    "resolveJsonModule": true,                   // Import JSON files
+    "isolatedModules": true,                     // Ensure each file can be transpiled in isolation
+    "noEmit": true,                              // Don’t emit JS (CRA handles this)
+    "jsx": "react-jsx",                          // React 17+ JSX transform
+    "baseUrl": "src"                             // Absolute imports start from src/
   },
-  "include": ["src"]
+  "include": [
+    "src",                                       // Your React app code
+    "supabase/functions/**/*.ts"                 // Your Edge Function code
+  ]
 }
