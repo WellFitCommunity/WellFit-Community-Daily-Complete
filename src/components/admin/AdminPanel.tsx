@@ -1,24 +1,50 @@
 // src/components/AdminPanel.tsx
-
-// src/components/AdminPanel.tsx
-
 import { useState } from 'react';
+import { supabase } from '../../lib/supabaseClient'; // Import Supabase client
 import UsersList from './UsersList';
 import ReportsSection from './ReportsSection';
 import ExportCheckIns from './ExportCheckIns';
-import ApiKeyManager from './ApiKeyManager'; // Import the new component
+import ApiKeyManager from './ApiKeyManager';
 
 const AdminPanel: React.FC = () => {
   const [pin, setPin] = useState('');
   const [authed, setAuthed] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false); // For loading state
 
-  const handleUnlock = () => {
-    if (pin === '1234') {  // TODO: replace with secure backend check
-      setAuthed(true);
-      setError('');
-    } else {
-      setError('Incorrect PIN');
+  const handleUnlock = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      // Ensure ADMIN_PANEL_PIN is set in your Supabase project's environment variables for the function
+      const { data, error: functionError } = await supabase.functions.invoke('verify-admin-pin', {
+        body: { pin },
+      });
+
+      if (functionError) {
+        console.error('Error invoking verify-admin-pin function:', functionError);
+        // If functionError exists, data might be null or not what we expect for app-level errors.
+        // Prioritize functionError.message.
+        const message = functionError.message || 'Server error during PIN verification.';
+        throw new Error(message);
+      }
+
+      // The function executed successfully, now check the application-level response in 'data'
+      if (data?.success) {
+        setAuthed(true);
+      } else {
+        setError(data?.error || 'Incorrect PIN.'); // Use error from function response if available
+      }
+    } catch (e: any) {
+      console.error('PIN verification failed:', e);
+      // Check for network-like errors specifically if needed, otherwise use e.message
+      if (e.message?.toLowerCase().includes('failed to fetch') || e.message?.toLowerCase().includes('networkerror')) {
+        setError('Network error. Please check your connection and try again.');
+      } else {
+        setError(e.message || 'An unexpected error occurred during PIN verification.');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
