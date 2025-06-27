@@ -32,6 +32,7 @@ import { DemoModeProvider } from './contexts/DemoModeContext';
 import { SessionTimeoutProvider } from './contexts/SessionTimeoutContext';
 import DemoBanner from './components/layout/DemoBanner';
 
+
 // Public routes for which you do NOT want to show the header
 const publicRoutes = [
   '/',

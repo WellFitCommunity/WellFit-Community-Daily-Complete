@@ -11,6 +11,8 @@ import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { AsYouType, isValidPhoneNumber } from 'libphonenumber-js';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import ExplicitCaptcha from '../components/ExplicitCaptcha';
+
 
 interface FormValues {
   firstName:      string;

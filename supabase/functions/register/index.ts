@@ -1,121 +1,167 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.42.2';
-import { hash, genSalt } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
+import { serve } from "https://deno.land/std@0.183.0/http/server.ts";
 
-// This is the ONLY thing you export!
-export default async function handler(req: Request) {
+interface RegisterBody {
+  phone: string;
+  password: string;
+  first_name: string;
+  last_name: string;
+  email?: string;
+  consent?: boolean;
+}
+
+function toHex(bytes: Uint8Array): string {
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function hashPassword(password: string) {
+  const encoder = new TextEncoder();
+  const passKey = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(password),
+    "PBKDF2",
+    false,
+    ["deriveBits"]
+  );
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const bits = await crypto.subtle.deriveBits(
+    {
+      name: "PBKDF2",
+      salt,
+      iterations: 100_000,
+      hash: "SHA-256",
+    },
+    passKey,
+    256
+  );
+  const hash = new Uint8Array(bits);
+  return `${toHex(salt)}:${toHex(hash)}`;
+}
+
+serve(async (req: Request) => {
+  const headers = new Headers({
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": req.headers.get("Origin") || "*",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+  });
+
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers });
+  }
+
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers,
+    });
+  }
+
   try {
-    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    const body: RegisterBody = await req.json();
+
+    for (const field of ["phone", "password", "first_name", "last_name"] as const) {
+      const v = body[field];
+      if (!v || typeof v !== "string" || !v.trim()) {
+        return new Response(
+          JSON.stringify({ error: `${field.replace("_", " ")} is required.` }),
+          { status: 400, headers }
+        );
+      }
+    }
+
+    const p = body.password;
+    const rules = [
+      { r: /.{8,}/, m: "at least 8 characters" },
+      { r: /[A-Z]/, m: "one uppercase letter" },
+      { r: /\d/, m: "one number" },
+      { r: /[^A-Za-z0-9]/, m: "one special character" },
+    ];
+    const bad = rules.filter(x => !x.r.test(p)).map(x => x.m);
+    if (bad.length) {
       return new Response(
-        JSON.stringify({ error: 'Supabase environment variables not set.' }),
-        { status: 500, headers: { "Content-Type": "application/json" } }
+        JSON.stringify({ error: `Password must contain ${bad.join(", ")}.` }),
+        { status: 400, headers }
       );
     }
 
-    if (req.method !== 'POST') {
-      return new Response(
-        JSON.stringify({ error: 'Method not allowed' }),
-        { status: 405, headers: { "Content-Type": "application/json" } }
-      );
+    // ✅ Secure environment var loading
+    const URL = Deno.env.get("SB_URL");
+    const KEY = Deno.env.get("SB_SERVICE_ROLE");
+
+    // ✅ Safety tip: don't log keys, just confirm presence
+    console.log("✅ SB_URL loaded:", !!URL);
+    console.log("✅ SB_SERVICE_ROLE loaded:", !!KEY);
+
+    if (!URL || !KEY) {
+      throw new Error("Missing SB_URL or SB_SERVICE_ROLE secret");
     }
 
-    let body;
-    try {
-      body = await req.json();
-    } catch {
-      return new Response(
-        JSON.stringify({ error: 'Invalid JSON in request body.' }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
-    }
+    const password_hash = await hashPassword(body.password);
 
-    // --- REQUIRED FIELDS CHECKS ---
-    if (!body.phone || typeof body.phone !== 'string' || body.phone.trim() === '') {
-      return new Response(
-        JSON.stringify({ error: 'Phone is required.' }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
-    }
-    if (!body.password || typeof body.password !== 'string' || body.password.trim() === '') {
-      return new Response(
-        JSON.stringify({ error: 'Password is required.' }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
-    }
-    if (!body.first_name || typeof body.first_name !== 'string' || body.first_name.trim() === '') {
-      return new Response(
-        JSON.stringify({ error: 'First name is required.' }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
-    }
-    if (!body.last_name || typeof body.last_name !== 'string' || body.last_name.trim() === '') {
-      return new Response(
-        JSON.stringify({ error: 'Last name is required.' }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
-    function isValidPassword(pw) {
-      if (!pw || pw.length < 8) return false; // At least 8 characters
-      if (!/[A-Z]/.test(pw)) return false;    // At least 1 uppercase
-      if (!/\d/.test(pw)) return false;       // At least 1 number
-      if (!/[^A-Za-z0-9]/.test(pw)) return false; // At least 1 special char
-      return true;
-    }
-    if (!isValidPassword(body.password)) {
-      return new Response(
-        JSON.stringify({
-          error: 'Password must be at least 8 characters, include 1 capital letter, 1 number, and 1 special character.',
-        }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
-    const salt = await genSalt(10);
-    const password_hash = await hash(body.password, salt);
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
-    const { data: existing, error: existingError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('phone', body.phone)
-      .single();
-
-    if (existing) {
-      return new Response(
-        JSON.stringify({ error: 'Phone already registered.' }),
-        { status: 409, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
-    const { data, error } = await supabase.from('profiles').insert([{
-      phone: body.phone,
-      password_hash,
-      first_name: body.first_name,
-      last_name: body.last_name,
-      email: body.email || null,
-      consent: body.consent === true,
-      phone_verified: false,
-      email_verified: false
-    }]);
-
-    if (error) {
-      return new Response(
-        JSON.stringify({ error: error.message }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
-    return new Response(
-      JSON.stringify({ success: true, user_id: data?.[0]?.id }),
-      { status: 201, headers: { "Content-Type": "application/json" } }
+    // 🔍 Check uniqueness
+    const check = await fetch(
+      `${URL}/rest/v1/profiles?phone=eq.${encodeURIComponent(body.phone)}`,
+      {
+        headers: {
+          apikey: KEY,
+          Authorization: `Bearer ${KEY}`,
+        },
+      }
     );
+    if (!check.ok) {
+      throw new Error(`Lookup failed: ${await check.text()}`);
+    }
+    if ((await check.json()).length > 0) {
+      return new Response(
+        JSON.stringify({ error: "Phone already registered." }),
+        { status: 409, headers }
+      );
+    }
+
+    // ➕ Insert into DB
+    const insertRes = await fetch(`${URL}/rest/v1/profiles`, {
+      method: "POST",
+      headers: {
+        apikey: KEY,
+        Authorization: `Bearer ${KEY}`,
+        "Content-Type": "application/json",
+        Prefer: "return=representation",
+      },
+      body: JSON.stringify({
+        phone: body.phone,
+        password_hash,
+        first_name: body.first_name,
+        last_name: body.last_name,
+        email: body.email ?? null,
+        consent: Boolean(body.consent),
+        phone_verified: false,
+        email_verified: false,
+        created_at: new Date().toISOString(),
+      }),
+    });
+
+    const inserted = await insertRes.json();
+
+    if (!insertRes.ok) {
+      console.error("❌ Insert error:", inserted);
+      throw new Error(`Insert failed: ${JSON.stringify(inserted)}`);
+    }
+
+    const user_id = inserted[0]?.id;
+    return new Response(JSON.stringify({ success: true, user_id }), {
+      status: 201,
+      headers,
+    });
+
   } catch (err) {
+    console.error("❌ register error:", err);
+    const errorMessage =
+      err && typeof err === "object" && "message" in err
+        ? (err as { message: string }).message
+        : String(err);
     return new Response(
-      JSON.stringify({ error: 'Internal server error', details: err?.message || err }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      JSON.stringify({ error: "Internal Server Error", details: errorMessage }),
+      { status: 500, headers }
     );
   }
-}
+});

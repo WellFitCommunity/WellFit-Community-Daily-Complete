@@ -2,8 +2,11 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
 
     <!-- App Identity -->
     <meta name="application-name" content="WellFit Community" />
@@ -15,14 +18,14 @@
 
     <!-- Descriptive Meta -->
     <meta name="description" content="Strong Seniors. Stronger Community. The WellFit app helps you stay healthy, informed, and connected." />
-    <meta name="keywords" content="senior wellness, WellFit Community, health tracking, fitness, RPM, aging well" />
+    <meta name="keywords" content="senior wellness, WellFit Community, health tracking, fitness, aging" />
     <meta name="author" content="WellFit Community" />
 
     <!-- Social Media -->
     <meta property="og:title" content="WellFit Community App" />
     <meta property="og:description" content="Track your wellness, meals, check-ins and more. Built for seniors, with love." />
     <meta property="og:image" content="/icons/icon-512x512.png" />
-    <meta property="og:url" content="https://yourappurl.com" /> <!-- Update this -->
+    <meta property="og:url" content="https://your-app.vercel.app" />
     <meta name="twitter:card" content="summary_large_image" />
 
     <!-- Icons -->
@@ -30,6 +33,16 @@
     <link rel="apple-touch-icon" href="/icons/icon-512x512.png" />
 
     <title>WellFit Community</title>
+
+    <!-- hCaptcha explicit render setup -->
+    <script>
+      // This hook will be overridden in React to render the captcha
+      window.hcaptchaOnLoad = () => {};
+    </script>
+    <script
+      src="https://js.hcaptcha.com/1/api.js?onload=hcaptchaOnLoad&render=explicit"
+      async defer
+    ></script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
