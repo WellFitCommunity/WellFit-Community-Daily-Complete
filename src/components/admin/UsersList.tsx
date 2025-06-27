@@ -60,7 +60,7 @@ const UsersList: React.FC = () => {
             </li>
           ))}
         </ul>
-      )}
+     ) : null}
     </div>
   );
 };
