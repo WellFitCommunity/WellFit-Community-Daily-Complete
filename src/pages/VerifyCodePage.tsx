@@ -1,20 +1,21 @@
-import { useState, useEffect } from 'react'; // Add useEffect
+// src/pages/VerifyCodePage.tsx
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 
 const VerifyCodePage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  // Try to get phone from location.state or prompt user if missing
-  const [phone, setPhone] = useState(location.state?.phone || '');
-  const [code, setCode] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [phone, setPhone] = useState<string>(location.state?.phone || '');
+  const [code, setCode] = useState<string>('');
+  const [error, setError] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    if (localStorage.getItem('wellfitUserId')) {
-      navigate('/dashboard', { replace: true });
-    }
+    // If already logged in, redirect
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) navigate('/dashboard', { replace: true });
+    });
   }, [navigate]);
 
   const handleVerify = async (e: React.FormEvent) => {
@@ -23,20 +24,21 @@ const VerifyCodePage: React.FC = () => {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.verifyOtp({
+      // Use Supabase OTP verification
+      const { data, error: otpError } = await supabase.auth.verifyOtp({
         phone: phone,
         token: code,
-        type: 'sms'
+        type: 'sms',
       });
 
-      if (error) throw error;
+      if (otpError) throw otpError;
 
       setLoading(false);
-      // Optionally: fetch user profile or do other onboarding here
-      navigate('/demographics'); // Or /dashboard, as you prefer
+      // Proceed to next step in your flow
+      navigate('/demographics');
     } catch (e: any) {
       setLoading(false);
-      setError(e?.message || 'Invalid code. Please try again.');
+      setError(e.message || 'Invalid code. Please try again.');
     }
   };
 
@@ -46,7 +48,7 @@ const VerifyCodePage: React.FC = () => {
       <form className="w-full" onSubmit={handleVerify}>
         {!location.state?.phone && (
           <div className="mb-4">
-            <label className="block font-semibold mb-1 text-[#003865]" htmlFor="phone">
+            <label htmlFor="phone" className="block font-semibold mb-1 text-[#003865]">
               Phone Number
             </label>
             <input
@@ -63,7 +65,7 @@ const VerifyCodePage: React.FC = () => {
           </div>
         )}
         <div className="mb-4">
-          <label className="block font-semibold mb-1 text-[#003865]" htmlFor="code">
+          <label htmlFor="code" className="block font-semibold mb-1 text-[#003865]">
             Verification Code
           </label>
           <input
@@ -82,7 +84,7 @@ const VerifyCodePage: React.FC = () => {
         <button
           type="submit"
           disabled={loading || !code || !phone}
-          className="bg-[#003865] hover:bg-[#8cc63f] text-white font-bold px-6 py-3 rounded shadow w-full mt-2 transition"
+          className="bg-[#003865] hover:bg-[#8cc63f] text-white font-bold px-6 py-3 rounded shadow w-full mt-2 transition disabled:opacity-50"
         >
           {loading ? 'Verifying...' : 'Verify'}
         </button>
@@ -92,3 +94,4 @@ const VerifyCodePage: React.FC = () => {
 };
 
 export default VerifyCodePage;
+
