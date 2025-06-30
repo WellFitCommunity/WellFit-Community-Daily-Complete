@@ -29,15 +29,15 @@ export const SessionTimeoutProvider: React.FC<SessionTimeoutProviderProps> = ({ 
 
   const logout = useCallback(async () => {
     console.log('Session timed out. Logging out...');
-    // Clear local storage
-    localStorage.removeItem('wellfitUserId');
-    localStorage.removeItem('wellfitPhone');
-    localStorage.removeItem('wellfitPin');
-    localStorage.removeItem('communicationConsent');
+    // Clear local storage - REMOVED specific app keys. Supabase signOut handles its own storage.
+    // localStorage.removeItem('wellfitUserId'); // Removed
+    // localStorage.removeItem('wellfitPhone'); // Removed
+    // localStorage.removeItem('wellfitPin'); // Removed
+    // localStorage.removeItem('communicationConsent'); // Removed
     // Clear other potential session-related items if any
-    // Example: localStorage.removeItem('supabase.auth.token'); // if Supabase stores it this way and it's not cleared by signOut
+    // Example: localStorage.removeItem('supabase.auth.token'); // Supabase's signOut should handle this.
 
-    // Sign out from Supabase
+    // Sign out from Supabase - this will trigger AuthContext to update state
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.error('Error logging out from Supabase:', error);

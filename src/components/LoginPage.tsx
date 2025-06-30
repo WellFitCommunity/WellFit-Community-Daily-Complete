@@ -31,11 +31,12 @@ const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const branding = useBranding();
 
-  useEffect(() => {
-    if (localStorage.getItem('wellfitUserId')) {
-      navigate('/dashboard', { replace: true });
-    }
-  }, [navigate]);
+  // useEffect(() => {
+  //   // Removing localStorage check for automatic login per new requirements
+  //   // if (localStorage.getItem('wellfitUserId')) {
+  //   //   navigate('/dashboard', { replace: true });
+  //   // }
+  // }, [navigate]);
 
   const isColorDark = (colorStr: string) => {
     if (!colorStr) return true;
@@ -98,11 +99,16 @@ const LoginPage: React.FC = () => {
         }
 
         if (result && result.success && result.data && result.data.userId) {
-          localStorage.setItem('wellfitUserId', result.data.userId);
-          if (result.data.token) {
-            localStorage.setItem('wellfitUserToken', result.data.token);
-          }
+          // localStorage.setItem('wellfitUserId', result.data.userId); // Removed per new requirements
+          // if (result.data.token) {
+            // localStorage.setItem('wellfitUserToken', result.data.token); // Removed per new requirements
+          // }
+          console.log('// JULES: Login successful. User ID:', result.data.userId, 'Token:', result.data.token);
+          console.log('// JULES: NOTE: Token and userId are not stored in localStorage anymore.');
+          console.log('// JULES: Full auth state management will be handled in a later step.');
           setError('');
+          // TODO: Navigate to a page that doesn't require auth, or handle auth state globally.
+          // For now, keeping navigation to /demographics, but it will likely fail without auth context.
           navigate('/demographics');
         } else {
           throw new Error(result.error || 'Login failed. Please check your phone number and password.');
