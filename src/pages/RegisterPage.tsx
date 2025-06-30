@@ -11,6 +11,7 @@ import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { AsYouType, isValidPhoneNumber } from 'libphonenumber-js';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { Link } from 'react-router-dom';
 import ExplicitCaptcha from '../components/ExplicitCaptcha';
 
 
@@ -471,6 +472,12 @@ const RegisterPage: React.FC = () => {
           )}
         </button>
       </form>
+      {/* Admin bypass link */}
+      <div className="mt-6 text-center text-sm">
+        <Link to="/admin" className="text-blue-500 hover:underline">
+          Admin Login (bypass OTP)
+        </Link>
+      </div>
     </div>
   );
 };
