@@ -36,8 +36,8 @@
 
     <!-- hCaptcha explicit render setup -->
     <script>
-      // This hook will be overridden in React to render the captcha
-      window.hcaptchaOnLoad = () => {};
+      // Define a no-op; React will override with the real handler
+      window.hcaptchaOnLoad = window.hcaptchaOnLoad || function() {};
     </script>
     <script
       src="https://js.hcaptcha.com/1/api.js?onload=hcaptchaOnLoad&render=explicit"
