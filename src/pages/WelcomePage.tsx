@@ -3,16 +3,19 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Card from '../components/ui/Card';
 import PageLayout from '../components/ui/PageLayout';
+import { useAuth } from '../contexts/AuthContext'; // Import useAuth
+import React from 'react';
 
 const WelcomePage: React.FC = () => {
   const navigate = useNavigate();
+  const { session, isLoading } = useAuth(); // Use AuthContext
 
   // Effect for redirecting authenticated users
   useEffect(() => {
-    if (localStorage.getItem('wellfitUserId')) {
+    if (!isLoading && session) {
       navigate('/dashboard', { replace: true });
     }
-  }, [navigate]);
+  }, [session, isLoading, navigate]);
 
   return (
     <PageLayout>

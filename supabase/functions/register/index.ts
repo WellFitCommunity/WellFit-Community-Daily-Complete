@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.183.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 interface RegisterBody {
   phone: string;
@@ -85,70 +86,94 @@ serve(async (req: Request) => {
     }
 
     // ✅ Secure environment var loading
-    const URL = Deno.env.get("SB_URL");
-    const KEY = Deno.env.get("SB_SERVICE_ROLE");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? Deno.env.get("SB_URL");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SB_SERVICE_ROLE");
 
-    // ✅ Safety tip: don't log keys, just confirm presence
-    console.log("✅ SB_URL loaded:", !!URL);
-    console.log("✅ SB_SERVICE_ROLE loaded:", !!KEY);
+    console.log("✅ SUPABASE_URL loaded:", !!supabaseUrl);
+    console.log("✅ SUPABASE_SERVICE_ROLE_KEY loaded:", !!serviceRoleKey);
 
-    if (!URL || !KEY) {
-      throw new Error("Missing SB_URL or SB_SERVICE_ROLE secret");
+    if (!supabaseUrl || !serviceRoleKey) {
+      throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY secret");
     }
 
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+
+    // Check if phone already exists in auth.users to prevent conflicts if possible
+    // Supabase admin SDK does not have a direct "getUserByPhone".
+    // For now, we rely on Supabase's internal unique constraints on phone in auth.users.
+    // If createUser fails due to phone conflict, it will be caught.
+
+    // We still need to hash password for storage in profiles if we keep it there.
+    // However, Supabase Auth will handle its own password storage.
+    // If profiles.password_hash is only for this custom flow, and we switch to Supabase Auth,
+    // we might not need it anymore, or keep it as a fallback (though that complicates things).
+    // For now, let's keep it, as the login function might still use it if Supabase Auth fails.
     const password_hash = await hashPassword(body.password);
+    const profile_id = crypto.randomUUID(); // Generate UUID for profile and auth user
 
-    // 🔍 Check uniqueness
-    const check = await fetch(
-      `${URL}/rest/v1/profiles?phone=eq.${encodeURIComponent(body.phone)}`,
-      {
-        headers: {
-          apikey: KEY,
-          Authorization: `Bearer ${KEY}`,
-        },
+    // ➕ Create Supabase Auth user first
+    const { data: authUserResponse, error: authError } = await supabaseAdmin.auth.admin.createUser({
+      id: profile_id, // Assign the generated UUID to auth.users.id
+      phone: body.phone,
+      password: body.password, // Plain password for Supabase Auth
+      phone_confirm: true,    // Auto-confirm phone in trusted server environment
+      email: body.email || undefined, // Pass email if provided
+      email_confirm: (body.email && body.email_verified !== undefined) ? body.email_verified : (body.email ? true : undefined), // Auto-confirm email if provided
+      user_metadata: {
+        first_name: body.first_name,
+        last_name: body.last_name,
+        // DO NOT store consent directly in user_metadata if it's sensitive or for legal tracking.
+        // Consent should be in a dedicated table or your profiles table.
       }
-    );
-    if (!check.ok) {
-      throw new Error(`Lookup failed: ${await check.text()}`);
-    }
-    if ((await check.json()).length > 0) {
-      return new Response(
-        JSON.stringify({ error: "Phone already registered." }),
-        { status: 409, headers }
-      );
+    });
+
+    if (authError) {
+      console.error("❌ Auth user creation error:", authError);
+      // Check for specific error types, e.g., user already exists
+      if (authError.message.includes("User already registered") || authError.message.includes("phone already exists")) {
+        return new Response(
+          JSON.stringify({ error: "Phone number is already registered." }),
+          { status: 409, headers }
+        );
+      }
+      throw new Error(`Failed to create authentication user: ${authError.message}`);
     }
 
-    // ➕ Insert into DB
-    const insertRes = await fetch(`${URL}/rest/v1/profiles`, {
-      method: "POST",
-      headers: {
-        apikey: KEY,
-        Authorization: `Bearer ${KEY}`,
-        "Content-Type": "application/json",
-        Prefer: "return=representation",
-      },
-      body: JSON.stringify({
+    console.log("✅ Auth user created:", authUserResponse.user.id);
+
+    // ➕ Insert into public.profiles table, linking to the auth user via id
+    const { data: profileData, error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .insert({
+        id: authUserResponse.user.id, // Use the ID from the created auth user
         phone: body.phone,
-        password_hash,
+        password_hash: password_hash, // Still storing this for now
         first_name: body.first_name,
         last_name: body.last_name,
         email: body.email ?? null,
-        consent: Boolean(body.consent),
-        phone_verified: false,
-        email_verified: false,
+        consent: Boolean(body.consent), // Ensure consent is stored in profiles
+        phone_verified: true, // Since phone_confirm was true for auth user
+        email_verified: authUserResponse.user.email_confirmed_at ? true : false,
         created_at: new Date().toISOString(),
-      }),
-    });
+      })
+      .select()
+      .single();
 
-    const inserted = await insertRes.json();
-
-    if (!insertRes.ok) {
-      console.error("❌ Insert error:", inserted);
-      throw new Error(`Insert failed: ${JSON.stringify(inserted)}`);
+    if (profileError) {
+      console.error("❌ Profile creation error:", profileError);
+      // Attempt to delete the auth user if profile creation fails to maintain consistency
+      console.warn(`Attempting to delete orphaned auth user: ${authUserResponse.user.id}`);
+      const { error: deleteAuthUserError } = await supabaseAdmin.auth.admin.deleteUser(authUserResponse.user.id);
+      if (deleteAuthUserError) {
+        console.error("❌ Failed to delete orphaned auth user:", deleteAuthUserError);
+      }
+      throw new Error(`Insert into profiles failed: ${profileError.message}`);
     }
 
-    const user_id = inserted[0]?.id;
-    return new Response(JSON.stringify({ success: true, user_id }), {
+    console.log("✅ Profile created/linked:", profileData.id);
+
+    // Return the auth user_id (which is now also profile_id)
+    return new Response(JSON.stringify({ success: true, user_id: authUserResponse.user.id }), {
       status: 201,
       headers,
     });
