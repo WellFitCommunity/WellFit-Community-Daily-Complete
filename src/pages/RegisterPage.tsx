@@ -1,5 +1,5 @@
 // src/pages/RegisterPage.tsx
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
   useForm,
   SubmitHandler,
@@ -12,8 +12,8 @@ import { AsYouType, isValidPhoneNumber } from 'libphonenumber-js';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { Link } from 'react-router-dom';
-import ExplicitCaptcha from '../components/ExplicitCaptcha';
-
+import { registerUser, RegisterPayload } from '../services/auth';
+import ExplicitCaptcha from '../components/ExplicitCaptcha'
 
 interface FormValues {
   firstName:      string;
@@ -27,14 +27,21 @@ interface FormValues {
 }
 
 const HCAPTCHA_SITE_KEY = process.env.REACT_APP_HCAPTCHA_SITE_KEY!;
-let API_ENDPOINT = process.env.REACT_APP_API_ENDPOINT;
 
-if (!API_ENDPOINT) {
+// Guarantee a string for fetch() and warn if the var is missing
+const API_ENDPOINT: string =
+  process.env.REACT_APP_API_ENDPOINT ??
+  'https://xkybsjnvuohpqpbkikyn.supabase.co/functions/v1/register';
+
+if (!process.env.REACT_APP_API_ENDPOINT) {
   console.warn(
-    'REACT_APP_API_ENDPOINT is not set. Using default fallback. This is not recommended for production.'
+    '⚠️ REACT_APP_API_ENDPOINT not set—using fallback. ' +
+    'Please define it in your .env and in Vercel settings!'
   );
-  API_ENDPOINT = 'https://xkybsjnvuohpqpbkikyn.functions.supabase.co/v1/register';
 }
+
+// …rest of your RegisterPage implementation…
+
 
 const schema = yup
   .object()
@@ -91,15 +98,15 @@ const RegisterPage: React.FC = () => {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isCaptchaConfigured, setIsCaptchaConfigured] = useState(true);
 
-  if (!HCAPTCHA_SITE_KEY && isCaptchaConfigured) {
-    console.error('FATAL: REACT_APP_HCAPTCHA_SITE_KEY is not defined. Captcha will not load.');
-    // This component-level state update will trigger a re-render to show the error.
-    // Note: Direct state update during render like this is generally discouraged,
-    // but for a one-time setup check that prevents core functionality, it's a pragmatic approach.
-    // A useEffect with an empty dependency array would be cleaner if this caused issues.
-    // However, since HCAPTCHA_SITE_KEY is a const, this will only run once.
+  useEffect(() => {
+  if (!process.env.REACT_APP_HCAPTCHA_SITE_KEY) {
+    console.error(
+      'FATAL: Missing REACT_APP_HCAPTCHA_SITE_KEY — captcha disabled.'
+    );
     setIsCaptchaConfigured(false);
   }
+}, []);
+
 
   const {
     register,
