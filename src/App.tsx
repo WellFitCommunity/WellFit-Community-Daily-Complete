@@ -30,6 +30,7 @@ import NotFoundPage from './components/NotFoundPage';
 
 import { DemoModeProvider } from './contexts/DemoModeContext';
 import { SessionTimeoutProvider } from './contexts/SessionTimeoutContext';
+import { AuthProvider } from './contexts/AuthContext'; // Import AuthProvider
 import DemoBanner from './components/layout/DemoBanner';
 
 
@@ -57,108 +58,110 @@ const App: React.FC = () => {
   const showHeader = !isPublicRoute(location.pathname);
 
   return (
-    <DemoModeProvider>
-      <BrandingContext.Provider value={branding}>
-        <SessionTimeoutProvider>
-          <DemoBanner />
-          {showHeader && <Header />}
-          <Routes>
-            {/* PUBLIC ROUTES */}
-            <Route path="/" element={<WelcomePage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/verify" element={<VerifyCodePage />} />
-            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-            <Route path="/terms" element={<TermsOfService />} />
+    <AuthProvider> {/* Wrap with AuthProvider */}
+      <DemoModeProvider>
+        <BrandingContext.Provider value={branding}>
+          <SessionTimeoutProvider>
+            <DemoBanner />
+            {showHeader && <Header />}
+            <Routes>
+              {/* PUBLIC ROUTES */}
+              <Route path="/" element={<WelcomePage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/verify" element={<VerifyCodePage />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/terms" element={<TermsOfService />} />
 
-            {/* PROTECTED ROUTES */}
-            <Route
-              path="/dashboard"
-              element={
-                <RequireAuth>
-                  <Dashboard />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/check-in"
-              element={
-                <RequireAuth>
-                  <CheckInTracker />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/word-find"
-              element={
-                <RequireAuth>
-                  <WordFind />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/meals/:id"
-              element={
-                <RequireAuth>
-                  <MealDetailPage />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/logout"
-              element={
-                <RequireAuth>
-                  <LogoutPage />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/consent-photo"
-              element={
-                <RequireAuth>
-                  <ConsentPhotoPage />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/consent-privacy"
-              element={
-                <RequireAuth>
-                  <ConsentPrivacyPage />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/self-reporting"
-              element={
-                <RequireAuth>
-                  <SelfReportingPage />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/doctors-view"
-              element={
-                <RequireAuth>
-                  <DoctorsView />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/admin-profile-editor"
-              element={
-                <RequireAuth>
-                  <AdminProfileEditor />
-                </RequireAuth>
-              }
-            />
+              {/* PROTECTED ROUTES */}
+              <Route
+                path="/dashboard"
+                element={
+                  <RequireAuth>
+                    <Dashboard />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/check-in"
+                element={
+                  <RequireAuth>
+                    <CheckInTracker />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/word-find"
+                element={
+                  <RequireAuth>
+                    <WordFind />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/meals/:id"
+                element={
+                  <RequireAuth>
+                    <MealDetailPage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/logout"
+                element={
+                  <RequireAuth>
+                    <LogoutPage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/consent-photo"
+                element={
+                  <RequireAuth>
+                    <ConsentPhotoPage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/consent-privacy"
+                element={
+                  <RequireAuth>
+                    <ConsentPrivacyPage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/self-reporting"
+                element={
+                  <RequireAuth>
+                    <SelfReportingPage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/doctors-view"
+                element={
+                  <RequireAuth>
+                    <DoctorsView />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/admin-profile-editor"
+                element={
+                  <RequireAuth> {/* This might need admin-specific auth */}
+                    <AdminProfileEditor />
+                  </RequireAuth>
+                }
+              />
 
-            {/* WILDCARD */}
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-          <Footer />
-        </SessionTimeoutProvider>
-      </BrandingContext.Provider>
-    </DemoModeProvider>
+              {/* WILDCARD */}
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+            <Footer />
+          </SessionTimeoutProvider>
+        </BrandingContext.Provider>
+      </DemoModeProvider>
+    </AuthProvider>
   );
 };
 
