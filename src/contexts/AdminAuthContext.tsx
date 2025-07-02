@@ -8,7 +8,7 @@ interface AdminAuthContextType {
   adminRole: AdminRole | null;
   isLoading: boolean;
   error: string | null;
-  verifyPinAndLogin: (pin: string, role: AdminRole) => Promise<boolean>;
+  verifyPinAndLogin: (pin: string, role: AdminRole, userId: string) => Promise<boolean>; // Added userId
   logoutAdmin: () => void;
 }
 
@@ -55,12 +55,13 @@ export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children 
     }
   };
 
-  const verifyPinAndLogin = useCallback(async (pin: string, role: AdminRole): Promise<boolean> => {
+  const verifyPinAndLogin = useCallback(async (pin: string, role: AdminRole, userId: string): Promise<boolean> => {
     setIsLoading(true);
     setError(null);
     try {
+      // Ensure userId is passed to the serverless function for logging purposes
       const { data, error: functionError } = await supabase.functions.invoke('verify-admin-pin', {
-        body: { pin, role }, // Pass role, though current function might not use it
+        body: { pin, role, userId }, // Pass userId along with pin and role
       });
 
       if (functionError) {
