@@ -7,13 +7,14 @@ import * as XLSX from 'xlsx';
 // Define the shape of your API key record
 interface ApiKey {
   id: string;
-  user_id: string | null;
+  user_id: string | null; // This should match 'created_by' from the function if that's the source
   org_name: string;
-  api_key: string;
+  api_key_hash: string; // Changed from api_key to api_key_hash
   active: boolean;
   usage_count: number;
   last_used: string | null;
   created_at: string;
+  created_by: string | null; // Added to match the function's potential insertion
 }
 
 const ApiKeyManager: React.FC = () => {
@@ -28,10 +29,10 @@ const ApiKeyManager: React.FC = () => {
     if (showLoading) setLoading(true);
     setError(null);
     try {
-      // Remove generic on .from() to avoid TSX conflict
+      // Select api_key_hash instead of api_key. Also include created_by
       const { data, error: supabaseError } = await supabase
         .from('api_keys')
-        .select('*')
+        .select('id, org_name, api_key_hash, active, usage_count, last_used, created_at, created_by')
         .order('created_at', { ascending: false });
 
       if (supabaseError) {
@@ -63,26 +64,39 @@ const ApiKeyManager: React.FC = () => {
       return;
     }
 
-    const sanitized = newOrgName.trim().toLowerCase().replace(/\s+/g, '-');
-    const apiKey = `${sanitized}-${crypto.randomUUID()}`;
-
     setLoading(true);
     try {
-      const { error: insertError } = await supabase
-        .from('api_keys')
-        .insert([{ org_name: newOrgName, api_key: apiKey, active: true }]);
+      // Call the Supabase Edge Function to generate the key
+      const { data: functionData, error: functionError } = await supabase.functions.invoke(
+        'generate-api-key',
+        { body: { org_name: newOrgName.trim() } }
+      );
 
-      if (insertError) {
-        setFeedbackMessage(`Error generating API key: ${insertError.message}`);
+      if (functionError) {
+        // Log the detailed error for admin/dev debugging
+        console.error('Supabase function error:', functionError.message);
+        let displayError = `Error generating API key: ${functionError.message}`;
+        try {
+            // Try to parse if context has more info (e.g. from the function's JSON response)
+            const contextError = JSON.parse(functionError.context || '{}');
+            if (contextError.error) {
+                displayError = `Error generating API key: ${contextError.error}`;
+            }
+        } catch (_) { /* ignore parsing error */ }
+        setFeedbackMessage(displayError);
+      } else if (functionData && functionData.api_key) {
+        setFeedbackMessage('API Key generated successfully. Copy it now as it will not be shown again.');
+        setGeneratedKey(functionData.api_key);
+        setNewOrgName(''); // Clear the input field
+        await fetchApiKeys(false); // Refresh the list of API keys
       } else {
-        setFeedbackMessage('API Key generated. Copy it now; it won’t be shown again.');
-        setGeneratedKey(apiKey);
-        setNewOrgName('');
-        await fetchApiKeys(false);
+        // Handle cases where the function might not return data as expected
+        setFeedbackMessage('API Key generation did not return a key. Please check function logs.');
+        console.error('Unexpected response from generate-api-key function:', functionData);
       }
-    } catch (e) {
-      console.error(e);
-      setFeedbackMessage('Unexpected error generating key.');
+    } catch (e: any) {
+      console.error('Client-side error calling generate-api-key function:', e);
+      setFeedbackMessage(`Unexpected error generating key: ${e.message}`);
     } finally {
       setLoading(false);
     }
@@ -144,8 +158,13 @@ const ApiKeyManager: React.FC = () => {
     }
   };
 
-  const maskApiKey = (key: string) =>
-    key.length <= 8 ? key : `${key.slice(0, 4)}...${key.slice(-4)}`;
+  // This function is no longer for masking a plaintext key, but for displaying the hash or a placeholder
+  const displayableApiKeyRepresentation = (hash: string | undefined) => {
+    if (!hash) return 'N/A (No Hash)';
+    // Example: Show first 8 characters of the hash as an identifier, or a static placeholder
+    // return `${hash.substring(0, 8)}... (Hashed)`;
+    return '******** (Hashed Key)'; // Static placeholder
+  };
 
   const formatDate = (str: string | null) => (str ? new Date(str).toLocaleString() : 'N/A');
 
@@ -220,11 +239,14 @@ const ApiKeyManager: React.FC = () => {
               {apiKeys.map(key => (
                 <tr key={key.id} className={loading ? 'opacity-50' : ''}>
                   <td className="border px-4 py-2">{key.org_name}</td>
-                  <td className="border px-4 py-2 font-mono">{maskApiKey(key.api_key)}</td>
+                  {/* Display a representation of the hashed key, not the hash itself directly for users */}
+                  <td className="border px-4 py-2 font-mono">{displayableApiKeyRepresentation(key.api_key_hash)}</td>
                   <td className="border px-4 py-2">{key.active ? 'Active' : 'Inactive'}</td>
                   <td className="border px-4 py-2">{key.usage_count}</td>
                   <td className="border px-4 py-2">{formatDate(key.last_used)}</td>
                   <td className="border px-4 py-2">{formatDate(key.created_at)}</td>
+                  {/* Optionally display created_by if available and useful for admins */}
+                  {/* <td className="border px-4 py-2">{key.created_by || 'N/A'}</td> */}
                   <td className="border px-4 py-2 space-x-2">
                     <button
                       onClick={() => handleToggleKeyStatus(key.id, key.active)}

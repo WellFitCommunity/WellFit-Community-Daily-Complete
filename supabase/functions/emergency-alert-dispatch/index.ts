@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL") || "admin@wellfitcommunity.org";
-const MAILERSEND_FUNCTION_NAME = "mailersend-email"; // Name of the email sending function
+const SEND_EMAIL_FUNCTION_NAME = "send_email"; // Consolidated email sending function
 
 interface CheckinRecord {
   id: string;
@@ -109,11 +109,11 @@ serve(async (req) => {
       Please check on them immediately.
     `;
 
-    const emailPayload = {
-      to: '', // Will be set per recipient
+    // Payload for the 'send_email' function
+    const baseEmailPayload = {
       subject: emailSubject,
-      html_content: emailBody.replace(/\n/g, '<br>'), // Basic HTML version
-      text_content: emailBody
+      html: emailBody.replace(/\n/g, '<br>'), // 'send_email' expects 'html'
+      text: emailBody  // 'send_email' expects 'text'
     };
 
     let emailSentToAdmin = false;
@@ -122,18 +122,18 @@ serve(async (req) => {
     // 3. Send email to Admin
     try {
       console.log(`Attempting to send email to admin: ${ADMIN_EMAIL}`);
-      const { error: adminEmailError } = await supabaseClient.functions.invoke(MAILERSEND_FUNCTION_NAME, {
-        body: { ...emailPayload, to: ADMIN_EMAIL },
+      const { error: adminEmailError } = await supabaseClient.functions.invoke(SEND_EMAIL_FUNCTION_NAME, {
+        body: { ...baseEmailPayload, to: ADMIN_EMAIL }, // Pass 'to', 'subject', 'html', 'text'
       });
       if (adminEmailError) {
-        console.error(`Error invoking ${MAILERSEND_FUNCTION_NAME} for admin:`, adminEmailError);
+        console.error(`Error invoking ${SEND_EMAIL_FUNCTION_NAME} for admin:`, adminEmailError.message);
         // Continue, but log this failure
       } else {
         emailSentToAdmin = true;
         console.log(`Email successfully invoked for admin: ${ADMIN_EMAIL}`);
       }
     } catch (e) {
-        console.error(`Exception invoking ${MAILERSEND_FUNCTION_NAME} for admin:`, e);
+        console.error(`Exception invoking ${SEND_EMAIL_FUNCTION_NAME} for admin:`, e.message);
     }
 
 
@@ -141,18 +141,18 @@ serve(async (req) => {
     if (caregiverEmail) {
       try {
         console.log(`Attempting to send email to caregiver: ${caregiverEmail}`);
-        const { error: caregiverEmailError } = await supabaseClient.functions.invoke(MAILERSEND_FUNCTION_NAME, {
-          body: { ...emailPayload, to: caregiverEmail },
+        const { error: caregiverEmailError } = await supabaseClient.functions.invoke(SEND_EMAIL_FUNCTION_NAME, {
+          body: { ...baseEmailPayload, to: caregiverEmail }, // Pass 'to', 'subject', 'html', 'text'
         });
         if (caregiverEmailError) {
-          console.error(`Error invoking ${MAILERSEND_FUNCTION_NAME} for caregiver ${caregiverEmail}:`, caregiverEmailError);
+          console.error(`Error invoking ${SEND_EMAIL_FUNCTION_NAME} for caregiver ${caregiverEmail}:`, caregiverEmailError.message);
           // Continue, but log this failure
         } else {
           emailSentToCaregiver = true;
           console.log(`Email successfully invoked for caregiver: ${caregiverEmail}`);
         }
       } catch (e) {
-        console.error(`Exception invoking ${MAILERSEND_FUNCTION_NAME} for caregiver:`, e);
+        console.error(`Exception invoking ${SEND_EMAIL_FUNCTION_NAME} for caregiver:`, e.message);
       }
     } else {
       console.log(`No caregiver email found for user ${user_id}.`);
