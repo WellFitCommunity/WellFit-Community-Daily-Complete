@@ -11,6 +11,10 @@
 
 ALTER TABLE public.admin_notes ENABLE ROW LEVEL SECURITY;
 
+-- Policy: Allow admins and super_admins to perform all actions on admin_notes
+-- This policy depends on the public.check_user_has_role(TEXT[]) function being defined
+-- in a separate, earlier migration, AFTER roles and user_roles tables are created.
+=======
 -- Helper function to check if the current user has specified roles.
 -- This function should be created once and reused.
 -- Ensure it's created in a separate, earlier migration if it doesn't exist.
