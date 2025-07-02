@@ -1,5 +1,5 @@
 // src/components/DashMealOfTheDay.tsx
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { allRecipes } from '../../data/allRecipes';
@@ -26,8 +26,15 @@ const DashMealOfTheDay: React.FC = () => {
           .from('meals')
           .select('id, name, image_url, preview, created_at')
           .order('created_at', { ascending: true });
-        if (data && data.length) mealData = data;
-      } catch {}
+        if (error) {
+          console.error('Error loading meals from Supabase:', error);
+        } else if (data && data.length) {
+          mealData = data;
+        }
+      } catch (err: any) {
+        console.error('Unexpected error fetching meals:', err);
+      }
+
       // Fallback to static if no data
       if (!mealData.length) mealData = allRecipes;
       if (!canceled && mealData.length) {
@@ -36,7 +43,9 @@ const DashMealOfTheDay: React.FC = () => {
         setMeal(mealData[idx]);
       }
     })();
-    return () => { canceled = true; };
+    return () => {
+      canceled = true;
+    };
   }, []);
 
   const goToDetail = () => meal && navigate(`/meals/${meal.id}`);
@@ -111,3 +120,4 @@ const DashMealOfTheDay: React.FC = () => {
 };
 
 export default DashMealOfTheDay;
+

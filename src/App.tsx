@@ -1,162 +1,82 @@
 import React, { useEffect, useState } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 
+import { AuthProvider } from './contexts/AuthContext';
+import { SessionTimeoutProvider } from './contexts/SessionTimeoutContext';
+import { DemoModeProvider } from './contexts/DemoModeContext';
 import { BrandingConfig, getCurrentBranding } from './branding.config';
 import { BrandingContext } from './BrandingContext';
 
+import DemoBanner from './components/layout/DemoBanner';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 
+import RequireAuth from './components/auth/RequireAuth';
+
+// Default import for WelcomePage
 import WelcomePage from './pages/WelcomePage';
 import RegisterPage from './pages/RegisterPage';
 import VerifyCodePage from './pages/VerifyCodePage';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
+import NotFoundPage from './components/NotFoundPage';
 
 import Dashboard from './pages/DashboardPage';
 import CheckInTracker from './pages/CheckInPage';
 import WordFind from './pages/WordFindPage';
 import MealDetailPage from './pages/MealDetailPage';
 import LogoutPage from './pages/LogoutPage';
-
-import AdminProfileEditor from './components/AdminProfileEditor';
 import ConsentPhotoPage from './pages/ConsentPhotoPage';
 import ConsentPrivacyPage from './pages/ConsentPrivacyPage';
-import DoctorsView from './pages/DoctorsViewPage';
-import RequireAuth from './components/auth/RequireAuth';
 import SelfReportingPage from './pages/SelfReportingPage';
+import DoctorsView from './pages/DoctorsViewPage';
+import AdminProfileEditor from './components/AdminProfileEditor';
 
-import PrivacyPolicy from './pages/PrivacyPolicy';
-import TermsOfService from './pages/TermsOfService';
-import NotFoundPage from './components/NotFoundPage';
-
-import { DemoModeProvider } from './contexts/DemoModeContext';
-import { SessionTimeoutProvider } from './contexts/SessionTimeoutContext';
-import { AuthProvider } from './contexts/AuthContext'; // Import AuthProvider
-import DemoBanner from './components/layout/DemoBanner';
-
-
-// Public routes for which you do NOT want to show the header
-const publicRoutes = [
-  '/',
-  '/register',
-  '/verify',
-  '/privacy-policy',
-  '/terms',
-];
-
-function isPublicRoute(pathname: string): boolean {
-  return publicRoutes.includes(pathname);
-}
+const PUBLIC_ROUTES = ['/', '/register', '/verify', '/privacy-policy', '/terms'];
 
 const App: React.FC = () => {
   const [branding, setBranding] = useState<BrandingConfig>(getCurrentBranding());
   const location = useLocation();
 
+  // Update branding on route change
   useEffect(() => {
     setBranding(getCurrentBranding());
-  }, []);
+  }, [location.pathname]);
 
-  const showHeader = !isPublicRoute(location.pathname);
+  const isPublic = PUBLIC_ROUTES.includes(location.pathname);
 
   return (
-    <AuthProvider> {/* Wrap with AuthProvider */}
+    <AuthProvider>
       <DemoModeProvider>
         <BrandingContext.Provider value={branding}>
           <SessionTimeoutProvider>
             <DemoBanner />
-            {showHeader && <Header />}
+            {!isPublic && <Header />}
+
             <Routes>
-              {/* PUBLIC ROUTES */}
+              {/* Public Routes */}
               <Route path="/" element={<WelcomePage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/verify" element={<VerifyCodePage />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/terms" element={<TermsOfService />} />
 
-              {/* PROTECTED ROUTES */}
-              <Route
-                path="/dashboard"
-                element={
-                  <RequireAuth>
-                    <Dashboard />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/check-in"
-                element={
-                  <RequireAuth>
-                    <CheckInTracker />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/word-find"
-                element={
-                  <RequireAuth>
-                    <WordFind />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/meals/:id"
-                element={
-                  <RequireAuth>
-                    <MealDetailPage />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/logout"
-                element={
-                  <RequireAuth>
-                    <LogoutPage />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/consent-photo"
-                element={
-                  <RequireAuth>
-                    <ConsentPhotoPage />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/consent-privacy"
-                element={
-                  <RequireAuth>
-                    <ConsentPrivacyPage />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/self-reporting"
-                element={
-                  <RequireAuth>
-                    <SelfReportingPage />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/doctors-view"
-                element={
-                  <RequireAuth>
-                    <DoctorsView />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/admin-profile-editor"
-                element={
-                  <RequireAuth> {/* This might need admin-specific auth */}
-                    <AdminProfileEditor />
-                  </RequireAuth>
-                }
-              />
+              {/* Protected Routes */}
+              <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
+              <Route path="/check-in" element={<RequireAuth><CheckInTracker /></RequireAuth>} />
+              <Route path="/word-find" element={<RequireAuth><WordFind /></RequireAuth>} />
+              <Route path="/meals/:id" element={<RequireAuth><MealDetailPage /></RequireAuth>} />
+              <Route path="/logout" element={<RequireAuth><LogoutPage /></RequireAuth>} />
+              <Route path="/consent-photo" element={<RequireAuth><ConsentPhotoPage /></RequireAuth>} />
+              <Route path="/consent-privacy" element={<RequireAuth><ConsentPrivacyPage /></RequireAuth>} />
+              <Route path="/self-reporting" element={<RequireAuth><SelfReportingPage /></RequireAuth>} />
+              <Route path="/doctors-view" element={<RequireAuth><DoctorsView /></RequireAuth>} />
+              <Route path="/admin-profile-editor" element={<RequireAuth><AdminProfileEditor /></RequireAuth>} />
 
-              {/* WILDCARD */}
+              {/* Fallback */}
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
+
             <Footer />
           </SessionTimeoutProvider>
         </BrandingContext.Provider>

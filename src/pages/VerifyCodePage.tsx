@@ -25,7 +25,7 @@ const VerifyCodePage: React.FC = () => {
 
     try {
       // Use Supabase OTP verification
-      const { data, error: otpError } = await supabase.auth.verifyOtp({
+      const { error: otpError } = await supabase.auth.verifyOtp({
         phone: phone,
         token: code,
         type: 'sms',
