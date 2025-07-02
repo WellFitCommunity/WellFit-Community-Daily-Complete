@@ -16,6 +16,9 @@ type LoginBody = z.infer<typeof loginSchema>;
 // The corresponding registration function (`../register/index.ts`)
 // creates users in Supabase Auth using their phone and password.
 
+const MAX_REQUESTS = 5; // Max attempts
+const TIME_WINDOW_MINUTES = 15; // Time window in minutes
+
 serve(async (req: Request) => {
   const headers = new Headers({
     "Content-Type": "application/json",
@@ -36,6 +39,52 @@ serve(async (req: Request) => {
   }
 
   try {
+    const supabaseUrlForRateLimit = Deno.env.get("SUPABASE_URL") ?? Deno.env.get("SB_URL");
+    const serviceRoleKeyForRateLimit = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SB_SERVICE_ROLE");
+
+    if (!supabaseUrlForRateLimit || !serviceRoleKeyForRateLimit) {
+      console.error("CRITICAL: Missing Supabase URL or Service Role Key for rate limiting in login function.");
+      return new Response(JSON.stringify({ error: "Server configuration error for rate limiting." }), { status: 500, headers });
+    }
+    const supabaseAdminForRateLimit = createClient(supabaseUrlForRateLimit, serviceRoleKeyForRateLimit);
+
+    const clientIp = req.headers.get("x-forwarded-for")?.split(',')[0].trim() ||
+                     req.headers.get("cf-connecting-ip") || // Cloudflare
+                     req.headers.get("x-real-ip") || // Nginx
+                     "unknown"; // Fallback
+
+    if (clientIp === "unknown") {
+      console.warn("Could not determine client IP for rate limiting in login.");
+      // Decide if you want to block or allow if IP is unknown. For now, allow but log.
+    } else {
+      // Log login attempt
+      const { error: logError } = await supabaseAdminForRateLimit
+        .from('rate_limit_logins')
+        .insert({ ip_address: clientIp });
+
+      if (logError) {
+        console.error("Error logging login attempt for rate limiting:", logError);
+        // Potentially allow request if logging fails
+      }
+
+      // Check rate limit
+      const timeWindowStart = new Date(Date.now() - TIME_WINDOW_MINUTES * 60 * 1000).toISOString();
+      const { data: attempts, error: countError } = await supabaseAdminForRateLimit
+        .from('rate_limit_logins')
+        .select('attempted_at', { count: 'exact' })
+        .eq('ip_address', clientIp)
+        .gte('attempted_at', timeWindowStart);
+
+      if (countError) {
+        console.error("Error counting login attempts for rate limiting:", countError);
+        return new Response(JSON.stringify({ error: "Error checking rate limit. Please try again later." }), { status: 500, headers });
+      }
+
+      if (attempts && attempts.length >= MAX_REQUESTS) {
+        return new Response(JSON.stringify({ error: "Too many login attempts. Please try again later." }), { status: 429, headers });
+      }
+    }
+
     const rawBody = await req.json();
     const validationResult = loginSchema.safeParse(rawBody);
 
