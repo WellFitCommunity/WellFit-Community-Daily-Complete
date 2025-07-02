@@ -174,16 +174,15 @@ const RegisterPage: React.FC = () => {
 
       // Assuming successful response includes user_id, even if it's not directly in this component's immediate use case after navigation
       // If it's not guaranteed, this parsing should also be in a try-catch
-      const result = await res.json();
+      // const result = await res.json(); // Not strictly needed if not using user_id client-side immediately
 
-      toast.success('Registration successful!');
-      navigate('/check-your-email', {
-        state: {
-          userId: result.user_id,
-          email:  data.email
-        },
-        replace: true
-      });
+      toast.success('Registration Successful! Please log in.');
+      // Redirect to login page or dashboard if auto-login is implemented after registration
+      // For now, redirecting to login page is a common pattern.
+      // If Supabase auth automatically logs in the user upon signUp, then redirect to dashboard.
+      // Based on current AuthContext, Supabase signUp does create a session.
+      navigate('/dashboard', { replace: true });
+
     } catch (err) {
       const error =
         err instanceof Error
