@@ -27,7 +27,29 @@ export const requestNotificationPermission = async (): Promise<string | null> =>
     const token = await getToken(messaging, { vapidKey });
     if (token) {
       console.log('FCM Token:', token);
-      // TODO: Save token to Supabase or backend if desired
+      // Attempt to save the token to the backend
+      try {
+        // Assuming supabase client is available, e.g., imported or via context
+        // This requires the user to be authenticated for supabase.auth.getUser() to work
+        // and for the RLS policies on fcm_tokens to allow insert.
+        const { supabase } = await import('../lib/supabaseClient'); // Dynamic import or ensure it's available
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (user) {
+          const { error: saveError } = await supabase.functions.invoke('save-fcm-token', {
+            body: { fcm_token: token, device_info: navigator.userAgent },
+          });
+          if (saveError) {
+            console.error('Failed to save FCM token to backend:', saveError);
+          } else {
+            console.log('FCM token saved to backend successfully.');
+          }
+        } else {
+          console.warn('User not authenticated, cannot save FCM token to backend.');
+        }
+      } catch (e) {
+        console.error('Error during FCM token save process:', e);
+      }
       return token;
     } else {
       console.warn('No FCM token returned.');
@@ -48,7 +70,18 @@ export const listenForMessages = () => {
   if (typeof window !== 'undefined' && messaging) {
     onMessage(messaging, payload => {
       console.log('Message received in foreground:', payload);
-      // TODO: Show a toast, modal, or update UI here if you wish
+      // Basic alert to show foreground message.
+      // Replace with a proper toast notification (e.g., using react-toastify) for better UX.
+      let title = "New Message";
+      let body = "You have a new message.";
+      if (payload.notification) {
+        title = payload.notification.title || title;
+        body = payload.notification.body || body;
+      } else if (payload.data) { // Check data payload if notification is not present
+        title = payload.data.title || title;
+        body = payload.data.body || body;
+      }
+      alert(`${title}\n\n${body}`);
     });
   }
 };

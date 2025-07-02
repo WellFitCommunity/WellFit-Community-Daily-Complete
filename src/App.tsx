@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 
 import { AuthProvider } from './contexts/AuthContext';
+import { AdminAuthProvider } from './contexts/AdminAuthContext'; // Import AdminAuthProvider
 import { SessionTimeoutProvider } from './contexts/SessionTimeoutContext';
 import { DemoModeProvider } from './contexts/DemoModeContext';
 import { BrandingConfig, getCurrentBranding } from './branding.config';
@@ -30,7 +31,11 @@ import ConsentPhotoPage from './pages/ConsentPhotoPage';
 import ConsentPrivacyPage from './pages/ConsentPrivacyPage';
 import SelfReportingPage from './pages/SelfReportingPage';
 import DoctorsView from './pages/DoctorsViewPage';
+
+// Admin components/pages
+import AdminPanel from './components/admin/AdminPanel'; // Import AdminPanel
 import AdminProfileEditor from './components/AdminProfileEditor';
+import RequireAdminAuth from './components/auth/RequireAdminAuth'; // Import RequireAdminAuth
 
 const PUBLIC_ROUTES = ['/', '/register', '/verify', '/privacy-policy', '/terms'];
 
@@ -49,9 +54,10 @@ const App: React.FC = () => {
     <AuthProvider>
       <DemoModeProvider>
         <BrandingContext.Provider value={branding}>
-          <SessionTimeoutProvider>
-            <DemoBanner />
-            {!isPublic && <Header />}
+          <AdminAuthProvider> {/* Wrap with AdminAuthProvider */}
+            <SessionTimeoutProvider>
+              <DemoBanner />
+              {!isPublic && <Header />}
 
             <Routes>
               {/* Public Routes */}
@@ -71,14 +77,37 @@ const App: React.FC = () => {
               <Route path="/consent-privacy" element={<RequireAuth><ConsentPrivacyPage /></RequireAuth>} />
               <Route path="/self-reporting" element={<RequireAuth><SelfReportingPage /></RequireAuth>} />
               <Route path="/doctors-view" element={<RequireAuth><DoctorsView /></RequireAuth>} />
-              <Route path="/admin-profile-editor" element={<RequireAuth><AdminProfileEditor /></RequireAuth>} />
+
+              {/* Admin Routes */}
+              {/* /admin is where an admin would go to enter their PIN via AdminPanel */}
+              <Route
+                path="/admin"
+                element={
+                  <RequireAuth>
+                    {/* AdminPanel now uses AdminAuthContext to show login or content */}
+                    <AdminPanel />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/admin-profile-editor"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth>
+                      <AdminProfileEditor />
+                    </RequireAdminAuth>
+                  </RequireAuth>
+                }
+              />
+              {/* Add other admin routes here, wrapped similarly with RequireAdminAuth */}
 
               {/* Fallback */}
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
 
-            <Footer />
-          </SessionTimeoutProvider>
+              <Footer />
+            </SessionTimeoutProvider>
+          </AdminAuthProvider>
         </BrandingContext.Provider>
       </DemoModeProvider>
     </AuthProvider>
