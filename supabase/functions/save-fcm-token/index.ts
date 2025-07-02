@@ -1,6 +1,7 @@
 // supabase/functions/save-fcm-token/index.ts
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 // Zod schema for save-fcm-token payload
@@ -10,6 +11,12 @@ const saveTokenSchema = z.object({
 });
 
 type SaveTokenPayload = z.infer<typeof saveTokenSchema>;
+
+
+interface SaveTokenPayload {
+  fcm_token: string;
+  device_info?: string; // Optional
+}
 
 async function getAuthenticatedUser(req: Request, supabaseClient: SupabaseClient) {
   const authHeader = req.headers.get('Authorization');
@@ -37,6 +44,7 @@ serve(async (req) => {
   }
 
   try {
+
     const rawBody = await req.json();
     const validationResult = saveTokenSchema.safeParse(rawBody);
 
@@ -49,6 +57,17 @@ serve(async (req) => {
     }
 
     const { fcm_token, device_info } = validationResult.data;
+
+
+    const { fcm_token, device_info } = await req.json() as SaveTokenPayload;
+
+    if (!fcm_token) {
+      return new Response(JSON.stringify({ error: 'Missing fcm_token in request body' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
 
     // Use service role client for database operations
     const serviceRoleClient = createClient(
