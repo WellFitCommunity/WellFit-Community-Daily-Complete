@@ -8,6 +8,7 @@ interface RegisterBody {
   last_name: string;
   email?: string;
   consent?: boolean;
+  hcaptcha_token?: string; // Added hCaptcha token
 }
 
 function toHex(bytes: Uint8Array): string {
@@ -38,6 +39,9 @@ async function hashPassword(password: string) {
   return `${toHex(salt)}:${toHex(hash)}`;
 }
 
+const MAX_REQUESTS = 5;
+const TIME_WINDOW_MINUTES = 15;
+
 serve(async (req: Request) => {
   const headers = new Headers({
     "Content-Type": "application/json",
@@ -58,7 +62,86 @@ serve(async (req: Request) => {
   }
 
   try {
+    const supabaseUrlForRateLimit = Deno.env.get("SUPABASE_URL") ?? Deno.env.get("SB_URL");
+    const serviceRoleKeyForRateLimit = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SB_SERVICE_ROLE");
+
+    if (!supabaseUrlForRateLimit || !serviceRoleKeyForRateLimit) {
+      console.error("CRITICAL: Missing Supabase URL or Service Role Key for rate limiting in register function.");
+      return new Response(JSON.stringify({ error: "Server configuration error for rate limiting." }), { status: 500, headers });
+    }
+    const supabaseAdminForRateLimit = createClient(supabaseUrlForRateLimit, serviceRoleKeyForRateLimit);
+
+    const clientIp = req.headers.get("x-forwarded-for")?.split(',')[0].trim() ||
+                     req.headers.get("cf-connecting-ip") || // Cloudflare
+                     req.headers.get("x-real-ip") || // Nginx
+                     "unknown"; // Fallback
+
+    if (clientIp === "unknown") {
+      console.warn("Could not determine client IP for rate limiting in registration.");
+      // Decide if you want to block or allow if IP is unknown. For now, allow but log.
+    } else {
+      // Log registration attempt
+      const { error: logError } = await supabaseAdminForRateLimit
+        .from('rate_limit_registrations')
+        .insert({ ip_address: clientIp });
+
+      if (logError) {
+        console.error("Error logging registration attempt for rate limiting:", logError);
+        // Potentially allow request if logging fails, or deny if strict rate limiting is required
+      }
+
+      // Check rate limit
+      const timeWindowStart = new Date(Date.now() - TIME_WINDOW_MINUTES * 60 * 1000).toISOString();
+      const { data: attempts, error: countError } = await supabaseAdminForRateLimit
+        .from('rate_limit_registrations')
+        .select('attempted_at', { count: 'exact' })
+        .eq('ip_address', clientIp)
+        .gte('attempted_at', timeWindowStart);
+
+      if (countError) {
+        console.error("Error counting registration attempts for rate limiting:", countError);
+        // Potentially allow request if counting fails, or deny
+        return new Response(JSON.stringify({ error: "Error checking rate limit. Please try again later." }), { status: 500, headers });
+      }
+
+      if (attempts && attempts.length >= MAX_REQUESTS) {
+        return new Response(JSON.stringify({ error: "Too many registration attempts. Please try again later." }), { status: 429, headers });
+      }
+    }
+
     const body: RegisterBody = await req.json();
+
+    // hCaptcha verification
+    const hcaptchaSecret = Deno.env.get("HCAPTCHA_SECRET");
+    if (!hcaptchaSecret) {
+      console.error("HCAPTCHA_SECRET is not set.");
+      return new Response(JSON.stringify({ error: "HCAPTCHA_SECRET is not configured." }), { status: 500, headers });
+    }
+
+    if (!body.hcaptcha_token) {
+      return new Response(JSON.stringify({ error: "hCaptcha token is missing." }), { status: 400, headers });
+    }
+
+    const hcaptchaParams = new URLSearchParams();
+    hcaptchaParams.append("secret", hcaptchaSecret);
+    hcaptchaParams.append("response", body.hcaptcha_token);
+    const remoteIp = req.headers.get("x-forwarded-for") || req.headers.get("cf-connecting-ip"); // Common headers for client IP
+    if (remoteIp) {
+      hcaptchaParams.append("remoteip", remoteIp);
+    }
+
+    const hcaptchaResponse = await fetch("https://api.hcaptcha.com/siteverify", {
+      method: "POST",
+      body: hcaptchaParams,
+    });
+
+    const hcaptchaData = await hcaptchaResponse.json();
+
+    if (!hcaptchaData.success) {
+      console.warn("hCaptcha verification failed:", hcaptchaData);
+      return new Response(JSON.stringify({ error: "hCaptcha verification failed. Please try again." }), { status: 400, headers });
+    }
+    console.log("✅ hCaptcha verification successful.");
 
     for (const field of ["phone", "password", "first_name", "last_name"] as const) {
       const v = body[field];
@@ -107,8 +190,8 @@ serve(async (req: Request) => {
     // However, Supabase Auth will handle its own password storage.
     // If profiles.password_hash is only for this custom flow, and we switch to Supabase Auth,
     // we might not need it anymore, or keep it as a fallback (though that complicates things).
-    // For now, let's keep it, as the login function might still use it if Supabase Auth fails.
-    const password_hash = await hashPassword(body.password);
+    // DECISION: Remove password_hash from profiles table. Supabase Auth handles authentication.
+    // const password_hash = await hashPassword(body.password); // No longer hashing here
     const profile_id = crypto.randomUUID(); // Generate UUID for profile and auth user
 
     // ➕ Create Supabase Auth user first
@@ -147,7 +230,7 @@ serve(async (req: Request) => {
       .insert({
         id: authUserResponse.user.id, // Use the ID from the created auth user
         phone: body.phone,
-        password_hash: password_hash, // Still storing this for now
+        // password_hash: password_hash, // Removed as Supabase Auth handles this
         first_name: body.first_name,
         last_name: body.last_name,
         email: body.email ?? null,

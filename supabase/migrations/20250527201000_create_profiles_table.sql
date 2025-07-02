@@ -4,7 +4,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE TABLE IF NOT EXISTS public.profiles (
   id             UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
   phone          TEXT          UNIQUE       NOT NULL,
-  password_hash  TEXT                      NOT NULL,
+  -- password_hash  TEXT                      NOT NULL, -- Removed, Supabase Auth handles passwords
   first_name     TEXT                      NOT NULL,
   last_name      TEXT                      NOT NULL,
   email          TEXT,
