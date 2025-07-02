@@ -2,6 +2,17 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+
+// Zod schema for save-fcm-token payload
+const saveTokenSchema = z.object({
+  fcm_token: z.string().min(1, "fcm_token is required."),
+  device_info: z.string().optional(),
+});
+
+type SaveTokenPayload = z.infer<typeof saveTokenSchema>;
+
+
 interface SaveTokenPayload {
   fcm_token: string;
   device_info?: string; // Optional
@@ -33,6 +44,21 @@ serve(async (req) => {
   }
 
   try {
+
+    const rawBody = await req.json();
+    const validationResult = saveTokenSchema.safeParse(rawBody);
+
+    if (!validationResult.success) {
+      const errors = validationResult.error.errors.map(e => ({ field: e.path.join('.'), message: e.message }));
+      return new Response(
+        JSON.stringify({ error: "Validation failed", details: errors }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { fcm_token, device_info } = validationResult.data;
+
+
     const { fcm_token, device_info } = await req.json() as SaveTokenPayload;
 
     if (!fcm_token) {
@@ -41,6 +67,7 @@ serve(async (req) => {
         headers: { 'Content-Type': 'application/json' },
       });
     }
+
 
     // Use service role client for database operations
     const serviceRoleClient = createClient(

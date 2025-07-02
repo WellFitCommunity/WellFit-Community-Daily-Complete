@@ -1,5 +1,15 @@
 import { serve } from "https://deno.land/std@0.183.0/http/server.ts";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+
+// Zod schema for login payload
+const loginSchema = z.object({
+  phone: z.string().min(1, "Phone is required."),
+  // Password complexity is enforced at registration. Here, we just check for presence.
+  password: z.string().min(1, "Password is required."),
+});
+
+type LoginBody = z.infer<typeof loginSchema>;
 
 // This function assumes that the Supabase project has been configured
 // to allow users to sign in with their phone number and a password.
@@ -26,32 +36,20 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { phone, password } = await req.json();
+    const rawBody = await req.json();
+    const validationResult = loginSchema.safeParse(rawBody);
 
-    if (!phone || !password) {
+    if (!validationResult.success) {
+      const errors = validationResult.error.errors.map(e => ({ field: e.path.join('.'), message: e.message }));
       return new Response(
-        JSON.stringify({ error: "Phone and password are required." }),
+        JSON.stringify({ error: "Validation failed", details: errors }),
         { status: 400, headers }
       );
     }
 
-    // Frontend should ideally enforce this, but a check here is good defense.
-    const passwordRules = [
-      { test: (pw: string) => pw.length >= 8, message: "at least 8 characters" },
-      { test: (pw: string) => /[A-Z]/.test(pw), message: "one uppercase letter" },
-      { test: (pw: string) => /\d/.test(pw), message: "one number" },
-      { test: (pw: string) => /[^A-Za-z0-9]/.test(pw), message: "one special character" },
-    ];
-    const failedPasswordRules = passwordRules
-      .filter(rule => !rule.test(password))
-      .map(rule => rule.message);
+    const { phone, password } = validationResult.data;
 
-    if (failedPasswordRules.length > 0) {
-      return new Response(
-        JSON.stringify({ error: `Password must contain ${failedPasswordRules.join(", ")}.` }),
-        { status: 400, headers }
-      );
-    }
+    // Password complexity rules are enforced at registration, so not checked here.
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? Deno.env.get("SB_URL");
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SB_ANON_KEY");
