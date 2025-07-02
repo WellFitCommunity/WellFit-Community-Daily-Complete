@@ -44,11 +44,34 @@ const AdminProfileEditor: React.FC = () => {
       const profile = profiles.find(p => p.id === selectedId) || null;
       setSelectedProfile(profile);
       fetchNotes(selectedId);
+
+      // Log admin viewing a profile
+      if (profile && userId) {
+        logProfileView(userId, profile.id);
+      }
     } else {
       setSelectedProfile(null);
       setNotes([]);
     }
-  }, [selectedId, profiles]);
+  }, [selectedId, profiles, userId]); // Added userId to dependency array
+
+  const logProfileView = async (adminUserId: string, viewedProfileId: string) => {
+    try {
+      // We don't have access to IP or User-Agent easily on the client-side without more setup.
+      // These can be added later if required, possibly by calling a Supabase function
+      // that can infer these from request headers.
+      const { error } = await supabase.from('admin_profile_view_logs').insert({
+        admin_user_id: adminUserId,
+        viewed_profile_id: viewedProfileId,
+        // ip_address and user_agent could be added here if available
+      });
+      if (error) {
+        console.error('Error logging profile view:', error);
+      }
+    } catch (err) {
+      console.error('Exception while logging profile view:', err);
+    }
+  };
 
   const fetchProfiles = async () => {
     const { data, error } = await supabase.from('profiles').select('*').eq('role', 'senior');
