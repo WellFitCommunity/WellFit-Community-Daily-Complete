@@ -1,17 +1,27 @@
 // src/contexts/SessionTimeoutContext.tsx
-import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabaseClient'; // Assuming supabase is used for logout
+import { supabase } from '../lib/supabaseClient';
 
-const INACTIVITY_TIMEOUT_MS = 2 * 24 * 60 * 60 * 1000; // 2 days
+// Default timeouts; can override via props or environment variables
+const DEFAULT_TIMEOUT_MS = process.env.REACT_APP_INACTIVITY_TIMEOUT_MS
+  ? parseInt(process.env.REACT_APP_INACTIVITY_TIMEOUT_MS)
+  : 2 * 24 * 60 * 60 * 1000; // 2 days
+const DEFAULT_WARNING_MS = process.env.REACT_APP_TIMEOUT_WARNING_MS
+  ? parseInt(process.env.REACT_APP_TIMEOUT_WARNING_MS)
+  : 5 * 60 * 1000; // 5 minutes before logout
+const THROTTLE_MS = 500; // throttle activity events
 
 interface SessionTimeoutContextType {
+  /**
+   * Manually reset the inactivity timeout (e.g., on user interaction)
+   */
   resetTimeout: () => void;
 }
 
 const SessionTimeoutContext = createContext<SessionTimeoutContextType | undefined>(undefined);
 
-export const useSessionTimeout = () => {
+export const useSessionTimeout = (): SessionTimeoutContextType => {
   const context = useContext(SessionTimeoutContext);
   if (!context) {
     throw new Error('useSessionTimeout must be used within a SessionTimeoutProvider');
@@ -21,58 +31,88 @@ export const useSessionTimeout = () => {
 
 interface SessionTimeoutProviderProps {
   children: React.ReactNode;
+  /**
+   * Total inactivity timeout before logout
+   */
+  timeoutMs?: number;
+  /**
+   * Time before actual logout to trigger warning callback
+   */
+  warningMs?: number;
+  /**
+   * Callback invoked warningMs before logout to show a warning UI
+   */
+  onTimeoutWarning?: () => void;
 }
 
-export const SessionTimeoutProvider: React.FC<SessionTimeoutProviderProps> = ({ children }) => {
+export const SessionTimeoutProvider: React.FC<SessionTimeoutProviderProps> = ({
+  children,
+  timeoutMs = DEFAULT_TIMEOUT_MS,
+  warningMs = DEFAULT_WARNING_MS,
+  onTimeoutWarning,
+}) => {
   const navigate = useNavigate();
-  const timeoutIdRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const warningRef = useRef<NodeJS.Timeout | null>(null);
+  const lastActivityRef = useRef<number>(0);
 
   const logout = useCallback(async () => {
     console.log('Session timed out. Logging out...');
-    // Clear local storage - REMOVED specific app keys. Supabase signOut handles its own storage.
-    // localStorage.removeItem('wellfitUserId'); // Removed
-    // localStorage.removeItem('wellfitPhone'); // Removed
-    // localStorage.removeItem('wellfitPin'); // Removed
-    // localStorage.removeItem('communicationConsent'); // Removed
-    // Clear other potential session-related items if any
-    // Example: localStorage.removeItem('supabase.auth.token'); // Supabase's signOut should handle this.
-
-    // Sign out from Supabase - this will trigger AuthContext to update state
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('Error logging out from Supabase:', error);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) console.error('Error logging out from Supabase:', error);
+    } catch (err: any) {
+      console.error('Unexpected logout error:', err);
     }
-
-    // Navigate to login page
     navigate('/login', { replace: true });
   }, [navigate]);
 
-  const resetTimeout = useCallback(() => {
-    if (timeoutIdRef.current) {
-      clearTimeout(timeoutIdRef.current);
+  const scheduleTimeouts = useCallback(() => {
+    // Clear existing timers
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (warningRef.current) clearTimeout(warningRef.current);
+
+    // Schedule warning callback
+    if (onTimeoutWarning) {
+      warningRef.current = setTimeout(
+        onTimeoutWarning,
+        timeoutMs - warningMs
+      );
     }
-    timeoutIdRef.current = setTimeout(logout, INACTIVITY_TIMEOUT_MS);
-  }, [logout]);
+
+    // Schedule actual logout
+    timeoutRef.current = setTimeout(logout, timeoutMs);
+  }, [logout, onTimeoutWarning, timeoutMs, warningMs]);
+
+  /**
+   * Public method to reset the inactivity timers
+   */
+  const resetTimeout = useCallback(() => {
+    const now = Date.now();
+    if (now - lastActivityRef.current < THROTTLE_MS) return;
+    lastActivityRef.current = now;
+    scheduleTimeouts();
+  }, [scheduleTimeouts]);
 
   useEffect(() => {
-    const events = ['mousemove', 'mousedown', 'keypress', 'touchstart', 'scroll'];
+    const activityEvents = ['mousemove', 'mousedown', 'keypress', 'touchstart', 'scroll'];
 
-    const handleActivity = () => {
-      resetTimeout();
-    };
+    // Reset timers on user activity
+    const handleActivity = () => resetTimeout();
 
-    // Initialize timeout on mount
-    resetTimeout();
+    // Initialize timers
+    scheduleTimeouts();
 
-    events.forEach(event => window.addEventListener(event, handleActivity));
+    // Attach listeners
+    activityEvents.forEach(evt => window.addEventListener(evt, handleActivity));
 
     return () => {
-      if (timeoutIdRef.current) {
-        clearTimeout(timeoutIdRef.current);
-      }
-      events.forEach(event => window.removeEventListener(event, handleActivity));
+      // Cleanup on unmount
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (warningRef.current) clearTimeout(warningRef.current);
+      activityEvents.forEach(evt => window.removeEventListener(evt, handleActivity));
     };
-  }, [resetTimeout]);
+  }, [resetTimeout, scheduleTimeouts]);
 
   return (
     <SessionTimeoutContext.Provider value={{ resetTimeout }}>
