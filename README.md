@@ -82,6 +82,18 @@ The frontend codebase (`src` directory) is organized as follows:
     SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key # For admin-level backend operations
 
     MAILERSEND_API_KEY=your_mailersend_api_key # For sending emails via MailerSend
+    MAILERSEND_FROM_EMAIL=your_sender_email_address # e.g., noreply@yourdomain.com, used by Supabase email functions
+
+    # Twilio (for SMS, used by Vercel function api/send-sms.ts)
+    TWILIO_ACCOUNT_SID=your_twilio_account_sid
+    TWILIO_AUTH_TOKEN=your_twilio_auth_token
+    TWILIO_PHONE_NUMBER=your_twilio_phone_number
+
+    # Internal API Key (for securing Vercel serverless functions)
+    INTERNAL_API_KEY=your_secure_internal_api_key
+
+    # Admin Panel PIN (for Supabase function verify-admin-pin)
+    ADMIN_PANEL_PIN=your_admin_panel_pin
 
     # Firebase Admin SDK (for Firebase Functions, if used)
     FIREBASE_PROJECT_ID=your_firebase_project_id
@@ -100,7 +112,11 @@ The frontend codebase (`src` directory) is organized as follows:
     *   `REACT_APP_FIREBASE_VAPID_KEY`: VAPID key for Firebase Cloud Messaging (push notifications).
     *   `REACT_APP_SUPABASE_EMAIL_ENDPOINT`: URL of the serverless function that handles sending welcome emails.
     *   `SUPABASE_SERVICE_ROLE_KEY`: Supabase service role key for backend operations requiring admin privileges (use with extreme caution).
-    *   `MAILERSEND_API_KEY`: API key for MailerSend service, used for sending emails.
+    *   `MAILERSEND_API_KEY`: API key for MailerSend service.
+    *   `MAILERSEND_FROM_EMAIL`: The email address used as the sender for emails sent via MailerSend by Supabase functions.
+    *   `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER`: Credentials for Twilio SMS service.
+    *   `INTERNAL_API_KEY`: A secret key used to authorize calls to your internal Vercel serverless functions.
+    *   `ADMIN_PANEL_PIN`: PIN code for accessing the admin panel via the `verify-admin-pin` Supabase function.
     *   `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`: Credentials for Firebase Admin SDK, typically used in Firebase Functions for backend tasks.
 
 ### Running the Development Server

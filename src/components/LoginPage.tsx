@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBranding } from '../BrandingContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const passwordRules = [
   {
@@ -38,6 +39,8 @@ const LoginPage: React.FC = () => {
   //   // }
   // }, [navigate]);
 
+  const auth = useAuth(); // Added useAuth hook
+
   const isColorDark = (colorStr: string) => {
     if (!colorStr) return true;
     const color = colorStr.startsWith('#') ? colorStr.substring(1) : colorStr;
@@ -74,60 +77,23 @@ const LoginPage: React.FC = () => {
 
     setLoading(true);
 
-    const requestBody = { phone, password };
-
-    console.log('// JULES: Attempting login with:', { url: '/functions/v1/login', method: 'POST', body: requestBody });
-
     try {
-      const response = await fetch('/functions/v1/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody),
-      });
+      // Use AuthContext's signIn method
+      await auth.signIn({ phone, password });
 
-      console.log('// JULES: Login response status:', response.status);
+      console.log('// JULES: Login successful via AuthContext. Navigating...');
+      setError('');
+      // The AuthContext now manages the session.
+      // TODO: Navigate to a page that requires auth, like /dashboard.
+      // For now, keeping navigation to /demographics as per original code.
+      // This page should ideally now work if it relies on AuthContext.
+      navigate('/demographics');
 
-      if (response.ok) {
-        let result;
-        try {
-          result = await response.json();
-          console.log('// JULES: Login response data:', result);
-        } catch (jsonError: any) {
-          console.error('// JULES: JSON parsing error:', jsonError);
-          setError('Invalid response from server.');
-          return;
-        }
-
-        if (result && result.success && result.data && result.data.userId) {
-          // localStorage.setItem('wellfitUserId', result.data.userId); // Removed per new requirements
-          // if (result.data.token) {
-            // localStorage.setItem('wellfitUserToken', result.data.token); // Removed per new requirements
-          // }
-          console.log('// JULES: Login successful. User ID:', result.data.userId, 'Token:', result.data.token);
-          console.log('// JULES: NOTE: Token and userId are not stored in localStorage anymore.');
-          console.log('// JULES: Full auth state management will be handled in a later step.');
-          setError('');
-          // TODO: Navigate to a page that doesn't require auth, or handle auth state globally.
-          // For now, keeping navigation to /demographics, but it will likely fail without auth context.
-          navigate('/demographics');
-        } else {
-          throw new Error(result.error || 'Login failed. Please check your phone number and password.');
-        }
-      } else {
-        const errorText = await response.text();
-        console.error('// JULES: Login error response text:', errorText);
-
-        if (response.status >= 500) {
-          throw new Error('Something went wrong on our end. Please try again later.');
-        } else if (response.status === 401) {
-          throw new Error('Login failed. Please check your phone number and password.');
-        } else {
-          throw new Error(`Login failed: ${response.status} ${response.statusText}. ${errorText ? errorText.substring(0,100) : ''}`);
-        }
-      }
     } catch (err: any) {
-      console.error('// JULES: Login error:', err);
-      if (err.name === 'TypeError' && err.message.includes('Failed to fetch')) {
+      console.error('// JULES: Login error via AuthContext:', err);
+      if (err.message.includes('Invalid login credentials')) {
+        setError('Login failed. Please check your phone number and password.');
+      } else if (err.message.includes('Failed to fetch') || err.message.includes('network error')) {
         setError('Could not connect to the server. Please check your internet connection and try again.');
       } else {
         setError(err.message || 'An unexpected error occurred during login. Please try again.');
