@@ -11,14 +11,14 @@ COMMENT ON COLUMN public.roles.name IS 'Unique name of the role (e.g., ''admin''
 
 -- Create user_roles join table
 CREATE TABLE IF NOT EXISTS public.user_roles (
-    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE, -- Assumes profiles.id is FK to auth.users
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     role_id INTEGER NOT NULL REFERENCES public.roles(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
     PRIMARY KEY (user_id, role_id)
 );
 
 COMMENT ON TABLE public.user_roles IS 'Assigns roles to users. A user can have multiple roles.';
-COMMENT ON COLUMN public.user_roles.user_id IS 'Foreign key to the user in the profiles table.';
+COMMENT ON COLUMN public.user_roles.user_id IS 'Foreign key to the user in the auth.users table.';
 COMMENT ON COLUMN public.user_roles.role_id IS 'Foreign key to the role in the roles table.';
 
 -- Seed initial roles (optional, but often useful)
