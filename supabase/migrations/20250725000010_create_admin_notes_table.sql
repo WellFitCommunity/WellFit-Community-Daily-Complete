@@ -1,8 +1,8 @@
 -- Create admin_notes table
 CREATE TABLE IF NOT EXISTS public.admin_notes (
   id BIGSERIAL PRIMARY KEY,
-  senior_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  created_by UUID NOT NULL REFERENCES public.profiles(id) ON DELETE RESTRICT, -- Admin user who wrote the note
+  senior_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  created_by UUID NOT NULL REFERENCES auth.users(id) ON DELETE RESTRICT, -- Admin user who wrote the note
   note TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL

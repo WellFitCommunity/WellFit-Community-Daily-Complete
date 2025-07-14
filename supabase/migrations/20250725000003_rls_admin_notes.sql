@@ -1,14 +1,5 @@
 -- Enable RLS for admin_notes table
--- Assuming admin_notes table exists. If not, it should be created first.
--- CREATE TABLE IF NOT EXISTS public.admin_notes (
---   id BIGSERIAL PRIMARY KEY,
---   senior_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
---   created_by UUID NOT NULL REFERENCES public.profiles(id) ON DELETE RESTRICT, -- or auth.users(id)
---   note TEXT NOT NULL,
---   created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
---   updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
--- );
-
+-- This table's senior_id and created_by columns are foreign keys to auth.users(id).
 ALTER TABLE public.admin_notes ENABLE ROW LEVEL SECURITY;
 
 -- Policy: Allow admins and super_admins to perform all actions on admin_notes

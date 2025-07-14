@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS alerts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     alert_type TEXT NOT NULL,
     timestamp TIMESTAMPTZ DEFAULT now() NOT NULL,
     details TEXT
