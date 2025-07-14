@@ -1,4 +1,5 @@
 -- Enable RLS for alerts table
+-- This table's user_id column is a foreign key to auth.users(id).
 ALTER TABLE public.alerts ENABLE ROW LEVEL SECURITY;
 
 -- Policy: Users can SELECT their own alerts
