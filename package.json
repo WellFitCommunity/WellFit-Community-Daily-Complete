@@ -52,7 +52,7 @@
     "eslint-plugin-react-hooks": "^4.6.2",
     "postcss": "^8.4.21",
     "react-scripts": "^5.0.1",
-    "supabase": "^2.26.9",
+    "supabase": "^2.34.3",
     "tailwindcss": "^3.3.2",
     "ts-node": "^10.9.2",
     "typescript": "^4.9.5"
@@ -66,7 +66,12 @@
     "eject": "react-scripts eject",
     "import:meals": "ts-node src/scripts/importMeals.ts",
     "deploy:register": "npx supabase functions deploy register",
-    "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\""
+    "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\"",
+    "sb:version": "npx -y supabase@latest --version",
+    "sb:migrations": "npx -y supabase@latest migration list",
+    "sb:start": "npx -y supabase@latest start -x edge-runtime",
+    "sb:diff": "npx -y supabase@latest db diff -f rls-hardening --debug",
+    "sb:stop": "npx -y supabase@latest stop"
   },
   "browserslist": {
     "production": [
