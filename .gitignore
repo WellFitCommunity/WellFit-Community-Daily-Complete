@@ -24,3 +24,7 @@ Thumbs.db
 *.bak
 .env.development
 .env.production
+supabase/.temp
+supabase/postgres-version
+supabase/gotrue-version
+supabase/storage-version
