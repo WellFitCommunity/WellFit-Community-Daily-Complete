@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 
 interface PhotoUploadProps {
-  context: string;   // e.g. "meal"
-  recordId: string;  // the meal.id
-  onSuccess?: () => void; // Optional: callback for parent to refresh data/gallery
+  /** e.g. "meal" (per-record gallery) or "community" (global, moderated) */
+  context: 'meal' | 'community';
+  /** required for per-record contexts like "meal"; ignored for "community" */
+  recordId?: string;
+  onSuccess?: () => void;
 }
 
 const MAX_FILE_SIZE_MB = 5;
@@ -12,57 +14,107 @@ const MAX_FILE_SIZE_MB = 5;
 const PhotoUpload: React.FC<PhotoUploadProps> = ({ context, recordId, onSuccess }) => {
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<{ type?: 'success' | 'error'; text?: string }>({});
-  const bucketName = `${context}-photos`;
+  const [caption, setCaption] = useState(''); // used for community uploads only
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>): Promise<void> {
     if (!e.target.files?.length) return;
     setMessage({}); // Clear previous messages
     const file: File = e.target.files[0];
 
-    // 1. File type validation
+    // 1) Type
     if (!file.type.startsWith('image/')) {
       setMessage({ type: 'error', text: 'Only image files are allowed.' });
       e.target.value = '';
       return;
     }
-    // 2. File size validation (limit to 5MB)
+    // 2) Size
     if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
       setMessage({ type: 'error', text: `File too large (max ${MAX_FILE_SIZE_MB}MB).` });
       e.target.value = '';
       return;
     }
 
-    const ext = file.name.split('.').pop();
-    const fileName = `${Date.now()}.${ext}`;
-    const filePath = `${recordId}/${fileName}`;
-
     setUploading(true);
     try {
-      const { error } = await supabase.storage
-        .from(bucketName)
-        .upload(filePath, file, { upsert: false });
+      if (context === 'community') {
+        // ---- Community Moments path ----
+        const { data: authData, error: userErr } = await supabase.auth.getUser();
+        if (userErr || !authData?.user) {
+          setMessage({ type: 'error', text: 'Please sign in first.' });
+          return;
+        }
+        const uid = authData.user.id;
+        const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+        const filename = crypto.randomUUID() + '.' + ext;
+        const storagePath = `community/${uid}/${filename}`;
 
-      if (error) throw error;
+        // Upload to 'community' bucket (public recommended for simplicity)
+        const { error: upErr } = await supabase.storage
+          .from('community')
+          .upload(storagePath, file, { upsert: false });
+        if (upErr) throw upErr;
 
-      setMessage({ type: 'success', text: 'Upload successful!' });
-      if (onSuccess) onSuccess();
-    } catch (error) {
-      const errMsg =
-        error instanceof Error
-          ? error.message
-          : typeof error === 'string'
-          ? error
+        // Insert DB row for moderation workflow
+        const { error: rowErr } = await supabase.from('community_photos').insert({
+          user_id: uid,
+          storage_path: storagePath,
+          caption: caption || null,
+          approved: false, // admin will approve
+        });
+        if (rowErr) throw rowErr;
+
+        setCaption('');
+        setMessage({ type: 'success', text: 'Uploaded! Pending admin approval.' });
+        onSuccess?.();
+      } else {
+        // ---- Per-record path (e.g., meals) ----
+        if (!recordId) {
+          setMessage({ type: 'error', text: 'Missing recordId for this upload.' });
+          return;
+        }
+        const ext = file.name.split('.').pop() || 'jpg';
+        const fileName = `${Date.now()}.${ext}`;
+        const filePath = `${recordId}/${fileName}`;
+        const bucketName = `${context}-photos`; // e.g. "meal-photos"
+
+        const { error } = await supabase.storage.from(bucketName).upload(filePath, file, { upsert: false });
+        if (error) throw error;
+
+        setMessage({ type: 'success', text: 'Upload successful!' });
+        onSuccess?.();
+      }
+    } catch (err) {
+      const text =
+        err instanceof Error
+          ? err.message
+          : typeof err === 'string'
+          ? err
           : 'An unknown error occurred during upload.';
-      setMessage({ type: 'error', text: `Error uploading: ${errMsg}` });
+      setMessage({ type: 'error', text: `Error uploading: ${text}` });
     } finally {
       setUploading(false);
       e.target.value = '';
     }
-  };
+  }
 
   return (
-    <div className="space-y-2">
-      <label htmlFor="photo-upload-input" className="block font-medium text-gray-700 text-base">Upload Photo</label>
+    <div className="space-y-3">
+      {context === 'community' && (
+        <div className="space-y-2">
+          <label className="block text-sm font-medium">Caption (optional)</label>
+          <input
+            className="border p-2 rounded w-full"
+            placeholder="Say something about your photo"
+            value={caption}
+            onChange={(e) => setCaption(e.target.value)}
+          />
+        </div>
+      )}
+
+      <label htmlFor="photo-upload-input" className="block font-medium text-gray-700 text-base">
+        {context === 'community' ? 'Upload Community Photo' : 'Upload Photo'}
+      </label>
+
       <input
         id="photo-upload-input"
         type="file"
