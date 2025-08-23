@@ -1,7 +1,14 @@
-import { useState } from 'react';
+import { useState,useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBranding } from '../BrandingContext';
 import { useAuth } from '../contexts/AuthContext';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.REACT_APP_SUPABASE_URL as string,
+  process.env.REACT_APP_SUPABASE_ANON_KEY as string
+);
+
 
 const passwordRules = [
   {
@@ -24,6 +31,27 @@ const passwordRules = [
 
 const isPhone = (val: string) => /^\d{10,15}$/.test(val.replace(/[^\d]/g, ''));
 
+async function nextRouteForUser() {
+  // get current session
+  const { data: { session } } = await supabase.auth.getSession();
+  const uid = session?.user?.id;
+  if (!uid) return '/login';
+
+  // read onboarding flags
+  const { data } = await supabase
+    .from('profiles')
+    .select('force_password_change, consent, demographics_complete')
+    .eq('id', uid)
+    .single();
+
+  if (!data) return '/login';
+
+  if (data.force_password_change) return '/change-password';
+  if (!data.consent) return '/consent';
+  if (!data.demographics_complete) return '/demographics';
+  return '/dashboard';
+}
+
 const LoginPage: React.FC = () => {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
@@ -40,6 +68,17 @@ const LoginPage: React.FC = () => {
   // }, [navigate]);
 
   const auth = useAuth(); // Added useAuth hook
+
+    useEffect(() => {
+  let cancel = false;
+  (async () => {
+    const route = await nextRouteForUser();
+    if (!cancel && route !== '/login') {
+      navigate(route, { replace: true });
+    }
+  })();
+  return () => { cancel = true; };
+}, [navigate]);
 
   const isColorDark = (colorStr: string) => {
     if (!colorStr) return true;
@@ -87,7 +126,8 @@ const LoginPage: React.FC = () => {
       // TODO: Navigate to a page that requires auth, like /dashboard.
       // For now, keeping navigation to /demographics as per original code.
       // This page should ideally now work if it relies on AuthContext.
-      navigate('/demographics');
+      const route = await nextRouteForUser();
+         navigate(route, { replace: true });
 
     } catch (err: any) {
       console.error('// JULES: Login error via AuthContext:', err);

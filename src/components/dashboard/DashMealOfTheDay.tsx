@@ -1,123 +1,108 @@
-// src/components/DashMealOfTheDay.tsx
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabaseClient';
+import { useMemo } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+// import ImageCarousel from '../components/ui/ImageCarousel';
+import PhotoUpload from '../../components/features/PhotoUpload';
+// import PhotoGallery from '../components/features/PhotoGallery';
 import { allRecipes } from '../../data/allRecipes';
+import ImageCarousel from 'components/ui/ImageCarousel';
+import PhotoGallery from 'components/features/PhotoGallery';
 
-type Meal = {
-  id: string;
-  name: string;
-  image_url?: string;
-  preview?: string;
-};
-
-const DASH_INFO_URL = 'https://www.nhlbi.nih.gov/education/dash-eating-plan';
-
-const DashMealOfTheDay: React.FC = () => {
+export default function MealDetailPage() {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [meal, setMeal] = useState<Meal | null>(null);
 
-  useEffect(() => {
-    let canceled = false;
-    (async () => {
-      let mealData: Meal[] = [];
-      try {
-        const { data, error } = await supabase
-          .from('meals')
-          .select('id, name, image_url, preview, created_at')
-          .order('created_at', { ascending: true });
-        if (error) {
-          console.error('Error loading meals from Supabase:', error);
-        } else if (data && data.length) {
-          mealData = data;
-        }
-      } catch (err: any) {
-        console.error('Unexpected error fetching meals:', err);
+  const recipe = useMemo(() => {
+    if (!id) return null;
+    return allRecipes.find((r: any) => String(r.id) === String(id)) || null;
+  }, [id]);
+
+  const meal = recipe
+    ? {
+        id: String(recipe.id),
+        name: recipe.name,
+        description: recipe.description || '',
+        image_url: recipe.image_url || recipe.images?.[0] || null,
+        calories: recipe.calories ?? null,
+        cost: recipe.cost ?? null,
+        images: recipe.images || [],
+        ingredients: recipe.ingredients || [],
+        steps: recipe.steps || [],
       }
-
-      // Fallback to static if no data
-      if (!mealData.length) mealData = allRecipes;
-      if (!canceled && mealData.length) {
-        const idx =
-          Math.floor(new Date().setHours(0, 0, 0, 0) / 86_400_000) % mealData.length;
-        setMeal(mealData[idx]);
-      }
-    })();
-    return () => {
-      canceled = true;
-    };
-  }, []);
-
-  const goToDetail = () => meal && navigate(`/meals/${meal.id}`);
+    : null;
 
   return (
-    <div
-      className="bg-white text-[#003865] rounded-xl shadow-md p-4 space-y-3 cursor-pointer hover:ring-2 hover:ring-[#8cc63f] transition"
-      onClick={goToDetail}
-      tabIndex={0}
-      aria-label="DASH Meal of the Day"
-      role="button"
-    >
-      <h2 className="text-xl font-bold">DASH Meal Suggestion</h2>
-      <p className="text-sm italic text-[#003865]/80">
-        DASH = Dietary Approaches to Stop Hypertension
-      </p>
-      <p className="text-sm mt-1">
-        Designed to lower sodium while boosting potassium-rich foods, the DASH
-        plan centers on colorful produce, whole grains, and lean proteins—
-        powerful allies for healthy blood pressure. Today’s meal fits those
-        guidelines perfectly.
-      </p>
+    <div className="bg-white text-[#003865] rounded-xl shadow-md p-4 sm:p-6 max-w-2xl mx-auto mt-8 space-y-6">
+      <button
+        onClick={() => navigate('/dashboard')}
+        className="text-sm text-[#8cc63f] hover:underline"
+      >
+        ← Back to dashboard
+      </button>
 
-      {meal ? (
+      {!meal && (
+        <div className="text-center space-y-3">
+          <p className="text-lg font-semibold text-red-600">Meal not found.</p>
+          <Link to="/dashboard" className="text-blue-500 underline">
+            Back to dashboard
+          </Link>
+        </div>
+      )}
+
+      {meal && (
         <>
-          {meal.image_url && (
+          <h1 className="text-2xl font-bold text-center">{meal.name}</h1>
+
+          {meal.images.length ? (
+            <ImageCarousel images={meal.images} altText={meal.name} />
+          ) : (
             <img
-              src={meal.image_url}
+              src={
+                meal.image_url ||
+                `https://source.unsplash.com/600x400/?${encodeURIComponent(meal.name)}`
+              }
               alt={meal.name}
-              className="w-full h-40 object-cover rounded-lg mb-2"
-              style={{ maxHeight: '200px' }}
+              className="w-full h-64 object-cover rounded-lg shadow-md"
             />
           )}
 
-          <h3 className="mt-2 font-semibold">Today’s pick: {meal.name}</h3>
+          <div className="flex flex-wrap gap-4 text-sm font-medium">
+            {meal.calories ? <span>Calories: {meal.calories}</span> : null}
+            {meal.cost ? <span>Cost: ${meal.cost}</span> : null}
+          </div>
 
-          {meal.preview && (
-            <p className="text-base text-gray-600">{meal.preview}</p>
-          )}
-
-          <p className="text-base italic text-center text-[#003865] font-medium">
-            Cooked this meal? Snap a photo and upload it on the next screen for
-            a chance to be featured in the Community Daily app and possibly our
-            website!
+          <p className="whitespace-pre-wrap leading-relaxed text-gray-700">
+            {meal.description || 'Enjoy your meal!'}
           </p>
 
-          <button
-            className="mt-2 w-full py-2 bg-[#003865] text-white font-semibold rounded hover:bg-[#8cc63f] transition"
-            onClick={e => {
-              e.stopPropagation();
-              goToDetail();
-            }}
-          >
-            See Full Recipe
-          </button>
+          {meal.ingredients.length > 0 && (
+            <>
+              <h2 className="text-lg font-semibold mt-4">Ingredients</h2>
+              <ul className="list-disc ml-6 text-base space-y-1">
+                {meal.ingredients.map((ing: string, idx: number) => (
+                  <li key={idx}>{ing}</li>
+                ))}
+              </ul>
+            </>
+          )}
 
-          <a
-            href={DASH_INFO_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block mt-2 text-center text-sm font-medium text-[#8cc63f] hover:underline"
-            onClick={e => e.stopPropagation()}
-          >
-            Learn more about the DASH plan ↗
-          </a>
+          {meal.steps.length > 0 && (
+            <>
+              <h2 className="text-lg font-semibold mt-4">Directions</h2>
+              <ol className="list-decimal ml-6 text-base space-y-2">
+                {meal.steps.map((step: string, idx: number) => (
+                  <li key={idx} className="mb-1">{step}</li>
+                ))}
+              </ol>
+            </>
+          )}
+
+          {/* Photos remain tied to this recipe's id */}
+          <div className="space-y-4 mt-6">
+            <PhotoUpload context="meal" recordId={meal.id} />
+            <PhotoGallery context="meal" recordId={meal.id} />
+          </div>
         </>
-      ) : (
-        <p className="text-sm text-muted-foreground mt-2">Loading meal…</p>
       )}
     </div>
   );
-};
-
-export default DashMealOfTheDay;
-
+}

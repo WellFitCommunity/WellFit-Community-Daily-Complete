@@ -1,5 +1,6 @@
 // src/components/layout/Footer.tsx
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useBranding } from '../../BrandingContext';
 
 const Footer: React.FC = () => {
@@ -21,17 +22,32 @@ const Footer: React.FC = () => {
   // Construct footer text dynamically; branding.config.ts should provide appName and primaryColor
   const footerText = `© ${new Date().getFullYear()} ${branding.appName}. All rights reserved.`;
 
+  // Link styling: inherit text color for maximum contrast, underline for affordance
+  const linkStyle: React.CSSProperties = { color: 'inherit', textDecoration: 'underline' };
+
   return (
     <footer
       style={{ backgroundColor: branding.primaryColor || '#003865' }}
       className={`w-full text-center py-4 px-2 mt-8 ${textColorClass} rounded-t-xl`}
+      aria-label="Site footer"
     >
-      <div>{footerText}</div>
-      <div className="mt-1">
-        Powered by WellFit Community, Inc., Vital Edge Healthcare Consulting, Envision Virtual Edge Group
-      </div>
-      <div className="mt-1 text-sm opacity-90">
-        {branding.contactInfo || 'Contact us at info@thewellfitcommunity.org'}
+      <div className="max-w-7xl mx-auto flex flex-col items-center gap-1">
+        <div>{footerText}</div>
+
+        <div className="mt-1">
+          Powered by WellFit Community, Inc., Vital Edge Healthcare Consulting, Envision Virtual Edge Group
+        </div>
+
+        <div className="mt-1 text-sm opacity-90">
+          {branding.contactInfo || 'Contact us at info@thewellfitcommunity.org'}
+        </div>
+
+        {/* Global Admin access */}
+        <nav className="mt-2" aria-label="Administrative">
+          <Link to="/admin-login" className="font-semibold" style={linkStyle}>
+            Admin Login
+          </Link>
+        </nav>
       </div>
     </footer>
   );

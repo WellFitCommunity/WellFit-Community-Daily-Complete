@@ -1,73 +1,44 @@
-import { useEffect, useState } from 'react';
+// src/pages/MealDetailPage.tsx
+import React, { useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { supabase } from '../lib/supabaseClient';
-import ImageCarousel from '../components/ui/ImageCarousel';
+import { allRecipes } from '../data/allRecipes';
 import PhotoUpload from '../components/features/PhotoUpload';
 import PhotoGallery from '../components/features/PhotoGallery';
-// Import your local recipe arrays
-import recipesWeek1 from '../data/recipesWeek1';
-import recipesWeek2 from '../data/recipesWeek2';
-// ...import recipesWeek3, recipesWeek4, recipesBonus
+// (Skip ImageCarousel for now to keep things simple.)
 
-const allRecipes = [
-  ...recipesWeek1,
-  ...recipesWeek2,
-  // ...add week3, week4, bonus
-];
 
-interface Meal {
+type Recipe = {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   image_url?: string | null;
+  images?: string[];
   calories?: number | null;
   cost?: number | null;
-  // Ensure it matches the 'meals' table structure for Supabase queries
-}
+  ingredients?: string[];
+  steps?: string[];
+};
 
-const MealDetailPage: React.FC = () => { // Added React.FC
-  const { id } = useParams<{ id: string }>(); // id will be string | undefined if not guaranteed by router
+export default function MealDetailPage() {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [meal, setMeal] = useState<Meal | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!id) {
-      setLoading(false); // Stop loading if no id
-      return;
-    }
-    const fetchMeal = async (): Promise<void> => { // Made into a named async function
-      setLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('meals')
-          .select('*')
-          .eq('id', id)
-          .single<Meal>(); // Use generic type for single()
-
-        if (error) {
-          console.error('Error fetching meal:', error.message);
-          setMeal(null);
-        } else {
-          setMeal(data);
-        }
-      } catch (e) {
-        const error = e instanceof Error ? e : new Error("An unexpected error occurred");
-        console.error('Unexpected error fetching meal:', error.message);
-        setMeal(null);
-      } finally {
-        setLoading(false);
-      }
+  const recipe: Recipe | null = useMemo(() => {
+    if (!id) return null;
+    const r: any = allRecipes.find((x: any) => String(x.id) === String(id));
+    if (!r) return null;
+    return {
+      id: String(r.id),
+      name: r.name,
+      description: r.description || '',
+      image_url: r.image_url || (Array.isArray(r.images) ? r.images[0] : null),
+      images: Array.isArray(r.images) ? r.images : [],
+      calories: typeof r.calories === 'number' ? r.calories : null,
+      cost: typeof r.cost === 'number' ? r.cost : null,
+      ingredients: Array.isArray(r.ingredients) ? r.ingredients : [],
+      steps: Array.isArray(r.steps) ? r.steps : [],
     };
-    fetchMeal();
   }, [id]);
-
-  // Match recipe by name
-  const recipe = meal
-    ? allRecipes.find(
-        (r) => r.name.trim().toLowerCase() === meal.name.trim().toLowerCase()
-      )
-    : null;
 
   return (
     <div className="bg-white text-[#003865] rounded-xl shadow-md p-4 sm:p-6 max-w-2xl mx-auto mt-8 space-y-6">
@@ -78,76 +49,68 @@ const MealDetailPage: React.FC = () => { // Added React.FC
         ← Back to dashboard
       </button>
 
-      {/* Loading state */}
-      {loading && <p className="text-center mt-10">Loading…</p>}
-
-      {/* Not‑found state */}
-      {!loading && !meal && (
+      {!recipe ? (
         <div className="text-center space-y-3">
           <p className="text-lg font-semibold text-red-600">Meal not found.</p>
           <Link to="/dashboard" className="text-blue-500 underline">
             Back to dashboard
           </Link>
         </div>
-      )}
-
-      {/* Successful state */}
-      {meal && (
+      ) : (
         <>
-          <h1 className="text-2xl font-bold text-center">{meal.name}</h1>
+          <h1 className="text-2xl font-bold text-center">{recipe.name}</h1>
 
-          {/* Carousel if images, else single img */}
-          {recipe?.images?.length ? (
-            <ImageCarousel images={recipe.images} altText={meal.name} />
-          ) : (
-            <img
-              src={
-                meal.image_url ||
-                `https://source.unsplash.com/600x400/?${encodeURIComponent(
-                  meal.name
-                )}`
-              }
-              alt={meal.name}
-              className="w-full h-64 object-cover rounded-lg shadow-md"
-            />
-          )}
+      {/* Image */}
+      <img
+        src={
+          recipe.image_url ||
+          `https://source.unsplash.com/600x400/?${encodeURIComponent(recipe.name)}`
+        }
+        alt={recipe.name}
+        className="w-full h-64 object-cover rounded-lg shadow-md"
+      />
+
+      {/* Photos tied to this recipe's id */}
+      <div className="space-y-4 mt-6">
+        <PhotoUpload context="meal" recordId={recipe.id} />
+        <PhotoGallery context="meal" recordId={recipe.id} />
+      </div>
+
 
           <div className="flex flex-wrap gap-4 text-sm font-medium">
-            {meal.calories && <span>Calories: {meal.calories}</span>}
-            {meal.cost && <span>Cost: ${meal.cost}</span>}
+            {recipe.calories !== null && <span>Calories: {recipe.calories}</span>}
+            {recipe.cost !== null && <span>Cost: ${recipe.cost}</span>}
           </div>
 
-          <p className="whitespace-pre-wrap leading-relaxed text-gray-700">
-            {meal.description}
-          </p>
+          {recipe.description && (
+            <p className="whitespace-pre-wrap leading-relaxed text-gray-700">
+              {recipe.description}
+            </p>
+          )}
 
-          {/* Show full recipe if available */}
-          {recipe && (
-            <div>
+          {recipe.ingredients && recipe.ingredients.length > 0 && (
+            <>
               <h2 className="text-lg font-semibold mt-4">Ingredients</h2>
               <ul className="list-disc ml-6 text-base space-y-1">
-                {recipe.ingredients.map((ing: string, idx: number) => (
+                {recipe.ingredients.map((ing, idx) => (
                   <li key={idx}>{ing}</li>
                 ))}
               </ul>
+            </>
+          )}
 
+          {recipe.steps && recipe.steps.length > 0 && (
+            <>
               <h2 className="text-lg font-semibold mt-4">Directions</h2>
               <ol className="list-decimal ml-6 text-base space-y-2">
-                {recipe.steps.map((step: string, idx: number) => (
+                {recipe.steps.map((step, idx) => (
                   <li key={idx} className="mb-1">{step}</li>
                 ))}
               </ol>
-            </div>
+            </>
           )}
-
-          <div className="space-y-4 mt-6">
-            <PhotoUpload context="meal" recordId={meal.id} />
-            <PhotoGallery context="meal" recordId={meal.id} />
-          </div>
         </>
       )}
     </div>
   );
 }
-
-export default MealDetailPage;
