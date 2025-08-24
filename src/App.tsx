@@ -18,8 +18,10 @@ import RequireAdminAuth from './components/auth/RequireAdminAuth';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import NotFoundPage from './components/NotFoundPage';
+import AdminLoginPage from './pages/AdminLoginPage';
+import ChangePasswordPage from './pages/ChangePasswordPage';
 
-// Lazy-loaded pages
+// Lazy-loaded pages/components
 const WelcomePage = React.lazy(() => import('./pages/WelcomePage'));
 const RegisterPage = React.lazy(() => import('./pages/RegisterPage'));
 const VerifyCodePage = React.lazy(() => import('./pages/VerifyCodePage'));
@@ -34,6 +36,7 @@ const SelfReportingPage = React.lazy(() => import('./pages/SelfReportingPage'));
 const DoctorsViewPage = React.lazy(() => import('./pages/DoctorsViewPage'));
 const AdminPanel = React.lazy(() => import('./components/admin/AdminPanel'));
 const AdminProfileEditorPage = React.lazy(() => import('./pages/AdminProfileEditorPage'));
+const CommunityMoments = React.lazy(() => import('./components/CommunityMoments'));
 
 const PUBLIC_ROUTES = ['/', '/register', '/verify', '/privacy-policy', '/terms'];
 
@@ -62,6 +65,8 @@ const App: React.FC = () => {
                   <Route path="/verify" element={<VerifyCodePage />} />
                   <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                   <Route path="/terms" element={<TermsOfService />} />
+                  <Route path="/change-password" element={<ChangePasswordPage />} />
+                  <Route path="/admin-login" element={<AdminLoginPage />} />
 
                   {/* Protected Routes */}
                   <Route path="/dashboard" element={<RequireAuth><DashboardPage /></RequireAuth>} />
@@ -74,15 +79,30 @@ const App: React.FC = () => {
                   <Route path="/self-reporting" element={<RequireAuth><SelfReportingPage /></RequireAuth>} />
                   <Route path="/doctors-view" element={<RequireAuth><DoctorsViewPage /></RequireAuth>} />
 
-                  {/* Admin Routes */}
-                  <Route path="/admin" element={<RequireAuth><AdminPanel /></RequireAuth>} />
-                  <Route path="/admin-profile-editor" element={
-                    <RequireAuth>
-                      <RequireAdminAuth>
-                        <AdminProfileEditorPage />
-                      </RequireAdminAuth>
-                    </RequireAuth>
-                  } />
+                  {/* NEW: Community Moments (protected) */}
+                  <Route path="/community" element={<RequireAuth><CommunityMoments /></RequireAuth>} />
+
+                  {/* Admin Routes (guarded) */}
+                  <Route
+                    path="/admin"
+                    element={
+                      <RequireAuth>
+                        <RequireAdminAuth>
+                          <AdminPanel />
+                        </RequireAdminAuth>
+                      </RequireAuth>
+                    }
+                  />
+                  <Route
+                    path="/admin-profile-editor"
+                    element={
+                      <RequireAuth>
+                        <RequireAdminAuth>
+                          <AdminProfileEditorPage />
+                        </RequireAdminAuth>
+                      </RequireAuth>
+                    }
+                  />
 
                   {/* Fallback */}
                   <Route path="*" element={<NotFoundPage />} />
@@ -97,4 +117,4 @@ const App: React.FC = () => {
   );
 };
 
-export default App;
+export default App;     

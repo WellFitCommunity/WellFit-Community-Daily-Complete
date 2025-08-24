@@ -1,4 +1,5 @@
 // src/pages/RegisterPage.tsx
+<<<<<<< HEAD
 import React, { useRef, useState, useEffect } from 'react';
 import {
   useForm,
@@ -41,8 +42,70 @@ import {
                                       }
 
                                       // …rest of your RegisterPage implementation…
+=======
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import HCaptcha from '@hcaptcha/react-hcaptcha';
+import { createClient } from '@supabase/supabase-js';
 
+/**
+ * Register Page (drop-in)
+ * - Public self-registration via Edge Function `register` (expects hcaptcha_token)
+ * - Server-side hCaptcha verification via Supabase Function `validate-hcaptcha`
+ * - Auto sign-in on success, then route to /consent
+ * - Admin Enroll panel preserved under the form
+ *
+ * Required env (CRA):
+ *   REACT_APP_SUPABASE_URL
+ *   REACT_APP_SUPABASE_ANON_KEY
+ *   REACT_APP_HCAPTCHA_SITE_KEY  (sitekey)
+ *
+ * Supabase Function env (server):
+ *   HCAPTCHA_SECRET               (secret key)
+ */
 
+// --- Supabase browser client (persist session for admin enroll) ---
+const supabase = createClient(
+  process.env.REACT_APP_SUPABASE_URL as string,
+  process.env.REACT_APP_SUPABASE_ANON_KEY as string,
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    },
+  }
+);
+
+// Utility: simple E.164 check
+const isE164 = (s: string) => /^\+\d{10,15}$/.test(s);
+
+// Small helper button to generate a temp password for admin enroll
+function TempPassButton({ onNew }: { onNew: (p: string) => void }) {
+  const gen = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*';
+    const out = Array.from({ length: 12 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    onNew(out);
+  };
+  return (
+    <button type="button" className="border rounded px-3 py-2" onClick={gen}>
+      New temp
+    </button>
+  );
+}
+
+// --- Admin enroll panel (appears below public form) ---
+function AdminEnrollPanel() {
+  const [open, setOpen] = useState(false);
+  const [signedIn, setSignedIn] = useState(false);
+  const [busy, setBusy] = useState(false);
+>>>>>>> 7c554e4 (Reverse-merge main; Postgres 17 + migrations safety updates)
+
+  // Admin creds
+  const [adminEmail, setAdminEmail] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+
+<<<<<<< HEAD
                                       const schema = yup
                                         .object()
                                           .shape({
@@ -489,3 +552,233 @@ import {
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                };
 
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                export default RegisterPage;
+=======
+  // Patient fields
+  const [pFirst, setPFirst] = useState('');
+  const [pLast, setPLast] = useState('');
+  const [pPhone, setPPhone] = useState('');
+  const [pEmail, setPEmail] = useState('');
+  const [tempPass, setTempPass] = useState('');
+
+  const canEnroll = useMemo(() => Boolean(pFirst && pLast && isE164(pPhone) && tempPass), [
+    pFirst,
+    pLast,
+    pPhone,
+    tempPass,
+  ]);
+
+  useEffect(() => {
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setSignedIn(Boolean(session?.user));
+    })();
+  }, []);
+
+  async function signInAdmin() {
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: adminEmail.trim(),
+        password: adminPassword,
+      });
+      if (error) return alert('Admin sign-in failed: ' + error.message);
+      setSignedIn(true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function enrollPatient() {
+    if (!canEnroll) return alert('Fill all required fields (names, +E.164 phone, temp password)');
+    setBusy(true);
+    try {
+      const { error } = await supabase.functions.invoke('enrollClient', {
+        body: {
+          phone: pPhone,
+          password: tempPass,
+          first_name: pFirst,
+          last_name: pLast,
+          email: pEmail || undefined,
+        },
+      });
+      if (error) return alert('Enroll failed: ' + (error.message ?? 'Unknown'));
+      alert(`Enrolled! Share temp password with the patient:\n\n${tempPass}\n\nThey must change it on first login.`);
+      setPFirst(''); setPLast(''); setPPhone(''); setPEmail(''); setTempPass('');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function adminSignOut() {
+    await supabase.auth.signOut();
+    setSignedIn(false);
+  }
+
+  return (
+    <div className="mt-10 border rounded-xl p-4">
+      <button type="button" className="underline" onClick={() => setOpen(!open)}>
+        {open ? 'Hide Admin Panel' : 'Admin? Sign in to enroll a patient'}
+      </button>
+
+      {open && !signedIn && (
+        <div className="mt-4 grid gap-2 max-w-sm">
+          <input className="border p-2 rounded" placeholder="Admin email" value={adminEmail} onChange={(e)=>setAdminEmail(e.target.value)} />
+          <input className="border p-2 rounded" type="password" placeholder="Admin password" value={adminPassword} onChange={(e)=>setAdminPassword(e.target.value)} />
+          <button className="bg-black text-white rounded p-2 disabled:opacity-50" disabled={busy} onClick={signInAdmin}>
+            {busy ? 'Signing in…' : 'Sign in as Admin'}
+          </button>
+          <p className="text-xs text-gray-500">Only admins/super_admins can enroll patients.</p>
+        </div>
+      )}
+
+      {open && signedIn && (
+        <div className="mt-6">
+          <h3 className="font-semibold mb-2">Enroll Patient</h3>
+          <div className="grid gap-2 max-w-sm">
+            <input className="border p-2 rounded" placeholder="First name" value={pFirst} onChange={(e)=>setPFirst(e.target.value)} />
+            <input className="border p-2 rounded" placeholder="Last name" value={pLast} onChange={(e)=>setPLast(e.target.value)} />
+            <input className="border p-2 rounded" placeholder="Phone (+E.164)" value={pPhone} onChange={(e)=>setPPhone(e.target.value)} />
+            <input className="border p-2 rounded" placeholder="Email (optional)" value={pEmail} onChange={(e)=>setPEmail(e.target.value)} />
+
+            <div className="grid grid-cols-[1fr_auto] gap-2 items-center">
+              <input className="border p-2 rounded" placeholder="Temp password" value={tempPass} onChange={(e)=>setTempPass(e.target.value)} />
+              <TempPassButton onNew={setTempPass} />
+            </div>
+
+            <div className="flex gap-2">
+              <button className="bg-green-600 text-white rounded p-2 disabled:opacity-50" disabled={busy || !canEnroll} onClick={enrollPatient}>
+                {busy ? 'Enrolling…' : 'Enroll'}
+              </button>
+              <button className="text-sm underline" onClick={adminSignOut}>Sign out admin</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// --- Public Register Page ---
+export default function RegisterPage() {
+  const navigate = useNavigate();
+  const SITE_KEY = process.env.REACT_APP_HCAPTCHA_SITE_KEY; // show widget only if present
+
+  const [first, setFirst] = useState('');
+  const [last, setLast] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [consent, setConsent] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  const captchaRef = useRef<any>(null);
+
+  const canSubmit = useMemo(() => {
+    return Boolean(first && last && isE164(phone) && password.length >= 8 && consent && captchaToken);
+  }, [first, last, phone, password, consent, captchaToken]);
+
+  useEffect(() => {
+    setMsg(null);
+  }, [first, last, phone, email, password, consent, captchaToken]);
+
+  async function submitRegister() {
+  if (!canSubmit) return;
+
+  setBusy(true);
+  try {
+    const REGISTER_URL = 'https://xkybsjnvuohpqpbkikyn.functions.supabase.co/register';
+    const phoneE164 = phone.startsWith('+') ? phone : '+' + phone.replace(/\D/g, '');
+
+    const res = await fetch(REGISTER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        phone: phoneE164,
+        password,
+        first_name: first,
+        last_name: last,
+        email: email || undefined,
+        consent,
+        hcaptcha_token: captchaToken, // let the backend verify
+      }),
+    });
+
+    const data: any = await res.json().catch(() => ({}));
+
+    if (res.status === 201) {
+      setMsg('Account created — signing you in…');
+
+      // Auto sign-in; if it fails, route to /login
+      const { error: signInErr } = await supabase.auth.signInWithPassword({
+        phone: phoneE164,
+        password,
+      });
+
+      if (signInErr) {
+        setMsg('Account created. Please sign in.');
+        navigate('/login', { replace: true });
+        return;
+      }
+
+      navigate('/consent', { replace: true });
+    } else {
+      setMsg(data?.error || `Registration failed (${res.status})`);
+      try {
+        captchaRef.current?.resetCaptcha();
+        setCaptchaToken(null);
+      } catch {}
+    }
+  } finally {
+    setBusy(false);
+  }
+}
+
+
+  return (
+    <div className="max-w-xl mx-auto p-4">
+      <h1 className="text-2xl font-semibold mb-4">Create your WellFit account</h1>
+
+      <div className="grid gap-3">
+        <div className="grid grid-cols-2 gap-3">
+          <input className="border p-2 rounded" placeholder="First name" value={first} onChange={(e)=>setFirst(e.target.value)} />
+          <input className="border p-2 rounded" placeholder="Last name" value={last} onChange={(e)=>setLast(e.target.value)} />
+        </div>
+        <input className="border p-2 rounded" placeholder="Phone (+E.164)" value={phone} onChange={(e)=>setPhone(e.target.value)} />
+        <input className="border p-2 rounded" placeholder="Email (optional)" value={email} onChange={(e)=>setEmail(e.target.value)} />
+        <input className="border p-2 rounded" type="password" placeholder="Password (8+ chars, mix recommended)" value={password} onChange={(e)=>setPassword(e.target.value)} />
+
+        {SITE_KEY ? (
+          <HCaptcha
+            ref={captchaRef}
+            sitekey={SITE_KEY}
+            onVerify={(t) => setCaptchaToken(t)}
+            onExpire={() => setCaptchaToken(null)}
+          />
+        ) : (
+          <p className="text-sm text-red-600">Missing hCaptcha site key env.</p>
+        )}
+
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={consent} onChange={(e)=>setConsent(e.target.checked)} />
+          I agree to the Terms &amp; Privacy.
+        </label>
+
+        <button
+          className="bg-black text-white rounded p-2 disabled:opacity-50"
+          disabled={busy || !canSubmit}
+          onClick={submitRegister}
+        >
+          {busy ? 'Creating…' : 'Create account'}
+        </button>
+
+        {msg && <div className="text-sm text-red-600 whitespace-pre-wrap">{msg}</div>}
+      </div>
+
+      {/* Admin enroll lives below the public form */}
+      <AdminEnrollPanel />
+    </div>
+  );
+}
+>>>>>>> 7c554e4 (Reverse-merge main; Postgres 17 + migrations safety updates)

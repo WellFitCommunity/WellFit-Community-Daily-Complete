@@ -3,20 +3,18 @@ import { serve } from "https://deno.land/std@0.183.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.28.0";
 import { z } from "https://esm.sh/zod@3.21.4";
 
-// ──── ENVIRONMENT VALIDATION ────────────────────────────────────────────────
+// ─── ENV ─────────────────────────────────────────────────────────────────────
 const SUPABASE_URL              = Deno.env.get("SUPABASE_URL");
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 const SUPABASE_ANON_KEY         = Deno.env.get("SUPABASE_ANON_KEY");
-
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !SUPABASE_ANON_KEY) {
   throw new Error("Missing required Supabase environment variables");
 }
 
-// ──── CLIENTS ────────────────────────────────────────────────────────────────
-const supabaseService = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-const supabaseAnon    = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const sSvc  = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+const sAnon = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ──── INPUT SCHEMA ────────────────────────────────────────────────────────────
+// ─── Input schema ────────────────────────────────────────────────────────────
 const EnrollSchema = z.object({
   phone:      z.string().regex(/^\+\d{10,15}$/, "Must be full E.164 number"),
   password:   z.string().min(8, "Password must be at least 8 characters"),
@@ -25,95 +23,94 @@ const EnrollSchema = z.object({
   email:      z.string().email().optional(),
 });
 
-// ──── FUNCTION ───────────────────────────────────────────────────────────────
+// ─── Helper: get caller + roles ─────────────────────────────────────────────
+async function getCaller(req: Request) {
+  const hdr = req.headers.get("Authorization") || "";
+  const token = hdr.startsWith("Bearer ") ? hdr.slice(7) : "";
+  if (!token) return { id: null as string | null, roles: [] as string[] };
+
+  const { data, error } = await sAnon.auth.getUser(token);
+  const id = data?.user?.id ?? null;
+  if (error || !id) return { id: null, roles: [] };
+
+  // NOTE: if your roles column is "role" instead of "name", change r.role here
+  const { data: rows } = await sSvc
+    .from("user_roles")
+    .select("roles!inner(name)")
+    .eq("user_id", id);
+
+  const roles = (rows ?? []).map((r: any) => r.roles?.name).filter(Boolean);
+  return { id, roles };
+}
+
+// ─── Function ────────────────────────────────────────────────────────────────
 serve(async (req) => {
   const headers = new Headers({
-    "Content-Type":               "application/json",
-    "Access-Control-Allow-Origin":  req.headers.get("Origin") ?? "*",
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": req.headers.get("Origin") ?? "*",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
   });
-  
-  if (req.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers });
-  }
-  if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers });
-  }
+
+  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers });
+  if (req.method !== "POST")   return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers });
 
   try {
-    // ──── AUTHENTICATE & AUTHORIZE ─────────────────────────────────────────────
-    const authHeader = req.headers.get("Authorization") || "";
-    if (!authHeader.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Missing Authorization header" }), { status: 401, headers });
-    }
-    const jwt = authHeader.split(" ")[1];
-    const { data: { user }, error: userErr } = await supabaseAnon.auth.getUser(jwt);
-    if (userErr || !user) {
-      return new Response(JSON.stringify({ error: "Invalid or expired token" }), { status: 401, headers });
-    }
+    // 1) AuthZ: must be admin or super_admin (switch to only super_admin if you prefer)
+    const { id: adminId, roles } = await getCaller(req);
+    if (!adminId) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
+    const isAllowed = roles.includes("admin") || roles.includes("super_admin");
+    if (!isAllowed) return new Response(JSON.stringify({ error: "Insufficient privileges" }), { status: 403, headers });
 
-    // Check for super_admin role
-    const { data: roleRecord, error: roleErr } = await supabaseService
-      .from("user_roles")
-      .select("roles(name)")
-      .eq("user_id", user.id)
-      .eq("roles.name", "super_admin")
-      .single();
-    if (roleErr || !roleRecord) {
-      return new Response(JSON.stringify({ error: "Insufficient privileges" }), { status: 403, headers });
-    }
-
-    // ──── VALIDATE INPUT ───────────────────────────────────────────────────────
+    // 2) Validate input
     const body = await req.json();
-    const parseResult = EnrollSchema.safeParse(body);
-    if (!parseResult.success) {
-      return new Response(
-        JSON.stringify({ error: parseResult.error.errors[0].message }),
-        { status: 400, headers }
-      );
+    const parsed = EnrollSchema.safeParse(body);
+    if (!parsed.success) {
+      return new Response(JSON.stringify({ error: parsed.error.errors[0].message }), { status: 400, headers });
     }
-    const { phone, password, first_name, last_name, email } = parseResult.data;
+    const { phone, password, first_name, last_name, email } = parsed.data;
 
-    // ──── CREATE AUTH USER ─────────────────────────────────────────────────────
-    const { data: newAuthUser, error: authErr } = await supabaseService.auth.admin.createUser({
+    // 3) Create auth user (server)
+    const { data: ures, error: uerr } = await sSvc.auth.admin.createUser({
       phone,
       password,
-      user_metadata: { first_name, last_name },
+      email: email || undefined,
       phone_confirm: true,
+      email_confirm: email ? true : undefined,
+      user_metadata: { role: "senior", first_name, last_name },
     });
-    if (authErr || !newAuthUser) {
-      return new Response(JSON.stringify({ error: authErr?.message ?? "User creation failed" }), { status: 400, headers });
+    if (uerr || !ures?.user) {
+      const msg = uerr?.message ?? "User creation failed";
+      return new Response(JSON.stringify({ error: msg }), { status: 400, headers });
+    }
+    const newUserId = ures.user.id;
+
+    // 4) Insert profile with PK == auth.users.id  (CRITICAL)
+    //    If your schema still has a separate user_id column, migrate off it.
+    const { error: perr } = await sSvc.from("profiles").insert({
+      id: newUserId,                // <-- key fix: profiles.id = auth.users.id
+      phone,
+      first_name,
+      last_name,
+      email: email ?? null,
+      authenticated: true,
+      verified: true,
+      created_at: new Date().toISOString(),
+    });
+    if (perr) {
+      // Cleanup orphan to keep DB consistent
+      await sSvc.auth.admin.deleteUser(newUserId).catch(() => {});
+      return new Response(JSON.stringify({ error: perr.message ?? "Profile insertion failed" }), { status: 500, headers });
     }
 
-    // ──── INSERT PROFILE ───────────────────────────────────────────────────────
-    const { data: profile, error: profileErr } = await supabaseService
-      .from("profiles")
-      .insert([{
-        user_id:    newAuthUser.id,
-        phone,
-        first_name,
-        last_name,
-        email:      email ?? null,
-        created_at: new Date().toISOString(),
-      }])
-      .select()
-      .single();
-    if (profileErr || !profile) {
-      return new Response(JSON.stringify({ error: profileErr?.message ?? "Profile insertion failed" }), { status: 500, headers });
-    }
+    // 5) Audit log (recommended)
+    await sSvc.from("admin_enroll_audit").insert({ admin_id: adminId, user_id: newUserId }).catch(() => {});
 
-    // ──── SUCCESS ──────────────────────────────────────────────────────────────
-    return new Response(
-      JSON.stringify({ success: true, user_id: newAuthUser.id }),
-      { status: 201, headers }
-    );
+    return new Response(JSON.stringify({ success: true, user_id: newUserId }), { status: 201, headers });
 
   } catch (err: any) {
     console.error("EnrollClient Error:", err);
-    return new Response(
-      JSON.stringify({ error: err.message ?? "Internal server error" }),
-      { status: err.status || 500, headers }
-    );
+    return new Response(JSON.stringify({ error: err?.message ?? "Internal server error" }), { status: 500, headers });
   }
 });
+ 

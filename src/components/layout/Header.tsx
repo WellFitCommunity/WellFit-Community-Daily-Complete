@@ -1,15 +1,22 @@
+// src/components/layout/Header.tsx
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { useBranding } from '../../BrandingContext';
+import { useIsAdmin } from '../../hooks/useIsAdmin'; // <-- NEW
 
 const Header: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const branding = useBranding();
+  const location = useLocation();
+  const isAdmin = useIsAdmin(); // <-- check admin status
+
+  // Hide staff link if already inside /admin routes
+  const showStaffLink = !location.pathname.startsWith('/admin');
 
   // Determine if the primary color is dark for text contrast
   const isPrimaryColorDark = (): boolean => {
-    const color = branding.primaryColor.replace('#', '');
+    const color = (branding.primaryColor || '#003865').replace('#', '');
     const r = parseInt(color.substring(0, 2), 16);
     const g = parseInt(color.substring(2, 4), 16);
     const b = parseInt(color.substring(4, 6), 16);
@@ -18,15 +25,15 @@ const Header: React.FC = () => {
   };
 
   const textColor = isPrimaryColorDark() ? 'text-white' : 'text-gray-800';
-  const linkHoverColor = branding.secondaryColor; // used for hover state
+  const linkHoverColor = branding.secondaryColor || '#ffffff';
   const hoverClass = `hover:text-[${linkHoverColor}]`;
 
   return (
-    <header style={{ backgroundColor: branding.primaryColor }} className="shadow-md">
+    <header style={{ backgroundColor: branding.primaryColor || '#003865' }} className="shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo / Title */}
-          <div className={`flex items-center ${textColor} text-xl font-bold`}>  
+          <div className={`flex items-center ${textColor} text-xl font-bold`}>
             {branding.logoUrl && (
               <img
                 src={branding.logoUrl}
@@ -51,6 +58,21 @@ const Header: React.FC = () => {
             <Link to="/self-reporting" className={`${textColor} ${hoverClass} transition`}>
               Self Report
             </Link>
+
+            {/* Show Admin Panel if admin */}
+            {isAdmin === true && (
+              <Link to="/admin" className={`${textColor} ${hoverClass} transition`}>
+                Admin Panel
+              </Link>
+            )}
+
+            {/* Show Staff Login if NOT admin */}
+            {showStaffLink && isAdmin === false && (
+              <Link to="/admin-login" className={`${textColor} ${hoverClass} transition`}>
+                Staff Login
+              </Link>
+            )}
+
             <Link to="/logout" className="text-red-300 hover:text-red-500 transition">
               Log Out
             </Link>
@@ -80,7 +102,7 @@ const Header: React.FC = () => {
       {menuOpen && (
         <nav
           className="md:hidden px-4 pb-4 space-y-2"
-          style={{ backgroundColor: branding.primaryColor }}
+          style={{ backgroundColor: branding.primaryColor || '#003865' }}
         >
           <Link
             to="/dashboard"
@@ -110,6 +132,29 @@ const Header: React.FC = () => {
           >
             Self Report
           </Link>
+
+          {/* Admin Panel if admin */}
+          {isAdmin === true && (
+            <Link
+              to="/admin"
+              onClick={() => setMenuOpen(false)}
+              className={`block ${textColor} ${hoverClass} transition`}
+            >
+              Admin Panel
+            </Link>
+          )}
+
+          {/* Staff Login if NOT admin */}
+          {showStaffLink && isAdmin === false && (
+            <Link
+              to="/admin-login"
+              onClick={() => setMenuOpen(false)}
+              className={`block ${textColor} ${hoverClass} transition`}
+            >
+              Staff Login
+            </Link>
+          )}
+
           <Link
             to="/logout"
             onClick={() => setMenuOpen(false)}
@@ -133,4 +178,3 @@ const Header: React.FC = () => {
 };
 
 export default Header;
-

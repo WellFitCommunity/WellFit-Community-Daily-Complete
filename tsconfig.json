@@ -1,24 +1,22 @@
 {
   "compilerOptions": {
-    "target": "es2017",                          // For async/await support
-    "lib": ["dom", "dom.iterable", "esnext"],    // DOM + modern JS APIs
-    "allowJs": true,                             // Allow JS files alongside TS
-    "skipLibCheck": true,                        // Skip checking declaration files
-    "esModuleInterop": true,                     // Interop for CommonJS modules
-    "allowSyntheticDefaultImports": true,        // Default imports from modules without defaults
-    "strict": true,                              // Enable all strict type-checking options
+    "target": "ES2020",
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
-    "module": "esnext",                          // Modern ES modules
-    "moduleResolution": "node",                  // Resolve modules like Node.js
-    "resolveJsonModule": true,                   // Import JSON files
-    "isolatedModules": true,                     // Ensure each file can be transpiled in isolation
-    "noEmit": true,                              // Don’t emit JS (CRA handles this)
-    "jsx": "react-jsx",                          // React 17+ JSX transform
-    "baseUrl": "src"                             // Absolute imports start from src/
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "baseUrl": "src"
   },
-  "include": [
-    "src",                                       // Your React app code
-    "supabase/functions/**/*.ts"                 // Your Edge Function code
-  ]
+  "include": ["src"],
+  "exclude": ["supabase/functions", "node_modules", "build", "dist"]
 }
