@@ -9,7 +9,8 @@ import { BrandingConfig, getCurrentBranding } from './branding.config';
 import { BrandingContext } from './BrandingContext';
 
 import DemoBanner from './components/layout/DemoBanner';
-import Header from './components/layout/Header';
+import Header from './components/layout/GlobalHeader';
+import AppHeader from './components/layout/AppHeader';
 import Footer from './components/layout/Footer';
 
 import RequireAuth from './components/auth/RequireAuth';
@@ -52,6 +53,7 @@ const App: React.FC = () => {
 
   return (
     <AuthProvider>
+      <AppHeader />
       <DemoModeProvider>
         <BrandingContext.Provider value={branding}>
           <AdminAuthProvider>
