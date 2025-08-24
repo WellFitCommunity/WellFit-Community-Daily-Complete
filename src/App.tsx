@@ -19,6 +19,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import NotFoundPage from './components/NotFoundPage';
 import AdminLoginPage from './pages/AdminLoginPage';
+import LoginPage from './pages/LoginPage';
 import ChangePasswordPage from './pages/ChangePasswordPage';
 
 // Lazy-loaded pages/components
@@ -67,6 +68,7 @@ const App: React.FC = () => {
                   <Route path="/terms" element={<TermsOfService />} />
                   <Route path="/change-password" element={<ChangePasswordPage />} />
                   <Route path="/admin-login" element={<AdminLoginPage />} />
+                  <Route path="/login" element={<LoginPage />} />
 
                   {/* Protected Routes */}
                   <Route path="/dashboard" element={<RequireAuth><DashboardPage /></RequireAuth>} />
