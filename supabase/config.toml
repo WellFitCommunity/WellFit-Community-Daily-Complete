@@ -1,0 +1,8 @@
+project_id = "xkybsjnvuohpqpbkikyn"
+
+[functions]
+
+# region = "iad1"
+
+[functions.register]
+verify_jwt = false

@@ -1,55 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <!-- Security Headers -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://js.hcaptcha.com https://*.hcaptcha.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co https://*.hcaptcha.com wss://*.supabase.co; frame-src https://*.hcaptcha.com; img-src 'self' data: https:; font-src 'self' data:;">
-    <meta http-equiv="Strict-Transport-Security" content="max-age=63072000; includeSubDomains; preload">
-    <meta http-equiv="X-Frame-Options" content="DENY">
-    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
-    <!-- End Security Headers -->
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+  <meta charset="UTF-8" />
+  <!-- DEV-ONLY CSP (Codespaces workaround)
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src 'self' 'unsafe-inline' https://*.hcaptcha.com https://hcaptcha.com;
+  style-src 'self' 'unsafe-inline';
+  img-src 'self' data: https://*.hcaptcha.com https://hcaptcha.com;
+  frame-src https://*.hcaptcha.com https://hcaptcha.com;
+  connect-src 'self'
+               https://*.supabase.co https://*.hcaptcha.com
+               https://*.app.github.dev
+               wss://*.supabase.co wss://*.app.github.dev
+               ws://localhost:*;
+  manifest-src 'self' https://*.app.github.dev https://*.github.dev https://github.dev;
+">
+-->
 
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
 
-    <!-- App Identity -->
-    <meta name="application-name" content="WellFit Community" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="WellFit Community" />
-    <meta name="theme-color" content="#003865" />
 
-    <!-- Descriptive Meta -->
-    <meta name="description" content="Strong Seniors. Stronger Community. The WellFit app helps you stay healthy, informed, and connected." />
-    <meta name="keywords" content="senior wellness, WellFit Community, health tracking, fitness, aging" />
-    <meta name="author" content="WellFit Community" />
+  <!-- Remove these from meta; set as real headers in production only
+       <meta http-equiv="Strict-Transport-Security" ...>
+       <meta http-equiv="X-Frame-Options" ...>
+       <meta http-equiv="Referrer-Policy" ...>
+  -->
 
-    <!-- Social Media -->
-    <meta property="og:title" content="WellFit Community App" />
-    <meta property="og:description" content="Track your wellness, meals, check-ins and more. Built for seniors, with love." />
-    <meta property="og:image" content="/icons/icon-512x512.png" />
-    <meta property="og:url" content="https://your-app.vercel.app" />
-    <meta name="twitter:card" content="summary_large_image" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Icons -->
-    <link rel="icon" type="image/png" href="/icons/icon-192x192.png" sizes="192x192" />
-    <link rel="apple-touch-icon" href="/icons/icon-512x512.png" />
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
 
-    <title>WellFit Community</title>
+  <!-- App Identity -->
+  <meta name="application-name" content="WellFit Community" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="WellFit Community" />
+  <meta name="theme-color" content="#003865" />
 
-    <!-- hCaptcha explicit render setup -->
-    <script>
-      // Define a no-op; React will override with the real handler
-      window.hcaptchaOnLoad = window.hcaptchaOnLoad || function() {};
-    </script>
-    <script
-      src="https://js.hcaptcha.com/1/api.js?onload=hcaptchaOnLoad&render=explicit"
-      async defer
-    ></script>
-  </head>
+  <!-- Descriptive Meta -->
+  <meta name="description" content="Strong Seniors. Stronger Community. The WellFit app helps you stay healthy, informed, and connected." />
+  <meta name="keywords" content="senior wellness, WellFit Community, health tracking, fitness, aging" />
+  <meta name="author" content="WellFit Community" />
+
+  <!-- Social Media -->
+  <meta property="og:title" content="WellFit Community App" />
+  <meta property="og:description" content="Track your wellness, meals, check-ins and more. Built for seniors, with love." />
+  <meta property="og:image" content="/icons/icon-512x512.png" />
+  <meta property="og:url" content="https://your-app.vercel.app" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <!-- Icons -->
+  <link rel="icon" type="image/png" href="/icons/icon-192x192.png" sizes="192x192" />
+  <link rel="apple-touch-icon" href="/icons/icon-512x512.png" />
+
+  <title>WellFit Community</title>
+
+  <!-- hCaptcha explicit render (fine for dev) -->
+  <script>
+    window.hcaptchaOnLoad = window.hcaptchaOnLoad || function() {};
+  </script>
+  <script src="https://js.hcaptcha.com/1/api.js?onload=hcaptchaOnLoad&render=explicit" async defer></script>
+</head>
+
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
