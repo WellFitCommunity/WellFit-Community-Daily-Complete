@@ -1,6 +1,6 @@
 // src/components/Dashboard.tsx
 import * as React from 'react';
-import Card from '../components/ui/Card';
+import Card from '../components/ui/PrettyCard';
 import { useNavigate } from 'react-router-dom';
 import { useBranding } from '../BrandingContext';
 import WeatherWidget from '../components/dashboard/WeatherWidget';
