@@ -1,3 +1,4 @@
+// src/pages/VerifyCodePage.tsx
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
@@ -6,7 +7,6 @@ type LocState = { phone?: string } | null;
 
 const WELLFIT_BLUE = '#003865';
 const WELLFIT_GREEN = '#8cc63f';
-
 const E164 = /^\+\d{10,15}$/;
 
 export default function VerifyCodePage() {
@@ -14,19 +14,18 @@ export default function VerifyCodePage() {
   const location = useLocation();
   const state = (location.state as LocState) || null;
 
-  // Prefer phone passed from the previous step, allow manual entry as fallback
   const [phone, setPhone] = useState<string>(state?.phone ?? '');
   const [code, setCode] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
 
-  // Resend cooldown (in seconds)
+  // resend cooldown
   const RESEND_COOLDOWN = 45;
   const [cooldown, setCooldown] = useState<number>(RESEND_COOLDOWN);
 
   const phoneIsValid = useMemo(() => E164.test(phone.trim()), [phone]);
 
-  // If already logged in, skip
+  // If already logged in, skip (safe to keep)
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) navigate('/dashboard', { replace: true });
@@ -34,7 +33,7 @@ export default function VerifyCodePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Start a cooldown timer only if we got here with a phone from the previous step
+  // Start timer if we arrived with a phone from the previous step
   useEffect(() => {
     if (!state?.phone) return;
     setCooldown(RESEND_COOLDOWN);
@@ -48,7 +47,7 @@ export default function VerifyCodePage() {
     setError('');
 
     const cleanPhone = phone.trim();
-    const cleanCode = code.replace(/\D/g, '').trim(); // digits only
+    const cleanCode = code.replace(/\D/g, '').trim();
 
     if (!E164.test(cleanPhone)) {
       setError('Enter a valid phone number in E.164 format (e.g. +15551234567).');
@@ -61,22 +60,19 @@ export default function VerifyCodePage() {
 
     setLoading(true);
     try {
-      const { error: otpError } = await supabase.auth.verifyOtp({
-        phone: cleanPhone,
-        token: cleanCode,
-        type: 'sms',
+      const { data, error } = await supabase.functions.invoke('sms-verify-code', {
+        body: { phone: cleanPhone, code: cleanCode },
       });
-      if (otpError) throw otpError;
 
-      // Double-check we actually have a session
-      const { data: { session }, error: sessErr } = await supabase.auth.getSession();
-      if (sessErr) throw sessErr;
-      if (!session) throw new Error('Verification succeeded but no session was created.');
+      if (error || !data?.ok) {
+        throw new Error(error?.message || data?.error || 'Invalid or expired code.');
+      }
 
+      // Twilio verification does NOT create a Supabase session.
+      // Continue your post-verify flow (you chose /demographics).
       navigate('/demographics', { replace: true });
     } catch (e: any) {
-      const msg = e?.message || 'Invalid or expired code. Please try again.';
-      setError(msg);
+      setError(e?.message || 'Invalid or expired code. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -91,12 +87,10 @@ export default function VerifyCodePage() {
     }
 
     try {
-      // Re-send OTP. Adjust shouldCreateUser depending on your signup flow.
-      const { error: sendErr } = await supabase.auth.signInWithOtp({
-        phone: cleanPhone,
-        options: { channel: 'sms', shouldCreateUser: true },
+      const { error } = await supabase.functions.invoke('sms-send-code', {
+        body: { phone: cleanPhone },
       });
-      if (sendErr) throw sendErr;
+      if (error) throw error;
 
       setCooldown(RESEND_COOLDOWN);
     } catch (e: any) {
@@ -111,7 +105,6 @@ export default function VerifyCodePage() {
       </h2>
 
       <form className="w-full space-y-4" onSubmit={handleVerify} noValidate>
-        {/* Phone field only if not provided by previous step, but always editable if they need to fix it */}
         <div>
           <label htmlFor="phone" className="block font-semibold mb-1" style={{ color: WELLFIT_BLUE }}>
             Phone Number (E.164)
@@ -130,7 +123,9 @@ export default function VerifyCodePage() {
             aria-invalid={!phoneIsValid}
           />
           {!phoneIsValid && phone && (
-            <p className="mt-1 text-sm text-red-600">Format must be +countrycode and digits (e.g. +15551234567).</p>
+            <p className="mt-1 text-sm text-red-600">
+              Format must be +countrycode and digits (e.g. +15551234567).
+            </p>
           )}
         </div>
 
