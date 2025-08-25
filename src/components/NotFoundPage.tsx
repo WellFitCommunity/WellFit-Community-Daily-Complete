@@ -1,7 +1,7 @@
 // src/components/NotFoundPage.tsx
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import Card from '../components/ui/Card';
+import Card from '../components/ui/PrettyCard';
 import PageLayout from '../components/ui/PageLayout';
 
 const NotFoundPage: React.FC = () => {
