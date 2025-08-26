@@ -17,6 +17,6 @@
     "jsx": "react-jsx",
     "baseUrl": "src"
   },
-  "include": ["src"],
+  "include": ["src", "src/serviceWorkerRegistration.ts"],
   "exclude": ["supabase/functions", "node_modules", "build", "dist"]
 }
