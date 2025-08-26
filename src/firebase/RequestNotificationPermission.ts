@@ -1,88 +1,67 @@
-import { getToken, onMessage } from 'firebase/messaging';
-import { messaging } from '../firebase'; // Adjust path if your firebase.ts is elsewhere
+// src/firebase.ts
+import { getApps, getApp, initializeApp, type FirebaseApp } from 'firebase/app';
+import { getMessaging, isSupported, type Messaging, getToken } from 'firebase/messaging';
 
-const vapidKey = process.env.REACT_APP_FIREBASE_VAPID_KEY; // Must be set in your .env or Vercel env vars
+type Maybe<T> = T | null;
 
-/**
- * Requests browser notification permission and retrieves FCM token from Firebase Messaging.
- * Returns the token string if permission granted, or null if denied.
- */
-export const requestNotificationPermission = async (): Promise<string | null> => {
-  // Safely check that messaging is defined
-  if (typeof window === 'undefined' || !messaging || typeof Notification === "undefined" || Notification.permission === 'denied') {
-    console.warn('Notifications not supported or permission denied.');
-    return null;
-  }
+const cfg = {
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID,
+  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID, // optional
+};
+
+const hasConfig =
+  !!cfg.apiKey && !!cfg.authDomain && !!cfg.projectId &&
+  !!cfg.storageBucket && !!cfg.messagingSenderId && !!cfg.appId;
+
+let app: Maybe<FirebaseApp> = null;
+
+/** Safe singleton Firebase app (no crashes if config missing) */
+function getFirebaseApp(): Maybe<FirebaseApp> {
+  if (!hasConfig) return null;
+  if (app) return app;
+  app = getApps().length ? getApp() : initializeApp(cfg as any);
+  return app;
+}
+
+/** Get Messaging instance if supported and configured (no SW auto-registration here) */
+export async function getFirebaseMessaging(): Promise<Messaging | null> {
+  if (typeof window === 'undefined') return null;
+  const app = getFirebaseApp();
+  if (!app) return null;
+
+  const supported = await isSupported().catch(() => false);
+  if (!supported) return null;
 
   try {
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') {
-      console.log('Notification permission denied');
-      return null;
-    }
-    if (!vapidKey) {
-      throw new Error('VAPID key is missing. Set REACT_APP_FIREBASE_VAPID_KEY in your environment variables.');
-    }
-
-    const token = await getToken(messaging, { vapidKey });
-    if (token) {
-      console.log('FCM Token:', token);
-      // Attempt to save the token to the backend
-      try {
-        // Assuming supabase client is available, e.g., imported or via context
-        // This requires the user to be authenticated for supabase.auth.getUser() to work
-        // and for the RLS policies on fcm_tokens to allow insert.
-        const { supabase } = await import('../lib/supabaseClient'); // Dynamic import or ensure it's available
-        const { data: { user } } = await supabase.auth.getUser();
-
-        if (user) {
-          const { error: saveError } = await supabase.functions.invoke('save-fcm-token', {
-            body: { fcm_token: token, device_info: navigator.userAgent },
-          });
-          if (saveError) {
-            console.error('Failed to save FCM token to backend:', saveError);
-          } else {
-            console.log('FCM token saved to backend successfully.');
-          }
-        } else {
-          console.warn('User not authenticated, cannot save FCM token to backend.');
-        }
-      } catch (e) {
-        console.error('Error during FCM token save process:', e);
-      }
-      return token;
-    } else {
-      console.warn('No FCM token returned.');
-      return null;
-    }
-  } catch (err) {
-    console.error('Error getting FCM token:', err);
+    return getMessaging(app);
+  } catch {
     return null;
   }
-};
+}
 
-/**
- * Listen for foreground push messages (call in your App root/componentDidMount).
- * You can display a toast, dialog, or update UI as needed here.
- */
-export const listenForMessages = () => {
-  // Safely check messaging is defined and window is available
-  if (typeof window !== 'undefined' && messaging) {
-    onMessage(messaging, payload => {
-      console.log('Message received in foreground:', payload);
-      // Basic alert to show foreground message.
-      // Replace with a proper toast notification (e.g., using react-toastify) for better UX.
-      let title = "New Message";
-      let body = "You have a new message.";
-      if (payload.notification) {
-        title = payload.notification.title || title;
-        body = payload.notification.body || body;
-      } else if (payload.data) { // Check data payload if notification is not present
-        title = payload.data.title || title;
-        body = payload.data.body || body;
-      }
-      alert(`${title}\n\n${body}`);
-    });
+/** Optional helper to obtain an FCM token (returns null if unsupported/denied/missing VAPID) */
+export async function getFcmToken(): Promise<string | null> {
+  const msg = await getFirebaseMessaging();
+  if (!msg) return null;
+
+  const vapidKey = process.env.REACT_APP_FIREBASE_VAPID_KEY;
+  if (!vapidKey) return null;
+
+  try {
+    const t = await getToken(msg, { vapidKey });
+    return t ?? null;
+  } catch {
+    return null;
   }
-};
+}
 
+/** Compile-time shim: if any old code imports { messaging } it won't crash. Prefer using getFirebaseMessaging(). */
+export const messaging: Messaging | null = null;
+
+/** ✅ Alias so existing imports work: `import { initFirebaseMessaging } from '../firebase'` */
+export { getFirebaseMessaging as initFirebaseMessaging };
