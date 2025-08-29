@@ -146,7 +146,7 @@ const RegisterPage: React.FC = () => {
       setSubmitError(e.message);
       // Some RHF typings bark at 'root'—guard with as any to avoid noise.
       setError('root' as any, { type: 'manual', message: e.message });
-      hcaptchaRef.current?.resetCaptcha();
+      (hcaptchaRef.current as any)?.reset();
       toast.error(e.message);
     }
   };
