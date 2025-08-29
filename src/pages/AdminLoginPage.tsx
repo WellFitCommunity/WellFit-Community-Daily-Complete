@@ -1,15 +1,17 @@
+// src/pages/AdminLoginPage.tsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useAdminAuth } from '../contexts/AdminAuthContext';
-import { supabase } from '../lib/supabaseClient';
+import { useSupabaseClient } from '../lib/supabaseClient';
 
 type AdminRole = 'admin' | 'super_admin';
 
 export default function AdminLoginPage() {
   const navigate = useNavigate();
+  const supabase = useSupabaseClient();
 
-  // You already have these contexts – keeping them as you wrote
+  // Keep your existing contexts
   const { user, isAdmin } = useAuth(); // session + boolean flag
   const { verifyPinAndLogin, isLoading, error } = useAdminAuth(); // PIN verify API + state
 
@@ -60,8 +62,8 @@ export default function AdminLoginPage() {
       setLocalErr('Incorrect PIN.');
       return;
     }
-    // ✅ Go to the actual panel route after successful unlock
-    navigate('/admin/panel', { replace: true });
+    // Route to your actual admin panel route (App.tsx maps it to "/admin")
+    navigate('/admin', { replace: true });
   }
 
   return (
@@ -146,3 +148,4 @@ export default function AdminLoginPage() {
     </div>
   );
 }
+

@@ -1,7 +1,6 @@
 {
   "name": "wellfit-community-daily",
   "version": "0.1.0",
-  "type": "module",
   "private": true,
   "dependencies": {
     "@hcaptcha/react-hcaptcha": "^1.12.1",
@@ -69,21 +68,20 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "serve:register": "npx supabase functions serve --env-file ./supabase/.env.local --no-verify-jwt",
-    "dev": "react-scripts start",
+    "start:cs": "PORT=3000 BROWSER=none WDS_SOCKET_HOST=0.0.0.0 WDS_SOCKET_PORT=3000 CHOKIDAR_USEPOLLING=true react-scripts start",
+    "start:cs-debug": "CI=true DISABLE_ESLINT_PLUGIN=true CHOKIDAR_USEPOLLING=true PORT=3000 BROWSER=none WDS_SOCKET_HOST=0.0.0.0 WDS_SOCKET_PORT=3000 react-scripts start -- --progress",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "import:meals": "ts-node src/scripts/importMeals.ts",
+    "serve:register": "npx supabase functions serve --env-file ./supabase/.env.local --no-verify-jwt",
+    "import:meals": "ts-node scripts/importMeals.ts",
     "deploy:register": "npx supabase functions deploy register",
     "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\"",
     "sb:version": "npx -y supabase@latest --version",
     "sb:migrations": "npx -y supabase@latest migration list",
     "sb:start": "npx -y supabase@latest start -x edge-runtime",
     "sb:diff": "npx -y supabase@latest db diff -f rls-hardening --debug",
-    "sb:stop": "npx -y supabase@latest stop",
-    "start:cs": "HOST=0.0.0.0 PORT=3000 BROWSER=none WDS_SOCKET_HOST=localhost WDS_SOCKET_PORT=443 CHOKIDAR_USEPOLLING=true react-scripts start",
-    "start:cs-debug": "CI=true DISABLE_ESLINT_PLUGIN=true CHOKIDAR_USEPOLLING=true HOST=0.0.0.0 PORT=3000 BROWSER=none WDS_SOCKET_HOST=localhost WDS_SOCKET_PORT=443 react-scripts start -- --progress"
+    "sb:stop": "npx -y supabase@latest stop"
   },
   "browserslist": {
     "production": [

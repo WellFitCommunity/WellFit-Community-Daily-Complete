@@ -1,15 +1,10 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+// src/lib/supabaseClient.ts
+// Do NOT create another client here.
+// The single Supabase client is created in index.tsx.
+// Re-export hooks so existing imports still work.
 
-const url  = process.env.REACT_APP_SUPABASE_URL || '';
-const anon = process.env.REACT_APP_SUPABASE_ANON_KEY || '';
-
-// Keep exactly one instance across hot reloads
-declare global {
-  // eslint-disable-next-line no-var
-  var __supabase__: SupabaseClient | undefined;
-}
-
-export const supabase: SupabaseClient =
-  (globalThis as any).__supabase__ ?? createClient(url, anon);
-
-if (!(globalThis as any).__supabase__) (globalThis as any).__supabase__ = supabase;
+export {
+  useSupabaseClient,
+  useSession,
+  useUser,
+} from '@supabase/auth-helpers-react';
