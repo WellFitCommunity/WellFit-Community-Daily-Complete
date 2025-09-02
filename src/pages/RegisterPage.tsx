@@ -1,6 +1,6 @@
 // src/pages/RegisterPage.tsx
 import React, { useEffect, useRef, useState } from 'react';
-import { useForm, SubmitHandler, Resolver } from 'react-hook-form';
+import { useForm, SubmitHandler } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
@@ -11,8 +11,8 @@ import PrettyCard from '../components/ui/PrettyCard';
 type FormValues = {
   firstName: string;
   lastName: string;
-  phone: string;            // E.164 (+15551234567)
-  email: string | null;     // optional
+  phone: string;          // E.164 (+15551234567)
+  email?: string;         // optional; empty string allowed, transformed to undefined
   password: string;
   confirmPassword: string;
   consent: boolean;
@@ -26,33 +26,38 @@ const API_ENDPOINT =
   process.env.REACT_APP_API_ENDPOINT ??
   'https://xkybsjnvuohpqpbkikyn.supabase.co/functions/v1/register';
 
-const schema = yup
-  .object({
-    firstName: yup.string().required('First name is required.'),
-    lastName: yup.string().required('Last name is required.'),
-    phone: yup
-      .string()
-      .required('Phone number is required.')
-      .matches(/^\+\d{10,15}$/, 'Use E.164 format, e.g. +15551234567.'),
-    email: yup.string().email('Invalid email address.').nullable(),
-    password: yup
-      .string()
-      .required('Password is required.')
-      .min(8, 'At least 8 characters.')
-      .matches(/[A-Z]/, 'One uppercase letter.')
-      .matches(/\d/, 'One number.')
-      .matches(/[^A-Za-z0-9]/, 'One special character.'),
-    confirmPassword: yup
-      .string()
-      .oneOf([yup.ref('password')], 'Passwords must match.')
-      .required('Please confirm your password.'),
-    consent: yup
-      .boolean()
-      .oneOf([true], 'You must agree to proceed.')
-      .required(),
-    hcaptchaToken: yup.string().required('Captcha verification is required.'),
-  })
-  .required();
+// Explicitly type schema so resolver + RHF agree on FormValues
+const schema: yup.ObjectSchema<FormValues> = yup.object({
+  firstName: yup.string().required('First name is required.'),
+  lastName: yup.string().required('Last name is required.'),
+  phone: yup
+    .string()
+    .required('Phone number is required.')
+    .matches(/^\+\d{10,15}$/, 'Use E.164 format, e.g. +15551234567.'),
+  // accept empty string in UI but treat it as undefined
+  email: yup
+    .string()
+    .trim()
+    .transform((v) => (v === '' ? undefined : v))
+    .optional()
+    .email('Invalid email address.'),
+  password: yup
+    .string()
+    .required('Password is required.')
+    .min(8, 'At least 8 characters.')
+    .matches(/[A-Z]/, 'One uppercase letter.')
+    .matches(/\d/, 'One number.')
+    .matches(/[^A-Za-z0-9]/, 'One special character.'),
+  confirmPassword: yup
+    .string()
+    .oneOf([yup.ref('password')], 'Passwords must match.')
+    .required('Please confirm your password.'),
+  consent: yup
+    .boolean()
+    .oneOf([true], 'You must agree to proceed.')
+    .required(),
+  hcaptchaToken: yup.string().required('Captcha verification is required.'),
+}).required();
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
@@ -82,14 +87,13 @@ const RegisterPage: React.FC = () => {
       firstName: '',
       lastName: '',
       phone: '',
-      email: null,
+      email: '',                // empty string, not null
       password: '',
       confirmPassword: '',
       consent: false,
       hcaptchaToken: '',
     },
-    // Cast fixes the resolver typing error in strict TS projects
-    resolver: yupResolver(schema) as Resolver<FormValues>,
+    resolver: yupResolver<FormValues>(schema), // generic binds types
     mode: 'onBlur',
     reValidateMode: 'onChange',
   });
@@ -113,7 +117,7 @@ const RegisterPage: React.FC = () => {
         first_name: data.firstName,
         last_name: data.lastName,
         phone: data.phone,
-        email: data.email,
+        email: data.email, // may be undefined after transform; that’s fine
         password: data.password,
         consent: data.consent,
         hcaptcha_token: data.hcaptchaToken,
@@ -130,7 +134,7 @@ const RegisterPage: React.FC = () => {
         try {
           const j = await res.json();
           if (j?.error) msg = j.error;
-        } catch {/* ignore */}
+        } catch { /* ignore JSON parse errors */ }
         throw new Error(msg);
       }
 
@@ -140,8 +144,9 @@ const RegisterPage: React.FC = () => {
       const e = err instanceof Error ? err : new Error('Unknown error');
       console.error(e);
       setSubmitError(e.message);
-      setError('root', { type: 'manual', message: e.message });
-      hcaptchaRef.current?.resetCaptcha();
+      // Some RHF typings bark at 'root'—guard with as any to avoid noise.
+      setError('root' as any, { type: 'manual', message: e.message });
+      (hcaptchaRef.current as any)?.reset();
       toast.error(e.message);
     }
   };

@@ -15,7 +15,9 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "baseUrl": "src"
+    "baseUrl": "src",
+    "paths": {},
+    "typeRoots": ["./node_modules/@types", "./src/types"]
   },
   "include": ["src", "src/serviceWorkerRegistration.ts"],
   "exclude": ["supabase/functions", "node_modules", "build", "dist"]

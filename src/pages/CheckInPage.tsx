@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { useSupabaseClient,useSession } from '../lib/supabaseClient';
 
 interface CheckIn {
   timestamp: string;
@@ -18,6 +18,7 @@ interface EmotionOption {
 }
 
 const CheckInTracker: React.FC = () => { // Added React.FC
+  const supabase = useSupabaseClient();
   const [history, setHistory] = useState<CheckIn[]>([]);
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
   const [infoMessage, setInfoMessage] = useState<{ type?: 'success' | 'error' | 'info'; text?: string } | null>(null);

@@ -1,5 +1,6 @@
+// src/pages/SelfReportingPage.tsx
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { useSupabaseClient, useSession } from '../lib/supabaseClient';
 import { useBranding } from '../BrandingContext';
 import type { User } from '@supabase/supabase-js';
 
@@ -24,6 +25,8 @@ const MOOD_OPTIONS = ['Happy', 'Okay', 'Sad', 'Anxious', 'Tired'] as const;
 
 const SelfReportingPage: React.FC = () => {
   const branding = useBranding();
+  const supabase = useSupabaseClient();
+  const session = useSession();
 
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [mood, setMood] = useState('');
@@ -36,7 +39,7 @@ const SelfReportingPage: React.FC = () => {
 
   const [selfReports, setSelfReports] = useState<SelfReportLog[]>([]);
 
-  // --- Auth bootstrap + listener
+  // --- Auth bootstrap + listener (uses single app client)
   useEffect(() => {
     let mounted = true;
 
@@ -60,44 +63,46 @@ const SelfReportingPage: React.FC = () => {
       }
     })();
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
       if (!mounted) return;
-      setCurrentUser(session?.user ?? null);
+      setCurrentUser(newSession?.user ?? null);
     });
 
     return () => {
       mounted = false;
-      // @ts-ignore - supabase returns { data: { subscription } } in v2
       sub?.subscription?.unsubscribe?.();
     };
-  }, []);
+  }, [supabase]);
 
   // --- Fetch self reports for the current user
-  const fetchReports = useCallback(async (uid: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('self_reports')
-        .select('id, created_at, mood, symptoms, activity_description, user_id, submitted_by, entry_type')
-        .eq('user_id', uid)
-        .order('created_at', { ascending: false });
+  const fetchReports = useCallback(
+    async (uid: string) => {
+      try {
+        const { data, error } = await supabase
+          .from('self_reports')
+          .select('id, created_at, mood, symptoms, activity_description, user_id, submitted_by, entry_type')
+          .eq('user_id', uid)
+          .order('created_at', { ascending: false });
 
-      if (error) {
-        setErrorMessage('Error loading reports: ' + error.message);
+        if (error) {
+          setErrorMessage('Error loading reports: ' + error.message);
+          setSelfReports([]);
+          return;
+        }
+
+        const reports: SelfReportLog[] = (data ?? []).map((r: SelfReportData) => ({
+          ...r,
+          source_type: r.user_id === r.submitted_by ? 'self' : 'staff',
+        }));
+        setSelfReports(reports);
+      } catch (e) {
+        const err = e instanceof Error ? e : new Error('An unexpected error occurred while fetching reports.');
+        setErrorMessage(err.message);
         setSelfReports([]);
-        return;
       }
-
-      const reports: SelfReportLog[] = (data ?? []).map((r: SelfReportData) => ({
-        ...r,
-        source_type: r.user_id === r.submitted_by ? 'self' : 'staff',
-      }));
-      setSelfReports(reports);
-    } catch (e) {
-      const err = e instanceof Error ? e : new Error('An unexpected error occurred while fetching reports.');
-      setErrorMessage(err.message);
-      setSelfReports([]);
-    }
-  }, []);
+    },
+    [supabase]
+  );
 
   // When logged-in user changes, refresh their reports
   useEffect(() => {
@@ -121,7 +126,7 @@ const SelfReportingPage: React.FC = () => {
       setErrorMessage('Please select your current mood.');
       return;
     }
-    if (!MOOD_OPTIONS.includes(chosenMood as typeof MOOD_OPTIONS[number])) {
+    if (!MOOD_OPTIONS.includes(chosenMood as (typeof MOOD_OPTIONS)[number])) {
       setErrorMessage('Invalid mood selection.');
       return;
     }
@@ -130,12 +135,11 @@ const SelfReportingPage: React.FC = () => {
     try {
       const payload = {
         user_id: currentUser.id,
-        submitted_by: currentUser.id,           // required for source coloring and audit
+        submitted_by: currentUser.id, // required for source coloring and audit
         entry_type: 'self_report',
         mood: chosenMood,
         symptoms: symptoms.trim() || null,
         activity_description: activity.trim() || null,
-        // created_at: let DB default handle this
       };
 
       const { error } = await supabase.from('self_reports').insert(payload);
@@ -157,10 +161,10 @@ const SelfReportingPage: React.FC = () => {
 
   // --- UI helpers
   const colorForSource = (type: SourceType | string): string => {
-    if (type === 'self') return '#8cc63f';   // WellFit Green
-    if (type === 'staff') return '#ff9800';  // Orange
+    if (type === 'self') return '#8cc63f'; // WellFit Green
+    if (type === 'staff') return '#ff9800'; // Orange
     return '#bdbdbd';
-    };
+  };
 
   if (isLoading && !currentUser) {
     return (

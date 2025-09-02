@@ -1,7 +1,7 @@
 // src/pages/VerifyCodePage.tsx
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { supabase } from '../lib/supabaseClient';
+import { useSupabaseClient } from '../lib/supabaseClient';
 
 type LocState = { phone?: string } | null;
 
@@ -12,6 +12,7 @@ const E164 = /^\+\d{10,15}$/;
 export default function VerifyCodePage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const supabase = useSupabaseClient();
   const state = (location.state as LocState) || null;
 
   const [phone, setPhone] = useState<string>(state?.phone ?? '');
@@ -25,7 +26,7 @@ export default function VerifyCodePage() {
 
   const phoneIsValid = useMemo(() => E164.test(phone.trim()), [phone]);
 
-  // If already logged in, skip (safe to keep)
+  // If already logged in, skip
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) navigate('/dashboard', { replace: true });

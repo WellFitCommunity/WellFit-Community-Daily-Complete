@@ -1,13 +1,10 @@
+// src/pages/ChangePasswordPage.tsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.REACT_APP_SUPABASE_URL as string,
-  process.env.REACT_APP_SUPABASE_ANON_KEY as string
-);
+import { useSupabaseClient } from '../lib/supabaseClient';
 
 export default function ChangePasswordPage() {
+  const supabase = useSupabaseClient();
   const [pw1, setPw1] = useState('');
   const [pw2, setPw2] = useState('');
   const [error, setError] = useState('');
@@ -29,8 +26,9 @@ export default function ChangePasswordPage() {
     }
     setBusy(true);
     try {
-      // Must be signed in (kiosk or personal device)
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       const uid = session?.user?.id;
       if (!uid) {
         setError('Session expired. Please log in again.');
@@ -70,7 +68,7 @@ export default function ChangePasswordPage() {
           type="password"
           placeholder="New password"
           value={pw1}
-          onChange={e => setPw1(e.target.value)}
+          onChange={(e) => setPw1(e.target.value)}
           className="w-full p-3 border border-gray-300 rounded"
           autoComplete="new-password"
         />
@@ -78,7 +76,7 @@ export default function ChangePasswordPage() {
           type="password"
           placeholder="Confirm new password"
           value={pw2}
-          onChange={e => setPw2(e.target.value)}
+          onChange={(e) => setPw2(e.target.value)}
           className="w-full p-3 border border-gray-300 rounded"
           autoComplete="new-password"
         />
