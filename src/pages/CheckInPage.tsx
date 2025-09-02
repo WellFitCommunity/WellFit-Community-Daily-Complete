@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useSupabaseClient,useSession } from '../lib/supabaseClient';
+import { useSupabaseClient } from '../lib/supabaseClient';
 
 interface CheckIn {
   timestamp: string;

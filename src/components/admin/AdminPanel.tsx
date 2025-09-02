@@ -8,7 +8,7 @@ import ReportsSection from './ReportsSection';
 import ExportCheckIns from './ExportCheckIns';
 import ApiKeyManager from './ApiKeyManager';
 
-type AdminRole = 'admin' | 'super_admin';
+type _AdminRole = 'admin' | 'super_admin';
 
 function EnrollPatientSection() {
   const [first, setFirst] = React.useState('');
