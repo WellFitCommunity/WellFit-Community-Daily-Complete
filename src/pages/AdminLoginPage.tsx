@@ -1,5 +1,5 @@
 // src/pages/AdminLoginPage.tsx
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useAdminAuth } from '../contexts/AdminAuthContext';
@@ -11,9 +11,9 @@ export default function AdminLoginPage() {
   const navigate = useNavigate();
   const supabase = useSupabaseClient();
 
-  // Keep your existing contexts
+  // App auth contexts
   const { user, isAdmin } = useAuth(); // session + boolean flag
-  const { verifyPinAndLogin, isLoading, error } = useAdminAuth(); // PIN verify API + state
+  const { verifyPinAndLogin, isLoading, error } = useAdminAuth(); // PIN verify + loading
 
   const [mode, setMode] = useState<'unlock' | 'setpin'>('unlock');
   const [role, setRole] = useState<AdminRole>('admin');
@@ -21,6 +21,9 @@ export default function AdminLoginPage() {
   const [pin2, setPin2] = useState('');
   const [localErr, setLocalErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  const userLabel = useMemo(() => user?.email || user?.phone || 'Unknown user', [user]);
 
   // Gate this page to authenticated admins only (per your current design)
   if (!user || !isAdmin) {
@@ -32,16 +35,26 @@ export default function AdminLoginPage() {
     );
   }
 
-  async function handleSetPin() {
+  function cleanPin(raw: string) {
+    return raw.replace(/[^\d]/g, '').slice(0, 8); // keep digits, max 8
+  }
+
+  async function handleSetPin(e?: React.FormEvent) {
+    e?.preventDefault();
     setLocalErr(null);
-    if (!/^\d{4,8}$/.test(pin)) return setLocalErr('PIN must be 4–8 digits.');
-    if (pin !== pin2) return setLocalErr('PINs do not match.');
+    setSuccessMsg(null);
+    const p1 = cleanPin(pin);
+    const p2 = cleanPin(pin2);
+
+    if (!/^\d{4,8}$/.test(p1)) return setLocalErr('PIN must be 4–8 digits.');
+    if (p1 !== p2) return setLocalErr('PINs do not match.');
 
     setBusy(true);
     try {
-      const { error: fnErr } = await supabase.functions.invoke('admin_set_pin', { body: { pin } });
+      const { data, error: fnErr } = await supabase.functions.invoke('admin_set_pin', { body: { pin: p1, role } });
       if (fnErr) return setLocalErr(fnErr.message || 'Could not set PIN.');
-      alert('PIN saved. You can now unlock the Admin Panel.');
+      // optionally inspect `data` if your edge function returns info
+      setSuccessMsg('PIN saved. You can now unlock the Admin Panel.');
       setMode('unlock');
       setPin('');
       setPin2('');
@@ -52,44 +65,52 @@ export default function AdminLoginPage() {
     }
   }
 
-  async function handleUnlock() {
+  async function handleUnlock(e?: React.FormEvent) {
+    e?.preventDefault();
     setLocalErr(null);
-    if (!/^\d{4,8}$/.test(pin)) return setLocalErr('Enter your 4–8 digit PIN.');
+    setSuccessMsg(null);
+
+    const p = cleanPin(pin);
+    if (!/^\d{4,8}$/.test(p)) return setLocalErr('Enter your 4–8 digit PIN.');
     if (!user) return setLocalErr('User not found. Please log in again.');
 
-    const ok = await verifyPinAndLogin(pin, role, user.id);
-    if (!ok) {
-      setLocalErr('Incorrect PIN.');
-      return;
+    try {
+      const ok = await verifyPinAndLogin(p, role, user.id);
+      if (!ok) return setLocalErr('Incorrect PIN.');
+      navigate('/admin', { replace: true });
+    } catch (err: any) {
+      setLocalErr(err?.message || 'Unable to unlock admin panel.');
     }
-    // Route to your actual admin panel route (App.tsx maps it to "/admin")
-    navigate('/admin', { replace: true });
   }
 
   return (
     <div className="p-6 max-w-md mx-auto bg-white rounded shadow">
       <h1 className="text-2xl font-semibold mb-2">Admin Security</h1>
-      <p className="text-sm text-gray-600 mb-4">Logged in as {user.email || user.phone}</p>
+      <p className="text-sm text-gray-600 mb-4">Logged in as {userLabel}</p>
 
-      <div className="flex gap-2 mb-4">
+      <div className="flex gap-2 mb-4" role="tablist" aria-label="Admin security mode">
         <button
           className={`px-3 py-2 rounded ${mode === 'unlock' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
-          onClick={() => { setMode('unlock'); setLocalErr(null); }}
+          onClick={() => { setMode('unlock'); setLocalErr(null); setSuccessMsg(null); }}
           type="button"
+          role="tab"
+          aria-selected={mode === 'unlock'}
         >
           Unlock
         </button>
         <button
           className={`px-3 py-2 rounded ${mode === 'setpin' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
-          onClick={() => { setMode('setpin'); setLocalErr(null); }}
+          onClick={() => { setMode('setpin'); setLocalErr(null); setSuccessMsg(null); }}
           type="button"
+          role="tab"
+          aria-selected={mode === 'setpin'}
         >
           Set / Update PIN
         </button>
       </div>
 
       {mode === 'unlock' ? (
-        <div className="grid gap-3">
+        <form className="grid gap-3" onSubmit={handleUnlock} noValidate>
           <label className="text-sm">Role for this session</label>
           <select
             className="border p-2 rounded"
@@ -103,49 +124,59 @@ export default function AdminLoginPage() {
           <input
             className="border p-2 rounded"
             type="password"
-            placeholder="Enter PIN"
+            inputMode="numeric"
+            pattern="\d{4,8}"
+            placeholder="Enter PIN (4–8 digits)"
             value={pin}
-            onChange={(e) => setPin(e.target.value)}
+            onChange={(e) => setPin(cleanPin(e.target.value))}
+            autoComplete="one-time-code"
+            required
           />
+
           {(localErr || error) && <p className="text-red-600 text-sm">{localErr || error}</p>}
+          {successMsg && <p className="text-green-700 text-sm">{successMsg}</p>}
 
           <button
             className="w-full py-2 bg-blue-600 text-white rounded disabled:opacity-50"
             disabled={isLoading}
-            onClick={handleUnlock}
-            type="button"
+            type="submit"
           >
             {isLoading ? 'Verifying…' : 'Unlock Admin Panel'}
           </button>
-        </div>
+        </form>
       ) : (
-        <div className="grid gap-3">
+        <form className="grid gap-3" onSubmit={handleSetPin} noValidate>
           <input
             className="border p-2 rounded"
             type="password"
+            inputMode="numeric"
+            pattern="\d{4,8}"
             placeholder="New PIN (4–8 digits)"
             value={pin}
-            onChange={(e) => setPin(e.target.value)}
+            onChange={(e) => setPin(cleanPin(e.target.value))}
+            required
           />
           <input
             className="border p-2 rounded"
             type="password"
+            inputMode="numeric"
+            pattern="\d{4,8}"
             placeholder="Confirm PIN"
             value={pin2}
-            onChange={(e) => setPin2(e.target.value)}
+            onChange={(e) => setPin2(cleanPin(e.target.value))}
+            required
           />
-          {localErr && <p className="text-red-600 text-sm">{localErr}</p>}
+          {(localErr || error) && <p className="text-red-600 text-sm">{localErr || error}</p>}
+          {successMsg && <p className="text-green-700 text-sm">{successMsg}</p>}
           <button
             className="w-full py-2 bg-green-600 text-white rounded disabled:opacity-50"
             disabled={busy}
-            onClick={handleSetPin}
-            type="button"
+            type="submit"
           >
             {busy ? 'Saving…' : 'Save PIN'}
           </button>
-        </div>
+        </form>
       )}
     </div>
   );
 }
-
