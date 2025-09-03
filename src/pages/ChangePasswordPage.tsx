@@ -1,34 +1,47 @@
 // src/pages/ChangePasswordPage.tsx
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSupabaseClient } from '../lib/supabaseClient';
 
 export default function ChangePasswordPage() {
   const supabase = useSupabaseClient();
+  const navigate = useNavigate();
+
   const [pw1, setPw1] = useState('');
   const [pw2, setPw2] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const navigate = useNavigate();
+  const [showPw1, setShowPw1] = useState(false);
+  const [showPw2, setShowPw2] = useState(false);
+  const [success, setSuccess] = useState<string | null>(null);
 
-  const ok =
-    pw1.length >= 8 &&
-    /[A-Z]/.test(pw1) &&
-    /\d/.test(pw1) &&
-    /[^A-Za-z0-9]/.test(pw1) &&
-    pw1 === pw2;
+  const clean1 = pw1.trim();
+  const clean2 = pw2.trim();
 
-  async function submit() {
+  const ok = useMemo(() => {
+    return (
+      clean1.length >= 8 &&
+      /[A-Z]/.test(clean1) &&
+      /\d/.test(clean1) &&
+      /[^A-Za-z0-9]/.test(clean1) &&
+      clean1 === clean2
+    );
+  }, [clean1, clean2]);
+
+  async function submit(e?: React.FormEvent) {
+    e?.preventDefault();
     setError('');
+    setSuccess(null);
+
     if (!ok) {
       setError('Passwords must match and meet all rules.');
       return;
     }
+
     setBusy(true);
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const { data: { session }, error: sessErr } = await supabase.auth.getSession();
+      if (sessErr) throw sessErr;
       const uid = session?.user?.id;
       if (!uid) {
         setError('Session expired. Please log in again.');
@@ -37,18 +50,19 @@ export default function ChangePasswordPage() {
       }
 
       // 1) Update Supabase Auth password
-      const { error: upErr } = await supabase.auth.updateUser({ password: pw1 });
+      const { error: upErr } = await supabase.auth.updateUser({ password: clean1 });
       if (upErr) throw upErr;
 
-      // 2) Clear the force-change flag
+      // 2) Clear the force-change flag in your profile
       const { error: dbErr } = await supabase
         .from('profiles')
         .update({ force_password_change: false })
         .eq('id', uid);
       if (dbErr) throw dbErr;
 
-      // 3) Move to next step in onboarding
-      navigate('/demographics', { replace: true });
+      // 3) Notify & route forward
+      setSuccess('Password updated successfully.');
+      setTimeout(() => navigate('/demographics', { replace: true }), 900);
     } catch (e: any) {
       setError(e?.message || 'Could not change password. Try again.');
     } finally {
@@ -63,41 +77,68 @@ export default function ChangePasswordPage() {
         For your security, please set a new password to continue.
       </p>
 
-      <div className="space-y-3 text-left">
-        <input
-          type="password"
-          placeholder="New password"
-          value={pw1}
-          onChange={(e) => setPw1(e.target.value)}
-          className="w-full p-3 border border-gray-300 rounded"
-          autoComplete="new-password"
-        />
-        <input
-          type="password"
-          placeholder="Confirm new password"
-          value={pw2}
-          onChange={(e) => setPw2(e.target.value)}
-          className="w-full p-3 border border-gray-300 rounded"
-          autoComplete="new-password"
-        />
+      <form className="space-y-3 text-left" onSubmit={submit} noValidate>
+        <div className="relative">
+          <input
+            type={showPw1 ? 'text' : 'password'}
+            placeholder="New password"
+            value={pw1}
+            onChange={(e) => setPw1(e.target.value)}
+            className="w-full p-3 border border-gray-300 rounded pr-12"
+            autoComplete="new-password"
+            required
+            minLength={8}
+          />
+          <button
+            type="button"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-600"
+            onClick={() => setShowPw1((s) => !s)}
+            aria-label={showPw1 ? 'Hide password' : 'Show password'}
+          >
+            {showPw1 ? 'Hide' : 'Show'}
+          </button>
+        </div>
+
+        <div className="relative">
+          <input
+            type={showPw2 ? 'text' : 'password'}
+            placeholder="Confirm new password"
+            value={pw2}
+            onChange={(e) => setPw2(e.target.value)}
+            className="w-full p-3 border border-gray-300 rounded pr-12"
+            autoComplete="new-password"
+            required
+            minLength={8}
+          />
+          <button
+            type="button"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-600"
+            onClick={() => setShowPw2((s) => !s)}
+            aria-label={showPw2 ? 'Hide password' : 'Show password'}
+          >
+            {showPw2 ? 'Hide' : 'Show'}
+          </button>
+        </div>
+
         <ul className="text-xs text-gray-600">
-          <li>{pw1.length >= 8 ? '✓' : '✗'} At least 8 characters</li>
-          <li>{/[A-Z]/.test(pw1) ? '✓' : '✗'} At least 1 capital letter</li>
-          <li>{/\d/.test(pw1) ? '✓' : '✗'} At least 1 number</li>
-          <li>{/[^A-Za-z0-9]/.test(pw1) ? '✓' : '✗'} At least 1 special character</li>
-          <li>{pw1 && pw1 === pw2 ? '✓' : '✗'} Passwords match</li>
+          <li>{clean1.length >= 8 ? '✓' : '✗'} At least 8 characters</li>
+          <li>{/[A-Z]/.test(clean1) ? '✓' : '✗'} At least 1 capital letter</li>
+          <li>{/\d/.test(clean1) ? '✓' : '✗'} At least 1 number</li>
+          <li>{/[^A-Za-z0-9]/.test(clean1) ? '✓' : '✗'} At least 1 special character</li>
+          <li>{clean1 && clean1 === clean2 ? '✓' : '✗'} Passwords match</li>
         </ul>
 
         {error && <p className="text-red-600 text-sm">{error}</p>}
+        {success && <p className="text-green-600 text-sm">{success}</p>}
 
         <button
-          onClick={submit}
+          type="submit"
           disabled={!ok || busy}
           className="w-full py-3 bg-black text-white rounded disabled:opacity-50"
         >
           {busy ? 'Saving…' : 'Save New Password'}
         </button>
-      </div>
+      </form>
     </div>
   );
 }

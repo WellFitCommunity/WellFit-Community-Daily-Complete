@@ -1,14 +1,14 @@
 // src/components/DemographicsPage.tsx
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSupabaseClient, useSession, useUser } from '../lib/supabaseClient';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabaseClient';
 
 interface DemographicsFormData {
   first_name: string;
   last_name: string;
   phone: string;
-  pin: string;
-  dob: string; // Assuming YYYY-MM-DD format
+  pin: string; // 4-digit numeric
+  dob: string; // YYYY-MM-DD
   address: string;
   hasEmail: boolean;
 }
@@ -24,6 +24,14 @@ interface ProfileOnboardingData {
 
 const DemographicsPage: React.FC = () => {
   const navigate = useNavigate();
+
+  // ✅ Use hooks in a React component
+  const supabase = useSupabaseClient();
+  const session = useSession();
+  const user = useUser();
+
+  const userId = useMemo(() => user?.id ?? session?.user?.id ?? null, [user, session]);
+
   const [formData, setFormData] = useState<DemographicsFormData>({
     first_name: '',
     last_name: '',
@@ -33,62 +41,58 @@ const DemographicsPage: React.FC = () => {
     address: '',
     hasEmail: false,
   });
-  const [userId, setUserId] = useState<string | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  // On mount: Only allow users who aren't onboarded yet
+  // On mount / when user changes: gate access & prefill
   useEffect(() => {
-    const checkUserAndOnboarding = async (): Promise<void> => {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-      if (userError || !user) {
-        console.error('Error fetching user or no user:', userError);
-        navigate('/'); // Not signed in, or error, go to welcome
-        return;
-      }
-      setUserId(user.id);
-
-      // Check if already onboarded
-      const { data: profile, error: profileErr } = await supabase
-        .from('profiles')
-        .select('onboarded, first_name, last_name, phone, dob, address')
-        .eq('id', user.id)
-        .single<ProfileOnboardingData>();
-
-      if (profileErr && profileErr.code !== 'PGRST116') { // PGRST116: row not found, which is fine for new user
-        console.error("Error fetching profile:", profileErr);
-        // Potentially set an error message for the user
+    (async () => {
+      if (!userId) {
+        // not signed in
         setLoading(false);
+        navigate('/');
         return;
       }
 
-      if (profile?.onboarded) {
-        navigate('/dashboard');
-        return;
-      }
+      try {
+        // Check if already onboarded
+        const { data: profile, error: profileErr } = await supabase
+          .from('profiles')
+          .select('onboarded, first_name, last_name, phone, dob, address')
+          .eq('id', userId)
+          .maybeSingle<ProfileOnboardingData>(); // allow null if not found
 
-      // Optionally prefill form if info exists
-      if (profile) {
-        setFormData(f => ({
-          ...f,
-          first_name: profile.first_name || '',
-          last_name: profile.last_name || '',
-          phone: profile.phone || '',
-          dob: profile.dob || '',
-          address: profile.address || '',
-        }));
-      }
-      setLoading(false);
-    };
+        if (profileErr) throw profileErr;
 
-    checkUserAndOnboarding();
-  }, [navigate]);
+        if (profile?.onboarded) {
+          navigate('/dashboard');
+          return;
+        }
+
+        if (profile) {
+          setFormData((f) => ({
+            ...f,
+            first_name: profile.first_name || '',
+            last_name: profile.last_name || '',
+            phone: profile.phone || '',
+            dob: profile.dob || '',
+            address: profile.address || '',
+          }));
+        }
+      } catch (e: any) {
+        console.error('Error fetching profile:', e);
+        setError(e?.message ?? 'Unable to load profile.');
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [userId, navigate, supabase]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
     }));
@@ -103,35 +107,50 @@ const DemographicsPage: React.FC = () => {
       return;
     }
 
+    // Basic guards
+    if (!formData.first_name || !formData.last_name || !formData.phone || !formData.dob || !formData.address) {
+      setError('Please fill out all required fields.');
+      return;
+    }
+    if (!/^\d{4}$/.test(formData.pin)) {
+      setError('PIN must be exactly 4 digits.');
+      return;
+    }
+
     const { first_name, last_name, phone, pin, dob, address, hasEmail } = formData;
 
-    const { error: profileError } = await supabase.from('profiles').upsert({
-      id: userId,
-      first_name,
-      last_name,
-      phone,
-      dob,
-      address,
-      onboarded: true, // Flag user as fully onboarded!
-    });
+    try {
+      // Upsert profile
+      const { error: profileError } = await supabase.from('profiles').upsert({
+        id: userId,
+        first_name,
+        last_name,
+        phone,
+        dob,
+        address,
+        onboarded: true,
+      });
+      if (profileError) throw profileError;
 
-    const { error: phoneAuthError } = await supabase.from('phone_auth').upsert({
-      id: userId,
-      phone,
-      pin,
-    });
+      // ⚠️ SECURITY NOTE: This stores a PIN as plaintext.
+      // Replace with an Edge Function that hashes the PIN server-side ASAP.
+      const { error: phoneAuthError } = await supabase.from('phone_auth').upsert({
+        id: userId,
+        phone,
+        pin, // TODO: hash via Edge Function
+      });
+      if (phoneAuthError) throw phoneAuthError;
 
-    if (profileError || phoneAuthError) {
-      setError(profileError?.message || phoneAuthError?.message || 'Unknown error.');
-    } else {
       setSuccess(true);
       setTimeout(() => {
         hasEmail ? navigate('/supabase-login') : navigate('/dashboard');
-      }, 2000);
+      }, 1200);
+    } catch (e: any) {
+      setError(e?.message ?? 'Unknown error.');
     }
   };
 
-  if (loading) return <div className="text-center mt-8">Loading...</div>;
+  if (loading) return <div className="text-center mt-8">Loading…</div>;
 
   return (
     <div className="max-w-xl mx-auto mt-10 p-6 bg-white rounded-xl shadow-md space-y-4">
@@ -141,7 +160,7 @@ const DemographicsPage: React.FC = () => {
       {error && <p className="text-red-500 text-center">{error}</p>}
       {success && (
         <p className="text-green-600 text-center font-bold text-xl my-4">
-          Registration Completed! Redirecting...
+          Registration Completed! Redirecting…
         </p>
       )}
 
@@ -161,7 +180,7 @@ const DemographicsPage: React.FC = () => {
           </div>
           <div>
             <label htmlFor="pin" className="sr-only">4-Digit PIN</label>
-            <input id="pin" name="pin" type="password" placeholder="Create 4-Digit PIN" maxLength={4} value={formData.pin} onChange={handleChange} className="w-full p-3 border rounded-md focus:ring-2 focus:ring-indigo-500" inputMode="numeric" pattern="[0-9]*" aria-required="true" />
+            <input id="pin" name="pin" type="password" placeholder="Create 4-Digit PIN" maxLength={4} value={formData.pin} onChange={handleChange} className="w-full p-3 border rounded-md focus:ring-2 focus:ring-indigo-500" inputMode="numeric" pattern="\d{4}" aria-required="true" />
           </div>
           <div>
             <label htmlFor="dob" className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
@@ -171,7 +190,7 @@ const DemographicsPage: React.FC = () => {
             <label htmlFor="address" className="sr-only">Address</label>
             <input id="address" name="address" placeholder="Full Address" value={formData.address} onChange={handleChange} className="w-full p-3 border rounded-md focus:ring-2 focus:ring-indigo-500" aria-required="true" />
           </div>
-          
+
           <div className="flex items-center space-x-2 pt-2">
             <input type="checkbox" id="hasEmail" name="hasEmail" checked={formData.hasEmail} onChange={handleChange} className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
             <label htmlFor="hasEmail" className="text-sm text-gray-700">
@@ -179,7 +198,10 @@ const DemographicsPage: React.FC = () => {
             </label>
           </div>
 
-          <button type="submit" className="w-full py-3 bg-wellfit-green text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+          <button
+            type="submit"
+            className="w-full py-3 bg-wellfit-green text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+          >
             Complete Registration
           </button>
         </form>

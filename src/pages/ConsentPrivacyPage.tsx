@@ -1,49 +1,70 @@
+// src/pages/ConsentPrivacyPage.tsx
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabaseClient';
+import { useSupabaseClient, useUser } from '../lib/supabaseClient';
 
-const ConsentPrivacyPage: React.FC = () => {
+const BUCKET = 'consent-signatures';
+
+export default function ConsentPrivacyPage() {
   const navigate = useNavigate();
+  const supabase = useSupabaseClient();
+  const user = useUser();
+  const userId = user?.id ?? null;
+
   const [confirm, setConfirm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [feedback, setFeedback] = useState('');
   const sigCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
+  function canvasToBlob(canvas: HTMLCanvasElement, type = 'image/png', quality?: number): Promise<Blob> {
+    return new Promise((resolve, reject) => {
+      canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Failed to capture signature.'))), type, quality);
+    });
+  }
+
   const handleSubmit = async () => {
+    setError('');
+    setFeedback('');
+
     if (!confirm) {
       setError('Please confirm your agreement to proceed.');
       return;
     }
-
-    const firstName = localStorage.getItem('firstName');
-    const lastName = localStorage.getItem('lastName');
-
+    if (!userId) {
+      setError('You must be logged in to submit consent.');
+      return;
+    }
+    const firstName = (localStorage.getItem('firstName') || '').trim();
+    const lastName = (localStorage.getItem('lastName') || '').trim();
     if (!firstName || !lastName) {
       setError('Missing name from previous step.');
       return;
     }
+    const canvas = sigCanvasRef.current;
+    if (!canvas) {
+      setError('No signature area found.');
+      return;
+    }
 
     setSubmitting(true);
-    setError('');
-    setFeedback('');
-
     try {
-      // Get signature data from the canvas
-      const dataUrl = sigCanvasRef.current?.toDataURL();
-      if (typeof dataUrl !== 'string') {
-        throw new Error('No signature found. Please sign before submitting.');
-      }
-      // Convert data URL to Blob
-      const blob = await (await fetch(dataUrl)).blob();
+      // Convert canvas drawing to a PNG Blob
+      const blob = await canvasToBlob(canvas, 'image/png');
 
-      // Construct a unique file name
-      const fileName = `privacy-signatures/${firstName}_${lastName}_${Date.now()}.png`;
+      // Safe filename under the user’s folder
+      const ts = Date.now();
+      const safe = (s: string) => s.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const filePath = `${userId}/${safe(firstName)}_${safe(lastName)}_${ts}.png`;
 
-      // Upload signature to Supabase Storage
+      // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
-        .from('consent-signatures')
-        .upload(fileName, blob);
+        .from(BUCKET)
+        .upload(`privacy-signatures/${filePath}`, blob, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: 'image/png',
+        });
 
       if (uploadError) {
         setError('Failed to upload privacy consent signature. Please try again.');
@@ -51,14 +72,15 @@ const ConsentPrivacyPage: React.FC = () => {
         return;
       }
 
-      // Insert privacy consent record into privacy_consent table
+      // Log consent in DB
       const { error: dbError } = await supabase.from('privacy_consent').insert([
         {
+          user_id: userId,
           first_name: firstName,
           last_name: lastName,
-          file_path: fileName,
+          file_path: `privacy-signatures/${filePath}`,
           consented_at: new Date().toISOString(),
-        }
+        },
       ]);
 
       if (dbError) {
@@ -71,7 +93,7 @@ const ConsentPrivacyPage: React.FC = () => {
       localStorage.removeItem('firstName');
       localStorage.removeItem('lastName');
 
-      setTimeout(() => navigate('/dashboard'), 2000);
+      setTimeout(() => navigate('/dashboard'), 1200);
     } catch (err) {
       console.error('Error submitting privacy consent:', err);
       setError('An unexpected error occurred while processing your privacy consent. Please try again.');
@@ -101,8 +123,8 @@ const ConsentPrivacyPage: React.FC = () => {
         <canvas
           ref={sigCanvasRef}
           width={400}
-          height={100}
-          style={{ border: '1px solid #ccc', background: '#f9f9f9' }}
+          height={120}
+          style={{ border: '1px solid #ccc', background: '#f9f9f9', width: '100%' }}
         />
       </div>
 
@@ -111,7 +133,7 @@ const ConsentPrivacyPage: React.FC = () => {
           type="checkbox"
           className="mr-2"
           checked={confirm}
-          onChange={() => setConfirm(!confirm)}
+          onChange={() => setConfirm((v) => !v)}
           disabled={submitting}
         />
         I have read and agree to the Privacy Policy.
@@ -122,14 +144,11 @@ const ConsentPrivacyPage: React.FC = () => {
         disabled={!confirm || submitting}
         className="w-full py-2 bg-[#003865] text-white rounded hover:bg-[#8cc63f] disabled:opacity-50"
       >
-        {submitting ? 'Submitting Agreement...' : 'Agree and Complete Registration'}
+        {submitting ? 'Submitting Agreement…' : 'Agree and Complete Registration'}
       </button>
 
       {feedback && <p className="text-green-600 text-sm mt-2">{feedback}</p>}
-      {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
+      {error && <p className="text-red-600 text-sm mt-2" role="alert">{error}</p>}
     </div>
   );
-};
-
-export default ConsentPrivacyPage;
-
+}

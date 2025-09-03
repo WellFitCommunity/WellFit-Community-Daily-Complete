@@ -1,5 +1,6 @@
+// src/components/CheckInTracker.tsx
 import { useEffect, useState } from 'react';
-import { useSupabaseClient,useSession } from '../lib/supabaseClient';
+import { useSupabaseClient, useUser } from '../lib/supabaseClient';
 
 interface CheckIn {
   timestamp: string;
@@ -11,54 +12,65 @@ interface CheckIn {
 }
 
 const STORAGE_KEY = 'wellfitCheckIns';
+const LOCAL_HISTORY_CAP = 200; // prevent unbounded growth
 
-interface EmotionOption {
-  value: string;
-  label: string;
-}
+type Toast = { type?: 'success' | 'error' | 'info'; text?: string } | null;
 
-const CheckInTracker: React.FC = () => { // Added React.FC
+const CheckInTracker: React.FC = () => {
   const supabase = useSupabaseClient();
+  const user = useUser();
+  const userId = user?.id ?? null;
+
   const [history, setHistory] = useState<CheckIn[]>([]);
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
-  const [infoMessage, setInfoMessage] = useState<{ type?: 'success' | 'error' | 'info'; text?: string } | null>(null);
+  const [infoMessage, setInfoMessage] = useState<Toast>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // New state variables for form fields
+  // Form fields
   const [emotionalState, setEmotionalState] = useState('');
-  const [heartRate, setHeartRate] = useState('');
-  const [pulseOximeter, setPulseOximeter] = useState('');
+  const [heartRate, setHeartRate] = useState('');       // keep as string for input control
+  const [pulseOximeter, setPulseOximeter] = useState(''); // same
 
   // Load stored history
   useEffect(() => {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      try {
-        setHistory(JSON.parse(raw));
-      } catch {
-        setHistory([]);
-      }
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) setHistory(parsed);
+    } catch {
+      setHistory([]);
     }
   }, []);
 
   // Persist on change
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(history.slice(-LOCAL_HISTORY_CAP)));
   }, [history]);
 
-  // Feedback messages - can be adapted or expanded
-  const checkInFeedback: { [label: string]: string } = {
+  const checkInFeedback: Record<string, string> = {
     '😊 Feeling Great Today': 'Awesome! Enjoy your day. 🌞',
-    '📅 Feeling fine & have a Dr. Appt today': "Don't forget to show your log to the doctor. 🩺",
+    '📅 Feeling fine & have a Dr. Appt today': "Don’t forget to show your log to the doctor. 🩺",
     '🏥 In the hospital': 'We’re thinking of you. Please call us if we can help. ❤️',
     '🧭 Need Healthcare Navigation Assistance': 'Hang tight—we will call you shortly. ☎️',
-    'DefaultSuccess': 'Check-in submitted successfully!', // New default success message
+    DefaultSuccess: 'Check-in submitted successfully!',
   };
 
-  // Handle check‑in action (now unified)
-  const handleCheckIn = async (label: string, isQuickButton: boolean = false): Promise<void> => { // Added return type
-    // For quick buttons, we don't require emotional state from the form.
-    // For the main "Submit Check-In Details" button, emotionalState is required.
+  function parseIntOrNull(v: string): number | null {
+    if (!v) return null;
+    const n = parseInt(v, 10);
+    return Number.isNaN(n) ? null : n;
+  }
+
+  function clampVitals(hr: number | null, spo2: number | null): { hr: number | null; spo2: number | null } {
+    // Reasonable human ranges; ignore outliers instead of saving junk
+    const validHr = hr !== null && hr >= 30 && hr <= 220 ? hr : null;
+    const validSp = spo2 !== null && spo2 >= 50 && spo2 <= 100 ? spo2 : null;
+    return { hr: validHr, spo2: validSp };
+  }
+
+  async function handleCheckIn(label: string, isQuickButton = false): Promise<void> {
+    // For the detailed form, require emotional state.
     if (!isQuickButton && !emotionalState) {
       setInfoMessage({ type: 'error', text: 'Please select your emotional state.' });
       setTimeout(() => setInfoMessage(null), 3000);
@@ -68,84 +80,69 @@ const CheckInTracker: React.FC = () => { // Added React.FC
     setIsSubmitting(true);
     setInfoMessage(null);
 
-    // Determine if it's an emergency based on specific quick button labels
-    const isEmergency =
-      isQuickButton && (label === '🚨 Fallen down & injured' || label === '🤒 Not Feeling Well');
-
+    const isEmergency = isQuickButton && (label === '🚨 Fallen down & injured' || label === '🤒 Not Feeling Well');
     const timestamp = new Date().toISOString();
-    const parsedHeartRate = heartRate ? parseInt(heartRate, 10) : null;
-    const parsedPulseOximeter = pulseOximeter ? parseInt(pulseOximeter, 10) : null;
 
+    const parsedHeartRate = parseIntOrNull(heartRate);
+    const parsedPulseOximeter = parseIntOrNull(pulseOximeter);
+    const { hr, spo2 } = clampVitals(parsedHeartRate, parsedPulseOximeter);
+
+    // Optimistic local append
     const newEntry: CheckIn = {
       label,
       timestamp,
       is_emergency: isEmergency,
-      emotional_state: emotionalState,
-      heart_rate: parsedHeartRate,
-      pulse_oximeter: parsedPulseOximeter,
+      emotional_state: isQuickButton ? undefined : emotionalState,
+      heart_rate: isQuickButton ? null : hr,
+      pulse_oximeter: isQuickButton ? null : spo2,
     };
-    setHistory((prev) => [...prev, newEntry]); // Save locally first
+    setHistory(prev => [...prev.slice(-LOCAL_HISTORY_CAP + 1), newEntry]);
 
-    // Show info message (local save success)
-    const feedbackText = checkInFeedback[label] || checkInFeedback['DefaultSuccess'];
-    // We'll set the message after Supabase attempt or if user is not logged in.
+    const feedbackText = checkInFeedback[label] || checkInFeedback.DefaultSuccess;
 
     if (isEmergency) {
       setShowEmergencyModal(true);
-      // Modal will hide itself or could be explicitly hidden in finally
     }
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { error: supabaseError } = await supabase.from('checkins').insert({
-          user_id: user.id,
+      if (userId) {
+        // 🔁 STANDARDIZE THIS TABLE NAME with the rest of your app:
+        // elsewhere you used 'check_ins' — recommend staying consistent.
+        const { error: supabaseError } = await supabase.from('check_ins').insert({
+          user_id: userId,
           timestamp,
           label,
           is_emergency: isEmergency,
-          // Use emotionalState from form if it's not a quick button, otherwise it might be empty or irrelevant
           emotional_state: isQuickButton ? (isEmergency ? 'Emergency' : 'Quick Update') : emotionalState,
-          heart_rate: isQuickButton ? null : parsedHeartRate, // Only log HR/SpO2 if from form
-          pulse_oximeter: isQuickButton ? null : parsedPulseOximeter,
+          heart_rate: isQuickButton ? null : hr,
+          pulse_oximeter: isQuickButton ? null : spo2,
         });
-
         if (supabaseError) throw supabaseError;
-        
+
         setInfoMessage({ type: 'success', text: `${feedbackText} (Saved to cloud)` });
-        // Clear form fields only if it was a form submission (not a quick button)
-        if (!isQuickButton) {
-          setEmotionalState('');
-          setHeartRate('');
-          setPulseOximeter('');
-        }
       } else {
         setInfoMessage({ type: 'info', text: `${feedbackText} (Saved locally. Log in to save to cloud.)` });
-        // Clear form fields if not a quick button, even if not logged in
-        if (!isQuickButton) {
-          setEmotionalState('');
-          setHeartRate('');
-          setPulseOximeter('');
-        }
       }
-    } catch (error) { // Changed error: any
-      console.error('Supabase error:', error);
-      const message = error instanceof Error ? error.message : "An unknown error occurred";
-      setInfoMessage({ type: 'error', text: `Local save successful. Cloud save failed: ${message}` });
-      // Still clear form if it was a form submission
+
+      // Clear form fields for the detailed submission
       if (!isQuickButton) {
         setEmotionalState('');
         setHeartRate('');
         setPulseOximeter('');
       }
+    } catch (e: any) {
+      console.error('Supabase error:', e);
+      const message = e?.message || 'An unknown error occurred';
+      setInfoMessage({ type: 'error', text: `Local save successful. Cloud save failed: ${message}` });
+      // keep local optimistic entry; it’s still useful
     } finally {
       setIsSubmitting(false);
-      if (isEmergency) { // Ensure modal is hidden after some time
-         setTimeout(() => setShowEmergencyModal(false), 7000); // Keep modal a bit longer
+      if (isEmergency) {
+        setTimeout(() => setShowEmergencyModal(false), 7000);
       }
-      // General message timeout
       setTimeout(() => setInfoMessage(null), 5000);
     }
-  };
+  }
 
   const checkInButtons = [
     '😊 Feeling Great Today',
@@ -157,7 +154,7 @@ const CheckInTracker: React.FC = () => { // Added React.FC
     '⭐ Attending the event today',
   ];
 
-  const emotionalStateOptions: EmotionOption[] = [ // Typed with EmotionOption
+  const emotionalStateOptions = [
     { value: '', label: '-- Select your emotional state --' },
     { value: 'Happy', label: '😊 Happy' },
     { value: 'Calm', label: '😌 Calm' },
@@ -171,11 +168,9 @@ const CheckInTracker: React.FC = () => { // Added React.FC
 
   return (
     <div className="relative max-w-xl mx-auto p-6 bg-white rounded-xl shadow-md border-2 border-wellfitGreen">
-      <h2 className="text-2xl font-bold mb-6 text-center text-wellfit-blue">
-        Check-In Center
-      </h2>
+      <h2 className="text-2xl font-bold mb-6 text-center text-wellfit-blue">Check-In Center</h2>
 
-      {/* New Form Fields */}
+      {/* Details Form */}
       <div className="space-y-4 mb-6">
         <div>
           <label htmlFor="emotionalState" className="block text-sm font-medium text-gray-700 mb-1">
@@ -184,7 +179,7 @@ const CheckInTracker: React.FC = () => { // Added React.FC
           <select
             id="emotionalState"
             value={emotionalState}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setEmotionalState(e.target.value)}
+            onChange={(e) => setEmotionalState(e.target.value)}
             disabled={isSubmitting}
             aria-required="true"
             className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:bg-gray-100"
@@ -205,7 +200,7 @@ const CheckInTracker: React.FC = () => { // Added React.FC
             type="number"
             id="heartRate"
             value={heartRate}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setHeartRate(e.target.value)}
+            onChange={(e) => setHeartRate(e.target.value)}
             placeholder="e.g., 70"
             disabled={isSubmitting}
             className="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:bg-gray-100"
@@ -220,7 +215,7 @@ const CheckInTracker: React.FC = () => { // Added React.FC
             type="number"
             id="pulseOximeter"
             value={pulseOximeter}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPulseOximeter(e.target.value)}
+            onChange={(e) => setPulseOximeter(e.target.value)}
             placeholder="e.g., 98"
             disabled={isSubmitting}
             className="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:bg-gray-100"
@@ -228,100 +223,93 @@ const CheckInTracker: React.FC = () => { // Added React.FC
         </div>
       </div>
 
-      {/* General Submit Button for new fields */}
+      {/* Submit detailed check-in */}
       <button
         onClick={() => handleCheckIn('Daily Self-Report', false)}
         className="w-full py-3 px-4 mb-6 bg-wellfit-blue text-white font-semibold rounded-lg shadow-md hover:bg-opacity-90 transition disabled:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-wellfit-blue"
-        disabled={!emotionalState || isSubmitting} 
+        disabled={!emotionalState || isSubmitting}
       >
-        {isSubmitting && !history.find(h => h.label === 'Daily Self-Report' && h.timestamp > new Date(Date.now() - 5000).toISOString()) ? 'Submitting...' : 'Submit Check-In Details'}
+        {isSubmitting ? 'Submitting…' : 'Submit Check-In Details'}
       </button>
 
-
-      {/* Quick Check-in buttons */}
+      {/* Quick Check-ins */}
       <h3 className="text-lg font-semibold mb-3 text-center text-gray-700">Or Quick Status Update:</h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         {checkInButtons.map((label) => (
           <button
             key={label}
-            onClick={(e: React.MouseEvent<HTMLButtonElement>) => { // Typed event
-              handleCheckIn(label, true); // Pass true for isQuickButton context
-              const btn = e.currentTarget;
-              // Visual feedback for quick buttons can remain, or be simplified if isSubmitting disables them
-              if (!isSubmitting) {
-                btn.classList.add('bg-wellfit-blue'); 
-                btn.classList.remove('bg-[#8cc63f]');
-                setTimeout(() => {
-                  btn.classList.remove('bg-wellfit-blue');
-                  btn.classList.add('bg-[#8cc63f]');
-                }, 2000);
-              }
-            }}
+            onClick={() => handleCheckIn(label, true)}
             className="w-full py-3 px-4 bg-[#8cc63f] border-2 border-[#003865] text-white font-semibold rounded-lg shadow-md hover:bg-[#77aa36] transition disabled:bg-gray-400 disabled:opacity-70 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8cc63f]"
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Processing...' : label}
+            {isSubmitting ? 'Processing…' : label}
           </button>
         ))}
       </div>
 
       {/* Feedback Message */}
-      {infoMessage && infoMessage.text && (
-        <div 
+      {infoMessage?.text && (
+        <div
           role="status"
-          aria-live={infoMessage.type === 'error' ? 'assertive' : 'polite'} // More assertive for errors
+          aria-live={infoMessage.type === 'error' ? 'assertive' : 'polite'}
           className={`mb-4 p-4 text-white rounded text-center font-medium ${
-          infoMessage.type === 'error' ? 'bg-red-500' : 
-          infoMessage.type === 'success' ? 'bg-green-500' : 
-          'bg-[#003865]' // Default info
-        }`}>
+            infoMessage.type === 'error'
+              ? 'bg-red-500'
+              : infoMessage.type === 'success'
+              ? 'bg-green-500'
+              : 'bg-[#003865]'
+          }`}
+        >
           {infoMessage.text}
         </div>
       )}
 
-      {/* History display */}
+      {/* History */}
       {history.length > 0 && (
         <>
-          <h3 className="text-lg font-semibold mb-2 text-center">
-            Your Recent Check‑Ins
-          </h3>
+          <h3 className="text-lg font-semibold mb-2 text-center">Your Recent Check-Ins</h3>
           <ul className="mb-4 space-y-2 text-sm text-gray-700 max-h-48 overflow-y-auto p-2 border rounded-md bg-gray-50">
-            {history.slice().reverse().map((h, i) => ( // Show newest first
-              <li key={i} className="p-2 border-b last:border-b-0">
-                <strong>{h.label}</strong> — {new Date(h.timestamp).toLocaleString()}
-                {h.emotional_state && <div className="text-xs">Feeling: {h.emotional_state}</div>}
-                {h.heart_rate !== null && typeof h.heart_rate !== 'undefined' && <div className="text-xs">HR: {h.heart_rate} BPM</div>}
-                {h.pulse_oximeter !== null && typeof h.pulse_oximeter !== 'undefined' && <div className="text-xs">SpO2: {h.pulse_oximeter}%</div>}
-              </li>
-            ))}
+            {history
+              .slice(-LOCAL_HISTORY_CAP)
+              .slice()
+              .reverse()
+              .map((h, i) => (
+                <li key={`${h.timestamp}-${i}`} className="p-2 border-b last:border-b-0">
+                  <strong>{h.label}</strong> — {new Date(h.timestamp).toLocaleString()}
+                  {h.emotional_state && <div className="text-xs">Feeling: {h.emotional_state}</div>}
+                  {h.heart_rate != null && <div className="text-xs">HR: {h.heart_rate} BPM</div>}
+                  {h.pulse_oximeter != null && <div className="text-xs">SpO₂: {h.pulse_oximeter}%</div>}
+                </li>
+              ))}
           </ul>
           <p className="text-sm text-center text-gray-500 mb-4">
-            🛈 This is a local log. Full history is saved if you are logged in. Export feature will be available soon.
+            🛈 This is a local log. Full history is saved if you are logged in.
           </p>
         </>
       )}
 
       {/* Emergency Overlay */}
       {showEmergencyModal && (
-        <div 
+        <div
           className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center"
           role="dialog"
           aria-modal="true"
           aria-labelledby="emergency-modal-title"
         >
           <div className="bg-red-600 text-white p-6 rounded-xl shadow-lg max-w-sm text-center animate-pulse">
-            <h3 id="emergency-modal-title" className="text-xl font-bold mb-2">🚨 Emergency Alert Triggered</h3>
-            <p className="mb-3">
-              Your check-in indicated an emergency. We've logged this.
-            </p>
+            <h3 id="emergency-modal-title" className="text-xl font-bold mb-2">
+              🚨 Emergency Alert Triggered
+            </h3>
+            <p className="mb-3">Your check-in indicated an emergency. We’ve logged this.</p>
             <p>
-              If you are in immediate danger or need urgent medical attention, please call <strong>911</strong> or your local emergency number now.
+              If you are in immediate danger or need urgent medical attention, please call{' '}
+              <strong>911</strong> or your local emergency number now.
             </p>
           </div>
         </div>
       )}
     </div>
   );
-}
+};
 
 export default CheckInTracker;

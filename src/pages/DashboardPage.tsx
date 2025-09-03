@@ -4,20 +4,21 @@ import Card from '../components/ui/PrettyCard';
 import { useNavigate } from 'react-router-dom';
 import { useBranding } from '../BrandingContext';
 import WeatherWidget from '../components/dashboard/WeatherWidget';
-import CheckInTracker from '../pages/CheckInPage';
+// ✅ Use the component, not the page wrapper
+import CheckInTracker from '../components/CheckInTracker';
 import DailyScripture from '../components/dashboard/DailyScripture';
 import TechTip from '../components/dashboard/TechTip';
 import EmergencyContact from '../components/features/EmergencyContact';
 import DashMealOfTheDay from '../components/dashboard/DashMealOfTheDay';
-import DoctorsView from '../pages/DoctorsViewPage';
+// ❌ Do not embed Doctor’s View on the dashboard
+// import DoctorsView from '../pages/DoctorsViewPage';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import AdminPanel from '../components/admin/AdminPanel'; // Will be used in future enhancements
+import AdminPanel from '../components/admin/AdminPanel'; // Future use
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const branding = useBranding();
 
-  // Helper to determine if a color is dark
   const isColorDark = (colorStr: string) => {
     if (!colorStr) return true;
     const color = colorStr.startsWith('#') ? colorStr.substring(1) : colorStr;
@@ -40,7 +41,7 @@ const Dashboard: React.FC = () => {
         Welcome to {branding.appName} Dashboard
       </h1>
 
-      {/* Return link */}
+      {/* Return link (hide if you later gate by role) */}
       <button
         onClick={() => navigate('/senior-enrollment')}
         className="text-sm underline mb-4"
@@ -52,11 +53,13 @@ const Dashboard: React.FC = () => {
       <Card>
         <WeatherWidget />
       </Card>
+
+      {/* ✅ Keep full check-in inline on the dashboard */}
       <Card>
         <CheckInTracker />
       </Card>
 
-      {/* Daily Check-in Navigation Card */}
+      {/* Optional: keep a button to the dedicated check-in page if you still want it */}
       <Card>
         <button
           className="w-full py-3 text-lg font-semibold bg-[#003865] text-white rounded-xl shadow hover:bg-[#8cc63f] transition"
@@ -70,7 +73,6 @@ const Dashboard: React.FC = () => {
         <DailyScripture />
       </Card>
 
-      {/* Meal of the Day preview */}
       <Card>
         <DashMealOfTheDay />
       </Card>
@@ -93,11 +95,17 @@ const Dashboard: React.FC = () => {
         </button>
       </Card>
 
-      {/* Trivia Game Navigation Card */}
       <Card>
         <button
-          className="w-full py-3 text-lg font-semibold bg-[#6B21A8] text-white rounded-xl shadow hover:bg-[#F59E0B] transition"
+          className="w-full py-3 text-lg font-semibold rounded-xl shadow transition"
+          style={{ backgroundColor: '#6B21A8', color: '#FFFFFF' }}
           onClick={() => navigate('/trivia-game')}
+          onMouseOver={(e) => {
+            e.currentTarget.style.backgroundColor = '#F59E0B';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.backgroundColor = '#6B21A8';
+          }}
         >
           🏆 Daily Trivia Challenge
         </button>
@@ -110,22 +118,28 @@ const Dashboard: React.FC = () => {
         <EmergencyContact />
       </Card>
 
-      {/* Doctor's View Section */}
+      {/* ✅ Doctor’s View is NOT embedded here. Give a clear button to the page. */}
       <section
-        className="mt-8 p-6 bg-white shadow-lg rounded-lg border-2"
+        className="mt-8 p-6 bg-white shadow-lg rounded-lg border-2 text-center"
         style={{ borderColor: branding.secondaryColor }}
       >
         <h2
-          className="text-2xl font-semibold mb-4 text-center"
+          className="text-2xl font-semibold mb-4"
           style={{ color: branding.primaryColor }}
         >
           What My Doctor Sees
         </h2>
-        <DoctorsView />
+        <p className="text-gray-600 mb-4">
+          View a summary of your recent check-ins and health info for clinic visits.
+        </p>
+        <button
+          className="px-6 py-3 rounded-xl font-semibold shadow text-white hover:opacity-90"
+          style={{ backgroundColor: branding.secondaryColor }}
+          onClick={() => navigate('/doctors-view')}
+        >
+          🩺 Open Doctor’s View
+        </button>
       </section>
-
-      {/* Admin Panel might be better placed at the end or in a separate admin route */}
-      {/* <Card><AdminPanel /></Card> */}
     </main>
   );
 };

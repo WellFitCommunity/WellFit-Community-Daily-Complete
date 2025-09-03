@@ -1,9 +1,10 @@
+// src/pages/PrivacyPolicy.tsx
 import * as React from 'react';
 
 const WELLFIT_BLUE = '#003865';
 const WELLFIT_GREEN = '#8cc63f';
 const GRADIENT = `linear-gradient(180deg, ${WELLFIT_GREEN} 0%, ${WELLFIT_BLUE} 100%)`;
-const LAST_UPDATED = 'August 24, 2025';
+const LAST_UPDATED = 'September 2, 2025';
 
 export default function PrivacyPolicy() {
   return (
@@ -47,12 +48,24 @@ export default function PrivacyPolicy() {
           <h2 className="text-xl font-semibold mt-6 mb-2" style={{ color: WELLFIT_BLUE }}>
             How We Use Your Information
           </h2>
-          <p className="mb-4">
-            We use your data to provide, personalize, and improve our wellness services; contact you
-            for wellness reminders, alerts, or program updates; compile anonymous, aggregated data
-            for research and reporting (no personal identities shared); and share success stories,
-            testimonials, or community highlights (only with your separate consent).
-          </p>
+          <ul className="list-disc ml-6 space-y-1 mb-4">
+            <li>Provide, personalize, and improve our wellness services.</li>
+            <li>Contact you for wellness reminders, alerts, or program updates.</li>
+            <li>
+              Compile anonymous, aggregated data for reporting, evaluation, and insights (no
+              personal identities shared unless necessary and protected).
+            </li>
+            <li>
+              Share success stories, testimonials, or community highlights (only with your separate
+              consent).
+            </li>
+            <li>
+              <strong>Research Purposes:</strong> Conduct community wellness research and program
+              evaluation to improve senior health and social outcomes. We use aggregated or
+              de-identified data wherever possible; if identifiable data is used, it is limited to
+              the minimum necessary and handled under strict safeguards.
+            </li>
+          </ul>
 
           <h2 className="text-xl font-semibold mt-6 mb-2" style={{ color: WELLFIT_BLUE }}>
             How We Protect Your Data
@@ -66,17 +79,32 @@ export default function PrivacyPolicy() {
           <h2 className="text-xl font-semibold mt-6 mb-2" style={{ color: WELLFIT_BLUE }}>
             How We Share Your Information
           </h2>
+          <ul className="list-disc ml-6 space-y-1 mb-4">
+            <li>
+              WellFit Community, Inc. does <strong>not</strong> sell your personal information to
+              third parties or affiliates for marketing or promotional purposes.
+            </li>
+            <li>
+              <strong>Service Providers:</strong> We share your information only with contracted
+              service providers or partners as necessary to deliver services you have requested (for
+              example, sending SMS notifications or processing check-ins). These parties are{' '}
+              <strong>not permitted</strong> to use your information for their own marketing or
+              promotional activities.
+            </li>
+            <li>
+              <strong>Affiliates and Program Partners:</strong> We work closely with affiliates
+              (such as Vital Edge Healthcare Consulting, LLC and Envision VirtualEdge Group, LLC)
+              and community partners (such as wellness centers, senior programs, or healthcare
+              collaborators). We may share your information with these parties only as needed to
+              operate the Services, support program delivery, evaluate outcomes, or for research and
+              reporting consistent with this Policy. These affiliates and partners are contractually
+              bound to protect your information and may not use it for their own marketing purposes
+              without your consent.
+            </li>
+          </ul>
           <p className="mb-4">
-            WellFit Community, Inc. does <strong>not</strong> share your personal information with
-            third parties or affiliates for marketing or promotional purposes. We only share your
-            information with contracted service providers or partners as necessary to deliver
-            services you have requested (for example, sending SMS notifications or processing
-            check-ins). These parties are <strong>not permitted</strong> to use your information for
-            their own marketing or promotional activities.
-          </p>
-          <p className="mb-4">
-            You may opt out of receiving SMS communications at any time by replying <strong>STOP</strong> to
-            any message you receive from us.
+            You may opt out of receiving SMS communications at any time by replying{' '}
+            <strong>STOP</strong> to any message you receive from us.
           </p>
 
           <h2 className="text-xl font-semibold mt-6 mb-2" style={{ color: WELLFIT_BLUE }}>
@@ -118,19 +146,18 @@ export default function PrivacyPolicy() {
             Contact Us
           </h2>
           <p>
-            <strong>WellFit Community, Inc.</strong><br />
+            <strong>WellFit Community, Inc.</strong>
+            <br />
             <a href="mailto:info@thewellfitcommunity.org" className="underline text-blue-700">
               info@thewellfitcommunity.org
-            </a>
-            {' '}·{' '}
+            </a>{' '}
+            ·{' '}
             <a href="tel:+18323155110" className="underline text-blue-700">
               (832) 315-5110
             </a>
           </p>
 
-          <p className="mt-6">
-            By using WellFit Community, you agree to this Privacy Policy.
-          </p>
+          <p className="mt-6">By using WellFit Community, you agree to this Privacy Policy.</p>
         </div>
       </div>
     </main>

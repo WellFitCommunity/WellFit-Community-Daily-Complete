@@ -1,5 +1,5 @@
 // src/pages/VerifyCodePage.tsx
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSupabaseClient } from '../lib/supabaseClient';
 
@@ -8,6 +8,7 @@ type LocState = { phone?: string } | null;
 const WELLFIT_BLUE = '#003865';
 const WELLFIT_GREEN = '#8cc63f';
 const E164 = /^\+\d{10,15}$/;
+const RESEND_COOLDOWN = 45;
 
 export default function VerifyCodePage() {
   const navigate = useNavigate();
@@ -20,35 +21,65 @@ export default function VerifyCodePage() {
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
 
-  // resend cooldown
-  const RESEND_COOLDOWN = 45;
   const [cooldown, setCooldown] = useState<number>(RESEND_COOLDOWN);
+  const timerRef = useRef<number | null>(null);
+  const codeInputRef = useRef<HTMLInputElement | null>(null);
 
   const phoneIsValid = useMemo(() => E164.test(phone.trim()), [phone]);
 
-  // If already logged in, skip
+  // Redirect if already logged in
   useEffect(() => {
+    let mounted = true;
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
       if (session) navigate('/dashboard', { replace: true });
     });
+    const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
+      if (session) navigate('/dashboard', { replace: true });
+    });
+    return () => {
+      mounted = false;
+      sub?.subscription?.unsubscribe?.();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Start timer if we arrived with a phone from the previous step
+  // Start cooldown if we arrived with a phone from prior step
   useEffect(() => {
     if (!state?.phone) return;
-    setCooldown(RESEND_COOLDOWN);
-    const t = setInterval(() => setCooldown((s) => (s > 0 ? s - 1 : 0)), 1000);
-    return () => clearInterval(t);
+    startCooldown();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state?.phone]);
 
-  const handleVerify = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Clean up interval on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) window.clearInterval(timerRef.current);
+    };
+  }, []);
+
+  const startCooldown = () => {
+    if (timerRef.current) window.clearInterval(timerRef.current);
+    setCooldown(RESEND_COOLDOWN);
+    timerRef.current = window.setInterval(() => {
+      setCooldown((s) => {
+        if (s <= 1) {
+          if (timerRef.current) window.clearInterval(timerRef.current);
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+  };
+
+  const normalizeCode = (v: string) => v.replace(/\D/g, '').slice(0, 6);
+
+  const handleVerify = async (e?: React.FormEvent) => {
+    e?.preventDefault?.();
     setError('');
 
     const cleanPhone = phone.trim();
-    const cleanCode = code.replace(/\D/g, '').trim();
+    const cleanCode = normalizeCode(code);
 
     if (!E164.test(cleanPhone)) {
       setError('Enter a valid phone number in E.164 format (e.g. +15551234567).');
@@ -66,14 +97,16 @@ export default function VerifyCodePage() {
       });
 
       if (error || !data?.ok) {
-        throw new Error(error?.message || data?.error || 'Invalid or expired code.');
+        // Keep this generic to avoid leaking verification detail
+        throw new Error('Invalid or expired code.');
       }
 
-      // Twilio verification does NOT create a Supabase session.
-      // Continue your post-verify flow (you chose /demographics).
+      // Post-verify flow you specified:
       navigate('/demographics', { replace: true });
     } catch (e: any) {
       setError(e?.message || 'Invalid or expired code. Please try again.');
+      // Focus code to re-try quickly
+      codeInputRef.current?.focus();
     } finally {
       setLoading(false);
     }
@@ -92,12 +125,22 @@ export default function VerifyCodePage() {
         body: { phone: cleanPhone },
       });
       if (error) throw error;
-
-      setCooldown(RESEND_COOLDOWN);
+      startCooldown();
+      // Place cursor in code field for quick entry
+      setTimeout(() => codeInputRef.current?.focus(), 0);
     } catch (e: any) {
       setError(e?.message || 'Could not resend code. Please wait a minute and try again.');
     }
   };
+
+  // Optional: auto-submit when 6 digits present
+  useEffect(() => {
+    if (!loading && code.length === 6 && phoneIsValid) {
+      // Don’t auto-submit if an error is currently shown; let user correct first
+      if (!error) handleVerify();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code, phoneIsValid]);
 
   return (
     <div className="max-w-lg mx-auto p-6 bg-white shadow-xl rounded-xl flex flex-col items-center">
@@ -119,12 +162,16 @@ export default function VerifyCodePage() {
             className="w-full p-3 border-2 rounded text-lg"
             style={{ borderColor: WELLFIT_BLUE }}
             placeholder="+15551234567"
-            inputMode="numeric"
+            inputMode="tel"
             pattern="^\+\d{10,15}$"
             aria-invalid={!phoneIsValid}
+            aria-describedby="phone-help"
           />
+          <p id="phone-help" className="mt-1 text-sm text-gray-500">
+            Use +country code (e.g., +1 for U.S.).
+          </p>
           {!phoneIsValid && phone && (
-            <p className="mt-1 text-sm text-red-600">
+            <p className="mt-1 text-sm text-red-600" role="alert" aria-live="polite">
               Format must be +countrycode and digits (e.g. +15551234567).
             </p>
           )}
@@ -136,9 +183,15 @@ export default function VerifyCodePage() {
           </label>
           <input
             id="code"
+            ref={codeInputRef}
             type="text"
             value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+            onChange={(e) => setCode(normalizeCode(e.target.value))}
+            onPaste={(e) => {
+              e.preventDefault();
+              const text = (e.clipboardData.getData('text') || '').toString();
+              setCode(normalizeCode(text));
+            }}
             required
             className="w-full p-3 border-2 rounded text-lg tracking-widest"
             style={{ borderColor: WELLFIT_BLUE }}
@@ -148,10 +201,18 @@ export default function VerifyCodePage() {
             placeholder="6-digit code"
             maxLength={6}
             autoFocus
+            aria-describedby="code-help"
           />
+          <p id="code-help" className="mt-1 text-sm text-gray-500">
+            We sent a 6-digit code by SMS.
+          </p>
         </div>
 
-        {error && <div className="text-red-600">{error}</div>}
+        {error && (
+          <div className="text-red-600" role="alert" aria-live="assertive">
+            {error}
+          </div>
+        )}
 
         <button
           type="submit"
@@ -188,3 +249,4 @@ export default function VerifyCodePage() {
     </div>
   );
 }
+

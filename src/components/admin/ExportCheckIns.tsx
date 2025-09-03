@@ -1,100 +1,99 @@
 // src/components/ExportCheckIns.tsx
 import React, { useState } from 'react';
-import { useSupabaseClient } from '@supabase/auth-helpers-react';
+import { useSupabaseClient } from '../../lib/supabaseClient';
+
+   // ✅ correct path
 import { saveAs } from 'file-saver';
 
-interface CheckInRecord {
+type ProfileRow = {
   user_id: string;
-  check_in_date: string; // Assuming ISO date string
-  status: string;
-  // Optional profile data after joining/fetching
-  full_name?: string;
-  phone?: string;
-}
+  first_name: string | null;
+  last_name: string | null;
+  phone: string | null;
+};
+
+type CheckInRow = {
+  user_id: string;
+  created_at: string;
+  label: string;
+  is_emergency: boolean;
+};
 
 const ExportCheckIns: React.FC = () => {
   const supabase = useSupabaseClient();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchAllCheckInsWithProfiles = async (): Promise<CheckInRecord[]> => {
-    // Fetch all check-ins
-    // Note: For large datasets, consider pagination or server-side CSV generation.
-    const { data: checkIns, error: checkInsError } = await supabase
-      .from('check_ins') // Assumption: 'check_ins' table exists
-      .select('user_id, check_in_date, status')
-      .order('check_in_date', { ascending: false });
+  async function fetchAll(): Promise<Array<CheckInRow & { full_name: string; phone: string }>> {
+    // 1) Fetch and assert the row type so `ci` is typed in .map
+    const { data: rawCheckIns, error: e1 } = await supabase
+      .from('check_ins')
+      .select('user_id, created_at, label, is_emergency')
+      .order('created_at', { ascending: false });
 
-    if (checkInsError) {
-      console.error('Error fetching check-ins:', checkInsError.message);
-      throw new Error(`Failed to fetch check-in data: ${checkInsError.message}`);
+    if (e1) throw new Error(`Failed to fetch check-ins: ${e1.message}`);
+
+    const checkIns: CheckInRow[] = (rawCheckIns ?? []) as CheckInRow[];   // ✅ type the array
+
+    if (checkIns.length === 0) return [];
+
+    // 2) Now `ci` is typed here
+    const userIds: string[] = Array.from(new Set(checkIns.map((ci: CheckInRow) => ci.user_id))); // ✅
+
+    // Default typed map
+    let profileMap: Map<string, ProfileRow> = new Map();
+
+    if (userIds.length > 0) {
+      const { data: rawProfiles, error: e2 } = await supabase
+        .from('profiles_with_user_id')
+        .select('user_id, first_name, last_name, phone')
+        .in('user_id', userIds);
+
+      if (!e2 && rawProfiles) {
+        const profiles: ProfileRow[] = rawProfiles as ProfileRow[];       // ✅ type the array
+        profileMap = new Map<string, ProfileRow>(
+          profiles.map((pr: ProfileRow) => [pr.user_id, pr])              // ✅ `pr` typed
+        );
+      }
     }
-    if (!checkIns) return [];
 
-    // Get unique user_ids from check-ins to fetch profiles
-    const userIds = [...new Set(checkIns.map(ci => ci.user_id))];
-
-    if (userIds.length === 0) return checkIns as CheckInRecord[];
-
-    // Fetch profiles for these user_ids
-    // Note: This is an N+1 pattern if many users. Better to use a view or function in Supabase.
-    // For this component, we'll proceed but acknowledge this limitation.
-    const { data: profiles, error: profilesError } = await supabase
-      .from('profiles_with_user_id') // Assumption: 'profiles_with_user_id' view/table exists
-      .select('user_id, first_name, last_name, phone')
-      .in('user_id', userIds);
-
-    if (profilesError) {
-      console.error('Error fetching profiles for check-ins:', profilesError.message);
-      // Proceed with check-ins but profile data will be missing
-    }
-
-    const profileMap = new Map(profiles?.map(p => [p.user_id, p]));
-
-    return checkIns.map(ci => {
-      const profile = profileMap.get(ci.user_id);
-      return {
-        ...ci,
-        full_name: profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() : 'N/A',
-        phone: profile?.phone || 'N/A',
-      };
+    // 3) `ci` typed here too
+    return checkIns.map((ci: CheckInRow) => {                              // ✅
+      const p = profileMap.get(ci.user_id);
+      const full_name = ((p?.first_name ?? '') + ' ' + (p?.last_name ?? '')).trim() || 'N/A';
+      const phone = p?.phone ?? 'N/A';
+      return { ...ci, full_name, phone };
     });
-  };
+  }
 
-
-  const handleExport = async () => {
+  async function handleExport() {
     setLoading(true);
     setError(null);
     try {
-      const recordsToExport = await fetchAllCheckInsWithProfiles();
-
-      if (recordsToExport.length === 0) {
-        alert('No check-in data available to export.'); // Or use a more integrated notification
-        setLoading(false);
+      const rows = await fetchAll();
+      if (rows.length === 0) {
+        alert('No check-in data available to export.');
         return;
       }
-
-      const csvHeader = ['Full Name', 'Phone', 'Check-In Date', 'Status'];
-      const csvRows = recordsToExport.map(record => [
-        `"${record.full_name?.replace(/"/g, '""') || 'N/A'}"`, // Escape quotes
-        `"${record.phone?.replace(/"/g, '""') || 'N/A'}"`,
-        `"${new Date(record.check_in_date).toLocaleDateString()}"`, // Format date
-        `"${record.status?.replace(/"/g, '""') || 'N/A'}"`,
+      const header = ['Full Name', 'Phone', 'Date/Time', 'Label', 'Emergency'];
+      const csvRows = rows.map((r) => [
+        `"${r.full_name.replace(/"/g, '""')}"`,
+        `"${r.phone.replace(/"/g, '""')}"`,
+        `"${new Date(r.created_at).toLocaleString()}"`,
+        `"${r.label.replace(/"/g, '""')}"`,
+        `"${r.is_emergency ? 'Yes' : 'No'}"`,
       ]);
-
-      const csvContent = [csvHeader.join(','), ...csvRows.map(row => row.join(','))].join('\n');
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const csv = [header.join(','), ...csvRows.map((c) => c.join(','))].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       saveAs(blob, `wellfit-checkins-${new Date().toISOString().split('T')[0]}.csv`);
-
     } catch (e: any) {
-      console.error('Export failed:', e);
-      setError(`Export failed: ${e.message}`);
-      // Consider showing error via toast or a more visible UI element
-      alert(`Export failed: ${e.message}`);
+      console.error(e);
+      setError(e.message || 'Export failed');
+      alert(`Export failed: ${e.message || 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   return (
     <div className="text-center p-4">
@@ -107,7 +106,7 @@ const ExportCheckIns: React.FC = () => {
       </button>
       {error && <p className="text-red-500 mt-2 bg-red-100 p-2 rounded-md">{error}</p>}
       <p className="text-xs text-gray-500 mt-2">
-        Note: For large datasets, consider alternative export methods for performance.
+        Note: For large datasets, consider server-side CSV generation.
       </p>
     </div>
   );

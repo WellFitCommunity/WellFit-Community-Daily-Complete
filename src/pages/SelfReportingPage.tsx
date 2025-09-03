@@ -8,13 +8,13 @@ type SourceType = 'self' | 'staff';
 
 interface SelfReportData {
   id: number;
-  created_at: string;              // ISO string (from DB)
+  created_at: string;              // ISO from DB
   mood: string;
   symptoms?: string | null;
   activity_description?: string | null;
   user_id: string;
-  submitted_by: string;            // user id of submitter
-  entry_type: string;              // e.g., 'self_report'
+  submitted_by: string;            // inferred for display; health_entries doesn't store this
+  entry_type: string;              // 'self_report'
 }
 
 interface SelfReportLog extends SelfReportData {
@@ -74,13 +74,14 @@ const SelfReportingPage: React.FC = () => {
     };
   }, [supabase]);
 
-  // --- Fetch self reports for the current user
+  // --- Fetch self reports for the current user (from health_entries)
   const fetchReports = useCallback(
     async (uid: string) => {
       try {
         const { data, error } = await supabase
-          .from('self_reports')
-          .select('id, created_at, mood, symptoms, activity_description, user_id, submitted_by, entry_type')
+          .from('health_entries')
+          .select('id, created_at, user_id, entry_type, data')
+          .eq('entry_type', 'self_report')
           .eq('user_id', uid)
           .order('created_at', { ascending: false });
 
@@ -90,10 +91,24 @@ const SelfReportingPage: React.FC = () => {
           return;
         }
 
-        const reports: SelfReportLog[] = (data ?? []).map((r: SelfReportData) => ({
-          ...r,
-          source_type: r.user_id === r.submitted_by ? 'self' : 'staff',
-        }));
+        const reports: SelfReportLog[] = (data ?? []).map((r: any) => {
+          const d = r?.data || {};
+          const row: SelfReportLog = {
+            id: r.id,
+            created_at: r.created_at,
+            user_id: r.user_id,
+            entry_type: r.entry_type,
+            // pull from data JSON
+            mood: (d.mood ?? '').toString(),
+            symptoms: d.symptoms ?? null,
+            activity_description: d.activity_description ?? null,
+            // health_entries doesn’t have submitted_by; infer “self”
+            submitted_by: r.user_id,
+            source_type: 'self',
+          };
+          return row;
+        });
+
         setSelfReports(reports);
       } catch (e) {
         const err = e instanceof Error ? e : new Error('An unexpected error occurred while fetching reports.');
@@ -110,7 +125,7 @@ const SelfReportingPage: React.FC = () => {
     fetchReports(currentUser.id);
   }, [currentUser?.id, fetchReports]);
 
-  // --- Submit handler
+  // --- Submit handler (writes to health_entries with data JSON)
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setFeedbackMessage(null);
@@ -135,14 +150,15 @@ const SelfReportingPage: React.FC = () => {
     try {
       const payload = {
         user_id: currentUser.id,
-        submitted_by: currentUser.id, // required for source coloring and audit
         entry_type: 'self_report',
-        mood: chosenMood,
-        symptoms: symptoms.trim() || null,
-        activity_description: activity.trim() || null,
+        data: {
+          mood: chosenMood,
+          symptoms: symptoms.trim() || undefined,
+          activity_description: activity.trim() || undefined,
+        },
       };
 
-      const { error } = await supabase.from('self_reports').insert(payload);
+      const { error } = await supabase.from('health_entries').insert([payload]);
       if (error) throw error;
 
       setFeedbackMessage('Report saved successfully!');

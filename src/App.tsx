@@ -23,6 +23,9 @@ import LoginPage from './pages/LoginPage';
 import ChangePasswordPage from './pages/ChangePasswordPage';
 import Home from 'pages/Home';
 
+// ✅ NEW: the gate wrapper
+import AuthGate from './AuthGate';
+
 // Lazy-loaded pages/components
 const WelcomePage = React.lazy(() => import('./pages/WelcomePage'));
 const RegisterPage = React.lazy(() => import('./pages/RegisterPage'));
@@ -40,7 +43,7 @@ const AdminPanel = React.lazy(() => import('./components/admin/AdminPanel'));
 const AdminProfileEditorPage = React.lazy(() => import('./pages/AdminProfileEditorPage'));
 const CommunityMoments = React.lazy(() => import('./components/CommunityMoments'));
 
-const PUBLIC_ROUTES = ['/', '/register', '/verify', '/privacy-policy', '/terms'];
+const PUBLIC_ROUTES = ['/', '/register', '/verify', '/privacy-policy', '/terms', '/login', '/admin-login', '/change-password', '/home'];
 
 const App: React.FC = () => {
   const [branding, setBranding] = useState<BrandingConfig>(getCurrentBranding());
@@ -59,59 +62,64 @@ const App: React.FC = () => {
           <SessionTimeoutProvider>
             <DemoBanner />
             {!isPublic && <Header />}
-            <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
-              <Routes>
-                {/* Public Routes */}
-                <Route path="/" element={<WelcomePage />} />
-                <Route path="/register" element={<RegisterPage />} />
-                <Route path="/verify" element={<VerifyCodePage />} />
-                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-                <Route path="/terms" element={<TermsOfService />} />
-                <Route path="/change-password" element={<ChangePasswordPage />} />
-                <Route path="/admin-login" element={<AdminLoginPage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/home" element={<Home />} />
 
-                {/* Protected Routes */}
-                <Route path="/dashboard" element={<RequireAuth><DashboardPage /></RequireAuth>} />
-                <Route path="/check-in" element={<RequireAuth><CheckInPage /></RequireAuth>} />
-                <Route path="/word-find" element={<RequireAuth><WordFindPage /></RequireAuth>} />
-                <Route path="/meals/:id" element={<RequireAuth><MealDetailPage /></RequireAuth>} />
-                <Route path="/logout" element={<RequireAuth><LogoutPage /></RequireAuth>} />
-                <Route path="/consent-photo" element={<RequireAuth><ConsentPhotoPage /></RequireAuth>} />
-                <Route path="/consent-privacy" element={<RequireAuth><ConsentPrivacyPage /></RequireAuth>} />
-                <Route path="/self-reporting" element={<RequireAuth><SelfReportingPage /></RequireAuth>} />
-                <Route path="/doctors-view" element={<RequireAuth><DoctorsViewPage /></RequireAuth>} />
+            {/* ✅ Wrap routes with the AuthGate so post-login rules apply everywhere */}
+            <AuthGate>
+              <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
+                <Routes>
+                  {/* Public Routes */}
+                  <Route path="/" element={<WelcomePage />} />
+                  <Route path="/register" element={<RegisterPage />} />
+                  <Route path="/verify" element={<VerifyCodePage />} />
+                  <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                  <Route path="/terms" element={<TermsOfService />} />
+                  <Route path="/change-password" element={<ChangePasswordPage />} />
+                  <Route path="/admin-login" element={<AdminLoginPage />} />
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/home" element={<Home />} />
 
-                {/* Community Moments (protected) */}
-                <Route path="/community" element={<RequireAuth><CommunityMoments /></RequireAuth>} />
+                  {/* Protected Routes */}
+                  <Route path="/dashboard" element={<RequireAuth><DashboardPage /></RequireAuth>} />
+                  <Route path="/check-in" element={<RequireAuth><CheckInPage /></RequireAuth>} />
+                  <Route path="/word-find" element={<RequireAuth><WordFindPage /></RequireAuth>} />
+                  <Route path="/meals/:id" element={<RequireAuth><MealDetailPage /></RequireAuth>} />
+                  <Route path="/logout" element={<RequireAuth><LogoutPage /></RequireAuth>} />
+                  <Route path="/consent-photo" element={<RequireAuth><ConsentPhotoPage /></RequireAuth>} />
+                  <Route path="/consent-privacy" element={<RequireAuth><ConsentPrivacyPage /></RequireAuth>} />
+                  <Route path="/self-reporting" element={<RequireAuth><SelfReportingPage /></RequireAuth>} />
+                  <Route path="/doctors-view" element={<RequireAuth><DoctorsViewPage /></RequireAuth>} />
 
-                {/* Admin Routes (guarded) */}
-                <Route
-                  path="/admin"
-                  element={
-                    <RequireAuth>
-                      <RequireAdminAuth>
-                        <AdminPanel />
-                      </RequireAdminAuth>
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="/admin-profile-editor"
-                  element={
-                    <RequireAuth>
-                      <RequireAdminAuth>
-                        <AdminProfileEditorPage />
-                      </RequireAdminAuth>
-                    </RequireAuth>
-                  }
-                />
+                  {/* Community Moments (protected) */}
+                  <Route path="/community" element={<RequireAuth><CommunityMoments /></RequireAuth>} />
 
-                {/* Fallback */}
-                <Route path="*" element={<NotFoundPage />} />
-              </Routes>
-            </Suspense>
+                  {/* Admin Routes (guarded) */}
+                  <Route
+                    path="/admin"
+                    element={
+                      <RequireAuth>
+                        <RequireAdminAuth>
+                          <AdminPanel />
+                        </RequireAdminAuth>
+                      </RequireAuth>
+                    }
+                  />
+                  <Route
+                    path="/admin-profile-editor"
+                    element={
+                      <RequireAuth>
+                        <RequireAdminAuth>
+                          <AdminProfileEditorPage />
+                        </RequireAdminAuth>
+                      </RequireAuth>
+                    }
+                  />
+
+                  {/* Fallback */}
+                  <Route path="*" element={<NotFoundPage />} />
+                </Routes>
+              </Suspense>
+            </AuthGate>
+
             <Footer />
           </SessionTimeoutProvider>
         </BrandingContext.Provider>

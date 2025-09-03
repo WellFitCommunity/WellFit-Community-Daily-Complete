@@ -11,8 +11,8 @@ import PrettyCard from '../components/ui/PrettyCard';
 type FormValues = {
   firstName: string;
   lastName: string;
-  phone: string;          // E.164 (+15551234567)
-  email?: string;         // optional; empty string allowed, transformed to undefined
+  phone: string;          // Always +1XXXXXXXXXX
+  email?: string;
   password: string;
   confirmPassword: string;
   consent: boolean;
@@ -26,42 +26,58 @@ const API_ENDPOINT =
   process.env.REACT_APP_API_ENDPOINT ??
   'https://xkybsjnvuohpqpbkikyn.supabase.co/functions/v1/register';
 
-// Explicitly type schema so resolver + RHF agree on FormValues
-const schema: yup.ObjectSchema<FormValues> = yup.object({
-  firstName: yup.string().required('First name is required.'),
-  lastName: yup.string().required('Last name is required.'),
-  phone: yup
-    .string()
-    .required('Phone number is required.')
-    .matches(/^\+\d{10,15}$/, 'Use E.164 format, e.g. +15551234567.'),
-  // accept empty string in UI but treat it as undefined
-  email: yup
-    .string()
-    .trim()
-    .transform((v) => (v === '' ? undefined : v))
-    .optional()
-    .email('Invalid email address.'),
-  password: yup
-    .string()
-    .required('Password is required.')
-    .min(8, 'At least 8 characters.')
-    .matches(/[A-Z]/, 'One uppercase letter.')
-    .matches(/\d/, 'One number.')
-    .matches(/[^A-Za-z0-9]/, 'One special character.'),
-  confirmPassword: yup
-    .string()
-    .oneOf([yup.ref('password')], 'Passwords must match.')
-    .required('Please confirm your password.'),
-  consent: yup
-    .boolean()
-    .oneOf([true], 'You must agree to proceed.')
-    .required(),
-  hcaptchaToken: yup.string().required('Captcha verification is required.'),
-}).required();
+// --- hCaptcha handle type (for the ref)
+type HCaptchaHandle = {
+  execute: () => void;
+  resetCaptcha: () => void;
+  remove?: () => void;
+};
+
+// Strict US-only E.164 (+1 + 10 digits)
+const schema: yup.ObjectSchema<FormValues> = yup
+  .object({
+    firstName: yup.string().required('First name is required.'),
+    lastName: yup.string().required('Last name is required.'),
+    phone: yup
+      .string()
+      .required('Phone number is required.')
+      .matches(/^\+1\d{10}$/, 'Enter a valid US number like +1XXXXXXXXXX.'),
+    email: yup
+      .string()
+      .trim()
+      .transform((v) => (v === '' ? undefined : v))
+      .optional()
+      .email('Invalid email address.'),
+    password: yup
+      .string()
+      .required('Password is required.')
+      .min(8, 'At least 8 characters.')
+      .matches(/[A-Z]/, 'One uppercase letter.')
+      .matches(/\d/, 'One number.')
+      .matches(/[^A-Za-z0-9]/, 'One special character.'),
+    confirmPassword: yup
+      .string()
+      .oneOf([yup.ref('password')], 'Passwords must match.')
+      .required('Please confirm your password.'),
+    consent: yup.boolean().oneOf([true], 'You must agree to proceed.').required(),
+    hcaptchaToken: yup.string().required('Captcha verification is required.'),
+  })
+  .required();
+
+// --- Helpers: keep phone input locked to +1 and digits only ---
+function normalizeUSPhoneInput(raw: string): string {
+  // Strip non-digits
+  const digits = raw.replace(/\D/g, '');
+  // Ensure it begins with country code 1
+  let core = digits.startsWith('1') ? digits : `1${digits}`;
+  // Limit to 11 digits total (1 + 10)
+  core = core.slice(0, 11);
+  return `+${core}`;
+}
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
-  const hcaptchaRef = useRef<HCaptcha>(null);
+  const hcaptchaRef = useRef<HCaptchaHandle | null>(null);
 
   const [isCaptchaConfigured, setIsCaptchaConfigured] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -81,22 +97,37 @@ const RegisterPage: React.FC = () => {
     setValue,
     setError,
     clearErrors,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     defaultValues: {
       firstName: '',
       lastName: '',
-      phone: '',
-      email: '',                // empty string, not null
+      phone: '+1', // seed with +1
+      email: '',
       password: '',
       confirmPassword: '',
       consent: false,
       hcaptchaToken: '',
     },
-    resolver: yupResolver<FormValues>(schema), // generic binds types
+    resolver: yupResolver<FormValues>(schema),
     mode: 'onBlur',
     reValidateMode: 'onChange',
   });
+
+  // Keep the phone input sticky to +1 prefix, digits only, max length 12 (+ + 11 digits)
+  const phoneVal = watch('phone');
+  useEffect(() => {
+    if (!phoneVal) {
+      setValue('phone', '+1', { shouldValidate: true, shouldDirty: true });
+      return;
+    }
+    // If user tries to delete + or 1, or paste random stuff, normalize it
+    const normalized = normalizeUSPhoneInput(phoneVal);
+    if (normalized !== phoneVal) {
+      setValue('phone', normalized, { shouldValidate: true, shouldDirty: true });
+    }
+  }, [phoneVal, setValue]);
 
   const onVerify = (token: string) => {
     setValue('hcaptchaToken', token, { shouldValidate: true });
@@ -116,8 +147,8 @@ const RegisterPage: React.FC = () => {
       const payload = {
         first_name: data.firstName,
         last_name: data.lastName,
-        phone: data.phone,
-        email: data.email, // may be undefined after transform; that’s fine
+        phone: data.phone, // guaranteed to be +1XXXXXXXXXX by schema
+        email: data.email, // may be undefined
         password: data.password,
         consent: data.consent,
         hcaptcha_token: data.hcaptchaToken,
@@ -134,19 +165,24 @@ const RegisterPage: React.FC = () => {
         try {
           const j = await res.json();
           if (j?.error) msg = j.error;
-        } catch { /* ignore JSON parse errors */ }
+        } catch {
+          /* ignore JSON parse errors */
+        }
         throw new Error(msg);
       }
 
       toast.success('Registration successful! Verify your phone next.');
-      navigate('/verify-code', { replace: true, state: { phone: data.phone } });
+      // IMPORTANT: your router defines "/verify" (not "/verify-code")
+      navigate('/verify', { replace: true, state: { phone: data.phone } });
     } catch (err) {
       const e = err instanceof Error ? err : new Error('Unknown error');
       console.error(e);
       setSubmitError(e.message);
-      // Some RHF typings bark at 'root'—guard with as any to avoid noise.
       setError('root' as any, { type: 'manual', message: e.message });
-      (hcaptchaRef.current as any)?.reset();
+      // ✅ correct reset call for hCaptcha
+      hcaptchaRef.current?.resetCaptcha();
+      // also clear token so schema re-validates
+      setValue('hcaptchaToken', '', { shouldValidate: true });
       toast.error(e.message);
     }
   };
@@ -199,14 +235,19 @@ const RegisterPage: React.FC = () => {
               </label>
 
               <label className="flex flex-col text-sm">
-                <span className="font-medium">Phone (E.164)</span>
+                <span className="font-medium">Phone (US only)</span>
                 <input
                   {...register('phone')}
                   inputMode="tel"
                   className="mt-1 rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-[#8cc63f]"
-                  placeholder="+15551234567"
+                  // Keep a helpful placeholder beyond the enforced prefix
+                  placeholder="+1XXXXXXXXXX"
                   autoComplete="tel"
+                  maxLength={12} // "+1" + 10 digits
                 />
+                <span className="text-xs text-gray-500 mt-1">
+                  We auto-format to <code>+1</code>. Type only your 10-digit US number.
+                </span>
                 {errors.phone && <span className="text-red-600">{errors.phone.message}</span>}
               </label>
 
@@ -269,7 +310,7 @@ const RegisterPage: React.FC = () => {
                   I agree to receive automated messages from WellFit Community for reminders and program
                   updates. Message &amp; data rates may apply. Reply STOP to opt out. Read our{' '}
                   <Link to="/terms" className="text-blue-700 underline">Terms of Service</Link> and{' '}
-                  <Link to="/privacy" className="text-blue-700 underline">Privacy Policy</Link>.
+                  <Link to="/privacy-policy" className="text-blue-700 underline">Privacy Policy</Link>.
                 </span>
               </label>
               {errors.consent && <span className="text-red-600">{errors.consent.message}</span>}

@@ -1,9 +1,16 @@
+// src/pages/ConsentPhotoPage.tsx
 import { useRef, useState } from 'react';
 import SignatureCanvas from 'react-signature-canvas';
-import { useNavigate } from 'react-router-dom'; 
-import { supabase } from '../lib/supabaseClient';
+import { useNavigate } from 'react-router-dom';
+import { useSupabaseClient, useUser } from '../lib/supabaseClient';
+
+const BUCKET = 'consent-signatures';
 
 const ConsentPhotoPage: React.FC = () => {
+  const supabase = useSupabaseClient();
+  const user = useUser();
+  const userId = user?.id ?? null;
+
   const sigCanvasRef = useRef<SignatureCanvas | null>(null);
   const [firstName, setFirstName] = useState(localStorage.getItem('firstName') || '');
   const [lastName, setLastName] = useState(localStorage.getItem('lastName') || '');
@@ -16,57 +23,86 @@ const ConsentPhotoPage: React.FC = () => {
     sigCanvasRef.current?.clear();
   };
 
+  async function dataUrlToBlob(dataUrl: string): Promise<Blob> {
+    // robust conversion without relying on fetch data URL
+    const [meta, base64] = dataUrl.split(',');
+    const mime = meta.match(/data:(.*);base64/)?.[1] || 'image/png';
+    const binStr = atob(base64);
+    const len = binStr.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) bytes[i] = binStr.charCodeAt(i);
+    return new Blob([bytes], { type: mime });
+  }
+
   const handleSubmit = async () => {
-    if (!firstName.trim() || !lastName.trim()) {
+    setError('');
+    setFeedback('');
+
+    const fn = firstName.trim();
+    const ln = lastName.trim();
+
+    if (!fn || !ln) {
       setError('First and last name are required.');
       return;
     }
-    if (sigCanvasRef.current?.isEmpty()) {
+    if (!userId) {
+      setError('You must be logged in to submit your consent.');
+      return;
+    }
+    if (!sigCanvasRef.current || sigCanvasRef.current.isEmpty()) {
       setError('Signature is required.');
       return;
     }
 
     setSubmitting(true);
-    setError('');
-    setFeedback('');
-
     try {
-      const dataUrl = sigCanvasRef.current?.toDataURL();
-      if (typeof dataUrl !== "string") {
-        throw new Error("No signature found. Please sign before submitting.");
-      }
-      const blob = await (await fetch(dataUrl)).blob();
+      // capture signature
+      const dataUrl = sigCanvasRef.current.toDataURL('image/png');
+      const blob = await dataUrlToBlob(dataUrl);
 
-      // Construct a unique, human-readable file name
-      const fileName = `photo-signatures/${firstName}_${lastName}_${Date.now()}.png`;
+      // filename: under the user’s folder for easier management
+      const ts = Date.now();
+      const safeFn = fn.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const safeLn = ln.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const filePath = `${userId}/${safeFn}_${safeLn}_${ts}.png`;
 
+      // upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
-        .from('consent-signatures')
-        .upload(fileName, blob);
-
+        .from(BUCKET)
+        .upload(filePath, blob, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: 'image/png',
+        });
       if (uploadError) {
-        setError('Failed to upload signature.');
+        setError('Failed to upload signature. Please try again.');
         setSubmitting(false);
         return;
       }
 
+      // log in DB
       const { error: dbError } = await supabase.from('privacy_consent').insert([
         {
-          first_name: firstName,
-          last_name: lastName,
-          file_path: fileName,
+          user_id: userId,
+          first_name: fn,
+          last_name: ln,
+          file_path: filePath,
           signed_at: new Date().toISOString(),
         },
       ]);
-
       if (dbError) {
-        setError('Signature saved, but logging consent failed.');
+        setError('Signature saved, but logging consent failed. Please contact support.');
         setSubmitting(false);
         return;
       }
 
+      // local cache for convenience
+      localStorage.setItem('firstName', fn);
+      localStorage.setItem('lastName', ln);
+
       setFeedback('Privacy consent submitted. Thank you!');
-      setTimeout(() => navigate('/dashboard'), 2000);
+      // Move to the next step in your consent flow
+      setTimeout(() => navigate('/consent-privacy'), 1200);
     } catch (err) {
       console.error('Error saving photo consent data:', err);
       setError('An unexpected error occurred while saving your consent. Please try again.');
@@ -94,6 +130,7 @@ const ConsentPhotoPage: React.FC = () => {
         value={firstName}
         onChange={e => setFirstName(e.target.value)}
         className="w-full p-2 border border-gray-400 rounded mb-4"
+        autoComplete="given-name"
       />
 
       <label htmlFor="lastName" className="block font-semibold mb-2">Last Name</label>
@@ -103,10 +140,11 @@ const ConsentPhotoPage: React.FC = () => {
         value={lastName}
         onChange={e => setLastName(e.target.value)}
         className="w-full p-2 border border-gray-400 rounded mb-4"
+        autoComplete="family-name"
       />
 
-      <label className="block font-semibold mb-2">Final Signature</label>
-      <div className="border border-gray-500 rounded mb-4">
+      <label className="block font-semibold mb-2" htmlFor="signature">Final Signature</label>
+      <div className="border border-gray-500 rounded mb-4" id="signature">
         <SignatureCanvas
           penColor="black"
           canvasProps={{ width: 500, height: 200, className: 'bg-gray-100 w-full' }}
@@ -118,20 +156,24 @@ const ConsentPhotoPage: React.FC = () => {
         <button
           onClick={handleClear}
           className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500"
+          type="button"
+          disabled={submitting}
         >
           Clear Signature
         </button>
         <button
           onClick={handleSubmit}
-          className="px-4 py-2 bg-[#003865] text-white rounded hover:bg-[#8cc63f]"
+          className="px-4 py-2 bg-[#003865] text-white rounded hover:bg-[#8cc63f] disabled:opacity-60"
           disabled={submitting}
+          type="button"
+          aria-busy={submitting}
         >
-          {submitting ? 'Saving...' : 'Save and Proceed to Privacy Consent'}
+          {submitting ? 'Saving…' : 'Save and Proceed to Privacy Consent'}
         </button>
       </div>
 
-      {feedback && <p className="text-green-600 text-sm mt-2">{feedback}</p>}
-      {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
+      {feedback && <p className="text-green-600 text-sm mt-2" role="status">{feedback}</p>}
+      {error && <p className="text-red-600 text-sm mt-2" role="alert">{error}</p>}
     </div>
   );
 };

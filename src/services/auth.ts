@@ -9,39 +9,58 @@ export interface RegisterPayload {
   hcaptcha_token: string;
 }
 
-// 1. Grab raw env var
+// Raw env
 const RAW_ENDPOINT = process.env.REACT_APP_API_ENDPOINT;
 
-// 2. Build a guaranteed string (fallback only in dev)
+// Fallback only allowed in non-production
 export const API_ENDPOINT: string =
   RAW_ENDPOINT ??
-  'https://xkybsjnvuohpqpbkikyn.supabase.co/functions/v1/register';
+  (process.env.NODE_ENV !== 'production'
+    ? 'https://xkybsjnvuohpqpbkikyn.supabase.co/functions/v1/register'
+    : (() => {
+        throw new Error(
+          'REACT_APP_API_ENDPOINT not set in production environment.'
+        );
+      })());
 
 if (!RAW_ENDPOINT && process.env.NODE_ENV !== 'production') {
   console.warn(
     '⚠️ REACT_APP_API_ENDPOINT not set—using fallback. ' +
-    'Define it in your .env and in Vercel settings.'
+      'Define it in your .env and in Vercel settings.'
   );
 }
 
-// 3. Export a function to register
-export async function registerUser(payload: RegisterPayload) {
-  const res = await fetch(API_ENDPOINT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-
-  if (!res.ok) {
-    let errorText: string;
-    try {
-      const errJson = await res.json();
-      errorText = errJson.error || JSON.stringify(errJson);
-    } catch {
-      errorText = res.statusText;
-    }
-    throw new Error(errorText || 'Registration failed');
+export async function registerUser<T = unknown>(
+  payload: RegisterPayload
+): Promise<T> {
+  if (!payload.consent) {
+    throw new Error('User consent is required before registration.');
   }
 
-  return res.json();
+  try {
+    const res = await fetch(API_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      let errorText: string;
+      try {
+        const errJson = await res.json();
+        errorText = errJson.error || JSON.stringify(errJson);
+      } catch {
+        errorText = res.statusText || `HTTP ${res.status}`;
+      }
+      throw new Error(errorText || 'Registration failed');
+    }
+
+    return (await res.json()) as T;
+  } catch (err) {
+    // Network / CORS / unexpected errors
+    if (err instanceof Error) {
+      throw new Error(`Registration request failed: ${err.message}`);
+    }
+    throw new Error('Registration request failed: Unknown error');
+  }
 }

@@ -4,7 +4,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useSupabaseClient, useSession } from '../lib/supabaseClient';
 
 type Profile = {
-  full_name?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
   role?: string | null;
 };
 
@@ -16,23 +17,27 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!session) return; // not logged in yet
+    if (!session?.user?.id) return; // not logged in yet
     (async () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('profiles')
-        .select('full_name, role')
-        .eq('user_id', session.user.id)
+        .select('first_name, last_name, role')
+        .eq('id', session.user.id)        // ✅ use id, not user_id
         .maybeSingle();
       if (!error) setProfile(data ?? {});
       setLoading(false);
     })();
-  }, [session, supabase]);
+  }, [session?.user?.id, supabase]);
 
   async function handleSignOut() {
     await supabase.auth.signOut();
     navigate('/login', { replace: true });
   }
+
+  const displayName =
+    (profile?.first_name?.trim() || '') +
+    (profile?.last_name ? ` ${profile.last_name.trim()}` : '');
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -52,7 +57,10 @@ export default function Home() {
       <main className="max-w-5xl mx-auto px-4 py-10">
         <div className="grid gap-6 md:grid-cols-3">
           <section className="md:col-span-2 bg-white rounded-xl shadow p-6">
-            <h2 className="text-lg font-semibold mb-2">Welcome{profile?.full_name ? `, ${profile.full_name}` : ''}</h2>
+            <h2 className="text-lg font-semibold mb-2">
+              Welcome{displayName ? `, ${displayName}` : ''}
+            </h2>
+
             {!session ? (
               <p className="text-gray-600">
                 You’re not signed in.{' '}
@@ -63,11 +71,12 @@ export default function Home() {
             ) : (
               <div className="text-gray-700 space-y-2">
                 <p><span className="font-medium">Email:</span> {session.user.email}</p>
-                <p><span className="font-medium">Role:</span> {profile?.role ?? 'member'}</p>
+                <p><span className="font-medium">Role:</span> {profile?.role ?? 'member'} </p>
                 <div className="mt-4 flex flex-wrap gap-3">
                   <Link to="/dashboard" className="px-4 py-2 rounded bg-[#003865] text-white">Open Dashboard</Link>
                   <Link to="/self-reporting" className="px-4 py-2 rounded bg-gray-900 text-white">Self-Report</Link>
                   <Link to="/community" className="px-4 py-2 rounded bg-gray-200 text-gray-900">Community</Link>
+                  <Link to="/doctors-view" className="px-4 py-2 rounded bg-[#8cc63f] text-white">Doctor’s View</Link>
                   <button onClick={handleSignOut} className="px-4 py-2 rounded border border-gray-300">
                     Sign Out
                   </button>

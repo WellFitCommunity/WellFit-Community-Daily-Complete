@@ -1,8 +1,9 @@
-// src/components/CommunityMoments.tsx — SAFE BASELINE (TS no-red)
+// src/components/CommunityMoments.tsx — hooks-based, CRA-safe
 // Compiles in CRA/Vite. Pagination, safer uploads, signed URLs (file_path), SSR guards.
 
 import React, { useEffect, useRef, useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { useSupabaseClient, useSession, useUser } from '../lib/supabaseClient';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import AdminFeatureToggle from './admin/AdminFeatureToggle';
 
 // If your editor complains about typings, keep these ts-ignores OR add src/types/vendor.d.ts per the notes.
@@ -70,16 +71,20 @@ function safeFilename(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]/g, '_');
 }
 
-async function getSignedUrlIfPossible(path?: string): Promise<string | null> {
+async function getSignedUrlIfPossible(client: SupabaseClient, path?: string): Promise<string | null> {
   if (!path) return null;
-  const { data, error } = await supabase.storage
-    .from(BUCKET)
-    .createSignedUrl(path, SIGNED_URL_TTL_SEC);
+  const { data, error } = await client.storage.from(BUCKET).createSignedUrl(path, SIGNED_URL_TTL_SEC);
   if (!error && data?.signedUrl) return data.signedUrl;
   return null;
 }
 
 const CommunityMoments: React.FC = () => {
+  // ✅ Hooks-based client & identity (no direct singleton import)
+  const supabase = useSupabaseClient();
+  const session = useSession();
+  const user = useUser();
+  const userId = user?.id ?? session?.user?.id ?? null;
+
   // Data state
   const [affirmation, setAffirmation] = useState<Affirmation | null>(null);
   const [moments, setMoments] = useState<Moment[]>([]);
@@ -112,18 +117,22 @@ const CommunityMoments: React.FC = () => {
     setRegular(rows.filter((m) => !m.is_gallery_high));
   };
 
-  // Admin detect
+  // Admin detect (runs when userId available)
   useEffect(() => {
     let cancelled = false;
+    if (!userId) return;
     (async () => {
-      const { data: authData } = await supabase.auth.getUser();
-      const uid = authData?.user?.id;
-      if (!uid) return;
-      const { data } = await supabase.rpc('is_admin', { u: uid });
-      if (!cancelled) setIsAdmin(Boolean(data));
+      try {
+        const { data } = await supabase.rpc('is_admin', { u: userId });
+        if (!cancelled) setIsAdmin(Boolean(data));
+      } catch {
+        if (!cancelled) setIsAdmin(false);
+      }
     })();
-    return () => { cancelled = true; };
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [supabase, userId]);
 
   // Affirmations
   useEffect(() => {
@@ -142,8 +151,10 @@ const CommunityMoments: React.FC = () => {
         // no-op
       }
     })();
-    return () => { cancelled = true; };
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [supabase]);
 
   // Fetch page 1
   useEffect(() => {
@@ -186,8 +197,10 @@ const CommunityMoments: React.FC = () => {
         if (!cancelled) setInitialLoading(false);
       }
     })();
-    return () => { cancelled = true; };
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [supabase]);
 
   // Load more
   const loadMore = async () => {
@@ -232,10 +245,10 @@ const CommunityMoments: React.FC = () => {
 
   // Parent handler to update UI immediately after toggle
   const handleFeatureChange = (id: string, next: boolean) => {
-    const updated = moments.map(mm => (mm.id === id ? { ...mm, is_gallery_high: next } : mm));
+    const updated = moments.map((mm) => (mm.id === id ? { ...mm, is_gallery_high: next } : mm));
     setMoments(updated);
-    setFeatured(updated.filter(x => x.is_gallery_high));
-    setRegular(updated.filter(x => !x.is_gallery_high));
+    setFeatured(updated.filter((x) => x.is_gallery_high));
+    setRegular(updated.filter((x) => !x.is_gallery_high));
   };
 
   // File input validation
@@ -268,9 +281,7 @@ const CommunityMoments: React.FC = () => {
     setUploading(true);
 
     try {
-      const { data: authData } = await supabase.auth.getUser();
-      const user_id = authData?.user?.id;
-      if (!user_id) throw new Error('User not authenticated.');
+      if (!userId) throw new Error('User not authenticated.');
       if (!selectedFile) throw new Error('Please select a photo to upload.');
 
       const t = title.trim();
@@ -280,7 +291,7 @@ const CommunityMoments: React.FC = () => {
       const cleanTags = sanitizeTags(tags);
       const now = Date.now();
       const safeName = safeFilename(selectedFile.name);
-      const filePath = `${user_id}/${now}_${safeName}`;
+      const filePath = `${userId}/${now}_${safeName}`;
 
       const { error: uploadError } = await supabase.storage
         .from(BUCKET)
@@ -295,7 +306,7 @@ const CommunityMoments: React.FC = () => {
       const { data: publicUrlData } = supabase.storage.from(BUCKET).getPublicUrl(filePath);
 
       const insertBody: any = {
-        user_id,
+        user_id: userId,
         title: t,
         description: d,
         emoji,
@@ -305,10 +316,7 @@ const CommunityMoments: React.FC = () => {
         file_url: publicUrlData?.publicUrl ?? '',
       };
 
-      const { error: insertError } = await supabase
-        .from('community_moments')
-        .insert([insertBody]);
-
+      const { error: insertError } = await supabase.from('community_moments').insert([insertBody]);
       if (insertError) throw new Error('Failed to save moment.');
 
       // Reset form
@@ -379,10 +387,12 @@ const CommunityMoments: React.FC = () => {
     useEffect(() => {
       let cancelled = false;
       (async () => {
-        const s = await getSignedUrlIfPossible(m.file_path);
+        const s = await getSignedUrlIfPossible(supabase, m.file_path);
         if (!cancelled) setUrl(s || m.file_url || null);
       })();
-      return () => { cancelled = true; };
+      return () => {
+        cancelled = true;
+      };
     }, [m.id, m.file_path, m.file_url]);
 
     const tagClass = featured ? 'bg-[#8cc63f] text-white' : 'bg-gray-300 text-[#003865]';
@@ -439,9 +449,13 @@ const CommunityMoments: React.FC = () => {
       {/* Header */}
       <div className="bg-gradient-to-r from-[#003865] to-[#8cc63f] p-5 rounded-t-xl shadow flex flex-col items-center mb-4">
         <div className="flex items-center gap-3">
-          <span className="text-4xl" aria-hidden>🎉</span>
+          <span className="text-4xl" aria-hidden>
+            🎉
+          </span>
           <h1 className="text-3xl md:text-4xl font-bold text-white drop-shadow">Community Moments</h1>
-          <span className="text-4xl" aria-hidden>📸</span>
+          <span className="text-4xl" aria-hidden>
+            📸
+          </span>
         </div>
         {affirmation && (
           <motion.div
@@ -467,18 +481,14 @@ const CommunityMoments: React.FC = () => {
       {featured.length > 0 && (
         <div className="mb-6">
           <h2 className="text-2xl font-bold mb-3 text-[#8cc63f] flex items-center gap-2">
-            <span className="text-2xl" aria-hidden>⭐</span>{' '}
+            <span className="text-2xl" aria-hidden>
+              ⭐
+            </span>{' '}
             Featured Moments
           </h2>
           <div className="grid gap-4 sm:grid-cols-2">
             {featured.map((m) => (
-              <MomentCard
-                key={m.id}
-                m={m}
-                featured
-                isAdmin={isAdmin}
-                onFeatureChange={handleFeatureChange}
-              />
+              <MomentCard key={m.id} m={m} featured isAdmin={isAdmin} onFeatureChange={handleFeatureChange} />
             ))}
           </div>
         </div>
@@ -488,7 +498,9 @@ const CommunityMoments: React.FC = () => {
       <div ref={formRef} className="mb-8 bg-white rounded-xl p-6 shadow border-2 border-[#003865]">
         <h2 className="text-2xl font-bold text-[#003865] mb-2">Share Your Community Moment</h2>
         <form onSubmit={handleSubmit}>
-          <label className="block font-semibold mb-1 text-lg" htmlFor="cm-photo">Photo</label>
+          <label className="block font-semibold mb-1 text-lg" htmlFor="cm-photo">
+            Photo
+          </label>
           <input
             id="cm-photo"
             type="file"
@@ -499,7 +511,9 @@ const CommunityMoments: React.FC = () => {
             aria-required
           />
 
-          <label className="block font-semibold mb-1 text-lg" htmlFor="cm-title">Title</label>
+          <label className="block font-semibold mb-1 text-lg" htmlFor="cm-title">
+            Title
+          </label>
           <input
             id="cm-title"
             className="w-full border rounded p-2 mb-3 text-lg"
@@ -509,7 +523,9 @@ const CommunityMoments: React.FC = () => {
             required
           />
 
-          <label className="block font-semibold mb-1 text-lg" htmlFor="cm-desc">Description</label>
+          <label className="block font-semibold mb-1 text-lg" htmlFor="cm-desc">
+            Description
+          </label>
           <textarea
             id="cm-desc"
             className="w-full border rounded p-2 mb-3 text-lg"
@@ -522,7 +538,9 @@ const CommunityMoments: React.FC = () => {
           />
 
           <div className="flex items-center mb-3">
-            <label className="font-semibold mr-3 text-lg" htmlFor="cm-emoji">Emoji:</label>
+            <label className="font-semibold mr-3 text-lg" htmlFor="cm-emoji">
+              Emoji:
+            </label>
             <motion.button
               id="cm-emoji"
               type="button"
@@ -531,12 +549,7 @@ const CommunityMoments: React.FC = () => {
               variants={
                 {
                   hidden: { scale: 0, opacity: 0, rotate: -90 },
-                  visible: {
-                    scale: 1.2,
-                    opacity: 1,
-                    rotate: 0,
-                    transition: { type: 'spring', stiffness: 300 },
-                  },
+                  visible: { scale: 1.2, opacity: 1, rotate: 0, transition: { type: 'spring', stiffness: 300 } },
                   tap: { scale: 1.4 },
                 } as any
               }
@@ -549,7 +562,8 @@ const CommunityMoments: React.FC = () => {
             >
               {emoji || '😊'}
             </motion.button>
-            {showEmojiPicker && isBrowser &&
+            {showEmojiPicker &&
+              isBrowser &&
               createPortal(
                 <div
                   className="z-50 fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white border rounded shadow p-2"
@@ -609,17 +623,10 @@ const CommunityMoments: React.FC = () => {
         <>
           <div className="grid gap-4 sm:grid-cols-2">
             {regular.map((m) => (
-              <MomentCard
-                key={m.id}
-                m={m}
-                isAdmin={isAdmin}
-                onFeatureChange={handleFeatureChange}
-              />
+              <MomentCard key={m.id} m={m} isAdmin={isAdmin} onFeatureChange={handleFeatureChange} />
             ))}
             {regular.length === 0 && (
-              <div className="text-gray-400 text-center text-xl py-8 col-span-full">
-                No moments shared yet.
-              </div>
+              <div className="text-gray-400 text-center text-xl py-8 col-span-full">No moments shared yet.</div>
             )}
           </div>
           {hasMore && (
@@ -640,4 +647,3 @@ const CommunityMoments: React.FC = () => {
 };
 
 export default CommunityMoments;
-
