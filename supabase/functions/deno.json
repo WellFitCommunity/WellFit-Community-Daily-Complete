@@ -1,7 +1,15 @@
 {
-  "imports": {
-    "serve": "https://deno.land/std@0.224.0/http/server.ts",
-    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.42.2"
+  "$schema": "https://deno.land/x/deno/cli/schemas/config-file.v1.json",
+  "importMap": "./import_map.json",
+  "lint": { "rules": { "tags": ["recommended"] } },
+  "fmt": {
+    "files": { "include": ["."], "exclude": ["node_modules", "dist"] },
+    "options": {
+      "useTabs": false,
+      "lineWidth": 100,
+      "indentWidth": 2,
+      "singleQuote": true,
+      "proseWrap": "preserve"
+    }
   }
 }
-

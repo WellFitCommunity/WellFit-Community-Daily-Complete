@@ -1,194 +1,86 @@
-import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { corsHeaders } from '../_shared/cors.ts';
+import { serve } from "https://deno.land/std@0.183.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://esm.sh/zod@3.23.8";
+import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 
-const MAX_ATTEMPTS = 5; // Max attempts before rate limiting
-const LOCKOUT_DURATION_MINUTES = 15; // Lockout duration in minutes
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SB_SECRET_KEY = Deno.env.get("SB_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const SB_PUB_KEY   = Deno.env.get("SB_PUBLISHABLE_API_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+const ADMIN_SESSION_TTL_MIN = Number(Deno.env.get("ADMIN_SESSION_TTL_MIN") ?? "120"); // 2h
 
-// Function to compare strings in constant time.
-async function constantTimeCompare(a: string, b: string): Promise<boolean> {
-  if (a.length !== b.length) {
-    return false;
-  }
-  const encoder = new TextEncoder();
-  const encodedA = encoder.encode(a);
-  const encodedB = encoder.encode(b);
+const admin = createClient(SUPABASE_URL, SB_SECRET_KEY, { auth: { persistSession: false } });
+const anon  = createClient(SUPABASE_URL, SB_PUB_KEY);
 
-  let result = 0;
-  for (let i = 0; i < encodedA.length; i++) {
-    result |= encodedA[i] ^ encodedB[i];
-  }
-  return result === 0;
+const schema = z.object({
+  pin: z.string().regex(/^\d{4,8}$/, "PIN must be 4–8 digits."),
+  role: z.enum(["admin","super_admin"])
+});
+
+async function getCaller(req: Request) {
+  const token = req.headers.get("Authorization")?.replace(/^Bearer /, "") || "";
+  if (!token) return { id: null as string | null, roles: [] as string[] };
+  const { data } = await anon.auth.getUser(token);
+  const id = data?.user?.id ?? null;
+  if (!id) return { id: null, roles: [] };
+
+  const { data: rows } = await admin.from("user_roles").select("roles!inner(name)").eq("user_id", id);
+  const roles = (rows ?? []).map((r: any) => r.roles?.name).filter(Boolean);
+  return { id, roles };
 }
 
-serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
+// simple rate-limit by (user_id + route)
+async function rateLimit(key: string, max = 10, windowSec = 300) {
+  const cutoff = new Date(Date.now() - windowSec * 1000).toISOString();
+  const { error: logErr } = await admin.from("rate_limit_admin").insert({ key });
+  if (logErr) console.warn("rate-limit log err:", logErr.message);
+  const { count, error } = await admin
+    .from("rate_limit_admin")
+    .select("attempted_at", { count: "exact", head: true })
+    .eq("key", key)
+    .gte("attempted_at", cutoff);
+  if (error) return false;
+  return (count ?? 0) <= max;
+}
 
-  const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-
-  if (!supabaseUrl || !serviceRoleKey) {
-    console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
-    return new Response(JSON.stringify({ error: 'Server configuration error (missing Supabase creds)' }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500,
-    });
-  }
-
-  // Create a Supabase client with the service role key for admin operations
-  // Do NOT pass client's Authorization header here for service role client.
-  const supabaseAdminClient = createClient(supabaseUrl, serviceRoleKey);
-
-  // Get client IP address for rate limiting
-  const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
-                   req.headers.get('cf-connecting-ip') || // Cloudflare
-                   'unknown';
+serve(async (req) => {
+  const headers = new Headers({
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGINS") ?? "*",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  });
+  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers });
+  if (req.method !== "POST")   return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers });
 
   try {
+    const { id, roles } = await getCaller(req);
+    if (!id) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
+
     const body = await req.json();
-    const { pin, userId, role } = body; // role is for future use, userId for logging
+    const parsed = schema.safeParse(body);
+    if (!parsed.success) return new Response(JSON.stringify({ error: parsed.error.errors[0].message }), { status: 400, headers });
+    const { pin, role } = parsed.data;
 
-    if (!pin) {
-      return new Response(JSON.stringify({ error: 'PIN is required' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      });
-    }
-    if (!userId) {
-      console.warn('User ID not provided for PIN verification attempt.');
-      // Decide if this is a hard error or just a warning. For now, soft fail on logging.
-    }
+    if (!roles.includes(role))
+      return new Response(JSON.stringify({ error: "Insufficient privileges for selected role" }), { status: 403, headers });
 
-    // 1. Check general user authentication and admin role (done client-side, but good to re-verify if possible or log)
-    //    For this function, we assume the client (AdminPanel.tsx) has already verified
-    //    that the user is logged in via Supabase Auth and has `isSupabaseAdmin === true`.
-    //    The `userId` is passed for logging the PIN attempt against a specific admin user.
+    const allowed = await rateLimit(`verify-pin:${id}`, 8, 300);
+    if (!allowed) return new Response(JSON.stringify({ error: "Too many attempts. Try again later." }), { status: 429, headers });
 
-    // 2. Implement Rate Limiting for PIN attempts (based on IP)
-    if (clientIp !== 'unknown') {
-      const { data: attemptsData, error: attemptsError } = await supabaseAdminClient
-        .from('admin_pin_attempts') // This table should store ip_address, attempts, last_attempt_at, (optionally user_id)
-        .select('attempts, last_attempt_at')
-        .eq('ip_address', clientIp)
-        .single();
+    const { data: row, error } = await admin.from("admin_pins").select("pin_hash, role").eq("user_id", id).single();
+    if (error || !row) return new Response(JSON.stringify({ error: "PIN not set" }), { status: 400, headers });
 
-      if (attemptsError && attemptsError.code !== 'PGRST116') { // PGRST116: No rows found
-        console.error('Error fetching PIN attempts:', attemptsError);
-        // Potentially allow if DB error, or deny. For now, log and continue, but this is a risk.
-      }
+    const ok = await bcrypt.compare(pin, row.pin_hash);
+    if (!ok) return new Response(JSON.stringify({ error: "Incorrect PIN" }), { status: 401, headers });
 
-      if (attemptsData) {
-        const lastAttemptTime = new Date(attemptsData.last_attempt_at).getTime();
-        const currentTime = new Date().getTime();
-        const timeDiffMinutes = (currentTime - lastAttemptTime) / (1000 * 60);
+    // create/refresh server-side admin session
+    const expires = new Date(Date.now() + ADMIN_SESSION_TTL_MIN * 60 * 1000);
+    const { error: upErr } = await admin.from("admin_sessions")
+      .upsert({ user_id: id, role, expires_at: expires.toISOString() });
+    if (upErr) throw new Error(upErr.message);
 
-        if (attemptsData.attempts >= MAX_ATTEMPTS && timeDiffMinutes < LOCKOUT_DURATION_MINUTES) {
-          // Log this attempt BEFORE returning the 429, including user_id if available
-          await supabaseAdminClient.from('admin_pin_attempts_log').insert({ // New dedicated log table
-            user_id: userId || null,
-            ip_address: clientIp,
-            success: false,
-            reason: 'Rate limited',
-            role_attempted: role || null,
-          });
-          return new Response(JSON.stringify({ error: 'Too many PIN attempts. Try again later.' }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 429, // Too Many Requests
-          });
-        } else if (attemptsData.attempts >= MAX_ATTEMPTS && timeDiffMinutes >= LOCKOUT_DURATION_MINUTES) {
-          // Reset attempts count if lockout duration has passed
-          await supabaseAdminClient.from('admin_pin_attempts').delete().eq('ip_address', clientIp);
-        }
-      }
-    } else {
-      console.warn("Client IP is 'unknown', cannot apply IP-based rate limiting for PIN verification.");
-    }
-
-    // 3. Verify PIN
-    const adminPinEnv = Deno.env.get('ADMIN_PANEL_PIN');
-    if (!adminPinEnv) {
-      console.error('ADMIN_PANEL_PIN environment variable is not set.');
-      await supabaseAdminClient.from('admin_pin_attempts_log').insert({
-        user_id: userId || null, ip_address: clientIp, success: false, reason: 'Server misconfiguration (PIN not set)', role_attempted: role || null,
-      });
-      return new Response(JSON.stringify({ error: 'Server configuration error (admin PIN not set)' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
-      });
-    }
-
-    const isPinValid = await constantTimeCompare(pin, adminPinEnv);
-
-    // 4. Log PIN attempt (success or failure) to a new admin_pin_attempts_log table
-    await supabaseAdminClient.from('admin_pin_attempts_log').insert({
-      user_id: userId || null, // Log the user ID who made the attempt
-      ip_address: clientIp,
-      success: isPinValid,
-      reason: isPinValid ? 'Successful PIN verification' : 'Invalid PIN',
-      role_attempted: role || null, // Log the role they attempted to assume
-    });
-
-    if (isPinValid) {
-      // If valid and IP was tracked, clear any 'admin_pin_attempts' counter records for this IP
-      if (clientIp !== 'unknown') {
-        await supabaseAdminClient.from('admin_pin_attempts').delete().eq('ip_address', clientIp);
-      }
-      return new Response(JSON.stringify({ success: true, role: role }), { // Return role for client context
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      });
-    } else {
-      // Invalid PIN, record/update attempt for rate limiting if IP is known
-      if (clientIp !== 'unknown') {
-        const { data: currentAttemptData } = await supabaseAdminClient
-          .from('admin_pin_attempts')
-          .select('attempts, last_attempt_at')
-          .eq('ip_address', clientIp)
-          .single();
-
-        if (currentAttemptData && (new Date().getTime() - new Date(currentAttemptData.last_attempt_at).getTime()) / (1000 * 60) < LOCKOUT_DURATION_MINUTES) {
-          const { error: updateError } = await supabaseAdminClient
-            .from('admin_pin_attempts')
-            .update({ attempts: (currentAttemptData.attempts || 0) + 1, last_attempt_at: new Date().toISOString() })
-            .eq('ip_address', clientIp);
-          if (updateError) console.error('Error updating PIN attempts counter:', updateError);
-        } else { // No previous attempts or lockout expired, so (re)insert.
-          const { error: insertError } = await supabaseAdminClient
-            .from('admin_pin_attempts')
-            .upsert({ ip_address: clientIp, attempts: 1, last_attempt_at: new Date().toISOString() }, { onConflict: 'ip_address' });
-          if (insertError) console.error('Error inserting/updating PIN attempt counter:', insertError);
-        }
-      }
-      return new Response(JSON.stringify({ error: 'Invalid PIN' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 401, // Unauthorized
-      });
-    }
-  } catch (error) {
-    console.error('Error in verify-admin-pin function:', error.message, error.stack);
-    const errorMsg = error instanceof SyntaxError && error.message.includes("Unexpected end of JSON input")
-      ? 'Request body is missing or not valid JSON.'
-      : 'An unexpected error occurred';
-
-    // Log this unexpected error too
-    try {
-      const bodyForLog = await req.json().catch(() => ({})); // Try to get body for logging context
-      await supabaseAdminClient.from('admin_pin_attempts_log').insert({
-        user_id: bodyForLog.userId || null,
-        ip_address: clientIp,
-        success: false,
-        reason: `Server error: ${errorMsg} - ${error.message}`,
-        role_attempted: bodyForLog.role || null,
-      });
-    } catch (logErr) {
-      console.error("Failed to log server error for PIN attempt:", logErr);
-    }
-
-    return new Response(JSON.stringify({ error: errorMsg }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500,
-    });
+    return new Response(JSON.stringify({ success: true, expires_at: expires.toISOString() }), { status: 200, headers });
+  } catch (e: any) {
+    return new Response(JSON.stringify({ error: e?.message ?? "Internal error" }), { status: 500, headers });
   }
 });

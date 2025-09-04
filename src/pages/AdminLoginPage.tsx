@@ -12,8 +12,8 @@ export default function AdminLoginPage() {
   const supabase = useSupabaseClient();
 
   // App auth contexts
-  const { user, isAdmin } = useAuth(); // session + boolean flag
-  const { verifyPinAndLogin, isLoading, error } = useAdminAuth(); // PIN verify + loading
+  const { user, isAdmin } = useAuth();
+  const { verifyPinAndLogin, isLoading, error } = useAdminAuth();
 
   const [mode, setMode] = useState<'unlock' | 'setpin'>('unlock');
   const [role, setRole] = useState<AdminRole>('admin');
@@ -25,7 +25,6 @@ export default function AdminLoginPage() {
 
   const userLabel = useMemo(() => user?.email || user?.phone || 'Unknown user', [user]);
 
-  // Gate this page to authenticated admins only (per your current design)
   if (!user || !isAdmin) {
     return (
       <div className="p-6 max-w-md mx-auto bg-white rounded shadow text-center">
@@ -36,7 +35,7 @@ export default function AdminLoginPage() {
   }
 
   function cleanPin(raw: string) {
-    return raw.replace(/[^\d]/g, '').slice(0, 8); // keep digits, max 8
+    return raw.replace(/[^\d]/g, '').slice(0, 8);
   }
 
   async function handleSetPin(e?: React.FormEvent) {
@@ -53,7 +52,6 @@ export default function AdminLoginPage() {
     try {
       const { data, error: fnErr } = await supabase.functions.invoke('admin_set_pin', { body: { pin: p1, role } });
       if (fnErr) return setLocalErr(fnErr.message || 'Could not set PIN.');
-      // optionally inspect `data` if your edge function returns info
       setSuccessMsg('PIN saved. You can now unlock the Admin Panel.');
       setMode('unlock');
       setPin('');
@@ -75,7 +73,7 @@ export default function AdminLoginPage() {
     if (!user) return setLocalErr('User not found. Please log in again.');
 
     try {
-      const ok = await verifyPinAndLogin(p, role, user.id);
+      const ok = await verifyPinAndLogin(p, role);
       if (!ok) return setLocalErr('Incorrect PIN.');
       navigate('/admin', { replace: true });
     } catch (err: any) {
@@ -125,7 +123,7 @@ export default function AdminLoginPage() {
             className="border p-2 rounded"
             type="password"
             inputMode="numeric"
-            pattern="\d{4,8}"
+            pattern="\\d{4,8}"          
             placeholder="Enter PIN (4–8 digits)"
             value={pin}
             onChange={(e) => setPin(cleanPin(e.target.value))}
@@ -150,7 +148,8 @@ export default function AdminLoginPage() {
             className="border p-2 rounded"
             type="password"
             inputMode="numeric"
-            pattern="\d{4,8}"
+            pattern="\\d{4,8}" 
+            
             placeholder="New PIN (4–8 digits)"
             value={pin}
             onChange={(e) => setPin(cleanPin(e.target.value))}
@@ -160,7 +159,7 @@ export default function AdminLoginPage() {
             className="border p-2 rounded"
             type="password"
             inputMode="numeric"
-            pattern="\d{4,8}"
+            pattern="\\d{4,8}"        
             placeholder="Confirm PIN"
             value={pin2}
             onChange={(e) => setPin2(cleanPin(e.target.value))}

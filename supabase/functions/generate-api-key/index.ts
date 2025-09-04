@@ -1,81 +1,125 @@
 // File: supabase/functions/generate-api-key/index.ts
-import { serve } from 'std/server'
-import { createClient, SupabaseClient } from '@supabase/supabase-js'
-import { randomBytes, createHash } from 'crypto'
+import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// Helper function to check user roles (ensure this matches the one in RLS migrations or is globally available)
-// This is a simplified version for use within this function.
-// Assumes the user's JWT is passed in the Authorization header.
-async function checkUserRole(supabaseClient: SupabaseClient, requiredRoles: string[]): Promise<boolean> {
-  const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-  if (userError || !user) {
-    console.error('Error getting user for role check:', userError?.message);
-    return false;
-  }
+// ---- Env (supports Postgres 17 names w/ fallbacks) -------------------------
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SB_PUBLISHABLE_API_KEY =
+  Deno.env.get("SB_PUBLISHABLE_API_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY")!;
+const SB_SECRET_KEY =
+  Deno.env.get("SB_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const ALLOWED_ORIGINS = (Deno.env.get("ALLOWED_ORIGINS") ?? "*")
+  .split(",")
+  .map(s => s.trim())
+  .filter(Boolean);
 
-  // This is a simplified check. Ideally, you'd call the DB function `check_user_has_role`
-  // or query the user_roles and roles tables directly.
-  // For this example, we'll assume an RPC call to the DB function.
-  // Ensure 'check_user_has_role' function is created in your DB.
-  const { data: hasRole, error: rpcError } = await supabaseClient
-    .rpc('check_user_has_role', { role_names: requiredRoles });
-
-  if (rpcError) {
-    console.error('RPC error checking user role:', rpcError.message);
-    return false;
-  }
-  return hasRole === true;
+// ---- Utilities --------------------------------------------------------------
+function corsHeaders(origin: string | null): Headers {
+  const allowOrigin =
+    ALLOWED_ORIGINS.includes("*") || (origin && ALLOWED_ORIGINS.includes(origin))
+      ? (origin ?? "*")
+      : ALLOWED_ORIGINS[0] ?? "*";
+  return new Headers({
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": allowOrigin,
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  });
 }
 
+async function checkUserRole(supabaseClient: SupabaseClient, requiredRoles: string[]): Promise<boolean> {
+  const { data: { user }, error: userErr } = await supabaseClient.auth.getUser();
+  if (userErr || !user) return false;
 
+  // RPC must enforce RLS with current_user via JWT
+  const { data: ok, error: rpcErr } = await supabaseClient
+    .rpc("check_user_has_role", { role_names: requiredRoles });
+  if (rpcErr) {
+    console.error("RPC role check failed:", rpcErr.message);
+    return false;
+  }
+  return ok === true;
+}
+
+function generateRandomHex(bytesLen: number): string {
+  const bytes = new Uint8Array(bytesLen);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, b => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function sha256Hex(s: string): Promise<string> {
+  const buf = new TextEncoder().encode(s);
+  const hash = await crypto.subtle.digest("SHA-256", buf);
+  return Array.from(new Uint8Array(hash), b => b.toString(16).padStart(2, "0")).join("");
+}
+
+function slugifyOrg(input: string): string {
+  return input.toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "").replace(/-+/g, "-");
+}
+
+// ---- Handler ----------------------------------------------------------------
 serve(async (req) => {
-  // Create a Supabase client with the ANON KEY to check user auth
-  // The SERVICE_ROLE_KEY will be used later for DB insertion if authorized.
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-  const supabaseAdminClient = createClient(supabaseUrl, supabaseAnonKey, {
-    global: { headers: { Authorization: req.headers.get('Authorization')! } },
-  });
+  const headers = corsHeaders(req.headers.get("Origin"));
 
-  // 0. Check if the user is an admin
-  const isAdmin = await checkUserRole(supabaseAdminClient, ['admin', 'super_admin']);
-  if (!isAdmin) {
-    return new Response(JSON.stringify({ error: 'Unauthorized: Admin role required.' }), { status: 403 });
-  }
+  // CORS preflight
+  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers });
+  if (req.method !== "POST")    return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers });
 
-  // 1. Read org_name from POST request
-  let org_name;
   try {
-    const body = await req.json();
-    org_name = body.org_name;
-  } catch (e) {
-    return new Response(JSON.stringify({ error: 'Invalid JSON body' }), { status: 400 });
+    // Client bound to caller’s JWT (so RLS/RPC see current_user)
+    const jwt = req.headers.get("Authorization") ?? "";
+    const userClient = createClient(SUPABASE_URL, SB_PUBLISHABLE_API_KEY, {
+      global: { headers: { Authorization: jwt } },
+    });
+
+    // Auth & role check
+    const isAdmin = await checkUserRole(userClient, ["admin", "super_admin"]);
+    if (!isAdmin) {
+      return new Response(JSON.stringify({ error: "Unauthorized: admin role required." }), { status: 403, headers });
+    }
+
+    // Parse body
+    let org_name: unknown;
+    try {
+      const body = await req.json();
+      org_name = (body as any)?.org_name;
+    } catch {
+      return new Response(JSON.stringify({ error: "Invalid JSON body" }), { status: 400, headers });
+    }
+
+    if (typeof org_name !== "string" || !org_name.trim()) {
+      return new Response(JSON.stringify({ error: "Missing or invalid org_name" }), { status: 400, headers });
+    }
+
+    const orgSlug = slugifyOrg(org_name);
+    if (!orgSlug) {
+      return new Response(JSON.stringify({ error: "org_name must contain letters/numbers" }), { status: 400, headers });
+    }
+
+    // Generate key (32 bytes -> 64 hex chars)
+    const randomHex = generateRandomHex(32);
+    const apiKeyPlain = `${orgSlug}-${randomHex}`;
+    const apiKeyHash = await sha256Hex(apiKeyPlain);
+
+    // Get current user id for created_by
+    const { data: { user } } = await userClient.auth.getUser();
+
+    // Service role client for write
+    const svc = createClient(SUPABASE_URL, SB_SECRET_KEY);
+    const { error: insertErr } = await svc
+      .from("api_keys")
+      .insert([{ org_name: org_name.trim(), api_key_hash: apiKeyHash, active: true, created_by: user?.id ?? null }]);
+
+    if (insertErr) {
+      console.error("Insert api_keys failed:", insertErr.message);
+      return new Response(JSON.stringify({ error: "Failed to save API key" }), { status: 500, headers });
+    }
+
+    // Return plain key once (client must store it)
+    return new Response(JSON.stringify({ api_key: apiKeyPlain }), { status: 200, headers });
+
+  } catch (e: any) {
+    console.error("generate-api-key error:", e?.message ?? e);
+    return new Response(JSON.stringify({ error: "Internal server error" }), { status: 500, headers });
   }
-
-  if (!org_name || typeof org_name !== 'string') {
-    return new Response(JSON.stringify({ error: 'Missing or invalid org_name' }), { status: 400 });
-  }
-
-  // 2. Generate secure API key
-  const apiKeyPlain = `${org_name.toLowerCase().replace(/\s+/g, '-')}-${randomBytes(32).toString('hex')}`;
-
-  // 3. Hash the API key with SHA-256
-  const apiKeyHash = createHash('sha256').update(apiKeyPlain).digest('hex');
-
-  // 4. Insert into api_keys table (only the hash!) using the SERVICE_ROLE_KEY
-  const supabaseServiceRoleClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-  const { error: insertError } = await supabaseServiceRoleClient
-    .from('api_keys')
-    .insert([{ org_name, api_key_hash: apiKeyHash, active: true, created_by: supabaseAdminClient.auth.getUser()?.id /* Store who created it */}]); // Store who created it
-
-  if (insertError) {
-    console.error('Error inserting API key:', insertError.message);
-    return new Response(JSON.stringify({ error: 'Failed to save API key: ' + insertError.message }), { status: 500 });
-  }
-
-  // 5. Return the plain API key (never returned again!)
-  return new Response(JSON.stringify({ api_key: apiKeyPlain }), {
-    status: 200,
-    headers: { 'Content-Type': 'application/json' }
-  });
-})
+});

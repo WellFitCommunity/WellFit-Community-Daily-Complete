@@ -1,163 +1,201 @@
 // supabase/functions/send-checkin-reminders/index.ts
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { initializeApp, cert, App } from 'https://npm.im/firebase-admin@11.11.1/app'; // Use npm.im for Deno compatibility
-import { getMessaging } from 'https://npm.im/firebase-admin@11.11.1/messaging';
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  createLogger,
+  getChicagoTime,
+  isWithinWindowChicago,
+  validateEnvVars,
+  type DatabaseTypes,
+} from "../shared/types.ts";
 
-// Firebase Admin SDK Initialization
-// Ensure these environment variables are set in your Supabase Function settings
-const FIREBASE_PROJECT_ID = Deno.env.get('FIREBASE_PROJECT_ID');
-const FIREBASE_CLIENT_EMAIL = Deno.env.get('FIREBASE_CLIENT_EMAIL');
-const FIREBASE_PRIVATE_KEY = Deno.env.get('FIREBASE_PRIVATE_KEY');
+// --- Config ---
+const RUN_HOUR_CT = 9; // 9:00–9:05 AM CT (change if you prefer)
+const FCM_ENDPOINT = "https://fcm.googleapis.com/fcm/send";
+const MAX_TOKENS_PER_BATCH = 500; // FCM legacy supports up to 1000, we keep a safety margin
 
-let firebaseAdminApp: App | null = null;
+// --- Setup ---
+const logger = createLogger("send-checkin-reminders");
+validateEnvVars(["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "FCM_SERVER_KEY"]);
 
-try {
-  if (FIREBASE_PROJECT_ID && FIREBASE_CLIENT_EMAIL && FIREBASE_PRIVATE_KEY) {
-    const privateKey = FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'); // Handle escaped newlines
-    firebaseAdminApp = initializeApp({
-      credential: cert({
-        projectId: FIREBASE_PROJECT_ID,
-        clientEmail: FIREBASE_CLIENT_EMAIL,
-        privateKey: privateKey,
-      }),
-    });
-    console.log("Firebase Admin SDK initialized successfully.");
-  } else {
-    console.error("Firebase Admin SDK credentials are not fully configured. Push notifications cannot be sent.");
-  }
-} catch (e) {
-  console.error("Error initializing Firebase Admin SDK:", e.message);
-  firebaseAdminApp = null; // Ensure app is null if init fails
+const supabase = createClient<DatabaseTypes>(
+  Deno.env.get("SUPABASE_URL")!,
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+);
+
+const FCM_SERVER_KEY = Deno.env.get("FCM_SERVER_KEY")!;
+
+// --- Helpers ---
+type TokenRow = {
+  user_id: string;
+  token: string | null;
+  profiles: {
+    id: string;
+    full_name: string | null;
+    first_name: string | null;
+    last_name: string | null;
+  } | null;
+};
+
+function chunk<T>(arr: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+  return out;
 }
 
+async function fetchUsersWithTokens(): Promise<TokenRow[]> {
+  const { data, error } = await supabase
+    .from("fcm_tokens")
+    .select(`
+      user_id,
+      token,
+      profiles ( id, full_name, first_name, last_name )
+    `)
+    .not("token", "is", null);
 
-serve(async (_req) => { // Request might not be used if triggered by cron
-  if (!firebaseAdminApp) {
-    return new Response(JSON.stringify({ error: 'Firebase Admin SDK not initialized. Check function logs.' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+  if (error) throw new Error(`Fetch tokens failed: ${error.message}`);
+  return (data as TokenRow[]) ?? [];
+}
+
+function buildNotificationBody(name: string | null) {
+  const friendly = name?.trim() || "there";
+  return {
+    notification: {
+      title: "WellFit Check-in Reminder",
+      body: `Hi ${friendly}, it's time for your check-in! Please log your well-being today.`,
+    },
+    // Optional: add data payload for client-side routing
+    // data: { type: "checkin_reminder", navigateTo: "/check-in" },
+  };
+}
+
+async function sendBatch(tokens: string[], nameForLog = "user") {
+  const payload = {
+    registration_ids: tokens,
+    ...buildNotificationBody(null), // same message for all
+  };
+
+  const res = await fetch(FCM_ENDPOINT, {
+    method: "POST",
+    headers: {
+      Authorization: `key=${FCM_SERVER_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const result = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(`FCM HTTP error ${res.status}: ${JSON.stringify(result).slice(0, 500)}`);
   }
+  logger.info("FCM batch sent", {
+    tokens: tokens.length,
+    success: result.success,
+    failure: result.failure,
+  });
+  return result; // contains per-result errors
+}
 
+async function removeInvalidToken(userId: string, token: string) {
+  const { error } = await supabase
+    .from("fcm_tokens")
+    .delete()
+    .eq("user_id", userId)
+    .eq("token", token);
+  if (error) {
+    logger.warn("Failed to delete invalid token", { userId, token, error: error.message });
+  } else {
+    logger.info("Deleted invalid token", { userId, token });
+  }
+}
+
+// --- Main handler ---
+serve(async () => {
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
+    logger.info("Function invoked", { chicagoTime: getChicagoTime().toISOString() });
 
-    // 1. Fetch all users who should receive a reminder.
-    //    This logic can be customized (e.g., users who haven't checked in, specific cohorts, etc.)
-    //    For now, let's fetch all users with active FCM tokens.
-    const { data: usersWithTokens, error: fetchError } = await supabaseClient
-      .from('fcm_tokens')
-      .select(`
-        user_id,
-        token,
-        profiles ( id, full_name, first_name, last_name )
-      `)
-      .neq('token', null); // Ensure token exists
+    // Time-gate to avoid hourly cron spam
+    if (!isWithinWindowChicago(RUN_HOUR_CT, 5)) {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: "Outside scheduled time window",
+          chicagoTime: getChicagoTime().toISOString(),
+        }),
+        { headers: { "Content-Type": "application/json" } }
+      );
+    }
 
-    if (fetchError) {
-      console.error('Error fetching users with FCM tokens:', fetchError);
-      return new Response(JSON.stringify({ error: 'Failed to fetch users for reminders', details: fetchError.message }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
+    const rows = await fetchUsersWithTokens();
+    if (rows.length === 0) {
+      logger.info("No users with FCM tokens found");
+      return new Response(JSON.stringify({ success: true, message: "No tokens to send." }), {
+        headers: { "Content-Type": "application/json" },
       });
     }
 
-    if (!usersWithTokens || usersWithTokens.length === 0) {
-      console.log('No users with FCM tokens found to send reminders to.');
-      return new Response(JSON.stringify({ success: true, message: 'No users with FCM tokens found.' }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
+    // Prepare tokens and a log map: index → { userId, token }
+    const validRows = rows.filter((r) => !!r.token);
+    const tokens = validRows.map((r) => r.token!) as string[];
+    const batches = chunk(tokens, MAX_TOKENS_PER_BATCH);
 
-    console.log(`Found ${usersWithTokens.length} tokens to potentially send reminders to.`);
+    logger.info("Prepared tokens", { totalTokens: tokens.length, batches: batches.length });
 
-    const messages = [];
-    const tokensToRemove: { userId: string, token: string }[] = [];
+    let totalSuccess = 0;
+    let totalFailure = 0;
+    let removedTokenCount = 0;
 
-    for (const record of usersWithTokens) {
-      const { token, profiles: profile } = record as any; // Type assertion for profile relation
-      const userName = profile?.full_name || profile?.first_name || 'there';
+    // Send each batch and clean up invalid tokens by mapping indices back to users
+    let offset = 0;
+    for (const batch of batches) {
+      const result = await sendBatch(batch);
 
-      if (token) {
-        messages.push({
-          notification: {
-            title: 'WellFit Check-in Reminder',
-            body: `Hi ${userName}, it's time for your check-in! Please log your well-being today.`,
-          },
-          token: token,
-          // Optional: Add data payload for client-side handling
-          // data: {
-          //   type: 'checkin_reminder',
-          //   navigateTo: '/check-in'
-          // }
-        });
-      }
-    }
+      // FCM legacy returns "results": [{message_id: "..."} | {error: "..."}]
+      const results: Array<{ message_id?: string; error?: string }> = result.results || [];
 
-    if (messages.length === 0) {
-      console.log('No valid messages to send.');
-       return new Response(JSON.stringify({ success: true, message: 'No valid messages to send.' }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
+      for (let i = 0; i < results.length; i++) {
+        const item = results[i];
+        const globalIndex = offset + i;
+        const row = validRows[globalIndex];
+        if (!row) continue;
 
-    // 2. Send messages via FCM
-    const messaging = getMessaging(firebaseAdminApp);
-    const batchResponse = await messaging.sendAll(messages);
-
-    console.log(`Successfully sent ${batchResponse.successCount} messages out of ${messages.length}.`);
-
-    batchResponse.responses.forEach((response, idx) => {
-      const originalToken = messages[idx].token;
-      if (!response.success) {
-        console.warn(`Failed to send message to token ${originalToken}:`, response.error);
-        // Handle unregistered or invalid tokens by removing them from the database
-        if (response.error.code === 'messaging/registration-token-not-registered' ||
-            response.error.code === 'messaging/invalid-registration-token') {
-          tokensToRemove.push({ userId: usersWithTokens[idx].user_id, token: originalToken });
-        }
-      }
-    });
-
-    // 3. Optional: Clean up invalid/unregistered tokens
-    if (tokensToRemove.length > 0) {
-      console.log(`Attempting to remove ${tokensToRemove.length} invalid FCM tokens.`);
-      for (const item of tokensToRemove) {
-        const { error: deleteError } = await supabaseClient
-          .from('fcm_tokens')
-          .delete()
-          .eq('user_id', item.userId)
-          .eq('token', item.token);
-        if (deleteError) {
-          console.error(`Failed to delete token ${item.token} for user ${item.userId}:`, deleteError.message);
+        if (item.message_id) {
+          totalSuccess++;
         } else {
-          console.log(`Successfully deleted invalid token ${item.token} for user ${item.userId}`);
+          totalFailure++;
+          const code = item.error || "unknown";
+          logger.warn("FCM send failure", { userId: row.user_id, token: row.token, code });
+
+          // Remove “unregistered/invalid” tokens
+          if (
+            code === "NotRegistered" ||
+            code === "InvalidRegistration" ||
+            code === "MismatchSenderId"
+          ) {
+            await removeInvalidToken(row.user_id, row.token!);
+            removedTokenCount++;
+          }
         }
       }
+
+      offset += batch.length;
     }
 
-    return new Response(JSON.stringify({
-      success: true,
-      message: 'Check-in reminders sent.',
-      sentCount: batchResponse.successCount,
-      failedCount: batchResponse.failureCount,
-      removedTokenCount: tokensToRemove.length
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
-
-  } catch (e) {
-    console.error('Error in send-checkin-reminders function:', e);
-    return new Response(JSON.stringify({ error: 'Internal Server Error', details: e.message }), {
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: "Check-in reminders processed.",
+        sentCount: totalSuccess,
+        failedCount: totalFailure,
+        removedTokenCount,
+      }),
+      { headers: { "Content-Type": "application/json" } }
+    );
+  } catch (err: any) {
+    logger.error("Function error", { message: String(err?.message || err).slice(0, 500) });
+    return new Response(JSON.stringify({ success: false, error: String(err?.message || err) }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { "Content-Type": "application/json" },
     });
   }
 });

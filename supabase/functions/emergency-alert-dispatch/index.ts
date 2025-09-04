@@ -2,15 +2,17 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL") || "admin@wellfitcommunity.org";
-const SEND_EMAIL_FUNCTION_NAME = "send_email"; // Consolidated email sending function
+const SEND_EMAIL_FUNCTION_NAME = "send_email";
 
+// Enhanced interfaces
 interface CheckinRecord {
   id: string;
   user_id: string;
-  label: string; // This will be the alert_type
+  label: string;
   is_emergency: boolean;
   created_at: string;
-  // other fields from checkins table if needed
+  location?: string; // Optional location data
+  additional_notes?: string; // Optional emergency details
 }
 
 interface ProfileRecord {
@@ -18,6 +20,90 @@ interface ProfileRecord {
   first_name?: string;
   last_name?: string;
   caregiver_email?: string;
+  phone_number?: string; // Could be useful for future SMS alerts
+  emergency_contact_name?: string;
+}
+
+interface EmailResult {
+  success: boolean;
+  recipient: string;
+  error?: string;
+}
+
+// Helper function to format email content
+function formatEmergencyEmailContent(
+  userName: string, 
+  alertType: string, 
+  timestamp: string,
+  userId: string,
+  additionalNotes?: string,
+  location?: string
+): { subject: string; htmlBody: string; textBody: string } {
+  const subject = `🚨 WellFit Emergency Alert: ${userName}`;
+  
+  let bodyContent = `
+An emergency alert has been triggered by ${userName}.
+
+Alert Type: ${alertType}
+Timestamp: ${new Date(timestamp).toLocaleString()}
+User ID: ${userId}`;
+
+  if (location) {
+    bodyContent += `\nLocation: ${location}`;
+  }
+
+  if (additionalNotes) {
+    bodyContent += `\nAdditional Notes: ${additionalNotes}`;
+  }
+
+  bodyContent += `\n\nPlease check on them immediately.`;
+
+  return {
+    subject,
+    htmlBody: bodyContent.replace(/\n/g, '<br>'),
+    textBody: bodyContent
+  };
+}
+
+// Helper function to send email with retry logic
+async function sendEmailWithRetry(
+  supabaseClient: any,
+  emailPayload: any,
+  recipient: string,
+  maxRetries: number = 2
+): Promise<EmailResult> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`Attempt ${attempt}: Sending email to ${recipient}`);
+      
+      const { error } = await supabaseClient.functions.invoke(SEND_EMAIL_FUNCTION_NAME, {
+        body: { ...emailPayload, to: recipient }
+      });
+
+      if (!error) {
+        console.log(`✅ Email successfully sent to ${recipient}`);
+        return { success: true, recipient };
+      }
+
+      console.error(`❌ Attempt ${attempt} failed for ${recipient}:`, error.message);
+      
+      if (attempt === maxRetries) {
+        return { success: false, recipient, error: error.message };
+      }
+
+      // Wait before retry (exponential backoff)
+      await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      
+    } catch (e) {
+      console.error(`❌ Exception on attempt ${attempt} for ${recipient}:`, e.message);
+      if (attempt === maxRetries) {
+        return { success: false, recipient, error: e.message };
+      }
+      await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+    }
+  }
+  
+  return { success: false, recipient, error: "Max retries exceeded" };
 }
 
 serve(async (req) => {
@@ -25,38 +111,45 @@ serve(async (req) => {
     return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
       status: 405,
       headers: { "Content-Type": "application/json" },
-    })
+    });
   }
+
+  const startTime = Date.now();
+  console.log("🚨 Emergency alert dispatch started at:", new Date().toISOString());
 
   try {
     const payload = await req.json();
-    console.log("Received payload:", JSON.stringify(payload));
+    console.log("Received payload:", JSON.stringify(payload, null, 2));
 
-    // Supabase webhooks for INSERT pass the new record in `record` or `new_record`
-    // Adjust based on actual webhook payload structure. Common is `record`.
     const newCheckin = (payload.record || payload.new_record) as CheckinRecord;
 
     if (!newCheckin) {
-      console.error("No record found in payload. Payload structure:", payload);
+      console.error("❌ No record found in payload");
       return new Response(JSON.stringify({ error: 'Bad Request: No record found in payload' }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
       });
     }
     
-    // Ensure it's an emergency check-in, though the trigger should handle this.
-    // This is a safeguard.
+    // Validate emergency status
     if (!newCheckin.is_emergency) {
+      console.log("ℹ️ Non-emergency check-in received, skipping alert");
       return new Response(JSON.stringify({ message: 'Not an emergency check-in, skipped.' }), {
-        status: 200, // Or 202 Accepted if preferred
+        status: 200,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    const { user_id, label: alert_type, created_at: checkin_timestamp } = newCheckin;
+    const { 
+      user_id, 
+      label: alert_type, 
+      created_at: checkin_timestamp,
+      location,
+      additional_notes 
+    } = newCheckin;
 
     if (!user_id || !alert_type) {
-      console.error("Missing user_id or label in check-in record:", newCheckin);
+      console.error("❌ Missing required fields:", { user_id, alert_type });
       return new Response(JSON.stringify({ error: 'Bad Request: Missing user_id or label' }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
@@ -65,101 +158,92 @@ serve(async (req) => {
     
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? '',
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? '' // Use service role key for admin operations
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ''
     );
 
-    // 1. Fetch user's profile and caregiver email
+    console.log(`📋 Fetching profile for user: ${user_id}`);
+
+    // Fetch user profile
     const { data: profile, error: profileError } = await supabaseClient
       .from('profiles')
-      .select('full_name, first_name, last_name, caregiver_email')
+      .select('full_name, first_name, last_name, caregiver_email, phone_number, emergency_contact_name')
       .eq('id', user_id)
       .single();
 
     if (profileError || !profile) {
-      console.error(`Error fetching profile for user_id ${user_id}:`, profileError);
-      // Decide if we should still send an alert to admin
-      // For now, we will log the error and proceed to log the alert, but not send emails if profile is missing.
-      // Alternatively, send a generic email to admin.
-      // Log to alerts table even if profile fetch fails
+      console.error(`❌ Profile fetch failed for user ${user_id}:`, profileError);
+      
+      // Log failed alert
       await supabaseClient.from('alerts').insert({
         user_id: user_id,
         alert_type: alert_type,
-        timestamp: checkin_timestamp || new Date().toISOString(), // Fallback to now if not available
-        details: `Emergency check-in. Profile fetch failed: ${profileError?.message}`
+        timestamp: checkin_timestamp || new Date().toISOString(),
+        details: `Emergency check-in received but profile fetch failed: ${profileError?.message}`
       });
-      return new Response(JSON.stringify({ error: `Failed to fetch profile: ${profileError?.message}` }), {
+
+      return new Response(JSON.stringify({ 
+        error: `Failed to fetch profile: ${profileError?.message}` 
+      }), {
         status: 500,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    const userName = profile.full_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || "Unknown User";
+    const userName = profile.full_name || 
+                    `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 
+                    "Unknown User";
     const caregiverEmail = profile.caregiver_email;
 
-    // 2. Prepare email content
-    const emailSubject = `WellFit Emergency Alert: ${userName}`;
-    const emailBody = `
-      An emergency alert has been triggered by ${userName}.
+    console.log(`👤 Processing alert for: ${userName}`);
+    console.log(`👥 Caregiver email: ${caregiverEmail || 'Not provided'}`);
 
-      Alert Type: ${alert_type}
-      Timestamp: ${new Date(checkin_timestamp).toLocaleString()}
+    // Prepare email content
+    const emailContent = formatEmergencyEmailContent(
+      userName, 
+      alert_type, 
+      checkin_timestamp,
+      user_id,
+      additional_notes,
+      location
+    );
 
-      User ID: ${user_id} 
-
-      Please check on them immediately.
-    `;
-
-    // Payload for the 'send_email' function
     const baseEmailPayload = {
-      subject: emailSubject,
-      html: emailBody.replace(/\n/g, '<br>'), // 'send_email' expects 'html'
-      text: emailBody  // 'send_email' expects 'text'
+      subject: emailContent.subject,
+      html: emailContent.htmlBody,
+      text: emailContent.textBody
     };
 
-    let emailSentToAdmin = false;
-    let emailSentToCaregiver = false;
+    // Send emails concurrently for faster processing
+    const emailPromises: Promise<EmailResult>[] = [];
+    
+    // Admin email
+    emailPromises.push(
+      sendEmailWithRetry(supabaseClient, baseEmailPayload, ADMIN_EMAIL)
+    );
 
-    // 3. Send email to Admin
-    try {
-      console.log(`Attempting to send email to admin: ${ADMIN_EMAIL}`);
-      const { error: adminEmailError } = await supabaseClient.functions.invoke(SEND_EMAIL_FUNCTION_NAME, {
-        body: { ...baseEmailPayload, to: ADMIN_EMAIL }, // Pass 'to', 'subject', 'html', 'text'
-      });
-      if (adminEmailError) {
-        console.error(`Error invoking ${SEND_EMAIL_FUNCTION_NAME} for admin:`, adminEmailError.message);
-        // Continue, but log this failure
-      } else {
-        emailSentToAdmin = true;
-        console.log(`Email successfully invoked for admin: ${ADMIN_EMAIL}`);
-      }
-    } catch (e) {
-        console.error(`Exception invoking ${SEND_EMAIL_FUNCTION_NAME} for admin:`, e.message);
-    }
-
-
-    // 4. Send email to Caregiver (if email exists)
+    // Caregiver email (if exists)
     if (caregiverEmail) {
-      try {
-        console.log(`Attempting to send email to caregiver: ${caregiverEmail}`);
-        const { error: caregiverEmailError } = await supabaseClient.functions.invoke(SEND_EMAIL_FUNCTION_NAME, {
-          body: { ...baseEmailPayload, to: caregiverEmail }, // Pass 'to', 'subject', 'html', 'text'
-        });
-        if (caregiverEmailError) {
-          console.error(`Error invoking ${SEND_EMAIL_FUNCTION_NAME} for caregiver ${caregiverEmail}:`, caregiverEmailError.message);
-          // Continue, but log this failure
-        } else {
-          emailSentToCaregiver = true;
-          console.log(`Email successfully invoked for caregiver: ${caregiverEmail}`);
-        }
-      } catch (e) {
-        console.error(`Exception invoking ${SEND_EMAIL_FUNCTION_NAME} for caregiver:`, e.message);
-      }
-    } else {
-      console.log(`No caregiver email found for user ${user_id}.`);
+      emailPromises.push(
+        sendEmailWithRetry(supabaseClient, baseEmailPayload, caregiverEmail)
+      );
     }
 
-    // 5. Log to alerts table
-    const alertDetails = `Admin email: ${ADMIN_EMAIL} (sent: ${emailSentToAdmin}). Caregiver email: ${caregiverEmail || 'N/A'} (sent: ${emailSentToCaregiver}).`;
+    console.log("📧 Sending emergency alert emails...");
+    const emailResults = await Promise.all(emailPromises);
+
+    // Process results
+    const adminResult = emailResults[0];
+    const caregiverResult = caregiverEmail ? emailResults[1] : null;
+
+    // Log to alerts table
+    const alertDetails = [
+      `Admin: ${ADMIN_EMAIL} (${results[ADMIN_EMAIL] ? 'sent' : 'failed'})`,
+      BACKUP_ADMIN_EMAIL ? `Backup Admin: ${BACKUP_ADMIN_EMAIL} (${results[BACKUP_ADMIN_EMAIL] ? 'sent' : 'failed'})` : null,
+      caregiverEmail ? `Caregiver: ${caregiverEmail} (${results[caregiverEmail] ? 'sent' : 'failed'})` : 'Caregiver: Not provided',
+      location ? `Location: ${location}` : null,
+      additional_notes ? `Notes: ${additional_notes}` : null
+    ].filter(Boolean).join('. ');
+
     const { error: insertAlertError } = await supabaseClient.from('alerts').insert({
       user_id: user_id,
       alert_type: alert_type,
@@ -168,24 +252,51 @@ serve(async (req) => {
     });
 
     if (insertAlertError) {
-      console.error('Error inserting into alerts table:', insertAlertError);
-      return new Response(JSON.stringify({ error: 'Failed to log alert', details: insertAlertError.message }), {
+      log('ERROR', 'Error logging alert to database', insertAlertError);
+      return new Response(JSON.stringify({ 
+        error: 'Failed to log alert', 
+        details: insertAlertError.message 
+      }), {
         status: 500,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    console.log("Emergency alert processed successfully.");
-    return new Response(JSON.stringify({ success: true, message: 'Alert processed.' }), {
+    const processingTime = Date.now() - startTime;
+    const successfulEmails = Object.values(results).filter(Boolean).length;
+    
+    log('INFO', `✅ Emergency alert processed successfully in ${processingTime}ms`);
+    log('DEBUG', `Emails sent: ${successfulEmails}/${Object.keys(results).length}`);
+
+    // Return detailed response
+    const response = {
+      success: true,
+      message: 'Emergency alert processed',
+      user_name: userName,
+      alert_type: alert_type,
+      emails_sent: results,
+      processing_time_ms: processingTime,
+      environment: ENVIRONMENT
+    };
+
+    return new Response(JSON.stringify(response), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
 
   } catch (error) {
-    console.error('Unhandled error in emergency-alert-dispatch:', error);
-    return new Response(JSON.stringify({ error: 'Internal Server Error', details: error.message }), {
+    clearTimeout(timeoutId);
+    const processingTime = Date.now() - startTime;
+    log('ERROR', `Unhandled error in emergency-alert-dispatch (${processingTime}ms)`, error);
+    
+    return new Response(JSON.stringify({ 
+      error: 'Internal Server Error', 
+      details: error.message,
+      processing_time_ms: processingTime,
+      environment: ENVIRONMENT
+    }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
     });
   }
-})
+});

@@ -1,8 +1,65 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@import "tailwindcss/forms";
 
-/* (Any global overrides below) */
-body {
-  @apply bg-white text-gray-800;
+/* Base resets (safe with Tailwind’s layering) */
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  body {
+    @apply bg-white text-gray-800 antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 }
+
+/* Extra helper utilities (no collisions, purged correctly) */
+@layer utilities {
+  /* Form field focus enhancement */
+  .form-field-enhanced:focus,
+  .form-field-enhanced:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+  }
+
+  /* Button hover lift */
+  .btn-hover-lift {
+    transition: transform 150ms ease, box-shadow 150ms ease;
+    will-change: transform;
+  }
+  .btn-hover-lift:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  .btn-hover-lift:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.10);
+  }
+
+  /* Toast stacking improvements */
+  .toast-container {
+    max-height: 80vh;
+    overflow-y: auto;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+  }
+  .toast-container::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* NOTE:
+   - We REMOVED any @keyframes and .animate-* class definitions from CSS.
+   - Animations are now defined in tailwind.config.js (wf-slide-in, wf-fade-in, wf-spin).
+   - Use classes: animate-wf-slide-in, animate-wf-fade-in, animate-wf-spin.
+*/
