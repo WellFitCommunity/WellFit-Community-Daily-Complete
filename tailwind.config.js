@@ -1,8 +1,9 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-    "./public/index.html",            // CRA
-    "./src/**/*.{js,jsx,ts,tsx}"      // your app code
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+    "./components/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
@@ -29,9 +30,9 @@ module.exports = {
     },
   },
   future: {
-    hoverOnlyWhenSupported: true,
+    hoverOnlyWhenSupported: true, // silences common hover/touch warning
   },
   plugins: [
-    require("@tailwindcss/forms"),     // ✅ plugin belongs here
+    // require("@tailwindcss/forms"), // optional: nicer form controls
   ],
 };
