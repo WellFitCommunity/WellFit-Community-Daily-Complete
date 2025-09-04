@@ -7,7 +7,7 @@ import { DemoModeProvider } from './contexts/DemoModeContext';
 import { BrandingConfig, getCurrentBranding } from './branding.config';
 import { BrandingContext } from './BrandingContext';
 
-// ✅ Add this
+// ✅ Admin auth provider
 import { AdminAuthProvider } from './contexts/AdminAuthContext';
 
 import DemoBanner from './components/layout/DemoBanner';
@@ -46,7 +46,21 @@ const AdminPanel = React.lazy(() => import('./components/admin/AdminPanel'));
 const AdminProfileEditorPage = React.lazy(() => import('./pages/AdminProfileEditorPage'));
 const CommunityMoments = React.lazy(() => import('./components/CommunityMoments'));
 
-const PUBLIC_ROUTES = ['/', '/register', '/verify', '/privacy-policy', '/terms', '/login', '/admin-login', '/change-password', '/home'];
+// ✅ NEW: Demographics page (post-login gate)
+const DemographicsPage = React.lazy(() => import('./pages/DemographicsPage'));
+
+// ⚠️ Do NOT include '/demographics' here – it’s a gated, authenticated route
+const PUBLIC_ROUTES = [
+  '/',
+  '/register',
+  '/verify',
+  '/privacy-policy',
+  '/terms',
+  '/login',
+  '/admin-login',
+  '/change-password',
+  '/home',
+];
 
 const App: React.FC = () => {
   const [branding, setBranding] = useState<BrandingConfig>(getCurrentBranding());
@@ -61,14 +75,12 @@ const App: React.FC = () => {
     <>
       <AppHeader />
       <DemoModeProvider>
-        {/* ✅ Provide admin auth context to the whole app */}
         <AdminAuthProvider>
           <BrandingContext.Provider value={branding}>
             <SessionTimeoutProvider>
               <DemoBanner />
               {!isPublic && <Header />}
 
-              {/* ✅ Wrap routes with the AuthGate so post-login rules apply everywhere */}
               <AuthGate>
                 <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
                   <Routes>
@@ -93,11 +105,19 @@ const App: React.FC = () => {
                     <Route path="/consent-privacy" element={<RequireAuth><ConsentPrivacyPage /></RequireAuth>} />
                     <Route path="/self-reporting" element={<RequireAuth><SelfReportingPage /></RequireAuth>} />
                     <Route path="/doctors-view" element={<RequireAuth><DoctorsViewPage /></RequireAuth>} />
-
-                    {/* Community Moments (protected) */}
                     <Route path="/community" element={<RequireAuth><CommunityMoments /></RequireAuth>} />
 
-                    {/* Admin Routes (guarded) */}
+                    {/* ✅ NEW: Demographics (post-login gate) */}
+                    <Route
+                      path="/demographics"
+                      element={
+                        <RequireAuth>
+                          <DemographicsPage />
+                        </RequireAuth>
+                      }
+                    />
+
+                    {/* Admin Routes */}
                     <Route
                       path="/admin"
                       element={
