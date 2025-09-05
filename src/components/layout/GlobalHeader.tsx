@@ -9,36 +9,42 @@ const WELLFIT_BLUE = '#003865';
 const WELLFIT_GREEN = '#8cc63f';
 const MID_GLINT = 'rgba(255,255,255,0.12)'; // subtle white shimmer
 
-
 const ROUTES = {
   dashboard: '/dashboard',
   wordFind: '/word-find',
   doctors: '/doctors-view',
   selfReport: '/self-reporting',
-  meals: '/meals',              // <— adjust if your app uses a different path
-  trivia: '/trivia-game',       // <— adjust if your app uses /trivia
+  meals: '/meals',
+  trivia: '/trivia-game',
   adminPanel: '/admin/panel',
   adminLogin: '/admin',
   logout: '/logout',
 };
 
+function readableTextOn(bgHex: string): '#000000' | '#ffffff' {
+  const hex = (bgHex || WELLFIT_BLUE).replace('#', '');
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 128 ? '#000000' : '#ffffff';
+}
+
 export default function GlobalHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
-  const branding = useBranding?.() as any;
+
+  // ✅ Correctly consume branding context
+  const { branding } = useBranding();
   const location = useLocation();
   const isAdmin = useIsAdmin();
 
   const primary = branding?.primaryColor || WELLFIT_BLUE;
+  const secondary = branding?.secondaryColor || WELLFIT_GREEN;
 
-  const textColor = useMemo(() => {
-    const hex = primary.replace('#', '');
-    const r = parseInt(hex.slice(0, 2), 16);
-    const g = parseInt(hex.slice(2, 4), 16);
-    const b = parseInt(hex.slice(4, 6), 16);
-    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    return luminance < 0.5 ? 'text-white' : 'text-gray-800';
-  }, [primary]);
+  // Prefer explicit textColor; else compute readable on primary
+  const textHex = branding?.textColor || readableTextOn(primary);
+  const textColor = useMemo(() => (textHex === '#000000' ? 'text-gray-800' : 'text-white'), [textHex]);
 
   const linkBase = `${textColor} hover:opacity-90 transition`;
   const showStaffLink = !location.pathname.startsWith('/admin');
@@ -46,15 +52,17 @@ export default function GlobalHeader() {
   const isActive = (path: string) =>
     location.pathname === path || location.pathname.startsWith(`${path}/`);
 
-  return (
-    <header
-  className="shadow-md relative z-30 backdrop-blur"
-  style={{
-    background: `linear-gradient(90deg, ${WELLFIT_GREEN} 0%, ${MID_GLINT} 48%, ${WELLFIT_BLUE} 100%)`,
-  }}
->
+  // Use tenant gradient if supplied; else fall back to WellFit + shimmer blend
+  const headerBackground = branding?.gradient
+    ? branding.gradient
+    : `linear-gradient(90deg, ${secondary} 0%, ${MID_GLINT} 48%, ${primary} 100%)`;
 
-      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 bg-white text-[#003865] px-3 py-1 rounded">
+  return (
+    <header className="shadow-md relative z-30 backdrop-blur" style={{ background: headerBackground, color: textHex }}>
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 bg-white text-[#003865] px-3 py-1 rounded"
+      >
         Skip to content
       </a>
 
@@ -164,18 +172,34 @@ export default function GlobalHeader() {
       {/* Mobile Nav */}
       {menuOpen && (
         <nav className="md:hidden px-4 pb-4 space-y-2" onClick={() => setMoreOpen(false)}>
-          <MobileItem to={ROUTES.dashboard} onDone={() => setMenuOpen(false)}>Dashboard</MobileItem>
-          <MobileItem to={ROUTES.wordFind} onDone={() => setMenuOpen(false)}>Word Find</MobileItem>
-          <MobileItem to={ROUTES.doctors} onDone={() => setMenuOpen(false)}>Doctor&apos;s View</MobileItem>
-          <MobileItem to={ROUTES.selfReport} onDone={() => setMenuOpen(false)}>Self Report</MobileItem>
-          <MobileItem to={ROUTES.meals} onDone={() => setMenuOpen(false)}>Meals</MobileItem>
-          <MobileItem to={ROUTES.trivia} onDone={() => setMenuOpen(false)}>Trivia Game</MobileItem>
+          <MobileItem to={ROUTES.dashboard} onDone={() => setMenuOpen(false)}>
+            Dashboard
+          </MobileItem>
+          <MobileItem to={ROUTES.wordFind} onDone={() => setMenuOpen(false)}>
+            Word Find
+          </MobileItem>
+          <MobileItem to={ROUTES.doctors} onDone={() => setMenuOpen(false)}>
+            Doctor&apos;s View
+          </MobileItem>
+          <MobileItem to={ROUTES.selfReport} onDone={() => setMenuOpen(false)}>
+            Self Report
+          </MobileItem>
+          <MobileItem to={ROUTES.meals} onDone={() => setMenuOpen(false)}>
+            Meals
+          </MobileItem>
+          <MobileItem to={ROUTES.trivia} onDone={() => setMenuOpen(false)}>
+            Trivia Game
+          </MobileItem>
 
           {isAdmin === true && (
-            <MobileItem to={ROUTES.adminPanel} onDone={() => setMenuOpen(false)}>Admin Panel</MobileItem>
+            <MobileItem to={ROUTES.adminPanel} onDone={() => setMenuOpen(false)}>
+              Admin Panel
+            </MobileItem>
           )}
           {showStaffLink && isAdmin === false && (
-            <MobileItem to={ROUTES.adminLogin} onDone={() => setMenuOpen(false)}>Staff Login</MobileItem>
+            <MobileItem to={ROUTES.adminLogin} onDone={() => setMenuOpen(false)}>
+              Staff Login
+            </MobileItem>
           )}
 
           <Link
@@ -236,5 +260,3 @@ function MobileItem({
     </Link>
   );
 }
-
-

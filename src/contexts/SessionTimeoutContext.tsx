@@ -1,47 +1,37 @@
 // src/contexts/SessionTimeoutContext.tsx
 import React, { createContext, useContext, useEffect, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 
-// Default timeouts; can override via props or environment variables
-const DEFAULT_TIMEOUT_MS = process.env.REACT_APP_INACTIVITY_TIMEOUT_MS
-  ? parseInt(process.env.REACT_APP_INACTIVITY_TIMEOUT_MS)
-  : 2 * 24 * 60 * 60 * 1000; // 2 days
-const DEFAULT_WARNING_MS = process.env.REACT_APP_TIMEOUT_WARNING_MS
-  ? parseInt(process.env.REACT_APP_TIMEOUT_WARNING_MS)
-  : 5 * 60 * 1000; // 5 minutes before logout
-const THROTTLE_MS = 500; // throttle activity events
+// ---------- helpers ----------
+const toMs = (val: string | undefined, fallback: number) => {
+  if (!val) return fallback;
+  const n = parseInt(val, 10);
+  return Number.isFinite(n) && n > 0 ? n : fallback;
+};
 
+// Defaults (safe fallbacks)
+const DEFAULT_TIMEOUT_MS = toMs(process.env.REACT_APP_INACTIVITY_TIMEOUT_MS, 2 * 24 * 60 * 60 * 1000); // 2 days
+const DEFAULT_WARNING_MS = toMs(process.env.REACT_APP_TIMEOUT_WARNING_MS, 5 * 60 * 1000);              // 5 minutes
+const THROTTLE_MS = 500;
+
+// ---------- types ----------
 interface SessionTimeoutContextType {
-  /**
-   * Manually reset the inactivity timeout (e.g., on user interaction)
-   */
   resetTimeout: () => void;
 }
 
 const SessionTimeoutContext = createContext<SessionTimeoutContextType | undefined>(undefined);
 
 export const useSessionTimeout = (): SessionTimeoutContextType => {
-  const context = useContext(SessionTimeoutContext);
-  if (!context) {
-    throw new Error('useSessionTimeout must be used within a SessionTimeoutProvider');
-  }
-  return context;
+  const ctx = useContext(SessionTimeoutContext);
+  if (!ctx) throw new Error('useSessionTimeout must be used within a SessionTimeoutProvider');
+  return ctx;
 };
 
 interface SessionTimeoutProviderProps {
   children: React.ReactNode;
-  /**
-   * Total inactivity timeout before logout
-   */
-  timeoutMs?: number;
-  /**
-   * Time before actual logout to trigger warning callback
-   */
-  warningMs?: number;
-  /**
-   * Callback invoked warningMs before logout to show a warning UI
-   */
+  timeoutMs?: number;          // total inactivity before logout
+  warningMs?: number;          // time before logout to trigger a warning
   onTimeoutWarning?: () => void;
 }
 
@@ -52,67 +42,100 @@ export const SessionTimeoutProvider: React.FC<SessionTimeoutProviderProps> = ({
   onTimeoutWarning,
 }) => {
   const navigate = useNavigate();
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const warningRef = useRef<NodeJS.Timeout | null>(null);
+  const location = useLocation();
+
+  // Use browser-safe timer types
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const warningRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastActivityRef = useRef<number>(0);
 
-  const logout = useCallback(async () => {
-    console.log('Session timed out. Logging out...');
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) console.error('Error logging out from Supabase:', error);
-    } catch (err: any) {
-      console.error('Unexpected logout error:', err);
-    }
-    navigate('/login', { replace: true });
-  }, [navigate]);
+  // Multi-tab sync
+  const bcRef = useRef<BroadcastChannel | null>(null);
+  if (typeof window !== 'undefined' && !bcRef.current && 'BroadcastChannel' in window) {
+    bcRef.current = new BroadcastChannel('session-timeout');
+  }
 
-  const scheduleTimeouts = useCallback(() => {
-    // Clear existing timers
+  const clearTimers = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     if (warningRef.current) clearTimeout(warningRef.current);
+    timeoutRef.current = null;
+    warningRef.current = null;
+  };
 
-    // Schedule warning callback
-    if (onTimeoutWarning) {
-      warningRef.current = setTimeout(
-        onTimeoutWarning,
-        timeoutMs - warningMs
-      );
+  const logout = useCallback(async () => {
+    // Avoid loops: if already on /login, skip navigating again
+    const alreadyOnLogin = location.pathname.startsWith('/login');
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) console.error('Supabase signOut error:', error);
+    } catch (err) {
+      console.error('Unexpected logout error:', err);
+    }
+    // Tell other tabs
+    bcRef.current?.postMessage({ type: 'LOGOUT' });
+    if (!alreadyOnLogin) navigate('/login', { replace: true });
+  }, [navigate, location.pathname]);
+
+  const scheduleTimeouts = useCallback(() => {
+    clearTimers();
+
+    // Guard invalid combos
+    const effectiveWarning =
+      typeof warningMs === 'number' && warningMs > 0 && warningMs < timeoutMs ? warningMs : 0;
+
+    if (onTimeoutWarning && effectiveWarning > 0) {
+      warningRef.current = setTimeout(onTimeoutWarning, timeoutMs - effectiveWarning);
     }
 
-    // Schedule actual logout
     timeoutRef.current = setTimeout(logout, timeoutMs);
   }, [logout, onTimeoutWarning, timeoutMs, warningMs]);
 
-  /**
-   * Public method to reset the inactivity timers
-   */
   const resetTimeout = useCallback(() => {
     const now = Date.now();
     if (now - lastActivityRef.current < THROTTLE_MS) return;
     lastActivityRef.current = now;
+
     scheduleTimeouts();
+    // Let other tabs know there was activity (optional; comment out if you don't want cross-tab resets)
+    bcRef.current?.postMessage({ type: 'ACTIVITY' });
   }, [scheduleTimeouts]);
 
   useEffect(() => {
-    const activityEvents = ['mousemove', 'mousedown', 'keypress', 'touchstart', 'scroll'];
+    const activityEvents: (keyof WindowEventMap)[] = [
+      'mousemove',
+      'mousedown',
+      'keypress',
+      'touchstart',
+      'scroll',
+    ];
 
-    // Reset timers on user activity
     const handleActivity = () => resetTimeout();
 
-    // Initialize timers
+    // Start timers
     scheduleTimeouts();
 
-    // Attach listeners
-    activityEvents.forEach(evt => window.addEventListener(evt, handleActivity));
+    // Attach listeners (passive where it makes sense)
+    activityEvents.forEach((evt) =>
+      window.addEventListener(evt, handleActivity, { passive: evt !== 'keypress' })
+    );
+
+    // BroadcastChannel listeners
+    const bc = bcRef.current;
+    if (bc) {
+      bc.onmessage = (ev) => {
+        if (!ev?.data) return;
+        const { type } = ev.data as { type: 'LOGOUT' | 'ACTIVITY' };
+        if (type === 'LOGOUT') logout();
+        if (type === 'ACTIVITY') scheduleTimeouts();
+      };
+    }
 
     return () => {
-      // Cleanup on unmount
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      if (warningRef.current) clearTimeout(warningRef.current);
-      activityEvents.forEach(evt => window.removeEventListener(evt, handleActivity));
+      clearTimers();
+      activityEvents.forEach((evt) => window.removeEventListener(evt, handleActivity as any));
+      if (bc) bc.onmessage = null;
     };
-  }, [resetTimeout, scheduleTimeouts]);
+  }, [resetTimeout, scheduleTimeouts, logout]);
 
   return (
     <SessionTimeoutContext.Provider value={{ resetTimeout }}>

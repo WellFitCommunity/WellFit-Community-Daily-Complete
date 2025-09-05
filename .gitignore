@@ -28,3 +28,10 @@ supabase/.temp
 supabase/postgres-version
 supabase/gotrue-version
 supabase/storage-version
+node_modules/
+dist/
+my_code_backup.tar.gz
+dist/
+build/
+.next/
+*.log

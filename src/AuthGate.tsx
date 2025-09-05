@@ -9,11 +9,11 @@ import { useSupabaseClient, useSession, useUser } from './lib/supabaseClient';
  * 2) onboarded === false             -> /demographics
  * 3) otherwise                       -> allow
  *
- * It only acts when a user is logged in. Public routes continue to work.
+ * Only acts when a user is logged in. Public routes continue to work.
  */
 export default function AuthGate({ children }: { children: React.ReactNode }) {
   const supabase = useSupabaseClient();
-  const session = useSession();
+  const session = useSession(); // not used directly, but keeps this component reacting to auth changes
   const user = useUser();
   const navigate = useNavigate();
   const location = useLocation();
@@ -22,21 +22,24 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
     let cancelled = false;
 
     (async () => {
-      // Not logged in? Do nothing; public routes will render.
-      if (!user) return;
+      if (!user) return; // not logged in → do nothing
 
-      // Don’t loop if we’re already on one of the gating pages
+      // Avoid loops on gate pages
       const path = location.pathname;
       const isGatePage = path === '/change-password' || path === '/demographics';
 
-      // Pull just the two flags we need
+      // Pull the two flags off profiles by user_id
       const { data, error } = await supabase
         .from('profiles')
         .select('force_password_change, onboarded')
-        .eq('id', user.id)
+        .eq('user_id', user.id)
         .maybeSingle();
 
-      if (cancelled || error) return; // fail open to avoid redirect loops
+      if (cancelled || error) {
+        // Fail-open to avoid loops/logouts on transient errors
+        if (error) console.warn('[AuthGate] profile fetch error:', error.message);
+        return;
+      }
 
       if (data?.force_password_change) {
         if (!isGatePage && path !== '/change-password') {
@@ -51,11 +54,11 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
         }
         return;
       }
-      // otherwise let them continue
+      // Otherwise, carry on.
     })();
 
     return () => { cancelled = true; };
-  }, [user, supabase, navigate, location.pathname]);
+  }, [user, supabase, navigate, location.pathname, session?.access_token]);
 
   return <>{children}</>;
 }
