@@ -17,15 +17,30 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AdminAuthProvider } from './contexts/AdminAuthContext';
 import { DemoModeProvider } from './contexts/DemoModeContext';
 
-const supabase = createClient(
-  process.env.REACT_APP_SUPABASE_URL as string,
-  process.env.REACT_APP_SUPABASE_ANON_KEY as string,
-  { auth: { persistSession: true, storageKey: 'wellfit-auth' } }
-);
+// ✅ Branding (provider for useBranding consumers)
+import { BrandingProvider } from './BrandingContext';
 
-// Bridge passes userId to DemoModeProvider without DemoMode using useAuth itself
+// ---- Supabase env (dual-key support) ----
+const supabaseUrl =
+  process.env.REACT_APP_SB_URL ||
+  process.env.REACT_APP_SUPABASE_URL;
+
+const supabaseAnonKey =
+  process.env.REACT_APP_SB_PUBLISHABLE_KEY ||
+  process.env.REACT_APP_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  // Optional: log a clear message during development
+  // console.warn('Missing Supabase env: REACT_APP_SB_URL/REACT_APP_SUPABASE_URL and/or REACT_APP_SB_PUBLISHABLE_KEY/REACT_APP_SUPABASE_ANON_KEY');
+}
+
+const supabase = createClient(supabaseUrl as string, supabaseAnonKey as string, {
+  auth: { persistSession: true, storageKey: 'wellfit-auth' },
+});
+
+// Bridge passes userId to DemoModeProvider without DemoMode importing useAuth directly
 function DemoModeBridge({ children }: { children: React.ReactNode }) {
-  const { user, userId } = useAuth() as any; // support either shape
+  const { user, userId } = useAuth() as any;
   const id = (user?.id ?? userId ?? null) as string | null;
   const demoEnabled =
     String(process.env.REACT_APP_DEMO_ENABLED ?? 'false').toLowerCase() === 'true';
@@ -38,22 +53,26 @@ function DemoModeBridge({ children }: { children: React.ReactNode }) {
 }
 
 const root = createRoot(document.getElementById('root')!);
+
 root.render(
   <React.StrictMode>
     <SessionContextProvider supabaseClient={supabase}>
       <AuthProvider>
-        <DemoModeBridge>
-          <AdminAuthProvider>
-            <BrowserRouter>
-              <ErrorBoundary>
-                <App />
-              </ErrorBoundary>
-            </BrowserRouter>
-          </AdminAuthProvider>
-        </DemoModeBridge>
+        <BrandingProvider>
+          <DemoModeBridge>
+            <AdminAuthProvider>
+              <BrowserRouter>
+                <ErrorBoundary>
+                  <App />
+                </ErrorBoundary>
+              </BrowserRouter>
+            </AdminAuthProvider>
+          </DemoModeBridge>
+        </BrandingProvider>
       </AuthProvider>
     </SessionContextProvider>
   </React.StrictMode>
 );
 
 serviceWorkerRegistration.unregister();
+

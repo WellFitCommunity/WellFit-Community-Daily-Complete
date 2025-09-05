@@ -1,108 +1,197 @@
 // src/pages/LoginPage.tsx
-import { useForm } from 'react-hook-form';
-import { useNavigate, Link } from 'react-router-dom';
-import { useSupabaseClient } from '../lib/supabaseClient';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useBranding } from '../BrandingContext';
+import { useAuth } from '../contexts/AuthContext';
+import { createClient } from '@supabase/supabase-js';
 
-type Form = { email: string; password: string };
+// Dual env support: prefer SB_* then fallback to SUPABASE_*
+const SUPABASE_URL =
+  process.env.REACT_APP_SB_URL || process.env.REACT_APP_SUPABASE_URL;
+const SUPABASE_ANON_KEY =
+  process.env.REACT_APP_SB_PUBLISHABLE_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY;
 
-export default function LoginPage() {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-    setError,
-  } = useForm<Form>({ defaultValues: { email: '', password: '' }, mode: 'onBlur' });
+const supabase = createClient(SUPABASE_URL as string, SUPABASE_ANON_KEY as string);
 
+const passwordRules = [
+  { test: (pw: string) => pw.length >= 8, message: 'At least 8 characters' },
+  { test: (pw: string) => /[A-Z]/.test(pw), message: 'At least 1 capital letter' },
+  { test: (pw: string) => /\d/.test(pw), message: 'At least 1 number' },
+  { test: (pw: string) => /[^A-Za-z0-9]/.test(pw), message: 'At least 1 special character' },
+];
+
+const isPhone = (val: string) => /^\d{10,15}$/.test(val.replace(/[^\d]/g, ''));
+
+async function nextRouteForUser() {
+  const { data: { session } } = await supabase.auth.getSession();
+  const uid = session?.user?.id;
+  if (!uid) return '/login';
+
+  const { data } = await supabase
+    .from('profiles')
+    .select('force_password_change, consent, demographics_complete')
+    .eq('id', uid)
+    .single();
+
+  if (!data) return '/login';
+  if (data.force_password_change) return '/change-password';
+  if (!data.consent) return '/consent';
+  if (!data.demographics_complete) return '/demographics';
+  return '/dashboard';
+}
+
+const LoginPage: React.FC = () => {
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const supabase = useSupabaseClient();
-  const [serverError, setServerError] = useState<string | null>(null);
 
-  const onSubmit = async (raw: Form) => {
-    setServerError(null);
+  // ✅ Correct branding usage + fallbacks
+  const { branding } = useBranding();
+  const primaryColor = branding?.primaryColor ?? '#0FA958';
+  const secondaryColor = branding?.secondaryColor ?? '#003865';
+  const logoUrl = branding?.logoUrl;
+  const appName = branding?.appName ?? 'WellFit';
 
-    const email = raw.email.trim().toLowerCase();
-    const password = raw.password;
+  const auth = useAuth();
 
+  useEffect(() => {
+    let cancel = false;
+    (async () => {
+      const route = await nextRouteForUser();
+      if (!cancel && route !== '/login') navigate(route, { replace: true });
+    })();
+    return () => { cancel = true; };
+  }, [navigate]);
+
+  const isColorDark = (colorStr: string) => {
+    if (!colorStr) return true;
+    const color = colorStr.startsWith('#') ? colorStr.substring(1) : colorStr;
+    const r = parseInt(color.substring(0, 2), 16);
+    const g = parseInt(color.substring(2, 4), 16);
+    const b = parseInt(color.substring(4, 6), 16);
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance < 0.5;
+  };
+
+  const primaryButtonTextColor = isColorDark(primaryColor) ? 'text-white' : 'text-gray-800';
+  const failedRules = passwordRules.filter(rule => !rule.test(password));
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    if (!phone || !password) {
+      setError('Please enter both phone number and password.');
+      return;
+    }
+    if (!isPhone(phone)) {
+      setError('Please enter a valid phone number.');
+      return;
+    }
+    if (failedRules.length > 0) {
+      setError('Password must meet all requirements.');
+      return;
+    }
+
+    setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        // route common auth errors into UI
-        if (error.message?.toLowerCase().includes('invalid')) {
-          setError('password', { type: 'manual', message: 'Invalid email or password.' });
-        } else {
-          setServerError(error.message || 'Sign-in failed.');
-        }
-        return;
+      await auth.signIn({ phone, password });
+      setError('');
+      const route = await nextRouteForUser();
+      navigate(route, { replace: true });
+    } catch (err: any) {
+      if (err?.message?.includes('Invalid login credentials')) {
+        setError('Login failed. Please check your phone number and password.');
+      } else if (err?.message?.toLowerCase?.().includes('fetch') || err?.message?.toLowerCase?.().includes('network')) {
+        setError('Could not connect to the server. Please check your internet connection and try again.');
+      } else {
+        setError(err?.message || 'An unexpected error occurred during login. Please try again.');
       }
-      navigate('/dashboard', { replace: true });
-    } catch (e: any) {
-      setServerError(e?.message || 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="bg-white w-full max-w-sm p-6 rounded-xl shadow space-y-4"
-        noValidate
-      >
-        <h1 className="text-xl font-bold text-center text-[#003865]">Sign In</h1>
+    <div
+      className="max-w-md mx-auto mt-16 p-8 bg-white rounded-xl shadow-md text-center"
+      style={{ borderColor: secondaryColor, borderWidth: '2px' }}
+    >
+      {logoUrl && (
+        <img src={logoUrl} alt={`${appName} Logo`} className="h-16 w-auto mx-auto mb-4" />
+      )}
 
+      <h1 className="text-2xl font-bold mb-6" style={{ color: primaryColor }}>
+        {appName} - Senior Login
+      </h1>
+
+      <form onSubmit={handleLogin} className="space-y-4">
         <div>
+          <label htmlFor="phone-input" className="block text-sm font-medium text-gray-700 mb-1 text-left">
+            Phone Number
+          </label>
           <input
-            {...register('email', {
-              required: 'Email is required',
-              pattern: { value: /^\S+@\S+\.\S+$/, message: 'Enter a valid email' },
-            })}
-            type="email"
-            placeholder="Email"
-            className="w-full border rounded px-3 py-2"
-            autoComplete="email"
-            inputMode="email"
+            id="phone-input"
+            type="tel"
+            placeholder="Phone Number"
+            value={phone}
+            onChange={e => setPhone(e.target.value)}
+            required
+            aria-required="true"
+            aria-invalid={!!error}
+            className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:outline-none"
+            style={{ borderColor: secondaryColor, '--tw-ring-color': primaryColor } as React.CSSProperties}
+            autoComplete="tel"
           />
-          {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>}
         </div>
 
         <div>
+          <label htmlFor="password-input" className="block text-sm font-medium text-gray-700 mb-1 text-left">
+            Password
+            <span className="block text-xs text-gray-500 mt-1">
+              Must be at least 8 characters, with 1 capital letter, 1 number, and 1 special character.
+            </span>
+          </label>
           <input
-            {...register('password', {
-              required: 'Password is required',
-              minLength: { value: 6, message: 'Password must be at least 6 characters' },
-            })}
+            id="password-input"
             type="password"
             placeholder="Password"
-            className="w-full border rounded px-3 py-2"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            required
+            minLength={8}
+            aria-required="true"
+            aria-invalid={!!error}
+            className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:outline-none"
+            style={{ borderColor: secondaryColor, '--tw-ring-color': primaryColor } as React.CSSProperties}
             autoComplete="current-password"
           />
-          {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>}
+          {password && (
+            <ul className="text-xs text-left mt-2">
+              {passwordRules.map(rule => (
+                <li key={rule.message} className={rule.test(password) ? 'text-green-600' : 'text-red-500'}>
+                  {rule.test(password) ? '✓' : '✗'} {rule.message}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
-        {serverError && (
-          <p className="text-sm text-red-700 bg-red-100 border border-red-200 rounded p-2">{serverError}</p>
-        )}
+        {error && <p role="alert" className="text-red-500 text-sm font-semibold">{error}</p>}
 
         <button
-          className="w-full rounded bg-[#003865] text-white py-2 disabled:opacity-60"
           type="submit"
-          disabled={isSubmitting}
+          className={`w-full py-3 font-semibold rounded hover:opacity-90 transition-opacity ${primaryButtonTextColor} focus:outline-none focus:ring-2 focus:ring-offset-2`}
+          style={{ backgroundColor: primaryColor }}
+          disabled={loading}
         >
-          {isSubmitting ? 'Signing in…' : 'Sign In'}
+          {loading ? 'Logging In...' : 'Log In'}
         </button>
-
-        <div className="flex items-center justify-between text-sm text-gray-600">
-          <Link className="text-blue-600 hover:underline" to="/reset-password">
-            Forgot password?
-          </Link>
-          <span>
-            Don’t have an account?{' '}
-            <Link className="text-blue-600 hover:underline" to="/register">
-              Register
-            </Link>
-          </span>
-        </div>
       </form>
     </div>
   );
-}
+};
+
+export default LoginPage;
