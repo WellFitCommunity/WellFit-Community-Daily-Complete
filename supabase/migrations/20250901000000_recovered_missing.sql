@@ -1,1 +1,1 @@
--- placeholder to sync with remote migration history (2025-09-01 00:00:00 UTC)
+-- placeholder to sync with remote migration history (2025-09-01 00:00:00 UTC) — fix_admin_notes_presence

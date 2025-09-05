@@ -1,1 +1,1 @@
--- placeholder to sync with remote migration history (2025-08-15 18:08:09 UTC)
+-- placeholder to sync with remote migration history (2025-08-15 18:08:09 UTC) — remote_schema
