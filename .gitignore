@@ -35,3 +35,12 @@ dist/
 build/
 .next/
 *.log
+
+# accidental backups
+*.backup
+*package-lock*.backup
+*package-lock*.old
+
+
+# supabase generated/temporary files
+supabase/.temp/

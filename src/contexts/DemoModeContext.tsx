@@ -1,121 +1,214 @@
-import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+// src/contexts/DemoModeContext.tsx
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  ReactNode,
+} from 'react';
 
-type DemoCtx = {
-  demoMode: boolean;
-  demoTimeLeft: number;              // seconds
-  startDemo: (seconds?: number) => void;
-  endDemo: () => void;
+type DemoContextValue = {
+  isDemo: boolean;
+  startedAt: number | null;        // epoch ms when demo started
+  remainingMs: number | null;      // time until auto-disable, if a timeout was set
+  enableDemo: (opts?: { durationMs?: number }) => void;
+  disableDemo: () => void;
+  toggleDemo: (opts?: { durationMs?: number }) => void;
 };
 
-const DemoModeContext = createContext<DemoCtx>({
-  demoMode: false,
-  demoTimeLeft: 0,
-  startDemo: () => {},
-  endDemo: () => {},
-});
+const DemoModeContext = createContext<DemoContextValue | undefined>(undefined);
 
-export function useDemoMode() {
-  return useContext(DemoModeContext);
+const LS_KEY_ENABLED = 'demoMode.enabled';
+const LS_KEY_STARTED = 'demoMode.startedAt';
+const LS_KEY_DURATION = 'demoMode.durationMs';
+
+function safeNow(): number {
+  return Date.now();
 }
 
-const DEFAULT_SECONDS = 15 * 60; // 15 minutes
+function readBoolLS(key: string, fallback = false): boolean {
+  try {
+    const v = localStorage.getItem(key);
+    return v === 'true' ? true : v === 'false' ? false : fallback;
+  } catch {
+    return fallback;
+  }
+}
 
-/**
- * Props:
- * - userId?: string | null    // optional; when provided, demo will auto-end on login
- * - enabled?: boolean         // optional kill switch; default true unless env disables it
- */
+function readNumLS(key: string): number | null {
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw == null) return null;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeLS(key: string, value: string) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // ignore quota/security errors
+  }
+}
+
 export function DemoModeProvider({
   children,
-  userId = null,
-  enabled,
+  enabled = false,
+  userId = null, // optional; when provided, demo will auto-end on login
 }: {
-  children: React.ReactNode;
-  userId?: string | null;
+  children: ReactNode;
   enabled?: boolean;
+  userId?: string | null;
 }) {
-  // Kill-switch via env, but allow explicit override via prop
-  const envEnabled =
-    String(process.env.REACT_APP_DEMO_ENABLED ?? 'true').toLowerCase() === 'true';
-  const isEnabled = typeof enabled === 'boolean' ? enabled : envEnabled;
-
-  // If disabled, no-op provider (prevents import explosions while making it inert)
-  if (!isEnabled) {
-    const value = useMemo<DemoCtx>(
-      () => ({ demoMode: false, demoTimeLeft: 0, startDemo: () => {}, endDemo: () => {} }),
-      []
-    );
-    return <DemoModeContext.Provider value={value}>{children}</DemoModeContext.Provider>;
-  }
-
-  const [demoMode, setDemoMode] = useState<boolean>(() => {
-    const saved = sessionStorage.getItem('demoMode');
-    return saved === 'true';
+  // ---- Hooks must be unconditional & top-level ----
+  const [isDemo, setIsDemo] = useState<boolean>(() => {
+    if (!enabled) return false;
+    // Try querystring first (demo=1), otherwise localStorage
+    try {
+      const sp = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+      if (sp.get('demo') === '1') return true;
+    } catch {
+      /* no window in SSR */
+    }
+    return typeof window !== 'undefined' ? readBoolLS(LS_KEY_ENABLED, false) : false;
   });
 
-  const [demoTimeLeft, setDemoTimeLeft] = useState<number>(() => {
-    const saved = sessionStorage.getItem('demoTimeLeft');
-    return saved ? Math.max(0, parseInt(saved, 10)) : DEFAULT_SECONDS;
+  const [startedAt, setStartedAt] = useState<number | null>(() => {
+    if (!enabled) return null;
+    return typeof window !== 'undefined' ? readNumLS(LS_KEY_STARTED) : null;
   });
 
-  const timerRef = useRef<number | null>(null);
+  const [durationMs, setDurationMs] = useState<number | null>(() => {
+    if (!enabled) return null;
+    return typeof window !== 'undefined' ? readNumLS(LS_KEY_DURATION) : null;
+  });
 
-  const startDemo = (seconds = DEFAULT_SECONDS) => {
-    setDemoMode(true);
-    setDemoTimeLeft(seconds);
-  };
+  const [remainingMs, setRemainingMs] = useState<number | null>(null);
 
-  const endDemo = () => {
-    setDemoMode(false);
-    setDemoTimeLeft(DEFAULT_SECONDS);
-  };
+  const tickRef = useRef<number | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Persist to sessionStorage
+  // If demo gets disabled by env/prop, immediately clear state and timers
   useEffect(() => {
-    sessionStorage.setItem('demoMode', String(demoMode));
-    sessionStorage.setItem('demoTimeLeft', String(demoTimeLeft));
-  }, [demoMode, demoTimeLeft]);
-
-  // 🚦 Auto-start from ?demo=1 ONLY if no user is logged in (based on optional userId)
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const wantsDemo = params.get('demo') === '1';
-    if (wantsDemo && !userId && !demoMode) {
-      startDemo(DEFAULT_SECONDS);
+    if (!enabled) {
+      setIsDemo(false);
+      setStartedAt(null);
+      setDurationMs(null);
+      setRemainingMs(null);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
     }
-    // re-run on login/logout transitions
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [enabled]);
 
-  // 🛑 If a user logs in at any time, immediately end demo (only if we received userId)
+  // Persist to localStorage whenever flags change (only if enabled)
   useEffect(() => {
-    if (userId && demoMode) endDemo();
-  }, [userId, demoMode]);
+    if (!enabled || typeof window === 'undefined') return;
+    writeLS(LS_KEY_ENABLED, String(isDemo));
+    if (startedAt != null) writeLS(LS_KEY_STARTED, String(startedAt));
+    else writeLS(LS_KEY_STARTED, '');
+    if (durationMs != null) writeLS(LS_KEY_DURATION, String(durationMs));
+    else writeLS(LS_KEY_DURATION, '');
+  }, [enabled, isDemo, startedAt, durationMs]);
 
-  // ⏱️ Countdown
+  // Drive remaining time + auto-disable if duration was set (only if enabled)
   useEffect(() => {
-    if (!demoMode) {
-      if (timerRef.current) window.clearInterval(timerRef.current);
-      timerRef.current = null;
-      return;
+    // clear any existing interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
     }
-    if (demoTimeLeft <= 0) {
-      endDemo();
-      return;
-    }
-    timerRef.current = window.setInterval(() => {
-      setDemoTimeLeft((t) => t - 1);
-    }, 1000) as unknown as number;
 
-    return () => {
-      if (timerRef.current) window.clearInterval(timerRef.current);
+    if (enabled && isDemo && startedAt != null && durationMs != null) {
+      const update = () => {
+        const now = safeNow();
+        const el = now - startedAt;
+        const remain = Math.max(durationMs - el, 0);
+        setRemainingMs(remain);
+        if (remain === 0) {
+          // auto-disable once
+          setIsDemo(false);
+          setStartedAt(null);
+          setDurationMs(null);
+        }
+      };
+      update(); // compute immediately
+      intervalRef.current = setInterval(update, 1000);
+      return () => {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+      };
+    } else {
+      setRemainingMs(null);
+    }
+  }, [enabled, isDemo, startedAt, durationMs]);
+
+  // Auto-end demo when a real user logs in (only if enabled)
+  useEffect(() => {
+    if (!enabled) return;
+    if (userId && isDemo) {
+      setIsDemo(false);
+      setStartedAt(null);
+      setDurationMs(null);
+      setRemainingMs(null);
+    }
+  }, [enabled, userId, isDemo]);
+
+  // Memoized API (unconditional hook)
+  const value = useMemo<DemoContextValue>(() => {
+    const enableDemo = (opts?: { durationMs?: number }) => {
+      if (!enabled) return; // no-op if feature disabled
+      setIsDemo(true);
+      const now = safeNow();
+      setStartedAt(now);
+      if (opts?.durationMs && Number.isFinite(opts.durationMs)) {
+        setDurationMs(opts.durationMs);
+      } else {
+        setDurationMs(null);
+      }
+      tickRef.current = now;
     };
-  }, [demoMode, demoTimeLeft]);
 
-  const value = useMemo(
-    () => ({ demoMode, demoTimeLeft, startDemo, endDemo }),
-    [demoMode, demoTimeLeft]
+    const disableDemo = () => {
+      setIsDemo(false);
+      setStartedAt(null);
+      setDurationMs(null);
+      setRemainingMs(null);
+    };
+
+    const toggleDemo = (opts?: { durationMs?: number }) => {
+      if (!enabled) return; // no-op if feature disabled
+      if (isDemo) disableDemo();
+      else enableDemo(opts);
+    };
+
+    return {
+      isDemo,
+      startedAt,
+      remainingMs,
+      enableDemo,
+      disableDemo,
+      toggleDemo,
+    };
+  }, [enabled, isDemo, startedAt, remainingMs]);
+
+  return (
+    <DemoModeContext.Provider value={value}>
+      {children}
+    </DemoModeContext.Provider>
   );
+}
 
-  return <DemoModeContext.Provider value={value}>{children}</DemoModeContext.Provider>;
+export function useDemoMode(): DemoContextValue {
+  const ctx = useContext(DemoModeContext);
+  if (!ctx) throw new Error('useDemoMode must be used within DemoModeProvider');
+  return ctx;
 }
