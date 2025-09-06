@@ -53,7 +53,7 @@ function endOfDayIso(dateStr: string): string {
 
 const ReportsPrintPage: React.FC = () => {
   const supabase = useSupabaseClient();
-  const branding = useBranding();
+  const { branding } = useBranding();
 
   // Date range: last 30 days
   const [from, setFrom] = useState<string>(() => {

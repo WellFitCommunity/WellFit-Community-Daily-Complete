@@ -38,7 +38,7 @@ interface CommunityEngagementSummary {
 const EVENT_LABEL = '⭐ Attending the event today';
 
 const DoctorsView: React.FC = () => {
-  const branding = useBranding();
+  const { branding } = useBranding();
   const supabase = useSupabaseClient();
   const user = useUser();
   const userId = user?.id ?? null;

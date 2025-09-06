@@ -17,7 +17,7 @@ import AdminPanel from '../components/admin/AdminPanel'; // Future use
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const branding = useBranding();
+  const { branding } = useBranding();
 
   const isColorDark = (colorStr: string) => {
     if (!colorStr) return true;

@@ -15,7 +15,7 @@ type DemoContextValue = {
 
   /** Compatibility aliases (so old code keeps working) */
   demoMode?: boolean;
-  demoTimeLeft?: number;      // seconds
+  demoTimeLeft: number;      // seconds - always defined, defaults to 0
   endTime?: number | null;    // epoch ms
 
   /** Canonical timing fields */
@@ -25,6 +25,7 @@ type DemoContextValue = {
   /** Controls */
   enableDemo: (opts?: { durationMs?: number }) => void;
   disableDemo: () => void;
+  endDemo: () => void;        // Added this missing method
   toggleDemo: (opts?: { durationMs?: number }) => void;
 };
 
@@ -177,6 +178,9 @@ export function DemoModeProvider({
       setRemainingMs(null);
     };
 
+    // Add endDemo as an alias for disableDemo
+    const endDemo = disableDemo;
+
     const toggleDemo = (opts?: { durationMs?: number }) => {
       if (!enabled) return;
       if (isDemo) disableDemo(); else enableDemo(opts);
@@ -195,6 +199,7 @@ export function DemoModeProvider({
       endTime,                   // alias (epoch ms)
       enableDemo,
       disableDemo,
+      endDemo,                   // Added this missing method
       toggleDemo,
     };
   }, [enabled, isDemo, startedAt, remainingMs, durationMs]);

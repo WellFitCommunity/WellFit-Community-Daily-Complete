@@ -7,7 +7,7 @@ export interface BrandingConfig {
   secondaryColor: string;
   textColor: string;
   contactInfo: string;
-  gradient?: string;
+  gradient: string;   // Made required - always has a default value
   customFooter?: string; // tenant-specific footer override (optional)
 }
 

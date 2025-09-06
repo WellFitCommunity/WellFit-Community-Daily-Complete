@@ -3,7 +3,7 @@ import React, { ReactNode } from 'react';
 import { useBranding } from '../../BrandingContext';
 
 const PageLayout = ({ children }: { children: ReactNode }) => {
-  const branding = useBranding();
+  const { branding } = useBranding();
 
   return (
     <div

@@ -24,7 +24,7 @@ interface SelfReportLog extends SelfReportData {
 const MOOD_OPTIONS = ['Happy', 'Okay', 'Sad', 'Anxious', 'Tired'] as const;
 
 const SelfReportingPage: React.FC = () => {
-  const branding = useBranding();
+  const { branding } = useBranding();
   const supabase = useSupabaseClient();
   const session = useSession();
 
