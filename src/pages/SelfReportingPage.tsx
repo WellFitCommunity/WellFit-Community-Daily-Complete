@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSupabaseClient, useSession } from '../lib/supabaseClient';
 import { useBranding } from '../BrandingContext';
-import type { User } from '@supabase/supabase-js';
+import type { User, AuthChangeEvent, Session } from '@supabase/supabase-js';
 
 type SourceType = 'self' | 'staff';
 
@@ -28,7 +28,7 @@ const SelfReportingPage: React.FC = () => {
   const supabase = useSupabaseClient();
   const session = useSession();
 
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(session?.user ?? null);
   const [mood, setMood] = useState('');
   const [symptoms, setSymptoms] = useState('');
   const [activity, setActivity] = useState('');
@@ -63,10 +63,13 @@ const SelfReportingPage: React.FC = () => {
       }
     })();
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      if (!mounted) return;
-      setCurrentUser(newSession?.user ?? null);
-    });
+    // ✅ Properly typed callback so TS stops yelling
+    const { data: sub } = supabase.auth.onAuthStateChange(
+      (_event: AuthChangeEvent, newSession: Session | null) => {
+        if (!mounted) return;
+        setCurrentUser(newSession?.user ?? null);
+      }
+    );
 
     return () => {
       mounted = false;
@@ -93,20 +96,17 @@ const SelfReportingPage: React.FC = () => {
 
         const reports: SelfReportLog[] = (data ?? []).map((r: any) => {
           const d = r?.data || {};
-          const row: SelfReportLog = {
+          return {
             id: r.id,
             created_at: r.created_at,
             user_id: r.user_id,
             entry_type: r.entry_type,
-            // pull from data JSON
-            mood: (d.mood ?? '').toString(),
+            mood: String(d.mood ?? ''),
             symptoms: d.symptoms ?? null,
             activity_description: d.activity_description ?? null,
-            // health_entries doesn’t have submitted_by; infer “self”
-            submitted_by: r.user_id,
+            submitted_by: r.user_id,     // health_entries doesn’t store submitted_by; infer “self”
             source_type: 'self',
           };
-          return row;
         });
 
         setSelfReports(reports);
@@ -287,10 +287,7 @@ const SelfReportingPage: React.FC = () => {
 
         {/* Feedback messages */}
         {feedbackMessage && (
-          <p
-            role="status"
-            className="text-green-600 bg-green-100 p-3 rounded-lg text-base sm:text-lg text-center font-medium"
-          >
+          <p role="status" className="text-green-600 bg-green-100 p-3 rounded-lg text-base sm:text-lg text-center font-medium">
             {feedbackMessage}
           </p>
         )}
@@ -336,11 +333,7 @@ const SelfReportingPage: React.FC = () => {
             >
               <strong>{new Date(log.created_at).toLocaleString()}</strong>
               <span
-                style={{
-                  color: colorForSource(log.source_type),
-                  fontWeight: 'bold',
-                  marginLeft: 8,
-                }}
+                style={{ color: colorForSource(log.source_type), fontWeight: 'bold', marginLeft: 8 }}
               >
                 {log.source_type === 'self' ? 'Self' : 'Staff'}
               </span>

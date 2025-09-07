@@ -1,90 +1,75 @@
-// File: supabase/functions/verify-hcaptcha/index.ts
-import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+// src/types/hcaptcha-react-hcaptcha.d.ts
+declare module '@hcaptcha/react-hcaptcha' {
+  import * as React from 'react';
 
-// ── Config ─────────────────────────────────────────────────────────────────────
-const ALLOWED_ORIGINS = (Deno.env.get("ALLOWED_ORIGINS") ?? "*")
-  .split(",")
-  .map(s => s.trim())
-  .filter(Boolean);
+  export type HCaptchaSize = 'normal' | 'compact' | 'invisible';
+  export type HCaptchaTheme = 'light' | 'dark' | 'contrast' | Record<string, any>;
 
-function makeCorsHeaders(origin: string | null): HeadersInit {
-  const allowOrigin =
-    ALLOWED_ORIGINS.includes("*")
-      ? "*"
-      : origin && ALLOWED_ORIGINS.includes(origin)
-        ? origin
-        : "null";
+  export interface HCaptchaProps {
+    /** Required site key from hCaptcha dashboard */
+    sitekey: string;
 
-  return {
-    "Access-Control-Allow-Origin": allowOrigin,
-    "Vary": "Origin",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Content-Type": "application/json",
-  };
+    /** UI & behavior */
+    size?: HCaptchaSize;
+    theme?: HCaptchaTheme;
+    tabindex?: number;
+    id?: string;
+    languageOverride?: string;            // ISO 639-2 code; 'auto' by default
+    reCaptchaCompat?: boolean;            // default true
+    loadAsync?: boolean;                  // default true
+    cleanup?: boolean;                    // default true
+    scriptLocation?: Element | null;      // defaults to document.head
+
+    /** Enterprise/advanced (optional; safe as strings) */
+    apihost?: string;
+    assethost?: string;
+    endpoint?: string;
+    host?: string;
+    imghost?: string;
+    reportapi?: string;
+    sentry?: boolean;
+    secureApi?: boolean;
+    scriptSource?: string;
+    custom?: boolean;
+
+    /** Events */
+    onVerify?: (token: string, ekey?: string) => void;
+    onExpire?: () => void;
+    onError?: (err: any) => void;
+    onOpen?: () => void;
+    onClose?: () => void;
+    onChalExpired?: () => void;
+    onLoad?: () => void;                  // fired when API is ready
+  }
+
+  /** Methods available via ref */
+  export interface HCaptchaHandle {
+    /**
+     * Programmatically trigger a challenge. You can pass a payload
+     * (e.g., { rqdata }) for enterprise features.
+     * When run asynchronously it resolves with { token, eKey }.
+     */
+    execute: (
+      payload?: Record<string, any>
+    ) => void | Promise<{ token: string; eKey?: string }>;
+
+    /** Get the current response token (if any) */
+    getResponse: () => string | null;
+
+    /** Get the challenge reference id (ekey) */
+    getRespKey: () => string | null;
+
+    /** Reset the widget/challenge */
+    resetCaptcha: () => void;
+
+    /** Optional in some versions */
+    setData?: (data: Record<string, any>) => void;
+    remove?: () => void;
+  }
+
+  const HCaptcha: React.ForwardRefExoticComponent<
+    HCaptchaProps & React.RefAttributes<HCaptchaHandle>
+  >;
+
+  export default HCaptcha;
 }
-
-interface ReqBody { token?: string }
-
-// ── Handler ────────────────────────────────────────────────────────────────────
-serve(async (req) => {
-  const origin = req.headers.get("origin");
-  const corsHeaders = makeCorsHeaders(origin);
-
-  // CORS preflight
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
-
-  if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Method not allowed" }), {
-      status: 405,
-      headers: corsHeaders,
-    });
-  }
-
-  try {
-    const { token } = (await req.json()) as ReqBody;
-    if (!token) {
-      return new Response(JSON.stringify({ error: "Missing token" }), {
-        status: 400,
-        headers: corsHeaders,
-      });
-    }
-
-    const secret = Deno.env.get("HCAPTCHA_SECRET_KEY");
-    if (!secret) {
-      return new Response(JSON.stringify({ error: "Server misconfig: missing HCAPTCHA_SECRET_KEY" }), {
-        status: 500,
-        headers: corsHeaders,
-      });
-    }
-
-    const verifyResp = await fetch("https://hcaptcha.com/siteverify", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({ secret, response: token }),
-    });
-
-    const result = await verifyResp.json();
-
-    if (result.success === true) {
-      return new Response(JSON.stringify({ success: true }), {
-        status: 200,
-        headers: corsHeaders,
-      });
-    }
-
-    // Bubble up hCaptcha error codes for debugging
-    return new Response(
-      JSON.stringify({ success: false, errors: result["error-codes"] ?? null }),
-      { status: 403, headers: corsHeaders },
-    );
-
-  } catch (e: any) {
-    return new Response(JSON.stringify({ error: String(e?.message ?? e) }), {
-      status: 500,
-      headers: corsHeaders,
-    });
-  }
-});

@@ -33,6 +33,23 @@ export const FIREBASE = {
 export const HCAPTCHA_SITE_KEY =
   process.env.REACT_APP_HCAPTCHA_SITE_KEY || '';
 
+  export const REQUIRE_LOGIN_CAPTCHA =
+  (process.env.REACT_APP_REQUIRE_LOGIN_CAPTCHA ?? 'false').toLowerCase() === 'true';
+
+export const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+
+if (!SUPABASE_URL) {
+  // Fail fast with clear messaging at runtime in dev
+  // In production, this will surface as build-time misconfig if missing.
+  // eslint-disable-next-line no-console
+  console.error('Missing SUPABASE_URL (REACT_APP_SB_URL).');
+}
+
+if (!SUPABASE_PUBLISHABLE_API_KEY) {
+  // eslint-disable-next-line no-console
+  console.error('Missing SUPABASE_PUBLISHABLE_API_KEY (REACT_APP_SB_PUBLISHABLE_API_KEY).');
+} 
+
 // API endpoints
 export const API_ENDPOINT =
   process.env.REACT_APP_API_ENDPOINT ??

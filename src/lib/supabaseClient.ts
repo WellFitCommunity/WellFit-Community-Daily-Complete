@@ -6,10 +6,12 @@ import {
 } from '../settings/settings';
 
 if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_API_KEY) {
-  throw new Error('Missing Supabase URL or publishable key in settings.ts');
+  throw new Error(
+    'Supabase misconfigured. Set REACT_APP_SB_URL and REACT_APP_SB_PUBLISHABLE_API_KEY.'
+  );
 }
 
-// Single shared client
+// One shared client for the whole app
 export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_API_KEY, {
   auth: {
     persistSession: true,
@@ -19,11 +21,9 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_API_KEY,
   },
 });
 
-// Re-export hooks + provider so you can import them from this module
-export {
-  SessionContextProvider,
-  useSupabaseClient,
-  useSession,
-  useUser,
-} from '@supabase/auth-helpers-react';
+// (Optional) If you use auth-helpers hooks elsewhere, you can still re-export them.
+// Remove if not used.
+
+
+export type { AuthChangeEvent, Session, User } from '@supabase/supabase-js';
 
