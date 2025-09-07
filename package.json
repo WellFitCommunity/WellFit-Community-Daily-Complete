@@ -2,7 +2,9 @@
   "name": "wellfit-community-daily",
   "version": "0.1.0",
   "private": true,
-  "engines": { "node": "20.x" },
+  "engines": {
+    "node": "20.x"
+  },
   "dependencies": {
     "@hcaptcha/react-hcaptcha": "^1.12.1",
     "@hookform/resolvers": "^3.10.0",

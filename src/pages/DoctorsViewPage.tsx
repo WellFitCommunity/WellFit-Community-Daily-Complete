@@ -1,6 +1,6 @@
 // src/pages/DoctorsViewPage.tsx (hooks-based client)
 import { useState, useEffect, useCallback } from 'react';
-import { useSupabaseClient, useUser } from '../lib/supabaseClient';
+import { useSupabaseClient, useUser } from '../contexts/AuthContext';
 import { useBranding } from '../BrandingContext';
 
 interface CheckInData {

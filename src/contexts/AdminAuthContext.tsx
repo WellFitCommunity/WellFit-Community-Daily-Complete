@@ -1,13 +1,6 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  ReactNode,
-  useCallback,
-  useEffect,
-  useRef,
-} from 'react';
-import { supabase } from '../lib/supabaseClient'; // your shared client
+// src/contexts/AdminAuthContext.tsx
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { supabase } from '../lib/supabaseClient';
 
 type AdminRole = 'admin' | 'super_admin';
 
@@ -16,28 +9,26 @@ interface AdminAuthContextType {
   adminRole: AdminRole | null;
   isLoading: boolean;
   error: string | null;
-  verifyPinAndLogin: (pin: string, role: AdminRole) => Promise<boolean>; // ❌ no userId
+  verifyPinAndLogin: (pin: string, role: AdminRole) => Promise<boolean>;
   logoutAdmin: () => void;
 }
 
 const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefined);
-
 const SESSION_STORAGE_KEY = 'wellfit_admin_auth';
 
 interface AdminSessionData {
   isAuthenticated: boolean;
   role: AdminRole | null;
-  expires_at: string | null; // ISO string
+  expires_at: string | null;
 }
 
-export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
+export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [adminRole, setAdminRole] = useState<AdminRole | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
 
-  // keep a timer to auto-logout on expiry
   const expiryTimerRef = useRef<number | null>(null);
 
   function clearExpiryTimer() {
@@ -46,54 +37,38 @@ export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children 
       expiryTimerRef.current = null;
     }
   }
-
   function scheduleExpiryTimer(expiresISO: string | null) {
     clearExpiryTimer();
     if (!expiresISO) return;
     const ms = new Date(expiresISO).getTime() - Date.now();
-    if (ms <= 0) {
-      // already expired
-      logoutAdmin();
-      return;
-    }
-    expiryTimerRef.current = window.setTimeout(() => {
-      // auto-lock when server session expires
-      logoutAdmin();
-    }, ms);
+    if (ms <= 0) return logoutAdmin();
+    expiryTimerRef.current = window.setTimeout(() => logoutAdmin(), ms);
   }
 
-  // Load persisted state on boot
   useEffect(() => {
     try {
       const persisted = sessionStorage.getItem(SESSION_STORAGE_KEY);
       if (persisted) {
-        const sessionData = JSON.parse(persisted) as AdminSessionData;
-        if (sessionData.isAuthenticated && sessionData.role && sessionData.expires_at) {
-          // check whether it’s still valid right now
-          if (new Date(sessionData.expires_at).getTime() > Date.now()) {
-            setIsAdminAuthenticated(true);
-            setAdminRole(sessionData.role);
-            setExpiresAt(sessionData.expires_at);
-            scheduleExpiryTimer(sessionData.expires_at);
-            // console.log('Admin session restored from sessionStorage');
-          } else {
-            // expired → clear it
-            sessionStorage.removeItem(SESSION_STORAGE_KEY);
-          }
+        const s = JSON.parse(persisted) as AdminSessionData;
+        if (s.isAuthenticated && s.role && s.expires_at && new Date(s.expires_at).getTime() > Date.now()) {
+          setIsAdminAuthenticated(true);
+          setAdminRole(s.role);
+          setExpiresAt(s.expires_at);
+          scheduleExpiryTimer(s.expires_at);
+        } else {
+          sessionStorage.removeItem(SESSION_STORAGE_KEY);
         }
       }
-    } catch (e) {
-      console.error('Failed to parse admin session from sessionStorage', e);
+    } catch {
       sessionStorage.removeItem(SESSION_STORAGE_KEY);
     }
-    // cleanup timer on unmount
     return () => clearExpiryTimer();
   }, []);
 
   function persistSession(isAuthenticated: boolean, role: AdminRole | null, expires_at: string | null) {
     if (isAuthenticated && role && expires_at) {
-      const sessionData: AdminSessionData = { isAuthenticated, role, expires_at };
-      sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(sessionData));
+      const data: AdminSessionData = { isAuthenticated, role, expires_at };
+      sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(data));
     } else {
       sessionStorage.removeItem(SESSION_STORAGE_KEY);
     }
@@ -103,47 +78,28 @@ export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children 
     setIsLoading(true);
     setError(null);
     try {
-      // 🔒 Do NOT send userId. The Edge function reads the auth user from the Supabase JWT automatically.
-      const { data, error: fnErr } = await supabase.functions.invoke('verify-admin-pin', {
-        body: { pin, role },
-      });
-
+      const { data, error: fnErr } = await supabase.functions.invoke('verify-admin-pin', { body: { pin, role } });
       if (fnErr) {
-        const msg = fnErr.message || 'PIN verification failed.';
-        setError(msg);
-        setIsAdminAuthenticated(false);
-        setAdminRole(null);
-        setExpiresAt(null);
-        persistSession(false, null, null);
-        clearExpiryTimer();
+        setError(fnErr.message || 'PIN verification failed.');
+        setIsAdminAuthenticated(false); setAdminRole(null); setExpiresAt(null);
+        persistSession(false, null, null); clearExpiryTimer();
         return false;
       }
-
       if (data?.success) {
         const exp = data.expires_at ?? null;
-        setIsAdminAuthenticated(true);
-        setAdminRole(role);
-        setExpiresAt(exp);
-        persistSession(true, role, exp);
-        scheduleExpiryTimer(exp);
+        setIsAdminAuthenticated(true); setAdminRole(role); setExpiresAt(exp);
+        persistSession(true, role, exp); scheduleExpiryTimer(exp);
         return true;
       } else {
-        const msg = data?.error || 'Invalid PIN or unexpected response.';
-        setError(msg);
-        setIsAdminAuthenticated(false);
-        setAdminRole(null);
-        setExpiresAt(null);
-        persistSession(false, null, null);
-        clearExpiryTimer();
+        setError(data?.error || 'Invalid PIN or unexpected response.');
+        setIsAdminAuthenticated(false); setAdminRole(null); setExpiresAt(null);
+        persistSession(false, null, null); clearExpiryTimer();
         return false;
       }
     } catch (e: any) {
       setError(e?.message || 'An unexpected error occurred.');
-      setIsAdminAuthenticated(false);
-      setAdminRole(null);
-      setExpiresAt(null);
-      persistSession(false, null, null);
-      clearExpiryTimer();
+      setIsAdminAuthenticated(false); setAdminRole(null); setExpiresAt(null);
+      persistSession(false, null, null); clearExpiryTimer();
       return false;
     } finally {
       setIsLoading(false);
@@ -157,7 +113,6 @@ export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children 
     setExpiresAt(null);
     persistSession(false, null, null);
     clearExpiryTimer();
-    // optional: navigate('/admin/login');
   }, []);
 
   return (
@@ -169,10 +124,8 @@ export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children 
   );
 };
 
-export const useAdminAuth = (): AdminAuthContextType => {
+export const useAdminAuth = () => {
   const ctx = useContext(AdminAuthContext);
-  if (!ctx) {
-    throw new Error('useAdminAuth must be used within an AdminAuthProvider');
-  }
+  if (!ctx) throw new Error('useAdminAuth must be used within an AdminAuthProvider');
   return ctx;
 };

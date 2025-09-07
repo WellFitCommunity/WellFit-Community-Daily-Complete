@@ -1,7 +1,7 @@
 // src/pages/Home.tsx
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useSupabaseClient, useSession } from '../lib/supabaseClient';
+import { useSupabaseClient, useSession } from '../contexts/AuthContext';
 
 type Profile = {
   first_name?: string | null;

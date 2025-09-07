@@ -2,7 +2,7 @@
 import { useRef, useState } from 'react';
 import SignatureCanvas from 'react-signature-canvas';
 import { useNavigate } from 'react-router-dom';
-import { useSupabaseClient, useUser } from '../lib/supabaseClient';
+import { useSupabaseClient, useUser } from '../contexts/AuthContext';
 
 const BUCKET = 'consent-signatures';
 

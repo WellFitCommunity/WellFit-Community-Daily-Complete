@@ -1,9 +1,6 @@
-// src/types/hcaptcha-react-hcaptcha.d.ts
 declare module '@hcaptcha/react-hcaptcha' {
   import * as React from 'react';
-
-  // Keep the surface tiny to avoid clashes with the library’s own types
-  type HCaptchaProps = {
+  export interface HCaptchaProps {
     sitekey: string;
     size?: 'normal' | 'compact' | 'invisible';
     theme?: 'light' | 'dark';
@@ -17,16 +14,9 @@ declare module '@hcaptcha/react-hcaptcha' {
     onOpen?: () => void;
     onClose?: () => void;
     onChalExpired?: () => void;
-  };
-
-  type HCaptchaHandle = {
-    execute: () => void;
-    resetCaptcha: () => void;
-  };
-
+  }
   const HCaptcha: React.ForwardRefExoticComponent<
-    HCaptchaProps & React.RefAttributes<HCaptchaHandle | undefined>
+    HCaptchaProps & React.RefAttributes<any>
   >;
-
   export default HCaptcha;
 }

@@ -1,7 +1,7 @@
 // src/AuthGate.tsx
-import { useEffect } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useSupabaseClient, useSession, useUser } from './lib/supabaseClient';
+import { useSupabaseClient, useSession, useUser } from './contexts/AuthContext';
 
 /**
  * Gatekeeper for post-login flow:
@@ -11,9 +11,9 @@ import { useSupabaseClient, useSession, useUser } from './lib/supabaseClient';
  *
  * Only acts when a user is logged in. Public routes continue to work.
  */
-export default function AuthGate({ children }: { children: React.ReactNode }) {
+export default function AuthGate({ children }: { children: ReactNode }) {
   const supabase = useSupabaseClient();
-  const session = useSession(); // not used directly, but keeps this component reacting to auth changes
+  const session = useSession(); // keep to react to auth changes
   const user = useUser();
   const navigate = useNavigate();
   const location = useLocation();
@@ -24,7 +24,6 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
     (async () => {
       if (!user) return; // not logged in → do nothing
 
-      // Avoid loops on gate pages
       const path = location.pathname;
       const isGatePage = path === '/change-password' || path === '/demographics';
 
@@ -36,7 +35,6 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
         .maybeSingle();
 
       if (cancelled || error) {
-        // Fail-open to avoid loops/logouts on transient errors
         if (error) console.warn('[AuthGate] profile fetch error:', error.message);
         return;
       }
@@ -57,7 +55,9 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
       // Otherwise, carry on.
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [user, supabase, navigate, location.pathname, session?.access_token]);
 
   return <>{children}</>;

@@ -1,128 +1,145 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from 'react';
-import { Session, User, AuthChangeEvent } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabaseClient';
+// src/contexts/AuthContext.tsx
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import type { Session, User, AuthChangeEvent } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabaseClient'; // ✅ fix the import
 
-interface AuthContextType {
-  user: User | null;
+type AuthContextValue = {
+  supabase: typeof supabase;
   session: Session | null;
-  isLoading: boolean;
+  user: User | null;
+  loading: boolean;
   error: Error | null;
-  signIn: (options: { phone?: string; email?: string; password: string }) => Promise<void>;
-  signUp: (options: { phone?: string; email?: string; password: string }) => Promise<void>;
+  signIn: (opts: { phone?: string; email?: string; password: string }) => Promise<void>;
+  signUp: (opts: { phone?: string; email?: string; password: string }) => Promise<void>;
   signOut: () => Promise<void>;
   isAdmin: boolean;
-}
+};
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
-  const [initializing, setInitializing] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    // Load initial session and user
-    supabase.auth
-      .getSession()
-      .then(({ data: { session } }) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setIsAdmin(!!session?.user?.app_metadata?.is_admin);
-      })
-      .catch(err => setError(err))
-      .finally(() => setInitializing(false));
+    let cancelled = false;
 
-    // Subscribe to auth state changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(
-      (_event: AuthChangeEvent, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setIsAdmin(!!session?.user?.app_metadata?.is_admin);
+    const init = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) console.error('[Auth] getSession error:', error.message);
+        if (!cancelled) {
+          setSession(data.session ?? null);
+          setUser(data.session?.user ?? null);
+          setIsAdmin(!!data.session?.user?.app_metadata?.is_admin);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    init();
+
+    // ✅ correct return shape & unsubscribe
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event: AuthChangeEvent, newSession: Session | null) => {
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
+        setIsAdmin(!!newSession?.user?.app_metadata?.is_admin);
       }
     );
 
     return () => {
+      cancelled = true;
       subscription.unsubscribe();
     };
   }, []);
 
   const signIn = async ({ phone, email, password }: { phone?: string; email?: string; password: string }) => {
-    setInitializing(true);
+    setLoading(true);
     setError(null);
     try {
-      let res;
-      if (phone && !email) {
-        res = await supabase.auth.signInWithPassword({ phone, password });
-      } else if (email) {
-        res = await supabase.auth.signInWithPassword({ email, password });
-      } else {
-        throw new Error('Email or phone is required for sign in');
-      }
+      const res = email
+        ? await supabase.auth.signInWithPassword({ email, password })
+        : await supabase.auth.signInWithPassword({ phone: phone!, password });
       if (res.error) throw res.error;
-    } catch (err: any) {
-      setError(err);
-      throw err;
+    } catch (e: any) {
+      setError(e);
+      throw e;
     } finally {
-      setInitializing(false);
+      setLoading(false);
     }
   };
 
   const signUp = async ({ phone, email, password }: { phone?: string; email?: string; password: string }) => {
-    setInitializing(true);
+    setLoading(true);
     setError(null);
     try {
-      let res;
-      if (phone && !email) {
-        res = await supabase.auth.signUp({ phone, password });
-      } else if (email) {
-        res = await supabase.auth.signUp({ email, password });
-      } else {
-        throw new Error('Email or phone is required for sign up');
-      }
+      const res = email
+        ? await supabase.auth.signUp({ email, password })
+        : await supabase.auth.signUp({ phone: phone!, password });
       if (res.error) throw res.error;
-    } catch (err: any) {
-      setError(err);
-      throw err;
+    } catch (e: any) {
+      setError(e);
+      throw e;
     } finally {
-      setInitializing(false);
+      setLoading(false);
     }
   };
 
   const signOut = async () => {
-    setInitializing(true);
+    setLoading(true);
     setError(null);
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-    } catch (err: any) {
-      setError(err);
-      throw err;
+    } catch (e: any) {
+      setError(e);
+      throw e;
     } finally {
-      setInitializing(false);
+      setLoading(false);
     }
   };
 
-  return (
-    <AuthContext.Provider
-      value={{ user, session, isLoading: initializing, error, signIn, signUp, signOut, isAdmin }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo<AuthContextValue>(
+    () => ({
+      supabase,
+      session,
+      user,
+      loading,
+      error,
+      signIn,
+      signUp,
+      signOut,
+      isAdmin,
+    }),
+    [session, user, loading, error, isAdmin]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within AuthProvider');
-  return context;
-};
+// ----- Hooks expected across your app (drop-in replacements) ----------------
+export function useSupabaseClient() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useSupabaseClient must be used within <AuthProvider>');
+  return ctx.supabase;
+}
+export function useSession() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useSession must be used within <AuthProvider>');
+  return ctx.session;
+}
+export function useUser() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useUser must be used within <AuthProvider>');
+  return ctx.user;
+}
+export function useAuth() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used within <AuthProvider>');
+  return ctx;
+}

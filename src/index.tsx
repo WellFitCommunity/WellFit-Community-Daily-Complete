@@ -6,25 +6,21 @@ import './index.css';
 import App from './App';
 import 'react-toastify/dist/ReactToastify.css';
 
-import './serviceWorkerRegistration'; // if you need side effects, otherwise keep the import below
 import ErrorBoundary from './ErrorBoundary';
 import * as serviceWorkerRegistration from './serviceWorkerRegistration';
 
-// ✅ Our single Supabase client lives here (used by contexts/components when needed)
-import { supabase } from './lib/supabaseClient';
-
-// ✅ Auth + Admin + Demo
+// ✅ Providers
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AdminAuthProvider } from './contexts/AdminAuthContext';
-import { DemoModeProvider } from './contexts/DemoModeContext';
-
-// ✅ Branding
-import { BrandingProvider } from './BrandingContext';
+// ❌ Do not import BrandingProvider here because App.tsx already provides BrandingContext
+// import { BrandingProvider } from './BrandingContext';
 
 // Bridge passes userId to DemoModeProvider without DemoMode importing useAuth directly
+import { DemoModeProvider } from './contexts/DemoModeContext';
+
 function DemoModeBridge({ children }: { children: React.ReactNode }) {
-  const { user, userId } = useAuth() as any;
-  const id = (user?.id ?? userId ?? null) as string | null;
+  const { user } = useAuth();
+  const id = user?.id ?? null;
   const demoEnabled =
     String(process.env.REACT_APP_DEMO_ENABLED ?? 'false').toLowerCase() === 'true';
 
@@ -39,22 +35,21 @@ const root = createRoot(document.getElementById('root')!);
 
 root.render(
   <React.StrictMode>
-    {/* ⛔ Removed SessionContextProvider — we are not using auth-helpers */}
     <AuthProvider>
-      <BrandingProvider>
-        <DemoModeBridge>
-          <AdminAuthProvider>
-            <BrowserRouter>
-              <ErrorBoundary>
-                <App />
-              </ErrorBoundary>
-            </BrowserRouter>
-          </AdminAuthProvider>
-        </DemoModeBridge>
-      </BrandingProvider>
+      <AdminAuthProvider>
+        <BrowserRouter>
+          <ErrorBoundary>
+            <DemoModeBridge>
+              <App />
+            </DemoModeBridge>
+          </ErrorBoundary>
+        </BrowserRouter>
+      </AdminAuthProvider>
     </AuthProvider>
   </React.StrictMode>
 );
 
-// Service worker choice
+// Service worker choice (keep as-is or switch to register() if you need offline)
+// Learn more: https://cra.link/PWA
 serviceWorkerRegistration.unregister();
+

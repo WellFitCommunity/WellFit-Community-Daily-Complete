@@ -1,6 +1,6 @@
 // src/components/ExportCheckIns.tsx
 import React, { useState, useCallback } from 'react';
-import { useSupabaseClient } from '../../lib/supabaseClient';
+import { useSupabaseClient } from '../../contexts/AuthContext';
 // NOTE: file-saver is now lazy-loaded inside the export functions for bundle size
 // import { saveAs } from 'file-saver';
 

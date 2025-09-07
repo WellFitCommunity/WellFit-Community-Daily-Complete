@@ -2,7 +2,7 @@
 // Compiles in CRA/Vite. Pagination, safer uploads, signed URLs (file_path), SSR guards.
 
 import React, { useEffect, useRef, useState } from 'react';
-import { useSupabaseClient, useSession, useUser } from '../lib/supabaseClient';
+import { useSupabaseClient, useSession, useUser } from '../contexts/AuthContext';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import AdminFeatureToggle from './admin/AdminFeatureToggle';
 

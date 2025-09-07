@@ -1,6 +1,6 @@
 // src/components/DemographicsPage.tsx
 import { useEffect, useMemo, useState } from 'react';
-import { useSupabaseClient, useSession, useUser } from '../lib/supabaseClient';
+import { useSupabaseClient, useSession, useUser } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 interface DemographicsFormData {

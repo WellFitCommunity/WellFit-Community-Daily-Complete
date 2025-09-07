@@ -30,8 +30,8 @@ export const useSessionTimeout = (): SessionTimeoutContextType => {
 
 interface SessionTimeoutProviderProps {
   children: React.ReactNode;
-  timeoutMs?: number;          // total inactivity before logout
-  warningMs?: number;          // time before logout to trigger a warning
+  timeoutMs?: number;
+  warningMs?: number;
   onTimeoutWarning?: () => void;
 }
 
@@ -44,42 +44,36 @@ export const SessionTimeoutProvider: React.FC<SessionTimeoutProviderProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Use browser-safe timer types
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const warningRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastActivityRef = useRef<number>(0);
+  const isAuthedRef = useRef<boolean>(false);
 
-  // Multi-tab sync
   const bcRef = useRef<BroadcastChannel | null>(null);
-  if (typeof window !== 'undefined' && !bcRef.current && 'BroadcastChannel' in window) {
-    bcRef.current = new BroadcastChannel('session-timeout');
-  }
 
-  const clearTimers = () => {
+  const clearTimers = useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     if (warningRef.current) clearTimeout(warningRef.current);
     timeoutRef.current = null;
     warningRef.current = null;
-  };
+  }, []);
 
   const logout = useCallback(async () => {
-    // Avoid loops: if already on /login, skip navigating again
     const alreadyOnLogin = location.pathname.startsWith('/login');
     try {
       const { error } = await supabase.auth.signOut();
-      if (error) console.error('Supabase signOut error:', error);
+      if (error) console.warn('[SessionTimeout] signOut error:', error.message);
     } catch (err) {
-      console.error('Unexpected logout error:', err);
+      console.warn('[SessionTimeout] Unexpected logout error:', (err as Error)?.message);
     }
-    // Tell other tabs
     bcRef.current?.postMessage({ type: 'LOGOUT' });
     if (!alreadyOnLogin) navigate('/login', { replace: true });
   }, [navigate, location.pathname]);
 
   const scheduleTimeouts = useCallback(() => {
     clearTimers();
+    if (!isAuthedRef.current) return;
 
-    // Guard invalid combos
     const effectiveWarning =
       typeof warningMs === 'number' && warningMs > 0 && warningMs < timeoutMs ? warningMs : 0;
 
@@ -88,54 +82,91 @@ export const SessionTimeoutProvider: React.FC<SessionTimeoutProviderProps> = ({
     }
 
     timeoutRef.current = setTimeout(logout, timeoutMs);
-  }, [logout, onTimeoutWarning, timeoutMs, warningMs]);
+  }, [logout, onTimeoutWarning, timeoutMs, warningMs, clearTimers]);
 
   const resetTimeout = useCallback(() => {
+    if (!isAuthedRef.current) return;
     const now = Date.now();
     if (now - lastActivityRef.current < THROTTLE_MS) return;
     lastActivityRef.current = now;
 
     scheduleTimeouts();
-    // Let other tabs know there was activity (optional; comment out if you don't want cross-tab resets)
     bcRef.current?.postMessage({ type: 'ACTIVITY' });
   }, [scheduleTimeouts]);
 
+  // Init listeners
   useEffect(() => {
-    const activityEvents: (keyof WindowEventMap)[] = [
-      'mousemove',
-      'mousedown',
-      'keypress',
-      'touchstart',
-      'scroll',
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window && !bcRef.current) {
+      bcRef.current = new BroadcastChannel('session-timeout');
+    }
+
+    const windowEvents: (keyof WindowEventMap)[] = [
+      'mousemove', 'mousedown', 'keypress', 'touchstart', 'scroll',
     ];
 
     const handleActivity = () => resetTimeout();
 
-    // Start timers
-    scheduleTimeouts();
-
-    // Attach listeners (passive where it makes sense)
-    activityEvents.forEach((evt) =>
+    // Window activity listeners
+    windowEvents.forEach((evt) =>
       window.addEventListener(evt, handleActivity, { passive: evt !== 'keypress' })
     );
+
+    // Document visibility (separate target & typing)
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') resetTimeout();
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
 
     // BroadcastChannel listeners
     const bc = bcRef.current;
     if (bc) {
       bc.onmessage = (ev) => {
-        if (!ev?.data) return;
-        const { type } = ev.data as { type: 'LOGOUT' | 'ACTIVITY' };
+        const type = (ev?.data && (ev.data as any).type) as 'LOGOUT' | 'ACTIVITY' | undefined;
         if (type === 'LOGOUT') logout();
         if (type === 'ACTIVITY') scheduleTimeouts();
       };
     }
 
     return () => {
+      windowEvents.forEach((evt) => window.removeEventListener(evt, handleActivity as any));
+      document.removeEventListener('visibilitychange', handleVisibility);
+      if (bc) {
+        bc.onmessage = null;
+        bc.close();
+      }
       clearTimers();
-      activityEvents.forEach((evt) => window.removeEventListener(evt, handleActivity as any));
-      if (bc) bc.onmessage = null;
     };
-  }, [resetTimeout, scheduleTimeouts, logout]);
+  }, [resetTimeout, scheduleTimeouts, logout, clearTimers]);
+
+  // Start/stop timers based on Supabase auth
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (cancelled) return;
+      isAuthedRef.current = !!data.session;
+      clearTimers();
+      if (isAuthedRef.current) scheduleTimeouts();
+    })();
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_evt, s) => {
+      isAuthedRef.current = !!s;
+      clearTimers();
+      if (isAuthedRef.current) scheduleTimeouts();
+    });
+
+    return () => {
+      cancelled = true;
+      sub.subscription.unsubscribe();
+    };
+  }, [scheduleTimeouts, clearTimers]);
+
+  // Treat route changes as activity
+  useEffect(() => {
+    resetTimeout();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
 
   return (
     <SessionTimeoutContext.Provider value={{ resetTimeout }}>

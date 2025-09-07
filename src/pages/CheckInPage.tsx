@@ -1,6 +1,6 @@
 // src/components/CheckInTracker.tsx
 import { useEffect, useState } from 'react';
-import { useSupabaseClient, useUser } from '../lib/supabaseClient';
+import { useSupabaseClient, useUser } from '../contexts/AuthContext';
 
 interface CheckIn {
   timestamp: string;

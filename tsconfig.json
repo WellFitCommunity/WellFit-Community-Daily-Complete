@@ -1,24 +1,29 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true,
+    "lib": ["DOM", "DOM.Iterable", "ES2020"],
     "module": "ESNext",
     "moduleResolution": "Node",
+    "jsx": "react-jsx",
+
+    "allowJs": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx",
-    "baseUrl": "src",
-    "paths": {},
-    "typeRoots": ["./node_modules/@types", "./src/types"]
+
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+
+    "baseUrl": "src"
+    /* If (and only if) you actually keep custom .d.ts files in src/types,
+       then uncomment the next line AND ensure the folder exists with at least one .d.ts.
+    */
+    // "typeRoots": ["./node_modules/@types", "./src/types"]
   },
-  "include": ["src", "src/serviceWorkerRegistration.ts"],
+  "include": ["src"],
   "exclude": ["supabase/functions", "node_modules", "build", "dist"]
 }

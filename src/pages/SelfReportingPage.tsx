@@ -1,6 +1,6 @@
 // src/pages/SelfReportingPage.tsx
 import { useState, useEffect, useCallback } from 'react';
-import { useSupabaseClient, useSession } from '../lib/supabaseClient';
+import { useSupabaseClient, useSession } from '../contexts/AuthContext';
 import { useBranding } from '../BrandingContext';
 import type { User, AuthChangeEvent, Session } from '@supabase/supabase-js';
 

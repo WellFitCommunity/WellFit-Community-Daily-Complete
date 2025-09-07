@@ -5,9 +5,11 @@ const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID")!;
 const TWILIO_AUTH_TOKEN  = Deno.env.get("TWILIO_AUTH_TOKEN")!;
 const VERIFY_SID         = Deno.env.get("TWILIO_VERIFY_SERVICE_SID")!;
 
+// 🚨 For production, set this to your exact app domains
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST,OPTIONS"
 };
 
 Deno.serve(async (req) => {
@@ -43,7 +45,7 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ ok: true }), {
       headers: { ...CORS, "Content-Type": "application/json" }
     });
-  } catch (e) {
+  } catch (e: any) {
     return new Response(JSON.stringify({ error: e?.message || "Unknown error" }), {
       status: 500, headers: { ...CORS, "Content-Type": "application/json" }
     });

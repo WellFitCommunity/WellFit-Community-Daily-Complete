@@ -1,6 +1,7 @@
 // src/components/UsersList.tsx (patched)
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import { useSupabaseClient } from '@supabase/auth-helpers-react';
+import { useSupabaseClient } from '../../contexts/AuthContext';
+
 
 type Profile = {
   user_id: string;

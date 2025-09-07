@@ -6,9 +6,8 @@ import { SessionTimeoutProvider } from './contexts/SessionTimeoutContext';
 import { BrandingConfig, getCurrentBranding } from './branding.config';
 import { BrandingContext } from './BrandingContext';
 
-// ⛔️ Remove AuthProvider/useAuth imports here
-// import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { AdminAuthProvider } from './contexts/AdminAuthContext';
+// ❌ Do NOT import or use AuthProvider here — it lives in index.tsx
+// ❌ Do NOT import or use AdminAuthProvider here — it lives in index.tsx
 
 import DemoBanner from './components/layout/DemoBanner';
 import AppHeader from './components/layout/AppHeader';
@@ -23,6 +22,7 @@ import NotFoundPage from './components/NotFoundPage';
 import AdminLoginPage from './pages/AdminLoginPage';
 import LoginPage from './pages/LoginPage';
 import ChangePasswordPage from './pages/ChangePasswordPage';
+// If your tsconfig doesn’t set baseUrl to "src", change this to './pages/Home'
 import Home from 'pages/Home';
 
 // ✅ Gate wrapper (does not replace AuthProvider)
@@ -59,7 +59,6 @@ const PUBLIC_ROUTES = [
 ];
 
 function Shell() {
-  // ⛔️ Remove useAuth here — userId is handled by DemoModeBridge in index.tsx
   const [branding, setBranding] = useState<BrandingConfig>(getCurrentBranding());
   const location = useLocation();
   const isPublic = PUBLIC_ROUTES.includes(location.pathname);
@@ -70,77 +69,74 @@ function Shell() {
 
   return (
     <BrandingContext.Provider value={{ branding, setBranding }}>
-      {/* DemoModeProvider is now mounted in index.tsx via DemoModeBridge */}
-      <AdminAuthProvider>
-        <SessionTimeoutProvider>
-          <AppHeader />
+      {/* SessionTimeout applies to the whole app */}
+      <SessionTimeoutProvider>
+        <AppHeader />
 
-          <AuthGate>
-            <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
-              <Routes>
-                {/* Public */}
-                <Route path="/" element={<WelcomePage />} />
-                <Route path="/register" element={<RegisterPage />} />
-                <Route path="/verify" element={<VerifyCodePage />} />
-                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-                <Route path="/terms" element={<TermsOfService />} />
-                <Route path="/change-password" element={<ChangePasswordPage />} />
-                <Route path="/admin-login" element={<AdminLoginPage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/home" element={<Home />} />
+        <AuthGate>
+          <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
+            <Routes>
+              {/* Public */}
+              <Route path="/" element={<WelcomePage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/verify" element={<VerifyCodePage />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/terms" element={<TermsOfService />} />
+              <Route path="/change-password" element={<ChangePasswordPage />} />
+              <Route path="/admin-login" element={<AdminLoginPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/home" element={<Home />} />
 
-                {/* Protected */}
-                <Route path="/dashboard" element={<RequireAuth><DashboardPage /></RequireAuth>} />
-                <Route path="/check-in" element={<RequireAuth><CheckInPage /></RequireAuth>} />
-                <Route path="/word-find" element={<RequireAuth><WordFindPage /></RequireAuth>} />
-                <Route path="/meals/:id" element={<RequireAuth><MealDetailPage /></RequireAuth>} />
-                <Route path="/logout" element={<RequireAuth><LogoutPage /></RequireAuth>} />
-                <Route path="/consent-photo" element={<RequireAuth><ConsentPhotoPage /></RequireAuth>} />
-                <Route path="/consent-privacy" element={<RequireAuth><ConsentPrivacyPage /></RequireAuth>} />
-                <Route path="/self-reporting" element={<RequireAuth><SelfReportingPage /></RequireAuth>} />
-                <Route path="/doctors-view" element={<RequireAuth><DoctorsViewPage /></RequireAuth>} />
-                <Route path="/community" element={<RequireAuth><CommunityMoments /></RequireAuth>} />
+              {/* Protected */}
+              <Route path="/dashboard" element={<RequireAuth><DashboardPage /></RequireAuth>} />
+              <Route path="/check-in" element={<RequireAuth><CheckInPage /></RequireAuth>} />
+              <Route path="/word-find" element={<RequireAuth><WordFindPage /></RequireAuth>} />
+              <Route path="/meals/:id" element={<RequireAuth><MealDetailPage /></RequireAuth>} />
+              <Route path="/logout" element={<RequireAuth><LogoutPage /></RequireAuth>} />
+              <Route path="/consent-photo" element={<RequireAuth><ConsentPhotoPage /></RequireAuth>} />
+              <Route path="/consent-privacy" element={<RequireAuth><ConsentPrivacyPage /></RequireAuth>} />
+              <Route path="/self-reporting" element={<RequireAuth><SelfReportingPage /></RequireAuth>} />
+              <Route path="/doctors-view" element={<RequireAuth><DoctorsViewPage /></RequireAuth>} />
+              <Route path="/community" element={<RequireAuth><CommunityMoments /></RequireAuth>} />
 
-                {/* Post-login gated */}
-                <Route path="/demographics" element={<RequireAuth><DemographicsPage /></RequireAuth>} />
+              {/* Post-login gated */}
+              <Route path="/demographics" element={<RequireAuth><DemographicsPage /></RequireAuth>} />
 
-                {/* Admin */}
-                <Route
-                  path="/admin"
-                  element={
-                    <RequireAuth>
-                      <RequireAdminAuth>
-                        <AdminPanel />
-                      </RequireAdminAuth>
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="/admin-profile-editor"
-                  element={
-                    <RequireAuth>
-                      <RequireAdminAuth>
-                        <AdminProfileEditorPage />
-                      </RequireAdminAuth>
-                    </RequireAuth>
-                  }
-                />
+              {/* Admin (requires user + admin pin) */}
+              <Route
+                path="/admin"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth>
+                      <AdminPanel />
+                    </RequireAdminAuth>
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/admin-profile-editor"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth>
+                      <AdminProfileEditorPage />
+                    </RequireAdminAuth>
+                  </RequireAuth>
+                }
+              />
 
-                {/* Fallback */}
-                <Route path="*" element={<NotFoundPage />} />
-              </Routes>
-            </Suspense>
+              {/* Fallback */}
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </Suspense>
 
-            <Footer />
-          </AuthGate>
-        </SessionTimeoutProvider>
-      </AdminAuthProvider>
+          <Footer />
+        </AuthGate>
+      </SessionTimeoutProvider>
     </BrandingContext.Provider>
   );
 }
 
 const App: React.FC = () => {
-  // ⛔️ Remove AuthProvider here — it now lives in index.tsx
   return <Shell />;
 };
 

@@ -3,7 +3,7 @@ import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useAdminAuth } from '../contexts/AdminAuthContext';
-import { useSupabaseClient } from '../lib/supabaseClient';
+import { useSupabaseClient } from '../contexts/AuthContext';
 
 type AdminRole = 'admin' | 'super_admin';
 

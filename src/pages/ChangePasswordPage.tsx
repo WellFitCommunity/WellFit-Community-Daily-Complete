@@ -1,7 +1,7 @@
 // src/pages/ChangePasswordPage.tsx
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSupabaseClient } from '../lib/supabaseClient';
+import { useSupabaseClient } from '../contexts/AuthContext';
 
 export default function ChangePasswordPage() {
   const supabase = useSupabaseClient();

@@ -1,6 +1,6 @@
 // src/components/ReportsSection.tsx
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { useSupabaseClient } from '@supabase/auth-helpers-react';
+import { useSupabaseClient } from '../../contexts/AuthContext';
 // NOTE: file-saver is lazy-loaded in helpers below to reduce bundle size
 // import { saveAs } from 'file-saver';
 

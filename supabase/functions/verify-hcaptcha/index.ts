@@ -66,6 +66,15 @@ serve(async (req) => {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: form
     });
+
+    // NEW: treat upstream non-OK as 502
+    if (!resp.ok) {
+      const text = await resp.text().catch(() => "");
+      return new Response(JSON.stringify({ error: "hCaptcha upstream error", detail: text || null }), {
+        status: 502, headers
+      });
+    }
+
     const json = await resp.json();
 
     if (json?.success === true) {
@@ -81,4 +90,3 @@ serve(async (req) => {
     });
   }
 });
-

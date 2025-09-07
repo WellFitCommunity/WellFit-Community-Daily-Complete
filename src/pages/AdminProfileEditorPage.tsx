@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useSupabaseClient, useSession, useUser } from '../lib/supabaseClient';
+import { useSupabaseClient, useSession, useUser } from '../contexts/AuthContext';
 
 interface Profile {
   user_id: string;

@@ -1,26 +1,39 @@
 // src/components/LogoutPage.tsx
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSupabaseClient } from '../lib/supabaseClient';
+import { useSupabaseClient } from '../contexts/AuthContext';
 
 const LogoutPage: React.FC = () => {
   const navigate = useNavigate();
   const supabase = useSupabaseClient();
   const [sec, setSec] = useState(5);
 
+  // Sign out and clear app-local caches
   useEffect(() => {
-    // Clear Supabase + custom local keys
-    supabase.auth.signOut();
-    localStorage.removeItem('wellfitPhone');
-    localStorage.removeItem('wellfitPin');
+    (async () => {
+      try {
+        await supabase.auth.signOut(); // await to ensure state is clean
+      } catch (e) {
+        console.warn('[logout] signOut failed:', (e as Error)?.message);
+      } finally {
+        try {
+          localStorage.removeItem('wellfitPhone');
+          localStorage.removeItem('wellfitPin');
+          // Do NOT remove any auth token here — sessions are in-memory now.
+        } catch {
+          /* ignore storage errors */
+        }
+      }
+    })();
   }, [supabase]);
 
+  // Countdown then redirect
   useEffect(() => {
     if (sec <= 0) {
       navigate('/', { replace: true });
       return;
     }
-    const t = setTimeout(() => setSec(sec - 1), 1000);
+    const t = setTimeout(() => setSec(s => s - 1), 1000);
     return () => clearTimeout(t);
   }, [sec, navigate]);
 

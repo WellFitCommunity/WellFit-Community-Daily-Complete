@@ -1,6 +1,6 @@
 // src/hooks/useIsAdmin.ts
 import { useEffect, useState } from 'react';
-import { useSupabaseClient, useSession } from '../lib/supabaseClient';
+import { useSupabaseClient, useSession } from '../contexts/AuthContext';
 
 /**
  * useIsAdmin

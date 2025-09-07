@@ -1,7 +1,7 @@
 // src/components/auth/RequireAuth.tsx
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth, useUser } from '../../contexts/AuthContext';
 
 interface RequireAuthProps {
   children: ReactNode;
@@ -9,10 +9,11 @@ interface RequireAuthProps {
 
 export default function RequireAuth({ children }: RequireAuthProps) {
   const location = useLocation();
-  const { user, isLoading } = useAuth();
+  const { loading } = useAuth();  // from AuthContext
+  const user = useUser();         // returns User | null
 
   // While checking the initial session, avoid flashing protected UI
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="w-full h-[40vh] flex items-center justify-center text-gray-600">
         Loading…

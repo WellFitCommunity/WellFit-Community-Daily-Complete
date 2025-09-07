@@ -1,4 +1,3 @@
-// src/lib/supabaseClient.ts
 import { createClient } from '@supabase/supabase-js';
 import {
   SUPABASE_URL,
@@ -11,19 +10,17 @@ if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_API_KEY) {
   );
 }
 
-// One shared client for the whole app
 export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_API_KEY, {
   auth: {
-    persistSession: true,
+    // 🔒 in-memory only — no localStorage
+    persistSession: false,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    storageKey: 'wellfit-auth',
+    // no storageKey
   },
 });
 
-// (Optional) If you use auth-helpers hooks elsewhere, you can still re-export them.
-// Remove if not used.
-
-
+// one-time migration cleanup if legacy key exists
+try { localStorage.removeItem('wellfit-auth'); } catch {}
 export type { AuthChangeEvent, Session, User } from '@supabase/supabase-js';
 

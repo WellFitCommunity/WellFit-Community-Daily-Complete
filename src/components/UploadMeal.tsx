@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useSupabaseClient, SupabaseClient } from '@supabase/auth-helpers-react';
+import { useSupabaseClient, useUser } from '../contexts/AuthContext';
 
 interface MealFormData {
   name: string;
@@ -14,7 +14,8 @@ interface MealFormData {
 }
 
 const UploadMeal: React.FC = () => {
-  const supabase: SupabaseClient = useSupabaseClient();
+  const supabase = useSupabaseClient();
+  const user = useUser();
 
   const initialFormData: MealFormData = {
     name: '',

@@ -4,7 +4,7 @@
 // Uses custom Supabase client/hooks from ../../lib/supabaseClient (adjust depth if needed).
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import { useSupabaseClient } from '../lib/supabaseClient'; // ← per your request; change to '../lib/...' if your path differs
+import { useSupabaseClient } from '../contexts/AuthContext'; // ← per your request; change to '../lib/...' if your path differs
 import { saveAs } from 'file-saver';
 import { useBranding } from '../BrandingContext';
 
