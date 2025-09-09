@@ -1,5 +1,5 @@
 // src/settings/settings.ts
-// Central place for environment vars and app constants.
+// Central place for environment vars and app constants. Works in CRA or Vite builds.
 
 export const WELLFIT_COLORS = Object.freeze({
   blue: '#003865',
@@ -7,31 +7,29 @@ export const WELLFIT_COLORS = Object.freeze({
   white: '#ffffff',
 });
 
-// Safe env reader: prefer Vite-style, guard CRA-style, add safe runtime fallbacks.
 const readEnv = (k: string): string | undefined => {
   let v: any;
 
-  // Vite-style (import.meta.env)
+  // 1) Vite-style
   try {
     // @ts-ignore
     v = (typeof import.meta !== 'undefined' && (import.meta as any).env && (import.meta as any).env[k]) || undefined;
   } catch { /* ignore */ }
 
-  // CRA-style (process.env) – guard 'process'
+  // 2) CRA-style
   if (!v && typeof process !== 'undefined' && (process as any).env) {
     v = (process as any).env[k];
   }
 
-  // OPTIONAL: runtime global injection (if you ever attach window.__ENV or window.__SB__)
-  if (!v && typeof globalThis !== 'undefined') {
-    // @ts-ignore
-    v = (globalThis as any).__ENV?.[k] ?? (globalThis as any).__SB?.[k];
+  // 3) Runtime META tag
+  if (!v && typeof document !== 'undefined') {
+    const meta = document.querySelector(`meta[name="${k}"]`) as HTMLMetaElement | null;
+    if (meta?.content) v = meta.content;
   }
 
-  // OPTIONAL: meta tag fallback <meta name="REACT_APP_SB_URL" content="...">
-  if (!v && typeof document !== 'undefined') {
-    const el = document.querySelector(`meta[name="${k}"]`) as HTMLMetaElement | null;
-    if (el?.content) v = el.content;
+  // 4) Optional window.__ENV__ bag
+  if (!v && typeof window !== 'undefined' && (window as any).__ENV__?.[k]) {
+    v = (window as any).__ENV__?.[k];
   }
 
   if (v == null) return undefined;
@@ -53,24 +51,22 @@ const parseBool = (v?: string, def = false) => {
   return s === '1' || s === 'true' || s === 'yes' || s === 'on';
 };
 
-// ---- SB (supports both SB_* and legacy aliases) ----
+// ---- Supabase (SB_* primary, SUPABASE_* legacy fallbacks) ----
 export const SB_URL: string = firstDefined(
   'REACT_APP_SB_URL',
-  'REACT_APP_SUPABASE_URL',               // legacy alias
-  'REACT_APP_SUPABASE_PROJECT_URL',       // legacy alias
-  'REACT_APP_SUPA_URL'                    // legacy alias
+  'REACT_APP_SUPABASE_URL',
+  'REACT_APP_SUPABASE_PROJECT_URL',
+  'REACT_APP_SUPA_URL'
 );
 
 export const SB_PUBLISHABLE_API_KEY: string = firstDefined(
   'REACT_APP_SB_PUBLISHABLE_API_KEY',
   'REACT_APP_SB_ANON_KEY',
-  'REACT_APP_SUPABASE_PUBLISHABLE_API_KEY', // legacy alias
-  'REACT_APP_SUPABASE_PUBLIC_ANON_KEY',     // legacy alias
-  'REACT_APP_SUPABASE_ANON_KEY',            // legacy alias
-  'REACT_APP_SUPABASE_PUBLIC_KEY'           // legacy alias
+  'REACT_APP_SUPABASE_PUBLISHABLE_API_KEY',
+  'REACT_APP_SUPABASE_PUBLIC_ANON_KEY',
+  'REACT_APP_SUPABASE_ANON_KEY',
+  'REACT_APP_SUPABASE_PUBLIC_KEY'
 );
-
-// Do NOT export any service-role/secret key in client code.
 
 // ---- Firebase ----
 export const FIREBASE = {
@@ -93,11 +89,10 @@ export const HCAPTCHA_SITE_KEY = firstDefined(
 export const REQUIRE_LOGIN_CAPTCHA = parseBool(readEnv('REACT_APP_REQUIRE_LOGIN_CAPTCHA'), false);
 
 // ---- App / Build info ----
-export const IS_PRODUCTION = typeof process !== 'undefined'
-  ? process.env?.NODE_ENV === 'production'
-  // fallback for Vite
+export const IS_PRODUCTION =
+  (typeof process !== 'undefined' && (process as any).env?.NODE_ENV === 'production') ||
   // @ts-ignore
-  : (typeof import.meta !== 'undefined' && (import.meta as any).env?.MODE === 'production');
+  (typeof import.meta !== 'undefined' && (import.meta as any).env?.MODE === 'production');
 
 // ---- API endpoints ----
 export const API_ENDPOINT =
@@ -111,7 +106,6 @@ export const APP_INFO = {
   supportPhone: '(832) 315-5110',
 };
 
-// Gentle dev warnings (worded with SB to avoid the vendor name)
+// Gentle dev warnings
 if (!SB_URL) console.error('Missing SB URL. Set REACT_APP_SB_URL (or legacy alias).');
-if (!SB_PUBLISHABLE_API_KEY) console.error('Missing SB anon key. Set REACT_APP_SB_PUBLISHABLE_API_KEY (or legacy alias).');
-if (HCAPTCHA_SITE_KEY && !FIREBASE.apiKey) console.error('Missing Firebase API key. Set REACT_APP_FIREBASE_API_KEY when using hCaptcha.');
+if (!SB_PUBLISHABLE_API_KEY) console.error('Missing SB anon/publishable key. Set REACT_APP_SB_PUBLISHABLE_API_KEY (or legacy alias).');

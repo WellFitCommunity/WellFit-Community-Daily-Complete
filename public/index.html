@@ -2,141 +2,43 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- DEV-ONLY CSP (commented). Real CSP should live in vercel.json headers. -->
-  <!--
-  <meta http-equiv="Content-Security-Policy" content="
-    default-src 'self';
-    script-src 'self' 'unsafe-inline' https://*.hcaptcha.com https://hcaptcha.com https://www.gstatic.com https://www.googletagmanager.com;
-    style-src 'self' 'unsafe-inline';
-    img-src 'self' data: https://*.hcaptcha.com https://hcaptcha.com https://*.mailersend.com https://*.mlsender.net;
-    frame-src https://*.hcaptcha.com https://hcaptcha.com https://metabase.wellfitcommunity.org;
-    connect-src 'self'
-                 https://*.supabase.co wss://*.supabase.co
-                 https://*.hcaptcha.com https://hcaptcha.com
-                 https://www.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseinstallations.googleapis.com https://firebaseremoteconfig.googleapis.com https://fcmregistrations.googleapis.com https://fcm.googleapis.com https://firebasestorage.googleapis.com https://*.cloudfunctions.net
-                 https://*.twilio.com wss://*.twilio.com
-                 https://api.mailersend.com https://*.mailersend.com https://*.mlsender.net;
-    manifest-src 'self';
-    worker-src 'self' blob:;
-  ">
-  -->
-
-  <!-- Canonical & Viewport -->
-  <link rel="canonical" href="https://wellfitcommunity.live/" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- PWA Manifest (root path) -->
-  <link rel="manifest" href="/manifest.json" />
+  <title>WellFit Community App</title>
+  <meta name="description" content="White-label senior wellness & community safety app: RPM, caregiver tools, resident check-ins, youth & family self-reports. HIPAA-ready." />
   <meta name="theme-color" content="#003865" />
 
-  <!-- Identity -->
-  <meta name="application-name" content="WellFit Community App" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="WellFit Community" />
+  <!-- CRA-safe manifest path -->
+  <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
 
-  <!-- Description & Keywords -->
-  <meta name="description" content="White-label senior wellness & community safety app: RPM, caregiver tools, apartment resident check-ins, youth & family self-reports, and engagement. HIPAA-ready." />
-  <meta name="keywords" content="WellFit Community App, remote patient monitoring, RPM, chronic care management, CCM, patient engagement, population health, health equity, SDOH, caregiver support, healthcare SaaS, white-label, telehealth, FHIR, community engagement, community alerts, safety check-in, welfare check, apartment safety, tenant wellness, resident check-in, property management, youth safety, CPS support, Firebase, Twilio, MailerSend, Metabase" />
-  <meta name="author" content="WellFit Community" />
+  <!-- Icons located in /public (root) -->
+  <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+  <link rel="apple-touch-icon" href="%PUBLIC_URL%/android-chrome-192x192.png" />
 
   <!-- Open Graph / Twitter -->
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="WellFit App — Wellness, RPM & Community Safety Check-Ins" />
-  <meta property="og:description" content="Seniors, tenants, youth & families can check in, self-report, and stay connected. White-label, HIPAA-ready." />
+  <meta property="og:title" content="WellFit Community App" />
+  <meta property="og:description" content="Self-reports, check-ins, caregiver tools, and alerts in one platform." />
   <meta property="og:url" content="https://wellfitcommunity.live/" />
-  <meta property="og:image" content="/android-chrome-512x512.png" />
+  <meta property="og:image" content="%PUBLIC_URL%/android-chrome-512x512.png" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="WellFit App — RPM & Community Safety" />
+  <meta name="twitter:title" content="WellFit Community App" />
   <meta name="twitter:description" content="Self-reports, check-ins, caregiver tools, and alerts in one platform." />
-  <meta name="twitter:image" content="/android-chrome-512x512.png" />
+  <meta name="twitter:image" content="%PUBLIC_URL%/android-chrome-512x512.png" />
 
-  <!-- Icons (root files) -->
-  <link rel="icon" href="/favicon.ico" />
-  <link rel="apple-touch-icon" href="/android-chrome-192x192.png" />
+  <!-- Supabase runtime inject (names MUST match your settings.ts) -->
+  <meta name="REACT_APP_SB_URL" content="https://xkybsjnvuohpqpbkikyn.supabase.co" />
+  <meta name="REACT_APP_SB_PUBLISHABLE_API_KEY" content="sb_publishable_yp4jkw5CTkCQmKkbY259zA_DKveGQy1" />
 
-  <title>WellFit Community App</title>
-
-  <!-- Structured Data: SoftwareApplication + Services + Organization -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "SoftwareApplication",
-        "@id": "https://wellfitcommunity.live/#app",
-        "name": "WellFit Community App",
-        "applicationCategory": "HealthApplication",
-        "operatingSystem": "Web",
-        "url": "https://wellfitcommunity.live/",
-        "publisher": { "@id": "https://thewellfitcommunity.org/#org" },
-        "description": "Senior wellness & RPM with self-reporting, check-ins, caregiver tools, and community safety modules for apartments and youth/families. White-label and HIPAA-ready.",
-        "audience": { "@type": "Audience", "audienceType": ["Seniors","Caregivers","Clinics","Community Partners","Property Managers","Tenants","Youth & Families"] },
-        "isAccessibleForFree": true,
-        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-        "keywords": "RPM, CCM, check-in, resident safety, youth safety self-report, caregiver tools, white-label, telehealth, FHIR"
-      },
-      {
-        "@type": "Service",
-        "@id": "https://wellfitcommunity.live/#service-community-safety",
-        "serviceType": "Community Safety Check-In",
-        "provider": { "@id": "https://thewellfitcommunity.org/#org" },
-        "areaServed": "US",
-        "audience": { "@type": "Audience", "audienceType": ["Community Members","Neighborhood Programs","Public Safety Partners"] },
-        "url": "https://wellfitcommunity.live/",
-        "isRelatedTo": { "@id": "https://wellfitcommunity.live/#app" },
-        "keywords": "community engagement, safety check-in, welfare check, crisis self-report, community alerts"
-      },
-      {
-        "@type": "Service",
-        "@id": "https://wellfitcommunity.live/#service-apartment",
-        "serviceType": "Apartment Resident Safety & Wellness",
-        "provider": { "@id": "https://thewellfitcommunity.org/#org" },
-        "areaServed": "US",
-        "audience": { "@type": "Audience", "audienceType": ["Property Managers","Tenants","Senior Housing","Affordable Housing"] },
-        "url": "https://wellfitcommunity.live/",
-        "isRelatedTo": { "@id": "https://wellfitcommunity.live/#app" },
-        "keywords": "apartment safety, tenant wellness, resident check-in, property management, alerts"
-      },
-      {
-        "@type": "Service",
-        "@id": "https://wellfitcommunity.live/#service-youth",
-        "serviceType": "Youth & Family Safety Self-Report (CPS Support)",
-        "provider": { "@id": "https://thewellfitcommunity.org/#org" },
-        "areaServed": "US",
-        "audience": { "@type": "Audience", "audienceType": ["Youth","Families","Care Teams"] },
-        "url": "https://wellfitcommunity.live/",
-        "isRelatedTo": { "@id": "https://wellfitcommunity.live/#app" },
-        "keywords": "youth safety check-in, family safety, self-report safe/unsafe, support services"
-      },
-      {
-        "@type": "Organization",
-        "@id": "https://thewellfitcommunity.org/#org",
-        "name": "WellFit Community",
-        "url": "https://thewellfitcommunity.org/",
-        "logo": "https://thewellfitcommunity.org/icons/icon-512x512.png",
-        "description": "Nonprofit publisher of the WellFit app supporting wellness and community safety.",
-        "contactPoint": [{
-          "@type": "ContactPoint",
-          "contactType": "sales",
-          "email": "info@thewellfitcommunity.org",
-          "areaServed": "US",
-          "availableLanguage": ["en","es"]
-        }]
-      }
-    ]
-  }
-  </script>
-
-  <!-- hCaptcha explicit render -->
+  <!-- hCaptcha (if you render explicitly) -->
   <script>window.hcaptchaOnLoad = window.hcaptchaOnLoad || function() {};</script>
   <script src="https://js.hcaptcha.com/1/api.js?onload=hcaptchaOnLoad&render=explicit" async defer></script>
 </head>
 
 <body>
-  <noscript>You need to enable JavaScript to run this app.</noscript>
+  <noscript>You need JavaScript enabled to run this app.</noscript>
+  <!-- IMPORTANT: React mounts here; must be 'root' to match src/index.tsx -->
   <div id="root"></div>
+  <!-- Do NOT add a script tag to /index.tsx. CRA injects built JS automatically. -->
 </body>
 </html>
