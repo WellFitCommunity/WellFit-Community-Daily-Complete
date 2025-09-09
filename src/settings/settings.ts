@@ -7,19 +7,31 @@ export const WELLFIT_COLORS = Object.freeze({
   white: '#ffffff',
 });
 
-// Safe env reader: prefer Vite-style, guard CRA-style.
+// Safe env reader: prefer Vite-style, guard CRA-style, add safe runtime fallbacks.
 const readEnv = (k: string): string | undefined => {
   let v: any;
 
-  // Vite-style (import.meta.env) – try/catch so bundlers that don't support it won't crash
+  // Vite-style (import.meta.env)
   try {
     // @ts-ignore
     v = (typeof import.meta !== 'undefined' && (import.meta as any).env && (import.meta as any).env[k]) || undefined;
   } catch { /* ignore */ }
 
-  // CRA-style (process.env) – must guard 'process' or it throws ReferenceError in the browser
+  // CRA-style (process.env) – guard 'process'
   if (!v && typeof process !== 'undefined' && (process as any).env) {
     v = (process as any).env[k];
+  }
+
+  // OPTIONAL: runtime global injection (if you ever attach window.__ENV or window.__SB__)
+  if (!v && typeof globalThis !== 'undefined') {
+    // @ts-ignore
+    v = (globalThis as any).__ENV?.[k] ?? (globalThis as any).__SB?.[k];
+  }
+
+  // OPTIONAL: meta tag fallback <meta name="REACT_APP_SB_URL" content="...">
+  if (!v && typeof document !== 'undefined') {
+    const el = document.querySelector(`meta[name="${k}"]`) as HTMLMetaElement | null;
+    if (el?.content) v = el.content;
   }
 
   if (v == null) return undefined;
@@ -41,21 +53,21 @@ const parseBool = (v?: string, def = false) => {
   return s === '1' || s === 'true' || s === 'yes' || s === 'on';
 };
 
-// ---- Supabase (support both SB_* and SUPABASE_* aliases) ----
+// ---- SB (supports both SB_* and legacy aliases) ----
 export const SB_URL: string = firstDefined(
   'REACT_APP_SB_URL',
-  'REACT_APP_SUPABASE_URL',
-  'REACT_APP_SUPABASE_PROJECT_URL',
-  'REACT_APP_SUPA_URL'
+  'REACT_APP_SUPABASE_URL',               // legacy alias
+  'REACT_APP_SUPABASE_PROJECT_URL',       // legacy alias
+  'REACT_APP_SUPA_URL'                    // legacy alias
 );
 
 export const SB_PUBLISHABLE_API_KEY: string = firstDefined(
   'REACT_APP_SB_PUBLISHABLE_API_KEY',
   'REACT_APP_SB_ANON_KEY',
-  'REACT_APP_SUPABASE_PUBLISHABLE_API_KEY',
-  'REACT_APP_SUPABASE_PUBLIC_ANON_KEY',
-  'REACT_APP_SUPABASE_ANON_KEY',
-  'REACT_APP_SUPABASE_PUBLIC_KEY'
+  'REACT_APP_SUPABASE_PUBLISHABLE_API_KEY', // legacy alias
+  'REACT_APP_SUPABASE_PUBLIC_ANON_KEY',     // legacy alias
+  'REACT_APP_SUPABASE_ANON_KEY',            // legacy alias
+  'REACT_APP_SUPABASE_PUBLIC_KEY'           // legacy alias
 );
 
 // Do NOT export any service-role/secret key in client code.
@@ -99,6 +111,7 @@ export const APP_INFO = {
   supportPhone: '(832) 315-5110',
 };
 
-// Gentle dev warnings
-if (!SB_URL) console.error('Missing Supabase URL. Set REACT_APP_SB_URL or REACT_APP_SUPABASE_URL.');
-if (!SB_PUBLISHABLE_API_KEY) console.error('Missing Supabase anon key. Set REACT_APP_SB_PUBLISHABLE_API_KEY / REACT_APP_SB_ANON_KEY / REACT_APP_SUPABASE_ANON_KEY.');
+// Gentle dev warnings (worded with SB to avoid the vendor name)
+if (!SB_URL) console.error('Missing SB URL. Set REACT_APP_SB_URL (or legacy alias).');
+if (!SB_PUBLISHABLE_API_KEY) console.error('Missing SB anon key. Set REACT_APP_SB_PUBLISHABLE_API_KEY (or legacy alias).');
+if (HCAPTCHA_SITE_KEY && !FIREBASE.apiKey) console.error('Missing Firebase API key. Set REACT_APP_FIREBASE_API_KEY when using hCaptcha.');
