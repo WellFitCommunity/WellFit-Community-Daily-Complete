@@ -1,10 +1,7 @@
 {
   "imports": {
-    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.39.4",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.45.4",
     "std/http/server.ts": "https://deno.land/std@0.192.0/http/server.ts",
-    "zod": "https://esm.sh/zod@3.22.4",
-    "firebase-admin/app": "https://npm.im/firebase-admin@11.11.1/app",
-    "firebase-admin/messaging": "https://npm.im/firebase-admin@11.11.1/messaging"
-
+    "zod": "https://deno.land/x/zod@v3.22.4/mod.ts"
   }
 }

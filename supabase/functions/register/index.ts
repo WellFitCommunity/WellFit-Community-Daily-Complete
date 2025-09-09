@@ -1,18 +1,14 @@
-// supabase/functions/register/index.ts
 import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
-// @ts-ignore – silence editor complaints, runtime is fine in Deno
+// @ts-ignore Deno types via ?dts are fine at runtime
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.4?dts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
-
 import { SUPABASE_URL, SB_SECRET_KEY, HCAPTCHA_SECRET } from "../_shared/env.ts";
 import { cors } from "../_shared/cors.ts";
 
-// --- Config ---
-const MAX_REQUESTS = 5;          // attempts
+const MAX_REQUESTS = 5;          // attempts per IP
 const TIME_WINDOW_MINUTES = 15;  // minutes
 const HCAPTCHA_VERIFY_URL = "https://hcaptcha.com/siteverify";
 
-// --- Schema ---
 const RegisterSchema = z.object({
   phone: z.string().min(1, "Phone is required"),
   password: z.string().min(8, "Password minimum is 8"),
@@ -22,17 +18,14 @@ const RegisterSchema = z.object({
   consent: z.boolean().optional(),
   hcaptcha_token: z.string().min(1, "hCaptcha token is required"),
 });
-
 type RegisterBody = z.infer<typeof RegisterSchema>;
 
-// --- Utils ---
 function toE164(phone: string): string {
   const digits = phone.replace(/[^\d]/g, "");
-  if (digits.length === 10) return `+1${digits}`;                       // US default
+  if (digits.length === 10) return `+1${digits}`;
   if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
   return digits.startsWith("+") ? digits : `+${digits}`;
 }
-
 function passwordMissingRules(pw: string): string[] {
   const rules = [
     { r: /.{8,}/, m: "at least 8 characters" },
@@ -44,18 +37,13 @@ function passwordMissingRules(pw: string): string[] {
 }
 
 serve(async (req: Request) => {
-  const origin = req.headers.get("origin");
-  const headers = cors(origin);
+  const { headers, allowed } = cors(req.headers.get("origin"), { methods: ['POST','OPTIONS'] });
 
-  if (req.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers });
-  }
-  if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers });
-  }
+  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers });
+  if (!allowed) return new Response(JSON.stringify({ error: "Origin not allowed" }), { status: 403, headers });
+  if (req.method !== "POST") return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers });
 
   try {
-    // ---- 0) Sanity: server envs ----
     if (!SUPABASE_URL || !SB_SECRET_KEY) {
       console.error("Missing SUPABASE_URL or SB_SECRET_KEY");
       return new Response(JSON.stringify({ error: "Server misconfiguration." }), { status: 500, headers });
@@ -64,10 +52,9 @@ serve(async (req: Request) => {
       console.error("Missing SB_HCAPTCHA_SECRET");
       return new Response(JSON.stringify({ error: "Captcha not configured." }), { status: 500, headers });
     }
-
     const admin: SupabaseClient = createClient(SUPABASE_URL, SB_SECRET_KEY);
 
-    // ---- 1) Rate limit per IP ----
+    // Rate limit per IP
     const clientIp =
       req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
       req.headers.get("cf-connecting-ip") ||
@@ -75,9 +62,7 @@ serve(async (req: Request) => {
       "unknown";
 
     if (clientIp !== "unknown") {
-      const { error: logErr } = await admin
-        .from("rate_limit_registrations")
-        .insert({ ip_address: clientIp });
+      const { error: logErr } = await admin.from("rate_limit_registrations").insert({ ip_address: clientIp });
       if (logErr) console.warn("rate_limit_registrations insert failed:", logErr);
 
       const since = new Date(Date.now() - TIME_WINDOW_MINUTES * 60 * 1000).toISOString();
@@ -87,40 +72,27 @@ serve(async (req: Request) => {
         .eq("ip_address", clientIp)
         .gte("attempted_at", since);
 
-      if (cntErr) {
-        console.error("rate_limit_registrations count failed:", cntErr);
-        return new Response(JSON.stringify({ error: "Rate limit check failed. Try again later." }), { status: 500, headers });
-      }
+      if (cntErr) return new Response(JSON.stringify({ error: "Rate limit check failed." }), { status: 500, headers });
       if ((count ?? 0) >= MAX_REQUESTS) {
-        return new Response(JSON.stringify({ error: "Too many registration attempts. Please try again later." }), {
-          status: 429,
-          headers,
-        });
+        return new Response(JSON.stringify({ error: "Too many registration attempts. Try again later." }), { status: 429, headers });
       }
     }
 
-    // ---- 2) Parse & validate body ----
+    // Validate body
     const raw: unknown = await req.json();
     const parsed = RegisterSchema.safeParse(raw);
     if (!parsed.success) {
-      const details = parsed.error.issues.map((i: z.ZodIssue) => ({
-        path: i.path.join("."),
-        message: i.message,
-      }));
+      const details = parsed.error.issues.map(i => ({ path: i.path.join("."), message: i.message }));
       return new Response(JSON.stringify({ error: "Validation failed", details }), { status: 400, headers });
     }
     const body: RegisterBody = parsed.data;
 
-    // Additional password checks (register only)
     const missing = passwordMissingRules(body.password);
     if (missing.length) {
-      return new Response(
-        JSON.stringify({ error: `Password must contain ${missing.join(", ")}.` }),
-        { status: 400, headers },
-      );
+      return new Response(JSON.stringify({ error: `Password must contain ${missing.join(", ")}.` }), { status: 400, headers });
     }
 
-    // ---- 3) Verify hCaptcha server-side ----
+    // hCaptcha
     const form = new URLSearchParams();
     form.set("secret", HCAPTCHA_SECRET);
     form.set("response", body.hcaptcha_token);
@@ -134,13 +106,10 @@ serve(async (req: Request) => {
     const cap = await fetch(HCAPTCHA_VERIFY_URL, { method: "POST", body: form });
     const capJson = await cap.json();
     if (!capJson?.success) {
-      return new Response(JSON.stringify({ error: "hCaptcha verification failed. Please try again." }), {
-        status: 400,
-        headers,
-      });
+      return new Response(JSON.stringify({ error: "hCaptcha verification failed. Please try again." }), { status: 400, headers });
     }
 
-    // ---- 4) Create Auth user (confirmed) ----
+    // Create user (confirmed)
     const e164 = toE164(body.phone);
     const { data: created, error: authErr } = await admin.auth.admin.createUser({
       phone: e164,
@@ -154,7 +123,6 @@ serve(async (req: Request) => {
         last_name: body.last_name,
       },
     });
-
     if (authErr || !created?.user) {
       const msg = authErr?.message ?? "Auth createUser failed";
       if (msg.toLowerCase().includes("exists")) {
@@ -163,10 +131,9 @@ serve(async (req: Request) => {
       console.error("Auth create error:", msg);
       return new Response(JSON.stringify({ error: "Unable to create account." }), { status: 500, headers });
     }
-
     const userId = created.user.id;
 
-    // ---- 5) Insert profile row ----
+    // Insert profile row (your columns kept)
     const { error: profErr } = await admin.from("profiles").insert({
       id: userId,
       phone: e164,
@@ -178,25 +145,15 @@ serve(async (req: Request) => {
       email_verified: !!created.user.email_confirmed_at,
       created_at: new Date().toISOString(),
     });
-
     if (profErr) {
       console.error("Profile insert failed:", profErr);
-      // cleanup auth user to keep system consistent
       await admin.auth.admin.deleteUser(userId);
-      return new Response(JSON.stringify({ error: "Unable to save profile. Please try again." }), {
-        status: 500,
-        headers,
-      });
+      return new Response(JSON.stringify({ error: "Unable to save profile. Please try again." }), { status: 500, headers });
     }
 
-    // ---- 6) Success ----
     return new Response(JSON.stringify({ success: true, user_id: userId }), { status: 201, headers });
   } catch (err) {
-    console.error("Unhandled register error:", err);
     const msg = err instanceof Error ? err.message : String(err);
-    return new Response(JSON.stringify({ error: "Internal Server Error", details: msg }), {
-      status: 500,
-      headers,
-    });
+    return new Response(JSON.stringify({ error: "Internal Server Error", details: msg }), { status: 500, headers });
   }
 });
