@@ -26,8 +26,9 @@
   <link rel="canonical" href="https://wellfitcommunity.live/" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- PWA Manifest -->
-  <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+  <!-- PWA Manifest (root path) -->
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#003865" />
 
   <!-- Identity -->
   <meta name="application-name" content="WellFit Community App" />
@@ -35,9 +36,8 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="WellFit Community" />
-  <meta name="theme-color" content="#003865" />
 
-  <!-- Description & Keywords (app-focused, multi-use but not stuffed) -->
+  <!-- Description & Keywords -->
   <meta name="description" content="White-label senior wellness & community safety app: RPM, caregiver tools, apartment resident check-ins, youth & family self-reports, and engagement. HIPAA-ready." />
   <meta name="keywords" content="WellFit Community App, remote patient monitoring, RPM, chronic care management, CCM, patient engagement, population health, health equity, SDOH, caregiver support, healthcare SaaS, white-label, telehealth, FHIR, community engagement, community alerts, safety check-in, welfare check, apartment safety, tenant wellness, resident check-in, property management, youth safety, CPS support, Firebase, Twilio, MailerSend, Metabase" />
   <meta name="author" content="WellFit Community" />
@@ -47,19 +47,19 @@
   <meta property="og:title" content="WellFit App — Wellness, RPM & Community Safety Check-Ins" />
   <meta property="og:description" content="Seniors, tenants, youth & families can check in, self-report, and stay connected. White-label, HIPAA-ready." />
   <meta property="og:url" content="https://wellfitcommunity.live/" />
-  <meta property="og:image" content="https://wellfitcommunity.live/icons/og-1200x630.png" />
+  <meta property="og:image" content="/android-chrome-512x512.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="WellFit App — RPM & Community Safety" />
   <meta name="twitter:description" content="Self-reports, check-ins, caregiver tools, and alerts in one platform." />
-  <meta name="twitter:image" content="https://wellfitcommunity.live/icons/og-1200x630.png" />
+  <meta name="twitter:image" content="/android-chrome-512x512.png" />
 
-  <!-- Icons -->
-  <link rel="icon" type="image/png" href="/icons/icon-192x192.png" sizes="192x192" />
-  <link rel="apple-touch-icon" href="/icons/icon-512x512.png" />
+  <!-- Icons (root files) -->
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="apple-touch-icon" href="/android-chrome-192x192.png" />
 
   <title>WellFit Community App</title>
 
-  <!-- Structured Data: SoftwareApplication + Services (app site), publisher is the .org -->
+  <!-- Structured Data: SoftwareApplication + Services + Organization -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -130,7 +130,7 @@
   }
   </script>
 
-  <!-- hCaptcha explicit render (app uses this) -->
+  <!-- hCaptcha explicit render -->
   <script>window.hcaptchaOnLoad = window.hcaptchaOnLoad || function() {};</script>
   <script src="https://js.hcaptcha.com/1/api.js?onload=hcaptchaOnLoad&render=explicit" async defer></script>
 </head>
