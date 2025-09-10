@@ -22,6 +22,7 @@ import NotFoundPage from './components/NotFoundPage';
 import AdminLoginPage from './pages/AdminLoginPage';
 import LoginPage from './pages/LoginPage';
 import ChangePasswordPage from './pages/ChangePasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 // If your tsconfig doesn’t set baseUrl to "src", change this to './pages/Home'
 import Home from 'pages/Home';
 
@@ -55,6 +56,7 @@ const PUBLIC_ROUTES = [
   '/login',
   '/admin-login',
   '/change-password',
+  '/reset-password',
   '/home',
 ];
 
@@ -83,6 +85,7 @@ function Shell() {
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/terms" element={<TermsOfService />} />
               <Route path="/change-password" element={<ChangePasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/admin-login" element={<AdminLoginPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/home" element={<Home />} />

@@ -1,7 +1,23 @@
 // src/pages/ChangePasswordPage.tsx
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSupabaseClient } from '../contexts/AuthContext';
+
+function readHashParams(): Record<string, string> {
+  const hash = (typeof window !== 'undefined' && window.location.hash) || '';
+  const params = new URLSearchParams(hash.startsWith('#') ? hash.slice(1) : hash);
+  const out: Record<string, string> = {};
+  params.forEach((v, k) => (out[k] = v));
+  return out;
+}
+
+function readQueryParams(): Record<string, string> {
+  const search = (typeof window !== 'undefined' && window.location.search) || '';
+  const params = new URLSearchParams(search);
+  const out: Record<string, string> = {};
+  params.forEach((v, k) => (out[k] = v));
+  return out;
+}
 
 export default function ChangePasswordPage() {
   const supabase = useSupabaseClient();
@@ -14,6 +30,7 @@ export default function ChangePasswordPage() {
   const [showPw1, setShowPw1] = useState(false);
   const [showPw2, setShowPw2] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
+  const [sessionReady, setSessionReady] = useState(false);
 
   const clean1 = pw1.trim();
   const clean2 = pw2.trim();
@@ -28,6 +45,53 @@ export default function ChangePasswordPage() {
     );
   }, [clean1, clean2]);
 
+  // 1) Claim/establish session from the reset link, then mark sessionReady=true
+  useEffect(() => {
+    let did = false;
+
+    (async () => {
+      try {
+        // A) Newer flow: query param with code
+        const q = readQueryParams();
+        if (q.type === 'recovery' && q.code) {
+          // Exchange code for a session
+          const { data, error } = await supabase.auth.exchangeCodeForSession(q.code);
+          if (error) throw error;
+          // Clean the URL (remove code/type)
+          window.history.replaceState({}, document.title, window.location.pathname);
+          setSessionReady(true);
+          did = true;
+          return;
+        }
+
+        // B) Legacy flow: tokens in the hash
+        const h = readHashParams();
+        if (h.type === 'recovery' && h.access_token && h.refresh_token) {
+          const { error } = await supabase.auth.setSession({
+            access_token: h.access_token,
+            refresh_token: h.refresh_token,
+          });
+          if (error) throw error;
+          // Clean the hash
+          window.history.replaceState({}, document.title, window.location.pathname);
+          setSessionReady(true);
+          did = true;
+          return;
+        }
+
+        // C) No tokens provided; check if we already have a session
+        const { data: { session } } = await supabase.auth.getSession();
+        setSessionReady(!!session);
+      } catch (e: any) {
+        setError(e?.message || 'Could not establish session from reset link.');
+        setSessionReady(false);
+      }
+    })();
+
+    return () => { did = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function submit(e?: React.FormEvent) {
     e?.preventDefault();
     setError('');
@@ -40,12 +104,12 @@ export default function ChangePasswordPage() {
 
     setBusy(true);
     try {
+      // Guard: ensure we really have a session (should be set by effect above)
       const { data: { session }, error: sessErr } = await supabase.auth.getSession();
       if (sessErr) throw sessErr;
       const uid = session?.user?.id;
       if (!uid) {
-        setError('Session expired. Please log in again.');
-        navigate('/login', { replace: true });
+        setError('Session expired or invalid. Please click the reset link again.');
         return;
       }
 
@@ -53,7 +117,7 @@ export default function ChangePasswordPage() {
       const { error: upErr } = await supabase.auth.updateUser({ password: clean1 });
       if (upErr) throw upErr;
 
-      // 2) Clear the force-change flag in your profile
+      // 2) (Optional) Clear your force-change flag if you use it
       const { error: dbErr } = await supabase
         .from('profiles')
         .update({ force_password_change: false })
@@ -74,7 +138,9 @@ export default function ChangePasswordPage() {
     <div className="max-w-md mx-auto mt-16 p-8 bg-white rounded-xl shadow-md text-center">
       <h1 className="text-2xl font-bold mb-4">Set a New Password</h1>
       <p className="text-sm text-gray-600 mb-4">
-        For your security, please set a new password to continue.
+        {sessionReady
+          ? 'For your security, please set a new password to continue.'
+          : 'We’re preparing your reset session. If this stalls, re-open the link from your email.'}
       </p>
 
       <form className="space-y-3 text-left" onSubmit={submit} noValidate>
@@ -88,6 +154,7 @@ export default function ChangePasswordPage() {
             autoComplete="new-password"
             required
             minLength={8}
+            disabled={!sessionReady || busy}
           />
           <button
             type="button"
@@ -109,6 +176,7 @@ export default function ChangePasswordPage() {
             autoComplete="new-password"
             required
             minLength={8}
+            disabled={!sessionReady || busy}
           />
           <button
             type="button"
@@ -133,7 +201,7 @@ export default function ChangePasswordPage() {
 
         <button
           type="submit"
-          disabled={!ok || busy}
+          disabled={!ok || busy || !sessionReady}
           className="w-full py-3 bg-black text-white rounded disabled:opacity-50"
         >
           {busy ? 'Saving…' : 'Save New Password'}
