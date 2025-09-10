@@ -29,7 +29,7 @@ const API_ENDPOINT =
 
 // --- hCaptcha handle type (for the ref)
 type HCaptchaHandle = {
-  execute: () => void;
+  execute?: () => void;
   resetCaptcha: () => void;
   remove?: () => void;
 };
@@ -141,55 +141,56 @@ const RegisterPage: React.FC = () => {
   };
 
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
-  try {
-    setSubmitError(null);
-    clearErrors();
+    try {
+      setSubmitError(null);
+      clearErrors();
 
-    // ✅ Fail-fast: verify captcha server-side first
-    if (!data.hcaptchaToken) {
-      throw new Error('Please complete the captcha.');
-    }
-    await verifyHcaptchaToken(data.hcaptchaToken);
+      // ✅ Fail-fast: verify captcha server-side first (separate function)
+      if (!data.hcaptchaToken) {
+        throw new Error('Please complete the captcha.');
+      }
+      await verifyHcaptchaToken(data.hcaptchaToken); // throws on failure
 
-    const payload = {
-      first_name: data.firstName,
-      last_name: data.lastName,
-      phone: data.phone,
-      email: data.email,
-      password: data.password,
-      consent: data.consent,
-      hcaptcha_token: data.hcaptchaToken, // keep this in case your register function also checks it
-    };
+      // Payload without the token (token goes in header)
+      const payload = {
+        first_name: data.firstName,
+        last_name: data.lastName,
+        phone: data.phone,
+        email: data.email ?? null,
+        password: data.password,
+        consent: data.consent,
+      };
 
-    const res = await fetch(API_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+      const res = await fetch(API_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // ⬇️ This is the key change: send the token exactly where most Edge handlers expect it
+          'x-hcaptcha-token': data.hcaptchaToken,
+        },
+        body: JSON.stringify(payload),
+      });
 
+      // Always try to parse JSON for a helpful message
+      const maybeJson = await res.json().catch(() => null as any);
 
       if (!res.ok) {
-        let msg = res.statusText || 'Registration failed.';
-        try {
-          const j = await res.json();
-          if (j?.error) msg = j.error;
-        } catch {
-          /* ignore JSON parse errors */
-        }
+        const msg =
+          (maybeJson && (maybeJson.error || maybeJson.message)) ||
+          res.statusText ||
+          'Registration failed.';
         throw new Error(msg);
       }
 
       toast.success('Registration successful! Verify your phone next.');
-      // IMPORTANT: your router defines "/verify" (not "/verify-code")
       navigate('/verify', { replace: true, state: { phone: data.phone } });
     } catch (err) {
       const e = err instanceof Error ? err : new Error('Unknown error');
       console.error(e);
       setSubmitError(e.message);
       setError('root' as any, { type: 'manual', message: e.message });
-      // ✅ correct reset call for hCaptcha
-      hcaptchaRef.current?.resetCaptcha();
-      // also clear token so schema re-validates
+      // Reset captcha on failure so the user can solve it again (tokens are short-lived)
+      hcaptchaRef.current?.resetCaptcha?.();
       setValue('hcaptchaToken', '', { shouldValidate: true });
       toast.error(e.message);
     }
@@ -248,7 +249,6 @@ const RegisterPage: React.FC = () => {
                   {...register('phone')}
                   inputMode="tel"
                   className="mt-1 rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-[#8cc63f]"
-                  // Keep a helpful placeholder beyond the enforced prefix
                   placeholder="+1XXXXXXXXXX"
                   autoComplete="tel"
                   maxLength={12} // "+1" + 10 digits
@@ -327,7 +327,7 @@ const RegisterPage: React.FC = () => {
             {isCaptchaConfigured && (
               <div className="pt-1">
                 <HCaptcha
-                  ref={hcaptchaRef}
+                  ref={hcaptchaRef as any}
                   sitekey={HCAPTCHA_SITE_KEY}
                   onVerify={onVerify}
                   onExpire={onExpire}
