@@ -1,9 +1,16 @@
 // src/pages/LoginPage.tsx
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
-import { WELLFIT_COLORS, APP_INFO, HCAPTCHA_SITE_KEY } from '../settings/settings';
-import HCaptcha from '@hcaptcha/react-hcaptcha';
+import { WELLFIT_COLORS, APP_INFO } from '../settings/settings';
+
+type Mode = 'senior' | 'admin';
+
+interface ProfileGate {
+  force_password_change?: boolean | null;
+  consent?: boolean | null;
+  demographics_complete?: boolean | null;
+}
 
 const isPhone = (val: string) => /^\d{10,15}$/.test(val.replace(/[^\d]/g, ''));
 
@@ -12,32 +19,25 @@ async function nextRouteForUser(): Promise<string> {
   const uid = session?.user?.id;
   if (!uid) return '/login';
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('profiles')
     .select('force_password_change, consent, demographics_complete')
     .eq('id', uid)
-    .single();
+    .single<ProfileGate>();
 
-  if (!data) return '/login';
+  if (error || !data) return '/dashboard'; // fail-open to dashboard; RLS will still protect
   if (data.force_password_change) return '/change-password';
   if (!data.consent) return '/consent';
   if (!data.demographics_complete) return '/demographics';
   return '/dashboard';
 }
 
-type Mode = 'senior' | 'admin';
-
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
 
-  // mode toggle
   const [mode, setMode] = useState<Mode>('senior');
-
-  // shared
-  const [captchaToken, setCaptchaToken] = useState<string>('');
-  const captchaRef = useRef<any>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string>('');
 
   // senior fields
   const [phone, setPhone] = useState('');
@@ -47,17 +47,41 @@ const LoginPage: React.FC = () => {
   const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
 
+  // colors
+  const primary = WELLFIT_COLORS.blue;   // #003865
+  const accent = WELLFIT_COLORS.green;   // #8cc63f
+
+  // Optional: tiny debug canary in non-prod to prove envs are injected
+  const debug = useMemo(() => {
+    try {
+      const client: any = supabase as any;
+      return {
+        url: client?.rest?.url ?? 'n/a',
+        hasAuth: !!client?.auth,
+      };
+    } catch {
+      return { url: 'n/a', hasAuth: false };
+    }
+  }, []);
+
   useEffect(() => {
     let cancel = false;
     (async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session && !cancel) {
+      if (!cancel && session) {
         const route = await nextRouteForUser();
         navigate(route, { replace: true });
       }
     })();
     return () => { cancel = true; };
   }, [navigate]);
+
+  const normalizeToE164 = (raw: string): string => {
+    const digits = raw.replace(/[^\d]/g, '');
+    if (digits.length === 10) return `+1${digits}`;
+    if (digits.length === 11 && digits.startsWith('1')) return `+${digits}`;
+    return raw.startsWith('+') ? raw : `+${digits}`;
+  };
 
   const handleSeniorLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,36 +95,24 @@ const LoginPage: React.FC = () => {
       setError('Please enter a valid phone number.');
       return;
     }
-    if (!captchaToken && HCAPTCHA_SITE_KEY) {
-      setError('Please complete the captcha.');
-      return;
-    }
 
     setLoading(true);
     try {
-      // Normalize to E.164; seniors never need to type "+1"
-      const digits = phone.replace(/[^\d]/g, '');
-      const e164 =
-        digits.length === 10 ? `+1${digits}` :
-        (digits.length === 11 && digits.startsWith('1')) ? `+${digits}` :
-        phone.startsWith('+') ? phone : `+${digits}`;
+      const e164 = normalizeToE164(phone);
 
       const { error: signInError } = await supabase.auth.signInWithPassword({
         phone: e164,
         password: seniorPassword,
-        options: captchaToken ? { captchaToken } : undefined,
       });
 
       if (signInError) {
-        const msg = signInError.message.toLowerCase();
+        const msg = (signInError.message || '').toLowerCase();
         if (msg.includes('invalid login credentials')) {
-          setError('Login failed. Please check your phone number and password.');
-        } else if (msg.includes('captcha')) {
-          setError('Captcha verification failed. Please try again.');
-          captchaRef.current?.resetCaptcha?.();
-          setCaptchaToken('');
+          setError('Login failed. Check your phone number and password.');
         } else if (msg.includes('confirm')) {
           setError('Account not confirmed. Please complete phone verification if required.');
+        } else if (msg.includes('internal') || msg.includes('server')) {
+          setError('Auth service error. Likely a configuration issue—please try again shortly.');
         } else {
           setError('An error occurred during login. Please try again.');
         }
@@ -129,37 +141,30 @@ const LoginPage: React.FC = () => {
       setError('Please enter both email and password.');
       return;
     }
-    // optional: require captcha for admin too
-    if (!captchaToken && HCAPTCHA_SITE_KEY) {
-      setError('Please complete the captcha.');
-      return;
-    }
 
     setLoading(true);
     try {
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: adminEmail.trim(),
         password: adminPassword,
-        options: captchaToken ? { captchaToken } : undefined,
       });
 
       if (signInError) {
-        const msg = signInError.message.toLowerCase();
+        const msg = (signInError.message || '').toLowerCase();
         if (msg.includes('invalid login credentials')) {
           setError('Admin login failed. Check your email and password.');
-        } else if (msg.includes('captcha')) {
-          setError('Captcha verification failed. Please try again.');
-          captchaRef.current?.resetCaptcha?.();
-          setCaptchaToken('');
         } else if (msg.includes('email not confirmed') || msg.includes('confirm')) {
           setError('Email not confirmed. Please check your inbox for the confirmation link.');
+        } else if (msg.includes('internal') || msg.includes('server')) {
+          setError('Auth service error. Likely a configuration issue—please try again shortly.');
         } else {
           setError('An error occurred during admin login. Please try again.');
         }
         return;
       }
 
-      // After admin email login, send them to your admin area (change if needed)
+      // If your flow wants a PIN step after email login, keep /admin-login.
+      // Otherwise, go straight to /admin.
       navigate('/admin-login', { replace: true });
     } catch (err: any) {
       const msg = String(err?.message ?? '');
@@ -173,36 +178,22 @@ const LoginPage: React.FC = () => {
     }
   };
 
-  const handleAdminResetPassword = async () => {
-    setError('');
-    if (!adminEmail) {
-      setError('Enter your email, then click “Reset password”.');
-      return;
-    }
-    try {
-      const redirectTo = `${window.location.origin}/reset-password`;
-      const { error } = await supabase.auth.resetPasswordForEmail(adminEmail.trim(), { redirectTo });
-      if (error) throw error;
-      alert('Password reset email sent. Check your inbox.');
-    } catch (e: any) {
-      setError(e?.message || 'Could not send reset email.');
-    }
-  };
-
-  const primary = WELLFIT_COLORS.blue;   // #003865
-  const accent = WELLFIT_COLORS.green;   // #8cc63f
-
   return (
     <div
       className="max-w-md mx-auto mt-16 p-6 bg-white rounded-xl shadow-md"
       style={{ borderColor: accent, borderWidth: '2px' }}
     >
-      <img src="/android-chrome-512x512.png" alt={`${APP_INFO.name} Logo`} className="h-16 w-auto mx-auto mb-4" />
+      <img
+        src="/android-chrome-512x512.png"
+        alt={`${APP_INFO.name} Logo`}
+        className="h-16 w-auto mx-auto mb-4"
+      />
+
       <h1 className="text-2xl font-bold text-center mb-2" style={{ color: primary }}>
         {APP_INFO.name}
       </h1>
 
-      {/* Toggle */}
+      {/* Mode Toggle */}
       <div className="flex justify-center gap-2 mb-6">
         <button
           type="button"
@@ -220,6 +211,7 @@ const LoginPage: React.FC = () => {
         </button>
       </div>
 
+      {/* Forms */}
       {mode === 'senior' ? (
         <form onSubmit={handleSeniorLogin} className="space-y-4">
           <div>
@@ -240,7 +232,9 @@ const LoginPage: React.FC = () => {
               autoComplete="tel"
               inputMode="tel"
             />
-            <p className="text-xs text-left mt-1 text-gray-500">You don’t need to type “+1”. We add it for you.</p>
+            <p className="text-xs text-left mt-1 text-gray-500">
+              You don’t need to type “+1”. We add it for you.
+            </p>
           </div>
 
           <div>
@@ -262,18 +256,6 @@ const LoginPage: React.FC = () => {
             />
           </div>
 
-          {HCAPTCHA_SITE_KEY && (
-            <div className="pt-2">
-              <HCaptcha
-                ref={captchaRef}
-                sitekey={HCAPTCHA_SITE_KEY}
-                onVerify={(token) => setCaptchaToken(token)}
-                onExpire={() => setCaptchaToken('')}
-                onError={() => setCaptchaToken('')}
-              />
-            </div>
-          )}
-
           {error && <p role="alert" className="text-red-500 text-sm font-semibold">{error}</p>}
 
           <button
@@ -290,6 +272,14 @@ const LoginPage: React.FC = () => {
               Admin PIN (for already-logged-in admins)
             </Link>
           </div>
+
+          {/* Dev-only debug canary */}
+          {process.env.NODE_ENV !== 'production' && (
+            <div className="mt-3 text-xs text-gray-500 text-center">
+              <div>Auth URL: {debug.url}</div>
+              <div>Client Ready: {String(debug.hasAuth)}</div>
+            </div>
+          )}
         </form>
       ) : (
         <form onSubmit={handleAdminLogin} className="space-y-4">
@@ -332,30 +322,12 @@ const LoginPage: React.FC = () => {
             />
           </div>
 
-          {HCAPTCHA_SITE_KEY && (
-            <div className="pt-2">
-              <HCaptcha
-                ref={captchaRef}
-                sitekey={HCAPTCHA_SITE_KEY}
-                onVerify={(token) => setCaptchaToken(token)}
-                onExpire={() => setCaptchaToken('')}
-                onError={() => setCaptchaToken('')}
-              />
-            </div>
-          )}
-
           {error && <p role="alert" className="text-red-500 text-sm font-semibold">{error}</p>}
 
           <div className="flex items-center justify-between">
-            <button
-              type="button"
-              onClick={handleAdminResetPassword}
-              className="text-sm underline"
-              style={{ color: primary }}
-              disabled={!adminEmail || loading}
-            >
+            <Link to="/reset-password" className="text-sm underline" style={{ color: primary }}>
               Forgot password?
-            </button>
+            </Link>
           </div>
 
           <button
@@ -372,6 +344,14 @@ const LoginPage: React.FC = () => {
               Admin PIN (after email login)
             </Link>
           </div>
+
+          {/* Dev-only debug canary */}
+          {process.env.NODE_ENV !== 'production' && (
+            <div className="mt-3 text-xs text-gray-500 text-center">
+              <div>Auth URL: {debug.url}</div>
+              <div>Client Ready: {String(debug.hasAuth)}</div>
+            </div>
+          )}
         </form>
       )}
     </div>

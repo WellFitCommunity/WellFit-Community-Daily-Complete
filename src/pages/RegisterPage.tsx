@@ -7,6 +7,7 @@ import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import PrettyCard from '../components/ui/PrettyCard';
+import { verifyHcaptchaToken } from '../utils/verifyHcaptcha';
 
 type FormValues = {
   firstName: string;
@@ -140,25 +141,32 @@ const RegisterPage: React.FC = () => {
   };
 
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
-    try {
-      setSubmitError(null);
-      clearErrors();
+  try {
+    setSubmitError(null);
+    clearErrors();
 
-      const payload = {
-        first_name: data.firstName,
-        last_name: data.lastName,
-        phone: data.phone, // guaranteed to be +1XXXXXXXXXX by schema
-        email: data.email, // may be undefined
-        password: data.password,
-        consent: data.consent,
-        hcaptcha_token: data.hcaptchaToken,
-      };
+    // ✅ Fail-fast: verify captcha server-side first
+    if (!data.hcaptchaToken) {
+      throw new Error('Please complete the captcha.');
+    }
+    await verifyHcaptchaToken(data.hcaptchaToken);
 
-      const res = await fetch(API_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+    const payload = {
+      first_name: data.firstName,
+      last_name: data.lastName,
+      phone: data.phone,
+      email: data.email,
+      password: data.password,
+      consent: data.consent,
+      hcaptcha_token: data.hcaptchaToken, // keep this in case your register function also checks it
+    };
+
+    const res = await fetch(API_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
 
       if (!res.ok) {
         let msg = res.statusText || 'Registration failed.';

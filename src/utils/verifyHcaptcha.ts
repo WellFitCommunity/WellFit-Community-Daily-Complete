@@ -7,6 +7,5 @@ export async function verifyHcaptchaToken(token: string, sitekey?: string) {
 
   if (error) throw new Error(error.message || 'hCaptcha verify call failed');
   if (!data?.success) throw new Error('hCaptcha failed');
-
   return true;
 }
