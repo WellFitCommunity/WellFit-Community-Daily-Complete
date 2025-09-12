@@ -13,8 +13,13 @@ const readEnv = (k: string): string | undefined => {
   // 1) Vite-style
   try {
     // @ts-ignore
-    v = (typeof import.meta !== 'undefined' && (import.meta as any).env && (import.meta as any).env[k]) || undefined;
-  } catch { /* ignore */ }
+    v =
+      (typeof import.meta !== 'undefined' &&
+        (import.meta as any).env &&
+        (import.meta as any).env[k]) || undefined;
+  } catch {
+    /* ignore */
+  }
 
   // 2) CRA-style
   if (!v && typeof process !== 'undefined' && (process as any).env) {
@@ -106,6 +111,26 @@ export const APP_INFO = {
   supportPhone: '(832) 315-5110',
 };
 
-// Gentle dev warnings
-if (!SB_URL) console.error('Missing SB URL. Set REACT_APP_SB_URL (or legacy alias).');
-if (!SB_PUBLISHABLE_API_KEY) console.error('Missing SB anon/publishable key. Set REACT_APP_SB_PUBLISHABLE_API_KEY (or legacy alias).');
+// ---- Aliases so BOTH import styles work (old & new) ----
+export const SUPABASE_URL = SB_URL;
+export const SUPABASE_PUBLISHABLE_API_KEY = SB_PUBLISHABLE_API_KEY;
+
+// ---- Clear warnings with the exact env names we check ----
+const urlCandidates = [
+  'REACT_APP_SB_URL',
+  'REACT_APP_SUPABASE_URL',
+  'REACT_APP_SUPABASE_PROJECT_URL',
+  'REACT_APP_SUPA_URL',
+];
+
+const keyCandidates = [
+  'REACT_APP_SB_PUBLISHABLE_API_KEY',
+  'REACT_APP_SB_ANON_KEY',
+  'REACT_APP_SUPABASE_PUBLISHABLE_KEY',
+  'REACT_APP_SUPABASE_PUBLIC_ANON_KEY',
+  'REACT_APP_SUPABASE_ANON_KEY',
+  'REACT_APP_SUPABASE_PUBLIC_KEY',
+];
+
+if (!SB_URL) console.error('Missing Supabase URL. Set one of:', urlCandidates);
+if (!SB_PUBLISHABLE_API_KEY) console.error('Missing Supabase anon/publishable key. Set one of:', keyCandidates);
