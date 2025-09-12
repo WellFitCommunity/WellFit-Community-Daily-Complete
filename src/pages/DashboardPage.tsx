@@ -4,20 +4,48 @@ import Card from '../components/ui/PrettyCard';
 import { useNavigate } from 'react-router-dom';
 import { useBranding } from '../BrandingContext';
 import WeatherWidget from '../components/dashboard/WeatherWidget';
-// ✅ Use the component, not the page wrapper
 import CheckInTracker from '../components/CheckInTracker';
 import DailyScripture from '../components/dashboard/DailyScripture';
 import TechTip from '../components/dashboard/TechTip';
 import EmergencyContact from '../components/features/EmergencyContact';
 import DashMealOfTheDay from '../components/dashboard/DashMealOfTheDay';
-// ❌ Do not embed Doctor’s View on the dashboard
-// import DoctorsView from '../pages/DoctorsViewPage';
+import { fetchMyProfile, updateMyProfile } from '../data/profile';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import AdminPanel from '../components/admin/AdminPanel'; // Future use
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { branding } = useBranding();
+
+  // NEW: local state for the current user's profile
+  const [me, setMe] = React.useState<any>(null);
+  const [saving, setSaving] = React.useState(false);
+
+  // Load profile once (uses .eq('user_id', user.id) under the hood)
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const profile = await fetchMyProfile();
+        setMe(profile);
+      } catch (e) {
+        console.warn('[Dashboard] fetchMyProfile failed:', (e as Error).message);
+      }
+    })();
+  }, []);
+
+  // Optional example: save email (remove if not needed)
+  async function saveEmail() {
+    if (!me?.email) return;
+    try {
+      setSaving(true);
+      const updated = await updateMyProfile({ email: me.email });
+      setMe(updated);
+    } catch (e) {
+      console.error('[Dashboard] updateMyProfile failed:', (e as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  }
 
   const isColorDark = (colorStr: string) => {
     if (!colorStr) return true;
@@ -34,12 +62,30 @@ const Dashboard: React.FC = () => {
 
   return (
     <main className="space-y-6 mt-4 p-4">
+      {/* Greeting pulled from profile (falls back to email if you add name later) */}
       <h1
-        className="text-2xl sm:text-3xl font-bold text-center mb-6"
+        className="text-2xl sm:text-3xl font-bold text-center mb-2"
         style={{ color: branding.primaryColor }}
       >
-        Welcome to {branding.appName} Dashboard
+        Welcome{me?.email ? `, ${me.email}` : ''} to {branding.appName} Dashboard
       </h1>
+
+      {/* Optional inline email editor (remove if not needed) */}
+      <div className="flex items-center justify-center gap-2 mb-4">
+        <input
+          className="border rounded px-3 py-2 w-64"
+          placeholder="your@email.com"
+          value={me?.email ?? ''}
+          onChange={(e) => setMe((prev: any) => ({ ...(prev || {}), email: e.target.value }))}
+        />
+        <button
+          onClick={saveEmail}
+          disabled={saving}
+          className="px-4 py-2 rounded bg-[#003865] text-white hover:bg-[#8cc63f] transition disabled:opacity-50"
+        >
+          {saving ? 'Saving…' : 'Save Email'}
+        </button>
+      </div>
 
       {/* Return link (hide if you later gate by role) */}
       <button
@@ -54,12 +100,10 @@ const Dashboard: React.FC = () => {
         <WeatherWidget />
       </Card>
 
-      {/* ✅ Keep full check-in inline on the dashboard */}
       <Card>
         <CheckInTracker />
       </Card>
 
-      {/* Optional: keep a button to the dedicated check-in page if you still want it */}
       <Card>
         <button
           className="w-full py-3 text-lg font-semibold bg-[#003865] text-white rounded-xl shadow hover:bg-[#8cc63f] transition"
@@ -118,7 +162,6 @@ const Dashboard: React.FC = () => {
         <EmergencyContact />
       </Card>
 
-      {/* ✅ Doctor’s View is NOT embedded here. Give a clear button to the page. */}
       <section
         className="mt-8 p-6 bg-white shadow-lg rounded-lg border-2 text-center"
         style={{ borderColor: branding.secondaryColor }}
