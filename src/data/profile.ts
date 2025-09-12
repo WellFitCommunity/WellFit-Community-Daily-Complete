@@ -10,43 +10,56 @@ export type Profile = {
   // disabled_at?: string | null; etc.
 };
 
-export async function getCurrentUserId(): Promise<string> {
+async function getCurrentUserId(): Promise<string | null> {
   const { data, error } = await supabase.auth.getUser();
-  if (error || !data.user) throw new Error('Not authenticated');
+  if (error || !data?.user) return null; // ✅ don't throw in UI
   return data.user.id;
 }
 
 export async function fetchMyProfile(): Promise<Profile | null> {
   const uid = await getCurrentUserId();
+  if (!uid) return null; // ✅ no session yet
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
     .eq('user_id', uid)
-    .single(); // returns row or error
-  if (error && error.code !== 'PGRST116') throw error; // not found
+    .maybeSingle(); // ✅ no exception when missing
+  if (error) {
+    // PGRST116 = no rows; treat as null
+    if ((error as any).code !== 'PGRST116') console.warn('[fetchMyProfile]', error.message);
+    return null;
+  }
   return (data as Profile) ?? null;
 }
 
-export async function upsertMyProfile(patch: Partial<Profile>): Promise<Profile> {
+export async function upsertMyProfile(patch: Partial<Profile>): Promise<Profile | null> {
   const uid = await getCurrentUserId();
+  if (!uid) return null;
   const payload = { ...patch, user_id: uid };
   const { data, error } = await supabase
     .from('profiles')
     .upsert(payload, { onConflict: 'user_id' })
     .select()
     .single();
-  if (error) throw error;
+  if (error) {
+    console.warn('[upsertMyProfile]', error.message);
+    return null;
+  }
   return data as Profile;
 }
 
-export async function updateMyProfile(patch: Partial<Profile>): Promise<Profile> {
+export async function updateMyProfile(patch: Partial<Profile>): Promise<Profile | null> {
   const uid = await getCurrentUserId();
+  if (!uid) return null;
   const { data, error } = await supabase
     .from('profiles')
     .update(patch)
     .eq('user_id', uid)
     .select()
     .single();
-  if (error) throw error;
+  if (error) {
+    console.warn('[updateMyProfile]', error.message);
+    return null;
+  }
   return data as Profile;
 }
