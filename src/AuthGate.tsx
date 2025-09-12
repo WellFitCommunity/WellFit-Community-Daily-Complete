@@ -1,4 +1,4 @@
-// src/AuthGate.tsx
+// src/AuthGate.tsx - FIXED VERSION
 import { useEffect, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSupabaseClient, useSession, useUser } from './contexts/AuthContext';
@@ -27,11 +27,11 @@ export default function AuthGate({ children }: { children: ReactNode }) {
       const path = location.pathname;
       const isGatePage = path === '/change-password' || path === '/demographics';
 
-      // Pull the two flags off profiles by user_id
+      // FIXED: Query by user_id (the correct primary key)
       const { data, error } = await supabase
         .from('profiles')
         .select('force_password_change, onboarded')
-        .eq('user_id', user.id)
+        .eq('user_id', user.id)  // CHANGED FROM 'id' to 'user_id'
         .maybeSingle();
 
       if (cancelled || error) {
