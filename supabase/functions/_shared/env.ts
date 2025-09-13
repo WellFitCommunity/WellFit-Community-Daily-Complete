@@ -20,3 +20,7 @@ export const HCAPTCHA_SECRET =
 
 export const ALLOWED_ORIGINS = (envGet('ALLOWED_ORIGINS') || '*')
   .split(',').map(s => s.trim()).filter(Boolean);
+
+// ✅ Aliases so old imports still work:
+export const SB_URL = SUPABASE_URL;
+export const ALLOW_ORIGINS = ALLOWED_ORIGINS;

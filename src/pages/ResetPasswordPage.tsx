@@ -3,6 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 
 const ResetPasswordPage: React.FC = () => {
+   console.log('🔍 Environment Debug:', {
+    SB_URL: process.env.REACT_APP_SB_URL,
+    SB_KEY: process.env.REACT_APP_SB_PUBLISHABLE_API_KEY,
+    SUPABASE_URL: process.env.REACT_APP_SUPABASE_URL,
+    SUPABASE_KEY: process.env.REACT_APP_SUPABASE_ANON_KEY,
+  });
+  
   const [email, setEmail] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
