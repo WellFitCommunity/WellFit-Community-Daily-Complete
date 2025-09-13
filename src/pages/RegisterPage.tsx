@@ -7,7 +7,6 @@ import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import PrettyCard from '../components/ui/PrettyCard';
-import { verifyHcaptchaToken } from '../utils/verifyHcaptcha';
 
 type FormValues = {
   firstName: string;
@@ -145,11 +144,8 @@ const RegisterPage: React.FC = () => {
       setSubmitError(null);
       clearErrors();
 
-      // ✅ Fail-fast: verify captcha server-side first (separate function)
-      if (!data.hcaptchaToken) {
-        throw new Error('Please complete the captcha.');
-      }
-      await verifyHcaptchaToken(data.hcaptchaToken); // throws on failure
+      // Pass the token to the server; server will verify.
+      if (!data.hcaptchaToken) throw new Error('Please complete the captcha.');
 
       // Payload without the token (token goes in header)
       const payload = {
@@ -165,7 +161,6 @@ const RegisterPage: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // ⬇️ This is the key change: send the token exactly where most Edge handlers expect it
           'x-hcaptcha-token': data.hcaptchaToken,
         },
         body: JSON.stringify(payload),
