@@ -1,26 +1,41 @@
 // supabase/functions/_shared/env.ts
-// Safe env access for Deno (and quiet in editors without Deno types).
+// Safe env access for Deno Edge Functions (no circular imports).
 
-const envGet = (name: string): string | undefined => {
-  try { return (globalThis as any)?.Deno?.env?.get?.(name); } catch { return undefined; }
+const envGet = (name: string): string => {
+  try {
+    // deno on Edge
+    // @ts-ignore
+    return (globalThis as any)?.Deno?.env?.get?.(name) ?? "";
+  } catch {
+    return "";
+  }
 };
 
-export const SUPABASE_URL =
-  envGet('SUPABASE_URL') || envGet('SB_URL') || '';
+// ---- Supabase ----
+export const SUPABASE_URL: string =
+  envGet("SUPABASE_URL") || envGet("SB_URL");
 
-export const SB_PUBLISHABLE_API_KEY =
-  envGet('SB_PUBLISHABLE_API_KEY') || envGet('SUPABASE_ANON_KEY') || '';
+export const SB_SECRET_KEY: string =
+  envGet("SB_SECRET_KEY") || envGet("SUPABASE_SERVICE_ROLE_KEY");
 
-export const SB_SECRET_KEY =
-  envGet('SB_SECRET_KEY') || envGet('SUPABASE_SERVICE_ROLE_KEY') || '';
+export const SB_PUBLISHABLE_API_KEY: string =
+  envGet("SB_PUBLISHABLE_API_KEY") || envGet("SUPABASE_ANON_KEY");
 
-/** Server-only captcha secret (we map both names to a single export). */
-export const HCAPTCHA_SECRET =
-  envGet('SB_HCAPTCHA_SECRET') || envGet('HCAPTCHA_SECRET') || '';
+// ---- hCaptcha ----
+export const HCAPTCHA_SECRET: string =
+  envGet("HCAPTCHA_SECRET") || envGet("SB_HCAPTCHA_SECRET");
 
-export const ALLOWED_ORIGINS = (envGet('ALLOWED_ORIGINS') || '*')
-  .split(',').map(s => s.trim()).filter(Boolean);
+// ---- CORS allowlist ----
+// Comma-separated, no spaces in the env value
+const toList = (v: string) =>
+  (v || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
 
-// ✅ Aliases so old imports still work:
+// Single canonical export (this is the one CORS will import)
+const ALLOWED_ORIGINS_STR: string = envGet("ALLOWED_ORIGINS");
+export const ALLOWED_ORIGINS: string[] = toList(ALLOWED_ORIGINS_STR);
+
+// Back-compat aliases (optional; do NOT import these in cors.ts)
 export const SB_URL = SUPABASE_URL;
-export const ALLOW_ORIGINS = ALLOWED_ORIGINS;
