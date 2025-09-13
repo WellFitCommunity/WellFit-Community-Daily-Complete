@@ -115,14 +115,13 @@ const RegisterPage: React.FC = () => {
     reValidateMode: 'onChange',
   });
 
-  // Keep the phone input sticky to +1 prefix, digits only, max length 12 (+ + 11 digits)
+  // Keep the phone input sticky to +1 prefix, digits only, max length 12 ("+" + 11 digits)
   const phoneVal = watch('phone');
   useEffect(() => {
     if (!phoneVal) {
       setValue('phone', '+1', { shouldValidate: true, shouldDirty: true });
       return;
     }
-    // If user tries to delete + or 1, or paste random stuff, normalize it
     const normalized = normalizeUSPhoneInput(phoneVal);
     if (normalized !== phoneVal) {
       setValue('phone', normalized, { shouldValidate: true, shouldDirty: true });
@@ -144,10 +143,9 @@ const RegisterPage: React.FC = () => {
       setSubmitError(null);
       clearErrors();
 
-      // Pass the token to the server; server will verify.
       if (!data.hcaptchaToken) throw new Error('Please complete the captcha.');
 
-      // Payload without the token (token goes in header)
+      // Payload (sans token if your server expects token in header)
       const payload = {
         first_name: data.firstName,
         last_name: data.lastName,
@@ -157,24 +155,50 @@ const RegisterPage: React.FC = () => {
         consent: data.consent,
       };
 
+      // --- Perform the request (DONT use Express-style res) ---
       const res = await fetch(API_ENDPOINT, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          // If your Edge Function verifies hCaptcha via header:
           'x-hcaptcha-token': data.hcaptchaToken,
         },
         body: JSON.stringify(payload),
       });
 
-      // Always try to parse JSON for a helpful message
-      const maybeJson = await res.json().catch(() => null as any);
+      // If your server expects token in the JSON body instead of header, use this:
+      // const res = await fetch(API_ENDPOINT, {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ ...payload, hcaptcha_token: data.hcaptchaToken }),
+      // });
+
+      // --- Read body once, parse if JSON, surface server errors nicely ---
+      const text = await res.text();
+      let serverMsg = '';
+      let parsed: any = null;
+
+      try {
+        parsed = text ? JSON.parse(text) : null;
+        serverMsg = parsed?.error || parsed?.message || parsed?.detail || '';
+      } catch {
+        serverMsg = text || '';
+      }
 
       if (!res.ok) {
-        const msg =
-          (maybeJson && (maybeJson.error || maybeJson.message)) ||
-          res.statusText ||
-          'Registration failed.';
+        const msg = serverMsg || `${res.status} ${res.statusText}`;
+        console.error('REGISTER ERROR', {
+          status: res.status,
+          statusText: res.statusText,
+          serverMsg,
+          raw: text,
+        });
         throw new Error(msg);
+      }
+
+      // Optional: check success shape
+      if (parsed && parsed.success === false) {
+        throw new Error(parsed.error || 'Registration failed');
       }
 
       toast.success('Registration successful! Verify your phone next.');
@@ -183,8 +207,9 @@ const RegisterPage: React.FC = () => {
       const e = err instanceof Error ? err : new Error('Unknown error');
       console.error(e);
       setSubmitError(e.message);
+      // react-hook-form root-level error
       setError('root' as any, { type: 'manual', message: e.message });
-      // Reset captcha on failure so the user can solve it again (tokens are short-lived)
+      // Reset captcha so user can solve again
       hcaptchaRef.current?.resetCaptcha?.();
       setValue('hcaptchaToken', '', { shouldValidate: true });
       toast.error(e.message);
@@ -246,7 +271,7 @@ const RegisterPage: React.FC = () => {
                   className="mt-1 rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-[#8cc63f]"
                   placeholder="+1XXXXXXXXXX"
                   autoComplete="tel"
-                  maxLength={12} // "+1" + 10 digits
+                  maxLength={12} // "+" + "1" + 10 digits
                 />
                 <span className="text-xs text-gray-500 mt-1">
                   We auto-format to <code>+1</code>. Type only your 10-digit US number.
