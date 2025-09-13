@@ -21,6 +21,8 @@ type FormValues = {
 
 const WELLFIT_BLUE = '#003865';
 
+// IMPORTANT: must be defined in your frontend build for prod.
+// For local dev this default is fine.
 const HCAPTCHA_SITE_KEY = process.env.REACT_APP_HCAPTCHA_SITE_KEY || '';
 const API_ENDPOINT =
   process.env.REACT_APP_API_ENDPOINT ??
@@ -66,11 +68,8 @@ const schema: yup.ObjectSchema<FormValues> = yup
 
 // --- Helpers: keep phone input locked to +1 and digits only ---
 function normalizeUSPhoneInput(raw: string): string {
-  // Strip non-digits
   const digits = raw.replace(/\D/g, '');
-  // Ensure it begins with country code 1
   let core = digits.startsWith('1') ? digits : `1${digits}`;
-  // Limit to 11 digits total (1 + 10)
   core = core.slice(0, 11);
   return `+${core}`;
 }
@@ -103,7 +102,7 @@ const RegisterPage: React.FC = () => {
     defaultValues: {
       firstName: '',
       lastName: '',
-      phone: '+1', // seed with +1
+      phone: '+1',
       email: '',
       password: '',
       confirmPassword: '',
@@ -115,7 +114,7 @@ const RegisterPage: React.FC = () => {
     reValidateMode: 'onChange',
   });
 
-  // Keep the phone input sticky to +1 prefix, digits only, max length 12 ("+" + 11 digits)
+  // Keep the phone input sticky to +1 prefix, digits only, max length 12 (+ + 11 digits)
   const phoneVal = watch('phone');
   useEffect(() => {
     if (!phoneVal) {
@@ -143,9 +142,10 @@ const RegisterPage: React.FC = () => {
       setSubmitError(null);
       clearErrors();
 
+      if (!isCaptchaConfigured) throw new Error('Captcha not configured.');
       if (!data.hcaptchaToken) throw new Error('Please complete the captcha.');
 
-      // Payload (sans token if your server expects token in header)
+      // Build payload for the Edge Function
       const payload = {
         first_name: data.firstName,
         last_name: data.lastName,
@@ -153,52 +153,36 @@ const RegisterPage: React.FC = () => {
         email: data.email ?? null,
         password: data.password,
         consent: data.consent,
+        // hcaptcha_token is OPTIONAL in body (server also accepts header),
+        // But sending both is fine.
+        hcaptcha_token: data.hcaptchaToken,
       };
 
-      // --- Perform the request (DONT use Express-style res) ---
+      // ✅ This is the missing part: actually perform the fetch
       const res = await fetch(API_ENDPOINT, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // If your Edge Function verifies hCaptcha via header:
+          // Important: browser sets Origin automatically; do NOT add it yourself.
           'x-hcaptcha-token': data.hcaptchaToken,
         },
         body: JSON.stringify(payload),
       });
 
-      // If your server expects token in the JSON body instead of header, use this:
-      // const res = await fetch(API_ENDPOINT, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ ...payload, hcaptcha_token: data.hcaptchaToken }),
-      // });
-
-      // --- Read body once, parse if JSON, surface server errors nicely ---
-      const text = await res.text();
-      let serverMsg = '';
-      let parsed: any = null;
-
-      try {
-        parsed = text ? JSON.parse(text) : null;
-        serverMsg = parsed?.error || parsed?.message || parsed?.detail || '';
-      } catch {
-        serverMsg = text || '';
-      }
+      // Read raw once, then try JSON
+      const raw = await res.text();
+      let js: any = null;
+      try { js = raw ? JSON.parse(raw) : null; } catch { /* not JSON */ }
 
       if (!res.ok) {
-        const msg = serverMsg || `${res.status} ${res.statusText}`;
+        const serverMsg = js?.error || js?.message || js?.detail || raw || `${res.status} ${res.statusText}`;
         console.error('REGISTER ERROR', {
           status: res.status,
           statusText: res.statusText,
           serverMsg,
-          raw: text,
+          raw,
         });
-        throw new Error(msg);
-      }
-
-      // Optional: check success shape
-      if (parsed && parsed.success === false) {
-        throw new Error(parsed.error || 'Registration failed');
+        throw new Error(serverMsg);
       }
 
       toast.success('Registration successful! Verify your phone next.');
@@ -207,9 +191,7 @@ const RegisterPage: React.FC = () => {
       const e = err instanceof Error ? err : new Error('Unknown error');
       console.error(e);
       setSubmitError(e.message);
-      // react-hook-form root-level error
       setError('root' as any, { type: 'manual', message: e.message });
-      // Reset captcha so user can solve again
       hcaptchaRef.current?.resetCaptcha?.();
       setValue('hcaptchaToken', '', { shouldValidate: true });
       toast.error(e.message);
@@ -271,7 +253,7 @@ const RegisterPage: React.FC = () => {
                   className="mt-1 rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-[#8cc63f]"
                   placeholder="+1XXXXXXXXXX"
                   autoComplete="tel"
-                  maxLength={12} // "+" + "1" + 10 digits
+                  maxLength={12}
                 />
                 <span className="text-xs text-gray-500 mt-1">
                   We auto-format to <code>+1</code>. Type only your 10-digit US number.
