@@ -8,10 +8,13 @@ import { z, type ZodIssue } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { SB_URL, SB_SECRET_KEY, HCAPTCHA_SECRET } from "../_shared/env.ts";
 import { cors } from "../_shared/cors.ts";
 
+// ---------- CONFIG ----------
 const MAX_REQUESTS = 5;
 const TIME_WINDOW_MINUTES = 15;
-const HCAPTCHA_VERIFY_URL = "https://hcaptcha.com/siteverify";
+const HCAPTCHA_VERIFY_URL =
+  Deno.env.get("HCAPTCHA_VERIFY_URL") || "https://hcaptcha.com/siteverify";
 
+// ---------- VALIDATION SCHEMA ----------
 const RegisterSchema = z.object({
   phone: z.string().min(1, "Phone is required"),
   password: z.string().min(8, "Password minimum is 8"),
@@ -19,10 +22,11 @@ const RegisterSchema = z.object({
   last_name: z.string().min(1, "Last name is required"),
   email: z.string().email().optional().nullable(),
   consent: z.boolean().optional(),
-  hcaptcha_token: z.string().optional(), // token can come from header too
+  hcaptcha_token: z.string().optional(), // can also come from header
 });
 type RegisterBody = z.infer<typeof RegisterSchema>;
 
+// ---------- HELPERS ----------
 function j(body: unknown, status: number, headers: HeadersInit) {
   return new Response(JSON.stringify(body), {
     status,
@@ -47,6 +51,7 @@ function passwordMissingRules(pw: string): string[] {
   return rules.filter(x => !x.r.test(pw)).map(x => x.m);
 }
 
+// ---------- MAIN ----------
 serve(async (req: Request) => {
   const { headers, allowed } = cors(req.headers.get("origin"), {
     methods: ["POST", "OPTIONS"],
@@ -59,7 +64,7 @@ serve(async (req: Request) => {
     ],
   });
 
-  // Early probe (logs even if CORS blocks)
+  // Early probe
   console.log("[register] hit", {
     method: req.method,
     origin: req.headers.get("origin") ?? "",
@@ -89,7 +94,7 @@ serve(async (req: Request) => {
 
     const admin: SupabaseClient = createClient(SB_URL, SB_SECRET_KEY);
 
-    // ---------- RATE LIMIT (soft — never fatal) ----------
+    // ---------- RATE LIMIT ----------
     console.log("[step] rate_limit:start");
     try {
       const clientIp =
@@ -119,7 +124,6 @@ serve(async (req: Request) => {
       }
     } catch (rlErr) {
       console.warn("[rate_limit] soft error, continuing:", rlErr);
-      // continue, never 500 from rate-limit
     }
 
     // ---------- VALIDATE ----------
@@ -157,10 +161,16 @@ serve(async (req: Request) => {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: form,
     });
+
+    console.info("[captcha.verify] status", cap.status);
+
     const capJson = await cap.json().catch(() => ({} as any));
     if (!cap.ok || !capJson?.success) {
       return j(
-        { error: "hCaptcha verification failed. Please try again.", detail: capJson?.["error-codes"] ?? [] },
+        {
+          error: "hCaptcha verification failed. Please try again.",
+          detail: capJson?.["error-codes"] ?? [],
+        },
         401,
         headers
       );
@@ -181,6 +191,7 @@ serve(async (req: Request) => {
         last_name: body.last_name,
       },
     });
+
     if (authErr || !created?.user) {
       const msg = authErr?.message ?? "Auth createUser failed";
       if (msg.toLowerCase().includes("exists")) {

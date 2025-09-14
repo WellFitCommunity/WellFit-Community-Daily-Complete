@@ -7,6 +7,7 @@ import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import PrettyCard from '../components/ui/PrettyCard';
+import { registerUser } from '../utils/register'; // ✅ use helper (cleaner)
 
 type FormValues = {
   firstName: string;
@@ -24,16 +25,9 @@ const WELLFIT_BLUE = '#003865';
 // IMPORTANT: must be defined in your frontend build for prod.
 // For local dev this default is fine.
 const HCAPTCHA_SITE_KEY = process.env.REACT_APP_HCAPTCHA_SITE_KEY || '';
-const API_ENDPOINT =
-  process.env.REACT_APP_API_ENDPOINT ??
-  'https://xkybsjnvuohpqpbkikyn.supabase.co/functions/v1/register';
 
-// --- hCaptcha handle type (for the ref)
-type HCaptchaHandle = {
-  execute?: () => void;
-  resetCaptcha: () => void;
-  remove?: () => void;
-};
+// --- hCaptcha handle type via any to avoid lib TS mismatch
+type HCaptchaHandleAny = any;
 
 // Strict US-only E.164 (+1 + 10 digits)
 const schema: yup.ObjectSchema<FormValues> = yup
@@ -76,7 +70,7 @@ function normalizeUSPhoneInput(raw: string): string {
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
-  const hcaptchaRef = useRef<HCaptchaHandle | null>(null);
+  const hcaptchaRef = useRef<HCaptchaHandleAny>(null); // ✅ safer typing
 
   const [isCaptchaConfigured, setIsCaptchaConfigured] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -109,7 +103,8 @@ const RegisterPage: React.FC = () => {
       consent: false,
       hcaptchaToken: '',
     },
-    resolver: yupResolver<FormValues>(schema),
+    // ✅ TS-safe: no generic arg needed here
+    resolver: yupResolver(schema),
     mode: 'onBlur',
     reValidateMode: 'onChange',
   });
@@ -145,7 +140,7 @@ const RegisterPage: React.FC = () => {
       if (!isCaptchaConfigured) throw new Error('Captcha not configured.');
       if (!data.hcaptchaToken) throw new Error('Please complete the captcha.');
 
-      // Build payload for the Edge Function
+      // Build payload for the Edge Function (server expects snake_case)
       const payload = {
         first_name: data.firstName,
         last_name: data.lastName,
@@ -153,37 +148,18 @@ const RegisterPage: React.FC = () => {
         email: data.email ?? null,
         password: data.password,
         consent: data.consent,
-        // hcaptcha_token is OPTIONAL in body (server also accepts header),
-        // But sending both is fine.
         hcaptcha_token: data.hcaptchaToken,
       };
 
-      // ✅ This is the missing part: actually perform the fetch
-      const res = await fetch(API_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // Important: browser sets Origin automatically; do NOT add it yourself.
-          'x-hcaptcha-token': data.hcaptchaToken,
-        },
-        body: JSON.stringify(payload),
+      // ✅ Use helper that calls supabase.functions.invoke('register')
+      await registerUser({
+        firstName: data.firstName,
+        lastName: data.lastName,
+        phone: data.phone,
+        password: data.password,
+        email: data.email,
+        hcaptchaToken: data.hcaptchaToken,
       });
-
-      // Read raw once, then try JSON
-      const raw = await res.text();
-      let js: any = null;
-      try { js = raw ? JSON.parse(raw) : null; } catch { /* not JSON */ }
-
-      if (!res.ok) {
-        const serverMsg = js?.error || js?.message || js?.detail || raw || `${res.status} ${res.statusText}`;
-        console.error('REGISTER ERROR', {
-          status: res.status,
-          statusText: res.statusText,
-          serverMsg,
-          raw,
-        });
-        throw new Error(serverMsg);
-      }
 
       toast.success('Registration successful! Verify your phone next.');
       navigate('/verify', { replace: true, state: { phone: data.phone } });
@@ -329,7 +305,7 @@ const RegisterPage: React.FC = () => {
             {isCaptchaConfigured && (
               <div className="pt-1">
                 <HCaptcha
-                  ref={hcaptchaRef as any}
+                  ref={hcaptchaRef}
                   sitekey={HCAPTCHA_SITE_KEY}
                   onVerify={onVerify}
                   onExpire={onExpire}
