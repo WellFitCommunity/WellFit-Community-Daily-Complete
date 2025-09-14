@@ -1,68 +1,85 @@
 // supabase/functions/_shared/cors.ts
-// Minimal, robust CORS helper for Supabase Edge Functions.
+// Universal CORS helper
 
-import { ALLOWED_ORIGINS } from "./env.ts"; // <-- correct, exported symbol exists
-
-export type CorsOptions = {
-  methods?: readonly string[];
-  allowHeaders?: readonly string[];
-  exposeHeaders?: readonly string[];
-  maxAgeSeconds?: number;
-  allowCredentials?: boolean;
-  allowedOrigins?: readonly string[]; // override env list if needed
+const getEnv = (key: string, fallbacks: string[] = []): string => {
+  const all = [key, ...fallbacks];
+  for (const k of all) {
+    const val = Deno.env.get(k);
+    if (val?.trim()) return val.trim();
+  }
+  return "";
 };
 
-function normalizeOrigin(o: string | null): string {
-  if (!o) return "";
-  try {
-    const u = new URL(o);
-    return `${u.protocol}//${u.host}`; // scheme + host[:port], no trailing slash
-  } catch {
-    return "";
-  }
+const DEFAULT_ORIGINS = [
+  "http://localhost:3100",
+  "https://localhost:3100",
+  "http://127.0.0.1:3100",
+  "https://127.0.0.1:3100",
+];
+
+const ALLOWED_ORIGINS = getEnv("ALLOWED_ORIGINS", [])
+  .split(",")
+  .map(s => s.trim())
+  .filter(Boolean)
+  .concat(DEFAULT_ORIGINS);
+
+export interface CorsOptions {
+  methods?: string[];
+  allowHeaders?: string[];
+  maxAge?: number;
 }
 
-function toOriginSet(list: readonly string[] = []): Set<string> {
-  const set = new Set<string>();
-  for (const item of list) {
-    if (item === "*") { set.add("*"); continue; }
-    const n = normalizeOrigin(item);
-    if (n) set.add(n);
-  }
-  return set;
-}
-
-export function cors(originHeader: string | null, opts: CorsOptions = {}) {
+export function cors(
+  origin: string | null,
+  options: CorsOptions = {}
+): { headers: HeadersInit; allowed: boolean } {
   const {
-    methods = ["GET", "POST", "OPTIONS"],
-    allowHeaders = ["content-type"],
-    exposeHeaders = [],
-    maxAgeSeconds = 600,
-    allowCredentials = false,
-    allowedOrigins = ALLOWED_ORIGINS,
-  } = opts;
+    methods = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowHeaders = [
+      "authorization",
+      "x-client-info",
+      "apikey",
+      "content-type",
+      "x-hcaptcha-token",
+      "x-admin-token",
+    ],
+    maxAge = 86400,
+  } = options;
 
-  const origin = normalizeOrigin(originHeader);
-  const allowset = toOriginSet(allowedOrigins);
-  const wildcard = allowset.has("*");
-  const allowed = wildcard || (!!origin && allowset.has(origin));
-
-  const headers: Record<string, string> = {
-    Vary: "Origin",
-    "Access-Control-Allow-Methods": methods.join(","),
-    "Access-Control-Allow-Headers": allowHeaders.join(","),
-    "Access-Control-Max-Age": String(maxAgeSeconds),
+  const headers: HeadersInit = {
     "Content-Type": "application/json",
+    "Access-Control-Allow-Methods": methods.join(", "),
+    "Access-Control-Allow-Headers": allowHeaders.join(", "),
+    "Access-Control-Max-Age": maxAge.toString(),
+    "Vary": "Origin",
   };
-  if (exposeHeaders.length) {
-    headers["Access-Control-Expose-Headers"] = exposeHeaders.join(",");
+
+  let allowed = false;
+
+  if (origin) {
+    try {
+      const originUrl = new URL(origin);
+      const normalizedOrigin = `${originUrl.protocol}//${originUrl.host}`;
+
+      allowed = ALLOWED_ORIGINS.includes(normalizedOrigin);
+
+      if (
+        !allowed &&
+        (originUrl.hostname === "localhost" || originUrl.hostname === "127.0.0.1")
+      ) {
+        if (originUrl.port === "3100") allowed = true;
+      }
+
+      if (allowed) {
+        headers["Access-Control-Allow-Origin"] = normalizedOrigin;
+      }
+    } catch (e) {
+      console.warn("[CORS] Invalid origin:", origin, e);
+      allowed = false;
+    }
   }
-  if (allowCredentials) {
-    headers["Access-Control-Allow-Credentials"] = "true";
-  }
-  if (allowed) {
-    headers["Access-Control-Allow-Origin"] = origin || (wildcard ? "*" : "");
-  }
+
+  console.log("[CORS] Origin:", origin, "Allowed:", allowed);
 
   return { headers, allowed };
 }

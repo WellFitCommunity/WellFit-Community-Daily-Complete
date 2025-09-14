@@ -212,27 +212,51 @@ const DoctorsView: React.FC = () => {
     return entry.entry_type;
   };
 
-  const handleQuestionSubmit = async () => {
-    if (!userId) {
-      setQuestionSubmitFeedback('You must be logged in to submit a question.');
-      return;
-    }
-    setIsSubmittingQuestion(true);
-    setQuestionSubmitFeedback(null);
-    try {
-      const { error: insertError } = await supabase.from('user_questions').insert({
-        user_id: userId,
-        user_email: user?.email ?? null,
-        created_at: new Date().toISOString(),
-      });
-      if (insertError) throw insertError;
-      setQuestionSubmitFeedback('Your question has been sent. The care team will get back to you soon.');
-    } catch (error: any) {
-      setQuestionSubmitFeedback(error.message || 'Failed to submit question. Please try again.');
-    } finally {
-      setIsSubmittingQuestion(false);
-    }
-  };
+  // In src/pages/DoctorsViewPage.tsx
+
+const handleQuestionSubmit = async () => {
+  if (!userId) {
+    setQuestionSubmitFeedback('You must be logged in to submit a question.');
+    return;
+  }
+
+  setIsSubmittingQuestion(true);
+  setQuestionSubmitFeedback(null);
+
+  try {
+    const { data: sess } = await supabase.auth.getSession();
+    const token = sess?.session?.access_token;
+    if (!token) throw new Error('Session expired. Please log in again.');
+
+    const { data, error } = await supabase.functions.invoke(
+      'admin-user-questions/submit',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: {
+          question_text: 'I have a question for my Care Team about my health data.',
+          category: 'general',
+        },
+      }
+    );
+
+    if (error) throw error;
+    if (!data?.success) throw new Error(data?.error || 'Failed to submit');
+
+    setQuestionSubmitFeedback(
+      'Your question has been sent. The care team will get back to you soon.'
+    );
+  } catch (error: any) {
+    setQuestionSubmitFeedback(
+      error?.message || 'Failed to submit question. Please try again.'
+    );
+  } finally {
+    setIsSubmittingQuestion(false);
+  }
+};
+
 
   if (loading) {
     return (
