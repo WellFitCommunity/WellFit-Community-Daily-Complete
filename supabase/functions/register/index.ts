@@ -6,6 +6,9 @@ import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supa
 import { z, type ZodIssue } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 // ---------- ENVIRONMENT & CORS ----------
+// supabase/functions/register/index.ts - ENVIRONMENT VARIABLE FIX
+// Just update the environment variable section at the top
+
 const getEnv = (key: string, fallbacks: string[] = []): string => {
   const all = [key, ...fallbacks];
   for (const k of all) {
@@ -15,11 +18,32 @@ const getEnv = (key: string, fallbacks: string[] = []): string => {
   return "";
 };
 
+// FIXED: Check all possible environment variable names
 const SB_URL = getEnv("SB_URL", ["SUPABASE_URL"]);
-const SB_SECRET_KEY = getEnv("SB_SECRET_KEY", ["SUPABASE_SERVICE_ROLE_KEY", "SB_SERVICE_ROLE"]);
+const SB_SECRET_KEY = getEnv("SB_SECRET_KEY", [
+  "SUPABASE_SERVICE_ROLE_KEY", 
+  "SB_SERVICE_ROLE", 
+  "SUPABASE_SERVICE_ROLE", // Add this common variant
+  "SERVICE_ROLE_KEY" // And this one
+]);
 const HCAPTCHA_SECRET = getEnv("HCAPTCHA_SECRET", ["SB_HCAPTCHA_SECRET"]);
-const HCAPTCHA_VERIFY_URL =
-  getEnv("HCAPTCHA_VERIFY_URL", ["HCAPTCHA_ENDPOINT"]) || "https://hcaptcha.com/siteverify";
+const HCAPTCHA_VERIFY_URL = getEnv("HCAPTCHA_VERIFY_URL", ["HCAPTCHA_ENDPOINT"]) || "https://hcaptcha.com/siteverify";
+
+// Enhanced environment logging
+console.log("[Register] Environment check:", {
+  SB_URL: SB_URL ? `${SB_URL.slice(0, 20)}...` : "MISSING",
+  SB_SECRET_KEY: SB_SECRET_KEY ? `${SB_SECRET_KEY.slice(0, 8)}...` : "MISSING",
+  HCAPTCHA_SECRET: HCAPTCHA_SECRET ? `${HCAPTCHA_SECRET.slice(0, 8)}...` : "MISSING",
+  HCAPTCHA_VERIFY_URL,
+});
+
+// Add this right after environment variable setup
+console.log("[DEBUG] Environment variables found:", {
+  hasUrl: !!SB_URL,
+  hasKey: !!SB_SECRET_KEY,
+  urlStart: SB_URL?.slice(0, 20),
+  keyStart: SB_SECRET_KEY?.slice(0, 20),
+});
 
 // Enhanced CORS for localhost:3100
 const DEVELOPMENT_ORIGINS = [
