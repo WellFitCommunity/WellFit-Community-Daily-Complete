@@ -46,6 +46,7 @@ const AdminPanel = React.lazy(() => import('./components/admin/AdminPanel'));
 const AdminProfileEditorPage = React.lazy(() => import('./pages/AdminProfileEditorPage'));
 const CommunityMoments = React.lazy(() => import('./components/CommunityMoments'));
 const DemographicsPage = React.lazy(() => import('./pages/DemographicsPage'));
+const TriviaGame = React.lazy(() => import('./components/TriviaGame'));
 
 const PUBLIC_ROUTES = [
   '/',
@@ -101,6 +102,7 @@ function Shell() {
               <Route path="/self-reporting" element={<RequireAuth><SelfReportingPage /></RequireAuth>} />
               <Route path="/doctors-view" element={<RequireAuth><DoctorsViewPage /></RequireAuth>} />
               <Route path="/community" element={<RequireAuth><CommunityMoments /></RequireAuth>} />
+              <Route path="/trivia-game" element={<RequireAuth><TriviaGame /></RequireAuth>} />
 
               {/* Post-login gated */}
               <Route path="/demographics" element={<RequireAuth><DemographicsPage /></RequireAuth>} />

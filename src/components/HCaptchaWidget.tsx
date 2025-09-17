@@ -8,8 +8,10 @@ import React, {
 } from 'react';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
 
+// Support CRA + Vite envs
 const SITE_KEY =
   process.env.REACT_APP_HCAPTCHA_SITE_KEY ||
+  (import.meta as any)?.env?.VITE_HCAPTCHA_SITE_KEY ||
   '';
 
 export interface HCaptchaRef {
@@ -24,12 +26,12 @@ type Props = {
   onVerify?: (token: string) => void;
   onError?: (msg: string) => void;
   onExpire?: () => void;
-  size?: Size;
-  theme?: Theme;
+  size?: Size;   // default now 'invisible'
+  theme?: Theme; // default 'light'
 };
 
 const HCaptchaWidget = forwardRef<HCaptchaRef, Props>(
-  ({ onVerify, onError, onExpire, size = 'normal', theme = 'light' }, ref) => {
+  ({ onVerify, onError, onExpire, size = 'invisible', theme = 'light' }, ref) => {
     // Use `any` to avoid brittle lib type changes + null-init complaints
     const widgetRef = useRef<any>(null);
     const [token, setToken] = useState('');
@@ -59,11 +61,13 @@ const HCaptchaWidget = forwardRef<HCaptchaRef, Props>(
             onError?.(err.message);
             return reject(err);
           }
+          // If we already have a valid token, reuse it
           if (token) return resolve(token);
 
           resolveRef.current = resolve;
           rejectRef.current = reject;
 
+          // In invisible mode, explicitly trigger a run
           if (size === 'invisible') {
             try {
               widgetRef.current?.execute?.();
@@ -75,6 +79,7 @@ const HCaptchaWidget = forwardRef<HCaptchaRef, Props>(
             }
           }
 
+          // Safety timeout in case onVerify never fires
           timeoutRef.current = window.setTimeout(() => {
             const err = new Error('hCaptcha timeout');
             rejectRef.current?.(err);
@@ -118,21 +123,25 @@ const HCaptchaWidget = forwardRef<HCaptchaRef, Props>(
     if (!SITE_KEY) {
       return (
         <div className="text-red-600 text-sm">
-          hCaptcha not configured (missing REACT_APP_HCAPTCHA_SITE_KEY / NEXT_PUBLIC_HCAPTCHA_SITE_KEY)
+          hCaptcha not configured (set REACT_APP_HCAPTCHA_SITE_KEY or VITE_HCAPTCHA_SITE_KEY)
         </div>
       );
     }
 
+    // Off-screen wrapper ensures no layout jump and keeps it effectively invisible.
     return (
-      <HCaptcha
-        ref={widgetRef}
-        sitekey={SITE_KEY}
-        size={size}
-        theme={theme}
-        onVerify={handleVerify}
-        onError={handleError}
-        onExpire={handleExpire}
-      />
+      <div style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }} aria-hidden="true">
+        <HCaptcha
+          ref={widgetRef}
+          sitekey={SITE_KEY}
+          size={size}
+          theme={theme}
+          reCaptchaCompat={false}
+          onVerify={handleVerify}
+          onError={handleError}
+          onExpire={handleExpire}
+        />
+      </div>
     );
   }
 );

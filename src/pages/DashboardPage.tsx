@@ -87,13 +87,13 @@ const Dashboard: React.FC = () => {
         </button>
       </div>
 
-      {/* Return link (hide if you later gate by role) */}
+      {/* Navigation to community */}
       <button
-        onClick={() => navigate('/senior-enrollment')}
+        onClick={() => navigate('/community')}
         className="text-sm underline mb-4"
         style={{ color: branding.secondaryColor }}
       >
-        ← Return to Enrollment
+        → View Community Moments
       </button>
 
       <Card>
