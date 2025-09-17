@@ -1,39 +1,16 @@
-// src/pages/LoginPage.tsx
+// src/pages/LoginPage.tsx - PRODUCTION-READY (TS-safe profile gate)
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { supabase } from '../lib/supabaseClient';
+import { useSupabaseClient } from '../contexts/AuthContext';
 import { WELLFIT_COLORS, APP_INFO } from '../settings/settings';
 
 type Mode = 'senior' | 'admin';
 
-interface ProfileGate {
-  force_password_change?: boolean | null;
-  consent?: boolean | null;
-  demographics_complete?: boolean | null;
-}
-
 const isPhone = (val: string) => /^\d{10,15}$/.test(val.replace(/[^\d]/g, ''));
-
-async function nextRouteForUser(): Promise<string> {
-  const { data: { session } } = await supabase.auth.getSession();
-  const uid = session?.user?.id;
-  if (!uid) return '/login';
-
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('force_password_change, consent, demographics_complete')
-    .eq('id', uid)
-    .single<ProfileGate>();
-
-  if (error || !data) return '/dashboard'; // fail-open to dashboard; RLS will still protect
-  if (data.force_password_change) return '/change-password';
-  if (!data.consent) return '/consent';
-  if (!data.demographics_complete) return '/demographics';
-  return '/dashboard';
-}
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const supabase = useSupabaseClient();
 
   const [mode, setMode] = useState<Mode>('senior');
   const [loading, setLoading] = useState(false);
@@ -49,9 +26,9 @@ const LoginPage: React.FC = () => {
 
   // colors
   const primary = WELLFIT_COLORS.blue;   // #003865
-  const accent = WELLFIT_COLORS.green;   // #8cc63f
+  const accent  = WELLFIT_COLORS.green;  // #8cc63f
 
-  // Optional: tiny debug canary in non-prod to prove envs are injected
+  // Debug info (dev only)
   const debug = useMemo(() => {
     try {
       const client: any = supabase as any;
@@ -62,8 +39,51 @@ const LoginPage: React.FC = () => {
     } catch {
       return { url: 'n/a', hasAuth: false };
     }
-  }, []);
+  }, [supabase]);
 
+  // Normalize phone to +E.164-ish
+  const normalizeToE164 = (raw: string): string => {
+    const digits = raw.replace(/[^\d]/g, '');
+    if (!/^\d{10,15}$/.test(digits)) throw new Error('Invalid phone');
+    if (digits.length === 10) return `+1${digits}`;
+    if (digits.length === 11 && digits.startsWith('1')) return `+${digits}`;
+    return raw.startsWith('+') ? raw : `+${digits}`;
+  };
+
+  // ---- TS-SAFE PROFILE GATE -----------------------------------------------
+  // Avoids .returns<T>() issues and tolerates column name drift.
+  const nextRouteForUser = async (): Promise<string> => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const uid = session?.user?.id;
+    if (!uid) return '/login';
+
+    // Fetch loosely (no .returns<T>(), no compile-time shape)
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('force_password_change, consent, data_consent, demographics_complete, demographic_complete, onboarded')
+      .eq('user_id', uid)
+      .maybeSingle();
+
+    if (error) {
+      console.warn('Profile fetch error:', error.message);
+      // Fail-open to dashboard; RLS still protects sensitive things.
+      return '/dashboard';
+    }
+
+    // Defensive mapping in case your actual column names differ
+    const forcePwd = (data as any)?.force_password_change ?? false;
+    const consent  = (data as any)?.consent ?? (data as any)?.data_consent ?? false;
+    const demoDone = (data as any)?.demographics_complete ?? (data as any)?.demographic_complete ?? false;
+    const onboard  = (data as any)?.onboarded ?? false;
+
+    if (forcePwd) return '/change-password';
+    if (!consent)  return '/consent-photo';
+    if (!onboard || !demoDone) return '/demographics';
+    return '/dashboard';
+  };
+  // -------------------------------------------------------------------------
+
+  // If already signed in, route immediately
   useEffect(() => {
     let cancel = false;
     (async () => {
@@ -74,14 +94,7 @@ const LoginPage: React.FC = () => {
       }
     })();
     return () => { cancel = true; };
-  }, [navigate]);
-
-  const normalizeToE164 = (raw: string): string => {
-    const digits = raw.replace(/[^\d]/g, '');
-    if (digits.length === 10) return `+1${digits}`;
-    if (digits.length === 11 && digits.startsWith('1')) return `+${digits}`;
-    return raw.startsWith('+') ? raw : `+${digits}`;
-  };
+  }, [navigate, supabase]);
 
   const handleSeniorLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,7 +125,7 @@ const LoginPage: React.FC = () => {
         } else if (msg.includes('confirm')) {
           setError('Account not confirmed. Please complete phone verification if required.');
         } else if (msg.includes('internal') || msg.includes('server')) {
-          setError('Auth service error. Likely a configuration issue—please try again shortly.');
+          setError('Auth service error. Please try again shortly.');
         } else {
           setError('An error occurred during login. Please try again.');
         }
@@ -125,6 +138,8 @@ const LoginPage: React.FC = () => {
       const msg = String(err?.message ?? '');
       if (msg.includes('fetch') || msg.includes('network')) {
         setError('Could not connect to the server. Please try again.');
+      } else if (msg.includes('Invalid phone')) {
+        setError('Please enter a valid phone number.');
       } else {
         setError('Unexpected error during login. Please try again.');
       }
@@ -154,17 +169,16 @@ const LoginPage: React.FC = () => {
         if (msg.includes('invalid login credentials')) {
           setError('Admin login failed. Check your email and password.');
         } else if (msg.includes('email not confirmed') || msg.includes('confirm')) {
-          setError('Email not confirmed. Please check your inbox for the confirmation link.');
+          setError('Email not confirmed. Please check your inbox.');
         } else if (msg.includes('internal') || msg.includes('server')) {
-          setError('Auth service error. Likely a configuration issue—please try again shortly.');
+          setError('Auth service error. Please try again shortly.');
         } else {
           setError('An error occurred during admin login. Please try again.');
         }
         return;
       }
 
-      // If your flow wants a PIN step after email login, keep /admin-login.
-      // Otherwise, go straight to /admin.
+      // After email login, route to Admin PIN verification
       navigate('/admin-login', { replace: true });
     } catch (err: any) {
       const msg = String(err?.message ?? '');
@@ -199,6 +213,7 @@ const LoginPage: React.FC = () => {
           type="button"
           onClick={() => { setMode('senior'); setError(''); }}
           className={`px-3 py-1 rounded ${mode === 'senior' ? 'bg-gray-900 text-white' : 'bg-gray-200'}`}
+          aria-pressed={mode === 'senior'}
         >
           Senior Login (Phone)
         </button>
@@ -206,6 +221,7 @@ const LoginPage: React.FC = () => {
           type="button"
           onClick={() => { setMode('admin'); setError(''); }}
           className={`px-3 py-1 rounded ${mode === 'admin' ? 'bg-gray-900 text-white' : 'bg-gray-200'}`}
+          aria-pressed={mode === 'admin'}
         >
           Admin Login (Email)
         </button>
@@ -213,7 +229,7 @@ const LoginPage: React.FC = () => {
 
       {/* Forms */}
       {mode === 'senior' ? (
-        <form onSubmit={handleSeniorLogin} className="space-y-4">
+        <form onSubmit={handleSeniorLogin} className="space-y-4" noValidate>
           <div>
             <label htmlFor="phone-input" className="block text-sm font-medium text-gray-700 mb-1 text-left">
               Phone Number
@@ -226,14 +242,14 @@ const LoginPage: React.FC = () => {
               onChange={e => setPhone(e.target.value)}
               required
               aria-required="true"
-              aria-invalid={!!error}
+              aria-invalid={Boolean(error && !adminEmail)}
               className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:outline-none"
               style={{ borderColor: accent, outlineColor: primary } as React.CSSProperties}
               autoComplete="tel"
               inputMode="tel"
             />
             <p className="text-xs text-left mt-1 text-gray-500">
-              You don’t need to type “+1”. We add it for you.
+              You don't need to type "+1". We add it for you.
             </p>
           </div>
 
@@ -249,7 +265,7 @@ const LoginPage: React.FC = () => {
               onChange={e => setSeniorPassword(e.target.value)}
               required
               aria-required="true"
-              aria-invalid={!!error}
+              aria-invalid={Boolean(error && !adminEmail)}
               className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:outline-none"
               style={{ borderColor: accent, outlineColor: primary } as React.CSSProperties}
               autoComplete="current-password"
@@ -267,9 +283,16 @@ const LoginPage: React.FC = () => {
             {loading ? 'Logging In...' : 'Log In'}
           </button>
 
-          <div className="mt-2 text-center">
-            <Link to="/admin-login" className="text-sm underline" style={{ color: primary }}>
-              Admin PIN (for already-logged-in admins)
+          <div className="mt-2 text-center space-y-2">
+            <Link to="/register" className="block text-sm underline" style={{ color: primary }}>
+              Don't have an account? Register here
+            </Link>
+            <Link
+              to={mode === 'senior' ? '/phone-reset' : '/reset-password'}
+              className="block text-sm underline"
+              style={{ color: primary }}
+            >
+              Forgot your password?
             </Link>
           </div>
 
@@ -282,7 +305,7 @@ const LoginPage: React.FC = () => {
           )}
         </form>
       ) : (
-        <form onSubmit={handleAdminLogin} className="space-y-4">
+        <form onSubmit={handleAdminLogin} className="space-y-4" noValidate>
           <div>
             <label htmlFor="admin-email-input" className="block text-sm font-medium text-gray-700 mb-1 text-left">
               Admin Email
@@ -295,7 +318,7 @@ const LoginPage: React.FC = () => {
               onChange={e => setAdminEmail(e.target.value)}
               required
               aria-required="true"
-              aria-invalid={!!error}
+              aria-invalid={Boolean(error && !phone)}
               className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:outline-none"
               style={{ borderColor: accent, outlineColor: primary } as React.CSSProperties}
               autoComplete="email"
@@ -315,7 +338,7 @@ const LoginPage: React.FC = () => {
               onChange={e => setAdminPassword(e.target.value)}
               required
               aria-required="true"
-              aria-invalid={!!error}
+              aria-invalid={Boolean(error && !phone)}
               className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:outline-none"
               style={{ borderColor: accent, outlineColor: primary } as React.CSSProperties}
               autoComplete="current-password"
@@ -340,9 +363,9 @@ const LoginPage: React.FC = () => {
           </button>
 
           <div className="mt-2 text-center">
-            <Link to="/admin-login" className="text-sm underline" style={{ color: primary }}>
-              Admin PIN (after email login)
-            </Link>
+            <p className="text-xs text-gray-600">
+              After email login, you'll need to enter your admin PIN
+            </p>
           </div>
 
           {/* Dev-only debug canary */}
@@ -359,3 +382,4 @@ const LoginPage: React.FC = () => {
 };
 
 export default LoginPage;
+

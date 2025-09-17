@@ -1,4 +1,4 @@
-// src/contexts/AuthContext.tsx
+// src/contexts/AuthContext.tsx — PRODUCTION-READY (roles-based admin)
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { Session, User, AuthChangeEvent } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabaseClient';
@@ -17,82 +17,133 @@ type AuthContextValue = {
   sendPhoneOtp: (phone: string, captchaToken?: string) => Promise<void>;
   verifyPhoneOtp: (phone: string, token: string) => Promise<void>;
 
-  // Convenience (keeps your old call sites working)
+  // Convenience
   signIn: (opts: { phone?: string; email?: string; password?: string; otp?: string; captchaToken?: string }) => Promise<void>;
   signUp: (opts: { phone?: string; email?: string; password?: string; captchaToken?: string }) => Promise<void>;
 
   signOut: () => Promise<void>;
-  isAdmin: boolean;
+  isAdmin: boolean; // computed from metadata + DB user_roles
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+
+// ---- helpers ----
+function metaIsAdmin(u: User | null): boolean {
+  if (!u) return false;
+  const app: any = u.app_metadata || {};
+  const usr: any = u.user_metadata || {};
+  return Boolean(
+    app.role === 'admin' ||
+    app.role === 'super_admin' ||
+    app.is_admin === true ||
+    usr.role === 'admin' ||
+    usr.role === 'super_admin'
+  );
+}
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
 
-  // derive admin flag from app_metadata.role === 'admin' OR is_admin === true
-  const computeIsAdmin = (u: User | null) => {
-    const role = (u?.app_metadata as any)?.role;
-    const flag = Boolean((u?.app_metadata as any)?.is_admin);
-    return role === 'admin' || flag;
-  };
+  const [metaAdmin, setMetaAdmin] = useState(false);
+  const [dbAdmin, setDbAdmin] = useState<boolean | null>(null); // null = unknown, true/false when known
 
+  async function refreshDbRoles(u: User | null) {
+    try {
+      if (!u?.id) {
+        setDbAdmin(null);
+        return;
+      }
+      // Expect table: public.user_roles(user_id uuid, role text) with RLS allowing self-read
+      const { data, error: selErr } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', u.id);
+
+      if (selErr) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn('[Auth] user_roles fetch failed:', selErr.message);
+        }
+        setDbAdmin(null);
+        return;
+      }
+
+      const roles = (data || []).map((r: any) => String(r.role));
+      const hasAdmin = roles.includes('admin') || roles.includes('super_admin');
+      setDbAdmin(hasAdmin);
+    } catch (e) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn('[Auth] refreshDbRoles exception:', e);
+      }
+      setDbAdmin(null);
+    }
+  }
+
+  // Initial session
   useEffect(() => {
     let cancelled = false;
 
     (async () => {
       try {
+        setLoading(true);
         const { data, error } = await supabase.auth.getSession();
-        if (error) console.error('[Auth] getSession error:', error.message);
-        if (!cancelled) {
-          setSession(data.session ?? null);
-          const u = data.session?.user ?? null;
-          setUser(u);
-          setIsAdmin(computeIsAdmin(u));
+        if (error && process.env.NODE_ENV !== 'production') {
+          console.error('[Auth] getSession error:', error.message);
         }
+        if (cancelled) return;
+
+        const s = data?.session ?? null;
+        const u = s?.user ?? null;
+
+        setSession(s);
+        setUser(u);
+        const m = metaIsAdmin(u);
+        setMetaAdmin(m);
+        refreshDbRoles(u); // async, non-blocking
+      } catch (e: any) {
+        if (!cancelled) setError(e);
       } finally {
         if (!cancelled) setLoading(false);
       }
     })();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event: AuthChangeEvent, newSession: Session | null) => {
-        setSession(newSession);
+    // Subscribe to auth changes
+    const { data: sub } = supabase.auth.onAuthStateChange(
+      (event: AuthChangeEvent, newSession: Session | null) => {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('[Auth] State change:', event, Boolean(newSession));
+        }
         const u = newSession?.user ?? null;
+        setSession(newSession);
         setUser(u);
-        setIsAdmin(computeIsAdmin(u));
+        const m = metaIsAdmin(u);
+        setMetaAdmin(m);
+        refreshDbRoles(u);
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') setError(null);
       }
     );
 
     return () => {
       cancelled = true;
-      subscription.unsubscribe();
+      sub?.subscription?.unsubscribe?.();
+      // @ts-ignore different bundle shapes
+      sub?.unsubscribe?.();
     };
   }, []);
 
-  // ---------- Auth API (simple, covers both worlds) ----------
+  // Final isAdmin: DB (when known) overrides metadata
+  const isAdmin = dbAdmin === null ? metaAdmin : dbAdmin;
+
+  // ---------- Auth API ----------
 
   const signInEmailPassword = async (email: string, password: string) => {
     setLoading(true); setError(null);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-    } catch (e: any) {
-      setError(e); throw e;
-    } finally { setLoading(false); }
-  };
-
-  // Step 1: send OTP (SMS)
-  const sendPhoneOtp = async (phone: string, captchaToken?: string) => {
-    setLoading(true); setError(null);
-    try {
-      const { error } = await supabase.auth.signInWithOtp({
-        phone,
-        options: captchaToken ? { captchaToken } : undefined,
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
       });
       if (error) throw error;
     } catch (e: any) {
@@ -100,7 +151,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally { setLoading(false); }
   };
 
-  // Step 2: verify OTP
+  const sendPhoneOtp = async (phone: string, captchaToken?: string) => {
+    setLoading(true); setError(null);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        phone,
+        options: { channel: 'sms', ...(captchaToken ? { captchaToken } : {}) },
+      });
+      if (error) throw error;
+    } catch (e: any) {
+      setError(e); throw e;
+    } finally { setLoading(false); }
+  };
+
   const verifyPhoneOtp = async (phone: string, token: string) => {
     setLoading(true); setError(null);
     try {
@@ -111,7 +174,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally { setLoading(false); }
   };
 
-  // Backward-compatible helper (routes to the right flow)
   const signIn = async (opts: { phone?: string; email?: string; password?: string; otp?: string; captchaToken?: string }) => {
     const { phone, email, password, otp, captchaToken } = opts || {};
     if (email && password) return signInEmailPassword(email, password);
@@ -120,17 +182,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     throw new Error('Provide (email+password) or (phone) or (phone+otp).');
   };
 
-  // Sign up (email/password) OR (phone via OTP)
   const signUp = async (opts: { phone?: string; email?: string; password?: string; captchaToken?: string }) => {
     const { phone, email, password, captchaToken } = opts || {};
     setLoading(true); setError(null);
     try {
       if (email && password) {
-        const { error } = await supabase.auth.signUp({ email, password, options: captchaToken ? { captchaToken } : undefined });
+        const { error } = await supabase.auth.signUp({
+          email: email.trim().toLowerCase(),
+          password,
+          options: captchaToken ? { captchaToken } : undefined,
+        });
         if (error) throw error;
       } else if (phone) {
-        // For phone, we use OTP sign-in to provision the user (no password UX).
-        const { error } = await supabase.auth.signInWithOtp({ phone, options: captchaToken ? { captchaToken } : undefined });
+        const { error } = await supabase.auth.signInWithOtp({
+          phone,
+          options: { channel: 'sms', ...(captchaToken ? { captchaToken } : {}) },
+        });
         if (error) throw error;
       } else {
         throw new Error('Provide (email+password) or (phone).');

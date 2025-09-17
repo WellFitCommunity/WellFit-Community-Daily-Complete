@@ -1,25 +1,42 @@
-// Deno — Supabase Edge Function
+// supabase/functions/sms-send-code/index.ts
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { cors } from "../_shared/cors.ts";
 
-const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID")!;
-const TWILIO_AUTH_TOKEN  = Deno.env.get("TWILIO_AUTH_TOKEN")!;
-const VERIFY_SID         = Deno.env.get("TWILIO_VERIFY_SERVICE_SID")!;
+Deno.serve(async (req: Request): Promise<Response> => {
+  const { headers, allowed } = cors(req.headers.get("origin"), {
+    methods: ["POST", "OPTIONS"],
+    allowHeaders: ["authorization", "x-client-info", "apikey", "content-type"],
+    maxAge: 600,
+  });
 
-// 🚨 For production, set this to your exact app domains
-const CORS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST,OPTIONS"
-};
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: allowed ? 204 : 403, headers });
+  }
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers });
+  }
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
+  // Safe env reads — never top-level throw
+  const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID") ?? "";
+  const TWILIO_AUTH_TOKEN  = Deno.env.get("TWILIO_AUTH_TOKEN") ?? "";
+  const VERIFY_SID         = Deno.env.get("TWILIO_VERIFY_SERVICE_SID") ?? "";
+
+  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !VERIFY_SID) {
+    console.error("Missing Twilio envs", {
+      hasSid: !!TWILIO_ACCOUNT_SID,
+      hasToken: !!TWILIO_AUTH_TOKEN,
+      hasVerify: !!VERIFY_SID,
+    });
+    return new Response(JSON.stringify({ error: "Server not configured (Twilio envs missing)" }), {
+      status: 500, headers,
+    });
+  }
 
   try {
-    const { phone } = await req.json();
-    if (!/^\+\d{10,15}$/.test(phone || "")) {
-      return new Response(JSON.stringify({ error: "Invalid E.164 phone." }), {
-        status: 400, headers: { ...CORS, "Content-Type": "application/json" }
+    const { phone } = await req.json().catch(() => ({}));
+    if (typeof phone !== "string" || !/^\+\d{10,15}$/.test(phone)) {
+      return new Response(JSON.stringify({ error: "Invalid E.164 phone (e.g., +15551234567)" }), {
+        status: 400, headers,
       });
     }
 
@@ -35,19 +52,18 @@ Deno.serve(async (req) => {
       }
     );
 
+    const txt = await resp.text();
     if (!resp.ok) {
-      const t = await resp.text();
-      return new Response(JSON.stringify({ error: `Twilio error: ${t}` }), {
-        status: 502, headers: { ...CORS, "Content-Type": "application/json" }
+      console.error("Twilio start error", resp.status, txt);
+      return new Response(JSON.stringify({ error: "Twilio error", details: txt }), {
+        status: 502, headers,
       });
     }
 
-    return new Response(JSON.stringify({ ok: true }), {
-      headers: { ...CORS, "Content-Type": "application/json" }
-    });
-  } catch (e: any) {
-    return new Response(JSON.stringify({ error: e?.message || "Unknown error" }), {
-      status: 500, headers: { ...CORS, "Content-Type": "application/json" }
-    });
+    return new Response(JSON.stringify({ ok: true }), { status: 200, headers });
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error("start-verification fatal", msg);
+    return new Response(JSON.stringify({ error: "Internal error" }), { status: 500, headers });
   }
 });

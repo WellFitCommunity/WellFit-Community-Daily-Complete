@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSupabaseClient, useUser } from '../contexts/AuthContext';
 import { useBranding } from '../BrandingContext';
+import { Link } from 'lucide-react';
 
 interface CheckInData {
   id: string;
@@ -362,19 +363,15 @@ const handleQuestionSubmit = async () => {
           <h4 className="font-semibold text-md mb-2" style={{ color: branding.primaryColor }}>
             Need Help or Have Questions?
           </h4>
-          <button
-            onClick={handleQuestionSubmit}
-            disabled={isSubmittingQuestion || loading}
-            className="px-6 py-2 text-white font-semibold rounded-md shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-70"
-            style={{ backgroundColor: branding.secondaryColor }}
-          >
-            {isSubmittingQuestion ? 'Submitting...' : 'I have a question for my Care Team'}
-          </button>
-          {questionSubmitFeedback && (
-            <p className={`mt-3 text-sm ${questionSubmitFeedback.includes('Failed') ? 'text-red-600' : 'text-green-600'}`}>
-              {questionSubmitFeedback}
-            </p>
-          )}
+         // In DoctorsViewPage.tsx, replace the question button with:
+<Link 
+  to="/questions" 
+  className="px-6 py-2 text-white font-semibold rounded-md shadow-sm hover:opacity-90"
+  style={{ backgroundColor: branding.secondaryColor }}
+>
+  Ask Your Care Team a Question
+</Link>
+          )
         </div>
       )}
     </div>

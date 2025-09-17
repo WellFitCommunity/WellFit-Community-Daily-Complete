@@ -1,339 +1,253 @@
-// src/pages/RegisterPage.tsx
-import React, { useEffect, useRef, useState } from 'react';
-import { useForm, SubmitHandler } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import * as yup from 'yup';
-import HCaptcha from '@hcaptcha/react-hcaptcha';
-import { useNavigate, Link } from 'react-router-dom';
-import { toast } from 'react-toastify';
-import PrettyCard from '../components/ui/PrettyCard';
-import { registerUser } from '../utils/register'; // ✅ use helper (cleaner)
+// src/pages/RegisterPage.tsx — INVISIBLE hCaptcha (ready to paste)
+import React, { useState, useRef, useCallback, FormEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useSupabaseClient } from '../contexts/AuthContext';
+import HCaptchaWidget, { HCaptchaRef } from '../components/HCaptchaWidget';
 
-type FormValues = {
-  firstName: string;
-  lastName: string;
-  phone: string;          // Always +1XXXXXXXXXX
-  email?: string;
+type FormState = {
+  phone: string;
   password: string;
   confirmPassword: string;
-  consent: boolean;
-  hcaptchaToken: string;
+  firstName: string;
+  lastName: string;
+  email: string;
 };
-
-const WELLFIT_BLUE = '#003865';
-
-// IMPORTANT: must be defined in your frontend build for prod.
-// For local dev this default is fine.
-const HCAPTCHA_SITE_KEY = process.env.REACT_APP_HCAPTCHA_SITE_KEY || '';
-
-// --- hCaptcha handle type via any to avoid lib TS mismatch
-type HCaptchaHandleAny = any;
-
-// Strict US-only E.164 (+1 + 10 digits)
-const schema: yup.ObjectSchema<FormValues> = yup
-  .object({
-    firstName: yup.string().required('First name is required.'),
-    lastName: yup.string().required('Last name is required.'),
-    phone: yup
-      .string()
-      .required('Phone number is required.')
-      .matches(/^\+1\d{10}$/, 'Enter a valid US number like +1XXXXXXXXXX.'),
-    email: yup
-      .string()
-      .trim()
-      .transform((v) => (v === '' ? undefined : v))
-      .optional()
-      .email('Invalid email address.'),
-    password: yup
-      .string()
-      .required('Password is required.')
-      .min(8, 'At least 8 characters.')
-      .matches(/[A-Z]/, 'One uppercase letter.')
-      .matches(/\d/, 'One number.')
-      .matches(/[^A-Za-z0-9]/, 'One special character.'),
-    confirmPassword: yup
-      .string()
-      .oneOf([yup.ref('password')], 'Passwords must match.')
-      .required('Please confirm your password.'),
-    consent: yup.boolean().oneOf([true], 'You must agree to proceed.').required(),
-    hcaptchaToken: yup.string().required('Captcha verification is required.'),
-  })
-  .required();
-
-// --- Helpers: keep phone input locked to +1 and digits only ---
-function normalizeUSPhoneInput(raw: string): string {
-  const digits = raw.replace(/\D/g, '');
-  let core = digits.startsWith('1') ? digits : `1${digits}`;
-  core = core.slice(0, 11);
-  return `+${core}`;
-}
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
-  const hcaptchaRef = useRef<HCaptchaHandleAny>(null); // ✅ safer typing
+  const supabase = useSupabaseClient();
+  const hcaptchaRef = useRef<HCaptchaRef>(null);
 
-  const [isCaptchaConfigured, setIsCaptchaConfigured] = useState(true);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [showPw, setShowPw] = useState(false);
-  const [showPw2, setShowPw2] = useState(false);
-
-  useEffect(() => {
-    if (!HCAPTCHA_SITE_KEY) {
-      console.error('Missing REACT_APP_HCAPTCHA_SITE_KEY — captcha disabled.');
-      setIsCaptchaConfigured(false);
-    }
-  }, []);
-
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    setError,
-    clearErrors,
-    watch,
-    formState: { errors, isSubmitting },
-  } = useForm<FormValues>({
-    defaultValues: {
-      firstName: '',
-      lastName: '',
-      phone: '+1',
-      email: '',
-      password: '',
-      confirmPassword: '',
-      consent: false,
-      hcaptchaToken: '',
-    },
-    // ✅ TS-safe: no generic arg needed here
-    resolver: yupResolver(schema),
-    mode: 'onBlur',
-    reValidateMode: 'onChange',
+  const [formData, setFormData] = useState<FormState>({
+    phone: '',
+    password: '',
+    confirmPassword: '',
+    firstName: '',
+    lastName: '',
+    email: '',
   });
 
-  // Keep the phone input sticky to +1 prefix, digits only, max length 12 (+ + 11 digits)
-  const phoneVal = watch('phone');
-  useEffect(() => {
-    if (!phoneVal) {
-      setValue('phone', '+1', { shouldValidate: true, shouldDirty: true });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [hcaptchaToken, setHcaptchaToken] = useState<string>('');
+
+  // We'll resolve this when onVerify fires (works whether a challenge pops or not)
+  const tokenResolverRef = useRef<((t: string) => void) | null>(null);
+
+  const normalizePhone = (phone: string): string => {
+    const digits = phone.replace(/[^\d]/g, '');
+    if (digits.length === 10) return `+1${digits}`;
+    if (digits.length === 11 && digits.startsWith('1')) return `+${digits}`;
+    return phone.startsWith('+') ? phone : (digits ? `+${digits}` : '');
+  };
+
+  const validateForm = (): string | null => {
+    if (!formData.firstName.trim()) return 'First name is required';
+    if (!formData.lastName.trim()) return 'Last name is required';
+
+    const normalizedPhone = normalizePhone(formData.phone);
+    if (!/^\+\d{10,15}$/.test(normalizedPhone)) {
+      return 'Please enter a valid phone number (e.g., 555-555-5555 or +15555555555)';
+    }
+
+    if (!formData.password) return 'Password is required';
+    if (formData.password !== formData.confirmPassword) return 'Passwords do not match';
+    if (formData.password.length < 8) return 'Password must be at least 8 characters';
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])/.test(formData.password)) {
+      return 'Password must contain uppercase, lowercase, number, and special character';
+    }
+    return null;
+  };
+
+  // Ask hCaptcha for a token in invisible mode. If it needs a challenge, it will show it.
+  const ensureCaptchaToken = useCallback(async (): Promise<string> => {
+    // Already have a token from a previous verify
+    if (hcaptchaToken) return hcaptchaToken;
+
+    // Prepare to wait for onVerify
+    const tokenPromise = new Promise<string>((resolve, reject) => {
+      tokenResolverRef.current = resolve;
+      // Safety timeout (15s); if hCaptcha never responds, we fail gracefully
+      const timer = setTimeout(() => {
+        tokenResolverRef.current = null;
+        reject(new Error('Security check timed out. Please try again.'));
+      }, 15000);
+      // Wrap resolve to clear timeout
+      const originalResolve = resolve;
+      tokenResolverRef.current = (t: string) => {
+        clearTimeout(timer);
+        originalResolve(t);
+      };
+    });
+
+    // Trigger the invisible challenge
+    try {
+      await hcaptchaRef.current?.execute?.();
+    } catch {
+      // If execute() is unavailable, surface a clear error
+      throw new Error('Security check failed to start. Please refresh and try again.');
+    }
+
+    // Wait for onVerify to provide the token
+    const token = await tokenPromise;
+    return token;
+  }, [hcaptchaToken]);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    const validationError = validateForm();
+    if (validationError) {
+      setError(validationError);
       return;
     }
-    const normalized = normalizeUSPhoneInput(phoneVal);
-    if (normalized !== phoneVal) {
-      setValue('phone', normalized, { shouldValidate: true, shouldDirty: true });
-    }
-  }, [phoneVal, setValue]);
 
-  const onVerify = (token: string) => {
-    setValue('hcaptchaToken', token, { shouldValidate: true });
-    clearErrors('hcaptchaToken');
-  };
-
-  const onExpire = () => {
-    setValue('hcaptchaToken', '', { shouldValidate: true });
-    setError('hcaptchaToken', { type: 'manual', message: 'Captcha expired. Please try again.' });
-  };
-
-  const onSubmit: SubmitHandler<FormValues> = async (data) => {
+    setLoading(true);
     try {
-      setSubmitError(null);
-      clearErrors();
+      // Always acquire/refresh token in invisible mode at submit time
+      const token = await ensureCaptchaToken();
 
-      if (!isCaptchaConfigured) throw new Error('Captcha not configured.');
-      if (!data.hcaptchaToken) throw new Error('Please complete the captcha.');
-
-      // Build payload for the Edge Function (server expects snake_case)
-      const payload = {
-        first_name: data.firstName,
-        last_name: data.lastName,
-        phone: data.phone,
-        email: data.email ?? null,
-        password: data.password,
-        consent: data.consent,
-        hcaptcha_token: data.hcaptchaToken,
-      };
-
-      // ✅ Use helper that calls supabase.functions.invoke('register')
-      await registerUser({
-        firstName: data.firstName,
-        lastName: data.lastName,
-        phone: data.phone,
-        password: data.password,
-        email: data.email,
-        hcaptchaToken: data.hcaptchaToken,
+      const normalizedPhone = normalizePhone(formData.phone);
+      const { error: regError } = await supabase.functions.invoke('register', {
+        body: {
+          phone: normalizedPhone,
+          password: formData.password,
+          first_name: formData.firstName.trim(),
+          last_name: formData.lastName.trim(),
+          email: formData.email?.trim() || undefined,
+          hcaptcha_token: token,
+        },
       });
 
-      toast.success('Registration successful! Verify your phone next.');
-      navigate('/verify', { replace: true, state: { phone: data.phone } });
-    } catch (err) {
-      const e = err instanceof Error ? err : new Error('Unknown error');
-      console.error(e);
-      setSubmitError(e.message);
-      setError('root' as any, { type: 'manual', message: e.message });
-      hcaptchaRef.current?.resetCaptcha?.();
-      setValue('hcaptchaToken', '', { shouldValidate: true });
-      toast.error(e.message);
+      if (regError) {
+        throw new Error(regError.message || 'Registration failed');
+      }
+
+      navigate('/verify', { state: { phone: normalizedPhone }, replace: true });
+    } catch (err: unknown) {
+      const message =
+        (err as { message?: string })?.message ||
+        'Registration failed. Please try again.';
+      setError(message);
+
+      // Reset captcha to allow a clean retry
+      try { hcaptchaRef.current?.reset?.(); } catch {}
+      setHcaptchaToken('');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <div className="max-w-lg w-full">
-        <PrettyCard>
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className="space-y-4"
-            noValidate
-            aria-labelledby="form-title"
-          >
-            <h2 id="form-title" className="text-2xl font-bold text-center" style={{ color: WELLFIT_BLUE }}>
-              WellFit Registration
-            </h2>
+    <div className="max-w-md mx-auto mt-8 p-6 bg-white rounded-xl shadow-md">
+      <h1 className="text-2xl font-bold text-center mb-6">Create Account</h1>
 
-            {!isCaptchaConfigured && (
-              <div role="alert" className="bg-red-100 border-l-4 border-red-700 p-4 text-red-700 font-semibold">
-                Registration is unavailable due to a configuration issue (hCaptcha Site Key missing).
-              </div>
-            )}
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+        <div className="grid grid-cols-2 gap-4">
+          <input
+            type="text"
+            placeholder="First Name"
+            value={formData.firstName}
+            onChange={(e) => setFormData((s) => ({ ...s, firstName: e.target.value }))}
+            className="p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+            required
+            aria-label="First Name"
+            autoComplete="given-name"
+          />
+          <input
+            type="text"
+            placeholder="Last Name"
+            value={formData.lastName}
+            onChange={(e) => setFormData((s) => ({ ...s, lastName: e.target.value }))}
+            className="p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+            required
+            aria-label="Last Name"
+            autoComplete="family-name"
+          />
+        </div>
 
-            {submitError && (
-              <div role="alert" className="bg-red-50 text-red-700 border border-red-200 p-3 rounded">
-                {submitError}
-              </div>
-            )}
+        <input
+          type="tel"
+          placeholder="Phone Number"
+          value={formData.phone}
+          onChange={(e) => setFormData((s) => ({ ...s, phone: e.target.value }))}
+          className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+          required
+          aria-label="Phone Number"
+          autoComplete="tel"
+          inputMode="tel"
+        />
 
-            <div className="grid grid-cols-1 gap-3">
-              <label className="flex flex-col text-sm">
-                <span className="font-medium">First name</span>
-                <input
-                  {...register('firstName')}
-                  className="mt-1 rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-[#8cc63f]"
-                  autoComplete="given-name"
-                />
-                {errors.firstName && <span className="text-red-600">{errors.firstName.message}</span>}
-              </label>
+        <input
+          type="email"
+          placeholder="Email (Optional)"
+          value={formData.email}
+          onChange={(e) => setFormData((s) => ({ ...s, email: e.target.value }))}
+          className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+          aria-label="Email (Optional)"
+          autoComplete="email"
+        />
 
-              <label className="flex flex-col text-sm">
-                <span className="font-medium">Last name</span>
-                <input
-                  {...register('lastName')}
-                  className="mt-1 rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-[#8cc63f]"
-                  autoComplete="family-name"
-                />
-                {errors.lastName && <span className="text-red-600">{errors.lastName.message}</span>}
-              </label>
+        <input
+          type="password"
+          placeholder="Password"
+          value={formData.password}
+          onChange={(e) => setFormData((s) => ({ ...s, password: e.target.value }))}
+          className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+          required
+          aria-label="Password"
+          autoComplete="new-password"
+        />
 
-              <label className="flex flex-col text-sm">
-                <span className="font-medium">Phone (US only)</span>
-                <input
-                  {...register('phone')}
-                  inputMode="tel"
-                  className="mt-1 rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-[#8cc63f]"
-                  placeholder="+1XXXXXXXXXX"
-                  autoComplete="tel"
-                  maxLength={12}
-                />
-                <span className="text-xs text-gray-500 mt-1">
-                  We auto-format to <code>+1</code>. Type only your 10-digit US number.
-                </span>
-                {errors.phone && <span className="text-red-600">{errors.phone.message}</span>}
-              </label>
+        <input
+          type="password"
+          placeholder="Confirm Password"
+          value={formData.confirmPassword}
+          onChange={(e) => setFormData((s) => ({ ...s, confirmPassword: e.target.value }))}
+          className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+          required
+          aria-label="Confirm Password"
+          autoComplete="new-password"
+        />
 
-              <label className="flex flex-col text-sm">
-                <span className="font-medium">Email (optional)</span>
-                <input
-                  {...register('email')}
-                  type="email"
-                  className="mt-1 rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-[#8cc63f]"
-                  autoComplete="email"
-                />
-                {errors.email && <span className="text-red-600">{errors.email.message}</span>}
-              </label>
+        {/* Invisible hCaptcha (no checkbox). It will run on submit via execute(). */}
+        <HCaptchaWidget
+          ref={hcaptchaRef}
+          onVerify={(t: string) => {
+            setHcaptchaToken(t);
+            // If someone is awaiting the token, resolve it
+            tokenResolverRef.current?.(t);
+            tokenResolverRef.current = null;
+            setError('');
+          }}
+          onError={() => {
+            setHcaptchaToken('');
+            tokenResolverRef.current = null;
+            setError('Security check failed. Please try again.');
+          }}
+          onExpire={() => {
+            setHcaptchaToken('');
+            tokenResolverRef.current = null;
+          }}
+          size="invisible"
+          theme="light"
+        />
 
-              <label className="flex flex-col text-sm">
-                <span className="font-medium">Password</span>
-                <div className="relative">
-                  <input
-                    {...register('password')}
-                    type={showPw ? 'text' : 'password'}
-                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 pr-16 outline-none focus:ring-2 focus:ring-[#8cc63f]"
-                    autoComplete="new-password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPw((s) => !s)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-blue-600 underline"
-                  >
-                    {showPw ? 'Hide' : 'Show'}
-                  </button>
-                </div>
-                {errors.password && <span className="text-red-600">{errors.password.message}</span>}
-              </label>
+        {error && (
+          <div className="p-3 bg-red-50 border border-red-200 rounded" role="alert">
+            <p className="text-red-600 text-sm">{error}</p>
+          </div>
+        )}
 
-              <label className="flex flex-col text-sm">
-                <span className="font-medium">Confirm Password</span>
-                <div className="relative">
-                  <input
-                    {...register('confirmPassword')}
-                    type={showPw2 ? 'text' : 'password'}
-                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 pr-16 outline-none focus:ring-2 focus:ring-[#8cc63f]"
-                    autoComplete="new-password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPw2((s) => !s)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-blue-600 underline"
-                  >
-                    {showPw2 ? 'Hide' : 'Show'}
-                  </button>
-                </div>
-                {errors.confirmPassword && (
-                  <span className="text-red-600">{errors.confirmPassword.message}</span>
-                )}
-              </label>
-
-              <label className="flex items-start gap-2 text-sm leading-5">
-                <input type="checkbox" {...register('consent')} className="mt-1" />
-                <span>
-                  I agree to receive automated messages from WellFit Community for reminders and program
-                  updates. Message &amp; data rates may apply. Reply STOP to opt out. Read our{' '}
-                  <Link to="/terms" className="text-blue-700 underline">Terms of Service</Link> and{' '}
-                  <Link to="/privacy-policy" className="text-blue-700 underline">Privacy Policy</Link>.
-                </span>
-              </label>
-              {errors.consent && <span className="text-red-600">{errors.consent.message}</span>}
-            </div>
-
-            {isCaptchaConfigured && (
-              <div className="pt-1">
-                <HCaptcha
-                  ref={hcaptchaRef}
-                  sitekey={HCAPTCHA_SITE_KEY}
-                  onVerify={onVerify}
-                  onExpire={onExpire}
-                />
-                {errors.hcaptchaToken && (
-                  <span className="text-red-600">{errors.hcaptchaToken.message}</span>
-                )}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={isSubmitting || !isCaptchaConfigured}
-              className="w-full mt-2 rounded-md px-4 py-2 text-white shadow disabled:opacity-60"
-              style={{ backgroundColor: WELLFIT_BLUE }}
-            >
-              {isSubmitting ? 'Submitting…' : 'Register'}
-            </button>
-
-            <p className="text-center text-sm text-gray-600">
-              Already have an account?{' '}
-              <Link to="/login" className="text-blue-600 underline">
-                Log in
-              </Link>
-            </p>
-          </form>
-        </PrettyCard>
-      </div>
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full py-3 bg-blue-600 text-white rounded disabled:opacity-50 hover:bg-blue-700"
+        >
+          {loading ? 'Creating Account...' : 'Create Account'}
+        </button>
+      </form>
     </div>
   );
 };
