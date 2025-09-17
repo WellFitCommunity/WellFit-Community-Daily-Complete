@@ -1,4 +1,6 @@
-// src/pages/RegisterPage.tsx — INVISIBLE hCaptcha (ready to paste)
+// src/pages/RegisterPage.tsx
+// PRODUCTION-GRADE with confirm password + ARIA fixes + invisible hCaptcha
+
 import React, { useState, useRef, useCallback, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSupabaseClient } from '../contexts/AuthContext';
@@ -30,10 +32,9 @@ const RegisterPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [hcaptchaToken, setHcaptchaToken] = useState<string>('');
-
-  // We'll resolve this when onVerify fires (works whether a challenge pops or not)
   const tokenResolverRef = useRef<((t: string) => void) | null>(null);
 
+  // ---------- HELPERS ----------
   const normalizePhone = (phone: string): string => {
     const digits = phone.replace(/[^\d]/g, '');
     if (digits.length === 10) return `+1${digits}`;
@@ -59,40 +60,33 @@ const RegisterPage: React.FC = () => {
     return null;
   };
 
-  // Ask hCaptcha for a token in invisible mode. If it needs a challenge, it will show it.
+  // ---------- hCaptcha ----------
   const ensureCaptchaToken = useCallback(async (): Promise<string> => {
-    // Already have a token from a previous verify
     if (hcaptchaToken) return hcaptchaToken;
 
-    // Prepare to wait for onVerify
     const tokenPromise = new Promise<string>((resolve, reject) => {
       tokenResolverRef.current = resolve;
-      // Safety timeout (15s); if hCaptcha never responds, we fail gracefully
       const timer = setTimeout(() => {
         tokenResolverRef.current = null;
         reject(new Error('Security check timed out. Please try again.'));
       }, 15000);
-      // Wrap resolve to clear timeout
-      const originalResolve = resolve;
+      const orig = resolve;
       tokenResolverRef.current = (t: string) => {
         clearTimeout(timer);
-        originalResolve(t);
+        orig(t);
       };
     });
 
-    // Trigger the invisible challenge
     try {
       await hcaptchaRef.current?.execute?.();
     } catch {
-      // If execute() is unavailable, surface a clear error
       throw new Error('Security check failed to start. Please refresh and try again.');
     }
 
-    // Wait for onVerify to provide the token
-    const token = await tokenPromise;
-    return token;
+    return await tokenPromise;
   }, [hcaptchaToken]);
 
+  // ---------- SUBMIT ----------
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
@@ -105,14 +99,14 @@ const RegisterPage: React.FC = () => {
 
     setLoading(true);
     try {
-      // Always acquire/refresh token in invisible mode at submit time
       const token = await ensureCaptchaToken();
-
       const normalizedPhone = normalizePhone(formData.phone);
+
       const { error: regError } = await supabase.functions.invoke('register', {
         body: {
           phone: normalizedPhone,
           password: formData.password,
+          confirm_password: formData.confirmPassword, // sent to server for parity check
           first_name: formData.firstName.trim(),
           last_name: formData.lastName.trim(),
           email: formData.email?.trim() || undefined,
@@ -120,18 +114,11 @@ const RegisterPage: React.FC = () => {
         },
       });
 
-      if (regError) {
-        throw new Error(regError.message || 'Registration failed');
-      }
+      if (regError) throw new Error(regError.message || 'Registration failed');
 
       navigate('/verify', { state: { phone: normalizedPhone }, replace: true });
-    } catch (err: unknown) {
-      const message =
-        (err as { message?: string })?.message ||
-        'Registration failed. Please try again.';
-      setError(message);
-
-      // Reset captcha to allow a clean retry
+    } catch (err: any) {
+      setError(err.message || 'Registration failed. Please try again.');
       try { hcaptchaRef.current?.reset?.(); } catch {}
       setHcaptchaToken('');
     } finally {
@@ -139,6 +126,7 @@ const RegisterPage: React.FC = () => {
     }
   };
 
+  // ---------- RENDER ----------
   return (
     <div className="max-w-md mx-auto mt-8 p-6 bg-white rounded-xl shadow-md">
       <h1 className="text-2xl font-bold text-center mb-6">Create Account</h1>
@@ -149,7 +137,7 @@ const RegisterPage: React.FC = () => {
             type="text"
             placeholder="First Name"
             value={formData.firstName}
-            onChange={(e) => setFormData((s) => ({ ...s, firstName: e.target.value }))}
+            onChange={(e) => setFormData(s => ({ ...s, firstName: e.target.value }))}
             className="p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
             required
             aria-label="First Name"
@@ -159,7 +147,7 @@ const RegisterPage: React.FC = () => {
             type="text"
             placeholder="Last Name"
             value={formData.lastName}
-            onChange={(e) => setFormData((s) => ({ ...s, lastName: e.target.value }))}
+            onChange={(e) => setFormData(s => ({ ...s, lastName: e.target.value }))}
             className="p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
             required
             aria-label="Last Name"
@@ -171,7 +159,7 @@ const RegisterPage: React.FC = () => {
           type="tel"
           placeholder="Phone Number"
           value={formData.phone}
-          onChange={(e) => setFormData((s) => ({ ...s, phone: e.target.value }))}
+          onChange={(e) => setFormData(s => ({ ...s, phone: e.target.value }))}
           className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
           required
           aria-label="Phone Number"
@@ -183,7 +171,7 @@ const RegisterPage: React.FC = () => {
           type="email"
           placeholder="Email (Optional)"
           value={formData.email}
-          onChange={(e) => setFormData((s) => ({ ...s, email: e.target.value }))}
+          onChange={(e) => setFormData(s => ({ ...s, email: e.target.value }))}
           className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
           aria-label="Email (Optional)"
           autoComplete="email"
@@ -193,7 +181,7 @@ const RegisterPage: React.FC = () => {
           type="password"
           placeholder="Password"
           value={formData.password}
-          onChange={(e) => setFormData((s) => ({ ...s, password: e.target.value }))}
+          onChange={(e) => setFormData(s => ({ ...s, password: e.target.value }))}
           className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
           required
           aria-label="Password"
@@ -204,19 +192,17 @@ const RegisterPage: React.FC = () => {
           type="password"
           placeholder="Confirm Password"
           value={formData.confirmPassword}
-          onChange={(e) => setFormData((s) => ({ ...s, confirmPassword: e.target.value }))}
+          onChange={(e) => setFormData(s => ({ ...s, confirmPassword: e.target.value }))}
           className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
           required
           aria-label="Confirm Password"
           autoComplete="new-password"
         />
 
-        {/* Invisible hCaptcha (no checkbox). It will run on submit via execute(). */}
         <HCaptchaWidget
           ref={hcaptchaRef}
           onVerify={(t: string) => {
             setHcaptchaToken(t);
-            // If someone is awaiting the token, resolve it
             tokenResolverRef.current?.(t);
             tokenResolverRef.current = null;
             setError('');

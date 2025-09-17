@@ -1,14 +1,13 @@
-// supabase/functions/register/index.ts
-// FINAL VERSION for deployment
-
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4?dts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
+// ---------- ENV ----------
 const SB_URL = Deno.env.get("SUPABASE_URL") || Deno.env.get("SB_URL") || "";
 const SB_SECRET_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("SB_SECRET_KEY") || "";
 const HCAPTCHA_SECRET = Deno.env.get("HCAPTCHA_SECRET") || "";
 
+// ---------- CORS ----------
 const corsHeaders = {
   "Content-Type": "application/json",
   "Access-Control-Allow-Origin": "*",
@@ -16,15 +15,28 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const RegisterSchema = z.object({
+// ---------- VALIDATION ----------
+// 1) Define a BASE schema
+const RegisterBase = z.object({
   phone: z.string().min(10),
   password: z.string().min(8),
+  confirm_password: z.string().min(8),
   first_name: z.string().min(1),
   last_name: z.string().min(1),
   hcaptcha_token: z.string().min(1),
 });
 
-function jsonResponse(body: any, status: number) {
+// 2) Type from base
+type RegisterInput = z.infer<typeof RegisterBase>;
+
+// 3) Refine with a TYPED param (fixes the TS error on 'v')
+const RegisterSchema = RegisterBase.refine(
+  (v: RegisterInput) => v.password === v.confirm_password,
+  { message: "Passwords do not match", path: ["confirm_password"] }
+);
+
+// ---------- HELPERS ----------
+function jsonResponse(body: unknown, status: number) {
   return new Response(JSON.stringify(body), { status, headers: corsHeaders });
 }
 
@@ -53,6 +65,7 @@ async function verifyHcaptcha(token: string): Promise<boolean> {
   }
 }
 
+// ---------- HANDLER ----------
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders });
   if (req.method !== "POST") return jsonResponse({ error: "Method not allowed" }, 405);
@@ -63,35 +76,38 @@ serve(async (req: Request) => {
     }
 
     const body = await req.json();
-    const validation = RegisterSchema.safeParse(body);
-    if (!validation.success) return jsonResponse({ error: "Invalid data" }, 400);
+    const parsed = RegisterSchema.safeParse(body);
+    if (!parsed.success) {
+      return jsonResponse({ error: "Invalid data", details: parsed.error.errors }, 400);
+    }
 
-    const data = validation.data;
-    const phoneNumber = normalizePhone(data.phone);
+    const payload: RegisterInput = parsed.data;
+    const phoneNumber = normalizePhone(payload.phone);
 
-    const captchaValid = await verifyHcaptcha(data.hcaptcha_token);
+    const captchaValid = await verifyHcaptcha(payload.hcaptcha_token);
     if (!captchaValid) return jsonResponse({ error: "Captcha failed" }, 401);
 
     const supabase = createClient(SB_URL, SB_SECRET_KEY);
 
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       phone: phoneNumber,
-      password: data.password,
+      password: payload.password,
       phone_confirm: true,
       user_metadata: {
         role: "senior",
-        first_name: data.first_name,
-        last_name: data.last_name,
+        first_name: payload.first_name,
+        last_name: payload.last_name,
         registration_method: "self_register",
         registered_at: new Date().toISOString(),
       },
     });
 
     if (authError) {
-      if ((authError.message || "").includes("already exists")) {
+      const msg = authError.message || "";
+      if (msg.includes("already exists")) {
         return jsonResponse({ error: "Account already exists" }, 409);
       }
-      return jsonResponse({ error: "Failed to create account", details: authError.message }, 500);
+      return jsonResponse({ error: "Failed to create account", details: msg }, 500);
     }
 
     if (!authData?.user) return jsonResponse({ error: "User creation failed" }, 500);
@@ -102,8 +118,8 @@ serve(async (req: Request) => {
       user: {
         user_id: authData.user.id,
         phone: phoneNumber,
-        firstName: data.first_name,
-        lastName: data.last_name,
+        firstName: payload.first_name,
+        lastName: payload.last_name,
         role: "senior",
       },
     }, 201);
