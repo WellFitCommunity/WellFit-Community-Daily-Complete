@@ -1,3 +1,5 @@
+
+// supabase/functions/register/index.ts
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4?dts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
@@ -16,20 +18,19 @@ const corsHeaders = {
 };
 
 // ---------- VALIDATION ----------
-// 1) Define a BASE schema
 const RegisterBase = z.object({
   phone: z.string().min(10),
   password: z.string().min(8),
   confirm_password: z.string().min(8),
   first_name: z.string().min(1),
   last_name: z.string().min(1),
+  email: z.string().email().optional().or(z.literal("").transform(() => undefined)),
   hcaptcha_token: z.string().min(1),
+  // advisory only; server enforces safe roles for public register
+  role_code: z.number().optional(),
 });
-
-// 2) Type from base
 type RegisterInput = z.infer<typeof RegisterBase>;
 
-// 3) Refine with a TYPED param (fixes the TS error on 'v')
 const RegisterSchema = RegisterBase.refine(
   (v: RegisterInput) => v.password === v.confirm_password,
   { message: "Passwords do not match", path: ["confirm_password"] }
@@ -65,6 +66,19 @@ async function verifyHcaptcha(token: string): Promise<boolean> {
   }
 }
 
+// Public roles allowed from the web form
+const PUBLIC_ALLOWED = new Set([4, 5, 6, 11, 13]); // senior, volunteer, caregiver, contractor, regular
+function effectiveRole(requested?: number): { role_code: number; role_slug: string } {
+  const rc = PUBLIC_ALLOWED.has(requested ?? 4) ? (requested as number) : 4;
+  const slug =
+    rc === 4 ? "senior" :
+    rc === 5 ? "volunteer" :
+    rc === 6 ? "caregiver" :
+    rc === 11 ? "contractor" :
+    rc === 13 ? "regular" : "senior";
+  return { role_code: rc, role_slug: slug };
+}
+
 // ---------- HANDLER ----------
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders });
@@ -72,10 +86,18 @@ serve(async (req: Request) => {
 
   try {
     if (!SB_URL || !SB_SECRET_KEY || !HCAPTCHA_SECRET) {
+      console.error("[register] misconfig env", { hasUrl: !!SB_URL, hasKey: !!SB_SECRET_KEY, hasHC: !!HCAPTCHA_SECRET });
       return jsonResponse({ error: "Server misconfigured" }, 500);
     }
 
-    const body = await req.json();
+    // Parse JSON safely
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return jsonResponse({ error: "Invalid JSON" }, 400);
+    }
+
     const parsed = RegisterSchema.safeParse(body);
     if (!parsed.success) {
       return jsonResponse({ error: "Invalid data", details: parsed.error.errors }, 400);
@@ -84,17 +106,25 @@ serve(async (req: Request) => {
     const payload: RegisterInput = parsed.data;
     const phoneNumber = normalizePhone(payload.phone);
 
+    // Captcha first
     const captchaValid = await verifyHcaptcha(payload.hcaptcha_token);
     if (!captchaValid) return jsonResponse({ error: "Captcha failed" }, 401);
 
     const supabase = createClient(SB_URL, SB_SECRET_KEY);
 
+    // Enforce safe public role (defaults to senior)
+    const enforced = effectiveRole(payload.role_code);
+
+    // Create Auth user
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       phone: phoneNumber,
       password: payload.password,
       phone_confirm: true,
+      email: payload.email || undefined,
+      email_confirm: false,
       user_metadata: {
-        role: "senior",
+        role_code: enforced.role_code,
+        role_slug: enforced.role_slug,
         first_name: payload.first_name,
         last_name: payload.last_name,
         registration_method: "self_register",
@@ -107,10 +137,32 @@ serve(async (req: Request) => {
       if (msg.includes("already exists")) {
         return jsonResponse({ error: "Account already exists" }, 409);
       }
-      return jsonResponse({ error: "Failed to create account", details: msg }, 500);
+      // 400 so client can surface actual cause in UI
+      return jsonResponse({ error: "Failed to create account", details: msg }, 400);
     }
 
     if (!authData?.user) return jsonResponse({ error: "User creation failed" }, 500);
+
+    // Upsert profile immediately to prevent bad defaults elsewhere
+    const profileRow = {
+      id: authData.user.id,
+      first_name: payload.first_name,
+      last_name: payload.last_name,
+      email: payload.email ?? null,
+      phone: phoneNumber,
+      role_code: enforced.role_code,
+      role_slug: enforced.role_slug,
+      created_by: null,
+    };
+
+    const { error: upsertErr } = await supabase
+      .from("profiles")
+      .upsert(profileRow, { onConflict: "id" });
+
+    if (upsertErr) {
+      console.error("[register] profiles upsert error:", upsertErr.message);
+      // Do not fail registration if profile write hiccups; auth user is created
+    }
 
     return jsonResponse({
       success: true,
@@ -120,12 +172,13 @@ serve(async (req: Request) => {
         phone: phoneNumber,
         firstName: payload.first_name,
         lastName: payload.last_name,
-        role: "senior",
+        role_code: enforced.role_code,
+        role_slug: enforced.role_slug,
       },
     }, 201);
 
   } catch (e) {
-    console.error("[Register] Error:", e);
+    console.error("[register] unhandled:", e);
     return jsonResponse({ error: "Internal server error" }, 500);
   }
 });
