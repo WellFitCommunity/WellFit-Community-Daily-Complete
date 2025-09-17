@@ -1,9 +1,8 @@
 // src/pages/RegisterPage.tsx
-// PRODUCTION-GRADE with confirm password + ARIA fixes + invisible hCaptcha
+// PRODUCTION-GRADE with confirm password + ARIA fixes + invisible hCaptcha + fetch error surfacing
 
 import React, { useState, useRef, useCallback, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSupabaseClient } from '../contexts/AuthContext';
 import HCaptchaWidget, { HCaptchaRef } from '../components/HCaptchaWidget';
 
 type FormState = {
@@ -15,9 +14,12 @@ type FormState = {
   email: string;
 };
 
+const FUNCTIONS_URL =
+  process.env.REACT_APP_SUPABASE_FUNCTIONS_URL ||
+  `${process.env.REACT_APP_SB_URL || process.env.REACT_APP_SUPABASE_URL}/functions/v1`;
+
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
-  const supabase = useSupabaseClient();
   const hcaptchaRef = useRef<HCaptchaRef>(null);
 
   const [formData, setFormData] = useState<FormState>({
@@ -102,24 +104,36 @@ const RegisterPage: React.FC = () => {
       const token = await ensureCaptchaToken();
       const normalizedPhone = normalizePhone(formData.phone);
 
-      const { error: regError } = await supabase.functions.invoke('register', {
-        body: {
-          phone: normalizedPhone,
-          password: formData.password,
-          confirm_password: formData.confirmPassword, // sent to server for parity check
-          first_name: formData.firstName.trim(),
-          last_name: formData.lastName.trim(),
-          email: formData.email?.trim() || undefined,
-          hcaptcha_token: token,
-        },
+      const payload = {
+        phone: normalizedPhone,
+        password: formData.password,
+        confirm_password: formData.confirmPassword,
+        first_name: formData.firstName.trim(),
+        last_name: formData.lastName.trim(),
+        email: formData.email?.trim() || undefined,
+        hcaptcha_token: token,
+      };
+
+      const res = await fetch(`${FUNCTIONS_URL}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
 
-      if (regError) throw new Error(regError.message || 'Registration failed');
+      const data = await res.json().catch(() => ({} as any));
+
+      if (!res.ok || data?.error) {
+        const msg =
+          data?.details || data?.error || `Registration failed (${res.status})`;
+        throw new Error(String(msg));
+      }
 
       navigate('/verify', { state: { phone: normalizedPhone }, replace: true });
     } catch (err: any) {
-      setError(err.message || 'Registration failed. Please try again.');
-      try { hcaptchaRef.current?.reset?.(); } catch {}
+      setError(err?.message || 'Registration failed. Please try again.');
+      try {
+        hcaptchaRef.current?.reset?.();
+      } catch {}
       setHcaptchaToken('');
     } finally {
       setLoading(false);
@@ -137,7 +151,7 @@ const RegisterPage: React.FC = () => {
             type="text"
             placeholder="First Name"
             value={formData.firstName}
-            onChange={(e) => setFormData(s => ({ ...s, firstName: e.target.value }))}
+            onChange={(e) => setFormData((s) => ({ ...s, firstName: e.target.value }))}
             className="p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
             required
             aria-label="First Name"
@@ -147,7 +161,7 @@ const RegisterPage: React.FC = () => {
             type="text"
             placeholder="Last Name"
             value={formData.lastName}
-            onChange={(e) => setFormData(s => ({ ...s, lastName: e.target.value }))}
+            onChange={(e) => setFormData((s) => ({ ...s, lastName: e.target.value }))}
             className="p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
             required
             aria-label="Last Name"
@@ -159,7 +173,7 @@ const RegisterPage: React.FC = () => {
           type="tel"
           placeholder="Phone Number"
           value={formData.phone}
-          onChange={(e) => setFormData(s => ({ ...s, phone: e.target.value }))}
+          onChange={(e) => setFormData((s) => ({ ...s, phone: e.target.value }))}
           className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
           required
           aria-label="Phone Number"
@@ -171,7 +185,7 @@ const RegisterPage: React.FC = () => {
           type="email"
           placeholder="Email (Optional)"
           value={formData.email}
-          onChange={(e) => setFormData(s => ({ ...s, email: e.target.value }))}
+          onChange={(e) => setFormData((s) => ({ ...s, email: e.target.value }))}
           className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
           aria-label="Email (Optional)"
           autoComplete="email"
@@ -181,7 +195,7 @@ const RegisterPage: React.FC = () => {
           type="password"
           placeholder="Password"
           value={formData.password}
-          onChange={(e) => setFormData(s => ({ ...s, password: e.target.value }))}
+          onChange={(e) => setFormData((s) => ({ ...s, password: e.target.value }))}
           className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
           required
           aria-label="Password"
@@ -192,7 +206,9 @@ const RegisterPage: React.FC = () => {
           type="password"
           placeholder="Confirm Password"
           value={formData.confirmPassword}
-          onChange={(e) => setFormData(s => ({ ...s, confirmPassword: e.target.value }))}
+          onChange={(e) =>
+            setFormData((s) => ({ ...s, confirmPassword: e.target.value }))
+          }
           className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
           required
           aria-label="Confirm Password"
