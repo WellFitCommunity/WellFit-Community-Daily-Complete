@@ -1,7 +1,7 @@
 // src/pages/RegisterPage.tsx
-// PRODUCTION-GRADE with confirm password + ARIA fixes + invisible hCaptcha + fetch error surfacing
+// Public Register: role dropdown (labels only), hCaptcha race guard, +1 hint
 
-import React, { useState, useRef, useCallback, FormEvent } from 'react';
+import React, { useState, useRef, useCallback, FormEvent, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import HCaptchaWidget, { HCaptchaRef } from '../components/HCaptchaWidget';
 
@@ -12,11 +12,20 @@ type FormState = {
   firstName: string;
   lastName: string;
   email: string;
+  roleLabel: string; // labels only (server enforces)
 };
 
 const FUNCTIONS_URL =
   process.env.REACT_APP_SUPABASE_FUNCTIONS_URL ||
   `${process.env.REACT_APP_SB_URL || process.env.REACT_APP_SUPABASE_URL}/functions/v1`;
+
+const PUBLIC_ROLES = [
+  'Senior',
+  'Volunteer',
+  'Caregiver',
+  'Contractor',
+  'Regular User',
+] as const;
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
@@ -29,11 +38,16 @@ const RegisterPage: React.FC = () => {
     firstName: '',
     lastName: '',
     email: '',
+    roleLabel: 'Senior',
   });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [hcaptchaToken, setHcaptchaToken] = useState<string>('');
+
+  // submission race guard
+  const submitCounterRef = useRef(0);
+  const completedRef = useRef(false);
   const tokenResolverRef = useRef<((t: string) => void) | null>(null);
 
   // ---------- HELPERS ----------
@@ -50,7 +64,7 @@ const RegisterPage: React.FC = () => {
 
     const normalizedPhone = normalizePhone(formData.phone);
     if (!/^\+\d{10,15}$/.test(normalizedPhone)) {
-      return 'Please enter a valid phone number (e.g., 555-555-5555 or +15555555555)';
+      return 'Please enter a valid phone number (e.g., +15555555555)';
     }
 
     if (!formData.password) return 'Password is required';
@@ -62,36 +76,70 @@ const RegisterPage: React.FC = () => {
     return null;
   };
 
-  // ---------- hCaptcha ----------
+  // map label → code (server also enforces; client is advisory)
+  const roleCode = useMemo(() => {
+    switch (formData.roleLabel) {
+      case 'Senior': return 4;
+      case 'Volunteer': return 5;
+      case 'Caregiver': return 6;
+      case 'Contractor': return 11;
+      case 'Regular User': return 13;
+      default: return 4;
+    }
+  }, [formData.roleLabel]);
+
+  // ---------- hCaptcha (resilient + race-guarded) ----------
   const ensureCaptchaToken = useCallback(async (): Promise<string> => {
     if (hcaptchaToken) return hcaptchaToken;
 
-    const tokenPromise = new Promise<string>((resolve, reject) => {
-      tokenResolverRef.current = resolve;
-      const timer = setTimeout(() => {
-        tokenResolverRef.current = null;
-        reject(new Error('Security check timed out. Please try again.'));
-      }, 15000);
-      const orig = resolve;
-      tokenResolverRef.current = (t: string) => {
-        clearTimeout(timer);
-        orig(t);
-      };
-    });
+    const mySubmitId = ++submitCounterRef.current;
+    const attemptOnce = (timeoutMs: number) =>
+      new Promise<string>((resolve, reject) => {
+        // Ignore stale events
+        const guardedResolve = (t: string) => {
+          if (mySubmitId !== submitCounterRef.current || completedRef.current) return;
+          resolve(t);
+        };
+        const guardedReject = (e: Error) => {
+          if (mySubmitId !== submitCounterRef.current || completedRef.current) return;
+          reject(e);
+        };
+
+        tokenResolverRef.current = (t: string) => {
+          guardedResolve(t);
+        };
+
+        const timer = setTimeout(() => {
+          tokenResolverRef.current = null;
+          guardedReject(new Error('Security check timed out. Please try again.'));
+        }, timeoutMs);
+
+        const orig = tokenResolverRef.current;
+        tokenResolverRef.current = (t: string) => {
+          clearTimeout(timer);
+          (orig as (t: string) => void)(t);
+        };
+
+        try {
+          hcaptchaRef.current?.execute?.();
+        } catch {
+          clearTimeout(timer);
+          guardedReject(new Error('Security check failed to start. Please refresh and try again.'));
+        }
+      });
 
     try {
-      await hcaptchaRef.current?.execute?.();
+      return await attemptOnce(45_000);
     } catch {
-      throw new Error('Security check failed to start. Please refresh and try again.');
+      return await attemptOnce(45_000);
     }
-
-    return await tokenPromise;
   }, [hcaptchaToken]);
 
   // ---------- SUBMIT ----------
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
+    completedRef.current = false; // new submission starts
 
     const validationError = validateForm();
     if (validationError) {
@@ -111,6 +159,7 @@ const RegisterPage: React.FC = () => {
         first_name: formData.firstName.trim(),
         last_name: formData.lastName.trim(),
         email: formData.email?.trim() || undefined,
+        role_code: roleCode, // advisory; server enforces
         hcaptcha_token: token,
       };
 
@@ -119,22 +168,20 @@ const RegisterPage: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-
       const data = await res.json().catch(() => ({} as any));
 
       if (!res.ok || data?.error) {
-        const msg =
-          data?.details || data?.error || `Registration failed (${res.status})`;
+        const msg = data?.details || data?.error || `Registration failed (${res.status})`;
         throw new Error(String(msg));
       }
 
+      // success → freeze current submission; ignore late captcha timers
+      completedRef.current = true;
       navigate('/verify', { state: { phone: normalizedPhone }, replace: true });
     } catch (err: any) {
-      setError(err?.message || 'Registration failed. Please try again.');
-      try {
-        hcaptchaRef.current?.reset?.();
-      } catch {}
-      setHcaptchaToken('');
+      if (!completedRef.current) setError(err?.message || 'Registration failed. Please try again.');
+      try { if (!completedRef.current) hcaptchaRef.current?.reset?.(); } catch {}
+      if (!completedRef.current) setHcaptchaToken('');
     } finally {
       setLoading(false);
     }
@@ -169,17 +216,22 @@ const RegisterPage: React.FC = () => {
           />
         </div>
 
-        <input
-          type="tel"
-          placeholder="Phone Number"
-          value={formData.phone}
-          onChange={(e) => setFormData((s) => ({ ...s, phone: e.target.value }))}
-          className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-          required
-          aria-label="Phone Number"
-          autoComplete="tel"
-          inputMode="tel"
-        />
+        <div>
+          <label className="block text-sm font-medium mb-1" htmlFor="phone">Phone (US)</label>
+          <input
+            id="phone"
+            type="tel"
+            placeholder="+1 555-555-5555"
+            value={formData.phone}
+            onChange={(e) => setFormData((s) => ({ ...s, phone: e.target.value }))}
+            className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+            required
+            aria-label="Phone Number"
+            autoComplete="tel"
+            inputMode="tel"
+          />
+          <p className="text-xs text-gray-500 mt-1">Tip: Start with “+1” for US numbers.</p>
+        </div>
 
         <input
           type="email"
@@ -206,29 +258,46 @@ const RegisterPage: React.FC = () => {
           type="password"
           placeholder="Confirm Password"
           value={formData.confirmPassword}
-          onChange={(e) =>
-            setFormData((s) => ({ ...s, confirmPassword: e.target.value }))
-          }
+          onChange={(e) => setFormData((s) => ({ ...s, confirmPassword: e.target.value }))}
           className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
           required
           aria-label="Confirm Password"
           autoComplete="new-password"
         />
 
+        <div>
+          <label className="block text-sm font-medium mb-1" htmlFor="role">Role</label>
+          <select
+            id="role"
+            value={formData.roleLabel}
+            onChange={(e) => setFormData((s) => ({ ...s, roleLabel: e.target.value }))}
+            className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+            aria-label="Role"
+          >
+            {PUBLIC_ROLES.map((label) => (
+              <option key={label} value={label}>{label}</option>
+            ))}
+          </select>
+          <p className="text-xs text-gray-500 mt-1">Admins/moderators are created internally only.</p>
+        </div>
+
         <HCaptchaWidget
           ref={hcaptchaRef}
           onVerify={(t: string) => {
+            if (completedRef.current) return;
             setHcaptchaToken(t);
             tokenResolverRef.current?.(t);
             tokenResolverRef.current = null;
             setError('');
           }}
           onError={() => {
+            if (completedRef.current) return;
             setHcaptchaToken('');
             tokenResolverRef.current = null;
             setError('Security check failed. Please try again.');
           }}
           onExpire={() => {
+            if (completedRef.current) return;
             setHcaptchaToken('');
             tokenResolverRef.current = null;
           }}
