@@ -7,6 +7,7 @@ import UsersList from './UsersList';
 import ReportsSection from './ReportsSection';
 import ExportCheckIns from './ExportCheckIns';
 import ApiKeyManager from './ApiKeyManager';
+import FhirAiDashboard from './FhirAiDashboard';
 
 type AdminRole = 'admin' | 'super_admin';
 
@@ -645,6 +646,14 @@ const AdminPanel: React.FC = () => {
             Logout Admin
           </button>
         </div>
+
+        <section className="mt-6 border rounded-xl p-6 bg-gradient-to-br from-purple-50 to-blue-50">
+          <h2 className="text-xl font-semibold text-purple-800 mb-4">AI-Enhanced FHIR Analytics</h2>
+          <FhirAiDashboard
+            supabaseUrl={process.env.REACT_APP_SUPABASE_URL || ''}
+            supabaseKey={process.env.REACT_APP_SUPABASE_ANON_KEY || ''}
+          />
+        </section>
 
         <UsersList />
         <ReportsSection />

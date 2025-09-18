@@ -11,6 +11,7 @@ const MID_GLINT = 'rgba(255,255,255,0.12)'; // subtle white shimmer
 
 const ROUTES = {
   dashboard: '/dashboard',
+  healthDashboard: '/health-dashboard',
   wordFind: '/word-find',
   doctors: '/doctors-view',
   selfReport: '/self-reporting',
@@ -80,6 +81,9 @@ export default function GlobalHeader() {
           <nav className="hidden md:flex items-center space-x-6">
             <HeaderLink to={ROUTES.dashboard} active={isActive(ROUTES.dashboard)} className={linkBase}>
               Dashboard
+            </HeaderLink>
+            <HeaderLink to={ROUTES.healthDashboard} active={isActive(ROUTES.healthDashboard)} className={linkBase}>
+              Health Insights
             </HeaderLink>
             <HeaderLink to={ROUTES.wordFind} active={isActive(ROUTES.wordFind)} className={linkBase}>
               Word Find
@@ -174,6 +178,9 @@ export default function GlobalHeader() {
         <nav className="md:hidden px-4 pb-4 space-y-2" onClick={() => setMoreOpen(false)}>
           <MobileItem to={ROUTES.dashboard} onDone={() => setMenuOpen(false)}>
             Dashboard
+          </MobileItem>
+          <MobileItem to={ROUTES.healthDashboard} onDone={() => setMenuOpen(false)}>
+            Health Insights
           </MobileItem>
           <MobileItem to={ROUTES.wordFind} onDone={() => setMenuOpen(false)}>
             Word Find

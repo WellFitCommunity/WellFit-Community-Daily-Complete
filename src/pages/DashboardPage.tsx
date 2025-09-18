@@ -9,6 +9,7 @@ import DailyScripture from '../components/dashboard/DailyScripture';
 import TechTip from '../components/dashboard/TechTip';
 import EmergencyContact from '../components/features/EmergencyContact';
 import DashMealOfTheDay from '../components/dashboard/DashMealOfTheDay';
+import SimpleFhirAiWidget from '../components/dashboard/SimpleFhirAiWidget';
 import { fetchMyProfile, updateMyProfile } from '../data/profile';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import AdminPanel from '../components/admin/AdminPanel'; // Future use
@@ -96,6 +97,11 @@ const Dashboard: React.FC = () => {
         → View Community Moments
       </button>
 
+      {/* AI Health Widget - Top Priority */}
+      <div className="mb-6">
+        <SimpleFhirAiWidget />
+      </div>
+
       <Card>
         <WeatherWidget />
       </Card>
@@ -104,14 +110,7 @@ const Dashboard: React.FC = () => {
         <CheckInTracker />
       </Card>
 
-      <Card>
-        <button
-          className="w-full py-3 text-lg font-semibold bg-[#003865] text-white rounded-xl shadow hover:bg-[#8cc63f] transition"
-          onClick={() => navigate('/check-in')}
-        >
-          📝 My Daily Check-in
-        </button>
-      </Card>
+      {/* Smart Check-in is now handled by AI Widget above */}
 
       <Card>
         <DailyScripture />
