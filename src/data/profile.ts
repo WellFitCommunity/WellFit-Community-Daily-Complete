@@ -4,9 +4,13 @@ import { supabase } from '../lib/supabaseClient';
 export type Profile = {
   user_id: string;
   email?: string | null;
-  role_id?: number | null;
+  role_code?: number | null;  // Fixed: was role_id, should be role_code
+  role?: string | null;       // Text role from database (senior, admin, etc.)
+  first_name?: string | null;
+  last_name?: string | null;
+  phone?: string | null;
+  phone_verified?: boolean | null;
   // add other columns you actually have:
-  // phone_verified?: boolean | null;
   // disabled_at?: string | null; etc.
 };
 

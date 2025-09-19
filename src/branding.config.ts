@@ -31,18 +31,57 @@ export const defaultBranding: BrandingConfig = {
 // ---- Tenants (optional) -----------------------------------------------------
 
 export const tenantBrandings: TenantBranding[] = [
-  // Example (leave commented until you have assets & subdomain live):
-  // {
-  //   subdomain: 'houston',
-  //   appName: 'WellFit Houston',
-  //   logoUrl: '/logos/houston-logo.png',
-  //   primaryColor: '#A00000',
-  //   secondaryColor: '#00A000',
-  //   textColor: '#ffffff',
-  //   gradient: 'linear-gradient(to bottom right, #A00000, #00A000)',
-  //   contactInfo: 'Contact WellFit Houston at …',
-  //   customFooter: '© 2025 WellFit Houston. Powered by Houston Senior Services.',
-  // },
+  // Client 1: Houston Senior Services
+  {
+    subdomain: 'houston',
+    appName: 'WellFit Houston',
+    logoUrl: '/logos/houston-logo.png',
+    primaryColor: '#C8102E',           // Houston Red
+    secondaryColor: '#FFDC00',         // Houston Gold
+    textColor: '#ffffff',
+    gradient: 'linear-gradient(to bottom right, #C8102E, #FFDC00)',
+    contactInfo: 'Houston Senior Services',
+    customFooter: '© 2025 WellFit Houston. Powered by Houston Senior Services.',
+  },
+
+  // Client 2: Miami Healthcare Network
+  {
+    subdomain: 'miami',
+    appName: 'WellFit Miami',
+    logoUrl: '/logos/miami-logo.png',
+    primaryColor: '#00B4A6',           // Miami Teal
+    secondaryColor: '#FF6B35',         // Miami Coral
+    textColor: '#ffffff',
+    gradient: 'linear-gradient(to bottom right, #00B4A6, #FF6B35)',
+    contactInfo: 'Miami Healthcare Network',
+    customFooter: '© 2025 WellFit Miami. Powered by Miami Healthcare Network.',
+  },
+
+  // Client 3: Phoenix Wellness Center
+  {
+    subdomain: 'phoenix',
+    appName: 'WellFit Phoenix',
+    logoUrl: '/logos/phoenix-logo.png',
+    primaryColor: '#D2691E',           // Desert Orange
+    secondaryColor: '#8B4513',         // Saddle Brown
+    textColor: '#ffffff',
+    gradient: 'linear-gradient(to bottom right, #D2691E, #8B4513)',
+    contactInfo: 'Phoenix Wellness Center',
+    customFooter: '© 2025 WellFit Phoenix. Powered by Phoenix Wellness Center.',
+  },
+
+  // Client 4: Seattle Community Health
+  {
+    subdomain: 'seattle',
+    appName: 'WellFit Seattle',
+    logoUrl: '/logos/seattle-logo.png',
+    primaryColor: '#004225',           // Evergreen
+    secondaryColor: '#0066CC',         // Pacific Blue
+    textColor: '#ffffff',
+    gradient: 'linear-gradient(to bottom right, #004225, #0066CC)',
+    contactInfo: 'Seattle Community Health',
+    customFooter: '© 2025 WellFit Seattle. Powered by Seattle Community Health.',
+  },
 ];
 
 // ---- Utilities --------------------------------------------------------------

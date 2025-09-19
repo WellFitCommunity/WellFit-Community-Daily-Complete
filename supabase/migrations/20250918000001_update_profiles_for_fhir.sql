@@ -13,10 +13,12 @@ add column if not exists dob date,
 add column if not exists address text,
 add column if not exists caregiver_email text,
 add column if not exists emergency_contact_name text,
-add column if not exists role text default 'senior';
+add column if not exists role text default 'senior',
+add column if not exists role_code integer default 4;
 
--- Add index for role column
+-- Add indexes for role columns
 create index if not exists idx_profiles_role on public.profiles (role);
+create index if not exists idx_profiles_role_code on public.profiles (role_code);
 
 -- Add check_ins table if it doesn't exist (for vitals data)
 create table if not exists public.check_ins (

@@ -115,11 +115,11 @@ serve(async (req: Request) => {
     // Enforce safe public role (defaults to senior)
     const enforced = effectiveRole(payload.role_code);
 
-    // Create Auth user
+    // Create Auth user (phone_confirm: false for SMS verification)
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       phone: phoneNumber,
       password: payload.password,
-      phone_confirm: true,
+      phone_confirm: false,  // Changed: require SMS verification
       email: payload.email || undefined,
       email_confirm: false,
       user_metadata: {
@@ -164,9 +164,29 @@ serve(async (req: Request) => {
       // Do not fail registration if profile write hiccups; auth user is created
     }
 
+    // Send SMS verification code via Twilio
+    try {
+      const smsResponse = await fetch(`${SB_URL}/functions/v1/sms-send-code`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${SB_SECRET_KEY}`
+        },
+        body: JSON.stringify({ phone: phoneNumber })
+      });
+
+      if (!smsResponse.ok) {
+        console.error("[register] SMS send failed:", await smsResponse.text());
+        // Don't fail registration if SMS fails - user can resend
+      }
+    } catch (smsError) {
+      console.error("[register] SMS send error:", smsError);
+      // Don't fail registration if SMS fails - user can resend
+    }
+
     return jsonResponse({
       success: true,
-      message: "Registration successful!",
+      message: "Registration successful! Check your phone for verification code.",
       user: {
         user_id: authData.user.id,
         phone: phoneNumber,

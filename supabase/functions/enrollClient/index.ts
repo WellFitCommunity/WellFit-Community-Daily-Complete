@@ -102,6 +102,8 @@ serve(async (req) => {
       first_name,
       last_name,
       email: email ?? null,
+      role: "senior",         // Fixed: Add role text
+      role_code: 4,           // Fixed: Add role_code number for seniors
       authenticated: true,
       verified: true,
       created_at: new Date().toISOString(),
