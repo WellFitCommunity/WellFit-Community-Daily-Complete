@@ -60,7 +60,7 @@ const LoginPage: React.FC = () => {
     // Fetch loosely (no .returns<T>(), no compile-time shape)
     const { data, error } = await supabase
       .from('profiles')
-      .select('force_password_change, consent, data_consent, demographics_complete, demographic_complete, onboarded')
+      .select('force_password_change, consent, data_consent, demographics_complete, demographic_complete, onboarded, role, role_code')
       .eq('user_id', uid)
       .maybeSingle();
 
@@ -75,10 +75,25 @@ const LoginPage: React.FC = () => {
     const consent  = (data as any)?.consent ?? (data as any)?.data_consent ?? false;
     const demoDone = (data as any)?.demographics_complete ?? (data as any)?.demographic_complete ?? false;
     const onboard  = (data as any)?.onboarded ?? false;
+    const role = (data as any)?.role || '';
+    const roleCode = (data as any)?.role_code || 0;
 
     if (forcePwd) return '/change-password';
     if (!consent)  return '/consent-photo';
     if (!onboard || !demoDone) return '/demographics';
+
+    // Role-based routing after profile completion
+    // Admin users need PIN authentication
+    if (role === 'admin' || role === 'super_admin' || roleCode === 1 || roleCode === 2) {
+      return '/admin-login';
+    }
+
+    // Caregivers get special dashboard with senior PIN entry
+    if (role === 'caregiver' || roleCode === 6) {
+      return '/caregiver-dashboard';
+    }
+
+    // Seniors and other users get standard dashboard
     return '/dashboard';
   };
   // -------------------------------------------------------------------------

@@ -47,6 +47,7 @@ const AdminProfileEditorPage = React.lazy(() => import('./pages/AdminProfileEdit
 const CommunityMoments = React.lazy(() => import('./components/CommunityMoments'));
 const DemographicsPage = React.lazy(() => import('./pages/DemographicsPage'));
 const TriviaGame = React.lazy(() => import('./components/TriviaGame'));
+const CaregiverDashboardPage = React.lazy(() => import('./pages/CaregiverDashboardPage'));
 
 const PUBLIC_ROUTES = [
   '/',
@@ -103,6 +104,9 @@ function Shell() {
               <Route path="/doctors-view" element={<RequireAuth><DoctorsViewPage /></RequireAuth>} />
               <Route path="/community" element={<RequireAuth><CommunityMoments /></RequireAuth>} />
               <Route path="/trivia-game" element={<RequireAuth><TriviaGame /></RequireAuth>} />
+
+              {/* Caregiver Dashboard */}
+              <Route path="/caregiver-dashboard" element={<RequireAuth><CaregiverDashboardPage /></RequireAuth>} />
 
               {/* Post-login gated */}
               <Route path="/demographics" element={<RequireAuth><DemographicsPage /></RequireAuth>} />

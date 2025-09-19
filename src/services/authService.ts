@@ -44,14 +44,32 @@ export async function nextRouteForUser(): Promise<string> {
 
   const { data, error } = await supabase
     .from('profiles')
-    .select('force_password_change, consent, demographics_complete')
+    .select('force_password_change, consent, demographics_complete, role, role_code')
     .eq('id', uid)
     .single();
 
   if (error || !data) return '/login';
+
+  // Check standard profile completion first
   if (data.force_password_change) return '/change-password';
   if (!data.consent) return '/consent';
   if (!data.demographics_complete) return '/demographics';
+
+  // Role-based routing after profile completion
+  const role = data.role || '';
+  const roleCode = data.role_code || 0;
+
+  // Admin users need PIN authentication
+  if (role === 'admin' || role === 'super_admin' || roleCode === 1 || roleCode === 2) {
+    return '/admin-login';
+  }
+
+  // Caregivers get special dashboard with senior PIN entry
+  if (role === 'caregiver' || roleCode === 6) {
+    return '/caregiver-dashboard';
+  }
+
+  // Seniors and other users get standard dashboard
   return '/dashboard';
 }
 
