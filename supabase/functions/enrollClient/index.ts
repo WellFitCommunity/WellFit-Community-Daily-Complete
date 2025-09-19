@@ -117,10 +117,19 @@ serve(async (req) => {
       );
     }
 
-    // 5) Audit log (best-effort)
-    await sSvc.from("admin_enroll_audit")
-      .insert({ admin_id: adminId, user_id: newUserId })
-      .catch(() => {});
+    // 5) Audit log (required for compliance)
+    const { error: auditError } = await sSvc.from("admin_enroll_audit")
+      .insert({ admin_id: adminId, user_id: newUserId });
+
+    if (auditError) {
+      console.error("Critical: Failed to log admin enrollment for compliance:", auditError);
+      // Rollback user creation on audit failure
+      await sSvc.auth.admin.deleteUser(newUserId).catch(() => {});
+      return new Response(
+        JSON.stringify({ error: "System error: Unable to record enrollment for compliance. Please contact support." }),
+        { status: 500, headers }
+      );
+    }
 
     return new Response(JSON.stringify({ success: true, user_id: newUserId }), {
       status: 201,

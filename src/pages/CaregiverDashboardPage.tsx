@@ -98,18 +98,24 @@ const CaregiverDashboardPage: React.FC = () => {
         return;
       }
 
-      // Success - store senior info and show dashboard
-      setCurrentSenior(seniorData);
-      setError('');
-
-      // Log the access for audit purposes
-      await supabase.from('caregiver_access_log').insert({
+      // Log the access for audit purposes BEFORE granting access (compliance requirement)
+      const { error: logError } = await supabase.from('caregiver_access_log').insert({
         caregiver_id: user?.id,
         senior_id: seniorData.user_id,
         access_time: new Date().toISOString(),
         caregiver_name: `${caregiverProfile?.first_name} ${caregiverProfile?.last_name}`,
         senior_name: `${seniorData.first_name} ${seniorData.last_name}`
-      }).catch(() => {}); // Best effort logging
+      });
+
+      if (logError) {
+        console.error('Critical: Failed to log caregiver access for compliance:', logError);
+        setError('System error: Unable to record access for compliance. Please contact support.');
+        return;
+      }
+
+      // Success - access logged and granted
+      setCurrentSenior(seniorData);
+      setError('');
 
     } catch (e: any) {
       setError(e?.message || 'Access failed. Please try again.');

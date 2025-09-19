@@ -209,18 +209,26 @@ serve(async (req: Request) => {
       });
     }
 
-    // Optional audit log
-    try {
-      await admin.from("admin_audit_log").insert({
-        user_id: id,
-        action: "pin_updated",
-        target_role: role,
-        ip_address: clientIp,
-        user_agent: req.headers.get("user-agent"),
-        timestamp: new Date().toISOString()
+    // Audit log (required for compliance)
+    const { error: auditError } = await admin.from("admin_audit_log").insert({
+      user_id: id,
+      action: "pin_updated",
+      target_role: role,
+      ip_address: clientIp,
+      user_agent: req.headers.get("user-agent"),
+      timestamp: new Date().toISOString()
+    });
+
+    if (auditError) {
+      console.error("Critical: Failed to log PIN update for compliance:", auditError);
+      // Rollback PIN update on audit failure
+      await admin.from("admin_pins")
+        .delete()
+        .eq("user_id", id)
+        .eq("role", role);
+      return new Response(JSON.stringify({ error: "System error: Unable to record PIN update for compliance. Please contact support." }), {
+        status: 500, headers
       });
-    } catch (err: unknown) {
-      console.warn("Audit log failed:", err);
     }
 
     return new Response(JSON.stringify({ success: true, message: "PIN updated successfully", role }), {
