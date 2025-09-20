@@ -71,10 +71,94 @@ Deno.serve(async (req: Request): Promise<Response> => {
       });
     }
 
-    // Success — no Supabase writes here by design
-    return new Response(JSON.stringify({ ok: true, message: "Phone verification successful" }), {
-      status: 200, headers,
-    });
+    // Success — now complete the registration
+    try {
+      const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.45.4?dts");
+      const SB_URL = Deno.env.get("SUPABASE_URL") || Deno.env.get("SB_URL") || "";
+      const SB_SECRET_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("SB_SECRET_KEY") || "";
+
+      if (!SB_URL || !SB_SECRET_KEY) {
+        console.error("Missing Supabase configuration");
+        return new Response(JSON.stringify({ error: "Server configuration error" }), { status: 500, headers });
+      }
+
+      const supabase = createClient(SB_URL, SB_SECRET_KEY);
+
+      // Get pending registration
+      const { data: pending, error: pendingError } = await supabase
+        .from("pending_registrations")
+        .select("*")
+        .eq("phone", phone)
+        .maybeSingle();
+
+      if (pendingError || !pending) {
+        console.error("No pending registration found for phone:", phone);
+        return new Response(JSON.stringify({ error: "No pending registration found. Please register again." }), {
+          status: 404, headers,
+        });
+      }
+
+      // Create the actual user account
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        phone: phone,
+        password: pending.password_hash, // Plain password from pending registration
+        phone_confirm: true, // Phone is now verified
+        email: pending.email || undefined,
+        email_confirm: false,
+        user_metadata: {
+          role_code: pending.role_code,
+          role_slug: pending.role_slug,
+          first_name: pending.first_name,
+          last_name: pending.last_name,
+          registration_method: "self_register",
+          registered_at: new Date().toISOString(),
+        },
+      });
+
+      if (authError || !authData?.user) {
+        console.error("Failed to create user account:", authError?.message);
+        return new Response(JSON.stringify({ error: "Failed to complete registration" }), { status: 500, headers });
+      }
+
+      // Create profile
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .insert({
+          id: authData.user.id,
+          first_name: pending.first_name,
+          last_name: pending.last_name,
+          email: pending.email,
+          phone: phone,
+          role_code: pending.role_code,
+          role_slug: pending.role_slug,
+          created_by: null,
+        });
+
+      if (profileError) {
+        console.error("Failed to create profile:", profileError.message);
+        // Don't fail here - user is created, profile can be fixed later
+      }
+
+      // Clean up pending registration
+      await supabase.from("pending_registrations").delete().eq("phone", phone);
+
+      return new Response(JSON.stringify({
+        ok: true,
+        message: "Registration completed successfully!",
+        user: {
+          user_id: authData.user.id,
+          phone: phone,
+          first_name: pending.first_name,
+          last_name: pending.last_name,
+          role_code: pending.role_code,
+          role_slug: pending.role_slug,
+        }
+      }), { status: 200, headers });
+
+    } catch (dbError) {
+      console.error("Database error during registration completion:", dbError);
+      return new Response(JSON.stringify({ error: "Failed to complete registration" }), { status: 500, headers });
+    }
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error("verify-code fatal", msg);

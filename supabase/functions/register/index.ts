@@ -134,53 +134,42 @@ serve(async (req: Request) => {
     // Enforce safe public role (defaults to senior)
     const enforced = effectiveRole(payload.role_code);
 
-    // Create Auth user (phone_confirm: false for SMS verification)
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      phone: phoneNumber,
-      password: payload.password,
-      phone_confirm: false,  // Changed: require SMS verification
-      email: payload.email || undefined,
-      email_confirm: false,
-      user_metadata: {
-        role_code: enforced.role_code,
-        role_slug: enforced.role_slug,
-        first_name: payload.first_name,
-        last_name: payload.last_name,
-        registration_method: "self_register",
-        registered_at: new Date().toISOString(),
-      },
-    });
+    // Check if phone already exists in auth.users or pending_registrations
+    const { data: existingAuth } = await supabase.auth.admin.listUsers();
+    const phoneExists = existingAuth?.users?.some(u => u.phone === phoneNumber);
 
-    if (authError) {
-      const msg = authError.message || "";
-      if (msg.includes("already exists")) {
-        return jsonResponse({ error: "Account already exists" }, 409, origin);
-      }
-      // 400 so client can surface actual cause in UI
-      return jsonResponse({ error: "Failed to create account", details: msg }, 400, origin);
+    if (phoneExists) {
+      return jsonResponse({ error: "Phone number already registered" }, 409, origin);
     }
 
-    if (!authData?.user) return jsonResponse({ error: "User creation failed" }, 500, origin);
+    const { data: existingPending } = await supabase
+      .from("pending_registrations")
+      .select("phone")
+      .eq("phone", phoneNumber)
+      .maybeSingle();
 
-    // Upsert profile immediately to prevent bad defaults elsewhere
-    const profileRow = {
-      id: authData.user.id,
-      first_name: payload.first_name,
-      last_name: payload.last_name,
-      email: payload.email ?? null,
-      phone: phoneNumber,
-      role_code: enforced.role_code,
-      role_slug: enforced.role_slug,
-      created_by: null,
-    };
+    if (existingPending) {
+      return jsonResponse({ error: "Registration already pending for this phone number. Check your SMS for verification code." }, 409, origin);
+    }
 
-    const { error: upsertErr } = await supabase
-      .from("profiles")
-      .upsert(profileRow, { onConflict: "id" });
+    // Store registration data in pending table (password temporarily stored - will be deleted after verification)
+    const { error: pendingError } = await supabase
+      .from("pending_registrations")
+      .insert({
+        phone: phoneNumber,
+        password_hash: payload.password, // Temporarily store plain password for account creation
+        first_name: payload.first_name,
+        last_name: payload.last_name,
+        email: payload.email ?? null,
+        role_code: enforced.role_code,
+        role_slug: enforced.role_slug,
+        hcaptcha_verified: true,
+        verification_code_sent: false,
+      });
 
-    if (upsertErr) {
-      console.error("[register] profiles upsert error:", upsertErr.message);
-      // Do not fail registration if profile write hiccups; auth user is created
+    if (pendingError) {
+      console.error("[register] pending registration error:", pendingError.message);
+      return jsonResponse({ error: "Failed to process registration" }, 500, origin);
     }
 
     // Send SMS verification code via Twilio
@@ -196,24 +185,28 @@ serve(async (req: Request) => {
 
       if (!smsResponse.ok) {
         console.error("[register] SMS send failed:", await smsResponse.text());
-        // Don't fail registration if SMS fails - user can resend
+        // If SMS fails, remove pending registration
+        await supabase.from("pending_registrations").delete().eq("phone", phoneNumber);
+        return jsonResponse({ error: "Failed to send verification code. Please try again." }, 500, origin);
+      } else {
+        // Mark SMS as sent
+        await supabase
+          .from("pending_registrations")
+          .update({ verification_code_sent: true })
+          .eq("phone", phoneNumber);
       }
     } catch (smsError) {
       console.error("[register] SMS send error:", smsError);
-      // Don't fail registration if SMS fails - user can resend
+      // If SMS fails, remove pending registration
+      await supabase.from("pending_registrations").delete().eq("phone", phoneNumber);
+      return jsonResponse({ error: "Failed to send verification code. Please try again." }, 500, origin);
     }
 
     return jsonResponse({
       success: true,
-      message: "Registration successful! Check your phone for verification code.",
-      user: {
-        user_id: authData.user.id,
-        phone: phoneNumber,
-        firstName: payload.first_name,
-        lastName: payload.last_name,
-        role_code: enforced.role_code,
-        role_slug: enforced.role_slug,
-      },
+      message: "Verification code sent! Check your phone and enter the code to complete registration.",
+      pending: true,
+      phone: phoneNumber,
     }, 201);
 
   } catch (e) {
