@@ -1,8 +1,11 @@
-// src/pages/LoginPage.tsx - PRODUCTION-READY (TS-safe profile gate)
-import React, { useEffect, useMemo, useState } from 'react';
+// src/pages/LoginPage.tsx - PRODUCTION-READY with hCaptcha (CRA + Supabase v2)
+// Uses credentials.options.captchaToken to satisfy TypeScript, no casts needed.
+
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useSupabaseClient } from '../contexts/AuthContext';
 import { WELLFIT_COLORS, APP_INFO } from '../settings/settings';
+import HCaptchaWidget, { HCaptchaRef } from '../components/HCaptchaWidget';
 
 type Mode = 'senior' | 'admin';
 
@@ -23,6 +26,10 @@ const LoginPage: React.FC = () => {
   // admin fields
   const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
+
+  // captcha state
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaRef = useRef<HCaptchaRef>(null);
 
   // colors
   const primary = WELLFIT_COLORS.blue;   // #003865
@@ -50,14 +57,12 @@ const LoginPage: React.FC = () => {
     return raw.startsWith('+') ? raw : `+${digits}`;
   };
 
-  // ---- TS-SAFE PROFILE GATE -----------------------------------------------
-  // Avoids .returns<T>() issues and tolerates column name drift.
+  // ---- PROFILE GATE --------------------------------------------------------
   const nextRouteForUser = async (): Promise<string> => {
     const { data: { session } } = await supabase.auth.getSession();
     const uid = session?.user?.id;
     if (!uid) return '/login';
 
-    // Fetch loosely (no .returns<T>(), no compile-time shape)
     const { data, error } = await supabase
       .from('profiles')
       .select('force_password_change, consent, data_consent, demographics_complete, demographic_complete, onboarded, role, role_code')
@@ -66,11 +71,9 @@ const LoginPage: React.FC = () => {
 
     if (error) {
       console.warn('Profile fetch error:', error.message);
-      // Fail-open to dashboard; RLS still protects sensitive things.
       return '/dashboard';
     }
 
-    // Defensive mapping in case your actual column names differ
     const forcePwd = (data as any)?.force_password_change ?? false;
     const consent  = (data as any)?.consent ?? (data as any)?.data_consent ?? false;
     const demoDone = (data as any)?.demographics_complete ?? (data as any)?.demographic_complete ?? false;
@@ -82,21 +85,15 @@ const LoginPage: React.FC = () => {
     if (!consent)  return '/consent-photo';
     if (!onboard || !demoDone) return '/demographics';
 
-    // Role-based routing after profile completion
-    // Admin users need PIN authentication
     if (role === 'admin' || role === 'super_admin' || roleCode === 1 || roleCode === 2) {
       return '/admin-login';
     }
-
-    // Caregivers get special dashboard with senior PIN entry
     if (role === 'caregiver' || roleCode === 6) {
       return '/caregiver-dashboard';
     }
-
-    // Seniors and other users get standard dashboard
     return '/dashboard';
   };
-  // -------------------------------------------------------------------------
+  // --------------------------------------------------------------------------
 
   // If already signed in, route immediately
   useEffect(() => {
@@ -110,6 +107,22 @@ const LoginPage: React.FC = () => {
     })();
     return () => { cancel = true; };
   }, [navigate, supabase]);
+
+  // Captcha helpers
+  const refreshCaptcha = () => {
+    captchaRef.current?.reset();
+    setCaptchaToken(null);
+  };
+  const ensureCaptcha = async (): Promise<string> => {
+    if (captchaToken) return captchaToken;
+    try {
+      const t = await captchaRef.current?.execute();
+      return t || '';
+    } catch (error) {
+      console.error('hCaptcha execution failed:', error);
+      return '';
+    }
+  };
 
   const handleSeniorLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,20 +140,26 @@ const LoginPage: React.FC = () => {
     setLoading(true);
     try {
       const e164 = normalizeToE164(phone);
+      const token = await ensureCaptcha();
+      if (!token) throw new Error('Captcha required.');
 
       const { error: signInError } = await supabase.auth.signInWithPassword({
         phone: e164,
         password: seniorPassword,
+        options: { captchaToken: token }, // ✅ TS-safe: options.captchaToken
       });
 
       if (signInError) {
+        if (signInError.message.toLowerCase().includes('captcha')) {
+          refreshCaptcha();
+          setError('Captcha failed. Please try again.');
+          return;
+        }
         const msg = (signInError.message || '').toLowerCase();
         if (msg.includes('invalid login credentials')) {
           setError('Login failed. Check your phone number and password.');
         } else if (msg.includes('confirm')) {
-          setError('Account not confirmed. Please complete phone verification if required.');
-        } else if (msg.includes('internal') || msg.includes('server')) {
-          setError('Auth service error. Please try again shortly.');
+          setError('Account not confirmed. Please complete verification.');
         } else {
           setError('An error occurred during login. Please try again.');
         }
@@ -150,14 +169,7 @@ const LoginPage: React.FC = () => {
       const route = await nextRouteForUser();
       navigate(route, { replace: true });
     } catch (err: any) {
-      const msg = String(err?.message ?? '');
-      if (msg.includes('fetch') || msg.includes('network')) {
-        setError('Could not connect to the server. Please try again.');
-      } else if (msg.includes('Invalid phone')) {
-        setError('Please enter a valid phone number.');
-      } else {
-        setError('Unexpected error during login. Please try again.');
-      }
+      setError(err?.message || 'Unexpected error during login.');
     } finally {
       setLoading(false);
     }
@@ -174,34 +186,35 @@ const LoginPage: React.FC = () => {
 
     setLoading(true);
     try {
+      const token = await ensureCaptcha();
+      if (!token) throw new Error('Captcha required.');
+
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: adminEmail.trim(),
         password: adminPassword,
+        options: { captchaToken: token }, // ✅ TS-safe
       });
 
       if (signInError) {
+        if (signInError.message.toLowerCase().includes('captcha')) {
+          refreshCaptcha();
+          setError('Captcha failed. Please try again.');
+          return;
+        }
         const msg = (signInError.message || '').toLowerCase();
         if (msg.includes('invalid login credentials')) {
           setError('Admin login failed. Check your email and password.');
-        } else if (msg.includes('email not confirmed') || msg.includes('confirm')) {
+        } else if (msg.includes('confirm')) {
           setError('Email not confirmed. Please check your inbox.');
-        } else if (msg.includes('internal') || msg.includes('server')) {
-          setError('Auth service error. Please try again shortly.');
         } else {
           setError('An error occurred during admin login. Please try again.');
         }
         return;
       }
 
-      // After email login, route to Admin PIN verification
       navigate('/admin-login', { replace: true });
     } catch (err: any) {
-      const msg = String(err?.message ?? '');
-      if (msg.includes('fetch') || msg.includes('network')) {
-        setError('Could not connect to the server. Please try again.');
-      } else {
-        setError('Unexpected error during admin login. Please try again.');
-      }
+      setError(err?.message || 'Unexpected error during admin login.');
     } finally {
       setLoading(false);
     }
@@ -303,7 +316,7 @@ const LoginPage: React.FC = () => {
               Don't have an account? Register here
             </Link>
             <Link
-              to={mode === 'senior' ? '/phone-reset' : '/reset-password'}
+              to="/phone-reset"
               className="block text-sm underline"
               style={{ color: primary }}
             >
@@ -318,6 +331,14 @@ const LoginPage: React.FC = () => {
               <div>Client Ready: {String(debug.hasAuth)}</div>
             </div>
           )}
+
+          <HCaptchaWidget
+            ref={captchaRef}
+            size="invisible"
+            onVerify={(t: string) => setCaptchaToken(t)}
+            onExpire={() => setCaptchaToken(null)}
+            onError={(msg: string) => console.error('hCaptcha error:', msg)}
+          />
         </form>
       ) : (
         <form onSubmit={handleAdminLogin} className="space-y-4" noValidate>
@@ -390,6 +411,14 @@ const LoginPage: React.FC = () => {
               <div>Client Ready: {String(debug.hasAuth)}</div>
             </div>
           )}
+
+          <HCaptchaWidget
+            ref={captchaRef}
+            size="invisible"
+            onVerify={(t: string) => setCaptchaToken(t)}
+            onExpire={() => setCaptchaToken(null)}
+            onError={(msg: string) => console.error('hCaptcha error:', msg)}
+          />
         </form>
       )}
     </div>
@@ -397,4 +426,3 @@ const LoginPage: React.FC = () => {
 };
 
 export default LoginPage;
-
