@@ -10,12 +10,30 @@ const SB_SECRET_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get(
 const HCAPTCHA_SECRET = Deno.env.get("HCAPTCHA_SECRET") || "";
 
 // ---------- CORS ----------
-const corsHeaders = {
-  "Content-Type": "application/json",
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const ALLOWED_ORIGINS = [
+  "https://thewellfitcommunity.org",
+  "https://wellfitcommunity.live",
+  "http://localhost:3100",
+  "https://localhost:3100"
+];
+
+function getCorsHeaders(origin: string | null) {
+  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : null;
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "X-XSS-Protection": "1; mode=block",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+  };
+  if (allowedOrigin) {
+    headers["Access-Control-Allow-Origin"] = allowedOrigin;
+  }
+  return headers;
+}
 
 // ---------- VALIDATION ----------
 const RegisterBase = z.object({
@@ -37,8 +55,8 @@ const RegisterSchema = RegisterBase.refine(
 );
 
 // ---------- HELPERS ----------
-function jsonResponse(body: unknown, status: number) {
-  return new Response(JSON.stringify(body), { status, headers: corsHeaders });
+function jsonResponse(body: unknown, status: number, origin: string | null = null) {
+  return new Response(JSON.stringify(body), { status, headers: getCorsHeaders(origin) });
 }
 
 function normalizePhone(phone: string): string {
@@ -81,13 +99,14 @@ function effectiveRole(requested?: number): { role_code: number; role_slug: stri
 
 // ---------- HANDLER ----------
 serve(async (req: Request) => {
-  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders });
-  if (req.method !== "POST") return jsonResponse({ error: "Method not allowed" }, 405);
+  const origin = req.headers.get("origin");
+  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: getCorsHeaders(origin) });
+  if (req.method !== "POST") return jsonResponse({ error: "Method not allowed" }, 405, origin);
 
   try {
     if (!SB_URL || !SB_SECRET_KEY || !HCAPTCHA_SECRET) {
       console.error("[register] misconfig env", { hasUrl: !!SB_URL, hasKey: !!SB_SECRET_KEY, hasHC: !!HCAPTCHA_SECRET });
-      return jsonResponse({ error: "Server misconfigured" }, 500);
+      return jsonResponse({ error: "Server misconfigured" }, 500, origin);
     }
 
     // Parse JSON safely
@@ -95,12 +114,12 @@ serve(async (req: Request) => {
     try {
       body = await req.json();
     } catch {
-      return jsonResponse({ error: "Invalid JSON" }, 400);
+      return jsonResponse({ error: "Invalid JSON" }, 400, origin);
     }
 
     const parsed = RegisterSchema.safeParse(body);
     if (!parsed.success) {
-      return jsonResponse({ error: "Invalid data", details: parsed.error.errors }, 400);
+      return jsonResponse({ error: "Invalid data", details: parsed.error.errors }, 400, origin);
     }
 
     const payload: RegisterInput = parsed.data;
@@ -108,7 +127,7 @@ serve(async (req: Request) => {
 
     // Captcha first
     const captchaValid = await verifyHcaptcha(payload.hcaptcha_token);
-    if (!captchaValid) return jsonResponse({ error: "Captcha failed" }, 401);
+    if (!captchaValid) return jsonResponse({ error: "Captcha failed" }, 401, origin);
 
     const supabase = createClient(SB_URL, SB_SECRET_KEY);
 
@@ -135,13 +154,13 @@ serve(async (req: Request) => {
     if (authError) {
       const msg = authError.message || "";
       if (msg.includes("already exists")) {
-        return jsonResponse({ error: "Account already exists" }, 409);
+        return jsonResponse({ error: "Account already exists" }, 409, origin);
       }
       // 400 so client can surface actual cause in UI
-      return jsonResponse({ error: "Failed to create account", details: msg }, 400);
+      return jsonResponse({ error: "Failed to create account", details: msg }, 400, origin);
     }
 
-    if (!authData?.user) return jsonResponse({ error: "User creation failed" }, 500);
+    if (!authData?.user) return jsonResponse({ error: "User creation failed" }, 500, origin);
 
     // Upsert profile immediately to prevent bad defaults elsewhere
     const profileRow = {
@@ -199,6 +218,6 @@ serve(async (req: Request) => {
 
   } catch (e) {
     console.error("[register] unhandled:", e);
-    return jsonResponse({ error: "Internal server error" }, 500);
+    return jsonResponse({ error: "Internal server error" }, 500, origin);
   }
 });

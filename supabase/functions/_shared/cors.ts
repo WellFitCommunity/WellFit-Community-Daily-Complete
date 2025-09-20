@@ -70,6 +70,11 @@ export function cors(
     "Access-Control-Allow-Headers": allowHeaders.join(", "),
     "Access-Control-Max-Age": String(maxAge),
     "Vary": "Origin",
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "X-XSS-Protection": "1; mode=block",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
   };
 
   let allowed = false;

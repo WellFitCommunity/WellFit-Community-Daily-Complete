@@ -6,12 +6,30 @@ const SB_URL = Deno.env.get("SUPABASE_URL") || Deno.env.get("SB_URL") || "";
 const SB_SECRET_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("SB_SECRET_KEY") || "";
 const ADMIN_REGISTER_SECRET = Deno.env.get("ADMIN_REGISTER_SECRET") || "";
 
-const corsHeaders = {
-  "Content-Type": "application/json",
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-admin-register-secret",
-};
+const ALLOWED_ORIGINS = [
+  "https://thewellfitcommunity.org",
+  "https://wellfitcommunity.live",
+  "http://localhost:3100",
+  "https://localhost:3100"
+];
+
+function getCorsHeaders(origin: string | null) {
+  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : null;
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-admin-register-secret",
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "X-XSS-Protection": "1; mode=block",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+  };
+  if (allowedOrigin) {
+    headers["Access-Control-Allow-Origin"] = allowedOrigin;
+  }
+  return headers;
+}
 
 const Payload = z.object({
   email: z.string().email().optional(),
@@ -29,8 +47,8 @@ const ELEVATED = new Set([1,2,3,12,14]);
 const PUBLIC = new Set([4,5,6,11,13]);
 const ALL = new Set([...ELEVATED, ...PUBLIC]);
 
-function jsonResponse(body: unknown, status: number) {
-  return new Response(JSON.stringify(body), { status, headers: corsHeaders });
+function jsonResponse(body: unknown, status: number, origin: string | null = null) {
+  return new Response(JSON.stringify(body), { status, headers: getCorsHeaders(origin) });
 }
 function normalizePhone(phone?: string): string | undefined {
   if (!phone) return undefined;
@@ -41,11 +59,12 @@ function normalizePhone(phone?: string): string | undefined {
 }
 
 serve(async (req: Request) => {
-  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders });
-  if (req.method !== "POST") return jsonResponse({ error: "Method not allowed" }, 405);
+  const origin = req.headers.get("origin");
+  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: getCorsHeaders(origin) });
+  if (req.method !== "POST") return jsonResponse({ error: "Method not allowed" }, 405, origin);
 
   try {
-    if (!SB_URL || !SB_SECRET_KEY) return jsonResponse({ error: "Server misconfigured" }, 500);
+    if (!SB_URL || !SB_SECRET_KEY) return jsonResponse({ error: "Server misconfigured" }, 500, origin);
 
     // Gate: require either a valid admin session OR the secret header
     const supabase = createClient(SB_URL, SB_SECRET_KEY);
@@ -66,22 +85,22 @@ serve(async (req: Request) => {
     const hasSecret = ADMIN_REGISTER_SECRET && secretHeader === ADMIN_REGISTER_SECRET;
 
     if (!isAdminSession && !hasSecret) {
-      return jsonResponse({ error: "Forbidden: admin credentials required" }, 403);
+      return jsonResponse({ error: "Forbidden: admin credentials required" }, 403, origin);
     }
 
     // Parse body
     let body: unknown;
-    try { body = await req.json(); } catch { return jsonResponse({ error: "Invalid JSON" }, 400); }
+    try { body = await req.json(); } catch { return jsonResponse({ error: "Invalid JSON" }, 400, origin); }
     const parsed = Payload.safeParse(body);
-    if (!parsed.success) return jsonResponse({ error: "Invalid data", details: parsed.error.errors }, 400);
+    if (!parsed.success) return jsonResponse({ error: "Invalid data", details: parsed.error.errors }, 400, origin);
 
     const input: Input = parsed.data;
-    if (!ALL.has(input.role_code)) return jsonResponse({ error: "Invalid role_code" }, 400);
+    if (!ALL.has(input.role_code)) return jsonResponse({ error: "Invalid role_code" }, 400, origin);
 
     const phone = normalizePhone(input.phone);
     const email = (input.email && input.email.trim() !== "") ? input.email : undefined;
 
-    if (!email && !phone) return jsonResponse({ error: "Provide email or phone" }, 400);
+    if (!email && !phone) return jsonResponse({ error: "Provide email or phone" }, 400, origin);
 
     // Auto-gen password if missing
     const password = input.password ?? crypto.randomUUID() + "aA1!";
@@ -121,8 +140,8 @@ serve(async (req: Request) => {
       },
     });
 
-    if (authError) return jsonResponse({ error: "Failed to create user", details: authError.message }, 400);
-    if (!authData?.user) return jsonResponse({ error: "User creation failed" }, 500);
+    if (authError) return jsonResponse({ error: "Failed to create user", details: authError.message }, 400, origin);
+    if (!authData?.user) return jsonResponse({ error: "User creation failed" }, 500, origin);
 
     // Upsert profiles
     const profile = {
@@ -151,6 +170,6 @@ serve(async (req: Request) => {
 
   } catch (e: any) {
     console.error("[admin_register] unhandled:", e?.message || e);
-    return jsonResponse({ error: "Internal server error", details: String(e?.message || e) }, 500);
+    return jsonResponse({ error: "Internal server error", details: String(e?.message || e) }, 500, origin);
   }
 });

@@ -1,7 +1,7 @@
 // supabase/functions/send_welcome_email/index.ts
 import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { cors } from "../_shared/cors.ts";
 
 // Validate incoming payload
 const welcomeEmailSchema = z.object({
@@ -10,14 +10,28 @@ const welcomeEmailSchema = z.object({
 });
 type WelcomeEmailPayload = z.infer<typeof welcomeEmailSchema>;
 
-const SEND_EMAIL_FUNCTION_NAME = "send_email";
+const MAILERSEND_API_KEY = Deno.env.get("MAILERSEND_API_KEY");
+const MAILERSEND_FROM_EMAIL = Deno.env.get("MAILERSEND_FROM_EMAIL");
+const MAILERSEND_FROM_NAME = Deno.env.get("MAILERSEND_FROM_NAME") || "WellFit Community";
+const WELCOME_TEMPLATE_ID = "v69oxl5w0zzl785k";
 
-console.log("✅ send_welcome_email initialized. Will call:", SEND_EMAIL_FUNCTION_NAME);
+console.log("✅ send_welcome_email initialized with template:", WELCOME_TEMPLATE_ID);
 
 serve(async (req) => {
-  const headers = new Headers({ "Content-Type": "application/json" });
+  const { headers, allowed } = cors(req.headers.get('origin'), {
+    methods: ['POST','OPTIONS'],
+  });
+
+  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers });
+  if (!allowed) return new Response(JSON.stringify({ error: 'Origin not allowed' }), { status: 403, headers });
+  if (req.method !== 'POST')
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });
 
   try {
+    if (!MAILERSEND_API_KEY || !MAILERSEND_FROM_EMAIL) {
+      return new Response(JSON.stringify({ error: "Email server configuration error." }), { status: 500, headers });
+    }
+
     // Parse JSON body safely
     let rawBody: unknown;
     try {
@@ -41,50 +55,57 @@ serve(async (req) => {
 
     const { email, full_name } = parsed.data as WelcomeEmailPayload;
 
-    // Build email content for the generic send_email function
-    const subject = "Welcome to WellFit!";
-    const text = [
-      `Hi ${full_name},`,
-      "",
-      "Welcome to the WellFit Community! We're so glad you're here.",
-      "If you have any questions, reach out anytime.",
-      "",
-      "— The WellFit Community Team",
-    ].join("\n");
+    // Send email using MailerSend template
+    const mailersendPayload = {
+      from: {
+        email: MAILERSEND_FROM_EMAIL,
+        name: MAILERSEND_FROM_NAME
+      },
+      to: [{
+        email: email,
+        name: full_name
+      }],
+      template_id: WELCOME_TEMPLATE_ID,
+      subject: "Welcome to WellFit Community!",
+      variables: [
+        {
+          email: email,
+          substitutions: [
+            {
+              var: "full_name",
+              value: full_name
+            }
+          ]
+        }
+      ]
+    };
 
-    const html = text.replace(/\n/g, "<br>");
+    console.log(`📨 Sending welcome email template ${WELCOME_TEMPLATE_ID} to: ${email}`);
 
-    const emailPayload = { to: email, subject, text, html };
+    const resp = await fetch('https://api.mailersend.com/v1/email', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${MAILERSEND_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(mailersendPayload),
+    });
 
-    // Invoke the existing send_email Edge Function using service role
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
-
-    console.log(`📨 Invoking ${SEND_EMAIL_FUNCTION_NAME} for: ${email}`);
-    const { data: fnData, error: fnError } = await supabase.functions.invoke(
-      SEND_EMAIL_FUNCTION_NAME,
-      { body: emailPayload }
-    );
-
-    if (fnError) {
-      // Extract best-effort detail
-      const detail =
-        (fnError as any)?.message ||
-        (fnError as any)?.context?.error ||
-        (fnError as any)?.context?.details ||
-        "Failed to send welcome email via send_email.";
-      console.error(`❌ ${SEND_EMAIL_FUNCTION_NAME} error:`, detail);
-      return new Response(JSON.stringify({ error: detail }), { status: 502, headers });
+    if (!resp.ok) {
+      const errText = await resp.text();
+      console.error(`❌ MailerSend error:`, errText);
+      return new Response(JSON.stringify({
+        error: 'Failed to send welcome email via MailerSend.',
+        details: errText.substring(0, 500)
+      }), { status: resp.status, headers });
     }
 
-    console.log(`✅ ${SEND_EMAIL_FUNCTION_NAME} success for: ${email}`);
+    console.log(`✅ Welcome email template sent successfully to: ${email}`);
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Welcome email dispatched.",
-        response: fnData ?? null,
+        message: "Welcome email sent with template.",
+        template_id: WELCOME_TEMPLATE_ID
       }),
       { status: 200, headers }
     );
