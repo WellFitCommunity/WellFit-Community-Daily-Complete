@@ -2,17 +2,22 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// CORS Configuration - Explicit allowlist for security
+const ALLOWED_ORIGINS = [
+  "https://thewellfitcommunity.org",
+  "https://wellfitcommunity.live",
+  "http://localhost:3100",
+  "https://localhost:3100"
+];
+
 function cors(origin: string | null): Headers {
-  const allowed = (Deno.env.get("ALLOWED_ORIGINS") ?? "*")
-    .split(",").map(s => s.trim()).filter(Boolean);
-  const allowOrigin = allowed.includes("*")
-    ? "*"
-    : (origin && allowed.includes(origin) ? origin : "");
+  const allowOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : null;
   const h = new Headers();
-  h.set("Access-Control-Allow-Origin", allowOrigin || "*");
+  h.set("Access-Control-Allow-Origin", allowOrigin || "null");
   h.set("Vary", "Origin");
   h.set("Access-Control-Allow-Methods", "POST, OPTIONS");
   h.set("Access-Control-Allow-Headers", "authorization, x-client-info, apikey, content-type");
+  h.set("Access-Control-Allow-Credentials", "true");
   h.set("Content-Type", "application/json");
   return h;
 }

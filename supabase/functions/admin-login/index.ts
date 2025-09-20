@@ -1,14 +1,18 @@
 import { serve } from "https://deno.land/std@0.183.0/http/server.ts";
-// We might not need createClient from supabase-js if we're just checking an env var
-// import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getCorsHeaders } from "../_shared/cors.ts";
+
+// Allowed origins for CORS
+const ALLOWED_ORIGINS = [
+  "https://thewellfitcommunity.org",
+  "https://wellfitcommunity.live",
+  "http://localhost:3100",
+  "https://localhost:3100"
+];
 
 serve(async (req: Request) => {
-  const headers = new Headers({
-    "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": req.headers.get("Origin") || "*",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, Apikey",
-  });
+  const origin = req.headers.get("Origin");
+  const headers = getCorsHeaders(origin, ALLOWED_ORIGINS);
 
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers });
@@ -31,10 +35,10 @@ serve(async (req: Request) => {
       );
     }
 
-    const serverAdminSecret = Deno.env.get("REACT_APP_ADMIN_SECRET");
+    const serverAdminSecret = Deno.env.get("ADMIN_SECRET");
 
     if (!serverAdminSecret) {
-      console.error("REACT_APP_ADMIN_SECRET is not set in function environment variables.");
+      console.error("ADMIN_SECRET is not set in function environment variables.");
       return new Response(
         JSON.stringify({ error: "Server configuration error." }),
         { status: 500, headers }
@@ -42,18 +46,41 @@ serve(async (req: Request) => {
     }
 
     if (adminKey === serverAdminSecret) {
-      // Admin key is valid.
-      // Similar to user login, we'll return a placeholder token for now.
-      // Actual session management (e.g., secure cookie, proper JWT) will be part of Step 7.
-      const placeholderAdminToken = "placeholder-admin-jwt-token";
+      // Initialize Supabase client for admin operations
+      const supabaseUrl = Deno.env.get("SUPABASE_URL");
+      const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+      if (!supabaseUrl || !supabaseServiceKey) {
+        console.error("Missing Supabase configuration");
+        return new Response(
+          JSON.stringify({ error: "Server configuration error." }),
+          { status: 500, headers }
+        );
+      }
+
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+      // Create a secure admin session token using Supabase Auth
+      const expiresIn = 60 * 60 * 8; // 8 hours
+      const { data: adminSession, error: sessionError } = await supabase.auth.admin.createSession({
+        user_id: "admin", // Special admin user ID
+        expires_in: expiresIn
+      });
+
+      if (sessionError) {
+        console.error("Failed to create admin session:", sessionError);
+        return new Response(
+          JSON.stringify({ error: "Failed to create admin session." }),
+          { status: 500, headers }
+        );
+      }
 
       return new Response(
         JSON.stringify({
           success: true,
           message: "Admin login successful.",
-          // The frontend will need a way to identify an admin session.
-          // A token is one way, even if it's a placeholder for now.
-          token: placeholderAdminToken
+          token: adminSession.access_token,
+          expires_in: expiresIn
         }),
         { status: 200, headers }
       );

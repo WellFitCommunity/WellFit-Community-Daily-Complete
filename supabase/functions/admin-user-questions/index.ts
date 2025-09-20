@@ -18,11 +18,13 @@ const getEnv = (key: string, fallbacks: string[] = []): string => {
 const SB_URL = getEnv("SB_URL", ["SUPABASE_URL"]);
 const SB_SECRET_KEY = getEnv("SB_SECRET_KEY", ["SUPABASE_SERVICE_ROLE_KEY"]);
 
-// CORS Configuration
-const ALLOWED_ORIGINS = getEnv("ALLOWED_ORIGINS", [])
-  .split(",")
-  .map((s) => s.trim())
-  .filter(Boolean);
+// CORS Configuration - Explicit allowlist for security
+const ALLOWED_ORIGINS = [
+  "https://thewellfitcommunity.org",
+  "https://wellfitcommunity.live",
+  "http://localhost:3100",
+  "https://localhost:3100"
+];
 
 // ---------- VALIDATION SCHEMAS ----------
 const SubmitQuestionSchema = z.object({
@@ -47,8 +49,8 @@ function corsHeaders(origin: string | null): { headers: Record<string, string>; 
   };
 
   if (ALLOWED_ORIGINS.length === 0) {
-    headers["Access-Control-Allow-Origin"] = origin || "*";
-    return { headers, allowed: true };
+    // Security: Never allow wildcard origin in production
+    return { headers, allowed: false };
   }
 
   const normalizedOrigin = origin ? new URL(origin).origin : null;

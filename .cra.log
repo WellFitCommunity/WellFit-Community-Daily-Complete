@@ -1,6 +1,6 @@
 
 > wellfit-community-daily@0.1.0 start:cs-debug
-> CI=true DISABLE_ESLINT_PLUGIN=true CHOKIDAR_USEPOLLING=true PORT=3000 BROWSER=none WDS_SOCKET_HOST=0.0.0.0 WDS_SOCKET_PORT=3000 react-scripts start -- --progress
+> CI=true DISABLE_ESLINT_PLUGIN=true CHOKIDAR_USEPOLLING=true PORT=3100 BROWSER=none WDS_SOCKET_HOST=0.0.0.0 WDS_SOCKET_PORT=3000 react-scripts start -- --progress
 
 Attempting to bind to HOST environment variable: 0.0.0.0
 If this was unintentional, check that you haven't mistakenly set it in your shell.

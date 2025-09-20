@@ -6,6 +6,9 @@ node_modules
 .env
 .env.local
 .env.*.local
+supabase/.env.local
+.env.test.local
+.env.development.local
 
 # Build output
 build/

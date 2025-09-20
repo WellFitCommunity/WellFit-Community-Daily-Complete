@@ -2,12 +2,23 @@ import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-
 
 console.log("validate-api-key function initializing.");
 
-// Define CORS headers for responses
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*', // Or specific origins
-  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS', // OPTIONS is crucial for preflight
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// CORS Configuration - Explicit allowlist for security
+const ALLOWED_ORIGINS = [
+  "https://thewellfitcommunity.org",
+  "https://wellfitcommunity.live",
+  "http://localhost:3100",
+  "https://localhost:3100"
+];
+
+function getCorsHeaders(origin: string | null) {
+  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : null;
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin || 'null',
+    'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Credentials': 'true',
+  };
+}
 
 // Initialize Supabase client with service role
 let supabaseAdminClient: SupabaseClient;
@@ -28,6 +39,9 @@ try {
 
 Deno.serve(async (req: Request) => {
   console.log(`Request received: ${req.method} ${req.url}`);
+
+  const origin = req.headers.get("Origin");
+  const corsHeaders = getCorsHeaders(origin);
 
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {

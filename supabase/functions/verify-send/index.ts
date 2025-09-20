@@ -5,17 +5,30 @@ const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID")!;
 const TWILIO_AUTH_TOKEN  = Deno.env.get("TWILIO_AUTH_TOKEN")!;
 const VERIFY_SID         = Deno.env.get("TWILIO_VERIFY_SERVICE_SID")!;
 
-// ⚠️ For production, replace "*" with your app's domain(s)
-const CORS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST,OPTIONS",
-};
+// CORS Configuration - Explicit allowlist for security
+const ALLOWED_ORIGINS = [
+  "https://thewellfitcommunity.org",
+  "https://wellfitcommunity.live",
+  "http://localhost:3100",
+  "https://localhost:3100"
+];
+
+function getCorsHeaders(origin: string | null) {
+  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : "null";
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST,OPTIONS",
+    "Access-Control-Allow-Credentials": "true",
+  };
+}
 
 Deno.serve(async (req) => {
+  const origin = req.headers.get("Origin");
+  const corsHeaders = getCorsHeaders(origin);
+
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: CORS });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
@@ -25,7 +38,7 @@ Deno.serve(async (req) => {
     if (!/^\+\d{10,15}$/.test(phone || "")) {
       return new Response(JSON.stringify({ error: "Invalid E.164 phone." }), {
         status: 400,
-        headers: { ...CORS, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -47,7 +60,7 @@ Deno.serve(async (req) => {
       const text = await resp.text();
       return new Response(JSON.stringify({ error: `Twilio error: ${text}` }), {
         status: 502,
-        headers: { ...CORS, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -59,7 +72,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: e?.message || "Unknown error" }),
       {
         status: 500,
-        headers: { ...CORS, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
   }

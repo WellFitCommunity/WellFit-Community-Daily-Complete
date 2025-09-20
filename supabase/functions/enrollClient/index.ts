@@ -46,14 +46,29 @@ async function getCaller(req: Request) {
   return { id, roles };
 }
 
-// ─── Function ────────────────────────────────────────────────────────────────
-serve(async (req) => {
-  const headers = new Headers({
+// CORS Configuration - Explicit allowlist for security
+const ALLOWED_ORIGINS = [
+  "https://thewellfitcommunity.org",
+  "https://wellfitcommunity.live",
+  "http://localhost:3100",
+  "https://localhost:3100"
+];
+
+function getCorsHeaders(origin: string | null) {
+  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : null;
+  return new Headers({
     "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": req.headers.get("Origin") ?? "*",
+    "Access-Control-Allow-Origin": allowedOrigin || "null",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Credentials": "true",
   });
+}
+
+// ─── Function ────────────────────────────────────────────────────────────────
+serve(async (req) => {
+  const origin = req.headers.get("Origin");
+  const headers = getCorsHeaders(origin);
 
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers });
   if (req.method !== "POST")

@@ -1,0 +1,166 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run security scan every Monday at 2 AM UTC
+    - cron: '0 2 * * 1'
+
+jobs:
+  security-scan:
+    name: Security Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run npm audit
+      run: |
+        echo "## NPM Security Audit" >> $GITHUB_STEP_SUMMARY
+        npm audit --audit-level=moderate --json > audit-results.json || true
+
+        # Parse and display results
+        if [ -s audit-results.json ]; then
+          echo "### Vulnerabilities Found:" >> $GITHUB_STEP_SUMMARY
+          cat audit-results.json | jq -r '.vulnerabilities | to_entries[] | "- **\(.key)**: \(.value.severity) - \(.value.title)"' >> $GITHUB_STEP_SUMMARY || echo "No vulnerabilities or parsing error" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "✅ No vulnerabilities found!" >> $GITHUB_STEP_SUMMARY
+        fi
+
+    - name: Run CodeQL Analysis
+      uses: github/codeql-action/init@v3
+      with:
+        languages: javascript, typescript
+
+    - name: Autobuild
+      uses: github/codeql-action/autobuild@v3
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+
+    - name: Run ESLint Security Plugin
+      run: |
+        npm install eslint-plugin-security --save-dev
+        echo "module.exports = { extends: ['plugin:security/recommended'], plugins: ['security'], env: { node: true, es6: true }, parserOptions: { ecmaVersion: 2021, sourceType: 'module' } };" > .eslintrc.security.js
+        npx eslint --config .eslintrc.security.js --ext .js,.ts,.tsx src/ supabase/ --format json > eslint-security.json || true
+
+        echo "## ESLint Security Scan" >> $GITHUB_STEP_SUMMARY
+        if [ -s eslint-security.json ]; then
+          echo "### Security Issues Found:" >> $GITHUB_STEP_SUMMARY
+          cat eslint-security.json | jq -r '.[] | select(.messages | length > 0) | .filePath as $file | .messages[] | "- **\($file)**: \(.message) (Line \(.line))"' >> $GITHUB_STEP_SUMMARY || echo "No security issues found" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "✅ No security issues found!" >> $GITHUB_STEP_SUMMARY
+        fi
+
+    - name: Check for secrets in code
+      run: |
+        echo "## Secret Detection" >> $GITHUB_STEP_SUMMARY
+
+        # Check for common secret patterns
+        SECRET_PATTERNS=(
+          "password\s*=\s*['\"][^'\"]{8,}"
+          "api[_-]?key\s*[=:]\s*['\"][^'\"]{20,}"
+          "secret[_-]?key\s*[=:]\s*['\"][^'\"]{20,}"
+          "token\s*[=:]\s*['\"][^'\"]{20,}"
+          "-----BEGIN [A-Z ]+-----"
+        )
+
+        FOUND_SECRETS=false
+        for pattern in "${SECRET_PATTERNS[@]}"; do
+          if grep -r -i -E "$pattern" src/ supabase/ --exclude-dir=node_modules --exclude="*.md" --exclude="*.json" 2>/dev/null; then
+            echo "⚠️ Potential secret found with pattern: $pattern" >> $GITHUB_STEP_SUMMARY
+            FOUND_SECRETS=true
+          fi
+        done
+
+        if [ "$FOUND_SECRETS" = false ]; then
+          echo "✅ No hardcoded secrets detected!" >> $GITHUB_STEP_SUMMARY
+        fi
+
+    - name: Dependency vulnerability check
+      run: |
+        echo "## Dependency Security Check" >> $GITHUB_STEP_SUMMARY
+
+        # Check for known vulnerable packages
+        npx audit-ci --config audit-ci.json || true
+
+        # Check package.json for outdated packages with security issues
+        npm outdated --json > outdated.json || true
+        if [ -s outdated.json ]; then
+          echo "### Outdated Packages:" >> $GITHUB_STEP_SUMMARY
+          cat outdated.json | jq -r 'to_entries[] | "- **\(.key)**: Current \(.value.current), Latest \(.value.latest)"' >> $GITHUB_STEP_SUMMARY || echo "Package check completed" >> $GITHUB_STEP_SUMMARY
+        fi
+
+    - name: Security Headers Check
+      run: |
+        echo "## Security Headers Analysis" >> $GITHUB_STEP_SUMMARY
+
+        # Check if security headers are implemented in code
+        HEADERS_FOUND=0
+
+        if grep -r "Content-Security-Policy" supabase/ src/ public/ 2>/dev/null; then
+          echo "✅ Content-Security-Policy implemented" >> $GITHUB_STEP_SUMMARY
+          ((HEADERS_FOUND++))
+        fi
+
+        if grep -r "X-Frame-Options" supabase/ src/ 2>/dev/null; then
+          echo "✅ X-Frame-Options implemented" >> $GITHUB_STEP_SUMMARY
+          ((HEADERS_FOUND++))
+        fi
+
+        if grep -r "X-Content-Type-Options" supabase/ src/ 2>/dev/null; then
+          echo "✅ X-Content-Type-Options implemented" >> $GITHUB_STEP_SUMMARY
+          ((HEADERS_FOUND++))
+        fi
+
+        echo "### Security Headers Score: $HEADERS_FOUND/3" >> $GITHUB_STEP_SUMMARY
+
+    - name: CORS Configuration Check
+      run: |
+        echo "## CORS Security Check" >> $GITHUB_STEP_SUMMARY
+
+        # Check for wildcard CORS
+        if grep -r "Access-Control-Allow-Origin.*\*" supabase/ src/ 2>/dev/null; then
+          echo "⚠️ Wildcard CORS detected - security risk!" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "✅ No wildcard CORS found" >> $GITHUB_STEP_SUMMARY
+        fi
+
+        # Check for proper CORS implementation
+        if grep -r "ALLOWED_ORIGINS\|allowedOrigins" supabase/ src/ 2>/dev/null; then
+          echo "✅ Origin allowlist implementation found" >> $GITHUB_STEP_SUMMARY
+        fi
+
+    - name: Upload scan results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: security-scan-results
+        path: |
+          audit-results.json
+          eslint-security.json
+          outdated.json
+        retention-days: 30
+
+    - name: Security Scan Summary
+      run: |
+        echo "## 🔒 Security Scan Complete" >> $GITHUB_STEP_SUMMARY
+        echo "Scan completed at $(date)" >> $GITHUB_STEP_SUMMARY
+        echo "**Next scan:** Scheduled for next Monday or on next push to main" >> $GITHUB_STEP_SUMMARY
