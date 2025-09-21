@@ -30,7 +30,6 @@ const LoginPage: React.FC = () => {
   // captcha state
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const captchaRef = useRef<HCaptchaRef>(null);
-  const requireCaptcha = process.env.REACT_APP_REQUIRE_HCAPTCHA_LOGIN === 'true';
 
   // colors
   const primary = WELLFIT_COLORS.blue;   // #003865
@@ -115,7 +114,6 @@ const LoginPage: React.FC = () => {
     setCaptchaToken(null);
   };
   const ensureCaptcha = async (): Promise<string> => {
-    if (!requireCaptcha) return ''; // Return empty string instead of 'skip'
     if (captchaToken) return captchaToken;
     try {
       const t = await captchaRef.current?.execute();
@@ -143,18 +141,13 @@ const LoginPage: React.FC = () => {
     try {
       const e164 = normalizeToE164(phone);
       const token = await ensureCaptcha();
-      if (requireCaptcha && !token) throw new Error('Captcha required.');
+      if (!token) throw new Error('Captcha required.');
 
-      const signInOptions: any = {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         phone: e164,
         password: seniorPassword,
-      };
-      // Always include options, but only add captchaToken if we have one
-      signInOptions.options = {};
-      if (requireCaptcha && token) {
-        signInOptions.options.captchaToken = token;
-      }
-      const { error: signInError } = await supabase.auth.signInWithPassword(signInOptions);
+        options: { captchaToken: token },
+      });
 
       if (signInError) {
         if (signInError.message.toLowerCase().includes('captcha')) {
@@ -194,18 +187,13 @@ const LoginPage: React.FC = () => {
     setLoading(true);
     try {
       const token = await ensureCaptcha();
-      if (requireCaptcha && !token) throw new Error('Captcha required.');
+      if (!token) throw new Error('Captcha required.');
 
-      const signInOptions: any = {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email: adminEmail.trim(),
         password: adminPassword,
-      };
-      // Always include options, but only add captchaToken if we have one
-      signInOptions.options = {};
-      if (requireCaptcha && token) {
-        signInOptions.options.captchaToken = token;
-      }
-      const { error: signInError } = await supabase.auth.signInWithPassword(signInOptions);
+        options: { captchaToken: token },
+      });
 
       if (signInError) {
         if (signInError.message.toLowerCase().includes('captcha')) {
@@ -344,15 +332,13 @@ const LoginPage: React.FC = () => {
             </div>
           )}
 
-          {requireCaptcha && (
-            <HCaptchaWidget
-              ref={captchaRef}
-              size="invisible"
-              onVerify={(t: string) => setCaptchaToken(t)}
-              onExpire={() => setCaptchaToken(null)}
-              onError={(msg: string) => console.error('hCaptcha error:', msg)}
-            />
-          )}
+          <HCaptchaWidget
+            ref={captchaRef}
+            size="invisible"
+            onVerify={(t: string) => setCaptchaToken(t)}
+            onExpire={() => setCaptchaToken(null)}
+            onError={(msg: string) => console.error('hCaptcha error:', msg)}
+          />
         </form>
       ) : (
         <form onSubmit={handleAdminLogin} className="space-y-4" noValidate>
@@ -426,15 +412,13 @@ const LoginPage: React.FC = () => {
             </div>
           )}
 
-          {requireCaptcha && (
-            <HCaptchaWidget
-              ref={captchaRef}
-              size="invisible"
-              onVerify={(t: string) => setCaptchaToken(t)}
-              onExpire={() => setCaptchaToken(null)}
-              onError={(msg: string) => console.error('hCaptcha error:', msg)}
-            />
-          )}
+          <HCaptchaWidget
+            ref={captchaRef}
+            size="invisible"
+            onVerify={(t: string) => setCaptchaToken(t)}
+            onExpire={() => setCaptchaToken(null)}
+            onError={(msg: string) => console.error('hCaptcha error:', msg)}
+          />
         </form>
       )}
     </div>
