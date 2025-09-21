@@ -1,108 +1,74 @@
-import { useMemo } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-// import ImageCarousel from '../components/ui/ImageCarousel';
-import PhotoUpload from '../../components/features/PhotoUpload';
-// import PhotoGallery from '../components/features/PhotoGallery';
+// Dashboard Meal of the Day Widget
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { allRecipes } from '../../data/allRecipes';
-import ImageCarousel from 'components/ui/ImageCarousel';
-import PhotoGallery from 'components/features/PhotoGallery';
 
-export default function MealDetailPage() {
-  const { id } = useParams<{ id: string }>();
+const DashMealOfTheDay: React.FC = () => {
   const navigate = useNavigate();
+  const [todaysMeal, setTodaysMeal] = useState<any>(null);
 
-  const recipe = useMemo(() => {
-    if (!id) return null;
-    return allRecipes.find((r: any) => String(r.id) === String(id)) || null;
-  }, [id]);
+  useEffect(() => {
+    // Get today's meal based on date
+    const today = new Date();
+    const dayOfYear = Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
+    const mealIndex = dayOfYear % allRecipes.length;
+    setTodaysMeal(allRecipes[mealIndex]);
+  }, []);
 
-  const meal = recipe
-    ? {
-        id: String(recipe.id),
-        name: recipe.name,
-        description: recipe.description || '',
-        image_url: recipe.image_url || recipe.images?.[0] || null,
-        calories: recipe.calories ?? null,
-        cost: recipe.cost ?? null,
-        images: recipe.images || [],
-        ingredients: recipe.ingredients || [],
-        steps: recipe.steps || [],
-      }
-    : null;
+  if (!todaysMeal) {
+    return (
+      <div className="text-center">
+        <div className="text-2xl sm:text-3xl mb-3">🍽️</div>
+        <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 mb-3">
+          Today's Meal
+        </h3>
+        <p className="text-sm sm:text-base text-gray-600">
+          Loading today's featured meal...
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div className="bg-white text-[#003865] rounded-xl shadow-md p-4 sm:p-6 max-w-2xl mx-auto mt-8 space-y-6">
-      <button
-        onClick={() => navigate('/dashboard')}
-        className="text-sm text-[#8cc63f] hover:underline"
-      >
-        ← Back to dashboard
-      </button>
+    <div className="text-center">
+      <div className="text-2xl sm:text-3xl mb-3">🍽️</div>
+      <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 mb-3">
+        Today's Featured Meal
+      </h3>
 
-      {!meal && (
-        <div className="text-center space-y-3">
-          <p className="text-lg font-semibold text-red-600">Meal not found.</p>
-          <Link to="/dashboard" className="text-blue-500 underline">
-            Back to dashboard
-          </Link>
+      <div className="mb-4">
+        {todaysMeal.image_url && (
+          <img
+            src={todaysMeal.image_url}
+            alt={todaysMeal.name}
+            className="w-full h-32 sm:h-40 object-cover rounded-lg mb-3"
+          />
+        )}
+        <h4 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">
+          {todaysMeal.name}
+        </h4>
+        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+          {todaysMeal.description || 'A delicious and nutritious meal for today!'}
+        </p>
+
+        <div className="flex justify-center gap-4 text-xs sm:text-sm text-gray-500 mb-4">
+          {todaysMeal.calories && (
+            <span>🔥 {todaysMeal.calories} cal</span>
+          )}
+          {todaysMeal.cost && (
+            <span>💰 ${todaysMeal.cost}</span>
+          )}
         </div>
-      )}
+      </div>
 
-      {meal && (
-        <>
-          <h1 className="text-2xl font-bold text-center">{meal.name}</h1>
-
-          {meal.images.length ? (
-            <ImageCarousel images={meal.images} altText={meal.name} />
-          ) : (
-            <img
-              src={
-                meal.image_url ||
-                `https://source.unsplash.com/600x400/?${encodeURIComponent(meal.name)}`
-              }
-              alt={meal.name}
-              className="w-full h-64 object-cover rounded-lg shadow-md"
-            />
-          )}
-
-          <div className="flex flex-wrap gap-4 text-sm font-medium">
-            {meal.calories ? <span>Calories: {meal.calories}</span> : null}
-            {meal.cost ? <span>Cost: ${meal.cost}</span> : null}
-          </div>
-
-          <p className="whitespace-pre-wrap leading-relaxed text-gray-700">
-            {meal.description || 'Enjoy your meal!'}
-          </p>
-
-          {meal.ingredients.length > 0 && (
-            <>
-              <h2 className="text-lg font-semibold mt-4">Ingredients</h2>
-              <ul className="list-disc ml-6 text-base space-y-1">
-                {meal.ingredients.map((ing: string, idx: number) => (
-                  <li key={idx}>{ing}</li>
-                ))}
-              </ul>
-            </>
-          )}
-
-          {meal.steps.length > 0 && (
-            <>
-              <h2 className="text-lg font-semibold mt-4">Directions</h2>
-              <ol className="list-decimal ml-6 text-base space-y-2">
-                {meal.steps.map((step: string, idx: number) => (
-                  <li key={idx} className="mb-1">{step}</li>
-                ))}
-              </ol>
-            </>
-          )}
-
-          {/* Photos remain tied to this recipe's id */}
-          <div className="space-y-4 mt-6">
-            <PhotoUpload context="meal" recordId={meal.id} />
-            <PhotoGallery context="meal" recordId={meal.id} />
-          </div>
-        </>
-      )}
+      <button
+        onClick={() => navigate(`/meals/${todaysMeal.id}`)}
+        className="bg-green-600 text-white text-sm sm:text-base px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:bg-green-700 transition-colors w-full"
+      >
+        🍳 View Full Recipe
+      </button>
     </div>
   );
-}
+};
+
+export default DashMealOfTheDay;
