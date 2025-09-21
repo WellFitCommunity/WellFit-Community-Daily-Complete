@@ -1,4 +1,4 @@
-// src/pages/DemographicsPage.tsx - Senior-Friendly Demographics
+// src/pages/DemographicsPage.tsx - Senior-Friendly Demographics with Save Feature
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSupabaseClient, useUser } from '../contexts/AuthContext';
@@ -11,6 +11,7 @@ interface DemographicsData {
   phone: string;
   dob: string;
   address: string;
+  pin: string; // For caregiver view-only access
 
   // Actual Demographics for Seniors
   gender: string;
@@ -50,7 +51,9 @@ const DemographicsPage: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<DemographicsData>({
     first_name: '',
@@ -58,6 +61,7 @@ const DemographicsPage: React.FC = () => {
     phone: '',
     dob: '',
     address: '',
+    pin: '',
     gender: '',
     ethnicity: '',
     marital_status: '',
@@ -92,7 +96,7 @@ const DemographicsPage: React.FC = () => {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('*')
+          .select('*, roles(name)')
           .eq('user_id', user.id)
           .single();
 
@@ -101,13 +105,22 @@ const DemographicsPage: React.FC = () => {
         }
 
         if (data) {
-          // Check if already completed demographics
+          const roleName = data.roles?.name || 'senior';
+          setUserRole(roleName);
+
+          // Skip demographics for admin/staff roles
+          if (['admin', 'super_admin', 'staff', 'moderator'].includes(roleName)) {
+            navigate('/dashboard');
+            return;
+          }
+
+          // Check if already completed demographics (only for seniors)
           if (data.demographics_complete) {
             navigate('/dashboard');
             return;
           }
 
-          // Pre-fill basic info
+          // Pre-fill all available data including partial progress
           setFormData(prev => ({
             ...prev,
             first_name: data.first_name || '',
@@ -116,7 +129,32 @@ const DemographicsPage: React.FC = () => {
             dob: data.dob || '',
             address: data.address || '',
             emergency_contact_name: data.emergency_contact_name || '',
+            emergency_contact_phone: data.emergency_contact_phone || '',
+            emergency_contact_relationship: data.emergency_contact_relationship || '',
+            gender: data.gender || '',
+            ethnicity: data.ethnicity || '',
+            marital_status: data.marital_status || '',
+            living_situation: data.living_situation || '',
+            education_level: data.education_level || '',
+            income_range: data.income_range || '',
+            insurance_type: data.insurance_type || '',
+            health_conditions: data.health_conditions || [],
+            medications: data.medications || '',
+            mobility_level: data.mobility_level || '',
+            hearing_status: data.hearing_status || '',
+            vision_status: data.vision_status || '',
+            has_smartphone: data.has_smartphone || false,
+            has_internet: data.has_internet || false,
+            tech_comfort_level: data.tech_comfort_level || '',
+            transportation_access: data.transportation_access || '',
+            food_security: data.food_security || '',
+            social_support: data.social_support || ''
           }));
+
+          // Resume from saved step if available
+          if (data.demographics_step) {
+            setCurrentStep(data.demographics_step);
+          }
         }
       } catch (err) {
         console.error('Error loading profile:', err);
@@ -146,7 +184,7 @@ const DemographicsPage: React.FC = () => {
   };
 
   const nextStep = () => {
-    if (currentStep < 5) {
+    if (currentStep < 6) { // Now includes PIN step
       setCurrentStep(currentStep + 1);
     }
   };
@@ -157,12 +195,72 @@ const DemographicsPage: React.FC = () => {
     }
   };
 
+  // Save progress without completing
+  const saveProgress = async () => {
+    setSaving(true);
+    setError(null);
+
+    try {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          gender: formData.gender,
+          ethnicity: formData.ethnicity,
+          marital_status: formData.marital_status,
+          living_situation: formData.living_situation,
+          education_level: formData.education_level,
+          income_range: formData.income_range,
+          insurance_type: formData.insurance_type,
+          emergency_contact_name: formData.emergency_contact_name,
+          emergency_contact_phone: formData.emergency_contact_phone,
+          emergency_contact_relationship: formData.emergency_contact_relationship,
+          health_conditions: formData.health_conditions,
+          medications: formData.medications,
+          mobility_level: formData.mobility_level,
+          hearing_status: formData.hearing_status,
+          vision_status: formData.vision_status,
+          has_smartphone: formData.has_smartphone,
+          has_internet: formData.has_internet,
+          tech_comfort_level: formData.tech_comfort_level,
+          transportation_access: formData.transportation_access,
+          food_security: formData.food_security,
+          social_support: formData.social_support,
+          demographics_step: currentStep, // Save current step
+          demographics_complete: false // Not finished yet
+        })
+        .eq('user_id', user!.id);
+
+      if (profileError) throw profileError;
+
+      // Navigate to dashboard with saved progress
+      navigate('/dashboard');
+    } catch (err) {
+      console.error('Error saving progress:', err);
+      setError('Unable to save your progress. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleSubmit = async () => {
     setSubmitting(true);
     setError(null);
 
+    // Validate required fields
+    if (!formData.first_name || !formData.last_name || !formData.phone) {
+      setError('Please complete your basic information.');
+      setSubmitting(false);
+      return;
+    }
+
+    if (!/^\d{4}$/.test(formData.pin)) {
+      setError('Please create a 4-digit PIN for caregiver access.');
+      setSubmitting(false);
+      return;
+    }
+
     try {
-      // Update profile with demographics data
+      // Update profile with all demographics data
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
@@ -188,11 +286,23 @@ const DemographicsPage: React.FC = () => {
           food_security: formData.food_security,
           social_support: formData.social_support,
           demographics_complete: true,
+          demographics_step: null, // Clear step since completed
           onboarded: true
         })
         .eq('user_id', user!.id);
 
       if (profileError) throw profileError;
+
+      // Store PIN separately for caregiver access (TODO: hash on server)
+      const { error: pinError } = await supabase
+        .from('phone_auth')
+        .upsert({
+          id: user!.id,
+          phone: formData.phone,
+          pin: formData.pin // TODO: hash via Edge Function for security
+        });
+
+      if (pinError) throw pinError;
 
       // Navigate to dashboard
       navigate('/dashboard');
@@ -226,9 +336,12 @@ const DemographicsPage: React.FC = () => {
           <p className="text-lg text-gray-600">
             This helps us provide better care and resources for you
           </p>
+          <p className="text-base text-gray-500 mt-2">
+            You can save your progress and come back anytime
+          </p>
           <div className="mt-4">
             <div className="flex justify-center space-x-2">
-              {[1, 2, 3, 4, 5].map((step) => (
+              {[1, 2, 3, 4, 5, 6].map((step) => (
                 <div
                   key={step}
                   className={`w-3 h-3 rounded-full ${
@@ -239,7 +352,7 @@ const DemographicsPage: React.FC = () => {
                 />
               ))}
             </div>
-            <p className="text-sm text-gray-500 mt-2">Step {currentStep} of 5</p>
+            <p className="text-sm text-gray-500 mt-2">Step {currentStep} of 6</p>
           </div>
         </div>
 
@@ -580,8 +693,46 @@ const DemographicsPage: React.FC = () => {
             </div>
           )}
 
+          {/* Step 6: PIN for Caregiver Access */}
+          {currentStep === 6 && (
+            <div className="space-y-6">
+              <h2 className="text-xl font-semibold mb-4">Caregiver Access PIN</h2>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <h3 className="text-lg font-medium text-blue-800 mb-2">Why do you need a PIN?</h3>
+                <p className="text-blue-700">
+                  Your PIN allows trusted caregivers, family members, or healthcare providers to view
+                  your health information and check-ins in <strong>read-only mode</strong>. They cannot
+                  change anything - only see how you're doing to help care for you.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-lg font-medium text-gray-700 mb-2">
+                  Create a 4-digit PIN
+                </label>
+                <p className="text-gray-600 mb-3">
+                  Choose 4 numbers that you can remember easily, like a special date or simple pattern
+                </p>
+                <input
+                  type="password"
+                  value={formData.pin}
+                  onChange={(e) => handleInputChange('pin', e.target.value)}
+                  className="w-full p-4 text-2xl text-center border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 tracking-widest"
+                  placeholder="••••"
+                  maxLength={4}
+                  inputMode="numeric"
+                  pattern="\d{4}"
+                />
+                <p className="text-sm text-gray-500 mt-2">
+                  This PIN is private and should only be shared with people you trust to help with your care
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Navigation Buttons */}
-          <div className="flex justify-between mt-8">
+          <div className="flex justify-between items-center mt-8">
             {currentStep > 1 && (
               <button
                 onClick={prevStep}
@@ -591,8 +742,18 @@ const DemographicsPage: React.FC = () => {
               </button>
             )}
 
-            <div className="ml-auto">
-              {currentStep < 5 ? (
+            <div className="flex gap-3 ml-auto">
+              {/* Save for Later Button */}
+              <button
+                onClick={saveProgress}
+                disabled={saving}
+                className="px-6 py-3 text-lg font-medium text-blue-700 bg-blue-100 rounded-lg hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+              >
+                {saving ? 'Saving...' : 'Save for Later'}
+              </button>
+
+              {/* Next/Complete Button */}
+              {currentStep < 6 ? (
                 <button
                   onClick={nextStep}
                   className="px-6 py-3 text-lg font-medium text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -612,6 +773,16 @@ const DemographicsPage: React.FC = () => {
               )}
             </div>
           </div>
+
+          {/* Progress Message */}
+          {currentStep < 6 && (
+            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-yellow-800 text-center text-sm">
+                💡 <strong>Tip:</strong> You can click "Save for Later" and continue this anytime.
+                We'll remember where you left off!
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

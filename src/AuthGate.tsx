@@ -27,11 +27,11 @@ export default function AuthGate({ children }: { children: ReactNode }) {
       const path = location.pathname;
       const isGatePage = path === '/change-password' || path === '/demographics';
 
-      // FIXED: Query by user_id (the correct primary key)
+      // FIXED: Query by user_id (the correct primary key) and get role info
       const { data, error } = await supabase
         .from('profiles')
-        .select('force_password_change, onboarded')
-        .eq('user_id', user.id)  // CHANGED FROM 'id' to 'user_id'
+        .select('force_password_change, onboarded, demographics_complete, roles(name)')
+        .eq('user_id', user.id)
         .maybeSingle();
 
       if (cancelled || error) {
@@ -46,7 +46,19 @@ export default function AuthGate({ children }: { children: ReactNode }) {
         return;
       }
 
-      if (data && data.onboarded === false) {
+      const roleName = data?.roles?.name || 'senior';
+
+      // Skip demographics for admin/staff roles - they go straight to dashboard
+      if (['admin', 'super_admin', 'staff', 'moderator'].includes(roleName)) {
+        // Set them as onboarded if not already
+        if (data && !data.onboarded) {
+          supabase.from('profiles').update({ onboarded: true }).eq('user_id', user.id);
+        }
+        return; // Let them continue to dashboard
+      }
+
+      // For seniors: check if demographics are needed
+      if (data && (data.onboarded === false || !data.demographics_complete)) {
         if (!isGatePage && path !== '/demographics') {
           navigate('/demographics', { replace: true });
         }
