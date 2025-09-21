@@ -112,6 +112,11 @@ const RegisterPage: React.FC = () => {
       return 'Please enter a valid phone number (e.g., +15555555555)';
     }
 
+    // Email required for caregivers (for emergency notifications)
+    if (formData.roleLabel === 'Caregiver' && !formData.email?.trim()) {
+      return 'Email is required for caregivers (needed for emergency notifications)';
+    }
+
     if (!formData.password) return 'Password is required';
     if (formData.password !== formData.confirmPassword) return 'Passwords do not match';
     if (formData.password.length < 8) return 'Password must be at least 8 characters';
@@ -280,12 +285,13 @@ const RegisterPage: React.FC = () => {
 
         <input
           type="email"
-          placeholder="Email (Optional)"
+          placeholder={formData.roleLabel === 'Caregiver' ? 'Email (Required for emergency notifications)' : 'Email (Optional)'}
           value={formData.email}
           onChange={(e) => setFormData((s) => ({ ...s, email: e.target.value }))}
           className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-          aria-label="Email (Optional)"
+          aria-label={formData.roleLabel === 'Caregiver' ? 'Email (Required)' : 'Email (Optional)'}
           autoComplete="email"
+          required={formData.roleLabel === 'Caregiver'}
         />
 
         <div className="relative">

@@ -1,19 +1,35 @@
-// src/AuthGate.tsx - FIXED VERSION
+// src/AuthGate.tsx — profiles-only, schema-aware, fail-safe (READY TO PASTE)
 import { useEffect, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSupabaseClient, useSession, useUser } from './contexts/AuthContext';
 
-/**
- * Gatekeeper for post-login flow:
- * 1) force_password_change === true  -> /change-password
- * 2) onboarded === false             -> /demographics
- * 3) otherwise                       -> allow
- *
- * Only acts when a user is logged in. Public routes continue to work.
- */
+type ProfileRow = {
+  force_password_change?: boolean | null;
+  onboarded?: boolean | null;
+  // role hints (no joins)
+  is_admin?: boolean | null;
+  role?: string | null;
+  role_code?: number | null;
+  role_id?: number | null;
+};
+
+const ADMIN_WORDS = new Set(['admin', 'super_admin', 'staff', 'moderator']);
+
+function isAdminish(p?: ProfileRow | null): boolean {
+  if (!p) return false;
+  if (p.is_admin) return true;
+  const name = (p.role || '').toLowerCase().trim();
+  if (name && ADMIN_WORDS.has(name)) return true;
+
+  // Check numeric role codes for admin roles:
+  if (typeof p.role_code === 'number' && (p.role_code === 1 || p.role_code === 2 || p.role_code === 3 || p.role_code === 12)) return true;   // admin=1, super_admin=2, staff=3, contractor_nurse=12
+  if (typeof p.role_id === 'number' && p.role_id <= 5) return false;        // conservative: don't assume admin on small ids
+  return false;
+}
+
 export default function AuthGate({ children }: { children: ReactNode }) {
   const supabase = useSupabaseClient();
-  const session = useSession(); // keep to react to auth changes
+  const session = useSession();
   const user = useUser();
   const navigate = useNavigate();
   const location = useLocation();
@@ -22,55 +38,66 @@ export default function AuthGate({ children }: { children: ReactNode }) {
     let cancelled = false;
 
     (async () => {
-      if (!user) return; // not logged in → do nothing
+      // Only run when truly logged in
+      if (!user || !session) return;
 
       const path = location.pathname;
       const isGatePage = path === '/change-password' || path === '/demographics';
 
-      // FIXED: Query by user_id (the correct primary key) and get role info
+      // Read ONLY from profiles; no joins = no RLS surprises
       const { data, error } = await supabase
         .from('profiles')
-        .select('force_password_change, onboarded, demographics_complete, roles(name)')
+        .select(
+          'force_password_change, onboarded, is_admin, role, role_code, role_id'
+        )
         .eq('user_id', user.id)
-        .maybeSingle();
+        .maybeSingle<ProfileRow>();
 
-      if (cancelled || error) {
-        if (error) console.warn('[AuthGate] profile fetch error:', error.message);
-        return;
+      if (cancelled) return;
+
+      if (error) {
+        console.warn('[AuthGate] profiles read error (non-blocking):', error.message);
+        return; // fail open: don’t break login
       }
 
-      if (data?.force_password_change) {
+      const p: ProfileRow = data || {};
+
+      // 1) Password change hard-stop
+      if (p.force_password_change) {
         if (!isGatePage && path !== '/change-password') {
           navigate('/change-password', { replace: true });
         }
         return;
       }
 
-      const roleName = data?.roles?.[0]?.name || 'senior';
-
-      // Skip demographics for admin/staff roles - they go straight to dashboard
-      if (['admin', 'super_admin', 'staff', 'moderator'].includes(roleName)) {
-        // Set them as onboarded if not already
-        if (data && !data.onboarded) {
+      // 2) Admin/staff bypass demographics (optionally mark onboarded)
+      if (isAdminish(p)) {
+        if (p.onboarded === false || p.onboarded == null) {
+          // fire-and-forget; don’t block navigation
           supabase.from('profiles').update({ onboarded: true }).eq('user_id', user.id);
         }
-        return; // Let them continue to dashboard
+        return; // continue
       }
 
-      // For seniors: check if demographics are needed
-      if (data && (data.onboarded === false || !data.demographics_complete)) {
+      // 3) Seniors must complete demographics (check via onboarded flag)
+      const needsDemo =
+        p.onboarded === false ||
+        p.onboarded == null;
+
+      if (needsDemo) {
         if (!isGatePage && path !== '/demographics') {
           navigate('/demographics', { replace: true });
         }
         return;
       }
-      // Otherwise, carry on.
+
+      // else: allow through
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [user, supabase, navigate, location.pathname, session?.access_token]);
+  }, [user?.id, session?.access_token, location.pathname, navigate, supabase]);
 
   return <>{children}</>;
 }

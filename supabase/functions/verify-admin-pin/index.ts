@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.183.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "https://esm.sh/zod@3.23.8";
 import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
+import { cors } from "../_shared/cors.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SB_SECRET_KEY = Deno.env.get("SB_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -42,51 +43,43 @@ async function rateLimit(key: string, max = 10, windowSec = 300) {
   return (count ?? 0) <= max;
 }
 
-// CORS Configuration - Explicit allowlist for security
-const ALLOWED_ORIGINS = [
-  "https://thewellfitcommunity.org",
-  "https://wellfitcommunity.live",
-  "http://localhost:3100",
-  "https://localhost:3100"
-];
-
-function getCorsHeaders(origin: string | null) {
-  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : null;
-  return new Headers({
-    "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": allowedOrigin || "null",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    "Access-Control-Allow-Credentials": "true",
+function jsonResponse(body: unknown, status: number, headers: Record<string, string>) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json", ...headers }
   });
 }
 
 serve(async (req) => {
-  const origin = req.headers.get("Origin");
-  const headers = getCorsHeaders(origin);
+  const { headers, allowed } = cors(req.headers.get("origin"), {
+    methods: ["POST", "OPTIONS"],
+    allowHeaders: ["authorization", "x-client-info", "apikey", "content-type"]
+  });
+
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers });
-  if (req.method !== "POST")   return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers });
+  if (!allowed) return jsonResponse({ error: "Origin not allowed" }, 403, headers);
+  if (req.method !== "POST") return jsonResponse({ error: "Method not allowed" }, 405, headers);
 
   try {
     const { id, roles } = await getCaller(req);
-    if (!id) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
+    if (!id) return jsonResponse({ error: "Unauthorized" }, 401, headers);
 
     const body = await req.json();
     const parsed = schema.safeParse(body);
-    if (!parsed.success) return new Response(JSON.stringify({ error: parsed.error.errors[0].message }), { status: 400, headers });
+    if (!parsed.success) return jsonResponse({ error: parsed.error.errors[0].message }, 400, headers);
     const { pin, role } = parsed.data;
 
     if (!roles.includes(role))
-      return new Response(JSON.stringify({ error: "Insufficient privileges for selected role" }), { status: 403, headers });
+      return jsonResponse({ error: "Insufficient privileges for selected role" }, 403, headers);
 
     const allowed = await rateLimit(`verify-pin:${id}`, 8, 300);
-    if (!allowed) return new Response(JSON.stringify({ error: "Too many attempts. Try again later." }), { status: 429, headers });
+    if (!allowed) return jsonResponse({ error: "Too many attempts. Try again later." }, 429, headers);
 
     const { data: row, error } = await admin.from("admin_pins").select("pin_hash, role").eq("user_id", id).single();
-    if (error || !row) return new Response(JSON.stringify({ error: "PIN not set" }), { status: 400, headers });
+    if (error || !row) return jsonResponse({ error: "PIN not set" }, 400, headers);
 
     const ok = await bcrypt.compare(pin, row.pin_hash);
-    if (!ok) return new Response(JSON.stringify({ error: "Incorrect PIN" }), { status: 401, headers });
+    if (!ok) return jsonResponse({ error: "Incorrect PIN" }, 401, headers);
 
     // create/refresh server-side admin session
     const expires = new Date(Date.now() + ADMIN_SESSION_TTL_MIN * 60 * 1000);
@@ -94,8 +87,8 @@ serve(async (req) => {
       .upsert({ user_id: id, role, expires_at: expires.toISOString() });
     if (upErr) throw new Error(upErr.message);
 
-    return new Response(JSON.stringify({ success: true, expires_at: expires.toISOString() }), { status: 200, headers });
+    return jsonResponse({ success: true, expires_at: expires.toISOString() }, 200, headers);
   } catch (e: any) {
-    return new Response(JSON.stringify({ error: e?.message ?? "Internal error" }), { status: 500, headers });
+    return jsonResponse({ error: e?.message ?? "Internal error" }, 500, headers);
   }
 });

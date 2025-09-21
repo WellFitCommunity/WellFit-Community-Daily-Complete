@@ -1,8 +1,7 @@
 // supabase/functions/register/index.ts
-// Deno Edge Function: strict CORS + hCaptcha + create user + insert profile
+// Deno Edge Function: strict CORS + hCaptcha + create user + insert profile (US-only, E.164 locked: +1XXXXXXXXXX)
 
-import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-// @ts-ignore Deno ?dts
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.4?dts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { SB_URL, SB_SECRET_KEY, HCAPTCHA_SECRET } from "../_shared/env.ts";
@@ -12,7 +11,7 @@ const MAX_REQUESTS = 5;
 const TIME_WINDOW_MINUTES = 15;
 const HCAPTCHA_VERIFY_URL = "https://hcaptcha.com/siteverify";
 
-// NOTE: make hcaptcha_token optional in the schema; we'll also accept header
+// NOTE: hcaptcha_token optional in body; also accepted via header
 const RegisterSchema = z.object({
   phone: z.string().min(1, "Phone is required"),
   password: z.string().min(8, "Password minimum is 8"),
@@ -20,19 +19,28 @@ const RegisterSchema = z.object({
   last_name: z.string().min(1, "Last name is required"),
   email: z.string().email().optional().nullable(),
   consent: z.boolean().optional(),
-  hcaptcha_token: z.string().optional(), // <-- now optional; we will also read header
+  hcaptcha_token: z.string().optional()
 });
 type RegisterBody = z.infer<typeof RegisterSchema>;
 
 function j(body: unknown, status: number, headers: HeadersInit) {
-  return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json", ...headers } });
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json", ...headers }
+  });
 }
 
-function toE164(phone: string): string {
-  const digits = phone.replace(/[^\d]/g, "");
+/**
+ * Normalize to **US E.164** exclusively.
+ * Returns: +1XXXXXXXXXX (12–char string)
+ * Throws if not a valid US 10-digit number optionally prefixed with +1 / 1.
+ */
+function toE164_US(input: string): string {
+  const digits = (input || "").replace(/[^\d]/g, "");
   if (digits.length === 10) return `+1${digits}`;
   if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
-  return phone.startsWith("+") ? phone : `+${digits}`;
+  if (input.startsWith("+1") && digits.length === 11) return `+${digits}`;
+  throw new Error("Phone must be a valid US number (10 digits) or E.164 +1 format.");
 }
 
 function passwordMissingRules(pw: string): string[] {
@@ -40,15 +48,15 @@ function passwordMissingRules(pw: string): string[] {
     { r: /.{8,}/, m: "at least 8 characters" },
     { r: /[A-Z]/, m: "one uppercase letter" },
     { r: /\d/, m: "one number" },
-    { r: /[^A-Za-z0-9]/, m: "one special character" },
+    { r: /[^A-Za-z0-9]/, m: "one special character" }
   ];
   return rules.filter(x => !x.r.test(pw)).map(x => x.m);
 }
 
-serve(async (req: Request) => {
+export default async function handler(req: Request): Promise<Response> {
   const { headers, allowed } = cors(req.headers.get("origin"), {
     methods: ["POST", "OPTIONS"],
-    allowHeaders: ["authorization", "x-client-info", "apikey", "content-type", "x-hcaptcha-token"],
+    allowHeaders: ["authorization", "x-client-info", "apikey", "content-type", "x-hcaptcha-token"]
   });
 
   // Preflight
@@ -68,7 +76,7 @@ serve(async (req: Request) => {
 
     const admin: SupabaseClient = createClient(SB_URL, SB_SECRET_KEY);
 
-    // Rate limit: per IP in time window
+    // Rate limit: per IP
     const clientIp =
       req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
       req.headers.get("cf-connecting-ip") ||
@@ -92,30 +100,39 @@ serve(async (req: Request) => {
       }
     }
 
-    // Validate body
+    // Parse & validate
     const raw = await req.json().catch(() => ({}));
     const parsed = RegisterSchema.safeParse(raw);
+
     if (!parsed.success) {
-      const details = parsed.error.issues.map(i => ({ path: i.path.join("."), message: i.message }));
+      const details = parsed.error.issues.map(i => ({
+        path: i.path.map(String).join("."), // handles string | number safely
+        message: i.message
+      }));
       return j({ error: "Validation failed", details }, 400, headers);
     }
+
     const body: RegisterBody = parsed.data;
 
-    // ----- hCaptcha token: accept from body or header -----
-    let token =
-      (body.hcaptcha_token ?? "").trim() ||
-      (req.headers.get("x-hcaptcha-token") ?? "").trim();
-    if (!token) {
-      return j({ error: "hCaptcha token missing." }, 400, headers);
+    // Canonicalize phone to **+1XXXXXXXXXX**
+    let e164: string;
+    try {
+      e164 = toE164_US(body.phone);
+    } catch (e) {
+      return j({ error: (e as Error).message }, 400, headers);
     }
 
-    // Extra password checks
+    // hCaptcha token (body or header)
+    const token = (body.hcaptcha_token ?? req.headers.get("x-hcaptcha-token") ?? "").trim();
+    if (!token) return j({ error: "hCaptcha token missing." }, 400, headers);
+
+    // Password complexity
     const missing = passwordMissingRules(body.password);
     if (missing.length) {
       return j({ error: `Password must contain ${missing.join(", ")}.` }, 400, headers);
     }
 
-    // hCaptcha verify
+    // Verify hCaptcha
     const form = new URLSearchParams();
     form.set("secret", HCAPTCHA_SECRET);
     form.set("response", token);
@@ -129,11 +146,14 @@ serve(async (req: Request) => {
     const cap = await fetch(HCAPTCHA_VERIFY_URL, { method: "POST", body: form });
     const capJson = await cap.json().catch(() => ({}));
     if (!cap.ok || !capJson?.success) {
-      return j({ error: "hCaptcha verification failed. Please try again.", detail: capJson?.["error-codes"] ?? [] }, 401, headers);
+      return j(
+        { error: "hCaptcha verification failed. Please try again.", detail: capJson?.["error-codes"] ?? [] },
+        401,
+        headers
+      );
     }
 
-    // Create user (confirmed)
-    const e164 = toE164(body.phone);
+    // Create auth user with **E.164** phone (keeps +1)
     const { data: created, error: authErr } = await admin.auth.admin.createUser({
       phone: e164,
       password: body.password,
@@ -143,8 +163,8 @@ serve(async (req: Request) => {
       user_metadata: {
         role: "senior",
         first_name: body.first_name,
-        last_name: body.last_name,
-      },
+        last_name: body.last_name
+      }
     });
     if (authErr || !created?.user) {
       const msg = authErr?.message ?? "Auth createUser failed";
@@ -156,7 +176,7 @@ serve(async (req: Request) => {
     }
     const userId = created.user.id;
 
-    // Insert profile row
+    // Insert profile row with the same **E.164** phone
     const { error: profErr } = await admin.from("profiles").insert({
       user_id: userId,
       phone: e164,
@@ -165,8 +185,8 @@ serve(async (req: Request) => {
       email: body.email ?? null,
       consent: Boolean(body.consent),
       phone_verified: true,
-      email_verified: !!created.user.email_confirmed_at,
-      created_at: new Date().toISOString(),
+      email_verified: !!created.user.email_confirmed_at
+      // created_at: new Date().toISOString() // include only if your schema has it
     });
     if (profErr) {
       console.error("Profile insert failed:", profErr);
@@ -174,10 +194,10 @@ serve(async (req: Request) => {
       return j({ error: "Unable to save profile. Please try again." }, 500, headers);
     }
 
-    return j({ success: true, user_id: userId }, 201, headers);
+    return j({ success: true, user_id: userId, phone: e164 }, 201, headers);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("register error:", msg);
     return j({ error: "Internal Server Error", details: msg }, 500, headers);
   }
-});
+}
