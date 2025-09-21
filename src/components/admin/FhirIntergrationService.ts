@@ -1,7 +1,8 @@
 // FHIR Integration Layer for WellFit - Complete Implementation
 // Maps your existing Supabase schema to FHIR R4 resources
 
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { supabase } from '../../lib/supabaseClient';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 // FHIR R4 Resource Types
 interface FHIRPatient {
@@ -179,8 +180,8 @@ export class FHIRIntegrationService {
   private supabase: SupabaseClient;
   private organizationSystem = 'http://wellfit-community.com/patient-ids';
 
-  constructor(supabaseUrl: string, supabaseKey: string) {
-    this.supabase = createClient(supabaseUrl, supabaseKey);
+  constructor() {
+    this.supabase = supabase;
   }
 
   // ==== PATIENT RESOURCE MAPPING ====
@@ -710,10 +711,7 @@ export class FHIRIntegrationService {
 
 // Usage Example:
 /*
-const fhirService = new FHIRIntegrationService(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const fhirService = new FHIRIntegrationService();
 
 // Export patient data as FHIR Bundle
 const patientBundle = await fhirService.exportPatientData('user-uuid');

@@ -9,7 +9,7 @@ import FhirAiPatientDashboard from './patient/FhirAiPatientDashboard';
 import { Alert, AlertDescription } from './ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabaseClient';
 
 interface DashboardRouterProps {
   supabaseUrl?: string;
@@ -36,8 +36,7 @@ const FhirAiDashboardRouter: React.FC<DashboardRouterProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [dashboardMode, setDashboardMode] = useState<'admin' | 'patient' | null>(null);
 
-  // Initialize Supabase client for role checking
-  const supabase = createClient(supabaseUrl, supabaseKey);
+  // Use singleton Supabase client for role checking
 
   // Determine user roles and capabilities
   const checkUserRoles = React.useCallback(async () => {
@@ -103,7 +102,7 @@ const FhirAiDashboardRouter: React.FC<DashboardRouterProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [user?.id, isAdminAuthenticated, forceMode, supabase]);
+  }, [user?.id, isAdminAuthenticated, forceMode]);
 
   useEffect(() => {
     checkUserRoles();

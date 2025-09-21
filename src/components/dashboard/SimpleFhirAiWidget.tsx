@@ -20,10 +20,7 @@ const SimpleFhirAiWidget: React.FC = () => {
   const [healthStatus, setHealthStatus] = useState<SimpleHealthStatus | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fhirService = new EnhancedFhirService(
-    process.env.REACT_APP_SUPABASE_URL || '',
-    process.env.REACT_APP_SUPABASE_ANON_KEY || ''
-  );
+  const fhirService = new EnhancedFhirService();
 
   // Load simple health status
   useEffect(() => {

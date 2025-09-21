@@ -1,18 +1,10 @@
 import { serve } from "https://deno.land/std@0.183.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { getCorsHeaders } from "../_shared/cors.ts";
-
-// Allowed origins for CORS
-const ALLOWED_ORIGINS = [
-  "https://thewellfitcommunity.org",
-  "https://wellfitcommunity.live",
-  "http://localhost:3100",
-  "https://localhost:3100"
-];
+import { cors } from "../_shared/cors.ts";
 
 serve(async (req: Request) => {
   const origin = req.headers.get("Origin");
-  const headers = getCorsHeaders(origin, ALLOWED_ORIGINS);
+  const { headers } = cors(origin, { methods: ["POST", "OPTIONS"] });
 
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers });

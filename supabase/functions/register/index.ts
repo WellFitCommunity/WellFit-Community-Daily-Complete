@@ -10,28 +10,12 @@ const SB_SECRET_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get(
 const HCAPTCHA_SECRET = Deno.env.get("HCAPTCHA_SECRET") || "";
 
 // ---------- CORS ----------
-const ALLOWED_ORIGINS = [
-  "https://thewellfitcommunity.org",
-  "https://wellfitcommunity.live",
-  "http://localhost:3100",
-  "https://localhost:3100"
-];
+import { cors } from "../_shared/cors.ts";
 
 function getCorsHeaders(origin: string | null) {
-  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : null;
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-    "X-Content-Type-Options": "nosniff",
-    "X-Frame-Options": "DENY",
-    "X-XSS-Protection": "1; mode=block",
-    "Referrer-Policy": "strict-origin-when-cross-origin",
-    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
-  };
-  if (allowedOrigin) {
-    headers["Access-Control-Allow-Origin"] = allowedOrigin;
-  }
+  const { headers } = cors(origin, {
+    methods: ["POST", "OPTIONS"]
+  });
   return headers;
 }
 
@@ -89,11 +73,16 @@ const PUBLIC_ALLOWED = new Set([4, 5, 6, 11, 13]); // senior, volunteer, caregiv
 function effectiveRole(requested?: number): { role_code: number; role_slug: string } {
   const rc = PUBLIC_ALLOWED.has(requested ?? 4) ? (requested as number) : 4;
   const slug =
+    rc === 1 ? "admin" :
+    rc === 2 ? "super_admin" :
+    rc === 3 ? "staff" :
     rc === 4 ? "senior" :
     rc === 5 ? "volunteer" :
     rc === 6 ? "caregiver" :
     rc === 11 ? "contractor" :
-    rc === 13 ? "regular" : "senior";
+    rc === 12 ? "contractor_nurse" :
+    rc === 13 ? "regular" :
+    rc === 14 ? "moderator" : "senior";
   return { role_code: rc, role_slug: slug };
 }
 

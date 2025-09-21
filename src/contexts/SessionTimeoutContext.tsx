@@ -50,12 +50,28 @@ export const SessionTimeoutProvider: React.FC<SessionTimeoutProviderProps> = ({
   const isAuthedRef = useRef<boolean>(false);
 
   const bcRef = useRef<BroadcastChannel | null>(null);
+  const isChannelClosedRef = useRef<boolean>(false);
 
   const clearTimers = useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     if (warningRef.current) clearTimeout(warningRef.current);
     timeoutRef.current = null;
     warningRef.current = null;
+  }, []);
+
+  const safePostMessage = useCallback((message: any) => {
+    try {
+      if (bcRef.current && !isChannelClosedRef.current) {
+        bcRef.current.postMessage(message);
+      }
+    } catch (error) {
+      if (error instanceof Error && error.name === 'InvalidStateError') {
+        console.warn('[SessionTimeout] BroadcastChannel is closed, marking as closed');
+        isChannelClosedRef.current = true;
+      } else {
+        console.warn('[SessionTimeout] BroadcastChannel error:', error);
+      }
+    }
   }, []);
 
   const logout = useCallback(async () => {
@@ -66,9 +82,9 @@ export const SessionTimeoutProvider: React.FC<SessionTimeoutProviderProps> = ({
     } catch (err) {
       console.warn('[SessionTimeout] Unexpected logout error:', (err as Error)?.message);
     }
-    bcRef.current?.postMessage({ type: 'LOGOUT' });
+    safePostMessage({ type: 'LOGOUT' });
     if (!alreadyOnLogin) navigate('/login', { replace: true });
-  }, [navigate, location.pathname]);
+  }, [navigate, location.pathname, safePostMessage]);
 
   const scheduleTimeouts = useCallback(() => {
     clearTimers();
@@ -91,13 +107,18 @@ export const SessionTimeoutProvider: React.FC<SessionTimeoutProviderProps> = ({
     lastActivityRef.current = now;
 
     scheduleTimeouts();
-    bcRef.current?.postMessage({ type: 'ACTIVITY' });
-  }, [scheduleTimeouts]);
+    safePostMessage({ type: 'ACTIVITY' });
+  }, [scheduleTimeouts, safePostMessage]);
 
   // Init listeners
   useEffect(() => {
     if (typeof window !== 'undefined' && 'BroadcastChannel' in window && !bcRef.current) {
-      bcRef.current = new BroadcastChannel('session-timeout');
+      try {
+        bcRef.current = new BroadcastChannel('session-timeout');
+        isChannelClosedRef.current = false;
+      } catch (error) {
+        console.warn('[SessionTimeout] Failed to create BroadcastChannel:', error);
+      }
     }
 
     const windowEvents: (keyof WindowEventMap)[] = [
@@ -132,7 +153,12 @@ export const SessionTimeoutProvider: React.FC<SessionTimeoutProviderProps> = ({
       document.removeEventListener('visibilitychange', handleVisibility);
       if (bc) {
         bc.onmessage = null;
-        bc.close();
+        try {
+          bc.close();
+        } catch (error) {
+          console.warn('[SessionTimeout] Error closing BroadcastChannel:', error);
+        }
+        isChannelClosedRef.current = true;
       }
       clearTimers();
     };

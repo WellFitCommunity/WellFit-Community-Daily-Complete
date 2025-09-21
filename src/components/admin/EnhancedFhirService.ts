@@ -1,7 +1,8 @@
 // Enhanced FHIR Integration with AI-Powered Analytics
 // Combines existing FHIR R4 compliance with intelligent insights and automation
 
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { supabase } from '../../lib/supabaseClient';
+import { SupabaseClient } from '@supabase/supabase-js';
 import FHIRIntegrationService from './FhirIntergrationService';
 import FhirAiService, { type PatientInsight, type PopulationInsights, type EmergencyAlert } from './FhirAiService';
 
@@ -128,10 +129,10 @@ export class EnhancedFhirService {
   private supabase: SupabaseClient;
   private cache: Map<string, { data: any; timestamp: number; ttl: number }>;
 
-  constructor(supabaseUrl: string, supabaseKey: string) {
-    this.fhirService = new FHIRIntegrationService(supabaseUrl, supabaseKey);
+  constructor() {
+    this.fhirService = new FHIRIntegrationService();
     this.aiService = new FhirAiService();
-    this.supabase = createClient(supabaseUrl, supabaseKey);
+    this.supabase = supabase;
     this.cache = new Map();
   }
 

@@ -265,7 +265,7 @@ const FhirAiPatientDashboard: React.FC<PatientDashboardProps> = ({ supabaseUrl, 
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  const [fhirService] = useState(() => new EnhancedFhirService(supabaseUrl, supabaseKey));
+  const [fhirService] = useState(() => new EnhancedFhirService());
 
   // Load patient insights
   const loadPatientInsights = useCallback(async () => {

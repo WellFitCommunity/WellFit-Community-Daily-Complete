@@ -353,7 +353,7 @@ const FhirAiDashboard: React.FC<DashboardProps> = ({ supabaseUrl, supabaseKey })
   });
 
   const [refreshInterval, setRefreshInterval] = useState<number>(300000); // 5 minutes default
-  const [fhirService] = useState(() => new EnhancedFhirService(supabaseUrl, supabaseKey));
+  const [fhirService] = useState(() => new EnhancedFhirService());
 
   // Load dashboard data
   const loadDashboardData = useCallback(async () => {
