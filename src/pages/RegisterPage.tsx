@@ -32,7 +32,7 @@ const RegisterPage: React.FC = () => {
   const hcaptchaRef = useRef<HCaptchaRef>(null);
 
   const [formData, setFormData] = useState<FormState>({
-    phone: '',
+    phone: '+1 ',
     password: '',
     confirmPassword: '',
     firstName: '',
@@ -56,6 +56,47 @@ const RegisterPage: React.FC = () => {
     if (digits.length === 10) return `+1${digits}`;
     if (digits.length === 11 && digits.startsWith('1')) return `+${digits}`;
     return phone.startsWith('+') ? phone : (digits ? `+${digits}` : '');
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value;
+
+    // Remove all non-digits to get clean number
+    const digits = value.replace(/[^\d]/g, '');
+
+    // If user tries to delete the +1, prevent it
+    if (!value.startsWith('+1')) {
+      // If they have digits, format with +1
+      if (digits.length > 0) {
+        // Take only the part after country code if they typed 1
+        const phoneDigits = digits.startsWith('1') && digits.length > 1 ? digits.slice(1) : digits;
+        value = `+1 ${phoneDigits}`;
+      } else {
+        // Keep the +1 prefix
+        value = '+1 ';
+      }
+    } else {
+      // Format the existing +1 number nicely
+      const phoneDigits = digits.startsWith('1') ? digits.slice(1) : digits;
+      if (phoneDigits.length > 0) {
+        // Format as +1 XXX-XXX-XXXX
+        let formatted = '+1 ';
+        if (phoneDigits.length > 0) {
+          formatted += phoneDigits.slice(0, 3);
+        }
+        if (phoneDigits.length > 3) {
+          formatted += '-' + phoneDigits.slice(3, 6);
+        }
+        if (phoneDigits.length > 6) {
+          formatted += '-' + phoneDigits.slice(6, 10);
+        }
+        value = formatted;
+      } else {
+        value = '+1 ';
+      }
+    }
+
+    setFormData(s => ({ ...s, phone: value }));
   };
 
   const validateForm = (): string | null => {
@@ -223,7 +264,7 @@ const RegisterPage: React.FC = () => {
             type="tel"
             placeholder="+1 555-555-5555"
             value={formData.phone}
-            onChange={(e) => setFormData((s) => ({ ...s, phone: e.target.value }))}
+            onChange={handlePhoneChange}
             className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
             required
             aria-label="Phone Number"
