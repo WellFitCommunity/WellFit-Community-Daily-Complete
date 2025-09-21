@@ -1,0 +1,93 @@
+{
+  "brand": "Your Healthcare Company",
+  "appName": "Care Monitor",
+  "generated": "2025-09-21T17:41:53.002Z",
+  "specifications": {
+    "icons": {
+      "app-icon.png": {
+        "width": 1024,
+        "height": 1024
+      },
+      "adaptive-icon.png": {
+        "width": 1024,
+        "height": 1024
+      },
+      "adaptive-icon-foreground.png": {
+        "width": 1024,
+        "height": 1024
+      },
+      "adaptive-icon-background.png": {
+        "width": 1024,
+        "height": 1024
+      },
+      "favicon.png": {
+        "width": 48,
+        "height": 48
+      },
+      "notification-icon.png": {
+        "width": 96,
+        "height": 96
+      }
+    },
+    "splash": {
+      "splash.png": {
+        "width": 1284,
+        "height": 2778
+      },
+      "splash-android.png": {
+        "width": 1080,
+        "height": 1920
+      }
+    },
+    "store": {
+      "feature-graphic.png": {
+        "width": 1024,
+        "height": 500
+      },
+      "promo-graphic.png": {
+        "width": 180,
+        "height": 120
+      },
+      "tv-banner.png": {
+        "width": 1280,
+        "height": 720
+      }
+    },
+    "screenshots": {
+      "screenshot-1-dashboard.png": {
+        "width": 1080,
+        "height": 1920
+      },
+      "screenshot-2-geofencing.png": {
+        "width": 1080,
+        "height": 1920
+      },
+      "screenshot-3-health-monitoring.png": {
+        "width": 1080,
+        "height": 1920
+      },
+      "screenshot-4-emergency-contacts.png": {
+        "width": 1080,
+        "height": 1920
+      },
+      "screenshot-5-settings.png": {
+        "width": 1080,
+        "height": 1920
+      }
+    }
+  },
+  "colors": {
+    "primary": "#2196F3",
+    "secondary": "#4CAF50",
+    "accent": "#FF9800",
+    "background": "#FFFFFF",
+    "text": "#333333",
+    "emergency": "#F44336"
+  },
+  "instructions": {
+    "icons": "Convert SVG template to PNG at required sizes using design software",
+    "screenshots": "Capture actual app screenshots at specified dimensions",
+    "store": "Create marketing graphics using brand colors and messaging",
+    "compliance": "Ensure all assets meet Google Play and App Store guidelines"
+  }
+}

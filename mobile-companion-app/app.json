@@ -1,0 +1,98 @@
+{
+  "expo": {
+    "name": "Dementia Care Monitor",
+    "slug": "dementia-care-monitor",
+    "version": "2.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#2196F3"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.wellfitcommunity.dementiacare",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs background location access to monitor patient safety and send alerts when they leave designated safe zones.",
+        "NSLocationWhenInUseUsageDescription": "This app needs location access to set up safe zones and monitor patient location for safety purposes.",
+        "NSCameraUsageDescription": "This app uses the camera to measure heart rate and oxygen saturation for health monitoring.",
+        "NSMicrophoneUsageDescription": "Microphone access may be needed for emergency features.",
+        "NSContactsUsageDescription": "Contact access is used to manage emergency contacts for patient safety.",
+        "NSCalendarsUsageDescription": "Calendar access may be used for medication reminders and appointments.",
+        "NSRemindersUsageDescription": "Reminders are used for medication schedules and health check-ins.",
+        "UIBackgroundModes": [
+          "location",
+          "background-processing",
+          "background-fetch"
+        ]
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#2196F3"
+      },
+      "package": "com.wellfitcommunity.dementiacare",
+      "versionCode": 1,
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "SEND_SMS",
+        "CALL_PHONE",
+        "READ_PHONE_STATE",
+        "WRITE_EXTERNAL_STORAGE",
+        "READ_EXTERNAL_STORAGE",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION",
+        "WAKE_LOCK",
+        "REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
+        "ACCESS_NETWORK_STATE",
+        "INTERNET",
+        "VIBRATE",
+        "RECEIVE_BOOT_COMPLETED"
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "YOUR_GOOGLE_MAPS_API_KEY"
+        }
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-location",
+      "expo-notifications",
+      "expo-camera",
+      "expo-task-manager",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 34,
+            "targetSdkVersion": 34,
+            "minSdkVersion": 23
+          },
+          "ios": {
+            "deploymentTarget": "13.0"
+          }
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "your-eas-project-id"
+      }
+    },
+    "owner": "wellfitcommunity"
+  }
+}
