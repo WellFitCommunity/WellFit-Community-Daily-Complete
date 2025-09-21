@@ -1,315 +1,619 @@
-// src/components/DemographicsPage.tsx
-import { useEffect, useMemo, useState } from 'react';
-import { useSupabaseClient, useSession, useUser } from '../contexts/AuthContext';
+// src/pages/DemographicsPage.tsx - Senior-Friendly Demographics
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSupabaseClient, useUser } from '../contexts/AuthContext';
+import { WELLFIT_COLORS } from '../settings/settings';
 
-interface DemographicsFormData {
+interface DemographicsData {
+  // Basic Info (already collected during registration)
   first_name: string;
   last_name: string;
   phone: string;
-  pin: string; // 4-digit numeric
-  dob: string; // YYYY-MM-DD
+  dob: string;
   address: string;
-  hasEmail: boolean;
-}
 
-interface ProfileOnboardingData {
-  onboarded?: boolean;
-  first_name?: string | null;
-  last_name?: string | null;
-  phone?: string | null;
-  dob?: string | null;
-  address?: string | null;
+  // Actual Demographics for Seniors
+  gender: string;
+  ethnicity: string;
+  marital_status: string;
+  living_situation: string;
+  education_level: string;
+  income_range: string;
+  insurance_type: string;
+  emergency_contact_name: string;
+  emergency_contact_phone: string;
+  emergency_contact_relationship: string;
+
+  // Health Demographics
+  health_conditions: string[];
+  medications: string;
+  mobility_level: string;
+  hearing_status: string;
+  vision_status: string;
+
+  // Technology Access
+  has_smartphone: boolean;
+  has_internet: boolean;
+  tech_comfort_level: string;
+
+  // Social Determinants
+  transportation_access: string;
+  food_security: string;
+  social_support: string;
 }
 
 const DemographicsPage: React.FC = () => {
   const navigate = useNavigate();
-
-  // ✅ Use hooks in a React component
   const supabase = useSupabaseClient();
-  const session = useSession();
   const user = useUser();
 
-  const userId = useMemo(() => user?.id ?? session?.user?.id ?? null, [user, session]);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState<DemographicsFormData>({
+  const [formData, setFormData] = useState<DemographicsData>({
     first_name: '',
     last_name: '',
     phone: '',
-    pin: '',
     dob: '',
     address: '',
-    hasEmail: false,
+    gender: '',
+    ethnicity: '',
+    marital_status: '',
+    living_situation: '',
+    education_level: '',
+    income_range: '',
+    insurance_type: '',
+    emergency_contact_name: '',
+    emergency_contact_phone: '',
+    emergency_contact_relationship: '',
+    health_conditions: [],
+    medications: '',
+    mobility_level: '',
+    hearing_status: '',
+    vision_status: '',
+    has_smartphone: false,
+    has_internet: false,
+    tech_comfort_level: '',
+    transportation_access: '',
+    food_security: '',
+    social_support: ''
   });
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-
-  // On mount / when user changes: gate access & prefill
+  // Load existing profile data
   useEffect(() => {
-    (async () => {
-      if (!userId) {
-        // not signed in
-        setLoading(false);
-        navigate('/');
+    const loadProfile = async () => {
+      if (!user?.id) {
+        navigate('/login');
         return;
       }
 
       try {
-        // Check if already onboarded
-        const { data: profile, error: profileErr } = await supabase
+        const { data, error } = await supabase
           .from('profiles')
-          .select('onboarded, first_name, last_name, phone, dob, address')
-          .eq('id', userId)
-          .maybeSingle<ProfileOnboardingData>(); // allow null if not found
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
 
-        if (profileErr) throw profileErr;
-
-        if (profile?.onboarded) {
-          navigate('/dashboard');
-          return;
+        if (error && error.code !== 'PGRST116') {
+          throw error;
         }
 
-        if (profile) {
-          setFormData((f) => ({
-            ...f,
-            first_name: profile.first_name || '',
-            last_name: profile.last_name || '',
-            phone: profile.phone || '',
-            dob: profile.dob || '',
-            address: profile.address || '',
+        if (data) {
+          // Check if already completed demographics
+          if (data.demographics_complete) {
+            navigate('/dashboard');
+            return;
+          }
+
+          // Pre-fill basic info
+          setFormData(prev => ({
+            ...prev,
+            first_name: data.first_name || '',
+            last_name: data.last_name || '',
+            phone: data.phone || '',
+            dob: data.dob || '',
+            address: data.address || '',
+            emergency_contact_name: data.emergency_contact_name || '',
           }));
         }
-      } catch (e: any) {
-        console.error('Error fetching profile:', e);
-        setError(e?.message ?? 'Unable to load profile.');
+      } catch (err) {
+        console.error('Error loading profile:', err);
+        setError('Unable to load your information. Please try again.');
       } finally {
         setLoading(false);
       }
-    })();
-  }, [userId, navigate, supabase]);
+    };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
+    loadProfile();
+  }, [user, supabase, navigate]);
+
+  const handleInputChange = (field: keyof DemographicsData, value: any) => {
+    setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value,
+      [field]: value
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
-    e.preventDefault();
-    setError(null);
+  const handleHealthConditionToggle = (condition: string) => {
+    setFormData(prev => ({
+      ...prev,
+      health_conditions: prev.health_conditions.includes(condition)
+        ? prev.health_conditions.filter(c => c !== condition)
+        : [...prev.health_conditions, condition]
+    }));
+  };
 
-    if (!userId) {
-      setError('User not authenticated. Please register or log in again.');
-      return;
-    }
-
-    // Basic validation with friendly messages
-    if (!formData.first_name) {
-      setError('Please tell us your first name.');
-      return;
-    }
-    if (!formData.last_name) {
-      setError('Please tell us your last name.');
-      return;
-    }
-    if (!formData.phone) {
-      setError('Please enter your phone number.');
-      return;
-    }
-    if (!formData.dob) {
-      setError('Please tell us when you were born.');
-      return;
-    }
-    if (!formData.address) {
-      setError('Please enter your home address.');
-      return;
-    }
-    if (!/^\d{4}$/.test(formData.pin)) {
-      setError('Your PIN needs to be exactly 4 numbers (like 1234).');
-      return;
-    }
-
-    const { first_name, last_name, phone, pin, dob, address, hasEmail } = formData;
-
-    // Normalize data for proper collection format while preserving user input
-    const normalizedData = {
-      first_name: first_name.trim(),
-      last_name: last_name.trim(),
-      phone: phone.replace(/\D/g, '').replace(/^1/, '').replace(/^(\d{3})(\d{3})(\d{4})$/, '($1) $2-$3'), // Format: (555) 123-4567
-      dob, // Keep YYYY-MM-DD format as entered
-      address: address.trim(),
-      pin: pin.trim(), // Keep as entered for user familiarity
-    };
-
-    try {
-      // Upsert profile with normalized data
-      const { error: profileError } = await supabase.from('profiles').upsert({
-        id: userId,
-        first_name: normalizedData.first_name,
-        last_name: normalizedData.last_name,
-        phone: normalizedData.phone,
-        dob: normalizedData.dob,
-        address: normalizedData.address,
-        onboarded: true,
-      });
-      if (profileError) throw profileError;
-
-      // ⚠️ SECURITY NOTE: This stores a PIN as plaintext.
-      // Replace with an Edge Function that hashes the PIN server-side ASAP.
-      const { error: phoneAuthError } = await supabase.from('phone_auth').upsert({
-        id: userId,
-        phone: normalizedData.phone,
-        pin: normalizedData.pin, // TODO: hash via Edge Function
-      });
-      if (phoneAuthError) throw phoneAuthError;
-
-      setSuccess(true);
-      setTimeout(() => {
-        hasEmail ? navigate('/supabase-login') : navigate('/dashboard');
-      }, 1200);
-    } catch (e: any) {
-      setError(e?.message ?? 'Unknown error.');
+  const nextStep = () => {
+    if (currentStep < 5) {
+      setCurrentStep(currentStep + 1);
     }
   };
 
-  if (loading) return <div className="text-center mt-8">Loading…</div>;
+  const prevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      // Update profile with demographics data
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          gender: formData.gender,
+          ethnicity: formData.ethnicity,
+          marital_status: formData.marital_status,
+          living_situation: formData.living_situation,
+          education_level: formData.education_level,
+          income_range: formData.income_range,
+          insurance_type: formData.insurance_type,
+          emergency_contact_name: formData.emergency_contact_name,
+          emergency_contact_phone: formData.emergency_contact_phone,
+          emergency_contact_relationship: formData.emergency_contact_relationship,
+          health_conditions: formData.health_conditions,
+          medications: formData.medications,
+          mobility_level: formData.mobility_level,
+          hearing_status: formData.hearing_status,
+          vision_status: formData.vision_status,
+          has_smartphone: formData.has_smartphone,
+          has_internet: formData.has_internet,
+          tech_comfort_level: formData.tech_comfort_level,
+          transportation_access: formData.transportation_access,
+          food_security: formData.food_security,
+          social_support: formData.social_support,
+          demographics_complete: true,
+          onboarded: true
+        })
+        .eq('user_id', user!.id);
+
+      if (profileError) throw profileError;
+
+      // Navigate to dashboard
+      navigate('/dashboard');
+    } catch (err) {
+      console.error('Error saving demographics:', err);
+      setError('Unable to save your information. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-lg text-gray-600">Loading your information...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-xl mx-auto mt-10 p-8 bg-white rounded-xl shadow-md space-y-6">
-      <div className="text-center">
-        <h2 className="text-3xl font-bold text-wellfit-blue mb-2">Welcome!</h2>
-        <p className="text-lg text-gray-700">Just a few more details to get you started with your health journey.</p>
-      </div>
-
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-700 text-center text-lg">{error}</p>
-        </div>
-      )}
-      {success && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <p className="text-green-700 text-center font-bold text-xl">
-            All set! Taking you to your dashboard...
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-2xl mx-auto px-4">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold mb-2" style={{ color: WELLFIT_COLORS.blue }}>
+            Tell Us About Yourself
+          </h1>
+          <p className="text-lg text-gray-600">
+            This helps us provide better care and resources for you
           </p>
+          <div className="mt-4">
+            <div className="flex justify-center space-x-2">
+              {[1, 2, 3, 4, 5].map((step) => (
+                <div
+                  key={step}
+                  className={`w-3 h-3 rounded-full ${
+                    step <= currentStep
+                      ? 'bg-green-500'
+                      : 'bg-gray-300'
+                  }`}
+                />
+              ))}
+            </div>
+            <p className="text-sm text-gray-500 mt-2">Step {currentStep} of 5</p>
+          </div>
         </div>
-      )}
 
-      {!success && (
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="first_name" className="block text-lg font-medium text-gray-700 mb-2">What's your first name?</label>
-            <input
-              id="first_name"
-              name="first_name"
-              placeholder="First name"
-              value={formData.first_name}
-              onChange={handleChange}
-              className="w-full p-4 text-lg border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-wellfit-green focus:border-wellfit-green"
-              aria-required="true"
-            />
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-700 text-center">{error}</p>
           </div>
+        )}
 
-          <div>
-            <label htmlFor="last_name" className="block text-lg font-medium text-gray-700 mb-2">What's your last name?</label>
-            <input
-              id="last_name"
-              name="last_name"
-              placeholder="Last name"
-              value={formData.last_name}
-              onChange={handleChange}
-              className="w-full p-4 text-lg border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-wellfit-green focus:border-wellfit-green"
-              aria-required="true"
-            />
-          </div>
+        <div className="bg-white rounded-lg shadow-md p-6">
+          {/* Step 1: Basic Demographics */}
+          {currentStep === 1 && (
+            <div className="space-y-6">
+              <h2 className="text-xl font-semibold mb-4">Basic Information</h2>
 
-          <div>
-            <label htmlFor="phone" className="block text-lg font-medium text-gray-700 mb-2">Your phone number</label>
-            <input
-              id="phone"
-              name="phone"
-              type="tel"
-              placeholder="(555) 123-4567"
-              value={formData.phone}
-              onChange={handleChange}
-              className="w-full p-4 text-lg border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-wellfit-green focus:border-wellfit-green"
-              aria-required="true"
-            />
-          </div>
+              <div>
+                <label className="block text-lg font-medium text-gray-700 mb-2">
+                  How do you identify your gender?
+                </label>
+                <select
+                  value={formData.gender}
+                  onChange={(e) => handleInputChange('gender', e.target.value)}
+                  className="w-full p-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                >
+                  <option value="">Please select</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="non-binary">Non-binary</option>
+                  <option value="prefer-not-to-say">Prefer not to say</option>
+                </select>
+              </div>
 
-          <div>
-            <label htmlFor="pin" className="block text-lg font-medium text-gray-700 mb-2">Create a 4-digit PIN for security</label>
-            <p className="text-gray-600 mb-2">This is like a password - just 4 numbers you can remember</p>
-            <input
-              id="pin"
-              name="pin"
-              type="password"
-              placeholder="1234"
-              maxLength={4}
-              value={formData.pin}
-              onChange={handleChange}
-              className="w-full p-4 text-lg text-center border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-wellfit-green focus:border-wellfit-green"
-              inputMode="numeric"
-              pattern="\d{4}"
-              aria-required="true"
-            />
-          </div>
+              <div>
+                <label className="block text-lg font-medium text-gray-700 mb-2">
+                  What is your ethnic background?
+                </label>
+                <select
+                  value={formData.ethnicity}
+                  onChange={(e) => handleInputChange('ethnicity', e.target.value)}
+                  className="w-full p-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                >
+                  <option value="">Please select</option>
+                  <option value="white">White</option>
+                  <option value="black">Black or African American</option>
+                  <option value="hispanic">Hispanic or Latino</option>
+                  <option value="asian">Asian</option>
+                  <option value="native-american">Native American</option>
+                  <option value="pacific-islander">Pacific Islander</option>
+                  <option value="mixed">Mixed race</option>
+                  <option value="other">Other</option>
+                  <option value="prefer-not-to-say">Prefer not to say</option>
+                </select>
+              </div>
 
-          <div>
-            <label htmlFor="dob" className="block text-lg font-medium text-gray-700 mb-2">When were you born?</label>
-            <input
-              id="dob"
-              name="dob"
-              type="date"
-              value={formData.dob}
-              onChange={handleChange}
-              className="w-full p-4 text-lg border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-wellfit-green focus:border-wellfit-green"
-              aria-required="true"
-            />
-          </div>
+              <div>
+                <label className="block text-lg font-medium text-gray-700 mb-2">
+                  What is your marital status?
+                </label>
+                <select
+                  value={formData.marital_status}
+                  onChange={(e) => handleInputChange('marital_status', e.target.value)}
+                  className="w-full p-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                >
+                  <option value="">Please select</option>
+                  <option value="single">Single</option>
+                  <option value="married">Married</option>
+                  <option value="divorced">Divorced</option>
+                  <option value="widowed">Widowed</option>
+                  <option value="separated">Separated</option>
+                  <option value="domestic-partner">Domestic Partner</option>
+                </select>
+              </div>
+            </div>
+          )}
 
-          <div>
-            <label htmlFor="address" className="block text-lg font-medium text-gray-700 mb-2">Your home address</label>
-            <p className="text-gray-600 mb-2">This helps us provide local health resources</p>
-            <input
-              id="address"
-              name="address"
-              placeholder="123 Main Street, City, State 12345"
-              value={formData.address}
-              onChange={handleChange}
-              className="w-full p-4 text-lg border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-wellfit-green focus:border-wellfit-green"
-              aria-required="true"
-            />
-          </div>
+          {/* Step 2: Living Situation */}
+          {currentStep === 2 && (
+            <div className="space-y-6">
+              <h2 className="text-xl font-semibold mb-4">Your Living Situation</h2>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex items-start space-x-3">
-              <input
-                type="checkbox"
-                id="hasEmail"
-                name="hasEmail"
-                checked={formData.hasEmail}
-                onChange={handleChange}
-                className="mt-1 h-5 w-5 text-wellfit-green border-gray-300 rounded focus:ring-wellfit-green"
-              />
-              <label htmlFor="hasEmail" className="text-lg text-gray-700">
-                <strong>Optional:</strong> I have an email address and would like to use it too
-                <p className="text-gray-600 text-base mt-1">You can always add this later if you want</p>
-              </label>
+              <div>
+                <label className="block text-lg font-medium text-gray-700 mb-2">
+                  Who do you live with?
+                </label>
+                <select
+                  value={formData.living_situation}
+                  onChange={(e) => handleInputChange('living_situation', e.target.value)}
+                  className="w-full p-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                >
+                  <option value="">Please select</option>
+                  <option value="alone">I live alone</option>
+                  <option value="spouse">With my spouse/partner</option>
+                  <option value="family">With family members</option>
+                  <option value="roommate">With roommates/friends</option>
+                  <option value="assisted-living">In assisted living</option>
+                  <option value="nursing-home">In a nursing home</option>
+                  <option value="other">Other arrangement</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-lg font-medium text-gray-700 mb-2">
+                  What is your highest level of education?
+                </label>
+                <select
+                  value={formData.education_level}
+                  onChange={(e) => handleInputChange('education_level', e.target.value)}
+                  className="w-full p-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                >
+                  <option value="">Please select</option>
+                  <option value="less-than-high-school">Less than high school</option>
+                  <option value="high-school">High school diploma or GED</option>
+                  <option value="some-college">Some college</option>
+                  <option value="associate">Associate degree</option>
+                  <option value="bachelor">Bachelor's degree</option>
+                  <option value="graduate">Graduate degree</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-lg font-medium text-gray-700 mb-2">
+                  What is your household income range? (Optional)
+                </label>
+                <select
+                  value={formData.income_range}
+                  onChange={(e) => handleInputChange('income_range', e.target.value)}
+                  className="w-full p-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                >
+                  <option value="">Prefer not to say</option>
+                  <option value="under-25k">Under $25,000</option>
+                  <option value="25k-50k">$25,000 - $50,000</option>
+                  <option value="50k-75k">$50,000 - $75,000</option>
+                  <option value="75k-100k">$75,000 - $100,000</option>
+                  <option value="over-100k">Over $100,000</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Health Information */}
+          {currentStep === 3 && (
+            <div className="space-y-6">
+              <h2 className="text-xl font-semibold mb-4">Health Information</h2>
+
+              <div>
+                <label className="block text-lg font-medium text-gray-700 mb-2">
+                  What type of health insurance do you have?
+                </label>
+                <select
+                  value={formData.insurance_type}
+                  onChange={(e) => handleInputChange('insurance_type', e.target.value)}
+                  className="w-full p-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                >
+                  <option value="">Please select</option>
+                  <option value="medicare">Medicare</option>
+                  <option value="medicaid">Medicaid</option>
+                  <option value="private">Private insurance</option>
+                  <option value="medicare-supplement">Medicare + Supplement</option>
+                  <option value="va">Veterans Affairs (VA)</option>
+                  <option value="none">No insurance</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-lg font-medium text-gray-700 mb-2">
+                  Do you have any of these health conditions? (Check all that apply)
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    'Diabetes', 'High Blood Pressure', 'Heart Disease', 'Arthritis',
+                    'Depression', 'Anxiety', 'COPD', 'Osteoporosis',
+                    'Memory Problems', 'Chronic Pain', 'Kidney Disease', 'Cancer'
+                  ].map((condition) => (
+                    <label key={condition} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={formData.health_conditions.includes(condition)}
+                        onChange={() => handleHealthConditionToggle(condition)}
+                        className="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                      />
+                      <span className="text-base">{condition}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-lg font-medium text-gray-700 mb-2">
+                  How would you describe your mobility?
+                </label>
+                <select
+                  value={formData.mobility_level}
+                  onChange={(e) => handleInputChange('mobility_level', e.target.value)}
+                  className="w-full p-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                >
+                  <option value="">Please select</option>
+                  <option value="excellent">I get around very well</option>
+                  <option value="good">I get around well with minor difficulty</option>
+                  <option value="fair">I need some help getting around</option>
+                  <option value="poor">I need a lot of help getting around</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* Step 4: Emergency Contact */}
+          {currentStep === 4 && (
+            <div className="space-y-6">
+              <h2 className="text-xl font-semibold mb-4">Emergency Contact</h2>
+
+              <div>
+                <label className="block text-lg font-medium text-gray-700 mb-2">
+                  Emergency contact name
+                </label>
+                <input
+                  type="text"
+                  value={formData.emergency_contact_name}
+                  onChange={(e) => handleInputChange('emergency_contact_name', e.target.value)}
+                  className="w-full p-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  placeholder="Full name"
+                />
+              </div>
+
+              <div>
+                <label className="block text-lg font-medium text-gray-700 mb-2">
+                  Emergency contact phone number
+                </label>
+                <input
+                  type="tel"
+                  value={formData.emergency_contact_phone}
+                  onChange={(e) => handleInputChange('emergency_contact_phone', e.target.value)}
+                  className="w-full p-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  placeholder="(555) 123-4567"
+                />
+              </div>
+
+              <div>
+                <label className="block text-lg font-medium text-gray-700 mb-2">
+                  Relationship to you
+                </label>
+                <select
+                  value={formData.emergency_contact_relationship}
+                  onChange={(e) => handleInputChange('emergency_contact_relationship', e.target.value)}
+                  className="w-full p-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                >
+                  <option value="">Please select</option>
+                  <option value="spouse">Spouse/Partner</option>
+                  <option value="child">Child</option>
+                  <option value="parent">Parent</option>
+                  <option value="sibling">Brother/Sister</option>
+                  <option value="friend">Friend</option>
+                  <option value="neighbor">Neighbor</option>
+                  <option value="caregiver">Caregiver</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* Step 5: Social Support */}
+          {currentStep === 5 && (
+            <div className="space-y-6">
+              <h2 className="text-xl font-semibold mb-4">Social Support & Resources</h2>
+
+              <div>
+                <label className="block text-lg font-medium text-gray-700 mb-2">
+                  How do you usually get around?
+                </label>
+                <select
+                  value={formData.transportation_access}
+                  onChange={(e) => handleInputChange('transportation_access', e.target.value)}
+                  className="w-full p-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                >
+                  <option value="">Please select</option>
+                  <option value="own-car">I drive my own car</option>
+                  <option value="family-drives">Family/friends drive me</option>
+                  <option value="public-transport">Public transportation</option>
+                  <option value="rideshare">Uber/Lyft/Taxi</option>
+                  <option value="medical-transport">Medical transport</option>
+                  <option value="walk">I walk most places</option>
+                  <option value="limited">Limited transportation</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-lg font-medium text-gray-700 mb-2">
+                  Do you ever worry about having enough food?
+                </label>
+                <select
+                  value={formData.food_security}
+                  onChange={(e) => handleInputChange('food_security', e.target.value)}
+                  className="w-full p-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                >
+                  <option value="">Please select</option>
+                  <option value="never">Never</option>
+                  <option value="rarely">Rarely</option>
+                  <option value="sometimes">Sometimes</option>
+                  <option value="often">Often</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-lg font-medium text-gray-700 mb-2">
+                  How often do you feel lonely or isolated?
+                </label>
+                <select
+                  value={formData.social_support}
+                  onChange={(e) => handleInputChange('social_support', e.target.value)}
+                  className="w-full p-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                >
+                  <option value="">Please select</option>
+                  <option value="never">Never</option>
+                  <option value="rarely">Rarely</option>
+                  <option value="sometimes">Sometimes</option>
+                  <option value="often">Often</option>
+                  <option value="always">Most of the time</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-lg font-medium text-gray-700 mb-2">
+                  How comfortable are you with technology?
+                </label>
+                <select
+                  value={formData.tech_comfort_level}
+                  onChange={(e) => handleInputChange('tech_comfort_level', e.target.value)}
+                  className="w-full p-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                >
+                  <option value="">Please select</option>
+                  <option value="very-comfortable">Very comfortable</option>
+                  <option value="somewhat-comfortable">Somewhat comfortable</option>
+                  <option value="not-very-comfortable">Not very comfortable</option>
+                  <option value="not-comfortable">Not comfortable at all</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* Navigation Buttons */}
+          <div className="flex justify-between mt-8">
+            {currentStep > 1 && (
+              <button
+                onClick={prevStep}
+                className="px-6 py-3 text-lg font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500"
+              >
+                Previous
+              </button>
+            )}
+
+            <div className="ml-auto">
+              {currentStep < 5 ? (
+                <button
+                  onClick={nextStep}
+                  className="px-6 py-3 text-lg font-medium text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  style={{ backgroundColor: WELLFIT_COLORS.green }}
+                >
+                  Next
+                </button>
+              ) : (
+                <button
+                  onClick={handleSubmit}
+                  disabled={submitting}
+                  className="px-8 py-3 text-lg font-medium text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
+                  style={{ backgroundColor: WELLFIT_COLORS.green }}
+                >
+                  {submitting ? 'Saving...' : 'Complete Setup'}
+                </button>
+              )}
             </div>
           </div>
-
-          <button
-            type="submit"
-            className="w-full py-4 text-xl font-semibold bg-wellfit-green text-white rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-wellfit-green transition-colors"
-          >
-            Complete Setup
-          </button>
-        </form>
-      )}
+        </div>
+      </div>
     </div>
   );
 };
