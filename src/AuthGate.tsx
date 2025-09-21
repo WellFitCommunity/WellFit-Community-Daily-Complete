@@ -46,7 +46,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
         return;
       }
 
-      const roleName = data?.roles?.name || 'senior';
+      const roleName = data?.roles?.[0]?.name || 'senior';
 
       // Skip demographics for admin/staff roles - they go straight to dashboard
       if (['admin', 'super_admin', 'staff', 'moderator'].includes(roleName)) {

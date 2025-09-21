@@ -3,8 +3,9 @@ import { useEffect, useState } from 'react';
 import { useSupabaseClient, useSession } from '../contexts/AuthContext';
 
 /**
- * useIsAdmin
- * - Calls your Postgres function `is_admin()`
+ * useIsAdmin - HIPAA-compliant admin check
+ * - Only medical roles (admin, super_admin, contractor_nurse) have admin access
+ * - Based on minimum necessary principle
  * - Returns: true, false, or null (while loading / no session)
  */
 export function useIsAdmin() {
@@ -22,15 +23,33 @@ export function useIsAdmin() {
     }
 
     (async () => {
-      const { data, error } = await supabase.rpc('is_admin');
-      if (cancelled) return;
+      try {
+        // Get user profile with role information
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('role_code, role')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
 
-      if (error) {
-        console.error('is_admin error:', error);
+        if (cancelled) return;
+
+        if (error) {
+          console.error('useIsAdmin profile fetch error:', error);
+          setIsAdmin(false);
+          return;
+        }
+
+        // HIPAA-compliant: Only medical roles get admin access
+        const roleCode = profile?.role_code;
+        const roleName = profile?.role;
+        const hasMedicalAccess = [1, 2, 12].includes(roleCode) ||
+          ['admin', 'super_admin', 'contractor_nurse'].includes(roleName);
+
+        setIsAdmin(hasMedicalAccess);
+      } catch (error) {
+        console.error('useIsAdmin error:', error);
         setIsAdmin(false);
-        return;
       }
-      setIsAdmin(Boolean(data));
     })();
 
     return () => {

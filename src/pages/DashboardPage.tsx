@@ -43,33 +43,41 @@ const Dashboard: React.FC = () => {
     );
   }
 
-  // Senior users get the simplified dashboard
-  if (profile?.role === 'senior') {
-    return <SeniorHealthDashboard />;
+  // HIPAA-compliant access control based on role codes
+  const roleCode = profile?.role_code;
+  const roleName = profile?.role;
+
+  // FHIR + Admin access only for medical roles (minimum necessary principle)
+  const hasFhirAccess = [1, 2, 12].includes(roleCode) ||
+    ['admin', 'super_admin', 'contractor_nurse'].includes(roleName);
+
+  if (hasFhirAccess) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4 py-6">
+          {/* Page Header */}
+          <div className="mb-8 text-center">
+            <h1
+              className="text-3xl font-bold mb-2"
+              style={{ color: branding.primaryColor }}
+            >
+              Welcome to {branding.appName}
+            </h1>
+            <p className="text-gray-600">
+              Your personalized health dashboard powered by AI
+            </p>
+          </div>
+
+          {/* Smart Dashboard Router handles all role-based logic */}
+          <FhirAiDashboardRouter />
+        </div>
+      </div>
+    );
   }
 
-  // All other users get the smart AI-powered dashboard
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-6">
-        {/* Page Header */}
-        <div className="mb-8 text-center">
-          <h1
-            className="text-3xl font-bold mb-2"
-            style={{ color: branding.primaryColor }}
-          >
-            Welcome to {branding.appName}
-          </h1>
-          <p className="text-gray-600">
-            Your personalized health dashboard powered by AI
-          </p>
-        </div>
-
-        {/* Smart Dashboard Router handles all role-based logic */}
-        <FhirAiDashboardRouter />
-      </div>
-    </div>
-  );
+  // Everyone else gets the senior-friendly dashboard
+  // Roles: Senior(4), Staff(3), Moderator(14), Volunteer(5), Caregiver(6), Contractor(11), User(13)
+  return <SeniorHealthDashboard />;
 };
 
 export default Dashboard;

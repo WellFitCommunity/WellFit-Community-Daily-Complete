@@ -101,11 +101,6 @@ export default function GlobalHeader() {
               Trivia Game
             </HeaderLink>
 
-            {isAdmin === true && (
-              <HeaderLink to={ROUTES.adminPanel} active={isActive(ROUTES.adminPanel)} className={linkBase}>
-                Admin Panel
-              </HeaderLink>
-            )}
             {showStaffLink && isAdmin === false && (
               <HeaderLink to={ROUTES.adminLogin} active={isActive(ROUTES.adminLogin)} className={linkBase}>
                 Staff Login
@@ -139,6 +134,12 @@ export default function GlobalHeader() {
                 >
                   <MenuItem to="/profile">Profile</MenuItem>
                   <MenuItem to="/settings">Settings</MenuItem>
+                  {isAdmin === true && (
+                    <>
+                      <div className="border-t my-1" />
+                      <MenuItem to={ROUTES.adminPanel}>Admin Panel</MenuItem>
+                    </>
+                  )}
                   <a
                     href="https://www.TheWellFitCommunity.org/support"
                     target="_blank"
@@ -198,11 +199,6 @@ export default function GlobalHeader() {
             Trivia Game
           </MobileItem>
 
-          {isAdmin === true && (
-            <MobileItem to={ROUTES.adminPanel} onDone={() => setMenuOpen(false)}>
-              Admin Panel
-            </MobileItem>
-          )}
           {showStaffLink && isAdmin === false && (
             <MobileItem to={ROUTES.adminLogin} onDone={() => setMenuOpen(false)}>
               Staff Login
