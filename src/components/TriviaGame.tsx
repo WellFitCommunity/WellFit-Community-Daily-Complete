@@ -139,7 +139,17 @@ const TriviaGame: React.FC = () => {
   };
 
   if (gamePhase === 'loading') {
-    return <div className="text-center p-8 text-xl">Loading Trivia Challenge... 🧐</div>;
+    return (
+      <div className="min-h-screen" style={{
+        background: 'linear-gradient(to bottom right, #003865, #8cc63f)'
+      }}>
+        <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
+          <div className="text-center p-8 text-xl bg-white rounded-xl shadow-lg max-w-lg mx-auto">
+            Loading Memory Lane... 🎭
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (gamePhase === 'finished') {
@@ -151,8 +161,12 @@ const TriviaGame: React.FC = () => {
     }
 
     return (
-      <div className="max-w-lg mx-auto p-6 bg-white rounded-lg shadow-xl text-center">
-        <h2 className="text-3xl font-bold text-wellfit-blue mb-6">Trivia Challenge Finished!</h2>
+      <div className="min-h-screen" style={{
+        background: 'linear-gradient(to bottom right, #003865, #8cc63f)'
+      }}>
+        <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
+          <div className="max-w-lg mx-auto p-6 bg-white rounded-lg shadow-xl text-center">
+            <h2 className="text-3xl font-bold text-wellfit-blue mb-6">Memory Lane Complete!</h2>
         {currentQuestions.length > 0 ? (
           <p className="text-2xl mb-4">Your final score: <span className="font-bold text-wellfit-green">{score}</span> out of {currentQuestions.length}</p>
         ) : (
@@ -165,6 +179,8 @@ const TriviaGame: React.FC = () => {
         >
             Play Again
         </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -176,8 +192,12 @@ const TriviaGame: React.FC = () => {
   }
 
   return (
-    <div className="max-w-lg mx-auto p-4 sm:p-6 bg-white rounded-xl shadow-2xl">
-      <h1 className="text-2xl sm:text-3xl font-bold text-center text-wellfit-blue mb-2">Daily Trivia Challenge</h1>
+    <div className="min-h-screen" style={{
+      background: 'linear-gradient(to bottom right, #003865, #8cc63f)'
+    }}>
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
+        <div className="max-w-lg mx-auto p-4 sm:p-6 bg-white rounded-xl shadow-2xl">
+          <h1 className="text-2xl sm:text-3xl font-bold text-center text-wellfit-blue mb-2">Memory Lane</h1>
       <p className="text-center text-gray-600 mb-1">Question {currentQuestionIndex + 1} of {currentQuestions.length}</p>
       <p className="text-center text-xl sm:text-2xl font-semibold text-wellfit-green mb-6">Score: {score}</p>
       
@@ -252,6 +272,8 @@ const TriviaGame: React.FC = () => {
           )}
         </div>
       )}
+        </div>
+      </div>
     </div>
   );
 };

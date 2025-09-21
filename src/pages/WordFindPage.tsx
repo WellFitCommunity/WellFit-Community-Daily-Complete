@@ -177,7 +177,12 @@ const WordFind: React.FC = () => {
   };
 
   return (
-    <div ref={containerRef} className="p-2 sm:p-4 w-full max-w-2xl mx-auto text-center">
+    <div className="min-h-screen" style={{
+      background: 'linear-gradient(to bottom right, #003865, #8cc63f)'
+    }}>
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
+        <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 max-w-2xl mx-auto">
+          <div ref={containerRef} className="text-center">
       <h2 className="text-2xl font-bold mb-2">{themeData.theme} Word Find</h2>
       <p className="text-sm mb-4">Tap letters to select in a straight line. Backwards works too.</p>
 
@@ -253,6 +258,9 @@ const WordFind: React.FC = () => {
           height={containerRef.current?.clientHeight || 480}
         />
       )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

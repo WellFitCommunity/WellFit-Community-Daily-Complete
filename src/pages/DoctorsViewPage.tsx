@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSupabaseClient, useUser } from '../contexts/AuthContext';
 import { useBranding } from '../BrandingContext';
-import { Link } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface CheckInData {
   id: string;
@@ -261,8 +261,16 @@ const handleQuestionSubmit = async () => {
 
   if (loading) {
     return (
-      <div className="p-4 text-center text-gray-600" style={{ color: branding.secondaryColor }}>
-        Loading doctor's view data...
+      <div className="min-h-screen" style={{
+        background: 'linear-gradient(to bottom right, #003865, #8cc63f)'
+      }}>
+        <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
+          <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 max-w-4xl mx-auto text-center">
+            <div style={{ color: branding.secondaryColor }}>
+              Loading doctor's view data...
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -272,7 +280,11 @@ const handleQuestionSubmit = async () => {
   }
 
   return (
-    <div className="p-4 border-gray-200 rounded-lg bg-gray-50 space-y-6">
+    <div className="min-h-screen" style={{
+      background: 'linear-gradient(to bottom right, #003865, #8cc63f)'
+    }}>
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
+        <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 max-w-4xl mx-auto space-y-6">
       {error && userId && <p className="text-red-500 bg-red-100 p-3 rounded-md mb-4">Notice: {error}</p>}
 
       {/* Latest Check-in */}
@@ -363,17 +375,17 @@ const handleQuestionSubmit = async () => {
           <h4 className="font-semibold text-md mb-2" style={{ color: branding.primaryColor }}>
             Need Help or Have Questions?
           </h4>
-         // In DoctorsViewPage.tsx, replace the question button with:
-<Link 
-  to="/questions" 
-  className="px-6 py-2 text-white font-semibold rounded-md shadow-sm hover:opacity-90"
-  style={{ backgroundColor: branding.secondaryColor }}
->
-  Ask Your Care Team a Question
-</Link>
-          )
+          <Link
+            to="/questions"
+            className="px-6 py-2 text-white font-semibold rounded-md shadow-sm hover:opacity-90"
+            style={{ backgroundColor: branding.secondaryColor }}
+          >
+            Ask Your Care Team a Question
+          </Link>
         </div>
       )}
+        </div>
+      </div>
     </div>
   );
 };

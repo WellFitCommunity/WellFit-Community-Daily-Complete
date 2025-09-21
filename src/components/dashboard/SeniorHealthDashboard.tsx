@@ -100,18 +100,18 @@ const SeniorHealthDashboard: React.FC = () => {
           </div>
 
           <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 text-center">
-            <div className="text-2xl sm:text-3xl mb-3">🏆</div>
+            <div className="text-2xl sm:text-3xl mb-3">🎭</div>
             <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 mb-3">
-              Daily Trivia
+              Memory Lane
             </h3>
             <p className="text-sm sm:text-base text-gray-600 mb-4">
-              Test your knowledge with fun questions
+              Take a trip down memory lane with questions from your era
             </p>
             <button
               onClick={() => navigate('/trivia-game')}
               className="bg-purple-600 text-white text-lg sm:text-xl px-4 sm:px-8 py-3 sm:py-4 rounded-xl hover:bg-purple-700 transition-colors w-full"
             >
-              🏆 Play Trivia
+              🎭 Visit Memory Lane
             </button>
           </div>
 
