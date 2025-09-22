@@ -11,7 +11,7 @@ const MID_GLINT = 'rgba(255,255,255,0.12)'; // subtle white shimmer
 
 const ROUTES = {
   dashboard: '/dashboard',
-  healthDashboard: '/health-dashboard',
+  healthDashboard: '/health-insights',
   wordFind: '/word-find',
   doctors: '/doctors-view',
   selfReport: '/self-reporting',

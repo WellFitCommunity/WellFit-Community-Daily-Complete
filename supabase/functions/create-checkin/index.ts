@@ -22,7 +22,7 @@ function cors(origin: string | null): Headers {
   return h;
 }
 
-serve(async (req) => {
+serve(async (req: Request) => {
   const origin = req.headers.get("origin");
   const headers = cors(origin);
 

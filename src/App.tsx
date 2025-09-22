@@ -48,6 +48,7 @@ const CommunityMoments = React.lazy(() => import('./components/CommunityMoments'
 const DemographicsPage = React.lazy(() => import('./pages/DemographicsPage'));
 const TriviaGame = React.lazy(() => import('./components/TriviaGame'));
 const CaregiverDashboardPage = React.lazy(() => import('./pages/CaregiverDashboardPage'));
+const HealthInsightsPage = React.lazy(() => import('./pages/HealthInsightsPage'));
 
 const PUBLIC_ROUTES = [
   '/',
@@ -94,6 +95,7 @@ function Shell() {
 
               {/* Protected */}
               <Route path="/dashboard" element={<RequireAuth><DashboardPage /></RequireAuth>} />
+              <Route path="/health-insights" element={<RequireAuth><HealthInsightsPage /></RequireAuth>} />
               <Route path="/check-in" element={<RequireAuth><CheckInPage /></RequireAuth>} />
               <Route path="/word-find" element={<RequireAuth><WordFindPage /></RequireAuth>} />
               <Route path="/meals/:id" element={<RequireAuth><MealDetailPage /></RequireAuth>} />

@@ -12,18 +12,25 @@ import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 // ---------- ENV ----------
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || Deno.env.get("SB_URL") || "";
 const SB_SECRET_KEY = Deno.env.get("SB_SECRET_KEY") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-const SB_PUB_KEY = Deno.env.get("SB_PUBLISHABLE_API_KEY") || Deno.env.get("SUPABASE_ANON_KEY") || "";
-const ALLOWED_ORIGINS = (Deno.env.get("ALLOWED_ORIGINS") || "")
+interface Env {
+  SUPABASE_URL?: string;
+  SB_URL?: string;
+  SB_SECRET_KEY?: string;
+  SUPABASE_SERVICE_ROLE_KEY?: string;
+  ALLOWED_ORIGINS?: string;
+}
+
+const ALLOWED_ORIGINS: string[] = (Deno.env.get("ALLOWED_ORIGINS") || "")
   .split(",")
-  .map(s => s.trim())
-  .filter(Boolean);
+  .map((s: string) => s.trim())
+  .filter((s: string) => Boolean(s));
 
 if (!SUPABASE_URL || !SB_SECRET_KEY) {
   throw new Error("Missing required environment variables: SUPABASE_URL and SB_SECRET_KEY (or SUPABASE_SERVICE_ROLE_KEY).");
 }
 
-const admin = createClient(SUPABASE_URL, SB_SECRET_KEY, { auth: { persistSession: false } });
-const anon = createClient(SUPABASE_URL, SB_PUB_KEY);
+// SINGLE CLIENT - uses service role for both auth checks and database operations
+const supabase = createClient(SUPABASE_URL, SB_SECRET_KEY, { auth: { persistSession: false } });
 
 // ---------- SCHEMA ----------
 const schema = z.object({
@@ -40,7 +47,6 @@ const schema = z.object({
     }, { message: "PIN cannot be a simple sequence" }),
   role: z.enum(["admin", "super_admin"]).default("admin"),
 });
-
 
 // ---------- HELPERS ----------
 function corsHeadersFor(origin: string | null): { headers: Headers; allowed: boolean } {
@@ -70,12 +76,13 @@ async function getCaller(req: Request): Promise<CallerInfo> {
   if (!token) return { id: null, roles: [] };
 
   try {
-    const { data, error } = await anon.auth.getUser(token);
+    // Use service role client to validate the user token
+    const { data, error } = await supabase.auth.getUser(token);
     if (error || !data?.user?.id) return { id: null, roles: [] };
     const id = data.user.id;
 
     // Option A: roles stored directly in user_roles(user_id, role)
-    const { data: rows, error: roleErr } = await admin
+    const { data: rows, error: roleErr } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", id);
@@ -88,7 +95,7 @@ async function getCaller(req: Request): Promise<CallerInfo> {
     const roles = (rows ?? []).map((r: any) => r.role).filter(Boolean);
 
     /* Option B (uncomment if you use a roles table with a join):
-    const { data: rowsJoin, error: roleErrJoin } = await admin
+    const { data: rowsJoin, error: roleErrJoin } = await supabase
       .from("user_roles")
       .select("roles!inner(name)")
       .eq("user_id", id);
@@ -190,7 +197,7 @@ serve(async (req: Request) => {
 
     // Upsert
     // NOTE: Ensure a unique constraint exists: create unique index on admin_pins(user_id, role)
-    const { error: upErr } = await admin
+    const { error: upErr } = await supabase
       .from("admin_pins")
       .upsert({
         user_id: id,
@@ -210,7 +217,7 @@ serve(async (req: Request) => {
     }
 
     // Audit log (required for compliance)
-    const { error: auditError } = await admin.from("admin_audit_log").insert({
+    const { error: auditError } = await supabase.from("admin_audit_log").insert({
       user_id: id,
       action: "pin_updated",
       target_role: role,
@@ -222,7 +229,7 @@ serve(async (req: Request) => {
     if (auditError) {
       console.error("Critical: Failed to log PIN update for compliance:", auditError);
       // Rollback PIN update on audit failure
-      await admin.from("admin_pins")
+      await supabase.from("admin_pins")
         .delete()
         .eq("user_id", id)
         .eq("role", role);

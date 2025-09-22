@@ -47,7 +47,11 @@ function clampVitals(
   };
 }
 
-export default function CheckInTracker() {
+interface CheckInTrackerProps {
+  showBackButton?: boolean;
+}
+
+export default function CheckInTracker({ showBackButton = false }: CheckInTrackerProps = {}) {
   const supabase = useSupabaseClient();
   const user = useUser();
   const userId = user?.id ?? null;
@@ -209,6 +213,15 @@ export default function CheckInTracker() {
 
   return (
     <div className="relative max-w-xl mx-auto p-6 bg-white rounded-xl shadow-md border-2 border-wellfitGreen">
+      {showBackButton && (
+        <button
+          onClick={() => window.history.back()}
+          className="text-sm text-[#8cc63f] hover:underline mb-4"
+          aria-label="Go back"
+        >
+          ← Back
+        </button>
+      )}
       <h2 className="text-2xl font-bold mb-6 text-center text-wellfit-blue">Check-In Center</h2>
 
       {/* Details Form */}

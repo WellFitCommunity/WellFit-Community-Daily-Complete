@@ -23,7 +23,7 @@ const SeniorHealthDashboard: React.FC = () => {
             Your Health Today
           </h1>
           <p className="text-lg sm:text-xl text-gray-600">
-            Let's see how you're doing
+            Let's check in today
           </p>
         </div>
 
