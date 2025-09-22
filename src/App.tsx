@@ -23,7 +23,7 @@ import AdminLoginPage from './pages/AdminLoginPage';
 import LoginPage from './pages/LoginPage';
 import ChangePasswordPage from './pages/ChangePasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
-// If your tsconfig doesn’t set baseUrl to "src", change this to './pages/Home'
+// If your tsconfig doesn't set baseUrl to "src", change this to './pages/Home'
 import Home from 'pages/Home';
 
 // ✅ Gate wrapper (does not replace AuthProvider)
@@ -34,6 +34,9 @@ const WelcomePage = React.lazy(() => import('./pages/WelcomePage'));
 const RegisterPage = React.lazy(() => import('./pages/RegisterPage'));
 const VerifyCodePage = React.lazy(() => import('./pages/VerifyCodePage'));
 const DashboardPage = React.lazy(() => import('./pages/DashboardPage'));
+const HealthTrackerPage = React.lazy(() => import('./pages/HealthTrackerPage'));
+const HelpPage = React.lazy(() => import('./pages/AIHelpPage'));
+const SettingsPage = React.lazy(() => import('./pages/SettingsPage'));
 const CheckInPage = React.lazy(() => import('./pages/CheckInPage'));
 const WordFindPage = React.lazy(() => import('./pages/WordFindPage'));
 const MealDetailPage = React.lazy(() => import('./pages/MealDetailPage'));
@@ -94,6 +97,9 @@ function Shell() {
 
               {/* Protected */}
               <Route path="/dashboard" element={<RequireAuth><DashboardPage /></RequireAuth>} />
+              <Route path="/health-dashboard" element={<RequireAuth><HealthTrackerPage /></RequireAuth>} />
+              <Route path="/help" element={<RequireAuth><HelpPage /></RequireAuth>} />
+              <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
               <Route path="/check-in" element={<RequireAuth><CheckInPage /></RequireAuth>} />
               <Route path="/word-find" element={<RequireAuth><WordFindPage /></RequireAuth>} />
               <Route path="/meals/:id" element={<RequireAuth><MealDetailPage /></RequireAuth>} />

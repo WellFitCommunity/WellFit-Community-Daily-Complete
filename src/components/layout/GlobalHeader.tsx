@@ -1,9 +1,9 @@
+// src/components/layout/GlobalHeader.tsx - Complete Updated Header for Senior-Focused Navigation
 import React, { useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, MoreVertical } from 'lucide-react';
 import { useBranding } from '../../BrandingContext';
 import { useIsAdmin } from '../../hooks/useIsAdmin';
-import WebsiteButton from './WebsiteButton';
 
 const WELLFIT_BLUE = '#003865';
 const WELLFIT_GREEN = '#8cc63f';
@@ -11,12 +11,11 @@ const MID_GLINT = 'rgba(255,255,255,0.12)'; // subtle white shimmer
 
 const ROUTES = {
   dashboard: '/dashboard',
-  healthDashboard: '/health-dashboard',
+  healthDashboard: '/health-dashboard', // This is the AI-lite self reporting dashboard
   wordFind: '/word-find',
   doctors: '/doctors-view',
-  selfReport: '/self-reporting',
-  meals: '/meals',
   trivia: '/trivia-game',
+  community: '/community',
   adminPanel: '/admin/panel',
   adminLogin: '/admin',
   logout: '/logout',
@@ -35,7 +34,6 @@ export default function GlobalHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
 
-  // ✅ Correctly consume branding context
   const { branding } = useBranding();
   const location = useLocation();
   const isAdmin = useIsAdmin();
@@ -48,7 +46,6 @@ export default function GlobalHeader() {
   const textColor = useMemo(() => (textHex === '#000000' ? 'text-gray-800' : 'text-white'), [textHex]);
 
   const linkBase = `${textColor} hover:opacity-90 transition`;
-  const showStaffLink = !location.pathname.startsWith('/admin');
 
   const isActive = (path: string) =>
     location.pathname === path || location.pathname.startsWith(`${path}/`);
@@ -78,41 +75,36 @@ export default function GlobalHeader() {
           </div>
 
           {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center space-x-6">
+          <nav className="hidden md:flex items-center space-x-4">
             <HeaderLink to={ROUTES.dashboard} active={isActive(ROUTES.dashboard)} className={linkBase}>
               Dashboard
             </HeaderLink>
             <HeaderLink to={ROUTES.healthDashboard} active={isActive(ROUTES.healthDashboard)} className={linkBase}>
-              Health Insights
+              Health Tracker
+            </HeaderLink>
+            <HeaderLink to={ROUTES.doctors} active={isActive(ROUTES.doctors)} className={linkBase}>
+              Doctor's View
             </HeaderLink>
             <HeaderLink to={ROUTES.wordFind} active={isActive(ROUTES.wordFind)} className={linkBase}>
               Word Find
             </HeaderLink>
-            <HeaderLink to={ROUTES.doctors} active={isActive(ROUTES.doctors)} className={linkBase}>
-              Doctor&apos;s View
-            </HeaderLink>
-            <HeaderLink to={ROUTES.selfReport} active={isActive(ROUTES.selfReport)} className={linkBase}>
-              Self Report
-            </HeaderLink>
-            <HeaderLink to={ROUTES.meals} active={isActive(ROUTES.meals)} className={linkBase}>
-              Meals
-            </HeaderLink>
             <HeaderLink to={ROUTES.trivia} active={isActive(ROUTES.trivia)} className={linkBase}>
-              Trivia Game
+              Memory Lane
+            </HeaderLink>
+            <HeaderLink to={ROUTES.community} active={isActive(ROUTES.community)} className={linkBase}>
+              Community
             </HeaderLink>
 
-            {showStaffLink && isAdmin === false && (
-              <HeaderLink to={ROUTES.adminLogin} active={isActive(ROUTES.adminLogin)} className={linkBase}>
-                Staff Login
-              </HeaderLink>
-            )}
-
-            <Link to={ROUTES.logout} className="text-red-200 hover:text-red-400 transition">
-              Log Out
-            </Link>
-
-            {/* Website button (WellFit green; .org) */}
-            <WebsiteButton />
+            {/* Website button - Made more prominent */}
+            <a
+              href="https://www.TheWellFitCommunity.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center px-4 py-2 rounded-lg font-semibold text-white shadow-md hover:shadow-lg transition-all duration-200 ml-2"
+              style={{ backgroundColor: '#8cc63f' }}
+            >
+              🌐 Visit Website
+            </a>
 
             {/* Ellipsis menu */}
             <div className="relative">
@@ -132,14 +124,14 @@ export default function GlobalHeader() {
                   className="absolute right-0 mt-2 w-56 overflow-hidden rounded-md bg-white shadow-lg ring-1 ring-black/5 z-40"
                   onMouseLeave={() => setMoreOpen(false)}
                 >
-                  <MenuItem to="/profile">Profile</MenuItem>
-                  <MenuItem to="/settings">Settings</MenuItem>
                   {isAdmin === true && (
                     <>
-                      <div className="border-t my-1" />
                       <MenuItem to={ROUTES.adminPanel}>Admin Panel</MenuItem>
+                      <div className="border-t my-1" />
                     </>
                   )}
+                  <MenuItem to="/demographics">My Information</MenuItem>
+                  <MenuItem to="/settings">Settings</MenuItem>
                   <a
                     href="https://www.TheWellFitCommunity.org/support"
                     target="_blank"
@@ -181,29 +173,49 @@ export default function GlobalHeader() {
             Dashboard
           </MobileItem>
           <MobileItem to={ROUTES.healthDashboard} onDone={() => setMenuOpen(false)}>
-            Health Insights
+            Health Tracker
+          </MobileItem>
+          <MobileItem to={ROUTES.doctors} onDone={() => setMenuOpen(false)}>
+            Doctor's View
           </MobileItem>
           <MobileItem to={ROUTES.wordFind} onDone={() => setMenuOpen(false)}>
             Word Find
           </MobileItem>
-          <MobileItem to={ROUTES.doctors} onDone={() => setMenuOpen(false)}>
-            Doctor&apos;s View
-          </MobileItem>
-          <MobileItem to={ROUTES.selfReport} onDone={() => setMenuOpen(false)}>
-            Self Report
-          </MobileItem>
-          <MobileItem to={ROUTES.meals} onDone={() => setMenuOpen(false)}>
-            Meals
-          </MobileItem>
           <MobileItem to={ROUTES.trivia} onDone={() => setMenuOpen(false)}>
-            Trivia Game
+            Memory Lane
+          </MobileItem>
+          <MobileItem to={ROUTES.community} onDone={() => setMenuOpen(false)}>
+            Community
           </MobileItem>
 
-          {showStaffLink && isAdmin === false && (
-            <MobileItem to={ROUTES.adminLogin} onDone={() => setMenuOpen(false)}>
-              Staff Login
+          {isAdmin === true && (
+            <MobileItem to={ROUTES.adminPanel} onDone={() => setMenuOpen(false)}>
+              Admin Panel
             </MobileItem>
           )}
+
+          <MobileItem to="/demographics" onDone={() => setMenuOpen(false)}>
+            My Information
+          </MobileItem>
+
+          <MobileItem to="/settings" onDone={() => setMenuOpen(false)}>
+            Settings
+          </MobileItem>
+
+          <MobileItem to="/help" onDone={() => setMenuOpen(false)}>
+            Help Center
+          </MobileItem>
+
+          <a
+            href="https://www.TheWellFitCommunity.org"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block w-full text-center px-4 py-2 rounded-lg font-semibold text-white shadow-md mt-3"
+            style={{ backgroundColor: '#8cc63f' }}
+            onClick={() => setMenuOpen(false)}
+          >
+            🌐 Visit Website
+          </a>
 
           <Link
             to={ROUTES.logout}
@@ -212,8 +224,6 @@ export default function GlobalHeader() {
           >
             Log Out
           </Link>
-
-          <WebsiteButton className="block w-full text-center" />
         </nav>
       )}
     </header>

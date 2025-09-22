@@ -1,10 +1,10 @@
-// Streamlined Dashboard using Smart Router Architecture
+// src/pages/DashboardPage.tsx - Updated to use new Senior Community Dashboard
 import React from 'react';
 import { useBranding } from '../BrandingContext';
 import { useAuth } from '../contexts/AuthContext';
 import { fetchMyProfile } from '../data/profile';
 import FhirAiDashboardRouter from '../components/FhirAiDashboardRouter';
-import SeniorHealthDashboard from '../components/dashboard/SeniorHealthDashboard';
+import SeniorCommunityDashboard from '../components/dashboard/SeniorCommunityDashboard';
 
 const Dashboard: React.FC = () => {
   const { branding } = useBranding();
@@ -75,9 +75,9 @@ const Dashboard: React.FC = () => {
     );
   }
 
-  // Everyone else gets the senior-friendly dashboard
+  // Everyone else gets the NEW senior community dashboard
   // Roles: Senior(4), Staff(3), Moderator(14), Volunteer(5), Caregiver(6), Contractor(11), User(13)
-  return <SeniorHealthDashboard />;
+  return <SeniorCommunityDashboard />;
 };
 
 export default Dashboard;
