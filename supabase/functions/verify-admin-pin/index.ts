@@ -19,8 +19,9 @@ function generateToken(): string {
   return crypto.randomUUID() + "-" + Date.now();
 }
 
-serve(async (req) => {
-  const { headers, allowed } = cors(req.headers.get("origin"), {
+serve(async (req: Request) => {
+  const origin = req.headers.get("origin");
+  const { headers, allowed } = cors(origin, {
     methods: ["POST", "OPTIONS"],
     allowHeaders: ["authorization", "content-type"],
   });
@@ -86,6 +87,7 @@ serve(async (req) => {
       { status: 200, headers }
     );
   } catch (e: any) {
+    console.error("verify-admin-pin error:", e);
     return new Response(JSON.stringify({ error: e?.message ?? "Internal error" }), { status: 500, headers });
   }
 });

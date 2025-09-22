@@ -65,4 +65,3 @@ serve(async (req) => {
     return new Response(JSON.stringify({ error: e?.message ?? "Internal error" }), { status: 500, headers });
   }
 });
-

@@ -14,8 +14,7 @@ if (!SUPABASE_URL || !SUPABASE_SECRET_KEY || !SUPABASE_PUBLISHABLE_API_KEY) {
   throw new Error("Missing SUPABASE_URL, SB_SECRET_KEY/SUPABASE_SERVICE_ROLE_KEY, or SB_PUBLISHABLE_API_KEY/SUPABASE_ANON_KEY");
 }
 
-const sSvc  = createClient(SUPABASE_URL, SUPABASE_SECRET_KEY, { auth: { persistSession: false } });
-const sAnon = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_API_KEY);
+const supabase = createClient(SUPABASE_URL, SUPABASE_SECRET_KEY, { auth: { persistSession: false } });
 
 // ─── Input schema ────────────────────────────────────────────────────────────
 const EnrollSchema = z.object({
@@ -32,12 +31,12 @@ async function getCaller(req: Request) {
   const token = hdr.startsWith("Bearer ") ? hdr.slice(7) : "";
   if (!token) return { id: null as string | null, roles: [] as string[] };
 
-  const { data, error } = await sAnon.auth.getUser(token);
+  const { data, error } = await supabase.auth.getUser(token);
   const id = data?.user?.id ?? null;
   if (error || !id) return { id: null, roles: [] };
 
   // Adjust column/rel names if yours differ
-  const { data: rows } = await sSvc
+  const { data: rows } = await supabase
     .from("user_roles")
     .select("roles!inner(name)")
     .eq("user_id", id);
@@ -66,7 +65,7 @@ function getCorsHeaders(origin: string | null) {
 }
 
 // ─── Function ────────────────────────────────────────────────────────────────
-serve(async (req) => {
+serve(async (req: Request) => {
   const origin = req.headers.get("Origin");
   const headers = getCorsHeaders(origin);
 
@@ -96,7 +95,7 @@ serve(async (req) => {
     const { phone, password, first_name, last_name, email } = parsed.data;
 
     // 3) Create auth user (service role required)
-    const { data: ures, error: uerr } = await sSvc.auth.admin.createUser({
+    const { data: ures, error: uerr } = await supabase.auth.admin.createUser({
       phone,
       password,
       email: email || undefined,
@@ -111,7 +110,7 @@ serve(async (req) => {
     const newUserId = ures.user.id;
 
     // 4) Insert profile with PK == auth.users.id  (CRITICAL)
-    const { error: perr } = await sSvc.from("profiles").insert({
+    const { error: perr } = await supabase.from("profiles").insert({
       id: newUserId, // profiles.id = auth.users.id
       phone,
       first_name,
@@ -125,7 +124,7 @@ serve(async (req) => {
     });
     if (perr) {
       // Cleanup orphan to keep DB consistent
-      await sSvc.auth.admin.deleteUser(newUserId).catch(() => {});
+      await supabase.auth.admin.deleteUser(newUserId).catch(() => {});
       return new Response(
         JSON.stringify({ error: perr.message ?? "Profile insertion failed" }),
         { status: 500, headers }
@@ -133,13 +132,13 @@ serve(async (req) => {
     }
 
     // 5) Audit log (required for compliance)
-    const { error: auditError } = await sSvc.from("admin_enroll_audit")
+    const { error: auditError } = await supabase.from("admin_enroll_audit")
       .insert({ admin_id: adminId, user_id: newUserId });
 
     if (auditError) {
       console.error("Critical: Failed to log admin enrollment for compliance:", auditError);
       // Rollback user creation on audit failure
-      await sSvc.auth.admin.deleteUser(newUserId).catch(() => {});
+      await supabase.auth.admin.deleteUser(newUserId).catch(() => {});
       return new Response(
         JSON.stringify({ error: "System error: Unable to record enrollment for compliance. Please contact support." }),
         { status: 500, headers }

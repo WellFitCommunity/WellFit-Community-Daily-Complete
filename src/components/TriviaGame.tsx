@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { triviaQuestions, TriviaQuestion } from '../data/triviaQuestions';
 
 // Helper function to shuffle an array
@@ -12,6 +13,7 @@ const shuffleArray = <T,>(array: T[]): T[] => {
 };
 
 const TriviaGame: React.FC = () => {
+  const navigate = useNavigate();
   const [currentQuestions, setCurrentQuestions] = useState<TriviaQuestion[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [score, setScore] = useState(0);
@@ -197,6 +199,13 @@ const TriviaGame: React.FC = () => {
     }}>
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
         <div className="max-w-lg mx-auto p-4 sm:p-6 bg-white rounded-xl shadow-2xl">
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="text-sm text-[#8cc63f] hover:underline mb-4"
+            aria-label="Go back to dashboard"
+          >
+            ← Back to Dashboard
+          </button>
           <h1 className="text-2xl sm:text-3xl font-bold text-center text-wellfit-blue mb-2">Memory Lane</h1>
       <p className="text-center text-gray-600 mb-1">Question {currentQuestionIndex + 1} of {currentQuestions.length}</p>
       <p className="text-center text-xl sm:text-2xl font-semibold text-wellfit-green mb-6">Score: {score}</p>

@@ -255,7 +255,7 @@ const SeniorCommunityDashboard: React.FC = () => {
             Welcome to Your Community
           </h1>
           <p className="text-lg sm:text-xl text-gray-600">
-            How are you doing today?
+            Let's check in today
           </p>
         </div>
 
