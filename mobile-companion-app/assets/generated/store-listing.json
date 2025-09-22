@@ -1,0 +1,27 @@
+{
+  "title": "Care Monitor - Patient Safety & Health Tracking",
+  "shortDescription": "Professional patient monitoring and safety alerts",
+  "fullDescription": "\nCare Monitor is a comprehensive safety and health monitoring solution designed specifically for caregivers and healthcare professionals. Our production-grade app provides peace of mind through advanced technology and HIPAA-compliant data protection.\n\n🛡️ ADVANCED SAFETY MONITORING\n• Customizable geofencing with GPS precision\n• Real-time location tracking with background monitoring\n• Instant alerts when patients leave designated safe zones\n• Emergency notifications to multiple contacts\n• Comprehensive location history and movement analysis\n\n❤️ HEALTH MONITORING\n• Camera-based pulse oximetry for heart rate and oxygen saturation\n• Continuous health trend tracking and analysis\n• Automated alerts for concerning vital signs\n• Historical health data for healthcare provider consultations\n\n🔒 HIPAA COMPLIANT & SECURE\n• AES-256 data encryption for maximum security\n• Secure local data storage with privacy protection\n• Configurable data retention policies\n• No cloud storage of sensitive data without explicit consent\n• Industry-standard privacy controls\n\n🚨 EMERGENCY FEATURES\n• One-touch caregiver and emergency calling\n• Smart emergency contact management\n• Real-time location sharing capabilities\n• Direct 911 dialing integration\n• Offline functionality for critical features\n\nPerfect for family caregivers, professional healthcare facilities, assisted living communities, and medical professionals managing patient safety and monitoring.\n\nIMPORTANT MEDICAL DISCLAIMER: This app supplements, not replaces, professional medical care and supervision. Always consult healthcare providers for medical decisions and maintain traditional emergency procedures.\n\nDeveloped by Your Healthcare Company with a focus on reliability, security, and user safety.",
+  "keywords": "health monitoring, patient care, medical alert",
+  "category": "Medical",
+  "contentRating": "Teen",
+  "pricing": {
+    "model": "one-time-purchase",
+    "suggestedPrice": "$39.99",
+    "alternatives": [
+      "$29.99",
+      "$49.99"
+    ]
+  },
+  "screenshots": {
+    "required": 5,
+    "recommended": 8,
+    "descriptions": [
+      "Main dashboard showing patient status and alerts",
+      "Interactive map with geofencing zones",
+      "Health monitoring interface with vital signs",
+      "Emergency contacts and communication setup",
+      "Settings and configuration options"
+    ]
+  }
+}

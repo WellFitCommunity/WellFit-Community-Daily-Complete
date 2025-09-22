@@ -2,9 +2,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 
-// NOTE: Export libraries are now lazy-loaded inside exportToExcel()
+// NOTE: Export libraries are now lazy-loaded inside exportToCsv()
 // import { saveAs } from 'file-saver';
-// import * as XLSX from 'xlsx';
 
 // Define the shape of your API key record
 interface ApiKey {
@@ -414,13 +413,10 @@ const ApiKeyManager: React.FC = () => {
     [apiKeys]
   );
 
-  const exportToExcel = async () => {
+  const exportToCsv = async () => {
     try {
-      // Lazy-load heavy deps only when needed
-      const [{ saveAs }, XLSX] = await Promise.all([
-        import('file-saver'),
-        import('xlsx')
-      ]);
+      // Lazy-load file-saver only when needed
+      const { saveAs } = await import('file-saver');
 
       const exportData = filteredAndSortedKeys.map(key => ({
         Organization: key.org_name,
@@ -431,25 +427,28 @@ const ApiKeyManager: React.FC = () => {
         'Created By': key.created_by || 'System'
       }));
 
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(exportData);
+      // Convert to CSV
+      const headers = Object.keys(exportData[0] || {});
+      const csvContent = [
+        headers.join(','),
+        ...exportData.map(row =>
+          headers.map(header => {
+            const value = row[header as keyof typeof row];
+            // Escape CSV values that contain commas or quotes
+            return typeof value === 'string' && (value.includes(',') || value.includes('"'))
+              ? `"${value.replace(/"/g, '""')}"`
+              : value;
+          }).join(',')
+        )
+      ].join('\n');
 
-      // Auto-size columns
-      const colWidths = Object.keys(exportData[0] || {}).map(key => ({
-        wch: Math.max(key.length, 15)
-      }));
-      (ws as any)['!cols'] = colWidths;
-
-      XLSX.utils.book_append_sheet(wb, ws, 'API Keys');
-      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-
-      const filename = `api_keys_${new Date().toISOString().split('T')[0]}.xlsx`;
-      saveAs(new Blob([wbout], { type: 'application/octet-stream' }), filename);
+      const filename = `api_keys_${new Date().toISOString().split('T')[0]}.csv`;
+      saveAs(new Blob([csvContent], { type: 'text/csv;charset=utf-8' }), filename);
 
       addToast('success', `Exported ${exportData.length} API keys to ${filename}`);
     } catch (error) {
       console.error('Export error:', error);
-      addToast('error', 'Failed to export data to Excel');
+      addToast('error', 'Failed to export data to CSV');
     }
   };
 
@@ -610,7 +609,7 @@ const ApiKeyManager: React.FC = () => {
 
           <div className="flex items-end">
             <button
-              onClick={exportToExcel}
+              onClick={exportToCsv}
               disabled={loading || filteredAndSortedKeys.length === 0}
               className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-1"
             >

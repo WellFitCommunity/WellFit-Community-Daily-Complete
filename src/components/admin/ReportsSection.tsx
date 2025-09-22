@@ -260,34 +260,31 @@ const ReportsSection: React.FC = () => {
     };
   }, [fetchReportStats, refreshInterval]);
 
-  // Enhanced Excel export with better formatting
-  const exportEngagementSummaryXlsx = async () => {
+  // CSV export with proper escaping
+  const exportEngagementSummaryCsv = async () => {
     setExporting('summary');
     try {
       addToast('info', 'Preparing engagement summary...');
 
-      const ExcelJS = (await import('exceljs')).default;
-      const wb = new ExcelJS.Workbook();
+      // Helper function to escape CSV values
+      const escapeCsvValue = (value: any): string => {
+        if (value === null || value === undefined) return '';
+        const str = String(value);
+        // Escape quotes and wrap in quotes if contains comma, quote, or newline
+        if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+          return '"' + str.replace(/"/g, '""') + '"';
+        }
+        return str;
+      };
 
-      // Metadata
-      wb.creator = 'WellFit Admin Dashboard';
-      wb.created = new Date();
-      wb.modified = new Date();
-
-      const ws = wb.addWorksheet('Engagement Summary');
-
-      // Header styling
-      ws.columns = [
-        { header: 'Metric', key: 'metric', width: 30 },
-        { header: 'Current Value', key: 'value', width: 20 },
-        { header: 'Period', key: 'period', width: 20 },
-        { header: 'Notes', key: 'notes', width: 40 },
-      ];
-
-      const headerRow = ws.getRow(1);
-      headerRow.font = { bold: true, color: { argb: 'FFFFFF' } };
-      headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '003865' } };
-      headerRow.alignment = { horizontal: 'center' };
+      // Helper function to convert array of objects to CSV
+      const arrayToCsv = (data: any[], headers: string[]): string => {
+        const headerRow = headers.map(escapeCsvValue).join(',');
+        const dataRows = data.map(row =>
+          headers.map(header => escapeCsvValue(row[header])).join(',')
+        );
+        return [headerRow, ...dataRows].join('\n');
+      };
 
       const rows = [
         { metric: 'Total Check-Ins', value: stats.totalCheckIns, period: 'All Time', notes: 'Total user check-ins recorded in the system' },
@@ -299,52 +296,31 @@ const ReportsSection: React.FC = () => {
         { metric: 'Tech Tips Viewed', value: stats.techTipsViewed, period: 'All Time', notes: 'Feature requires additional setup' },
       ];
 
-      rows.forEach((row, index) => {
-        const excelRow = ws.addRow(row);
-        if (index % 2 === 1) {
-          excelRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F8F9FA' } };
-        }
-        if (typeof row.value === 'number') {
-          excelRow.getCell(2).numFmt = '#,##0';
-        }
-      });
+      const csvContent = [
+        '# WellFit Engagement Summary',
+        `# Generated: ${new Date().toISOString()}`,
+        `# Created by: WellFit Admin Dashboard`,
+        '',
+        arrayToCsv(rows, ['metric', 'value', 'period', 'notes']),
+        '',
+        `# Report Generated,${new Date().toLocaleString()},,WellFit Admin Dashboard`
+      ].join('\n');
 
-      ws.addRow({});
-      const metadataRow = ws.addRow(['Report Generated', new Date().toLocaleString(), '', 'WellFit Admin Dashboard']);
-      metadataRow.font = { italic: true };
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
 
-      // Auto-fit columns
-      ws.columns.forEach((column: any) => {
-        let maxLength = 0;
-        column.eachCell?.({ includeEmpty: false }, (cell: any) => {
-          if (cell.value) {
-            const length = cell.value.toString().length;
-            if (length > maxLength) maxLength = length;
-          }
-        });
-        column.width = Math.min(maxLength + 2, 50);
-      });
-
-      const buf = await wb.xlsx.writeBuffer();
-      const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-
-      const filename = `engagement_summary_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      const filename = `engagement_summary_${new Date().toISOString().slice(0, 10)}.csv`;
       await lazySaveAs(blob, filename);
       addToast('success', `Engagement summary exported to ${filename}`);
     } catch (error) {
       console.error('Export error:', error);
       const message = error instanceof Error ? error.message : 'Export failed';
-      if (message.includes("Cannot find module 'exceljs'")) {
-        addToast('error', 'Excel export requires exceljs. Install with: npm i exceljs');
-      } else {
-        addToast('error', `Failed to export Excel: ${message}`);
-      }
+      addToast('error', `Failed to export CSV: ${message}`);
     } finally {
       setExporting(null);
     }
   };
 
-  const exportSelfReportsXlsx = async () => {
+  const exportSelfReportsCsv = async () => {
     setExporting('self');
     try {
       addToast('info', 'Fetching self-report data...');
@@ -363,77 +339,63 @@ const ReportsSection: React.FC = () => {
         return;
       }
 
-      const ExcelJS = (await import('exceljs')).default;
-      const wb = new ExcelJS.Workbook();
-      wb.creator = 'WellFit Admin Dashboard';
-
-      const ws = wb.addWorksheet('Self Reports');
-      ws.columns = [
-        { header: 'Report ID', key: 'id', width: 30 },
-        { header: 'User ID', key: 'user_id', width: 38 },
-        { header: 'Date Created', key: 'created_at', width: 20 },
-        { header: 'Mood', key: 'mood', width: 15 },
-        { header: 'Symptoms', key: 'symptoms', width: 60 },
-        { header: 'Activity Description', key: 'activity_description', width: 60 },
-        { header: 'Submitted By', key: 'submitted_by', width: 38 },
-        { header: 'Entry Type', key: 'entry_type', width: 18 },
-      ];
-
-      const headerRow = ws.getRow(1);
-      headerRow.font = { bold: true, color: { argb: 'FFFFFF' } };
-      headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '8CC63F' } };
-      headerRow.alignment = { horizontal: 'center' };
-      ws.views = [{ state: 'frozen', ySplit: 1 }];
-
-      rows.forEach((row, index) => {
-        const excelRow = ws.addRow({
-          ...row,
-          created_at: new Date(row.created_at),
-          symptoms: row.symptoms ?? '',
-          activity_description: row.activity_description ?? '',
-        });
-        if (index % 2 === 1) {
-          excelRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F8F9FA' } };
+      // Helper function to escape CSV values
+      const escapeCsvValue = (value: any): string => {
+        if (value === null || value === undefined) return '';
+        const str = String(value);
+        // Escape quotes and wrap in quotes if contains comma, quote, or newline
+        if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+          return '"' + str.replace(/"/g, '""') + '"';
         }
-        excelRow.getCell(5).alignment = { wrapText: true, vertical: 'top' };
-        excelRow.getCell(6).alignment = { wrapText: true, vertical: 'top' };
-        excelRow.height = 30;
-      });
+        return str;
+      };
 
-      ws.addRow({});
-      const summaryRow = ws.addRow({
-        id: 'SUMMARY',
-        user_id: `Total Records: ${rows.length}`,
-        created_at: `Export Date: ${new Date().toLocaleDateString()}`,
-        mood: '',
-        symptoms: '',
-        activity_description: '',
-        submitted_by: '',
-        entry_type: ''
-      });
-      summaryRow.font = { bold: true };
-      summaryRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'E9ECEF' } };
+      // Helper function to convert array of objects to CSV
+      const arrayToCsv = (data: any[], headers: string[]): string => {
+        const headerRow = headers.map(escapeCsvValue).join(',');
+        const dataRows = data.map(row =>
+          headers.map(header => escapeCsvValue(row[header])).join(',')
+        );
+        return [headerRow, ...dataRows].join('\n');
+      };
 
-      const buf = await wb.xlsx.writeBuffer();
-      const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const processedRows = rows.map(row => ({
+        ...row,
+        created_at: new Date(row.created_at).toISOString(),
+        symptoms: row.symptoms ?? '',
+        activity_description: row.activity_description ?? '',
+      }));
 
-      const filename = `self_reports_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      const csvContent = [
+        '# WellFit Self Reports Export',
+        `# Generated: ${new Date().toISOString()}`,
+        `# Created by: WellFit Admin Dashboard`,
+        `# Total Records: ${rows.length}`,
+        '',
+        arrayToCsv(processedRows, [
+          'id', 'user_id', 'created_at', 'mood', 'symptoms',
+          'activity_description', 'submitted_by', 'entry_type'
+        ]),
+        '',
+        `# Summary,,,,,,,,`,
+        `# Total Records,${rows.length},Export Date,${new Date().toLocaleDateString()},,,,`
+      ].join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+
+      const filename = `self_reports_${new Date().toISOString().slice(0, 10)}.csv`;
       await lazySaveAs(blob, filename);
       addToast('success', `${rows.length} self-reports exported to ${filename}`);
     } catch (error) {
       console.error('Export error:', error);
       const message = error instanceof Error ? error.message : 'Export failed';
-      if (message.includes("Cannot find module 'exceljs'")) {
-        addToast('error', 'Excel export requires exceljs. Install with: npm i exceljs');
-      } else {
-        addToast('error', `Failed to export self-reports: ${message}`);
-      }
+      addToast('error', `Failed to export self-reports: ${message}`);
     } finally {
       setExporting(null);
     }
   };
 
-  // Detailed analytics export
+  // Detailed analytics export as CSV
   const exportDetailedAnalytics = async () => {
     setExporting('detailed');
     try {
@@ -444,21 +406,25 @@ const ReportsSection: React.FC = () => {
         supabase.from('profiles_with_user_id').select('user_id, first_name, last_name, phone, created_at').limit(5000)
       ]);
 
-      const ExcelJS = (await import('exceljs')).default;
-      const wb = new ExcelJS.Workbook();
-      wb.creator = 'WellFit Admin Dashboard';
+      // Helper function to escape CSV values
+      const escapeCsvValue = (value: any): string => {
+        if (value === null || value === undefined) return '';
+        const str = String(value);
+        // Escape quotes and wrap in quotes if contains comma, quote, or newline
+        if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+          return '"' + str.replace(/"/g, '""') + '"';
+        }
+        return str;
+      };
 
-      // Summary Sheet
-      const summaryWs = wb.addWorksheet('Analytics Summary');
-      summaryWs.columns = [
-        { header: 'Metric', key: 'metric', width: 30 },
-        { header: 'Value', key: 'value', width: 20 },
-        { header: 'Percentage', key: 'percentage', width: 15 },
-      ];
-
-      const headerRow = summaryWs.getRow(1);
-      headerRow.font = { bold: true, color: { argb: 'FFFFFF' } };
-      headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '003865' } };
+      // Helper function to convert array of objects to CSV
+      const arrayToCsv = (data: any[], headers: string[]): string => {
+        const headerRow = headers.map(escapeCsvValue).join(',');
+        const dataRows = data.map(row =>
+          headers.map(header => escapeCsvValue(row[header])).join(',')
+        );
+        return [headerRow, ...dataRows].join('\n');
+      };
 
       const summaryData = [
         { metric: 'Total Check-ins', value: stats.totalCheckIns, percentage: '100%' },
@@ -468,35 +434,50 @@ const ReportsSection: React.FC = () => {
         { metric: 'Check-ins This Week', value: stats.checkInsThisWeek, percentage: `${((stats.checkInsThisWeek / Math.max(stats.totalCheckIns, 1)) * 100).toFixed(1)}%` },
         { metric: 'Check-ins This Month', value: stats.checkInsThisMonth, percentage: `${((stats.checkInsThisMonth / Math.max(stats.totalCheckIns, 1)) * 100).toFixed(1)}%` },
       ];
-      summaryData.forEach(row => summaryWs.addRow(row));
 
-      // Check-ins data sheet (if available)
+      let csvContent = [
+        '# WellFit Detailed Analytics Export',
+        `# Generated: ${new Date().toISOString()}`,
+        `# Created by: WellFit Admin Dashboard`,
+        '',
+        '# Analytics Summary',
+        arrayToCsv(summaryData, ['metric', 'value', 'percentage'])
+      ];
+
+      // Add check-ins data if available
       if (checkInsData.status === 'fulfilled' && checkInsData.value.data) {
-        const checkInsWs = wb.addWorksheet('Recent Check-ins');
-        checkInsWs.columns = [
-          { header: 'Date', key: 'created_at', width: 20 },
-          { header: 'User ID', key: 'user_id', width: 38 },
-          { header: 'Label', key: 'label', width: 20 },
-          { header: 'Emergency', key: 'is_emergency', width: 15 },
-        ];
-        const checkInsHeader = checkInsWs.getRow(1);
-        checkInsHeader.font = { bold: true, color: { argb: 'FFFFFF' } };
-        checkInsHeader.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '8CC63F' } };
+        const checkInsRows = checkInsData.value.data.map(row => ({
+          created_at: new Date(row.created_at).toISOString(),
+          user_id: row.user_id,
+          label: row.label,
+          is_emergency: row.is_emergency ? 'Yes' : 'No'
+        }));
 
-        checkInsData.value.data.forEach(row => {
-          checkInsWs.addRow({
-            created_at: new Date(row.created_at),
-            user_id: row.user_id,
-            label: row.label,
-            is_emergency: row.is_emergency ? 'Yes' : 'No'
-          });
-        });
+        csvContent.push(
+          '',
+          '# Recent Check-ins',
+          arrayToCsv(checkInsRows, ['created_at', 'user_id', 'label', 'is_emergency'])
+        );
       }
 
-      const buf = await wb.xlsx.writeBuffer();
-      const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      // Add profiles data if available
+      if (profilesData.status === 'fulfilled' && profilesData.value.data) {
+        const profileRows = profilesData.value.data.map(row => ({
+          ...row,
+          created_at: new Date(row.created_at).toISOString()
+        }));
 
-      const filename = `detailed_analytics_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        csvContent.push(
+          '',
+          '# User Profiles',
+          arrayToCsv(profileRows, ['user_id', 'first_name', 'last_name', 'phone', 'created_at'])
+        );
+      }
+
+      const finalCsv = csvContent.join('\n');
+      const blob = new Blob([finalCsv], { type: 'text/csv;charset=utf-8' });
+
+      const filename = `detailed_analytics_${new Date().toISOString().slice(0, 10)}.csv`;
       await lazySaveAs(blob, filename);
       addToast('success', `Detailed analytics exported to ${filename}`);
     } catch (error) {
@@ -601,7 +582,7 @@ const ReportsSection: React.FC = () => {
                 </div>
               </div>
               <button
-                onClick={exportEngagementSummaryXlsx}
+                onClick={exportEngagementSummaryCsv}
                 disabled={!!exporting}
                 className="w-full px-4 py-2 bg-[#003865] text-white font-medium rounded-lg hover:bg-[#002347] focus:ring-2 focus:ring-[#003865] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
@@ -611,7 +592,7 @@ const ReportsSection: React.FC = () => {
                     <span>Exporting...</span>
                   </div>
                 ) : (
-                  'Export Summary (.xlsx)'
+                  'Export Summary (.csv)'
                 )}
               </button>
             </div>
@@ -625,7 +606,7 @@ const ReportsSection: React.FC = () => {
                 </div>
               </div>
               <button
-                onClick={exportSelfReportsXlsx}
+                onClick={exportSelfReportsCsv}
                 disabled={!!exporting}
                 className="w-full px-4 py-2 bg-[#8cc63f] text-white font-medium rounded-lg hover:bg-[#7db335] focus:ring-2 focus:ring-[#8cc63f] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
@@ -635,7 +616,7 @@ const ReportsSection: React.FC = () => {
                     <span>Exporting...</span>
                   </div>
                 ) : (
-                  'Export Reports (.xlsx)'
+                  'Export Reports (.csv)'
                 )}
               </button>
             </div>
@@ -659,7 +640,7 @@ const ReportsSection: React.FC = () => {
                     <span>Exporting...</span>
                   </div>
                 ) : (
-                  'Export Analytics (.xlsx)'
+                  'Export Analytics (.csv)'
                 )}
               </button>
             </div>
@@ -675,7 +656,7 @@ const ReportsSection: React.FC = () => {
                   <li>• <strong>Summary:</strong> High-level metrics and KPIs with trend analysis</li>
                   <li>• <strong>Self Reports:</strong> Individual user health submissions and mood tracking</li>
                   <li>• <strong>Analytics:</strong> Multi-sheet detailed data with charts and breakdowns</li>
-                  <li>• All exports include metadata and are Excel-compatible</li>
+                  <li>• All exports are in CSV format for universal compatibility</li>
                 </ul>
               </div>
             </div>
