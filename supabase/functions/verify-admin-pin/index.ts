@@ -22,16 +22,15 @@ function generateToken(): string {
 serve(async (req: Request) => {
   const origin = req.headers.get("origin");
   const { headers, allowed } = cors(origin, {
-  methods: ["POST", "OPTIONS"],
-  allowHeaders: [
-    "authorization",
-    "content-type",
-    "x-client-info",
-    "apikey",
-    "x-supabase-api-version"
-  ]
-});
-
+    methods: ["POST", "OPTIONS"],
+    allowHeaders: [
+      "authorization",
+      "content-type",
+      "x-client-info",
+      "apikey",
+      "x-supabase-api-version"
+    ]
+  });
 
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers });
   if (!allowed) return new Response(JSON.stringify({ error: "Origin not allowed" }), { status: 403, headers });
