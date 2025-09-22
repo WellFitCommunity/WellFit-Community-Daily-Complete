@@ -3,6 +3,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useBranding } from '../../BrandingContext';
 import CheckInTracker from '../CheckInTracker';
 import DashMealOfTheDay from './DashMealOfTheDay';
 import WeatherWidget from './WeatherWidget';
@@ -13,9 +14,13 @@ import PositiveAffirmations from './PositiveAffirmations';
 
 const SeniorHealthDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { branding } = useBranding();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div
+      className="min-h-screen"
+      style={{ background: branding.gradient }}
+    >
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-4xl">
         {/* Simple Header */}
         <div className="text-center mb-6 sm:mb-8">

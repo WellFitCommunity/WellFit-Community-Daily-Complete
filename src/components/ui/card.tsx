@@ -1,19 +1,28 @@
 import React from 'react';
 import { cn } from '../../lib/utils';
+import { useBranding } from '../../BrandingContext';
 
 const Card = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      'rounded-lg border border-gray-200 bg-white text-gray-950 shadow-sm',
-      className
-    )}
-    {...props}
-  />
-));
+>(({ className, ...props }, ref) => {
+  const { branding } = useBranding();
+
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        'rounded-lg bg-white text-gray-950 shadow-lg border-2',
+        className
+      )}
+      style={{
+        borderColor: branding.primaryColor,
+        boxShadow: `0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px ${branding.primaryColor}20`
+      }}
+      {...props}
+    />
+  );
+});
 Card.displayName = 'Card';
 
 const CardHeader = React.forwardRef<

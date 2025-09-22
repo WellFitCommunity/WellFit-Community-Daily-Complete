@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSupabaseClient, useUser } from '../../contexts/AuthContext';
+import { useBranding } from '../../BrandingContext';
 import WeatherWidget from './WeatherWidget';
 import DailyScripture from './DailyScripture';
 import TechTip from './TechTip';
@@ -12,6 +13,7 @@ const SeniorCommunityDashboard: React.FC = () => {
   const navigate = useNavigate();
   const supabase = useSupabaseClient();
   const user = useUser();
+  const { branding } = useBranding();
   
   const [checkedInToday, setCheckedInToday] = useState<string | null>(null);
   const [showEmergencyBanner, setShowEmergencyBanner] = useState(false);
@@ -246,7 +248,10 @@ const SeniorCommunityDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div
+      className="min-h-screen"
+      style={{ background: branding.gradient }}
+    >
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-6xl">
         
         {/* Welcome Header */}

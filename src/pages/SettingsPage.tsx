@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useSupabaseClient, useUser } from '../contexts/AuthContext';
 import { useBranding } from '../BrandingContext';
 import { useNavigate } from 'react-router-dom';
+import { Card } from '../components/ui/card';
 
 interface UserSettings {
   font_size: 'small' | 'medium' | 'large' | 'extra-large';
@@ -153,7 +154,10 @@ const SettingsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+      <div
+        className="min-h-screen"
+        style={{ background: branding.gradient }}
+      >
         <div className="container mx-auto px-4 py-6 max-w-4xl">
           <div className="text-center">
             <div className="text-2xl mb-4">⚙️</div>
@@ -165,7 +169,10 @@ const SettingsPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div
+      className="min-h-screen"
+      style={{ background: branding.gradient }}
+    >
       <div className="container mx-auto px-4 py-6 max-w-4xl">
         
         {/* Header */}
@@ -210,7 +217,7 @@ const SettingsPage: React.FC = () => {
         {/* Settings Sections */}
         <div className="space-y-4">
           {settingsSections.map((section) => (
-            <div key={section.id} className="bg-white rounded-lg shadow-md border border-gray-200">
+            <Card key={section.id}>
               <button
                 onClick={() => setActiveSection(activeSection === section.id ? null : section.id)}
                 className="w-full p-6 text-left flex items-center justify-between hover:bg-gray-50 transition"
@@ -447,7 +454,7 @@ const SettingsPage: React.FC = () => {
 
                 </div>
               )}
-            </div>
+            </Card>
           ))}
         </div>
 

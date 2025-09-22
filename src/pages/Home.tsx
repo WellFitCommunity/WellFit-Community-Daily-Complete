@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSupabaseClient, useSession } from '../contexts/AuthContext';
+import { useBranding } from '../BrandingContext';
 
 type Profile = {
   first_name?: string | null;
@@ -13,6 +14,7 @@ export default function Home() {
   const supabase = useSupabaseClient();
   const session = useSession();
   const navigate = useNavigate();
+  const { branding } = useBranding();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -40,7 +42,10 @@ export default function Home() {
     (profile?.last_name ? ` ${profile.last_name.trim()}` : '');
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div
+      className="min-h-screen"
+      style={{ background: branding.gradient }}
+    >
       <header className="bg-white border-b">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
           <h1 className="text-xl font-bold text-[#003865]">WellFit</h1>

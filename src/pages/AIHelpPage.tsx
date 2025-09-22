@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useBranding } from '../BrandingContext';
 import { useNavigate } from 'react-router-dom';
 import { useSupabaseClient, useUser } from '../contexts/AuthContext';
+import { Card } from '../components/ui/card';
 
 interface ChatMessage {
   id: string;
@@ -347,7 +348,10 @@ const AIHelpPage: React.FC = () => {
     : helpSections;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div
+      className="min-h-screen"
+      style={{ background: branding.gradient }}
+    >
       <div className="container mx-auto px-4 py-6 max-w-4xl">
         
         {/* Header */}
@@ -585,7 +589,7 @@ const AIHelpPage: React.FC = () => {
           )}
 
           {filteredSections.map((section) => (
-            <div key={section.id} className="bg-white rounded-lg shadow-md border border-gray-200">
+            <Card key={section.id}>
               <div className="p-6">
                 <div className="flex items-center mb-4">
                   <span className="text-3xl mr-4">{section.icon}</span>
@@ -605,7 +609,7 @@ const AIHelpPage: React.FC = () => {
                   ))}
                 </div>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
 
