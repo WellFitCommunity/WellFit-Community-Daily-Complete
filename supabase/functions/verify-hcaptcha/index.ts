@@ -105,8 +105,8 @@ export default async function handler(req: Request): Promise<Response> {
     const parsed = RegisterSchema.safeParse(raw);
 
     if (!parsed.success) {
-      const details = parsed.error.issues.map(i => ({
-        path: i.path.map(String).join("."), // handles string | number safely
+      const details = parsed.error.issues.map((i: any) => ({
+        path: (i.path as (string | number)[]).map(String).join("."),
         message: i.message
       }));
       return j({ error: "Validation failed", details }, 400, headers);
