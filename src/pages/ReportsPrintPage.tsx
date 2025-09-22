@@ -1,6 +1,6 @@
 // src/pages/ReportsPrintPage.tsx
 // Print-optimized reports page with optional date range, engagement summary,
-// self-reports (from health_entries), and Excel export (lazy exceljs).
+// self-reports (from health_entries), and CSV export.
 // Uses custom Supabase client/hooks from ../../lib/supabaseClient (adjust depth if needed).
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
@@ -223,84 +223,86 @@ const ReportsPrintPage: React.FC = () => {
 
   const handlePrint = () => window.print();
 
-  const handleExportXlsx = async () => {
+  const handleExportCsv = async () => {
     setExporting(true);
     try {
-      const ExcelJS = (await import('exceljs')).default;
-      const wb = new ExcelJS.Workbook();
-
-      // Sheet 1: Engagement Summary
-      const s1 = wb.addWorksheet('Engagement Summary');
-      s1.columns = [
-        { header: 'Metric', key: 'metric', width: 28 },
-        { header: 'Value', key: 'value', width: 18 },
-      ];
-      s1.getRow(1).font = { bold: true };
-      s1.addRow({ metric: 'Total Check-Ins', value: stats.totalCheckIns });
-      s1.addRow({ metric: 'Meals Prepared', value: stats.mealsPrepared });
-      s1.addRow({ metric: 'Tech Tips Viewed', value: stats.techTipsViewed });
-      s1.addRow({ metric: 'Registered Users', value: stats.activeUsers });
-      s1.addRow({ metric: 'From', value: from });
-      s1.addRow({ metric: 'To', value: to });
-      s1.addRow({ metric: 'Generated At', value: new Date() });
-
-      // Sheet 2: Mood Summary
-      const s2 = wb.addWorksheet('Mood Summary');
-      s2.columns = [
-        { header: 'Mood', key: 'mood', width: 22 },
-        { header: 'Count', key: 'count', width: 12 },
-      ];
-      s2.getRow(1).font = { bold: true };
-      moodCounts.forEach(([mood, count]) => s2.addRow({ mood, count }));
-
-      // Sheet 3: Self Reports (detailed)
-      const s3 = wb.addWorksheet('Self Reports');
-      s3.columns = [
-        { header: 'Created', key: 'created_at', width: 24 },
-        { header: 'User', key: 'user_id', width: 36 },
-        { header: 'Mood', key: 'mood', width: 16 },
-        { header: 'BP Systolic', key: 'bp_systolic', width: 12 },
-        { header: 'BP Diastolic', key: 'bp_diastolic', width: 12 },
-        { header: 'Pulse', key: 'pulse', width: 12 },
-        { header: 'Glucose', key: 'glucose', width: 12 },
-        { header: 'Symptoms', key: 'symptoms', width: 42 },
-        { header: 'Activity', key: 'activity_description', width: 42 },
-        { header: 'Source', key: 'source_type', width: 10 },
-        { header: 'Entry Type', key: 'entry_type', width: 14 },
-        { header: 'ID', key: 'id', width: 24 },
-      ];
-      s3.getRow(1).font = { bold: true };
-      s3.views = [{ state: 'frozen', ySplit: 1 }];
-
-      rows.forEach((r) => {
-        s3.addRow({
-          ...r,
-          created_at: new Date(r.created_at),
-          symptoms: r.symptoms ?? '',
-          activity_description: r.activity_description ?? '',
-        });
-      });
-
-      // Wrap long text
-      s3.eachRow((row, idx) => {
-        if (idx > 1) {
-          row.getCell(8).alignment = { wrapText: true, vertical: 'top' }; // Symptoms
-          row.getCell(9).alignment = { wrapText: true, vertical: 'top' }; // Activity
+      // Helper function to escape CSV values
+      const escapeCsvValue = (value: any): string => {
+        if (value === null || value === undefined) return '';
+        const str = String(value);
+        // Escape quotes and wrap in quotes if contains comma, quote, or newline
+        if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+          return '"' + str.replace(/"/g, '""') + '"';
         }
-      });
+        return str;
+      };
 
-      const buf = await wb.xlsx.writeBuffer();
-      const blob = new Blob([buf], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      });
-      saveAs(blob, `wellfit_reports_${from}_to_${to}.xlsx`);
+      // Helper function to convert array of objects to CSV
+      const arrayToCsv = (data: any[], headers: string[]): string => {
+        const headerRow = headers.map(escapeCsvValue).join(',');
+        const dataRows = data.map(row =>
+          headers.map(header => escapeCsvValue(row[header])).join(',')
+        );
+        return [headerRow, ...dataRows].join('\n');
+      };
+
+      // Engagement Summary CSV
+      const engagementData = [
+        { metric: 'Total Check-Ins', value: stats.totalCheckIns },
+        { metric: 'Meals Prepared', value: stats.mealsPrepared },
+        { metric: 'Tech Tips Viewed', value: stats.techTipsViewed },
+        { metric: 'Registered Users', value: stats.activeUsers },
+        { metric: 'From', value: from },
+        { metric: 'To', value: to },
+        { metric: 'Generated At', value: new Date().toISOString() }
+      ];
+      const engagementCsv = arrayToCsv(engagementData, ['metric', 'value']);
+
+      // Mood Summary CSV
+      const moodData = moodCounts.map(([mood, count]) => ({ mood, count }));
+      const moodCsv = arrayToCsv(moodData, ['mood', 'count']);
+
+      // Self Reports CSV
+      const reportsData = rows.map((r) => ({
+        created_at: new Date(r.created_at).toISOString(),
+        user_id: r.user_id,
+        mood: r.mood || '',
+        bp_systolic: r.bp_systolic ?? '',
+        bp_diastolic: r.bp_diastolic ?? '',
+        pulse: r.pulse ?? '',
+        glucose: r.glucose ?? '',
+        symptoms: r.symptoms ?? '',
+        activity_description: r.activity_description ?? '',
+        source_type: r.source_type,
+        entry_type: r.entry_type,
+        id: r.id
+      }));
+      const reportsCsv = arrayToCsv(reportsData, [
+        'created_at', 'user_id', 'mood', 'bp_systolic', 'bp_diastolic',
+        'pulse', 'glucose', 'symptoms', 'activity_description', 'source_type', 'entry_type', 'id'
+      ]);
+
+      // Combine all data into one CSV with section headers
+      const combinedCsv = [
+        '# WellFit Reports Export',
+        `# Generated: ${new Date().toISOString()}`,
+        `# Date Range: ${from} to ${to}`,
+        '',
+        '# Engagement Summary',
+        engagementCsv,
+        '',
+        '# Mood Summary',
+        moodCsv,
+        '',
+        '# Self Reports',
+        reportsCsv
+      ].join('\n');
+
+      const blob = new Blob([combinedCsv], { type: 'text/csv;charset=utf-8' });
+      saveAs(blob, `wellfit_reports_${from}_to_${to}.csv`);
     } catch (e: any) {
       const msg = e?.message || String(e);
-      alert(
-        msg.includes("Cannot find module 'exceljs'")
-          ? 'Excel export requires exceljs. Install with: npm i exceljs'
-          : `Failed to export Excel: ${msg}`
-      );
+      alert(`Failed to export CSV: ${msg}`);
     } finally {
       setExporting(false);
     }
@@ -335,7 +337,7 @@ const ReportsPrintPage: React.FC = () => {
             <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="border rounded px-2 py-1" />
           </div>
           <button onClick={() => fetchReports()} className="px-3 py-2 rounded bg-gray-100 border hover:bg-gray-200">Refresh</button>
-          <button onClick={handleExportXlsx} disabled={exporting} className="px-3 py-2 rounded bg-[#003865] text-white disabled:opacity-60">{exporting ? 'Exporting…' : 'Export .xlsx'}</button>
+          <button onClick={handleExportCsv} disabled={exporting} className="px-3 py-2 rounded bg-[#003865] text-white disabled:opacity-60">{exporting ? 'Exporting…' : 'Export .csv'}</button>
           <button onClick={handlePrint} className="px-3 py-2 rounded bg-[#8cc63f] text-white">Print</button>
         </div>
       </div>
