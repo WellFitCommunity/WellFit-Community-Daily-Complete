@@ -4,8 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- CSP is enforced via headers (vercel.json / Edge). This meta is REPORT-ONLY for diagnostics. -->
-  <meta http-equiv="Content-Security-Policy-Report-Only" content="default-src 'self'; frame-ancestors 'self' https://wellfitcommunity.live https://www.wellfitcommunity.live https://thewellfitcommunity.org https://www.thewellfitcommunity.org; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.hcaptcha.com https://hcaptcha.com https://www.gstatic.com https://www.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://api.hcaptcha.com https://*.supabase.co https://*.supabase.io https://verify.twilio.com https://api.twilio.com https://api.mailersend.com https://images.unsplash.com https://source.unsplash.com; connect-src 'self' https://api.hcaptcha.com https://*.supabase.co https://*.supabase.io https://verify.twilio.com https://api.twilio.com https://api.mailersend.com https://images.unsplash.com https://source.unsplash.com; frame-src 'self' https://hcaptcha.com https://*.hcaptcha.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+  <!-- CSP is enforced via headers (vercel.json / _headers). Report-only CSP cannot be set via meta tags. -->
 
   <title>WellFit Community App</title>
   <meta name="description" content="White-label senior wellness & community safety app: RPM, caregiver tools, resident check-ins, youth & family self-reports. HIPAA-ready." />
