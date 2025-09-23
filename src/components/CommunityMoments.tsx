@@ -17,7 +17,7 @@ import { createPortal } from 'react-dom';
 
 const BUCKET = 'community-moments';
 const PAGE_SIZE = 12;
-const MAX_FILE_MB = 5;
+const MAX_FILE_MB = 20;
 const SIGNED_URL_TTL_SEC = 3600; // 1 hour
 
 const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
