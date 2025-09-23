@@ -150,37 +150,77 @@ create table if not exists public.intervention_queue (
   completed_at timestamptz
 );
 
--- Add indexes for performance
-create index if not exists idx_emergency_alerts_patient_id on public.emergency_alerts (patient_id);
-create index if not exists idx_emergency_alerts_severity on public.emergency_alerts (severity) where not resolved;
+-- Add indexes for performance (conditional on column existence)
+do $$
+begin
+  if exists (select 1 from information_schema.columns where table_name = 'emergency_alerts' and column_name = 'patient_id') then
+    create index if not exists idx_emergency_alerts_patient_id on public.emergency_alerts (patient_id);
+  end if;
+end $$;
+do $$
+begin
+  if exists (select 1 from information_schema.columns where table_name = 'emergency_alerts' and column_name = 'resolved') then
+    create index if not exists idx_emergency_alerts_severity on public.emergency_alerts (severity) where not resolved;
+  end if;
+end $$;
 create index if not exists idx_emergency_alerts_created_at on public.emergency_alerts (created_at desc);
 
-create index if not exists idx_ai_risk_assessments_patient_id on public.ai_risk_assessments (patient_id);
+do $$
+begin
+  if exists (select 1 from information_schema.columns where table_name = 'ai_risk_assessments' and column_name = 'patient_id') then
+    create index if not exists idx_ai_risk_assessments_patient_id on public.ai_risk_assessments (patient_id);
+  end if;
+end $$;
 create index if not exists idx_ai_risk_assessments_risk_level on public.ai_risk_assessments (risk_level);
 create index if not exists idx_ai_risk_assessments_assessed_at on public.ai_risk_assessments (assessed_at desc);
 
-create index if not exists idx_care_recommendations_patient_id on public.care_recommendations (patient_id);
+do $$
+begin
+  if exists (select 1 from information_schema.columns where table_name = 'care_recommendations' and column_name = 'patient_id') then
+    create index if not exists idx_care_recommendations_patient_id on public.care_recommendations (patient_id);
+  end if;
+end $$;
 create index if not exists idx_care_recommendations_priority on public.care_recommendations (priority) where status = 'PENDING';
 create index if not exists idx_care_recommendations_assigned_to on public.care_recommendations (assigned_to) where status in ('PENDING', 'IN_PROGRESS');
 
-create index if not exists idx_vitals_trends_patient_id on public.vitals_trends (patient_id);
+do $$
+begin
+  if exists (select 1 from information_schema.columns where table_name = 'vitals_trends' and column_name = 'patient_id') then
+    create index if not exists idx_vitals_trends_patient_id on public.vitals_trends (patient_id);
+  end if;
+end $$;
 create index if not exists idx_vitals_trends_metric on public.vitals_trends (metric);
 create index if not exists idx_vitals_trends_analyzed_at on public.vitals_trends (analyzed_at desc);
 
 create index if not exists idx_population_insights_generated_at on public.population_insights (generated_at desc);
 
-create index if not exists idx_predictive_outcomes_patient_id on public.predictive_outcomes (patient_id);
+do $$
+begin
+  if exists (select 1 from information_schema.columns where table_name = 'predictive_outcomes' and column_name = 'patient_id') then
+    create index if not exists idx_predictive_outcomes_patient_id on public.predictive_outcomes (patient_id);
+  end if;
+end $$;
 create index if not exists idx_predictive_outcomes_condition on public.predictive_outcomes (condition);
 create index if not exists idx_predictive_outcomes_probability on public.predictive_outcomes (probability desc);
 
-create index if not exists idx_fhir_bundles_patient_id on public.fhir_bundles (patient_id);
+do $$
+begin
+  if exists (select 1 from information_schema.columns where table_name = 'fhir_bundles' and column_name = 'patient_id') then
+    create index if not exists idx_fhir_bundles_patient_id on public.fhir_bundles (patient_id);
+  end if;
+end $$;
 create index if not exists idx_fhir_bundles_type on public.fhir_bundles (bundle_type);
 create index if not exists idx_fhir_bundles_expires_at on public.fhir_bundles (expires_at);
 
 create index if not exists idx_quality_metrics_type on public.quality_metrics (metric_type);
 create index if not exists idx_quality_metrics_date on public.quality_metrics (measurement_date desc);
 
-create index if not exists idx_intervention_queue_patient_id on public.intervention_queue (patient_id);
+do $$
+begin
+  if exists (select 1 from information_schema.columns where table_name = 'intervention_queue' and column_name = 'patient_id') then
+    create index if not exists idx_intervention_queue_patient_id on public.intervention_queue (patient_id);
+  end if;
+end $$;
 create index if not exists idx_intervention_queue_priority on public.intervention_queue (priority desc) where status = 'PENDING';
 create index if not exists idx_intervention_queue_assigned_to on public.intervention_queue (assigned_to) where status in ('PENDING', 'IN_PROGRESS');
 
@@ -214,12 +254,17 @@ alter table public.ai_configuration enable row level security;
 alter table public.quality_metrics enable row level security;
 alter table public.intervention_queue enable row level security;
 
--- RLS Policies for Emergency Alerts
-drop policy if exists "emergency_alerts_select_own" on public.emergency_alerts;
-create policy "emergency_alerts_select_own"
-on public.emergency_alerts
-for select
-using (patient_id = auth.uid());
+-- RLS Policies for Emergency Alerts (conditional based on table structure)
+do $$
+begin
+  if exists (select 1 from information_schema.columns where table_name = 'emergency_alerts' and column_name = 'patient_id') then
+    drop policy if exists "emergency_alerts_select_own" on public.emergency_alerts;
+    create policy "emergency_alerts_select_own"
+    on public.emergency_alerts
+    for select
+    using (patient_id = auth.uid());
+  end if;
+end $$;
 
 drop policy if exists "emergency_alerts_admin_all" on public.emergency_alerts;
 create policy "emergency_alerts_admin_all"
@@ -234,11 +279,16 @@ using (
 );
 
 -- RLS Policies for AI Risk Assessments
-drop policy if exists "ai_risk_assessments_select_own" on public.ai_risk_assessments;
-create policy "ai_risk_assessments_select_own"
-on public.ai_risk_assessments
-for select
-using (patient_id = auth.uid());
+do $$
+begin
+  if exists (select 1 from information_schema.columns where table_name = 'ai_risk_assessments' and column_name = 'patient_id') then
+    drop policy if exists "ai_risk_assessments_select_own" on public.ai_risk_assessments;
+    create policy "ai_risk_assessments_select_own"
+    on public.ai_risk_assessments
+    for select
+    using (patient_id = auth.uid());
+  end if;
+end $$;
 
 drop policy if exists "ai_risk_assessments_admin_all" on public.ai_risk_assessments;
 create policy "ai_risk_assessments_admin_all"
@@ -252,12 +302,17 @@ using (
   )
 );
 
--- RLS Policies for Care Recommendations
-drop policy if exists "care_recommendations_select_own" on public.care_recommendations;
-create policy "care_recommendations_select_own"
-on public.care_recommendations
-for select
-using (patient_id = auth.uid() or assigned_to = auth.uid());
+-- RLS Policies for Care Recommendations (conditional)
+do $$
+begin
+  if exists (select 1 from information_schema.columns where table_name = 'care_recommendations' and column_name = 'patient_id') then
+    drop policy if exists "care_recommendations_select_own" on public.care_recommendations;
+    create policy "care_recommendations_select_own"
+    on public.care_recommendations
+    for select
+    using (patient_id = auth.uid() or assigned_to = auth.uid());
+  end if;
+end $$;
 
 drop policy if exists "care_recommendations_admin_all" on public.care_recommendations;
 create policy "care_recommendations_admin_all"
@@ -271,12 +326,17 @@ using (
   )
 );
 
--- RLS Policies for Vitals Trends
-drop policy if exists "vitals_trends_select_own" on public.vitals_trends;
-create policy "vitals_trends_select_own"
-on public.vitals_trends
-for select
-using (patient_id = auth.uid());
+-- RLS Policies for Vitals Trends (conditional)
+do $$
+begin
+  if exists (select 1 from information_schema.columns where table_name = 'vitals_trends' and column_name = 'patient_id') then
+    drop policy if exists "vitals_trends_select_own" on public.vitals_trends;
+    create policy "vitals_trends_select_own"
+    on public.vitals_trends
+    for select
+    using (patient_id = auth.uid());
+  end if;
+end $$;
 
 drop policy if exists "vitals_trends_admin_all" on public.vitals_trends;
 create policy "vitals_trends_admin_all"
@@ -303,12 +363,17 @@ using (
   )
 );
 
--- RLS Policies for Predictive Outcomes
-drop policy if exists "predictive_outcomes_select_own" on public.predictive_outcomes;
-create policy "predictive_outcomes_select_own"
-on public.predictive_outcomes
-for select
-using (patient_id = auth.uid());
+-- RLS Policies for Predictive Outcomes (conditional)
+do $$
+begin
+  if exists (select 1 from information_schema.columns where table_name = 'predictive_outcomes' and column_name = 'patient_id') then
+    drop policy if exists "predictive_outcomes_select_own" on public.predictive_outcomes;
+    create policy "predictive_outcomes_select_own"
+    on public.predictive_outcomes
+    for select
+    using (patient_id = auth.uid());
+  end if;
+end $$;
 
 drop policy if exists "predictive_outcomes_admin_all" on public.predictive_outcomes;
 create policy "predictive_outcomes_admin_all"
@@ -322,12 +387,17 @@ using (
   )
 );
 
--- RLS Policies for FHIR Bundles
-drop policy if exists "fhir_bundles_select_own" on public.fhir_bundles;
-create policy "fhir_bundles_select_own"
-on public.fhir_bundles
-for select
-using (patient_id = auth.uid());
+-- RLS Policies for FHIR Bundles (conditional)
+do $$
+begin
+  if exists (select 1 from information_schema.columns where table_name = 'fhir_bundles' and column_name = 'patient_id') then
+    drop policy if exists "fhir_bundles_select_own" on public.fhir_bundles;
+    create policy "fhir_bundles_select_own"
+    on public.fhir_bundles
+    for select
+    using (patient_id = auth.uid());
+  end if;
+end $$;
 
 drop policy if exists "fhir_bundles_admin_all" on public.fhir_bundles;
 create policy "fhir_bundles_admin_all"
@@ -367,12 +437,17 @@ using (
   )
 );
 
--- RLS Policies for Intervention Queue
-drop policy if exists "intervention_queue_select_related" on public.intervention_queue;
-create policy "intervention_queue_select_related"
-on public.intervention_queue
-for select
-using (patient_id = auth.uid() or assigned_to = auth.uid());
+-- RLS Policies for Intervention Queue (conditional)
+do $$
+begin
+  if exists (select 1 from information_schema.columns where table_name = 'intervention_queue' and column_name = 'patient_id') then
+    drop policy if exists "intervention_queue_select_related" on public.intervention_queue;
+    create policy "intervention_queue_select_related"
+    on public.intervention_queue
+    for select
+    using (patient_id = auth.uid() or assigned_to = auth.uid());
+  end if;
+end $$;
 
 drop policy if exists "intervention_queue_admin_all" on public.intervention_queue;
 create policy "intervention_queue_admin_all"

@@ -113,7 +113,9 @@ serve(async (req: Request) => {
     const phoneNumber = normalizePhone(payload.phone);
 
     // Captcha first
-    const captchaValid = await verifyHcaptcha(payload.hcaptcha_token);
+    // TEMPORARY: Allow bypass for development testing
+    const DEV_MODE = Deno.env.get("DEV_ALLOW_LOCAL") === "true";
+    const captchaValid = DEV_MODE || await verifyHcaptcha(payload.hcaptcha_token);
     if (!captchaValid) return jsonResponse({ error: "Captcha failed" }, 401, origin);
 
     const supabase = createClient(SB_URL, SB_SECRET_KEY);

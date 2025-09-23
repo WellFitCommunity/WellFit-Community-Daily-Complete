@@ -17,7 +17,6 @@ const schema = z.object({
 serve(async (req) => {
   const { headers, allowed } = cors(req.headers.get("origin"), {
     methods: ["POST", "OPTIONS"],
-    allowHeaders: ["authorization", "content-type"],
   });
 
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers });
