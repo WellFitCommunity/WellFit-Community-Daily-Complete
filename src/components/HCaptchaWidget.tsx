@@ -130,7 +130,10 @@ const HCaptchaWidget = forwardRef<HCaptchaRef, Props>(
 
     // Off-screen wrapper ensures no layout jump and keeps it effectively invisible.
     return (
-      <div style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }}>
+      <div
+        style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }}
+        aria-hidden="false"
+      >
         <HCaptcha
           ref={widgetRef}
           sitekey={SITE_KEY}

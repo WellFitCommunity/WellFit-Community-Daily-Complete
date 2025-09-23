@@ -17,6 +17,9 @@ assertClientSupabaseEnv();
 
 export const supabase = createClient(url as string, key as string, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+  global: {
+    fetch: fetch.bind(globalThis),
+  },
 });
 
 export type { AuthChangeEvent, Session, User } from '@supabase/supabase-js';
