@@ -5,6 +5,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBranding } from '../../BrandingContext';
 import CheckInTracker from '../CheckInTracker';
+import HealthHistory from '../HealthHistory';
 import DashMealOfTheDay from './DashMealOfTheDay';
 import WeatherWidget from './WeatherWidget';
 import DailyScripture from './DailyScripture';
@@ -48,6 +49,11 @@ const SeniorHealthDashboard: React.FC = () => {
           {/* Daily Check-in - Stationary and Essential */}
           <div className="md:col-span-2 bg-white rounded-xl shadow-lg p-4 sm:p-6">
             <CheckInTracker />
+          </div>
+
+          {/* Health History - Shows past check-ins */}
+          <div className="md:col-span-2 bg-white rounded-xl shadow-lg p-4 sm:p-6">
+            <HealthHistory />
           </div>
 
           {/* Emergency Contact - Stationary */}
