@@ -36,7 +36,7 @@ const HealthInsightsPage: React.FC = () => {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <div>Loading your health insights...</div>
+          <div className="text-white">Loading your health insights...</div>
         </div>
       </div>
     );
@@ -56,8 +56,8 @@ const HealthInsightsPage: React.FC = () => {
           >
             Welcome to {branding.appName}
           </h1>
-          <p className="text-gray-600">
-            Your personalized health dashboard powered by AI
+          <p className="text-white">
+            Your personalized health dashboard
           </p>
         </div>
 

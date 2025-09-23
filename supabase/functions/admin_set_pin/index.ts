@@ -1,8 +1,8 @@
 import { serve } from "https://deno.land/std@0.183.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=deno";
 import { z } from "https://esm.sh/zod@3.23.8?target=deno";
-import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 import { cors } from "../_shared/cors.ts";
+import { hashPin } from "../_shared/crypto.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SB_SECRET_KEY = Deno.env.get("SB_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -48,7 +48,7 @@ serve(async (req) => {
     }
 
     const { pin, role } = parsed.data;
-    const pin_hash = await bcrypt.hash(pin, 12);
+    const pin_hash = await hashPin(pin);
 
     const { error } = await supabase.from("admin_pins").upsert({
       user_id,

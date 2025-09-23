@@ -12,6 +12,8 @@ const MID_GLINT = 'rgba(255,255,255,0.12)'; // subtle white shimmer
 const ROUTES = {
   dashboard: '/dashboard',
   healthDashboard: '/health-insights',
+  questions: '/questions',
+  selfReport: '/self-reporting',
   wordFind: '/word-find',
   doctors: '/doctors-view',
   trivia: '/trivia-game',
@@ -82,6 +84,12 @@ export default function GlobalHeader() {
             <HeaderLink to={ROUTES.healthDashboard} active={isActive(ROUTES.healthDashboard)} className={linkBase}>
               Health Tracker
             </HeaderLink>
+            <HeaderLink to={ROUTES.questions} active={isActive(ROUTES.questions)} className={linkBase}>
+              Ask Nurse
+            </HeaderLink>
+            <HeaderLink to={ROUTES.selfReport} active={isActive(ROUTES.selfReport)} className={linkBase}>
+              Self-Report
+            </HeaderLink>
             <HeaderLink to={ROUTES.doctors} active={isActive(ROUTES.doctors)} className={linkBase}>
               Doctor's View
             </HeaderLink>
@@ -127,6 +135,7 @@ export default function GlobalHeader() {
                   {isAdmin === true && (
                     <>
                       <MenuItem to={ROUTES.adminPanel}>Admin Panel</MenuItem>
+                      <MenuItem to="/admin-questions">Nurse Questions</MenuItem>
                       <div className="border-t my-1" />
                     </>
                   )}
@@ -175,6 +184,12 @@ export default function GlobalHeader() {
           <MobileItem to={ROUTES.healthDashboard} onDone={() => setMenuOpen(false)}>
             Health Tracker
           </MobileItem>
+          <MobileItem to={ROUTES.questions} onDone={() => setMenuOpen(false)}>
+            Ask Nurse
+          </MobileItem>
+          <MobileItem to={ROUTES.selfReport} onDone={() => setMenuOpen(false)}>
+            Self-Report
+          </MobileItem>
           <MobileItem to={ROUTES.doctors} onDone={() => setMenuOpen(false)}>
             Doctor's View
           </MobileItem>
@@ -189,9 +204,14 @@ export default function GlobalHeader() {
           </MobileItem>
 
           {isAdmin === true && (
-            <MobileItem to={ROUTES.adminPanel} onDone={() => setMenuOpen(false)}>
-              Admin Panel
-            </MobileItem>
+            <>
+              <MobileItem to={ROUTES.adminPanel} onDone={() => setMenuOpen(false)}>
+                Admin Panel
+              </MobileItem>
+              <MobileItem to="/admin-questions" onDone={() => setMenuOpen(false)}>
+                Nurse Questions
+              </MobileItem>
+            </>
           )}
 
           <MobileItem to="/demographics" onDone={() => setMenuOpen(false)}>

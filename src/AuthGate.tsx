@@ -6,6 +6,7 @@ import { useSupabaseClient, useSession, useUser } from './contexts/AuthContext';
 type ProfileRow = {
   force_password_change?: boolean | null;
   onboarded?: boolean | null;
+  consent?: boolean | null;
   // role hints (no joins)
   is_admin?: boolean | null;
   role?: string | null;
@@ -42,13 +43,13 @@ export default function AuthGate({ children }: { children: ReactNode }) {
       if (!user || !session) return;
 
       const path = location.pathname;
-      const isGatePage = path === '/change-password' || path === '/demographics';
+      const isGatePage = path === '/change-password' || path === '/demographics' || path === '/consent-photo' || path === '/consent-privacy';
 
       // Read ONLY from profiles; no joins = no RLS surprises
       const { data, error } = await supabase
         .from('profiles')
         .select(
-          'force_password_change, onboarded, is_admin, role, role_code, role_id'
+          'force_password_change, onboarded, consent, is_admin, role, role_code, role_id'
         )
         .eq('user_id', user.id)
         .maybeSingle<ProfileRow>();
@@ -79,7 +80,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
         return; // continue
       }
 
-      // 3) Seniors must complete demographics (check via onboarded flag)
+      // 3) Seniors must complete demographics first (check via onboarded flag)
       const needsDemo =
         p.onboarded === false ||
         p.onboarded == null;
@@ -87,6 +88,18 @@ export default function AuthGate({ children }: { children: ReactNode }) {
       if (needsDemo) {
         if (!isGatePage && path !== '/demographics') {
           navigate('/demographics', { replace: true });
+        }
+        return;
+      }
+
+      // 4) After demographics, seniors must complete consent forms
+      const needsConsent =
+        p.consent === false ||
+        p.consent == null;
+
+      if (needsConsent && (p.onboarded === true)) {
+        if (!isGatePage && path !== '/consent-photo' && path !== '/consent-privacy') {
+          navigate('/consent-photo', { replace: true });
         }
         return;
       }

@@ -2,7 +2,6 @@
   "imports": {
     "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.57.2?target=deno",
     "std/http/server.ts": "https://deno.land/std@0.183.0/http/server.ts",
-    "zod": "https://esm.sh/zod@3.23.8?target=deno",
-    "bcrypt": "https://deno.land/x/bcrypt@v0.4.1/mod.ts"
+    "zod": "https://esm.sh/zod@3.23.8?target=deno"
   }
 }

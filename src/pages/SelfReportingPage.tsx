@@ -1,5 +1,7 @@
 // src/pages/SelfReportingPage.tsx
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import { useSupabaseClient, useSession } from '../contexts/AuthContext';
 import { useBranding } from '../BrandingContext';
 import type { User, AuthChangeEvent, Session } from '@supabase/supabase-js';
@@ -25,6 +27,7 @@ const MOOD_OPTIONS = ['Happy', 'Okay', 'Sad', 'Anxious', 'Tired'] as const;
 
 const SelfReportingPage: React.FC = () => {
   const { branding } = useBranding();
+  const navigate = useNavigate();
   const supabase = useSupabaseClient();
   const session = useSession();
 
@@ -221,6 +224,16 @@ const SelfReportingPage: React.FC = () => {
         border: `1px solid ${branding.primaryColor}`,
       }}
     >
+      {/* Back Button */}
+      <button
+        onClick={() => navigate('/dashboard')}
+        className="flex items-center mb-4 px-3 py-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+        style={{ color: branding.primaryColor }}
+      >
+        <ArrowLeft size={20} className="mr-2" />
+        Back to Dashboard
+      </button>
+
       <h1
         className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6 md:mb-8 text-center"
         style={{ color: branding.primaryColor }}

@@ -52,6 +52,8 @@ const DemographicsPage = React.lazy(() => import('./pages/DemographicsPage'));
 const TriviaGame = React.lazy(() => import('./components/TriviaGame'));
 const CaregiverDashboardPage = React.lazy(() => import('./pages/CaregiverDashboardPage'));
 const HealthInsightsPage = React.lazy(() => import('./pages/HealthInsightsPage'));
+const QuestionsPage = React.lazy(() => import('./pages/QuestionsPage'));
+const AdminQuestionsPage = React.lazy(() => import('./pages/AdminQuestionsPage'));
 
 const PUBLIC_ROUTES = [
   '/',
@@ -100,6 +102,7 @@ function Shell() {
               <Route path="/dashboard" element={<RequireAuth><DashboardPage /></RequireAuth>} />
               <Route path="/health-insights" element={<RequireAuth><HealthInsightsPage /></RequireAuth>} />
               <Route path="/health-dashboard" element={<RequireAuth><HealthTrackerPage /></RequireAuth>} />
+              <Route path="/questions" element={<RequireAuth><QuestionsPage /></RequireAuth>} />
               <Route path="/help" element={<RequireAuth><HelpPage /></RequireAuth>} />
               <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
               <Route path="/check-in" element={<RequireAuth><CheckInPage /></RequireAuth>} />
@@ -136,6 +139,16 @@ function Shell() {
                   <RequireAuth>
                     <RequireAdminAuth>
                       <AdminProfileEditorPage />
+                    </RequireAdminAuth>
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/admin-questions"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth>
+                      <AdminQuestionsPage />
                     </RequireAdminAuth>
                   </RequireAuth>
                 }

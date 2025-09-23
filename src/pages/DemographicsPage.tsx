@@ -55,7 +55,6 @@ const DemographicsPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<DemographicsData>({
     first_name: '',
@@ -108,7 +107,6 @@ const DemographicsPage: React.FC = () => {
 
         if (data) {
           const roleName = data.roles?.name || 'senior';
-          setUserRole(roleName);
 
           // Skip demographics for admin/staff roles
           if (['admin', 'super_admin', 'staff', 'moderator'].includes(roleName)) {
@@ -306,8 +304,8 @@ const DemographicsPage: React.FC = () => {
 
       if (pinError) throw pinError;
 
-      // Navigate to dashboard
-      navigate('/dashboard');
+      // Navigate to consent forms after demographics completion
+      navigate('/consent-photo');
     } catch (err) {
       console.error('Error saving demographics:', err);
       setError('Unable to save your information. Please try again.');

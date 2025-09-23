@@ -1,8 +1,8 @@
 import { serve } from "https://deno.land/std@0.183.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=deno";
 import { z } from "https://esm.sh/zod@3.23.8?target=deno";
-import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 import { cors } from "../_shared/cors.ts";
+import { verifyPin, generateSecureToken } from "../_shared/crypto.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SB_SECRET_KEY = Deno.env.get("SB_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -15,9 +15,6 @@ const schema = z.object({
   role: z.enum(["admin", "super_admin"]),
 });
 
-function generateToken(): string {
-  return crypto.randomUUID() + "-" + Date.now();
-}
 
 serve(async (req: Request) => {
   const origin = req.headers.get("origin");
@@ -74,11 +71,11 @@ serve(async (req: Request) => {
       throw pinErr;
     }
 
-    const valid = await bcrypt.compare(pin, pinRow!.pin_hash);
+    const valid = await verifyPin(pin, pinRow!.pin_hash);
     if (!valid) return new Response(JSON.stringify({ error: "Incorrect PIN" }), { status: 401, headers });
 
     const expires = new Date(Date.now() + ADMIN_SESSION_TTL_MIN * 60 * 1000);
-    const admin_token = generateToken();
+    const admin_token = generateSecureToken();
 
     const { error: upErr } = await supabase.from("admin_sessions").upsert({
       user_id,

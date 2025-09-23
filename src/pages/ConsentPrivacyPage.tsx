@@ -89,6 +89,17 @@ export default function ConsentPrivacyPage() {
         return;
       }
 
+      // Mark consent as complete in profiles table
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ consent: true })
+        .eq('user_id', userId);
+
+      if (profileError) {
+        console.warn('Failed to update consent status in profiles:', profileError);
+        // Don't fail the whole process, just warn
+      }
+
       setFeedback('Your consent has been recorded. Thank you!');
       localStorage.removeItem('firstName');
       localStorage.removeItem('lastName');
