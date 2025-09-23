@@ -115,17 +115,17 @@ jobs:
         # Check if security headers are implemented in code
         HEADERS_FOUND=0
 
-        if grep -r "Content-Security-Policy" supabase/ src/ public/ 2>/dev/null; then
+        if grep -r "Content-Security-Policy" supabase/ src/ public/ 2>/dev/null || false; then
           echo "✅ Content-Security-Policy implemented" >> $GITHUB_STEP_SUMMARY
           ((HEADERS_FOUND++))
         fi
 
-        if grep -r "X-Frame-Options" supabase/ src/ 2>/dev/null; then
+        if grep -r "X-Frame-Options" supabase/ src/ 2>/dev/null || false; then
           echo "✅ X-Frame-Options implemented" >> $GITHUB_STEP_SUMMARY
           ((HEADERS_FOUND++))
         fi
 
-        if grep -r "X-Content-Type-Options" supabase/ src/ 2>/dev/null; then
+        if grep -r "X-Content-Type-Options" supabase/ src/ 2>/dev/null || false; then
           echo "✅ X-Content-Type-Options implemented" >> $GITHUB_STEP_SUMMARY
           ((HEADERS_FOUND++))
         fi
