@@ -25,6 +25,7 @@ const SeniorCommunityDashboard: React.FC = () => {
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [recentCommunityPhoto, setRecentCommunityPhoto] = useState<string | null>(null);
   const [todaysMeal, setTodaysMeal] = useState<any>(null);
+  const [caregiverPhone, setCaregiverPhone] = useState<string | null>(null);
 
   // Get today's meal
   useEffect(() => {
@@ -40,7 +41,7 @@ const SeniorCommunityDashboard: React.FC = () => {
     setTodaysMeal(meals[dayOfYear % meals.length]);
   }, []);
 
-  // Load recent community photo
+  // Load recent community photo and caregiver contact
   useEffect(() => {
     const loadRecentPhoto = async () => {
       try {
@@ -50,7 +51,7 @@ const SeniorCommunityDashboard: React.FC = () => {
           .order('created_at', { ascending: false })
           .limit(1)
           .single();
-        
+
         if (data?.file_url) {
           setRecentCommunityPhoto(data.file_url);
         }
@@ -58,8 +59,28 @@ const SeniorCommunityDashboard: React.FC = () => {
         console.log('No recent community photos found');
       }
     };
+
+    const loadCaregiverContact = async () => {
+      if (user?.id) {
+        try {
+          const { data } = await supabase
+            .from('profiles')
+            .select('caregiver_phone')
+            .eq('id', user.id)
+            .single();
+
+          if (data?.caregiver_phone) {
+            setCaregiverPhone(data.caregiver_phone);
+          }
+        } catch (error) {
+          console.log('No caregiver contact found');
+        }
+      }
+    };
+
     loadRecentPhoto();
-  }, [supabase]);
+    loadCaregiverContact();
+  }, [supabase, user?.id]);
 
   const checkInButtons = [
     {
@@ -73,22 +94,23 @@ const SeniorCommunityDashboard: React.FC = () => {
       id: 'appointment',
       emoji: '📅',
       text: 'I have a Dr. Appt today',
-      response: "Don't forget to show your doctor your progress! 🩺",
+      response: 'Have a great visit. We are here if you need us.',
       color: '#4CAF50'
     },
     {
       id: 'hospital',
       emoji: '🏥',
       text: 'In the hospital',
-      response: "We're thinking of you. We'll check on you in a few days. Get well soon! ❤️",
+      response: 'We will check on you in a few days. Get well soon.',
       color: '#2196F3'
     },
     {
       id: 'navigation',
       emoji: '🧭',
       text: 'Need Healthcare Navigation Assistance',
-      response: 'Hang tight—we will call you shortly. ☎️',
-      color: '#FF9800'
+      response: 'Message the nurse for a call.',
+      color: '#FF9800',
+      needsNavigation: true
     },
     {
       id: 'event',
@@ -127,9 +149,11 @@ const SeniorCommunityDashboard: React.FC = () => {
     if (button.emergency) {
       setEmergencyType(button.emergency);
       setEmergencyMessage(
-        button.emergency === 'red' 
+        button.emergency === 'red'
           ? 'Call 911 immediately!'
-          : 'Call emergency contact'
+          : caregiverPhone
+            ? `Call your emergency contact: ${caregiverPhone}`
+            : 'Call emergency contact'
       );
       setShowEmergencyBanner(true);
       
@@ -153,8 +177,8 @@ const SeniorCommunityDashboard: React.FC = () => {
     // Log check-in to database
     await logCheckIn(button.id, button.text, button.response);
     
-    // Show feedback for 5 seconds
-    setTimeout(() => setFeedbackMessage(''), 5000);
+    // Show feedback for 10 seconds (seniors need more time to read)
+    setTimeout(() => setFeedbackMessage(''), 10000);
   };
 
   const handleFollowUpFeeling = async (feeling: string) => {
@@ -164,27 +188,40 @@ const SeniorCommunityDashboard: React.FC = () => {
 
   const handleSupportResponse = async (needsHelp: boolean) => {
     setNeedsSupport(needsHelp);
-    
-    const response = needsHelp 
-      ? "We understand. Someone from our care team will reach out to you soon. 💙"
-      : "We're glad you're managing. Remember, we're here if you need us. 🤗";
-    
+
+    let response = '';
+
+    if (selectedFeeling === 'Mentally') {
+      if (needsHelp) {
+        response = "Mental Health Crisis Hotlines:\n\n988 (National Crisis Lifeline)\n1-800-662-4357 (SAMHSA National Helpline)\n\nTap the numbers above to call.";
+      } else {
+        response = "Take a walk, get some fresh air, or listen to music... and contact your doctor.";
+      }
+    } else if (selectedFeeling === 'Physically' || selectedFeeling === 'Emotionally') {
+      response = "Contact your doctor.";
+    } else {
+      // Fallback for any unexpected feeling type
+      response = needsHelp
+        ? "We understand. Someone from our care team will reach out to you soon."
+        : "We're glad you're managing. Remember, we're here if you need us.";
+    }
+
     setFeedbackMessage(response);
     setCheckedInToday('not-best');
-    
+
     // Log detailed check-in
     await logCheckIn('not-best', `Not feeling best - ${selectedFeeling}`, response, {
       feeling_type: selectedFeeling,
       needs_support: needsHelp
     });
-    
+
     // Close follow-up
     setShowFollowUp(false);
     setTimeout(() => {
       setFeedbackMessage('');
       setSelectedFeeling('');
       setNeedsSupport(null);
-    }, 5000);
+    }, 10000); // 10 seconds for seniors
   };
 
   const sendTeamAlert = async (type: string, description: string) => {
@@ -271,7 +308,35 @@ const SeniorCommunityDashboard: React.FC = () => {
           }`}>
             <div className="text-2xl mb-2">🚨</div>
             {emergencyMessage}
-            <button 
+            {emergencyType === 'red' && (
+              <div className="mt-4">
+                <button
+                  onClick={() => {
+                    if (window.confirm('Are you sure you want to call 911? This will dial emergency services.')) {
+                      window.location.href = 'tel:911';
+                    }
+                  }}
+                  className="bg-white text-red-600 px-6 py-3 rounded-lg font-bold text-xl hover:bg-gray-100 transition"
+                >
+                  📞 Call 911 Now
+                </button>
+              </div>
+            )}
+            {emergencyType === 'yellow' && caregiverPhone && (
+              <div className="mt-4">
+                <button
+                  onClick={() => {
+                    if (window.confirm(`Are you sure you want to call your emergency contact at ${caregiverPhone}?`)) {
+                      window.location.href = `tel:${caregiverPhone}`;
+                    }
+                  }}
+                  className="bg-white text-yellow-600 px-6 py-3 rounded-lg font-bold text-xl hover:bg-gray-100 transition"
+                >
+                  📞 Call Emergency Contact
+                </button>
+              </div>
+            )}
+            <button
               onClick={() => setShowEmergencyBanner(false)}
               className="absolute top-2 right-2 text-white text-2xl"
             >
@@ -334,7 +399,34 @@ const SeniorCommunityDashboard: React.FC = () => {
         {/* Feedback Message */}
         {feedbackMessage && (
           <div className="mb-6 p-4 bg-[#8cc63f] text-white rounded-xl text-center text-lg font-semibold">
-            {feedbackMessage}
+            {feedbackMessage.includes('988') ? (
+              <div className="whitespace-pre-line">
+                Mental Health Crisis Hotlines:
+                <br /><br />
+                <a href="tel:988" className="text-white underline hover:text-gray-200 text-xl font-bold">
+                  988 (National Crisis Lifeline)
+                </a>
+                <br />
+                <a href="tel:18006624357" className="text-white underline hover:text-gray-200 text-xl font-bold">
+                  1-800-662-4357 (SAMHSA National Helpline)
+                </a>
+                <br /><br />
+                Tap the numbers above to call.
+              </div>
+            ) : feedbackMessage.includes('Message the nurse') ? (
+              <div>
+                {feedbackMessage}
+                <br /><br />
+                <button
+                  onClick={() => navigate('/questions')}
+                  className="bg-white text-[#8cc63f] px-6 py-3 rounded-lg font-bold text-xl hover:bg-gray-100 transition"
+                >
+                  💬 Message Your Nurse Now
+                </button>
+              </div>
+            ) : (
+              feedbackMessage
+            )}
           </div>
         )}
 

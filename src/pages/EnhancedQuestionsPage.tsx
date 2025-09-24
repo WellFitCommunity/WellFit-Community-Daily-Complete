@@ -100,16 +100,19 @@ const EnhancedQuestionsPage: React.FC = () => {
       // Use existing user_questions table for medical questions
       const { data, error } = await supabase
         .from('user_questions')
-        .select(`
-          *,
-          responded_by_profile:profiles!responded_by(first_name, last_name)
-        `)
+        .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Failed to load questions:', error);
-        setError('Failed to load your questions. Please try again.');
+        console.error('Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        setError(`Failed to load your questions: ${error.message}`);
         return;
       }
 
@@ -287,26 +290,29 @@ const EnhancedQuestionsPage: React.FC = () => {
           <h2 className="text-xl font-semibold mb-4">Ask a Question</h2>
 
           {/* Quick Suggestions */}
-          <div className="mb-4">
+          <div className="mb-6">
             <button
               onClick={() => setShowSuggestions(!showSuggestions)}
-              className="flex items-center text-blue-600 hover:text-blue-800 mb-2"
+              className="w-full p-3 text-lg bg-green-100 text-green-800 rounded-lg hover:bg-green-200 transition flex items-center justify-center font-semibold"
             >
-              <Lightbulb size={16} className="mr-1" />
-              Need ideas? Click for common questions
+              <Lightbulb size={24} className="mr-2" />
+              {showSuggestions ? 'Hide Common Questions' : 'Show Common Questions for Ideas'}
             </button>
 
             {showSuggestions && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 p-3 bg-blue-50 rounded-lg">
-                {SENIOR_QUESTION_SUGGESTIONS.slice(0, 6).map((suggestion, index) => (
-                  <button
-                    key={index}
-                    onClick={() => selectSuggestion(suggestion)}
-                    className="text-left p-2 bg-white rounded shadow-sm hover:shadow-md transition text-sm"
-                  >
-                    💡 {suggestion}
-                  </button>
-                ))}
+              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h4 className="text-lg font-semibold text-blue-900 mb-3">💡 Tap any question to use it:</h4>
+                <div className="grid grid-cols-1 gap-3">
+                  {SENIOR_QUESTION_SUGGESTIONS.map((suggestion, index) => (
+                    <button
+                      key={index}
+                      onClick={() => selectSuggestion(suggestion)}
+                      className="text-left p-3 bg-white rounded-lg shadow-sm hover:shadow-md hover:bg-blue-50 transition text-base border border-gray-200"
+                    >
+                      <span className="text-blue-600 font-medium">❓</span> {suggestion}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -349,21 +355,29 @@ const EnhancedQuestionsPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={isListening ? stopVoiceRecognition : startVoiceRecognition}
-                  className={`absolute right-3 top-3 p-2 rounded-full transition ${
+                  className={`absolute right-2 top-2 p-3 rounded-full transition text-white font-bold shadow-lg ${
                     isListening
-                      ? 'bg-red-500 text-white animate-pulse'
-                      : 'bg-blue-500 text-white hover:bg-blue-600'
+                      ? 'bg-red-500 animate-pulse'
+                      : 'bg-blue-500 hover:bg-blue-600'
                   }`}
-                  title={isListening ? 'Stop speaking' : 'Click to speak'}
+                  title={isListening ? 'Click to stop recording' : 'Click to start speaking'}
                 >
-                  {isListening ? <MicOff size={20} /> : <Mic size={20} />}
+                  {isListening ? <Mic size={24} /> : <MicOff size={24} />}
                 </button>
               )}
             </div>
 
-            <div className="flex justify-between text-sm text-gray-500 mt-1">
-              <span>{isListening ? '🎤 Listening...' : 'Type or speak your question'}</span>
-              <span>{currentQuestion.length}/1000</span>
+            <div className="flex justify-between items-center mt-2">
+              <div className="text-base">
+                {isListening ? (
+                  <span className="text-red-600 font-semibold animate-pulse">🎤 Listening... Speak now!</span>
+                ) : voiceSupported ? (
+                  <span className="text-blue-600">📝 Type your question or click the 🎤 button to speak</span>
+                ) : (
+                  <span className="text-gray-600">Type your question below</span>
+                )}
+              </div>
+              <span className="text-sm text-gray-500">{currentQuestion.length}/1000</span>
             </div>
           </div>
 

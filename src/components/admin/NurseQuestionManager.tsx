@@ -46,7 +46,7 @@ const NurseQuestionManager: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Mock data for demonstration
+  // Demo/Training data - replace with real database connection when ready
   const mockQuestions: Question[] = [
     {
       id: '1',
@@ -89,7 +89,7 @@ const NurseQuestionManager: React.FC = () => {
   }, []);
 
   const loadQuestions = async () => {
-    // TODO: Replace with actual database call
+    // TODO: Replace with actual database call when ready
     setQuestions(mockQuestions);
   };
 
