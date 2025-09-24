@@ -123,7 +123,7 @@ const SeniorCommunityDashboard: React.FC = () => {
       id: 'not-best',
       emoji: '🤒',
       text: 'I am not feeling my best today',
-      response: '',
+      response: 'We understand. Let us know how we can help.',
       color: '#FF5722',
       needsFollowUp: true
     },
@@ -131,7 +131,7 @@ const SeniorCommunityDashboard: React.FC = () => {
       id: 'fallen',
       emoji: '🚨',
       text: 'Fallen down & injured',
-      response: '',
+      response: 'Emergency alert sent. Help is on the way.',
       color: '#F44336',
       emergency: 'red'
     },
@@ -139,13 +139,17 @@ const SeniorCommunityDashboard: React.FC = () => {
       id: 'lost',
       emoji: '🤷',
       text: 'I am lost',
-      response: '',
+      response: 'Help is coming. Stay where you are if safe.',
       color: '#FFC107',
       emergency: 'yellow'
     }
   ];
 
   const handleCheckIn = async (button: any) => {
+    // Set the check-in status and show response message for all buttons
+    setCheckedInToday(button.id);
+    setFeedbackMessage(button.response);
+
     if (button.emergency) {
       setEmergencyType(button.emergency);
       setEmergencyMessage(
@@ -156,27 +160,25 @@ const SeniorCommunityDashboard: React.FC = () => {
             : 'Call emergency contact'
       );
       setShowEmergencyBanner(true);
-      
+
       // Send alert to team
       await sendTeamAlert(button.id, button.text);
-      
+
       // Auto-hide banner after 10 seconds for safety
       setTimeout(() => setShowEmergencyBanner(false), 10000);
-      return;
-    }
 
-    if (button.needsFollowUp) {
+      // Log emergency check-in
+      await logCheckIn(button.id, button.text, button.response);
+    } else if (button.needsFollowUp) {
       setShowFollowUp(true);
-      return;
+
+      // Log initial follow-up check-in
+      await logCheckIn(button.id, button.text, button.response);
+    } else {
+      // Regular check-in
+      await logCheckIn(button.id, button.text, button.response);
     }
 
-    // Regular check-in
-    setCheckedInToday(button.id);
-    setFeedbackMessage(button.response);
-    
-    // Log check-in to database
-    await logCheckIn(button.id, button.text, button.response);
-    
     // Show feedback for 10 seconds (seniors need more time to read)
     setTimeout(() => setFeedbackMessage(''), 10000);
   };

@@ -32,7 +32,7 @@ const EmergencyContact: React.FC = () => {
     email: '',
   });
   const [editing, setEditing] = useState(false);
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
 
   const [isLoadingData, setIsLoadingData] = useState(true);
