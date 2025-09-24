@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
+import { useSupabaseClient } from '../../contexts/AuthContext';
 
 const techTips: string[] = [
   // Part 1 - Security & Scams
@@ -106,6 +107,7 @@ interface TipFeedback {
 }
 
 const TechTip: React.FC = () => {
+  const supabase = useSupabaseClient();
   const [feedback, setFeedback] = useState<TipFeedback | null>(null);
   const [showFeedback, setShowFeedback] = useState<boolean>(false);
 
@@ -129,19 +131,38 @@ const TechTip: React.FC = () => {
     }
   }, [todaysDateString]);
 
-  const handleFeedback = (reaction: 'helpful' | 'not-helpful') => {
+  const handleFeedback = async (reaction: 'helpful' | 'not-helpful') => {
     const newFeedback: TipFeedback = {
       date: todaysDateString,
       reaction,
       timestamp: Date.now()
     };
-    
+
     setFeedback(newFeedback);
     setShowFeedback(true);
-    
+
     // Save to localStorage using today's date as key
     localStorage.setItem(`tip-feedback-${todaysDateString}`, JSON.stringify(newFeedback));
-    
+
+    // Log engagement to database for admin panel tracking
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('user_engagements').insert({
+          user_id: user.id,
+          engagement_type: 'tech_tip_feedback',
+          content_id: `tip-${todaysTipIndex}`,
+          metadata: {
+            tip_content: todaysTip,
+            reaction: reaction,
+            date: todaysDateString
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Failed to log tech tip engagement:', error);
+    }
+
     // Hide feedback message after 3 seconds
     setTimeout(() => {
       setShowFeedback(false);

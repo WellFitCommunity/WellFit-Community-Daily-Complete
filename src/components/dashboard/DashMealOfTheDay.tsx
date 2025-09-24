@@ -42,6 +42,10 @@ const DashMealOfTheDay: React.FC = () => {
             src={todaysMeal.image_url}
             alt={todaysMeal.name}
             className="w-full h-32 sm:h-40 object-cover rounded-lg mb-3"
+            onError={(e) => {
+              // Hide image if it fails to load
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
           />
         )}
         <h4 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">
