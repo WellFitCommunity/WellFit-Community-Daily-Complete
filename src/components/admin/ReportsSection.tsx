@@ -177,7 +177,7 @@ const ReportsSection: React.FC = () => {
         supabase.from('check_ins').select('*', { count: 'exact', head: true }).eq('is_emergency', true),
         supabase.from('check_ins').select('*', { count: 'exact', head: true }).gte('created_at', oneWeekAgo.toISOString()),
         supabase.from('check_ins').select('*', { count: 'exact', head: true }).gte('created_at', oneMonthAgo.toISOString()),
-        supabase.from('profiles_with_user_id').select('user_id', { count: 'exact', head: true })
+        supabase.from('profiles').select('user_id', { count: 'exact', head: true })
       ]);
 
       // Extract results with error handling
@@ -403,7 +403,7 @@ const ReportsSection: React.FC = () => {
 
       const [checkInsData, profilesData] = await Promise.allSettled([
         supabase.from('check_ins').select('created_at, label, is_emergency, user_id').order('created_at', { ascending: false }).limit(5000),
-        supabase.from('profiles_with_user_id').select('user_id, first_name, last_name, phone, created_at').limit(5000)
+        supabase.from('profiles').select('user_id, first_name, last_name, phone, created_at').limit(5000)
       ]);
 
       // Helper function to escape CSV values
