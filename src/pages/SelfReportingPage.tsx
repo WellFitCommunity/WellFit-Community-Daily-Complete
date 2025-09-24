@@ -272,17 +272,13 @@ const SelfReportingPage: React.FC = () => {
       const payload = {
         user_id: currentUser.id,
         mood: chosenMood,
-        // Health metrics mapped to self_reports table columns
+        // Map to actual self_reports table columns only
         bp_systolic: bloodPressureSystolic ? parseInt(bloodPressureSystolic) : null,
         bp_diastolic: bloodPressureDiastolic ? parseInt(bloodPressureDiastolic) : null,
-        blood_sugar: bloodSugar ? parseInt(bloodSugar) : null,
-        blood_oxygen: bloodOxygen ? parseInt(bloodOxygen) : null,
-        weight: weight ? parseFloat(weight) : null,
-        physical_activity: physicalActivity || null,
-        social_engagement: socialEngagement || null,
-        // Advanced reporting fields
+        spo2: bloodOxygen ? parseInt(bloodOxygen) : null, // Map blood_oxygen to spo2
         symptoms: symptoms.trim() || null,
-        activity_description: activity.trim() || null,
+        // Note: blood_sugar, weight, physical_activity, social_engagement, activity_description
+        // are not in the self_reports table schema
       };
 
       const { error } = await supabase.from('self_reports').insert([payload]);
