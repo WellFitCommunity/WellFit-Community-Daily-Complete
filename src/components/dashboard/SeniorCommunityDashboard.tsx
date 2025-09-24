@@ -87,28 +87,28 @@ const SeniorCommunityDashboard: React.FC = () => {
       id: 'great',
       emoji: '😊',
       text: 'Feeling Great Today',
-      response: 'Awesome! Enjoy your day. 🌞',
+      response: 'Awesome! Have a great day!',
       color: '#8cc63f'
     },
     {
       id: 'appointment',
       emoji: '📅',
       text: 'I have a Dr. Appt today',
-      response: 'Have a great visit. We are here if you need us.',
+      response: "Don't forget to show your doctor your progress and have a great visit!",
       color: '#4CAF50'
     },
     {
       id: 'hospital',
       emoji: '🏥',
       text: 'In the hospital',
-      response: 'We will check on you in a few days. Get well soon.',
+      response: 'We will follow up with you in a few days. Get well soon!',
       color: '#2196F3'
     },
     {
       id: 'navigation',
       emoji: '🧭',
       text: 'Need Healthcare Navigation Assistance',
-      response: 'Message the nurse for a call.',
+      response: 'Sent the nurse a message',
       color: '#FF9800',
       needsNavigation: true
     },
@@ -123,7 +123,7 @@ const SeniorCommunityDashboard: React.FC = () => {
       id: 'not-best',
       emoji: '🤒',
       text: 'I am not feeling my best today',
-      response: 'We understand. Let us know how we can help.',
+      response: 'Do you need to speak to someone?',
       color: '#FF5722',
       needsFollowUp: true
     },
@@ -131,7 +131,7 @@ const SeniorCommunityDashboard: React.FC = () => {
       id: 'fallen',
       emoji: '🚨',
       text: 'Fallen down & injured',
-      response: 'Emergency alert sent. Help is on the way.',
+      response: 'CALL 911',
       color: '#F44336',
       emergency: 'red'
     },
@@ -139,7 +139,7 @@ const SeniorCommunityDashboard: React.FC = () => {
       id: 'lost',
       emoji: '🤷',
       text: 'I am lost',
-      response: 'Help is coming. Stay where you are if safe.',
+      response: 'Call emergency contact',
       color: '#FFC107',
       emergency: 'yellow'
     }
@@ -154,18 +154,18 @@ const SeniorCommunityDashboard: React.FC = () => {
       setEmergencyType(button.emergency);
       setEmergencyMessage(
         button.emergency === 'red'
-          ? 'Call 911 immediately!'
+          ? '🚨 CALL 911 IMMEDIATELY! 🚨'
           : caregiverPhone
-            ? `Call your emergency contact: ${caregiverPhone}`
-            : 'Call emergency contact'
+            ? `📞 Call your emergency contact: ${caregiverPhone}`
+            : '📞 Call emergency contact'
       );
       setShowEmergencyBanner(true);
 
       // Send alert to team
       await sendTeamAlert(button.id, button.text);
 
-      // Auto-hide banner after 10 seconds for safety
-      setTimeout(() => setShowEmergencyBanner(false), 10000);
+      // Auto-hide banner after 15 seconds for safety
+      setTimeout(() => setShowEmergencyBanner(false), 15000);
 
       // Log emergency check-in
       await logCheckIn(button.id, button.text, button.response);
@@ -179,8 +179,8 @@ const SeniorCommunityDashboard: React.FC = () => {
       await logCheckIn(button.id, button.text, button.response);
     }
 
-    // Show feedback for 10 seconds (seniors need more time to read)
-    setTimeout(() => setFeedbackMessage(''), 10000);
+    // Show feedback for 15 seconds (seniors need more time to read)
+    setTimeout(() => setFeedbackMessage(''), 15000);
   };
 
   const handleFollowUpFeeling = async (feeling: string) => {
@@ -193,14 +193,18 @@ const SeniorCommunityDashboard: React.FC = () => {
 
     let response = '';
 
-    if (selectedFeeling === 'Mentally') {
+    if (selectedFeeling === 'Mentally' || selectedFeeling === 'Emotionally') {
       if (needsHelp) {
-        response = "Mental Health Crisis Hotlines:\n\n988 (National Crisis Lifeline)\n1-800-662-4357 (SAMHSA National Helpline)\n\nTap the numbers above to call.";
+        response = "🆘 CALL OR TEXT 988 MENTAL HEALTH HOTLINE 🆘";
       } else {
         response = "Take a walk, get some fresh air, or listen to music... and contact your doctor.";
       }
-    } else if (selectedFeeling === 'Physically' || selectedFeeling === 'Emotionally') {
-      response = "Contact your doctor.";
+    } else if (selectedFeeling === 'Physically') {
+      if (needsHelp) {
+        response = "📞 CONTACT YOUR PHYSICIAN\n\n🚨 If this is a medical emergency CALL 911! 🚨";
+      } else {
+        response = "Contact your physician if symptoms continue.";
+      }
     } else {
       // Fallback for any unexpected feeling type
       response = needsHelp
