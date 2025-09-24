@@ -88,7 +88,7 @@ const AIHelpPage: React.FC = () => {
           .limit(1);
 
         const { data: healthEntries } = await supabase
-          .from('health_entries')
+          .from('self_reports')
           .select('id')
           .eq('user_id', user.id)
           .limit(1);

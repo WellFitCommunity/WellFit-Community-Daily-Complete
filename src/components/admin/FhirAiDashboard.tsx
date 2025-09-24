@@ -8,6 +8,7 @@ import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import EnhancedFhirService from './EnhancedFhirService';
+import RiskAssessmentManager from './RiskAssessmentManager';
 
 interface DashboardProps {
   supabaseUrl: string;
@@ -556,9 +557,10 @@ const FhirAiDashboard: React.FC<DashboardProps> = ({ supabaseUrl, supabaseKey })
 
       {/* Main Dashboard Content */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="patients">Patients</TabsTrigger>
+          <TabsTrigger value="risk-assessment">Risk Assessment</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="quality">Quality</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
@@ -600,6 +602,10 @@ const FhirAiDashboard: React.FC<DashboardProps> = ({ supabaseUrl, supabaseKey })
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        <TabsContent value="risk-assessment" className="space-y-6">
+          <RiskAssessmentManager />
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-6">

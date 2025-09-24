@@ -16,11 +16,23 @@ interface CheckInData {
 interface HealthDataEntry {
   id: string;
   user_id: string;
-  entry_type: string;
-  data: Record<string, any>;
+  // Direct columns from self_reports table
+  mood: string;
+  symptoms?: string | null;
+  activity_description?: string | null;
+  bp_systolic?: number | null;
+  bp_diastolic?: number | null;
+  heart_rate?: number | null;
+  blood_sugar?: number | null;
+  blood_oxygen?: number | null;
+  weight?: number | null;
+  physical_activity?: string | null;
+  social_engagement?: string | null;
   created_at: string;
   reviewed_at?: string | null;
   reviewed_by_name?: string | null;
+  // Legacy compatibility for admin code
+  entry_type?: string;
 }
 
 interface CareTeamReview {
@@ -70,8 +82,8 @@ const DoctorsView: React.FC = () => {
           .limit(1)
           .single(),
         supabase
-          .from('health_entries')
-          .select('id, user_id, entry_type, data, created_at, reviewed_at, reviewed_by_name')
+          .from('self_reports')
+          .select('id, user_id, mood, symptoms, activity_description, bp_systolic, bp_diastolic, heart_rate, blood_sugar, blood_oxygen, weight, physical_activity, social_engagement, created_at, reviewed_at, reviewed_by_name')
           .eq('user_id', uid)
           .order('created_at', { ascending: false })
           .limit(3),
@@ -196,21 +208,24 @@ const DoctorsView: React.FC = () => {
     dateString ? new Date(dateString).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A';
 
   const renderHealthEntryData = (entry: HealthDataEntry) => {
-    if (entry.entry_type === 'self_report' && entry.data) {
-      const { mood, symptoms, activity_description } = entry.data;
-      const parts: string[] = [];
-      if (mood) parts.push(`Mood: ${mood}`);
-      if (symptoms) parts.push(`Symptoms: ${symptoms}`);
-      if (activity_description) parts.push(`Activity: ${activity_description}`);
-      return parts.length > 0 ? `Self Report — ${parts.join(', ')}` : 'Self Report — (No details provided)';
+    // Direct column access from self_reports table
+    const parts: string[] = [];
+    if (entry.mood) parts.push(`Mood: ${entry.mood}`);
+    if (entry.symptoms) parts.push(`Symptoms: ${entry.symptoms}`);
+    if (entry.activity_description) parts.push(`Activity: ${entry.activity_description}`);
+
+    // Health metrics
+    if (entry.bp_systolic && entry.bp_diastolic) {
+      parts.push(`BP: ${entry.bp_systolic}/${entry.bp_diastolic}`);
     }
-    if (entry.data) {
-      const dataEntries = Object.entries(entry.data)
-        .map(([key, value]) => `${key.replace(/_/g, ' ')}: ${value}`)
-        .join(', ');
-      return `${entry.entry_type} — ${dataEntries}`;
-    }
-    return entry.entry_type;
+    if (entry.heart_rate) parts.push(`HR: ${entry.heart_rate}`);
+    if (entry.blood_sugar) parts.push(`Blood Sugar: ${entry.blood_sugar}`);
+    if (entry.blood_oxygen) parts.push(`O2: ${entry.blood_oxygen}%`);
+    if (entry.weight) parts.push(`Weight: ${entry.weight}lbs`);
+    if (entry.physical_activity) parts.push(`Activity: ${entry.physical_activity}`);
+    if (entry.social_engagement) parts.push(`Social: ${entry.social_engagement}`);
+
+    return parts.length > 0 ? `Self Report — ${parts.join(', ')}` : 'Self Report — (No details provided)';
   };
 
   // In src/pages/DoctorsViewPage.tsx
@@ -349,7 +364,7 @@ const handleQuestionSubmit = async () => {
           </div>
         ) : (
           <p className="text-base text-gray-500">
-            Note: This section depends on <code>reviewed_at</code> and <code>reviewed_by_name</code> in both <code>check_ins</code> and <code>health_entries</code>.
+            Note: This section depends on <code>reviewed_at</code> and <code>reviewed_by_name</code> in both <code>check_ins</code> and <code>self_reports</code>.
           </p>
         )}
       </div>

@@ -1,6 +1,6 @@
 // src/pages/ReportsPrintPage.tsx
 // Print-optimized reports page with optional date range, engagement summary,
-// self-reports (from health_entries), and CSV export.
+// self-reports (from self_reports table), and CSV export.
 // Uses custom Supabase client/hooks from ../../lib/supabaseClient (adjust depth if needed).
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
@@ -133,11 +133,10 @@ const ReportsPrintPage: React.FC = () => {
       const fromIso = startOfDayIso(from);
       const toIso = endOfDayIso(to);
 
-      // Pull self-reports from health_entries; `data` JSON holds fields
+      // Pull self-reports from self_reports table with direct columns
       const { data, error: err } = await supabase
-        .from('health_entries')
-        .select('id, user_id, created_at, entry_type, data')
-        .eq('entry_type', 'self_report')
+        .from('self_reports')
+        .select('id, user_id, created_at, mood, symptoms, activity_description, bp_systolic, bp_diastolic, heart_rate, blood_sugar, blood_oxygen, weight, physical_activity, social_engagement')
         .gte('created_at', fromIso)
         .lte('created_at', toIso)
         .order('created_at', { ascending: true })
@@ -146,36 +145,24 @@ const ReportsPrintPage: React.FC = () => {
       if (err) throw err;
 
       const list: SelfReportRow[] = (data ?? []).map((r: any) => {
-        const d = r?.data || {};
+        // Direct column access from self_reports table
+        const mood = (r.mood ?? '').toString();
+        const symptoms = r.symptoms ?? null;
+        const activity_description = r.activity_description ?? null;
 
-        // Mood + narrative fields
-        const mood = (d.mood ?? '').toString();
-        const symptoms = d.symptoms ?? null;
-        const activity_description = d.activity_description ?? null;
+        // Health metrics from direct columns
+        const bp_systolic = numberOrNull(r.bp_systolic);
+        const bp_diastolic = numberOrNull(r.bp_diastolic);
+        const pulse = numberOrNull(r.heart_rate);
+        const glucose = numberOrNull(r.blood_sugar);
 
-        // Health metrics (defensive aliases)
-        const bp_systolic =
-          numberOrNull(d.bp_systolic) ??
-          numberOrNull(d.systolic) ??
-          numberOrNull(d.blood_pressure_systolic);
+        // Additional metrics from self_reports table
+        const blood_oxygen = numberOrNull(r.blood_oxygen);
+        const weight = numberOrNull(r.weight);
+        const physical_activity = r.physical_activity ?? null;
+        const social_engagement = r.social_engagement ?? null;
 
-        const bp_diastolic =
-          numberOrNull(d.bp_diastolic) ??
-          numberOrNull(d.diastolic) ??
-          numberOrNull(d.blood_pressure_diastolic);
-
-        const pulse =
-          numberOrNull(d.pulse) ??
-          numberOrNull(d.heart_rate) ??
-          numberOrNull(d.hr);
-
-        const glucose =
-          numberOrNull(d.glucose) ??
-          numberOrNull(d.blood_glucose) ??
-          numberOrNull(d.blood_sugar) ??
-          numberOrNull(d.bg);
-
-        // We don't have submitted_by in health_entries by default; assume self
+        // self_reports table tracks user_id as the submitter
         const submitted_by = r.user_id as string;
         const source_type: SourceType = 'self';
 

@@ -9,26 +9,30 @@ import type { User, AuthChangeEvent, Session } from '@supabase/supabase-js';
 type SourceType = 'self' | 'staff';
 
 interface SelfReportData {
-  id: number;
-  created_at: string;              // ISO from DB
+  id: string;
+  created_at: string;
   mood: string;
   symptoms?: string | null;
   activity_description?: string | null;
-  // New health metrics
-  blood_pressure_systolic?: number | null;
-  blood_pressure_diastolic?: number | null;
+  // Health metrics that map directly to self_reports table columns
+  bp_systolic?: number | null;
+  bp_diastolic?: number | null;
   blood_sugar?: number | null;
   blood_oxygen?: number | null;
   weight?: number | null;
   physical_activity?: string | null;
   social_engagement?: string | null;
   user_id: string;
-  submitted_by: string;            // inferred for display; health_entries doesn't store this
-  entry_type: string;              // 'self_report'
+  // Additional fields from self_reports table
+  heart_rate?: number | null;
+  spo2?: number | null;
 }
 
 interface SelfReportLog extends SelfReportData {
   source_type: SourceType;         // client-added for color coding
+  // Add legacy field names for display compatibility
+  blood_pressure_systolic?: number | null;
+  blood_pressure_diastolic?: number | null;
 }
 
 const MOOD_OPTIONS = ['Great', 'Good', 'Okay', 'Not Great', 'Sad', 'Anxious', 'Tired', 'Stressed'] as const;
@@ -184,14 +188,13 @@ const SelfReportingPage: React.FC = () => {
     }
   };
 
-  // --- Fetch self reports for the current user (from health_entries)
+  // --- Fetch self reports for the current user (from self_reports table)
   const fetchReports = useCallback(
     async (uid: string) => {
       try {
         const { data, error } = await supabase
-          .from('health_entries')
-          .select('id, created_at, user_id, entry_type, data')
-          .eq('entry_type', 'self_report')
+          .from('self_reports')
+          .select('*')
           .eq('user_id', uid)
           .order('created_at', { ascending: false });
 
@@ -202,24 +205,26 @@ const SelfReportingPage: React.FC = () => {
         }
 
         const reports: SelfReportLog[] = (data ?? []).map((r: any) => {
-          const d = r?.data || {};
           return {
             id: r.id,
             created_at: r.created_at,
             user_id: r.user_id,
-            entry_type: r.entry_type,
-            mood: String(d.mood ?? ''),
-            symptoms: d.symptoms ?? null,
-            activity_description: d.activity_description ?? null,
-            // New health metrics
-            blood_pressure_systolic: d.blood_pressure_systolic ?? null,
-            blood_pressure_diastolic: d.blood_pressure_diastolic ?? null,
-            blood_sugar: d.blood_sugar ?? null,
-            blood_oxygen: d.blood_oxygen ?? null,
-            weight: d.weight ?? null,
-            physical_activity: d.physical_activity ?? null,
-            social_engagement: d.social_engagement ?? null,
-            submitted_by: r.user_id,     // health_entries doesn't store submitted_by; infer "self"
+            entry_type: 'self_report',
+            mood: String(r.mood ?? ''),
+            symptoms: r.symptoms ?? null,
+            activity_description: r.activity_description ?? null,
+            // Health metrics directly from self_reports columns
+            bp_systolic: r.bp_systolic ?? null,
+            bp_diastolic: r.bp_diastolic ?? null,
+            // Legacy names for display compatibility
+            blood_pressure_systolic: r.bp_systolic ?? null,
+            blood_pressure_diastolic: r.bp_diastolic ?? null,
+            blood_sugar: r.blood_sugar ?? null,
+            blood_oxygen: r.blood_oxygen ?? null,
+            weight: r.weight ?? null,
+            physical_activity: r.physical_activity ?? null,
+            social_engagement: r.social_engagement ?? null,
+            submitted_by: r.user_id,
             source_type: 'self',
           };
         });
@@ -240,7 +245,7 @@ const SelfReportingPage: React.FC = () => {
     fetchReports(currentUser.id);
   }, [currentUser?.id, fetchReports]);
 
-  // --- Submit handler (writes to health_entries with data JSON)
+  // --- Submit handler (writes to self_reports table with direct columns)
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setFeedbackMessage(null);
@@ -265,24 +270,21 @@ const SelfReportingPage: React.FC = () => {
     try {
       const payload = {
         user_id: currentUser.id,
-        entry_type: 'self_report',
-        data: {
-          mood: chosenMood,
-          // New health metrics
-          blood_pressure_systolic: bloodPressureSystolic ? parseInt(bloodPressureSystolic) : undefined,
-          blood_pressure_diastolic: bloodPressureDiastolic ? parseInt(bloodPressureDiastolic) : undefined,
-          blood_sugar: bloodSugar ? parseInt(bloodSugar) : undefined,
-          blood_oxygen: bloodOxygen ? parseInt(bloodOxygen) : undefined,
-          weight: weight ? parseFloat(weight) : undefined,
-          physical_activity: physicalActivity || undefined,
-          social_engagement: socialEngagement || undefined,
-          // Advanced reporting fields
-          symptoms: symptoms.trim() || undefined,
-          activity_description: activity.trim() || undefined,
-        },
+        mood: chosenMood,
+        // Health metrics mapped to self_reports table columns
+        bp_systolic: bloodPressureSystolic ? parseInt(bloodPressureSystolic) : null,
+        bp_diastolic: bloodPressureDiastolic ? parseInt(bloodPressureDiastolic) : null,
+        blood_sugar: bloodSugar ? parseInt(bloodSugar) : null,
+        blood_oxygen: bloodOxygen ? parseInt(bloodOxygen) : null,
+        weight: weight ? parseFloat(weight) : null,
+        physical_activity: physicalActivity || null,
+        social_engagement: socialEngagement || null,
+        // Advanced reporting fields
+        symptoms: symptoms.trim() || null,
+        activity_description: activity.trim() || null,
       };
 
-      const { error } = await supabase.from('health_entries').insert([payload]);
+      const { error } = await supabase.from('self_reports').insert([payload]);
       if (error) throw error;
 
       setFeedbackMessage('Report saved successfully!');

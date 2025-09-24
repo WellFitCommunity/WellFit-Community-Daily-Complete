@@ -342,7 +342,7 @@ export class EnhancedFhirService {
       const [profile, checkIns, healthEntries] = await Promise.all([
         this.supabase.from('profiles').select('*').eq('user_id', userId).single(),
         this.supabase.from('check_ins').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(50),
-        this.supabase.from('health_entries').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(50)
+        this.supabase.from('self_reports').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(50)
       ]);
 
       const data = {

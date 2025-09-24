@@ -538,9 +538,9 @@ export class FHIRIntegrationService {
         .gte('created_at', thirtyDaysAgo.toISOString())
         .order('created_at', { ascending: false });
 
-      // Fetch health entries (last 30 days)
+      // Fetch self reports (last 30 days)
       const { data: healthEntries, error: healthError } = await this.supabase
-        .from('health_entries')
+        .from('self_reports')
         .select('*')
         .eq('user_id', userId)
         .gte('created_at', thirtyDaysAgo.toISOString())
