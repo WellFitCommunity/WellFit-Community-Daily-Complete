@@ -21,8 +21,10 @@ const TriviaGame: React.FC = () => {
   const [showFeedback, setShowFeedback] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [gamePhase, setGamePhase] = useState<'loading' | 'playing' | 'finished'>('loading');
+  const [gamesPlayedToday, setGamesPlayedToday] = useState(0);
 
   const LOCAL_STORAGE_KEY = 'dailyTriviaSet';
+  const GAMES_PLAYED_KEY = 'memoryLaneGamesPlayed';
 
   interface StoredTriviaSet {
     date: string;
@@ -97,7 +99,24 @@ const TriviaGame: React.FC = () => {
   
   useEffect(() => {
     selectDailyQuestions();
+    checkGamesPlayedToday();
   }, []);
+
+  const checkGamesPlayedToday = () => {
+    const today = new Date().toISOString().split('T')[0];
+    const stored = localStorage.getItem(GAMES_PLAYED_KEY);
+    if (stored) {
+      const data = JSON.parse(stored);
+      if (data.date === today) {
+        setGamesPlayedToday(data.count || 0);
+      } else {
+        setGamesPlayedToday(0);
+        localStorage.setItem(GAMES_PLAYED_KEY, JSON.stringify({ date: today, count: 0 }));
+      }
+    } else {
+      localStorage.setItem(GAMES_PLAYED_KEY, JSON.stringify({ date: today, count: 0 }));
+    }
+  };
 
   const handleAnswerSelect = (answer: string) => {
     if (!showFeedback) { 
@@ -273,7 +292,13 @@ const TriviaGame: React.FC = () => {
 
           {showFeedback && (
              <button
-              onClick={currentQuestionIndex < currentQuestions.length - 1 ? handleNextQuestion : () => setGamePhase('finished')}
+              onClick={currentQuestionIndex < currentQuestions.length - 1 ? handleNextQuestion : () => {
+                setGamePhase('finished');
+                const today = new Date().toISOString().split('T')[0];
+                const newCount = gamesPlayedToday + 1;
+                setGamesPlayedToday(newCount);
+                localStorage.setItem(GAMES_PLAYED_KEY, JSON.stringify({ date: today, count: newCount }));
+              }}
               className="w-full py-3 bg-wellfit-orange text-white font-semibold rounded-lg shadow-md hover:bg-opacity-90 transition-colors mt-2"
             >
               {currentQuestionIndex < currentQuestions.length - 1 ? 'Next Question →' : 'View Results'}

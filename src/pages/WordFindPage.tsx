@@ -31,6 +31,26 @@ const WordFind: React.FC = () => {
   const [lockedDir, setLockedDir] = useState<Point | null>(null);
   const [found, setFound] = useState<Set<string>>(new Set());
   const [celebrate, setCelebrate] = useState(false);
+  const [gamesPlayedToday, setGamesPlayedToday] = useState(0);
+
+  const GAMES_PLAYED_KEY = 'wordFindGamesPlayed';
+
+  // Check games played today
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0];
+    const stored = localStorage.getItem(GAMES_PLAYED_KEY);
+    if (stored) {
+      const data = JSON.parse(stored);
+      if (data.date === today) {
+        setGamesPlayedToday(data.count || 0);
+      } else {
+        setGamesPlayedToday(0);
+        localStorage.setItem(GAMES_PLAYED_KEY, JSON.stringify({ date: today, count: 0 }));
+      }
+    } else {
+      localStorage.setItem(GAMES_PLAYED_KEY, JSON.stringify({ date: today, count: 0 }));
+    }
+  }, []);
 
   // Build puzzle
   useEffect(() => {
