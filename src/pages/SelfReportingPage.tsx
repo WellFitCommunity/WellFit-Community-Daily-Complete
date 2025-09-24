@@ -392,11 +392,25 @@ const SelfReportingPage: React.FC = () => {
               onChange={(e) => setMood(e.target.value)}
               disabled={isLoading}
               aria-required="true"
-              className="mt-1 block w-full py-3 px-4 text-lg border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 disabled:bg-gray-50"
+              className="mt-1 block w-full py-3 px-4 text-lg border-2 border-gray-400 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 text-gray-900 font-medium"
+              style={{ minHeight: '48px', fontSize: '16px' }}
             >
-              <option value="" disabled>Select your mood...</option>
+              <option value="" disabled style={{ color: '#6B7280', backgroundColor: '#F9FAFB' }}>
+                Select your mood...
+              </option>
               {MOOD_OPTIONS.map((option) => (
-                <option key={option} value={option}>{option}</option>
+                <option
+                  key={option}
+                  value={option}
+                  style={{
+                    color: '#111827',
+                    backgroundColor: '#FFFFFF',
+                    padding: '8px',
+                    fontSize: '16px'
+                  }}
+                >
+                  {option}
+                </option>
               ))}
             </select>
           </div>
@@ -494,11 +508,25 @@ const SelfReportingPage: React.FC = () => {
             <select
               value={physicalActivity}
               onChange={(e) => setPhysicalActivity(e.target.value)}
-              className="w-full py-3 px-4 text-lg border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+              className="w-full py-3 px-4 text-lg border-2 border-gray-400 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 font-medium"
+              style={{ minHeight: '48px', fontSize: '16px' }}
             >
-              <option value="">Select an activity...</option>
+              <option value="" style={{ color: '#6B7280', backgroundColor: '#F9FAFB' }}>
+                Select an activity...
+              </option>
               {PHYSICAL_ACTIVITY_OPTIONS.map((option) => (
-                <option key={option} value={option}>{option}</option>
+                <option
+                  key={option}
+                  value={option}
+                  style={{
+                    color: '#111827',
+                    backgroundColor: '#FFFFFF',
+                    padding: '8px',
+                    fontSize: '16px'
+                  }}
+                >
+                  {option}
+                </option>
               ))}
             </select>
           </div>
@@ -511,11 +539,25 @@ const SelfReportingPage: React.FC = () => {
             <select
               value={socialEngagement}
               onChange={(e) => setSocialEngagement(e.target.value)}
-              className="w-full py-3 px-4 text-lg border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+              className="w-full py-3 px-4 text-lg border-2 border-gray-400 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 font-medium"
+              style={{ minHeight: '48px', fontSize: '16px' }}
             >
-              <option value="">Tell us about your social time...</option>
+              <option value="" style={{ color: '#6B7280', backgroundColor: '#F9FAFB' }}>
+                Tell us about your social time...
+              </option>
               {SOCIAL_ENGAGEMENT_OPTIONS.map((option) => (
-                <option key={option} value={option}>{option}</option>
+                <option
+                  key={option}
+                  value={option}
+                  style={{
+                    color: '#111827',
+                    backgroundColor: '#FFFFFF',
+                    padding: '8px',
+                    fontSize: '16px'
+                  }}
+                >
+                  {option}
+                </option>
               ))}
             </select>
           </div>
