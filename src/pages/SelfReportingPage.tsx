@@ -135,11 +135,13 @@ const SelfReportingPage: React.FC = () => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
       recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = false;
-      recognitionRef.current.interimResults = false;
-      recognitionRef.current.lang = 'en-US';
 
-      recognitionRef.current.onresult = (event: any) => {
+      if (recognitionRef.current) {
+        recognitionRef.current.continuous = false;
+        recognitionRef.current.interimResults = false;
+        recognitionRef.current.lang = 'en-US';
+
+        recognitionRef.current.onresult = (event: any) => {
         const transcript = event.results[0][0].transcript;
 
         // Set the value based on which field is active
@@ -153,15 +155,16 @@ const SelfReportingPage: React.FC = () => {
         setCurrentField(null);
       };
 
-      recognitionRef.current.onend = () => {
-        setIsListening(false);
-        setCurrentField(null);
-      };
+        recognitionRef.current.onend = () => {
+          setIsListening(false);
+          setCurrentField(null);
+        };
 
-      recognitionRef.current.onerror = () => {
-        setIsListening(false);
-        setCurrentField(null);
-      };
+        recognitionRef.current.onerror = () => {
+          setIsListening(false);
+          setCurrentField(null);
+        };
+      }
     }
   }, [currentField]);
 
