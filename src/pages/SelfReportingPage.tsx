@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Mic, MicOff } from 'lucide-react';
 import { useSupabaseClient, useSession } from '../contexts/AuthContext';
 import { useBranding } from '../BrandingContext';
+import HealthInsightsWidget from '../components/HealthInsightsWidget';
 import type { User, AuthChangeEvent, Session } from '@supabase/supabase-js';
 
 type SourceType = 'self' | 'staff';
@@ -628,6 +629,20 @@ const SelfReportingPage: React.FC = () => {
           </p>
         )}
       </form>
+
+      {/* Health Insights Widget - Shows after user fills in health data */}
+      <HealthInsightsWidget
+        healthData={{
+          mood,
+          bp_systolic: bloodPressureSystolic ? parseInt(bloodPressureSystolic) : null,
+          bp_diastolic: bloodPressureDiastolic ? parseInt(bloodPressureDiastolic) : null,
+          blood_sugar: bloodSugar ? parseInt(bloodSugar) : null,
+          blood_oxygen: bloodOxygen ? parseInt(bloodOxygen) : null,
+          weight: weight ? parseFloat(weight) : null,
+          symptoms,
+          physical_activity: physicalActivity
+        }}
+      />
 
       {/* History */}
       <div className="mt-8">

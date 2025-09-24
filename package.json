@@ -6,6 +6,7 @@
     "node": "20.x"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.63.1",
     "@hcaptcha/react-hcaptcha": "^1.12.1",
     "@hookform/resolvers": "^3.10.0",
     "@supabase/auth-helpers-shared": "0.7.0",

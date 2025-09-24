@@ -4,6 +4,7 @@ import { useBranding } from '../BrandingContext';
 import { useNavigate } from 'react-router-dom';
 import { useSupabaseClient, useUser } from '../contexts/AuthContext';
 import { Card } from '../components/ui/card';
+import claudeService from '../services/claudeService';
 
 interface ChatMessage {
   id: string;
@@ -234,8 +235,22 @@ const AIHelpPage: React.FC = () => {
     setChatInput('');
     setIsTyping(true);
 
-    // Simulate AI thinking time
-    setTimeout(() => {
+    try {
+      // Try Claude first, fallback to local responses
+      const claudeResponse = await claudeService.chatWithHealthAssistant(userMessage, userActivity);
+
+      const assistantMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        type: 'assistant',
+        content: claudeResponse,
+        timestamp: new Date(),
+        suggestions: generateFollowUpSuggestions(userMessage)
+      };
+
+      setChatMessages(prev => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error('Chat error:', error);
+      // Fallback to local response
       const response = generateAIResponse(userMessage);
       const assistantMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
@@ -244,10 +259,29 @@ const AIHelpPage: React.FC = () => {
         timestamp: new Date(),
         suggestions: response.suggestions
       };
-
       setChatMessages(prev => [...prev, assistantMessage]);
+    } finally {
       setIsTyping(false);
-    }, 1000 + Math.random() * 1000);
+    }
+  };
+
+  // Generate follow-up suggestions based on user message
+  const generateFollowUpSuggestions = (userMessage: string): string[] => {
+    const message = userMessage.toLowerCase();
+
+    if (message.includes('check in') || message.includes('feeling')) {
+      return ["How to track my mood daily", "What if I'm not feeling well?", "Show me health tracking"];
+    }
+
+    if (message.includes('photo') || message.includes('community')) {
+      return ["How to upload photos", "See community posts", "Share with family"];
+    }
+
+    if (message.includes('game') || message.includes('word find')) {
+      return ["Play Word Find now", "Other games available", "Brain training tips"];
+    }
+
+    return ["I have another question", "Take me to dashboard", "What else can I do?"];
   };
 
   // Generate AI responses
