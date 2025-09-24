@@ -153,7 +153,7 @@ const ExportCheckIns: React.FC = () => {
 
     if (userIds.length > 0) {
       const { data: rawProfiles, error: e2 } = await supabase
-        .from('profiles_with_user_id')
+        .from('profiles')
         .select('user_id, first_name, last_name, phone')
         .in('user_id', userIds);
 

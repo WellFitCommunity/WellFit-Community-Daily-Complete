@@ -266,7 +266,7 @@ const UsersList: React.FC = () => {
     try {
       // Profiles
       const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles_with_user_id')
+        .from('profiles')
         .select('user_id, first_name, last_name, phone, dob, address, created_at');
 
       if (profilesError) {

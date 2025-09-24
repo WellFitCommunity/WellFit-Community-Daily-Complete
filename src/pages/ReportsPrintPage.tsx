@@ -94,7 +94,7 @@ const ReportsPrintPage: React.FC = () => {
       // Count users: prefer view if present, otherwise profiles(id)
       let totalUsersCount = 0;
       const viewTry = await supabase
-        .from('profiles_with_user_id')
+        .from('profiles')
         .select('user_id', { head: true, count: 'exact' });
       if (!viewTry.error) {
         totalUsersCount = viewTry.count ?? 0;

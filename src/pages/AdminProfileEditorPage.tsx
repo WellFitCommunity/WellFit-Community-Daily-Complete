@@ -52,7 +52,7 @@ const AdminProfileEditor: React.FC = () => {
       setIsLoadingProfiles(true);
       try {
         const { data, error } = await supabase
-          .from('profiles_with_user_id')
+          .from('profiles')
           .select('user_id, first_name, last_name, role, dob, phone, address')
           .eq('role', 'senior');
         if (error) throw error;
