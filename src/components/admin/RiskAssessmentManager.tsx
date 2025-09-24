@@ -35,7 +35,7 @@ const RiskAssessmentManager: React.FC = () => {
     try {
       // Load all patients
       const { data: patientsData, error: patientsError } = await supabase
-        .from('profiles_with_user_id')
+        .from('profiles')
         .select('user_id, first_name, last_name, phone, email')
         .eq('role', 'senior');
 

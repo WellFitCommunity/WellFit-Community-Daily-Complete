@@ -5,17 +5,21 @@ import { supabase } from '../../lib/supabaseClient';
 // NOTE: Export libraries are now lazy-loaded inside exportToCsv()
 // import { saveAs } from 'file-saver';
 
-// Define the shape of your API key record
+// Define the shape of your API key record (matches actual database schema)
 interface ApiKey {
   id: string;
-  user_id: string | null;
-  org_name: string;
-  api_key_hash: string;
-  active: boolean;
-  usage_count: number;
-  last_used: string | null;
+  label: string; // This is the organization name in the database
+  key_hash: string; // This is the api_key_hash in the database
+  created_by: string;
   created_at: string;
-  created_by: string | null;
+  revoked_at: string | null;
+  // Computed fields for compatibility
+  org_name?: string;
+  api_key_hash?: string;
+  active?: boolean;
+  usage_count?: number;
+  last_used?: string | null;
+  user_id?: string | null;
 }
 
 interface Toast {
@@ -117,14 +121,25 @@ const ApiKeyManager: React.FC = () => {
     try {
       const { data, error: supabaseError } = await supabase
         .from('api_keys')
-        .select('id, org_name, api_key_hash, active, usage_count, last_used, created_at, created_by, user_id')
+        .select('id, label, key_hash, created_by, created_at, revoked_at')
         .order('created_at', { ascending: false });
 
       if (supabaseError) {
         throw new Error(`Failed to fetch API keys: ${supabaseError.message}`);
       }
 
-      setApiKeys((data as ApiKey[]) || []);
+      // Transform database data to match expected interface
+      const transformedData = (data || []).map(key => ({
+        ...key,
+        org_name: key.label,
+        api_key_hash: key.key_hash,
+        active: !key.revoked_at, // Active if not revoked
+        usage_count: 0, // Not tracked in current schema
+        last_used: null, // Not tracked in current schema
+        user_id: key.created_by
+      }));
+
+      setApiKeys(transformedData as ApiKey[]);
 
       if (!showLoading && data) {
         addToast('success', `Refreshed ${data.length} API keys`);
@@ -190,7 +205,7 @@ const ApiKeyManager: React.FC = () => {
     try {
       const { data: functionData, error: functionError } = await supabase.functions.invoke(
         'generate-api-key',
-        { body: { org_name: newOrgName.trim() } }
+        { body: { label: newOrgName.trim() } }
       );
 
       if (functionError) {
@@ -237,9 +252,14 @@ const ApiKeyManager: React.FC = () => {
     setLoading(true);
 
     try {
+      // Toggle by setting/clearing revoked_at
+      const updateData = currentStatus
+        ? { revoked_at: new Date().toISOString() } // Disable by setting revoked_at
+        : { revoked_at: null }; // Enable by clearing revoked_at
+
       const { error: updateError } = await supabase
         .from('api_keys')
-        .update({ active: !currentStatus })
+        .update(updateData)
         .eq('id', keyId);
 
       if (updateError) {
@@ -277,13 +297,13 @@ const ApiKeyManager: React.FC = () => {
     setLoading(true);
 
     try {
-      const { error: deleteError } = await supabase
+      const { error: updateError } = await supabase
         .from('api_keys')
-        .delete()
+        .update({ revoked_at: new Date().toISOString() })
         .eq('id', keyId);
 
-      if (deleteError) {
-        throw new Error(`Error revoking key: ${deleteError.message}`);
+      if (updateError) {
+        throw new Error(`Error revoking key: ${updateError.message}`);
       }
 
       addToast('warning', `API key for "${orgName}" has been permanently revoked`);
