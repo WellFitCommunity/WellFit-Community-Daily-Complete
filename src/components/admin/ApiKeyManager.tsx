@@ -13,13 +13,13 @@ interface ApiKey {
   created_by: string;
   created_at: string;
   revoked_at: string | null;
-  // Computed fields for compatibility
-  org_name?: string;
-  api_key_hash?: string;
-  active?: boolean;
-  usage_count?: number;
-  last_used?: string | null;
-  user_id?: string | null;
+  // Computed fields for compatibility (always set by transformation)
+  org_name: string;
+  api_key_hash: string;
+  active: boolean;
+  usage_count: number;
+  last_used: string | null;
+  user_id: string | null;
 }
 
 interface Toast {
