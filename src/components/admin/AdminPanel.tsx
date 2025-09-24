@@ -638,17 +638,32 @@ const AdminPanel: React.FC = () => {
               {adminRole === 'super_admin' ? 'Super Administrator' : 'Administrator'}
             </span>
           </h1>
-          <button
-            onClick={logoutAdmin}
-            className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors text-sm font-medium"
-            aria-label="Logout from admin panel"
-          >
-            Logout Admin
-          </button>
+          <div className="flex gap-4">
+            <a
+              href="/admin-questions"
+              target="_blank"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors text-sm font-medium"
+              aria-label="Open Risk Assessment in new tab"
+            >
+              📋 Risk Assessment
+            </a>
+            <button
+              onClick={logoutAdmin}
+              className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors text-sm font-medium"
+              aria-label="Logout from admin panel"
+            >
+              Logout Admin
+            </button>
+          </div>
         </div>
 
         <section className="mt-6 border rounded-xl p-6 bg-gradient-to-br from-purple-50 to-blue-50">
           <h2 className="text-xl font-semibold text-purple-800 mb-4">AI-Enhanced FHIR Analytics</h2>
+          <div className="mb-4 p-4 bg-yellow-100 border border-yellow-400 rounded">
+            <p className="text-yellow-800">🔍 Debug: FHIR section should render here</p>
+            <p className="text-sm">URL: {process.env.REACT_APP_SUPABASE_URL ? 'Found' : 'Missing'}</p>
+            <p className="text-sm">Key: {process.env.REACT_APP_SUPABASE_ANON_KEY ? 'Found' : 'Missing'}</p>
+          </div>
           <FhirAiDashboard
             supabaseUrl={process.env.REACT_APP_SUPABASE_URL || ''}
             supabaseKey={process.env.REACT_APP_SUPABASE_ANON_KEY || ''}
