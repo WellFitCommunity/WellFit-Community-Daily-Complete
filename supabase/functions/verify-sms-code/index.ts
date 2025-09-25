@@ -98,10 +98,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
         });
       }
 
-      // Create the actual user account
+      // Generate a secure random password for the user account
+      // The hashed password in pending_registrations is no longer needed since we'll create a new one
+      const securePassword = crypto.randomUUID() + "Aa1!"; // Meets complexity requirements
+
+      // Create the actual user account with new secure password
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         phone: phone,
-        password: pending.password_hash, // Plain password from pending registration
+        password: securePassword, // Use secure generated password
         phone_confirm: true, // Phone is now verified
         email: pending.email || undefined,
         email_confirm: false,
@@ -112,6 +116,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
           last_name: pending.last_name,
           registration_method: "self_register",
           registered_at: new Date().toISOString(),
+          force_password_change: true, // Force user to set their own password on first login
         },
       });
 
@@ -120,7 +125,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         return new Response(JSON.stringify({ error: "Failed to complete registration" }), { status: 500, headers });
       }
 
-      // Create profile
+      // Create profile with force_password_change flag
       const { error: profileError } = await supabase
         .from("profiles")
         .insert({
@@ -131,12 +136,40 @@ Deno.serve(async (req: Request): Promise<Response> => {
           phone: phone,
           role_code: pending.role_code,
           role_slug: pending.role_slug,
+          force_password_change: true, // Ensure user must set password on first login
           created_by: null,
         });
 
       if (profileError) {
         console.error("Failed to create profile:", profileError.message);
         // Don't fail here - user is created, profile can be fixed later
+      }
+
+      // Send welcome email if user has an email
+      if (pending.email) {
+        try {
+          const welcomeEmailResponse = await fetch(`${SB_URL}/functions/v1/send_welcome_email`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${SB_SECRET_KEY}`
+            },
+            body: JSON.stringify({
+              email: pending.email,
+              full_name: `${pending.first_name} ${pending.last_name}`
+            })
+          });
+
+          if (!welcomeEmailResponse.ok) {
+            console.error("Failed to send welcome email:", await welcomeEmailResponse.text());
+            // Don't fail registration if welcome email fails
+          } else {
+            console.log(`✅ Welcome email sent to ${pending.email}`);
+          }
+        } catch (emailError) {
+          console.error("Welcome email error:", emailError);
+          // Don't fail registration if welcome email fails
+        }
       }
 
       // Clean up pending registration

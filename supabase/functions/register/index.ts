@@ -4,6 +4,7 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4?dts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { cors } from "../_shared/cors.ts";
+import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 
 // ---------- ENV ----------
 const SB_URL = Deno.env.get("SUPABASE_URL") || Deno.env.get("SB_URL") || "";
@@ -141,12 +142,16 @@ serve(async (req: Request) => {
       return jsonResponse({ error: "Registration already pending for this phone number. Check your SMS for verification code." }, 409, origin);
     }
 
-    // Store registration data in pending table (password temporarily stored - will be deleted after verification)
+    // Hash password before storing
+    const saltRounds = 12;
+    const hashedPassword = await bcrypt.hash(payload.password, saltRounds);
+
+    // Store registration data in pending table with hashed password
     const { error: pendingError } = await supabase
       .from("pending_registrations")
       .insert({
         phone: phoneNumber,
-        password_hash: payload.password, // Temporarily store plain password for account creation
+        password_hash: hashedPassword, // Store hashed password for security
         first_name: payload.first_name,
         last_name: payload.last_name,
         email: payload.email ?? null,

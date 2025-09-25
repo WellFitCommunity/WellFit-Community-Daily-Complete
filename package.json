@@ -92,7 +92,10 @@
     "sb:start": "npx -y supabase@latest start -x edge-runtime",
     "sb:diff": "npx -y supabase@latest db diff -f rls-hardening --debug",
     "sb:stop": "npx -y supabase@latest stop",
-    "serve:3100": "npx serve -s build -l 3100"
+    "serve:3100": "npx serve -s build -l 3100",
+    "sbom:generate": "node scripts/generate-sbom.js",
+    "deps:audit": "npm audit --audit-level=moderate && npm outdated",
+    "deps:update": "npm update && npm run sbom:generate"
   },
   "browserslist": {
     "production": [

@@ -35,6 +35,9 @@ export const SB_SECRET_KEY = req("SB_SECRET_KEY");          // service role (kee
 // ---- hCaptcha (server-only) ----
 export const HCAPTCHA_SECRET = req("HCAPTCHA_SECRET");      // secret key for server verify
 
+// ---- Internal API Security ----
+export const INTERNAL_API_KEY = req("INTERNAL_API_KEY");    // secret key for internal API calls
+
 // Optional helpers:
 export const assertEither = (msgSvcSid: string, fromNumber: string) => {
   if (!msgSvcSid && !fromNumber) {

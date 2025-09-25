@@ -1,0 +1,1472 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.4",
+  "serialNumber": "urn:uuid:f795814b-61c8-48cb-8690-4f2dee242365",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2025-09-25T17:15:45.549Z",
+    "tools": [
+      {
+        "vendor": "WellFit Community",
+        "name": "SBOM Generator",
+        "version": "1.0.0"
+      }
+    ],
+    "component": {
+      "type": "application",
+      "name": "wellfit-community-daily",
+      "version": "0.1.0",
+      "description": "WellFit Community Healthcare Platform - Comprehensive senior care and wellness management system",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "WellFit Community",
+        "url": [
+          "https://thewellfitcommunity.org"
+        ]
+      }
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "name": "@anthropic-ai/sdk",
+      "version": "0.63.1",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/@anthropic-ai/sdk"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "@hcaptcha/react-hcaptcha",
+      "version": "1.12.1",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/@hcaptcha/react-hcaptcha"
+        }
+      ],
+      "properties": [
+        {
+          "name": "category",
+          "value": "healthcare"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "@hookform/resolvers",
+      "version": "3.10.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/@hookform/resolvers"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "@supabase/auth-helpers-shared",
+      "version": "0.7.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/@supabase/auth-helpers-shared"
+        }
+      ],
+      "properties": [
+        {
+          "name": "category",
+          "value": "security"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "@supabase/supabase-js",
+      "version": "2.57.2",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/@supabase/supabase-js"
+        }
+      ],
+      "properties": [
+        {
+          "name": "category",
+          "value": "healthcare"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "@tailwindcss/forms",
+      "version": "0.5.10",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/@tailwindcss/forms"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "@types/bcryptjs",
+      "version": "2.4.6",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/@types/bcryptjs"
+        }
+      ],
+      "properties": [
+        {
+          "name": "category",
+          "value": "healthcare"
+        },
+        {
+          "name": "category",
+          "value": "security"
+        },
+        {
+          "name": "category",
+          "value": "encryption"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "@types/file-saver",
+      "version": "2.0.7",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/@types/file-saver"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "@types/node",
+      "version": "20.19.13",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/@types/node"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "@types/react",
+      "version": "18.3.3",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/@types/react"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "@types/react-dom",
+      "version": "18.3.0",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/@types/react-dom"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "@types/react-toastify",
+      "version": "4.0.2",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/@types/react-toastify"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "@typescript-eslint/eslint-plugin",
+      "version": "5.62.0",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/@typescript-eslint/eslint-plugin"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "@typescript-eslint/parser",
+      "version": "5.62.0",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/@typescript-eslint/parser"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "@vercel/node",
+      "version": "5.3.23",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/@vercel/node"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "ajv",
+      "version": "8.17.1",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/ajv"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "ajv-formats",
+      "version": "3.0.1",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/ajv-formats"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "ajv-keywords",
+      "version": "5.1.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/ajv-keywords"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "autoprefixer",
+      "version": "10.4.21",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/autoprefixer"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "bcryptjs",
+      "version": "3.0.2",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/bcryptjs"
+        }
+      ],
+      "properties": [
+        {
+          "name": "category",
+          "value": "healthcare"
+        },
+        {
+          "name": "category",
+          "value": "security"
+        },
+        {
+          "name": "category",
+          "value": "encryption"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "clsx",
+      "version": "2.1.1",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/clsx"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "dotenv",
+      "version": "16.6.1",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/dotenv"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "emoji-picker-react",
+      "version": "4.13.3",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/emoji-picker-react"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "eslint",
+      "version": "8.57.1",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/eslint"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "eslint-config-google",
+      "version": "0.14.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/eslint-config-google"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "eslint-config-react-app",
+      "version": "7.0.1",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/eslint-config-react-app"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "eslint-plugin-flowtype",
+      "version": "8.0.3",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/eslint-plugin-flowtype"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "eslint-plugin-import",
+      "version": "2.32.0",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/eslint-plugin-import"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "eslint-plugin-jsx-a11y",
+      "version": "6.10.2",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/eslint-plugin-jsx-a11y"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "eslint-plugin-react",
+      "version": "7.37.5",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/eslint-plugin-react"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "eslint-plugin-react-hooks",
+      "version": "4.6.2",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/eslint-plugin-react-hooks"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "eslint-plugin-security",
+      "version": "3.0.1",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/eslint-plugin-security"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "exceljs",
+      "version": "4.4.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/exceljs"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "file-saver",
+      "version": "2.0.5",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/file-saver"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "firebase",
+      "version": "11.10.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/firebase"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "firebase-admin",
+      "version": "12.6.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/firebase-admin"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "firebase-functions",
+      "version": "6.0.1",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/firebase-functions"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "firebase-functions-test",
+      "version": "3.1.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/firebase-functions-test"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "framer-motion",
+      "version": "12.23.12",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/framer-motion"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "libphonenumber-js",
+      "version": "1.12.16",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/libphonenumber-js"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "lucide-react",
+      "version": "0.503.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/lucide-react"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "nodemailer",
+      "version": "7.0.6",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/nodemailer"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "postcss",
+      "version": "8.5.6",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/postcss"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "react",
+      "version": "18.3.1",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/react"
+        }
+      ],
+      "properties": [
+        {
+          "name": "category",
+          "value": "healthcare"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "react-confetti",
+      "version": "6.4.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/react-confetti"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "react-dom",
+      "version": "18.3.1",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/react-dom"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "react-hook-form",
+      "version": "7.62.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/react-hook-form"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "react-router-dom",
+      "version": "6.30.1",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/react-router-dom"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "react-scripts",
+      "version": "5.0.1",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/react-scripts"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "react-signature-canvas",
+      "version": "1.1.0-alpha.2",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/react-signature-canvas"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "react-toastify",
+      "version": "11.0.5",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/react-toastify"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "supabase",
+      "version": "2.40.7",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/supabase"
+        }
+      ],
+      "properties": [
+        {
+          "name": "category",
+          "value": "healthcare"
+        },
+        {
+          "name": "category",
+          "value": "security"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "tailwind-merge",
+      "version": "3.3.1",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/tailwind-merge"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "tailwindcss",
+      "version": "3.4.17",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/tailwindcss"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "ts-node",
+      "version": "10.9.2",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/ts-node"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "twilio",
+      "version": "5.9.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/twilio"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "typescript",
+      "version": "4.9.5",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/typescript"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "webpack",
+      "version": "5.101.3",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/webpack"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "webpack-dev-server",
+      "version": "5.2.2",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/webpack-dev-server"
+        }
+      ],
+      "properties": []
+    },
+    {
+      "type": "library",
+      "name": "yup",
+      "version": "1.7.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "npm"
+      },
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.npmjs.com/package/yup"
+        }
+      ],
+      "properties": []
+    }
+  ]
+}
