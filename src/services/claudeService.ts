@@ -36,7 +36,7 @@ class ClaudeService {
 
     try {
       const response = await this.client!.messages.create({
-        model: 'claude-4-sonnet-20250109',
+        model: 'claude-sonnet-4-20250514',
         max_tokens: 50,
         messages: [{
           role: 'user',
@@ -114,7 +114,7 @@ class ClaudeService {
       const healthSummary = this.formatHealthDataForClaude(healthData);
 
       const response = await this.client!.messages.create({
-        model: 'claude-4-sonnet-20250109',
+        model: 'claude-sonnet-4-20250514',
         max_tokens: 400,
         system: systemPrompt,
         messages: [{
@@ -160,7 +160,7 @@ class ClaudeService {
       const assessmentSummary = this.formatAssessmentForClaude(assessmentData);
 
       const response = await this.client!.messages.create({
-        model: 'claude-4-sonnet-20250109',
+        model: 'claude-sonnet-4-20250514',
         max_tokens: 500,
         system: systemPrompt,
         messages: [{
@@ -201,7 +201,7 @@ class ClaudeService {
       const contextData = this.formatClinicalContextForClaude(patientData, assessmentData);
 
       const response = await this.client!.messages.create({
-        model: 'claude-4-sonnet-20250109',
+        model: 'claude-sonnet-4-20250514',
         max_tokens: 400,
         system: systemPrompt,
         messages: [{
@@ -237,7 +237,7 @@ class ClaudeService {
       const contextInfo = this.formatUserContextForClaude(userProfile, recentActivity);
 
       const response = await this.client!.messages.create({
-        model: 'claude-4-sonnet-20250109',
+        model: 'claude-sonnet-4-20250514',
         max_tokens: 300,
         system: systemPrompt,
         messages: [{
