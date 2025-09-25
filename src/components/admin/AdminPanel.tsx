@@ -7,6 +7,7 @@ import UsersList from './UsersList';
 import ReportsSection from './ReportsSection';
 import ExportCheckIns from './ExportCheckIns';
 import ApiKeyManager from './ApiKeyManager';
+import ClaudeTestWidget from './ClaudeTestWidget';
 import FhirAiDashboard from './FhirAiDashboard';
 
 type AdminRole = 'admin' | 'super_admin';
@@ -676,10 +677,17 @@ const AdminPanel: React.FC = () => {
         <EnrollPatientSection />
 
         {adminRole === 'super_admin' && (
-          <section className="mt-6 border rounded-xl p-6 bg-gradient-to-br from-blue-50 to-indigo-50">
-            <h2 className="text-xl font-semibold text-blue-800 mb-4">Super Admin Features</h2>
-            <ApiKeyManager />
-          </section>
+          <>
+            <section className="mt-6 border rounded-xl p-6 bg-gradient-to-br from-blue-50 to-indigo-50">
+              <h2 className="text-xl font-semibold text-blue-800 mb-4">Super Admin Features</h2>
+              <ApiKeyManager />
+            </section>
+
+            <section className="mt-6 border rounded-xl p-6 bg-gradient-to-br from-green-50 to-emerald-50">
+              <h2 className="text-xl font-semibold text-green-800 mb-4">Claude AI Service Test</h2>
+              <ClaudeTestWidget />
+            </section>
+          </>
         )}
       </div>
     </RequireAdminAuth>

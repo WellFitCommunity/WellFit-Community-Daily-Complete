@@ -100,9 +100,12 @@ export default function CheckInTracker({ showBackButton = false }: CheckInTracke
 
   const feedbackCopy: Record<string, string> = {
     '😊 Feeling Great Today': 'Awesome! Enjoy your day. 🌞',
-    '📅 Feeling fine & have a Dr. Appt today': "Don’t forget to show your log to the doctor. 🩺",
-    '🏥 In the hospital': 'We’re thinking of you. Please call us if we can help. ❤️',
+    '📅 Feeling fine & have a Dr. Appt today': 'Do not forget to show your log to the doctor. 🩺',
+    '🏥 In the hospital': 'We are thinking of you. Please call us if we can help. ❤️',
+    '🚨 Fallen down & injured': 'We are notifying your emergency contacts immediately. Stay safe! 🚨',
+    '🤒 Not Feeling Well': 'Sorry you are not feeling well. Consider contacting your healthcare provider. Take care! 💙',
     '🧭 Need Healthcare Navigation Assistance': 'Hang tight—we will call you shortly. ☎️',
+    '⭐ Attending the event today': 'Great! Have a wonderful time at the event. Enjoy yourself! ✨',
     DefaultSuccess: 'Check-in submitted successfully!',
   };
 

@@ -8,6 +8,7 @@ import { Badge } from '../ui/badge';
 import { Alert, AlertDescription } from '../ui/alert';
 import { useSupabaseClient, useUser } from '../../contexts/AuthContext';
 import { RiskAssessment } from '../../types/riskAssessment';
+import claudeService from '../../services/claudeService';
 
 interface RiskAssessmentFormProps {
   patientId: string;
@@ -79,6 +80,13 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [aiAnalysis, setAiAnalysis] = useState<{
+    suggestedRiskLevel: string;
+    riskFactors: string[];
+    recommendations: string[];
+    clinicalNotes: string;
+  } | null>(null);
+  const [analyzingAI, setAnalyzingAI] = useState(false);
 
   // Load existing assessment if provided
   useEffect(() => {
@@ -194,6 +202,40 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
     }
   };
 
+  const runAIAnalysis = async () => {
+    setAnalyzingAI(true);
+    try {
+      const analysis = await claudeService.analyzeRiskAssessment(formData);
+      setAiAnalysis(analysis);
+
+      // Auto-apply AI suggestions if user wants
+      if (analysis.suggestedRiskLevel && analysis.suggestedRiskLevel !== formData.risk_level) {
+        // Don't auto-apply, just show suggestion
+      }
+    } catch (err) {
+      console.error('AI analysis failed:', err);
+      setError('AI analysis failed. Please continue with manual assessment.');
+    } finally {
+      setAnalyzingAI(false);
+    }
+  };
+
+  const applyAISuggestions = () => {
+    if (!aiAnalysis) return;
+
+    setFormData(prev => ({
+      ...prev,
+      risk_level: aiAnalysis.suggestedRiskLevel as any,
+      risk_factors: [...(prev.risk_factors || []), ...aiAnalysis.riskFactors.filter(f => !prev.risk_factors?.includes(f))],
+      recommended_actions: [...(prev.recommended_actions || []), ...aiAnalysis.recommendations.filter(r => !prev.recommended_actions?.includes(r))],
+      assessment_notes: prev.assessment_notes ?
+        `${prev.assessment_notes}\n\nAI Analysis: ${aiAnalysis.clinicalNotes}` :
+        `AI Analysis: ${aiAnalysis.clinicalNotes}`
+    }));
+
+    setSuccess('AI suggestions applied to assessment');
+  };
+
   return (
     <Card className="max-w-4xl mx-auto">
       <CardHeader>
@@ -216,34 +258,222 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
 
-          {/* Risk Scoring Section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              { field: 'medical_risk_score', label: 'Medical Risk', icon: '🏥' },
-              { field: 'mobility_risk_score', label: 'Mobility Risk', icon: '🚶' },
-              { field: 'cognitive_risk_score', label: 'Cognitive Risk', icon: '🧠' },
-              { field: 'social_risk_score', label: 'Social Risk', icon: '👥' }
-            ].map(({ field, label, icon }) => (
-              <div key={field} className="space-y-2">
-                <label className="text-sm font-medium flex items-center">
-                  <span className="mr-2">{icon}</span>
-                  {label}
-                </label>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="range"
-                    min="1"
-                    max="10"
-                    value={formData[field as keyof RiskAssessment] as number || 1}
-                    onChange={(e) => handleScoreChange(field, parseInt(e.target.value))}
-                    className="flex-1"
-                  />
-                  <span className="text-lg font-bold min-w-[2rem] text-center">
-                    {formData[field as keyof RiskAssessment] as number || 1}
-                  </span>
+          {/* Functional Assessment Questions */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 space-y-6">
+            <h3 className="text-lg font-semibold text-blue-900 mb-4">📋 Functional Assessment Questions</h3>
+
+            {/* Basic Mobility */}
+            <div className="space-y-4">
+              <h4 className="font-medium text-gray-900">🚶‍♀️ Mobility & Movement</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Can walk independently?</label>
+                  <select
+                    value={formData.walking_ability || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, walking_ability: e.target.value }))}
+                    className="w-full mt-1 p-2 border border-gray-300 rounded-lg"
+                  >
+                    <option value="">Select...</option>
+                    <option value="independent">Yes, without assistance</option>
+                    <option value="cane">With cane/walker</option>
+                    <option value="assistance">Needs human assistance</option>
+                    <option value="wheelchair">Uses wheelchair</option>
+                    <option value="bedbound">Unable to walk</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Can climb stairs?</label>
+                  <select
+                    value={formData.stair_climbing || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, stair_climbing: e.target.value }))}
+                    className="w-full mt-1 p-2 border border-gray-300 rounded-lg"
+                  >
+                    <option value="">Select...</option>
+                    <option value="independent">Yes, without help</option>
+                    <option value="handrail">With handrail only</option>
+                    <option value="assistance">Needs assistance</option>
+                    <option value="unable">Cannot climb stairs</option>
+                  </select>
                 </div>
               </div>
-            ))}
+            </div>
+
+            {/* Sitting & Standing */}
+            <div className="space-y-4">
+              <h4 className="font-medium text-gray-900">🪑 Sitting & Standing</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Can sit down safely?</label>
+                  <select
+                    value={formData.sitting_ability || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, sitting_ability: e.target.value }))}
+                    className="w-full mt-1 p-2 border border-gray-300 rounded-lg"
+                  >
+                    <option value="">Select...</option>
+                    <option value="independent">Yes, easily</option>
+                    <option value="careful">Carefully, but independent</option>
+                    <option value="assistance">Needs assistance</option>
+                    <option value="unsafe">Unsafe without help</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Can stand up from chair?</label>
+                  <select
+                    value={formData.standing_ability || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, standing_ability: e.target.value }))}
+                    className="w-full mt-1 p-2 border border-gray-300 rounded-lg"
+                  >
+                    <option value="">Select...</option>
+                    <option value="independent">Yes, easily</option>
+                    <option value="arms">Using arms for support</option>
+                    <option value="assistance">Needs assistance</option>
+                    <option value="unable">Cannot stand independently</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Bathroom Independence */}
+            <div className="space-y-4">
+              <h4 className="font-medium text-gray-900">🚽 Bathroom Independence</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Can get on/off toilet safely?</label>
+                  <select
+                    value={formData.toilet_transfer || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, toilet_transfer: e.target.value }))}
+                    className="w-full mt-1 p-2 border border-gray-300 rounded-lg"
+                  >
+                    <option value="">Select...</option>
+                    <option value="independent">Yes, independently</option>
+                    <option value="grab_bars">With grab bars</option>
+                    <option value="assistance">Needs assistance</option>
+                    <option value="unsafe">Unsafe without help</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Bathing independence?</label>
+                  <select
+                    value={formData.bathing_ability || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, bathing_ability: e.target.value }))}
+                    className="w-full mt-1 p-2 border border-gray-300 rounded-lg"
+                  >
+                    <option value="">Select...</option>
+                    <option value="independent">Bathes independently</option>
+                    <option value="shower_chair">Uses shower chair/aids</option>
+                    <option value="assistance">Needs assistance</option>
+                    <option value="full_help">Requires full help</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Daily Living Activities */}
+            <div className="space-y-4">
+              <h4 className="font-medium text-gray-900">🍽️ Daily Living Activities</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Can prepare meals?</label>
+                  <select
+                    value={formData.meal_preparation || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, meal_preparation: e.target.value }))}
+                    className="w-full mt-1 p-2 border border-gray-300 rounded-lg"
+                  >
+                    <option value="">Select...</option>
+                    <option value="independent">Yes, cooks full meals</option>
+                    <option value="simple">Simple meals only</option>
+                    <option value="microwave">Microwave/reheat only</option>
+                    <option value="unable">Cannot prepare food</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Managing medications?</label>
+                  <select
+                    value={formData.medication_management || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, medication_management: e.target.value }))}
+                    className="w-full mt-1 p-2 border border-gray-300 rounded-lg"
+                  >
+                    <option value="">Select...</option>
+                    <option value="independent">Manages independently</option>
+                    <option value="reminder">Needs reminders</option>
+                    <option value="assistance">Needs assistance</option>
+                    <option value="supervised">Requires supervision</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Fall Risk Assessment */}
+            <div className="space-y-4">
+              <h4 className="font-medium text-gray-900">⚠️ Fall Risk Factors</h4>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {[
+                  'History of falls',
+                  'Fear of falling',
+                  'Dizziness/lightheaded',
+                  'Uses assistive device',
+                  'Balance problems',
+                  'Takes 4+ medications',
+                  'Vision problems',
+                  'Hearing problems',
+                  'Foot problems',
+                  'Home hazards present'
+                ].map(factor => (
+                  <label key={factor} className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.fall_risk_factors?.includes(factor) || false}
+                      onChange={() => {
+                        const currentFactors = formData.fall_risk_factors || [];
+                        const newFactors = currentFactors.includes(factor)
+                          ? currentFactors.filter(f => f !== factor)
+                          : [...currentFactors, factor];
+                        setFormData(prev => ({ ...prev, fall_risk_factors: newFactors }));
+                      }}
+                      className="rounded border-gray-300"
+                    />
+                    <span className="text-sm">{factor}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Risk Scoring Section */}
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">📊 Clinical Risk Scores</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[
+                { field: 'medical_risk_score', label: 'Medical Risk', icon: '🏥' },
+                { field: 'mobility_risk_score', label: 'Mobility Risk', icon: '🚶' },
+                { field: 'cognitive_risk_score', label: 'Cognitive Risk', icon: '🧠' },
+                { field: 'social_risk_score', label: 'Social Risk', icon: '👥' }
+              ].map(({ field, label, icon }) => (
+                <div key={field} className="space-y-2">
+                  <label className="text-sm font-medium flex items-center">
+                    <span className="mr-2">{icon}</span>
+                    {label}
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="range"
+                      min="1"
+                      max="10"
+                      value={formData[field as keyof RiskAssessment] as number || 1}
+                      onChange={(e) => handleScoreChange(field, parseInt(e.target.value))}
+                      className="flex-1"
+                    />
+                    <span className="text-lg font-bold min-w-[2rem] text-center">
+                      {formData[field as keyof RiskAssessment] as number || 1}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Assessment Notes */}

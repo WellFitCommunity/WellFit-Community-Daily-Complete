@@ -16,6 +16,18 @@ export interface RiskAssessment {
   recommended_actions: string[];
   next_assessment_due: string;
   review_frequency: 'weekly' | 'biweekly' | 'monthly' | 'quarterly';
+
+  // Functional Assessment Fields
+  walking_ability?: string;
+  stair_climbing?: string;
+  sitting_ability?: string;
+  standing_ability?: string;
+  toilet_transfer?: string;
+  bathing_ability?: string;
+  meal_preparation?: string;
+  medication_management?: string;
+  fall_risk_factors?: string[];
+
   created_at?: string;
   updated_at?: string;
   valid_until?: string;
