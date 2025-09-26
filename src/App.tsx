@@ -147,9 +147,7 @@ function Shell() {
                 path="/admin-questions"
                 element={
                   <RequireAuth>
-                    <RequireAdminAuth>
-                      <AdminQuestionsPage />
-                    </RequireAdminAuth>
+                    <AdminQuestionsPage />
                   </RequireAuth>
                 }
               />

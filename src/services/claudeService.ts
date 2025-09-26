@@ -4,21 +4,37 @@ import { ANTHROPIC_API_KEY } from '../lib/env';
 
 class ClaudeService {
   private client: Anthropic | null = null;
+  private apiKey: string | null = null;
+  private defaultModel: string = 'claude-3-5-sonnet-20241022'; // Claude 3.5 for user features
+  private adminModel: string = 'claude-3-5-sonnet-20241022'; // Claude 3.5 Latest for admin FHIR (most advanced available)
 
   constructor() {
-    if (ANTHROPIC_API_KEY && ANTHROPIC_API_KEY.startsWith('sk-ant-')) {
+    this.apiKey = ANTHROPIC_API_KEY;
+    this.initializeClient();
+  }
+
+  private initializeClient(): void {
+    if (this.apiKey && this.apiKey.startsWith('sk-ant-')) {
       try {
         this.client = new Anthropic({
-          apiKey: ANTHROPIC_API_KEY,
+          apiKey: this.apiKey,
           dangerouslyAllowBrowser: true // Only for client-side usage
         });
+        console.log('✅ Claude AI connected successfully');
       } catch (error) {
-        console.error('Failed to initialize Claude client:', error);
+        console.error('❌ Failed to initialize Claude client:', error);
         this.client = null;
       }
     } else {
-      console.warn('Claude AI: Invalid or missing API key');
+      console.warn('❌ Claude AI: Invalid or missing API key');
     }
+  }
+
+  // Allow manual API key setting at runtime
+  public setApiKey(apiKey: string): void {
+    this.apiKey = apiKey;
+    this.initializeClient();
+    console.log('🔄 API key updated, client re-initialized');
   }
 
   private isAvailable(): boolean {
@@ -36,7 +52,7 @@ class ClaudeService {
 
     try {
       const response = await this.client!.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: this.defaultModel, // Test with default model
         max_tokens: 50,
         messages: [{
           role: 'user',
@@ -78,7 +94,7 @@ class ClaudeService {
       Keep responses concise and easy to understand.`;
 
       const response = await this.client!.messages.create({
-        model: 'claude-3-5-haiku-20241022', // Fast model for seniors
+        model: this.defaultModel, // Claude 3.5 Sonnet for user features
         max_tokens: 300,
         system: systemPrompt,
         messages: [{
@@ -114,7 +130,7 @@ class ClaudeService {
       const healthSummary = this.formatHealthDataForClaude(healthData);
 
       const response = await this.client!.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: this.defaultModel, // Claude 3.5 Sonnet for user health interpretation
         max_tokens: 400,
         system: systemPrompt,
         messages: [{

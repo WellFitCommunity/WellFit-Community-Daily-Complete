@@ -23,7 +23,8 @@ const RiskAssessmentManager: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [selectedPatient, setSelectedPatient] = useState<string | null>(null);
-  const [showForm, setShowForm] = useState(false);
+  // Remove unused showForm state since form is now always accessible
+  // const [showForm, setShowForm] = useState(false);
   const [editingAssessment, setEditingAssessment] = useState<RiskAssessment | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -80,27 +81,23 @@ const RiskAssessmentManager: React.FC = () => {
   const handleNewAssessment = (patientId: string) => {
     setSelectedPatient(patientId);
     setEditingAssessment(null);
-    setShowForm(true);
     setActiveTab('form');
   };
 
   const handleEditAssessment = (assessment: RiskAssessment) => {
     setSelectedPatient(assessment.patient_id);
     setEditingAssessment(assessment);
-    setShowForm(true);
     setActiveTab('form');
   };
 
   const handleFormSubmit = (assessment: RiskAssessment) => {
     loadData(); // Refresh data
-    setShowForm(false);
-    setSelectedPatient(null);
+    // Keep form open so user can create another assessment if needed
+    // Just clear the current assessment
     setEditingAssessment(null);
-    setActiveTab('overview');
   };
 
   const handleFormCancel = () => {
-    setShowForm(false);
     setSelectedPatient(null);
     setEditingAssessment(null);
     setActiveTab('overview');
@@ -161,8 +158,8 @@ const RiskAssessmentManager: React.FC = () => {
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="assessments">All Assessments</TabsTrigger>
-          <TabsTrigger value="form" disabled={!showForm}>
-            {editingAssessment ? 'Edit Assessment' : 'New Assessment'}
+          <TabsTrigger value="form">
+            Risk Assessment Form
           </TabsTrigger>
         </TabsList>
 
@@ -328,18 +325,63 @@ const RiskAssessmentManager: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="form">
-          {showForm && selectedPatient && (
-            <RiskAssessmentForm
-              patientId={selectedPatient}
-              patientName={selectedPatientData ?
-                `${selectedPatientData.first_name || ''} ${selectedPatientData.last_name || ''}`.trim() :
-                undefined
-              }
-              existingAssessment={editingAssessment}
-              onSubmit={handleFormSubmit}
-              onCancel={handleFormCancel}
-            />
-          )}
+          <div className="space-y-6">
+            {/* Patient Selector */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Select Patient for Risk Assessment</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {patients.map(patient => (
+                    <button
+                      key={patient.user_id}
+                      onClick={() => {
+                        setSelectedPatient(patient.user_id);
+                        setEditingAssessment(null);
+                      }}
+                      className={`p-4 border rounded-lg text-left hover:bg-gray-50 transition-colors ${
+                        selectedPatient === patient.user_id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                      }`}
+                    >
+                      <div className="font-medium">
+                        {patient.first_name} {patient.last_name}
+                      </div>
+                      <div className="text-sm text-gray-600">{patient.phone}</div>
+                    </button>
+                  ))}
+                </div>
+                {patients.length === 0 && (
+                  <div className="text-center text-gray-500 py-8">
+                    No patients available for assessment
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Risk Assessment Form */}
+            {selectedPatient && (
+              <RiskAssessmentForm
+                patientId={selectedPatient}
+                patientName={selectedPatientData ?
+                  `${selectedPatientData.first_name || ''} ${selectedPatientData.last_name || ''}`.trim() :
+                  undefined
+                }
+                existingAssessment={editingAssessment}
+                onSubmit={handleFormSubmit}
+                onCancel={handleFormCancel}
+              />
+            )}
+
+            {!selectedPatient && (
+              <Card>
+                <CardContent className="p-8 text-center text-gray-500">
+                  <div className="text-lg font-medium mb-2">Ready to Create Risk Assessment</div>
+                  <div>Please select a patient above to begin the assessment</div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </TabsContent>
       </Tabs>
     </div>
