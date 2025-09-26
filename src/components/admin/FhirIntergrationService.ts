@@ -439,7 +439,7 @@ export class FHIRIntegrationService {
     const patientDisplay = `${profile.first_name} ${profile.last_name}`;
 
     // Mood Observation
-    if (entry.data.mood) {
+    if (entry.data && entry.data.mood) {
       observations.push({
         resourceType: 'Observation',
         id: `mood-${entry.id}`,
@@ -475,7 +475,7 @@ export class FHIRIntegrationService {
     }
 
     // Activity Level Observation
-    if (entry.data.activity_description) {
+    if (entry.data && entry.data.activity_description) {
       observations.push({
         resourceType: 'Observation',
         id: `activity-${entry.id}`,
