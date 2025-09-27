@@ -1,0 +1,116 @@
+// Type definitions for Claude integration in WellFit Community
+
+// User role definitions for model selection
+export enum UserRole {
+  SENIOR_PATIENT = 'senior_patient',
+  ADMIN = 'admin',
+  HEALTHCARE_PROVIDER = 'healthcare_provider',
+  CAREGIVER = 'caregiver'
+}
+
+// Available Claude models with specific use cases
+export enum ClaudeModel {
+  HAIKU_3 = 'claude-3-haiku-20240307',
+  SONNET_3_5 = 'claude-3-5-sonnet-20241022',
+  SONNET_4 = 'claude-3-5-sonnet-20241022' // Using latest Sonnet 3.5 as Sonnet 4 equivalent
+}
+
+// Request types for determining appropriate model
+export enum RequestType {
+  HEALTH_QUESTION = 'health_question',
+  MEDICATION_GUIDANCE = 'medication_guidance',
+  ANALYTICS = 'analytics',
+  FHIR_ANALYSIS = 'fhir_analysis',
+  RISK_ASSESSMENT = 'risk_assessment',
+  CLINICAL_NOTES = 'clinical_notes',
+  HEALTH_INSIGHTS = 'health_insights'
+}
+
+// Health data context for Claude requests
+export interface HealthDataContext {
+  patientId: string;
+  demographics: {
+    age: number;
+    gender: string;
+    primaryLanguage?: string;
+  };
+  currentConditions: Array<{
+    condition: string;
+    severity: 'mild' | 'moderate' | 'severe';
+    onsetDate?: string;
+  }>;
+  medications: Array<{
+    name: string;
+    dosage: string;
+    frequency: string;
+    purpose: string;
+  }>;
+  recentVitals: {
+    bloodPressure?: string;
+    heartRate?: number;
+    weight?: number;
+    bloodSugar?: number;
+    lastUpdated: string;
+  };
+}
+
+// Request context for Claude service calls
+export interface ClaudeRequestContext {
+  userId: string;
+  userRole: UserRole;
+  requestId: string;
+  timestamp: Date;
+  requestType: RequestType;
+  healthContext?: HealthDataContext;
+  emergencyContact?: string;
+}
+
+// Response from Claude service
+export interface ClaudeResponse {
+  content: string;
+  model: ClaudeModel;
+  tokenUsage: {
+    inputTokens: number;
+    outputTokens: number;
+  };
+  cost: number;
+  responseTime: number;
+  qualityScore?: number;
+  requestId: string;
+}
+
+// Error types for Claude service
+export interface ClaudeError {
+  code: string;
+  message: string;
+  statusCode?: number;
+  originalError?: any;
+  requestId?: string;
+}
+
+// Model selection criteria
+export interface ModelSelectionCriteria {
+  userRole: UserRole;
+  requestType: RequestType;
+  complexity: 'simple' | 'moderate' | 'complex';
+  budgetTier: 'standard' | 'premium';
+}
+
+// Cost tracking information
+export interface CostInfo {
+  estimatedCost: number;
+  actualCost: number;
+  dailySpend: number;
+  monthlySpend: number;
+  remainingBudget: number;
+}
+
+// Service health status
+export interface ServiceStatus {
+  isInitialized: boolean;
+  isHealthy: boolean;
+  lastHealthCheck: Date;
+  circuitBreakerState: 'CLOSED' | 'OPEN' | 'HALF_OPEN';
+  apiKeyValid: boolean;
+  modelsAvailable: ClaudeModel[];
+}

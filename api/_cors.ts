@@ -25,10 +25,19 @@ function matchesOrigin(origin: string | undefined): string | null {
 function escapeRe(s: string) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 
 export function applyCors(res: VercelResponse, reqOrigin?: string) {
-  const allowed = matchesOrigin(reqOrigin) ?? ALLOWLIST[0] ?? '';
-  res.setHeader('Access-Control-Allow-Origin', allowed || '*');
+  const allowed = matchesOrigin(reqOrigin);
+
+  if (!allowed) {
+    // ✅ SECURITY: Reject unauthorized origins instead of wildcard fallback
+    res.setHeader('Access-Control-Allow-Origin', 'null');
+    res.status(403).json({ error: 'Origin not allowed' });
+    return false;
+  }
+
+  res.setHeader('Access-Control-Allow-Origin', allowed);
   res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Headers', 'content-type, authorization, x-requested-with');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  return true;
 }

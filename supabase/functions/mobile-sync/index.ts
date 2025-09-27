@@ -2,10 +2,11 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { cors } from "../_shared/cors.ts"
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+// ❌ REMOVED WILDCARD CORS - Using secure cors() function instead
+// const corsHeaders = {
+//   'Access-Control-Allow-Origin': '*',  // SECURITY RISK REMOVED
+//   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+// }
 
 interface LocationData {
   latitude: number
@@ -65,10 +66,22 @@ interface SyncRequest {
   }
 }
 
-serve(async (req) => {
-  // Handle CORS
+serve(async (req: Request) => {
+  // Handle CORS with secure origin validation
+  const origin = req.headers.get('origin');
+  const { headers: corsHeaders, allowed } = cors(origin, {
+    methods: ['POST', 'OPTIONS']
+  });
+
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
+  }
+
+  if (!allowed) {
+    return new Response(
+      JSON.stringify({ error: 'Origin not allowed' }),
+      { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
   }
 
   try {
@@ -85,9 +98,11 @@ serve(async (req) => {
     }
 
     // Initialize Supabase client
+    const supabaseUrl = (globalThis as any).Deno?.env?.get('SUPABASE_URL') ?? '';
+    const supabaseKey = (globalThis as any).Deno?.env?.get('SUPABASE_ANON_KEY') ?? '';
     const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      supabaseUrl,
+      supabaseKey,
       { global: { headers: { Authorization: authHeader } } }
     )
 

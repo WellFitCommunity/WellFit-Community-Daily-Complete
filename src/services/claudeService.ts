@@ -1,47 +1,378 @@
-// Claude AI Service for WellFit Community
+// Enhanced Claude AI Service for WellFit Community - Production Ready Implementation
 import Anthropic from '@anthropic-ai/sdk';
-import { ANTHROPIC_API_KEY } from '../lib/env';
+import { env, validateEnvironment } from '../config/environment';
+import {
+  UserRole,
+  ClaudeModel,
+  RequestType,
+  ClaudeRequestContext,
+  ClaudeResponse,
+  ClaudeError,
+  HealthDataContext,
+  ServiceStatus,
+  CostInfo
+} from '../types/claude';
+import { modelSelector, createModelCriteria } from '../utils/claudeModelSelection';
 
-class ClaudeService {
-  private client: Anthropic | null = null;
-  private apiKey: string | null = null;
-  private defaultModel: string = 'claude-3-5-sonnet-20241022'; // Claude 3.5 for user features
-  private adminModel: string = 'claude-3-5-sonnet-20241022'; // Claude 3.5 Latest for admin FHIR (most advanced available)
+// Custom error classes
+export class ClaudeServiceError extends Error {
+  constructor(
+    message: string,
+    public code: string,
+    public statusCode?: number,
+    public originalError?: any,
+    public requestId?: string
+  ) {
+    super(message);
+    this.name = 'ClaudeServiceError';
+  }
+}
 
-  constructor() {
-    this.apiKey = ANTHROPIC_API_KEY;
-    this.initializeClient();
+export class ClaudeInitializationError extends ClaudeServiceError {
+  constructor(message: string, originalError?: any) {
+    super(message, 'INITIALIZATION_ERROR', 500, originalError);
+    this.name = 'ClaudeInitializationError';
+  }
+}
+
+// Rate limiter for API calls
+class RateLimiter {
+  private requests: Map<string, number[]> = new Map();
+
+  constructor(
+    private maxRequests: number = 60,
+    private windowMs: number = 60000 // 1 minute
+  ) {}
+
+  canMakeRequest(userId: string): boolean {
+    const now = Date.now();
+    const userRequests = this.requests.get(userId) || [];
+
+    // Remove old requests outside the window
+    const validRequests = userRequests.filter(
+      timestamp => now - timestamp < this.windowMs
+    );
+
+    if (validRequests.length >= this.maxRequests) {
+      return false;
+    }
+
+    validRequests.push(now);
+    this.requests.set(userId, validRequests);
+    return true;
   }
 
-  private initializeClient(): void {
-    if (this.apiKey && this.apiKey.startsWith('sk-ant-')) {
-      try {
-        this.client = new Anthropic({
-          apiKey: this.apiKey,
-          dangerouslyAllowBrowser: true // Only for client-side usage
-        });
-        console.log('✅ Claude AI connected successfully');
-      } catch (error) {
-        console.error('❌ Failed to initialize Claude client:', error);
-        this.client = null;
-      }
-    } else {
-      console.warn('❌ Claude AI: Invalid or missing API key');
+  getRemainingRequests(userId: string): number {
+    const now = Date.now();
+    const userRequests = this.requests.get(userId) || [];
+    const validRequests = userRequests.filter(
+      timestamp => now - timestamp < this.windowMs
+    );
+    return Math.max(0, this.maxRequests - validRequests.length);
+  }
+
+  getResetTime(userId: string): Date {
+    const userRequests = this.requests.get(userId) || [];
+    if (userRequests.length === 0) {
+      return new Date();
+    }
+    const oldestRequest = Math.min(...userRequests);
+    return new Date(oldestRequest + this.windowMs);
+  }
+}
+
+// Enhanced cost tracker for budget management
+class CostTracker {
+  private dailySpend: Map<string, number> = new Map();
+  private monthlySpend: Map<string, number> = new Map();
+  private readonly dailyLimit: number = 50; // $50 daily limit per user
+  private readonly monthlyLimit: number = 500; // $500 monthly limit per user
+
+  private readonly modelCosts = {
+    [ClaudeModel.HAIKU_3]: { input: 0.00025, output: 0.00125 },
+    [ClaudeModel.SONNET_3_5]: { input: 0.003, output: 0.015 },
+    [ClaudeModel.SONNET_4]: { input: 0.003, output: 0.015 }
+  };
+
+  calculateCost(model: ClaudeModel, inputTokens: number, outputTokens: number): number {
+    const costs = this.modelCosts[model];
+    return (inputTokens / 1000 * costs.input) + (outputTokens / 1000 * costs.output);
+  }
+
+  estimateCost(model: ClaudeModel, inputText: string, expectedOutputTokens: number = 1000): number {
+    const inputTokens = Math.ceil(inputText.length / 4); // Rough estimation
+    return this.calculateCost(model, inputTokens, expectedOutputTokens);
+  }
+
+  canAffordRequest(userId: string, estimatedCost: number): boolean {
+    const dailySpend = this.dailySpend.get(userId) || 0;
+    const monthlySpend = this.monthlySpend.get(userId) || 0;
+
+    return (dailySpend + estimatedCost) <= this.dailyLimit &&
+           (monthlySpend + estimatedCost) <= this.monthlyLimit;
+  }
+
+  recordSpending(userId: string, cost: number): void {
+    const currentDaily = this.dailySpend.get(userId) || 0;
+    const currentMonthly = this.monthlySpend.get(userId) || 0;
+
+    this.dailySpend.set(userId, currentDaily + cost);
+    this.monthlySpend.set(userId, currentMonthly + cost);
+
+    // Log budget alerts
+    this.checkBudgetAlerts(userId, currentMonthly + cost);
+  }
+
+  private checkBudgetAlerts(userId: string, currentSpend: number): void {
+    const percentUsed = (currentSpend / this.monthlyLimit) * 100;
+
+    if (percentUsed >= 80) {
+      console.warn(`⚠️ Budget Alert: User ${userId} has used ${percentUsed.toFixed(1)}% of their monthly Claude budget`);
     }
   }
 
-  // Allow manual API key setting at runtime
-  public setApiKey(apiKey: string): void {
-    this.apiKey = apiKey;
-    this.initializeClient();
-    console.log('🔄 API key updated, client re-initialized');
+  getCostInfo(userId: string): CostInfo {
+    const dailySpend = this.dailySpend.get(userId) || 0;
+    const monthlySpend = this.monthlySpend.get(userId) || 0;
+
+    return {
+      estimatedCost: 0,
+      actualCost: 0,
+      dailySpend,
+      monthlySpend,
+      remainingBudget: this.monthlyLimit - monthlySpend
+    };
   }
 
+  // Reset daily counters (call this daily via cron job)
+  resetDailySpend(): void {
+    this.dailySpend.clear();
+    console.log('✅ Daily Claude spending counters reset');
+  }
+
+  // Get spending summary for reporting
+  getSpendingSummary(): { totalDaily: number; totalMonthly: number; userCount: number } {
+    const totalDaily = Array.from(this.dailySpend.values()).reduce((sum, spend) => sum + spend, 0);
+    const totalMonthly = Array.from(this.monthlySpend.values()).reduce((sum, spend) => sum + spend, 0);
+
+    return {
+      totalDaily,
+      totalMonthly,
+      userCount: this.monthlySpend.size
+    };
+  }
+}
+
+// Circuit breaker for API resilience
+class CircuitBreaker {
+  private state: 'CLOSED' | 'OPEN' | 'HALF_OPEN' = 'CLOSED';
+  private failureCount = 0;
+  private lastFailureTime?: Date;
+  private readonly failureThreshold = 5;
+  private readonly timeout = 60000; // 60 seconds
+
+  async execute<T>(fn: () => Promise<T>): Promise<T> {
+    if (this.state === 'OPEN') {
+      if (this.shouldAttemptReset()) {
+        this.state = 'HALF_OPEN';
+        console.log('🔄 Circuit breaker attempting reset...');
+      } else {
+        throw new ClaudeServiceError(
+          'Claude service temporarily unavailable due to repeated failures',
+          'CIRCUIT_BREAKER_OPEN'
+        );
+      }
+    }
+
+    try {
+      const result = await fn();
+      this.onSuccess();
+      return result;
+    } catch (error) {
+      this.onFailure(error);
+      throw error;
+    }
+  }
+
+  private shouldAttemptReset(): boolean {
+    return this.lastFailureTime &&
+           (Date.now() - this.lastFailureTime.getTime()) > this.timeout;
+  }
+
+  private onSuccess(): void {
+    if (this.state === 'HALF_OPEN') {
+      console.log('✅ Circuit breaker reset - service restored');
+    }
+    this.failureCount = 0;
+    this.state = 'CLOSED';
+  }
+
+  private onFailure(error: any): void {
+    this.failureCount++;
+    this.lastFailureTime = new Date();
+
+    if (this.failureCount >= this.failureThreshold) {
+      this.state = 'OPEN';
+      console.error('🚨 Circuit breaker opened due to repeated failures:', error);
+    }
+  }
+
+  getState(): 'CLOSED' | 'OPEN' | 'HALF_OPEN' {
+    return this.state;
+  }
+
+  getStatus(): { state: string; failures: number; lastFailure?: Date } {
+    return {
+      state: this.state,
+      failures: this.failureCount,
+      lastFailure: this.lastFailureTime
+    };
+  }
+}
+
+// Main Claude Service Class - Production Ready
+class ClaudeService {
+  private static instance: ClaudeService | null = null;
+  private client: Anthropic | null = null;
+  private rateLimiter: RateLimiter;
+  private costTracker: CostTracker;
+  private circuitBreaker: CircuitBreaker;
+  private isInitialized = false;
+  private lastHealthCheck?: Date;
+  private defaultModel: ClaudeModel = ClaudeModel.SONNET_3_5;
+
+  private constructor() {
+    this.rateLimiter = new RateLimiter();
+    this.costTracker = new CostTracker();
+    this.circuitBreaker = new CircuitBreaker();
+  }
+
+  public static getInstance(): ClaudeService {
+    if (!ClaudeService.instance) {
+      ClaudeService.instance = new ClaudeService();
+    }
+    return ClaudeService.instance;
+  }
+
+  /**
+   * Initialize Claude service with comprehensive error handling
+   */
+  public async initialize(): Promise<void> {
+    try {
+      console.log('🚀 Initializing Claude service...');
+
+      // Validate environment configuration
+      const envValidation = validateEnvironment();
+      if (!envValidation.success) {
+        throw new ClaudeInitializationError(
+          `Environment validation failed: ${envValidation.message}`
+        );
+      }
+
+      // Validate API key format
+      if (!env.REACT_APP_ANTHROPIC_API_KEY) {
+        throw new ClaudeInitializationError(
+          'ANTHROPIC_API_KEY is required but not provided'
+        );
+      }
+
+      if (!env.REACT_APP_ANTHROPIC_API_KEY.startsWith('sk-ant-')) {
+        throw new ClaudeInitializationError(
+          'Invalid ANTHROPIC_API_KEY format. Must start with "sk-ant-"'
+        );
+      }
+
+      // Initialize Anthropic client
+      this.client = new Anthropic({
+        apiKey: env.REACT_APP_ANTHROPIC_API_KEY,
+        timeout: env.REACT_APP_CLAUDE_TIMEOUT,
+        dangerouslyAllowBrowser: true, // Required for client-side usage
+        maxRetries: 3
+      });
+
+      // Test the connection with a minimal request
+      const healthCheckResult = await this.healthCheck();
+      if (healthCheckResult !== true) {
+        throw new ClaudeInitializationError(
+          'Failed to connect to Claude API during health check'
+        );
+      }
+
+      this.isInitialized = true;
+      console.log('✅ Claude service initialized successfully');
+      console.log(`📊 Default model: ${this.defaultModel}`);
+      console.log(`🔒 API key valid: ${env.REACT_APP_ANTHROPIC_API_KEY.substring(0, 10)}...`);
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown initialization error';
+      console.error('❌ Claude service initialization failed:', errorMessage);
+
+      // Reset state on failure
+      this.isInitialized = false;
+      this.client = null;
+
+      throw new ClaudeInitializationError(
+        `Failed to initialize Claude service: ${errorMessage}`,
+        error
+      );
+    }
+  }
+
+  /**
+   * Comprehensive health check
+   */
+  public async healthCheck(): Promise<boolean> {
+    try {
+      if (!this.client) {
+        console.warn('⚠️ Health check failed: No client initialized');
+        return false;
+      }
+
+      const response = await this.client.messages.create({
+        model: ClaudeModel.HAIKU_3, // Use fastest model for health check
+        max_tokens: 50,
+        messages: [{ role: 'user', content: 'Hello' }]
+      });
+
+      this.lastHealthCheck = new Date();
+      const isHealthy = response.content.length > 0 && response.content[0]?.type === 'text';
+
+      if (isHealthy) {
+        console.log('✅ Claude health check passed');
+      } else {
+        console.warn('⚠️ Claude health check returned unexpected response');
+      }
+
+      return isHealthy;
+    } catch (error) {
+      console.error('❌ Claude health check failed:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Check if service is available for requests
+   */
   private isAvailable(): boolean {
-    return this.client !== null;
+    return this.isInitialized && this.client !== null;
   }
 
-  // Test method to verify Claude service is working
+  /**
+   * Ensure service is properly initialized
+   */
+  private ensureInitialized(): void {
+    if (!this.isInitialized || !this.client) {
+      throw new ClaudeServiceError(
+        'Claude service not initialized. Call initialize() first.',
+        'NOT_INITIALIZED',
+        500
+      );
+    }
+  }
+
+  /**
+   * Test connection method for debugging
+   */
   async testConnection(): Promise<{ success: boolean; message: string }> {
     if (!this.isAvailable()) {
       return {
@@ -52,7 +383,7 @@ class ClaudeService {
 
     try {
       const response = await this.client!.messages.create({
-        model: this.defaultModel, // Test with default model
+        model: this.defaultModel,
         max_tokens: 50,
         messages: [{
           role: 'user',
@@ -76,71 +407,104 @@ class ClaudeService {
     }
   }
 
-  // General health assistant chat (Senior-facing - uses faster model)
+  /**
+   * Generate senior-friendly health guidance
+   */
+  public async generateSeniorHealthGuidance(
+    question: string,
+    context: ClaudeRequestContext
+  ): Promise<ClaudeResponse> {
+    const prompt = this.createSeniorHealthPrompt(question, context.healthContext);
+    const criteria = createModelCriteria(context.userRole, RequestType.HEALTH_QUESTION, question);
+
+    return this.generateResponse(prompt, {
+      ...context,
+      requestType: RequestType.HEALTH_QUESTION
+    }, criteria);
+  }
+
+  /**
+   * Generate advanced medical analytics for admin users
+   */
+  public async generateMedicalAnalytics(
+    analysisRequest: string,
+    healthData: HealthDataContext[],
+    context: ClaudeRequestContext
+  ): Promise<ClaudeResponse> {
+    const prompt = this.createMedicalAnalyticsPrompt(analysisRequest, healthData);
+    const criteria = createModelCriteria(context.userRole, RequestType.ANALYTICS, analysisRequest);
+
+    return this.generateResponse(prompt, {
+      ...context,
+      requestType: RequestType.ANALYTICS
+    }, criteria);
+  }
+
+  /**
+   * Generate FHIR data insights
+   */
+  public async analyzeFHIRData(
+    fhirData: any,
+    analysisType: 'summary' | 'risk_assessment' | 'care_gaps',
+    context: ClaudeRequestContext
+  ): Promise<ClaudeResponse> {
+    const prompt = this.createFHIRAnalysisPrompt(fhirData, analysisType);
+    const criteria = createModelCriteria(context.userRole, RequestType.FHIR_ANALYSIS, JSON.stringify(fhirData));
+
+    return this.generateResponse(prompt, {
+      ...context,
+      requestType: RequestType.FHIR_ANALYSIS
+    }, criteria);
+  }
+
+  /**
+   * Legacy methods for backward compatibility
+   */
   async chatWithHealthAssistant(message: string, userContext?: any): Promise<string> {
     if (!this.isAvailable()) {
       return "I'm sorry, the AI assistant is currently unavailable. Please try again later.";
     }
 
     try {
-      const systemPrompt = `You are a helpful, caring health assistant for seniors using the WellFit Community app.
-      You should:
-      - Speak in simple, friendly language
-      - Provide helpful health guidance
-      - Encourage users to consult their healthcare providers for medical decisions
-      - Focus on wellness, daily activities, and healthy aging
-      - Be supportive and encouraging
+      const context: ClaudeRequestContext = {
+        userId: userContext?.userId || 'anonymous',
+        userRole: UserRole.SENIOR_PATIENT,
+        requestId: `chat-${Date.now()}`,
+        timestamp: new Date(),
+        requestType: RequestType.HEALTH_QUESTION
+      };
 
-      Keep responses concise and easy to understand.`;
-
-      const response = await this.client!.messages.create({
-        model: this.defaultModel, // Claude 3.5 Sonnet for user features
-        max_tokens: 300,
-        system: systemPrompt,
-        messages: [{
-          role: 'user',
-          content: message
-        }]
-      });
-
-      return response.content[0]?.type === 'text' ? response.content[0].text :
-        "I'm having trouble understanding. Could you please rephrase your question?";
+      const response = await this.generateSeniorHealthGuidance(message, context);
+      return response.content;
 
     } catch (error) {
-      console.error('Claude API error:', error);
+      console.error('Claude chat error:', error);
       return "I'm sorry, I'm having trouble connecting right now. Please try again in a moment.";
     }
   }
 
-  // Interpret health data in simple language
   async interpretHealthData(healthData: any): Promise<string> {
     if (!this.isAvailable()) {
       return "Health data interpretation is currently unavailable.";
     }
 
     try {
-      const systemPrompt = `You are a health data interpreter for seniors. Take complex health metrics and explain them in simple, encouraging language. Focus on:
-      - What the numbers mean in everyday terms
-      - Whether they're in healthy ranges
-      - Simple suggestions for improvement
-      - When to talk to a doctor
+      const healthContext = this.convertLegacyHealthData(healthData);
+      const context: ClaudeRequestContext = {
+        userId: 'health-data-user',
+        userRole: UserRole.SENIOR_PATIENT,
+        requestId: `health-data-${Date.now()}`,
+        timestamp: new Date(),
+        requestType: RequestType.HEALTH_INSIGHTS,
+        healthContext
+      };
 
-      Always be positive and supportive. Never diagnose or give medical advice.`;
+      const response = await this.generateSeniorHealthGuidance(
+        "Please explain my recent health measurements in simple terms",
+        context
+      );
 
-      const healthSummary = this.formatHealthDataForClaude(healthData);
-
-      const response = await this.client!.messages.create({
-        model: this.defaultModel, // Claude 3.5 Sonnet for user health interpretation
-        max_tokens: 400,
-        system: systemPrompt,
-        messages: [{
-          role: 'user',
-          content: `Please explain this health data in simple terms: ${healthSummary}`
-        }]
-      });
-
-      return response.content[0]?.type === 'text' ? response.content[0].text :
-        "I couldn't interpret your health data right now. Please try again.";
+      return response.content;
 
     } catch (error) {
       console.error('Claude health interpretation error:', error);
@@ -148,7 +512,6 @@ class ClaudeService {
     }
   }
 
-  // Admin: AI-powered risk assessment scoring
   async analyzeRiskAssessment(assessmentData: any): Promise<{
     suggestedRiskLevel: string;
     riskFactors: string[];
@@ -165,28 +528,19 @@ class ClaudeService {
     }
 
     try {
-      const systemPrompt = `You are a healthcare AI assistant helping clinicians assess senior patient risk. Analyze functional assessment data and provide:
-      1. Risk level (LOW/MODERATE/HIGH/CRITICAL)
-      2. Key risk factors identified
-      3. Clinical recommendations
-      4. Brief assessment notes
+      const context: ClaudeRequestContext = {
+        userId: 'risk-assessment-user',
+        userRole: UserRole.ADMIN,
+        requestId: `risk-${Date.now()}`,
+        timestamp: new Date(),
+        requestType: RequestType.RISK_ASSESSMENT
+      };
 
-      Base your analysis on mobility, ADLs, fall risk, and functional independence. Be conservative in risk assessment.`;
+      const prompt = this.createRiskAssessmentPrompt(this.formatAssessmentForClaude(assessmentData));
+      const criteria = createModelCriteria(context.userRole, RequestType.RISK_ASSESSMENT, prompt);
 
-      const assessmentSummary = this.formatAssessmentForClaude(assessmentData);
-
-      const response = await this.client!.messages.create({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 500,
-        system: systemPrompt,
-        messages: [{
-          role: 'user',
-          content: `Analyze this functional assessment: ${assessmentSummary}`
-        }]
-      });
-
-      const analysis = response.content[0]?.type === 'text' ? response.content[0].text : '';
-      return this.parseRiskAnalysis(analysis);
+      const response = await this.generateResponse(prompt, context, criteria);
+      return this.parseRiskAnalysis(response.content);
 
     } catch (error) {
       console.error('Claude risk analysis error:', error);
@@ -199,35 +553,27 @@ class ClaudeService {
     }
   }
 
-  // Admin: Generate clinical notes from assessment data
   async generateClinicalNotes(patientData: any, assessmentData: any): Promise<string> {
     if (!this.isAvailable()) {
       return "Clinical notes generation unavailable. Please document findings manually.";
     }
 
     try {
-      const systemPrompt = `You are a clinical documentation assistant. Generate professional, concise clinical notes for a senior patient assessment. Include:
-      - Functional status summary
-      - Risk factors observed
-      - Clinical impressions
-      - Follow-up recommendations
+      const context: ClaudeRequestContext = {
+        userId: 'clinical-notes-user',
+        userRole: UserRole.ADMIN,
+        requestId: `clinical-${Date.now()}`,
+        timestamp: new Date(),
+        requestType: RequestType.CLINICAL_NOTES
+      };
 
-      Use medical terminology appropriate for healthcare records.`;
+      const prompt = this.createClinicalNotesPrompt(
+        this.formatClinicalContextForClaude(patientData, assessmentData)
+      );
+      const criteria = createModelCriteria(context.userRole, RequestType.CLINICAL_NOTES, prompt);
 
-      const contextData = this.formatClinicalContextForClaude(patientData, assessmentData);
-
-      const response = await this.client!.messages.create({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 400,
-        system: systemPrompt,
-        messages: [{
-          role: 'user',
-          content: `Generate clinical notes for: ${contextData}`
-        }]
-      });
-
-      return response.content[0]?.type === 'text' ? response.content[0].text :
-        "Unable to generate clinical notes. Please document assessment findings manually.";
+      const response = await this.generateResponse(prompt, context, criteria);
+      return response.content;
 
     } catch (error) {
       console.error('Claude clinical notes error:', error);
@@ -235,38 +581,30 @@ class ClaudeService {
     }
   }
 
-  // Generate personalized health suggestions
   async generateHealthSuggestions(userProfile: any, recentActivity: any): Promise<string[]> {
     if (!this.isAvailable()) {
       return ["Keep up your daily check-ins!", "Stay hydrated throughout the day.", "Take a short walk if you feel up to it."];
     }
 
     try {
-      const systemPrompt = `You are a wellness coach for seniors. Based on their profile and recent activity, suggest 3-5 simple, actionable health tips. Make them:
-      - Easy to understand and follow
-      - Age-appropriate
-      - Encouraging and positive
-      - Safe for seniors
+      const context: ClaudeRequestContext = {
+        userId: userProfile?.id || 'suggestions-user',
+        userRole: UserRole.SENIOR_PATIENT,
+        requestId: `suggestions-${Date.now()}`,
+        timestamp: new Date(),
+        requestType: RequestType.HEALTH_INSIGHTS
+      };
 
-      Return each suggestion on a new line.`;
+      const prompt = this.createHealthSuggestionsPrompt(
+        this.formatUserContextForClaude(userProfile, recentActivity)
+      );
+      const criteria = createModelCriteria(context.userRole, RequestType.HEALTH_INSIGHTS, prompt);
 
-      const contextInfo = this.formatUserContextForClaude(userProfile, recentActivity);
+      const response = await this.generateResponse(prompt, context, criteria);
+      const suggestions = response.content.split('\n').filter(line => line.trim()).slice(0, 5);
 
-      const response = await this.client!.messages.create({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 300,
-        system: systemPrompt,
-        messages: [{
-          role: 'user',
-          content: `Based on this user information, provide health suggestions: ${contextInfo}`
-        }]
-      });
-
-      const suggestions = response.content[0]?.type === 'text' ?
-        response.content[0].text.split('\n').filter(line => line.trim()) :
+      return suggestions.length > 0 ? suggestions :
         ["Keep up your daily check-ins!", "Stay hydrated throughout the day."];
-
-      return suggestions.slice(0, 5); // Limit to 5 suggestions
 
     } catch (error) {
       console.error('Claude suggestions error:', error);
@@ -274,36 +612,279 @@ class ClaudeService {
     }
   }
 
-  private formatHealthDataForClaude(healthData: any): string {
-    const parts = [];
+  /**
+   * Main response generation method with comprehensive error handling
+   */
+  private async generateResponse(
+    prompt: string,
+    context: ClaudeRequestContext,
+    criteria: { userRole: UserRole; requestType: RequestType; complexity: 'simple' | 'moderate' | 'complex' }
+  ): Promise<ClaudeResponse> {
+    this.ensureInitialized();
 
-    if (healthData.bp_systolic && healthData.bp_diastolic) {
-      parts.push(`Blood pressure: ${healthData.bp_systolic}/${healthData.bp_diastolic}`);
+    // Rate limiting check
+    if (!this.rateLimiter.canMakeRequest(context.userId)) {
+      const resetTime = this.rateLimiter.getResetTime(context.userId);
+      throw new ClaudeServiceError(
+        `Rate limit exceeded. Please try again after ${resetTime.toLocaleTimeString()}.`,
+        'RATE_LIMIT_EXCEEDED',
+        429,
+        undefined,
+        context.requestId
+      );
     }
 
-    if (healthData.heart_rate) {
-      parts.push(`Heart rate: ${healthData.heart_rate} bpm`);
+    // Select appropriate model
+    const model = modelSelector.selectModel({
+      ...criteria,
+      budgetTier: 'standard'
+    });
+
+    const maxTokens = criteria.complexity === 'simple' ? 1000 :
+                     criteria.complexity === 'moderate' ? 2000 : 4000;
+
+    // Cost estimation and budget check
+    const estimatedCost = this.costTracker.estimateCost(model, prompt, maxTokens);
+
+    if (!this.costTracker.canAffordRequest(context.userId, estimatedCost)) {
+      const costInfo = this.costTracker.getCostInfo(context.userId);
+      throw new ClaudeServiceError(
+        `Budget limit reached. Monthly spend: $${costInfo.monthlySpend.toFixed(2)}/$${(costInfo.monthlySpend + costInfo.remainingBudget).toFixed(2)}`,
+        'BUDGET_EXCEEDED',
+        402,
+        undefined,
+        context.requestId
+      );
     }
 
-    if (healthData.blood_sugar || healthData.glucose_mg_dl) {
-      const glucose = healthData.blood_sugar || healthData.glucose_mg_dl;
-      parts.push(`Blood sugar: ${glucose} mg/dL`);
-    }
+    const startTime = Date.now();
 
-    if (healthData.blood_oxygen || healthData.pulse_oximeter) {
-      const oxygen = healthData.blood_oxygen || healthData.pulse_oximeter;
-      parts.push(`Blood oxygen: ${oxygen}%`);
-    }
+    try {
+      const response = await this.circuitBreaker.execute(async () => {
+        return await this.client!.messages.create({
+          model,
+          max_tokens: maxTokens,
+          messages: [{ role: 'user', content: prompt }],
+          metadata: {
+            user_id: context.userId
+          }
+        });
+      });
 
-    if (healthData.weight) {
-      parts.push(`Weight: ${healthData.weight} lbs`);
-    }
+      const responseTime = Date.now() - startTime;
+      const actualCost = this.costTracker.calculateCost(
+        model,
+        response.usage.input_tokens,
+        response.usage.output_tokens
+      );
 
-    if (healthData.mood) {
-      parts.push(`Mood: ${healthData.mood}`);
-    }
+      // Record spending
+      this.costTracker.recordSpending(context.userId, actualCost);
 
-    return parts.length > 0 ? parts.join(', ') : 'No specific health metrics available';
+      // Log successful request
+      console.log(`✅ Claude request completed: ${context.requestType} | Model: ${model} | Cost: $${actualCost.toFixed(4)} | Time: ${responseTime}ms`);
+
+      return {
+        content: response.content[0]?.type === 'text' ? response.content[0].text : '',
+        model,
+        tokenUsage: {
+          inputTokens: response.usage.input_tokens,
+          outputTokens: response.usage.output_tokens
+        },
+        cost: actualCost,
+        responseTime,
+        requestId: context.requestId
+      };
+
+    } catch (error) {
+      console.error('❌ Claude API request failed:', {
+        requestId: context.requestId,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        model,
+        userId: context.userId
+      });
+
+      throw new ClaudeServiceError(
+        'Failed to generate response from Claude API',
+        'API_REQUEST_FAILED',
+        500,
+        error,
+        context.requestId
+      );
+    }
+  }
+
+  /**
+   * Prompt creation methods
+   */
+  private createSeniorHealthPrompt(question: string, healthContext?: HealthDataContext): string {
+    const contextInfo = healthContext ? this.formatHealthContextForSeniors(healthContext) : '';
+
+    return `You are a kind, patient health assistant helping an older adult understand their health.
+
+COMMUNICATION GUIDELINES:
+- Use simple, everyday language (8th grade level)
+- Keep sentences short and clear
+- Use familiar comparisons and analogies
+- Always be encouraging and supportive
+- Break complex information into small steps
+- Repeat important points for clarity
+
+${contextInfo}
+
+Patient's Question: ${question}
+
+Please provide a helpful, easy-to-understand response that:
+1. Directly addresses their concern
+2. Explains what they need to know in simple terms
+3. Provides clear, actionable next steps
+4. Reassures them when appropriate
+5. Suggests when to contact their doctor
+
+IMPORTANT: Always remind them to check with their healthcare provider for personalized medical advice.
+
+Format your response with clear headings and short paragraphs.`;
+  }
+
+  private createMedicalAnalyticsPrompt(analysisRequest: string, healthData: HealthDataContext[]): string {
+    const aggregatedData = this.aggregateHealthData(healthData);
+
+    return `You are a clinical analytics AI providing insights for healthcare administrators.
+
+PATIENT POPULATION DATA:
+${aggregatedData}
+
+ANALYSIS REQUEST: ${analysisRequest}
+
+Provide comprehensive analysis including:
+
+1. POPULATION HEALTH OVERVIEW:
+   - Key health trends and patterns
+   - Risk stratification of patient population
+   - Common conditions and their prevalence
+
+2. CLINICAL INSIGHTS:
+   - Evidence-based recommendations
+   - Quality improvement opportunities
+   - Care gap identification
+
+3. PREDICTIVE ANALYTICS:
+   - Risk prediction modeling
+   - Resource allocation recommendations
+   - Cost-effectiveness analysis
+
+4. ACTIONABLE RECOMMENDATIONS:
+   - Specific intervention strategies
+   - Priority areas for improvement
+   - Expected outcomes and timelines
+
+Use appropriate medical terminology and cite relevant clinical guidelines where applicable.`;
+  }
+
+  private createFHIRAnalysisPrompt(fhirData: any, analysisType: string): string {
+    return `You are analyzing FHIR healthcare data to provide clinical insights.
+
+FHIR DATA:
+${JSON.stringify(fhirData, null, 2)}
+
+ANALYSIS TYPE: ${analysisType}
+
+Please provide a comprehensive analysis appropriate for healthcare professionals, including clinical significance, risk factors, and evidence-based recommendations.
+
+Focus on actionable insights that can improve patient care and health outcomes.`;
+  }
+
+  private createRiskAssessmentPrompt(assessmentSummary: string): string {
+    return `You are a healthcare AI assistant helping clinicians assess senior patient risk. Analyze functional assessment data and provide:
+1. Risk level (LOW/MODERATE/HIGH/CRITICAL)
+2. Key risk factors identified
+3. Clinical recommendations
+4. Brief assessment notes
+
+Base your analysis on mobility, ADLs, fall risk, and functional independence. Be conservative in risk assessment.
+
+Analyze this functional assessment: ${assessmentSummary}`;
+  }
+
+  private createClinicalNotesPrompt(contextData: string): string {
+    return `You are a clinical documentation assistant. Generate professional, concise clinical notes for a senior patient assessment. Include:
+- Functional status summary
+- Risk factors observed
+- Clinical impressions
+- Follow-up recommendations
+
+Use medical terminology appropriate for healthcare records.
+
+Generate clinical notes for: ${contextData}`;
+  }
+
+  private createHealthSuggestionsPrompt(contextInfo: string): string {
+    return `You are a wellness coach for seniors. Based on their profile and recent activity, suggest 3-5 simple, actionable health tips. Make them:
+- Easy to understand and follow
+- Age-appropriate
+- Encouraging and positive
+- Safe for seniors
+
+Return each suggestion on a new line.
+
+Based on this user information, provide health suggestions: ${contextInfo}`;
+  }
+
+  /**
+   * Helper methods for data formatting
+   */
+  private formatHealthContextForSeniors(context: HealthDataContext): string {
+    const { demographics, currentConditions, medications, recentVitals } = context;
+
+    return `PATIENT INFORMATION:
+Age: ${demographics.age}
+Current Health Conditions: ${currentConditions.map(c => c.condition).join(', ') || 'None listed'}
+Current Medications: ${medications.map(m => `${m.name} (${m.purpose})`).join(', ') || 'None listed'}
+Recent Health Measurements: Blood pressure: ${recentVitals.bloodPressure || 'Not recorded'}
+Weight: ${recentVitals.weight ? `${recentVitals.weight} lbs` : 'Not recorded'}`;
+  }
+
+  private aggregateHealthData(healthData: HealthDataContext[]): string {
+    const totalPatients = healthData.length;
+    const avgAge = healthData.reduce((sum, p) => sum + p.demographics.age, 0) / totalPatients;
+
+    const conditionCounts = new Map<string, number>();
+    healthData.forEach(patient => {
+      patient.currentConditions.forEach(condition => {
+        conditionCounts.set(condition.condition, (conditionCounts.get(condition.condition) || 0) + 1);
+      });
+    });
+
+    return `POPULATION SUMMARY:
+Total Patients: ${totalPatients}
+Average Age: ${avgAge.toFixed(1)} years
+Most Common Conditions: ${Array.from(conditionCounts.entries())
+  .sort(([,a], [,b]) => b - a)
+  .slice(0, 5)
+  .map(([condition, count]) => `${condition} (${count} patients)`)
+  .join(', ')}`;
+  }
+
+  private convertLegacyHealthData(healthData: any): HealthDataContext | undefined {
+    if (!healthData) return undefined;
+
+    return {
+      patientId: 'legacy-patient',
+      demographics: {
+        age: 75,
+        gender: 'unknown'
+      },
+      currentConditions: [],
+      medications: [],
+      recentVitals: {
+        bloodPressure: healthData.bp_systolic && healthData.bp_diastolic ?
+          `${healthData.bp_systolic}/${healthData.bp_diastolic}` : undefined,
+        heartRate: healthData.heart_rate,
+        weight: healthData.weight,
+        bloodSugar: healthData.blood_sugar || healthData.glucose_mg_dl,
+        lastUpdated: new Date().toISOString()
+      }
+    };
   }
 
   private formatUserContextForClaude(userProfile: any, recentActivity: any): string {
@@ -332,7 +913,6 @@ class ClaudeService {
   private formatAssessmentForClaude(assessmentData: any): string {
     const parts = [];
 
-    // Functional assessment data
     if (assessmentData.walking_ability) parts.push(`Walking: ${assessmentData.walking_ability}`);
     if (assessmentData.stair_climbing) parts.push(`Stairs: ${assessmentData.stair_climbing}`);
     if (assessmentData.sitting_ability) parts.push(`Sitting: ${assessmentData.sitting_ability}`);
@@ -342,12 +922,10 @@ class ClaudeService {
     if (assessmentData.meal_preparation) parts.push(`Meals: ${assessmentData.meal_preparation}`);
     if (assessmentData.medication_management) parts.push(`Medications: ${assessmentData.medication_management}`);
 
-    // Fall risk factors
     if (assessmentData.fall_risk_factors?.length > 0) {
       parts.push(`Fall risks: ${assessmentData.fall_risk_factors.join(', ')}`);
     }
 
-    // Risk scores
     if (assessmentData.medical_risk_score) parts.push(`Medical risk: ${assessmentData.medical_risk_score}/10`);
     if (assessmentData.mobility_risk_score) parts.push(`Mobility risk: ${assessmentData.mobility_risk_score}/10`);
     if (assessmentData.cognitive_risk_score) parts.push(`Cognitive risk: ${assessmentData.cognitive_risk_score}/10`);
@@ -368,7 +946,6 @@ class ClaudeService {
       if (age) parts.push(`Age: ${age}`);
     }
 
-    // Include assessment summary
     const assessmentSummary = this.formatAssessmentForClaude(assessmentData);
     if (assessmentSummary) parts.push(`Assessment: ${assessmentSummary}`);
 
@@ -381,7 +958,6 @@ class ClaudeService {
     recommendations: string[];
     clinicalNotes: string;
   } {
-    // Simple parsing of Claude's response
     const lines = analysis.split('\n').filter(line => line.trim());
 
     let suggestedRiskLevel = 'MODERATE';
@@ -423,8 +999,73 @@ class ClaudeService {
       clinicalNotes: clinicalNotes.substring(0, 500)
     };
   }
+
+  /**
+   * Service status and monitoring methods
+   */
+  public getServiceStatus(): ServiceStatus {
+    return {
+      isInitialized: this.isInitialized,
+      isHealthy: this.client !== null,
+      lastHealthCheck: this.lastHealthCheck || new Date(0),
+      circuitBreakerState: this.circuitBreaker.getState(),
+      apiKeyValid: !!env.REACT_APP_ANTHROPIC_API_KEY,
+      modelsAvailable: Object.values(ClaudeModel)
+    };
+  }
+
+  public getCostInfo(userId: string): CostInfo {
+    return this.costTracker.getCostInfo(userId);
+  }
+
+  public getRateLimitInfo(userId: string): {
+    remaining: number;
+    resetTime: Date;
+    limit: number;
+  } {
+    return {
+      remaining: this.rateLimiter.getRemainingRequests(userId),
+      resetTime: this.rateLimiter.getResetTime(userId),
+      limit: 60 // maxRequests
+    };
+  }
+
+  public getCircuitBreakerStatus(): { state: string; failures: number; lastFailure?: Date } {
+    return this.circuitBreaker.getStatus();
+  }
+
+  public getSpendingSummary(): { totalDaily: number; totalMonthly: number; userCount: number } {
+    return this.costTracker.getSpendingSummary();
+  }
+
+  /**
+   * Administrative methods
+   */
+  public async resetService(): Promise<void> {
+    console.log('🔄 Resetting Claude service...');
+    this.isInitialized = false;
+    this.client = null;
+    this.lastHealthCheck = undefined;
+    await this.initialize();
+  }
+
+  public resetDailySpending(): void {
+    this.costTracker.resetDailySpend();
+  }
 }
 
-// Export singleton instance
-export const claudeService = new ClaudeService();
+// Export singleton instance and types
+export const claudeService = ClaudeService.getInstance();
 export default claudeService;
+
+// Export types for use in other components
+export {
+  UserRole,
+  ClaudeModel,
+  RequestType,
+  type ClaudeRequestContext,
+  type ClaudeResponse,
+  type HealthDataContext,
+  type ServiceStatus,
+  type CostInfo
+} from '../types/claude';
