@@ -1,3 +1,4 @@
+# .github/workflows/security-scan.yml
 name: Security Scan
 
 on:
@@ -6,8 +7,7 @@ on:
   pull_request:
     branches: [ main ]
   schedule:
-    # Run security scan every Monday at 2 AM UTC
-    - cron: '0 2 * * 1'
+    - cron: '0 2 * * 1' # Mondays 02:00 UTC
 
 jobs:
   security-scan:
@@ -19,148 +19,248 @@ jobs:
       contents: read
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
 
-    - name: Install dependencies
-      run: npm ci
+      - name: Install tooling (jq + audit-ci)
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y jq
+          npm i -g audit-ci
 
-    - name: Run npm audit
-      run: |
-        echo "## NPM Security Audit" >> $GITHUB_STEP_SUMMARY
-        npm audit --audit-level=moderate --json > audit-results.json || true
-
-        # Parse and display results
-        if [ -s audit-results.json ]; then
-          echo "### Vulnerabilities Found:" >> $GITHUB_STEP_SUMMARY
-          cat audit-results.json | jq -r '.vulnerabilities | to_entries[] | "- **\(.key)**: \(.value.severity) - \(.value.title)"' >> $GITHUB_STEP_SUMMARY || echo "No vulnerabilities or parsing error" >> $GITHUB_STEP_SUMMARY
-        else
-          echo "✅ No vulnerabilities found!" >> $GITHUB_STEP_SUMMARY
-        fi
-
-    - name: Run CodeQL Analysis
-      uses: github/codeql-action/init@v3
-      with:
-        languages: javascript, typescript
-
-    - name: Autobuild
-      uses: github/codeql-action/autobuild@v3
-
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
-
-    - name: Run ESLint Security Plugin
-      run: |
-        npm install eslint-plugin-security --save-dev
-        echo "module.exports = { extends: ['plugin:security/recommended'], plugins: ['security'], env: { node: true, es6: true }, parserOptions: { ecmaVersion: 2021, sourceType: 'module' } };" > .eslintrc.security.js
-        npx eslint --config .eslintrc.security.js --ext .js,.ts,.tsx src/ supabase/ --format json > eslint-security.json || true
-
-        echo "## ESLint Security Scan" >> $GITHUB_STEP_SUMMARY
-        if [ -s eslint-security.json ]; then
-          echo "### Security Issues Found:" >> $GITHUB_STEP_SUMMARY
-          cat eslint-security.json | jq -r '.[] | select(.messages | length > 0) | .filePath as $file | .messages[] | "- **\($file)**: \(.message) (Line \(.line))"' >> $GITHUB_STEP_SUMMARY || echo "No security issues found" >> $GITHUB_STEP_SUMMARY
-        else
-          echo "✅ No security issues found!" >> $GITHUB_STEP_SUMMARY
-        fi
-
-    - name: Check for secrets in code
-      run: |
-        echo "## Secret Detection" >> $GITHUB_STEP_SUMMARY
-
-        # Check for common secret patterns
-        SECRET_PATTERNS=(
-          "password\s*=\s*['\"][^'\"]{8,}"
-          "api[_-]?key\s*[=:]\s*['\"][^'\"]{20,}"
-          "secret[_-]?key\s*[=:]\s*['\"][^'\"]{20,}"
-          "token\s*[=:]\s*['\"][^'\"]{20,}"
-          "-----BEGIN [A-Z ]+-----"
-        )
-
-        FOUND_SECRETS=false
-        for pattern in "${SECRET_PATTERNS[@]}"; do
-          if grep -r -i -E "$pattern" src/ supabase/ --exclude-dir=node_modules --exclude="*.md" --exclude="*.json" 2>/dev/null; then
-            echo "⚠️ Potential secret found with pattern: $pattern" >> $GITHUB_STEP_SUMMARY
-            FOUND_SECRETS=true
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm i
           fi
-        done
 
-        if [ "$FOUND_SECRETS" = false ]; then
-          echo "✅ No hardcoded secrets detected!" >> $GITHUB_STEP_SUMMARY
-        fi
+      - name: Init summary + fail flag
+        run: |
+          echo "## 🔒 Security Scan – WellFit Community" >> $GITHUB_STEP_SUMMARY
+          echo "Started at $(date -u) UTC" >> $GITHUB_STEP_SUMMARY
+          echo "FAIL=0" >> $GITHUB_ENV
 
-    - name: Dependency vulnerability check
-      run: |
-        echo "## Dependency Security Check" >> $GITHUB_STEP_SUMMARY
+      # ---------------------------
+      # Insecure protocol scanner
+      # ---------------------------
+      - name: Scan for insecure http:// and ws://
+        id: insecure-scan
+        run: |
+          echo "## Insecure Request Scan" >> $GITHUB_STEP_SUMMARY
 
-        # Check for known vulnerable packages
-        npx audit-ci --config audit-ci.json || true
+          # Find http:// and ws:// (skip build caches)
+          MATCH_HTTP=$(grep -Rni "http://" . \
+            --exclude-dir=node_modules --exclude-dir=build --exclude-dir=dist --exclude-dir=.git 2>/dev/null || true)
+          MATCH_WS=$(grep -Rni "ws://" . \
+            --exclude-dir=node_modules --exclude-dir=build --exclude-dir=dist --exclude-dir=.git 2>/dev/null || true)
 
-        # Check package.json for outdated packages with security issues
-        npm outdated --json > outdated.json || true
-        if [ -s outdated.json ]; then
-          echo "### Outdated Packages:" >> $GITHUB_STEP_SUMMARY
-          cat outdated.json | jq -r 'to_entries[] | "- **\(.key)**: Current \(.value.current), Latest \(.value.latest)"' >> $GITHUB_STEP_SUMMARY || echo "Package check completed" >> $GITHUB_STEP_SUMMARY
-        fi
+          if [ -n "$MATCH_HTTP$MATCH_WS" ]; then
+            echo "### ❌ Insecure references found:" >> $GITHUB_STEP_SUMMARY
+            {
+              echo '```'
+              echo "$MATCH_HTTP"
+              echo "$MATCH_WS"
+              echo '```'
+            } >> $GITHUB_STEP_SUMMARY
+            echo "FAIL=1" >> $GITHUB_ENV
+          else
+            echo "✅ No insecure protocol references found." >> $GITHUB_STEP_SUMMARY
+          fi
 
-    - name: Security Headers Check
-      run: |
-        echo "## Security Headers Analysis" >> $GITHUB_STEP_SUMMARY
+      # ---------------------------
+      # NPM audit (JSON to summary)
+      # ---------------------------
+      - name: Run npm audit
+        run: |
+          echo "## NPM Security Audit" >> $GITHUB_STEP_SUMMARY
+          npm audit --audit-level=moderate --json > audit-results.json || true
 
-        # Check if security headers are implemented in code
-        HEADERS_FOUND=0
+          if [ -s audit-results.json ]; then
+            COUNT=$(jq '.metadata.vulnerabilities.total // 0' audit-results.json)
+            if [ "$COUNT" -gt 0 ]; then
+              echo "### ❌ Vulnerabilities Found: $COUNT" >> $GITHUB_STEP_SUMMARY
+              jq -r '
+                .vulnerabilities
+                | to_entries[]
+                | select(.value.severity != null)
+                | "- **\(.key)**: \(.value.severity) – \(.value.title)"
+              ' audit-results.json >> $GITHUB_STEP_SUMMARY || echo "Parse error" >> $GITHUB_STEP_SUMMARY
+              echo "FAIL=1" >> $GITHUB_ENV
+            else
+              echo "✅ No vulnerabilities found!" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "ℹ️ npm audit produced no output." >> $GITHUB_STEP_SUMMARY
+          fi
 
-        if grep -r "Content-Security-Policy" supabase/ src/ public/ 2>/dev/null || false; then
-          echo "✅ Content-Security-Policy implemented" >> $GITHUB_STEP_SUMMARY
-          ((HEADERS_FOUND++))
-        fi
+      # ---------------------------
+      # CodeQL
+      # ---------------------------
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript, typescript
 
-        if grep -r "X-Frame-Options" supabase/ src/ 2>/dev/null || false; then
-          echo "✅ X-Frame-Options implemented" >> $GITHUB_STEP_SUMMARY
-          ((HEADERS_FOUND++))
-        fi
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
 
-        if grep -r "X-Content-Type-Options" supabase/ src/ 2>/dev/null || false; then
-          echo "✅ X-Content-Type-Options implemented" >> $GITHUB_STEP_SUMMARY
-          ((HEADERS_FOUND++))
-        fi
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
 
-        echo "### Security Headers Score: $HEADERS_FOUND/3" >> $GITHUB_STEP_SUMMARY
+      # ---------------------------
+      # ESLint Security
+      # ---------------------------
+      - name: Run ESLint Security Plugin
+        run: |
+          npm i -D eslint eslint-plugin-security
+          echo "module.exports = { extends: ['plugin:security/recommended'], plugins: ['security'], env: { node: true, es6: true }, parserOptions: { ecmaVersion: 2021, sourceType: 'module' } };" > .eslintrc.security.js
+          npx eslint --config .eslintrc.security.js --ext .js,.ts,.tsx src/ supabase/ --format json > eslint-security.json || true
 
-    - name: CORS Configuration Check
-      run: |
-        echo "## CORS Security Check" >> $GITHUB_STEP_SUMMARY
+          echo "## ESLint Security Scan" >> $GITHUB_STEP_SUMMARY
+          if [ -s eslint-security.json ]; then
+            ISSUES=$(jq '[.[].messages] | flatten | length' eslint-security.json)
+            if [ "$ISSUES" -gt 0 ]; then
+              echo "### ❌ Security Issues Found: $ISSUES" >> $GITHUB_STEP_SUMMARY
+              jq -r '
+                .[] | select(.messages | length > 0)
+                | .filePath as $file
+                | .messages[] | "- **\($file)**: \(.message) (Line \(.line))"
+              ' eslint-security.json >> $GITHUB_STEP_SUMMARY || echo "Parse error" >> $GITHUB_STEP_SUMMARY
+              echo "FAIL=1" >> $GITHUB_ENV
+            else
+              echo "✅ No security issues found!" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "ℹ️ ESLint produced no output." >> $GITHUB_STEP_SUMMARY
 
-        # Check for wildcard CORS
-        if grep -r "Access-Control-Allow-Origin.*\*" supabase/ src/ 2>/dev/null; then
-          echo "⚠️ Wildcard CORS detected - security risk!" >> $GITHUB_STEP_SUMMARY
-        else
-          echo "✅ No wildcard CORS found" >> $GITHUB_STEP_SUMMARY
-        fi
+      # ---------------------------
+      # Secret scanning (filenames only)
+      # ---------------------------
+      - name: Check for secrets in code
+        run: |
+          echo "## Secret Detection" >> $GITHUB_STEP_SUMMARY
 
-        # Check for proper CORS implementation
-        if grep -r "ALLOWED_ORIGINS\|allowedOrigins" supabase/ src/ 2>/dev/null; then
-          echo "✅ Origin allowlist implementation found" >> $GITHUB_STEP_SUMMARY
-        fi
+          # Patterns (do not echo matched content)
+          PATTERNS=(
+            "password[[:space:]]*=[[:space:]]*['\"][^'\"]\{8,\}"
+            "api[_-]?key[[:space:]]*[:=][[:space:]]*['\"][^'\"]\{20,\}"
+            "secret[_-]?key[[:space:]]*[:=][[:space:]]*['\"][^'\"]\{20,\}"
+            "token[[:space:]]*[:=][[:space:]]*['\"][^'\"]\{20,\}"
+            "-----BEGIN [A-Z ]\+-----"
+          )
 
-    - name: Upload scan results
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: security-scan-results
-        path: |
-          audit-results.json
-          eslint-security.json
-          outdated.json
-        retention-days: 30
+          FOUND=false
+          FILES=$(git ls-files | grep -Ev '(\.md$|\.png$|\.jpg$|\.jpeg$|\.gif$|\.svg$|\.ico$|\.pdf$|^node_modules/|^dist/|^build/)' || true)
 
-    - name: Security Scan Summary
-      run: |
-        echo "## 🔒 Security Scan Complete" >> $GITHUB_STEP_SUMMARY
-        echo "Scan completed at $(date)" >> $GITHUB_STEP_SUMMARY
-        echo "**Next scan:** Scheduled for next Monday or on next push to main" >> $GITHUB_STEP_SUMMARY
+          for f in $FILES; do
+            for p in "${PATTERNS[@]}"; do
+              if grep -E -q "$p" "$f"; then
+                echo "- Potential secret in **$f**" >> $GITHUB_STEP_SUMMARY
+                FOUND=true
+                break
+              fi
+            done
+          done
+
+          if [ "$FOUND" = true ]; then
+            echo "### ❌ Potential secrets detected." >> $GITHUB_STEP_SUMMARY
+            echo "FAIL=1" >> $GITHUB_ENV
+          else
+            echo "✅ No hardcoded secrets detected!" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      # ---------------------------
+      # Dependency check (audit-ci + outdated)
+      # ---------------------------
+      - name: Dependency vulnerability check
+        run: |
+          echo "## Dependency Security Check" >> $GITHUB_STEP_SUMMARY
+
+          audit-ci --low || echo "audit-ci finished (non-blocking)"
+
+          npm outdated --json > outdated.json || true
+          if [ -s outdated.json ]; then
+            echo "### Outdated Packages:" >> $GITHUB_STEP_SUMMARY
+            jq -r 'to_entries[] | "- **\(.key)**: Current \(.value.current // "n/a"), Latest \(.value.latest // "n/a")"' outdated.json >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ No outdated packages reported." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      # ---------------------------
+      # Headers & CORS checks
+      # ---------------------------
+      - name: Security Headers Check
+        run: |
+          echo "## Security Headers Analysis" >> $GITHUB_STEP_SUMMARY
+          SCORE=0
+
+          if grep -R "Content-Security-Policy" public/ supabase/ src/ 2>/dev/null; then echo "✅ Content-Security-Policy present" >> $GITHUB_STEP_SUMMARY; SCORE=$((SCORE+1)); fi
+          if grep -R "X-Content-Type-Options" public/ supabase/ src/ 2>/dev/null; then echo "✅ X-Content-Type-Options present" >> $GITHUB_STEP_SUMMARY; SCORE=$((SCORE+1)); fi
+          if grep -R "X-Frame-Options" public/ supabase/ src/ 2>/dev/null; then echo "✅ X-Frame-Options present" >> $GITHUB_STEP_SUMMARY; SCORE=$((SCORE+1)); fi
+
+          # Helpful extras many scanners expect:
+          if grep -R "Strict-Transport-Security" public/ supabase/ src/ 2>/dev/null; then echo "✅ HSTS present" >> $GITHUB_STEP_SUMMARY; SCORE=$((SCORE+1)); fi
+          if grep -R "Referrer-Policy" public/ supabase/ src/ 2>/dev/null; then echo "✅ Referrer-Policy present" >> $GITHUB_STEP_SUMMARY; SCORE=$((SCORE+1)); fi
+          if grep -R "Permissions-Policy" public/ supabase/ src/ 2>/dev/null; then echo "✅ Permissions-Policy present" >> $GITHUB_STEP_SUMMARY; SCORE=$((SCORE+1)); fi
+
+          echo "### Headers Score: $SCORE/6" >> $GITHUB_STEP_SUMMARY
+
+      - name: CORS Configuration Check
+        run: |
+          echo "## CORS Security Check" >> $GITHUB_STEP_SUMMARY
+
+          if grep -R "Access-Control-Allow-Origin.*\*" supabase/ src/ 2>/dev/null; then
+            echo "❌ Wildcard CORS detected - security risk!" >> $GITHUB_STEP_SUMMARY
+            echo "FAIL=1" >> $GITHUB_ENV
+          else
+            echo "✅ No wildcard CORS found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if grep -R "ALLOWED_ORIGINS\|allowedOrigins" supabase/ src/ 2>/dev/null; then
+            echo "✅ Origin allowlist implementation found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      # ---------------------------
+      # Upload artifacts
+      # ---------------------------
+      - name: Ensure result files exist
+        if: always()
+        run: |
+          touch audit-results.json eslint-security.json outdated.json
+
+      - name: Upload scan results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-scan-results
+          path: |
+            audit-results.json
+            eslint-security.json
+            outdated.json
+          retention-days: 30
+
+      # ---------------------------
+      # Finalize
+      # ---------------------------
+      - name: Security Scan Summary
+        if: always()
+        run: |
+          echo "## ✅ Security Scan Complete" >> $GITHUB_STEP_SUMMARY
+          echo "Completed at $(date -u) UTC" >> $GITHUB_STEP_SUMMARY
+          echo "**Next scan:** Next Monday or on your next push" >> $GITHUB_STEP_SUMMARY
+
+      - name: Fail if critical issues were found
+        if: always()
+        run: |
+          if [ "$FAIL" = "1" ]; then
+            echo "🔴 Critical issues detected (see summary). Failing job."
+            exit 1
+          fi
