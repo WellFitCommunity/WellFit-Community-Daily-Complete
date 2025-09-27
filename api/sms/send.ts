@@ -26,7 +26,12 @@ function validateInternalApiKey(req: VercelRequest): boolean {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // Option 1: Require valid session (user must be logged in)
-    const session = await getServerSession(req);
+    // Convert VercelRequest to standard Request
+    const request = new Request(req.url || '', {
+      method: req.method,
+      headers: new Headers(req.headers as Record<string, string>),
+    });
+    const session = await getServerSession(request);
     // Option 2: Allow internal API key bypass
     const hasValidApiKey = validateInternalApiKey(req);
 
