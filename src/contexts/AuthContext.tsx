@@ -23,6 +23,9 @@ type AuthContextValue = {
 
   signOut: () => Promise<void>;
   isAdmin: boolean; // computed from metadata + DB user_roles
+
+  // Error handling
+  handleAuthError: (error: any) => Promise<boolean>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -50,6 +53,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [metaAdmin, setMetaAdmin] = useState(false);
   const [dbAdmin, setDbAdmin] = useState<boolean | null>(null); // null = unknown, true/false when known
 
+  // Handle session expiry gracefully
+  const handleSessionExpiry = React.useCallback(async () => {
+    try {
+      console.log('[Auth] Handling session expiry - clearing auth state');
+
+      // Clear all auth state
+      setSession(null);
+      setUser(null);
+      setMetaAdmin(false);
+      setDbAdmin(null);
+      setError(null);
+
+      // Clear any stored tokens
+      localStorage.removeItem('supabase.auth.token');
+      sessionStorage.removeItem('supabase.auth.token');
+
+      // Sign out cleanly from Supabase
+      await supabase.auth.signOut({ scope: 'local' });
+
+      // Redirect to login if not already there
+      const currentPath = window.location.pathname;
+      if (currentPath !== '/login' && currentPath !== '/register' && currentPath !== '/') {
+        console.log('[Auth] Redirecting to login due to session expiry');
+        window.location.href = '/login';
+      }
+    } catch (error) {
+      console.error('[Auth] Error during session expiry handling:', error);
+      // Force redirect even if cleanup fails
+      window.location.href = '/login';
+    }
+  }, []);
+
+  // Global error handler for auth-related errors
+  const handleAuthError = React.useCallback(async (error: any) => {
+    const errorMessage = error?.message || '';
+
+    if (errorMessage.includes('Invalid Refresh Token') ||
+        errorMessage.includes('Session Expired') ||
+        errorMessage.includes('Revoked by Newer Login') ||
+        error?.status === 400) {
+      await handleSessionExpiry();
+      return true; // Handled
+    }
+
+    return false; // Not handled
+  }, [handleSessionExpiry]);
+
   async function refreshDbRoles(u: User | null) {
     try {
       if (!u?.id) {
@@ -63,6 +113,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('user_id', u.id);
 
       if (selErr) {
+        // Check if this is a session expiry error
+        if (selErr.message?.includes('Invalid Refresh Token') ||
+            selErr.message?.includes('Session Expired') ||
+            selErr.code === 'PGRST301') {
+          await handleSessionExpiry();
+          return;
+        }
+
         if (process.env.NODE_ENV !== 'production') {
           console.warn('[Auth] user_roles fetch failed:', selErr.message);
         }
@@ -73,13 +131,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const roles = (data || []).map((r: any) => String(r.role));
       const hasAdmin = roles.includes('admin') || roles.includes('super_admin');
       setDbAdmin(hasAdmin);
-    } catch (e) {
+    } catch (e: any) {
+      // Check if this is a session expiry error
+      if (e.message?.includes('Invalid Refresh Token') ||
+          e.message?.includes('Session Expired')) {
+        await handleSessionExpiry();
+        return;
+      }
+
       if (process.env.NODE_ENV !== 'production') {
         console.warn('[Auth] refreshDbRoles exception:', e);
       }
       setDbAdmin(null);
     }
   }
+
 
   // Initial session
   useEffect(() => {
@@ -89,9 +155,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         setLoading(true);
         const { data, error } = await supabase.auth.getSession();
-        if (error && process.env.NODE_ENV !== 'production') {
-          console.error('[Auth] getSession error:', error.message);
+
+        // Handle session expiry errors during initial load
+        if (error) {
+          if (error.message?.includes('Invalid Refresh Token') ||
+              error.message?.includes('Session Expired')) {
+            await handleSessionExpiry();
+            return;
+          }
+
+          if (process.env.NODE_ENV !== 'production') {
+            console.error('[Auth] getSession error:', error.message);
+          }
         }
+
         if (cancelled) return;
 
         const s = data?.session ?? null;
@@ -103,6 +180,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setMetaAdmin(m);
         refreshDbRoles(u); // async, non-blocking
       } catch (e: any) {
+        // Handle session expiry errors in catch block too
+        if (e.message?.includes('Invalid Refresh Token') ||
+            e.message?.includes('Session Expired')) {
+          if (!cancelled) await handleSessionExpiry();
+          return;
+        }
+
         if (!cancelled) setError(e);
       } finally {
         if (!cancelled) setLoading(false);
@@ -111,10 +195,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Subscribe to auth changes
     const { data: sub } = supabase.auth.onAuthStateChange(
-      (event: AuthChangeEvent, newSession: Session | null) => {
+      async (event: AuthChangeEvent, newSession: Session | null) => {
         if (process.env.NODE_ENV !== 'production') {
           console.log('[Auth] State change:', event, Boolean(newSession));
         }
+
+        // Handle session expiry/refresh token errors
+        if (event === 'TOKEN_REFRESHED' && !newSession) {
+          console.warn('[Auth] Token refresh failed - session expired');
+          await handleSessionExpiry();
+          return;
+        }
+
+        if (event === 'SIGNED_OUT' && session) {
+          // Clear any stored tokens on explicit sign out
+          localStorage.removeItem('supabase.auth.token');
+          sessionStorage.removeItem('supabase.auth.token');
+        }
+
         const u = newSession?.user ?? null;
         setSession(newSession);
         setUser(u);
@@ -230,7 +328,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signUp,
     signOut,
     isAdmin,
-  }), [session, user, loading, error, isAdmin]);
+    handleAuthError,
+  }), [session, user, loading, error, isAdmin, handleAuthError]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
@@ -255,4 +354,53 @@ export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used within <AuthProvider>');
   return ctx;
+}
+
+// Helper hook for automatic auth error handling
+export function useAuthErrorHandler() {
+  const { handleAuthError } = useAuth();
+
+  return React.useCallback(async (error: any) => {
+    const handled = await handleAuthError(error);
+    if (!handled) {
+      // If not an auth error, rethrow for normal error handling
+      throw error;
+    }
+  }, [handleAuthError]);
+}
+
+// Higher-order function to wrap API calls with auth error handling
+export function withAuthErrorHandling<T extends (...args: any[]) => Promise<any>>(fn: T): T {
+  return (async (...args: any[]) => {
+    try {
+      return await fn(...args);
+    } catch (error: any) {
+      // Check if this looks like an auth error
+      const errorMessage = error?.message || '';
+      if (errorMessage.includes('Invalid Refresh Token') ||
+          errorMessage.includes('Session Expired') ||
+          errorMessage.includes('Revoked by Newer Login') ||
+          error?.status === 400) {
+
+        // Try to get auth context
+        try {
+          const authContext = document.querySelector('[data-auth-provider]') as any;
+          if (authContext?._authContext?.handleAuthError) {
+            const handled = await authContext._authContext.handleAuthError(error);
+            if (handled) return;
+          }
+        } catch (e) {
+          console.warn('[Auth] Could not access auth context for error handling');
+        }
+
+        // Fallback: clear storage and redirect
+        localStorage.removeItem('supabase.auth.token');
+        sessionStorage.removeItem('supabase.auth.token');
+        window.location.href = '/login';
+        return;
+      }
+
+      throw error;
+    }
+  }) as T;
 }
