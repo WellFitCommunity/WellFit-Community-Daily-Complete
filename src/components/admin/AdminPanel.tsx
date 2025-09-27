@@ -660,11 +660,6 @@ const AdminPanel: React.FC = () => {
 
         <section className="mt-6 border rounded-xl p-6 bg-gradient-to-br from-purple-50 to-blue-50">
           <h2 className="text-xl font-semibold text-purple-800 mb-4">AI-Enhanced FHIR Analytics</h2>
-          <div className="mb-4 p-4 bg-yellow-100 border border-yellow-400 rounded">
-            <p className="text-yellow-800">🔍 Debug: FHIR section should render here</p>
-            <p className="text-sm">URL: {process.env.REACT_APP_SUPABASE_URL ? 'Found' : 'Missing'}</p>
-            <p className="text-sm">Key: {process.env.REACT_APP_SUPABASE_ANON_KEY ? 'Found' : 'Missing'}</p>
-          </div>
           <FhirAiDashboard
             supabaseUrl={process.env.REACT_APP_SUPABASE_URL || ''}
             supabaseKey={process.env.REACT_APP_SUPABASE_ANON_KEY || ''}

@@ -1,6 +1,7 @@
 // src/components/admin/NurseQuestionManager.tsx - AI-Powered Nurse Response System
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, Clock, AlertTriangle, MessageCircle, Brain, Send, User, Phone } from 'lucide-react';
+import { fetchNurseQueue, claimQuestion, fetchMyQuestions, addNurseNote, submitAnswer } from '../../lib/nurseApi';
 
 interface Question {
   id: string;
@@ -89,8 +90,26 @@ const NurseQuestionManager: React.FC = () => {
   }, []);
 
   const loadQuestions = async () => {
-    // TODO: Replace with actual database call when ready
-    setQuestions(mockQuestions);
+    try {
+      const data = await fetchNurseQueue();
+      setQuestions(data.map(q => ({
+        id: q.question_id,
+        user_id: '',
+        question_text: q.preview,
+        category: 'general' as const,
+        status: 'pending' as const,
+        urgency: 'medium' as const,
+        created_at: q.asked_at,
+        patient_profile: {
+          first_name: 'Patient',
+          last_name: '',
+          phone: ''
+        }
+      })));
+    } catch (error) {
+      console.error('Failed to load questions:', error);
+      setQuestions(mockQuestions);
+    }
   };
 
   const generateAISuggestion = async (question: Question) => {
@@ -135,13 +154,11 @@ const NurseQuestionManager: React.FC = () => {
 
     setSubmitting(true);
     try {
-      // TODO: Replace with actual database update
-      console.log('Submitting response:', {
-        questionId: selectedQuestion.id,
-        response: responseText,
-        notes: nurseNotes,
-        aiSuggestion: aiSuggestion
-      });
+      await submitAnswer(selectedQuestion.id, responseText);
+
+      if (nurseNotes.trim()) {
+        await addNurseNote(selectedQuestion.id, nurseNotes);
+      }
 
       // Update question status locally
       setQuestions(prev => prev.map(q =>
@@ -206,6 +223,60 @@ const NurseQuestionManager: React.FC = () => {
       {/* Filters and Search */}
       <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
         <div className="flex flex-wrap gap-4 items-center">
+          <button
+            onClick={async () => {
+              try {
+                const data = await fetchNurseQueue();
+                setQuestions(data.map(q => ({
+                  id: q.question_id,
+                  user_id: '',
+                  question_text: q.preview,
+                  category: 'general' as const,
+                  status: 'pending' as const,
+                  urgency: 'medium' as const,
+                  created_at: q.asked_at,
+                  patient_profile: {
+                    first_name: 'Patient',
+                    last_name: '',
+                    phone: ''
+                  }
+                })));
+              } catch (error) {
+                console.error('Failed to fetch queue:', error);
+              }
+            }}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Queue
+          </button>
+
+          <button
+            onClick={async () => {
+              try {
+                const data = await fetchMyQuestions();
+                setQuestions(data.map(q => ({
+                  id: q.question_id,
+                  user_id: '',
+                  question_text: q.question,
+                  category: 'general' as const,
+                  status: q.status as any,
+                  urgency: 'medium' as const,
+                  created_at: q.asked_at,
+                  patient_profile: {
+                    first_name: 'Patient',
+                    last_name: '',
+                    phone: ''
+                  }
+                })));
+              } catch (error) {
+                console.error('Failed to fetch my questions:', error);
+              }
+            }}
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+          >
+            My Questions
+          </button>
+
           <div className="flex items-center space-x-2">
             <Search size={20} className="text-gray-400" />
             <input
@@ -264,7 +335,14 @@ const NurseQuestionManager: React.FC = () => {
                 className={`p-4 cursor-pointer hover:bg-gray-50 ${
                   selectedQuestion?.id === question.id ? 'bg-blue-50 border-r-4 border-blue-500' : ''
                 }`}
-                onClick={() => {
+                onClick={async () => {
+                  if (question.status === 'pending') {
+                    try {
+                      await claimQuestion(question.id);
+                    } catch (error) {
+                      console.error('Failed to claim question:', error);
+                    }
+                  }
                   setSelectedQuestion(question);
                   setResponseText('');
                   setNurseNotes('');
