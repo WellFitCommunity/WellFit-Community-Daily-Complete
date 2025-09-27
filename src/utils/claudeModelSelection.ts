@@ -197,8 +197,7 @@ export class WellFitModelSelector implements ModelSelectionStrategy {
 
     // Complex criteria
     if (hasMultipleDataPoints ||
-        (wordCount > 100 && hasMedicalTerms) ||
-        requestType === RequestType.ANALYTICS) {
+        (wordCount > 100 && hasMedicalTerms)) {
       return 'complex';
     }
 

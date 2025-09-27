@@ -3,7 +3,7 @@
 
 import { supabase } from '../../lib/supabaseClient';
 import { SupabaseClient } from '@supabase/supabase-js';
-import FHIRIntegrationService from './FhirIntergrationService';
+import FHIRIntegrationService from './FhirIntegrationService';
 import FhirAiService, { type PatientInsight, type PopulationInsights, type EmergencyAlert } from './FhirAiService';
 
 interface EnhancedPatientData {

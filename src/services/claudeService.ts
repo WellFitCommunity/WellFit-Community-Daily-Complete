@@ -195,8 +195,8 @@ class CircuitBreaker {
   }
 
   private shouldAttemptReset(): boolean {
-    return this.lastFailureTime &&
-           (Date.now() - this.lastFailureTime.getTime()) > this.timeout;
+    return !!(this.lastFailureTime &&
+           (Date.now() - this.lastFailureTime.getTime()) > this.timeout);
   }
 
   private onSuccess(): void {

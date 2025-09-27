@@ -14,15 +14,15 @@ const envSchema = z.object({
   // Claude Model Configuration
   REACT_APP_CLAUDE_DEFAULT_MODEL: z.string().default("claude-3-5-sonnet-20241022"),
   REACT_APP_CLAUDE_ADMIN_MODEL: z.string().default("claude-3-5-sonnet-20241022"),
-  REACT_APP_CLAUDE_MAX_TOKENS: z.string().transform((val) => parseInt(val) || 4000),
-  REACT_APP_CLAUDE_TIMEOUT: z.string().transform((val) => parseInt(val) || 30000),
+  REACT_APP_CLAUDE_MAX_TOKENS: z.coerce.number().default(4000),
+  REACT_APP_CLAUDE_TIMEOUT: z.coerce.number().default(30000),
 
   // Environment info
-  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
 
   // App configuration
   REACT_APP_APP_NAME: z.string().default("WellFit Community"),
-  REACT_APP_DEMO_ENABLED: z.string().transform((val) => val === 'true').default(false),
+  REACT_APP_DEMO_ENABLED: z.coerce.boolean().default(false),
 });
 
 // Parse and validate environment variables

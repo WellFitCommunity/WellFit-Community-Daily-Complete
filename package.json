@@ -34,7 +34,7 @@
     "tailwind-merge": "^3.3.1",
     "twilio": "^5.7.0",
     "yup": "^1.7.0",
-    "zod": "^4.1.11"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.7",

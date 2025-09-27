@@ -301,11 +301,4 @@ export async function runCompleteIntegrationTest() {
   }
 }
 
-// Export individual test functions for selective testing
-export {
-  seniorPatientExample,
-  adminAnalyticsExample,
-  healthDataInterpretationExample,
-  riskAssessmentExample,
-  serviceMonitoringExample
-};
+// Functions are already exported individually above
