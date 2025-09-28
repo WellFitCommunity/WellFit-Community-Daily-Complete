@@ -9,6 +9,8 @@ import ExportCheckIns from './ExportCheckIns';
 import ApiKeyManager from './ApiKeyManager';
 import ClaudeTestWidget from './ClaudeTestWidget';
 import FhirAiDashboard from './FhirAiDashboard';
+import FHIRFormBuilderEnhanced from './FHIRFormBuilderEnhanced';
+import FHIRDataMapper from './FHIRDataMapper';
 
 type AdminRole = 'admin' | 'super_admin';
 
@@ -664,6 +666,18 @@ const AdminPanel: React.FC = () => {
             supabaseUrl={process.env.REACT_APP_SUPABASE_URL || ''}
             supabaseKey={process.env.REACT_APP_SUPABASE_ANON_KEY || ''}
           />
+        </section>
+
+        <section className="mt-6 border rounded-xl p-6 bg-gradient-to-br from-blue-50 to-cyan-50">
+          <h2 className="text-xl font-semibold text-blue-800 mb-4">🧠 FHIR Questionnaire Builder</h2>
+          <p className="text-gray-600 mb-4">Create standardized clinical questionnaires using AI and deploy them to WellFit or export to EHR systems.</p>
+          <FHIRFormBuilderEnhanced />
+        </section>
+
+        <section className="mt-6 border rounded-xl p-6 bg-gradient-to-br from-teal-50 to-green-50">
+          <h2 className="text-xl font-semibold text-teal-800 mb-4">🔄 FHIR Data Mapper</h2>
+          <p className="text-gray-600 mb-4">Transform legacy healthcare data into FHIR-compliant formats with AI-powered mapping.</p>
+          <FHIRDataMapper />
         </section>
 
         <UsersList />

@@ -315,7 +315,7 @@ const LoginPage: React.FC = () => {
               onChange={handlePhoneChange}
               required
               aria-required="true"
-              aria-invalid={Boolean(error && !adminEmail)}
+              aria-invalid={Boolean(error && phone.trim() === '')}
               className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:outline-none"
               style={{ borderColor: accent, outlineColor: primary } as React.CSSProperties}
               autoComplete="tel"
@@ -339,7 +339,7 @@ const LoginPage: React.FC = () => {
                 onChange={e => setSeniorPassword(e.target.value)}
                 required
                 aria-required="true"
-                aria-invalid={Boolean(error && !adminEmail)}
+                aria-invalid={Boolean(error && seniorPassword.trim() === '')}
                 className="w-full p-3 pr-12 border border-gray-300 rounded focus:ring-2 focus:outline-none"
                 style={{ borderColor: accent, outlineColor: primary } as React.CSSProperties}
                 autoComplete="current-password"
@@ -418,7 +418,7 @@ const LoginPage: React.FC = () => {
               onChange={e => setAdminEmail(e.target.value)}
               required
               aria-required="true"
-              aria-invalid={Boolean(error && !phone)}
+              aria-invalid={Boolean(error && adminEmail.trim() === '')}
               className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:outline-none"
               style={{ borderColor: accent, outlineColor: primary } as React.CSSProperties}
               autoComplete="email"
@@ -439,7 +439,7 @@ const LoginPage: React.FC = () => {
                 onChange={e => setAdminPassword(e.target.value)}
                 required
                 aria-required="true"
-                aria-invalid={Boolean(error && !phone)}
+                aria-invalid={Boolean(error && adminPassword.trim() === '')}
                 className="w-full p-3 pr-12 border border-gray-300 rounded focus:ring-2 focus:outline-none"
                 style={{ borderColor: accent, outlineColor: primary } as React.CSSProperties}
                 autoComplete="current-password"
