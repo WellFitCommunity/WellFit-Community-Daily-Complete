@@ -9,6 +9,8 @@ import { Button } from '../ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import EnhancedFhirService from './EnhancedFhirService';
 import RiskAssessmentManager from './RiskAssessmentManager';
+import SmartLauncher from '../smart/SmartLauncher';
+import SmartSessionStatus from '../smart/SmartSessionStatus';
 
 interface DashboardProps {
   supabaseUrl: string;
@@ -557,10 +559,11 @@ const FhirAiDashboard: React.FC<DashboardProps> = ({ supabaseUrl, supabaseKey })
 
       {/* Main Dashboard Content */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="patients">Patients</TabsTrigger>
           <TabsTrigger value="risk-assessment">Risk Assessment</TabsTrigger>
+          <TabsTrigger value="smart-ehr">Smart-EHR Connect</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="quality">Quality</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
@@ -607,6 +610,33 @@ const FhirAiDashboard: React.FC<DashboardProps> = ({ supabaseUrl, supabaseKey })
         <TabsContent value="risk-assessment" className="space-y-6">
           <RiskAssessmentManager />
         </TabsContent>
+
+        <TabsContent value="smart-ehr" className="space-y-6">
+           <Card>
+            <CardHeader>
+               <CardTitle>🏥 SMART on FHIR Integration</CardTitle>
+               <p className="text-gray-600">
+                 Connect WellFit to hospital EHR systems using SMART on FHIR standards
+               </p>
+            </CardHeader>
+            <CardContent>
+              <SmartLauncher
+                onLaunch={(ehrSystem) => {
+                  console.log(`Launching SMART app for ${ehrSystem}`);
+                }}
+              />
+           </CardContent>
+         </Card>
+
+         <Card>
+           <CardHeader>
+             <CardTitle>Current EHR Connections</CardTitle>
+           </CardHeader>
+           <CardContent>
+             <SmartSessionStatus />
+           </CardContent>
+         </Card>
+      </TabsContent>
 
         <TabsContent value="analytics" className="space-y-6">
           <Card>

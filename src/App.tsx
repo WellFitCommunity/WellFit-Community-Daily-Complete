@@ -54,6 +54,8 @@ const CaregiverDashboardPage = React.lazy(() => import('./pages/CaregiverDashboa
 const HealthInsightsPage = React.lazy(() => import('./pages/HealthInsightsPage'));
 const QuestionsPage = React.lazy(() => import('./pages/QuestionsPage'));
 const AdminQuestionsPage = React.lazy(() => import('./pages/AdminQuestionsPage'));
+// Add this import at the top with your other lazy imports
+const SmartCallbackPage = React.lazy(() => import('./pages/SmartCallbackPage'));
 
 const PUBLIC_ROUTES = [
   '/',
@@ -115,6 +117,8 @@ function Shell() {
               <Route path="/doctors-view" element={<RequireAuth><DoctorsViewPage /></RequireAuth>} />
               <Route path="/community" element={<RequireAuth><CommunityMoments /></RequireAuth>} />
               <Route path="/trivia-game" element={<RequireAuth><TriviaGame /></RequireAuth>} />
+              {/* Add this route in your Routes section (in the Protected section) */}
+              <Route path="/smart-callback" element={<RequireAuth><SmartCallbackPage /></RequireAuth>} />
 
               {/* Caregiver Dashboard */}
               <Route path="/caregiver-dashboard" element={<RequireAuth><CaregiverDashboardPage /></RequireAuth>} />

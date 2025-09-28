@@ -911,6 +911,34 @@ export class EnhancedFhirService {
   getAiConfiguration(): any {
     return this.aiService.getConfiguration();
   }
+
+  // SMART on FHIR data synchronization
+  async syncWithSmartSession(smartSession: any): Promise<{
+    patientData: any;
+    observations: any[];
+    synchronized: boolean;
+  }> {
+    try {
+      // Simple demo implementation - will be enhanced later
+      console.log('Syncing SMART session:', smartSession);
+      
+      return {
+        patientData: { id: 'demo-patient', name: 'Demo Patient' },
+        observations: [],
+        synchronized: true
+      };
+
+    } catch (error) {
+      console.error('SMART sync error:', error);
+      throw new Error(`Failed to sync SMART data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  // Helper method for future EHR integration
+  private async syncPatientToWellFit(fhirPatient: any, observations: any[]): Promise<void> {
+    // Placeholder for future implementation
+    console.log('Syncing patient to WellFit:', fhirPatient.id);
+  }
 }
 
 export default EnhancedFhirService;
