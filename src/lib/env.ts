@@ -20,10 +20,6 @@ export const SB_PUBLISHABLE_KEY = pick(
   process.env.REACT_APP_SUPABASE_ANON_KEY       // legacy
 );
 
-export const ANTHROPIC_API_KEY = pick(
-  process.env.REACT_APP_ANTHROPIC_API_KEY
-);
-
 // Minimal, sanitized runtime diag (no secrets printed)
 export function assertSupabaseEnv(): void {
   const hasUrl = truthy(SB_URL);
@@ -43,7 +39,7 @@ export function assertSupabaseEnv(): void {
     );
   }
 
-  // Optional: single-line masked log to prove they’re present at runtime
+  // Optional: single-line masked log to prove they're present at runtime
   try {
     const masked = SB_PUBLISHABLE_KEY
       ? SB_PUBLISHABLE_KEY.slice(0, 4) + "•••" + SB_PUBLISHABLE_KEY.slice(-4)

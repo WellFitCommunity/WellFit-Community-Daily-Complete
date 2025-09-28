@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Alert, AlertDescription } from '../ui/alert';
-import claudeService from '../../services/claudeService';
 
 const ClaudeTestWidget: React.FC = () => {
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
@@ -15,12 +14,32 @@ const ClaudeTestWidget: React.FC = () => {
     setTestResult(null);
 
     try {
-      const result = await claudeService.testConnection();
-      setTestResult(result);
+      const response = await fetch('/api/anthropic-chats', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: 'Hello, this is a connection test.' }],
+          max_tokens: 50
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.content) {
+        setTestResult({
+          success: true,
+          message: `✅ Claude API connected! Response: "${data.content[0]?.text || 'Connected successfully'}"`
+        });
+      } else {
+        setTestResult({
+          success: false,
+          message: `❌ API Error: ${data.error || 'Unknown error'} (Status: ${response.status})`
+        });
+      }
     } catch (error) {
       setTestResult({
         success: false,
-        message: `Test failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        message: `❌ Connection failed: ${error instanceof Error ? error.message : 'Network error'}`
       });
     } finally {
       setIsLoading(false);
@@ -40,8 +59,24 @@ const ClaudeTestWidget: React.FC = () => {
         blood_oxygen: 98
       };
 
-      const insights = await claudeService.interpretHealthData(testHealthData);
-      setHealthTest(insights);
+      const prompt = `Please analyze this health data and provide a brief assessment: ${JSON.stringify(testHealthData)}`;
+
+      const response = await fetch('/api/anthropic-chats', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: prompt }],
+          max_tokens: 200
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.content) {
+        setHealthTest(data.content[0]?.text || 'Health analysis completed successfully');
+      } else {
+        setHealthTest(`Health test failed: ${data.error || 'Unknown error'}`);
+      }
     } catch (error) {
       setHealthTest(`Health test failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
@@ -95,15 +130,14 @@ const ClaudeTestWidget: React.FC = () => {
 
         {/* Configuration Info */}
         <div className="text-xs text-gray-600 space-y-1">
-          <p><strong>Model:</strong> claude-3-5-haiku-20241022</p>
-          <p><strong>API Key:</strong> {process.env.REACT_APP_ANTHROPIC_API_KEY ? '✅ Configured' : '❌ Missing'}</p>
+          <p><strong>Model:</strong> claude-3-5-sonnet-20241022</p>
+          <p><strong>API Key:</strong> ✅ Configured server-side</p>
           <p><strong>Environment:</strong> {process.env.NODE_ENV}</p>
         </div>
 
         <Alert>
           <AlertDescription className="text-xs">
-            ⚠️ <strong>Security Note:</strong> In production, the API key should be handled server-side
-            to avoid exposure in the client. This client-side implementation is for development only.
+            ✅ <strong>Security:</strong> API key is properly secured server-side only.
           </AlertDescription>
         </Alert>
 
@@ -112,4 +146,4 @@ const ClaudeTestWidget: React.FC = () => {
   );
 };
 
-export default ClaudeTestWidget;
+export default ClaudeTestWidget

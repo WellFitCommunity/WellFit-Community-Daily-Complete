@@ -1,4 +1,3 @@
-// File: api/anthropic-chat.ts
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 // Strict origin allowlist
@@ -17,12 +16,7 @@ function cors(res: VercelResponse, origin?: string) {
     res.setHeader("Vary", "Origin");
   }
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "content-type, x-client-info, authorization"
-  );
-  // If you ever need cookies:
-  // res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Headers", "content-type, x-client-info, authorization");
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -38,18 +32,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return res
-      .status(500)
-      .json({ error: "Server not configured (missing ANTHROPIC_API_KEY)" });
+    return res.status(500).json({ error: "Server not configured (missing ANTHROPIC_API_KEY)" });
   }
 
   try {
     const {
       messages,
-      model = "claude-3-7-sonnet-20250219",
+      model = "claude-3-5-sonnet-20241022",
       max_tokens = 1024,
       system,
     } = req.body || {};
+    
     if (!messages || !Array.isArray(messages)) {
       return res.status(400).json({ error: "Missing messages[] in body" });
     }
@@ -72,16 +65,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (!anthropicRes.ok) {
       const text = await anthropicRes.text();
-      return res
-        .status(anthropicRes.status)
-        .json({ error: "Anthropic error", detail: text });
+      return res.status(anthropicRes.status).json({ error: "Anthropic error", detail: text });
     }
 
     const data = await anthropicRes.json();
     return res.status(200).json(data);
+    
   } catch (err: any) {
-    return res
-      .status(500)
-      .json({ error: "Proxy error", detail: String(err?.message || err) });
+    return res.status(500).json({ error: "Proxy error", detail: String(err?.message || err) });
   }
 }
