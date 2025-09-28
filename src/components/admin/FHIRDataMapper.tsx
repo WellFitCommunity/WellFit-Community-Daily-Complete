@@ -312,7 +312,7 @@ PID|0001||PATID1234^5^M11^ADT1^MR^UNIVERSITY HOSPITAL~123456789^^^USSSA^SS||EVER
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle>Generated FHIR Mapping</CardTitle>
-                <p className="text-gray-600">{state.generatedMapping.sourceName}</p>
+                <p className="text-gray-600">{state.generatedMapping?.sourceName ?? ''}</p>
               </div>
               
               <div className="flex border border-gray-300 rounded-lg overflow-hidden">
@@ -370,7 +370,7 @@ PID|0001||PATID1234^5^M11^ADT1^MR^UNIVERSITY HOSPITAL~123456789^^^USSSA^SS||EVER
 
             {viewMode === 'rules' && (
               <div className="space-y-4">
-                <h3 className="font-medium">Mapping Rules ({state.generatedMapping.mappingRules.length})</h3>
+                <h3 className="font-medium">Mapping Rules ({state.generatedMapping?.mappingRules?.length ?? 0})</h3>
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse border border-gray-300">
                     <thead className="bg-gray-50">
@@ -383,7 +383,7 @@ PID|0001||PATID1234^5^M11^ADT1^MR^UNIVERSITY HOSPITAL~123456789^^^USSSA^SS||EVER
                       </tr>
                     </thead>
                     <tbody>
-                      {state.generatedMapping.mappingRules.map((rule, index) => (
+                      {(state.generatedMapping?.mappingRules ?? []).map((rule, index) => (
                         <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                           <td className="border border-gray-300 px-4 py-2 font-mono text-sm">
                             {rule.sourceField}
@@ -411,7 +411,8 @@ PID|0001||PATID1234^5^M11^ADT1^MR^UNIVERSITY HOSPITAL~123456789^^^USSSA^SS||EVER
                   </table>
                 </div>
 
-                {state.generatedMapping.validationResults?.unmappedFields && state.generatedMapping.validationResults.unmappedFields.length > 0 && (
+                {state.generatedMapping?.validationResults?.unmappedFields &&
+                state.generatedMapping.validationResults.unmappedFields.length > 0 && (
                   <Alert>
                     <AlertDescription>
                       <strong>Unmapped Fields:</strong> {state.generatedMapping.validationResults.unmappedFields.join(', ')}
@@ -426,7 +427,7 @@ PID|0001||PATID1234^5^M11^ADT1^MR^UNIVERSITY HOSPITAL~123456789^^^USSSA^SS||EVER
                 <h3 className="font-medium">FHIR Resources Preview</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {['Patient', 'Observation', 'Encounter'].map(resourceType => {
-                    const rules = state.generatedMapping.mappingRules.filter(r => r.fhirResource === resourceType);
+                    const rules = (state.generatedMapping?.mappingRules ?? []).filter(r => r.fhirResource === resourceType);
                     if (rules.length === 0) return null;
                     
                     return (
