@@ -12,6 +12,7 @@ import * as serviceWorkerRegistration from './serviceWorkerRegistration';
 // ✅ Providers
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AdminAuthProvider } from './contexts/AdminAuthContext';
+import { LanguageProvider } from './contexts/LanguageContext';
 // ❌ Do not import BrandingProvider here because App.tsx already provides BrandingContext
 // import { BrandingProvider } from './BrandingContext';
 
@@ -35,17 +36,19 @@ const root = createRoot(document.getElementById('root')!);
 
 root.render(
   <React.StrictMode>
-    <AuthProvider>
-      <AdminAuthProvider>
-        <BrowserRouter>
-          <ErrorBoundary>
-            <DemoModeBridge>
-              <App />
-            </DemoModeBridge>
-          </ErrorBoundary>
-        </BrowserRouter>
-      </AdminAuthProvider>
-    </AuthProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <AdminAuthProvider>
+          <BrowserRouter>
+            <ErrorBoundary>
+              <DemoModeBridge>
+                <App />
+              </DemoModeBridge>
+            </ErrorBoundary>
+          </BrowserRouter>
+        </AdminAuthProvider>
+      </AuthProvider>
+    </LanguageProvider>
   </React.StrictMode>
 );
 

@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, MoreVertical } from 'lucide-react';
 import { useBranding } from '../../BrandingContext';
 import { useIsAdmin } from '../../hooks/useIsAdmin';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 const WELLFIT_BLUE = '#003865';
 const WELLFIT_GREEN = '#8cc63f';
@@ -39,6 +40,7 @@ export default function GlobalHeader() {
   const { branding } = useBranding();
   const location = useLocation();
   const isAdmin = useIsAdmin();
+  const { t } = useLanguage();
 
   const primary = branding?.primaryColor || WELLFIT_BLUE;
   const secondary = branding?.secondaryColor || WELLFIT_GREEN;
@@ -76,19 +78,19 @@ export default function GlobalHeader() {
             {branding?.appName || 'WellFit Community'}
           </div>
 
-          {/* Desktop Nav - Simplified for Seniors */}
+          {/* Desktop Nav - Reorganized: Games & Self-Report in header, Health Insights in More */}
           <nav className="hidden md:flex items-center space-x-6">
             <HeaderLink to={ROUTES.dashboard} active={isActive(ROUTES.dashboard)} className={linkBase}>
-              🏠 Home
+              {t.nav.home}
             </HeaderLink>
-            <HeaderLink to={ROUTES.healthDashboard} active={isActive(ROUTES.healthDashboard)} className={linkBase}>
-              💊 My Health
+            <HeaderLink to={ROUTES.selfReport} active={isActive(ROUTES.selfReport)} className={linkBase}>
+              {t.nav.selfReport}
             </HeaderLink>
-            <HeaderLink to={ROUTES.questions} active={isActive(ROUTES.questions)} className={linkBase}>
-              👩‍⚕️ Ask Nurse
+            <HeaderLink to={ROUTES.trivia} active={isActive(ROUTES.trivia)} className={linkBase}>
+              {t.nav.memoryLane}
             </HeaderLink>
-            <HeaderLink to={ROUTES.community} active={isActive(ROUTES.community)} className={linkBase}>
-              👥 Community
+            <HeaderLink to={ROUTES.wordFind} active={isActive(ROUTES.wordFind)} className={linkBase}>
+              {t.nav.wordFind}
             </HeaderLink>
 
             {/* More menu with larger touch target */}
@@ -101,7 +103,7 @@ export default function GlobalHeader() {
                 className={`px-4 py-2 rounded-lg ${textColor} hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white font-semibold text-lg`}
                 title="More Options"
               >
-                ⋯ More
+                {t.nav.more}
               </button>
               {moreOpen && (
                 <div
@@ -110,10 +112,10 @@ export default function GlobalHeader() {
                   onMouseLeave={() => setMoreOpen(false)}
                 >
                   <div className="py-2">
-                    <MenuItem to={ROUTES.selfReport}>📝 Self-Report</MenuItem>
-                    <MenuItem to={ROUTES.doctors}>🩺 Doctor's View</MenuItem>
-                    <MenuItem to={ROUTES.trivia}>🧠 Memory Lane</MenuItem>
-                    <MenuItem to={ROUTES.wordFind}>🔤 Word Find</MenuItem>
+                    <MenuItem to={ROUTES.healthDashboard}>{t.nav.myHealth}</MenuItem>
+                    <MenuItem to={ROUTES.questions}>{t.nav.askNurse}</MenuItem>
+                    <MenuItem to={ROUTES.community}>{t.nav.community}</MenuItem>
+                    <MenuItem to={ROUTES.doctors}>{t.nav.doctorsView}</MenuItem>
                     <div className="border-t my-2" />
                     {isAdmin === true && (
                       <>
@@ -122,8 +124,8 @@ export default function GlobalHeader() {
                         <div className="border-t my-2" />
                       </>
                     )}
-                    <MenuItem to="/demographics">📋 My Information</MenuItem>
-                    <MenuItem to="/settings">⚙️ Settings</MenuItem>
+                    <MenuItem to="/demographics">{t.nav.myInformation}</MenuItem>
+                    <MenuItem to="/settings">{t.nav.settings}</MenuItem>
                     <a
                       href="https://www.TheWellFitCommunity.org"
                       target="_blank"
@@ -131,7 +133,7 @@ export default function GlobalHeader() {
                       className="block px-4 py-3 text-base text-gray-700 hover:bg-gray-50"
                       role="menuitem"
                     >
-                      🌐 Visit Website
+                      {t.nav.visitWebsite}
                     </a>
                     <div className="border-t my-2" />
                     <Link
@@ -139,7 +141,7 @@ export default function GlobalHeader() {
                       className="block px-4 py-3 text-base text-red-600 hover:bg-red-50 font-semibold"
                       role="menuitem"
                     >
-                      🚪 Log Out
+                      {t.nav.logout}
                     </Link>
                   </div>
                 </div>
@@ -159,56 +161,58 @@ export default function GlobalHeader() {
         </div>
       </div>
 
-      {/* Mobile Nav - Simplified and larger text */}
+      {/* Mobile Nav - Reorganized to match desktop */}
       {menuOpen && (
         <nav className="md:hidden px-4 pb-4 space-y-3" onClick={() => setMoreOpen(false)}>
           <MobileItem to={ROUTES.dashboard} onDone={() => setMenuOpen(false)}>
-            🏠 Home
+            {t.nav.home}
           </MobileItem>
-          <MobileItem to={ROUTES.healthDashboard} onDone={() => setMenuOpen(false)}>
-            💊 My Health
-          </MobileItem>
-          <MobileItem to={ROUTES.questions} onDone={() => setMenuOpen(false)}>
-            👩‍⚕️ Ask Nurse
-          </MobileItem>
-          <MobileItem to={ROUTES.community} onDone={() => setMenuOpen(false)}>
-            👥 Community
-          </MobileItem>
-          <div className="border-t border-white/20 my-2" />
           <MobileItem to={ROUTES.selfReport} onDone={() => setMenuOpen(false)}>
-            📝 Self-Report
-          </MobileItem>
-          <MobileItem to={ROUTES.doctors} onDone={() => setMenuOpen(false)}>
-            🩺 Doctor's View
+            {t.nav.selfReport}
           </MobileItem>
           <MobileItem to={ROUTES.trivia} onDone={() => setMenuOpen(false)}>
-            🧠 Memory Lane
+            {t.nav.memoryLane}
           </MobileItem>
           <MobileItem to={ROUTES.wordFind} onDone={() => setMenuOpen(false)}>
-            🔤 Word Find
+            {t.nav.wordFind}
+          </MobileItem>
+          <div className="border-t border-white/20 my-2" />
+          <MobileItem to={ROUTES.healthDashboard} onDone={() => setMenuOpen(false)}>
+            {t.nav.myHealth}
+          </MobileItem>
+          <MobileItem to={ROUTES.questions} onDone={() => setMenuOpen(false)}>
+            {t.nav.askNurse}
+          </MobileItem>
+          <MobileItem to={ROUTES.community} onDone={() => setMenuOpen(false)}>
+            {t.nav.community}
+          </MobileItem>
+          <MobileItem to={ROUTES.doctors} onDone={() => setMenuOpen(false)}>
+            {t.nav.doctorsView}
           </MobileItem>
 
           {isAdmin === true && (
             <>
+              <div className="border-t border-white/20 my-2" />
               <MobileItem to={ROUTES.adminPanel} onDone={() => setMenuOpen(false)}>
-                Admin Panel
+                ⚙️ Admin Panel
               </MobileItem>
               <MobileItem to="/admin-questions" onDone={() => setMenuOpen(false)}>
-                Nurse Questions
+                💬 Nurse Questions
               </MobileItem>
             </>
           )}
 
+          <div className="border-t border-white/20 my-2" />
           <MobileItem to="/demographics" onDone={() => setMenuOpen(false)}>
-            My Information
+            {t.nav.myInformation}
           </MobileItem>
 
           <MobileItem to="/settings" onDone={() => setMenuOpen(false)}>
-            Settings
+            {t.nav.settings}
           </MobileItem>
 
           <MobileItem to="/help" onDone={() => setMenuOpen(false)}>
-            Help Center
+            ❓ Help Center
           </MobileItem>
 
           <a
@@ -219,7 +223,7 @@ export default function GlobalHeader() {
             style={{ backgroundColor: '#8cc63f' }}
             onClick={() => setMenuOpen(false)}
           >
-            🌐 Visit Website
+            {t.nav.visitWebsite}
           </a>
 
           <Link
@@ -227,7 +231,7 @@ export default function GlobalHeader() {
             className="block text-red-200 hover:text-red-400 transition"
             onClick={() => setMenuOpen(false)}
           >
-            Log Out
+            {t.nav.logout}
           </Link>
         </nav>
       )}

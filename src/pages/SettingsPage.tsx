@@ -4,6 +4,7 @@ import { useSupabaseClient, useUser } from '../contexts/AuthContext';
 import { useBranding } from '../BrandingContext';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../components/ui/card';
+import LanguageSelector from '../components/LanguageSelector';
 
 interface UserSettings {
   font_size: 'small' | 'medium' | 'large' | 'extra-large';
@@ -121,6 +122,12 @@ const SettingsPage: React.FC = () => {
 
   const settingsSections = [
     {
+      id: 'language',
+      title: '🌐 Language / Idioma',
+      icon: '🗣️',
+      description: 'Choose your preferred language'
+    },
+    {
       id: 'display',
       title: '👁️ Display Settings',
       icon: '🖥️',
@@ -236,7 +243,24 @@ const SettingsPage: React.FC = () => {
               
               {activeSection === section.id && (
                 <div className="px-6 pb-6 space-y-4">
-                  
+
+                  {/* Language Settings */}
+                  {section.id === 'language' && (
+                    <div className="space-y-4">
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                        <p className="text-[#003865] font-semibold mb-2">
+                          🌍 Select your preferred language / Seleccione su idioma preferido
+                        </p>
+                        <p className="text-gray-600 text-sm">
+                          The app will display in your chosen language. Changes take effect immediately.
+                          <br />
+                          <em>La aplicación se mostrará en el idioma que elija. Los cambios se aplican inmediatamente.</em>
+                        </p>
+                      </div>
+                      <LanguageSelector showLabel={true} className="justify-center" />
+                    </div>
+                  )}
+
                   {/* Display Settings */}
                   {section.id === 'display' && (
                     <div className="space-y-4">
