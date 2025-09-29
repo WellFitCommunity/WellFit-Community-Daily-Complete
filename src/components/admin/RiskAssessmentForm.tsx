@@ -8,7 +8,7 @@ import { Badge } from '../ui/badge';
 import { Alert, AlertDescription } from '../ui/alert';
 import { useSupabaseClient, useUser } from '../../contexts/AuthContext';
 import { RiskAssessment } from '../../types/riskAssessment';
-import claudeService from '../../services/claudeService';
+import { supabase } from '../../lib/supabaseClient';
 
 interface RiskAssessmentFormProps {
   patientId: string;
@@ -205,13 +205,8 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
   const runAIAnalysis = async () => {
     setAnalyzingAI(true);
     try {
-      const analysis = await claudeService.analyzeRiskAssessment(formData);
-      setAiAnalysis(analysis);
-
-      // Auto-apply AI suggestions if user wants
-      if (analysis.suggestedRiskLevel && analysis.suggestedRiskLevel !== formData.risk_level) {
-        // Don't auto-apply, just show suggestion
-      }
+      // TODO: Implement AI analysis via Edge Function
+      setError('AI analysis temporarily disabled - manual assessment only.');
     } catch (err) {
       console.error('AI analysis failed:', err);
       setError('AI analysis failed. Please continue with manual assessment.');

@@ -2,22 +2,18 @@ import React from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import RequireAdminAuth from 'components/auth/RequireAdminAuth';
+import AdminHeader from './AdminHeader';
 
 import UsersList from './UsersList';
 import ReportsSection from './ReportsSection';
 import ExportCheckIns from './ExportCheckIns';
-import ApiKeyManager from './ApiKeyManager';
 import ClaudeTestWidget from './ClaudeTestWidget';
 import FhirAiDashboard from './FhirAiDashboard';
 import FHIRFormBuilderEnhanced from './FHIRFormBuilderEnhanced';
 import FHIRDataMapper from './FHIRDataMapper';
+import BillingDashboard from './BillingDashboard';
 
-type AdminRole = 'admin' | 'super_admin';
-
-interface EnrollmentError {
-  message: string;
-  field?: string;
-}
+// Removed unused interfaces - enrollment moved to header
 
 interface EnrollmentFormData {
   first: string;
@@ -629,75 +625,149 @@ function genTemp(len: number = 12): string {
 }
 
 const AdminPanel: React.FC = () => {
-  const { adminRole, logoutAdmin } = useAdminAuth();
+  const { adminRole } = useAdminAuth();
 
   return (
     <RequireAdminAuth allowedRoles={['admin', 'super_admin']}>
-      <div className="p-6 max-w-7xl mx-auto bg-white rounded-lg shadow-lg space-y-6">
-        <div className="flex justify-between items-center pb-4 border-b">
-          <h1 className="text-3xl font-bold text-blue-900">
-            Admin Panel
-            <span className="text-sm font-normal text-gray-600 ml-3">
-              {adminRole === 'super_admin' ? 'Super Administrator' : 'Administrator'}
-            </span>
-          </h1>
-          <div className="flex gap-4">
-            <a
-              href="/admin-questions"
-              target="_blank"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors text-sm font-medium"
-              aria-label="Open Risk Assessment in new tab"
-            >
-              📋 Risk Assessment
-            </a>
-            <button
-              onClick={logoutAdmin}
-              className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors text-sm font-medium"
-              aria-label="Logout from admin panel"
-            >
-              Logout Admin
-            </button>
+      <div className="min-h-screen bg-gray-50">
+        <AdminHeader title="WellFit Admin Dashboard" showRiskAssessment={true} />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+
+          {/* FHIR Analytics Dashboard */}
+          <section className="bg-white rounded-xl shadow-lg border border-gray-200">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-purple-800 flex items-center">
+                <span className="mr-2">🧠</span>
+                AI-Enhanced FHIR Analytics
+              </h2>
+              <p className="text-gray-600 text-sm mt-1">Real-time patient insights and clinical decision support</p>
+            </div>
+            <div className="p-6">
+              <FhirAiDashboard
+                supabaseUrl={process.env.REACT_APP_SUPABASE_URL || ''}
+                supabaseKey={process.env.REACT_APP_SUPABASE_ANON_KEY || ''}
+              />
+            </div>
+          </section>
+
+          {/* FHIR Tools Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <section className="bg-white rounded-xl shadow-lg border border-gray-200">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-blue-800 flex items-center">
+                  <span className="mr-2">📝</span>
+                  FHIR Questionnaire Builder
+                </h2>
+                <p className="text-gray-600 text-sm mt-1">Create standardized clinical questionnaires using AI</p>
+              </div>
+              <div className="p-6">
+                <FHIRFormBuilderEnhanced />
+              </div>
+            </section>
+
+            <section className="bg-white rounded-xl shadow-lg border border-gray-200">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-teal-800 flex items-center">
+                  <span className="mr-2">🔄</span>
+                  FHIR Data Mapper
+                </h2>
+                <p className="text-gray-600 text-sm mt-1">Transform legacy data into FHIR-compliant formats</p>
+              </div>
+              <div className="p-6">
+                <FHIRDataMapper />
+              </div>
+            </section>
           </div>
+
+          {/* Billing Dashboard */}
+          <section className="bg-white rounded-xl shadow-lg border border-gray-200">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-green-800 flex items-center">
+                <span className="mr-2">💳</span>
+                Billing & Claims Management
+              </h2>
+              <p className="text-gray-600 text-sm mt-1">Monitor claims processing and revenue tracking</p>
+            </div>
+            <div className="p-6">
+              <BillingDashboard />
+            </div>
+          </section>
+
+          {/* Core Admin Functions Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <section className="bg-white rounded-xl shadow-lg border border-gray-200">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-800 flex items-center">
+                  <span className="mr-2">👥</span>
+                  User Management
+                </h2>
+              </div>
+              <div className="p-6">
+                <UsersList />
+              </div>
+            </section>
+
+            <section className="bg-white rounded-xl shadow-lg border border-gray-200">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-800 flex items-center">
+                  <span className="mr-2">📊</span>
+                  Reports & Analytics
+                </h2>
+              </div>
+              <div className="p-6">
+                <ReportsSection />
+              </div>
+            </section>
+          </div>
+
+          {/* Data Export */}
+          <section className="bg-white rounded-xl shadow-lg border border-gray-200">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-800 flex items-center">
+                <span className="mr-2">📤</span>
+                Data Export & Advanced Tools
+              </h2>
+              <p className="text-gray-600 text-sm mt-1">Export data and access advanced administrative functions</p>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-lg font-medium text-gray-700 mb-4">Data Export</h3>
+                  <ExportCheckIns />
+                </div>
+                <div>
+                  <h3 className="text-lg font-medium text-gray-700 mb-4">Advanced Enrollment</h3>
+                  <EnrollPatientSection />
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Super Admin Only Features */}
+          {adminRole === 'super_admin' && (
+            <section className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-1">
+              <div className="bg-white rounded-lg">
+                <div className="px-6 py-4 border-b border-gray-200">
+                  <h2 className="text-xl font-semibold text-blue-800 flex items-center">
+                    <span className="mr-2">🔐</span>
+                    Super Admin Features
+                  </h2>
+                  <p className="text-gray-600 text-sm mt-1">Advanced system administration and AI testing</p>
+                </div>
+                <div className="p-6">
+                  <div className="bg-green-50 rounded-lg p-6">
+                    <h3 className="text-lg font-medium text-green-700 mb-4 flex items-center">
+                      <span className="mr-2">🧠</span>
+                      Claude AI Service Test
+                    </h3>
+                    <p className="text-green-600 text-sm mb-4">Test and validate AI service integration</p>
+                    <ClaudeTestWidget />
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
         </div>
-
-        <section className="mt-6 border rounded-xl p-6 bg-gradient-to-br from-purple-50 to-blue-50">
-          <h2 className="text-xl font-semibold text-purple-800 mb-4">AI-Enhanced FHIR Analytics</h2>
-          <FhirAiDashboard
-            supabaseUrl={process.env.REACT_APP_SUPABASE_URL || ''}
-            supabaseKey={process.env.REACT_APP_SUPABASE_ANON_KEY || ''}
-          />
-        </section>
-
-        <section className="mt-6 border rounded-xl p-6 bg-gradient-to-br from-blue-50 to-cyan-50">
-          <h2 className="text-xl font-semibold text-blue-800 mb-4">🧠 FHIR Questionnaire Builder</h2>
-          <p className="text-gray-600 mb-4">Create standardized clinical questionnaires using AI and deploy them to WellFit or export to EHR systems.</p>
-          <FHIRFormBuilderEnhanced />
-        </section>
-
-        <section className="mt-6 border rounded-xl p-6 bg-gradient-to-br from-teal-50 to-green-50">
-          <h2 className="text-xl font-semibold text-teal-800 mb-4">🔄 FHIR Data Mapper</h2>
-          <p className="text-gray-600 mb-4">Transform legacy healthcare data into FHIR-compliant formats with AI-powered mapping.</p>
-          <FHIRDataMapper />
-        </section>
-
-        <UsersList />
-        <ReportsSection />
-        <ExportCheckIns />
-        <EnrollPatientSection />
-
-        {adminRole === 'super_admin' && (
-          <>
-            <section className="mt-6 border rounded-xl p-6 bg-gradient-to-br from-blue-50 to-indigo-50">
-              <h2 className="text-xl font-semibold text-blue-800 mb-4">Super Admin Features</h2>
-              <ApiKeyManager />
-            </section>
-
-            <section className="mt-6 border rounded-xl p-6 bg-gradient-to-br from-green-50 to-emerald-50">
-              <h2 className="text-xl font-semibold text-green-800 mb-4">Claude AI Service Test</h2>
-              <ClaudeTestWidget />
-            </section>
-          </>
-        )}
       </div>
     </RequireAdminAuth>
   );
