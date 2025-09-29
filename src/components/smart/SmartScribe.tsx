@@ -74,7 +74,7 @@ const SmartScribe: React.FC<SmartScribeProps> = ({
         let finalTranscript = '';
         let interimTranscript = '';
 
-        for (let i = event.resultIndex; i < event.results.length; i++) {
+        for (let i = (event as any).resultIndex; i < event.results.length; i++) {
           const transcript = event.results[i][0].transcript;
           if (event.results[i].isFinal) {
             finalTranscript += transcript + ' ';

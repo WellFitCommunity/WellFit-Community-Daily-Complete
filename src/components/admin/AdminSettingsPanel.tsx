@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo, useCallback } from 'react';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 
 interface AdminSettings {
@@ -25,7 +25,7 @@ interface AdminSettings {
   };
 }
 
-const AdminSettingsPanel: React.FC = () => {
+const AdminSettingsPanel: React.FC = memo(() => {
   const { adminRole } = useAdminAuth();
   const [settings, setSettings] = useState<AdminSettings>({
     theme: 'light',
@@ -90,15 +90,15 @@ const AdminSettingsPanel: React.FC = () => {
     }
   };
 
-  const updateSetting = (section: keyof AdminSettings, key: string, value: any) => {
+  const updateSetting = useCallback((section: keyof AdminSettings, key: string, value: any) => {
     setSettings(prev => ({
       ...prev,
       [section]: {
-        ...prev[section],
+        ...(prev[section] as Record<string, any>),
         [key]: value,
       },
     }));
-  };
+  }, []);
 
   const resetToDefaults = () => {
     if (window.confirm('Are you sure you want to reset all settings to defaults? This cannot be undone.')) {
@@ -379,6 +379,8 @@ const AdminSettingsPanel: React.FC = () => {
       )}
     </div>
   );
-};
+});
+
+AdminSettingsPanel.displayName = 'AdminSettingsPanel';
 
 export default AdminSettingsPanel;
