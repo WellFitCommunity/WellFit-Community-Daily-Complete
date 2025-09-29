@@ -214,10 +214,9 @@ RESPOND WITH ONLY JSON - NO OTHER TEXT:`
   }
 
   async incrementTemplateUsage(templateId: number): Promise<void> {
-    const { error } = await this.supabase
-      .from('questionnaire_templates')
-      .update({ usage_count: this.supabase.raw('usage_count + 1') })
-      .eq('id', templateId);
+    const { error } = await this.supabase.rpc('increment_template_usage', {
+      template_id: templateId
+    });
 
     if (error) {
       console.error('Failed to increment template usage:', error);

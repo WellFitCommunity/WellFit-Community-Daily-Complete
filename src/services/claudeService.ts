@@ -269,22 +269,23 @@ class ClaudeService {
         );
       }
 
-      // Validate API key format
-      if (!env.REACT_APP_ANTHROPIC_API_KEY) {
-        throw new ClaudeInitializationError(
-          'ANTHROPIC_API_KEY is required but not provided'
-        );
+      // Get API key from environment or process.env as fallback
+      const apiKey = env.REACT_APP_ANTHROPIC_API_KEY || process.env.REACT_APP_ANTHROPIC_API_KEY;
+
+      if (!apiKey) {
+        console.warn('ANTHROPIC_API_KEY not found - Claude service will be limited to Edge Functions only');
+        // Don't throw error, just log warning to prevent crashes
+        return;
       }
 
-      if (!env.REACT_APP_ANTHROPIC_API_KEY.startsWith('sk-ant-')) {
-        throw new ClaudeInitializationError(
-          'Invalid ANTHROPIC_API_KEY format. Must start with "sk-ant-"'
-        );
+      if (!apiKey.startsWith('sk-ant-')) {
+        console.warn('Invalid ANTHROPIC_API_KEY format - should start with "sk-ant-"');
+        return;
       }
 
       // Initialize Anthropic client
       this.client = new Anthropic({
-        apiKey: env.REACT_APP_ANTHROPIC_API_KEY,
+        apiKey: apiKey,
         timeout: env.REACT_APP_CLAUDE_TIMEOUT,
         dangerouslyAllowBrowser: true, // Required for client-side usage
         maxRetries: 3
@@ -301,7 +302,7 @@ class ClaudeService {
       this.isInitialized = true;
       console.log('✅ Claude service initialized successfully');
       console.log(`📊 Default model: ${this.defaultModel}`);
-      console.log(`🔒 API key valid: ${env.REACT_APP_ANTHROPIC_API_KEY.substring(0, 10)}...`);
+      console.log(`🔒 API key valid: ${env.REACT_APP_ANTHROPIC_API_KEY ? env.REACT_APP_ANTHROPIC_API_KEY.substring(0, 10) + '...' : 'Not available'}`);
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown initialization error';
