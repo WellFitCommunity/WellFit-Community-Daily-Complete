@@ -5,6 +5,7 @@ import { useBranding } from '../BrandingContext';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../components/ui/card';
 import LanguageSelector from '../components/LanguageSelector';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface UserSettings {
   font_size: 'small' | 'medium' | 'large' | 'extra-large';
@@ -23,6 +24,7 @@ const SettingsPage: React.FC = () => {
   const supabase = useSupabaseClient();
   const user = useUser();
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const [settings, setSettings] = useState<UserSettings>({
     font_size: 'medium',
@@ -104,7 +106,7 @@ const SettingsPage: React.FC = () => {
 
       if (error) throw error;
 
-      setMessage({ type: 'success', text: 'Settings saved successfully! 🎉' });
+      setMessage({ type: 'success', text: t.settings.saveSuccess });
       
       // Apply font size immediately
       document.documentElement.style.fontSize = 
@@ -113,7 +115,7 @@ const SettingsPage: React.FC = () => {
         settings.font_size === 'extra-large' ? '22px' : '16px';
 
     } catch (error: any) {
-      setMessage({ type: 'error', text: 'Failed to save settings. Please try again.' });
+      setMessage({ type: 'error', text: t.settings.saveFailed });
     } finally {
       setSaving(false);
       setTimeout(() => setMessage(null), 5000);
@@ -123,39 +125,39 @@ const SettingsPage: React.FC = () => {
   const settingsSections = [
     {
       id: 'language',
-      title: '🌐 Language / Idioma',
+      title: t.settings.sections.language.title,
       icon: '🗣️',
-      description: 'Choose your preferred language'
+      description: t.settings.sections.language.description
     },
     {
       id: 'display',
-      title: '👁️ Display Settings',
+      title: t.settings.sections.display.title,
       icon: '🖥️',
-      description: 'Make the app easier to see and use'
+      description: t.settings.sections.display.description
     },
     {
       id: 'notifications',
-      title: '🔔 Notification Preferences',
+      title: t.settings.sections.notifications.title,
       icon: '📱',
-      description: 'Choose what notifications you want to receive'
+      description: t.settings.sections.notifications.description
     },
     {
       id: 'emergency',
-      title: '🚨 Emergency Contacts',
+      title: t.settings.sections.emergency.title,
       icon: '📞',
-      description: 'Update your emergency contact information'
+      description: t.settings.sections.emergency.description
     },
     {
       id: 'personal',
-      title: '👤 Personal Information',
+      title: t.settings.sections.personal.title,
       icon: '📝',
-      description: 'Your name and preferences'
+      description: t.settings.sections.personal.description
     },
     {
       id: 'account',
-      title: '🔐 Account Security',
+      title: t.settings.sections.account.title,
       icon: '🛡️',
-      description: 'Password and security settings'
+      description: t.settings.sections.account.description
     }
   ];
 
@@ -168,7 +170,7 @@ const SettingsPage: React.FC = () => {
         <div className="container mx-auto px-4 py-6 max-w-4xl">
           <div className="text-center">
             <div className="text-2xl mb-4">⚙️</div>
-            <div className="text-xl">Loading your settings...</div>
+            <div className="text-xl">{t.actions.loading}</div>
           </div>
         </div>
       </div>
@@ -185,10 +187,10 @@ const SettingsPage: React.FC = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-[#003865] mb-4">
-            ⚙️ Your Settings
+            {t.settings.title}
           </h1>
           <p className="text-lg text-gray-600">
-            Customize your WellFit Community experience
+            {t.settings.subtitle}
           </p>
         </div>
 
@@ -199,16 +201,16 @@ const SettingsPage: React.FC = () => {
             className="p-4 bg-[#8cc63f] text-white rounded-lg hover:bg-[#003865] transition text-center"
           >
             <div className="text-2xl mb-2">🏠</div>
-            <div className="font-semibold">Back to Dashboard</div>
+            <div className="font-semibold">{t.settings.backToDashboard}</div>
           </button>
-          
+
           <button
             onClick={saveSettings}
             disabled={saving}
             className="p-4 bg-[#003865] text-white rounded-lg hover:bg-[#8cc63f] transition text-center disabled:opacity-50"
           >
             <div className="text-2xl mb-2">💾</div>
-            <div className="font-semibold">{saving ? 'Saving...' : 'Save All Settings'}</div>
+            <div className="font-semibold">{saving ? t.settings.saving : t.settings.saveAllSettings}</div>
           </button>
         </div>
 

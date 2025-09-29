@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSupabaseClient, useUser } from '../../contexts/AuthContext';
 import { useBranding } from '../../BrandingContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import WeatherWidget from './WeatherWidget';
 import DailyScripture from './DailyScripture';
 import TechTip from './TechTip';
@@ -14,6 +15,7 @@ const SeniorCommunityDashboard: React.FC = () => {
   const supabase = useSupabaseClient();
   const user = useUser();
   const { branding } = useBranding();
+  const { t } = useLanguage();
   
   const [checkedInToday, setCheckedInToday] = useState<string | null>(null);
   const [showEmergencyBanner, setShowEmergencyBanner] = useState(false);
@@ -86,60 +88,60 @@ const SeniorCommunityDashboard: React.FC = () => {
     {
       id: 'great',
       emoji: '😊',
-      text: 'Feeling Great Today',
-      response: 'Awesome! Have a great day!',
+      text: t.dashboard.checkInButtons.feelingGreat,
+      response: t.dashboard.checkInResponses.feelingGreat,
       color: '#8cc63f'
     },
     {
       id: 'appointment',
       emoji: '📅',
-      text: 'I have a Dr. Appt today',
-      response: "Don't forget to show your doctor your progress and have a great visit!",
+      text: t.dashboard.checkInButtons.doctorAppt,
+      response: t.dashboard.checkInResponses.doctorAppt,
       color: '#4CAF50'
     },
     {
       id: 'hospital',
       emoji: '🏥',
-      text: 'In the hospital',
-      response: 'We will follow up with you in a few days. Get well soon!',
+      text: t.dashboard.checkInButtons.inHospital,
+      response: t.dashboard.checkInResponses.inHospital,
       color: '#2196F3'
     },
     {
       id: 'navigation',
       emoji: '🧭',
-      text: 'Need Healthcare Navigation Assistance',
-      response: 'Sent the nurse a message',
+      text: t.dashboard.checkInButtons.navigation,
+      response: t.dashboard.checkInResponses.navigation,
       color: '#FF9800',
       needsNavigation: true
     },
     {
       id: 'event',
       emoji: '⭐',
-      text: 'Attending the event today',
-      response: "We can't wait to see you there!",
+      text: t.dashboard.checkInButtons.attendingEvent,
+      response: t.dashboard.checkInResponses.attendingEvent,
       color: '#9C27B0'
     },
     {
       id: 'not-best',
       emoji: '🤒',
-      text: 'I am not feeling my best today',
-      response: 'Do you need to speak to someone?',
+      text: t.dashboard.checkInButtons.notBest,
+      response: t.dashboard.checkInResponses.notBest,
       color: '#FF5722',
       needsFollowUp: true
     },
     {
       id: 'fallen',
       emoji: '🚨',
-      text: 'Fallen down & injured',
-      response: 'CALL 911',
+      text: t.dashboard.checkInButtons.fallen,
+      response: t.dashboard.checkInResponses.fallen,
       color: '#F44336',
       emergency: 'red'
     },
     {
       id: 'lost',
       emoji: '🤷',
-      text: 'I am lost',
-      response: 'Call emergency contact',
+      text: t.dashboard.checkInButtons.lost,
+      response: t.dashboard.checkInResponses.lost,
       color: '#FFC107',
       emergency: 'yellow'
     }
@@ -300,10 +302,10 @@ const SeniorCommunityDashboard: React.FC = () => {
         {/* Welcome Header */}
         <div className="text-center mb-6 sm:mb-8">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#003865] mb-2">
-            Welcome to Your Community
+            {t.dashboard.welcome}
           </h1>
           <p className="text-lg sm:text-xl text-gray-600">
-            Let's check in today
+            {t.dashboard.welcomeSubtitle}
           </p>
         </div>
 
@@ -461,7 +463,7 @@ const SeniorCommunityDashboard: React.FC = () => {
           {/* Center Column - Check-in Buttons */}
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h2 className="text-2xl font-bold text-[#003865] mb-6 text-center">
-              Daily Check-In
+              {t.dashboard.dailyCheckIn}
             </h2>
             
             <div className="grid grid-cols-1 gap-4">
@@ -469,18 +471,28 @@ const SeniorCommunityDashboard: React.FC = () => {
                 <button
                   key={button.id}
                   onClick={() => handleCheckIn(button)}
-                  disabled={checkedInToday === button.id}
+                  disabled={checkedInToday === button.id && !button.needsFollowUp}
                   className={`w-full p-4 rounded-xl font-semibold text-white text-lg transition-all duration-200 hover:scale-105 ${
-                    checkedInToday === button.id 
-                      ? 'bg-[#8cc63f] scale-105' 
+                    checkedInToday === button.id
+                      ? 'bg-[#8cc63f] scale-105'
                       : 'bg-[#003865] hover:bg-[#8cc63f]'
                   }`}
-                  style={{ 
-                    backgroundColor: checkedInToday === button.id ? '#8cc63f' : '#003865'
+                  style={{
+                    backgroundColor: checkedInToday === button.id ? '#8cc63f' : '#003865',
+                    minHeight: checkedInToday === button.id && !button.needsFollowUp ? '80px' : '60px'
                   }}
                 >
-                  <span className="text-2xl mr-3">{button.emoji}</span>
-                  {button.text}
+                  {checkedInToday === button.id && !button.needsFollowUp ? (
+                    <div className="whitespace-normal">
+                      <div className="text-2xl mb-2">✅</div>
+                      <div className="font-bold">{button.response}</div>
+                    </div>
+                  ) : (
+                    <>
+                      <span className="text-2xl mr-3">{button.emoji}</span>
+                      {button.text}
+                    </>
+                  )}
                 </button>
               ))}
             </div>
@@ -493,17 +505,17 @@ const SeniorCommunityDashboard: React.FC = () => {
             <div className="bg-white rounded-xl shadow-lg p-6">
               <div className="text-center">
                 <h3 className="text-xl font-bold text-[#003865] mb-4">
-                  🌟 Community Moments
+                  {t.dashboard.communityMoments}
                 </h3>
-                
+
                 {recentCommunityPhoto && (
-                  <img 
-                    src={recentCommunityPhoto} 
-                    alt="Recent community moment" 
+                  <img
+                    src={recentCommunityPhoto}
+                    alt="Recent community moment"
                     className="w-full h-32 object-cover rounded-lg mb-4"
                   />
                 )}
-                
+
                 <div className="space-y-3">
                   <input
                     type="file"
@@ -519,14 +531,14 @@ const SeniorCommunityDashboard: React.FC = () => {
                     htmlFor="photo-upload"
                     className="block w-full p-3 bg-[#8cc63f] text-white rounded-lg cursor-pointer hover:bg-[#003865] transition"
                   >
-                    📸 Share a Photo
+                    {t.dashboard.sharePhoto}
                   </label>
-                  
+
                   <button
                     onClick={() => navigate('/community')}
                     className="w-full p-3 bg-[#003865] text-white rounded-lg hover:bg-[#8cc63f] transition"
                   >
-                    👥 View All Moments
+                    {t.dashboard.viewAllMoments}
                   </button>
                 </div>
               </div>
@@ -536,20 +548,20 @@ const SeniorCommunityDashboard: React.FC = () => {
             <div className="bg-white rounded-xl shadow-lg p-6">
               <div className="text-center">
                 <h3 className="text-xl font-bold text-[#003865] mb-3">
-                  🍽️ DASH Meal of the Day
+                  {t.dashboard.dashMeal}
                 </h3>
-                
+
                 <div className="mb-4 p-3 bg-blue-50 rounded-lg">
                   <p className="text-sm text-gray-700 mb-2">
-                    <strong>DASH</strong> = Dietary Approaches to Stop Hypertension
+                    <strong>{t.dashboard.dashExplanation}</strong>
                   </p>
-                  <a 
-                    href="https://www.nhlbi.nih.gov/education/dash/research" 
-                    target="_blank" 
+                  <a
+                    href="https://www.nhlbi.nih.gov/education/dash/research"
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-600 underline text-sm"
                   >
-                    Learn more about DASH research →
+                    {t.dashboard.learnMore}
                   </a>
                 </div>
 
@@ -572,7 +584,7 @@ const SeniorCommunityDashboard: React.FC = () => {
                   }}
                   className="w-full p-3 bg-[#8cc63f] text-white rounded-lg hover:bg-[#003865] transition"
                 >
-                  🍳 View Today's Recipe
+                  {t.dashboard.viewRecipe}
                 </button>
               </div>
             </div>
@@ -592,7 +604,7 @@ const SeniorCommunityDashboard: React.FC = () => {
           <div className="bg-white rounded-xl shadow-lg p-6 text-center">
             <div className="text-3xl mb-3">🧩</div>
             <h3 className="text-xl font-bold text-[#003865] mb-3">
-              Daily Word Find
+              {t.dashboard.dailyWordFind}
             </h3>
             <p className="text-gray-600 mb-4">
               Keep your mind sharp with today's puzzle
@@ -601,7 +613,7 @@ const SeniorCommunityDashboard: React.FC = () => {
               onClick={() => navigate('/word-find')}
               className="w-full p-3 bg-[#003865] text-white rounded-lg hover:bg-[#8cc63f] transition text-lg"
             >
-              🧩 Play Today's Puzzle
+              {t.dashboard.playPuzzle}
             </button>
           </div>
 
@@ -609,7 +621,7 @@ const SeniorCommunityDashboard: React.FC = () => {
           <div className="bg-white rounded-xl shadow-lg p-6 text-center">
             <div className="text-3xl mb-3">🎭</div>
             <h3 className="text-xl font-bold text-[#003865] mb-3">
-              Memory Lane
+              {t.dashboard.memoryLane}
             </h3>
             <p className="text-gray-600 mb-4">
               Take a trip down memory lane with trivia from your era
@@ -618,7 +630,7 @@ const SeniorCommunityDashboard: React.FC = () => {
               onClick={() => navigate('/trivia-game')}
               className="w-full p-3 bg-[#003865] text-white rounded-lg hover:bg-[#8cc63f] transition text-lg"
             >
-              🎭 Visit Memory Lane
+              {t.dashboard.visitMemoryLane}
             </button>
           </div>
 
