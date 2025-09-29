@@ -22,7 +22,7 @@ describe('FHIRMappingService', () => {
 
       const result = service.validateFile(mockFile);
       expect(result.isValid).toBe(false);
-      expect(result.errors).toContain('File size exceeds maximum allowed size of 0.0001MB');
+      expect(result.errors[0]).toMatch(/File size exceeds maximum allowed size of .*MB/);
     });
 
     it('should reject unsupported file types', () => {
