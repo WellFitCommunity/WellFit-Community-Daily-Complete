@@ -207,13 +207,10 @@ CREATE INDEX IF NOT EXISTS idx_scribe_audit_log_created_at ON scribe_audit_log(c
 CREATE INDEX IF NOT EXISTS idx_scribe_audit_log_session_id ON scribe_audit_log(session_id);
 
 -- Storage bucket for audio recordings (if not exists)
-INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+INSERT INTO storage.buckets (id, name)
 VALUES (
     'medical-recordings',
-    'medical-recordings',
-    false,
-    10485760, -- 10MB limit
-    ARRAY['audio/webm', 'audio/wav', 'audio/mp3', 'audio/mp4']
+    'medical-recordings'
 ) ON CONFLICT (id) DO NOTHING;
 
 -- RLS for medical recordings storage

@@ -24,7 +24,10 @@ const HealthInsightsWidget: React.FC<HealthInsightsProps> = ({ healthData, onClo
 
   useEffect(() => {
     if (hasHealthData(healthData)) {
-      generateInsights();
+      generateInsights().catch(err => {
+        console.error('Failed to generate insights:', err);
+        setInsights('Unable to generate insights at this time. Please try again later.');
+      });
     }
   }, [healthData]);
 
@@ -35,6 +38,12 @@ const HealthInsightsWidget: React.FC<HealthInsightsProps> = ({ healthData, onClo
   const generateInsights = async () => {
     setIsLoading(true);
     try {
+      // Check if Claude service is initialized
+      const serviceStatus = claudeService.getServiceStatus?.();
+      if (serviceStatus && !serviceStatus.isHealthy) {
+        throw new Error('Claude AI service not available');
+      }
+
       const interpretation = await claudeService.interpretHealthData(healthData);
       setInsights(interpretation);
 
@@ -48,6 +57,7 @@ const HealthInsightsWidget: React.FC<HealthInsightsProps> = ({ healthData, onClo
 
     } catch (error) {
       console.error('Error generating health insights:', error);
+      // Use fallback insights when AI is unavailable
       setInsights(generateFallbackInsights(healthData));
       setSuggestions(['Keep tracking your health daily', 'Stay hydrated', 'Get adequate rest']);
     } finally {

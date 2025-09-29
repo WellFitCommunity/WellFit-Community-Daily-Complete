@@ -76,88 +76,72 @@ export default function GlobalHeader() {
             {branding?.appName || 'WellFit Community'}
           </div>
 
-          {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center space-x-4">
+          {/* Desktop Nav - Simplified for Seniors */}
+          <nav className="hidden md:flex items-center space-x-6">
             <HeaderLink to={ROUTES.dashboard} active={isActive(ROUTES.dashboard)} className={linkBase}>
-              Dashboard
+              🏠 Home
             </HeaderLink>
             <HeaderLink to={ROUTES.healthDashboard} active={isActive(ROUTES.healthDashboard)} className={linkBase}>
-              Health Tracker
+              💊 My Health
             </HeaderLink>
             <HeaderLink to={ROUTES.questions} active={isActive(ROUTES.questions)} className={linkBase}>
-              Ask Nurse
-            </HeaderLink>
-            <HeaderLink to={ROUTES.selfReport} active={isActive(ROUTES.selfReport)} className={linkBase}>
-              Self-Report
-            </HeaderLink>
-            <HeaderLink to={ROUTES.doctors} active={isActive(ROUTES.doctors)} className={linkBase}>
-              Doctor's View
-            </HeaderLink>
-            <HeaderLink to={ROUTES.wordFind} active={isActive(ROUTES.wordFind)} className={linkBase}>
-              Word Find
-            </HeaderLink>
-            <HeaderLink to={ROUTES.trivia} active={isActive(ROUTES.trivia)} className={linkBase}>
-              Memory Lane
+              👩‍⚕️ Ask Nurse
             </HeaderLink>
             <HeaderLink to={ROUTES.community} active={isActive(ROUTES.community)} className={linkBase}>
-              Community
+              👥 Community
             </HeaderLink>
 
-            {/* Website button - Made more prominent */}
-            <a
-              href="https://www.TheWellFitCommunity.org"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center px-4 py-2 rounded-lg font-semibold text-white shadow-md hover:shadow-lg transition-all duration-200 ml-2"
-              style={{ backgroundColor: '#8cc63f' }}
-            >
-              🌐 Visit Website
-            </a>
-
-            {/* Ellipsis menu */}
+            {/* More menu with larger touch target */}
             <div className="relative">
               <button
                 type="button"
                 aria-haspopup="menu"
                 aria-expanded={moreOpen}
                 onClick={() => setMoreOpen((v) => !v)}
-                className={`p-2 rounded ${textColor} hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white`}
-                title="More"
+                className={`px-4 py-2 rounded-lg ${textColor} hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white font-semibold text-lg`}
+                title="More Options"
               >
-                <MoreVertical size={20} aria-hidden="true" />
+                ⋯ More
               </button>
               {moreOpen && (
                 <div
                   role="menu"
-                  className="absolute right-0 mt-2 w-56 overflow-hidden rounded-md bg-white shadow-lg ring-1 ring-black/5 z-40"
+                  className="absolute right-0 mt-2 w-64 overflow-hidden rounded-lg bg-white shadow-xl ring-1 ring-black/5 z-40"
                   onMouseLeave={() => setMoreOpen(false)}
                 >
-                  {isAdmin === true && (
-                    <>
-                      <MenuItem to={ROUTES.adminPanel}>Admin Panel</MenuItem>
-                      <MenuItem to="/admin-questions">Nurse Questions</MenuItem>
-                      <div className="border-t my-1" />
-                    </>
-                  )}
-                  <MenuItem to="/demographics">My Information</MenuItem>
-                  <MenuItem to="/settings">Settings</MenuItem>
-                  <a
-                    href="https://www.TheWellFitCommunity.org/support"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                    role="menuitem"
-                  >
-                    Help Center
-                  </a>
-                  <div className="border-t my-1" />
-                  <Link
-                    to={ROUTES.logout}
-                    className="block px-4 py-2 text-sm text-red-600 hover:bg-gray-50"
-                    role="menuitem"
-                  >
-                    Log Out
-                  </Link>
+                  <div className="py-2">
+                    <MenuItem to={ROUTES.selfReport}>📝 Self-Report</MenuItem>
+                    <MenuItem to={ROUTES.doctors}>🩺 Doctor's View</MenuItem>
+                    <MenuItem to={ROUTES.trivia}>🧠 Memory Lane</MenuItem>
+                    <MenuItem to={ROUTES.wordFind}>🔤 Word Find</MenuItem>
+                    <div className="border-t my-2" />
+                    {isAdmin === true && (
+                      <>
+                        <MenuItem to={ROUTES.adminPanel}>⚙️ Admin Panel</MenuItem>
+                        <MenuItem to="/admin-questions">💬 Nurse Questions</MenuItem>
+                        <div className="border-t my-2" />
+                      </>
+                    )}
+                    <MenuItem to="/demographics">📋 My Information</MenuItem>
+                    <MenuItem to="/settings">⚙️ Settings</MenuItem>
+                    <a
+                      href="https://www.TheWellFitCommunity.org"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block px-4 py-3 text-base text-gray-700 hover:bg-gray-50"
+                      role="menuitem"
+                    >
+                      🌐 Visit Website
+                    </a>
+                    <div className="border-t my-2" />
+                    <Link
+                      to={ROUTES.logout}
+                      className="block px-4 py-3 text-base text-red-600 hover:bg-red-50 font-semibold"
+                      role="menuitem"
+                    >
+                      🚪 Log Out
+                    </Link>
+                  </div>
                 </div>
               )}
             </div>
@@ -175,32 +159,33 @@ export default function GlobalHeader() {
         </div>
       </div>
 
-      {/* Mobile Nav */}
+      {/* Mobile Nav - Simplified and larger text */}
       {menuOpen && (
-        <nav className="md:hidden px-4 pb-4 space-y-2" onClick={() => setMoreOpen(false)}>
+        <nav className="md:hidden px-4 pb-4 space-y-3" onClick={() => setMoreOpen(false)}>
           <MobileItem to={ROUTES.dashboard} onDone={() => setMenuOpen(false)}>
-            Dashboard
+            🏠 Home
           </MobileItem>
           <MobileItem to={ROUTES.healthDashboard} onDone={() => setMenuOpen(false)}>
-            Health Tracker
+            💊 My Health
           </MobileItem>
           <MobileItem to={ROUTES.questions} onDone={() => setMenuOpen(false)}>
-            Ask Nurse
-          </MobileItem>
-          <MobileItem to={ROUTES.selfReport} onDone={() => setMenuOpen(false)}>
-            Self-Report
-          </MobileItem>
-          <MobileItem to={ROUTES.doctors} onDone={() => setMenuOpen(false)}>
-            Doctor's View
-          </MobileItem>
-          <MobileItem to={ROUTES.wordFind} onDone={() => setMenuOpen(false)}>
-            Word Find
-          </MobileItem>
-          <MobileItem to={ROUTES.trivia} onDone={() => setMenuOpen(false)}>
-            Memory Lane
+            👩‍⚕️ Ask Nurse
           </MobileItem>
           <MobileItem to={ROUTES.community} onDone={() => setMenuOpen(false)}>
-            Community
+            👥 Community
+          </MobileItem>
+          <div className="border-t border-white/20 my-2" />
+          <MobileItem to={ROUTES.selfReport} onDone={() => setMenuOpen(false)}>
+            📝 Self-Report
+          </MobileItem>
+          <MobileItem to={ROUTES.doctors} onDone={() => setMenuOpen(false)}>
+            🩺 Doctor's View
+          </MobileItem>
+          <MobileItem to={ROUTES.trivia} onDone={() => setMenuOpen(false)}>
+            🧠 Memory Lane
+          </MobileItem>
+          <MobileItem to={ROUTES.wordFind} onDone={() => setMenuOpen(false)}>
+            🔤 Word Find
           </MobileItem>
 
           {isAdmin === true && (
@@ -288,7 +273,7 @@ function MobileItem({
   children: React.ReactNode;
 }) {
   return (
-    <Link to={to} onClick={onDone} className="block text-white/90 hover:text-white transition">
+    <Link to={to} onClick={onDone} className="block text-white/90 hover:text-white transition text-lg py-2">
       {children}
     </Link>
   );

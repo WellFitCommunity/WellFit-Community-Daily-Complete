@@ -163,9 +163,12 @@ begin
 end$$;
 
 -- Create archived_check_ins table for long-term storage
-create table if not exists public.archived_check_ins (
-  like public.check_ins including all
-);
+do $$
+begin
+  if exists (select 1 from information_schema.tables where table_schema = 'public' and table_name = 'check_ins') then
+    execute 'create table if not exists public.archived_check_ins (like public.check_ins including all)';
+  end if;
+end$$;
 
 -- Add deleted_at column to profiles for soft deletes
 alter table public.profiles
