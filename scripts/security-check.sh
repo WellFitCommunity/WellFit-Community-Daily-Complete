@@ -74,21 +74,25 @@ fi
 print_status "Checking security headers implementation..."
 
 HEADERS_SCORE=0
-if grep -r "Content-Security-Policy" supabase/ src/ public/ > /dev/null 2>&1; then
+
+# Check for Content-Security-Policy in vercel.json, _headers, or source files
+if grep -r "Content-Security-Policy" vercel.json public/_headers build/_headers src/ public/ > /dev/null 2>&1; then
     print_success "Content-Security-Policy implemented"
     ((HEADERS_SCORE++))
 else
     print_error "Content-Security-Policy missing"
 fi
 
-if grep -r "X-Frame-Options" supabase/ src/ > /dev/null 2>&1; then
+# Check for X-Frame-Options in vercel.json, _headers, or source files
+if grep -r "X-Frame-Options" vercel.json public/_headers build/_headers src/ public/ > /dev/null 2>&1; then
     print_success "X-Frame-Options implemented"
     ((HEADERS_SCORE++))
 else
     print_error "X-Frame-Options missing"
 fi
 
-if grep -r "X-Content-Type-Options" supabase/ src/ > /dev/null 2>&1; then
+# Check for X-Content-Type-Options in vercel.json, _headers, or source files
+if grep -r "X-Content-Type-Options" vercel.json public/_headers build/_headers src/ public/ > /dev/null 2>&1; then
     print_success "X-Content-Type-Options implemented"
     ((HEADERS_SCORE++))
 else
