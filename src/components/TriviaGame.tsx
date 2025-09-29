@@ -22,9 +22,12 @@ const TriviaGame: React.FC = () => {
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [gamePhase, setGamePhase] = useState<'loading' | 'playing' | 'finished'>('loading');
   const [gamesPlayedToday, setGamesPlayedToday] = useState(0);
+  const [startTime, setStartTime] = useState<number | null>(null);
+  const [completionTime, setCompletionTime] = useState<number | null>(null);
 
   const LOCAL_STORAGE_KEY = 'dailyTriviaSet';
   const GAMES_PLAYED_KEY = 'memoryLaneGamesPlayed';
+  const TIME_TRACKING_KEY = 'memoryLaneTimeTracking';
 
   interface StoredTriviaSet {
     date: string;
@@ -91,6 +94,8 @@ const TriviaGame: React.FC = () => {
       setShowFeedback(false);
       setFeedbackMessage('');
       setGamePhase('playing');
+      setStartTime(Date.now()); // Start tracking time
+      setCompletionTime(null);
     } else {
       setFeedbackMessage("Not enough questions available to start the game. Please check back later or contact support.");
       setGamePhase('finished'); 
@@ -150,13 +155,54 @@ const TriviaGame: React.FC = () => {
     if (currentQuestionIndex < currentQuestions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     } else {
+      // Calculate completion time
+      if (startTime) {
+        const timeInSeconds = Math.round((Date.now() - startTime) / 1000);
+        setCompletionTime(timeInSeconds);
+
+        // Save time tracking to localStorage
+        try {
+          const today = new Date().toISOString().split('T')[0];
+          const stored = localStorage.getItem(TIME_TRACKING_KEY);
+          let timeData: any = {};
+
+          if (stored) {
+            timeData = JSON.parse(stored);
+          }
+
+          if (!timeData[today]) {
+            timeData[today] = [];
+          }
+
+          timeData[today].push({
+            timestamp: new Date().toISOString(),
+            completionTime: timeInSeconds,
+            score: score,
+            totalQuestions: currentQuestions.length
+          });
+
+          localStorage.setItem(TIME_TRACKING_KEY, JSON.stringify(timeData));
+        } catch (error) {
+          console.error('Failed to save time tracking:', error);
+        }
+      }
       setGamePhase('finished');
     }
   };
 
   const handlePlayAgain = () => {
     setGamePhase('loading'); // Show loading while questions are (re)selected
+    setCompletionTime(null);
     selectDailyQuestions(); // This will load the same daily set if called on the same day
+  };
+
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    if (mins > 0) {
+      return `${mins}m ${secs}s`;
+    }
+    return `${secs}s`;
   };
 
   if (gamePhase === 'loading') {
@@ -189,7 +235,14 @@ const TriviaGame: React.FC = () => {
           <div className="max-w-lg mx-auto p-6 bg-white rounded-lg shadow-xl text-center">
             <h2 className="text-3xl font-bold text-wellfit-blue mb-6">Memory Lane Complete!</h2>
         {currentQuestions.length > 0 ? (
-          <p className="text-2xl mb-4">Your final score: <span className="font-bold text-wellfit-green">{score}</span> out of {currentQuestions.length}</p>
+          <>
+            <p className="text-2xl mb-4">Your final score: <span className="font-bold text-wellfit-green">{score}</span> out of {currentQuestions.length}</p>
+            {completionTime !== null && (
+              <p className="text-lg text-gray-600 mb-4">
+                Completion time: <span className="font-semibold text-wellfit-blue">{formatTime(completionTime)}</span>
+              </p>
+            )}
+          </>
         ) : (
           <p className="text-xl mb-4 text-red-600">{feedbackMessage || "The game could not be loaded."}</p>
         )}

@@ -172,10 +172,16 @@ const TechTip: React.FC = () => {
   const todaysTip = techTips[todaysTipIndex];
 
   return (
-    <section className="bg-white border-2 border-wellfit-green p-6 rounded-xl shadow-md">
+    <section className="bg-white border-2 border-wellfit-green p-6 rounded-xl shadow-md relative overflow-hidden">
+      {/* Animated glow effect */}
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-400/10 via-green-400/10 to-blue-400/10 animate-pulse pointer-events-none"></div>
+
+      {/* Content */}
+      <div className="relative z-10">
       {/* Header */}
       <div className="mb-4">
-        <h2 className="text-xl font-semibold text-wellfit-blue mb-1">
+        <h2 className="text-xl font-semibold text-wellfit-blue mb-1 flex items-center">
+          <span className="mr-2 text-2xl animate-bounce">💡</span>
           Tech Tip of the Day
         </h2>
         <p className="text-sm text-gray-500">
@@ -188,8 +194,8 @@ const TechTip: React.FC = () => {
         </p>
       </div>
 
-      {/* Tip Content */}
-      <div className="bg-gradient-to-r from-blue-50 to-green-50 p-5 rounded-lg mb-5 border-l-4 border-wellfit-blue">
+      {/* Tip Content with enhanced glow */}
+      <div className="bg-gradient-to-r from-blue-50 to-green-50 p-5 rounded-lg mb-5 border-l-4 border-wellfit-blue shadow-lg ring-2 ring-blue-200/50 hover:ring-blue-300/70 transition-all duration-300">
         <p className="text-gray-800 text-lg leading-relaxed">{todaysTip}</p>
       </div>
 
@@ -251,6 +257,7 @@ const TechTip: React.FC = () => {
         <p className="text-xs text-gray-400">
           💡 New tip every day • Check back tomorrow for more!
         </p>
+      </div>
       </div>
     </section>
   );

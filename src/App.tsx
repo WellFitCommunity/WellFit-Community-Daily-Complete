@@ -47,6 +47,9 @@ const SelfReportingPage = React.lazy(() => import('./pages/SelfReportingPage'));
 const DoctorsViewPage = React.lazy(() => import('./pages/DoctorsViewPage'));
 const AdminPanel = React.lazy(() => import('./components/admin/AdminPanel'));
 const AdminProfileEditorPage = React.lazy(() => import('./pages/AdminProfileEditorPage'));
+const NursePanel = React.lazy(() => import('./components/nurse/NursePanel'));
+const BulkEnrollmentPanel = React.lazy(() => import('./components/admin/BulkEnrollmentPanel'));
+const BulkExportPanel = React.lazy(() => import('./components/admin/BulkExportPanel'));
 const CommunityMoments = React.lazy(() => import('./components/CommunityMoments'));
 const DemographicsPage = React.lazy(() => import('./pages/DemographicsPage'));
 const TriviaGame = React.lazy(() => import('./components/TriviaGame'));
@@ -143,6 +146,36 @@ function Shell() {
                   <RequireAuth>
                     <RequireAdminAuth>
                       <AdminProfileEditorPage />
+                    </RequireAdminAuth>
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/nurse-dashboard"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'nurse']}>
+                      <NursePanel />
+                    </RequireAdminAuth>
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/admin/bulk-enroll"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth>
+                      <BulkEnrollmentPanel />
+                    </RequireAdminAuth>
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/admin/bulk-export"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth>
+                      <BulkExportPanel />
                     </RequireAdminAuth>
                   </RequireAuth>
                 }

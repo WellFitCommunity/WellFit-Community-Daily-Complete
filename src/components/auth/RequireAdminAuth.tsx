@@ -5,12 +5,12 @@ import { useAdminAuth } from '../../contexts/AdminAuthContext';
 
 interface RequireAdminAuthProps {
   children: ReactNode;
-  allowedRoles?: ('admin' | 'super_admin')[];
+  allowedRoles?: ('admin' | 'super_admin' | 'nurse')[];
 }
 
 export default function RequireAdminAuth({
   children,
-  allowedRoles = ['admin', 'super_admin'],
+  allowedRoles = ['admin', 'super_admin', 'nurse'],
 }: RequireAdminAuthProps) {
   const { isAdminAuthenticated, adminRole, isLoading } = useAdminAuth();
   const location = useLocation();

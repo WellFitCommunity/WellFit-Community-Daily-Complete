@@ -30,8 +30,13 @@ const DashMealOfTheDay: React.FC = () => {
   }
 
   return (
-    <div className="text-center">
-      <div className="text-2xl sm:text-3xl mb-3">🍽️</div>
+    <div className="text-center relative">
+      {/* Animated glow effect */}
+      <div className="absolute inset-0 bg-gradient-to-br from-orange-400/10 via-green-400/10 to-yellow-400/10 animate-pulse pointer-events-none rounded-lg"></div>
+
+      {/* Content */}
+      <div className="relative z-10">
+      <div className="text-2xl sm:text-3xl mb-3 animate-bounce">🍽️</div>
       <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 mb-3">
         Today's Featured Meal
       </h3>
@@ -41,7 +46,7 @@ const DashMealOfTheDay: React.FC = () => {
           <img
             src={todaysMeal.image_url}
             alt={todaysMeal.name}
-            className="w-full h-32 sm:h-40 object-cover rounded-lg mb-3"
+            className="w-full h-32 sm:h-40 object-cover rounded-lg mb-3 ring-2 ring-orange-200/50 hover:ring-orange-300/70 transition-all duration-300 shadow-lg"
             onError={(e) => {
               // Hide image if it fails to load
               (e.target as HTMLImageElement).style.display = 'none';
@@ -67,10 +72,11 @@ const DashMealOfTheDay: React.FC = () => {
 
       <button
         onClick={() => navigate(`/meals/${todaysMeal.id}`)}
-        className="bg-green-600 text-white text-sm sm:text-base px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:bg-green-700 transition-colors w-full"
+        className="bg-green-600 text-white text-sm sm:text-base px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:bg-green-700 hover:scale-105 transition-all duration-300 w-full shadow-md hover:shadow-lg"
       >
         🍳 View Full Recipe
       </button>
+      </div>
     </div>
   );
 };

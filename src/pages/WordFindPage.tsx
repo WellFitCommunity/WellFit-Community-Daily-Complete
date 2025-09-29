@@ -32,8 +32,11 @@ const WordFind: React.FC = () => {
   const [found, setFound] = useState<Set<string>>(new Set());
   const [celebrate, setCelebrate] = useState(false);
   const [gamesPlayedToday, setGamesPlayedToday] = useState(0);
+  const [startTime, setStartTime] = useState<number | null>(null);
+  const [completionTime, setCompletionTime] = useState<number | null>(null);
 
   const GAMES_PLAYED_KEY = 'wordFindGamesPlayed';
+  const TIME_TRACKING_KEY = 'wordFindTimeTracking';
 
   // Check games played today
   useEffect(() => {
@@ -54,6 +57,8 @@ const WordFind: React.FC = () => {
 
   // Build puzzle
   useEffect(() => {
+    setStartTime(Date.now()); // Start tracking time when puzzle is built
+    setCompletionTime(null);
     const matrix: string[][] = Array.from({ length: ROWS }, () => Array(COLS).fill(''));
     const placedWords: string[] = [];
 
@@ -188,7 +193,54 @@ const WordFind: React.FC = () => {
         if (!word || prev.has(word)) return prev;
         const updated = new Set(prev);
         updated.add(word);
-        if (updated.size === words.length) setCelebrate(true);
+
+        // Check if game is complete
+        if (updated.size === words.length) {
+          setCelebrate(true);
+
+          // Calculate completion time
+          if (startTime) {
+            const timeInSeconds = Math.round((Date.now() - startTime) / 1000);
+            setCompletionTime(timeInSeconds);
+
+            // Save time tracking to localStorage
+            try {
+              const today = new Date().toISOString().split('T')[0];
+              const stored = localStorage.getItem(TIME_TRACKING_KEY);
+              let timeData: any = {};
+
+              if (stored) {
+                timeData = JSON.parse(stored);
+              }
+
+              if (!timeData[today]) {
+                timeData[today] = [];
+              }
+
+              timeData[today].push({
+                timestamp: new Date().toISOString(),
+                completionTime: timeInSeconds,
+                wordsFound: updated.size,
+                theme: themeData.theme
+              });
+
+              localStorage.setItem(TIME_TRACKING_KEY, JSON.stringify(timeData));
+
+              // Update games played count
+              const gamesStored = localStorage.getItem(GAMES_PLAYED_KEY);
+              if (gamesStored) {
+                const gamesData = JSON.parse(gamesStored);
+                if (gamesData.date === today) {
+                  const newCount = (gamesData.count || 0) + 1;
+                  setGamesPlayedToday(newCount);
+                  localStorage.setItem(GAMES_PLAYED_KEY, JSON.stringify({ date: today, count: newCount }));
+                }
+              }
+            } catch (error) {
+              console.error('Failed to save time tracking:', error);
+            }
+          }
+        }
         return updated;
       });
       // Start fresh path after a find
@@ -271,6 +323,19 @@ const WordFind: React.FC = () => {
           })}
         </div>
       </div>
+
+      {/* Completion Stats */}
+      {celebrate && completionTime !== null && (
+        <div className="mt-4 p-4 bg-green-50 border-2 border-green-400 rounded-lg">
+          <h3 className="font-bold text-green-800 text-xl mb-2">🎉 Puzzle Complete!</h3>
+          <p className="text-green-700">
+            Completion time: <span className="font-semibold">{Math.floor(completionTime / 60)}m {completionTime % 60}s</span>
+          </p>
+          <p className="text-green-600 text-sm mt-1">
+            Games played today: {gamesPlayedToday}
+          </p>
+        </div>
+      )}
 
       {celebrate && (
         <Confetti
