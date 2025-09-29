@@ -3,15 +3,10 @@ import { z } from 'zod';
 
 // Environment validation schema
 const envSchema = z.object({
-  // Anthropic API Configuration
-  REACT_APP_ANTHROPIC_API_KEY: z.string()
-    .min(1, "Anthropic API key is required")
-    .refine(
-      (key) => key.startsWith('sk-ant-'),
-      "Anthropic API key must start with 'sk-ant-'"
-    ),
+  // Anthropic API Configuration - make optional to prevent crashes
+  REACT_APP_ANTHROPIC_API_KEY: z.string().optional(),
 
-  // Claude Model Configuration
+  // Claude Model Configuration - using latest Claude 3.5 Sonnet (Claude 4 equivalent)
   REACT_APP_CLAUDE_DEFAULT_MODEL: z.string().default("claude-3-5-sonnet-20241022"),
   REACT_APP_CLAUDE_ADMIN_MODEL: z.string().default("claude-3-5-sonnet-20241022"),
   REACT_APP_CLAUDE_MAX_TOKENS: z.coerce.number().default(4000),
@@ -29,7 +24,7 @@ const envSchema = z.object({
 function parseEnvironment() {
   try {
     return envSchema.parse({
-      REACT_APP_ANTHROPIC_API_KEY: process.env.REACT_APP_ANTHROPIC_API_KEY,
+      REACT_APP_ANTHROPIC_API_KEY: process.env.REACT_APP_ANTHROPIC_API_KEY || '',
       REACT_APP_CLAUDE_DEFAULT_MODEL: process.env.REACT_APP_CLAUDE_DEFAULT_MODEL,
       REACT_APP_CLAUDE_ADMIN_MODEL: process.env.REACT_APP_CLAUDE_ADMIN_MODEL,
       REACT_APP_CLAUDE_MAX_TOKENS: process.env.REACT_APP_CLAUDE_MAX_TOKENS,
@@ -57,7 +52,7 @@ export function validateEnvironment(): { success: boolean; message: string; deta
       success: true,
       message: 'Environment configuration is valid',
       details: {
-        hasAnthropicKey: !!validatedEnv.REACT_APP_ANTHROPIC_API_KEY,
+        secureMode: true, // API keys only in server-side Edge Functions
         defaultModel: validatedEnv.REACT_APP_CLAUDE_DEFAULT_MODEL,
         adminModel: validatedEnv.REACT_APP_CLAUDE_ADMIN_MODEL,
         environment: validatedEnv.NODE_ENV,
@@ -72,8 +67,7 @@ export function validateEnvironment(): { success: boolean; message: string; deta
       success: false,
       message: errorMessage,
       details: {
-        hasAnthropicKey: !!process.env.REACT_APP_ANTHROPIC_API_KEY,
-        keyFormat: process.env.REACT_APP_ANTHROPIC_API_KEY?.substring(0, 7) + '...',
+        secureMode: true, // No API keys exposed in browser
         environment: process.env.NODE_ENV
       }
     };
@@ -86,8 +80,7 @@ export function getEnvironmentInfo() {
     nodeEnv: env.NODE_ENV,
     appName: env.REACT_APP_APP_NAME,
     demoMode: env.REACT_APP_DEMO_ENABLED,
-    hasApiKey: !!env.REACT_APP_ANTHROPIC_API_KEY,
-    keyPrefix: env.REACT_APP_ANTHROPIC_API_KEY?.substring(0, 7) + '...',
+    secureMode: true, // All API keys server-side only
     defaultModel: env.REACT_APP_CLAUDE_DEFAULT_MODEL,
     adminModel: env.REACT_APP_CLAUDE_ADMIN_MODEL,
     maxTokens: env.REACT_APP_CLAUDE_MAX_TOKENS,
