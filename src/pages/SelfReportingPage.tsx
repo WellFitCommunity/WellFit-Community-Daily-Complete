@@ -30,8 +30,8 @@ interface SelfReportData {
 }
 
 interface SelfReportLog extends SelfReportData {
-  source_type: SourceType;         // client-added for color coding
-  // Add legacy field names for display compatibility
+  source_type: SourceType; // client-added for color coding
+  // Legacy field names for display compatibility
   blood_pressure_systolic?: number | null;
   blood_pressure_diastolic?: number | null;
 }
@@ -42,7 +42,6 @@ const PHYSICAL_ACTIVITY_OPTIONS = [
   'Walking',
   'Gym/Fitness Center',
   'YMCA',
-  'Silver Sneakers',
   'Swimming',
   'Yoga/Stretching',
   'Dancing',
@@ -121,7 +120,6 @@ const SelfReportingPage: React.FC = () => {
       }
     })();
 
-    // ✅ Properly typed callback so TS stops yelling
     const { data: sub } = supabase.auth.onAuthStateChange(
       (_event: AuthChangeEvent, newSession: Session | null) => {
         if (!mounted) return;
@@ -138,7 +136,8 @@ const SelfReportingPage: React.FC = () => {
   // Initialize speech recognition
   useEffect(() => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+      const SpeechRecognition =
+        (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
       recognitionRef.current = new SpeechRecognition();
 
       if (recognitionRef.current) {
@@ -147,18 +146,17 @@ const SelfReportingPage: React.FC = () => {
         recognitionRef.current.lang = 'en-US';
 
         recognitionRef.current.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
+          const transcript = event.results[0][0].transcript;
 
-        // Set the value based on which field is active
-        if (currentField === 'symptoms') {
-          setSymptoms(prev => prev + (prev ? ' ' : '') + transcript);
-        } else if (currentField === 'activity') {
-          setActivity(prev => prev + (prev ? ' ' : '') + transcript);
-        }
+          if (currentField === 'symptoms') {
+            setSymptoms((prev) => prev + (prev ? ' ' : '') + transcript);
+          } else if (currentField === 'activity') {
+            setActivity((prev) => prev + (prev ? ' ' : '') + transcript);
+          }
 
-        setIsListening(false);
-        setCurrentField(null);
-      };
+          setIsListening(false);
+          setCurrentField(null);
+        };
 
         recognitionRef.current.onend = () => {
           setIsListening(false);
@@ -189,7 +187,7 @@ const SelfReportingPage: React.FC = () => {
     }
   };
 
-  // --- Fetch self reports for the current user (from self_reports table)
+  // --- Fetch self reports for the current user
   const fetchReports = useCallback(
     async (uid: string) => {
       try {
@@ -205,30 +203,28 @@ const SelfReportingPage: React.FC = () => {
           return;
         }
 
-        const reports: SelfReportLog[] = (data ?? []).map((r: any) => {
-          return {
-            id: r.id,
-            created_at: r.created_at,
-            user_id: r.user_id,
-            entry_type: 'self_report',
-            mood: String(r.mood ?? ''),
-            symptoms: r.symptoms ?? null,
-            activity_description: r.activity_description ?? null,
-            // Health metrics directly from self_reports columns
-            bp_systolic: r.bp_systolic ?? null,
-            bp_diastolic: r.bp_diastolic ?? null,
-            // Legacy names for display compatibility
-            blood_pressure_systolic: r.bp_systolic ?? null,
-            blood_pressure_diastolic: r.bp_diastolic ?? null,
-            blood_sugar: r.blood_sugar ?? null,
-            blood_oxygen: r.blood_oxygen ?? null,
-            weight: r.weight ?? null,
-            physical_activity: r.physical_activity ?? null,
-            social_engagement: r.social_engagement ?? null,
-            submitted_by: r.user_id,
-            source_type: 'self',
-          };
-        });
+        const reports: SelfReportLog[] = (data ?? []).map((r: any) => ({
+          id: r.id,
+          created_at: r.created_at,
+          user_id: r.user_id,
+          mood: String(r.mood ?? ''),
+          symptoms: r.symptoms ?? null,
+          activity_description: r.activity_description ?? null,
+          // direct
+          bp_systolic: r.bp_systolic ?? null,
+          bp_diastolic: r.bp_diastolic ?? null,
+          // legacy aliases
+          blood_pressure_systolic: r.bp_systolic ?? null,
+          blood_pressure_diastolic: r.bp_diastolic ?? null,
+          blood_sugar: r.blood_sugar ?? null,
+          blood_oxygen: r.blood_oxygen ?? null,
+          weight: r.weight ?? null,
+          physical_activity: r.physical_activity ?? null,
+          social_engagement: r.social_engagement ?? null,
+          spo2: r.spo2 ?? null,
+          heart_rate: r.heart_rate ?? null,
+          source_type: 'self',
+        }));
 
         setSelfReports(reports);
       } catch (e) {
@@ -240,13 +236,12 @@ const SelfReportingPage: React.FC = () => {
     [supabase]
   );
 
-  // When logged-in user changes, refresh their reports
   useEffect(() => {
     if (!currentUser?.id) return;
     fetchReports(currentUser.id);
   }, [currentUser?.id, fetchReports]);
 
-  // --- Submit handler (writes to self_reports table with direct columns)
+  // --- Submit
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setFeedbackMessage(null);
@@ -272,11 +267,10 @@ const SelfReportingPage: React.FC = () => {
       const payload = {
         user_id: currentUser.id,
         mood: chosenMood,
-        // Health metrics - now saving all fields to self_reports table
         bp_systolic: bloodPressureSystolic ? parseInt(bloodPressureSystolic) : null,
         bp_diastolic: bloodPressureDiastolic ? parseInt(bloodPressureDiastolic) : null,
         spo2: bloodOxygen ? parseInt(bloodOxygen) : null,
-        blood_oxygen: bloodOxygen ? parseInt(bloodOxygen) : null, // Also save as blood_oxygen for health insights
+        blood_oxygen: bloodOxygen ? parseInt(bloodOxygen) : null,
         blood_sugar: bloodSugar ? parseInt(bloodSugar) : null,
         weight: weight ? parseFloat(weight) : null,
         physical_activity: physicalActivity.trim() || null,
@@ -290,7 +284,7 @@ const SelfReportingPage: React.FC = () => {
 
       setFeedbackMessage('Report saved successfully!');
 
-      // Reset all fields
+      // reset
       setMood('');
       setBloodPressureSystolic('');
       setBloodPressureDiastolic('');
@@ -311,7 +305,7 @@ const SelfReportingPage: React.FC = () => {
     }
   };
 
-  // --- UI helpers
+  // UI helpers
   const colorForSource = (type: SourceType | string): string => {
     if (type === 'self') return '#8cc63f'; // WellFit Green
     if (type === 'staff') return '#ff9800'; // Orange
@@ -320,449 +314,454 @@ const SelfReportingPage: React.FC = () => {
 
   if (isLoading && !currentUser) {
     return (
-      <div className="text-center p-8 text-xl" style={{ color: branding.primaryColor }}>
-        Loading...
+      <div className="min-h-screen flex items-center justify-center" style={{
+        background: branding.gradient || `linear-gradient(to bottom right, ${branding.primaryColor}, ${branding.secondaryColor})`
+      }}>
+        <div className="text-center p-8 text-xl text-white">Loading...</div>
       </div>
     );
   }
 
   if (!currentUser && errorMessage) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] p-6 text-center">
-        <p className="text-2xl font-semibold mb-4" style={{ color: branding.primaryColor }}>
-          Access Denied
-        </p>
-        <p className="text-lg" style={{ color: branding.textColor }}>
-          {errorMessage}
-        </p>
-        <p className="text-md mt-4" style={{ color: branding.textColor }}>
-          Please{' '}
-          <a href="/" className="underline" style={{ color: branding.secondaryColor }}>
-            log in
-          </a>{' '}
-          to access this page.
-        </p>
+      <div className="min-h-screen flex items-center justify-center" style={{
+        background: branding.gradient || `linear-gradient(to bottom right, ${branding.primaryColor}, ${branding.secondaryColor})`
+      }}>
+        <div className="flex flex-col items-center justify-center p-6 text-center bg-white rounded-xl shadow-md max-w-lg w-full">
+          <p className="text-2xl font-semibold mb-4" style={{ color: branding.primaryColor }}>
+            Access Denied
+          </p>
+          <p className="text-lg text-gray-700">{errorMessage}</p>
+          <p className="text-md mt-4 text-gray-700">
+            Please{' '}
+            <a href="/" className="underline" style={{ color: branding.secondaryColor }}>
+              log in
+            </a>{' '}
+            to access this page.
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
+    // FULL-BLEED GRADIENT BACKGROUND
     <div
-      className="p-4 md:p-8 max-w-2xl mx-auto rounded-xl shadow-md"
+      className="min-h-screen w-full py-6 sm:py-10"
       style={{
         background:
           branding.gradient ||
           `linear-gradient(to bottom right, ${branding.primaryColor}, ${branding.secondaryColor})`,
-        color: branding.textColor,
-        border: `1px solid ${branding.primaryColor}`,
       }}
     >
-      {/* Back Button */}
-      <button
-        onClick={() => navigate('/dashboard')}
-        className="flex items-center mb-4 px-3 py-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
-        style={{ color: branding.primaryColor }}
-      >
-        <ArrowLeft size={20} className="mr-2" />
-        Back to Dashboard
-      </button>
-
-      <h1
-        className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6 md:mb-8 text-center"
-        style={{ color: branding.primaryColor }}
-      >
-        📊 My Daily Health Check-In
-      </h1>
-
-      <p className="text-center text-lg mb-6 text-white">
-        Track your health every day - you can report twice daily!
-      </p>
-
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow">
-
-        {/* Daily Health Metrics Section */}
-        <div className="border-b border-gray-200 pb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">📈 Today's Health Numbers</h2>
-
-          {/* Mood */}
-          <div className="mb-4">
-            <label htmlFor="mood" className="block text-lg font-medium text-gray-700 mb-2">
-              😊 How are you feeling today?
-            </label>
-            <select
-              id="mood"
-              value={mood}
-              onChange={(e) => setMood(e.target.value)}
-              disabled={isLoading}
-              aria-required="true"
-              className="mt-1 block w-full py-3 px-4 text-lg border-2 border-gray-400 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 text-gray-900 font-medium"
-              style={{ minHeight: '48px', fontSize: '16px' }}
+      <div className="max-w-3xl mx-auto px-4">
+        {/* CARD */}
+        <div className="rounded-xl shadow-md border border-white/20 bg-white">
+          {/* Header / Back */}
+          <div className="p-4 sm:p-6 border-b border-gray-200">
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="flex items-center mb-4 px-3 py-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200"
+              style={{ color: branding.primaryColor }}
             >
-              <option value="" disabled style={{ color: '#6B7280', backgroundColor: '#F9FAFB' }}>
-                Select your mood...
-              </option>
-              {MOOD_OPTIONS.map((option) => (
-                <option
-                  key={option}
-                  value={option}
-                  style={{
-                    color: '#111827',
-                    backgroundColor: '#FFFFFF',
-                    padding: '8px',
-                    fontSize: '16px'
-                  }}
-                >
-                  {option}
-                </option>
-              ))}
-            </select>
+              <ArrowLeft size={20} className="mr-2" />
+              Back to Dashboard
+            </button>
+
+            <h1
+              className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2"
+              style={{ color: branding.primaryColor }}
+            >
+              📊 My Daily Health Check-In
+            </h1>
+            <p className="text-gray-700">Track your health every day — you can report twice daily!</p>
           </div>
 
-          {/* Blood Pressure */}
-          <div className="mb-4">
-            <label className="block text-lg font-medium text-gray-700 mb-2">
-              🩸 Blood Pressure (if you took it today)
-            </label>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
+          {/* FORM */}
+          <form onSubmit={handleSubmit} className="space-y-6 p-4 sm:p-6 text-gray-900">
+            {/* Daily Health Metrics Section */}
+            <div className="border-b border-gray-200 pb-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">📈 Today&apos;s Health Numbers</h2>
+
+              {/* Mood */}
+              <div className="mb-4">
+                <label htmlFor="mood" className="block text-lg font-medium text-gray-700 mb-2">
+                  😊 How are you feeling today?
+                </label>
+                <select
+                  id="mood"
+                  value={mood}
+                  onChange={(e) => setMood(e.target.value)}
+                  disabled={isLoading}
+                  aria-required="true"
+                  className="mt-1 block w-full py-3 px-4 text-lg border-2 border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 text-gray-900 placeholder-gray-400"
+                  style={{ minHeight: '48px', fontSize: '16px' }}
+                >
+                  <option value="" disabled className="text-gray-500 bg-gray-50">
+                    Select your mood...
+                  </option>
+                  {MOOD_OPTIONS.map((option) => (
+                    <option key={option} value={option} className="text-gray-900 bg-white">
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Blood Pressure */}
+              <div className="mb-4">
+                <label className="block text-lg font-medium text-gray-700 mb-2">
+                  🩸 Blood Pressure (if you took it today)
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <input
+                      type="number"
+                      placeholder="Top number"
+                      value={bloodPressureSystolic}
+                      onChange={(e) => setBloodPressureSystolic(e.target.value)}
+                      className="w-full py-3 px-4 text-lg border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-900 placeholder-gray-400 bg-white"
+                      min={70}
+                      max={250}
+                    />
+                    <span className="text-sm text-gray-600">Systolic (top)</span>
+                  </div>
+                  <div>
+                    <input
+                      type="number"
+                      placeholder="Bottom number"
+                      value={bloodPressureDiastolic}
+                      onChange={(e) => setBloodPressureDiastolic(e.target.value)}
+                      className="w-full py-3 px-4 text-lg border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-900 placeholder-gray-400 bg-white"
+                      min={40}
+                      max={150}
+                    />
+                    <span className="text-sm text-gray-600">Diastolic (bottom)</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Blood Sugar */}
+              <div className="mb-4">
+                <label className="block text-lg font-medium text-gray-700 mb-2">
+                  🍯 Blood Sugar (if you checked it)
+                </label>
                 <input
                   type="number"
-                  placeholder="Top number"
-                  value={bloodPressureSystolic}
-                  onChange={(e) => setBloodPressureSystolic(e.target.value)}
-                  className="w-full py-3 px-4 text-lg border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
-                  min="70" max="250"
+                  placeholder="mg/dL"
+                  value={bloodSugar}
+                  onChange={(e) => setBloodSugar(e.target.value)}
+                  className="w-full py-3 px-4 text-lg border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-900 placeholder-gray-400 bg-white"
+                  min={50}
+                  max={500}
                 />
-                <span className="text-sm text-gray-600">Systolic (top)</span>
+                <span className="text-sm text-gray-600">Enter number only (like 120)</span>
               </div>
-              <div>
+
+              {/* Blood Oxygen */}
+              <div className="mb-4">
+                <label className="block text-lg font-medium text-gray-700 mb-2">
+                  🫁 Blood Oxygen Level (if you measured it)
+                </label>
                 <input
                   type="number"
-                  placeholder="Bottom number"
-                  value={bloodPressureDiastolic}
-                  onChange={(e) => setBloodPressureDiastolic(e.target.value)}
-                  className="w-full py-3 px-4 text-lg border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
-                  min="40" max="150"
+                  placeholder="% (like 98)"
+                  value={bloodOxygen}
+                  onChange={(e) => setBloodOxygen(e.target.value)}
+                  className="w-full py-3 px-4 text-lg border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-900 placeholder-gray-400 bg-white"
+                  min={70}
+                  max={100}
                 />
-                <span className="text-sm text-gray-600">Diastolic (bottom)</span>
+                <span className="text-sm text-gray-600">Percentage (normal is 95–100%)</span>
+              </div>
+
+              {/* Weight */}
+              <div className="mb-4">
+                <label className="block text-lg font-medium text-gray-700 mb-2">
+                  ⚖️ Weight (if you weighed yourself)
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  placeholder="pounds"
+                  value={weight}
+                  onChange={(e) => setWeight(e.target.value)}
+                  className="w-full py-3 px-4 text-lg border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-900 placeholder-gray-400 bg-white"
+                  min={50}
+                  max={500}
+                />
+                <span className="text-sm text-gray-600">Enter your weight in pounds</span>
               </div>
             </div>
-          </div>
 
-          {/* Blood Sugar */}
-          <div className="mb-4">
-            <label className="block text-lg font-medium text-gray-700 mb-2">
-              🍯 Blood Sugar (if you checked it)
-            </label>
-            <input
-              type="number"
-              placeholder="mg/dL"
-              value={bloodSugar}
-              onChange={(e) => setBloodSugar(e.target.value)}
-              className="w-full py-3 px-4 text-lg border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
-              min="50" max="500"
-            />
-            <span className="text-sm text-gray-600">Enter number only (like 120)</span>
-          </div>
+            {/* Activity & Social Section */}
+            <div className="border-b border-gray-200 pb-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">🏃‍♀️ Today&apos;s Activities</h2>
 
-          {/* Blood Oxygen */}
-          <div className="mb-4">
-            <label className="block text-lg font-medium text-gray-700 mb-2">
-              🫁 Blood Oxygen Level (if you measured it)
-            </label>
-            <input
-              type="number"
-              placeholder="% (like 98)"
-              value={bloodOxygen}
-              onChange={(e) => setBloodOxygen(e.target.value)}
-              className="w-full py-3 px-4 text-lg border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
-              min="70" max="100"
-            />
-            <span className="text-sm text-gray-600">Percentage (normal is 95-100%)</span>
-          </div>
-
-          {/* Weight */}
-          <div className="mb-4">
-            <label className="block text-lg font-medium text-gray-700 mb-2">
-              ⚖️ Weight (if you weighed yourself)
-            </label>
-            <input
-              type="number"
-              step="0.1"
-              placeholder="pounds"
-              value={weight}
-              onChange={(e) => setWeight(e.target.value)}
-              className="w-full py-3 px-4 text-lg border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
-              min="50" max="500"
-            />
-            <span className="text-sm text-gray-600">Enter your weight in pounds</span>
-          </div>
-        </div>
-
-        {/* Activity & Social Section */}
-        <div className="border-b border-gray-200 pb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">🏃‍♀️ Today's Activities</h2>
-
-          {/* Physical Activity */}
-          <div className="mb-4">
-            <label className="block text-lg font-medium text-gray-700 mb-2">
-              🏃‍♀️ What physical activity did you do today?
-            </label>
-            <select
-              value={physicalActivity}
-              onChange={(e) => setPhysicalActivity(e.target.value)}
-              className="w-full py-3 px-4 text-lg border-2 border-gray-400 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 font-medium"
-              style={{ minHeight: '48px', fontSize: '16px' }}
-            >
-              <option value="" style={{ color: '#6B7280', backgroundColor: '#F9FAFB' }}>
-                Select an activity...
-              </option>
-              {PHYSICAL_ACTIVITY_OPTIONS.map((option) => (
-                <option
-                  key={option}
-                  value={option}
-                  style={{
-                    color: '#111827',
-                    backgroundColor: '#FFFFFF',
-                    padding: '8px',
-                    fontSize: '16px'
-                  }}
+              {/* Physical Activity */}
+              <div className="mb-4">
+                <label className="block text-lg font-medium text-gray-700 mb-2">
+                  🏃‍♀️ What physical activity did you do today?
+                </label>
+                <select
+                  value={physicalActivity}
+                  onChange={(e) => setPhysicalActivity(e.target.value)}
+                  className="w-full py-3 px-4 text-lg border-2 border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 placeholder-gray-400"
+                  style={{ minHeight: '48px', fontSize: '16px' }}
                 >
-                  {option}
-                </option>
-              ))}
-            </select>
-          </div>
+                  <option value="" className="text-gray-500 bg-gray-50">
+                    Select an activity...
+                  </option>
+                  {PHYSICAL_ACTIVITY_OPTIONS.map((option) => (
+                    <option key={option} value={option} className="text-gray-900 bg-white">
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-          {/* Social Engagement */}
-          <div className="mb-4">
-            <label className="block text-lg font-medium text-gray-700 mb-2">
-              👥 How did you connect with others today?
-            </label>
-            <select
-              value={socialEngagement}
-              onChange={(e) => setSocialEngagement(e.target.value)}
-              className="w-full py-3 px-4 text-lg border-2 border-gray-400 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 font-medium"
-              style={{ minHeight: '48px', fontSize: '16px' }}
-            >
-              <option value="" style={{ color: '#6B7280', backgroundColor: '#F9FAFB' }}>
-                Tell us about your social time...
-              </option>
-              {SOCIAL_ENGAGEMENT_OPTIONS.map((option) => (
-                <option
-                  key={option}
-                  value={option}
-                  style={{
-                    color: '#111827',
-                    backgroundColor: '#FFFFFF',
-                    padding: '8px',
-                    fontSize: '16px'
-                  }}
+              {/* Social Engagement */}
+              <div className="mb-4">
+                <label className="block text-lg font-medium text-gray-700 mb-2">
+                  👥 How did you connect with others today?
+                </label>
+                <select
+                  value={socialEngagement}
+                  onChange={(e) => setSocialEngagement(e.target.value)}
+                  className="w-full py-3 px-4 text-lg border-2 border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 placeholder-gray-400"
+                  style={{ minHeight: '48px', fontSize: '16px' }}
                 >
-                  {option}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Advanced Reporting Section */}
-        <div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">📝 Additional Notes (Optional)</h2>
-
-          <div className="mb-4">
-            <label htmlFor="symptoms" className="block text-lg font-medium text-gray-700 mb-2">
-              🤒 Any symptoms you're experiencing?
-            </label>
-            <div className="relative">
-              <textarea
-                id="symptoms"
-                value={symptoms}
-                onChange={(e) => setSymptoms(e.target.value)}
-                rows={3}
-                disabled={isLoading}
-                className="w-full py-3 px-4 text-lg border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 disabled:bg-gray-50 pr-14"
-                placeholder="e.g., headache, fatigue, feeling dizzy..."
-                maxLength={500}
-              />
-              <button
-                type="button"
-                onClick={() => isListening && currentField === 'symptoms' ? stopVoiceRecognition() : startVoiceRecognition('symptoms')}
-                className={`absolute right-3 top-3 p-2 rounded-full transition ${
-                  isListening && currentField === 'symptoms'
-                    ? 'bg-red-500 text-white animate-pulse'
-                    : 'bg-blue-500 text-white hover:bg-blue-600'
-                }`}
-                title={isListening && currentField === 'symptoms' ? 'Stop recording' : 'Click to speak'}
-              >
-                {isListening && currentField === 'symptoms' ? <Mic size={20} /> : <MicOff size={20} />}
-              </button>
+                  <option value="" className="text-gray-500 bg-gray-50">
+                    Tell us about your social time...
+                  </option>
+                  {SOCIAL_ENGAGEMENT_OPTIONS.map((option) => (
+                    <option key={option} value={option} className="text-gray-900 bg-white">
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-            {isListening && currentField === 'symptoms' && (
-              <p className="text-red-600 text-sm mt-1 animate-pulse">🎤 Listening... Speak now!</p>
-            )}
-          </div>
 
-          <div className="mb-4">
-            <label htmlFor="activity" className="block text-lg font-medium text-gray-700 mb-2">
-              📓 Tell us more about your day
-            </label>
-            <div className="relative">
-              <textarea
-                id="activity"
-                value={activity}
-                onChange={(e) => setActivity(e.target.value)}
-                rows={3}
-                disabled={isLoading}
-                className="w-full py-3 px-4 text-lg border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 disabled:bg-gray-50 pr-14"
-                placeholder="Tell us about your day, any concerns, or how you're feeling..."
-                maxLength={500}
-              />
-              <button
-                type="button"
-                onClick={() => isListening && currentField === 'activity' ? stopVoiceRecognition() : startVoiceRecognition('activity')}
-                className={`absolute right-3 top-3 p-2 rounded-full transition ${
-                  isListening && currentField === 'activity'
-                    ? 'bg-red-500 text-white animate-pulse'
-                    : 'bg-blue-500 text-white hover:bg-blue-600'
-                }`}
-                title={isListening && currentField === 'activity' ? 'Stop recording' : 'Click to speak'}
-              >
-                {isListening && currentField === 'activity' ? <Mic size={20} /> : <MicOff size={20} />}
-              </button>
+            {/* Advanced Reporting Section */}
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">📝 Additional Notes (Optional)</h2>
+
+              <div className="mb-4">
+                <label htmlFor="symptoms" className="block text-lg font-medium text-gray-700 mb-2">
+                  🤒 Any symptoms you&apos;re experiencing?
+                </label>
+                <div className="relative">
+                  <textarea
+                    id="symptoms"
+                    value={symptoms}
+                    onChange={(e) => setSymptoms(e.target.value)}
+                    rows={3}
+                    disabled={isLoading}
+                    className="w-full py-3 px-4 text-lg border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 disabled:bg-gray-50 pr-14 text-gray-900 placeholder-gray-400"
+                    placeholder="e.g., headache, fatigue, feeling dizzy..."
+                    maxLength={500}
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      isListening && currentField === 'symptoms'
+                        ? stopVoiceRecognition()
+                        : startVoiceRecognition('symptoms')
+                    }
+                    className={`absolute right-3 top-3 p-2 rounded-full transition ${
+                      isListening && currentField === 'symptoms'
+                        ? 'bg-red-500 text-white animate-pulse'
+                        : 'bg-blue-500 text-white hover:bg-blue-600'
+                    }`}
+                    title={
+                      isListening && currentField === 'symptoms' ? 'Stop recording' : 'Click to speak'
+                    }
+                  >
+                    {isListening && currentField === 'symptoms' ? <Mic size={20} /> : <MicOff size={20} />}
+                  </button>
+                </div>
+                {isListening && currentField === 'symptoms' && (
+                  <p className="text-red-600 text-sm mt-1 animate-pulse">🎤 Listening... Speak now!</p>
+                )}
+              </div>
+
+              <div className="mb-4">
+                <label htmlFor="activity" className="block text-lg font-medium text-gray-700 mb-2">
+                  📓 Tell us more about your day
+                </label>
+                <div className="relative">
+                  <textarea
+                    id="activity"
+                    value={activity}
+                    onChange={(e) => setActivity(e.target.value)}
+                    rows={3}
+                    disabled={isLoading}
+                    className="w-full py-3 px-4 text-lg border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 disabled:bg-gray-50 pr-14 text-gray-900 placeholder-gray-400"
+                    placeholder="Tell us about your day, any concerns, or how you're feeling..."
+                    maxLength={500}
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      isListening && currentField === 'activity'
+                        ? stopVoiceRecognition()
+                        : startVoiceRecognition('activity')
+                    }
+                    className={`absolute right-3 top-3 p-2 rounded-full transition ${
+                      isListening && currentField === 'activity'
+                        ? 'bg-red-500 text-white animate-pulse'
+                        : 'bg-blue-500 text-white hover:bg-blue-600'
+                    }`}
+                    title={
+                      isListening && currentField === 'activity' ? 'Stop recording' : 'Click to speak'
+                    }
+                  >
+                    {isListening && currentField === 'activity' ? <Mic size={20} /> : <MicOff size={20} />}
+                  </button>
+                </div>
+                {isListening && currentField === 'activity' && (
+                  <p className="text-red-600 text-sm mt-1 animate-pulse">🎤 Listening... Speak now!</p>
+                )}
+              </div>
             </div>
-            {isListening && currentField === 'activity' && (
-              <p className="text-red-600 text-sm mt-1 animate-pulse">🎤 Listening... Speak now!</p>
+
+            {/* Feedback messages */}
+            {feedbackMessage && (
+              <p
+                role="status"
+                className="text-green-700 bg-green-100 p-3 rounded-lg text-base sm:text-lg text-center font-medium"
+              >
+                {feedbackMessage}
+              </p>
             )}
-          </div>
-        </div>
+            {errorMessage && !feedbackMessage && (
+              <p
+                role="alert"
+                className="text-red-700 bg-red-100 p-3 rounded-lg text-base sm:text-lg text-center font-medium"
+              >
+                {errorMessage}
+              </p>
+            )}
 
-        {/* Feedback messages */}
-        {feedbackMessage && (
-          <p role="status" className="text-green-600 bg-green-100 p-3 rounded-lg text-base sm:text-lg text-center font-medium">
-            {feedbackMessage}
-          </p>
-        )}
-        {errorMessage && !feedbackMessage && (
-          <p role="alert" className="text-red-600 bg-red-100 p-3 rounded-lg text-base sm:text-lg text-center font-medium">
-            {errorMessage}
-          </p>
-        )}
-
-        <button
-          type="submit"
-          disabled={isLoading || !currentUser || !mood}
-          className="w-full text-white font-bold py-4 px-6 rounded-lg text-2xl shadow-lg transition-all duration-300 disabled:opacity-50 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-white hover:shadow-xl"
-          style={{
-            background:
-              branding.gradient ||
-              `linear-gradient(to right, ${branding.primaryColor}, ${branding.secondaryColor})`,
-            color: 'white',
-            border: 'none',
-          }}
-        >
-          {isLoading ? '📤 Submitting...' : '✅ Save My Health Report'}
-        </button>
-
-        {!mood && (
-          <p className="text-center text-red-600 font-medium">
-            📌 Please select your mood before submitting
-          </p>
-        )}
-      </form>
-
-      {/* Health Insights Widget - Shows after user fills in health data */}
-      <HealthInsightsWidget
-        healthData={{
-          mood,
-          bp_systolic: bloodPressureSystolic ? parseInt(bloodPressureSystolic) : null,
-          bp_diastolic: bloodPressureDiastolic ? parseInt(bloodPressureDiastolic) : null,
-          blood_sugar: bloodSugar ? parseInt(bloodSugar) : null,
-          blood_oxygen: bloodOxygen ? parseInt(bloodOxygen) : null,
-          weight: weight ? parseFloat(weight) : null,
-          symptoms,
-          physical_activity: physicalActivity
-        }}
-      />
-
-      {/* History */}
-      <div className="mt-8">
-        <h2 className="text-lg sm:text-xl font-semibold mb-4" style={{ color: branding.primaryColor }}>
-          Your Previous Reports
-        </h2>
-        {selfReports.length === 0 ? (
-          <p style={{ color: branding.textColor }}>No reports yet.</p>
-        ) : (
-          selfReports.map((log) => (
-            <div
-              key={log.id}
+            <button
+              type="submit"
+              disabled={isLoading || !currentUser || !mood}
+              className="w-full text-white font-bold py-4 px-6 rounded-lg text-2xl shadow-lg transition-all duration-300 disabled:opacity-50 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-white hover:shadow-xl"
               style={{
-                borderLeft: `8px solid ${colorForSource(log.source_type)}`,
-                padding: '8px',
-                marginBottom: '4px',
-                background: '#fff',
+                background:
+                  branding.gradient ||
+                  `linear-gradient(to right, ${branding.primaryColor}, ${branding.secondaryColor})`,
+                color: 'white',
+                border: 'none',
               }}
             >
-              <strong>{new Date(log.created_at).toLocaleString()}</strong>
-              <span
-                style={{ color: colorForSource(log.source_type), fontWeight: 'bold', marginLeft: 8 }}
+              {isLoading ? '📤 Submitting...' : '✅ Save My Health Report'}
+            </button>
+
+            {!mood && (
+              <p className="text-center text-red-600 font-medium">
+                📌 Please select your mood before submitting
+              </p>
+            )}
+          </form>
+        </div>
+
+        {/* Health Insights Widget */}
+        <div className="mt-8">
+          <HealthInsightsWidget
+            healthData={{
+              mood,
+              bp_systolic: bloodPressureSystolic ? parseInt(bloodPressureSystolic) : null,
+              bp_diastolic: bloodPressureDiastolic ? parseInt(bloodPressureDiastolic) : null,
+              blood_sugar: bloodSugar ? parseInt(bloodSugar) : null,
+              blood_oxygen: bloodOxygen ? parseInt(bloodOxygen) : null,
+              weight: weight ? parseFloat(weight) : null,
+              symptoms,
+              physical_activity: physicalActivity,
+            }}
+          />
+        </div>
+
+        {/* History */}
+        <div className="mt-8">
+          <h2 className="text-lg sm:text-xl font-semibold mb-4" style={{ color: branding.primaryColor }}>
+            Your Previous Reports
+          </h2>
+          {selfReports.length === 0 ? (
+            <p className="text-white/90">No reports yet.</p>
+          ) : (
+            selfReports.map((log) => (
+              <div
+                key={log.id}
+                style={{
+                  borderLeft: `8px solid ${colorForSource(log.source_type)}`,
+                  padding: '8px',
+                  marginBottom: '8px',
+                  background: '#fff',
+                }}
+                className="rounded-md shadow-sm"
               >
-                {log.source_type === 'self' ? 'Self' : 'Staff'}
-              </span>
-              <br />
-              <strong>😊 Mood:</strong> {log.mood}
-              {log.blood_pressure_systolic && log.blood_pressure_diastolic && (
-                <>
-                  <br />
-                  <strong>🩸 Blood Pressure:</strong> {log.blood_pressure_systolic}/{log.blood_pressure_diastolic}
-                </>
-              )}
-              {log.blood_sugar && (
-                <>
-                  <br />
-                  <strong>🍯 Blood Sugar:</strong> {log.blood_sugar} mg/dL
-                </>
-              )}
-              {log.blood_oxygen && (
-                <>
-                  <br />
-                  <strong>🫁 Blood Oxygen:</strong> {log.blood_oxygen}%
-                </>
-              )}
-              {log.weight && (
-                <>
-                  <br />
-                  <strong>⚖️ Weight:</strong> {log.weight} lbs
-                </>
-              )}
-              {log.physical_activity && (
-                <>
-                  <br />
-                  <strong>🏃‍♀️ Activity:</strong> {log.physical_activity}
-                </>
-              )}
-              {log.social_engagement && (
-                <>
-                  <br />
-                  <strong>👥 Social:</strong> {log.social_engagement}
-                </>
-              )}
-              {log.symptoms && (
-                <>
-                  <br />
-                  <strong>🤒 Symptoms:</strong> {log.symptoms}
-                </>
-              )}
-              {log.activity_description && (
-                <>
-                  <br />
-                  <strong>📓 Notes:</strong> {log.activity_description}
-                </>
-              )}
-            </div>
-          ))
-        )}
+                <strong>{new Date(log.created_at).toLocaleString()}</strong>
+                <span
+                  style={{ color: colorForSource(log.source_type), fontWeight: 'bold', marginLeft: 8 }}
+                >
+                  {log.source_type === 'self' ? 'Self' : 'Staff'}
+                </span>
+                <br />
+                <strong>😊 Mood:</strong> {log.mood}
+                {log.blood_pressure_systolic && log.blood_pressure_diastolic && (
+                  <>
+                    <br />
+                    <strong>🩸 Blood Pressure:</strong> {log.blood_pressure_systolic}/{log.blood_pressure_diastolic}
+                  </>
+                )}
+                {log.blood_sugar && (
+                  <>
+                    <br />
+                    <strong>🍯 Blood Sugar:</strong> {log.blood_sugar} mg/dL
+                  </>
+                )}
+                {log.blood_oxygen && (
+                  <>
+                    <br />
+                    <strong>🫁 Blood Oxygen:</strong> {log.blood_oxygen}%
+                  </>
+                )}
+                {log.weight && (
+                  <>
+                    <br />
+                    <strong>⚖️ Weight:</strong> {log.weight} lbs
+                  </>
+                )}
+                {log.physical_activity && (
+                  <>
+                    <br />
+                    <strong>🏃‍♀️ Activity:</strong> {log.physical_activity}
+                  </>
+                )}
+                {log.social_engagement && (
+                  <>
+                    <br />
+                    <strong>👥 Social:</strong> {log.social_engagement}
+                  </>
+                )}
+                {log.symptoms && (
+                  <>
+                    <br />
+                    <strong>🤒 Symptoms:</strong> {log.symptoms}
+                  </>
+                )}
+                {log.activity_description && (
+                  <>
+                    <br />
+                    <strong>📓 Notes:</strong> {log.activity_description}
+                  </>
+                )}
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );

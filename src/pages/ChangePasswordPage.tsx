@@ -53,16 +53,18 @@ export default function ChangePasswordPage() {
       try {
         // A) Newer flow: query param with code
         const q = readQueryParams();
-        if (q.type === 'recovery' && q.code) {
-          // Exchange code for a session
-          const { data, error } = await supabase.auth.exchangeCodeForSession(q.code);
-          if (error) throw error;
-          // Clean the URL (remove code/type)
-          window.history.replaceState({}, document.title, window.location.pathname);
-          setSessionReady(true);
-          did = true;
-          return;
-        }
+if (q.type === 'recovery' && q.code) {
+  // Exchange code for a session (must pass full URL, not just code)
+  const { data, error } = await supabase.auth.exchangeCodeForSession(window.location.href);
+  if (error) throw error;
+
+  // Clean the URL (remove code/type)
+  window.history.replaceState({}, document.title, window.location.pathname);
+
+  setSessionReady(true);
+  did = true;
+  return;
+}
 
         // B) Legacy flow: tokens in the hash
         const h = readHashParams();
