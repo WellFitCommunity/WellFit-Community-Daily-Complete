@@ -1,8 +1,7 @@
 // src/pages/ChangePasswordPage.tsx
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSupabaseClient } from '../contexts/AuthContext';
-import HCaptchaWidget, { HCaptchaRef } from '../components/HCaptchaWidget';
 
 function readHashParams(): Record<string, string> {
   const hash = (typeof window !== 'undefined' && window.location.hash) || '';
@@ -33,10 +32,6 @@ export default function ChangePasswordPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [sessionReady, setSessionReady] = useState(false);
 
-  // hCaptcha state
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-  const captchaRef = useRef<HCaptchaRef>(null);
-
   const clean1 = pw1.trim();
   const clean2 = pw2.trim();
 
@@ -49,22 +44,6 @@ export default function ChangePasswordPage() {
       clean1 === clean2
     );
   }, [clean1, clean2]);
-
-  // Captcha helpers
-  const refreshCaptcha = () => {
-    captchaRef.current?.reset();
-    setCaptchaToken(null);
-  };
-  const ensureCaptcha = async (): Promise<string> => {
-    if (captchaToken) return captchaToken;
-    try {
-      const t = await captchaRef.current?.execute();
-      return t || '';
-    } catch (error) {
-      console.error('hCaptcha execution failed:', error);
-      return '';
-    }
-  };
 
   // 1) Claim/establish session from the reset link, then mark sessionReady=true
   useEffect(() => {
@@ -137,29 +116,10 @@ if (q.type === 'recovery' && q.code) {
         return;
       }
 
-      // Get captcha token
-      const token = await ensureCaptcha();
-      if (!token) {
-        setError('Security check required. Please try again.');
-        refreshCaptcha();
-        setBusy(false);
-        return;
-      }
-
-      // 1) Update Supabase Auth password with captcha token
-      const { error: upErr } = await supabase.auth.updateUser(
-        { password: clean1 },
-        { captchaToken: token }
-      );
-
-      if (upErr) {
-        if (upErr.message.toLowerCase().includes('captcha')) {
-          refreshCaptcha();
-          setError('Security check failed. Please try again.');
-          return;
-        }
-        throw upErr;
-      }
+      // 1) Update Supabase Auth password
+      // Note: captcha not required here - user already verified via email recovery link
+      const { error: upErr } = await supabase.auth.updateUser({ password: clean1 });
+      if (upErr) throw upErr;
 
       // 2) (Optional) Clear your force-change flag if you use it
       const { error: dbErr } = await supabase
@@ -251,14 +211,6 @@ if (q.type === 'recovery' && q.code) {
           {busy ? 'Saving…' : 'Save New Password'}
         </button>
       </form>
-
-      <HCaptchaWidget
-        ref={captchaRef}
-        size="invisible"
-        onVerify={(t: string) => setCaptchaToken(t)}
-        onExpire={() => setCaptchaToken(null)}
-        onError={(msg: string) => console.error('hCaptcha error:', msg)}
-      />
     </div>
   );
 }
