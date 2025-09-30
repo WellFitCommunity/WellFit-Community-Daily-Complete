@@ -57,6 +57,7 @@ const CaregiverDashboardPage = React.lazy(() => import('./pages/CaregiverDashboa
 const HealthInsightsPage = React.lazy(() => import('./pages/HealthInsightsPage'));
 const QuestionsPage = React.lazy(() => import('./pages/QuestionsPage'));
 const AdminQuestionsPage = React.lazy(() => import('./pages/AdminQuestionsPage'));
+const BillingDashboard = React.lazy(() => import('./components/admin/BillingDashboard'));
 // Add this import at the top with your other lazy imports
 const SmartCallbackPage = React.lazy(() => import('./pages/SmartCallbackPage'));
 
@@ -185,6 +186,21 @@ function Shell() {
                 element={
                   <RequireAuth>
                     <AdminQuestionsPage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/billing"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth allowedRoles={['admin', 'super_admin']}>
+                      <div className="min-h-screen bg-gray-50 py-8">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                          <h1 className="text-3xl font-bold text-gray-900 mb-6">Billing & Claims</h1>
+                          <BillingDashboard />
+                        </div>
+                      </div>
+                    </RequireAdminAuth>
                   </RequireAuth>
                 }
               />

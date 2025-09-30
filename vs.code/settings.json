@@ -1,5 +1,11 @@
 {
+  // --- Deno setup ---
   "deno.enable": true,
   "deno.enablePaths": ["supabase/functions"],
-  "deno.lint": true
+  "deno.lint": true,
+
+  // --- Prettier setup ---
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "prettier.requireConfig": true
 }
