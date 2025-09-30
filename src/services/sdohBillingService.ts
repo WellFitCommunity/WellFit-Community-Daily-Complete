@@ -639,7 +639,7 @@ export class SDOHBillingService {
 
     // Check activity types
     const requiredTypes: CCMActivity['type'][] = ['assessment', 'care_coordination'];
-    const providedTypes = [...new Set(activities.map(a => a.type))];
+    const providedTypes = Array.from(new Set(activities.map(a => a.type)));
 
     const missingTypes = requiredTypes.filter(type => !providedTypes.includes(type));
     if (missingTypes.length > 0) {
