@@ -10,7 +10,9 @@ export interface ModelSelectionStrategy {
 const MODEL_COSTS = {
   [ClaudeModel.HAIKU_3]: { input: 0.00025, output: 0.00125 },
   [ClaudeModel.SONNET_3_5]: { input: 0.003, output: 0.015 },
-  [ClaudeModel.SONNET_4]: { input: 0.003, output: 0.015 } // Same as Sonnet 3.5 pricing
+  [ClaudeModel.SONNET_4]: { input: 0.003, output: 0.015 }, // Legacy
+  [ClaudeModel.SONNET_4_5]: { input: 0.003, output: 0.015 }, // Latest for admin/nurse
+  [ClaudeModel.OPUS_4_1]: { input: 0.015, output: 0.075 } // Premium
 } as const;
 
 // Model capabilities and characteristics
@@ -25,13 +27,25 @@ const MODEL_CHARACTERISTICS = {
     speed: 'fast',
     cost: 'moderate',
     capability: 'advanced',
-    bestFor: ['health_analysis', 'complex_questions', 'care_recommendations']
+    bestFor: ['health_analysis', 'complex_questions', 'care_recommendations', 'senior_interactions']
   },
   [ClaudeModel.SONNET_4]: {
     speed: 'fast',
     cost: 'moderate',
     capability: 'expert',
     bestFor: ['clinical_analysis', 'fhir_processing', 'risk_assessment', 'medical_research']
+  },
+  [ClaudeModel.SONNET_4_5]: {
+    speed: 'fast',
+    cost: 'moderate',
+    capability: 'expert_plus',
+    bestFor: ['nurse_scribe', 'admin_panel', 'complex_coding', 'autonomous_agents', 'medical_coding']
+  },
+  [ClaudeModel.OPUS_4_1]: {
+    speed: 'medium',
+    cost: 'premium',
+    capability: 'maximum',
+    bestFor: ['complex_research', 'advanced_reasoning', 'critical_clinical_decisions']
   }
 } as const;
 
@@ -62,23 +76,23 @@ export class WellFitModelSelector implements ModelSelectionStrategy {
   }
 
   /**
-   * Admin model selection - prioritizes capability for analytics and clinical decisions
+   * Admin model selection - uses Sonnet 4.5 for advanced admin and nurse scribe functionality
    */
   private selectAdminModel(requestType: RequestType, complexity: 'simple' | 'moderate' | 'complex'): ClaudeModel {
     switch (requestType) {
       case RequestType.ANALYTICS:
       case RequestType.FHIR_ANALYSIS:
       case RequestType.RISK_ASSESSMENT:
-        return ClaudeModel.SONNET_4; // Always use most capable for critical analytics
+        return ClaudeModel.SONNET_4_5; // Latest model for best admin/nurse analytics
 
       case RequestType.CLINICAL_NOTES:
-        return complexity === 'complex' ? ClaudeModel.SONNET_4 : ClaudeModel.SONNET_3_5;
+        return complexity === 'complex' ? ClaudeModel.SONNET_4_5 : ClaudeModel.SONNET_3_5;
 
       case RequestType.HEALTH_INSIGHTS:
         return ClaudeModel.SONNET_3_5; // Good balance for general insights
 
       default:
-        return ClaudeModel.SONNET_3_5;
+        return ClaudeModel.SONNET_4_5; // Default to latest for admin panel
     }
   }
 
@@ -114,17 +128,17 @@ export class WellFitModelSelector implements ModelSelectionStrategy {
   }
 
   /**
-   * Patient/Caregiver model selection - prioritizes cost-effectiveness and speed
+   * Patient/Caregiver model selection - uses Sonnet 3.5 for excellent senior experience
    */
   private selectPatientModel(requestType: RequestType, complexity: 'simple' | 'moderate' | 'complex'): ClaudeModel {
     switch (requestType) {
       case RequestType.HEALTH_QUESTION:
       case RequestType.MEDICATION_GUIDANCE:
-        // Use fast, cost-effective model for basic health questions
-        return complexity === 'complex' ? ClaudeModel.SONNET_3_5 : ClaudeModel.HAIKU_3;
+        // Seniors love Sonnet 3.5 - great balance of quality and cost
+        return ClaudeModel.SONNET_3_5;
 
       case RequestType.HEALTH_INSIGHTS:
-        // Balanced model for health interpretations
+        // Sonnet 3.5 provides excellent health interpretations seniors appreciate
         return ClaudeModel.SONNET_3_5;
 
       // Patients shouldn't have direct access to clinical analysis tools
@@ -133,7 +147,7 @@ export class WellFitModelSelector implements ModelSelectionStrategy {
       case RequestType.RISK_ASSESSMENT:
       case RequestType.CLINICAL_NOTES:
       default:
-        return ClaudeModel.HAIKU_3; // Fallback to simplest model
+        return ClaudeModel.SONNET_3_5; // Default to Sonnet 3.5 for senior-facing
     }
   }
 
@@ -171,13 +185,13 @@ export class WellFitModelSelector implements ModelSelectionStrategy {
       }
     ];
 
-    // Only show advanced model for admin and healthcare providers
+    // Only show advanced models for admin and healthcare providers
     if (userRole === UserRole.ADMIN || userRole === UserRole.HEALTHCARE_PROVIDER) {
       baseRecommendations.push({
-        model: ClaudeModel.SONNET_4,
-        recommendedFor: ['Clinical analysis', 'FHIR processing', 'Risk assessment', 'Medical research'],
+        model: ClaudeModel.SONNET_4_5,
+        recommendedFor: ['Nurse scribe', 'Admin panel', 'Medical coding', 'Complex analytics', 'Autonomous agents'],
         costTier: 'medium' as const,
-        speed: 'medium' as const
+        speed: 'fast' as const
       });
     }
 

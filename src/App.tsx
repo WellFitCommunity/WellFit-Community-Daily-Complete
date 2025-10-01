@@ -186,7 +186,9 @@ function Shell() {
                 path="/admin-questions"
                 element={
                   <RequireAuth>
-                    <AdminQuestionsPage />
+                    <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'nurse']}>
+                      <AdminQuestionsPage />
+                    </RequireAdminAuth>
                   </RequireAuth>
                 }
               />

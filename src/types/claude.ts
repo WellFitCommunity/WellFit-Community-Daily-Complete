@@ -12,7 +12,9 @@ export enum UserRole {
 export enum ClaudeModel {
   HAIKU_3 = 'claude-3-haiku-20240307',
   SONNET_3_5 = 'claude-3-5-sonnet-20241022',
-  SONNET_4 = 'claude-3-5-sonnet-20241022' // Using latest Sonnet 3.5 as Sonnet 4 equivalent
+  SONNET_4 = 'claude-3-5-sonnet-20241022', // Legacy reference
+  SONNET_4_5 = 'claude-sonnet-4-5-20250929', // Latest model - best for complex agents and coding
+  OPUS_4_1 = 'claude-opus-4-1-20250805' // Advanced model for complex reasoning
 }
 
 // Request types for determining appropriate model

@@ -1,5 +1,5 @@
 // Supabase Edge Function (Deno) — production-grade
-// - Uses Anthropic Claude "claude-3-5-sonnet-latest"
+// - Uses Anthropic Claude Sonnet 4.5 (latest model for best medical coding)
 // - De-identifies input aggressively
 // - Writes comprehensive audit row (no PHI)
 // - Production-ready error handling
@@ -149,8 +149,8 @@ serve(async (req) => {
     if (band) (payload as any).age_band = band;
     (payload as any).time_frame = "recent";
 
-    // Claude call (model: claude-3-5-sonnet-latest)
-    const model = "claude-3-5-sonnet-latest";
+    // Claude call (model: claude-sonnet-4-5-20250929 - latest for best medical coding)
+    const model = "claude-sonnet-4-5-20250929";
     let text = "";
     let lastErr: any = null;
 

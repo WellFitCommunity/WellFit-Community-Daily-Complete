@@ -225,7 +225,7 @@ Format as JSON with this structure:
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-sonnet-4-5-20250929', // Latest model for best coding and analysis
         max_tokens: 4000,
         system: systemPrompt,
         messages: [

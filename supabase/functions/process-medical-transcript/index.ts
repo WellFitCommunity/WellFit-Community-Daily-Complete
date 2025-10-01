@@ -56,8 +56,8 @@ serve(async (req) => {
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-3-sonnet-20240229',
-        max_tokens: 2000,
+        model: 'claude-sonnet-4-5-20250929', // Latest model for best nurse scribe performance
+        max_tokens: 4000, // Increased for more detailed clinical notes
         temperature: 0.1,
         messages: [{
           role: 'user',
@@ -142,7 +142,7 @@ Guidelines:
         session_type: sessionType,
         transcript_length: transcript.length,
         duration_seconds: duration,
-        ai_model_used: 'claude-3-sonnet',
+        ai_model_used: 'claude-sonnet-4.5',
         codes_suggested: validatedCodes.length,
         processing_time_ms: Date.now(),
         success: true
