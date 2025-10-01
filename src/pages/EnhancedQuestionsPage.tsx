@@ -1,9 +1,10 @@
 // src/pages/EnhancedQuestionsPage.tsx - Senior-Friendly Questions with AI & Voice
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Mic, MicOff, Send, Lightbulb, MessageCircle } from 'lucide-react';
+import { Mic, MicOff, Send, Lightbulb, MessageCircle } from 'lucide-react';
 import { useSupabaseClient, useUser } from '../contexts/AuthContext';
 import { useBranding } from '../BrandingContext';
+import SmartBackButton from '../components/ui/SmartBackButton';
 
 interface Question {
   id: string;
@@ -255,14 +256,9 @@ const EnhancedQuestionsPage: React.FC = () => {
 
         {/* Header with Back Button */}
         <div className="mb-6">
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="flex items-center mb-4 px-4 py-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
-            style={{ color: branding.primaryColor || '#003865' }}
-          >
-            <ArrowLeft size={20} className="mr-2" />
-            Back to Dashboard
-          </button>
+          <div className="mb-4">
+            <SmartBackButton label="Back to Dashboard" />
+          </div>
 
           <h1 className="text-3xl font-bold text-center" style={{ color: branding.primaryColor || '#003865' }}>
             💬 Ask Your Nurse

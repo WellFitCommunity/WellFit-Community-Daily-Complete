@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card } from '../components/ui/card';
 import LanguageSelector from '../components/LanguageSelector';
 import { useLanguage } from '../contexts/LanguageContext';
+import SmartBackButton from '../components/ui/SmartBackButton';
 
 interface UserSettings {
   font_size: 'small' | 'medium' | 'large' | 'extra-large';
@@ -183,7 +184,12 @@ const SettingsPage: React.FC = () => {
       style={{ background: branding.gradient }}
     >
       <div className="container mx-auto px-4 py-6 max-w-4xl">
-        
+
+        {/* Smart Back Button */}
+        <div className="mb-4">
+          <SmartBackButton label="Back to Dashboard" />
+        </div>
+
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-[#003865] mb-4">

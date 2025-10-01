@@ -18,15 +18,25 @@ export default function RequireAdminAuth({
   // While verifying admin session
   if (isLoading) {
     return (
-      <div className="w-full h-[40vh] flex items-center justify-center text-gray-600">
-        Loading admin session…
+      <div className="w-full h-[40vh] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Verifying admin access...</p>
+        </div>
       </div>
     );
   }
 
   // Not authenticated as admin → go to the admin login screen, preserve target
   if (!isAdminAuthenticated) {
-    return <Navigate to="/admin-login" state={{ from: location }} replace />;
+    return <Navigate
+      to="/admin-login"
+      state={{
+        from: location,
+        message: 'Please enter your admin PIN to access this page.'
+      }}
+      replace
+    />;
   }
 
   // Auth'd, but role not allowed → bounce to admin-login with a message

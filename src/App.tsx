@@ -59,8 +59,8 @@ const QuestionsPage = React.lazy(() => import('./pages/QuestionsPage'));
 const AdminQuestionsPage = React.lazy(() => import('./pages/AdminQuestionsPage'));
 const BillingDashboard = React.lazy(() => import('./components/admin/BillingDashboard'));
 const ApiKeyManager = React.lazy(() => import('./components/admin/ApiKeyManager'));
-// Add this import at the top with your other lazy imports
 const SmartCallbackPage = React.lazy(() => import('./pages/SmartCallbackPage'));
+const SmartBackButton = React.lazy(() => import('./components/ui/SmartBackButton'));
 
 const PUBLIC_ROUTES = [
   '/',
@@ -195,23 +195,17 @@ function Shell() {
                 element={
                   <RequireAuth>
                     <RequireAdminAuth allowedRoles={['admin', 'super_admin']}>
-                      <div className="min-h-screen bg-gray-50 py-8">
-                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                          <div className="mb-4">
-                            <button
-                              onClick={() => window.history.length > 2 ? window.history.back() : window.location.href = '/admin'}
-                              className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                            >
-                              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                              </svg>
-                              Back
-                            </button>
+                      <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
+                        <div className="min-h-screen bg-gray-50 py-8">
+                          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                            <div className="mb-4">
+                              <SmartBackButton />
+                            </div>
+                            <h1 className="text-3xl font-bold text-gray-900 mb-6">Billing & Claims</h1>
+                            <BillingDashboard />
                           </div>
-                          <h1 className="text-3xl font-bold text-gray-900 mb-6">Billing & Claims</h1>
-                          <BillingDashboard />
                         </div>
-                      </div>
+                      </Suspense>
                     </RequireAdminAuth>
                   </RequireAuth>
                 }
@@ -221,23 +215,17 @@ function Shell() {
                 element={
                   <RequireAuth>
                     <RequireAdminAuth allowedRoles={['super_admin']}>
-                      <div className="min-h-screen bg-gray-50 py-8">
-                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                          <div className="mb-4">
-                            <button
-                              onClick={() => window.history.length > 2 ? window.history.back() : window.location.href = '/admin'}
-                              className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                            >
-                              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                              </svg>
-                              Back
-                            </button>
+                      <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
+                        <div className="min-h-screen bg-gray-50 py-8">
+                          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                            <div className="mb-4">
+                              <SmartBackButton />
+                            </div>
+                            <h1 className="text-3xl font-bold text-gray-900 mb-6">API Key Manager</h1>
+                            <ApiKeyManager />
                           </div>
-                          <h1 className="text-3xl font-bold text-gray-900 mb-6">API Key Manager</h1>
-                          <ApiKeyManager />
                         </div>
-                      </div>
+                      </Suspense>
                     </RequireAdminAuth>
                   </RequireAuth>
                 }

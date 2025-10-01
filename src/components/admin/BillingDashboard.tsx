@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { BillingService } from '../../services/billingService';
-import { EncounterService } from '../../services/encounterService';
 import type { BillingProvider, BillingPayer, Claim, ClaimStatus } from '../../types/billing';
 
 interface BillingMetrics {
@@ -17,7 +16,6 @@ interface BillingDashboardProps {
 const BillingDashboard: React.FC<BillingDashboardProps> = ({ className = '' }) => {
   const [metrics, setMetrics] = useState<BillingMetrics | null>(null);
   const [providers, setProviders] = useState<BillingProvider[]>([]);
-  const [payers, setPayers] = useState<BillingPayer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,10 +28,9 @@ const BillingDashboard: React.FC<BillingDashboardProps> = ({ className = '' }) =
       setLoading(true);
       setError(null);
 
-      const [metricsData, providersData, payersData, recentClaimsData] = await Promise.all([
+      const [metricsData, providersData, recentClaimsData] = await Promise.all([
         BillingService.getClaimMetrics(),
         BillingService.getProviders(),
-        BillingService.getPayers(),
         BillingService.searchClaims({ limit: 10 })
       ]);
 
@@ -44,7 +41,6 @@ const BillingDashboard: React.FC<BillingDashboardProps> = ({ className = '' }) =
         recentClaims: recentClaimsData
       });
       setProviders(providersData);
-      setPayers(payersData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load billing data');
     } finally {
@@ -166,54 +162,95 @@ const BillingDashboard: React.FC<BillingDashboardProps> = ({ className = '' }) =
         </div>
       )}
 
-      {/* Recent Claims */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Recent Claims</h3>
-          <button
-            onClick={loadBillingData}
-            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-          >
-            Refresh
-          </button>
+      {/* Recent Claims - Enhanced Table */}
+      <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden mb-6">
+        <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">Recent Claims</h3>
+            <button
+              onClick={loadBillingData}
+              className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors"
+            >
+              <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Refresh
+            </button>
+          </div>
         </div>
 
         {metrics?.recentClaims && metrics.recentClaims.length > 0 ? (
-          <div className="overflow-hidden">
-            <div className="space-y-3">
-              {metrics.recentClaims.slice(0, 5).map((claim) => (
-                <div key={claim.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3">
-                      <div className="flex-shrink-0">
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(claim.status)}`}>
-                          {claim.status}
-                        </span>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Claim ID
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Type
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Date
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Amount
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {metrics.recentClaims.slice(0, 10).map((claim) => (
+                  <tr key={claim.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-8 w-8 flex items-center justify-center bg-blue-100 rounded-full">
+                          <span className="text-blue-600 text-xs font-medium">
+                            {claim.control_number ? claim.control_number.slice(0, 2) : 'CL'}
+                          </span>
+                        </div>
+                        <div className="ml-3">
+                          <p className="text-sm font-medium text-gray-900">
+                            #{claim.control_number || claim.id.slice(0, 8)}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {claim.id.slice(0, 8)}
+                          </p>
+                        </div>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-gray-900 truncate">
-                          Claim #{claim.control_number || claim.id.slice(0, 8)}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {new Date(claim.created_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex-shrink-0 text-right">
-                    <p className="text-sm font-medium text-gray-900">
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(claim.status)}`}>
+                        {claim.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                      {claim.claim_type}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(claim.created_at).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                      })}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
                       {formatCurrency(claim.total_charge || 0)}
-                    </p>
-                    <p className="text-xs text-gray-500">{claim.claim_type}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-500">
-            <span className="text-4xl mb-2 block">📋</span>
-            <p>No claims found</p>
+          <div className="text-center py-12">
+            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <p className="mt-2 text-sm text-gray-500">No claims found</p>
+            <p className="text-xs text-gray-400 mt-1">Claims will appear here once created</p>
           </div>
         )}
       </div>
