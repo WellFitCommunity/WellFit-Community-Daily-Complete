@@ -20,6 +20,7 @@ const STORAGE_KEY = 'wellfitCheckIns';
 const LOCAL_HISTORY_CAP = 200;
 
 type Toast = { type?: 'success' | 'error' | 'info'; text?: string } | null;
+type CrisisOption = 'speak_someone' | 'fallen_injured' | 'lost' | null;
 
 function parseIntOrNull(v: string): number | null {
   if (!v) return null;
@@ -58,6 +59,10 @@ export default function CheckInTracker({ showBackButton = false }: CheckInTracke
 
   const [history, setHistory] = useState<CheckIn[]>([]);
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
+  const [showCrisisOptions, setShowCrisisOptions] = useState(false);
+  const [selectedCrisisOption, setSelectedCrisisOption] = useState<CrisisOption>(null);
+  const [showCrisisMessage, setShowCrisisMessage] = useState(false);
+  const [emergencyContactPhone, setEmergencyContactPhone] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState<Toast>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -82,6 +87,21 @@ export default function CheckInTracker({ showBackButton = false }: CheckInTracke
     }
   }, []);
 
+  // Load emergency contact phone
+  useEffect(() => {
+    if (!userId) return;
+    (async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('emergency_contact_phone')
+        .eq('user_id', userId)
+        .single();
+      if (data?.emergency_contact_phone) {
+        setEmergencyContactPhone(data.emergency_contact_phone);
+      }
+    })();
+  }, [userId, supabase]);
+
   // Persist on change (disabled for HIPAA)
   useEffect(() => {
     if (!ENABLE_LOCAL_HISTORY) return;
@@ -92,8 +112,7 @@ export default function CheckInTracker({ showBackButton = false }: CheckInTracke
     '😊 Feeling Great Today',
     '📅 Feeling fine & have a Dr. Appt today',
     '🏥 In the hospital',
-    '🚨 Fallen down & injured',
-    '🤒 Not Feeling Well',
+    '🤒 Not Feeling My Best',
     '🧭 Need Healthcare Navigation Assistance',
     '⭐ Attending the event today',
   ];
@@ -102,14 +121,31 @@ export default function CheckInTracker({ showBackButton = false }: CheckInTracke
     '😊 Feeling Great Today': 'Awesome! Enjoy your day. 🌞',
     '📅 Feeling fine & have a Dr. Appt today': 'Do not forget to show your log to the doctor. 🩺',
     '🏥 In the hospital': 'We are thinking of you. Please call us if we can help. ❤️',
-    '🚨 Fallen down & injured': 'We are notifying your emergency contacts immediately. Stay safe! 🚨',
-    '🤒 Not Feeling Well': 'Sorry you are not feeling well. Consider contacting your healthcare provider. Take care! 💙',
+    '🤒 Not Feeling My Best': 'We understand. Please let us know how we can help.',
     '🧭 Need Healthcare Navigation Assistance': 'Hang tight—we will call you shortly. ☎️',
     '⭐ Attending the event today': 'Great! Have a wonderful time at the event. Enjoy yourself! ✨',
     DefaultSuccess: 'Check-in submitted successfully!',
   };
 
+  const handleCrisisOption = (option: CrisisOption) => {
+    setSelectedCrisisOption(option);
+    setShowCrisisOptions(false);
+    setShowCrisisMessage(true);
+
+    // Show message for 7 seconds
+    setTimeout(() => {
+      setShowCrisisMessage(false);
+      setSelectedCrisisOption(null);
+    }, 7000);
+  };
+
   async function handleCheckIn(label: string, isQuickButton = false): Promise<void> {
+    // Show crisis options for "Not Feeling My Best"
+    if (label === '🤒 Not Feeling My Best' && isQuickButton) {
+      setShowCrisisOptions(true);
+      return;
+    }
+
     // For detailed form, require emotional state.
     if (!isQuickButton && !emotionalState) {
       setInfoMessage({ type: 'error', text: 'Please select your emotional state.' });
@@ -120,8 +156,7 @@ export default function CheckInTracker({ showBackButton = false }: CheckInTracke
     setIsSubmitting(true);
     setInfoMessage(null);
 
-    const isEmergency =
-      isQuickButton && (label === '🚨 Fallen down & injured' || label === '🤒 Not Feeling Well');
+    const isEmergency = false; // Emergency handling moved to crisis options
     const timestamp = new Date().toISOString();
 
     const parsedHr = parseIntOrNull(heartRate);
@@ -395,7 +430,110 @@ export default function CheckInTracker({ showBackButton = false }: CheckInTracke
         </>
       )}
 
-      {/* Emergency Overlay */}
+      {/* Crisis Options Modal */}
+      {showCrisisOptions && (
+        <div
+          className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="crisis-options-title"
+        >
+          <div className="bg-white p-6 rounded-xl shadow-lg max-w-md w-full mx-4">
+            <h3 id="crisis-options-title" className="text-xl font-bold mb-4 text-[#003865] text-center">
+              How can we help you?
+            </h3>
+            <div className="space-y-3">
+              <button
+                onClick={() => handleCrisisOption('speak_someone')}
+                className="w-full py-3 px-4 bg-[#8cc63f] text-white font-semibold rounded-lg shadow-md hover:bg-[#77aa36] transition"
+              >
+                💬 Would you like to speak to someone?
+              </button>
+              <button
+                onClick={() => handleCrisisOption('fallen_injured')}
+                className="w-full py-3 px-4 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700 transition"
+              >
+                🚑 I have fallen and injured myself
+              </button>
+              <button
+                onClick={() => handleCrisisOption('lost')}
+                className="w-full py-3 px-4 bg-orange-500 text-white font-semibold rounded-lg shadow-md hover:bg-orange-600 transition"
+              >
+                🧭 I am lost
+              </button>
+              <button
+                onClick={() => setShowCrisisOptions(false)}
+                className="w-full py-2 px-4 bg-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-400 transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Crisis Message Display */}
+      {showCrisisMessage && selectedCrisisOption && (
+        <div
+          className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center"
+          role="alert"
+          aria-live="assertive"
+        >
+          <div className="bg-white p-6 rounded-xl shadow-lg max-w-md w-full mx-4 text-center">
+            {selectedCrisisOption === 'speak_someone' && (
+              <>
+                <h3 className="text-xl font-bold mb-4 text-[#003865]">Crisis Support Available</h3>
+                <p className="text-lg mb-4">
+                  If you're in crisis or need emotional support, please call or text the 988 Suicide & Crisis Lifeline:
+                </p>
+                <a
+                  href="tel:988"
+                  className="inline-block py-3 px-6 bg-[#8cc63f] text-white font-bold text-xl rounded-lg shadow-md hover:bg-[#77aa36] transition mb-2"
+                >
+                  📞 Call or Text 988
+                </a>
+                <p className="text-sm text-gray-600 mt-2">Available 24/7 for free, confidential support</p>
+              </>
+            )}
+            {selectedCrisisOption === 'fallen_injured' && (
+              <>
+                <h3 className="text-xl font-bold mb-4 text-red-600">🚨 Emergency - Call 911</h3>
+                <p className="text-lg mb-4">
+                  If you've fallen and are injured, please call 911 immediately for emergency medical assistance.
+                </p>
+                <a
+                  href="tel:911"
+                  className="inline-block py-3 px-6 bg-red-600 text-white font-bold text-xl rounded-lg shadow-md hover:bg-red-700 transition"
+                >
+                  📞 Call 911
+                </a>
+              </>
+            )}
+            {selectedCrisisOption === 'lost' && (
+              <>
+                <h3 className="text-xl font-bold mb-4 text-orange-600">🧭 You're Lost - Contact Emergency Contact</h3>
+                <p className="text-lg mb-4">
+                  Please contact your emergency contact for help with directions and assistance.
+                </p>
+                {emergencyContactPhone ? (
+                  <a
+                    href={`tel:${emergencyContactPhone}`}
+                    className="inline-block py-3 px-6 bg-orange-500 text-white font-bold text-xl rounded-lg shadow-md hover:bg-orange-600 transition"
+                  >
+                    📞 Call Emergency Contact
+                  </a>
+                ) : (
+                  <p className="text-red-600 font-semibold">
+                    No emergency contact phone number on file. Please call 911 if you need immediate assistance.
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Emergency Overlay (Legacy - kept for compatibility) */}
       {showEmergencyModal && (
         <div
           className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center"
@@ -407,7 +545,7 @@ export default function CheckInTracker({ showBackButton = false }: CheckInTracke
             <h3 id="emergency-modal-title" className="text-xl font-bold mb-2">
               🚨 Emergency Alert Triggered
             </h3>
-            <p className="mb-3">Your check-in indicated an emergency. We’ve logged this.</p>
+            <p className="mb-3">Your check-in indicated an emergency. We've logged this.</p>
             <p>
               If you are in immediate danger or need urgent medical attention, please call{' '}
               <strong>911</strong> or your local emergency number now.
