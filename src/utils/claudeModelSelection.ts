@@ -170,18 +170,23 @@ export class WellFitModelSelector implements ModelSelectionStrategy {
     costTier: 'low' | 'medium' | 'high';
     speed: 'fast' | 'medium' | 'slow';
   }> {
-    const baseRecommendations = [
+    const baseRecommendations: Array<{
+      model: ClaudeModel;
+      recommendedFor: string[];
+      costTier: 'low' | 'medium' | 'high';
+      speed: 'fast' | 'medium' | 'slow';
+    }> = [
       {
         model: ClaudeModel.HAIKU_3,
         recommendedFor: ['Simple health questions', 'Basic medication info', 'Quick responses'],
-        costTier: 'low' as const,
-        speed: 'fast' as const
+        costTier: 'low',
+        speed: 'fast'
       },
       {
         model: ClaudeModel.SONNET_3_5,
         recommendedFor: ['Health analysis', 'Complex questions', 'Care recommendations'],
-        costTier: 'medium' as const,
-        speed: 'medium' as const
+        costTier: 'medium',
+        speed: 'medium'
       }
     ];
 
@@ -190,8 +195,8 @@ export class WellFitModelSelector implements ModelSelectionStrategy {
       baseRecommendations.push({
         model: ClaudeModel.SONNET_4_5,
         recommendedFor: ['Nurse scribe', 'Admin panel', 'Medical coding', 'Complex analytics', 'Autonomous agents'],
-        costTier: 'medium' as const,
-        speed: 'fast' as const
+        costTier: 'medium',
+        speed: 'fast'
       });
     }
 
