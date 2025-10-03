@@ -41,9 +41,9 @@ CREATE POLICY "Only admins can modify trivia questions"
   TO authenticated
   USING (
     EXISTS (
-      SELECT 1 FROM admin_roles
-      WHERE admin_roles.user_id = auth.uid()
-      AND admin_roles.role IN ('admin', 'super_admin')
+      SELECT 1 FROM profiles
+      WHERE profiles.user_id = auth.uid()
+      AND profiles.is_admin = true
     )
   );
 

@@ -64,42 +64,35 @@ const LoginPage: React.FC = () => {
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value;
 
-    // Remove all non-digits to get clean number
+    // Remove all non-digits to get clean number (ONLY numbers allowed)
     const digits = value.replace(/[^\d]/g, '');
 
-    // If user tries to delete the +1, prevent it
-    if (!value.startsWith('+1')) {
-      // If they have digits, format with +1
-      if (digits.length > 0) {
-        // Take only the part after country code if they typed 1
-        const phoneDigits = digits.startsWith('1') && digits.length > 1 ? digits.slice(1) : digits;
-        value = `+1 ${phoneDigits}`;
-      } else {
-        // Keep the +1 prefix
-        value = '+1 ';
-      }
-    } else {
-      // Format the existing +1 number nicely
-      const phoneDigits = digits.startsWith('1') ? digits.slice(1) : digits;
-      if (phoneDigits.length > 0) {
-        // Format as +1 XXX-XXX-XXXX
-        let formatted = '+1 ';
-        if (phoneDigits.length > 0) {
-          formatted += phoneDigits.slice(0, 3);
-        }
-        if (phoneDigits.length > 3) {
-          formatted += '-' + phoneDigits.slice(3, 6);
-        }
-        if (phoneDigits.length > 6) {
-          formatted += '-' + phoneDigits.slice(6, 10);
-        }
-        value = formatted;
-      } else {
-        value = '+1 ';
-      }
+    // Always format with +1 prefix
+    if (digits.length === 0) {
+      // Keep the +1 prefix even when empty
+      setPhone('+1 ');
+      return;
     }
 
-    setPhone(value);
+    // Extract phone digits (removing country code if typed)
+    const phoneDigits = digits.startsWith('1') && digits.length > 1 ? digits.slice(1) : digits;
+
+    // Limit to 10 digits
+    const limitedDigits = phoneDigits.slice(0, 10);
+
+    // Format as +1 XXX-XXX-XXXX
+    let formatted = '+1 ';
+    if (limitedDigits.length > 0) {
+      formatted += limitedDigits.slice(0, 3);
+    }
+    if (limitedDigits.length > 3) {
+      formatted += '-' + limitedDigits.slice(3, 6);
+    }
+    if (limitedDigits.length > 6) {
+      formatted += '-' + limitedDigits.slice(6, 10);
+    }
+
+    setPhone(formatted);
   };
 
   // ---- PROFILE GATE --------------------------------------------------------
@@ -415,7 +408,13 @@ const LoginPage: React.FC = () => {
               type="email"
               placeholder="you@org.com"
               value={adminEmail}
-              onChange={e => setAdminEmail(e.target.value)}
+              onChange={e => {
+                // Only allow email format - no phone numbers
+                const value = e.target.value;
+                // Allow only valid email characters: letters, numbers, @, ., -, _
+                const emailValue = value.replace(/[^a-zA-Z0-9@.\-_]/g, '');
+                setAdminEmail(emailValue);
+              }}
               required
               aria-required="true"
               aria-invalid={Boolean(error && adminEmail.trim() === '')}
@@ -423,6 +422,7 @@ const LoginPage: React.FC = () => {
               style={{ borderColor: accent, outlineColor: primary } as React.CSSProperties}
               autoComplete="email"
               inputMode="email"
+              pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
             />
           </div>
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, memo, useCallback } from 'react';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
+import { useSupabaseClient, useUser } from '../../contexts/AuthContext';
 
 interface AdminSettings {
   theme: 'light' | 'dark' | 'auto';
@@ -27,6 +28,9 @@ interface AdminSettings {
 
 const AdminSettingsPanel: React.FC = memo(() => {
   const { adminRole } = useAdminAuth();
+  const supabase = useSupabaseClient();
+  const user = useUser();
+
   const [settings, setSettings] = useState<AdminSettings>({
     theme: 'light',
     notifications: {
@@ -52,9 +56,60 @@ const AdminSettingsPanel: React.FC = memo(() => {
   });
 
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
-  // Settings are session-only for compliance
+  // Load settings from database
+  useEffect(() => {
+    const loadSettings = async () => {
+      if (!user?.id) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('admin_settings')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error loading admin settings:', error);
+          return;
+        }
+
+        if (data) {
+          setSettings({
+            theme: data.theme || 'light',
+            notifications: {
+              email: data.email_notifications ?? true,
+              browser: data.browser_notifications ?? true,
+              emergencyAlerts: data.emergency_alerts ?? true,
+            },
+            security: {
+              sessionTimeout: data.session_timeout || 30,
+              requirePinForSensitive: data.require_pin_for_sensitive ?? true,
+              enableAuditLogging: data.enable_audit_logging ?? true,
+            },
+            display: {
+              compactMode: data.compact_mode ?? false,
+              showAdvancedMetrics: data.show_advanced_metrics ?? true,
+              defaultDashboardView: data.default_dashboard_view || 'overview',
+            },
+            system: {
+              autoBackup: data.auto_backup ?? true,
+              backupFrequency: data.backup_frequency || 'daily',
+              enableBetaFeatures: data.enable_beta_features ?? false,
+            },
+          });
+        }
+      } catch (error) {
+        console.error('Error loading admin settings:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSettings();
+  }, [user?.id, supabase]);
 
   // Apply theme changes (session only)
   useEffect(() => {
@@ -74,17 +129,44 @@ const AdminSettingsPanel: React.FC = memo(() => {
   }, [settings.theme]);
 
   const saveSettings = async () => {
+    if (!user?.id) return;
+
     setSaving(true);
     try {
-      // Settings applied immediately - session only for compliance
-      setLastSaved(new Date());
-      console.log('Settings applied for current session:', settings);
+      // Prepare settings data for database
+      const settingsData = {
+        user_id: user.id,
+        theme: settings.theme,
+        email_notifications: settings.notifications.email,
+        browser_notifications: settings.notifications.browser,
+        emergency_alerts: settings.notifications.emergencyAlerts,
+        session_timeout: settings.security.sessionTimeout,
+        require_pin_for_sensitive: settings.security.requirePinForSensitive,
+        enable_audit_logging: settings.security.enableAuditLogging,
+        compact_mode: settings.display.compactMode,
+        show_advanced_metrics: settings.display.showAdvancedMetrics,
+        default_dashboard_view: settings.display.defaultDashboardView,
+        auto_backup: settings.system.autoBackup,
+        backup_frequency: settings.system.backupFrequency,
+        enable_beta_features: settings.system.enableBetaFeatures,
+      };
 
-      // Simulate brief processing
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // Use upsert to insert or update
+      const { error } = await supabase
+        .from('admin_settings')
+        .upsert(settingsData, { onConflict: 'user_id' });
+
+      if (error) {
+        console.error('Failed to save settings:', error);
+        alert('Failed to save settings. Please try again.');
+        return;
+      }
+
+      setLastSaved(new Date());
+      console.log('Settings saved successfully:', settings);
     } catch (error) {
-      console.error('Failed to apply settings:', error);
-      alert('Failed to apply settings. Please try again.');
+      console.error('Failed to save settings:', error);
+      alert('Failed to save settings. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -127,6 +209,16 @@ const AdminSettingsPanel: React.FC = memo(() => {
       });
     }
   };
+
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto p-6 space-y-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
+          <p className="text-gray-600">Loading settings...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">

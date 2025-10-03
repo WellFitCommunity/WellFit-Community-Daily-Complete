@@ -50,23 +50,27 @@ const SettingsPage: React.FC = () => {
       if (!user?.id) return;
 
       try {
-        const { data: profile } = await supabase
+        const { data: profile, error } = await supabase
           .from('profiles')
           .select('*')
-          .eq('id', user.id)
+          .eq('user_id', user.id)
           .single();
+
+        if (error) {
+          console.error('Error loading profile:', error);
+        }
 
         if (profile) {
           setSettings({
-            font_size: profile.font_size || 'medium',
+            font_size: (profile.font_size as any) || 'medium',
             notifications_enabled: profile.notifications_enabled ?? true,
-            emergency_contact_name: profile.caregiver_first_name + ' ' + profile.caregiver_last_name || '',
-            emergency_contact_phone: profile.caregiver_phone || '',
+            emergency_contact_name: profile.emergency_contact_name || '',
+            emergency_contact_phone: profile.emergency_contact_phone || '',
             preferred_name: profile.first_name || '',
-            timezone: profile.timezone || 'America/New_York',
-            daily_reminder_time: profile.daily_reminder_time || '09:00',
-            care_team_notifications: profile.care_team_notifications ?? true,
-            community_notifications: profile.community_notifications ?? true,
+            timezone: (profile.timezone as any) || 'America/New_York',
+            daily_reminder_time: (profile.daily_reminder_time as any) || '09:00',
+            care_team_notifications: (profile.care_team_notifications as any) ?? true,
+            community_notifications: (profile.community_notifications as any) ?? true,
           });
         }
       } catch (error) {
@@ -86,36 +90,36 @@ const SettingsPage: React.FC = () => {
     setMessage(null);
 
     try {
-      const [firstName, ...lastNameParts] = settings.emergency_contact_name.split(' ');
-      const lastName = lastNameParts.join(' ');
-
       const { error } = await supabase
         .from('profiles')
         .update({
           font_size: settings.font_size,
           notifications_enabled: settings.notifications_enabled,
-          caregiver_first_name: firstName || '',
-          caregiver_last_name: lastName || '',
-          caregiver_phone: settings.emergency_contact_phone,
+          emergency_contact_name: settings.emergency_contact_name,
+          emergency_contact_phone: settings.emergency_contact_phone,
           first_name: settings.preferred_name,
           timezone: settings.timezone,
           daily_reminder_time: settings.daily_reminder_time,
           care_team_notifications: settings.care_team_notifications,
           community_notifications: settings.community_notifications,
         })
-        .eq('id', user.id);
+        .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Save error:', error);
+        throw error;
+      }
 
       setMessage({ type: 'success', text: t.settings.saveSuccess });
-      
+
       // Apply font size immediately
-      document.documentElement.style.fontSize = 
+      document.documentElement.style.fontSize =
         settings.font_size === 'small' ? '14px' :
         settings.font_size === 'large' ? '18px' :
         settings.font_size === 'extra-large' ? '22px' : '16px';
 
     } catch (error: any) {
+      console.error('Settings save error:', error);
       setMessage({ type: 'error', text: t.settings.saveFailed });
     } finally {
       setSaving(false);

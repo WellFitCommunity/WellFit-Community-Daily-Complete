@@ -204,9 +204,16 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="p-6 max-w-md mx-auto bg-white rounded shadow">
-      <h1 className="text-2xl font-semibold mb-2">Admin Security</h1>
-      <p className="text-sm text-gray-600 mb-4">Logged in as: {userLabel}</p>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="w-full max-w-md">
+        {/* Simple Banner Header */}
+        <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white text-center py-6 px-6 rounded-t-lg shadow-lg">
+          <h1 className="text-2xl font-bold">WellFit Community Admin Log in</h1>
+        </div>
+
+        {/* Card Content */}
+        <div className="bg-white p-6 rounded-b-lg shadow-lg">
+          <p className="text-sm text-gray-600 mb-4">Logged in as: {userLabel}</p>
 
       {state.message && (
         <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-yellow-800 text-sm">
@@ -407,6 +414,8 @@ export default function AdminLoginPage() {
           <strong>Security Note:</strong> Your admin PIN provides an additional layer of security for administrative functions.
           It expires after 2 hours of inactivity.
         </p>
+      </div>
+        </div>
       </div>
     </div>
   );

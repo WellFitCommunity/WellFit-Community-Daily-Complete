@@ -68,6 +68,10 @@ CREATE INDEX IF NOT EXISTS idx_profiles_emergency_phone
   ON public.profiles (emergency_contact_phone)
   WHERE emergency_contact_phone IS NOT NULL;
 
+-- Add demographics_complete column if it doesn't exist
+ALTER TABLE public.profiles
+ADD COLUMN IF NOT EXISTS demographics_complete boolean DEFAULT false;
+
 -- Add index for demographics completion tracking
 CREATE INDEX IF NOT EXISTS idx_profiles_demographics_complete
   ON public.profiles (demographics_complete)
