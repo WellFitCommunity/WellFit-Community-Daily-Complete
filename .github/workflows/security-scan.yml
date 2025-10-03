@@ -107,13 +107,69 @@ jobs:
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
+          # Comma-separated list is supported; matrix is another option if you prefer
           languages: javascript, typescript
+          # queries: +security-and-quality
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v3
 
-      - name: Perform CodeQL Analysis
+      - name: Perform CodeQL Analysis (emit SARIF locally too)
         uses: github/codeql-action/analyze@v3
+        with:
+          output: results
+
+      # ---- NEW: Deterministic gate on CodeQL SARIF ----
+      - name: Gate on CodeQL SARIF severities
+        run: |
+          echo "## CodeQL Severity Gate" >> $GITHUB_STEP_SUMMARY
+
+          SEVERITIES="critical,high"   # tune: critical,high,medium,low or use error|warning|note if your SARIF uses 'level'
+          THRESHOLD=0                  # fail if > THRESHOLD findings at selected severities
+
+          # If no SARIF was emitted (shouldn't happen), skip gracefully
+          shopt -s nullglob
+          files=(results/*.sarif)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "ℹ️ No SARIF files found in results/. Skipping CodeQL gate." >> $GITHUB_STEP_SUMMARY
+            exit 0
+          fi
+
+          total=0
+          for sarif in "${files[@]}"; do
+            count=$(jq --arg severities "$SEVERITIES" -r '
+              def sev: ($severities | split(",") | map(ascii_downcase));
+              [
+                .runs[]
+                | .results[]
+                | (
+                    # Prefer CodeQL "security-severity"; fallback to SARIF "level"
+                    ( .properties."security-severity" // "" ) as $ss
+                    | ( .level // "" ) as $lvl
+                    | ( ( $ss | ascii_downcase ), ( $lvl | ascii_downcase ) )
+                  )
+                | if (.[0] | length) > 0 then .[0] else .[1] end
+                | select( . != "" )
+                | select( . as $x | (sev | index($x)) != null )
+              ] | length
+            ' "$sarif")
+            echo "Found $count findings in $sarif"
+            total=$(( total + count ))
+          done
+
+          {
+            echo "- Severities gated: \`$SEVERITIES\`"
+            echo "- Threshold: \`$THRESHOLD\`"
+            echo "- Total matching findings: \`$total\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # Flip FAIL if threshold exceeded; final step will enforce
+          if [ "$total" -gt "$THRESHOLD" ]; then
+            echo "### ❌ CodeQL High/Critical exceed threshold ($total > $THRESHOLD)" >> $GITHUB_STEP_SUMMARY
+            echo "FAIL=1" >> $GITHUB_ENV
+          else
+            echo "✅ CodeQL gate passed ($total ≤ $THRESHOLD)" >> $GITHUB_STEP_SUMMARY
+          fi
 
       # ---------------------------
       # ESLint Security
@@ -150,11 +206,11 @@ jobs:
 
           # Patterns (do not echo matched content)
           PATTERNS=(
-            "password[[:space:]]*=[[:space:]]*['\"][^'\"]\{8,\}"
-            "api[_-]?key[[:space:]]*[:=][[:space:]]*['\"][^'\"]\{20,\}"
-            "secret[_-]?key[[:space:]]*[:=][[:space:]]*['\"][^'\"]\{20,\}"
-            "token[[:space:]]*[:=][[:space:]]*['\"][^'\"]\{20,\}"
-            "-----BEGIN [A-Z ]\+-----"
+            "password[[:space:]]*=[[:space:]]*['\"][^'\"]{8,}"
+            "api[_-]?key[[:space:]]*[:=][[:space:]]*['\"][^'\"]{20,}"
+            "secret[_-]?key[[:space:]]*[:=][[:space:]]*['\"][^'\"]{20,}"
+            "token[[:space:]]*[:=][[:space:]]*['\"][^'\"]{20,}"
+            "-----BEGIN [A-Z ]+-----"
           )
 
           FOUND=false
@@ -206,7 +262,6 @@ jobs:
           if grep -R "X-Content-Type-Options" public/ supabase/ src/ 2>/dev/null; then echo "✅ X-Content-Type-Options present" >> $GITHUB_STEP_SUMMARY; SCORE=$((SCORE+1)); fi
           if grep -R "X-Frame-Options" public/ supabase/ src/ 2>/dev/null; then echo "✅ X-Frame-Options present" >> $GITHUB_STEP_SUMMARY; SCORE=$((SCORE+1)); fi
 
-          # Helpful extras many scanners expect:
           if grep -R "Strict-Transport-Security" public/ supabase/ src/ 2>/dev/null; then echo "✅ HSTS present" >> $GITHUB_STEP_SUMMARY; SCORE=$((SCORE+1)); fi
           if grep -R "Referrer-Policy" public/ supabase/ src/ 2>/dev/null; then echo "✅ Referrer-Policy present" >> $GITHUB_STEP_SUMMARY; SCORE=$((SCORE+1)); fi
           if grep -R "Permissions-Policy" public/ supabase/ src/ 2>/dev/null; then echo "✅ Permissions-Policy present" >> $GITHUB_STEP_SUMMARY; SCORE=$((SCORE+1)); fi
@@ -245,6 +300,7 @@ jobs:
             audit-results.json
             eslint-security.json
             outdated.json
+            results/*.sarif
           retention-days: 30
 
       # ---------------------------
@@ -260,7 +316,9 @@ jobs:
       - name: Fail if critical issues were found
         if: always()
         run: |
-          if [ "$FAIL" = "1" ]; then
+          if [ "${FAIL:-0}" = "1" ]; then
             echo "🔴 Critical issues detected (see summary). Failing job."
             exit 1
+          else
+            echo "🟢 No critical gates tripped."
           fi

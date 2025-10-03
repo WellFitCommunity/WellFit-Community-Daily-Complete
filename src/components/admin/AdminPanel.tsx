@@ -80,7 +80,14 @@ const AdminPanel: React.FC = () => {
           {/* Quick Actions Bar */}
           <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl shadow-lg p-6">
             <h2 className="text-white text-xl font-bold mb-4">Quick Actions</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              <button
+                onClick={() => navigate('/admin/enroll-senior')}
+                className="bg-white text-emerald-700 px-6 py-4 rounded-lg font-semibold hover:bg-emerald-50 transition-colors shadow-md flex items-center justify-center"
+              >
+                <span className="mr-2 text-2xl">➕</span>
+                Enroll Senior
+              </button>
               <button
                 onClick={() => navigate('/admin/bulk-enroll')}
                 className="bg-white text-blue-700 px-6 py-4 rounded-lg font-semibold hover:bg-blue-50 transition-colors shadow-md flex items-center justify-center"

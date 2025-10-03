@@ -17,12 +17,21 @@ if (!SUPABASE_URL || !SUPABASE_SECRET_KEY || !SUPABASE_PUBLISHABLE_API_KEY) {
 const supabase = createClient(SUPABASE_URL, SUPABASE_SECRET_KEY, { auth: { persistSession: false } });
 
 // ─── Input schema ────────────────────────────────────────────────────────────
+// UPDATED: 2025-10-03 - Added fields from EnrollSeniorPage.tsx
+// These fields are collected during admin enrollment and should be saved
+// to avoid forcing seniors to re-enter this information in DemographicsPage
 const EnrollSchema = z.object({
-  phone:      z.string().regex(/^\+\d{10,15}$/, "Must be full E.164 number"),
-  password:   z.string().min(8, "Password must be at least 8 characters"),
-  first_name: z.string().min(1, "First name required"),
-  last_name:  z.string().min(1, "Last name required"),
-  email:      z.string().email().optional(),
+  phone:                      z.string().regex(/^\+\d{10,15}$/, "Must be full E.164 number"),
+  password:                   z.string().min(8, "Password must be at least 8 characters"),
+  first_name:                 z.string().min(1, "First name required"),
+  last_name:                  z.string().min(1, "Last name required"),
+  email:                      z.string().email().optional(),
+  // Additional fields from EnrollSeniorPage (all optional)
+  date_of_birth:              z.string().optional(), // Maps to profiles.dob
+  emergency_contact_name:     z.string().optional(), // Next of Kin name in UI
+  emergency_contact_phone:    z.string().optional(), // Next of Kin phone in UI
+  caregiver_email:            z.string().email().optional(),
+  notes:                      z.string().optional(), // Admin notes, stored in admin_enrollment_notes
 });
 
 // ─── Helper: get caller + roles ─────────────────────────────────────────────
@@ -46,11 +55,17 @@ async function getCaller(req: Request) {
 }
 
 // CORS Configuration - Explicit allowlist for security
+// UPDATED 2025-10-03: Added white-label tenant subdomains
 const ALLOWED_ORIGINS = [
   "https://thewellfitcommunity.org",
   "https://wellfitcommunity.live",
   "http://localhost:3100",
-  "https://localhost:3100"
+  "https://localhost:3100",
+  // White-label tenant subdomains
+  "https://houston.thewellfitcommunity.org",
+  "https://miami.thewellfitcommunity.org",
+  "https://phoenix.thewellfitcommunity.org",
+  "https://seattle.thewellfitcommunity.org",
 ];
 
 function getCorsHeaders(origin: string | null) {
@@ -92,7 +107,18 @@ serve(async (req: Request) => {
         headers,
       });
     }
-    const { phone, password, first_name, last_name, email } = parsed.data;
+    const {
+      phone,
+      password,
+      first_name,
+      last_name,
+      email,
+      date_of_birth,
+      emergency_contact_name,
+      emergency_contact_phone,
+      caregiver_email,
+      notes
+    } = parsed.data;
 
     // 3) Create auth user (service role required)
     const { data: ures, error: uerr } = await supabase.auth.admin.createUser({
@@ -110,16 +136,27 @@ serve(async (req: Request) => {
     const newUserId = ures.user.id;
 
     // 4) Insert profile with PK == auth.users.id  (CRITICAL)
+    // FIXED 2025-10-03: Changed 'id' to 'user_id' to match schema in
+    // migration 20250916000000_new_init_roles_and_security.sql:5-16
+    // Added all fields from EnrollSeniorPage to avoid data loss
     const { error: perr } = await supabase.from("profiles").insert({
-      id: newUserId, // profiles.id = auth.users.id
+      user_id: newUserId,  // ✅ FIXED: Was 'id', now 'user_id' (matches schema)
       phone,
       first_name,
       last_name,
       email: email ?? null,
-      role: "senior",         // Fixed: Add role text
-      role_code: 4,           // Fixed: Add role_code number for seniors
+      dob: date_of_birth ?? null,  // Date of birth (optional)
+      emergency_contact_name: emergency_contact_name ?? null,  // Next of Kin name
+      emergency_contact_phone: emergency_contact_phone ?? null,  // Next of Kin phone
+      caregiver_email: caregiver_email ?? null,  // Caregiver email (optional)
+      admin_enrollment_notes: notes ?? null,  // Admin notes (not visible to patient)
+      role: "senior",
+      role_code: 4,
       authenticated: true,
       verified: true,
+      phone_verified: true,  // Set to true since phone_confirm: true in auth
+      demographics_complete: false,  // Will be set to true after DemographicsPage
+      onboarded: false,  // Will be set to true after full onboarding
       created_at: new Date().toISOString(),
     });
     if (perr) {

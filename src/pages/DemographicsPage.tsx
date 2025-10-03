@@ -293,13 +293,28 @@ const DemographicsPage: React.FC = () => {
 
       if (profileError) throw profileError;
 
-      // Store PIN separately for caregiver access (TODO: hash on server)
+      // Store PIN separately for caregiver read-only access
+      // FIXED 2025-10-03: Hash PIN securely using Web Crypto Edge Function
+      // Security: PBKDF2 with 100k iterations, SHA-256, 16-byte random salt
+      // Caregivers will use this PIN for view-only access to senior's progress
+      const { data: pinHashData, error: pinHashError } = await supabase.functions.invoke('hash-pin', {
+        body: { pin: formData.pin }
+      });
+
+      if (pinHashError) {
+        console.error('PIN hashing failed:', pinHashError);
+        throw new Error('Failed to securely store caregiver PIN. Please try again.');
+      }
+
+      // Store hashed PIN (format: base64(salt):base64(hash))
       const { error: pinError } = await supabase
         .from('phone_auth')
         .upsert({
-          id: user!.id,
+          user_id: user!.id,  // Link to senior's account
           phone: formData.phone,
-          pin: formData.pin // TODO: hash via Edge Function for security
+          pin_hash: pinHashData.hashed,  // Securely hashed PIN for caregiver access
+          verified: true,
+          verified_at: new Date().toISOString()
         });
 
       if (pinError) throw pinError;

@@ -50,6 +50,7 @@ const AdminProfileEditorPage = React.lazy(() => import('./pages/AdminProfileEdit
 const NursePanel = React.lazy(() => import('./components/nurse/NursePanel'));
 const BulkEnrollmentPanel = React.lazy(() => import('./components/admin/BulkEnrollmentPanel'));
 const BulkExportPanel = React.lazy(() => import('./components/admin/BulkExportPanel'));
+const EnrollSeniorPage = React.lazy(() => import('./pages/EnrollSeniorPage'));
 const CommunityMoments = React.lazy(() => import('./components/CommunityMoments'));
 const DemographicsPage = React.lazy(() => import('./pages/DemographicsPage'));
 const TriviaGame = React.lazy(() => import('./components/TriviaGame'));
@@ -158,6 +159,16 @@ function Shell() {
                   <RequireAuth>
                     <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'nurse']}>
                       <NursePanel />
+                    </RequireAdminAuth>
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/admin/enroll-senior"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth>
+                      <EnrollSeniorPage />
                     </RequireAdminAuth>
                   </RequireAuth>
                 }
