@@ -13,8 +13,12 @@ import FHIRFormBuilderEnhanced from './FHIRFormBuilderEnhanced';
 import FHIRDataMapper from './FHIRDataMapper';
 import BillingDashboard from './BillingDashboard';
 import ApiKeyManager from './ApiKeyManager';
-import SmartScribe from '../smart/SmartScribe';
+import SmartScribe from '../smart/RealTimeSmartScribe';
 import SDOHCoderAssist from '../billing/SDOHCoderAssist';
+import CCMTimeline from '../atlas/CCMTimeline';
+import RevenueDashboard from '../atlas/RevenueDashboard';
+import ClaimsSubmissionPanel from '../atlas/ClaimsSubmissionPanel';
+import ClaimsAppealsPanel from '../atlas/ClaimsAppealsPanel';
 
 // Collapsible Section Component
 interface CollapsibleSectionProps {
@@ -115,10 +119,47 @@ const AdminPanel: React.FC = () => {
             icon="🎤"
             headerColor="text-purple-800"
           >
-            <SmartScribe
-              sessionType="consultation"
-              className="w-full"
-            />
+            <SmartScribe />
+          </CollapsibleSection>
+
+          {/* Project Atlas: CCM Autopilot */}
+          <CollapsibleSection
+            title="CCM Autopilot - Chronic Care Management"
+            subtitle="Automatic tracking of 20+ minute patient interactions for CCM billing"
+            icon="⏱️"
+            headerColor="text-purple-800"
+          >
+            <CCMTimeline />
+          </CollapsibleSection>
+
+          {/* Project Atlas: Revenue Dashboard */}
+          <CollapsibleSection
+            title="Revenue Dashboard - Project Atlas"
+            subtitle="Real-time revenue analytics and optimization opportunities"
+            icon="💰"
+            headerColor="text-green-800"
+          >
+            <RevenueDashboard />
+          </CollapsibleSection>
+
+          {/* Project Atlas: Claims Submission */}
+          <CollapsibleSection
+            title="Claims Submission Center"
+            subtitle="Generate and submit 837P claims to clearinghouses"
+            icon="📋"
+            headerColor="text-blue-800"
+          >
+            <ClaimsSubmissionPanel />
+          </CollapsibleSection>
+
+          {/* Project Atlas: Claims Appeals */}
+          <CollapsibleSection
+            title="Claims Appeals & Resubmission"
+            subtitle="AI-assisted appeal letters for denied claims"
+            icon="🔄"
+            headerColor="text-red-800"
+          >
+            <ClaimsAppealsPanel />
           </CollapsibleSection>
 
           {/* SDOH Billing Encoder */}

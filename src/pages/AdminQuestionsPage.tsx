@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import RiskAssessmentManager from '../components/admin/RiskAssessmentManager';
 import NurseQuestionManager from '../components/admin/NurseQuestionManager';
-import SmartScribe from '../components/smart/SmartScribe';
+import SmartScribe from '../components/smart/RealTimeSmartScribe';
 import SmartBackButton from '../components/ui/SmartBackButton';
 import { ClipboardCheck, MessageSquare, Mic } from 'lucide-react';
 
@@ -72,10 +72,7 @@ export default function AdminQuestionsPage() {
                 Record patient consultations with voice transcription and AI-powered clinical note generation using Claude Sonnet 4.5
               </p>
             </div>
-            <SmartScribe
-              sessionType="consultation"
-              className="w-full"
-            />
+            <SmartScribe />
           </div>
         )}
       </div>

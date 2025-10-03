@@ -3,9 +3,11 @@ import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import RequireAdminAuth from '../auth/RequireAdminAuth';
 import AdminHeader from '../admin/AdminHeader';
 import UserQuestions from '../UserQuestions';
-import SmartScribe from '../smart/SmartScribe';
+import SmartScribe from '../smart/RealTimeSmartScribe';
 import RiskAssessmentManager from '../admin/RiskAssessmentManager';
 import ReportsSection from '../admin/ReportsSection';
+import CCMTimeline from '../atlas/CCMTimeline';
+import RevenueDashboard from '../atlas/RevenueDashboard';
 import { supabase } from '../../lib/supabaseClient';
 
 // Collapsible Section Component
@@ -205,10 +207,17 @@ const NursePanel: React.FC = () => {
 
           {/* Smart Medical Scribe */}
           <CollapsibleSection title="Smart Medical Scribe" icon="🎤">
-            <SmartScribe
-              sessionType="consultation"
-              className="w-full"
-            />
+            <SmartScribe />
+          </CollapsibleSection>
+
+          {/* Project Atlas: CCM Autopilot */}
+          <CollapsibleSection title="CCM Autopilot - Chronic Care Management" icon="⏱️">
+            <CCMTimeline />
+          </CollapsibleSection>
+
+          {/* Project Atlas: Revenue Dashboard */}
+          <CollapsibleSection title="Revenue Dashboard - Project Atlas" icon="💰">
+            <RevenueDashboard />
           </CollapsibleSection>
 
           {/* Risk Assessment */}
