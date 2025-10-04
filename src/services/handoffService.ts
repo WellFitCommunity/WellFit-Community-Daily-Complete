@@ -35,8 +35,7 @@ export class HandoffService {
     request: CreateHandoffPacketRequest
   ): Promise<CreateHandoffPacketResponse> {
     try {
-      // TODO: Encrypt patient_name and patient_dob before storing
-      // For now, we'll mark them as needing encryption
+      // Encrypt sensitive patient information using PHI encryption
       const encryptedName = await this.encryptPHI(request.patient_name);
       const encryptedDOB = await this.encryptPHI(request.patient_dob);
 
@@ -55,6 +54,9 @@ export class HandoffService {
           sender_provider_name: request.sender_provider_name,
           sender_callback_number: request.sender_callback_number,
           sender_notes: request.sender_notes,
+          receiver_contact_name: request.receiver_contact_name,
+          receiver_contact_email: request.receiver_contact_email,
+          receiver_contact_phone: request.receiver_contact_phone,
           status: 'draft',
         })
         .select()
@@ -238,13 +240,45 @@ export class HandoffService {
 
       await this.logEvent(request.packet_id, 'sent', 'Packet sent to receiving facility');
 
-      // TODO: Send SMS/Email confirmation if requested
-      // if (request.send_confirmation_sms) {
-      //   await this.sendSMSConfirmation(data);
-      // }
-      // if (request.send_confirmation_email) {
-      //   await this.sendEmailConfirmation(data);
-      // }
+      // Send email/SMS confirmations if requested and contact info is available
+      if (request.send_confirmation_email || request.send_confirmation_sms) {
+        try {
+          const { HandoffNotificationService } = await import('./handoffNotificationService');
+
+          // Build recipient list from packet data
+          const recipients = [];
+          if (data.receiver_contact_email || data.receiver_contact_phone) {
+            recipients.push({
+              name: data.receiver_contact_name || data.receiving_facility || 'Receiving Facility',
+              email: request.send_confirmation_email ? data.receiver_contact_email : undefined,
+              phone: request.send_confirmation_sms ? data.receiver_contact_phone : undefined,
+              role: 'physician' as const
+            });
+          }
+
+          if (recipients.length > 0) {
+            await HandoffNotificationService.notifyPacketSent(data, recipients);
+
+            // Update notification tracking
+            await supabase
+              .from('handoff_packets')
+              .update({
+                notification_preferences: {
+                  send_email: request.send_confirmation_email || false,
+                  send_sms: request.send_confirmation_sms || false,
+                  email_sent: request.send_confirmation_email || false,
+                  sms_sent: request.send_confirmation_sms || false,
+                  email_sent_at: request.send_confirmation_email ? new Date().toISOString() : null,
+                  sms_sent_at: request.send_confirmation_sms ? new Date().toISOString() : null
+                }
+              })
+              .eq('id', request.packet_id);
+          }
+        } catch (notifyError) {
+          console.error('Failed to send notification:', notifyError);
+          // Don't fail the entire operation if notification fails
+        }
+      }
 
       return data;
     } catch (error: any) {

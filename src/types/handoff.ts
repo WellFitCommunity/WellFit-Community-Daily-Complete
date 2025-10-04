@@ -55,6 +55,19 @@ export interface HandoffPacket {
   sender_notes?: string;
   sender_user_id?: string;
 
+  // Receiver contact information (for Twilio SMS and MailerSend email)
+  receiver_contact_name?: string;
+  receiver_contact_email?: string;
+  receiver_contact_phone?: string; // E.164 format: +1234567890
+  notification_preferences?: {
+    send_email?: boolean;
+    send_sms?: boolean;
+    email_sent?: boolean;
+    sms_sent?: boolean;
+    email_sent_at?: string;
+    sms_sent_at?: string;
+  };
+
   // Status tracking
   status: HandoffStatus;
 
@@ -251,6 +264,11 @@ export interface CreateHandoffPacketRequest {
   sender_provider_name: string;
   sender_callback_number: string;
   sender_notes?: string;
+
+  // Receiver contact info (for Twilio SMS and MailerSend email notifications)
+  receiver_contact_name?: string;
+  receiver_contact_email?: string;
+  receiver_contact_phone?: string; // E.164 format: +1234567890
 }
 
 export interface CreateHandoffPacketResponse {

@@ -8,7 +8,7 @@ import { Badge } from '../ui/badge';
 import { Alert, AlertDescription } from '../ui/alert';
 import { useSupabaseClient, useUser } from '../../contexts/AuthContext';
 import { RiskAssessment } from '../../types/riskAssessment';
-import { supabase } from '../../lib/supabaseClient';
+import { claudeService } from '../../services/claudeService';
 
 interface RiskAssessmentFormProps {
   patientId: string;
@@ -204,12 +204,24 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
 
   const runAIAnalysis = async () => {
     setAnalyzingAI(true);
+    setError(null);
     try {
-      // TODO: Implement AI analysis via Edge Function
-      setError('AI analysis temporarily disabled - manual assessment only.');
+      const assessmentData = {
+        medical_risk_score: formData.medical_risk_score,
+        mobility_risk_score: formData.mobility_risk_score,
+        cognitive_risk_score: formData.cognitive_risk_score,
+        social_risk_score: formData.social_risk_score,
+        risk_factors: formData.risk_factors,
+        assessment_notes: formData.assessment_notes
+      };
+
+      const analysis = await claudeService.analyzeRiskAssessment(assessmentData);
+
+      setAiAnalysis(analysis);
+      setSuccess('AI analysis completed successfully. Review suggestions below.');
     } catch (err) {
       console.error('AI analysis failed:', err);
-      setError('AI analysis failed. Please continue with manual assessment.');
+      setError('AI analysis is currently unavailable. Please continue with manual assessment.');
     } finally {
       setAnalyzingAI(false);
     }

@@ -13,11 +13,12 @@ import * as serviceWorkerRegistration from './serviceWorkerRegistration';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AdminAuthProvider } from './contexts/AdminAuthContext';
 import { LanguageProvider } from './contexts/LanguageContext';
-// ❌ Do not import BrandingProvider here because App.tsx already provides BrandingContext
-// import { BrandingProvider } from './BrandingContext';
 
 // Bridge passes userId to DemoModeProvider without DemoMode importing useAuth directly
 import { DemoModeProvider } from './contexts/DemoModeContext';
+
+// Initialize Claude AI service
+import { claudeService } from './services/claudeService';
 
 function DemoModeBridge({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -31,6 +32,13 @@ function DemoModeBridge({ children }: { children: React.ReactNode }) {
     </DemoModeProvider>
   );
 }
+
+// Initialize Claude service on app startup
+claudeService.initialize().then(() => {
+  console.log('✅ Claude AI service initialized and ready');
+}).catch((error) => {
+  console.warn('⚠️ Claude AI service initialization failed (app will continue with limited AI features):', error.message);
+});
 
 const root = createRoot(document.getElementById('root')!);
 

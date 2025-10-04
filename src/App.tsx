@@ -9,7 +9,6 @@ import { BrandingContext } from './BrandingContext';
 // ❌ Do NOT import or use AuthProvider here — it lives in index.tsx
 // ❌ Do NOT import or use AdminAuthProvider here — it lives in index.tsx
 
-import DemoBanner from './components/layout/DemoBanner';
 import AppHeader from './components/layout/AppHeader';
 import Footer from './components/layout/Footer';
 
@@ -79,7 +78,6 @@ const PUBLIC_ROUTES = [
 function Shell() {
   const [branding, setBranding] = useState<BrandingConfig>(getCurrentBranding());
   const location = useLocation();
-  const isPublic = PUBLIC_ROUTES.includes(location.pathname);
 
   useEffect(() => {
     setBranding(getCurrentBranding());
