@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, Clock, AlertTriangle, MessageCircle, Brain, Send, User, Phone } from 'lucide-react';
 import { fetchNurseQueue, claimQuestion, fetchMyQuestions, addNurseNote, submitAnswer } from '../../lib/nurseApi';
+import { claudeService } from '../../services/claudeService';
+import { UserRole, RequestType, ClaudeRequestContext } from '../../types/claude';
 
 interface Question {
   id: string;
@@ -115,35 +117,98 @@ const NurseQuestionManager: React.FC = () => {
   const generateAISuggestion = async (question: Question) => {
     setLoadingAi(true);
     try {
-      // TODO: Replace with actual AI service call
-      // This would integrate with your existing AI services
+      // Build health context from patient profile
+      const healthContext = question.patient_profile ? {
+        patientId: question.user_id,
+        demographics: {
+          age: question.patient_profile.age || 70,
+          gender: 'unknown' as const
+        },
+        currentConditions: (question.patient_profile.conditions || []).map(condition => ({
+          condition,
+          severity: 'moderate' as const,
+          onsetDate: undefined
+        })),
+        medications: (question.patient_profile.medications || []).map(med => ({
+          name: med,
+          dosage: 'as prescribed',
+          frequency: 'as prescribed',
+          purpose: 'chronic condition management'
+        })),
+        recentVitals: {
+          lastUpdated: new Date().toISOString()
+        }
+      } : undefined;
 
-      // Mock AI response based on question analysis
-      const mockSuggestion: AISuggestion = {
-        response: question.category === 'medication'
-          ? "Based on the patient's medication schedule and the timing of the missed dose, I recommend taking the medication now since it's been less than 12 hours. However, if it's close to the next scheduled dose (within 4 hours), skip this dose and continue with the regular schedule."
-          : "Given the patient's history of hypertension and heart disease, orthostatic hypotension (dizziness when standing) could indicate medication adjustment needs or dehydration. Recommend checking blood pressure in sitting and standing positions.",
-        confidence: 0.85,
-        reasoning: question.category === 'medication'
-          ? "Patient has a history of hypertension and takes Lisinopril. Missing doses can affect blood pressure control. Standard guidance for missed doses applies."
-          : "Orthostatic hypotension is common in elderly patients with cardiovascular conditions. Patient's medications (Metoprolol) can contribute to this symptom.",
+      // Create request context for Claude
+      const context: ClaudeRequestContext = {
+        userId: 'nurse-panel',
+        userRole: UserRole.HEALTHCARE_PROVIDER,
+        requestId: `nurse-q-${question.id}-${Date.now()}`,
+        timestamp: new Date(),
+        requestType: RequestType.HEALTH_QUESTION,
+        healthContext
+      };
+
+      // Build enhanced prompt with patient context
+      const enhancedPrompt = `As a registered nurse reviewing a patient question, please provide a professional, evidence-based response.
+
+PATIENT QUESTION:
+${question.question_text}
+
+CATEGORY: ${question.category}
+URGENCY: ${question.urgency}
+
+${question.patient_profile ? `
+PATIENT CONTEXT:
+- Age: ${question.patient_profile.age || 'Unknown'}
+- Phone: ${question.patient_profile.phone}
+${question.patient_profile.conditions?.length ? `- Known Conditions: ${question.patient_profile.conditions.join(', ')}` : ''}
+${question.patient_profile.medications?.length ? `- Current Medications: ${question.patient_profile.medications.join(', ')}` : ''}
+` : ''}
+
+Please provide:
+1. A clear, compassionate response suitable for sending directly to the patient
+2. Your clinical reasoning for this recommendation
+3. Any follow-up actions needed
+4. Relevant patient education resources
+
+Format your response as a clear, professional message that can be sent to the patient.`;
+
+      // Call real Claude AI service
+      const aiResponse = await claudeService.generateSeniorHealthGuidance(
+        enhancedPrompt,
+        context
+      );
+
+      // Parse AI response into structured suggestion
+      const aiSuggestion: AISuggestion = {
+        response: aiResponse.content,
+        confidence: 0.90,
+        reasoning: `AI-generated response based on patient's ${question.category} question. Model: ${aiResponse.model}. Tokens: ${aiResponse.tokenUsage.inputTokens}/${aiResponse.tokenUsage.outputTokens}. Cost: $${aiResponse.cost.toFixed(4)}`,
         resources: [
-          "Medication Timing Guidelines",
-          "Blood Pressure Monitoring Protocol",
-          "Patient Education Materials"
+          'Evidence-Based Guidelines',
+          'Patient Education Materials',
+          'Clinical Protocols'
         ],
         followUp: [
-          "Schedule follow-up call in 24 hours",
-          "Review medication adherence",
-          "Consider medication timing adjustment"
+          'Document response in patient record',
+          'Schedule follow-up if needed',
+          'Monitor patient response'
         ]
       };
 
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      setAiSuggestion(mockSuggestion);
-    } catch (error) {
+      setAiSuggestion(aiSuggestion);
+    } catch (error: any) {
       console.error('AI suggestion failed:', error);
+      // Provide helpful fallback message
+      setAiSuggestion({
+        response: `Unable to generate AI suggestion at this time. Error: ${error.message || 'Unknown error'}. Please provide a manual response based on your clinical judgment.`,
+        confidence: 0,
+        reasoning: 'AI service temporarily unavailable',
+        resources: [],
+        followUp: ['Provide manual clinical response']
+      });
     } finally {
       setLoadingAi(false);
     }

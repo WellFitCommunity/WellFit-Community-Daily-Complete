@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BillingService } from '../../services/billingService';
-import type { BillingProvider, BillingPayer, Claim, ClaimStatus } from '../../types/billing';
+import type { BillingProvider, Claim, ClaimStatus } from '../../types/billing';
 
 interface BillingMetrics {
   totalClaims: number;
