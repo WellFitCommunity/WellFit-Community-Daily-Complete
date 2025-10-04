@@ -912,6 +912,76 @@ WHERE patient_id = 'patient-uuid'
 
 ---
 
+## Admin Panel Consolidation Plan (Next Session)
+
+### Recommended Component Merges
+
+To reduce staff clicks and improve UX, consolidate related components into unified hubs:
+
+#### **1. Atlas Control Center (Priority: HIGHEST)**
+**Current:** 6 separate navigation items
+**Proposed:** Single component with tabs
+
+```typescript
+// src/components/atlas/AtlasControlCenter.tsx
+<AtlasControlCenter>
+  <Tab name="Revenue" component={<RevenueDashboard />} />
+  <Tab name="CCM" component={<CCMTimeline />} />
+  <Tab name="Frequent Flyer" component={<FrequentFlyerDashboard />} />
+  <Tab name="Coding" component={<CodingSuggestionPanel />} />
+  <Tab name="Claims" component={<ClaimsSubmissionPanel />} />
+  <Tab name="Appeals" component={<ClaimsAppealsPanel />} />
+</AtlasControlCenter>
+```
+
+**Benefit:** 6 clicks → 1 click + tabs
+
+#### **2. Billing Hub (Priority: HIGH)**
+**Current:** 3-5 separate billing components
+**Proposed:** Single billing hub with sections
+
+```typescript
+// src/components/billing/BillingHub.tsx
+<BillingHub>
+  <Tab name="Dashboard" component={<BillingDashboard />} />
+  <Tab name="Coder Assist" component={<SDOHCoderAssist />} />
+  <Tab name="Claims" component={<ClaimsManager />} />
+  <Tab name="X12 Generator" component={<X12ClaimGenerator />} />
+</BillingHub>
+```
+
+**Benefit:** 5 clicks → 1 click + tabs
+
+#### **3. Care Team Inbox (Priority: MEDIUM)**
+**Current:** 3 separate question management views
+**Proposed:** Unified inbox
+
+```typescript
+// src/components/care/CareTeamInbox.tsx
+<CareTeamInbox>
+  <Tab name="Queue" component={<NurseQueue />} />
+  <Tab name="My Questions" component={<MyAssignedQuestions />} />
+  <Tab name="All Questions" component={<AllQuestions />} />
+  <Tab name="Templates" component={<ResponseTemplates />} />
+</CareTeamInbox>
+```
+
+**Benefit:** 3 clicks → 1 click + tabs
+
+### Implementation Notes
+
+- Keep existing components intact (no breaking changes)
+- Create new "hub" components that wrap existing ones
+- Use React Router sub-routes for tabs
+- Maintain all existing functionality
+- Add keyboard shortcuts (Ctrl+1, Ctrl+2, etc. for tab switching)
+- Save last-viewed tab in localStorage
+
+**Estimated Time:** 2-3 hours for all three hubs
+**Risk:** Low (wrapping existing components, not rewriting)
+
+---
+
 ## Future Enhancements
 
 ### Phase 2 Features
