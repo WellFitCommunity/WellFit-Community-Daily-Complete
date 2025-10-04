@@ -78,7 +78,7 @@ export class ReadmissionTrackingService {
       if (error) throw error;
 
       // Trigger automated workflows if high risk
-      if (readmissionAnalysis.high_utilizer_flag || readmissionAnalysis.risk_score >= 70) {
+      if (readmissionAnalysis.high_utilizer_flag || (readmissionAnalysis.risk_score !== undefined && readmissionAnalysis.risk_score >= 70)) {
         await this.triggerHighRiskWorkflow(data);
       }
 
