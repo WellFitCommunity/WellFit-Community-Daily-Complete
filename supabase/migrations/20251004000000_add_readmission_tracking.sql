@@ -82,8 +82,8 @@ CREATE TABLE IF NOT EXISTS public.care_coordination_plans (
 
   -- SDOH integration
   sdoh_factors jsonb DEFAULT '{}',
-  -- Links to SDOH assessment
-  sdoh_assessment_id uuid REFERENCES public.sdoh_assessments(id),
+  -- Links to SDOH assessment (optional - table may not exist yet)
+  sdoh_assessment_id uuid,
 
   -- Team coordination
   care_team_members jsonb DEFAULT '[]',
