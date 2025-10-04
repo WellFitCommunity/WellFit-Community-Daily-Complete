@@ -18,8 +18,7 @@ import type {
   CreateBillingProvider,
   UpdateBillingProvider,
   CreateClaim,
-  UpdateClaim,
-  ClaudeError
+  UpdateClaim
 } from '../types/billing';
 
 export class BillingService {
