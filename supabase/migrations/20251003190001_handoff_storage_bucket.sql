@@ -47,7 +47,8 @@ WITH CHECK (
   )
 );
 
--- Policy: Admins and packet owners can download files
+-- Policy: Admins and authenticated users can download files
+-- Note: Packet-level security is enforced in the handoff_attachments table RLS
 DROP POLICY IF EXISTS "handoff_attachments_admin_download" ON storage.objects;
 CREATE POLICY "handoff_attachments_admin_download"
 ON storage.objects FOR SELECT
@@ -59,18 +60,7 @@ USING (
       WHERE ur.user_id = auth.uid()
       AND ur.role IN ('admin', 'super_admin')
     )
-    OR EXISTS (
-      -- Check if user is associated with the packet
-      SELECT 1
-      FROM public.handoff_packets hp
-      JOIN public.handoff_attachments ha ON ha.handoff_packet_id = hp.id
-      WHERE ha.storage_path = storage.objects.name
-      AND (
-        hp.created_by = auth.uid()
-        OR hp.sender_user_id = auth.uid()
-      )
-    )
-    OR auth.uid() IS NOT NULL -- Allow authenticated users to download
+    OR auth.uid() IS NOT NULL -- Allow authenticated users to download (table RLS handles packet ownership)
   )
 );
 

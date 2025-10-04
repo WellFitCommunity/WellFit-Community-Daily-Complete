@@ -19,6 +19,7 @@ import CCMTimeline from '../atlas/CCMTimeline';
 import RevenueDashboard from '../atlas/RevenueDashboard';
 import ClaimsSubmissionPanel from '../atlas/ClaimsSubmissionPanel';
 import ClaimsAppealsPanel from '../atlas/ClaimsAppealsPanel';
+import AdminTransferLogs from '../handoff/AdminTransferLogs';
 
 // Collapsible Section Component
 interface CollapsibleSectionProps {
@@ -225,6 +226,16 @@ const AdminPanel: React.FC = () => {
             headerColor="text-green-800"
           >
             <BillingDashboard />
+          </CollapsibleSection>
+
+          {/* Patient Handoff System */}
+          <CollapsibleSection
+            title="Patient Handoff System"
+            subtitle="Secure transfer of care between facilities - HIPAA compliant audit trail"
+            icon="🏥"
+            headerColor="text-teal-800"
+          >
+            <AdminTransferLogs showExportButton={true} />
           </CollapsibleSection>
 
           {/* Core Admin Functions Grid */}

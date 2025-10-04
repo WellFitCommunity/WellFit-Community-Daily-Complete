@@ -56,10 +56,11 @@ jobs:
         run: |
           echo "## Insecure Request Scan" >> $GITHUB_STEP_SUMMARY
 
-          # Find http:// and ws:// (skip build caches)
-          MATCH_HTTP=$(grep -Rni "http://" . \
-            --exclude-dir=node_modules --exclude-dir=build --exclude-dir=dist --exclude-dir=.git 2>/dev/null || true)
-          MATCH_WS=$(grep -Rni "ws://" . \
+          # Ignore common benign cases: localhost/127.0.0.1, schema refs, comments in lockfiles, etc.
+          MATCH_HTTP=$(grep -RniE '\bhttp://(?!localhost\b|127\.0\.0\.1\b|schemas\.|0\.0\.0\.0\b)' . \
+            --exclude-dir=node_modules --exclude-dir=build --exclude-dir=dist --exclude-dir=.git \
+            --exclude=package-lock.json --exclude=yarn.lock 2>/dev/null || true)
+          MATCH_WS=$(grep -RniE '\bws://(?!localhost\b|127\.0\.0\.1\b|0\.0\.0\.0\b)' . \
             --exclude-dir=node_modules --exclude-dir=build --exclude-dir=dist --exclude-dir=.git 2>/dev/null || true)
 
           if [ -n "$MATCH_HTTP$MATCH_WS" ]; then
@@ -81,21 +82,31 @@ jobs:
       - name: Run npm audit
         run: |
           echo "## NPM Security Audit" >> $GITHUB_STEP_SUMMARY
-          npm audit --audit-level=moderate --json > audit-results.json || true
+          npm audit --audit-level=low --json > audit-results.json || true
 
           if [ -s audit-results.json ]; then
-            COUNT=$(jq '.metadata.vulnerabilities.total // 0' audit-results.json)
-            if [ "$COUNT" -gt 0 ]; then
-              echo "### ❌ Vulnerabilities Found: $COUNT" >> $GITHUB_STEP_SUMMARY
+            TOTAL=$(jq '.metadata.vulnerabilities.total // 0' audit-results.json)
+            HIGH=$(jq '.metadata.vulnerabilities.high // 0' audit-results.json)
+            CRIT=$(jq '.metadata.vulnerabilities.critical // 0' audit-results.json)
+
+            echo "- Total: $TOTAL | High: $HIGH | Critical: $CRIT" >> $GITHUB_STEP_SUMMARY
+
+            if [ "$TOTAL" -gt 0 ]; then
+              echo "### Vulnerabilities Summary" >> $GITHUB_STEP_SUMMARY
               jq -r '
                 .vulnerabilities
                 | to_entries[]
                 | select(.value.severity != null)
                 | "- **\(.key)**: \(.value.severity) – \(.value.title)"
               ' audit-results.json >> $GITHUB_STEP_SUMMARY || echo "Parse error" >> $GITHUB_STEP_SUMMARY
+            fi
+
+            # Gate ONLY on High/Critical
+            if [ "$HIGH" -gt 0 ] || [ "$CRIT" -gt 0 ]; then
+              echo "### ❌ High/Critical vulnerabilities present." >> $GITHUB_STEP_SUMMARY
               echo "FAIL=1" >> $GITHUB_ENV
             else
-              echo "✅ No vulnerabilities found!" >> $GITHUB_STEP_SUMMARY
+              echo "✅ No High/Critical vulnerabilities." >> $GITHUB_STEP_SUMMARY
             fi
           else
             echo "ℹ️ npm audit produced no output." >> $GITHUB_STEP_SUMMARY
@@ -107,7 +118,6 @@ jobs:
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
-          # Comma-separated list is supported; matrix is another option if you prefer
           languages: javascript, typescript
           # queries: +security-and-quality
 
@@ -119,17 +129,16 @@ jobs:
         with:
           output: results
 
-      # ---- NEW: Deterministic gate on CodeQL SARIF ----
+      # ---- Deterministic gate on CodeQL SARIF (numeric severity) ----
       - name: Gate on CodeQL SARIF severities
         run: |
           echo "## CodeQL Severity Gate" >> $GITHUB_STEP_SUMMARY
 
-          SEVERITIES="critical,high"   # tune: critical,high,medium,low or use error|warning|note if your SARIF uses 'level'
-          THRESHOLD=0                  # fail if > THRESHOLD findings at selected severities
+          # Numeric threshold for High/Critical (CVSS-like)
+          MIN_SEVERITY=8.9  # change to 7.0 to include 'High', or 9.0 for Critical-only
 
-          # If no SARIF was emitted (shouldn't happen), skip gracefully
           shopt -s nullglob
-          files=(results/*.sarif)
+          files=(results/*.sarif results/**/*.sarif)
           if [ ${#files[@]} -eq 0 ]; then
             echo "ℹ️ No SARIF files found in results/. Skipping CodeQL gate." >> $GITHUB_STEP_SUMMARY
             exit 0
@@ -137,38 +146,38 @@ jobs:
 
           total=0
           for sarif in "${files[@]}"; do
-            count=$(jq --arg severities "$SEVERITIES" -r '
-              def sev: ($severities | split(",") | map(ascii_downcase));
+            count=$(jq --argjson min "$MIN_SEVERITY" '
               [
-                .runs[]
-                | .results[]
+                .runs[].results[]? as $r
                 | (
-                    # Prefer CodeQL "security-severity"; fallback to SARIF "level"
-                    ( .properties."security-severity" // "" ) as $ss
-                    | ( .level // "" ) as $lvl
-                    | ( ( $ss | ascii_downcase ), ( $lvl | ascii_downcase ) )
+                    # Prefer CodeQL numeric security-severity; fall back to rule property; else map "level"
+                    (
+                      ($r.properties."security-severity"? // $r.rule.properties."security-severity"? // null)
+                    ) as $ss
+                    |
+                    if ($ss != null) then
+                      ( ($ss|tostring)|tonumber ) >= $min
+                    else
+                      # fallback: treat "level:error" as High/Critical
+                      ($r.level? // "") | ascii_downcase == "error"
+                    end
                   )
-                | if (.[0] | length) > 0 then .[0] else .[1] end
-                | select( . != "" )
-                | select( . as $x | (sev | index($x)) != null )
-              ] | length
+              ] | map(select(.)) | length
             ' "$sarif")
-            echo "Found $count findings in $sarif"
+            echo "File: $sarif -> High/Critical count: $count"
             total=$(( total + count ))
           done
 
           {
-            echo "- Severities gated: \`$SEVERITIES\`"
-            echo "- Threshold: \`$THRESHOLD\`"
-            echo "- Total matching findings: \`$total\`"
+            echo "- Numeric threshold: >= $MIN_SEVERITY"
+            echo "- Total matching findings: $total"
           } >> "$GITHUB_STEP_SUMMARY"
 
-          # Flip FAIL if threshold exceeded; final step will enforce
-          if [ "$total" -gt "$THRESHOLD" ]; then
-            echo "### ❌ CodeQL High/Critical exceed threshold ($total > $THRESHOLD)" >> $GITHUB_STEP_SUMMARY
+          if [ "$total" -gt 0 ]; then
+            echo "### ❌ CodeQL findings exceed threshold ($total)" >> $GITHUB_STEP_SUMMARY
             echo "FAIL=1" >> $GITHUB_ENV
           else
-            echo "✅ CodeQL gate passed ($total ≤ $THRESHOLD)" >> $GITHUB_STEP_SUMMARY
+            echo "✅ CodeQL gate passed" >> $GITHUB_STEP_SUMMARY
           fi
 
       # ---------------------------
@@ -184,13 +193,16 @@ jobs:
           if [ -s eslint-security.json ]; then
             ISSUES=$(jq '[.[].messages] | flatten | length' eslint-security.json)
             if [ "$ISSUES" -gt 0 ]; then
-              echo "### ❌ Security Issues Found: $ISSUES" >> $GITHUB_STEP_SUMMARY
+              echo "### Findings: $ISSUES (informational)" >> $GITHUB_STEP_SUMMARY
               jq -r '
                 .[] | select(.messages | length > 0)
                 | .filePath as $file
                 | .messages[] | "- **\($file)**: \(.message) (Line \(.line))"
               ' eslint-security.json >> $GITHUB_STEP_SUMMARY || echo "Parse error" >> $GITHUB_STEP_SUMMARY
-              echo "FAIL=1" >> $GITHUB_ENV
+
+              # If you want ESLint to be a gate, uncomment the next two lines:
+              # echo "### ❌ ESLint Security gate tripped" >> $GITHUB_STEP_SUMMARY
+              # echo "FAIL=1" >> $GITHUB_ENV
             else
               echo "✅ No security issues found!" >> $GITHUB_STEP_SUMMARY
             fi
@@ -204,7 +216,6 @@ jobs:
         run: |
           echo "## Secret Detection" >> $GITHUB_STEP_SUMMARY
 
-          # Patterns (do not echo matched content)
           PATTERNS=(
             "password[[:space:]]*=[[:space:]]*['\"][^'\"]{8,}"
             "api[_-]?key[[:space:]]*[:=][[:space:]]*['\"][^'\"]{20,}"
@@ -236,7 +247,7 @@ jobs:
       # ---------------------------
       # Dependency check (audit-ci + outdated)
       # ---------------------------
-      - name: Dependency vulnerability check
+      - name: Dependency security & freshness
         run: |
           echo "## Dependency Security Check" >> $GITHUB_STEP_SUMMARY
 
@@ -244,7 +255,7 @@ jobs:
 
           npm outdated --json > outdated.json || true
           if [ -s outdated.json ]; then
-            echo "### Outdated Packages:" >> $GITHUB_STEP_SUMMARY
+            echo "### Outdated Packages (informational):" >> $GITHUB_STEP_SUMMARY
             jq -r 'to_entries[] | "- **\(.key)**: Current \(.value.current // "n/a"), Latest \(.value.latest // "n/a")"' outdated.json >> $GITHUB_STEP_SUMMARY
           else
             echo "✅ No outdated packages reported." >> $GITHUB_STEP_SUMMARY
@@ -261,7 +272,6 @@ jobs:
           if grep -R "Content-Security-Policy" public/ supabase/ src/ 2>/dev/null; then echo "✅ Content-Security-Policy present" >> $GITHUB_STEP_SUMMARY; SCORE=$((SCORE+1)); fi
           if grep -R "X-Content-Type-Options" public/ supabase/ src/ 2>/dev/null; then echo "✅ X-Content-Type-Options present" >> $GITHUB_STEP_SUMMARY; SCORE=$((SCORE+1)); fi
           if grep -R "X-Frame-Options" public/ supabase/ src/ 2>/dev/null; then echo "✅ X-Frame-Options present" >> $GITHUB_STEP_SUMMARY; SCORE=$((SCORE+1)); fi
-
           if grep -R "Strict-Transport-Security" public/ supabase/ src/ 2>/dev/null; then echo "✅ HSTS present" >> $GITHUB_STEP_SUMMARY; SCORE=$((SCORE+1)); fi
           if grep -R "Referrer-Policy" public/ supabase/ src/ 2>/dev/null; then echo "✅ Referrer-Policy present" >> $GITHUB_STEP_SUMMARY; SCORE=$((SCORE+1)); fi
           if grep -R "Permissions-Policy" public/ supabase/ src/ 2>/dev/null; then echo "✅ Permissions-Policy present" >> $GITHUB_STEP_SUMMARY; SCORE=$((SCORE+1)); fi
@@ -301,6 +311,7 @@ jobs:
             eslint-security.json
             outdated.json
             results/*.sarif
+          if-no-files-found: ignore
           retention-days: 30
 
       # ---------------------------

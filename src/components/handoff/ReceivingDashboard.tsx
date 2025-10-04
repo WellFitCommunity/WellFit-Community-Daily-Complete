@@ -4,6 +4,8 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import HandoffService from '../../services/handoffService';
+import MedicationReconciliationAlert from './MedicationReconciliationAlert';
+import LabResultVault from './LabResultVault';
 import type {
   HandoffPacket,
   HandoffAttachment,
@@ -334,6 +336,12 @@ const PacketViewer: React.FC<{
           </div>
         </div>
       </div>
+
+      {/* Medication Reconciliation Alert */}
+      <MedicationReconciliationAlert packet={packet} />
+
+      {/* Lab Result Vault - Auto-Populated Labs with Trending */}
+      <LabResultVault packet={packet} />
 
       {/* Transfer Details */}
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
