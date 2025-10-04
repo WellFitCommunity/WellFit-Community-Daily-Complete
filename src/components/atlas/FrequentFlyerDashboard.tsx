@@ -382,6 +382,13 @@ const PatientDetailModal: React.FC<PatientDetailModalProps> = ({ patient, onClos
     }
   };
 
+  const getRiskLabel = (score: number): string => {
+    if (score >= 80) return 'CRITICAL';
+    if (score >= 60) return 'HIGH';
+    if (score >= 40) return 'MODERATE';
+    return 'LOW';
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-auto">
