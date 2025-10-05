@@ -328,7 +328,7 @@ const PatientEngagementDashboard: React.FC = () => {
                         ) : (
                           <div className="text-gray-400 text-xs">No mood data</div>
                         )}
-                        {patient.avg_mood_score_30d !== null && (
+                        {patient.avg_mood_score_30d !== null && patient.avg_mood_score_30d !== undefined && (
                           <div className="flex items-center gap-2">
                             <span className="text-gray-500">Avg:</span>
                             <span className={`font-medium ${
@@ -336,7 +336,7 @@ const PatientEngagementDashboard: React.FC = () => {
                               patient.avg_mood_score_30d >= 3 ? 'text-yellow-600' :
                               'text-red-600 font-bold'
                             }`}>
-                              {patient.avg_mood_score_30d.toFixed(1)}/5
+                              {Number(patient.avg_mood_score_30d).toFixed(1)}/5
                             </span>
                           </div>
                         )}
