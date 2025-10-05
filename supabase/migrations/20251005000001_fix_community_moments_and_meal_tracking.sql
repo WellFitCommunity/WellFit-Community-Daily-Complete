@@ -72,9 +72,9 @@ CREATE TABLE IF NOT EXISTS public.meal_interactions (
   updated_at timestamptz DEFAULT now() NOT NULL
 );
 
-CREATE INDEX idx_meal_interactions_user ON public.meal_interactions(user_id, responded_at DESC);
-CREATE INDEX idx_meal_interactions_meal ON public.meal_interactions(meal_id);
-CREATE INDEX idx_meal_interactions_photos ON public.meal_interactions(photo_uploaded) WHERE photo_uploaded = true;
+CREATE INDEX IF NOT EXISTS idx_meal_interactions_user ON public.meal_interactions(user_id, responded_at DESC);
+CREATE INDEX IF NOT EXISTS idx_meal_interactions_meal ON public.meal_interactions(meal_id);
+CREATE INDEX IF NOT EXISTS idx_meal_interactions_photos ON public.meal_interactions(photo_uploaded) WHERE photo_uploaded = true;
 
 -- RLS for meal interactions
 ALTER TABLE public.meal_interactions ENABLE ROW LEVEL SECURITY;

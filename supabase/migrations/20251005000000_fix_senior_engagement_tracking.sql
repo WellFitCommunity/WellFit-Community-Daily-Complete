@@ -34,8 +34,8 @@ CREATE TABLE IF NOT EXISTS public.trivia_game_results (
   updated_at timestamptz DEFAULT now() NOT NULL
 );
 
-CREATE INDEX idx_trivia_user_date ON public.trivia_game_results(user_id, game_date DESC);
-CREATE INDEX idx_trivia_completed ON public.trivia_game_results(completed_at DESC) WHERE completed_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_trivia_user_date ON public.trivia_game_results(user_id, game_date DESC);
+CREATE INDEX IF NOT EXISTS idx_trivia_completed ON public.trivia_game_results(completed_at DESC) WHERE completed_at IS NOT NULL;
 
 -- Create table for word find/puzzle game results
 CREATE TABLE IF NOT EXISTS public.word_game_results (
@@ -56,15 +56,14 @@ CREATE TABLE IF NOT EXISTS public.word_game_results (
 
   -- Engagement indicators
   completion_status text DEFAULT 'completed' CHECK (completion_status IN ('completed', 'abandoned', 'incomplete')),
-
   -- Metadata
   puzzle_id text, -- Reference to specific puzzle
   created_at timestamptz DEFAULT now() NOT NULL,
   updated_at timestamptz DEFAULT now() NOT NULL
 );
 
-CREATE INDEX idx_word_game_user_date ON public.word_game_results(user_id, game_date DESC);
-CREATE INDEX idx_word_game_completed ON public.word_game_results(completed_at DESC) WHERE completed_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_word_game_user_date ON public.word_game_results(user_id, game_date DESC);
+CREATE INDEX IF NOT EXISTS idx_word_game_completed ON public.word_game_results(completed_at DESC) WHERE completed_at IS NOT NULL;
 
 -- ====================================================================
 -- 2. FIX CHECK_INS TABLE - ADD METADATA COLUMN
@@ -107,9 +106,25 @@ CREATE TABLE IF NOT EXISTS public.user_questions (
   updated_at timestamptz DEFAULT now() NOT NULL
 );
 
-CREATE INDEX idx_user_questions_user ON public.user_questions(user_id, created_at DESC);
-CREATE INDEX idx_user_questions_status ON public.user_questions(status, created_at DESC);
-CREATE INDEX idx_user_questions_priority ON public.user_questions(priority DESC, created_at DESC) WHERE status = 'pending';
+-- Ensure user_questions table has all required columns (if table already existed)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'user_questions' AND column_name = 'priority') THEN
+    ALTER TABLE public.user_questions ADD COLUMN priority text DEFAULT 'normal' CHECK (priority IN ('low', 'normal', 'high', 'urgent'));
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'user_questions' AND column_name = 'responded_by') THEN
+    ALTER TABLE public.user_questions ADD COLUMN responded_by uuid REFERENCES auth.users(id) ON DELETE SET NULL;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'user_questions' AND column_name = 'responded_at') THEN
+    ALTER TABLE public.user_questions ADD COLUMN responded_at timestamptz;
+  END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS idx_user_questions_user ON public.user_questions(user_id, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_user_questions_user ON public.user_questions(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_user_questions_status ON public.user_questions(status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_user_questions_priority ON public.user_questions(priority DESC, created_at DESC) WHERE status = 'pending';
 
 -- ====================================================================
 -- 4. SELF-REPORTS ENGAGEMENT TABLE
@@ -135,7 +150,7 @@ CREATE TABLE IF NOT EXISTS public.self_report_submissions (
   created_at timestamptz DEFAULT now() NOT NULL
 );
 
-CREATE INDEX idx_self_reports_user_date ON public.self_report_submissions(user_id, submission_date DESC);
+CREATE INDEX IF NOT EXISTS idx_self_reports_user_date ON public.self_report_submissions(user_id, submission_date DESC);
 
 -- ====================================================================
 -- 5. ENGAGEMENT SCORING VIEW FOR RISK ASSESSMENT
