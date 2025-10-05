@@ -53,7 +53,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
           <div className="hidden lg:flex items-center space-x-2">
             {/* Quick Enroll */}
             <button
-              onClick={() => navigateTo('/admin/enroll')}
+              onClick={() => navigateTo('/admin/enroll-senior')}
               className="inline-flex items-center px-3 py-2 border border-white border-opacity-20 rounded-md text-sm font-medium bg-green-500 bg-opacity-20 hover:bg-opacity-30 focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-opacity-50 transition-all duration-200"
             >
               <span className="mr-2">➕</span>
@@ -83,7 +83,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
 
             {/* Billing */}
             <button
-              onClick={() => navigateTo('/admin/billing')}
+              onClick={() => navigateTo('/billing')}
               className="inline-flex items-center px-3 py-2 border border-white border-opacity-20 rounded-md text-sm font-medium bg-white bg-opacity-10 hover:bg-opacity-20 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 transition-all duration-200"
             >
               <span className="mr-2">💳</span>
@@ -92,16 +92,16 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
 
             {/* Bulk Export */}
             <button
-              onClick={() => navigateTo('/admin/export')}
+              onClick={() => navigateTo('/admin/bulk-export')}
               className="inline-flex items-center px-3 py-2 border border-white border-opacity-20 rounded-md text-sm font-medium bg-orange-500 bg-opacity-20 hover:bg-opacity-30 focus:outline-none focus:ring-2 focus:ring-orange-300 focus:ring-opacity-50 transition-all duration-200"
             >
               <span className="mr-2">📤</span>
               Bulk Export
             </button>
 
-            {/* Reports */}
+            {/* Reports - Scrolls to Reports Section in Admin Panel */}
             <button
-              onClick={() => navigateTo('/admin/reports')}
+              onClick={() => navigateTo('/admin')}
               className="inline-flex items-center px-3 py-2 border border-white border-opacity-20 rounded-md text-sm font-medium bg-white bg-opacity-10 hover:bg-opacity-20 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 transition-all duration-200"
             >
               <span className="mr-2">📊</span>
@@ -232,7 +232,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
         <div className="lg:hidden pb-3">
           <div className="flex space-x-2 overflow-x-auto">
             <button
-              onClick={() => navigateTo('/admin/enroll')}
+              onClick={() => navigateTo('/admin/enroll-senior')}
               className="flex-shrink-0 inline-flex items-center px-2 py-1 border border-white border-opacity-20 rounded text-xs font-medium bg-green-500 bg-opacity-20 hover:bg-opacity-30"
             >
               ➕ Enroll
@@ -254,19 +254,19 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
               </button>
             )}
             <button
-              onClick={() => navigateTo('/admin/billing')}
+              onClick={() => navigateTo('/billing')}
               className="flex-shrink-0 inline-flex items-center px-2 py-1 border border-white border-opacity-20 rounded text-xs font-medium bg-white bg-opacity-10 hover:bg-opacity-20"
             >
               💳 Billing
             </button>
             <button
-              onClick={() => navigateTo('/admin/export')}
+              onClick={() => navigateTo('/admin/bulk-export')}
               className="flex-shrink-0 inline-flex items-center px-2 py-1 border border-white border-opacity-20 rounded text-xs font-medium bg-orange-500 bg-opacity-20 hover:bg-opacity-30"
             >
               📤 Export
             </button>
             <button
-              onClick={() => navigateTo('/admin/reports')}
+              onClick={() => navigateTo('/admin')}
               className="flex-shrink-0 inline-flex items-center px-2 py-1 border border-white border-opacity-20 rounded text-xs font-medium bg-white bg-opacity-10 hover:bg-opacity-20"
             >
               📊 Reports

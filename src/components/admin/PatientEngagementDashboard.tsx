@@ -21,6 +21,11 @@ interface EngagementScore {
   last_self_report: string | null;
   avg_trivia_score_pct: number | null;
   avg_trivia_completion_time: number | null;
+  // ⭐ Mood & Self-Report Risk Indicators
+  avg_mood_score_30d: number | null;
+  latest_mood: string | null;
+  negative_moods_30d: number;
+  symptom_reports_30d: number;
   engagement_score: number;
 }
 
@@ -246,10 +251,10 @@ const PatientEngagementDashboard: React.FC = () => {
                   30-Day Activity
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Last Activity
+                  ⭐ Mood & Self-Reports
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Performance
+                  Last Activity
                 </th>
               </tr>
             </thead>
@@ -291,7 +296,7 @@ const PatientEngagementDashboard: React.FC = () => {
                           <span className="font-medium">{patient.trivia_games_30d + patient.word_games_30d}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-gray-500">Reports:</span>
+                          <span className="text-gray-500">⭐ Self-Reports:</span>
                           <span className="font-medium">{patient.self_reports_30d}</span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -300,20 +305,58 @@ const PatientEngagementDashboard: React.FC = () => {
                         </div>
                       </div>
                     </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm space-y-1">
+                        {patient.latest_mood ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-500">Latest:</span>
+                            <span className={`font-medium ${
+                              patient.latest_mood.toLowerCase().includes('sad') ||
+                              patient.latest_mood.toLowerCase().includes('down') ||
+                              patient.latest_mood.toLowerCase().includes('depressed') ||
+                              patient.latest_mood.toLowerCase().includes('terrible')
+                                ? 'text-red-600 font-bold'
+                                : patient.latest_mood.toLowerCase().includes('great') ||
+                                  patient.latest_mood.toLowerCase().includes('happy') ||
+                                  patient.latest_mood.toLowerCase().includes('excellent')
+                                ? 'text-green-600'
+                                : 'text-gray-700'
+                            }`}>
+                              {patient.latest_mood}
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="text-gray-400 text-xs">No mood data</div>
+                        )}
+                        {patient.avg_mood_score_30d !== null && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-500">Avg:</span>
+                            <span className={`font-medium ${
+                              patient.avg_mood_score_30d >= 4 ? 'text-green-600' :
+                              patient.avg_mood_score_30d >= 3 ? 'text-yellow-600' :
+                              'text-red-600 font-bold'
+                            }`}>
+                              {patient.avg_mood_score_30d.toFixed(1)}/5
+                            </span>
+                          </div>
+                        )}
+                        {patient.negative_moods_30d > 0 && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-red-600 font-bold text-xs">⚠️ {patient.negative_moods_30d} negative</span>
+                          </div>
+                        )}
+                        {patient.symptom_reports_30d > 0 && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-orange-600 text-xs">📋 {patient.symptom_reports_30d} symptoms</span>
+                          </div>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <div>{formatDate(patient.last_check_in)}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {patient.avg_trivia_score_pct !== null && (
-                        <div className="space-y-1">
-                          <div className="text-gray-700">
-                            Trivia: <span className="font-medium">{Math.round(patient.avg_trivia_score_pct)}%</span>
-                          </div>
-                          {patient.avg_trivia_completion_time && (
-                            <div className="text-gray-500 text-xs">
-                              Avg: {Math.round(patient.avg_trivia_completion_time)}s
-                            </div>
-                          )}
+                      {patient.last_self_report && (
+                        <div className="text-xs text-blue-600 mt-1">
+                          Report: {formatDate(patient.last_self_report)}
                         </div>
                       )}
                     </td>
@@ -343,7 +386,10 @@ const PatientEngagementDashboard: React.FC = () => {
           </div>
         </div>
         <div className="mt-3 text-xs text-blue-700">
-          <strong>Scoring:</strong> Check-ins (2 pts), Games (5 pts), Self-reports (3 pts), Questions (2 pts), Meals (2 pts), Meal Photos (+3 bonus), Community Photos (3 pts) - Last 30 days
+          <strong>⭐ Current Scoring:</strong> Check-ins (2 pts) + Self-reports (3 pts) + Questions (2 pts) - Last 30 days
+        </div>
+        <div className="mt-2 text-xs text-blue-600 bg-white p-2 rounded">
+          <strong>Mood Indicators:</strong> Avg Mood Score (1-5 scale), Latest Mood, Negative Moods Count, Symptom Reports - helps identify patients needing intervention
         </div>
       </div>
     </div>
