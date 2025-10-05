@@ -3,6 +3,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import PhotoUpload from '../components/features/PhotoUpload';
 import PhotoGallery from '../components/features/PhotoGallery';
+import { useSupabaseClient, useUser } from '../contexts/AuthContext';
+import { submitMealInteraction, uploadMealPhoto, getUserMealInteraction } from '../services/mealInteractionService';
 
 // Local data (today's source of truth)
 import { allRecipes } from '../data/allRecipes';
@@ -67,11 +69,21 @@ export default function MealDetailPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const backTo = (location.state as any)?.from ?? '/dashboard';
+  const supabase = useSupabaseClient();
+  const user = useUser();
 
   const [loading, setLoading] = useState<boolean>(MEALS_SOURCE === 'supabase');
   const [recipe, setRecipe] = useState<Recipe | null>(() =>
     MEALS_SOURCE === 'local' ? normalizeFromLocalById(id) : null
   );
+
+  // Meal interaction state
+  const [showInteractionPrompt, setShowInteractionPrompt] = useState(false);
+  const [interactionId, setInteractionId] = useState<string | null>(null);
+  const [userResponse, setUserResponse] = useState<boolean | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [interactionMessage, setInteractionMessage] = useState('');
 
   // On mount or id/source change, fetch from the selected source.
   useEffect(() => {
@@ -140,6 +152,80 @@ export default function MealDetailPage() {
       document.title = 'WellFit Community';
     };
   }, [recipe?.name]);
+
+  // Check if user already interacted with this meal
+  useEffect(() => {
+    if (!user?.id || !id) return;
+
+    const checkInteraction = async () => {
+      const { data } = await getUserMealInteraction(supabase, user.id, id);
+      if (data) {
+        setUserResponse(data.will_make_it);
+        setInteractionId(data.id);
+        setShowInteractionPrompt(false);
+      } else {
+        // Show prompt after 3 seconds if not already responded
+        setTimeout(() => setShowInteractionPrompt(true), 3000);
+      }
+    };
+
+    checkInteraction();
+  }, [user?.id, id, supabase]);
+
+  // Handle meal interaction response
+  const handleMealResponse = async (willMakeIt: boolean) => {
+    if (!user?.id || !recipe) return;
+
+    try {
+      const { data, error } = await submitMealInteraction(supabase, {
+        user_id: user.id,
+        meal_id: recipe.id,
+        meal_name: recipe.name,
+        will_make_it: willMakeIt
+      });
+
+      if (error) throw error;
+
+      setUserResponse(willMakeIt);
+      setInteractionId(data.id);
+      setShowInteractionPrompt(false);
+
+      if (willMakeIt) {
+        setInteractionMessage('Great! Consider uploading a photo when you make it to be featured!');
+        setTimeout(() => setInteractionMessage(''), 5000);
+      } else {
+        setInteractionMessage('Thanks for letting us know!');
+        setTimeout(() => setInteractionMessage(''), 3000);
+      }
+    } catch (error) {
+      console.error('Failed to submit meal interaction:', error);
+    }
+  };
+
+  // Handle photo upload
+  const handlePhotoUpload = async () => {
+    if (!photoFile || !interactionId || !user?.id) return;
+
+    setUploadingPhoto(true);
+    try {
+      const { error } = await uploadMealPhoto(supabase, {
+        interaction_id: interactionId,
+        photo_file: photoFile,
+        user_id: user.id
+      });
+
+      if (error) throw error;
+
+      setInteractionMessage('🎉 Photo uploaded! You may be featured on the website or in Community Moments!');
+      setPhotoFile(null);
+      setTimeout(() => setInteractionMessage(''), 5000);
+    } catch (error) {
+      console.error('Failed to upload meal photo:', error);
+      setInteractionMessage('Failed to upload photo. Please try again.');
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
 
   const mainImage = useMemo(() => {
     if (recipe?.image_url) return recipe.image_url;
@@ -228,6 +314,65 @@ export default function MealDetailPage() {
                 ))}
               </ol>
             </>
+          )}
+
+          {/* Meal Interaction Prompt */}
+          {showInteractionPrompt && user && (
+            <div className="mt-6 p-6 bg-gradient-to-r from-blue-50 to-green-50 border-2 border-[#8cc63f] rounded-xl shadow-lg">
+              <h3 className="text-xl font-bold text-[#003865] mb-4 text-center">
+                🍽️ Will you be making this meal?
+              </h3>
+              <div className="flex gap-4 justify-center">
+                <button
+                  onClick={() => handleMealResponse(true)}
+                  className="px-8 py-4 bg-[#8cc63f] text-white font-bold text-lg rounded-lg hover:bg-[#77aa36] transition shadow-md"
+                >
+                  Yes! 😊
+                </button>
+                <button
+                  onClick={() => handleMealResponse(false)}
+                  className="px-8 py-4 bg-gray-400 text-white font-bold text-lg rounded-lg hover:bg-gray-500 transition shadow-md"
+                >
+                  Not this time
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Photo Upload Section (if user said yes) */}
+          {userResponse === true && interactionId && (
+            <div className="mt-6 p-6 bg-yellow-50 border-2 border-yellow-400 rounded-xl">
+              <h3 className="text-lg font-bold text-[#003865] mb-3">
+                📸 Share Your Creation!
+              </h3>
+              <p className="text-gray-700 mb-4">
+                Upload a photo of your meal to be featured on our website or in Community Moments!
+              </p>
+              <div className="space-y-3">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
+                  className="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#8cc63f] file:text-white hover:file:bg-[#77aa36]"
+                />
+                {photoFile && (
+                  <button
+                    onClick={handlePhotoUpload}
+                    disabled={uploadingPhoto}
+                    className="w-full px-6 py-3 bg-[#003865] text-white font-bold rounded-lg hover:bg-[#8cc63f] transition disabled:bg-gray-400"
+                  >
+                    {uploadingPhoto ? 'Uploading...' : 'Upload Photo 📤'}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Interaction Messages */}
+          {interactionMessage && (
+            <div className="mt-4 p-4 bg-green-100 border border-green-400 text-green-800 rounded-lg text-center font-semibold">
+              {interactionMessage}
+            </div>
           )}
         </>
       )}
