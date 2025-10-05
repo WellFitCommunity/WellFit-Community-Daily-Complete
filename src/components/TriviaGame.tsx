@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { triviaQuestions, TriviaQuestion } from '../data/triviaQuestions';
+import { useSupabaseClient, useUser } from '../contexts/AuthContext';
+import { saveTriviaGameResult } from '../services/engagementTracking';
 
 // Helper function to shuffle an array
 const shuffleArray = <T,>(array: T[]): T[] => {
@@ -14,6 +16,8 @@ const shuffleArray = <T,>(array: T[]): T[] => {
 
 const TriviaGame: React.FC = () => {
   const navigate = useNavigate();
+  const supabase = useSupabaseClient();
+  const user = useUser();
   const [currentQuestions, setCurrentQuestions] = useState<TriviaQuestion[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [score, setScore] = useState(0);
@@ -148,7 +152,7 @@ const TriviaGame: React.FC = () => {
     }
   };
 
-  const handleNextQuestion = () => {
+  const handleNextQuestion = async () => {
     setShowFeedback(false);
     setSelectedAnswer(null);
     setFeedbackMessage(''); // Clear previous feedback
@@ -184,6 +188,32 @@ const TriviaGame: React.FC = () => {
           localStorage.setItem(TIME_TRACKING_KEY, JSON.stringify(timeData));
         } catch (error) {
           console.error('Failed to save time tracking:', error);
+        }
+
+        // ✅ SAVE TO DATABASE (the fix!)
+        if (user?.id) {
+          try {
+            // Calculate difficulty breakdown
+            const difficultyBreakdown: Record<string, number> = {};
+            currentQuestions.forEach(q => {
+              difficultyBreakdown[q.difficulty] = (difficultyBreakdown[q.difficulty] || 0) + 1;
+            });
+
+            await saveTriviaGameResult(supabase, {
+              user_id: user.id,
+              started_at: new Date(startTime).toISOString(),
+              completed_at: new Date().toISOString(),
+              completion_time_seconds: timeInSeconds,
+              score: score,
+              total_questions: currentQuestions.length,
+              difficulty_breakdown: difficultyBreakdown,
+              questions_attempted: currentQuestions.map(q => q.id),
+              completion_status: 'completed'
+            });
+            console.log('✅ Trivia game result saved to database');
+          } catch (error) {
+            console.error('Failed to save trivia result to database:', error);
+          }
         }
       }
       setGamePhase('finished');

@@ -2,6 +2,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Confetti from 'react-confetti';
 import { dailyThemes } from '../data/wordThemes';
+import { useSupabaseClient, useUser } from '../contexts/AuthContext';
+import { saveWordGameResult } from '../services/engagementTracking';
 
 interface Point { r: number; c: number; }
 const ROWS = 10;
@@ -21,6 +23,8 @@ function toKey(p: Point) { return `${p.r},${p.c}`; }
 
 const WordFind: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const supabase = useSupabaseClient();
+  const user = useUser();
 
   const todayIndex = useMemo(() => (new Date().getDate() - 1) % dailyThemes.length, []);
   const themeData = dailyThemes[todayIndex];
@@ -235,6 +239,26 @@ const WordFind: React.FC = () => {
                   setGamesPlayedToday(newCount);
                   localStorage.setItem(GAMES_PLAYED_KEY, JSON.stringify({ date: today, count: newCount }));
                 }
+              }
+
+              // ✅ SAVE TO DATABASE (the fix!)
+              if (user?.id) {
+                saveWordGameResult(supabase, {
+                  user_id: user.id,
+                  started_at: new Date(startTime).toISOString(),
+                  completed_at: new Date().toISOString(),
+                  completion_time_seconds: timeInSeconds,
+                  words_found: updated.size,
+                  total_words: words.length,
+                  hints_used: 0,
+                  difficulty_level: themeData.theme || 'medium',
+                  completion_status: 'completed',
+                  puzzle_id: `${today}-${todayIndex}`
+                }).then(() => {
+                  console.log('✅ Word game result saved to database');
+                }).catch((error) => {
+                  console.error('Failed to save word game result to database:', error);
+                });
               }
             } catch (error) {
               console.error('Failed to save time tracking:', error);

@@ -20,6 +20,7 @@ import RevenueDashboard from '../atlas/RevenueDashboard';
 import ClaimsSubmissionPanel from '../atlas/ClaimsSubmissionPanel';
 import ClaimsAppealsPanel from '../atlas/ClaimsAppealsPanel';
 import AdminTransferLogs from '../handoff/AdminTransferLogs';
+import PatientEngagementDashboard from './PatientEngagementDashboard';
 
 // Collapsible Section Component
 interface CollapsibleSectionProps {
@@ -119,6 +120,17 @@ const AdminPanel: React.FC = () => {
               </button>
             </div>
           </div>
+
+          {/* Patient Engagement Dashboard - CRITICAL FOR RISK ASSESSMENT */}
+          <CollapsibleSection
+            title="Patient Engagement & Risk Assessment"
+            subtitle="Monitor senior activity levels to identify at-risk patients - includes trivia, games, check-ins, questions"
+            icon="📊"
+            headerColor="text-indigo-800"
+            defaultOpen={true}
+          >
+            <PatientEngagementDashboard />
+          </CollapsibleSection>
 
           {/* Smart Medical Scribe */}
           <CollapsibleSection
