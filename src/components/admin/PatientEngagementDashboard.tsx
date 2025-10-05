@@ -30,7 +30,7 @@ const PatientEngagementDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'engagement_score' | 'last_activity'>('engagement_score');
-  const [filterLevel, setFilterLevel] = useState<'all' | 'high' | 'medium' | 'low'>('all');
+  const [filterLevel, setFilterLevel] = useState<'all' | 'high' | 'medium' | 'low' | 'critical'>('all');
 
   useEffect(() => {
     loadEngagementData();
@@ -56,24 +56,27 @@ const PatientEngagementDashboard: React.FC = () => {
     }
   };
 
-  const getEngagementLevel = (score: number): 'high' | 'medium' | 'low' => {
+  const getEngagementLevel = (score: number): 'high' | 'medium' | 'low' | 'critical' => {
     if (score >= 70) return 'high';
     if (score >= 40) return 'medium';
-    return 'low';
+    if (score >= 20) return 'low';
+    return 'critical'; // 0-19 = CRITICAL
   };
 
   const getEngagementColor = (score: number): string => {
     const level = getEngagementLevel(score);
     return level === 'high' ? 'bg-green-100 text-green-800' :
            level === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-           'bg-red-100 text-red-800';
+           level === 'low' ? 'bg-orange-100 text-orange-800' :
+           'bg-red-100 text-red-800 font-bold';
   };
 
   const getRiskIndicator = (score: number): string => {
     const level = getEngagementLevel(score);
     return level === 'high' ? 'Low Risk' :
            level === 'medium' ? 'Medium Risk' :
-           'High Risk';
+           level === 'low' ? 'High Risk' :
+           '🚨 CRITICAL RISK';
   };
 
   const formatDate = (dateStr: string | null): string => {
@@ -155,7 +158,7 @@ const PatientEngagementDashboard: React.FC = () => {
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <div className="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
           <div className="text-sm text-gray-600">Total Patients</div>
           <div className="text-2xl font-bold text-gray-800">{engagementData.length}</div>
@@ -172,10 +175,16 @@ const PatientEngagementDashboard: React.FC = () => {
             {engagementData.filter(d => getEngagementLevel(d.engagement_score) === 'medium').length}
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
-          <div className="text-sm text-gray-600">Low Engagement (At Risk)</div>
-          <div className="text-2xl font-bold text-red-600">
+        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-orange-500">
+          <div className="text-sm text-gray-600">High Risk</div>
+          <div className="text-2xl font-bold text-orange-600">
             {engagementData.filter(d => getEngagementLevel(d.engagement_score) === 'low').length}
+          </div>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-red-600 animate-pulse">
+          <div className="text-sm text-gray-600 font-bold">🚨 CRITICAL</div>
+          <div className="text-2xl font-bold text-red-600">
+            {engagementData.filter(d => getEngagementLevel(d.engagement_score) === 'critical').length}
           </div>
         </div>
       </div>
@@ -202,9 +211,10 @@ const PatientEngagementDashboard: React.FC = () => {
               className="px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="all">All Patients</option>
-              <option value="high">High Engagement</option>
+              <option value="high">High Engagement (Low Risk)</option>
               <option value="medium">Medium Engagement</option>
-              <option value="low">Low Engagement (At Risk)</option>
+              <option value="low">Low Engagement (High Risk)</option>
+              <option value="critical">🚨 CRITICAL RISK (0-19 Score)</option>
             </select>
           </div>
           <div className="flex-1"></div>
@@ -318,19 +328,22 @@ const PatientEngagementDashboard: React.FC = () => {
       {/* Legend */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <h3 className="font-semibold text-blue-900 mb-2">Understanding Engagement Scores</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-blue-800">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-blue-800">
           <div>
-            <span className="font-medium">High (70-100):</span> Active participation, low risk
+            <span className="font-medium text-green-700">High (70-100):</span> Active participation, <strong>LOW RISK</strong> 🟢
           </div>
           <div>
-            <span className="font-medium">Medium (40-69):</span> Moderate engagement, monitor closely
+            <span className="font-medium text-yellow-700">Medium (40-69):</span> Moderate engagement, <strong>MEDIUM RISK</strong> 🟡
           </div>
           <div>
-            <span className="font-medium">Low (0-39):</span> Limited activity, high risk - requires intervention
+            <span className="font-medium text-orange-700">Low (20-39):</span> Limited activity, <strong>HIGH RISK</strong> 🟠
+          </div>
+          <div className="bg-red-100 px-2 py-1 rounded border border-red-300">
+            <span className="font-bold text-red-800">🚨 CRITICAL (0-19):</span> <strong>IMMEDIATE INTERVENTION REQUIRED</strong>
           </div>
         </div>
         <div className="mt-3 text-xs text-blue-700">
-          <strong>Scoring:</strong> Check-ins (2 pts), Games (5 pts), Self-reports (3 pts), Questions (2 pts) - Last 30 days
+          <strong>Scoring:</strong> Check-ins (2 pts), Games (5 pts), Self-reports (3 pts), Questions (2 pts), Meals (2 pts), Meal Photos (+3 bonus), Community Photos (3 pts) - Last 30 days
         </div>
       </div>
     </div>
