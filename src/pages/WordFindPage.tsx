@@ -6,8 +6,8 @@ import { useSupabaseClient, useUser } from '../contexts/AuthContext';
 import { saveWordGameResult } from '../services/engagementTracking';
 
 interface Point { r: number; c: number; }
-const ROWS = 10;
-const COLS = 12;
+const ROWS = 12;
+const COLS = 10;
 const DIRECTIONS: Point[] = [
   { r: 0, c: 1 }, { r: 1, c: 0 }, { r: 0, c: -1 }, { r: -1, c: 0 },
   { r: 1, c: 1 }, { r: 1, c: -1 }, { r: -1, c: 1 }, { r: -1, c: -1 }
@@ -334,10 +334,10 @@ const WordFind: React.FC = () => {
             return (
               <div
                 key={w}
-                className={`px-3 py-1 rounded-full border text-base md:text-lg ${
+                className={`px-3 py-2 text-base md:text-lg font-medium ${
                   isFound
-                    ? 'bg-green-100 text-green-600 line-through border-green-400'
-                    : 'bg-gray-100 text-gray-800 border-gray-300'
+                    ? 'text-green-600 line-through'
+                    : 'text-gray-800'
                 }`}
                 style={{ minWidth: 75, textAlign: 'center', scrollSnapAlign: 'center' }}
               >

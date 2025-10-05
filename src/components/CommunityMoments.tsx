@@ -5,6 +5,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useSupabaseClient, useSession, useUser } from '../contexts/AuthContext';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import AdminFeatureToggle from './admin/AdminFeatureToggle';
+import { useBranding } from '../BrandingContext';
 
 // If your editor complains about typings, keep these ts-ignores OR add src/types/vendor.d.ts per the notes.
 // @ts-ignore
@@ -42,6 +43,7 @@ interface Moment {
   emoji: string;
   tags: string;
   is_gallery_high: boolean;
+  is_approved?: boolean;
   created_at: string;
   profile?: Profile;
 }
@@ -84,6 +86,7 @@ const CommunityMoments: React.FC = () => {
   const session = useSession();
   const user = useUser();
   const userId = user?.id ?? session?.user?.id ?? null;
+  const { branding } = useBranding();
 
   // Data state
   const [affirmation, setAffirmation] = useState<Affirmation | null>(null);
@@ -95,6 +98,7 @@ const CommunityMoments: React.FC = () => {
   const [initialLoading, setInitialLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
 
   // Form state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -133,6 +137,32 @@ const CommunityMoments: React.FC = () => {
       cancelled = true;
     };
   }, [supabase, userId]);
+
+  // Load pending photo count for admins
+  useEffect(() => {
+    let cancelled = false;
+    if (!isAdmin) return;
+
+    const loadPendingCount = async () => {
+      try {
+        const { data, error } = await supabase.rpc('get_pending_photo_count');
+        if (!cancelled && !error) {
+          setPendingCount(data || 0);
+        }
+      } catch (err) {
+        console.error('Failed to load pending count:', err);
+      }
+    };
+
+    loadPendingCount();
+    // Poll every 30 seconds for updates
+    const interval = setInterval(loadPendingCount, 30000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [supabase, isAdmin]);
 
   // Affirmations
   useEffect(() => {
@@ -192,7 +222,8 @@ const CommunityMoments: React.FC = () => {
         setPage(1);
         setHasMore(((count ?? 0) as number) > normalized.length);
       } catch (e) {
-        setError('Failed to load moments.');
+        console.error('Community moments error:', e);
+        setError(e instanceof Error ? e.message : 'Failed to load moments. Please refresh the page.');
       } finally {
         if (!cancelled) setInitialLoading(false);
       }
@@ -469,12 +500,33 @@ const CommunityMoments: React.FC = () => {
           </motion.div>
         )}
         <button
-          className="mt-6 bg-white text-[#003865] font-bold px-6 py-2 rounded-xl shadow hover:bg-[#8cc63f] hover:text-white text-lg transition"
+          className="mt-6 bg-white font-bold px-6 py-2 rounded-xl shadow hover:bg-opacity-90 text-lg transition"
+          style={{ color: branding.primaryColor, backgroundColor: 'white' }}
           onClick={() => formRef.current?.scrollIntoView({ behavior: 'smooth' })}
           aria-label="Share your moment"
         >
           + Share Your Moment
         </button>
+
+        {/* Admin: Pending Approval Notification */}
+        {isAdmin && pendingCount > 0 && (
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="mt-4 bg-yellow-400 text-gray-900 rounded-xl p-4 shadow-lg w-full max-w-xl text-center"
+          >
+            <div className="flex items-center justify-center gap-2 font-bold text-lg">
+              <span className="text-2xl">📸</span>
+              <span>{pendingCount} photo{pendingCount > 1 ? 's' : ''} awaiting approval</span>
+            </div>
+            <a
+              href="/admin"
+              className="mt-2 inline-block text-sm underline hover:text-blue-800"
+            >
+              View in Admin Panel
+            </a>
+          </motion.div>
+        )}
       </div>
 
       {/* Featured */}
