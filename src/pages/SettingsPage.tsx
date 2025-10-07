@@ -7,7 +7,7 @@ import { Card } from '../components/ui/card';
 import LanguageSelector from '../components/LanguageSelector';
 import { useLanguage } from '../contexts/LanguageContext';
 import SmartBackButton from '../components/ui/SmartBackButton';
-import PasskeySetup from '../components/PasskeySetup';
+// import PasskeySetup from '../components/PasskeySetup';
 
 interface UserSettings {
   font_size: 'small' | 'medium' | 'large' | 'extra-large';
@@ -313,11 +313,10 @@ const SettingsPage: React.FC = () => {
 
                   {/* Security Settings */}
                   {section.id === 'security' && user && (
-                    <PasskeySetup
-                      userId={user.id}
-                      userName={user.email || user.phone || 'user'}
-                      displayName={settings.preferred_name || 'User'}
-                    />
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <div className="font-semibold text-[#003865] mb-2">Biometric Authentication</div>
+                      <div className="text-gray-600">Biometric login (Touch ID, Face ID) is currently unavailable. This feature will be enabled in a future update.</div>
+                    </div>
                   )}
 
                   {/* Notification Settings */}

@@ -67,8 +67,8 @@ export interface AuthenticationOptions {
 export function isPasskeySupported(): boolean {
   return !!(
     window?.PublicKeyCredential &&
-    navigator?.credentials?.create &&
-    navigator?.credentials?.get
+    typeof navigator?.credentials?.create === 'function' &&
+    typeof navigator?.credentials?.get === 'function'
   );
 }
 

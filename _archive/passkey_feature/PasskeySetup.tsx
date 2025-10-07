@@ -96,7 +96,7 @@ export const PasskeySetup: React.FC<PasskeySetupProps> = ({
 
   // Delete credential
   const handleDelete = async (credentialId: string) => {
-    if (!confirm('Are you sure you want to remove this biometric authentication?')) {
+    if (!window.confirm('Are you sure you want to remove this biometric authentication?')) {
       return;
     }
 
