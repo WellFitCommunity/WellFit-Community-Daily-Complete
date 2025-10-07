@@ -6,6 +6,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useSupabaseClient } from '../contexts/AuthContext';
 import { WELLFIT_COLORS, APP_INFO } from '../settings/settings';
 import HCaptchaWidget, { HCaptchaRef } from '../components/HCaptchaWidget';
+import { isPasskeySupported, authenticateWithPasskey } from '../services/passkeyService';
 
 type Mode = 'senior' | 'admin';
 
@@ -34,6 +35,10 @@ const LoginPage: React.FC = () => {
   // password visibility state
   const [showSeniorPassword, setShowSeniorPassword] = useState(false);
   const [showAdminPassword, setShowAdminPassword] = useState(false);
+
+  // passkey state
+  const [passkeySupported, setPasskeySupported] = useState(false);
+  const [passkeyLoading, setPasskeyLoading] = useState(false);
 
   // colors
   const primary = WELLFIT_COLORS.blue;   // #003865
@@ -146,6 +151,11 @@ const LoginPage: React.FC = () => {
     return () => { cancel = true; };
   }, [navigate, supabase]);
 
+  // Check passkey support
+  useEffect(() => {
+    setPasskeySupported(isPasskeySupported());
+  }, []);
+
   // Captcha helpers
   const refreshCaptcha = () => {
     captchaRef.current?.reset();
@@ -159,6 +169,25 @@ const LoginPage: React.FC = () => {
     } catch (error) {
       console.error('hCaptcha execution failed:', error);
       return '';
+    }
+  };
+
+  // Passkey login handler
+  const handlePasskeyLogin = async () => {
+    setError('');
+    setPasskeyLoading(true);
+
+    try {
+      const result = await authenticateWithPasskey();
+
+      // Navigate to appropriate page
+      const route = await nextRouteForUser();
+      navigate(route, { replace: true });
+    } catch (err: any) {
+      console.error('Passkey login failed:', err);
+      setError(err.message || 'Biometric login failed. Please try password login instead.');
+    } finally {
+      setPasskeyLoading(false);
     }
   };
 
@@ -367,6 +396,40 @@ const LoginPage: React.FC = () => {
           >
             {loading ? 'Logging In...' : 'Log In'}
           </button>
+
+          {/* Passkey Login Button */}
+          {passkeySupported && (
+            <>
+              <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white text-gray-500">OR</span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handlePasskeyLogin}
+                disabled={passkeyLoading || loading}
+                className="w-full py-3 font-semibold rounded border-2 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                style={{ borderColor: accent, color: primary }}
+              >
+                {passkeyLoading ? (
+                  <>
+                    <span className="animate-spin mr-2">⏳</span>
+                    Authenticating...
+                  </>
+                ) : (
+                  <>
+                    <span className="mr-2">🔐</span>
+                    Login with Biometrics
+                  </>
+                )}
+              </button>
+            </>
+          )}
 
           <div className="mt-2 text-center space-y-2">
             <Link to="/register" className="block text-sm underline" style={{ color: primary }}>

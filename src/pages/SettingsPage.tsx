@@ -7,6 +7,7 @@ import { Card } from '../components/ui/card';
 import LanguageSelector from '../components/LanguageSelector';
 import { useLanguage } from '../contexts/LanguageContext';
 import SmartBackButton from '../components/ui/SmartBackButton';
+import PasskeySetup from '../components/PasskeySetup';
 
 interface UserSettings {
   font_size: 'small' | 'medium' | 'large' | 'extra-large';
@@ -139,6 +140,12 @@ const SettingsPage: React.FC = () => {
       title: t.settings.sections.display.title,
       icon: '🖥️',
       description: t.settings.sections.display.description
+    },
+    {
+      id: 'security',
+      title: 'Security & Login',
+      icon: '🔐',
+      description: 'Manage biometric login and security settings'
     },
     {
       id: 'notifications',
@@ -302,6 +309,15 @@ const SettingsPage: React.FC = () => {
                         </div>
                       </div>
                     </div>
+                  )}
+
+                  {/* Security Settings */}
+                  {section.id === 'security' && user && (
+                    <PasskeySetup
+                      userId={user.id}
+                      userName={user.email || user.phone || 'user'}
+                      displayName={settings.preferred_name || 'User'}
+                    />
                   )}
 
                   {/* Notification Settings */}
