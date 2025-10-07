@@ -30,6 +30,9 @@ import Home from 'pages/Home';
 import AuthGate from './AuthGate';
 import { useSupabaseClient } from './contexts/AuthContext';
 
+// Offline indicator
+import OfflineIndicator from './components/OfflineIndicator';
+
 // Lazy-loaded pages/components
 const WelcomePage = React.lazy(() => import('./pages/WelcomePage'));
 const RegisterPage = React.lazy(() => import('./pages/RegisterPage'));
@@ -258,6 +261,9 @@ function Shell() {
           </Suspense>
 
           <Footer />
+
+          {/* Offline indicator for all users */}
+          <OfflineIndicator />
         </AuthGate>
       </SessionTimeoutProvider>
     </BrandingContext.Provider>

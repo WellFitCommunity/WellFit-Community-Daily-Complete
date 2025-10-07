@@ -1,10 +1,12 @@
 // src/pages/SelfReportingPage.tsx
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Mic, MicOff } from 'lucide-react';
+import { ArrowLeft, Mic, MicOff, Heart } from 'lucide-react';
 import { useSupabaseClient, useSession } from '../contexts/AuthContext';
 import { useBranding } from '../BrandingContext';
 import HealthInsightsWidget from '../components/HealthInsightsWidget';
+import PulseOximeter from '../components/PulseOximeter';
+import { offlineStorage, isOnline } from '../utils/offlineStorage';
 import type { User, AuthChangeEvent, Session } from '@supabase/supabase-js';
 
 type SourceType = 'self' | 'staff';
@@ -95,6 +97,7 @@ const SelfReportingPage: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const [selfReports, setSelfReports] = useState<SelfReportLog[]>([]);
+  const [showPulseOximeter, setShowPulseOximeter] = useState(false);
 
   // --- Auth bootstrap + listener (uses single app client)
   useEffect(() => {
@@ -241,7 +244,16 @@ const SelfReportingPage: React.FC = () => {
     fetchReports(currentUser.id);
   }, [currentUser?.id, fetchReports]);
 
-  // --- Submit
+  // --- Handle pulse oximeter measurement
+  const handlePulseOximeterComplete = (heartRate: number, spo2: number) => {
+    setBloodOxygen(spo2.toString());
+    // Note: We're not storing heart_rate separately in this form, but it could be added
+    setShowPulseOximeter(false);
+    setFeedbackMessage(`Measurement complete! Heart Rate: ${heartRate} BPM, Blood Oxygen: ${spo2}%`);
+    setTimeout(() => setFeedbackMessage(null), 5000);
+  };
+
+  // --- Submit (with offline support)
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setFeedbackMessage(null);
@@ -263,28 +275,46 @@ const SelfReportingPage: React.FC = () => {
     }
 
     setIsLoading(true);
+
+    const payload = {
+      user_id: currentUser.id,
+      mood: chosenMood,
+      bp_systolic: bloodPressureSystolic ? parseInt(bloodPressureSystolic) : null,
+      bp_diastolic: bloodPressureDiastolic ? parseInt(bloodPressureDiastolic) : null,
+      spo2: bloodOxygen ? parseInt(bloodOxygen) : null,
+      blood_oxygen: bloodOxygen ? parseInt(bloodOxygen) : null,
+      blood_sugar: bloodSugar ? parseInt(bloodSugar) : null,
+      weight: weight ? parseFloat(weight) : null,
+      physical_activity: physicalActivity.trim() || null,
+      social_engagement: socialEngagement.trim() || null,
+      symptoms: symptoms.trim() || null,
+      activity_description: activity.trim() || null,
+    };
+
     try {
-      const payload = {
-        user_id: currentUser.id,
-        mood: chosenMood,
-        bp_systolic: bloodPressureSystolic ? parseInt(bloodPressureSystolic) : null,
-        bp_diastolic: bloodPressureDiastolic ? parseInt(bloodPressureDiastolic) : null,
-        spo2: bloodOxygen ? parseInt(bloodOxygen) : null,
-        blood_oxygen: bloodOxygen ? parseInt(bloodOxygen) : null,
-        blood_sugar: bloodSugar ? parseInt(bloodSugar) : null,
-        weight: weight ? parseFloat(weight) : null,
-        physical_activity: physicalActivity.trim() || null,
-        social_engagement: socialEngagement.trim() || null,
-        symptoms: symptoms.trim() || null,
-        activity_description: activity.trim() || null,
-      };
+      // Check if online
+      const online = isOnline();
 
-      const { error } = await supabase.from('self_reports').insert([payload]);
-      if (error) throw error;
+      if (online) {
+        // Try to save to database
+        try {
+          const { error } = await supabase.from('self_reports').insert([payload]);
+          if (error) throw error;
 
-      setFeedbackMessage('Report saved successfully!');
+          setFeedbackMessage('✅ Report saved successfully!');
+        } catch (error) {
+          // If online but save failed, save offline
+          console.warn('[SelfReporting] Online save failed, saving offline:', error);
+          await offlineStorage.savePendingReport(currentUser.id, payload);
+          setFeedbackMessage('✅ Report saved! Will sync when connection improves.');
+        }
+      } else {
+        // Offline - save locally
+        await offlineStorage.savePendingReport(currentUser.id, payload);
+        setFeedbackMessage('💾 Saved offline! Will upload automatically when you\'re back online.');
+      }
 
-      // reset
+      // reset form
       setMood('');
       setBloodPressureSystolic('');
       setBloodPressureDiastolic('');
@@ -296,7 +326,14 @@ const SelfReportingPage: React.FC = () => {
       setSymptoms('');
       setActivity('');
 
-      await fetchReports(currentUser.id);
+      // Refresh reports if online
+      if (online) {
+        try {
+          await fetchReports(currentUser.id);
+        } catch (error) {
+          console.warn('[SelfReporting] Failed to refresh reports:', error);
+        }
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'An unknown error occurred.';
       setErrorMessage(`Error saving report: ${message}`);
@@ -458,20 +495,42 @@ const SelfReportingPage: React.FC = () => {
                 <span className="text-sm text-gray-600">Enter number only (like 120)</span>
               </div>
 
-              {/* Blood Oxygen */}
+              {/* Blood Oxygen with Pulse Oximeter */}
               <div className="mb-4">
                 <label className="block text-lg font-medium text-gray-700 mb-2">
                   🫁 Blood Oxygen Level (if you measured it)
                 </label>
-                <input
-                  type="number"
-                  placeholder="% (like 98)"
-                  value={bloodOxygen}
-                  onChange={(e) => setBloodOxygen(e.target.value)}
-                  className="w-full py-3 px-4 text-lg border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-900 placeholder-gray-400 bg-white"
-                  min={70}
-                  max={100}
-                />
+
+                <div className="flex gap-2 mb-2">
+                  <input
+                    type="number"
+                    placeholder="% (like 98)"
+                    value={bloodOxygen}
+                    onChange={(e) => setBloodOxygen(e.target.value)}
+                    className="flex-1 py-3 px-4 text-lg border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-900 placeholder-gray-400 bg-white"
+                    min={70}
+                    max={100}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => setShowPulseOximeter(true)}
+                    className="px-4 py-3 bg-gradient-to-r from-red-500 to-pink-500 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2 whitespace-nowrap"
+                    title="Measure with your camera"
+                  >
+                    <Heart size={20} />
+                    <span className="hidden sm:inline">Measure Now</span>
+                    <span className="sm:hidden">Measure</span>
+                  </button>
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-2">
+                  <p className="text-sm text-gray-700">
+                    <strong>📱 New!</strong> Use your phone camera to measure your pulse and blood oxygen.
+                    Tap "Measure Now" to get started!
+                  </p>
+                </div>
+
                 <span className="text-sm text-gray-600">Percentage (normal is 95–100%)</span>
               </div>
 
@@ -763,6 +822,14 @@ const SelfReportingPage: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Pulse Oximeter Modal */}
+      {showPulseOximeter && (
+        <PulseOximeter
+          onMeasurementComplete={handlePulseOximeterComplete}
+          onClose={() => setShowPulseOximeter(false)}
+        />
+      )}
     </div>
   );
 };

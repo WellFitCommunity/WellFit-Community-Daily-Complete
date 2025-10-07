@@ -60,7 +60,21 @@ root.render(
   </React.StrictMode>
 );
 
-// Service worker choice (keep as-is or switch to register() if you need offline)
-// Learn more: https://cra.link/PWA
-serviceWorkerRegistration.unregister();
+// ✅ ENABLE OFFLINE SUPPORT FOR RURAL HEALTHCARE
+// Register service worker to enable offline functionality
+serviceWorkerRegistration.register({
+  onSuccess: () => {
+    console.log('✅ WellFit is now available offline!');
+  },
+  onUpdate: (registration) => {
+    console.log('🔄 New version available! Refresh to update.');
+    // Optionally show a notification to the user
+    if (window.confirm('A new version is available! Reload to update?')) {
+      if (registration.waiting) {
+        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      }
+      window.location.reload();
+    }
+  },
+});
 
