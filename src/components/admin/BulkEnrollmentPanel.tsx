@@ -216,6 +216,10 @@ Mary,Smith,+15551234568,mary.smith@email.com,1938-07-22,Bob Smith,+15559876544,D
           // Generate secure password
           const tempPassword = generateSecurePassword();
 
+          // Get session token for authorization
+          const { data: sessionData } = await supabase.auth.getSession();
+          const accessToken = sessionData.session?.access_token;
+
           // Call enrollment function
           const { data, error } = await supabase.functions.invoke('enrollClient', {
             body: {
@@ -229,7 +233,8 @@ Mary,Smith,+15551234568,mary.smith@email.com,1938-07-22,Bob Smith,+15559876544,D
               emergency_contact_phone: record.emergencyPhone,
               date_of_birth: record.dateOfBirth,
               notes: record.notes
-            }
+            },
+            headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined
           });
 
           if (error) throw error;
