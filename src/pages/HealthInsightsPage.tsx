@@ -8,10 +8,9 @@ import FhirAiDashboardRouter from '../components/FhirAiDashboardRouter';
 const HealthInsightsPage: React.FC = () => {
   const { branding } = useBranding();
   const { user } = useAuth();
-  const [profile, setProfile] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
 
-  // Load user profile to determine dashboard type
+  // Check if user is authenticated
   React.useEffect(() => {
     (async () => {
       if (!user?.id) {
@@ -20,10 +19,10 @@ const HealthInsightsPage: React.FC = () => {
       }
 
       try {
-        const userProfile = await fetchMyProfile();
-        setProfile(userProfile);
+        // Verify profile exists
+        await fetchMyProfile();
       } catch (e) {
-        console.warn('[HealthInsights] fetchMyProfile failed:', (e as Error).message);
+        console.warn('[HealthInsights] Profile check failed:', (e as Error).message);
       } finally {
         setLoading(false);
       }
