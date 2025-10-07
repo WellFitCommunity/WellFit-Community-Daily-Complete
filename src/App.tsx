@@ -64,6 +64,7 @@ const QuestionsPage = React.lazy(() => import('./pages/QuestionsPage'));
 const AdminQuestionsPage = React.lazy(() => import('./pages/AdminQuestionsPage'));
 const BillingDashboard = React.lazy(() => import('./components/admin/BillingDashboard'));
 const ApiKeyManager = React.lazy(() => import('./components/admin/ApiKeyManager'));
+const PhotoApprovalPage = React.lazy(() => import('./pages/PhotoApprovalPage'));
 const SmartCallbackPage = React.lazy(() => import('./pages/SmartCallbackPage'));
 const SmartBackButton = React.lazy(() => import('./components/ui/SmartBackButton'));
 
@@ -249,6 +250,18 @@ function Shell() {
                             <ApiKeyManager />
                           </div>
                         </div>
+                      </Suspense>
+                    </RequireAdminAuth>
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/admin/photo-approval"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth allowedRoles={['admin', 'super_admin']}>
+                      <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
+                        <PhotoApprovalPage />
                       </Suspense>
                     </RequireAdminAuth>
                   </RequireAuth>
