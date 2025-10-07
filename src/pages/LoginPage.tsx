@@ -6,7 +6,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useSupabaseClient } from '../contexts/AuthContext';
 import { WELLFIT_COLORS, APP_INFO } from '../settings/settings';
 import HCaptchaWidget, { HCaptchaRef } from '../components/HCaptchaWidget';
-// import { isPasskeySupported, authenticateWithPasskey } from '../services/passkeyService';
+import { isPasskeySupported, authenticateWithPasskey } from '../services/passkeyService';
 
 type Mode = 'senior' | 'admin';
 
@@ -36,9 +36,9 @@ const LoginPage: React.FC = () => {
   const [showSeniorPassword, setShowSeniorPassword] = useState(false);
   const [showAdminPassword, setShowAdminPassword] = useState(false);
 
-  // passkey state (disabled for now)
-  const passkeySupported = false; // const [passkeySupported, setPasskeySupported] = useState(false);
-  const passkeyLoading = false; // const [passkeyLoading, setPasskeyLoading] = useState(false);
+  // passkey state
+  const [passkeySupported, setPasskeySupported] = useState(false);
+  const [passkeyLoading, setPasskeyLoading] = useState(false);
 
   // colors
   const primary = WELLFIT_COLORS.blue;   // #003865
@@ -151,10 +151,10 @@ const LoginPage: React.FC = () => {
     return () => { cancel = true; };
   }, [navigate, supabase]);
 
-  // Check passkey support (disabled for now)
-  // useEffect(() => {
-  //   setPasskeySupported(isPasskeySupported());
-  // }, []);
+  // Check passkey support
+  useEffect(() => {
+    setPasskeySupported(isPasskeySupported());
+  }, []);
 
   // Captcha helpers
   const refreshCaptcha = () => {
@@ -172,24 +172,23 @@ const LoginPage: React.FC = () => {
     }
   };
 
-  // Passkey login handler (disabled for now)
+  // Passkey login handler
   const handlePasskeyLogin = async () => {
-    setError('Biometric login is currently unavailable. Please use password login.');
-    // setError('');
-    // setPasskeyLoading(true);
+    setError('');
+    setPasskeyLoading(true);
 
-    // try {
-    //   const result = await authenticateWithPasskey();
+    try {
+      await authenticateWithPasskey();
 
-    //   // Navigate to appropriate page
-    //   const route = await nextRouteForUser();
-    //   navigate(route, { replace: true });
-    // } catch (err: any) {
-    //   console.error('Passkey login failed:', err);
-    //   setError(err.message || 'Biometric login failed. Please try password login instead.');
-    // } finally {
-    //   setPasskeyLoading(false);
-    // }
+      // Navigate to appropriate page
+      const route = await nextRouteForUser();
+      navigate(route, { replace: true });
+    } catch (err: any) {
+      console.error('Passkey login failed:', err);
+      setError(err.message || 'Biometric login failed. Please try password login instead.');
+    } finally {
+      setPasskeyLoading(false);
+    }
   };
 
   const handleSeniorLogin = async (e: React.FormEvent) => {

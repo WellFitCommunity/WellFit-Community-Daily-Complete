@@ -7,7 +7,6 @@
  */
 
 import { supabase } from '../lib/supabaseClient';
-import type { SupabaseClient } from '@supabase/supabase-js';
 
 // ─── Types ─────────────────────────────────────────────────────────
 
@@ -89,13 +88,14 @@ export async function isPlatformAuthenticatorAvailable(): Promise<boolean> {
 }
 
 /**
- * Convert base64url string to Uint8Array
+ * Convert base64url string to Uint8Array (as ArrayBuffer)
  */
 function base64urlToUint8Array(base64url: string): Uint8Array {
   const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
   const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, '=');
   const binary = atob(padded);
-  const bytes = new Uint8Array(binary.length);
+  const buffer = new ArrayBuffer(binary.length);
+  const bytes = new Uint8Array(buffer);
   for (let i = 0; i < binary.length; i++) {
     bytes[i] = binary.charCodeAt(i);
   }
@@ -181,11 +181,11 @@ export async function completePasskeyRegistration(
   try {
     // Convert options to WebAuthn format
     const publicKeyOptions: PublicKeyCredentialCreationOptions = {
-      challenge: base64urlToUint8Array(options.challenge),
+      challenge: base64urlToUint8Array(options.challenge) as BufferSource,
       rp: options.rp,
       user: {
         ...options.user,
-        id: base64urlToUint8Array(options.user.id)
+        id: base64urlToUint8Array(options.user.id) as BufferSource
       },
       pubKeyCredParams: options.pubKeyCredParams,
       authenticatorSelection: options.authenticatorSelection,
@@ -273,11 +273,11 @@ export async function completePasskeyAuthentication(
   try {
     // Convert options to WebAuthn format
     const publicKeyOptions: PublicKeyCredentialRequestOptions = {
-      challenge: base64urlToUint8Array(options.challenge),
+      challenge: base64urlToUint8Array(options.challenge) as BufferSource,
       rpId: options.rpId || getRelyingPartyId(),
       allowCredentials: options.allowCredentials?.map(cred => ({
         type: 'public-key' as const,
-        id: typeof cred.id === 'string' ? base64urlToUint8Array(cred.id) : cred.id,
+        id: (typeof cred.id === 'string' ? base64urlToUint8Array(cred.id) : cred.id) as BufferSource,
         transports: (cred.transports || []) as AuthenticatorTransport[]
       })),
       timeout: options.timeout || 60000,
