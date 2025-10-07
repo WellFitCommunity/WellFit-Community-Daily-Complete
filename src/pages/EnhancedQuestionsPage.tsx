@@ -445,13 +445,13 @@ const EnhancedQuestionsPage: React.FC = () => {
 
                   <div className="mb-4">
                     <h4 className="font-medium text-gray-900 mb-2">Your Question:</h4>
-                    <p className="text-gray-800 bg-gray-50 p-3 rounded-lg">{question.question_text}</p>
+                    <p className="text-black bg-gray-50 p-3 rounded-lg">{question.question_text}</p>
                   </div>
 
                   {question.response_text && (
                     <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-3">
                       <h4 className="font-medium text-blue-900 mb-2">👩‍⚕️ Nurse Response:</h4>
-                      <p className="text-blue-800">{question.response_text}</p>
+                      <p className="text-black">{question.response_text}</p>
                       {question.responded_at && (
                         <p className="text-xs text-blue-600 mt-2">
                           Responded: {new Date(question.responded_at).toLocaleString()}

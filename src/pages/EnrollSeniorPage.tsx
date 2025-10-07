@@ -260,15 +260,22 @@ const EnrollSeniorPage: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Phone <span className="text-red-600">*</span>
                 </label>
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="+15551234567"
-                  required
-                />
-                <p className="text-xs text-gray-500 mt-1">Format: +1 followed by 10 digits</p>
+                <div className="relative">
+                  <span className="absolute left-3 top-2 text-gray-700 font-medium">+1</span>
+                  <input
+                    type="tel"
+                    value={phone.startsWith('+1') ? phone.slice(2) : phone}
+                    onChange={(e) => {
+                      const digits = e.target.value.replace(/\D/g, '');
+                      setPhone('+1' + digits);
+                    }}
+                    className="w-full border border-gray-300 rounded-md pl-10 pr-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="5551234567"
+                    maxLength={10}
+                    required
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Enter 10-digit phone number</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email (Optional)</label>
@@ -320,13 +327,20 @@ const EnrollSeniorPage: React.FC = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Emergency Contact Phone</label>
-                <input
-                  type="tel"
-                  value={emergencyPhone}
-                  onChange={(e) => setEmergencyPhone(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="+15559876543"
-                />
+                <div className="relative">
+                  <span className="absolute left-3 top-2 text-gray-700 font-medium">+1</span>
+                  <input
+                    type="tel"
+                    value={emergencyPhone.startsWith('+1') ? emergencyPhone.slice(2) : emergencyPhone}
+                    onChange={(e) => {
+                      const digits = e.target.value.replace(/\D/g, '');
+                      setEmergencyPhone(digits ? '+1' + digits : '');
+                    }}
+                    className="w-full border border-gray-300 rounded-md pl-10 pr-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="5559876543"
+                    maxLength={10}
+                  />
+                </div>
               </div>
             </div>
 

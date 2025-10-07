@@ -32,6 +32,9 @@ const EnrollSchema = z.object({
   emergency_contact_phone:    z.string().optional(), // Next of Kin phone in UI
   caregiver_email:            z.string().email().optional(),
   notes:                      z.string().optional(), // Admin notes, stored in admin_enrollment_notes
+  // Test user fields
+  is_test_user:               z.boolean().optional(), // Mark as test user for easy deletion
+  test_tag:                   z.string().optional(), // Tag for bulk operations (e.g., "demo-2025")
 });
 
 // ─── Helper: get caller + roles ─────────────────────────────────────────────
@@ -117,7 +120,9 @@ serve(async (req: Request) => {
       emergency_contact_name,
       emergency_contact_phone,
       caregiver_email,
-      notes
+      notes,
+      is_test_user,
+      test_tag
     } = parsed.data;
 
     // 3) Create auth user (service role required)
@@ -157,6 +162,8 @@ serve(async (req: Request) => {
       phone_verified: true,  // Set to true since phone_confirm: true in auth
       demographics_complete: false,  // Will be set to true after DemographicsPage
       onboarded: false,  // Will be set to true after full onboarding
+      is_test_user: is_test_user ?? false,  // Mark as test user for easy deletion
+      test_tag: test_tag ?? null,  // Tag for bulk operations
       created_at: new Date().toISOString(),
     });
     if (perr) {

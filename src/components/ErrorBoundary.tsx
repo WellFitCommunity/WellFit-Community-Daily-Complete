@@ -1,6 +1,7 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Alert, AlertDescription } from './ui/alert';
 import { Button } from './ui/button';
+import { performanceMonitor } from '../services/performanceMonitoring';
 
 interface Props {
   children: ReactNode;
@@ -25,6 +26,17 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
+
+    // Log to performance monitoring system
+    performanceMonitor.logError({
+      error_message: error.message,
+      error_stack: error.stack,
+      error_type: 'react_error_boundary',
+      component_name: errorInfo.componentStack?.split('\n')[1]?.trim() || 'Unknown',
+      page_url: window.location.href,
+      severity: 'critical'
+    });
+
     this.props.onError?.(error, errorInfo);
   }
 

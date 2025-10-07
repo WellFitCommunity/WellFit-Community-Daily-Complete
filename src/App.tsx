@@ -5,6 +5,7 @@ import { Routes, Route, useLocation } from 'react-router-dom';
 import { SessionTimeoutProvider } from './contexts/SessionTimeoutContext';
 import { BrandingConfig, getCurrentBranding } from './branding.config';
 import { BrandingContext } from './BrandingContext';
+import { performanceMonitor } from './services/performanceMonitoring';
 
 // ❌ Do NOT import or use AuthProvider here — it lives in index.tsx
 // ❌ Do NOT import or use AdminAuthProvider here — it lives in index.tsx
@@ -27,6 +28,7 @@ import Home from 'pages/Home';
 
 // ✅ Gate wrapper (does not replace AuthProvider)
 import AuthGate from './AuthGate';
+import { useSupabaseClient } from './contexts/AuthContext';
 
 // Lazy-loaded pages/components
 const WelcomePage = React.lazy(() => import('./pages/WelcomePage'));
@@ -78,6 +80,14 @@ const PUBLIC_ROUTES = [
 function Shell() {
   const [branding, setBranding] = useState<BrandingConfig>(getCurrentBranding());
   const location = useLocation();
+  const { supabase, user } = useSupabaseClient() as any;
+
+  // Initialize performance monitoring
+  useEffect(() => {
+    if (supabase) {
+      performanceMonitor.initialize(supabase, user?.id);
+    }
+  }, [supabase, user?.id]);
 
   useEffect(() => {
     setBranding(getCurrentBranding());

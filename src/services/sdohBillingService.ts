@@ -594,8 +594,48 @@ export class SDOHBillingService {
   }
 
   private static checkDocumentationExists(requirement: string, encounter: any): boolean {
-    // Simplified check - in real implementation, would check actual documentation
-    return Math.random() > 0.3; // Simulate 70% documentation completeness
+    // Check for required documentation based on requirement type
+    if (!encounter) return false;
+
+    const requirementLower = requirement.toLowerCase();
+
+    // Check for patient consent
+    if (requirementLower.includes('consent')) {
+      return !!(encounter.patient_consent || encounter.ccm_consent_obtained);
+    }
+
+    // Check for care plan
+    if (requirementLower.includes('care plan')) {
+      return !!(encounter.care_plan || encounter.care_plan_updated);
+    }
+
+    // Check for patient access
+    if (requirementLower.includes('patient access') || requirementLower.includes('24/7')) {
+      return !!(encounter.patient_access_provided || encounter.after_hours_access);
+    }
+
+    // Check for EHR system
+    if (requirementLower.includes('electronic health record') || requirementLower.includes('ehr')) {
+      return true; // Assume EHR exists if we're in the system
+    }
+
+    // Check for SDOH assessment
+    if (requirementLower.includes('sdoh')) {
+      return !!(encounter.sdoh_assessment || encounter.social_history);
+    }
+
+    // Check for care coordination notes
+    if (requirementLower.includes('care coordination') || requirementLower.includes('communication log')) {
+      return !!(encounter.care_coordination_notes || encounter.clinical_notes);
+    }
+
+    // Check for chronic condition documentation
+    if (requirementLower.includes('chronic condition')) {
+      return !!(encounter.diagnoses && encounter.diagnoses.length > 0);
+    }
+
+    // Default: check for any clinical documentation
+    return !!(encounter.clinical_notes || encounter.documentation);
   }
 
   private static determineCCMCodes(billableMinutes: number, patientId: string): string[] {
