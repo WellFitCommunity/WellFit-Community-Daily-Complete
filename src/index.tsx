@@ -34,11 +34,17 @@ function DemoModeBridge({ children }: { children: React.ReactNode }) {
 }
 
 // Initialize Claude service on app startup
-claudeService.initialize().then(() => {
-  console.log('✅ Claude AI service initialized and ready');
-}).catch((error) => {
-  console.warn('⚠️ Claude AI service initialization failed (app will continue with limited AI features):', error.message);
-});
+claudeService
+  .initialize()
+  .then(() => {
+    console.log('✅ Claude AI service initialized and ready');
+  })
+  .catch((error) => {
+    console.warn(
+      '⚠️ Claude AI service initialization failed (app will continue with limited AI features):',
+      error.message
+    );
+  });
 
 const root = createRoot(document.getElementById('root')!);
 
@@ -60,21 +66,5 @@ root.render(
   </React.StrictMode>
 );
 
-// ✅ ENABLE OFFLINE SUPPORT FOR RURAL HEALTHCARE
-// Register service worker to enable offline functionality
-serviceWorkerRegistration.register({
-  onSuccess: () => {
-    console.log('✅ WellFit is now available offline!');
-  },
-  onUpdate: (registration) => {
-    console.log('🔄 New version available! Refresh to update.');
-    // Optionally show a notification to the user
-    if (window.confirm('A new version is available! Reload to update?')) {
-      if (registration.waiting) {
-        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-      }
-      window.location.reload();
-    }
-  },
-});
-
+// ✅ TEMPORARILY DISABLE SERVICE WORKER UNTIL SAFE VERSION IS READY
+serviceWorkerRegistration.unregister();
