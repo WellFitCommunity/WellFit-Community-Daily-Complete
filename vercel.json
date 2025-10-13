@@ -27,23 +27,18 @@
     },
     {
       "source": "/service-worker.js",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-store" }
-      ]
+      "headers": [{ "key": "Cache-Control", "value": "no-store" }]
     }
   ],
-  "rewrites": [
-    { "source": "/static/:path*", "destination": "/static/:path*" },
-    { "source": "/asset-manifest.json", "destination": "/asset-manifest.json" },
-    { "source": "/manifest.json", "destination": "/manifest.json" },
-    { "source": "/favicon.ico", "destination": "/favicon.ico" },
-    { "source": "/logo192.png", "destination": "/logo192.png" },
-    { "source": "/logo512.png", "destination": "/logo512.png" },
-    { "source": "/android-chrome-192x192.png", "destination": "/android-chrome-192x192.png" },
-    { "source": "/android-chrome-512x512.png", "destination": "/android-chrome-512x512.png" },
-    { "source": "/robots.txt", "destination": "/robots.txt" },
-    { "source": "/service-worker.js", "destination": "/service-worker.js" },
-
-    { "source": "/(.*)", "destination": "/" }
+  "routes": [
+    { "src": "/static/(.*)", "dest": "/static/$1" },
+    { "src": "/asset-manifest.json", "dest": "/asset-manifest.json" },
+    { "src": "/manifest.json", "dest": "/manifest.json" },
+    { "src": "/favicon.ico", "dest": "/favicon.ico" },
+    { "src": "/logo192.png", "dest": "/logo192.png" },
+    { "src": "/logo512.png", "dest": "/logo512.png" },
+    { "src": "/robots.txt", "dest": "/robots.txt" },
+    { "src": "/service-worker.js", "dest": "/service-worker.js" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
