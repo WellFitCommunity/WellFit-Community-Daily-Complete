@@ -1,13 +1,29 @@
 {
-  "short_name": "WellFit",
   "name": "WellFit Community Daily",
-  "icons": [
-    { "src": "/android-chrome-192x192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/android-chrome-512x512.png", "sizes": "512x512", "type": "image/png" }
-  ],
+  "short_name": "WellFit",
+  "description": "WellFit Community Daily helps members check in, self-report, and stay connected.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "theme_color": "#003865",
+  "orientation": "portrait-primary",
   "background_color": "#ffffff",
-  "description": "WellFit Community Daily helps members check in, self-report, and stay connected."
+  "theme_color": "#003865",
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "prefer_related_applications": false,
+  "categories": ["health", "fitness", "medical", "productivity"],
+  "lang": "en-US",
+  "dir": "ltr"
 }
