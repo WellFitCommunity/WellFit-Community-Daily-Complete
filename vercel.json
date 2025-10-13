@@ -1,6 +1,12 @@
 {
   "version": 2,
-  "builds": [{ "src": "package.json", "use": "@vercel/static-build" }],
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": { "distDir": "build" }
+    }
+  ],
   "build": {
     "env": {
       "CI": "false",
@@ -27,9 +33,7 @@
     },
     {
       "source": "/service-worker.js",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-store" }
-      ]
+      "headers": [{ "key": "Cache-Control", "value": "no-store" }]
     }
   ],
   "rewrites": [
@@ -42,7 +46,7 @@
     { "source": "/android-chrome-192x192.png", "destination": "/android-chrome-192x192.png" },
     { "source": "/android-chrome-512x512.png", "destination": "/android-chrome-512x512.png" },
     { "source": "/robots.txt", "destination": "/robots.txt" },
-    { "source": "/service-worker.js", "destination": "/service-worker.js" },
-    { "source": "/(.*)", "destination": "/" }
+
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
