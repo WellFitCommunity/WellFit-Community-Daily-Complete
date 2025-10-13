@@ -10,10 +10,10 @@ interface CommunityMoment {
   description: string;
   approval_status: 'pending' | 'approved' | 'rejected';
   created_at: string;
-  profile?: {
+  profiles?: {
     first_name: string;
     last_name: string;
-  };
+  } | null;
 }
 
 export default function PhotoApprovalPage() {
@@ -31,7 +31,16 @@ export default function PhotoApprovalPage() {
     try {
       let query = supabase
         .from('community_moments')
-        .select('id, user_id, file_url, title, description, approval_status, created_at, profile:profiles(first_name, last_name)')
+        .select(`
+          id,
+          user_id,
+          file_url,
+          title,
+          description,
+          approval_status,
+          created_at,
+          profiles(first_name, last_name)
+        `)
         .order('created_at', { ascending: false });
 
       if (filter !== 'all') {
@@ -41,7 +50,14 @@ export default function PhotoApprovalPage() {
       const { data, error } = await query;
 
       if (error) throw error;
-      setPendingMoments(data || []);
+
+      // Transform the data to match our interface (profiles is returned as array from Supabase)
+      const transformedData = (data || []).map((moment: any) => ({
+        ...moment,
+        profiles: Array.isArray(moment.profiles) ? moment.profiles[0] : moment.profiles
+      }));
+
+      setPendingMoments(transformedData);
     } catch (error) {
       console.error('Error fetching moments:', error);
     } finally {
@@ -163,7 +179,7 @@ export default function PhotoApprovalPage() {
                   <h3 className="font-bold text-lg mb-2">{moment.title}</h3>
                   <p className="text-gray-600 text-sm mb-2">{moment.description}</p>
                   <p className="text-gray-500 text-xs mb-1">
-                    By: {moment.profile?.first_name} {moment.profile?.last_name}
+                    By: {moment.profiles?.first_name} {moment.profiles?.last_name}
                   </p>
                   <p className="text-gray-400 text-xs mb-3">
                     {new Date(moment.created_at).toLocaleDateString()}

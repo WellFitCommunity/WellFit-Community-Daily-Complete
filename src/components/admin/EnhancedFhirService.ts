@@ -4,7 +4,12 @@
 import { supabase } from '../../lib/supabaseClient';
 import { SupabaseClient } from '@supabase/supabase-js';
 import FHIRIntegrationService from './FhirIntegrationService';
-import FhirAiService, { type PatientInsight, type PopulationInsights, type EmergencyAlert } from './FhirAiService';
+import FhirAiService, {
+  type PatientInsight,
+  type PopulationInsights,
+  type EmergencyAlert,
+  type HealthStatistics
+} from './FhirAiService';
 
 interface EnhancedPatientData {
   fhirBundle: any;
@@ -13,6 +18,7 @@ interface EnhancedPatientData {
   recommendedActions: string[];
   nextReviewDate: string;
   clinicalSummary: string;
+  healthStatistics: HealthStatistics; // Added: Daily logs and weekly averages
 }
 
 interface PopulationDashboard {
@@ -151,6 +157,13 @@ export class EnhancedFhirService {
       // Monitor for emergency conditions
       const emergencyAlerts = await this.aiService.monitorPatientInRealTime(patientData);
 
+      // PRODUCTION FIX: Compute daily logs and weekly averages
+      const allHealthData = [
+        ...(patientData.checkIns || []),
+        ...(patientData.healthEntries || [])
+      ];
+      const healthStatistics = await this.aiService.computeHealthStatistics(allHealthData);
+
       // Generate clinical summary
       const clinicalSummary = this.generateClinicalSummary(aiInsights, fhirBundle);
 
@@ -166,7 +179,8 @@ export class EnhancedFhirService {
         emergencyAlerts,
         recommendedActions,
         nextReviewDate,
-        clinicalSummary
+        clinicalSummary,
+        healthStatistics
       };
 
     } catch (error) {

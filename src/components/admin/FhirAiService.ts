@@ -112,6 +112,58 @@ interface AiConfiguration {
   };
 }
 
+// Type definitions for aggregation
+interface DailyHealthLog {
+  date: string;
+  readings: any[];
+  aggregates: DailyAggregates;
+}
+
+interface DailyAggregates {
+  bloodPressure: { systolic: number | null; diastolic: number | null; count: number } | null;
+  heartRate: { avg: number | null; min: number | null; max: number | null; count: number } | null;
+  bloodSugar: { avg: number | null; min: number | null; max: number | null; count: number } | null;
+  bloodOxygen: { avg: number | null; min: number | null; max: number | null; count: number } | null;
+  weight: { avg: number | null; count: number } | null;
+  mood: { predominant: string | null; entries: string[] } | null;
+  physicalActivity: { entries: string[] } | null;
+  socialEngagement: { entries: string[] } | null;
+  symptoms: { entries: string[] } | null;
+}
+
+interface WeeklyHealthSummary {
+  weekStart: string;
+  weekEnd: string;
+  daysWithData: number;
+  totalReadings: number;
+  aggregates: DailyAggregates;
+  trends: WeeklyTrends;
+}
+
+interface WeeklyTrends {
+  bloodPressure: 'RISING' | 'FALLING' | 'STABLE';
+  heartRate: 'RISING' | 'FALLING' | 'STABLE';
+  bloodSugar: 'RISING' | 'FALLING' | 'STABLE';
+  bloodOxygen: 'RISING' | 'FALLING' | 'STABLE';
+  weight: 'RISING' | 'FALLING' | 'STABLE';
+  mood: 'RISING' | 'FALLING' | 'STABLE';
+}
+
+interface HealthStatistics {
+  dailyLogs: DailyHealthLog[];
+  weeklyAverages: WeeklyHealthSummary[];
+  overallStats: OverallStatistics;
+  lastUpdated: string;
+  dataPoints: number;
+}
+
+interface OverallStatistics {
+  totalReadings: number;
+  dateRange: { start: string | null; end: string | null };
+  averages: DailyAggregates;
+  complianceRate: number;
+}
+
 export type {
   HealthRiskAssessment,
   VitalsTrend,
@@ -119,7 +171,13 @@ export type {
   EmergencyAlert,
   PredictedOutcome,
   CareRecommendation,
-  PopulationInsights
+  PopulationInsights,
+  DailyHealthLog,
+  DailyAggregates,
+  WeeklyHealthSummary,
+  WeeklyTrends,
+  HealthStatistics,
+  OverallStatistics
 };
 
 export class FhirAiService {
@@ -958,6 +1016,296 @@ export class FhirAiService {
 
   getConfiguration(): AiConfiguration {
     return { ...this.config };
+  }
+
+  // Production-grade daily and weekly aggregation methods
+  /**
+   * Compute daily health logs by aggregating all vitals from self_reports and check_ins for each day
+   * @param healthData Array of health entries (self_reports, check_ins, etc.)
+   * @returns Map of date strings to aggregated daily statistics
+   */
+  computeDailyHealthLogs(healthData: any[]): Map<string, DailyHealthLog> {
+    const dailyLogs = new Map<string, DailyHealthLog>();
+
+    // Group data by date
+    for (const entry of healthData) {
+      const dateStr = this.getDateString(entry.created_at);
+
+      if (!dailyLogs.has(dateStr)) {
+        dailyLogs.set(dateStr, {
+          date: dateStr,
+          readings: [],
+          aggregates: this.getEmptyAggregates()
+        });
+      }
+
+      const log = dailyLogs.get(dateStr)!;
+      log.readings.push(entry);
+    }
+
+    // Calculate aggregates for each day
+    for (const [, log] of dailyLogs) {
+      log.aggregates = this.calculateDailyAggregates(log.readings);
+    }
+
+    return dailyLogs;
+  }
+
+  /**
+   * Compute weekly averages from daily logs
+   * @param dailyLogs Map of daily health logs
+   * @returns Array of weekly statistics
+   */
+  computeWeeklyAverages(dailyLogs: Map<string, DailyHealthLog>): WeeklyHealthSummary[] {
+    const weeklySummaries: WeeklyHealthSummary[] = [];
+    const sortedDates = Array.from(dailyLogs.keys()).sort();
+
+    // Group dates into weeks (7-day periods)
+    let weekStart = 0;
+    while (weekStart < sortedDates.length) {
+      const weekEnd = Math.min(weekStart + 7, sortedDates.length);
+      const weekDates = sortedDates.slice(weekStart, weekEnd);
+
+      const weeklyData = weekDates.map(date => dailyLogs.get(date)!);
+      const weekSummary = this.calculateWeeklySummary(weeklyData, weekDates[0], weekDates[weekDates.length - 1]);
+
+      weeklySummaries.push(weekSummary);
+      weekStart = weekEnd;
+    }
+
+    return weeklySummaries;
+  }
+
+  /**
+   * Get comprehensive health statistics for a patient
+   * @param healthData Array of all health entries
+   * @returns Structured daily and weekly statistics
+   */
+  async computeHealthStatistics(healthData: any[]): Promise<HealthStatistics> {
+    const dailyLogs = this.computeDailyHealthLogs(healthData);
+    const weeklyAverages = this.computeWeeklyAverages(dailyLogs);
+
+    // Compute overall statistics
+    const allReadings = Array.from(dailyLogs.values()).flatMap(log => log.readings);
+    const overallStats = this.calculateOverallStatistics(allReadings);
+
+    return {
+      dailyLogs: Array.from(dailyLogs.values()).sort((a, b) => b.date.localeCompare(a.date)),
+      weeklyAverages: weeklyAverages.reverse(), // Most recent first
+      overallStats,
+      lastUpdated: new Date().toISOString(),
+      dataPoints: allReadings.length
+    };
+  }
+
+  // Helper methods for aggregation
+  private getDateString(timestamp: string): string {
+    const date = new Date(timestamp);
+    return date.toISOString().split('T')[0]; // YYYY-MM-DD
+  }
+
+  private getEmptyAggregates(): DailyAggregates {
+    return {
+      bloodPressure: { systolic: null, diastolic: null, count: 0 },
+      heartRate: { avg: null, min: null, max: null, count: 0 },
+      bloodSugar: { avg: null, min: null, max: null, count: 0 },
+      bloodOxygen: { avg: null, min: null, max: null, count: 0 },
+      weight: { avg: null, count: 0 },
+      mood: { predominant: null, entries: [] },
+      physicalActivity: { entries: [] },
+      socialEngagement: { entries: [] },
+      symptoms: { entries: [] }
+    };
+  }
+
+  private calculateDailyAggregates(readings: any[]): DailyAggregates {
+    const aggregates = this.getEmptyAggregates();
+
+    // Arrays to collect numeric values
+    const bpSystolic: number[] = [];
+    const bpDiastolic: number[] = [];
+    const heartRates: number[] = [];
+    const bloodSugars: number[] = [];
+    const bloodOxygens: number[] = [];
+    const weights: number[] = [];
+    const moods: string[] = [];
+
+    // Collect all values
+    for (const reading of readings) {
+      if (reading.bp_systolic != null) bpSystolic.push(reading.bp_systolic);
+      if (reading.bp_diastolic != null) bpDiastolic.push(reading.bp_diastolic);
+      if (reading.heart_rate != null) heartRates.push(reading.heart_rate);
+      if (reading.blood_sugar != null) bloodSugars.push(reading.blood_sugar);
+      if (reading.blood_oxygen != null) bloodOxygens.push(reading.blood_oxygen);
+      if (reading.spo2 != null) bloodOxygens.push(reading.spo2);
+      if (reading.weight != null) weights.push(reading.weight);
+      if (reading.mood) moods.push(reading.mood);
+      if (reading.physical_activity) aggregates.physicalActivity!.entries.push(reading.physical_activity);
+      if (reading.social_engagement) aggregates.socialEngagement!.entries.push(reading.social_engagement);
+      if (reading.symptoms) aggregates.symptoms!.entries.push(reading.symptoms);
+    }
+
+    // Calculate blood pressure
+    if (bpSystolic.length > 0 && bpDiastolic.length > 0) {
+      aggregates.bloodPressure!.systolic = Math.round(this.average(bpSystolic));
+      aggregates.bloodPressure!.diastolic = Math.round(this.average(bpDiastolic));
+      aggregates.bloodPressure!.count = Math.min(bpSystolic.length, bpDiastolic.length);
+    }
+
+    // Calculate heart rate
+    if (heartRates.length > 0) {
+      aggregates.heartRate!.avg = Math.round(this.average(heartRates));
+      aggregates.heartRate!.min = Math.min(...heartRates);
+      aggregates.heartRate!.max = Math.max(...heartRates);
+      aggregates.heartRate!.count = heartRates.length;
+    }
+
+    // Calculate blood sugar
+    if (bloodSugars.length > 0) {
+      aggregates.bloodSugar!.avg = Math.round(this.average(bloodSugars));
+      aggregates.bloodSugar!.min = Math.min(...bloodSugars);
+      aggregates.bloodSugar!.max = Math.max(...bloodSugars);
+      aggregates.bloodSugar!.count = bloodSugars.length;
+    }
+
+    // Calculate blood oxygen
+    if (bloodOxygens.length > 0) {
+      aggregates.bloodOxygen!.avg = Math.round(this.average(bloodOxygens));
+      aggregates.bloodOxygen!.min = Math.min(...bloodOxygens);
+      aggregates.bloodOxygen!.max = Math.max(...bloodOxygens);
+      aggregates.bloodOxygen!.count = bloodOxygens.length;
+    }
+
+    // Calculate weight
+    if (weights.length > 0) {
+      aggregates.weight!.avg = parseFloat(this.average(weights).toFixed(1));
+      aggregates.weight!.count = weights.length;
+    }
+
+    // Calculate mood
+    if (moods.length > 0) {
+      aggregates.mood!.predominant = this.getMostFrequent(moods);
+      aggregates.mood!.entries = moods;
+    }
+
+    return aggregates;
+  }
+
+  private calculateWeeklySummary(weeklyData: DailyHealthLog[], startDate: string, endDate: string): WeeklyHealthSummary {
+    // Flatten all readings from the week
+    const allReadings = weeklyData.flatMap(day => day.readings);
+
+    // Calculate weekly aggregates
+    const weeklyAggregates = this.calculateDailyAggregates(allReadings);
+
+    // Calculate trends
+    const trends = this.calculateWeeklyTrends(weeklyData);
+
+    return {
+      weekStart: startDate,
+      weekEnd: endDate,
+      daysWithData: weeklyData.filter(day => day.readings.length > 0).length,
+      totalReadings: allReadings.length,
+      aggregates: weeklyAggregates,
+      trends
+    };
+  }
+
+  private calculateWeeklyTrends(weeklyData: DailyHealthLog[]): WeeklyTrends {
+    const daysWithData = weeklyData.filter(day => day.readings.length > 0);
+
+    if (daysWithData.length < 2) {
+      return {
+        bloodPressure: 'STABLE',
+        heartRate: 'STABLE',
+        bloodSugar: 'STABLE',
+        bloodOxygen: 'STABLE',
+        weight: 'STABLE',
+        mood: 'STABLE'
+      };
+    }
+
+    const firstDay = daysWithData[0].aggregates;
+    const lastDay = daysWithData[daysWithData.length - 1].aggregates;
+
+    return {
+      bloodPressure: this.calculateTrend(firstDay.bloodPressure?.systolic, lastDay.bloodPressure?.systolic),
+      heartRate: this.calculateTrend(firstDay.heartRate?.avg, lastDay.heartRate?.avg),
+      bloodSugar: this.calculateTrend(firstDay.bloodSugar?.avg, lastDay.bloodSugar?.avg),
+      bloodOxygen: this.calculateTrend(firstDay.bloodOxygen?.avg, lastDay.bloodOxygen?.avg),
+      weight: this.calculateTrend(firstDay.weight?.avg, lastDay.weight?.avg),
+      mood: 'STABLE' // Mood trend would require more complex analysis
+    };
+  }
+
+  private calculateOverallStatistics(allReadings: any[]): OverallStatistics {
+    const aggregates = this.calculateDailyAggregates(allReadings);
+
+    return {
+      totalReadings: allReadings.length,
+      dateRange: {
+        start: allReadings.length > 0 ? this.getDateString(allReadings[allReadings.length - 1].created_at) : null,
+        end: allReadings.length > 0 ? this.getDateString(allReadings[0].created_at) : null
+      },
+      averages: aggregates,
+      complianceRate: this.calculateComplianceRate(allReadings)
+    };
+  }
+
+  private calculateComplianceRate(readings: any[]): number {
+    if (readings.length === 0) return 0;
+
+    const dates = new Set(readings.map(r => this.getDateString(r.created_at)));
+    const daysSinceFirst = this.daysBetween(
+      readings[readings.length - 1].created_at,
+      readings[0].created_at
+    );
+
+    if (daysSinceFirst === 0) return 100;
+
+    return Math.round((dates.size / daysSinceFirst) * 100);
+  }
+
+  private average(numbers: number[]): number {
+    if (numbers.length === 0) return 0;
+    return numbers.reduce((sum, n) => sum + n, 0) / numbers.length;
+  }
+
+  private getMostFrequent(items: string[]): string | null {
+    if (items.length === 0) return null;
+
+    const frequency = new Map<string, number>();
+    for (const item of items) {
+      frequency.set(item, (frequency.get(item) || 0) + 1);
+    }
+
+    let maxCount = 0;
+    let mostFrequent = items[0];
+    for (const [item, count] of frequency) {
+      if (count > maxCount) {
+        maxCount = count;
+        mostFrequent = item;
+      }
+    }
+
+    return mostFrequent;
+  }
+
+  private calculateTrend(first: number | null | undefined, last: number | null | undefined): 'RISING' | 'FALLING' | 'STABLE' {
+    if (first == null || last == null) return 'STABLE';
+
+    const change = ((last - first) / first) * 100;
+
+    if (change > 5) return 'RISING';
+    if (change < -5) return 'FALLING';
+    return 'STABLE';
+  }
+
+  private daysBetween(date1: string, date2: string): number {
+    const d1 = new Date(date1);
+    const d2 = new Date(date2);
+    const diffTime = Math.abs(d2.getTime() - d1.getTime());
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   }
 }
 

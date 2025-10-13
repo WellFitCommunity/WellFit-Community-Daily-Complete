@@ -8,9 +8,9 @@ BEGIN;
 -- ====================================================================
 
 -- Ensure the storage bucket exists
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('community-moments', 'community-moments', true)
-ON CONFLICT (id) DO UPDATE SET public = true;
+INSERT INTO storage.buckets (id, name)
+VALUES ('community-moments', 'community-moments')
+ON CONFLICT (id) DO NOTHING;
 
 -- Drop existing policies to recreate them properly
 DROP POLICY IF EXISTS "Public read access to community moments" ON storage.objects;
@@ -111,9 +111,9 @@ CREATE TRIGGER update_meal_interactions_updated_at
 -- 3. CREATE STORAGE BUCKET FOR MEAL PHOTOS
 -- ====================================================================
 
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('meal-photos', 'meal-photos', true)
-ON CONFLICT (id) DO UPDATE SET public = true;
+INSERT INTO storage.buckets (id, name)
+VALUES ('meal-photos', 'meal-photos')
+ON CONFLICT (id) DO NOTHING;
 
 -- Meal photos storage policies
 CREATE POLICY "Public read access to meal photos"
