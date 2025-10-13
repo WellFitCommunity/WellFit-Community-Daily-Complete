@@ -4,6 +4,17 @@ This application is designed for seniors to log their daily health data and for 
 
 **This application is deployed exclusively on Vercel.**
 
+> **🫀 Offline Mode Available:** WellFit works completely offline - perfect for rural areas with unreliable internet. See [Offline Guide](docs/OFFLINE_GUIDE.md).
+
+## 📚 Documentation
+
+- **[Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** - Complete Vercel deployment instructions
+- **[Offline Mode Guide](docs/OFFLINE_GUIDE.md)** - Offline functionality for rural healthcare
+- **[Feature Documentation](docs/features/)** - Individual feature guides
+- **[Security & Compliance](docs/security/)** - HIPAA, SOC2, security documentation
+- **[Database Setup](docs/database/)** - Migrations, multi-tenancy, tenant setup
+- **[All Documentation](docs/)** - Full documentation index
+
 ## Project Structure
 
 The frontend codebase (`src` directory) is organized as follows:
@@ -150,9 +161,12 @@ If you need to run a local Supabase instance for backend development (e.g., test
 
 This application is configured for deployment on **Vercel**.
 
+**For complete deployment instructions, see [Deployment Guide](docs/DEPLOYMENT_GUIDE.md).**
+
+Quick steps:
 1.  Connect your Git repository to Vercel.
-2.  Configure the Environment Variables listed above in your Vercel project settings. Pay special attention to how multi-line variables like `FIREBASE_PRIVATE_KEY` are handled (Base64 encoding is often a good solution).
-3.  Vercel will typically build and deploy the application automatically upon pushes to the main branch. The build command is usually `npm run build` (from `package.json`).
+2.  Configure the Environment Variables listed above in your Vercel project settings.
+3.  Vercel will build and deploy automatically on pushes to the main branch.
 
 ## Scripts
 
