@@ -1,175 +1,116 @@
-// public/service-worker.js - Offline-First Service Worker for Rural Healthcare
+// public/service-worker.js — Safe, MIME-aware offline SW
+// - No guessing hashed filenames
+// - Never caches HTML for script/style requests
+// - Network-first for navigations, cache-first for static assets
 
-const CACHE_NAME = 'wellfit-offline-v1';
-const RUNTIME_CACHE = 'wellfit-runtime-v1';
+const CACHE_VERSION = 'wellfit-v3';
+const SHELL_CACHE = `shell-${CACHE_VERSION}`;
+const RUNTIME_CACHE = `runtime-${CACHE_VERSION}`;
+const NAV_FALLBACK_URL = '/index.html';
 
-// Essential files to cache for offline use
-const ESSENTIAL_FILES = [
+// Only cache stable shell files. (Hashed assets are cached on-demand.)
+const SHELL_FILES = [
   '/',
   '/index.html',
-  '/static/css/main.css',
-  '/static/js/main.js',
   '/manifest.json',
   '/favicon.ico'
 ];
 
-// Install - cache essential files
-self.addEventListener('install', (event) => {
-  console.log('[Service Worker] Installing for offline support...');
+// --- Install: pre-cache shell (best-effort)
+self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('[Service Worker] Caching essential files');
-        return cache.addAll(ESSENTIAL_FILES.map(url => new Request(url, { cache: 'reload' })))
-          .catch(err => {
-            console.warn('[Service Worker] Some files could not be cached:', err);
-            // Continue anyway - app will work with partial cache
-          });
-      })
+    caches.open(SHELL_CACHE)
+      .then(cache => cache.addAll(SHELL_FILES.map(u => new Request(u, { cache: 'reload' }))))
+      .catch(() => {}) // don't fail install if one misses
       .then(() => self.skipWaiting())
   );
 });
 
-// Activate - clean up old caches
-self.addEventListener('activate', (event) => {
-  console.log('[Service Worker] Activating offline support...');
+// --- Activate: clean old caches
+self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys()
-      .then(cacheNames => {
-        return Promise.all(
-          cacheNames.map(cacheName => {
-            if (cacheName !== CACHE_NAME && cacheName !== RUNTIME_CACHE) {
-              console.log('[Service Worker] Deleting old cache:', cacheName);
-              return caches.delete(cacheName);
-            }
-          })
-        );
-      })
-      .then(() => self.clients.claim())
+    caches.keys().then(keys =>
+      Promise.all(keys.map(k => {
+        if (!k.includes(CACHE_VERSION)) return caches.delete(k);
+      }))
+    ).then(() => self.clients.claim())
   );
 });
 
-// Fetch - serve from cache when offline, update cache when online
-self.addEventListener('fetch', (event) => {
-  const { request } = event;
-  const url = new URL(request.url);
+// Utility: detect HTML responses
+const isHtml = (resp) => {
+  const ct = resp.headers.get('content-type') || '';
+  return ct.includes('text/html');
+};
 
-  // Skip non-GET requests
-  if (request.method !== 'GET') {
+// --- Fetch handler
+self.addEventListener('fetch', event => {
+  const req = event.request;
+  const url = new URL(req.url);
+
+  // Handle only http(s) GET
+  if (req.method !== 'GET' || !url.protocol.startsWith('http')) return;
+
+  // Ignore third-party domains we don't control (APIs, captchas, etc.)
+  if (
+    url.hostname.includes('supabase.co') ||
+    url.hostname.includes('hcaptcha.com') ||
+    url.hostname.includes('google') ||
+    url.hostname.includes('gstatic.com')
+  ) return;
+
+  // 1) Navigations: network-first with index.html fallback
+  if (req.mode === 'navigate') {
+    event.respondWith(
+      fetch(req).catch(async () =>
+        (await caches.match(NAV_FALLBACK_URL)) || Response.error()
+      )
+    );
     return;
   }
 
-  // Skip chrome extensions and other protocols
-  if (!url.protocol.startsWith('http')) {
-    return;
-  }
+  // 2) Static assets (script/style/image/font): cache-first, but NEVER cache HTML
+  const dest = req.destination; // 'script' | 'style' | 'image' | 'font' | ...
+  if (['script', 'style', 'image', 'font'].includes(dest)) {
+    event.respondWith((async () => {
+      const cached = await caches.match(req);
+      if (cached) return cached;
 
-  // Skip Supabase API calls - we'll handle those separately with IndexedDB
-  if (url.hostname.includes('supabase.co')) {
-    return;
-  }
-
-  // Skip external resources we don't control
-  if (url.hostname.includes('hcaptcha.com') ||
-      url.hostname.includes('google') ||
-      url.hostname.includes('gstatic')) {
-    return;
-  }
-
-  event.respondWith(
-    caches.match(request)
-      .then(cachedResponse => {
-        // Return cached version if available
-        if (cachedResponse) {
-          // Update cache in background if online
-          if (navigator.onLine) {
-            fetch(request)
-              .then(response => {
-                if (response && response.status === 200) {
-                  caches.open(RUNTIME_CACHE)
-                    .then(cache => cache.put(request, response.clone()));
-                }
-              })
-              .catch(() => {
-                // Fetch failed, but we have cache - no problem
-              });
-          }
-          return cachedResponse;
+      try {
+        const net = await fetch(req);
+        if (net.ok && !isHtml(net)) {
+          const clone = net.clone();
+          const cache = await caches.open(RUNTIME_CACHE);
+          await cache.put(req, clone);
         }
+        return net;
+      } catch {
+        // No cache and offline -> generic failure
+        return new Response('', { status: 503, statusText: 'Offline' });
+      }
+    })());
+    return;
+  }
 
-        // Not in cache - fetch from network
-        return fetch(request)
-          .then(response => {
-            // Don't cache bad responses
-            if (!response || response.status !== 200 || response.type === 'error') {
-              return response;
-            }
-
-            // Cache successful responses
-            const responseToCache = response.clone();
-            caches.open(RUNTIME_CACHE)
-              .then(cache => cache.put(request, responseToCache));
-
-            return response;
-          })
-          .catch(error => {
-            console.log('[Service Worker] Fetch failed, offline mode:', error);
-
-            // Return offline page for navigation requests
-            if (request.mode === 'navigate') {
-              return caches.match('/index.html');
-            }
-
-            throw error;
-          });
-      })
-  );
+  // 3) Everything else: try network, fall back to cache if present
+  event.respondWith((async () => {
+    try {
+      return await fetch(req);
+    } catch {
+      const cached = await caches.match(req);
+      return cached || new Response('', { status: 503, statusText: 'Offline' });
+    }
+  })());
 });
 
-// Handle background sync for pending health reports
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'sync-health-reports') {
-    event.waitUntil(syncPendingReports());
-  }
-});
-
-async function syncPendingReports() {
-  console.log('[Service Worker] Syncing pending health reports...');
-
-  try {
-    // Notify all clients that sync is starting
-    const clients = await self.clients.matchAll();
-    clients.forEach(client => {
-      client.postMessage({
-        type: 'SYNC_START',
-        message: 'Syncing your saved health reports...'
-      });
-    });
-
-    // The actual sync will be handled by the app's IndexedDB utility
-    // We just trigger it here
-    return Promise.resolve();
-  } catch (error) {
-    console.error('[Service Worker] Sync failed:', error);
-    throw error;
-  }
-}
-
-// Listen for messages from the app
+// Support messages if you use them
 self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-
-  if (event.data && event.data.type === 'CLEAR_CACHE') {
+  if (event.data === 'SKIP_WAITING') self.skipWaiting();
+  if (event.data === 'CLEAR_CACHE') {
     event.waitUntil(
-      caches.keys().then(cacheNames => {
-        return Promise.all(
-          cacheNames.map(cacheName => caches.delete(cacheName))
-        );
-      })
+      caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))))
     );
   }
 });
 
-console.log('[Service Worker] Loaded and ready for offline support!');
+console.log('[SW] Safe, MIME-aware service worker loaded.');
