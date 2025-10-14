@@ -1,9 +1,10 @@
 // Enhanced SDOH-aware billing coder assistant
 // Integrates social determinants of health into coding workflow
 
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { SDOHBillingService } from '../../services/sdohBillingService';
+import { CCMTimeTracker } from './CCMTimeTracker';
 import type {
   EnhancedCodingSuggestion,
   SDOHAssessment,
@@ -310,8 +311,12 @@ export function SDOHCoderAssist({ encounterId, patientId, onSaved }: Props) {
                   <div className="text-2xl font-bold text-blue-600">{ccmTimeTracking.totalMinutes} min</div>
                 </div>
                 <div>
-                  <div className="text-sm text-gray-600">Billable Code</div>
-                  <div className="text-xl font-mono font-semibold">{ccmTimeTracking.billableCode}</div>
+                  <div className="text-sm text-gray-600">Suggested Codes</div>
+                  <div className="text-xl font-mono font-semibold">
+                    {ccmTimeTracking.suggestedCodes.length > 0
+                      ? ccmTimeTracking.suggestedCodes.join(', ')
+                      : 'None'}
+                  </div>
                 </div>
               </div>
 
@@ -321,15 +326,15 @@ export function SDOHCoderAssist({ encounterId, patientId, onSaved }: Props) {
                   {ccmTimeTracking.activities.map((activity, idx) => (
                     <div key={idx} className="flex justify-between items-center py-2 px-3 bg-gray-50 rounded text-sm">
                       <div>
-                        <div className="font-medium">{activity.activityType}</div>
+                        <div className="font-medium">{activity.type}</div>
                         {activity.description && (
                           <div className="text-xs text-gray-600">{activity.description}</div>
                         )}
                       </div>
                       <div className="text-right">
-                        <div className="font-semibold">{activity.minutes} min</div>
+                        <div className="font-semibold">{activity.duration} min</div>
                         <div className="text-xs text-gray-500">
-                          {new Date(activity.timestamp).toLocaleDateString()}
+                          Provider: {activity.provider}
                         </div>
                       </div>
                     </div>
@@ -341,12 +346,17 @@ export function SDOHCoderAssist({ encounterId, patientId, onSaved }: Props) {
                 <div className="text-xs text-gray-600">
                   <span className="font-medium">Status:</span>
                   <span className={`ml-2 px-2 py-1 rounded ${
-                    ccmTimeTracking.meetsThreshold
+                    ccmTimeTracking.isCompliant
                       ? 'bg-green-100 text-green-800'
                       : 'bg-yellow-100 text-yellow-800'
                   }`}>
-                    {ccmTimeTracking.meetsThreshold ? 'Meets Billing Threshold' : 'Below Threshold'}
+                    {ccmTimeTracking.isCompliant ? 'Compliant' : 'Non-Compliant'}
                   </span>
+                  {ccmTimeTracking.complianceNotes && ccmTimeTracking.complianceNotes.length > 0 && (
+                    <div className="mt-2 text-xs text-gray-500">
+                      {ccmTimeTracking.complianceNotes.join('; ')}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -584,6 +594,17 @@ export function SDOHCoderAssist({ encounterId, patientId, onSaved }: Props) {
           </div>
         )}
       </div>
+
+      {/* CCM Time Tracker Modal */}
+      {showTimeTracker && (
+        <CCMTimeTracker
+          encounterId={encounterId}
+          patientId={patientId}
+          onSave={saveCCMTimeTracking}
+          onCancel={() => setShowTimeTracker(false)}
+          initialData={ccmTimeTracking || undefined}
+        />
+      )}
     </div>
   );
 }

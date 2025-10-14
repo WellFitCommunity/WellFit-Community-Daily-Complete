@@ -146,10 +146,13 @@ export class SDOHBillingService {
     // Check compliance
     const { isCompliant, complianceNotes } = this.checkCCMCompliance(activities, billableMinutes);
 
+    const serviceDate = new Date().toISOString().split('T')[0];
+    const serviceMonth = new Date(serviceDate).toISOString().slice(0, 8) + '01'; // First day of month
+
     const timeTracking: CCMTimeTracking = {
       encounterId,
       patientId,
-      serviceDate: new Date().toISOString().split('T')[0],
+      serviceDate,
       activities,
       totalMinutes,
       billableMinutes,
@@ -164,8 +167,8 @@ export class SDOHBillingService {
       .insert({
         encounter_id: encounterId,
         patient_id: patientId,
-        service_date: timeTracking.serviceDate,
-        activities: timeTracking.activities,
+        service_month: serviceMonth,
+        activities: activities,
         total_minutes: totalMinutes,
         billable_minutes: billableMinutes,
         suggested_codes: suggestedCodes,
