@@ -275,29 +275,57 @@ const FhirAiPatientDashboard: React.FC<PatientDashboardProps> = ({ supabaseUrl, 
       setLoading(true);
       setError(null);
 
+      console.log('[PatientDashboard] Loading insights for user:', user.id);
+
       // Get enhanced patient data
       const enhancedData = await fhirService.exportEnhancedPatientData(user.id);
+      console.log('[PatientDashboard] Enhanced data received:', {
+        hasAiInsights: !!enhancedData.aiInsights,
+        hasVitalsTrends: !!enhancedData.aiInsights?.vitalsTrends,
+        trendsCount: enhancedData.aiInsights?.vitalsTrends?.length || 0
+      });
+
       const aiInsights = enhancedData.aiInsights;
+
+      // Check if we have actual data or just defaults
+      // A user has NO data if:
+      // - No AI insights object
+      // - No vitals trends (empty array means no health metrics recorded)
+      // - Last check-in is 'Never'
+      const hasNoData = !aiInsights ||
+        (!aiInsights.vitalsTrends || aiInsights.vitalsTrends.length === 0) &&
+        aiInsights.lastCheckIn === 'Never';
+
+      if (hasNoData) {
+        console.log('[PatientDashboard] No real health data found - showing onboarding');
+        setInsights(null);
+        setHealthMetrics([]);
+        setLastUpdated(new Date());
+        setLoading(false);
+        return;
+      }
+
+      console.log('[PatientDashboard] Health data found, rendering dashboard');
 
       // Transform AI insights into patient-friendly format
       const patientInsights: PatientInsights = {
         overallHealthScore: aiInsights.overallHealthScore,
-        riskLevel: aiInsights.riskAssessment.riskLevel,
-        adherenceScore: aiInsights.adherenceScore,
-        lastCheckIn: aiInsights.lastCheckIn,
-        emergencyAlerts: aiInsights.emergencyAlerts,
-        careRecommendations: aiInsights.careRecommendations,
-        vitalsTrends: aiInsights.vitalsTrends,
+        riskLevel: aiInsights.riskAssessment?.riskLevel || 'LOW',
+        adherenceScore: aiInsights.adherenceScore || 0,
+        lastCheckIn: aiInsights.lastCheckIn || 'Never',
+        emergencyAlerts: aiInsights.emergencyAlerts || [],
+        careRecommendations: aiInsights.careRecommendations || [],
+        vitalsTrends: aiInsights.vitalsTrends || [],
         nextActions: enhancedData.recommendedActions || [],
-        encouragement: generateEncouragement(aiInsights.overallHealthScore, aiInsights.adherenceScore)
+        encouragement: generateEncouragement(aiInsights.overallHealthScore, aiInsights.adherenceScore || 0)
       };
 
       // Transform vitals trends into health metrics
-      const metrics: HealthMetric[] = aiInsights.vitalsTrends.map((trend: any) => ({
+      const metrics: HealthMetric[] = (aiInsights.vitalsTrends || []).map((trend: any) => ({
         name: getMetricDisplayName(trend.metric),
         value: `${trend.current} ${getMetricUnit(trend.metric)}`,
         status: trend.isAbnormal ? 'concerning' : 'good',
-        trend: trend.trend.toLowerCase(),
+        trend: trend.trend?.toLowerCase() || 'stable',
         recommendation: trend.recommendation
       }));
 
@@ -306,8 +334,20 @@ const FhirAiPatientDashboard: React.FC<PatientDashboardProps> = ({ supabaseUrl, 
       setLastUpdated(new Date());
 
     } catch (error) {
-      console.error('Error loading patient insights:', error);
-      setError('Unable to load your health insights. Please try again later.');
+      console.error('[PatientDashboard] Error loading patient insights:', error);
+      console.error('[PatientDashboard] Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
+
+      // If it's a "no data" type error, show the no-data state instead
+      const errorMessage = error instanceof Error ? error.message : '';
+      if (errorMessage.includes('no data') || errorMessage.includes('not found')) {
+        setInsights(null);
+        setHealthMetrics([]);
+      } else {
+        setError('Unable to load your health insights. This may be because you haven\'t completed a health check-in yet.');
+      }
     } finally {
       setLoading(false);
     }
@@ -387,14 +427,80 @@ const FhirAiPatientDashboard: React.FC<PatientDashboardProps> = ({ supabaseUrl, 
 
   if (!insights) {
     return (
-      <Card>
-        <CardContent className="p-6 text-center">
-          <div className="text-gray-500">
-            <p>No health data available yet.</p>
-            <p className="text-sm mt-2">Complete a health check-in to see your personalized insights!</p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-6 max-w-4xl mx-auto p-4">
+        <Card className="bg-gradient-to-br from-blue-50 to-indigo-50">
+          <CardContent className="p-8 text-center">
+            <div className="text-6xl mb-4">🏥</div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+              Welcome to Your Health Dashboard!
+            </h2>
+            <p className="text-gray-700 mb-6 max-w-md mx-auto">
+              Your personalized AI-powered health insights will appear here once you complete your first health check-in.
+            </p>
+
+            <div className="bg-white rounded-lg p-6 mb-6 max-w-lg mx-auto">
+              <h3 className="font-semibold text-gray-900 mb-3">What you'll see here:</h3>
+              <div className="space-y-3 text-left">
+                <div className="flex items-start space-x-3">
+                  <span className="text-2xl">📊</span>
+                  <div>
+                    <div className="font-medium text-gray-900">Your Health Score</div>
+                    <div className="text-sm text-gray-600">Track your overall wellness over time</div>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <span className="text-2xl">💡</span>
+                  <div>
+                    <div className="font-medium text-gray-900">AI-Powered Insights</div>
+                    <div className="text-sm text-gray-600">Personalized recommendations based on your data</div>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <span className="text-2xl">📈</span>
+                  <div>
+                    <div className="font-medium text-gray-900">Health Trends</div>
+                    <div className="text-sm text-gray-600">See how your vitals change over time</div>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <span className="text-2xl">🎯</span>
+                  <div>
+                    <div className="font-medium text-gray-900">Personalized Action Items</div>
+                    <div className="text-sm text-gray-600">Clear next steps to improve your health</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Button
+              size="lg"
+              className="bg-blue-600 hover:bg-blue-700"
+              onClick={() => window.location.href = '/daily-checkin'}
+            >
+              Complete Your First Check-in
+            </Button>
+
+            <p className="text-sm text-gray-500 mt-4">
+              Takes only 2-3 minutes
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Quick tips card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">💡 Getting Started Tips</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 text-sm text-gray-700">
+              <p>• Complete daily check-ins regularly to see meaningful trends</p>
+              <p>• Be honest and accurate with your health data for better insights</p>
+              <p>• Check back daily to see how your health score improves</p>
+              <p>• Follow the AI recommendations to optimize your wellness</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
