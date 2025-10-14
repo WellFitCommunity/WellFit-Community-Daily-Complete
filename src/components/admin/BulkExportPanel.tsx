@@ -104,13 +104,34 @@ const BulkExportPanel: React.FC = () => {
 
       setActiveJobs(prev => [...prev, newJob]);
 
+      // Get current user for audit logging
+      const { data: { user } } = await supabase.auth.getUser();
+      const isPHIExport = ['check_ins', 'risk_assessments', 'users_profiles', 'fhir_resources'].includes(exportType);
+
+      // Log audit entry for PHI exports
+      if (isPHIExport && user) {
+        await supabase.from('audit_logs').insert({
+          user_id: user.id,
+          action: 'phi_export_initiated',
+          resource_type: exportType,
+          resource_id: jobId,
+          metadata: {
+            export_type: exportType,
+            filters: filters,
+            timestamp: new Date().toISOString(),
+            user_email: user.email,
+            user_role: adminRole
+          }
+        });
+      }
+
       // Start the export process
       const { data, error } = await supabase.functions.invoke('bulk-export', {
         body: {
           jobId,
           exportType,
           filters,
-          requestedBy: 'admin'
+          requestedBy: user?.id || 'admin'
         }
       });
 
@@ -172,8 +193,28 @@ const BulkExportPanel: React.FC = () => {
     poll();
   };
 
-  const downloadExport = (job: ExportJob) => {
+  const downloadExport = async (job: ExportJob) => {
     if (job.downloadUrl) {
+      // Log audit entry for PHI export downloads
+      const { data: { user } } = await supabase.auth.getUser();
+      const isPHIExport = ['check_ins', 'risk_assessments', 'users_profiles', 'fhir_resources'].includes(job.type);
+
+      if (isPHIExport && user) {
+        await supabase.from('audit_logs').insert({
+          user_id: user.id,
+          action: 'phi_export_downloaded',
+          resource_type: job.type,
+          resource_id: job.id,
+          metadata: {
+            export_type: job.type,
+            download_timestamp: new Date().toISOString(),
+            user_email: user.email,
+            user_role: adminRole,
+            records_exported: job.totalRecords
+          }
+        });
+      }
+
       const link = document.createElement('a');
       link.href = job.downloadUrl;
       link.download = `wellfit_${job.type}_${job.startedAt.toISOString().split('T')[0]}.${filters.format}${filters.compression ? '.gz' : ''}`;

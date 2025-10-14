@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
+import { getSignedUrl } from "../../utils/getSignedUrl";
 
 interface PhotoUploadProps {
   context: "meal" | "community";
@@ -32,13 +33,14 @@ function safeSegment(s: string) {
 
 // always try to return a signed URL (works for private OR public buckets)
 async function getViewUrl(bucket: string, path: string, expiresInSeconds = 3600) {
-  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, expiresInSeconds);
-  if (error) {
-    // Fall back to public URL (won’t work on private, but harmless to return)
-    const { data: pub } = supabase.storage.from(bucket).getPublicUrl(path);
-    return pub?.publicUrl;
+  // Use the cached version for better performance
+  const signedUrl = await getSignedUrl(path, expiresInSeconds, bucket);
+  if (signedUrl) {
+    return signedUrl;
   }
-  return data?.signedUrl;
+  // Fall back to public URL (won't work on private, but harmless to return)
+  const { data: pub } = supabase.storage.from(bucket).getPublicUrl(path);
+  return pub?.publicUrl;
 }
 
 const PhotoUpload: React.FC<PhotoUploadProps> = ({ context, recordId, onSuccess }) => {

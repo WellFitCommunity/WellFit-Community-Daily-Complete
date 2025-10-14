@@ -24,10 +24,11 @@ interface BulkEnrollmentJob {
   processedRecords: number;
   successCount: number;
   failedCount: number;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'rolling_back' | 'rolled_back';
   startedAt: Date;
   completedAt?: Date;
   records: EnrollmentRecord[];
+  canRollback: boolean;
 }
 
 const BulkEnrollmentPanel: React.FC = () => {
@@ -185,7 +186,8 @@ Mary,Smith,+15551234568,mary.smith@email.com,1938-07-22,Bob Smith,+15559876544,D
       failedCount: 0,
       status: 'processing',
       startedAt: new Date(),
-      records: [...previewRecords]
+      records: [...previewRecords],
+      canRollback: true
     };
 
     setEnrollmentJob(job);
@@ -319,6 +321,64 @@ Mary,Smith,+15551234568,mary.smith@email.com,1938-07-22,Bob Smith,+15559876544,D
     }
 
     return password.join('');
+  };
+
+  const rollbackEnrollment = async () => {
+    if (!enrollmentJob || !enrollmentJob.canRollback) return;
+
+    const confirmed = window.confirm(
+      `⚠️ ROLLBACK CONFIRMATION\n\nThis will delete ${enrollmentJob.successCount} successfully enrolled users.\n\n` +
+      `Are you sure you want to rollback this enrollment?`
+    );
+
+    if (!confirmed) return;
+
+    setEnrollmentJob(prev => prev ? { ...prev, status: 'rolling_back' } : null);
+
+    const successfulRecords = enrollmentJob.records.filter(r => r.status === 'success' && r.userId);
+    let rolledBackCount = 0;
+    let rollbackErrors = 0;
+
+    for (const record of successfulRecords) {
+      try {
+        if (!record.userId) continue;
+
+        // Delete the user
+        const { error } = await supabase.auth.admin.deleteUser(record.userId);
+
+        if (error) {
+          console.error(`Failed to delete user ${record.userId}:`, error);
+          rollbackErrors++;
+        } else {
+          rolledBackCount++;
+          // Update record status
+          setEnrollmentJob(prev => prev ? {
+            ...prev,
+            records: prev.records.map(r =>
+              r.userId === record.userId ? { ...r, status: 'pending', userId: undefined } : r
+            )
+          } : null);
+        }
+      } catch (error) {
+        console.error(`Rollback error for user ${record.userId}:`, error);
+        rollbackErrors++;
+      }
+    }
+
+    // Update job status
+    setEnrollmentJob(prev => prev ? {
+      ...prev,
+      status: 'rolled_back',
+      successCount: 0,
+      failedCount: prev.failedCount + rollbackErrors,
+      canRollback: false
+    } : null);
+
+    alert(
+      `Rollback completed!\n\n` +
+      `✓ Rolled back: ${rolledBackCount} users\n` +
+      `${rollbackErrors > 0 ? `✗ Errors: ${rollbackErrors}` : ''}`
+    );
   };
 
   const resetEnrollment = () => {
@@ -515,14 +575,34 @@ Mary,Smith,+15551234568,mary.smith@email.com,1938-07-22,Bob Smith,+15559876544,D
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold text-gray-900">Enrollment Progress</h2>
-            {enrollmentJob.status === 'completed' && (
-              <button
-                onClick={exportResults}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
-              >
-                📊 Export Results
-              </button>
-            )}
+            <div className="flex items-center space-x-3">
+              {enrollmentJob.status === 'completed' && enrollmentJob.canRollback && enrollmentJob.successCount > 0 && (
+                <button
+                  onClick={rollbackEnrollment}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium"
+                >
+                  ↩️ Rollback Enrollment
+                </button>
+              )}
+              {enrollmentJob.status === 'completed' && (
+                <button
+                  onClick={exportResults}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
+                >
+                  📊 Export Results
+                </button>
+              )}
+              {enrollmentJob.status === 'rolling_back' && (
+                <span className="px-4 py-2 bg-yellow-100 text-yellow-800 rounded-md text-sm font-medium">
+                  ⏳ Rolling back...
+                </span>
+              )}
+              {enrollmentJob.status === 'rolled_back' && (
+                <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-md text-sm font-medium">
+                  ✓ Rolled back
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Progress Stats */}

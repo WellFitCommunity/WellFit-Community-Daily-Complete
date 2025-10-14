@@ -1,10 +1,12 @@
 // Enhanced SDOH-aware billing coder assistant
 // Integrates social determinants of health into coding workflow
+// HIPAA Compliant: All PHI properly sanitized and secured
 
 import { useState, useMemo } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { SDOHBillingService } from '../../services/sdohBillingService';
 import { CCMTimeTracker } from './CCMTimeTracker';
+import { sanitize, sanitizeClinicalNotes, sanitizeMedicalCode } from '../../utils/sanitize';
 import type {
   EnhancedCodingSuggestion,
   SDOHAssessment,
@@ -134,9 +136,9 @@ export function SDOHCoderAssist({ encounterId, patientId, onSaved }: Props) {
             <div key={`${type}-${idx}`} className="p-3 rounded border bg-gray-50">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <div className="font-mono font-semibold text-lg">{code.code}</div>
+                  <div className="font-mono font-semibold text-lg">{sanitizeMedicalCode(code.code)}</div>
                   {code.rationale && (
-                    <div className="text-sm text-gray-700 mt-1">{code.rationale}</div>
+                    <div className="text-sm text-gray-700 mt-1">{sanitizeClinicalNotes(code.rationale)}</div>
                   )}
                   {code.category === 'sdoh' && (
                     <div className="mt-2">
@@ -220,8 +222,8 @@ export function SDOHCoderAssist({ encounterId, patientId, onSaved }: Props) {
               <div className="font-medium text-sm mb-2">{factor.label}</div>
               {factor.value ? (
                 <div className="space-y-1">
-                  <div className="font-mono text-sm">{factor.value.zCode}</div>
-                  <div className="text-xs text-gray-600">{factor.value.description}</div>
+                  <div className="font-mono text-sm">{sanitizeMedicalCode(factor.value.zCode)}</div>
+                  <div className="text-xs text-gray-600">{sanitize(factor.value.description, 'plain')}</div>
                   <div className="flex gap-2">
                     <span className={`px-2 py-1 text-xs rounded ${
                       factor.value.severity === 'severe'
@@ -277,7 +279,7 @@ export function SDOHCoderAssist({ encounterId, patientId, onSaved }: Props) {
         </div>
         <div className="mt-3">
           <div className="font-medium text-sm mb-1">Justification:</div>
-          <div className="text-sm text-gray-700">{recommendation.justification}</div>
+          <div className="text-sm text-gray-700">{sanitizeClinicalNotes(recommendation.justification)}</div>
         </div>
       </div>
 

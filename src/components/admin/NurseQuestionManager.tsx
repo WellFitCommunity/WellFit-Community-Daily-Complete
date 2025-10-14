@@ -48,6 +48,9 @@ const NurseQuestionManager: React.FC = () => {
   const [filterUrgency, setFilterUrgency] = useState<'all' | 'low' | 'medium' | 'high'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [autoSaving, setAutoSaving] = useState(false);
+  const autosaveTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
   // Demo/Training data - replace with real database connection when ready
   const mockQuestions: Question[] = [
@@ -90,6 +93,79 @@ const NurseQuestionManager: React.FC = () => {
   useEffect(() => {
     loadQuestions();
   }, []);
+
+  // Autosave effect
+  useEffect(() => {
+    if (!selectedQuestion || (!responseText && !nurseNotes)) {
+      return;
+    }
+
+    // Clear existing timer
+    if (autosaveTimerRef.current) {
+      clearTimeout(autosaveTimerRef.current);
+    }
+
+    // Set new timer for 3 seconds after last change
+    autosaveTimerRef.current = setTimeout(() => {
+      performAutosave();
+    }, 3000);
+
+    // Cleanup on unmount
+    return () => {
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current);
+      }
+    };
+  }, [responseText, nurseNotes, selectedQuestion]);
+
+  const performAutosave = async () => {
+    if (!selectedQuestion) return;
+
+    setAutoSaving(true);
+    try {
+      // Save draft to localStorage as backup
+      const draftKey = `nurse-draft-${selectedQuestion.id}`;
+      const draft = {
+        questionId: selectedQuestion.id,
+        responseText,
+        nurseNotes,
+        timestamp: new Date().toISOString()
+      };
+      localStorage.setItem(draftKey, JSON.stringify(draft));
+      setLastSaved(new Date());
+    } catch (error) {
+      console.error('Autosave failed:', error);
+    } finally {
+      setAutoSaving(false);
+    }
+  };
+
+  const loadDraft = (questionId: string) => {
+    try {
+      const draftKey = `nurse-draft-${questionId}`;
+      const savedDraft = localStorage.getItem(draftKey);
+      if (savedDraft) {
+        const draft = JSON.parse(savedDraft);
+        setResponseText(draft.responseText || '');
+        setNurseNotes(draft.nurseNotes || '');
+        setLastSaved(new Date(draft.timestamp));
+        return true;
+      }
+    } catch (error) {
+      console.error('Failed to load draft:', error);
+    }
+    return false;
+  };
+
+  const clearDraft = (questionId: string) => {
+    try {
+      const draftKey = `nurse-draft-${questionId}`;
+      localStorage.removeItem(draftKey);
+      setLastSaved(null);
+    } catch (error) {
+      console.error('Failed to clear draft:', error);
+    }
+  };
 
   const loadQuestions = async () => {
     try {
@@ -214,6 +290,18 @@ Format your response as a clear, professional message that can be sent to the pa
     }
   };
 
+  const selectQuestion = (question: Question) => {
+    setSelectedQuestion(question);
+    setShowAiHelp(false);
+    setAiSuggestion(null);
+    // Try to load saved draft
+    const hasDraft = loadDraft(question.id);
+    if (!hasDraft) {
+      setResponseText('');
+      setNurseNotes('');
+    }
+  };
+
   const submitResponse = async () => {
     if (!selectedQuestion || !responseText.trim()) return;
 
@@ -224,6 +312,9 @@ Format your response as a clear, professional message that can be sent to the pa
       if (nurseNotes.trim()) {
         await addNurseNote(selectedQuestion.id, nurseNotes);
       }
+
+      // Clear the draft after successful submission
+      clearDraft(selectedQuestion.id);
 
       // Update question status locally
       setQuestions(prev => prev.map(q =>
@@ -408,11 +499,7 @@ Format your response as a clear, professional message that can be sent to the pa
                       console.error('Failed to claim question:', error);
                     }
                   }
-                  setSelectedQuestion(question);
-                  setResponseText('');
-                  setNurseNotes('');
-                  setAiSuggestion(null);
-                  setShowAiHelp(false);
+                  selectQuestion(question);
                 }}
               >
                 <div className="flex items-start justify-between mb-2">
@@ -559,6 +646,26 @@ Format your response as a clear, professional message that can be sent to the pa
 
               {/* Response Form */}
               <div className="space-y-4">
+                {/* Autosave Indicator */}
+                {(responseText || nurseNotes) && (
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center space-x-2">
+                      {autoSaving ? (
+                        <>
+                          <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                          <span className="text-blue-600">Saving draft...</span>
+                        </>
+                      ) : lastSaved ? (
+                        <>
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <span className="text-green-600">
+                            Draft saved {lastSaved.toLocaleTimeString()}
+                          </span>
+                        </>
+                      ) : null}
+                    </div>
+                  </div>
+                )}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Your Response to Patient
@@ -568,7 +675,7 @@ Format your response as a clear, professional message that can be sent to the pa
                     onChange={(e) => setResponseText(e.target.value)}
                     rows={6}
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    placeholder="Type your response to the patient here..."
+                    placeholder="Type your response to the patient here... (autosaves every 3 seconds)"
                   />
                 </div>
 

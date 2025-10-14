@@ -74,37 +74,66 @@ const PulseOximeter: React.FC<PulseOximeterProps> = ({ onMeasurementComplete, on
       setFlashlightError(null);
 
       // Request camera with flashlight
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: 'environment', // Back camera
-          advanced: [{ torch: true } as any] // Enable flashlight
+      let stream: MediaStream | null = null;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: 'environment', // Back camera
+            advanced: [{ torch: true } as any] // Enable flashlight
+          }
+        });
+      } catch (torchError) {
+        // Fallback: Try without torch constraint if initial request fails
+        console.warn('Camera with torch failed, trying without torch:', torchError);
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: 'environment'
+            }
+          });
+          setFlashlightStatus('unsupported');
+          setFlashlightError('Flashlight unavailable. Continuing without flashlight - ensure good lighting.');
+        } catch (fallbackError) {
+          // Second fallback: Try any camera
+          console.warn('Back camera failed, trying any camera:', fallbackError);
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: true
+          });
+          setFlashlightStatus('unsupported');
+          setFlashlightError('Using front camera. Cover camera completely with finger for best results.');
         }
-      });
+      }
+
+      if (!stream) {
+        throw new Error('Failed to access camera');
+      }
 
       streamRef.current = stream;
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.play();
+        await videoRef.current.play();
       }
 
-      // Enable torch/flashlight
-      const track = stream.getVideoTracks()[0];
-      if ('applyConstraints' in track) {
-        try {
-          await track.applyConstraints({
-            advanced: [{ torch: true } as any]
-          });
-          setFlashlightStatus('on');
-          setFlashlightError(null);
-        } catch (e) {
-          console.warn('Flashlight not supported:', e);
+      // Enable torch/flashlight if not already set to unsupported
+      if (flashlightStatus !== 'unsupported') {
+        const track = stream.getVideoTracks()[0];
+        if ('applyConstraints' in track) {
+          try {
+            await track.applyConstraints({
+              advanced: [{ torch: true } as any]
+            });
+            setFlashlightStatus('on');
+            setFlashlightError(null);
+          } catch (e) {
+            console.warn('Flashlight not supported:', e);
+            setFlashlightStatus('unsupported');
+            setFlashlightError('Flashlight not available on this device. Measurement will continue without it.');
+          }
+        } else {
           setFlashlightStatus('unsupported');
-          setFlashlightError('Flashlight not available on this device. Measurement will continue without it.');
+          setFlashlightError('Flashlight control not supported on this browser.');
         }
-      } else {
-        setFlashlightStatus('unsupported');
-        setFlashlightError('Flashlight control not supported on this browser.');
       }
 
       // Start countdown
@@ -125,7 +154,19 @@ const PulseOximeter: React.FC<PulseOximeterProps> = ({ onMeasurementComplete, on
       setInstruction('Keep your finger still and steady');
     } catch (error) {
       console.error('Error accessing camera:', error);
-      setInstruction('Unable to access camera. Please allow camera access and try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+      // Provide specific guidance based on error type
+      if (errorMessage.includes('Permission') || errorMessage.includes('NotAllowedError')) {
+        setInstruction('Camera permission denied. Please allow camera access in your browser settings and try again.');
+      } else if (errorMessage.includes('NotFoundError') || errorMessage.includes('DevicesNotFoundError')) {
+        setInstruction('No camera found. Please ensure your device has a camera and try again.');
+      } else if (errorMessage.includes('NotReadableError') || errorMessage.includes('TrackStartError')) {
+        setInstruction('Camera is in use by another app. Close other apps using the camera and try again.');
+      } else {
+        setInstruction('Unable to access camera. Please check permissions and try again.');
+      }
+
       setFlashlightStatus('error');
       stopMeasurement();
     }

@@ -3,13 +3,37 @@ import React, { useState } from 'react';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Alert, AlertDescription } from '../ui/alert';
+import { useClaudeRateLimit } from '../../hooks/useClaudeRateLimit';
 
 const ClaudeTestWidget: React.FC = () => {
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [healthTest, setHealthTest] = useState<string>('');
 
+  // UI Rate Limiting
+  const {
+    canMakeRequest,
+    remaining,
+    isLimited,
+    checkRateLimit,
+    remainingDisplay,
+    resetTimeDisplay
+  } = useClaudeRateLimit({
+    userId: 'admin-test-user',
+    onLimitExceeded: (resetTime) => {
+      setTestResult({
+        success: false,
+        message: `⚠️ Rate limit exceeded. Please wait until ${resetTime.toLocaleTimeString()}`
+      });
+    }
+  });
+
   const runConnectionTest = async () => {
+    // Check rate limit before making request
+    if (!checkRateLimit()) {
+      return; // Blocked by rate limit, message already shown
+    }
+
     setIsLoading(true);
     setTestResult(null);
 
@@ -54,6 +78,12 @@ const ClaudeTestWidget: React.FC = () => {
   };
 
   const runHealthDataTest = async () => {
+    // Check rate limit before making request
+    if (!checkRateLimit()) {
+      setHealthTest(`⚠️ Rate limit exceeded. ${remainingDisplay} requests remaining.`);
+      return;
+    }
+
     setIsLoading(true);
     setHealthTest('');
 
@@ -135,6 +165,10 @@ const ClaudeTestWidget: React.FC = () => {
           <p><strong>Model:</strong> claude-3-5-sonnet-20241022</p>
           <p><strong>API Key:</strong> ✅ Configured server-side</p>
           <p><strong>Environment:</strong> {process.env.NODE_ENV}</p>
+          <p><strong>Rate Limit:</strong> {remainingDisplay} requests remaining</p>
+          {isLimited && (
+            <p className="text-red-600"><strong>⚠️ Rate Limited:</strong> Resets at {resetTimeDisplay}</p>
+          )}
         </div>
 
         <Alert>

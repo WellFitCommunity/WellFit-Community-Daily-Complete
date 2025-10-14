@@ -95,6 +95,7 @@ const ApiKeyManager: React.FC = () => {
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [newOrgName, setNewOrgName] = useState('');
   const [generatedKey, setGeneratedKey] = useState<string | null>(null);
+  const [keyMasked, setKeyMasked] = useState(false);
   const [loading, setLoading] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -231,12 +232,18 @@ const ApiKeyManager: React.FC = () => {
 
       addToast('success', 'API Key generated successfully! Copy it now as it will not be shown again.');
       setGeneratedKey(functionData.api_key);
+      setKeyMasked(false);
       setNewOrgName('');
 
       // Focus the generated key for accessibility
       setTimeout(() => {
         generatedKeyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 100);
+
+      // Auto-mask the key after 60 seconds
+      setTimeout(() => {
+        setKeyMasked(true);
+      }, 60000);
 
       await fetchApiKeys(false);
     } catch (error) {
@@ -321,6 +328,10 @@ const ApiKeyManager: React.FC = () => {
     try {
       await navigator.clipboard.writeText(text);
       addToast('success', 'API Key copied to clipboard!');
+      // Auto-mask after copy
+      setTimeout(() => {
+        setKeyMasked(true);
+      }, 3000);
     } catch (error) {
       console.error('Failed to copy to clipboard:', error);
       addToast('error', 'Failed to copy. Please copy manually.');
@@ -578,19 +589,32 @@ const ApiKeyManager: React.FC = () => {
               <span className="text-green-700 font-medium">🎉 New API Key Generated!</span>
             </div>
             <div className="bg-white p-3 rounded border font-mono text-sm break-all select-all">
-              {generatedKey}
+              {keyMasked ? '••••••••••••••••••••••••••••••••••••••••' : generatedKey}
             </div>
             <div className="flex justify-between items-center mt-3">
               <p className="text-green-700 text-sm">
-                ⚠️ Copy this key now! It will not be displayed again for security reasons.
+                {keyMasked
+                  ? '🔒 Key has been masked for security. It cannot be retrieved again.'
+                  : '⚠️ Copy this key now! It will be auto-masked in 60 seconds and cannot be retrieved again.'}
               </p>
-              <button
-                onClick={() => copyToClipboard(generatedKey)}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-1"
-              >
-                <span>📋</span>
-                <span>Copy Key</span>
-              </button>
+              {!keyMasked && (
+                <button
+                  onClick={() => copyToClipboard(generatedKey)}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-1"
+                >
+                  <span>📋</span>
+                  <span>Copy Key</span>
+                </button>
+              )}
+              {keyMasked && (
+                <button
+                  onClick={() => setGeneratedKey(null)}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-1"
+                >
+                  <span>✕</span>
+                  <span>Dismiss</span>
+                </button>
+              )}
             </div>
           </div>
         )}

@@ -17,6 +17,7 @@ import type {
 import { CCM_CODES } from '../types/sdohBilling';
 import type { CodingSuggestion } from '../types/billing';
 import { BillingService } from './billingService';
+import { FeeScheduleService } from './feeScheduleService';
 
 export class SDOHBillingService {
   // Z-Code and SDOH Assessment
@@ -281,8 +282,19 @@ export class SDOHBillingService {
       employment: null
     };
 
+    // CRITICAL FIX: Handle empty check-ins data
+    if (!checkIns || checkIns.length === 0) {
+      console.warn('No check-in data available for SDOH analysis - returning empty factors');
+      return factors;
+    }
+
     // Analyze check-in data for SDOH indicators
     checkIns.forEach(checkIn => {
+      // Safety checks for missing data
+      if (!checkIn) {
+        console.warn('Null check-in encountered, skipping');
+        return;
+      }
       // Look for housing indicators
       if (checkIn.housing_situation && checkIn.housing_situation !== 'stable') {
         factors.housing = {
@@ -295,19 +307,19 @@ export class SDOHBillingService {
         };
       }
 
-      // Look for food security indicators
-      if (checkIn.food_security === 'insecure' || checkIn.meals_missed > 0) {
+      // Look for food security indicators (with null safety)
+      if (checkIn.food_security === 'insecure' || (checkIn.meals_missed != null && checkIn.meals_missed > 0)) {
         factors.nutrition = {
           zCode: 'Z59.3',
           description: 'Food insecurity',
-          severity: checkIn.meals_missed > 2 ? 'severe' : 'moderate',
+          severity: (checkIn.meals_missed || 0) > 2 ? 'severe' : 'moderate',
           impact: 'high',
           documented: true,
           source: 'patient_checkin'
         };
       }
 
-      // Look for transportation barriers
+      // Look for transportation barriers (with null safety)
       if (checkIn.transportation_barriers === true) {
         factors.transportation = {
           zCode: 'Z59.8',
@@ -319,8 +331,8 @@ export class SDOHBillingService {
         };
       }
 
-      // Look for social isolation indicators
-      if (checkIn.social_isolation_score > 7) {
+      // Look for social isolation indicators (with null safety)
+      if (checkIn.social_isolation_score != null && checkIn.social_isolation_score > 7) {
         factors.social = {
           zCode: 'Z60.2',
           description: 'Social isolation',
@@ -383,8 +395,8 @@ export class SDOHBillingService {
     // Add CCM CPT codes based on assessment
     const ccmCodes = this.generateCCMCodes(sdohAssessment);
 
-    // Calculate expected reimbursement
-    const expectedReimbursement = this.calculateExpectedReimbursement(ccmCodes);
+    // Calculate expected reimbursement (now async)
+    const expectedReimbursement = await this.calculateExpectedReimbursement(ccmCodes);
 
     return {
       medicalCodes: {
@@ -505,11 +517,24 @@ export class SDOHBillingService {
     return codes;
   }
 
-  private static calculateExpectedReimbursement(codes: any[]): number {
-    return codes.reduce((total, code) => {
-      const codeData = CCM_CODES[code.code as keyof typeof CCM_CODES];
-      return total + (codeData?.baseReimbursement || 0);
-    }, 0);
+  private static async calculateExpectedReimbursement(codes: any[]): Promise<number> {
+    // Use database fee schedule service instead of hardcoded rates
+    const codeList = codes.map(c => ({ code: c.code, units: 1 }));
+    const { total } = await FeeScheduleService.calculateExpectedReimbursement(
+      codeList,
+      'cpt',
+      'medicare'
+    );
+
+    // Fallback to hardcoded if database unavailable
+    if (total === 0 && codes.length > 0) {
+      return codes.reduce((sum, code) => {
+        const codeData = CCM_CODES[code.code as keyof typeof CCM_CODES];
+        return sum + (codeData?.baseReimbursement || 0);
+      }, 0);
+    }
+
+    return total;
   }
 
   private static generateCCMJustification(assessment: SDOHAssessment): string {
