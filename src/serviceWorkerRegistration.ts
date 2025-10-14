@@ -27,7 +27,7 @@ async function hardUnregister() {
       navigator.serviceWorker.controller.postMessage('SKIP_WAITING');
     }
     // Soft reload to escape controlled state
-    setTimeout(() => location.reload(), 10);
+    setTimeout(() => window.location.reload(), 10);
   } catch (e) {
     // no-op
     // console.warn('[SW] Unregister error', e);
