@@ -196,16 +196,15 @@ describe('useFHIRMapping', () => {
     mockService.generateMapping.mockResolvedValue(mockMapping);
 
     const { result } = renderHook(() => useFHIRMapping());
-    const [, actions] = result.current;
 
     // Set up initial data
     act(() => {
-      actions.setSourceData('{"patient": {"name": "John"}}');
-      actions.setSourceType('JSON');
+      result.current[1].setSourceData('{"patient": {"name": "John"}}');
+      result.current[1].setSourceType('JSON');
     });
 
     await act(async () => {
-      await actions.generateMapping();
+      await result.current[1].generateMapping();
     });
 
     const [state] = result.current;
@@ -218,14 +217,13 @@ describe('useFHIRMapping', () => {
     mockService.generateMapping.mockRejectedValue(new Error('API error'));
 
     const { result } = renderHook(() => useFHIRMapping());
-    const [, actions] = result.current;
 
     act(() => {
-      actions.setSourceData('{"test": "data"}');
+      result.current[1].setSourceData('{"test": "data"}');
     });
 
     await act(async () => {
-      await actions.generateMapping();
+      await result.current[1].generateMapping();
     });
 
     const [state] = result.current;
@@ -260,14 +258,13 @@ describe('useFHIRMapping', () => {
     mockService.generateMapping.mockResolvedValue(mockMapping);
 
     const { result } = renderHook(() => useFHIRMapping());
-    const [, actions] = result.current;
 
     act(() => {
-      actions.setSourceData('{"patient": {"name": "John"}}');
+      result.current[1].setSourceData('{"patient": {"name": "John"}}');
     });
 
     await act(async () => {
-      await actions.generateMapping();
+      await result.current[1].generateMapping();
     });
 
     const [state] = result.current;
@@ -293,21 +290,20 @@ describe('useFHIRMapping', () => {
     mockService.generateMapping.mockResolvedValue(mockMapping);
 
     const { result } = renderHook(() => useFHIRMapping());
-    const [, actions] = result.current;
 
     act(() => {
-      actions.setSourceData('{"patient": {"name": "John", "age": 30}}');
+      result.current[1].setSourceData('{"patient": {"name": "John", "age": 30}}');
     });
 
     await act(async () => {
-      await actions.generateMapping();
+      await result.current[1].generateMapping();
     });
 
     const [state] = result.current;
     expect(state.warnings).toContain('1 fields could not be mapped to FHIR resources.');
   });
 
-  it('should download mapping', () => {
+  it('should download mapping', async () => {
     const mockMapping = {
       id: 'test-mapping',
       sourceName: 'Test Data',
@@ -323,22 +319,22 @@ describe('useFHIRMapping', () => {
       }
     };
 
+    mockService.generateMapping.mockResolvedValue(mockMapping);
+
     const { result } = renderHook(() => useFHIRMapping());
-    const [, actions] = result.current;
 
-    // Set up mapping first
+    // Set up mapping by actually generating it
     act(() => {
-      actions.setSourceData('test');
-      actions.setSourceType('JSON');
+      result.current[1].setSourceData('{"test": "data"}');
+      result.current[1].setSourceType('JSON');
     });
 
-    // Manually set mapping for testing
-    act(() => {
-      (result.current[0] as any).generatedMapping = mockMapping;
+    await act(async () => {
+      await result.current[1].generateMapping();
     });
 
     act(() => {
-      actions.downloadMapping();
+      result.current[1].downloadMapping();
     });
 
     expect(mockService.downloadMapping).toHaveBeenCalledWith(mockMapping);
@@ -377,36 +373,91 @@ describe('useFHIRMapping', () => {
     expect(state.errors).toHaveLength(0);
   });
 
-  it('should clear warnings', () => {
-    const { result } = renderHook(() => useFHIRMapping());
-    const [, actions] = result.current;
+  it('should clear warnings', async () => {
+    // Create a mapping with low confidence to trigger warnings
+    const mockMapping = {
+      id: 'test-mapping',
+      sourceName: 'Test Data',
+      sourceType: 'JSON' as const,
+      fhirVersion: 'R4' as const,
+      mappingRules: [
+        {
+          sourceField: 'patient.name',
+          sourceType: 'string',
+          fhirResource: 'Patient',
+          fhirPath: 'Patient.name.given',
+          confidence: 50 // Low confidence to trigger warning
+        }
+      ],
+      validationResults: {
+        totalFields: 1,
+        mappedFields: 1,
+        unmappedFields: [],
+        errors: [],
+        confidence: 50
+      }
+    };
 
-    // Simulate adding a warning
+    mockService.generateMapping.mockResolvedValue(mockMapping);
+
+    const { result } = renderHook(() => useFHIRMapping());
+
+    // Generate mapping to add warnings
     act(() => {
-      (result.current[0] as any).warnings = ['Test warning'];
+      result.current[1].setSourceData('{"patient": {"name": "John"}}');
     });
 
+    await act(async () => {
+      await result.current[1].generateMapping();
+    });
+
+    // Verify warnings were added
+    expect(result.current[0].warnings.length).toBeGreaterThan(0);
+
     act(() => {
-      actions.clearWarnings();
+      result.current[1].clearWarnings();
     });
 
     const [state] = result.current;
     expect(state.warnings).toHaveLength(0);
   });
 
-  it('should reset to initial state', () => {
-    const { result } = renderHook(() => useFHIRMapping());
-    const [, actions] = result.current;
+  it('should reset to initial state', async () => {
+    const mockMapping = {
+      id: 'test-mapping',
+      sourceName: 'Test Data',
+      sourceType: 'CSV' as const,
+      fhirVersion: 'R4' as const,
+      mappingRules: [],
+      validationResults: {
+        totalFields: 0,
+        mappedFields: 0,
+        unmappedFields: [],
+        errors: [],
+        confidence: 0
+      }
+    };
 
-    // Modify state
+    mockService.generateMapping.mockResolvedValue(mockMapping);
+
+    const { result } = renderHook(() => useFHIRMapping());
+
+    // Modify state significantly
     act(() => {
-      actions.setSourceData('test data');
-      actions.setSourceType('CSV');
+      result.current[1].setSourceData('test data');
+      result.current[1].setSourceType('CSV');
     });
+
+    await act(async () => {
+      await result.current[1].generateMapping();
+    });
+
+    // Verify state was modified
+    expect(result.current[0].generatedMapping).not.toBeNull();
 
     // Reset
     act(() => {
-      actions.reset();
+      result.current[1].reset();
     });
 
     const [state] = result.current;

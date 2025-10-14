@@ -41,12 +41,8 @@ export const useFHIRMapping = (): [FHIRMappingState, FHIRMappingActions] => {
   }, []);
 
   const addError = useCallback((error: string) => {
-    updateState({ errors: [...state.errors, error] });
-  }, [state.errors, updateState]);
-
-  const addWarning = useCallback((warning: string) => {
-    updateState({ warnings: [...state.warnings, warning] });
-  }, [state.warnings, updateState]);
+    setState(prev => ({ ...prev, errors: [...prev.errors, error] }));
+  }, []);
 
   const setSourceData = useCallback((data: string) => {
     updateState({ sourceData: data, errors: [], warnings: [] });
@@ -105,27 +101,31 @@ export const useFHIRMapping = (): [FHIRMappingState, FHIRMappingActions] => {
 
     try {
       const mapping = await fhirMappingService.generateMapping(state.sourceData, state.sourceType);
-      updateState({
-        generatedMapping: mapping,
-        isAnalyzing: false
-      });
+
+      const newWarnings: string[] = [];
 
       // Add warnings for low confidence mappings
       const lowConfidenceRules = mapping.mappingRules.filter(rule => rule.confidence < 60);
       if (lowConfidenceRules.length > 0) {
-        addWarning(`${lowConfidenceRules.length} mapping rules have low confidence scores. Please review these carefully.`);
+        newWarnings.push(`${lowConfidenceRules.length} mapping rules have low confidence scores. Please review these carefully.`);
       }
 
       // Add warnings for unmapped fields
       if (mapping.validationResults?.unmappedFields && mapping.validationResults.unmappedFields.length > 0) {
-        addWarning(`${mapping.validationResults.unmappedFields.length} fields could not be mapped to FHIR resources.`);
+        newWarnings.push(`${mapping.validationResults.unmappedFields.length} fields could not be mapped to FHIR resources.`);
       }
+
+      updateState({
+        generatedMapping: mapping,
+        isAnalyzing: false,
+        warnings: newWarnings
+      });
 
     } catch (error) {
       updateState({ isAnalyzing: false });
       addError(error instanceof Error ? error.message : 'Failed to generate mapping');
     }
-  }, [state.sourceData, state.sourceType, updateState, addError, addWarning]);
+  }, [state.sourceData, state.sourceType, updateState, addError]);
 
   const downloadMapping = useCallback(() => {
     if (!state.generatedMapping) {

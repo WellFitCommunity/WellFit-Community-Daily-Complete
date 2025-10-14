@@ -43,6 +43,7 @@
     "@testing-library/user-event": "^14.6.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/file-saver": "^2.0.7",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20.16.11",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.3.0",

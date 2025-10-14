@@ -1,6 +1,6 @@
 // src/components/PulseOximeter.tsx
 import React, { useState, useRef, useEffect } from 'react';
-import { Heart, Activity, X } from 'lucide-react';
+import { Heart, Activity, X, Flashlight, FlashlightOff, AlertCircle } from 'lucide-react';
 
 interface PulseOximeterProps {
   onMeasurementComplete: (heartRate: number, spo2: number) => void;
@@ -14,6 +14,8 @@ const PulseOximeter: React.FC<PulseOximeterProps> = ({ onMeasurementComplete, on
   const [countdown, setCountdown] = useState<number | null>(null);
   const [progress, setProgress] = useState(0);
   const [instruction, setInstruction] = useState('Place your finger over the back camera and flashlight');
+  const [flashlightStatus, setFlashlightStatus] = useState<'off' | 'on' | 'unsupported' | 'error'>('off');
+  const [flashlightError, setFlashlightError] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -41,10 +43,36 @@ const PulseOximeter: React.FC<PulseOximeterProps> = ({ onMeasurementComplete, on
       animationFrameRef.current = null;
     }
     setIsActive(false);
+    setFlashlightStatus('off');
+  };
+
+  const toggleFlashlight = async (enable: boolean) => {
+    if (!streamRef.current) return;
+
+    const track = streamRef.current.getVideoTracks()[0];
+    if (!track || !('applyConstraints' in track)) {
+      setFlashlightStatus('unsupported');
+      setFlashlightError('Flashlight control not supported on this device/browser');
+      return;
+    }
+
+    try {
+      await track.applyConstraints({
+        advanced: [{ torch: enable } as any]
+      });
+      setFlashlightStatus(enable ? 'on' : 'off');
+      setFlashlightError(null);
+    } catch (e) {
+      console.error('Flashlight toggle error:', e);
+      setFlashlightStatus('error');
+      setFlashlightError('Failed to control flashlight. It may not be supported on this device.');
+    }
   };
 
   const startMeasurement = async () => {
     try {
+      setFlashlightError(null);
+
       // Request camera with flashlight
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
@@ -67,9 +95,16 @@ const PulseOximeter: React.FC<PulseOximeterProps> = ({ onMeasurementComplete, on
           await track.applyConstraints({
             advanced: [{ torch: true } as any]
           });
+          setFlashlightStatus('on');
+          setFlashlightError(null);
         } catch (e) {
-          console.log('Flashlight not supported, continuing anyway');
+          console.warn('Flashlight not supported:', e);
+          setFlashlightStatus('unsupported');
+          setFlashlightError('Flashlight not available on this device. Measurement will continue without it.');
         }
+      } else {
+        setFlashlightStatus('unsupported');
+        setFlashlightError('Flashlight control not supported on this browser.');
       }
 
       // Start countdown
@@ -91,6 +126,7 @@ const PulseOximeter: React.FC<PulseOximeterProps> = ({ onMeasurementComplete, on
     } catch (error) {
       console.error('Error accessing camera:', error);
       setInstruction('Unable to access camera. Please allow camera access and try again.');
+      setFlashlightStatus('error');
       stopMeasurement();
     }
   };
@@ -349,6 +385,53 @@ const PulseOximeter: React.FC<PulseOximeterProps> = ({ onMeasurementComplete, on
 
         {isActive && (
           <div className="space-y-4">
+            {/* Flashlight Status Indicator */}
+            <div className={`flex items-center justify-between p-3 rounded-lg border-2 ${
+              flashlightStatus === 'on' ? 'bg-yellow-50 border-yellow-400' :
+              flashlightStatus === 'unsupported' ? 'bg-gray-50 border-gray-300' :
+              flashlightStatus === 'error' ? 'bg-orange-50 border-orange-400' :
+              'bg-gray-50 border-gray-300'
+            }`}>
+              <div className="flex items-center gap-2">
+                {flashlightStatus === 'on' ? (
+                  <Flashlight className="text-yellow-600" size={20} />
+                ) : (
+                  <FlashlightOff className="text-gray-500" size={20} />
+                )}
+                <span className="text-sm font-medium text-gray-800">
+                  Flashlight: {
+                    flashlightStatus === 'on' ? '✓ ON' :
+                    flashlightStatus === 'off' ? 'OFF' :
+                    flashlightStatus === 'unsupported' ? 'Not Supported' :
+                    'Error'
+                  }
+                </span>
+              </div>
+
+              {/* Manual Toggle Button */}
+              {flashlightStatus !== 'unsupported' && (
+                <button
+                  onClick={() => toggleFlashlight(flashlightStatus !== 'on')}
+                  className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                    flashlightStatus === 'on'
+                      ? 'bg-yellow-200 text-yellow-800 hover:bg-yellow-300'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                  aria-label={flashlightStatus === 'on' ? 'Turn off flashlight' : 'Turn on flashlight'}
+                >
+                  {flashlightStatus === 'on' ? 'Turn Off' : 'Turn On'}
+                </button>
+              )}
+            </div>
+
+            {/* Flashlight Error Message */}
+            {flashlightError && (
+              <div className="bg-orange-50 border-2 border-orange-300 rounded-lg p-3 flex items-start gap-2">
+                <AlertCircle className="text-orange-600 flex-shrink-0 mt-0.5" size={18} />
+                <p className="text-sm text-orange-800">{flashlightError}</p>
+              </div>
+            )}
+
             {countdown !== null && countdown > 0 && (
               <div className="text-center">
                 <div className="text-6xl font-bold text-blue-600 mb-2">{countdown}</div>
