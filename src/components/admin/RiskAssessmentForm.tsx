@@ -495,6 +495,96 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
             />
           </div>
 
+          {/* AI Analysis Section */}
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-purple-900 flex items-center">
+                <span className="mr-2">🤖</span>
+                AI-Assisted Risk Analysis
+              </h3>
+              <Button
+                type="button"
+                onClick={runAIAnalysis}
+                disabled={analyzingAI || loading}
+                className="bg-purple-600 hover:bg-purple-700 text-white"
+              >
+                {analyzingAI ? 'Analyzing...' : 'Run AI Analysis'}
+              </Button>
+            </div>
+
+            {aiAnalysis && (
+              <div className="space-y-4 mt-4">
+                <div className="bg-white rounded-lg p-4 border border-purple-100">
+                  <h4 className="font-semibold text-gray-900 mb-2">AI Recommendations:</h4>
+
+                  <div className="space-y-3">
+                    <div>
+                      <span className="text-sm font-medium text-gray-700">Suggested Risk Level: </span>
+                      <Badge className={getRiskLevelColor(aiAnalysis.suggestedRiskLevel)}>
+                        {aiAnalysis.suggestedRiskLevel}
+                      </Badge>
+                    </div>
+
+                    {aiAnalysis.riskFactors.length > 0 && (
+                      <div>
+                        <span className="text-sm font-medium text-gray-700 block mb-1">
+                          Additional Risk Factors:
+                        </span>
+                        <div className="flex flex-wrap gap-2">
+                          {aiAnalysis.riskFactors.map((factor, idx) => (
+                            <Badge key={idx} variant="outline" className="bg-orange-50">
+                              {factor}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {aiAnalysis.recommendations.length > 0 && (
+                      <div>
+                        <span className="text-sm font-medium text-gray-700 block mb-1">
+                          Recommended Actions:
+                        </span>
+                        <div className="flex flex-wrap gap-2">
+                          {aiAnalysis.recommendations.map((rec, idx) => (
+                            <Badge key={idx} variant="outline" className="bg-blue-50">
+                              {rec}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {aiAnalysis.clinicalNotes && (
+                      <div>
+                        <span className="text-sm font-medium text-gray-700 block mb-1">
+                          Clinical Notes:
+                        </span>
+                        <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
+                          {aiAnalysis.clinicalNotes}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  <Button
+                    type="button"
+                    onClick={applyAISuggestions}
+                    disabled={loading}
+                    className="mt-4 w-full bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    Apply AI Suggestions to Assessment
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            <p className="text-xs text-gray-600">
+              AI analysis uses Claude to review risk scores and patient data.
+              Healthcare professional review and approval is always required.
+            </p>
+          </div>
+
           {/* Risk Factors */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Identified Risk Factors</label>

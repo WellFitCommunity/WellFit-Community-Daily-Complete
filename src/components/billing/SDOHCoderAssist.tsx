@@ -293,13 +293,64 @@ export function SDOHCoderAssist({ encounterId, patientId, onSaved }: Props) {
       </div>
 
       {recommendation.eligible && (
-        <div className="bg-blue-50 p-4 rounded">
+        <div className="bg-blue-50 p-4 rounded space-y-4">
           <button
             onClick={startCCMTimeTracking}
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
             Start CCM Time Tracking
           </button>
+
+          {ccmTimeTracking && (
+            <div className="bg-white border border-blue-200 rounded-lg p-4 mt-4">
+              <h5 className="font-semibold text-blue-900 mb-3">CCM Time Tracking Summary</h5>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <div className="text-sm text-gray-600">Total Time</div>
+                  <div className="text-2xl font-bold text-blue-600">{ccmTimeTracking.totalMinutes} min</div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-600">Billable Code</div>
+                  <div className="text-xl font-mono font-semibold">{ccmTimeTracking.billableCode}</div>
+                </div>
+              </div>
+
+              {ccmTimeTracking.activities && ccmTimeTracking.activities.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-sm font-medium text-gray-700 mb-2">Activities:</div>
+                  {ccmTimeTracking.activities.map((activity, idx) => (
+                    <div key={idx} className="flex justify-between items-center py-2 px-3 bg-gray-50 rounded text-sm">
+                      <div>
+                        <div className="font-medium">{activity.activityType}</div>
+                        {activity.description && (
+                          <div className="text-xs text-gray-600">{activity.description}</div>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <div className="font-semibold">{activity.minutes} min</div>
+                        <div className="text-xs text-gray-500">
+                          {new Date(activity.timestamp).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-4 pt-3 border-t">
+                <div className="text-xs text-gray-600">
+                  <span className="font-medium">Status:</span>
+                  <span className={`ml-2 px-2 py-1 rounded ${
+                    ccmTimeTracking.meetsThreshold
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {ccmTimeTracking.meetsThreshold ? 'Meets Billing Threshold' : 'Below Threshold'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

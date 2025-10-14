@@ -584,6 +584,96 @@ const FhirAiDashboard: React.FC<DashboardProps> = ({ supabaseUrl, supabaseKey })
 
             <PredictiveAlerts alerts={state.populationDashboard?.predictiveAlerts} />
           </div>
+
+          {/* Alert Configuration */}
+          <Card className="bg-gradient-to-br from-purple-50 to-blue-50 border-purple-200">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <span className="mr-2">🔔</span>
+                Alert Configuration
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
+                <div>
+                  <h4 className="font-semibold text-gray-900">Real-Time Monitoring</h4>
+                  <p className="text-sm text-gray-600">Enable continuous monitoring and instant alerts</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={alertConfig.enableRealTime}
+                    onChange={(e) => setAlertConfig(prev => ({ ...prev, enableRealTime: e.target.checked }))}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
+
+              <div className="p-4 bg-white rounded-lg border space-y-3">
+                <label className="block">
+                  <span className="font-semibold text-gray-900 block mb-2">Critical Threshold</span>
+                  <p className="text-sm text-gray-600 mb-3">
+                    Alert when risk score reaches this threshold (0-100)
+                  </p>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="5"
+                    value={alertConfig.criticalThreshold}
+                    onChange={(e) => setAlertConfig(prev => ({ ...prev, criticalThreshold: parseInt(e.target.value) }))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <div className="flex justify-between items-center mt-2">
+                    <span className="text-sm text-gray-500">Low (0)</span>
+                    <span className="text-2xl font-bold text-blue-600">{alertConfig.criticalThreshold}</span>
+                    <span className="text-sm text-gray-500">Critical (100)</span>
+                  </div>
+                </label>
+              </div>
+
+              <div className="p-4 bg-white rounded-lg border space-y-3">
+                <h4 className="font-semibold text-gray-900">Notification Methods</h4>
+                <div className="space-y-2">
+                  {[
+                    { value: 'dashboard', label: 'In-Dashboard Notifications', icon: '📊' },
+                    { value: 'email', label: 'Email Alerts', icon: '📧' },
+                    { value: 'sms', label: 'SMS Notifications', icon: '📱' },
+                    { value: 'webhook', label: 'Webhook Integration', icon: '🔗' }
+                  ].map(method => (
+                    <label key={method.value} className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={alertConfig.notificationMethods.includes(method.value)}
+                        onChange={(e) => {
+                          const methods = e.target.checked
+                            ? [...alertConfig.notificationMethods, method.value]
+                            : alertConfig.notificationMethods.filter(m => m !== method.value);
+                          setAlertConfig(prev => ({ ...prev, notificationMethods: methods }));
+                        }}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                      <span className="text-lg">{method.icon}</span>
+                      <span className="text-sm font-medium text-gray-900">{method.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  <span className={`inline-flex items-center justify-center w-2 h-2 rounded-full ${alertConfig.enableRealTime ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></span>
+                  <span className="text-sm font-medium text-gray-700">
+                    Status: {alertConfig.enableRealTime ? 'Active Monitoring' : 'Inactive'}
+                  </span>
+                </div>
+                <span className="text-xs text-gray-500">
+                  {alertConfig.notificationMethods.length} method{alertConfig.notificationMethods.length !== 1 ? 's' : ''} enabled
+                </span>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="patients" className="space-y-6">

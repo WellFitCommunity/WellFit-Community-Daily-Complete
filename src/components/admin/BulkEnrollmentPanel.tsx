@@ -363,6 +363,20 @@ Mary,Smith,+15551234568,mary.smith@email.com,1938-07-22,Bob Smith,+15559876544,D
     }
   };
 
+  // Check admin permissions
+  if (!adminRole || (adminRole !== 'super_admin' && adminRole !== 'admin')) {
+    return (
+      <div className="max-w-6xl mx-auto p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <span className="text-4xl mb-4 block">🔒</span>
+          <h2 className="text-xl font-semibold text-red-800 mb-2">Access Denied</h2>
+          <p className="text-red-600">You do not have permission to access bulk enrollment.</p>
+          <p className="text-sm text-red-500 mt-2">Required role: Admin or Super Admin</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
       {/* Back Button */}

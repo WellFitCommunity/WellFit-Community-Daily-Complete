@@ -30,6 +30,10 @@ interface SelfReportRow {
   bp_diastolic?: number | null;
   pulse?: number | null;
   glucose?: number | null;
+  blood_oxygen?: number | null;
+  weight?: number | null;
+  physical_activity?: string | null;
+  social_engagement?: string | null;
   submitted_by: string | null; // inferred for now
   entry_type: string;
   source_type: SourceType; // derived client-side
@@ -178,6 +182,10 @@ const ReportsPrintPage: React.FC = () => {
           bp_diastolic,
           pulse,
           glucose,
+          blood_oxygen,
+          weight,
+          physical_activity,
+          social_engagement,
           submitted_by,
           source_type,
         };
@@ -258,6 +266,10 @@ const ReportsPrintPage: React.FC = () => {
         bp_diastolic: r.bp_diastolic ?? '',
         pulse: r.pulse ?? '',
         glucose: r.glucose ?? '',
+        blood_oxygen: r.blood_oxygen ?? '',
+        weight: r.weight ?? '',
+        physical_activity: r.physical_activity ?? '',
+        social_engagement: r.social_engagement ?? '',
         symptoms: r.symptoms ?? '',
         activity_description: r.activity_description ?? '',
         source_type: r.source_type,
@@ -266,7 +278,8 @@ const ReportsPrintPage: React.FC = () => {
       }));
       const reportsCsv = arrayToCsv(reportsData, [
         'created_at', 'user_id', 'mood', 'bp_systolic', 'bp_diastolic',
-        'pulse', 'glucose', 'symptoms', 'activity_description', 'source_type', 'entry_type', 'id'
+        'pulse', 'glucose', 'blood_oxygen', 'weight', 'physical_activity',
+        'social_engagement', 'symptoms', 'activity_description', 'source_type', 'entry_type', 'id'
       ]);
 
       // Combine all data into one CSV with section headers
@@ -399,6 +412,10 @@ const ReportsPrintPage: React.FC = () => {
                   <th className="border px-2 py-1 text-left">BP (Sys/Dia)</th>
                   <th className="border px-2 py-1 text-left">Pulse</th>
                   <th className="border px-2 py-1 text-left">Glucose</th>
+                  <th className="border px-2 py-1 text-left">SpO2 (%)</th>
+                  <th className="border px-2 py-1 text-left">Weight (lbs)</th>
+                  <th className="border px-2 py-1 text-left">Physical Activity</th>
+                  <th className="border px-2 py-1 text-left">Social Engagement</th>
                   <th className="border px-2 py-1 text-left">Symptoms</th>
                   <th className="border px-2 py-1 text-left">Activity</th>
                   <th className="border px-2 py-1 text-left">Source</th>
@@ -415,6 +432,10 @@ const ReportsPrintPage: React.FC = () => {
                     </td>
                     <td className="border px-2 py-1">{r.pulse ?? '—'}</td>
                     <td className="border px-2 py-1">{r.glucose ?? '—'}</td>
+                    <td className="border px-2 py-1">{r.blood_oxygen ?? '—'}</td>
+                    <td className="border px-2 py-1">{r.weight ?? '—'}</td>
+                    <td className="border px-2 py-1 whitespace-pre-wrap">{r.physical_activity || '—'}</td>
+                    <td className="border px-2 py-1 whitespace-pre-wrap">{r.social_engagement || '—'}</td>
                     <td className="border px-2 py-1 whitespace-pre-wrap">{r.symptoms || '—'}</td>
                     <td className="border px-2 py-1 whitespace-pre-wrap">{r.activity_description || '—'}</td>
                     <td className="border px-2 py-1">{r.source_type === 'self' ? 'Self' : 'Staff'}</td>

@@ -2,12 +2,6 @@
 // Enable offline support for rural healthcare areas with poor connectivity
 // Safe guards: never register on preview domains to avoid MIME issues
 
-const isLocalhost = Boolean(
-  window.location.hostname === 'localhost' ||
-  window.location.hostname === '[::1]' ||
-  /^127(?:\.(?:25[0-5]|2[0-4]\d|[01]?\d?\d)){3}$/.test(window.location.hostname)
-);
-
 // Feature flag: Enable by default for production (rural healthcare needs offline support)
 // Can be disabled with REACT_APP_ENABLE_SW=false if needed
 const ENABLE_SW = String(process.env.REACT_APP_ENABLE_SW || 'true').toLowerCase() !== 'false';

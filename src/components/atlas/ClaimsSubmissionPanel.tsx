@@ -25,6 +25,7 @@ export const ClaimsSubmissionPanel: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{ success: boolean; message: string; claimId?: string } | null>(null);
+  const [x12Content, setX12Content] = useState<string | null>(null);
 
   useEffect(() => {
     loadLookupData();
@@ -43,6 +44,32 @@ export const ClaimsSubmissionPanel: React.FC = () => {
       console.error('Failed to load lookup data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const downloadX12File = () => {
+    if (!x12Content || !result?.claimId) return;
+
+    const blob = new Blob([x12Content], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `claim_${result.claimId}_837P.x12`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  };
+
+  const copyX12ToClipboard = async () => {
+    if (!x12Content) return;
+
+    try {
+      await navigator.clipboard.writeText(x12Content);
+      alert('X12 content copied to clipboard!');
+    } catch (error) {
+      console.error('Failed to copy to clipboard:', error);
+      alert('Failed to copy to clipboard');
     }
   };
 
@@ -91,10 +118,13 @@ export const ClaimsSubmissionPanel: React.FC = () => {
       }
 
       // Generate X12 837P file
-      const x12Content = await BillingService.generateX12Claim(
+      const x12Data = await BillingService.generateX12Claim(
         formData.encounterId,
         formData.billingProviderId
       );
+
+      // Save X12 content for display and download
+      setX12Content(x12Data);
 
       // Update claim with X12 content
       await BillingService.updateClaimStatus(claim.id, 'submitted', 'Claim generated and ready for submission');
@@ -259,6 +289,53 @@ export const ClaimsSubmissionPanel: React.FC = () => {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* X12 Content Display */}
+      {x12Content && result?.success && (
+        <div className="mt-6 p-6 bg-gray-50 border-2 border-blue-200 rounded-lg">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+              <span className="mr-2">📄</span>
+              Generated X12 837P File
+            </h3>
+            <div className="flex gap-2">
+              <button
+                onClick={copyX12ToClipboard}
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded-lg transition-colors"
+                title="Copy to clipboard"
+              >
+                📋 Copy
+              </button>
+              <button
+                onClick={downloadX12File}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                title="Download X12 file"
+              >
+                ⬇️ Download
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-white border border-gray-300 rounded-lg overflow-hidden">
+            <div className="bg-gray-800 px-4 py-2 flex items-center justify-between">
+              <span className="text-sm text-gray-300 font-mono">claim_{result.claimId}_837P.x12</span>
+              <span className="text-xs text-gray-400">{x12Content.length} characters</span>
+            </div>
+            <div className="p-4 overflow-x-auto">
+              <pre className="text-xs font-mono text-gray-800 whitespace-pre-wrap break-words">
+                {x12Content}
+              </pre>
+            </div>
+          </div>
+
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
+            <p className="text-sm text-blue-800">
+              <strong>Next Steps:</strong> Download this X12 file and submit it to your clearinghouse for processing.
+              The file is formatted according to HIPAA 837P standards.
+            </p>
           </div>
         </div>
       )}
