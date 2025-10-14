@@ -1,6 +1,6 @@
 // src/serviceWorkerRegistration.ts
-// Production kill-switch by default. Flip REACT_APP_ENABLE_SW=true to re-enable later.
-// Safe guards: never register on preview domains, and always unregister on prod unless flag is true.
+// Enable offline support for rural healthcare areas with poor connectivity
+// Safe guards: never register on preview domains to avoid MIME issues
 
 const isLocalhost = Boolean(
   window.location.hostname === 'localhost' ||
@@ -8,8 +8,9 @@ const isLocalhost = Boolean(
   /^127(?:\.(?:25[0-5]|2[0-4]\d|[01]?\d?\d)){3}$/.test(window.location.hostname)
 );
 
-// Feature flag (do NOT enable until your SW is replaced with the safe version I gave you)
-const ENABLE_SW = String(process.env.REACT_APP_ENABLE_SW || '').toLowerCase() === 'true';
+// Feature flag: Enable by default for production (rural healthcare needs offline support)
+// Can be disabled with REACT_APP_ENABLE_SW=false if needed
+const ENABLE_SW = String(process.env.REACT_APP_ENABLE_SW || 'true').toLowerCase() !== 'false';
 
 // Treat *.vercel.app as preview; your prod is the custom domain.
 const isVercelPreview = /\.vercel\.app$/.test(window.location.hostname);
@@ -39,16 +40,18 @@ type Config = {
 };
 
 /**
- * REGISTER (safe): In production, we default to UNREGISTER unless REACT_APP_ENABLE_SW=true.
- * In preview (vercel.app) we also UNREGISTER to avoid protected-asset 401s and MIME issues.
- * In localhost, we honor the flag so you can test SW deliberately.
+ * REGISTER (safe): Enable service worker for offline support in rural healthcare areas.
+ * - In preview (vercel.app) we UNREGISTER to avoid protected-asset 401s and MIME issues.
+ * - In production, SW is ENABLED by default for rural offline support.
+ * - Can be disabled with REACT_APP_ENABLE_SW=false if needed.
  */
 export function register(config?: Config) {
   if (!('serviceWorker' in navigator)) return;
 
-  // Always unregister on preview, or when feature flag is not enabled in prod.
-  if (isVercelPreview || (!isLocalhost && !ENABLE_SW)) {
-    // console.log('[SW] Disabled (preview or prod without flag) — unregistering');
+  // Always unregister on preview domains to avoid MIME issues
+  // Can be disabled in production with REACT_APP_ENABLE_SW=false
+  if (isVercelPreview || !ENABLE_SW) {
+    // console.log('[SW] Disabled by config or running on preview — unregistering');
     void hardUnregister();
     return;
   }

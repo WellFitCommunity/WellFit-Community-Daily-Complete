@@ -66,5 +66,18 @@ root.render(
   </React.StrictMode>
 );
 
-// ✅ TEMPORARILY DISABLE SERVICE WORKER UNTIL SAFE VERSION IS READY
-serviceWorkerRegistration.unregister();
+// ✅ Enable service worker for offline support in rural healthcare areas
+// The safe, MIME-aware service worker is now active
+serviceWorkerRegistration.register({
+  onSuccess: () => {
+    console.log('[WellFit] Offline mode ready - app will work without internet connection');
+  },
+  onUpdate: (registration) => {
+    console.log('[WellFit] New version available - refresh to update');
+    // Optional: Show a toast notification to users
+    if (window.confirm('A new version is available. Reload to update?')) {
+      registration.waiting?.postMessage({ type: 'SKIP_WAITING' });
+      window.location.reload();
+    }
+  }
+});
