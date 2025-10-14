@@ -359,10 +359,17 @@ export class EnhancedFhirService {
         this.supabase.from('self_reports').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(50)
       ]);
 
+      // CRITICAL FIX: Merge check_ins and self_reports into a unified vitals array
+      // This ensures all health data (from both sources) is available for AI analysis
+      const allVitals = [
+        ...(checkIns.data || []),
+        ...(healthEntries.data || [])
+      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
       const data = {
         profile: profile.data,
         checkIns: checkIns.data || [],
-        vitals: checkIns.data || [],
+        vitals: allVitals, // FIX: Now includes both check_ins and self_reports data
         healthEntries: healthEntries.data || []
       };
 

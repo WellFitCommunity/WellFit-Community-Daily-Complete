@@ -202,8 +202,10 @@ export class FhirAiService {
     if (latestVitals) {
       const bpRisk = this.assessBloodPressureRisk(latestVitals.bp_systolic, latestVitals.bp_diastolic);
       const hrRisk = this.assessHeartRateRisk(latestVitals.heart_rate);
-      const glucoseRisk = this.assessGlucoseRisk(latestVitals.glucose_mg_dl);
-      const oxygenRisk = this.assessOxygenSaturationRisk(latestVitals.pulse_oximeter);
+      // FIX: Handle both field names for glucose (blood_sugar from self_reports, glucose_mg_dl from check_ins)
+      const glucoseRisk = this.assessGlucoseRisk(latestVitals.glucose_mg_dl || latestVitals.blood_sugar);
+      // FIX: Handle multiple field names for oxygen (pulse_oximeter, spo2, blood_oxygen)
+      const oxygenRisk = this.assessOxygenSaturationRisk(latestVitals.pulse_oximeter || latestVitals.spo2 || latestVitals.blood_oxygen);
 
       riskScore += bpRisk.score + hrRisk.score + glucoseRisk.score + oxygenRisk.score;
       riskFactors.push(...bpRisk.factors, ...hrRisk.factors, ...glucoseRisk.factors, ...oxygenRisk.factors);
@@ -619,8 +621,19 @@ export class FhirAiService {
   }
 
   private calculateVitalTrend(vitals: any[], metric: string): VitalsTrend {
-    const current = vitals[0]?.[metric] || 0;
-    const previous = vitals[1]?.[metric] || current;
+    // FIX: Handle field name variations between self_reports and check_ins
+    const getVitalValue = (vital: any, metricName: string): number => {
+      if (metricName === 'glucose_mg_dl') {
+        return vital?.glucose_mg_dl || vital?.blood_sugar || 0;
+      }
+      if (metricName === 'pulse_oximeter') {
+        return vital?.pulse_oximeter || vital?.spo2 || vital?.blood_oxygen || 0;
+      }
+      return vital?.[metricName] || 0;
+    };
+
+    const current = getVitalValue(vitals[0], metric);
+    const previous = getVitalValue(vitals[1], metric) || current;
 
     const changePercent = previous !== 0 ? ((current - previous) / previous) * 100 : 0;
     let trend: VitalsTrend['trend'] = 'STABLE';
@@ -1130,19 +1143,37 @@ export class FhirAiService {
     const weights: number[] = [];
     const moods: string[] = [];
 
-    // Collect all values
+    // Collect all values - FIX: Handle field name variations from both self_reports and check_ins
     for (const reading of readings) {
+      // Blood pressure
       if (reading.bp_systolic != null) bpSystolic.push(reading.bp_systolic);
       if (reading.bp_diastolic != null) bpDiastolic.push(reading.bp_diastolic);
+
+      // Heart rate
       if (reading.heart_rate != null) heartRates.push(reading.heart_rate);
+
+      // Blood sugar - handle both field names
       if (reading.blood_sugar != null) bloodSugars.push(reading.blood_sugar);
+      if (reading.glucose_mg_dl != null) bloodSugars.push(reading.glucose_mg_dl);
+
+      // Blood oxygen - handle all three field names
       if (reading.blood_oxygen != null) bloodOxygens.push(reading.blood_oxygen);
       if (reading.spo2 != null) bloodOxygens.push(reading.spo2);
+      if (reading.pulse_oximeter != null) bloodOxygens.push(reading.pulse_oximeter);
+
+      // Weight
       if (reading.weight != null) weights.push(reading.weight);
+
+      // Mood
       if (reading.mood) moods.push(reading.mood);
+
+      // Activities
       if (reading.physical_activity) aggregates.physicalActivity!.entries.push(reading.physical_activity);
       if (reading.social_engagement) aggregates.socialEngagement!.entries.push(reading.social_engagement);
+
+      // Symptoms and notes
       if (reading.symptoms) aggregates.symptoms!.entries.push(reading.symptoms);
+      if (reading.activity_description) aggregates.symptoms!.entries.push(reading.activity_description);
     }
 
     // Calculate blood pressure
