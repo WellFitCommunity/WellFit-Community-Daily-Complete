@@ -43,6 +43,11 @@ const PatientEngagementDashboard: React.FC = () => {
     loadEngagementData();
   }, []);
 
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterLevel, sortBy]);
+
   const loadEngagementData = async () => {
     setLoading(true);
     setError(null);
@@ -163,11 +168,6 @@ const PatientEngagementDashboard: React.FC = () => {
   }
 
   const data = paginatedData();
-
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filterLevel, sortBy]);
 
   return (
     <div className="space-y-6">
@@ -421,7 +421,7 @@ const PatientEngagementDashboard: React.FC = () => {
 
             <div className="flex items-center gap-2">
               {Array.from({ length: Math.min(7, totalPages) }, (_, i) => {
-                let pageNum;
+                let pageNum: number;
                 if (totalPages <= 7) {
                   pageNum = i + 1;
                 } else if (currentPage <= 4) {

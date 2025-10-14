@@ -5,7 +5,7 @@ export interface ErrorDetails {
   title: string;
   message: string;
   technicalDetails?: string;
-  actions?: string[];
+  actions?: readonly string[];
   severity: 'error' | 'warning' | 'info';
 }
 
