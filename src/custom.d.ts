@@ -42,3 +42,11 @@ declare namespace NodeJS {
   }
 }
 
+// Google Analytics / gtag
+interface Window {
+  gtag?: (
+    command: 'event' | 'config' | 'set',
+    targetId: string,
+    config?: Record<string, unknown>
+  ) => void;
+}

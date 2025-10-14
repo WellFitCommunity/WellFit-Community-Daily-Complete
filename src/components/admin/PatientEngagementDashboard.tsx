@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSupabaseClient } from '../../contexts/AuthContext';
 import { getAllPatientEngagementScores } from '../../services/engagementTracking';
+import { DashboardSkeleton } from '../ui/skeleton';
 
 interface EngagementScore {
   user_id: string;
@@ -145,11 +146,7 @@ const PatientEngagementDashboard: React.FC = () => {
   const totalFiltered = filteredAndSortedData().length;
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center p-8">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   if (error) {

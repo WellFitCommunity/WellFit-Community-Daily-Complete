@@ -1,6 +1,7 @@
 // src/components/admin/ApiKeyManager.tsx
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../../lib/supabaseClient';
+import { ApiKeyManagerSkeleton } from '../ui/skeleton';
 
 // NOTE: Export libraries are now lazy-loaded inside exportToCsv()
 // import { saveAs } from 'file-saver';
@@ -324,17 +325,68 @@ const ApiKeyManager: React.FC = () => {
     }
   };
 
-  const copyToClipboard = async (text: string) => {
+  const copyToClipboard = async (text: string, label: string = 'API Key') => {
+    // Input validation
+    if (!text || typeof text !== 'string') {
+      console.error('Invalid text provided to copyToClipboard');
+      addToast('error', 'Cannot copy empty value');
+      return;
+    }
+
     try {
-      await navigator.clipboard.writeText(text);
-      addToast('success', 'API Key copied to clipboard!');
-      // Auto-mask after copy
-      setTimeout(() => {
-        setKeyMasked(true);
-      }, 3000);
+      // Check if clipboard API is available
+      if (!navigator.clipboard) {
+        throw new Error('Clipboard API not supported');
+      }
+
+      // Security: Sanitize text before copying (prevent code injection)
+      const sanitizedText = text.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
+
+      await navigator.clipboard.writeText(sanitizedText);
+
+      addToast('success', `${label} copied to clipboard!`);
+
+      // Track copy action for analytics (production usage monitoring)
+      if (window.gtag) {
+        window.gtag('event', 'copy_action', {
+          item_type: label,
+          value: sanitizedText.length,
+        });
+      }
+
+      // Auto-mask after copy (only for generated keys)
+      if (label === 'API Key') {
+        setTimeout(() => {
+          setKeyMasked(true);
+        }, 3000);
+      }
     } catch (error) {
       console.error('Failed to copy to clipboard:', error);
-      addToast('error', 'Failed to copy. Please copy manually.');
+
+      // Fallback: Provide manual copy instructions
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+      // Try legacy execCommand as fallback
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(textArea);
+        textArea.select();
+        const success = document.execCommand('copy');
+        document.body.removeChild(textArea);
+
+        if (success) {
+          addToast('success', `${label} copied to clipboard (legacy method)`);
+          return;
+        }
+      } catch (fallbackError) {
+        console.error('Fallback copy method failed:', fallbackError);
+      }
+
+      addToast('error', `Failed to copy: ${errorMessage}. Please copy manually.`);
     }
   };
 
@@ -544,9 +596,14 @@ const ApiKeyManager: React.FC = () => {
           <h3 className="text-lg font-medium mb-3">Generate New API Key</h3>
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
             <div className="flex-grow">
-              <label htmlFor="orgName" className="block text-sm font-medium text-gray-700 mb-1">
-                Organization Name *
-              </label>
+              <div className="flex justify-between items-center mb-1">
+                <label htmlFor="orgName" className="text-sm font-medium text-gray-700">
+                  Organization Name *
+                </label>
+                <span className={`text-xs ${newOrgName.length > 90 ? 'text-red-600 font-semibold' : 'text-gray-500'}`}>
+                  {newOrgName.length}/100
+                </span>
+              </div>
               <input
                 ref={orgNameInputRef}
                 id="orgName"
@@ -674,10 +731,7 @@ const ApiKeyManager: React.FC = () => {
 
         {/* Loading State */}
         {loading && !apiKeys.length && (
-          <div className="text-center py-8">
-            <LoadingSpinner size="lg" />
-            <p className="mt-2 text-gray-600">Loading API keys…</p>
-          </div>
+          <ApiKeyManagerSkeleton />
         )}
 
         {/* Empty State */}
@@ -773,10 +827,28 @@ const ApiKeyManager: React.FC = () => {
                   >
                     <td className="border border-gray-300 px-4 py-3">
                       <div className="font-medium text-gray-900">{key.org_name}</div>
-                      <div className="text-xs text-gray-500 mt-1">ID: {key.id.slice(0, 8)}...</div>
+                      <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                        <span>ID: {key.id.slice(0, 8)}...</span>
+                        <button
+                          onClick={() => copyToClipboard(key.id, 'Key ID')}
+                          className="text-blue-600 hover:text-blue-800 transition-colors"
+                          title="Copy full key ID"
+                        >
+                          📋
+                        </button>
+                      </div>
                     </td>
-                    <td className="border border-gray-300 px-4 py-3 font-mono text-sm">
-                      {displayableApiKeyRepresentation(key.api_key_hash, key.org_name)}
+                    <td className="border border-gray-300 px-4 py-3">
+                      <div className="flex items-center gap-2 font-mono text-sm">
+                        <span>{displayableApiKeyRepresentation(key.api_key_hash, key.org_name)}</span>
+                        <button
+                          onClick={() => copyToClipboard(key.id, 'Key ID')}
+                          className="text-blue-600 hover:text-blue-800 transition-colors text-xs"
+                          title="Copy key ID"
+                        >
+                          📋
+                        </button>
+                      </div>
                     </td>
                     <td className="border border-gray-300 px-4 py-3">
                       <span

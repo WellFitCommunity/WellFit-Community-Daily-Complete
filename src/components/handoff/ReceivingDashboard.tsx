@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import HandoffService from '../../services/handoffService';
 import MedicationReconciliationAlert from './MedicationReconciliationAlert';
 import LabResultVault from './LabResultVault';
+import { TransferPacketSkeleton } from '../ui/skeleton';
 import type {
   HandoffPacket,
   HandoffAttachment,
@@ -62,19 +63,28 @@ const ReceivingDashboard: React.FC<ReceivingFacilityDashboardProps> = ({
   const handleAcknowledge = async () => {
     if (!selectedPacket) return;
 
+    // Optimistic UI update - remove packet from list immediately
+    const packetId = selectedPacket.id;
+    setPackets(prev => prev.filter(p => p.id !== packetId));
+    setSelectedPacket(null);
+    setAcknowledgementNotes('');
+
+    // Show optimistic success message
+    toast.success('Transfer acknowledged successfully!', { autoClose: 2000 });
+
     setAcknowledging(true);
     try {
       await HandoffService.acknowledgePacket({
-        packet_id: selectedPacket.id,
+        packet_id: packetId,
         acknowledgement_notes: acknowledgementNotes,
       });
 
-      toast.success('Transfer acknowledged successfully!');
-      setSelectedPacket(null);
-      setAcknowledgementNotes('');
-      loadPackets(); // Refresh list
+      // Refresh to ensure sync with server
+      loadPackets();
     } catch (error: any) {
+      // Rollback on error - reload all packets
       toast.error(`Failed to acknowledge: ${error.message}`);
+      loadPackets();
     } finally {
       setAcknowledging(false);
     }
@@ -115,14 +125,7 @@ const ReceivingDashboard: React.FC<ReceivingFacilityDashboardProps> = ({
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center p-12">
-        <div className="text-center">
-          <div className="text-4xl mb-4">⏳</div>
-          <p className="text-gray-600">Loading incoming transfers...</p>
-        </div>
-      </div>
-    );
+    return <TransferPacketSkeleton />;
   }
 
   if (selectedPacket) {
@@ -561,14 +564,20 @@ const PacketViewer: React.FC<{
         </p>
 
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Acknowledgement Notes (Optional)
-          </label>
+          <div className="flex justify-between items-center mb-1">
+            <label className="text-sm font-medium text-gray-700">
+              Acknowledgement Notes (Optional)
+            </label>
+            <span className={`text-xs ${acknowledgementNotes.length > 450 ? 'text-red-600 font-semibold' : 'text-gray-500'}`}>
+              {acknowledgementNotes.length}/500
+            </span>
+          </div>
           <textarea
             value={acknowledgementNotes}
             onChange={(e) => setAcknowledgementNotes(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
             rows={3}
+            maxLength={500}
             placeholder="Patient received, care initiated, bed assigned to Room 302..."
           />
         </div>

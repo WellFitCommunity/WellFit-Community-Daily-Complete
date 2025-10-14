@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import RequireAdminAuth from 'components/auth/RequireAdminAuth';
 import AdminHeader from './AdminHeader';
+import WhatsNewModal from './WhatsNewModal';
 
 import UsersList from './UsersList';
 import ReportsSection from './ReportsSection';
@@ -72,6 +73,18 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
 const AdminPanel: React.FC = () => {
   const { adminRole } = useAdminAuth();
   const navigate = useNavigate();
+  const [showWhatsNew, setShowWhatsNew] = useState(false);
+
+  useEffect(() => {
+    // Auto-show What's New modal if user hasn't seen latest updates
+    const lastSeenVersion = localStorage.getItem('whatsNew_lastSeen');
+    const currentVersion = '2025-10-14'; // Update this when adding new features
+
+    if (lastSeenVersion !== currentVersion) {
+      // Show after a short delay for better UX
+      setTimeout(() => setShowWhatsNew(true), 1000);
+    }
+  }, []);
 
   return (
     <RequireAdminAuth allowedRoles={['admin', 'super_admin']}>
@@ -79,9 +92,22 @@ const AdminPanel: React.FC = () => {
         <AdminHeader title="WellFit Admin Dashboard" showRiskAssessment={true} />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
+          {/* What's New Modal */}
+          <WhatsNewModal isOpen={showWhatsNew} onClose={() => setShowWhatsNew(false)} />
+
           {/* Quick Actions Bar */}
           <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl shadow-lg p-6">
-            <h2 className="text-white text-xl font-bold mb-4">Quick Actions</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-white text-xl font-bold">Quick Actions</h2>
+              <button
+                onClick={() => setShowWhatsNew(true)}
+                className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
+                title="View recent updates"
+              >
+                <span>✨</span>
+                <span>What's New</span>
+              </button>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <button
                 onClick={() => navigate('/admin/enroll-senior')}
