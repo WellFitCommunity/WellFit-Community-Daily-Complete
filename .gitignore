@@ -53,3 +53,16 @@ supabase/.temp/
 *_URGENT*.md
 *_SUMMARY.md
 fix_*.sql
+
+# Secret docs (do not track)
+SECRET_ROTATION_REQUIRED.md
+
+# Secret docs (do not track)
+SECRET_ROTATION_REQUIRED.md
+
+# Secret docs (do not track)
+SECRET_ROTATION_REQUIRED.md
+
+# Never commit secrets or local env
+SECRET_ROTATION_REQUIRED.md
+.env*

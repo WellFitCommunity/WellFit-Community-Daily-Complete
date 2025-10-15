@@ -25,6 +25,7 @@ import ChangePasswordPage from './pages/ChangePasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 // If your tsconfig doesn't set baseUrl to "src", change this to './pages/Home'
 import Home from 'pages/Home';
+import MetricsPage from './pages/MetricsPage';
 
 // ✅ Gate wrapper (does not replace AuthProvider)
 import AuthGate from './AuthGate';
@@ -116,6 +117,7 @@ function Shell() {
               <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/admin-login" element={<AdminLoginPage />} />
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/metrics" element={<MetricsPage />} />
               <Route path="/home" element={<Home />} />
 
               {/* Protected */}

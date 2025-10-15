@@ -3,7 +3,7 @@
 // - Never caches HTML for script/style requests
 // - Network-first for navigations, cache-first for static assets
 
-const CACHE_VERSION = 'wellfit-v3';
+const CACHE_VERSION = 'wellfit-v4-spa-routes';
 const SHELL_CACHE = `shell-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `runtime-${CACHE_VERSION}`;
 const NAV_FALLBACK_URL = '/index.html';
@@ -61,6 +61,31 @@ self.addEventListener('fetch', event => {
 
   // 1) Navigations: network-first with index.html fallback
   if (req.mode === 'navigate') {
+    // Known SPA routes - serve index.html directly without network request
+    const spaRoutes = [
+      '/login', '/register', '/verify', '/dashboard', '/admin', '/admin-login',
+      '/settings', '/help', '/check-in', '/logout', '/privacy-policy', '/terms',
+      '/health-insights', '/health-dashboard', '/questions', '/word-find',
+      '/consent-photo', '/consent-privacy', '/self-reporting', '/doctors-view',
+      '/community', '/trivia-game', '/smart-callback', '/caregiver-dashboard',
+      '/demographics', '/nurse-dashboard', '/billing', '/change-password', '/reset-password'
+    ];
+
+    const isSpaRoute = spaRoutes.some(route =>
+      url.pathname === route || url.pathname.startsWith(route + '/')
+    );
+
+    if (isSpaRoute) {
+      // Serve index.html directly for known SPA routes
+      event.respondWith(
+        caches.match(NAV_FALLBACK_URL).then(cached =>
+          cached || fetch(NAV_FALLBACK_URL)
+        )
+      );
+      return;
+    }
+
+    // For other navigations, try network first
     event.respondWith(
       fetch(req).catch(async () =>
         (await caches.match(NAV_FALLBACK_URL)) || Response.error()
