@@ -9,7 +9,6 @@
     "@anthropic-ai/sdk": "^0.64.0",
     "@hcaptcha/react-hcaptcha": "^1.12.1",
     "@hookform/resolvers": "^3.10.0",
-    "@supabase/auth-helpers-shared": "0.7.0",
     "@supabase/supabase-js": "^2.58.0",
     "@types/dompurify": "^3.0.5",
     "ajv": "^8.17.1",
