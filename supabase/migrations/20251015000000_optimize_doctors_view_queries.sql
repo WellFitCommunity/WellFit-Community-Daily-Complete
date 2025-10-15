@@ -33,22 +33,22 @@ COMMENT ON INDEX idx_check_ins_user_label_created IS
 DO $$
 BEGIN
   RAISE NOTICE '========================================';
-  RAISE NOTICE '✅ DOCTORS VIEW QUERY OPTIMIZATION COMPLETE';
+  RAISE NOTICE 'DOCTORS VIEW QUERY OPTIMIZATION COMPLETE';
   RAISE NOTICE '========================================';
-  RAISE NOTICE '';
-  RAISE NOTICE '📊 Indexes Created:';
-  RAISE NOTICE '   ✅ idx_self_reports_user_created';
-  RAISE NOTICE '   ✅ idx_check_ins_user_label_created (partial index)';
-  RAISE NOTICE '';
-  RAISE NOTICE '🚀 Expected Performance Improvements:';
-  RAISE NOTICE '   • Recent health entries query: 3-5x faster';
-  RAISE NOTICE '   • Community engagement query: 2-3x faster';
-  RAISE NOTICE '   • DoctorsView page load time: Reduced by ~40%';
-  RAISE NOTICE '';
-  RAISE NOTICE '💡 Query Patterns Optimized:';
-  RAISE NOTICE '   • Latest 5 self-reports per user';
-  RAISE NOTICE '   • Community event attendance tracking';
-  RAISE NOTICE '   • Timeline rendering in DoctorsViewPage';
+  RAISE NOTICE ' ';
+  RAISE NOTICE 'Indexes Created:';
+  RAISE NOTICE '  - idx_self_reports_user_created';
+  RAISE NOTICE '  - idx_check_ins_user_label_created (partial index)';
+  RAISE NOTICE ' ';
+  RAISE NOTICE 'Expected Performance Improvements:';
+  RAISE NOTICE '  - Recent health entries query: 3-5x faster';
+  RAISE NOTICE '  - Community engagement query: 2-3x faster';
+  RAISE NOTICE '  - DoctorsView page load time: Reduced by ~40%%';
+  RAISE NOTICE ' ';
+  RAISE NOTICE 'Query Patterns Optimized:';
+  RAISE NOTICE '  - Latest 5 self-reports per user';
+  RAISE NOTICE '  - Community event attendance tracking';
+  RAISE NOTICE '  - Timeline rendering in DoctorsViewPage';
   RAISE NOTICE '========================================';
 END $$;
 
