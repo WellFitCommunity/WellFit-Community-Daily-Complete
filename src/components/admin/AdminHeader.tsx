@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 
 interface AdminHeaderProps {
@@ -10,6 +11,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
   title = "Admin Panel",
   showRiskAssessment = true
 }) => {
+  const navigate = useNavigate();
   const { adminRole, logoutAdmin } = useAdminAuth();
   const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
@@ -27,7 +29,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
   };
 
   const navigateTo = (path: string) => {
-    window.location.href = path;
+    navigate(path);
   };
 
   return (
@@ -146,7 +148,10 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
                         <span className="text-sm text-gray-700">Dark Mode</span>
                       </div>
                       <button
-                        onClick={toggleDarkMode}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleDarkMode();
+                        }}
                         className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
                           darkMode ? 'bg-blue-600' : 'bg-gray-200'
                         }`}

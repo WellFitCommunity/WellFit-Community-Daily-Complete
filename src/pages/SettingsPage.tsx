@@ -296,7 +296,10 @@ const SettingsPage: React.FC = () => {
                           ].map((option) => (
                             <button
                               key={option.value}
-                              onClick={() => setSettings({ ...settings, font_size: option.value as any })}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSettings({ ...settings, font_size: option.value as any });
+                              }}
                               className={`p-3 border-2 rounded-lg ${option.size} font-semibold transition ${
                                 settings.font_size === option.value
                                   ? 'border-[#8cc63f] bg-[#8cc63f] text-white'
@@ -329,12 +332,15 @@ const SettingsPage: React.FC = () => {
                           <div className="text-gray-600">Enable or disable all notifications</div>
                         </div>
                         <button
-                          onClick={() => setSettings({ ...settings, notifications_enabled: !settings.notifications_enabled })}
-                          className={`w-16 h-8 rounded-full transition ${
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSettings({ ...settings, notifications_enabled: !settings.notifications_enabled });
+                          }}
+                          className={`relative w-16 h-8 rounded-full transition-colors ${
                             settings.notifications_enabled ? 'bg-[#8cc63f]' : 'bg-gray-300'
                           }`}
                         >
-                          <div className={`w-6 h-6 bg-white rounded-full transition-transform ${
+                          <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-transform ${
                             settings.notifications_enabled ? 'translate-x-9' : 'translate-x-1'
                           }`} />
                         </button>
@@ -346,12 +352,15 @@ const SettingsPage: React.FC = () => {
                           <div className="text-gray-600">Messages from your care team</div>
                         </div>
                         <button
-                          onClick={() => setSettings({ ...settings, care_team_notifications: !settings.care_team_notifications })}
-                          className={`w-16 h-8 rounded-full transition ${
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSettings({ ...settings, care_team_notifications: !settings.care_team_notifications });
+                          }}
+                          className={`relative w-16 h-8 rounded-full transition-colors ${
                             settings.care_team_notifications ? 'bg-[#8cc63f]' : 'bg-gray-300'
                           }`}
                         >
-                          <div className={`w-6 h-6 bg-white rounded-full transition-transform ${
+                          <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-transform ${
                             settings.care_team_notifications ? 'translate-x-9' : 'translate-x-1'
                           }`} />
                         </button>
@@ -363,12 +372,15 @@ const SettingsPage: React.FC = () => {
                           <div className="text-gray-600">New photos and community events</div>
                         </div>
                         <button
-                          onClick={() => setSettings({ ...settings, community_notifications: !settings.community_notifications })}
-                          className={`w-16 h-8 rounded-full transition ${
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSettings({ ...settings, community_notifications: !settings.community_notifications });
+                          }}
+                          className={`relative w-16 h-8 rounded-full transition-colors ${
                             settings.community_notifications ? 'bg-[#8cc63f]' : 'bg-gray-300'
                           }`}
                         >
-                          <div className={`w-6 h-6 bg-white rounded-full transition-transform ${
+                          <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-transform ${
                             settings.community_notifications ? 'translate-x-9' : 'translate-x-1'
                           }`} />
                         </button>
