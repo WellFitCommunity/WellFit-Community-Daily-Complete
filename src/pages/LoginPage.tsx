@@ -279,7 +279,8 @@ const LoginPage: React.FC = () => {
         return;
       }
 
-      navigate('/admin-login', { replace: true });
+      const route = await nextRouteForUser();
+      navigate(route, { replace: true });
     } catch (err: any) {
       setError(err?.message || 'Unexpected error during admin login.');
     } finally {

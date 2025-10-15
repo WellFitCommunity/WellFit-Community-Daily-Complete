@@ -241,10 +241,10 @@ const ApiKeyManager: React.FC = () => {
         generatedKeyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 100);
 
-      // Auto-mask the key after 60 seconds
+      // Auto-mask the key after 5 seconds for security (was 60 seconds)
       setTimeout(() => {
         setKeyMasked(true);
-      }, 60000);
+      }, 5000);
 
       await fetchApiKeys(false);
     } catch (error) {
@@ -346,19 +346,18 @@ const ApiKeyManager: React.FC = () => {
 
       addToast('success', `${label} copied to clipboard!`);
 
-      // Track copy action for analytics (production usage monitoring)
-      if (window.gtag) {
+      // Track copy action for analytics - DO NOT send key metadata
+      if (window.gtag && label !== 'API Key') {
         window.gtag('event', 'copy_action', {
           item_type: label,
-          value: sanitizedText.length,
         });
       }
 
-      // Auto-mask after copy (only for generated keys)
+      // Auto-mask immediately after copy for security
       if (label === 'API Key') {
         setTimeout(() => {
           setKeyMasked(true);
-        }, 3000);
+        }, 500);
       }
     } catch (error) {
       console.error('Failed to copy to clipboard:', error);
@@ -392,7 +391,9 @@ const ApiKeyManager: React.FC = () => {
 
   const displayableApiKeyRepresentation = (hash: string | undefined, orgName: string) => {
     if (!hash) return 'N/A (No Hash)';
-    return `ak_${orgName.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 6)}_••••••••`;
+    // Use hash instead of org name to prevent information leakage
+    const hashPrefix = hash.slice(0, 8);
+    return `ak_${hashPrefix}_••••••••`;
   };
 
   const formatDate = (str: string | null) => {
@@ -652,7 +653,7 @@ const ApiKeyManager: React.FC = () => {
               <p className="text-green-700 text-sm">
                 {keyMasked
                   ? '🔒 Key has been masked for security. It cannot be retrieved again.'
-                  : '⚠️ Copy this key now! It will be auto-masked in 60 seconds and cannot be retrieved again.'}
+                  : '⚠️ COPY THIS KEY NOW! It will be auto-masked in 5 seconds and cannot be retrieved again.'}
               </p>
               {!keyMasked && (
                 <button
