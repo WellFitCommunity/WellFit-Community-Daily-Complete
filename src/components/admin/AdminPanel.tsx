@@ -108,7 +108,7 @@ const AdminPanel: React.FC = () => {
                 <span>What's New</span>
               </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
               <button
                 onClick={() => navigate('/admin/enroll-senior')}
                 className="bg-white text-emerald-700 px-6 py-4 rounded-lg font-semibold hover:bg-emerald-50 transition-colors shadow-md flex items-center justify-center"
@@ -129,6 +129,13 @@ const AdminPanel: React.FC = () => {
               >
                 <span className="mr-2 text-2xl">📤</span>
                 Bulk Export
+              </button>
+              <button
+                onClick={() => navigate('/admin/photo-approval')}
+                className="bg-white text-yellow-700 px-6 py-4 rounded-lg font-semibold hover:bg-yellow-50 transition-colors shadow-md flex items-center justify-center"
+              >
+                <span className="mr-2 text-2xl">📸</span>
+                Approve Photos
               </button>
               <button
                 onClick={() => navigate('/admin-questions')}

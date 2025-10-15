@@ -355,15 +355,13 @@ export default function MealDetailPage() {
                   onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
                   className="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#8cc63f] file:text-white hover:file:bg-[#77aa36]"
                 />
-                {photoFile && (
-                  <button
-                    onClick={handlePhotoUpload}
-                    disabled={uploadingPhoto}
-                    className="w-full px-6 py-3 bg-[#003865] text-white font-bold rounded-lg hover:bg-[#8cc63f] transition disabled:bg-gray-400"
-                  >
-                    {uploadingPhoto ? 'Uploading...' : 'Upload Photo 📤'}
-                  </button>
-                )}
+                <button
+                  onClick={handlePhotoUpload}
+                  disabled={!photoFile || uploadingPhoto}
+                  className="w-full px-6 py-3 bg-[#003865] text-white font-bold rounded-lg hover:bg-[#8cc63f] transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  {uploadingPhoto ? 'Uploading...' : 'Upload Photo 📤'}
+                </button>
               </div>
             </div>
           )}
