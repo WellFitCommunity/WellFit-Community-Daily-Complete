@@ -1,6 +1,6 @@
 // src/components/layout/Footer.tsx
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useBranding } from '../../BrandingContext';
 
 function readableTextOn(bgHex: string): '#000000' | '#ffffff' {
@@ -12,8 +12,18 @@ function readableTextOn(bgHex: string): '#000000' | '#ffffff' {
   return yiq >= 128 ? '#000000' : '#ffffff';
 }
 
+const AUTH_ROUTES = ['/login', '/register', '/verify', '/admin-login', '/reset-password', '/change-password'];
+
 const Footer: React.FC = () => {
   const { branding } = useBranding(); // ✅ correct shape: { branding, setBranding }
+  const location = useLocation();
+
+  // Hide footer on authentication pages for cleaner UI
+  const isAuthPage = AUTH_ROUTES.some(
+    (p) => location.pathname === p || location.pathname.startsWith(`${p}/`)
+  );
+
+  if (isAuthPage) return null;
 
   const primary = branding?.primaryColor || '#003865';
   const textColor = branding?.textColor || readableTextOn(primary);
