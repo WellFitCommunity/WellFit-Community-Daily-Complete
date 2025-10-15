@@ -20,7 +20,8 @@ import type {
   ClaimLine,
   CreateClaim,
   BillingProvider,
-  BillingPayer
+  BillingPayer,
+  CodingSuggestion
 } from '../types/billing';
 import type {
   EnhancedCodingSuggestion,
@@ -43,6 +44,7 @@ export interface BillingWorkflowInput {
   patientId: string;
   providerId: string;
   payerId: string;
+  policyStatus?: 'active' | 'inactive' | 'pending';
 
   // Clinical context
   serviceDate: string;
@@ -70,7 +72,7 @@ export interface BillingWorkflowResult {
   claimLines?: ClaimLine[];
 
   // Analysis results
-  codingSuggestions?: EnhancedCodingSuggestion;
+  codingSuggestions?: EnhancedCodingSuggestion | CodingSuggestion;
   sdohAssessment?: SDOHAssessment;
   decisionTreeResult?: DecisionTreeResult;
   validation?: BillingValidation;
@@ -82,7 +84,7 @@ export interface BillingWorkflowResult {
 
   // Financial summary
   totalCharges: number;
-  estimatedReimbursement?: number;
+  estimatedReimbursement: number;
 
   // Next actions
   requiresManualReview: boolean;
@@ -191,7 +193,7 @@ export class UnifiedBillingService {
       }
 
       // STEP 3: Get AI coding suggestions (if enabled)
-      let codingSuggestions: EnhancedCodingSuggestion | undefined;
+      let codingSuggestions: EnhancedCodingSuggestion | CodingSuggestion | undefined;
       if (input.enableAIAssist !== false) {
         const aiStep = await this.executeStep(
           'ai_coding',
@@ -218,8 +220,8 @@ export class UnifiedBillingService {
           'sdoh_assessment',
           'SDOH Assessment',
           async () => {
-            // Check if we already have assessment from AI step
-            if (codingSuggestions?.sdohAssessment) {
+            // Check if we already have assessment from AI step (only in EnhancedCodingSuggestion)
+            if (codingSuggestions && 'sdohAssessment' in codingSuggestions && codingSuggestions.sdohAssessment) {
               return codingSuggestions.sdohAssessment;
             }
             return await SDOHBillingService.assessSDOHComplexity(input.patientId);
@@ -246,14 +248,18 @@ export class UnifiedBillingService {
 
       const finalCoding = finalCodingStep.result;
 
-      // STEP 6: Validate billing compliance
+      if (!finalCoding) {
+        throw new Error('Failed to finalize coding');
+      }
+
+      // STEP 6: Validate billing compliance (only for EnhancedCodingSuggestion)
       let validation: BillingValidation | undefined;
-      if (codingSuggestions) {
+      if (codingSuggestions && 'medicalCodes' in codingSuggestions) {
         const validationStep = await this.executeStep(
           'validate_compliance',
           'Validate Billing Compliance',
           async () => {
-            return await SDOHBillingService.validateBillingCompliance(codingSuggestions!);
+            return await SDOHBillingService.validateBillingCompliance(codingSuggestions as EnhancedCodingSuggestion);
           },
           workflowSteps
         );
@@ -349,11 +355,11 @@ export class UnifiedBillingService {
       const estimatedReimbursement = this.estimateReimbursement(finalCoding);
 
       // Determine if manual review required
-      const requiresManualReview =
+      const requiresManualReview: boolean =
         manualReviewReasons.length > 0 ||
         errors.length > 0 ||
-        (validation && !validation.isValid) ||
-        (validation && validation.auditFlags.length > 0);
+        (validation ? !validation.isValid : false) ||
+        (validation ? validation.auditFlags.length > 0 : false);
 
       // Generate recommended actions
       if (requiresManualReview) {
@@ -362,7 +368,7 @@ export class UnifiedBillingService {
       if (sdohAssessment?.ccmEligible) {
         recommendedActions.push(`Patient eligible for ${sdohAssessment.ccmTier} CCM services - ensure time tracking`);
       }
-      if (codingSuggestions?.auditReadiness && codingSuggestions.auditReadiness.score < 85) {
+      if (codingSuggestions && 'auditReadiness' in codingSuggestions && codingSuggestions.auditReadiness && codingSuggestions.auditReadiness.score < 85) {
         recommendedActions.push('Complete missing documentation to improve audit readiness');
       }
 
@@ -405,6 +411,7 @@ export class UnifiedBillingService {
         errors,
         warnings,
         totalCharges: 0,
+        estimatedReimbursement: 0,
         requiresManualReview: true,
         manualReviewReasons: [`Critical workflow error: ${errorMessage}`],
         recommendedActions: ['Contact billing support for assistance']
@@ -499,11 +506,22 @@ export class UnifiedBillingService {
       patientId: input.patientId,
       providerId: input.providerId,
       payerId: input.payerId,
+      policyStatus: input.policyStatus || 'active',
       serviceDate: input.serviceDate,
       encounterType: input.encounterType,
       chiefComplaint: input.chiefComplaint,
-      presentingDiagnoses: input.diagnoses,
-      proceduresPerformed: input.procedures || [],
+      presentingDiagnoses: input.diagnoses
+        .filter(d => d.term) // Filter out entries without term
+        .map(d => ({
+          term: d.term!,
+          icd10Code: d.icd10Code
+        })),
+      proceduresPerformed: (input.procedures || [])
+        .filter(p => p.description) // Filter out entries without description
+        .map(p => ({
+          description: p.description!,
+          cptCode: p.cptCode
+        })),
       timeSpent: input.timeSpent,
       placeOfService: input.placeOfService
     };
@@ -514,7 +532,7 @@ export class UnifiedBillingService {
    */
   private static reconcileCodingSources(
     decisionTree?: DecisionTreeResult,
-    aiSuggestions?: EnhancedCodingSuggestion,
+    aiSuggestions?: EnhancedCodingSuggestion | CodingSuggestion,
     sdohAssessment?: SDOHAssessment
   ): {
     cptCodes: Array<{ code: string; modifiers?: string[]; chargeAmount?: number }>;
@@ -534,12 +552,22 @@ export class UnifiedBillingService {
         modifiers: decisionTree.claimLine.cptModifiers,
         chargeAmount: decisionTree.claimLine.billedAmount
       });
-    } else if (aiSuggestions?.procedureCodes.cpt) {
-      cptCodes.push(...aiSuggestions.procedureCodes.cpt.map(c => ({
-        code: c.code,
-        modifiers: c.modifiers,
-        chargeAmount: undefined
-      })));
+    } else if (aiSuggestions) {
+      // Check if it's EnhancedCodingSuggestion
+      if ('procedureCodes' in aiSuggestions && aiSuggestions.procedureCodes.cpt) {
+        cptCodes.push(...aiSuggestions.procedureCodes.cpt.map(c => ({
+          code: c.code,
+          modifiers: c.modifiers,
+          chargeAmount: undefined
+        })));
+      } else if ('cpt' in aiSuggestions && aiSuggestions.cpt) {
+        // Basic CodingSuggestion
+        cptCodes.push(...aiSuggestions.cpt.map(c => ({
+          code: c.code,
+          modifiers: c.modifiers,
+          chargeAmount: undefined
+        })));
+      }
     }
 
     // ICD-10 codes
@@ -548,19 +576,37 @@ export class UnifiedBillingService {
         code,
         description: undefined
       })));
-    } else if (aiSuggestions?.medicalCodes.icd10) {
-      icd10Codes.push(...aiSuggestions.medicalCodes.icd10.map(c => ({
-        code: c.code,
-        description: c.rationale
-      })));
+    } else if (aiSuggestions) {
+      // Check if it's EnhancedCodingSuggestion
+      if ('medicalCodes' in aiSuggestions && aiSuggestions.medicalCodes.icd10) {
+        icd10Codes.push(...aiSuggestions.medicalCodes.icd10.map(c => ({
+          code: c.code,
+          description: c.rationale
+        })));
+      } else if ('icd10' in aiSuggestions && aiSuggestions.icd10) {
+        // Basic CodingSuggestion
+        icd10Codes.push(...aiSuggestions.icd10.map(c => ({
+          code: c.code,
+          description: c.rationale
+        })));
+      }
     }
 
     // HCPCS codes
-    if (aiSuggestions?.procedureCodes.hcpcs) {
-      hcpcsCodes.push(...aiSuggestions.procedureCodes.hcpcs.map(c => ({
-        code: c.code,
-        modifiers: c.modifiers
-      })));
+    if (aiSuggestions) {
+      // Check if it's EnhancedCodingSuggestion
+      if ('procedureCodes' in aiSuggestions && aiSuggestions.procedureCodes.hcpcs) {
+        hcpcsCodes.push(...aiSuggestions.procedureCodes.hcpcs.map(c => ({
+          code: c.code,
+          modifiers: c.modifiers
+        })));
+      } else if ('hcpcs' in aiSuggestions && aiSuggestions.hcpcs) {
+        // Basic CodingSuggestion
+        hcpcsCodes.push(...aiSuggestions.hcpcs.map(c => ({
+          code: c.code,
+          modifiers: c.modifiers
+        })));
+      }
     }
 
     return { cptCodes, icd10Codes, hcpcsCodes };
@@ -602,7 +648,7 @@ export class UnifiedBillingService {
     manualReviewRate: number;
     totalCharges: number;
     estimatedReimbursement: number;
-    topErrors: Array<{ code: string; count: number }>;
+    topErrors: Array<{ code: string; count: number; message: string }>;
   }> {
     // Query workflow history from database
     const { data: workflows, error } = await supabase
@@ -629,18 +675,22 @@ export class UnifiedBillingService {
       : 0;
 
     // Top errors
-    const errorCounts = new Map<string, number>();
+    const errorCounts = new Map<string, { count: number; message: string }>();
     workflows?.forEach(w => {
       if (w.errors && Array.isArray(w.errors)) {
         w.errors.forEach((error: any) => {
-          const count = errorCounts.get(error.code) || 0;
-          errorCounts.set(error.code, count + 1);
+          const existing = errorCounts.get(error.code);
+          if (existing) {
+            existing.count += 1;
+          } else {
+            errorCounts.set(error.code, { count: 1, message: error.message || 'Unknown error' });
+          }
         });
       }
     });
 
     const topErrors = Array.from(errorCounts.entries())
-      .map(([code, count]) => ({ code, count }))
+      .map(([code, { count, message }]) => ({ code, count, message }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
 

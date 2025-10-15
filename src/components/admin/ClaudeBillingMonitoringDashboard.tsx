@@ -187,7 +187,7 @@ const ClaudeBillingMonitoringDashboard: React.FC = () => {
       });
 
       // Cost trend (daily)
-      const costTrend = this.aggregateCostTrend(claudeLogs);
+      const costTrend = aggregateCostTrend(claudeLogs);
 
       // Response times
       const responseTimes = claudeLogs
