@@ -41,8 +41,16 @@ const Footer: React.FC = () => {
           {branding?.contactInfo || 'Contact us at info@thewellfitcommunity.org'}
         </div>
 
-        {/* Global Admin access */}
-        <nav className="mt-2" aria-label="Administrative">
+        {/* Legal and administrative links */}
+        <nav className="mt-2 flex flex-wrap justify-center gap-4 text-sm" aria-label="Footer navigation">
+          <Link to="/privacy-policy" style={linkStyle}>
+            Privacy Policy
+          </Link>
+          <span aria-hidden="true">·</span>
+          <Link to="/terms" style={linkStyle}>
+            Terms of Service
+          </Link>
+          <span aria-hidden="true">·</span>
           <Link to="/admin-login" className="font-semibold" style={linkStyle}>
             Admin Login
           </Link>

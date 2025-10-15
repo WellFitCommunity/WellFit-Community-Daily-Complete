@@ -44,6 +44,7 @@ const RegisterPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [hcaptchaToken, setHcaptchaToken] = useState<string>('');
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   // password visibility state
   const [showPassword, setShowPassword] = useState(false);
@@ -123,6 +124,9 @@ const RegisterPage: React.FC = () => {
     if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])/.test(formData.password)) {
       return 'Password must contain uppercase, lowercase, number, and special character';
     }
+
+    if (!agreedToTerms) return 'You must agree to the Terms of Service and Privacy Policy';
+
     return null;
   };
 
@@ -368,6 +372,38 @@ const RegisterPage: React.FC = () => {
             ))}
           </select>
           <p className="text-xs text-gray-500 mt-1">Admins/moderators are created internally only.</p>
+        </div>
+
+        {/* Terms and Privacy Agreement */}
+        <div className="flex items-start gap-2 p-3 border border-gray-300 rounded bg-gray-50">
+          <input
+            type="checkbox"
+            id="agreedToTerms"
+            checked={agreedToTerms}
+            onChange={(e) => setAgreedToTerms(e.target.checked)}
+            className="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+            aria-describedby="terms-text"
+          />
+          <label htmlFor="agreedToTerms" id="terms-text" className="text-sm text-gray-700">
+            I have read and agree to the{' '}
+            <a
+              href="/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 underline hover:text-blue-800"
+            >
+              Terms of Service
+            </a>
+            {' '}and{' '}
+            <a
+              href="/privacy-policy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 underline hover:text-blue-800"
+            >
+              Privacy Policy
+            </a>
+          </label>
         </div>
 
         <HCaptchaWidget

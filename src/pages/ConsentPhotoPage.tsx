@@ -120,7 +120,11 @@ const ConsentPhotoPage: React.FC = () => {
       </p>
 
       <p className="mb-4 text-sm">
-        By signing this agreement, you confirm that you have read and understand how photos, videos, or stories shared through the WellFit Community platform may be used. Your likeness or story may appear in program materials, community newsletters, grant reports, or other wellness-related promotions to highlight the impact of this work. Participation is entirely voluntary and may be withdrawn at any time by contacting our team.
+        By signing below, you confirm that you have read and understand how photos, videos, or stories shared through the WellFit Community platform may be used. Your likeness or story may appear in program materials, community newsletters, grant reports, or other wellness-related promotions to highlight the impact of this work. Participation is entirely voluntary and may be withdrawn at any time by contacting our team.
+      </p>
+
+      <p className="mb-4 text-xs text-gray-600">
+        <strong>Note:</strong> This consent is separate from your Privacy Policy agreement, which you will complete on the next step.
       </p>
 
       <label htmlFor="firstName" className="block font-semibold mb-2">First Name</label>
@@ -143,7 +147,7 @@ const ConsentPhotoPage: React.FC = () => {
         autoComplete="family-name"
       />
 
-      <label className="block font-semibold mb-2" htmlFor="signature">Final Signature</label>
+      <label className="block font-semibold mb-2" htmlFor="signature">Signature</label>
       <div className="border border-gray-500 rounded mb-4" id="signature">
         <SignatureCanvas
           penColor="black"
@@ -168,7 +172,7 @@ const ConsentPhotoPage: React.FC = () => {
           type="button"
           aria-busy={submitting}
         >
-          {submitting ? 'Saving…' : 'Save and Proceed to Privacy Consent'}
+          {submitting ? 'Saving…' : 'Continue to Privacy Agreement'}
         </button>
       </div>
 

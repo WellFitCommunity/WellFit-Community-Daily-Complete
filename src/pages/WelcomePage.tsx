@@ -94,6 +94,15 @@ const WelcomePage: React.FC = () => {
         <p className="mt-3 text-sm text-gray-500">
           Returning member? You can also <a href="/login" className="underline text-[#003865]">log in</a>.
         </p>
+
+        {/* Legal links */}
+        <div className="mt-4 pt-4 border-t border-gray-200 text-center">
+          <p className="text-xs text-gray-500">
+            <a href="/privacy-policy" className="underline text-[#003865] hover:text-[#8cc63f]">Privacy Policy</a>
+            {' · '}
+            <a href="/terms" className="underline text-[#003865] hover:text-[#8cc63f]">Terms of Service</a>
+          </p>
+        </div>
       </div>
     </div>
   );
