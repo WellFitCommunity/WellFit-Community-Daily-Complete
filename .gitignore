@@ -47,3 +47,9 @@ build/
 
 # supabase generated/temporary files
 supabase/.temp/
+
+# Documentation files that may contain sensitive information
+*_FIX_*.md
+*_URGENT*.md
+*_SUMMARY.md
+fix_*.sql
