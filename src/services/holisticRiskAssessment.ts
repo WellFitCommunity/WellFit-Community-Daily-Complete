@@ -51,16 +51,17 @@ export interface HolisticRiskScores {
 /**
  * Calculate engagement risk score (inverse of engagement score)
  * Low engagement = HIGH RISK
+ * Includes ALL activities: check-ins, self-reports, games, questions, community, meals
  */
 export async function calculateEngagementRisk(
   supabase: SupabaseClient,
   userId: string
 ): Promise<{ score: number; dataPoints: number }> {
   try {
-    // Get engagement score from view
+    // Get comprehensive engagement data from view
     const { data, error } = await supabase
       .from('patient_engagement_scores')
-      .select('engagement_score, check_ins_30d, trivia_games_30d, word_games_30d, self_reports_30d, questions_asked_30d, meal_interactions_30d')
+      .select('engagement_score, check_ins_30d, check_ins_7d, self_reports_30d, self_reports_7d, trivia_games_30d, word_games_30d, questions_asked_30d, community_photos_30d, physical_activity_reports_30d, social_engagement_reports_30d, no_activity_7days')
       .eq('user_id', userId)
       .single();
 
@@ -69,13 +70,17 @@ export async function calculateEngagementRisk(
     }
 
     const engagementScore = data.engagement_score || 0;
+
+    // Count all activities from the comprehensive view
     const totalActivities = (
       (data.check_ins_30d || 0) +
+      (data.self_reports_30d || 0) +
       (data.trivia_games_30d || 0) +
       (data.word_games_30d || 0) +
-      (data.self_reports_30d || 0) +
       (data.questions_asked_30d || 0) +
-      (data.meal_interactions_30d || 0)
+      (data.community_photos_30d || 0) +
+      (data.physical_activity_reports_30d || 0) +
+      (data.social_engagement_reports_30d || 0)
     );
 
     // Invert engagement score to risk (0-100 engagement → 10-0 risk)
@@ -83,10 +88,15 @@ export async function calculateEngagementRisk(
     // 20-39 engagement (LOW) → 7-8.9 risk
     // 40-69 engagement (MEDIUM) → 4-6.9 risk
     // 70-100 engagement (HIGH) → 0-3.9 risk
-    const riskScore = engagementScore >= 70 ? 2.0 :
-                      engagementScore >= 40 ? 5.0 :
-                      engagementScore >= 20 ? 7.5 :
-                      9.5; // CRITICAL
+    let riskScore = engagementScore >= 70 ? 2.0 :
+                    engagementScore >= 40 ? 5.0 :
+                    engagementScore >= 20 ? 7.5 :
+                    9.5; // CRITICAL
+
+    // Additional risk factor: No activity in last 7 days is a red flag
+    if (data.no_activity_7days) {
+      riskScore = Math.min(10, riskScore + 2.0); // Boost risk if completely inactive
+    }
 
     return { score: riskScore, dataPoints: totalActivities };
   } catch (err) {
@@ -96,24 +106,55 @@ export async function calculateEngagementRisk(
 }
 
 /**
- * Calculate vitals risk score from self-reported health metrics
- * Analyzes BP, blood sugar, oxygen, weight trends
+ * Calculate vitals risk score from self-reported health metrics AND check-ins
+ * Analyzes BP, blood sugar, oxygen, weight trends from both sources
  */
 export async function calculateVitalsRisk(
   supabase: SupabaseClient,
   userId: string
 ): Promise<{ score: number; dataPoints: number }> {
   try {
-    const { data, error } = await supabase
-      .from('self_reports')
-      .select('bp_systolic, bp_diastolic, blood_sugar, blood_oxygen, weight, spo2, created_at')
-      .eq('user_id', userId)
-      .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
-      .order('created_at', { ascending: false });
+    // Fetch from BOTH self_reports AND check_ins tables
+    const [selfReportsResult, checkInsResult] = await Promise.all([
+      supabase
+        .from('self_reports')
+        .select('bp_systolic, bp_diastolic, blood_sugar, blood_oxygen, weight, spo2, created_at')
+        .eq('user_id', userId)
+        .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('check_ins')
+        .select('bp_systolic, bp_diastolic, glucose_mg_dl, pulse_oximeter, heart_rate, created_at')
+        .eq('user_id', userId)
+        .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+        .order('created_at', { ascending: false })
+    ]);
 
-    if (error || !data || data.length === 0) {
+    // Merge and normalize data from both sources
+    const allVitals = [
+      ...(selfReportsResult.data || []).map(r => ({
+        bp_systolic: r.bp_systolic,
+        bp_diastolic: r.bp_diastolic,
+        blood_sugar: r.blood_sugar,
+        blood_oxygen: r.blood_oxygen || r.spo2,
+        weight: r.weight,
+        created_at: r.created_at
+      })),
+      ...(checkInsResult.data || []).map(r => ({
+        bp_systolic: r.bp_systolic,
+        bp_diastolic: r.bp_diastolic,
+        blood_sugar: r.glucose_mg_dl,
+        blood_oxygen: r.pulse_oximeter,
+        weight: undefined, // check_ins don't track weight
+        created_at: r.created_at
+      }))
+    ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+    if (allVitals.length === 0) {
       return { score: 5.0, dataPoints: 0 }; // Default if no data
     }
+
+    const data = allVitals;
 
     let riskScore = 0;
     let riskFactors = 0;
@@ -169,7 +210,7 @@ export async function calculateVitalsRisk(
     }
 
     // Blood Oxygen Risk (< 92% is concerning)
-    const oxygen = latest.blood_oxygen || latest.spo2;
+    const oxygen = latest.blood_oxygen;
     if (oxygen) {
       if (oxygen < 88) {
         riskScore += 3; // Critical
@@ -215,23 +256,48 @@ export async function calculateVitalsRisk(
 
 /**
  * Calculate mental/emotional health risk from mood patterns
- * Analyzes self-reported mood, stress, anxiety
+ * Analyzes self-reported mood, stress, anxiety AND check-in emotional states
  */
 export async function calculateMentalHealthRisk(
   supabase: SupabaseClient,
   userId: string
 ): Promise<{ score: number; dataPoints: number }> {
   try {
-    const { data, error } = await supabase
-      .from('self_reports')
-      .select('mood, symptoms, created_at')
-      .eq('user_id', userId)
-      .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
-      .order('created_at', { ascending: false });
+    // Fetch from BOTH self_reports AND check_ins tables
+    const [selfReportsResult, checkInsResult] = await Promise.all([
+      supabase
+        .from('self_reports')
+        .select('mood, symptoms, created_at')
+        .eq('user_id', userId)
+        .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('check_ins')
+        .select('emotional_state, notes, created_at')
+        .eq('user_id', userId)
+        .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+        .order('created_at', { ascending: false })
+    ]);
 
-    if (error || !data || data.length === 0) {
+    // Merge data from both sources
+    const allMoodData = [
+      ...(selfReportsResult.data || []).map(r => ({
+        mood: r.mood,
+        symptoms: r.symptoms,
+        created_at: r.created_at
+      })),
+      ...(checkInsResult.data || []).map(r => ({
+        mood: r.emotional_state, // Map emotional_state to mood
+        symptoms: r.notes, // Use notes as additional symptom context
+        created_at: r.created_at
+      }))
+    ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+    if (allMoodData.length === 0) {
       return { score: 5.0, dataPoints: 0 };
     }
+
+    const data = allMoodData;
 
     let riskScore = 0;
     let moodCount = 0;
