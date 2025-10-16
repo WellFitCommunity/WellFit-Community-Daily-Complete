@@ -1,7 +1,7 @@
 // src/index.tsx
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
+import { HashRouter } from 'react-router-dom';
 import './index.css';
 import App from './App';
 
@@ -53,7 +53,7 @@ root.render(
     <LanguageProvider>
       <AuthProvider>
         <AdminAuthProvider>
-          <BrowserRouter>
+          <HashRouter>
             <ErrorBoundary>
               <DemoModeBridge>
                 <App />
@@ -70,7 +70,7 @@ root.render(
                 />
               </DemoModeBridge>
             </ErrorBoundary>
-          </BrowserRouter>
+          </HashRouter>
         </AdminAuthProvider>
       </AuthProvider>
     </LanguageProvider>
