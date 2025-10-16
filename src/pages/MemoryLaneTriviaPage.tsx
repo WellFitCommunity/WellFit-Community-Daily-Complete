@@ -249,26 +249,28 @@ const MemoryLaneTriviaPage: React.FC = () => {
   };
 
   const getButtonClass = (optionLetter: string) => {
-    const baseClass = "w-full p-4 text-left rounded-xl border-2 font-semibold text-lg transition-all duration-300";
+    const baseClass = "w-full p-4 text-left rounded-xl font-semibold text-lg transition-all duration-300";
 
     if (!selectedAnswer) {
-      return `${baseClass} border-gray-300 bg-white cursor-pointer`;
+      return `${baseClass} bg-white text-gray-900 border-[3px] cursor-pointer hover:bg-blue-50`;
     }
 
     if (optionLetter === currentQuestion.correct_answer) {
-      return `${baseClass} text-white`;
+      return `${baseClass} border-[3px] text-white`;
     }
 
     if (optionLetter === selectedAnswer && optionLetter !== currentQuestion.correct_answer) {
-      return `${baseClass} border-red-500 bg-red-100 text-red-800`;
+      return `${baseClass} border-[3px] border-red-500 bg-red-100 text-red-800`;
     }
 
-    return `${baseClass} border-gray-300 bg-gray-100 opacity-50`;
+    return `${baseClass} border-[3px] border-gray-300 bg-gray-100 opacity-50`;
   };
 
   const getButtonStyle = (optionLetter: string) => {
     if (!selectedAnswer) {
-      return {};
+      return {
+        borderColor: '#003865'
+      };
     }
 
     if (optionLetter === currentQuestion.correct_answer) {

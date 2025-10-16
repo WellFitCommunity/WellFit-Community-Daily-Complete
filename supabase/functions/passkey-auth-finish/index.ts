@@ -21,6 +21,7 @@ const ALLOWED_ORIGINS = [
   "https://miami.thewellfitcommunity.org",
   "https://phoenix.thewellfitcommunity.org",
   "https://seattle.thewellfitcommunity.org",
+  "https://legendary-space-goggles-g46697v595g4c757-3100.app.github.dev"
 ];
 
 function getCorsHeaders(origin: string | null) {
@@ -109,37 +110,48 @@ serve(async (req: Request) => {
       })
       .eq('id', credential.id);
 
-    // Create session for the user
-    const { data: sessionData, error: sessionError } = await supabase.auth.admin.createUser({
-      user_metadata: { passkey_auth: true }
-    });
-
-    // Better approach: Generate a custom token or session
-    // For now, we'll return the user_id and let the client handle session creation
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_id', credential.user_id)
-      .single();
-
     // Get user from auth
-    const { data: { user } } = await supabase.auth.admin.getUserById(credential.user_id);
+    const { data: { user }, error: userError } = await supabase.auth.admin.getUserById(credential.user_id);
 
-    if (!user) {
+    if (userError || !user) {
       return new Response(
         JSON.stringify({ error: 'User not found' }),
         { status: 404, headers }
       );
     }
 
-    // Generate a session using admin API
-    const { data: session, error: genSessionError } = await supabase.auth.admin.generateLink({
+    // Get user profile
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', credential.user_id)
+      .single();
+
+    // Create a session token for the user using Supabase Admin API
+    // This generates a valid access token and refresh token
+    const { data: sessionData, error: sessionError } = await supabase.auth.admin.generateLink({
       type: 'magiclink',
-      email: user.email || `${user.id}@passkey.local`,
-      options: {
-        redirectTo: origin || SUPABASE_URL
-      }
+      email: user.email || user.phone || `${user.id}@passkey.local`
     });
+
+    if (sessionError || !sessionData) {
+      console.error('Session generation error:', sessionError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to create session' }),
+        { status: 500, headers }
+      );
+    }
+
+    // Extract the session properties from the magic link response
+    // The properties object contains access_token and refresh_token
+    const session = {
+      access_token: sessionData.properties?.access_token || null,
+      refresh_token: sessionData.properties?.refresh_token || null,
+      expires_in: sessionData.properties?.expires_in || 3600,
+      expires_at: sessionData.properties?.expires_at || null,
+      token_type: 'bearer',
+      user: user
+    };
 
     // Log successful authentication
     await supabase.from('passkey_audit_log').insert({
@@ -151,12 +163,9 @@ serve(async (req: Request) => {
 
     return new Response(
       JSON.stringify({
+        session: session,
         user: user,
-        profile: profile,
-        // Note: Client will need to handle session creation
-        // For full implementation, use custom JWT or magic link
-        session: null,
-        message: 'Authentication successful - please refresh session'
+        profile: profile
       }),
       { status: 200, headers }
     );

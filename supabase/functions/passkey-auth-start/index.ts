@@ -21,6 +21,7 @@ const ALLOWED_ORIGINS = [
   "https://miami.thewellfitcommunity.org",
   "https://phoenix.thewellfitcommunity.org",
   "https://seattle.thewellfitcommunity.org",
+  "https://legendary-space-goggles-g46697v595g4c757-3100.app.github.dev"
 ];
 
 function getCorsHeaders(origin: string | null) {
