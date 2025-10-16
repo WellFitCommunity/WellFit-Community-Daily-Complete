@@ -1,24 +1,26 @@
-// public/service-worker.js — Redirect-safe, MIME-aware offline SW (WellFit)
-// Fixes: "redirect mode is not 'follow'" by forcing redirect:'follow' and avoiding caching redirects.
-// Strategy:
-//  - Navigations (HTML): network-first with SPA shell fallback
-//  - Static assets: cache-first
-//  - Same-origin GET runtime: network-first
-//  - Never intercept: non-GET or cross-origin; bypass auth/captcha/Supabase routes
+/* public/service-worker.js — Redirect-safe, MIME-aware offline SW (WellFit)
+   Fixes: "redirect mode is not 'follow'" by forcing redirect:'follow' and avoiding caching redirects.
+   Strategy:
+    - Navigations (HTML): network-first with SPA shell fallback
+    - Static assets: cache-first
+    - Same-origin GET runtime: network-first
+    - Never intercept: non-GET or cross-origin; bypass auth/captcha/Supabase routes
+*/
 
-const VERSION = 'wellfit-v5.0.0';
+const VERSION = 'wellfit-v5.0.1';
 const SHELL_CACHE = `shell-${VERSION}`;
 const RUNTIME_CACHE = `runtime-${VERSION}`;
 const NAV_SHELL = '/index.html';
 
-// Only cache stable shell files (hashed assets cached on-demand)
-const SHELL_FILES = ['/', '/index.html', '/manifest.json', '/favicon.ico'];
+// Only cache stable shell files (⚠️ do NOT cache "/" — hosts often redirect it)
+const SHELL_FILES = ['/index.html', '/manifest.json', '/favicon.ico'];
 
 // Paths we never intercept/cache (auth flows, callbacks, captcha, etc.)
 const BYPASS_PATH_PREFIXES = [
   '/login', '/register', '/verify', '/logout',
   '/auth', '/auth/callback', '/api/auth',
-  '/hcaptcha', '/captcha'
+  '/hcaptcha', '/captcha',
+  '/api/hcaptcha', '/api/hcaptcha/verify'
 ];
 
 // ---------- Install: pre-cache shell (best-effort) ----------
@@ -47,6 +49,9 @@ self.addEventListener('activate', (event) => {
           .filter(k => ![SHELL_CACHE, RUNTIME_CACHE].includes(k))
           .map(k => caches.delete(k))
       );
+      if (self.registration.navigationPreload) {
+        try { await self.registration.navigationPreload.enable(); } catch {}
+      }
     } catch (_) {}
     await self.clients.claim();
   })());
@@ -60,7 +65,7 @@ const sameOrigin = (url) => {
 const isSPAHtmlNav = (request) =>
   request.mode === 'navigate' ||
   (request.method === 'GET' &&
-   request.headers.get('accept')?.includes('text/html'));
+   (request.headers.get('accept') || '').includes('text/html'));
 
 const shouldBypass = (url) => {
   try {
@@ -81,7 +86,7 @@ const isStaticDest = (request) => {
 const canCache = (response) => {
   if (!response) return false;
   if (response.redirected) return false;        // never cache redirects
-  if (response.type !== 'basic') return false;  // ignore cross-origin/opaque
+  if (!['basic', 'cors'].includes(response.type)) return false; // ignore opaque where possible
   if (response.status !== 200) return false;
   const ct = response.headers.get('content-type') || '';
   return /text\/html|text\/css|application\/javascript|application\/json|image\/|font\//i.test(ct);
@@ -94,7 +99,7 @@ const isHtml = (response) => {
 };
 
 // Always follow redirects when SW fetches
-const fetchFollow = (request) => fetch(request, { redirect: 'follow' });
+const fetchFollow = (request, opts = {}) => fetch(request, { redirect: 'follow', ...opts });
 
 // ---------- Fetch ----------
 self.addEventListener('fetch', (event) => {
@@ -131,11 +136,15 @@ async function handleNavigation(event) {
   } catch (_) {}
 
   try {
-    const net = await fetchFollow(event.request);
+    const net = await fetchFollow(event.request, { cache: 'no-store' });
     if (isHtml(net)) return net;
+
     // If server gives non-HTML (or a redirect we won’t cache), serve shell
     const shell = await caches.match(NAV_SHELL);
-    return shell || fetchFollow(NAV_SHELL);
+    if (shell) return shell;
+
+    // Last resort: fetch shell from network following redirects
+    return await fetchFollow(NAV_SHELL, { cache: 'reload' });
   } catch {
     const shell = await caches.match(NAV_SHELL);
     return shell || new Response('', { status: 503, statusText: 'Offline' });
@@ -169,6 +178,7 @@ async function networkFirstRuntime(request) {
   } catch {
     const fallback = await caches.match(request, { ignoreVary: false, ignoreSearch: false });
     if (fallback) return fallback;
+
     if (isSPAHtmlNav(request)) {
       const shell = await caches.match(NAV_SHELL);
       return shell || new Response('', { status: 503, statusText: 'Offline' });

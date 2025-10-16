@@ -393,7 +393,11 @@ const SettingsPage: React.FC = () => {
                         <input
                           type="time"
                           value={settings.daily_reminder_time}
-                          onChange={(e) => setSettings({ ...settings, daily_reminder_time: e.target.value })}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            setSettings({ ...settings, daily_reminder_time: e.target.value });
+                          }}
+                          onClick={(e) => e.stopPropagation()}
                           className="w-full p-3 text-lg border-2 border-gray-300 rounded-lg focus:border-[#8cc63f] focus:outline-none"
                         />
                       </div>
@@ -410,7 +414,11 @@ const SettingsPage: React.FC = () => {
                         <input
                           type="text"
                           value={settings.emergency_contact_name}
-                          onChange={(e) => setSettings({ ...settings, emergency_contact_name: e.target.value })}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            setSettings({ ...settings, emergency_contact_name: e.target.value });
+                          }}
+                          onClick={(e) => e.stopPropagation()}
                           className="w-full p-3 text-lg border-2 border-gray-300 rounded-lg focus:border-[#8cc63f] focus:outline-none"
                           placeholder="Full name of your emergency contact"
                         />
@@ -423,7 +431,11 @@ const SettingsPage: React.FC = () => {
                         <input
                           type="tel"
                           value={settings.emergency_contact_phone}
-                          onChange={(e) => setSettings({ ...settings, emergency_contact_phone: e.target.value })}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            setSettings({ ...settings, emergency_contact_phone: e.target.value });
+                          }}
+                          onClick={(e) => e.stopPropagation()}
                           className="w-full p-3 text-lg border-2 border-gray-300 rounded-lg focus:border-[#8cc63f] focus:outline-none"
                           placeholder="(555) 123-4567"
                         />
@@ -441,7 +453,11 @@ const SettingsPage: React.FC = () => {
                         <input
                           type="text"
                           value={settings.preferred_name}
-                          onChange={(e) => setSettings({ ...settings, preferred_name: e.target.value })}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            setSettings({ ...settings, preferred_name: e.target.value });
+                          }}
+                          onClick={(e) => e.stopPropagation()}
                           className="w-full p-3 text-lg border-2 border-gray-300 rounded-lg focus:border-[#8cc63f] focus:outline-none"
                           placeholder="Your preferred name"
                         />
@@ -453,7 +469,11 @@ const SettingsPage: React.FC = () => {
                         </label>
                         <select
                           value={settings.timezone}
-                          onChange={(e) => setSettings({ ...settings, timezone: e.target.value })}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            setSettings({ ...settings, timezone: e.target.value });
+                          }}
+                          onClick={(e) => e.stopPropagation()}
                           className="w-full p-3 text-lg border-2 border-gray-300 rounded-lg focus:border-[#8cc63f] focus:outline-none"
                         >
                           <option value="America/New_York">Eastern Time</option>
@@ -476,7 +496,10 @@ const SettingsPage: React.FC = () => {
                           Keep your account secure by using a strong password and changing it regularly.
                         </p>
                         <button
-                          onClick={() => navigate('/change-password')}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate('/change-password');
+                          }}
                           className="bg-[#003865] text-white px-6 py-3 rounded-lg hover:bg-[#8cc63f] transition font-semibold"
                         >
                           🔒 Change Password
@@ -501,12 +524,16 @@ const SettingsPage: React.FC = () => {
                         <div className="flex flex-col sm:flex-row gap-2">
                           <a
                             href="tel:1-800-WELLFIT"
+                            onClick={(e) => e.stopPropagation()}
                             className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition text-center"
                           >
                             📞 Call Support
                           </a>
                           <button
-                            onClick={() => navigate('/help')}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate('/help');
+                            }}
                             className="bg-[#003865] text-white px-4 py-2 rounded-lg hover:bg-[#8cc63f] transition"
                           >
                             📚 View Help Center

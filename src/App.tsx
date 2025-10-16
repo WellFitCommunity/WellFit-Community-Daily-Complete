@@ -42,6 +42,7 @@ const DashboardPage = React.lazy(() => import('./pages/DashboardPage'));
 const HealthTrackerPage = React.lazy(() => import('./pages/HealthTrackerPage'));
 const HelpPage = React.lazy(() => import('./pages/AIHelpPage'));
 const SettingsPage = React.lazy(() => import('./pages/SettingsPage'));
+const ProfilePage = React.lazy(() => import('./pages/ProfilePage'));
 const CheckInPage = React.lazy(() => import('./pages/CheckInPage'));
 const WordFindPage = React.lazy(() => import('./pages/WordFindPage'));
 const MealDetailPage = React.lazy(() => import('./pages/MealDetailPage'));
@@ -115,6 +116,7 @@ function Shell() {
               <Route path="/questions" element={<RequireAuth><QuestionsPage /></RequireAuth>} />
               <Route path="/help" element={<RequireAuth><HelpPage /></RequireAuth>} />
               <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
+              <Route path="/profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />
               <Route path="/check-in" element={<RequireAuth><CheckInPage /></RequireAuth>} />
               <Route path="/word-find" element={<RequireAuth><WordFindPage /></RequireAuth>} />
               <Route path="/memory-lane-trivia" element={<RequireAuth><MemoryLaneTriviaPage /></RequireAuth>} />

@@ -265,7 +265,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
               {(['light', 'dark', 'auto'] as const).map((theme) => (
                 <button
                   key={theme}
-                  onClick={() => updateSetting('theme', 'theme', theme)}
+                  onClick={() => setSettings(prev => ({ ...prev, theme }))}
                   className={`p-3 border rounded-lg text-sm font-medium capitalize transition-colors ${
                     settings.theme === theme
                       ? 'border-blue-500 bg-blue-50 text-blue-700'

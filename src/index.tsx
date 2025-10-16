@@ -4,20 +4,20 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import './index.css';
 import App from './App';
+
+// Toasts
+import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+// Error boundary & Providers
 import ErrorBoundary from './ErrorBoundary';
-import * as serviceWorkerRegistration from './serviceWorkerRegistration';
-
-// ✅ Providers
+import { register, promptUpdate, UPDATE_EVENT_NAME } from './serviceWorkerRegistration';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AdminAuthProvider } from './contexts/AdminAuthContext';
 import { LanguageProvider } from './contexts/LanguageContext';
-
-// Bridge passes userId to DemoModeProvider without DemoMode importing useAuth directly
 import { DemoModeProvider } from './contexts/DemoModeContext';
 
-// Initialize Claude AI service
+// Claude init
 import { claudeService } from './services/claudeService';
 
 function DemoModeBridge({ children }: { children: React.ReactNode }) {
@@ -41,8 +41,8 @@ claudeService
   })
   .catch((error) => {
     console.warn(
-      '⚠️ Claude AI service initialization failed (app will continue with limited AI features):',
-      error.message
+      '⚠️ Claude AI service initialization failed (limited AI features):',
+      error?.message ?? error
     );
   });
 
@@ -57,6 +57,17 @@ root.render(
             <ErrorBoundary>
               <DemoModeBridge>
                 <App />
+                {/* Global toast container (if you already mount one inside App, remove this to avoid duplicates) */}
+                <ToastContainer
+                  containerId="root-toaster"
+                  position="bottom-center"
+                  newestOnTop
+                  closeOnClick
+                  draggable
+                  pauseOnHover
+                  limit={2}
+                  autoClose={4000}
+                />
               </DemoModeBridge>
             </ErrorBoundary>
           </BrowserRouter>
@@ -66,18 +77,64 @@ root.render(
   </React.StrictMode>
 );
 
-// ✅ Enable service worker for offline support in rural healthcare areas
-// The safe, MIME-aware service worker is now active
-serviceWorkerRegistration.register({
+/**
+ * ===========================
+ * Service Worker Registration
+ * ===========================
+ *
+ * Two separate “updates”:
+ * 1) App Version Update (new deploy) → show toast with Reload button (calls promptUpdate()).
+ * 2) Connectivity/Data Sync (offline→online) → show small “Back online” toast.
+ */
+register({
   onSuccess: () => {
-    console.log('[WellFit] Offline mode ready - app will work without internet connection');
+    console.log('[WellFit] Offline support ready.');
   },
-  onUpdate: (registration) => {
-    console.log('[WellFit] New version available - refresh to update');
-    // Optional: Show a toast notification to users
-    if (window.confirm('A new version is available. Reload to update?')) {
-      registration.waiting?.postMessage({ type: 'SKIP_WAITING' });
-      window.location.reload();
-    }
-  }
+  onUpdate: () => {
+    // Proactive toast; user can reload immediately
+    toast.info(
+      <span>
+        A new version is available.&nbsp;
+        <button
+          onClick={() => promptUpdate()}
+          style={{ textDecoration: 'underline', fontWeight: 600 }}
+        >
+          Reload
+        </button>
+      </span>,
+      { containerId: 'root-toaster', autoClose: false }
+    );
+  },
 });
+
+// Also listen for our custom event from serviceWorkerRegistration (belt & suspenders)
+window.addEventListener(
+  UPDATE_EVENT_NAME,
+  () => {
+    toast.info(
+      <span>
+        New version ready.&nbsp;
+        <button
+          onClick={() => promptUpdate()}
+          style={{ textDecoration: 'underline', fontWeight: 600 }}
+        >
+          Reload
+        </button>
+      </span>,
+      { containerId: 'root-toaster', autoClose: false }
+    );
+  },
+  { once: true }
+);
+
+// Connectivity signals (Data/Sync layer — separate from app version updates)
+window.addEventListener('online', () => {
+  toast.success('Back online — syncing data if needed…', { containerId: 'root-toaster' });
+});
+
+window.addEventListener('offline', () => {
+  toast.warn('You are offline — changes will be queued locally.', { containerId: 'root-toaster' });
+});
+
+// Optional: expose a manual quick action for debugging from DevTools console
+// window.WF?.swKill?.();  // instantly unregisters SW + clears caches + reloads path

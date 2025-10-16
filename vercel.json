@@ -9,6 +9,7 @@
   },
   "cleanUrls": true,
   "trailingSlash": false,
+
   "headers": [
     {
       "source": "/(.*)",
@@ -17,18 +18,36 @@
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
         { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
+
+        
         { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" },
+
         {
           "key": "Content-Security-Policy",
           "value": "default-src 'self'; frame-ancestors 'self' https://wellfitcommunity.live https://www.wellfitcommunity.live https://thewellfitcommunity.org https://www.thewellfitcommunity.org; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.hcaptcha.com https://hcaptcha.com https://www.gstatic.com https://www.google.com https://*.supabase.co https://*.supabase.io; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://api.hcaptcha.com https://*.supabase.co https://*.supabase.io https://verify.twilio.com https://api.twilio.com https://api.mailersend.com https://images.unsplash.com https://source.unsplash.com; connect-src 'self' https://hcaptcha.com https://*.hcaptcha.com https://api.hcaptcha.com https://*.supabase.co https://*.supabase.io https://verify.twilio.com https://api.twilio.com https://api.mailersend.com https://images.unsplash.com https://source.unsplash.com https://wellfitcommunity.live https://www.wellfitcommunity.live https://thewellfitcommunity.org https://www.thewellfitcommunity.org https://api.weatherapi.com; frame-src 'self' https://hcaptcha.com https://*.hcaptcha.com; worker-src 'self' blob:; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"
         }
       ]
     },
+
+   
+    {
+      "source": "/static/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+
+    
     {
       "source": "/service-worker.js",
-      "headers": [{ "key": "Cache-Control", "value": "no-store" }]
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store" },
+        { "key": "Service-Worker-Allowed", "value": "/" }
+      ]
     }
   ],
+
+ 
   "rewrites": [
     { "source": "/static/:path*", "destination": "/static/:path*" },
     { "source": "/asset-manifest.json", "destination": "/asset-manifest.json" },
@@ -40,6 +59,10 @@
     { "source": "/android-chrome-512x512.png", "destination": "/android-chrome-512x512.png" },
     { "source": "/robots.txt", "destination": "/robots.txt" },
 
+    
+    { "source": "/service-worker.js", "destination": "/service-worker.js" },
+
+   
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

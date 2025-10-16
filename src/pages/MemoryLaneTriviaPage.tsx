@@ -164,26 +164,27 @@ const MemoryLaneTriviaPage: React.FC = () => {
     // Save progress to database
     await saveProgress(newProgress, false);
 
-    // Move to next question after delay
-    setTimeout(async () => {
-      if (currentQuestionIndex < questions.length - 1) {
-        setCurrentQuestionIndex(currentQuestionIndex + 1);
-        setSelectedAnswer(null);
-        setAnsweredCorrectly(null);
-      } else {
-        // Game completed!
-        const perfectScore = newProgress.correct_answers === 5;
-        setGameCompleted(true);
+    // Don't auto-advance - wait for user to click Next
+  };
 
-        if (perfectScore) {
-          setShowConfetti(true);
-          await awardTrophy();
-          setTimeout(() => setShowConfetti(false), 8000);
-        }
+  const handleNextQuestion = async () => {
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      setSelectedAnswer(null);
+      setAnsweredCorrectly(null);
+    } else {
+      // Game completed!
+      const perfectScore = progress.correct_answers === 5;
+      setGameCompleted(true);
 
-        await saveProgress({ ...newProgress, perfect_score: perfectScore }, true);
+      if (perfectScore) {
+        setShowConfetti(true);
+        await awardTrophy();
+        setTimeout(() => setShowConfetti(false), 8000);
       }
-    }, 2500);
+
+      await saveProgress({ ...progress, perfect_score: perfectScore }, true);
+    }
   };
 
   const saveProgress = async (progressData: TriviaProgress, completed: boolean) => {
@@ -421,22 +422,35 @@ const MemoryLaneTriviaPage: React.FC = () => {
 
               {/* Feedback */}
               {answeredCorrectly !== null && (
-                <div
-                  className="p-6 rounded-xl border-2 text-center"
-                  style={{
-                    backgroundColor: answeredCorrectly ? '#f0f8e8' : '#e8f4f8',
-                    borderColor: answeredCorrectly ? '#8cc63f' : '#003865'
-                  }}
-                >
-                  <p
-                    className="text-2xl font-bold mb-2"
-                    style={{ color: answeredCorrectly ? '#003865' : '#003865' }}
+                <div className="space-y-4">
+                  <div
+                    className="p-6 rounded-xl border-2 text-center"
+                    style={{
+                      backgroundColor: answeredCorrectly ? '#f0f8e8' : '#e8f4f8',
+                      borderColor: answeredCorrectly ? '#8cc63f' : '#003865'
+                    }}
                   >
-                    {answeredCorrectly ? '✓ Correct!' : POSITIVE_MESSAGES[Math.floor(Math.random() * POSITIVE_MESSAGES.length)]}
-                  </p>
-                  <p className="text-lg text-gray-700">
-                    {!answeredCorrectly && `The correct answer was ${currentQuestion.correct_answer}.`}
-                  </p>
+                    <p
+                      className="text-2xl font-bold mb-2"
+                      style={{ color: answeredCorrectly ? '#003865' : '#003865' }}
+                    >
+                      {answeredCorrectly ? '✓ Correct!' : POSITIVE_MESSAGES[Math.floor(Math.random() * POSITIVE_MESSAGES.length)]}
+                    </p>
+                    <p className="text-lg text-gray-700">
+                      {!answeredCorrectly && `The correct answer was ${currentQuestion.correct_answer}.`}
+                    </p>
+                  </div>
+
+                  {/* Next Question Button */}
+                  <button
+                    onClick={handleNextQuestion}
+                    className="w-full py-6 text-white font-bold text-2xl rounded-xl transition shadow-lg hover:scale-105"
+                    style={{
+                      background: 'linear-gradient(90deg, #8cc63f 0%, #003865 100%)'
+                    }}
+                  >
+                    {currentQuestionIndex < questions.length - 1 ? '➡️ Next Question' : '🏁 See My Results'}
+                  </button>
                 </div>
               )}
             </div>
