@@ -9,6 +9,7 @@ import DailyScripture from './DailyScripture';
 import TechTip from './TechTip';
 import PositiveAffirmations from './PositiveAffirmations';
 import EmergencyContact from '../features/EmergencyContact';
+import WhatsNewSeniorModal from '../WhatsNewSeniorModal';
 
 const SeniorCommunityDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -28,6 +29,7 @@ const SeniorCommunityDashboard: React.FC = () => {
   const [recentCommunityPhoto, setRecentCommunityPhoto] = useState<string | null>(null);
   const [todaysMeal, setTodaysMeal] = useState<any>(null);
   const [caregiverPhone, setCaregiverPhone] = useState<string | null>(null);
+  const [showWhatsNew, setShowWhatsNew] = useState(false);
 
   // Get today's meal
   useEffect(() => {
@@ -83,6 +85,20 @@ const SeniorCommunityDashboard: React.FC = () => {
     loadRecentPhoto();
     loadCaregiverContact();
   }, [supabase, user?.id]);
+
+  // Check if user should see What's New modal
+  useEffect(() => {
+    try {
+      const lastSeenVersion = localStorage.getItem('seniorWhatsNew_lastSeen');
+      const currentVersion = '2025-10-16';
+      if (lastSeenVersion !== currentVersion) {
+        // Show modal after a short delay for better UX
+        setTimeout(() => setShowWhatsNew(true), 1000);
+      }
+    } catch (err) {
+      console.error('Failed to check What\'s New status:', err);
+    }
+  }, []);
 
   const checkInButtons = [
     {
@@ -297,8 +313,11 @@ const SeniorCommunityDashboard: React.FC = () => {
       className="min-h-screen"
       style={{ background: branding.gradient }}
     >
+      {/* What's New Modal */}
+      <WhatsNewSeniorModal isOpen={showWhatsNew} onClose={() => setShowWhatsNew(false)} />
+
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-6xl">
-        
+
         {/* Welcome Header */}
         <div className="text-center mb-6 sm:mb-8">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#003865] mb-2">

@@ -19,6 +19,20 @@ interface WhatsNewModalProps {
 
 const RECENT_FEATURES: Feature[] = [
   {
+    title: 'User Profile Page',
+    description: 'New comprehensive profile page for seniors with photo upload, achievements tracking, emergency contacts, and account information. Accessible via /profile route.',
+    category: 'new',
+    date: '2025-10-16',
+    icon: '👤',
+  },
+  {
+    title: 'Avatar Storage System',
+    description: 'Secure profile photo storage with automatic image management, size validation (5MB max), and RLS policies for user data protection.',
+    category: 'new',
+    date: '2025-10-16',
+    icon: '📸',
+  },
+  {
     title: 'Loading Skeletons',
     description: 'Dashboards now show content placeholders while loading instead of spinners for better perceived performance.',
     category: 'improved',
