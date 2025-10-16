@@ -254,8 +254,6 @@ const WordFind: React.FC = () => {
                   difficulty_level: themeData.theme || 'medium',
                   completion_status: 'completed',
                   puzzle_id: `${today}-${todayIndex}`
-                }).then(() => {
-                  console.log('✅ Word game result saved to database');
                 }).catch((error) => {
                   console.error('Failed to save word game result to database:', error);
                 });

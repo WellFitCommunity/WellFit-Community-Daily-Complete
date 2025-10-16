@@ -70,19 +70,6 @@ const PhotoApprovalPage = React.lazy(() => import('./pages/PhotoApprovalPage'));
 const SmartCallbackPage = React.lazy(() => import('./pages/SmartCallbackPage'));
 const SmartBackButton = React.lazy(() => import('./components/ui/SmartBackButton'));
 
-const PUBLIC_ROUTES = [
-  '/',
-  '/register',
-  '/verify',
-  '/privacy-policy',
-  '/terms',
-  '/login',
-  '/admin-login',
-  '/change-password',
-  '/reset-password',
-  '/home',
-];
-
 function Shell() {
   const [branding, setBranding] = useState<BrandingConfig>(getCurrentBranding());
   const location = useLocation();

@@ -15,7 +15,6 @@ interface MealFormData {
 
 const UploadMeal: React.FC = () => {
   const supabase = useSupabaseClient();
-  const user = useUser();
 
   const initialFormData: MealFormData = {
     name: '',

@@ -7,7 +7,6 @@ import {
   RequestType,
   ClaudeRequestContext,
   ClaudeResponse,
-  ClaudeError,
   HealthDataContext,
   ServiceStatus,
   CostInfo

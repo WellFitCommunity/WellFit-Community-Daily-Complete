@@ -30,7 +30,7 @@ interface Toast {
 }
 
 // Toast Component
-const Toast: React.FC<{ toast: Toast; onDismiss: (id: string) => void }> = ({ toast, onDismiss }) => {
+const ToastNotification: React.FC<{ toast: Toast; onDismiss: (id: string) => void }> = ({ toast, onDismiss }) => {
   useEffect(() => {
     const timer = setTimeout(() => onDismiss(toast.id), 5000);
     return () => clearTimeout(timer);
@@ -71,7 +71,7 @@ const Toast: React.FC<{ toast: Toast; onDismiss: (id: string) => void }> = ({ to
 const ToastContainer: React.FC<{ toasts: Toast[]; onDismiss: (id: string) => void }> = ({ toasts, onDismiss }) => (
   <div className="fixed top-4 right-4 z-50 space-y-2" aria-live="polite">
     {toasts.map(toast => (
-      <Toast key={toast.id} toast={toast} onDismiss={onDismiss} />
+      <ToastNotification key={toast.id} toast={toast} onDismiss={onDismiss} />
     ))}
   </div>
 );

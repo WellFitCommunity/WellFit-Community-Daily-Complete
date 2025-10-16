@@ -29,7 +29,6 @@ export const PasskeySetup: React.FC<PasskeySetupProps> = ({
   onSuccess,
   className = ''
 }) => {
-  const { user } = useSupabaseClient() as any;
   const [supported, setSupported] = useState(false);
   const [platformAvailable, setPlatformAvailable] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -71,7 +70,7 @@ export const PasskeySetup: React.FC<PasskeySetupProps> = ({
     setSuccess('');
 
     try {
-      const credential = await registerPasskey(
+      await registerPasskey(
         userId,
         userName,
         displayName,

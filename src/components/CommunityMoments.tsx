@@ -401,12 +401,6 @@ const CommunityMoments: React.FC = () => {
     }
   };
 
-  const emojiVariants: any = {
-    hidden: { scale: 0, opacity: 0, rotate: -90 },
-    visible: { scale: 1.2, opacity: 1, rotate: 0, transition: { type: 'spring', stiffness: 300 } },
-    tap: { scale: 1.4 },
-  };
-
   // Moment Card (now accepts admin + callback)
   const MomentCard: React.FC<{
     m: Moment;

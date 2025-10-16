@@ -19,14 +19,11 @@ import type {
   Claim,
   ClaimLine,
   CreateClaim,
-  BillingProvider,
-  BillingPayer,
   CodingSuggestion
 } from '../types/billing';
 import type {
   EnhancedCodingSuggestion,
   SDOHAssessment,
-  CCMTimeTracking,
   BillingValidation
 } from '../types/sdohBilling';
 import type {

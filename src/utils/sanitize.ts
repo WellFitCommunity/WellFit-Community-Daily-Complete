@@ -174,7 +174,7 @@ export function sanitizeFileName(filename: string | null | undefined): string {
   if (!filename) return '';
 
   // Remove path separators and null bytes
-  let safe = filename.replace(/[\/\\:\0]/g, '');
+  let safe = filename.replace(/[/\\:\0]/g, '');
 
   // Remove leading dots to prevent hidden files
   safe = safe.replace(/^\.+/, '');

@@ -17,8 +17,7 @@ import type {
   BatchStatus,
   CreateBillingProvider,
   UpdateBillingProvider,
-  CreateClaim,
-  UpdateClaim
+  CreateClaim
 } from '../types/billing';
 
 export class BillingService {
