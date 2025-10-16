@@ -160,7 +160,7 @@ const AdminPanel: React.FC = () => {
             subtitle="Monitor senior activity levels to identify at-risk patients - includes trivia, games, check-ins, questions"
             icon="📊"
             headerColor="text-indigo-800"
-            defaultOpen={true}
+            defaultOpen={false}
           >
             <PatientEngagementDashboard />
           </CollapsibleSection>

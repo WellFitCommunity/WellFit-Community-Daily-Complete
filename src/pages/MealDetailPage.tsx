@@ -318,20 +318,22 @@ export default function MealDetailPage() {
 
           {/* Meal Interaction Prompt */}
           {showInteractionPrompt && user && (
-            <div className="mt-6 p-6 bg-gradient-to-r from-blue-50 to-green-50 border-2 border-[#8cc63f] rounded-xl shadow-lg">
+            <div className="mt-6 p-6 bg-gradient-to-r from-blue-50 to-green-50 border-2 border-[#8cc63f] rounded-xl shadow-lg relative z-10">
               <h3 className="text-xl font-bold text-[#003865] mb-4 text-center">
                 🍽️ Will you be making this meal?
               </h3>
               <div className="flex gap-4 justify-center">
                 <button
+                  type="button"
                   onClick={() => handleMealResponse(true)}
-                  className="px-8 py-4 bg-[#8cc63f] text-white font-bold text-lg rounded-lg hover:bg-[#77aa36] transition shadow-md"
+                  className="px-8 py-4 bg-[#8cc63f] text-white font-bold text-lg rounded-lg hover:bg-[#77aa36] transition shadow-md active:scale-95 cursor-pointer touch-manipulation"
                 >
                   Yes! 😊
                 </button>
                 <button
+                  type="button"
                   onClick={() => handleMealResponse(false)}
-                  className="px-8 py-4 bg-gray-400 text-white font-bold text-lg rounded-lg hover:bg-gray-500 transition shadow-md"
+                  className="px-8 py-4 bg-gray-400 text-white font-bold text-lg rounded-lg hover:bg-gray-500 transition shadow-md active:scale-95 cursor-pointer touch-manipulation"
                 >
                   Not this time
                 </button>

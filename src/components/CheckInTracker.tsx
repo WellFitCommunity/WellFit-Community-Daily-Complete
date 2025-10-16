@@ -1,5 +1,5 @@
 // src/components/CheckInTracker.tsx
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useSupabaseClient, useUser } from '../contexts/AuthContext';
 
 const ENABLE_LOCAL_HISTORY = false; // HIPAA: keep PHI out of localStorage
@@ -66,6 +66,9 @@ export default function CheckInTracker({ showBackButton = false }: CheckInTracke
   const [infoMessage, setInfoMessage] = useState<Toast>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Ref for feedback message to scroll to
+  const feedbackRef = useRef<HTMLDivElement>(null);
+
   // Detailed form fields
   const [emotionalState, setEmotionalState] = useState('');
   const [heartRate, setHeartRate] = useState('');
@@ -101,6 +104,17 @@ export default function CheckInTracker({ showBackButton = false }: CheckInTracke
       }
     })();
   }, [userId, supabase]);
+
+  // Scroll to feedback message when it appears
+  useEffect(() => {
+    if (infoMessage && feedbackRef.current) {
+      feedbackRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'nearest'
+      });
+    }
+  }, [infoMessage]);
 
   // Persist on change (disabled for HIPAA)
   useEffect(() => {
@@ -386,9 +400,10 @@ export default function CheckInTracker({ showBackButton = false }: CheckInTracke
       {/* Feedback */}
       {infoMessage?.text && (
         <div
+          ref={feedbackRef}
           role="status"
           aria-live={infoMessage.type === 'error' ? 'assertive' : 'polite'}
-          className={`mb-4 p-4 text-white rounded text-center font-medium ${
+          className={`mb-4 p-4 text-white rounded text-center font-medium scroll-mt-4 ${
             infoMessage.type === 'error'
               ? 'bg-red-500'
               : infoMessage.type === 'success'

@@ -369,8 +369,8 @@ const PulseOximeter: React.FC<PulseOximeterProps> = ({ onMeasurementComplete, on
 
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 relative">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 relative my-auto max-h-[90vh] overflow-y-auto">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
@@ -397,8 +397,8 @@ const PulseOximeter: React.FC<PulseOximeterProps> = ({ onMeasurementComplete, on
             </div>
 
             <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
-              <p className="text-lg text-gray-800 font-medium mb-3">📋 Instructions:</p>
-              <ol className="text-base text-gray-700 space-y-2 list-decimal list-inside">
+              <p className="text-lg text-black font-medium mb-3">📋 Instructions:</p>
+              <ol className="text-base text-black space-y-2 list-decimal list-inside">
                 <li>Tap "Start Measurement" below</li>
                 <li>Cover the BACK camera with your fingertip</li>
                 <li>The flashlight will turn on automatically</li>
@@ -408,7 +408,7 @@ const PulseOximeter: React.FC<PulseOximeterProps> = ({ onMeasurementComplete, on
             </div>
 
             <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4">
-              <p className="text-sm text-gray-700">
+              <p className="text-sm text-black">
                 <strong>💡 Tips:</strong> Press your finger gently over the camera.
                 Too much or too little pressure may affect accuracy.
               </p>
@@ -439,7 +439,7 @@ const PulseOximeter: React.FC<PulseOximeterProps> = ({ onMeasurementComplete, on
                 ) : (
                   <FlashlightOff className="text-gray-500" size={20} />
                 )}
-                <span className="text-sm font-medium text-gray-800">
+                <span className="text-sm font-medium text-black">
                   Flashlight: {
                     flashlightStatus === 'on' ? '✓ ON' :
                     flashlightStatus === 'off' ? 'OFF' :
@@ -483,7 +483,7 @@ const PulseOximeter: React.FC<PulseOximeterProps> = ({ onMeasurementComplete, on
             {countdown === null && (
               <>
                 <div className="bg-gray-100 rounded-lg p-4 text-center">
-                  <p className="text-lg font-medium text-gray-800 mb-2">{instruction}</p>
+                  <p className="text-lg font-medium text-black mb-2">{instruction}</p>
 
                   <div className="relative h-8 bg-gray-300 rounded-full overflow-hidden mb-2">
                     <div

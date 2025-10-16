@@ -6,6 +6,29 @@ import { useSupabaseClient, useUser } from '../contexts/AuthContext';
 import { useBranding } from '../BrandingContext';
 import SmartBackButton from '../components/ui/SmartBackButton';
 
+// Proper TypeScript definitions for Web Speech API
+interface SpeechRecognitionResultItem {
+  transcript: string;
+  confidence: number;
+  isFinal: boolean;
+}
+
+interface SpeechRecognitionResult {
+  [index: number]: SpeechRecognitionResultItem;
+  isFinal: boolean;
+  length: number;
+}
+
+interface SpeechRecognitionResultList {
+  [index: number]: SpeechRecognitionResult;
+  length: number;
+}
+
+interface SpeechRecognitionEvent extends Event {
+  resultIndex: number;
+  results: SpeechRecognitionResultList;
+}
+
 interface Question {
   id: string;
   question_text: string;
@@ -59,33 +82,63 @@ const EnhancedQuestionsPage: React.FC = () => {
   // Voice recognition
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const [voiceSupported, setVoiceSupported] = useState(false);
+  const [recordingTimer, setRecordingTimer] = useState(0);
+  const timerIntervalRef = useRef<number | null>(null);
 
   // Initialize voice recognition
   useEffect(() => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
       recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = false;
-      recognitionRef.current.interimResults = false;
+      recognitionRef.current.continuous = true; // Changed to true for longer recording
+      recognitionRef.current.interimResults = true; // Show real-time transcription
       recognitionRef.current.lang = 'en-US';
 
       recognitionRef.current.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        setCurrentQuestion(prev => prev + (prev ? ' ' : '') + transcript);
-        setIsListening(false);
+        const recognitionEvent = event as unknown as SpeechRecognitionEvent;
+        let finalTranscript = '';
+
+        for (let i = recognitionEvent.resultIndex; i < recognitionEvent.results.length; i++) {
+          const transcript = recognitionEvent.results[i][0].transcript;
+          if (recognitionEvent.results[i].isFinal) {
+            finalTranscript += transcript + ' ';
+          }
+        }
+
+        // Update with final results
+        if (finalTranscript) {
+          setCurrentQuestion(prev => prev + finalTranscript);
+        }
       };
 
       recognitionRef.current.onend = () => {
         setIsListening(false);
+        if (timerIntervalRef.current) {
+          clearInterval(timerIntervalRef.current);
+          timerIntervalRef.current = null;
+        }
+        setRecordingTimer(0);
       };
 
-      recognitionRef.current.onerror = () => {
+      recognitionRef.current.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
         setIsListening(false);
+        if (timerIntervalRef.current) {
+          clearInterval(timerIntervalRef.current);
+          timerIntervalRef.current = null;
+        }
+        setRecordingTimer(0);
         setError('Voice recognition failed. Please try typing instead.');
       };
 
       setVoiceSupported(true);
     }
+
+    return () => {
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+      }
+    };
   }, []);
 
   // Load questions
@@ -206,14 +259,48 @@ const EnhancedQuestionsPage: React.FC = () => {
     if (recognitionRef.current && voiceSupported) {
       setIsListening(true);
       setError(null);
-      recognitionRef.current.start();
+      setRecordingTimer(0);
+
+      // Start timer
+      timerIntervalRef.current = window.setInterval(() => {
+        setRecordingTimer(prev => {
+          const newTime = prev + 1;
+          // Auto-stop after 2 minutes (120 seconds)
+          if (newTime >= 120) {
+            stopVoiceRecognition();
+            return 120;
+          }
+          return newTime;
+        });
+      }, 1000);
+
+      try {
+        recognitionRef.current.start();
+      } catch (error) {
+        console.error('Failed to start voice recognition:', error);
+        setError('Failed to start voice recognition. Please try again.');
+        setIsListening(false);
+        if (timerIntervalRef.current) {
+          clearInterval(timerIntervalRef.current);
+          timerIntervalRef.current = null;
+        }
+      }
     }
   };
 
   const stopVoiceRecognition = () => {
     if (recognitionRef.current) {
-      recognitionRef.current.stop();
+      try {
+        recognitionRef.current.stop();
+      } catch (error) {
+        console.error('Error stopping recognition:', error);
+      }
       setIsListening(false);
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
+      setRecordingTimer(0);
     }
   };
 
@@ -366,9 +453,15 @@ const EnhancedQuestionsPage: React.FC = () => {
             <div className="flex justify-between items-center mt-2">
               <div className="text-base">
                 {isListening ? (
-                  <span className="text-red-600 font-semibold animate-pulse">🎤 Listening... Speak now!</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-red-600 font-bold text-xl animate-pulse">🎤 RECORDING</span>
+                    <span className="text-black font-bold text-lg bg-red-100 px-3 py-1 rounded-full">
+                      {Math.floor(recordingTimer / 60)}:{(recordingTimer % 60).toString().padStart(2, '0')} / 2:00
+                    </span>
+                    <span className="text-green-600 font-semibold">✓ Voice Detected</span>
+                  </div>
                 ) : voiceSupported ? (
-                  <span className="text-blue-600">📝 Type your question or click the 🎤 button to speak</span>
+                  <span className="text-blue-600">📝 Type your question or click the 🎤 button to speak (up to 2 minutes)</span>
                 ) : (
                   <span className="text-gray-600">Type your question below</span>
                 )}
@@ -376,6 +469,27 @@ const EnhancedQuestionsPage: React.FC = () => {
               <span className="text-sm text-gray-500">{currentQuestion.length}/1000</span>
             </div>
           </div>
+
+          {/* Recording Progress Bar */}
+          {isListening && (
+            <div className="mb-4 p-4 bg-red-50 border-2 border-red-300 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-red-800 font-bold">Recording in progress...</span>
+                <span className="text-red-600 font-mono font-bold">
+                  {Math.floor(recordingTimer / 60)}:{(recordingTimer % 60).toString().padStart(2, '0')} / 2:00
+                </span>
+              </div>
+              <div className="h-3 bg-red-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-red-600 transition-all duration-1000 ease-linear"
+                  style={{ width: `${(recordingTimer / 120) * 100}%` }}
+                />
+              </div>
+              <p className="text-sm text-red-700 mt-2 text-center font-semibold">
+                🗣️ Keep speaking - your voice is being recorded. Click the microphone button to stop.
+              </p>
+            </div>
+          )}
 
           {/* Submit Button */}
           <button
