@@ -48,21 +48,8 @@
   ],
 
  
-  "rewrites": [
-    { "source": "/static/:path*", "destination": "/static/:path*" },
-    { "source": "/asset-manifest.json", "destination": "/asset-manifest.json" },
-    { "source": "/manifest.json", "destination": "/manifest.json" },
-    { "source": "/favicon.ico", "destination": "/favicon.ico" },
-    { "source": "/logo192.png", "destination": "/logo192.png" },
-    { "source": "/logo512.png", "destination": "/logo512.png" },
-    { "source": "/android-chrome-192x192.png", "destination": "/android-chrome-192x192.png" },
-    { "source": "/android-chrome-512x512.png", "destination": "/android-chrome-512x512.png" },
-    { "source": "/robots.txt", "destination": "/robots.txt" },
-
-    
-    { "source": "/service-worker.js", "destination": "/service-worker.js" },
-
-   
-    { "source": "/(.*)", "destination": "/index.html" }
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
