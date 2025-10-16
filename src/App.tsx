@@ -63,6 +63,7 @@ const CaregiverDashboardPage = React.lazy(() => import('./pages/CaregiverDashboa
 const HealthInsightsPage = React.lazy(() => import('./pages/HealthInsightsPage'));
 const QuestionsPage = React.lazy(() => import('./pages/QuestionsPage'));
 const AdminQuestionsPage = React.lazy(() => import('./pages/AdminQuestionsPage'));
+const MemoryLaneTriviaPage = React.lazy(() => import('./pages/MemoryLaneTriviaPage'));
 const BillingDashboard = React.lazy(() => import('./components/admin/BillingDashboard'));
 const ApiKeyManager = React.lazy(() => import('./components/admin/ApiKeyManager'));
 const PhotoApprovalPage = React.lazy(() => import('./pages/PhotoApprovalPage'));
@@ -129,6 +130,7 @@ function Shell() {
               <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
               <Route path="/check-in" element={<RequireAuth><CheckInPage /></RequireAuth>} />
               <Route path="/word-find" element={<RequireAuth><WordFindPage /></RequireAuth>} />
+              <Route path="/memory-lane-trivia" element={<RequireAuth><MemoryLaneTriviaPage /></RequireAuth>} />
               <Route path="/meals/:id" element={<RequireAuth><MealDetailPage /></RequireAuth>} />
               <Route path="/logout" element={<RequireAuth><LogoutPage /></RequireAuth>} />
               <Route path="/consent-photo" element={<RequireAuth><ConsentPhotoPage /></RequireAuth>} />

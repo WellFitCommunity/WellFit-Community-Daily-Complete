@@ -627,7 +627,7 @@ const SeniorCommunityDashboard: React.FC = () => {
               Take a trip down memory lane with trivia from your era
             </p>
             <button
-              onClick={() => navigate('/trivia-game')}
+              onClick={() => navigate('/memory-lane-trivia')}
               className="w-full p-3 bg-[#003865] text-white rounded-lg hover:bg-[#8cc63f] transition text-lg"
             >
               {t.dashboard.visitMemoryLane}
