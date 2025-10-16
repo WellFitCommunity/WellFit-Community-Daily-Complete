@@ -113,6 +113,57 @@ interface FHIRObservation {
   }>;
 }
 
+interface FHIRMedicationStatement {
+  resourceType: 'MedicationStatement';
+  id: string;
+  status: 'active' | 'completed' | 'entered-in-error' | 'intended' | 'stopped' | 'on-hold' | 'unknown' | 'not-taken';
+  medicationCodeableConcept: {
+    coding: Array<{
+      system: string;
+      code: string;
+      display: string;
+    }>;
+    text: string;
+  };
+  subject: {
+    reference: string;
+    display: string;
+  };
+  effectiveDateTime: string;
+  dateAsserted: string;
+  informationSource: {
+    reference: string;
+    display: string;
+  };
+  dosage?: Array<{
+    text: string;
+    timing?: {
+      repeat: {
+        frequency: number;
+        period: number;
+        periodUnit: string;
+      };
+    };
+    route?: {
+      coding: Array<{
+        system: string;
+        code: string;
+        display: string;
+      }>;
+    };
+    doseAndRate?: Array<{
+      doseQuantity: {
+        value?: number;
+        unit: string;
+        system: string;
+      };
+    }>;
+  }>;
+  note?: Array<{
+    text: string;
+  }>;
+}
+
 interface FHIRBundle {
   resourceType: 'Bundle';
   id: string;
@@ -129,7 +180,7 @@ interface FHIRBundle {
   timestamp: string;
   entry: Array<{
     fullUrl: string;
-    resource: FHIRPatient | FHIRObservation;
+    resource: FHIRPatient | FHIRObservation | FHIRMedicationStatement;
   }>;
 }
 
@@ -174,6 +225,42 @@ interface HealthEntry {
     activity_description?: string;
   };
   created_at: string;
+}
+
+interface Medication {
+  id: string;
+  user_id: string;
+  medication_name: string;
+  generic_name?: string;
+  brand_name?: string;
+  dosage?: string;
+  dosage_form?: string;
+  strength?: string;
+  instructions?: string;
+  frequency?: string;
+  route?: string;
+  prescribed_by?: string;
+  prescribed_date?: string;
+  prescription_number?: string;
+  pharmacy_name?: string;
+  pharmacy_phone?: string;
+  quantity?: number;
+  refills_remaining?: number;
+  last_refill_date?: string;
+  next_refill_date?: string;
+  ndc_code?: string;
+  purpose?: string;
+  side_effects?: string[];
+  warnings?: string[];
+  interactions?: string[];
+  status: string;
+  discontinued_date?: string;
+  discontinued_reason?: string;
+  ai_confidence?: number;
+  extraction_notes?: string;
+  needs_review?: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export class FHIRIntegrationService {
@@ -699,12 +786,191 @@ export class FHIRIntegrationService {
     try {
       return bundle.resourceType === 'Bundle' &&
              bundle.entry.length > 0 &&
-             bundle.entry.every(entry => 
-               entry.resource.resourceType === 'Patient' || 
-               entry.resource.resourceType === 'Observation'
+             bundle.entry.every(entry =>
+               entry.resource.resourceType === 'Patient' ||
+               entry.resource.resourceType === 'Observation' ||
+               entry.resource.resourceType === 'MedicationStatement'
              );
     } catch {
       return false;
+    }
+  }
+
+  // ==== MEDICATION STATEMENT RESOURCE MAPPING ====
+  async createMedicationStatements(medications: Medication[], profile: Profile): Promise<FHIRMedicationStatement[]> {
+    const statements: FHIRMedicationStatement[] = [];
+    const patientReference = `Patient/${profile.user_id}`;
+    const patientDisplay = `${profile.first_name} ${profile.last_name}`;
+
+    for (const medication of medications) {
+      if (medication.status !== 'active') continue; // Only sync active medications
+
+      const statement: FHIRMedicationStatement = {
+        resourceType: 'MedicationStatement',
+        id: `medication-${medication.id}`,
+        status: this.mapMedicationStatus(medication.status),
+        medicationCodeableConcept: {
+          coding: [
+            {
+              system: 'http://www.nlm.nih.gov/research/umls/rxnorm',
+              code: medication.ndc_code || 'unknown',
+              display: medication.medication_name
+            }
+          ],
+          text: medication.medication_name
+        },
+        subject: {
+          reference: patientReference,
+          display: patientDisplay
+        },
+        effectiveDateTime: medication.prescribed_date || medication.created_at,
+        dateAsserted: medication.created_at,
+        informationSource: {
+          reference: patientReference,
+          display: 'Patient reported'
+        },
+        dosage: [
+          {
+            text: medication.instructions || `${medication.dosage} ${medication.frequency || ''}`.trim(),
+            timing: medication.frequency ? {
+              repeat: {
+                frequency: this.parseFrequency(medication.frequency),
+                period: 1,
+                periodUnit: 'd' // day
+              }
+            } : undefined,
+            route: medication.route ? {
+              coding: [
+                {
+                  system: 'http://snomed.info/sct',
+                  code: this.mapRouteToSNOMED(medication.route),
+                  display: medication.route
+                }
+              ]
+            } : undefined,
+            doseAndRate: medication.dosage ? [
+              {
+                doseQuantity: {
+                  value: parseFloat(medication.dosage.replace(/[^\d.]/g, '')) || undefined,
+                  unit: medication.dosage.replace(/[\d.]/g, '').trim() || 'unit',
+                  system: 'http://unitsofmeasure.org'
+                }
+              }
+            ] : undefined
+          }
+        ],
+        note: []
+      };
+
+      // Add purpose as note
+      if (medication.purpose) {
+        statement.note!.push({
+          text: `Purpose: ${medication.purpose}`
+        });
+      }
+
+      // Add side effects as note
+      if (medication.side_effects && medication.side_effects.length > 0) {
+        statement.note!.push({
+          text: `Side effects: ${medication.side_effects.join(', ')}`
+        });
+      }
+
+      // Add warnings as note
+      if (medication.warnings && medication.warnings.length > 0) {
+        statement.note!.push({
+          text: `Warnings: ${medication.warnings.join(', ')}`
+        });
+      }
+
+      statements.push(statement);
+    }
+
+    return statements;
+  }
+
+  // Helper functions for medication mapping
+  private mapMedicationStatus(status: string): 'active' | 'completed' | 'entered-in-error' | 'intended' | 'stopped' | 'on-hold' | 'unknown' | 'not-taken' {
+    switch (status) {
+      case 'active': return 'active';
+      case 'completed': return 'completed';
+      case 'discontinued': return 'stopped';
+      default: return 'unknown';
+    }
+  }
+
+  private parseFrequency(frequency: string): number {
+    const lowerFreq = frequency.toLowerCase();
+    if (lowerFreq.includes('once')) return 1;
+    if (lowerFreq.includes('twice') || lowerFreq.includes('two')) return 2;
+    if (lowerFreq.includes('three') || lowerFreq.includes('thrice')) return 3;
+    if (lowerFreq.includes('four')) return 4;
+    // Extract number from string like "every 8 hours" = 3 times per day
+    const match = lowerFreq.match(/every\s+(\d+)\s+hour/);
+    if (match) {
+      const hours = parseInt(match[1]);
+      return Math.round(24 / hours);
+    }
+    return 1; // Default to once daily
+  }
+
+  private mapRouteToSNOMED(route: string): string {
+    const routeMap: Record<string, string> = {
+      'oral': '26643006',
+      'topical': '6064005',
+      'injection': '129326001',
+      'intravenous': '47625008',
+      'sublingual': '37839007',
+      'rectal': '37161004',
+      'inhalation': '447694001'
+    };
+    return routeMap[route.toLowerCase()] || '26643006'; // Default to oral
+  }
+
+  // Update exportPatientData to include medications
+  async exportPatientDataWithMedications(userId: string): Promise<FHIRBundle> {
+    try {
+      // Get base bundle with patient and observations
+      const bundle = await this.exportPatientData(userId);
+
+      // Fetch medications
+      const { data: medications, error: medError } = await this.supabase
+        .from('medications')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+
+      if (medError) {
+        console.error('Failed to fetch medications:', medError);
+        return bundle; // Return bundle without medications
+      }
+
+      if (medications && medications.length > 0) {
+        // Get profile for patient reference
+        const { data: profile } = await this.supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
+
+        if (profile) {
+          const medicationStatements = await this.createMedicationStatements(medications, profile);
+
+          // Add medication statements to bundle
+          medicationStatements.forEach((statement) => {
+            bundle.entry.push({
+              fullUrl: `urn:uuid:medication-statement-${statement.id}`,
+              resource: statement
+            });
+          });
+        }
+      }
+
+      return bundle;
+    } catch (error) {
+      console.error('FHIR export with medications error:', error);
+      throw error;
     }
   }
 }
