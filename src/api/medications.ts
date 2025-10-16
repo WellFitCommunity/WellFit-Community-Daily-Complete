@@ -10,6 +10,7 @@
 
 import { supabase } from '../lib/supabaseClient';
 import { medicationLabelReader, MedicationInfo, LabelExtractionResult } from '../services/medicationLabelReader';
+import { checkMedicationAllergy } from './allergies';
 
 // ============================================================================
 // TYPE DEFINITIONS
