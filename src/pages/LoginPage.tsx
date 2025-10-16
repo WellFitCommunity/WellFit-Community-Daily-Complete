@@ -207,13 +207,12 @@ const LoginPage: React.FC = () => {
     setLoading(true);
     try {
       const e164 = normalizeToE164(phone);
-      const token = await ensureCaptcha();
-      if (!token) throw new Error('Captcha required.');
+      const token = await ensureCaptcha().catch(() => '');
 
       const { error: signInError } = await supabase.auth.signInWithPassword({
         phone: e164,
         password: seniorPassword,
-        options: { captchaToken: token },
+        options: token ? { captchaToken: token } : {},
       });
 
       if (signInError) {
@@ -253,13 +252,12 @@ const LoginPage: React.FC = () => {
 
     setLoading(true);
     try {
-      const token = await ensureCaptcha();
-      if (!token) throw new Error('Captcha required.');
+      const token = await ensureCaptcha().catch(() => '');
 
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: adminEmail.trim(),
         password: adminPassword,
-        options: { captchaToken: token },
+        options: token ? { captchaToken: token } : {},
       });
 
       if (signInError) {
