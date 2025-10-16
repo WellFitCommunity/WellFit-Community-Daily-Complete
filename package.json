@@ -80,9 +80,9 @@
     "path-to-regexp": "^6.3.0",
     "undici": "^5.28.5",
     "esbuild": "^0.25.10",
-    "resolve-url-loader": {
-      "postcss": "^8.4.31"
-    }
+    "webpack-dev-server": "^5.2.1",
+    "postcss": "^8.4.31",
+    "resolve-url-loader": "^5.0.0"
   },
   "scripts": {
     "start": "react-scripts start",

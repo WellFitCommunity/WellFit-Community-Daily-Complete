@@ -24,15 +24,17 @@ const WeatherWidget: React.FC = () => {
       setError('Geolocation not supported');
       return;
     }
+    // Auto-request location - browser will show permission dialog
     navigator.geolocation.getCurrentPosition(
       pos => {
         const { latitude, longitude } = pos.coords;
         fetchWeather(`${latitude},${longitude}`);
       },
       () => {
-        setError('Geolocation denied');
+        setError('Location access denied');
       }
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [useManual, city]);
 
   const fetchWeather = (q: string) => {
@@ -63,10 +65,10 @@ const WeatherWidget: React.FC = () => {
 
       {error && !useManual && (
         <div className="space-y-2">
-          <p className="text-red-500">{error}</p>
+          <p className="text-orange-600">{error}</p>
           <button
             onClick={() => setUseManual(true)}
-            className="py-2 px-4 bg-wellfitBlue text-white rounded"
+            className="py-2 px-4 bg-wellfitBlue text-white rounded-lg hover:bg-wellfitGreen"
           >
             Enter city manually
           </button>
@@ -91,7 +93,7 @@ const WeatherWidget: React.FC = () => {
         </div>
       )}
 
-      {!error && !useManual && !weather && <p>Loading weather…</p>}
+      {!error && !useManual && !weather && <p>Loading weather...</p>}
 
       {weather && (
         <p>
