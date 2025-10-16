@@ -1,9 +1,7 @@
 // Memory Lane Trivia - Era-based trivia game for seniors (1950s-1990s)
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Trophy, Brain, Clock, Star, Share2, Award, Sparkles } from 'lucide-react';
 import { useSupabaseClient, useUser } from '../contexts/AuthContext';
-import { useBranding } from '../BrandingContext';
 import SmartBackButton from '../components/ui/SmartBackButton';
 import Confetti from 'react-confetti';
 import { useWindowSize } from 'react-use';
@@ -49,8 +47,6 @@ const POSITIVE_MESSAGES = [
 ];
 
 const MemoryLaneTriviaPage: React.FC = () => {
-  const navigate = useNavigate();
-  const { branding } = useBranding();
   const supabase = useSupabaseClient();
   const user = useUser();
   const { width, height } = useWindowSize();
@@ -70,7 +66,6 @@ const MemoryLaneTriviaPage: React.FC = () => {
   const [showConfetti, setShowConfetti] = useState(false);
   const [gameCompleted, setGameCompleted] = useState(false);
   const [trophies, setTrophies] = useState<Array<{ earned_date: string }>>([]);
-  const [todayCompleted, setTodayCompleted] = useState(false);
 
   const currentQuestion = questions[currentQuestionIndex];
 
@@ -97,7 +92,6 @@ const MemoryLaneTriviaPage: React.FC = () => {
         .maybeSingle();
 
       if (existingProgress && existingProgress.completed_at) {
-        setTodayCompleted(true);
         setProgress({
           correct_answers: existingProgress.correct_answers,
           total_questions: existingProgress.total_questions,
@@ -258,11 +252,11 @@ const MemoryLaneTriviaPage: React.FC = () => {
     const baseClass = "w-full p-4 text-left rounded-xl border-2 font-semibold text-lg transition-all duration-300";
 
     if (!selectedAnswer) {
-      return `${baseClass} border-gray-300 bg-white hover:bg-blue-50 hover:border-blue-400 cursor-pointer`;
+      return `${baseClass} border-gray-300 bg-white cursor-pointer`;
     }
 
     if (optionLetter === currentQuestion.correct_answer) {
-      return `${baseClass} border-green-500 bg-green-100 text-green-800`;
+      return `${baseClass} text-white`;
     }
 
     if (optionLetter === selectedAnswer && optionLetter !== currentQuestion.correct_answer) {
@@ -272,11 +266,26 @@ const MemoryLaneTriviaPage: React.FC = () => {
     return `${baseClass} border-gray-300 bg-gray-100 opacity-50`;
   };
 
+  const getButtonStyle = (optionLetter: string) => {
+    if (!selectedAnswer) {
+      return {};
+    }
+
+    if (optionLetter === currentQuestion.correct_answer) {
+      return {
+        backgroundColor: '#8cc63f',
+        borderColor: '#8cc63f'
+      };
+    }
+
+    return {};
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-100 to-blue-100">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #e8f4f8 0%, #f0f8e8 100%)' }}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 mx-auto mb-4" style={{ borderColor: '#003865' }}></div>
           <p className="text-xl text-gray-700">Loading your daily trivia...</p>
         </div>
       </div>
@@ -284,7 +293,7 @@ const MemoryLaneTriviaPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-100 via-blue-100 to-pink-100 py-8 px-4">
+    <div className="min-h-screen py-8 px-4" style={{ background: 'linear-gradient(135deg, #e8f4f8 0%, #f0f8e8 50%, #e8f4f8 100%)' }}>
       {showConfetti && <Confetti width={width} height={height} recycle={false} numberOfPieces={500} />}
 
       <div className="max-w-4xl mx-auto">
@@ -297,9 +306,9 @@ const MemoryLaneTriviaPage: React.FC = () => {
           {/* Title */}
           <div className="text-center mb-8">
             <div className="flex items-center justify-center gap-3 mb-3">
-              <Brain className="text-purple-600" size={40} />
-              <h1 className="text-4xl font-bold text-gray-900">Memory Lane Trivia</h1>
-              <Sparkles className="text-yellow-500" size={40} />
+              <Brain className="text-[#003865]" size={40} />
+              <h1 className="text-4xl font-bold text-[#003865]">Memory Lane Trivia</h1>
+              <Sparkles className="text-[#8cc63f]" size={40} />
             </div>
             <p className="text-xl text-gray-600">Travel back in time from the 1950s to 1990s!</p>
           </div>
@@ -309,12 +318,15 @@ const MemoryLaneTriviaPage: React.FC = () => {
             <div className="mb-8">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-sm font-medium text-gray-700">Question {currentQuestionIndex + 1} of 5</span>
-                <span className="text-sm font-medium text-purple-600">{progress.correct_answers} correct</span>
+                <span className="text-sm font-medium text-[#8cc63f]">{progress.correct_answers} correct</span>
               </div>
               <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-500"
-                  style={{ width: `${((currentQuestionIndex + 1) / 5) * 100}%` }}
+                  className="h-full transition-all duration-500"
+                  style={{
+                    width: `${((currentQuestionIndex + 1) / 5) * 100}%`,
+                    background: 'linear-gradient(90deg, #003865 0%, #8cc63f 100%)'
+                  }}
                 />
               </div>
             </div>
@@ -323,20 +335,20 @@ const MemoryLaneTriviaPage: React.FC = () => {
           {/* Game Completed */}
           {gameCompleted ? (
             <div className="text-center space-y-6">
-              <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-xl p-8">
+              <div className="rounded-xl p-8" style={{ background: 'linear-gradient(135deg, #e8f4f8 0%, #f0f8e8 100%)' }}>
                 {progress.perfect_score ? (
                   <>
-                    <Trophy className="mx-auto text-yellow-500 mb-4" size={80} />
-                    <h2 className="text-3xl font-bold text-gray-900 mb-3">Perfect Score!</h2>
+                    <Trophy className="mx-auto mb-4" style={{ color: '#8cc63f' }} size={80} />
+                    <h2 className="text-3xl font-bold mb-3" style={{ color: '#003865' }}>Perfect Score!</h2>
                     <p className="text-xl text-gray-700 mb-4">You got all 5 questions correct! You're a Memory Lane champion!</p>
-                    <div className="inline-block bg-yellow-100 border-2 border-yellow-400 rounded-lg px-6 py-3">
-                      <p className="text-2xl font-bold text-yellow-800">🏆 Trophy Earned!</p>
+                    <div className="inline-block rounded-lg px-6 py-3" style={{ backgroundColor: '#f0f8e8', border: '2px solid #8cc63f' }}>
+                      <p className="text-2xl font-bold" style={{ color: '#003865' }}>Trophy Earned!</p>
                     </div>
                   </>
                 ) : (
                   <>
-                    <Star className="mx-auto text-blue-500 mb-4" size={80} />
-                    <h2 className="text-3xl font-bold text-gray-900 mb-3">{POSITIVE_MESSAGES[progress.correct_answers]}</h2>
+                    <Star className="mx-auto mb-4" style={{ color: '#8cc63f' }} size={80} />
+                    <h2 className="text-3xl font-bold mb-3" style={{ color: '#003865' }}>{POSITIVE_MESSAGES[progress.correct_answers]}</h2>
                     <p className="text-xl text-gray-700 mb-4">You answered {progress.correct_answers} out of 5 questions correctly!</p>
                     <p className="text-lg text-gray-600">Every question helps keep your mind sharp. Come back tomorrow for new questions!</p>
                   </>
@@ -346,16 +358,17 @@ const MemoryLaneTriviaPage: React.FC = () => {
               {/* Share Button */}
               <button
                 onClick={shareScore}
-                className="mx-auto flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-green-500 to-blue-500 text-white font-bold text-lg rounded-xl hover:from-green-600 hover:to-blue-600 transition shadow-lg"
+                className="mx-auto flex items-center gap-2 px-8 py-4 text-white font-bold text-lg rounded-xl transition shadow-lg"
+                style={{ background: 'linear-gradient(90deg, #8cc63f 0%, #003865 100%)' }}
               >
                 <Share2 size={24} />
                 Share Your Score
               </button>
 
               {/* Come Back Message */}
-              <div className="bg-blue-50 border-2 border-blue-300 rounded-xl p-6">
-                <Clock className="mx-auto text-blue-600 mb-3" size={40} />
-                <p className="text-lg font-semibold text-blue-900">Come back tomorrow for 5 new questions!</p>
+              <div className="border-2 rounded-xl p-6" style={{ backgroundColor: '#e8f4f8', borderColor: '#003865' }}>
+                <Clock className="mx-auto mb-3" style={{ color: '#003865' }} size={40} />
+                <p className="text-lg font-semibold" style={{ color: '#003865' }}>Come back tomorrow for 5 new questions!</p>
                 <p className="text-gray-700 mt-2">New trivia available every day at midnight</p>
               </div>
             </div>
@@ -364,7 +377,7 @@ const MemoryLaneTriviaPage: React.FC = () => {
             <div className="space-y-6">
               {/* Era Badge */}
               <div className="flex items-center justify-between">
-                <span className="inline-block px-4 py-2 bg-purple-100 text-purple-800 font-bold rounded-full">
+                <span className="inline-block px-4 py-2 bg-blue-100 text-[#003865] font-bold rounded-full">
                   {currentQuestion.era}
                 </span>
                 <span className={`inline-block px-4 py-2 font-bold rounded-full ${
@@ -377,7 +390,7 @@ const MemoryLaneTriviaPage: React.FC = () => {
               </div>
 
               {/* Question */}
-              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border-2 border-purple-200">
+              <div className="rounded-xl p-6 border-2" style={{ background: 'linear-gradient(135deg, #e8f4f8 0%, #f0f8e8 100%)', borderColor: '#8cc63f' }}>
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">{currentQuestion.question}</h2>
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <Brain size={16} />
@@ -395,6 +408,7 @@ const MemoryLaneTriviaPage: React.FC = () => {
                       onClick={() => handleAnswerSelect(optionLetter)}
                       disabled={selectedAnswer !== null}
                       className={getButtonClass(optionLetter)}
+                      style={getButtonStyle(optionLetter)}
                     >
                       <span className="font-bold text-xl mr-3">{optionLetter}.</span>
                       {currentQuestion[optionKey as keyof TriviaQuestion]}
@@ -405,14 +419,17 @@ const MemoryLaneTriviaPage: React.FC = () => {
 
               {/* Feedback */}
               {answeredCorrectly !== null && (
-                <div className={`p-6 rounded-xl border-2 text-center ${
-                  answeredCorrectly
-                    ? 'bg-green-50 border-green-400'
-                    : 'bg-blue-50 border-blue-400'
-                }`}>
-                  <p className={`text-2xl font-bold mb-2 ${
-                    answeredCorrectly ? 'text-green-800' : 'text-blue-800'
-                  }`}>
+                <div
+                  className="p-6 rounded-xl border-2 text-center"
+                  style={{
+                    backgroundColor: answeredCorrectly ? '#f0f8e8' : '#e8f4f8',
+                    borderColor: answeredCorrectly ? '#8cc63f' : '#003865'
+                  }}
+                >
+                  <p
+                    className="text-2xl font-bold mb-2"
+                    style={{ color: answeredCorrectly ? '#003865' : '#003865' }}
+                  >
                     {answeredCorrectly ? '✓ Correct!' : POSITIVE_MESSAGES[Math.floor(Math.random() * POSITIVE_MESSAGES.length)]}
                   </p>
                   <p className="text-lg text-gray-700">
@@ -428,24 +445,28 @@ const MemoryLaneTriviaPage: React.FC = () => {
         {trophies.length > 0 && (
           <div className="bg-white rounded-2xl shadow-xl p-6">
             <div className="flex items-center gap-2 mb-4">
-              <Award className="text-yellow-500" size={28} />
-              <h3 className="text-2xl font-bold text-gray-900">Your Trophy Collection</h3>
+              <Award style={{ color: '#8cc63f' }} size={28} />
+              <h3 className="text-2xl font-bold" style={{ color: '#003865' }}>Your Trophy Collection</h3>
             </div>
             <div className="flex flex-wrap gap-3">
               {trophies.map((trophy, index) => (
                 <div
                   key={index}
-                  className="flex flex-col items-center justify-center w-20 h-20 bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-xl border-2 border-yellow-400 shadow-md hover:scale-110 transition-transform"
+                  className="flex flex-col items-center justify-center w-20 h-20 rounded-xl border-2 shadow-md hover:scale-110 transition-transform"
+                  style={{
+                    background: 'linear-gradient(135deg, #f0f8e8 0%, #e8f4f8 100%)',
+                    borderColor: '#8cc63f'
+                  }}
                 >
-                  <Trophy className="text-yellow-600" size={32} />
-                  <span className="text-xs font-semibold text-yellow-800 mt-1">
+                  <Trophy style={{ color: '#8cc63f' }} size={32} />
+                  <span className="text-xs font-semibold mt-1" style={{ color: '#003865' }}>
                     {new Date(trophy.earned_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </span>
                 </div>
               ))}
             </div>
             <p className="text-sm text-gray-600 mt-4 text-center">
-              🏆 {trophies.length} perfect {trophies.length === 1 ? 'score' : 'scores'}! Keep up the great work!
+              {trophies.length} perfect {trophies.length === 1 ? 'score' : 'scores'}! Keep up the great work!
             </p>
           </div>
         )}
