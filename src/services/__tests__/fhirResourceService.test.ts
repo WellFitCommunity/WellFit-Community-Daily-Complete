@@ -10,6 +10,7 @@ import {
   DiagnosticReportService,
   ProcedureService,
   ObservationService,
+  FHIRService,
 } from '../fhirResourceService';
 import { supabase } from '../../lib/supabaseClient';
 
@@ -1185,6 +1186,244 @@ describe('ObservationService', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('Record not found');
+    });
+  });
+});
+
+// ============================================================================
+// CARE PLAN SERVICE TESTS
+// ============================================================================
+
+describe('CarePlanService', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('getByPatient', () => {
+    it('should fetch all care plans for a patient', async () => {
+      const mockData = [
+        {
+          id: 'cp-1',
+          patient_id: 'patient-123',
+          status: 'active',
+          intent: 'plan',
+          category: ['assess-plan'],
+          title: 'Diabetes Management Plan',
+          description: 'Comprehensive care plan for Type 2 Diabetes',
+          period_start: '2025-01-01T00:00:00Z',
+          period_end: '2025-12-31T23:59:59Z',
+          created: '2025-01-01T10:00:00Z',
+        },
+        {
+          id: 'cp-2',
+          patient_id: 'patient-123',
+          status: 'completed',
+          intent: 'plan',
+          category: ['assess-plan'],
+          title: 'Post-Surgery Recovery Plan',
+          created: '2024-12-01T10:00:00Z',
+        },
+      ];
+
+      const mockQuery = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        order: jest.fn().mockResolvedValue({ data: mockData, error: null }),
+      };
+
+      (supabase.from as any).mockReturnValue(mockQuery);
+
+      const result = await FHIRService.CarePlan.getByPatient('patient-123');
+
+      expect(result).toEqual(mockData);
+      expect(supabase.from).toHaveBeenCalledWith('fhir_care_plans');
+      expect(mockQuery.eq).toHaveBeenCalledWith('patient_id', 'patient-123');
+      expect(mockQuery.order).toHaveBeenCalledWith('created', { ascending: false });
+    });
+
+    it('should handle errors gracefully', async () => {
+      const mockError = new Error('Database error');
+      const mockQuery = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        order: jest.fn().mockResolvedValue({ data: null, error: mockError }),
+      };
+
+      (supabase.from as any).mockReturnValue(mockQuery);
+
+      await expect(FHIRService.CarePlan.getByPatient('patient-123')).rejects.toThrow('Database error');
+    });
+  });
+
+  describe('getActive', () => {
+    it('should fetch active care plans using RPC', async () => {
+      const mockData = [
+        {
+          id: 'cp-1',
+          title: 'Active Plan 1',
+          status: 'active',
+          created: '2025-01-15T10:00:00Z',
+        },
+      ];
+
+      (supabase.rpc as any).mockResolvedValue({ data: mockData, error: null });
+
+      const result = await FHIRService.CarePlan.getActive('patient-123');
+
+      expect(result).toEqual(mockData);
+      expect(supabase.rpc).toHaveBeenCalledWith('get_active_care_plans', {
+        p_patient_id: 'patient-123',
+      });
+    });
+
+    it('should handle RPC errors', async () => {
+      const mockError = new Error('RPC failed');
+      (supabase.rpc as any).mockResolvedValue({ data: null, error: mockError });
+
+      await expect(FHIRService.CarePlan.getActive('patient-123')).rejects.toThrow('RPC failed');
+    });
+  });
+
+  describe('getCurrent', () => {
+    it('should fetch the current active care plan', async () => {
+      const mockData = [
+        {
+          id: 'cp-current',
+          title: 'Current Active Plan',
+          status: 'active',
+          period_start: '2025-01-01T00:00:00Z',
+          period_end: '2025-12-31T23:59:59Z',
+        },
+      ];
+
+      (supabase.rpc as any).mockResolvedValue({ data: mockData, error: null });
+
+      const result = await FHIRService.CarePlan.getCurrent('patient-123');
+
+      expect(result).toEqual(mockData[0]);
+      expect(supabase.rpc).toHaveBeenCalledWith('get_current_care_plan', {
+        p_patient_id: 'patient-123',
+      });
+    });
+
+    it('should return null when no current plan exists', async () => {
+      (supabase.rpc as any).mockResolvedValue({ data: [], error: null });
+
+      const result = await FHIRService.CarePlan.getCurrent('patient-123');
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('create', () => {
+    it('should create a new care plan', async () => {
+      const newCarePlan = {
+        patient_id: 'patient-123',
+        status: 'active' as const,
+        intent: 'plan' as const,
+        category: ['assess-plan'],
+        title: 'New Care Plan',
+        description: 'Test care plan',
+        period_start: '2025-01-01',
+      };
+
+      const mockData = { ...newCarePlan, id: 'cp-new', created: '2025-01-15T10:00:00Z' };
+
+      const mockQuery = {
+        insert: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: mockData, error: null }),
+      };
+
+      (supabase.from as any).mockReturnValue(mockQuery);
+
+      const result = await FHIRService.CarePlan.create(newCarePlan);
+
+      expect(result).toEqual(mockData);
+      expect(mockQuery.insert).toHaveBeenCalledWith([newCarePlan]);
+    });
+
+    it('should handle creation errors', async () => {
+      const mockError = new Error('Insert failed');
+      const mockQuery = {
+        insert: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: null, error: mockError }),
+      };
+
+      (supabase.from as any).mockReturnValue(mockQuery);
+
+      await expect(FHIRService.CarePlan.create({
+        patient_id: 'patient-123',
+        status: 'active',
+        intent: 'plan',
+        category: ['assess-plan'],
+      })).rejects.toThrow('Insert failed');
+    });
+  });
+
+  describe('update', () => {
+    it('should update an existing care plan', async () => {
+      const updates = {
+        status: 'completed' as const,
+        period_end: '2025-06-30',
+      };
+
+      const mockData = { id: 'cp-1', ...updates };
+
+      const mockQuery = {
+        update: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: mockData, error: null }),
+      };
+
+      (supabase.from as any).mockReturnValue(mockQuery);
+
+      const result = await FHIRService.CarePlan.update('cp-1', updates);
+
+      expect(result).toEqual(mockData);
+      expect(mockQuery.update).toHaveBeenCalledWith(updates);
+      expect(mockQuery.eq).toHaveBeenCalledWith('id', 'cp-1');
+    });
+  });
+
+  describe('search', () => {
+    it('should search care plans with multiple filters', async () => {
+      const mockData = [
+        {
+          id: 'cp-1',
+          status: 'active',
+          category: ['assess-plan'],
+          period_start: '2025-01-01',
+        },
+      ];
+
+      const mockQuery = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        contains: jest.fn().mockReturnThis(),
+        gte: jest.fn().mockReturnThis(),
+        lte: jest.fn().mockReturnThis(),
+        order: jest.fn().mockResolvedValue({ data: mockData, error: null }),
+      };
+
+      (supabase.from as any).mockReturnValue(mockQuery);
+
+      const result = await FHIRService.CarePlan.search({
+        patientId: 'patient-123',
+        status: 'active',
+        category: 'assess-plan',
+        fromDate: '2025-01-01',
+        toDate: '2025-12-31',
+      });
+
+      expect(result).toEqual(mockData);
+      expect(mockQuery.eq).toHaveBeenCalledWith('patient_id', 'patient-123');
+      expect(mockQuery.eq).toHaveBeenCalledWith('status', 'active');
+      expect(mockQuery.contains).toHaveBeenCalledWith('category', ['assess-plan']);
+      expect(mockQuery.gte).toHaveBeenCalledWith('period_start', '2025-01-01');
+      expect(mockQuery.lte).toHaveBeenCalledWith('period_end', '2025-12-31');
     });
   });
 });
