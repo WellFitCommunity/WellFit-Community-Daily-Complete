@@ -722,3 +722,146 @@ export const IMMUNIZATION_SITES = {
   LD: { code: 'LD', display: 'Left deltoid' },
   RD: { code: 'RD', display: 'Right deltoid' },
 } as const;
+
+// ============================================================================
+// CARE PLAN
+// ============================================================================
+
+export interface FHIRCarePlan extends FHIRResource {
+  // External System Integration
+  external_id?: string;
+  external_system?: string;
+
+  // FHIR Meta
+  version_id?: string;
+  last_updated?: string;
+
+  // Required Fields (US Core)
+  patient_id: string;
+  status: 'draft' | 'active' | 'on-hold' | 'revoked' | 'completed' | 'entered-in-error' | 'unknown';
+  intent: 'proposal' | 'plan' | 'order' | 'option';
+  category: string[]; // e.g., ['assess-plan'], ['careteam']
+  category_display?: string[];
+
+  // Title and Description
+  title?: string;
+  description?: string;
+
+  // Subject (usually same as patient)
+  subject_reference?: string;
+  subject_display?: string;
+
+  // Period (when plan is in effect)
+  period_start?: string;
+  period_end?: string;
+
+  // Created Date
+  created?: string;
+  author_reference?: string; // Practitioner/Organization who created plan
+  author_display?: string;
+
+  // Care Team
+  care_team_reference?: string;
+  care_team_display?: string;
+
+  // Addresses (conditions this plan addresses)
+  addresses_condition_references?: string[];
+  addresses_condition_displays?: string[];
+
+  // Supporting Info
+  supporting_info_references?: string[];
+  supporting_info_displays?: string[];
+
+  // Goals
+  goal_references?: string[];
+  goal_displays?: string[];
+
+  // Activities
+  activities?: CarePlanActivity[];
+
+  // Notes
+  note?: string;
+
+  // Audit Fields
+  created_by?: string;
+  updated_by?: string;
+}
+
+export interface CarePlanActivity {
+  id?: string;
+  status?: 'not-started' | 'scheduled' | 'in-progress' | 'on-hold' | 'completed' | 'cancelled' | 'stopped' | 'unknown' | 'entered-in-error';
+
+  // Activity Detail
+  detail?: {
+    kind?: 'Appointment' | 'CommunicationRequest' | 'DeviceRequest' | 'MedicationRequest' | 'NutritionOrder' | 'Task' | 'ServiceRequest' | 'VisionPrescription';
+    code?: string;
+    code_display?: string;
+    status?: 'not-started' | 'scheduled' | 'in-progress' | 'on-hold' | 'completed' | 'cancelled' | 'stopped' | 'unknown' | 'entered-in-error';
+    description?: string;
+    scheduled_timing?: string;
+    scheduled_period_start?: string;
+    scheduled_period_end?: string;
+    location_display?: string;
+    performer_display?: string[];
+    product_display?: string;
+    daily_amount_value?: number;
+    daily_amount_unit?: string;
+    quantity_value?: number;
+    quantity_unit?: string;
+    goal_references?: string[];
+  };
+
+  // Outcome
+  outcome_reference?: string[];
+  outcome_display?: string[];
+
+  // Progress
+  progress?: string[];
+
+  // Reference to external activity
+  reference?: string;
+  reference_display?: string;
+}
+
+// Care Plan Categories (US Core)
+export const CARE_PLAN_CATEGORIES = {
+  ASSESS_PLAN: 'assess-plan',
+  CARETEAM: 'careteam',
+  ENCOUNTER_PLAN: 'encounter-plan',
+  LONGITUDINAL_CARE_PLAN: 'longitudinal-care-plan',
+} as const;
+
+export const CARE_PLAN_CATEGORY_NAMES: Record<string, string> = {
+  'assess-plan': 'Assessment and Plan of Treatment',
+  'careteam': 'Care Team',
+  'encounter-plan': 'Encounter Plan',
+  'longitudinal-care-plan': 'Longitudinal Care Plan',
+};
+
+// Activity Detail Kinds
+export const ACTIVITY_KINDS = {
+  APPOINTMENT: 'Appointment',
+  COMMUNICATION: 'CommunicationRequest',
+  DEVICE: 'DeviceRequest',
+  MEDICATION: 'MedicationRequest',
+  NUTRITION: 'NutritionOrder',
+  TASK: 'Task',
+  SERVICE: 'ServiceRequest',
+  VISION: 'VisionPrescription',
+} as const;
+
+// Common Activity Codes for Senior Care
+export const SENIOR_CARE_ACTIVITIES = {
+  MEDICATION_REVIEW: { code: '182836005', display: 'Review of medication' },
+  VITAL_SIGNS_MONITORING: { code: '113011001', display: 'Vital signs monitoring' },
+  NUTRITION_COUNSELING: { code: '61310001', display: 'Nutrition education' },
+  EXERCISE_THERAPY: { code: '229065009', display: 'Exercise therapy' },
+  FALL_PREVENTION: { code: '718227007', display: 'Fall prevention education' },
+  CHRONIC_DISEASE_MGMT: { code: '408580007', display: 'Chronic disease management' },
+  SMOKING_CESSATION: { code: '225323000', display: 'Smoking cessation education' },
+  DIABETES_EDUCATION: { code: '281090004', display: 'Diabetes self-management education' },
+  HYPERTENSION_MGMT: { code: '386800008', display: 'Hypertension management' },
+  DEPRESSION_SCREENING: { code: '171207006', display: 'Depression screening' },
+  COGNITIVE_ASSESSMENT: { code: '113024003', display: 'Cognitive assessment' },
+  SOCIAL_SUPPORT: { code: '410155007', display: 'Social support' },
+} as const;

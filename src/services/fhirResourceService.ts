@@ -17,6 +17,7 @@ import type {
   Observation,
   CreateObservation,
   FHIRImmunization,
+  FHIRCarePlan,
   FHIRApiResponse,
   FHIRSearchParams,
 } from '../types/fhir';
@@ -1063,6 +1064,183 @@ const ImmunizationService = {
 };
 
 // ============================================================================
+// CARE PLAN SERVICE
+// ============================================================================
+
+const CarePlanService = {
+  /**
+   * Get all care plans for a patient
+   */
+  async getByPatient(patientId: string): Promise<FHIRCarePlan[]> {
+    const { data, error } = await supabase
+      .from('fhir_care_plans')
+      .select('*')
+      .eq('patient_id', patientId)
+      .order('created', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  /**
+   * Get active care plans
+   */
+  async getActive(patientId: string): Promise<any[]> {
+    const { data, error } = await supabase
+      .rpc('get_active_care_plans', {
+        p_patient_id: patientId
+      });
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  /**
+   * Get current care plan (most recent active)
+   */
+  async getCurrent(patientId: string): Promise<any | null> {
+    const { data, error } = await supabase
+      .rpc('get_current_care_plan', {
+        p_patient_id: patientId
+      });
+
+    if (error) throw error;
+    return data && data.length > 0 ? data[0] : null;
+  },
+
+  /**
+   * Get care plans by status
+   */
+  async getByStatus(patientId: string, status: string): Promise<any[]> {
+    const { data, error } = await supabase
+      .rpc('get_care_plans_by_status', {
+        p_patient_id: patientId,
+        p_status: status
+      });
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  /**
+   * Get care plans by category
+   */
+  async getByCategory(patientId: string, category: string): Promise<any[]> {
+    const { data, error } = await supabase
+      .rpc('get_care_plans_by_category', {
+        p_patient_id: patientId,
+        p_category: category
+      });
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  /**
+   * Get care plan by ID
+   */
+  async getById(id: string): Promise<FHIRCarePlan | null> {
+    const { data, error } = await supabase
+      .from('fhir_care_plans')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  /**
+   * Get activity summary for a care plan
+   */
+  async getActivitiesSummary(carePlanId: string): Promise<any> {
+    const { data, error } = await supabase
+      .rpc('get_care_plan_activities_summary', {
+        p_care_plan_id: carePlanId
+      });
+
+    if (error) throw error;
+    return data && data.length > 0 ? data[0] : null;
+  },
+
+  /**
+   * Create a new care plan
+   */
+  async create(carePlan: Partial<FHIRCarePlan>): Promise<FHIRCarePlan> {
+    const { data, error } = await supabase
+      .from('fhir_care_plans')
+      .insert([carePlan])
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  /**
+   * Update a care plan
+   */
+  async update(id: string, updates: Partial<FHIRCarePlan>): Promise<FHIRCarePlan> {
+    const { data, error } = await supabase
+      .from('fhir_care_plans')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  /**
+   * Delete a care plan
+   */
+  async delete(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('fhir_care_plans')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+  },
+
+  /**
+   * Advanced search with filters
+   */
+  async search(params: {
+    patientId?: string;
+    status?: string;
+    category?: string;
+    fromDate?: string;
+    toDate?: string;
+  }): Promise<FHIRCarePlan[]> {
+    let query = supabase.from('fhir_care_plans').select('*');
+
+    if (params.patientId) {
+      query = query.eq('patient_id', params.patientId);
+    }
+    if (params.status) {
+      query = query.eq('status', params.status);
+    }
+    if (params.category) {
+      query = query.contains('category', [params.category]);
+    }
+    if (params.fromDate) {
+      query = query.gte('period_start', params.fromDate);
+    }
+    if (params.toDate) {
+      query = query.lte('period_end', params.toDate);
+    }
+
+    query = query.order('created', { ascending: false });
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data || [];
+  },
+};
+
+// ============================================================================
 // UNIFIED FHIR SERVICE (Single Entry Point)
 // ============================================================================
 
@@ -1073,6 +1251,7 @@ export const FHIRService = {
   Procedure: ProcedureService,
   Observation: ObservationService,
   Immunization: ImmunizationService,
+  CarePlan: CarePlanService,
 };
 
 export default FHIRService;

@@ -11,6 +11,8 @@ import PositiveAffirmations from './PositiveAffirmations';
 import EmergencyContact from '../features/EmergencyContact';
 import WhatsNewSeniorModal from '../WhatsNewSeniorModal';
 import HealthObservationsWidget from './HealthObservationsWidget';
+import CarePlansWidget from './CarePlansWidget';
+import VaccineGapsWidget from './VaccineGapsWidget';
 
 const SeniorCommunityDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -616,6 +618,12 @@ const SeniorCommunityDashboard: React.FC = () => {
 
             {/* Health Observations */}
             <HealthObservationsWidget />
+
+            {/* Vaccine Gaps */}
+            <VaccineGapsWidget />
+
+            {/* Care Plans */}
+            <CarePlansWidget />
 
             {/* Medicine Cabinet */}
             <div className="bg-white rounded-xl shadow-lg p-6">

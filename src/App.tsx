@@ -71,6 +71,8 @@ const PhotoApprovalPage = React.lazy(() => import('./pages/PhotoApprovalPage'));
 const SmartCallbackPage = React.lazy(() => import('./pages/SmartCallbackPage'));
 const SmartBackButton = React.lazy(() => import('./components/ui/SmartBackButton'));
 const HealthObservationsPage = React.lazy(() => import('./pages/HealthObservationsPage'));
+const ImmunizationsPage = React.lazy(() => import('./pages/ImmunizationsPage'));
+const CarePlansPage = React.lazy(() => import('./pages/CarePlansPage'));
 const MedicineCabinet = React.lazy(() => import('./components/patient/MedicineCabinet'));
 
 function Shell() {
@@ -116,6 +118,8 @@ function Shell() {
               <Route path="/health-insights" element={<RequireAuth><HealthInsightsPage /></RequireAuth>} />
               <Route path="/health-dashboard" element={<RequireAuth><HealthTrackerPage /></RequireAuth>} />
               <Route path="/health-observations" element={<RequireAuth><HealthObservationsPage /></RequireAuth>} />
+              <Route path="/immunizations" element={<RequireAuth><ImmunizationsPage /></RequireAuth>} />
+              <Route path="/care-plans" element={<RequireAuth><CarePlansPage /></RequireAuth>} />
               <Route path="/medicine-cabinet" element={<RequireAuth><MedicineCabinet /></RequireAuth>} />
               <Route path="/questions" element={<RequireAuth><QuestionsPage /></RequireAuth>} />
               <Route path="/help" element={<RequireAuth><HelpPage /></RequireAuth>} />
