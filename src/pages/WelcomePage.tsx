@@ -10,34 +10,24 @@ const WelcomePage: React.FC = () => {
   const navigate = useNavigate();
   const supabase = useSupabaseClient();
 
-  // If the user is already logged in, let AuthGate handle routing by just waiting a bit
+  // If user is already logged in, redirect immediately to dashboard
+  // Let LoginPage handle the complex routing logic (demographics, consent, etc.)
   useEffect(() => {
     let mounted = true;
-    let timeoutId: NodeJS.Timeout;
 
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!mounted || !session) return;
 
-      // Give AuthGate 300ms to complete its routing logic
-      // If we're still on welcome page after that, user is fully onboarded - go to dashboard
-      timeoutId = setTimeout(() => {
-        if (mounted) {
-          navigate('/dashboard', { replace: true });
-        }
-      }, 300);
+      // User is logged in - redirect to dashboard
+      // AuthGate will handle any onboarding redirects
+      navigate('/dashboard', { replace: true });
     };
 
     checkSession();
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
-      if (session) checkSession();
-    });
-
     return () => {
       mounted = false;
-      if (timeoutId) clearTimeout(timeoutId);
-      sub?.subscription?.unsubscribe?.();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

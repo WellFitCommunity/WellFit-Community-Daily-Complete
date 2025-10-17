@@ -145,7 +145,10 @@ const LoginPage: React.FC = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!cancel && session) {
         const route = await nextRouteForUser();
-        navigate(route, { replace: true });
+        // Only navigate if we're still on login page to avoid loop
+        if (!cancel && window.location.pathname === '/login') {
+          navigate(route, { replace: true });
+        }
       }
     })();
     return () => { cancel = true; };
