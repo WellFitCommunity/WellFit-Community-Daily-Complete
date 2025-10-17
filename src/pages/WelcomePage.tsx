@@ -23,7 +23,7 @@ const WelcomePage: React.FC = () => {
       if (!userId) return;
 
       // Fetch profile to check role
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('role, role_code, onboarded, consent')
         .eq('user_id', userId)
@@ -31,8 +31,22 @@ const WelcomePage: React.FC = () => {
 
       if (!mounted) return;
 
+      // If profile doesn't exist or error, don't auto-redirect
+      // Let user click login button to trigger proper error handling
+      if (profileError) {
+        console.error('[WelcomePage] Error fetching profile:', profileError.message);
+        return;
+      }
+
+      if (!profile) {
+        console.warn('[WelcomePage] No profile found for user. User should register or contact support.');
+        return;
+      }
+
       const role = profile?.role || '';
       const roleCode = profile?.role_code || 0;
+
+      console.log('[WelcomePage] User profile:', { role, roleCode, onboarded: profile.onboarded, consent: profile.consent });
 
       // Admin/super_admin go to admin login
       if (role === 'admin' || role === 'super_admin' || roleCode === 1 || roleCode === 2) {
@@ -43,6 +57,7 @@ const WelcomePage: React.FC = () => {
 
       // Caregiver goes to caregiver dashboard
       if (role === 'caregiver' || roleCode === 6) {
+        console.log('[WelcomePage] Caregiver detected, redirecting to caregiver-dashboard');
         navigate('/caregiver-dashboard', { replace: true });
         return;
       }

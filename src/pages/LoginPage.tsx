@@ -257,9 +257,12 @@ const LoginPage: React.FC = () => {
         return;
       }
 
+      console.log('[LoginPage] Senior login successful, determining route...');
       const route = await nextRouteForUser();
+      console.log('[LoginPage] Senior navigating to:', route);
       navigate(route, { replace: true });
     } catch (err: any) {
+      console.error('[LoginPage] Senior login error:', err);
       setError(err?.message || 'Unexpected error during login.');
     } finally {
       setLoading(false);
@@ -302,9 +305,12 @@ const LoginPage: React.FC = () => {
         return;
       }
 
+      console.log('[LoginPage] Admin login successful, determining route...');
       const route = await nextRouteForUser();
+      console.log('[LoginPage] Admin navigating to:', route);
       navigate(route, { replace: true });
     } catch (err: any) {
+      console.error('[LoginPage] Admin login error:', err);
       setError(err?.message || 'Unexpected error during admin login.');
     } finally {
       setLoading(false);
