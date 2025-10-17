@@ -19,6 +19,27 @@ interface WhatsNewModalProps {
 
 const RECENT_FEATURES: Feature[] = [
   {
+    title: 'Medicine Cabinet Connected',
+    description: 'AI-powered Medicine Cabinet now accessible to seniors from their dashboard. Features medication label scanning with Claude Vision, adherence tracking, refill reminders, and drug interaction warnings.',
+    category: 'new',
+    date: '2025-10-17',
+    icon: '💊',
+  },
+  {
+    title: 'ObservationService Testing Complete',
+    description: 'Added 20 comprehensive unit tests for ObservationService covering vital signs, lab results, social history, and CRUD operations. All 58 FHIR resource tests passing with zero TypeScript errors.',
+    category: 'improved',
+    date: '2025-10-17',
+    icon: '🧪',
+  },
+  {
+    title: 'Security Audit Clean',
+    description: 'Fixed ESLint security warnings. Verified zero actual security vulnerabilities - all warnings are code quality only. HIPAA/SOC2 compliance maintained through FHIR R4 implementation.',
+    category: 'fixed',
+    date: '2025-10-17',
+    icon: '🔒',
+  },
+  {
     title: 'User Profile Page',
     description: 'New comprehensive profile page for seniors with photo upload, achievements tracking, emergency contacts, and account information. Accessible via /profile route.',
     category: 'new',

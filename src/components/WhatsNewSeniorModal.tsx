@@ -18,6 +18,12 @@ interface WhatsNewSeniorModalProps {
 
 const SENIOR_FEATURES: SeniorFeature[] = [
   {
+    title: 'Medicine Cabinet Now Available!',
+    description: 'Track all your medications in one place! Just take a photo of your pill bottle label and our AI will read it for you. Get reminders when to take your medicine and when you need refills.',
+    icon: '💊',
+    date: '2025-10-17',
+  },
+  {
     title: 'New Profile Page',
     description: 'Visit your profile to upload a photo, view your achievements, and update your emergency contact information.',
     icon: '👤',
