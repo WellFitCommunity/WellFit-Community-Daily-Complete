@@ -10,6 +10,7 @@ import TechTip from './TechTip';
 import PositiveAffirmations from './PositiveAffirmations';
 import EmergencyContact from '../features/EmergencyContact';
 import WhatsNewSeniorModal from '../WhatsNewSeniorModal';
+import HealthObservationsWidget from './HealthObservationsWidget';
 
 const SeniorCommunityDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -611,6 +612,28 @@ const SeniorCommunityDashboard: React.FC = () => {
             {/* Tech Tips */}
             <div className="bg-white rounded-xl shadow-lg p-6">
               <TechTip />
+            </div>
+
+            {/* Health Observations */}
+            <HealthObservationsWidget />
+
+            {/* Medicine Cabinet */}
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <div className="text-center">
+                <div className="text-3xl mb-3">💊</div>
+                <h3 className="text-xl font-bold text-[#003865] mb-3">
+                  Medicine Cabinet
+                </h3>
+                <p className="text-gray-600 mb-4 text-sm">
+                  AI-powered medication tracking & management
+                </p>
+                <button
+                  onClick={() => navigate('/medicine-cabinet')}
+                  className="w-full p-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all transform hover:scale-105 text-lg font-semibold"
+                >
+                  Open Medicine Cabinet
+                </button>
+              </div>
             </div>
 
           </div>

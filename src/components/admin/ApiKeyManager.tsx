@@ -340,6 +340,7 @@ const ApiKeyManager: React.FC = () => {
       }
 
       // Security: Sanitize text before copying (prevent code injection)
+      // eslint-disable-next-line no-control-regex
       const sanitizedText = text.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
 
       await navigator.clipboard.writeText(sanitizedText);

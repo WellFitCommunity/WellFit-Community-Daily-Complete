@@ -9,6 +9,7 @@ import {
   ConditionService,
   DiagnosticReportService,
   ProcedureService,
+  ObservationService,
 } from '../fhirResourceService';
 import { supabase } from '../../lib/supabaseClient';
 
@@ -362,7 +363,8 @@ describe('ConditionService', () => {
 
       expect(result.success).toBe(true);
       // Verify normalized data has both FHIR and backwards-compat fields
-      expect(result.data[0]).toMatchObject({
+      expect(result.data).toBeDefined();
+      expect(result.data![0]).toMatchObject({
         id: 'cond-1',
         code: 'I10',
         code_code: 'I10', // Backwards compat
@@ -399,7 +401,8 @@ describe('ConditionService', () => {
 
       expect(result.success).toBe(true);
       // Verify normalized data has both FHIR and backwards-compat fields
-      expect(result.data[0]).toMatchObject({
+      expect(result.data).toBeDefined();
+      expect(result.data![0]).toMatchObject({
         id: 'cond-1',
         category: ['problem-list-item'],
         category_code: 'problem-list-item', // Backwards compat
@@ -425,9 +428,12 @@ describe('ConditionService', () => {
     it('should create a new condition', async () => {
       const newCondition = {
         patient_id: 'patient-123',
+        code_system: 'http://hl7.org/fhir/sid/icd-10-cm',
+        code: 'E11.9',
         code_code: 'E11.9',
         code_display: 'Type 2 diabetes mellitus',
         clinical_status: 'active' as const,
+        verification_status: 'confirmed' as const,
         recorded_date: '2025-01-15',
       };
 
@@ -607,6 +613,10 @@ describe('DiagnosticReportService', () => {
     it('should create a new diagnostic report', async () => {
       const newReport = {
         patient_id: 'patient-123',
+        code_system: 'http://loinc.org',
+        code: '58410-2',
+        code_display: 'Complete blood count (hemogram) panel',
+        category: ['LAB'],
         category_code: 'LAB',
         category_display: 'Laboratory',
         status: 'final' as const,
@@ -726,6 +736,8 @@ describe('ProcedureService', () => {
     it('should create a new procedure', async () => {
       const newProcedure = {
         patient_id: 'patient-123',
+        code_system: 'http://www.ama-assn.org/go/cpt',
+        code: '99213',
         code_code: '99213',
         code_display: 'Office visit',
         status: 'completed' as const,
@@ -789,6 +801,390 @@ describe('ProcedureService', () => {
         patient_id_param: 'patient-123',
         encounter_id_param: 'enc-123',
       });
+    });
+  });
+});
+
+describe('ObservationService', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('getByPatient', () => {
+    it('should fetch all observations for a patient', async () => {
+      const mockData = [
+        {
+          id: 'obs-1',
+          patient_id: 'patient-123',
+          code: '8867-4',
+          code_display: 'Heart rate',
+          category: ['vital-signs'],
+          status: 'final',
+          effective_datetime: '2025-01-15T10:00:00Z',
+          value_quantity: 72,
+          value_unit: 'beats/minute',
+        },
+        {
+          id: 'obs-2',
+          patient_id: 'patient-123',
+          code: '8480-6',
+          code_display: 'Systolic blood pressure',
+          category: ['vital-signs'],
+          status: 'final',
+          effective_datetime: '2025-01-14T10:00:00Z',
+          value_quantity: 120,
+          value_unit: 'mmHg',
+        },
+      ];
+
+      const mockQuery = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        order: jest.fn().mockResolvedValue({ data: mockData, error: null }),
+      };
+      (supabase.from as any).mockReturnValue(mockQuery);
+
+      const result = await ObservationService.getByPatient('patient-123');
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockData);
+      expect(supabase.from).toHaveBeenCalledWith('fhir_observations');
+      expect(mockQuery.eq).toHaveBeenCalledWith('patient_id', 'patient-123');
+      expect(mockQuery.order).toHaveBeenCalledWith('effective_datetime', { ascending: false });
+    });
+
+    it('should handle errors gracefully', async () => {
+      const mockError = new Error('Database connection failed');
+      const mockQuery = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        order: jest.fn().mockResolvedValue({ data: null, error: mockError }),
+      };
+      (supabase.from as any).mockReturnValue(mockQuery);
+
+      const result = await ObservationService.getByPatient('patient-123');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Database connection failed');
+    });
+
+    it('should return empty array when no data found', async () => {
+      const mockQuery = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        order: jest.fn().mockResolvedValue({ data: [], error: null }),
+      };
+      (supabase.from as any).mockReturnValue(mockQuery);
+
+      const result = await ObservationService.getByPatient('patient-123');
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual([]);
+    });
+  });
+
+  describe('getVitalSigns', () => {
+    it('should fetch vital signs with default days', async () => {
+      const mockData = [
+        { id: 'obs-1', category: ['vital-signs'], code: '8867-4' },
+      ];
+      (supabase.rpc as any).mockResolvedValue({ data: mockData, error: null });
+
+      const result = await ObservationService.getVitalSigns('patient-123');
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockData);
+      expect(supabase.rpc).toHaveBeenCalledWith('get_patient_vital_signs', {
+        patient_id_param: 'patient-123',
+        days_param: 30,
+      });
+    });
+
+    it('should fetch vital signs with custom days', async () => {
+      const mockData = [{ id: 'obs-1', category: ['vital-signs'] }];
+      (supabase.rpc as any).mockResolvedValue({ data: mockData, error: null });
+
+      const result = await ObservationService.getVitalSigns('patient-123', 7);
+
+      expect(supabase.rpc).toHaveBeenCalledWith('get_patient_vital_signs', {
+        patient_id_param: 'patient-123',
+        days_param: 7,
+      });
+    });
+
+    it('should handle RPC errors', async () => {
+      const mockError = new Error('RPC function not found');
+      (supabase.rpc as any).mockResolvedValue({ data: null, error: mockError });
+
+      const result = await ObservationService.getVitalSigns('patient-123');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('RPC function not found');
+    });
+  });
+
+  describe('getLabResults', () => {
+    it('should fetch lab results with default days', async () => {
+      const mockData = [
+        { id: 'obs-1', category: ['laboratory'], code: '2339-0' },
+      ];
+      (supabase.rpc as any).mockResolvedValue({ data: mockData, error: null });
+
+      const result = await ObservationService.getLabResults('patient-123');
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockData);
+      expect(supabase.rpc).toHaveBeenCalledWith('get_patient_lab_results', {
+        patient_id_param: 'patient-123',
+        days_param: 90,
+      });
+    });
+
+    it('should fetch lab results with custom days', async () => {
+      const mockData = [{ id: 'obs-1', category: ['laboratory'] }];
+      (supabase.rpc as any).mockResolvedValue({ data: mockData, error: null });
+
+      const result = await ObservationService.getLabResults('patient-123', 30);
+
+      expect(supabase.rpc).toHaveBeenCalledWith('get_patient_lab_results', {
+        patient_id_param: 'patient-123',
+        days_param: 30,
+      });
+    });
+  });
+
+  describe('getSocialHistory', () => {
+    it('should fetch social history observations', async () => {
+      const mockData = [
+        { id: 'obs-1', category: ['social-history'], code: '72166-2' },
+      ];
+      (supabase.rpc as any).mockResolvedValue({ data: mockData, error: null });
+
+      const result = await ObservationService.getSocialHistory('patient-123');
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockData);
+      expect(supabase.rpc).toHaveBeenCalledWith('get_patient_social_history', {
+        patient_id_param: 'patient-123',
+      });
+    });
+  });
+
+  describe('getByCode', () => {
+    it('should fetch observations by code with default days', async () => {
+      const mockData = [
+        { id: 'obs-1', code: '8867-4', code_display: 'Heart rate' },
+      ];
+      (supabase.rpc as any).mockResolvedValue({ data: mockData, error: null });
+
+      const result = await ObservationService.getByCode('patient-123', '8867-4');
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockData);
+      expect(supabase.rpc).toHaveBeenCalledWith('get_observations_by_code', {
+        patient_id_param: 'patient-123',
+        code_param: '8867-4',
+        days_param: 365,
+      });
+    });
+
+    it('should fetch observations by code with custom days', async () => {
+      const mockData = [{ id: 'obs-1', code: '8867-4' }];
+      (supabase.rpc as any).mockResolvedValue({ data: mockData, error: null });
+
+      const result = await ObservationService.getByCode('patient-123', '8867-4', 90);
+
+      expect(supabase.rpc).toHaveBeenCalledWith('get_observations_by_code', {
+        patient_id_param: 'patient-123',
+        code_param: '8867-4',
+        days_param: 90,
+      });
+    });
+  });
+
+  describe('getByCategory', () => {
+    it('should fetch observations by category without days filter', async () => {
+      const mockData = [
+        { id: 'obs-1', category: ['vital-signs'], status: 'final' },
+        { id: 'obs-2', category: ['vital-signs'], status: 'amended' },
+      ];
+
+      const mockQuery = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        contains: jest.fn().mockReturnThis(),
+        in: jest.fn().mockReturnThis(),
+        order: jest.fn().mockResolvedValue({ data: mockData, error: null }),
+      };
+      (supabase.from as any).mockReturnValue(mockQuery);
+
+      const result = await ObservationService.getByCategory('patient-123', 'vital-signs');
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockData);
+      expect(mockQuery.eq).toHaveBeenCalledWith('patient_id', 'patient-123');
+      expect(mockQuery.contains).toHaveBeenCalledWith('category', ['vital-signs']);
+      expect(mockQuery.in).toHaveBeenCalledWith('status', ['final', 'amended', 'corrected']);
+    });
+
+    it('should fetch observations by category with days filter', async () => {
+      const mockData = [{ id: 'obs-1', category: ['laboratory'] }];
+
+      const mockQuery = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        contains: jest.fn().mockReturnThis(),
+        in: jest.fn().mockReturnThis(),
+        order: jest.fn().mockReturnThis(),
+        gte: jest.fn().mockResolvedValue({ data: mockData, error: null }),
+      };
+      (supabase.from as any).mockReturnValue(mockQuery);
+
+      const result = await ObservationService.getByCategory('patient-123', 'laboratory', 30);
+
+      expect(result.success).toBe(true);
+      expect(mockQuery.gte).toHaveBeenCalledWith('effective_datetime', expect.any(String));
+    });
+
+    it('should handle errors', async () => {
+      const mockError = new Error('Query failed');
+      const mockQuery = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        contains: jest.fn().mockReturnThis(),
+        in: jest.fn().mockReturnThis(),
+        order: jest.fn().mockResolvedValue({ data: null, error: mockError }),
+      };
+      (supabase.from as any).mockReturnValue(mockQuery);
+
+      const result = await ObservationService.getByCategory('patient-123', 'vital-signs');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Query failed');
+    });
+  });
+
+  describe('create', () => {
+    it('should create a new observation', async () => {
+      const newObservation = {
+        patient_id: 'patient-123',
+        code: '8867-4',
+        code_display: 'Heart rate',
+        category: ['vital-signs'],
+        status: 'final' as const,
+        effective_datetime: '2025-01-15T10:00:00Z',
+        value_quantity: 72,
+        value_unit: 'beats/minute',
+      };
+
+      const mockCreatedData = { ...newObservation, id: 'obs-1' };
+
+      const mockQuery = {
+        insert: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: mockCreatedData, error: null }),
+      };
+      (supabase.from as any).mockReturnValue(mockQuery);
+
+      const result = await ObservationService.create(newObservation);
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockCreatedData);
+      expect(mockQuery.insert).toHaveBeenCalledWith([newObservation]);
+    });
+
+    it('should handle insertion errors', async () => {
+      const newObservation = {
+        patient_id: 'patient-123',
+        code: '8867-4',
+        code_display: 'Heart rate',
+        category: ['vital-signs'],
+        status: 'final' as const,
+        effective_datetime: '2025-01-15T10:00:00Z',
+        value_quantity: 72,
+        value_unit: 'beats/minute',
+      };
+
+      const insertError = new Error('Constraint violation');
+      const mockQuery = {
+        insert: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: null, error: insertError }),
+      };
+      (supabase.from as any).mockReturnValue(mockQuery);
+
+      const result = await ObservationService.create(newObservation);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Constraint violation');
+    });
+  });
+
+  describe('update', () => {
+    it('should update an observation', async () => {
+      const updates = { status: 'amended' as const, note: 'Value corrected' };
+      const mockUpdatedData = { id: 'obs-1', ...updates };
+
+      const mockQuery = {
+        update: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: mockUpdatedData, error: null }),
+      };
+      (supabase.from as any).mockReturnValue(mockQuery);
+
+      const result = await ObservationService.update('obs-1', updates);
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockUpdatedData);
+      expect(mockQuery.update).toHaveBeenCalledWith(updates);
+      expect(mockQuery.eq).toHaveBeenCalledWith('id', 'obs-1');
+    });
+
+    it('should handle update errors', async () => {
+      const mockError = new Error('Record not found');
+      const mockQuery = {
+        update: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: null, error: mockError }),
+      };
+      (supabase.from as any).mockReturnValue(mockQuery);
+
+      const result = await ObservationService.update('obs-1', { status: 'amended' });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Record not found');
+    });
+  });
+
+  describe('delete', () => {
+    it('should delete an observation', async () => {
+      const mockQuery = {
+        delete: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockResolvedValue({ error: null }),
+      };
+      (supabase.from as any).mockReturnValue(mockQuery);
+
+      const result = await ObservationService.delete('obs-1');
+
+      expect(result.success).toBe(true);
+      expect(mockQuery.delete).toHaveBeenCalled();
+      expect(mockQuery.eq).toHaveBeenCalledWith('id', 'obs-1');
+    });
+
+    it('should handle deletion errors', async () => {
+      const mockError = new Error('Record not found');
+      const mockQuery = {
+        delete: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockResolvedValue({ error: mockError }),
+      };
+      (supabase.from as any).mockReturnValue(mockQuery);
+
+      const result = await ObservationService.delete('obs-1');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Record not found');
     });
   });
 });

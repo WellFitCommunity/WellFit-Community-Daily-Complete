@@ -70,6 +70,8 @@ const ApiKeyManager = React.lazy(() => import('./components/admin/ApiKeyManager'
 const PhotoApprovalPage = React.lazy(() => import('./pages/PhotoApprovalPage'));
 const SmartCallbackPage = React.lazy(() => import('./pages/SmartCallbackPage'));
 const SmartBackButton = React.lazy(() => import('./components/ui/SmartBackButton'));
+const HealthObservationsPage = React.lazy(() => import('./pages/HealthObservationsPage'));
+const MedicineCabinet = React.lazy(() => import('./components/patient/MedicineCabinet'));
 
 function Shell() {
   const [branding, setBranding] = useState<BrandingConfig>(getCurrentBranding());
@@ -113,6 +115,8 @@ function Shell() {
               <Route path="/dashboard" element={<RequireAuth><DashboardPage /></RequireAuth>} />
               <Route path="/health-insights" element={<RequireAuth><HealthInsightsPage /></RequireAuth>} />
               <Route path="/health-dashboard" element={<RequireAuth><HealthTrackerPage /></RequireAuth>} />
+              <Route path="/health-observations" element={<RequireAuth><HealthObservationsPage /></RequireAuth>} />
+              <Route path="/medicine-cabinet" element={<RequireAuth><MedicineCabinet /></RequireAuth>} />
               <Route path="/questions" element={<RequireAuth><QuestionsPage /></RequireAuth>} />
               <Route path="/help" element={<RequireAuth><HelpPage /></RequireAuth>} />
               <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
