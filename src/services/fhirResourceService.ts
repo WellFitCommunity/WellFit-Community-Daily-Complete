@@ -14,6 +14,9 @@ import type {
   CreateDiagnosticReport,
   Procedure,
   CreateProcedure,
+  Observation,
+  CreateObservation,
+  FHIRImmunization,
   FHIRApiResponse,
   FHIRSearchParams,
 } from '../types/fhir';
@@ -657,6 +660,409 @@ export class ProcedureService {
 }
 
 // ============================================================================
+// OBSERVATION SERVICE
+// ============================================================================
+
+export class ObservationService {
+  /**
+   * Get all observations for a patient
+   */
+  static async getByPatient(patientId: string): Promise<FHIRApiResponse<Observation[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_observations')
+        .select('*')
+        .eq('patient_id', patientId)
+        .order('effective_datetime', { ascending: false });
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch observations',
+      };
+    }
+  }
+
+  /**
+   * Get vital signs for a patient
+   */
+  static async getVitalSigns(
+    patientId: string,
+    days: number = 30
+  ): Promise<FHIRApiResponse<Observation[]>> {
+    try {
+      const { data, error } = await supabase.rpc('get_patient_vital_signs', {
+        patient_id_param: patientId,
+        days_param: days,
+      });
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch vital signs',
+      };
+    }
+  }
+
+  /**
+   * Get laboratory results for a patient
+   */
+  static async getLabResults(
+    patientId: string,
+    days: number = 90
+  ): Promise<FHIRApiResponse<Observation[]>> {
+    try {
+      const { data, error } = await supabase.rpc('get_patient_lab_results', {
+        patient_id_param: patientId,
+        days_param: days,
+      });
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch lab results',
+      };
+    }
+  }
+
+  /**
+   * Get social history observations
+   */
+  static async getSocialHistory(patientId: string): Promise<FHIRApiResponse<Observation[]>> {
+    try {
+      const { data, error } = await supabase.rpc('get_patient_social_history', {
+        patient_id_param: patientId,
+      });
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch social history',
+      };
+    }
+  }
+
+  /**
+   * Get observations by code (for trending)
+   */
+  static async getByCode(
+    patientId: string,
+    code: string,
+    days: number = 365
+  ): Promise<FHIRApiResponse<Observation[]>> {
+    try {
+      const { data, error } = await supabase.rpc('get_observations_by_code', {
+        patient_id_param: patientId,
+        code_param: code,
+        days_param: days,
+      });
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch observations by code',
+      };
+    }
+  }
+
+  /**
+   * Get observations by category
+   */
+  static async getByCategory(
+    patientId: string,
+    category: string,
+    days?: number
+  ): Promise<FHIRApiResponse<Observation[]>> {
+    try {
+      let query = supabase
+        .from('fhir_observations')
+        .select('*')
+        .eq('patient_id', patientId)
+        .contains('category', [category])
+        .in('status', ['final', 'amended', 'corrected'])
+        .order('effective_datetime', { ascending: false });
+
+      if (days) {
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - days);
+        query = query.gte('effective_datetime', cutoffDate.toISOString());
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch observations by category',
+      };
+    }
+  }
+
+  /**
+   * Create a new observation
+   */
+  static async create(observation: CreateObservation): Promise<FHIRApiResponse<Observation>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_observations')
+        .insert([observation])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to create observation',
+      };
+    }
+  }
+
+  /**
+   * Update an observation
+   */
+  static async update(
+    id: string,
+    updates: Partial<Observation>
+  ): Promise<FHIRApiResponse<Observation>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_observations')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to update observation',
+      };
+    }
+  }
+
+  /**
+   * Delete an observation
+   */
+  static async delete(id: string): Promise<FHIRApiResponse<void>> {
+    try {
+      const { error } = await supabase.from('fhir_observations').delete().eq('id', id);
+
+      if (error) throw error;
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to delete observation',
+      };
+    }
+  }
+}
+
+// ============================================================================
+// IMMUNIZATION SERVICE
+// ============================================================================
+
+const ImmunizationService = {
+  /**
+   * Get all immunizations for a patient
+   */
+  async getByPatient(patientId: string): Promise<FHIRImmunization[]> {
+    const { data, error } = await supabase
+      .from('fhir_immunizations')
+      .select('*')
+      .eq('patient_id', patientId)
+      .order('occurrence_datetime', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  /**
+   * Get immunization history (helper function)
+   */
+  async getHistory(patientId: string, days: number = 365): Promise<any[]> {
+    const { data, error } = await supabase
+      .rpc('get_patient_immunizations', {
+        p_patient_id: patientId,
+        p_days: days
+      });
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  /**
+   * Get immunizations by vaccine type
+   */
+  async getByVaccineCode(patientId: string, vaccineCode: string): Promise<any[]> {
+    const { data, error } = await supabase
+      .rpc('get_immunizations_by_vaccine', {
+        p_patient_id: patientId,
+        p_vaccine_code: vaccineCode
+      });
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  /**
+   * Check if vaccine is due (care gap)
+   */
+  async checkVaccineDue(
+    patientId: string,
+    vaccineCode: string,
+    monthsSinceLast: number = 12
+  ): Promise<boolean> {
+    const { data, error } = await supabase
+      .rpc('check_vaccine_due', {
+        p_patient_id: patientId,
+        p_vaccine_code: vaccineCode,
+        p_months_since_last: monthsSinceLast
+      });
+
+    if (error) throw error;
+    return data || false;
+  },
+
+  /**
+   * Get vaccine gaps (care opportunities)
+   */
+  async getVaccineGaps(patientId: string): Promise<any[]> {
+    const { data, error } = await supabase
+      .rpc('get_vaccine_gaps', {
+        p_patient_id: patientId
+      });
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  /**
+   * Create new immunization record
+   */
+  async create(immunization: Partial<FHIRImmunization>): Promise<FHIRImmunization> {
+    const { data, error } = await supabase
+      .from('fhir_immunizations')
+      .insert(immunization)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  /**
+   * Update immunization record
+   */
+  async update(id: string, updates: Partial<FHIRImmunization>): Promise<FHIRImmunization> {
+    const { data, error } = await supabase
+      .from('fhir_immunizations')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  /**
+   * Delete immunization record
+   */
+  async delete(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('fhir_immunizations')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+  },
+
+  /**
+   * Get immunization by ID
+   */
+  async getById(id: string): Promise<FHIRImmunization | null> {
+    const { data, error } = await supabase
+      .from('fhir_immunizations')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') return null; // Not found
+      throw error;
+    }
+    return data;
+  },
+
+  /**
+   * Get completed immunizations only
+   */
+  async getCompleted(patientId: string): Promise<FHIRImmunization[]> {
+    const { data, error } = await supabase
+      .from('fhir_immunizations')
+      .select('*')
+      .eq('patient_id', patientId)
+      .eq('status', 'completed')
+      .order('occurrence_datetime', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  /**
+   * Search immunizations with filters
+   */
+  async search(params: {
+    patientId?: string;
+    status?: string;
+    vaccineCode?: string;
+    fromDate?: string;
+    toDate?: string;
+  }): Promise<FHIRImmunization[]> {
+    let query = supabase.from('fhir_immunizations').select('*');
+
+    if (params.patientId) {
+      query = query.eq('patient_id', params.patientId);
+    }
+    if (params.status) {
+      query = query.eq('status', params.status);
+    }
+    if (params.vaccineCode) {
+      query = query.eq('vaccine_code', params.vaccineCode);
+    }
+    if (params.fromDate) {
+      query = query.gte('occurrence_datetime', params.fromDate);
+    }
+    if (params.toDate) {
+      query = query.lte('occurrence_datetime', params.toDate);
+    }
+
+    query = query.order('occurrence_datetime', { ascending: false });
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data || [];
+  },
+};
+
+// ============================================================================
 // UNIFIED FHIR SERVICE (Single Entry Point)
 // ============================================================================
 
@@ -665,6 +1071,8 @@ export const FHIRService = {
   Condition: ConditionService,
   DiagnosticReport: DiagnosticReportService,
   Procedure: ProcedureService,
+  Observation: ObservationService,
+  Immunization: ImmunizationService,
 };
 
 export default FHIRService;

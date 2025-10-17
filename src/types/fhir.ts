@@ -447,6 +447,134 @@ export interface CreateProcedure extends Partial<Procedure> {
 }
 
 // ============================================================================
+// OBSERVATION
+// ============================================================================
+
+export interface ObservationComponent {
+  code: string;
+  display: string;
+  value: number;
+  unit: string;
+}
+
+export interface Observation extends FHIRResource {
+  status: 'registered' | 'preliminary' | 'final' | 'amended' | 'corrected' | 'cancelled' | 'entered-in-error' | 'unknown';
+
+  // Category - FHIR R4 (array)
+  category: string[];
+  category_coding_system?: string[];
+
+  // Code (required) - LOINC preferred
+  code_system: string;
+  code: string;
+  code_display: string;
+  code_text?: string;
+
+  // Patient
+  patient_id: string;
+  encounter_id?: string;
+
+  // Timing
+  effective_datetime?: string;
+  effective_period_start?: string;
+  effective_period_end?: string;
+  issued?: string;
+
+  // Performers
+  performer_type?: string[];
+  performer_id?: string[];
+  performer_display?: string[];
+
+  // Value[x] - Multiple value types supported
+  value_quantity_value?: number;
+  value_quantity_unit?: string;
+  value_quantity_code?: string;
+  value_quantity_system?: string;
+
+  value_codeable_concept_code?: string;
+  value_codeable_concept_display?: string;
+  value_codeable_concept_system?: string;
+
+  value_string?: string;
+  value_boolean?: boolean;
+  value_integer?: number;
+  value_range_low?: number;
+  value_range_high?: number;
+  value_ratio_numerator?: number;
+  value_ratio_denominator?: number;
+  value_sampled_data?: any;
+  value_time?: string;
+  value_datetime?: string;
+  value_period_start?: string;
+  value_period_end?: string;
+
+  // Data Absent Reason
+  data_absent_reason_code?: string;
+  data_absent_reason_display?: string;
+
+  // Interpretation
+  interpretation_code?: string[];
+  interpretation_display?: string[];
+  interpretation_system?: string[];
+
+  // Notes
+  note?: string;
+
+  // Body Site
+  body_site_code?: string;
+  body_site_display?: string;
+  body_site_system?: string;
+
+  // Method
+  method_code?: string;
+  method_display?: string;
+  method_system?: string;
+
+  // Specimen
+  specimen_id?: string;
+  specimen_display?: string;
+
+  // Device
+  device_id?: string;
+  device_display?: string;
+
+  // Reference Range
+  reference_range_low?: number;
+  reference_range_high?: number;
+  reference_range_type_code?: string;
+  reference_range_type_display?: string;
+  reference_range_applies_to_code?: string[];
+  reference_range_age_low?: number;
+  reference_range_age_high?: number;
+  reference_range_text?: string;
+
+  // Components (for complex observations like BP)
+  components?: ObservationComponent[];
+
+  // References
+  has_member_ids?: string[];
+  derived_from_ids?: string[];
+  based_on_type?: string[];
+  based_on_id?: string[];
+  part_of_type?: string[];
+  part_of_id?: string[];
+  focus_type?: string;
+  focus_id?: string;
+
+  // Legacy
+  check_in_id?: number;
+}
+
+export interface CreateObservation extends Partial<Observation> {
+  patient_id: string;
+  status: Observation['status'];
+  category: string[];
+  code: string;
+  code_display: string;
+  code_system?: string;
+}
+
+// ============================================================================
 // API RESPONSE TYPES
 // ============================================================================
 
@@ -466,3 +594,131 @@ export interface FHIRSearchParams {
   _count?: number;
   _sort?: string;
 }
+
+// ============================================================================
+// IMMUNIZATION
+// ============================================================================
+
+export interface FHIRImmunization extends FHIRResource {
+  // External System Integration
+  external_id?: string;
+  external_system?: string;
+
+  // FHIR Meta
+  version_id?: string;
+  last_updated?: string;
+
+  // Required Fields (US Core)
+  patient_id: string;
+  status: 'completed' | 'entered-in-error' | 'not-done';
+  vaccine_code: string; // CVX code
+  vaccine_display: string;
+  occurrence_datetime?: string;
+  primary_source: boolean;
+
+  // Status Reason (required if status != completed)
+  status_reason_code?: string;
+  status_reason_display?: string;
+
+  // Vaccine Details
+  lot_number?: string;
+  expiration_date?: string;
+  manufacturer?: string;
+
+  // Administration Details
+  site_code?: string; // Body site
+  site_display?: string;
+  route_code?: string; // Route of administration
+  route_display?: string;
+  dose_quantity_value?: number;
+  dose_quantity_unit?: string;
+
+  // Performer (who gave the vaccine)
+  performer_actor_reference?: string;
+  performer_actor_display?: string;
+  performer_function_code?: string;
+  performer_function_display?: string;
+
+  // Location
+  location_reference?: string;
+  location_display?: string;
+
+  // Reason for Immunization
+  reason_code?: string[];
+  reason_display?: string[];
+
+  // Reactions (adverse events)
+  reaction_date?: string;
+  reaction_detail_reference?: string;
+  reaction_reported?: boolean;
+
+  // Protocol Applied (vaccine dose number in series)
+  protocol_dose_number_positive_int?: number;
+  protocol_series_doses_positive_int?: number;
+  protocol_target_disease?: string[];
+  protocol_target_disease_display?: string[];
+
+  // Funding Source
+  funding_source_code?: string;
+  funding_source_display?: string;
+
+  // Education (patient education given)
+  education_document_type?: string;
+  education_reference?: string;
+  education_publication_date?: string;
+  education_presentation_date?: string;
+
+  // Notes
+  note?: string;
+
+  // Audit Fields
+  created_by?: string;
+  updated_by?: string;
+}
+
+// Common CVX Vaccine Codes for Seniors
+export const SENIOR_VACCINE_CODES = {
+  FLU: '141', // Influenza, seasonal, injectable
+  COVID: '213', // COVID-19
+  SHINGLES: '121', // Zoster (Shingles) - Shingrix
+  PCV13: '152', // Pneumococcal conjugate PCV13
+  PPSV23: '33', // Pneumococcal polysaccharide PPSV23
+  TDAP: '115', // Tdap
+  TD: '113', // Td (tetanus, diphtheria)
+  HEPATITIS_B: '43', // Hepatitis B
+  HEPATITIS_A: '83', // Hepatitis A
+  MMR: '03', // MMR
+} as const;
+
+// Vaccine Display Names
+export const VACCINE_NAMES: Record<string, string> = {
+  '141': 'Influenza (Flu Shot)',
+  '213': 'COVID-19 Vaccine',
+  '121': 'Shingles (Shingrix)',
+  '152': 'Pneumococcal PCV13',
+  '33': 'Pneumococcal PPSV23',
+  '115': 'Tdap (Tetanus, Diphtheria, Pertussis)',
+  '113': 'Td (Tetanus, Diphtheria)',
+  '43': 'Hepatitis B',
+  '83': 'Hepatitis A',
+  '03': 'MMR (Measles, Mumps, Rubella)',
+};
+
+// Administration Routes
+export const IMMUNIZATION_ROUTES = {
+  IM: { code: 'IM', display: 'Intramuscular' },
+  NASINHL: { code: 'NASINHL', display: 'Nasal inhalation' },
+  PO: { code: 'PO', display: 'Oral' },
+  SC: { code: 'SC', display: 'Subcutaneous' },
+  TD: { code: 'TD', display: 'Transdermal' },
+} as const;
+
+// Administration Sites
+export const IMMUNIZATION_SITES = {
+  LA: { code: 'LA', display: 'Left arm' },
+  RA: { code: 'RA', display: 'Right arm' },
+  LT: { code: 'LT', display: 'Left thigh' },
+  RT: { code: 'RT', display: 'Right thigh' },
+  LD: { code: 'LD', display: 'Left deltoid' },
+  RD: { code: 'RD', display: 'Right deltoid' },
+} as const;
