@@ -23,7 +23,7 @@ export const SB_PUBLISHABLE_API_KEY: string =
 
 // ---- hCaptcha ----
 export const HCAPTCHA_SECRET: string =
-  envGet("HCAPTCHA_SECRET") || envGet("SB_HCAPTCHA_SECRET");
+  envGet("HCAPTCHA_SECRET") || envGet("HCAPTCHA_SECRET_KEY") || envGet("SB_HCAPTCHA_SECRET");
 
 // ---- CORS allowlist ----
 // Comma-separated, no spaces in the env value
