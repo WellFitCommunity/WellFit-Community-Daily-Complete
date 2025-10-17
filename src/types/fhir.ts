@@ -64,6 +64,7 @@ export interface MedicationRequest extends FHIRResource {
   dosage_timing_period_unit?: 's' | 'min' | 'h' | 'd' | 'wk' | 'mo' | 'a';
   dosage_route_code?: string;
   dosage_route_display?: string;
+  dosage_route?: string; // Backwards compatibility - simplified field
   dosage_dose_quantity?: number;
   dosage_dose_unit?: string;
   dosage_dose_code?: string;
@@ -75,6 +76,8 @@ export interface MedicationRequest extends FHIRResource {
   // Supply
   dispense_quantity?: number;
   dispense_unit?: string;
+  dispense_quantity_unit?: string; // Backwards compatibility - simplified field
+  dispense_number_of_repeats?: number; // Backwards compatibility - simplified field
   dispense_expected_supply_duration?: number;
   dispense_expected_supply_duration_unit?: string;
   number_of_repeats_allowed?: number;
@@ -140,20 +143,28 @@ export interface Condition extends FHIRResource {
   clinical_status: 'active' | 'recurrence' | 'relapse' | 'inactive' | 'remission' | 'resolved';
   verification_status: 'unconfirmed' | 'provisional' | 'differential' | 'confirmed' | 'refuted' | 'entered-in-error';
 
-  // Category
+  // Category - FHIR R4 (array) for EHR interoperability
   category?: string[];
   category_coding_system?: string[];
+
+  // Category - Simplified (backwards compatibility for legacy/community-only deployments)
+  category_code?: string;
+  category_display?: string;
+  category_system?: string;
 
   // Severity
   severity_code?: string;
   severity_display?: string;
   severity_system?: string;
 
-  // Code (required)
+  // Code (required) - FHIR R4 name
   code_system: string;
   code: string;
   code_display: string;
   code_text?: string;
+
+  // Code - Simplified alias (backwards compatibility)
+  code_code?: string;
 
   // Body Site
   body_site_code?: string;
@@ -229,15 +240,21 @@ export interface CreateCondition extends Partial<Condition> {
 export interface DiagnosticReport extends FHIRResource {
   status: 'registered' | 'partial' | 'preliminary' | 'final' | 'amended' | 'corrected' | 'appended' | 'cancelled' | 'entered-in-error' | 'unknown';
 
-  // Category
+  // Category - FHIR R4 (array)
   category: string[];
   category_coding_system?: string[];
+  // Category - Backwards compatibility (simplified)
+  category_code?: string;
+  category_display?: string;
+  category_system?: string;
 
-  // Code
+  // Code - FHIR R4
   code_system: string;
   code: string;
   code_display: string;
   code_text?: string;
+  // Code - Backwards compatibility (simplified)
+  code_code?: string;
 
   // Patient
   patient_id: string;

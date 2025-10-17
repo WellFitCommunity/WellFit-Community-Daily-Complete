@@ -19,6 +19,43 @@ import type {
 } from '../types/fhir';
 
 // ============================================================================
+// BACKWARDS COMPATIBILITY ADAPTERS
+// ============================================================================
+
+/**
+ * Normalizes Condition to support both FHIR array fields and simplified string fields
+ * Ensures backwards compatibility with legacy systems and community-only deployments
+ */
+function normalizeCondition(condition: Condition): Condition {
+  return {
+    ...condition,
+    // Sync FHIR array → simplified string (for UI)
+    category_code: condition.category_code || condition.category?.[0],
+    code_code: condition.code_code || condition.code,
+    // Sync simplified string → FHIR array (for database/EHR)
+    category: condition.category || (condition.category_code ? [condition.category_code] : undefined),
+    code: condition.code || condition.code_code!,
+  };
+}
+
+/**
+ * Prepares Condition for database insertion (converts to FHIR format)
+ */
+function toFHIRCondition(condition: Partial<Condition>): Partial<Condition> {
+  const normalized = { ...condition };
+
+  // Ensure FHIR array fields are populated
+  if (normalized.category_code && !normalized.category) {
+    normalized.category = [normalized.category_code];
+  }
+  if (normalized.code_code && !normalized.code) {
+    normalized.code = normalized.code_code;
+  }
+
+  return normalized;
+}
+
+// ============================================================================
 // MEDICATION REQUEST SERVICE
 // ============================================================================
 
@@ -174,7 +211,9 @@ export class ConditionService {
         .order('recorded_date', { ascending: false });
 
       if (error) throw error;
-      return { success: true, data: data || [] };
+      // Normalize for backwards compatibility
+      const normalized = (data || []).map(normalizeCondition);
+      return { success: true, data: normalized };
     } catch (error) {
       return {
         success: false,
@@ -192,7 +231,9 @@ export class ConditionService {
         .rpc('get_active_conditions', { patient_id_param: patientId });
 
       if (error) throw error;
-      return { success: true, data: data || [] };
+      // Normalize for backwards compatibility
+      const normalized = (data || []).map(normalizeCondition);
+      return { success: true, data: normalized };
     } catch (error) {
       return {
         success: false,
@@ -210,7 +251,8 @@ export class ConditionService {
         .rpc('get_problem_list', { patient_id_param: patientId });
 
       if (error) throw error;
-      return { success: true, data: data || [] };
+      const normalized = (data || []).map(normalizeCondition);
+      return { success: true, data: normalized };
     } catch (error) {
       return {
         success: false,
@@ -228,7 +270,8 @@ export class ConditionService {
         .rpc('get_encounter_diagnoses', { encounter_id_param: encounterId });
 
       if (error) throw error;
-      return { success: true, data: data || [] };
+      const normalized = (data || []).map(normalizeCondition);
+      return { success: true, data: normalized };
     } catch (error) {
       return {
         success: false,
@@ -242,14 +285,18 @@ export class ConditionService {
    */
   static async create(condition: CreateCondition): Promise<FHIRApiResponse<Condition>> {
     try {
+      // Convert to FHIR format for database
+      const fhirCondition = toFHIRCondition(condition);
+
       const { data, error } = await supabase
         .from('fhir_conditions')
-        .insert([condition])
+        .insert([fhirCondition])
         .select()
         .single();
 
       if (error) throw error;
-      return { success: true, data };
+      // Normalize for backwards compatibility
+      return { success: true, data: normalizeCondition(data) };
     } catch (error) {
       return {
         success: false,
@@ -299,7 +346,8 @@ export class ConditionService {
         .rpc('get_chronic_conditions', { patient_id_param: patientId });
 
       if (error) throw error;
-      return { success: true, data: data || [] };
+      const normalized = (data || []).map(normalizeCondition);
+      return { success: true, data: normalized };
     } catch (error) {
       return {
         success: false,

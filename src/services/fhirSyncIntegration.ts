@@ -140,11 +140,14 @@ export class FHIRSyncIntegration {
           try {
             const condition: Partial<Condition> = {
               patient_id: patientId,
-              clinical_status: fhirCondition.clinicalStatus?.coding?.[0]?.code || 'active',
+              clinical_status: fhirCondition.clinicalStatus?.coding?.[0]?.code as any,
               verification_status:
-                fhirCondition.verificationStatus?.coding?.[0]?.code || 'confirmed',
+                fhirCondition.verificationStatus?.coding?.[0]?.code as any || 'confirmed',
               code_system: fhirCondition.code?.coding?.[0]?.system || 'http://snomed.info/sct',
               code: fhirCondition.code?.coding?.[0]?.code || '',
+              code_code: fhirCondition.code?.coding?.[0]?.code || '', // Backwards compat
+              category: fhirCondition.category?.map((c: any) => c.coding?.[0]?.code) || ['problem-list-item'],
+              category_code: fhirCondition.category?.[0]?.coding?.[0]?.code || 'problem-list-item', // Backwards compat
               code_display:
                 fhirCondition.code?.coding?.[0]?.display || fhirCondition.code?.text || 'Unknown condition',
               onset_datetime: fhirCondition.onsetDateTime,
@@ -219,10 +222,12 @@ export class FHIRSyncIntegration {
           try {
             const report: Partial<DiagnosticReport> = {
               patient_id: patientId,
-              status: fhirReport.status || 'final',
+              status: fhirReport.status as any || 'final',
               category: fhirReport.category?.[0]?.coding?.map((c: any) => c.code) || ['LAB'],
+              category_code: fhirReport.category?.[0]?.coding?.[0]?.code || 'LAB', // Backwards compat
               code_system: fhirReport.code?.coding?.[0]?.system || 'http://loinc.org',
               code: fhirReport.code?.coding?.[0]?.code || '',
+              code_code: fhirReport.code?.coding?.[0]?.code || '', // Backwards compat
               code_display:
                 fhirReport.code?.coding?.[0]?.display || fhirReport.code?.text || 'Unknown report',
               effective_datetime: fhirReport.effectiveDateTime,
@@ -298,7 +303,7 @@ export class FHIRSyncIntegration {
           try {
             const procedure: Partial<Procedure> = {
               patient_id: patientId,
-              status: fhirProcedure.status || 'completed',
+              status: fhirProcedure.status as any || 'completed',
               code_system: fhirProcedure.code?.coding?.[0]?.system || 'http://snomed.info/sct',
               code: fhirProcedure.code?.coding?.[0]?.code || '',
               code_display:
