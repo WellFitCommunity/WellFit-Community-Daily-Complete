@@ -55,12 +55,12 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
   const [filter, setFilter] = useState<'all' | 'active' | 'chronic' | 'problem-list'>('all');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Form state for adding/editing
+  // Form state for adding/editing - FHIR R4 native
   const [formData, setFormData] = useState<Partial<CreateCondition>>({
     patient_id: patientId,
     clinical_status: 'active',
     verification_status: 'confirmed',
-    category_code: 'problem-list-item',
+    category: ['problem-list-item'], // FHIR R4 array
     severity_code: 'moderate',
     recorded_date: new Date().toISOString().split('T')[0],
   });
@@ -104,7 +104,7 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.code_code || !formData.code_display) {
+    if (!formData.code || !formData.code_display) {
       setError('Please enter a condition code and description');
       return;
     }
@@ -142,11 +142,11 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
   const handleEdit = (condition: Condition) => {
     setFormData({
       patient_id: condition.patient_id,
-      code_code: condition.code_code,
+      code: condition.code, // FHIR R4 native
       code_display: condition.code_display,
       clinical_status: condition.clinical_status,
       verification_status: condition.verification_status,
-      category_code: condition.category_code,
+      category: condition.category || ['problem-list-item'], // FHIR R4 array
       severity_code: condition.severity_code,
       onset_datetime: condition.onset_datetime,
       recorded_date: condition.recorded_date,
@@ -179,7 +179,7 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
       patient_id: patientId,
       clinical_status: 'active',
       verification_status: 'confirmed',
-      category_code: 'problem-list-item',
+      category: ['problem-list-item'], // FHIR R4 array
       severity_code: 'moderate',
       recorded_date: new Date().toISOString().split('T')[0],
     });
@@ -194,7 +194,7 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
     return conditions.filter(
       (c) =>
         c.code_display?.toLowerCase().includes(lower) ||
-        c.code_code?.toLowerCase().includes(lower) ||
+        c.code?.toLowerCase().includes(lower) || // FHIR R4 native
         c.note?.toLowerCase().includes(lower)
     );
   }, [conditions, searchTerm]);
@@ -215,7 +215,7 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
   // Statistics
   const stats = useMemo(() => {
     const active = conditions.filter((c) => c.clinical_status === 'active').length;
-    const chronic = conditions.filter((c) => c.category_code === 'chronic').length;
+    const chronic = conditions.filter((c) => c.category?.includes('chronic')).length; // FHIR R4 array
     const resolved = conditions.filter((c) => c.clinical_status === 'resolved').length;
     return { active, chronic, resolved, total: conditions.length };
   }, [conditions]);
@@ -312,8 +312,8 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
                 </label>
                 <input
                   type="text"
-                  value={formData.code_code || ''}
-                  onChange={(e) => setFormData({ ...formData, code_code: e.target.value })}
+                  value={formData.code || ''}
+                  onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                   placeholder="e.g., I10"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
@@ -339,8 +339,8 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
                 <select
-                  value={formData.category_code || ''}
-                  onChange={(e) => setFormData({ ...formData, category_code: e.target.value })}
+                  value={formData.category?.[0] || ''}
+                  onChange={(e) => setFormData({ ...formData, category: [e.target.value] })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   {CONDITION_CATEGORIES.map((cat) => (
@@ -521,7 +521,7 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
                     )}
                   </div>
                   <p className="text-sm text-gray-600 mt-1">
-                    Code: <span className="font-mono font-medium">{condition.code_code}</span>
+                    Code: <span className="font-mono font-medium">{condition.code}</span>
                   </p>
                   {condition.onset_datetime && (
                     <p className="text-sm text-gray-500 mt-1">
