@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, Clock, AlertTriangle, MessageCircle, Brain, Send, User, Phone } from 'lucide-react';
 import { fetchNurseQueue, claimQuestion, fetchMyQuestions, addNurseNote, submitAnswer } from '../../lib/nurseApi';
-import { claudeService } from '../../services/claudeService';
+import { claudeEdgeService } from '../../services/claudeEdgeService';
 import { UserRole, RequestType, ClaudeRequestContext } from '../../types/claude';
 
 interface Question {
@@ -251,17 +251,18 @@ Please provide:
 
 Format your response as a clear, professional message that can be sent to the patient.`;
 
-      // Call real Claude AI service
-      const aiResponse = await claudeService.generateSeniorHealthGuidance(
-        enhancedPrompt,
-        context
-      );
+      // Call secure Claude Edge Function (server-side API)
+      const aiResponse = await claudeEdgeService.complete(enhancedPrompt, {
+        model: 'claude-3-5-sonnet-20241022',
+        max_tokens: 1000,
+        system: 'You are a healthcare professional assistant providing guidance for patient questions. Be compassionate, clear, and evidence-based.'
+      });
 
       // Parse AI response into structured suggestion
       const aiSuggestion: AISuggestion = {
-        response: aiResponse.content,
+        response: aiResponse,
         confidence: 0.90,
-        reasoning: `AI-generated response based on patient's ${question.category} question. Model: ${aiResponse.model}. Tokens: ${aiResponse.tokenUsage.inputTokens}/${aiResponse.tokenUsage.outputTokens}. Cost: $${aiResponse.cost.toFixed(4)}`,
+        reasoning: `AI-generated response based on patient's ${question.category} question using Claude 3.5 Sonnet via secure Edge Function.`,
         resources: [
           'Evidence-Based Guidelines',
           'Patient Education Materials',
