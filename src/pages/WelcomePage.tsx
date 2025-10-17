@@ -16,16 +16,25 @@ const WelcomePage: React.FC = () => {
     let mounted = true;
 
     const checkSessionAndRedirect = async () => {
+      console.log('[WelcomePage] Checking session...');
       const { data: { session } } = await supabase.auth.getSession();
-      if (!mounted || !session) return;
+      if (!mounted || !session) {
+        console.log('[WelcomePage] No session found');
+        return;
+      }
 
       const userId = session.user?.id;
-      if (!userId) return;
+      if (!userId) {
+        console.log('[WelcomePage] No user ID in session');
+        return;
+      }
+
+      console.log('[WelcomePage] User logged in, fetching profile...');
 
       // Fetch profile to check role
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('role, role_code, onboarded, consent')
+        .select('role, role_code, onboarded, consent, force_password_change')
         .eq('user_id', userId)
         .maybeSingle();
 
@@ -46,7 +55,14 @@ const WelcomePage: React.FC = () => {
       const role = profile?.role || '';
       const roleCode = profile?.role_code || 0;
 
-      console.log('[WelcomePage] User profile:', { role, roleCode, onboarded: profile.onboarded, consent: profile.consent });
+      console.log('[WelcomePage] User profile:', { role, roleCode, onboarded: profile.onboarded, consent: profile.consent, force_password_change: profile.force_password_change });
+
+      // Force password change takes priority
+      if (profile.force_password_change) {
+        console.log('[WelcomePage] Force password change required');
+        navigate('/change-password', { replace: true });
+        return;
+      }
 
       // Admin/super_admin go to admin login
       if (role === 'admin' || role === 'super_admin' || roleCode === 1 || roleCode === 2) {
@@ -62,8 +78,8 @@ const WelcomePage: React.FC = () => {
         return;
       }
 
-      // Seniors: redirect to dashboard, AuthGate will handle onboarding
-      console.log('[WelcomePage] Senior user detected, redirecting to dashboard');
+      // Seniors: redirect to dashboard, AuthGate will handle onboarding flow
+      console.log('[WelcomePage] Senior user detected, redirecting to dashboard (AuthGate will handle onboarding)');
       navigate('/dashboard', { replace: true });
     };
 

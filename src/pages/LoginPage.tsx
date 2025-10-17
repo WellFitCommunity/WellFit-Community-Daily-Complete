@@ -158,23 +158,35 @@ const LoginPage: React.FC = () => {
   };
   // --------------------------------------------------------------------------
 
-  // If already signed in when mounting LoginPage, redirect to appropriate page
+  // Check if already logged in - show message instead of auto-redirecting (prevents loop)
+  const [alreadyLoggedIn, setAlreadyLoggedIn] = useState(false);
+  const [existingUserEmail, setExistingUserEmail] = useState('');
+
   useEffect(() => {
     let cancel = false;
     (async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!cancel && session) {
-        console.log('[LoginPage] Already logged in, redirecting...');
-        const route = await nextRouteForUser();
-        if (!cancel) {
-          navigate(route, { replace: true });
-        }
+        console.log('[LoginPage] User already logged in');
+        setAlreadyLoggedIn(true);
+        setExistingUserEmail(session.user?.email || session.user?.phone || 'current user');
       }
     })();
     return () => { cancel = true; };
-    // Only run once on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setAlreadyLoggedIn(false);
+    setExistingUserEmail('');
+  };
+
+  const handleContinueAsLoggedIn = async () => {
+    console.log('[LoginPage] Continuing as logged-in user...');
+    const route = await nextRouteForUser();
+    navigate(route, { replace: true });
+  };
 
   // Check passkey support
   useEffect(() => {
@@ -316,6 +328,50 @@ const LoginPage: React.FC = () => {
       setLoading(false);
     }
   };
+
+  // If already logged in, show message with options
+  if (alreadyLoggedIn) {
+    return (
+      <div
+        className="max-w-md mx-auto mt-16 p-6 bg-white rounded-xl shadow-md"
+        style={{ borderColor: accent, borderWidth: '2px' }}
+      >
+        <img
+          src="/android-chrome-512x512.png"
+          alt={`${APP_INFO.name} Logo`}
+          className="h-16 w-auto mx-auto mb-4"
+        />
+
+        <h1 className="text-2xl font-bold text-center mb-4" style={{ color: primary }}>
+          Already Logged In
+        </h1>
+
+        <p className="text-center text-gray-700 mb-6">
+          You are currently logged in as <strong>{existingUserEmail}</strong>
+        </p>
+
+        <div className="space-y-3">
+          <button
+            type="button"
+            onClick={handleContinueAsLoggedIn}
+            className="w-full py-3 font-semibold rounded hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-offset-2 text-white"
+            style={{ backgroundColor: primary }}
+          >
+            Continue to Dashboard
+          </button>
+
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="w-full py-3 font-semibold rounded border-2 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+            style={{ borderColor: accent, color: primary }}
+          >
+            Logout and Login as Different User
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
