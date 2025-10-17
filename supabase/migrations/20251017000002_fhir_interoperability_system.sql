@@ -367,7 +367,7 @@ DROP FUNCTION IF EXISTS public.cleanup_old_fhir_sync_logs();
 DROP FUNCTION IF EXISTS public.get_connection_sync_stats(UUID, INTEGER);
 DROP FUNCTION IF EXISTS public.get_patient_fhir_sync_status(UUID);
 DROP FUNCTION IF EXISTS public.get_active_fhir_connections();
-DROP FUNCTION IF EXISTS public.update_fhir_updated_at();
+DROP FUNCTION IF EXISTS public.update_fhir_updated_at() CASCADE;
 
 -- Drop tables
 DROP TABLE IF EXISTS public.fhir_sync_conflicts CASCADE;

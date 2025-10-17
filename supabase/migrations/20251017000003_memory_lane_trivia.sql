@@ -75,36 +75,42 @@ ALTER TABLE user_trivia_progress ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_trivia_trophies ENABLE ROW LEVEL SECURITY;
 
 -- Trivia questions are readable by all authenticated users
+DROP POLICY IF EXISTS "Trivia questions are viewable by authenticated users" ON memory_lane_trivia;
 CREATE POLICY "Trivia questions are viewable by authenticated users"
   ON memory_lane_trivia FOR SELECT
   TO authenticated
   USING (is_active = TRUE);
 
 -- Users can view their own progress
+DROP POLICY IF EXISTS "Users can view their own trivia progress" ON user_trivia_progress;
 CREATE POLICY "Users can view their own trivia progress"
   ON user_trivia_progress FOR SELECT
   TO authenticated
   USING (auth.uid() = user_id);
 
 -- Users can insert their own progress
+DROP POLICY IF EXISTS "Users can insert their own trivia progress" ON user_trivia_progress;
 CREATE POLICY "Users can insert their own trivia progress"
   ON user_trivia_progress FOR INSERT
   TO authenticated
   WITH CHECK (auth.uid() = user_id);
 
 -- Users can update their own progress
+DROP POLICY IF EXISTS "Users can update their own trivia progress" ON user_trivia_progress;
 CREATE POLICY "Users can update their own trivia progress"
   ON user_trivia_progress FOR UPDATE
   TO authenticated
   USING (auth.uid() = user_id);
 
 -- Users can view their own trophies
+DROP POLICY IF EXISTS "Users can view their own trophies" ON user_trivia_trophies;
 CREATE POLICY "Users can view their own trophies"
   ON user_trivia_trophies FOR SELECT
   TO authenticated
   USING (auth.uid() = user_id);
 
 -- Users can insert their own trophies
+DROP POLICY IF EXISTS "Users can insert their own trophies" ON user_trivia_trophies;
 CREATE POLICY "Users can insert their own trophies"
   ON user_trivia_trophies FOR INSERT
   TO authenticated

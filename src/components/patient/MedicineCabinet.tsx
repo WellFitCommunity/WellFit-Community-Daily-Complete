@@ -33,8 +33,11 @@ import {
   Sparkles,
   Activity,
   BarChart3,
-  Info
+  Info,
+  Search,
+  Shield
 } from 'lucide-react';
+import { PillIdentifier } from './PillIdentifier';
 
 export function MedicineCabinet() {
   const user = useUser();
@@ -46,6 +49,8 @@ export function MedicineCabinet() {
     error,
     processing,
     uploadProgress,
+    psychMedAlert,
+    psychAlerts,
     scanMedicationLabel,
     confirmScannedMedication,
     addMedication,
@@ -56,10 +61,11 @@ export function MedicineCabinet() {
     getAdherence,
     getNeedingRefill,
     getUpcomingDoses,
-    addReminder
+    addReminder,
+    acknowledgePsychAlert
   } = useMedicineCabinet(userId);
 
-  const [activeTab, setActiveTab] = useState<'all' | 'scan' | 'adherence' | 'reminders'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'scan' | 'identify' | 'verify' | 'adherence' | 'reminders'>('all');
   const [selectedMedication, setSelectedMedication] = useState<Medication | null>(null);
   const [showScanner, setShowScanner] = useState(false);
   const [adherenceData, setAdherenceData] = useState<any[]>([]);
@@ -186,17 +192,19 @@ export function MedicineCabinet() {
 
       {/* Tabs */}
       <div className="max-w-7xl mx-auto mb-6">
-        <div className="flex gap-2 bg-white rounded-xl shadow-md p-2">
+        <div className="flex gap-2 bg-white rounded-xl shadow-md p-2 overflow-x-auto">
           {[
             { id: 'all', label: 'All Medications', icon: Pill },
-            { id: 'scan', label: 'Scan New', icon: Camera },
+            { id: 'scan', label: 'Scan Label', icon: Camera },
+            { id: 'identify', label: 'Identify Pill', icon: Search },
+            { id: 'verify', label: 'Verify Pill', icon: Shield },
             { id: 'adherence', label: 'Adherence', icon: BarChart3 },
             { id: 'reminders', label: 'Reminders', icon: Bell }
           ].map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all ${
+              className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all whitespace-nowrap ${
                 activeTab === tab.id
                   ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md'
                   : 'text-gray-600 hover:bg-gray-100'
@@ -211,6 +219,87 @@ export function MedicineCabinet() {
 
       {/* Content Area */}
       <div className="max-w-7xl mx-auto">
+        {/* Psych Med Alert Banner */}
+        {psychMedAlert && psychMedAlert.hasMultiplePsychMeds && psychAlerts.length > 0 && (
+          <div className={`mb-6 rounded-xl border-2 p-6 ${
+            psychAlerts[0].severity === 'critical'
+              ? 'bg-red-50 border-red-300'
+              : 'bg-yellow-50 border-yellow-300'
+          }`}>
+            <div className="flex items-start gap-4">
+              <div className={`flex-shrink-0 ${
+                psychAlerts[0].severity === 'critical' ? 'text-red-600' : 'text-yellow-600'
+              }`}>
+                <AlertTriangle className="w-10 h-10" />
+              </div>
+              <div className="flex-1">
+                <h3 className={`text-xl font-bold mb-2 ${
+                  psychAlerts[0].severity === 'critical' ? 'text-red-900' : 'text-yellow-900'
+                }`}>
+                  Multiple Psychiatric Medications Detected
+                </h3>
+                <p className={`mb-3 ${
+                  psychAlerts[0].severity === 'critical' ? 'text-red-800' : 'text-yellow-800'
+                }`}>
+                  Patient is taking {psychMedAlert.psychMedCount} psychiatric medications simultaneously.
+                  {psychMedAlert.requiresReview && ' Requires clinical review.'}
+                </p>
+
+                {/* Medication List */}
+                <div className="bg-white bg-opacity-60 rounded-lg p-4 mb-3">
+                  <p className="font-semibold text-gray-900 mb-2">Psychiatric Medications:</p>
+                  <ul className="space-y-1">
+                    {psychMedAlert.medications.map((med, idx) => (
+                      <li key={idx} className="text-sm text-gray-800">
+                        • <span className="font-medium">{med.name}</span>
+                        <span className="text-gray-600"> - {med.category}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Warnings */}
+                {psychMedAlert.warnings.length > 0 && (
+                  <div className="bg-white bg-opacity-60 rounded-lg p-4 mb-3">
+                    <p className="font-semibold text-gray-900 mb-2">Warnings:</p>
+                    <ul className="space-y-1">
+                      {psychMedAlert.warnings.map((warning, idx) => (
+                        <li key={idx} className="text-sm text-gray-800 flex items-start gap-2">
+                          <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                          {warning}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex gap-3">
+                  {!psychAlerts[0].acknowledged && (
+                    <button
+                      onClick={async () => {
+                        const success = await acknowledgePsychAlert(psychAlerts[0].id);
+                        if (success) {
+                          toast.success('Alert acknowledged');
+                        }
+                      }}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                    >
+                      Acknowledge Alert
+                    </button>
+                  )}
+                  {psychAlerts[0].acknowledged && (
+                    <div className="flex items-center gap-2 text-green-700">
+                      <CheckCircle className="w-5 h-5" />
+                      <span className="text-sm font-medium">Acknowledged</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center gap-2">
             <AlertTriangle className="w-5 h-5" />
@@ -229,6 +318,10 @@ export function MedicineCabinet() {
                 onDelete={() => handleDeleteMedication(med.id)}
                 onTakeDose={() => handleTakeDose(med.id)}
                 onAddReminder={() => handleAddReminder(med.id)}
+                onVerifyPill={() => {
+                  setSelectedMedication(med);
+                  setActiveTab('verify');
+                }}
               />
             ))}
 
@@ -257,6 +350,27 @@ export function MedicineCabinet() {
                 setActiveTab('all');
               }
             }}
+          />
+        )}
+
+        {/* Identify Pill Tab */}
+        {activeTab === 'identify' && (
+          <PillIdentifier
+            userId={userId}
+            medications={medications}
+            mode="identify"
+            onComplete={() => setActiveTab('all')}
+          />
+        )}
+
+        {/* Verify Pill Tab */}
+        {activeTab === 'verify' && (
+          <PillIdentifier
+            userId={userId}
+            medications={medications}
+            mode="verify"
+            selectedMedication={selectedMedication || undefined}
+            onComplete={() => setActiveTab('all')}
           />
         )}
 
@@ -325,13 +439,15 @@ function MedicationCard({
   onEdit,
   onDelete,
   onTakeDose,
-  onAddReminder
+  onAddReminder,
+  onVerifyPill
 }: {
   medication: Medication;
   onEdit: () => void;
   onDelete: () => void;
   onTakeDose: () => void;
   onAddReminder: () => void;
+  onVerifyPill: () => void;
 }) {
   const needsReview = medication.needs_review;
   const lowConfidence = (medication.ai_confidence || 0) < 0.7;
@@ -360,6 +476,19 @@ function MedicationCard({
 
       {/* Body */}
       <div className="p-4 space-y-3">
+        {/* Psychiatric Medication Badge */}
+        {medication.is_psychiatric && (
+          <div className="bg-purple-100 border border-purple-300 text-purple-800 px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4" />
+            PSYCHIATRIC MEDICATION
+            {medication.psych_category && (
+              <span className="text-purple-600">
+                - {medication.psych_category.replace('_', ' ').toUpperCase()}
+              </span>
+            )}
+          </div>
+        )}
+
         {/* Dosage */}
         <div className="flex items-center gap-2 text-sm">
           <Pill className="w-4 h-4 text-gray-400" />
@@ -402,25 +531,34 @@ function MedicationCard({
         </div>
 
         {/* Actions */}
-        <div className="flex gap-2 pt-2 border-t">
+        <div className="space-y-2 pt-2 border-t">
+          <div className="flex gap-2">
+            <button
+              onClick={onTakeDose}
+              className="flex-1 bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors"
+            >
+              <CheckCircle className="w-4 h-4" />
+              Take Dose
+            </button>
+            <button
+              onClick={onAddReminder}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg text-sm transition-colors"
+            >
+              <Bell className="w-4 h-4" />
+            </button>
+            <button
+              onClick={onDelete}
+              className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
           <button
-            onClick={onTakeDose}
-            className="flex-1 bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors"
+            onClick={onVerifyPill}
+            className="w-full bg-purple-500 hover:bg-purple-600 text-white px-3 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors"
           >
-            <CheckCircle className="w-4 h-4" />
-            Take Dose
-          </button>
-          <button
-            onClick={onAddReminder}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg text-sm transition-colors"
-          >
-            <Bell className="w-4 h-4" />
-          </button>
-          <button
-            onClick={onDelete}
-            className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm transition-colors"
-          >
-            <Trash2 className="w-4 h-4" />
+            <Shield className="w-4 h-4" />
+            Verify Pill Matches
           </button>
         </div>
       </div>

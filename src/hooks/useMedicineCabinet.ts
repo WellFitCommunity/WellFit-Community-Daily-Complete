@@ -8,6 +8,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import medicationAPI, { Medication, MedicationReminder, ApiResponse } from '../api/medications';
 import { LabelExtractionResult, MedicationInfo } from '../services/medicationLabelReader';
+import { PsychMedAlert } from '../services/psychMedClassifier';
 
 interface UseMedicineCabinetReturn {
   // State
@@ -16,6 +17,8 @@ interface UseMedicineCabinetReturn {
   error: string | null;
   processing: boolean;
   uploadProgress: number;
+  psychMedAlert: PsychMedAlert | null;
+  psychAlerts: any[];
 
   // CRUD operations
   loadMedications: () => Promise<void>;
@@ -39,6 +42,10 @@ interface UseMedicineCabinetReturn {
   getAdherence: (medicationId?: string, days?: number) => Promise<any>;
   getNeedingRefill: (daysThreshold?: number) => Promise<Medication[]>;
   getUpcomingDoses: (hoursAhead?: number) => Promise<any[]>;
+
+  // Psychiatric medication alerts
+  checkPsychMeds: () => Promise<void>;
+  acknowledgePsychAlert: (alertId: string) => Promise<boolean>;
 }
 
 export function useMedicineCabinet(userId: string): UseMedicineCabinetReturn {
@@ -47,6 +54,8 @@ export function useMedicineCabinet(userId: string): UseMedicineCabinetReturn {
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [psychMedAlert, setPsychMedAlert] = useState<PsychMedAlert | null>(null);
+  const [psychAlerts, setPsychAlerts] = useState<any[]>([]);
 
   // Load medications
   const loadMedications = useCallback(async () => {
@@ -261,12 +270,44 @@ export function useMedicineCabinet(userId: string): UseMedicineCabinetReturn {
     return response.data || [];
   }, [userId]);
 
-  // Load medications on mount
+  // Check for multiple psych meds
+  const checkPsychMeds = useCallback(async () => {
+    if (!userId) return;
+
+    try {
+      const [alertResponse, alertsResponse] = await Promise.all([
+        medicationAPI.checkMultiplePsychMeds(userId),
+        medicationAPI.getPsychMedAlerts(userId)
+      ]);
+
+      if (alertResponse.success && alertResponse.data) {
+        setPsychMedAlert(alertResponse.data);
+      }
+
+      if (alertsResponse.success && alertsResponse.data) {
+        setPsychAlerts(alertsResponse.data);
+      }
+    } catch (err) {
+      console.error('Error checking psych meds:', err);
+    }
+  }, [userId]);
+
+  // Acknowledge psych med alert
+  const acknowledgePsychAlert = useCallback(async (alertId: string): Promise<boolean> => {
+    const response = await medicationAPI.acknowledgePsychMedAlert(alertId, userId);
+    if (response.success) {
+      await checkPsychMeds(); // Reload alerts
+    }
+    return response.success;
+  }, [userId, checkPsychMeds]);
+
+  // Load medications and check psych meds on mount
   useEffect(() => {
     if (userId) {
       loadMedications();
+      checkPsychMeds();
     }
-  }, [userId, loadMedications]);
+  }, [userId, loadMedications, checkPsychMeds]);
 
   return {
     // State
@@ -275,6 +316,8 @@ export function useMedicineCabinet(userId: string): UseMedicineCabinetReturn {
     error,
     processing,
     uploadProgress,
+    psychMedAlert,
+    psychAlerts,
 
     // CRUD
     loadMedications,
@@ -297,7 +340,11 @@ export function useMedicineCabinet(userId: string): UseMedicineCabinetReturn {
     recordDose,
     getAdherence,
     getNeedingRefill,
-    getUpcomingDoses
+    getUpcomingDoses,
+
+    // Psychiatric medication alerts
+    checkPsychMeds,
+    acknowledgePsychAlert
   };
 }
 

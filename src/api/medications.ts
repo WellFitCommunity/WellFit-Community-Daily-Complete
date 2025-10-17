@@ -10,7 +10,8 @@
 
 import { supabase } from '../lib/supabaseClient';
 import { medicationLabelReader, MedicationInfo, LabelExtractionResult } from '../services/medicationLabelReader';
-import { checkMedicationAllergy } from './allergies';
+import { pillIdentifier, PillIdentificationResult, PillLabelComparison } from '../services/pillIdentifierService';
+import { psychMedClassifier, PsychMedAlert } from '../services/psychMedClassifier';
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -57,6 +58,11 @@ export interface Medication {
   needs_review?: boolean;
   reviewed_by?: string;
   reviewed_at?: string;
+  // Psychiatric medication flags
+  is_psychiatric?: boolean;
+  psych_category?: string;
+  psych_subcategory?: string;
+  psych_classification_confidence?: number;
   created_at: string;
   updated_at: string;
 }
@@ -161,13 +167,33 @@ export async function createMedication(
   medicationData: Partial<Medication>
 ): Promise<ApiResponse<Medication>> {
   try {
+    // Classify medication as psychiatric or not
+    const classification = psychMedClassifier.classifyMedication(
+      medicationData.medication_name || '',
+      medicationData.generic_name
+    );
+
+    // Add psychiatric classification to medication data
+    const enrichedData = {
+      ...medicationData,
+      is_psychiatric: classification.isPsychiatric,
+      psych_category: classification.category,
+      psych_subcategory: classification.subcategory,
+      psych_classification_confidence: classification.confidence
+    };
+
     const { data, error } = await supabase
       .from('medications')
-      .insert([medicationData])
+      .insert([enrichedData])
       .select()
       .single();
 
     if (error) throw error;
+
+    // Check for multiple psych meds if this is a psychiatric medication
+    if (classification.isPsychiatric && medicationData.user_id) {
+      await checkAndAlertMultiplePsychMeds(medicationData.user_id);
+    }
 
     return {
       success: true,
@@ -675,6 +701,374 @@ export async function getUpcomingReminders(
 }
 
 // ============================================================================
+// PILL IDENTIFICATION
+// ============================================================================
+
+/**
+ * Identify a pill from an image
+ */
+export async function identifyPill(
+  userId: string,
+  pillImage: File
+): Promise<ApiResponse<{ identification: PillIdentificationResult }>> {
+  try {
+    const identification = await pillIdentifier.identifyPillFromImage(pillImage);
+
+    // Save identification attempt to database
+    await supabase.from('pill_identifications').insert([{
+      user_id: userId,
+      image_size: pillImage.size,
+      image_type: pillImage.type,
+      identification_data: identification.identification,
+      confidence_score: identification.identification?.confidence || 0,
+      identification_success: identification.success,
+      processing_time_ms: identification.processingTimeMs,
+      model_used: identification.modelUsed,
+      api_sources: identification.apiSources
+    }]);
+
+    if (!identification.success) {
+      return {
+        success: false,
+        error: identification.error || 'Failed to identify pill',
+        data: { identification }
+      };
+    }
+
+    return {
+      success: true,
+      data: { identification },
+      message: 'Pill identified successfully'
+    };
+
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to identify pill'
+    };
+  }
+}
+
+/**
+ * Compare a pill image with medication label information
+ */
+export async function comparePillWithLabel(
+  userId: string,
+  pillImage: File,
+  medicationId: string
+): Promise<ApiResponse<{ comparison: PillLabelComparison }>> {
+  try {
+    // Get medication information
+    const medicationResult = await getMedication(medicationId);
+    if (!medicationResult.success || !medicationResult.data) {
+      return {
+        success: false,
+        error: 'Medication not found'
+      };
+    }
+
+    const medication = medicationResult.data;
+
+    // Compare pill with label
+    const comparison = await pillIdentifier.comparePillWithLabel(pillImage, {
+      medicationName: medication.medication_name,
+      strength: medication.strength,
+      ndcCode: medication.ndc_code
+    });
+
+    // Save comparison to database
+    await supabase.from('pill_label_comparisons').insert([{
+      user_id: userId,
+      medication_id: medicationId,
+      pill_medication_name: comparison.pillIdentification.medicationName,
+      label_medication_name: comparison.labelInformation.medicationName,
+      match: comparison.match,
+      match_confidence: comparison.matchConfidence,
+      discrepancies: comparison.discrepancies,
+      safety_recommendation: comparison.safetyRecommendation,
+      requires_pharmacist_review: comparison.requiresPharmacistReview
+    }]);
+
+    // If there's a critical mismatch, create an alert
+    if (!comparison.match && comparison.requiresPharmacistReview) {
+      await supabase.from('medication_safety_alerts').insert([{
+        user_id: userId,
+        medication_id: medicationId,
+        alert_type: 'pill_label_mismatch',
+        severity: 'critical',
+        message: comparison.safetyRecommendation,
+        metadata: {
+          discrepancies: comparison.discrepancies,
+          matchConfidence: comparison.matchConfidence
+        }
+      }]);
+    }
+
+    return {
+      success: true,
+      data: { comparison },
+      message: comparison.match
+        ? 'Pill matches label information'
+        : 'Pill may not match label - review required'
+    };
+
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to compare pill with label'
+    };
+  }
+}
+
+/**
+ * Get pill identification history for a user
+ */
+export async function getPillIdentificationHistory(
+  userId: string,
+  limit: number = 50
+): Promise<ApiResponse<any[]>> {
+  try {
+    const { data, error } = await supabase
+      .from('pill_identifications')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+
+    return {
+      success: true,
+      data: data || []
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch identification history'
+    };
+  }
+}
+
+/**
+ * Get pill-label comparison history for a medication
+ */
+export async function getPillComparisonHistory(
+  medicationId: string,
+  limit: number = 10
+): Promise<ApiResponse<any[]>> {
+  try {
+    const { data, error } = await supabase
+      .from('pill_label_comparisons')
+      .select('*')
+      .eq('medication_id', medicationId)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+
+    return {
+      success: true,
+      data: data || []
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch comparison history'
+    };
+  }
+}
+
+// ============================================================================
+// PSYCHIATRIC MEDICATION MANAGEMENT
+// ============================================================================
+
+/**
+ * Check if user has multiple psychiatric medications and create/update alerts
+ */
+async function checkAndAlertMultiplePsychMeds(userId: string): Promise<void> {
+  try {
+    // Get all active medications for user
+    const { data: medications } = await supabase
+      .from('medications')
+      .select('id, medication_name, generic_name, status, is_psychiatric, psych_category')
+      .eq('user_id', userId)
+      .eq('status', 'active');
+
+    if (!medications) return;
+
+    // Analyze for multiple psych meds
+    const analysis = psychMedClassifier.analyzeMultiplePsychMeds(medications);
+
+    if (analysis.hasMultiplePsychMeds) {
+      // Check if alert already exists
+      const { data: existingAlerts } = await supabase
+        .from('psych_med_alerts')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('alert_type', 'multiple_psych_meds')
+        .eq('resolved', false)
+        .limit(1);
+
+      if (!existingAlerts || existingAlerts.length === 0) {
+        // Create new alert
+        await supabase.from('psych_med_alerts').insert([{
+          user_id: userId,
+          alert_type: 'multiple_psych_meds',
+          severity: analysis.psychMedCount >= 3 ? 'critical' : 'warning',
+          psych_med_count: analysis.psychMedCount,
+          medication_ids: analysis.medications.map(m => m.id),
+          medication_names: analysis.medications.map(m => m.name),
+          categories: analysis.medications.map(m => m.category),
+          warnings: analysis.warnings,
+          requires_review: analysis.requiresReview
+        }]);
+      }
+    } else {
+      // Auto-resolve existing alerts if psych med count is now 0 or 1
+      await supabase
+        .from('psych_med_alerts')
+        .update({
+          resolved: true,
+          resolved_at: new Date().toISOString(),
+          resolved_notes: `Auto-resolved: Psych medication count reduced to ${analysis.psychMedCount}`
+        })
+        .eq('user_id', userId)
+        .eq('alert_type', 'multiple_psych_meds')
+        .eq('resolved', false);
+    }
+  } catch (error) {
+    console.error('Error checking multiple psych meds:', error);
+  }
+}
+
+/**
+ * Get psychiatric medications for a user
+ */
+export async function getPsychiatricMedications(
+  userId: string
+): Promise<ApiResponse<Medication[]>> {
+  try {
+    const { data, error } = await supabase
+      .from('medications')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .eq('is_psychiatric', true)
+      .order('medication_name');
+
+    if (error) throw error;
+
+    return {
+      success: true,
+      data: data || []
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch psychiatric medications'
+    };
+  }
+}
+
+/**
+ * Check user for multiple psych meds and get analysis
+ */
+export async function checkMultiplePsychMeds(
+  userId: string
+): Promise<ApiResponse<PsychMedAlert>> {
+  try {
+    // Get all active medications
+    const { data: medications } = await supabase
+      .from('medications')
+      .select('id, medication_name, generic_name, status, is_psychiatric, psych_category')
+      .eq('user_id', userId)
+      .eq('status', 'active');
+
+    if (!medications) {
+      return {
+        success: false,
+        error: 'No medications found'
+      };
+    }
+
+    // Analyze for multiple psych meds
+    const analysis = psychMedClassifier.analyzeMultiplePsychMeds(medications);
+
+    // Update alerts
+    await checkAndAlertMultiplePsychMeds(userId);
+
+    return {
+      success: true,
+      data: analysis
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to check psychiatric medications'
+    };
+  }
+}
+
+/**
+ * Get active psych med alerts for a user
+ */
+export async function getPsychMedAlerts(
+  userId: string
+): Promise<ApiResponse<any[]>> {
+  try {
+    const { data, error } = await supabase
+      .from('psych_med_alerts')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('resolved', false)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    return {
+      success: true,
+      data: data || []
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch psych med alerts'
+    };
+  }
+}
+
+/**
+ * Acknowledge a psych med alert
+ */
+export async function acknowledgePsychMedAlert(
+  alertId: string,
+  userId: string
+): Promise<ApiResponse> {
+  try {
+    const { error } = await supabase
+      .from('psych_med_alerts')
+      .update({
+        acknowledged: true,
+        acknowledged_by: userId,
+        acknowledged_at: new Date().toISOString()
+      })
+      .eq('id', alertId);
+
+    if (error) throw error;
+
+    return {
+      success: true,
+      message: 'Alert acknowledged'
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to acknowledge alert'
+    };
+  }
+}
+
+// ============================================================================
 // EXPORT
 // ============================================================================
 
@@ -690,6 +1084,18 @@ export default {
   // Label reading
   extractMedicationFromImage,
   confirmMedication,
+
+  // Pill identification
+  identifyPill,
+  comparePillWithLabel,
+  getPillIdentificationHistory,
+  getPillComparisonHistory,
+
+  // Psychiatric medication management
+  getPsychiatricMedications,
+  checkMultiplePsychMeds,
+  getPsychMedAlerts,
+  acknowledgePsychMedAlert,
 
   // Reminders
   getMedicationReminders,
