@@ -153,21 +153,23 @@ const LoginPage: React.FC = () => {
   };
   // --------------------------------------------------------------------------
 
-  // Disable automatic redirect on mount - let user explicitly login
-  // This prevents redirect loops from competing navigation logic
-  // useEffect(() => {
-  //   let cancel = false;
-  //   (async () => {
-  //     const { data: { session } } = await supabase.auth.getSession();
-  //     if (!cancel && session) {
-  //       const route = await nextRouteForUser();
-  //       if (!cancel && window.location.pathname === '/login') {
-  //         navigate(route, { replace: true });
-  //       }
-  //     }
-  //   })();
-  //   return () => { cancel = true; };
-  // }, [navigate, supabase]);
+  // If already signed in when mounting LoginPage, redirect to appropriate page
+  useEffect(() => {
+    let cancel = false;
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!cancel && session) {
+        console.log('[LoginPage] Already logged in, redirecting...');
+        const route = await nextRouteForUser();
+        if (!cancel) {
+          navigate(route, { replace: true });
+        }
+      }
+    })();
+    return () => { cancel = true; };
+    // Only run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Check passkey support
   useEffect(() => {
