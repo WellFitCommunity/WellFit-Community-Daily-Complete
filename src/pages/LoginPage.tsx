@@ -132,23 +132,28 @@ const LoginPage: React.FC = () => {
 
     console.log('[LoginPage] Profile data:', { forcePwd, consent, demoDone, onboard, role, roleCode });
 
-    // Check in proper order: forced actions first, then onboarding flow
+    // 1. Forced password change applies to everyone (including admins)
     if (forcePwd) return '/change-password';
 
+    // 2. Admin/staff bypass demographics and consent - go straight to admin panel
+    if (role === 'admin' || role === 'super_admin' || roleCode === 1 || roleCode === 2) {
+      console.log('[LoginPage] Admin detected, bypassing onboarding');
+      return '/admin-login';
+    }
+
+    // 3. Caregiver role routing
+    if (role === 'caregiver' || roleCode === 6) {
+      return '/caregiver-dashboard';
+    }
+
+    // 4. Regular users (seniors) must complete onboarding flow
     // Demographics/onboarding MUST come before consent
     if (!onboard || !demoDone) return '/demographics';
 
     // Only check consent after demographics is complete
     if (!consent) return '/consent-photo';
 
-    // Role-based routing
-    if (role === 'admin' || role === 'super_admin' || roleCode === 1 || roleCode === 2) {
-      return '/admin-login';
-    }
-    if (role === 'caregiver' || roleCode === 6) {
-      return '/caregiver-dashboard';
-    }
-
+    // 5. All onboarding complete - go to dashboard
     return '/dashboard';
   };
   // --------------------------------------------------------------------------
