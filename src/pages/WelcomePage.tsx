@@ -10,8 +10,9 @@ const WelcomePage: React.FC = () => {
   const navigate = useNavigate();
   const supabase = useSupabaseClient();
 
-  // If user is already logged in, redirect immediately to dashboard
-  // Let LoginPage handle the complex routing logic (demographics, consent, etc.)
+  // Check if user is logged in and redirect appropriately
+  // Don't redirect on welcome page - let user click "log in" link
+  // This prevents loops with AuthGate
   useEffect(() => {
     let mounted = true;
 
@@ -19,9 +20,10 @@ const WelcomePage: React.FC = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!mounted || !session) return;
 
-      // User is logged in - redirect to dashboard
-      // AuthGate will handle any onboarding redirects
-      navigate('/dashboard', { replace: true });
+      // User is logged in but on welcome page
+      // They probably clicked "back" or want to see the welcome screen
+      // Don't auto-redirect - let them click login link themselves
+      console.log('[WelcomePage] User is logged in. Click login link to continue.');
     };
 
     checkSession();
