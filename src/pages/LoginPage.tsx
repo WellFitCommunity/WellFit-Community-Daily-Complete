@@ -113,7 +113,13 @@ const LoginPage: React.FC = () => {
       .maybeSingle();
 
     if (error) {
-      console.warn('Profile fetch error:', error.message);
+      console.warn('[LoginPage] Profile fetch error:', error.message);
+      return '/dashboard';
+    }
+
+    // If no profile exists, go to dashboard and let AuthGate handle it
+    if (!data) {
+      console.warn('[LoginPage] No profile found for user, redirecting to dashboard');
       return '/dashboard';
     }
 
@@ -124,35 +130,44 @@ const LoginPage: React.FC = () => {
     const role = (data as any)?.role || '';
     const roleCode = (data as any)?.role_code || 0;
 
+    console.log('[LoginPage] Profile data:', { forcePwd, consent, demoDone, onboard, role, roleCode });
+
+    // Check in proper order: forced actions first, then onboarding flow
     if (forcePwd) return '/change-password';
-    if (!consent)  return '/consent-photo';
+
+    // Demographics/onboarding MUST come before consent
     if (!onboard || !demoDone) return '/demographics';
 
+    // Only check consent after demographics is complete
+    if (!consent) return '/consent-photo';
+
+    // Role-based routing
     if (role === 'admin' || role === 'super_admin' || roleCode === 1 || roleCode === 2) {
       return '/admin-login';
     }
     if (role === 'caregiver' || roleCode === 6) {
       return '/caregiver-dashboard';
     }
+
     return '/dashboard';
   };
   // --------------------------------------------------------------------------
 
-  // If already signed in, route immediately
-  useEffect(() => {
-    let cancel = false;
-    (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!cancel && session) {
-        const route = await nextRouteForUser();
-        // Only navigate if we're still on login page to avoid loop
-        if (!cancel && window.location.pathname === '/login') {
-          navigate(route, { replace: true });
-        }
-      }
-    })();
-    return () => { cancel = true; };
-  }, [navigate, supabase]);
+  // Disable automatic redirect on mount - let user explicitly login
+  // This prevents redirect loops from competing navigation logic
+  // useEffect(() => {
+  //   let cancel = false;
+  //   (async () => {
+  //     const { data: { session } } = await supabase.auth.getSession();
+  //     if (!cancel && session) {
+  //       const route = await nextRouteForUser();
+  //       if (!cancel && window.location.pathname === '/login') {
+  //         navigate(route, { replace: true });
+  //       }
+  //     }
+  //   })();
+  //   return () => { cancel = true; };
+  // }, [navigate, supabase]);
 
   // Check passkey support
   useEffect(() => {
