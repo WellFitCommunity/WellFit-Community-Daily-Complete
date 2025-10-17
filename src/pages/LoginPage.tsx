@@ -246,6 +246,8 @@ const LoginPage: React.FC = () => {
       const e164 = normalizeToE164(phone);
       const token = await ensureCaptcha().catch(() => '');
 
+      console.log('[LoginPage] Login attempt:', { phone: e164, hasToken: !!token, tokenPrefix: token?.substring(0, 20) });
+
       const { error: signInError } = await supabase.auth.signInWithPassword({
         phone: e164,
         password: seniorPassword,
@@ -296,6 +298,8 @@ const LoginPage: React.FC = () => {
     setLoading(true);
     try {
       const token = await ensureCaptcha().catch(() => '');
+
+      console.log('[LoginPage] Admin login attempt:', { email: adminEmail, hasToken: !!token, tokenPrefix: token?.substring(0, 20) });
 
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: adminEmail.trim(),
@@ -577,7 +581,6 @@ const LoginPage: React.FC = () => {
               style={{ borderColor: accent, outlineColor: primary } as React.CSSProperties}
               autoComplete="email"
               inputMode="email"
-              pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
             />
           </div>
 

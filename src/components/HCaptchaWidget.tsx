@@ -1,5 +1,5 @@
 // src/components/HCaptchaWidget.tsx
-import React, {
+import {
   forwardRef,
   useImperativeHandle,
   useRef,
@@ -132,7 +132,7 @@ const HCaptchaWidget = forwardRef<HCaptchaRef, Props>(
     return (
       <div
         style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }}
-        aria-hidden="false"
+        aria-hidden="true"
       >
         <HCaptcha
           ref={widgetRef}
