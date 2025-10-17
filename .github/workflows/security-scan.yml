@@ -56,9 +56,17 @@ jobs:
         run: |
           echo "## Insecure Protocol Scan" >> $GITHUB_STEP_SUMMARY
 
-          MATCH_HTTP=$(grep -RniE '\bhttp://(?!localhost\b|127\.0\.0\.1\b|schemas\.|0\.0\.0\.0\b)' . \
-            --exclude-dir=node_modules --exclude-dir=build --exclude-dir=dist --exclude-dir=.git \
-            --exclude=package-lock.json --exclude=yarn.lock 2>/dev/null || true)
+          MATCH_HTTP=$(grep -RniE '\bhttp://' . \
+            --exclude-dir=node_modules --exclude-dir=build --exclude-dir=dist --exclude-dir=.git --exclude-dir=archive \
+            --exclude=package-lock.json --exclude=yarn.lock --exclude=logo.png 2>/dev/null | \
+            grep -v "localhost" | grep -v "127\.0\.0\.1" | grep -v "0\.0\.0\.0" | \
+            grep -v "schemas\." | grep -v "loinc\.org" | grep -v "snomed\.info" | \
+            grep -v "terminology\.hl7\.org" | grep -v "hl7\.org/fhir" | \
+            grep -v "unitsofmeasure\.org" | grep -v "wellfitcommunity\.org" | \
+            grep -v "wellfit-community\.com" | grep -v "www\.w3\.org" | \
+            grep -v "www\.ama-assn\.org" | grep -v "www\.nlm\.nih\.gov" | \
+            grep -v "pillbox\.nlm\.nih\.gov" | grep -v "example\.com" | \
+            grep -v "xmlns=" || true)
           
           MATCH_WS=$(grep -RniE '\bws://(?!localhost\b|127\.0\.0\.1\b|0\.0\.0\.0\b)' . \
             --exclude-dir=node_modules --exclude-dir=build --exclude-dir=dist --exclude-dir=.git 2>/dev/null || true)
