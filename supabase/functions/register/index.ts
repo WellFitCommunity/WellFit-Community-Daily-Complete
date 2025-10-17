@@ -51,6 +51,11 @@ function normalizePhone(phone: string): string {
 
 async function verifyHcaptcha(token: string): Promise<boolean> {
   try {
+    if (!HCAPTCHA_SECRET) {
+      console.error("[verifyHcaptcha] HCAPTCHA_SECRET is not set!");
+      return false;
+    }
+
     const form = new URLSearchParams();
     form.set("secret", HCAPTCHA_SECRET);
     form.set("response", token);
@@ -61,8 +66,18 @@ async function verifyHcaptcha(token: string): Promise<boolean> {
       body: form,
     });
     const result = await response.json();
+
+    if (!result.success) {
+      console.error("[verifyHcaptcha] Verification failed:", {
+        success: result.success,
+        errorCodes: result["error-codes"],
+        tokenPrefix: token?.substring(0, 20)
+      });
+    }
+
     return result.success === true;
-  } catch {
+  } catch (err) {
+    console.error("[verifyHcaptcha] Exception:", err);
     return false;
   }
 }
@@ -113,11 +128,12 @@ serve(async (req: Request) => {
     const payload: RegisterInput = parsed.data;
     const phoneNumber = normalizePhone(payload.phone);
 
-    // Captcha first
-    // TEMPORARY: Allow bypass for development testing
-    const DEV_MODE = Deno.env.get("DEV_ALLOW_LOCAL") === "true";
-    const captchaValid = DEV_MODE || await verifyHcaptcha(payload.hcaptcha_token);
-    if (!captchaValid) return jsonResponse({ error: "Captcha failed" }, 401, origin);
+    // Verify hCaptcha
+    const captchaValid = await verifyHcaptcha(payload.hcaptcha_token);
+    if (!captchaValid) {
+      console.error("[register] hCaptcha verification failed for token:", payload.hcaptcha_token?.substring(0, 20) + "...");
+      return jsonResponse({ error: "Captcha verification failed. Please try again." }, 401, origin);
+    }
 
     const supabase = createClient(SB_URL, SB_SECRET_KEY);
 
