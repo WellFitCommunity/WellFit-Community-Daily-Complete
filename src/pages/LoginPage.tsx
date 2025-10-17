@@ -253,17 +253,20 @@ const LoginPage: React.FC = () => {
       });
 
       if (signInError) {
-        if (signInError.message.toLowerCase().includes('captcha')) {
+        const msg = (signInError.message || '').toLowerCase();
+
+        // Check for invalid credentials FIRST (most common case)
+        if (msg.includes('invalid login credentials') || msg.includes('invalid password')) {
+          setError('Login failed. Check your phone number and password.');
+        } else if (msg.includes('captcha verification') || msg.includes('captcha token')) {
+          // Only treat as captcha error if explicitly about captcha verification
           refreshCaptcha();
           setError('Captcha failed. Please try again.');
-          return;
-        }
-        const msg = (signInError.message || '').toLowerCase();
-        if (msg.includes('invalid login credentials')) {
-          setError('Login failed. Check your phone number and password.');
         } else if (msg.includes('confirm')) {
           setError('Account not confirmed. Please complete verification.');
         } else {
+          // For debugging: show actual error in console
+          console.error('[LoginPage] Unhandled auth error:', signInError.message);
           setError('An error occurred during login. Please try again.');
         }
         return;
@@ -301,17 +304,20 @@ const LoginPage: React.FC = () => {
       });
 
       if (signInError) {
-        if (signInError.message.toLowerCase().includes('captcha')) {
+        const msg = (signInError.message || '').toLowerCase();
+
+        // Check for invalid credentials FIRST (most common case)
+        if (msg.includes('invalid login credentials') || msg.includes('invalid password')) {
+          setError('Admin login failed. Check your email and password.');
+        } else if (msg.includes('captcha verification') || msg.includes('captcha token')) {
+          // Only treat as captcha error if explicitly about captcha verification
           refreshCaptcha();
           setError('Captcha failed. Please try again.');
-          return;
-        }
-        const msg = (signInError.message || '').toLowerCase();
-        if (msg.includes('invalid login credentials')) {
-          setError('Admin login failed. Check your email and password.');
         } else if (msg.includes('confirm')) {
           setError('Email not confirmed. Please check your inbox.');
         } else {
+          // For debugging: show actual error in console
+          console.error('[LoginPage] Unhandled admin auth error:', signInError.message);
           setError('An error occurred during admin login. Please try again.');
         }
         return;
