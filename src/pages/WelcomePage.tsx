@@ -10,23 +10,49 @@ const WelcomePage: React.FC = () => {
   const navigate = useNavigate();
   const supabase = useSupabaseClient();
 
-  // Check if user is logged in and redirect appropriately
-  // Don't redirect on welcome page - let user click "log in" link
-  // This prevents loops with AuthGate
+  // Auto-redirect logged-in users to appropriate page
+  // Check role FIRST to avoid sending admins through senior onboarding
   useEffect(() => {
     let mounted = true;
 
-    const checkSession = async () => {
+    const checkSessionAndRedirect = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!mounted || !session) return;
 
-      // User is logged in but on welcome page
-      // They probably clicked "back" or want to see the welcome screen
-      // Don't auto-redirect - let them click login link themselves
-      console.log('[WelcomePage] User is logged in. Click login link to continue.');
+      const userId = session.user?.id;
+      if (!userId) return;
+
+      // Fetch profile to check role
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role, role_code, onboarded, consent')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (!mounted) return;
+
+      const role = profile?.role || '';
+      const roleCode = profile?.role_code || 0;
+
+      // Admin/super_admin go to admin login
+      if (role === 'admin' || role === 'super_admin' || roleCode === 1 || roleCode === 2) {
+        console.log('[WelcomePage] Admin detected, redirecting to admin-login');
+        navigate('/admin-login', { replace: true });
+        return;
+      }
+
+      // Caregiver goes to caregiver dashboard
+      if (role === 'caregiver' || roleCode === 6) {
+        navigate('/caregiver-dashboard', { replace: true });
+        return;
+      }
+
+      // Seniors: redirect to dashboard, AuthGate will handle onboarding
+      console.log('[WelcomePage] Senior user detected, redirecting to dashboard');
+      navigate('/dashboard', { replace: true });
     };
 
-    checkSession();
+    checkSessionAndRedirect();
 
     return () => {
       mounted = false;
