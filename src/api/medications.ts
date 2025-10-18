@@ -1072,7 +1072,7 @@ export async function acknowledgePsychMedAlert(
 // EXPORT
 // ============================================================================
 
-export default {
+const MedicationsAPI = {
   // CRUD
   getMedications,
   getMedication,
@@ -1109,3 +1109,5 @@ export default {
   getMedicationsNeedingRefill,
   getUpcomingReminders
 };
+
+export default MedicationsAPI;

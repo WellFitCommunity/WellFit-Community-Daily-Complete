@@ -19,14 +19,14 @@ type Profile = {
 type SortField = keyof Profile;
 type SortDirection = 'asc' | 'desc';
 
-interface Toast {
+interface ToastData {
   id: string;
   type: 'success' | 'error' | 'info' | 'warning';
   message: string;
 }
 
 // Toast Component
-const Toast: React.FC<{ toast: Toast; onDismiss: (id: string) => void }> = ({ toast, onDismiss }) => {
+const Toast: React.FC<{ toast: ToastData; onDismiss: (id: string) => void }> = ({ toast, onDismiss }) => {
   useEffect(() => {
     const timer = setTimeout(() => onDismiss(toast.id), 5000);
     return () => clearTimeout(timer);
@@ -64,7 +64,7 @@ const Toast: React.FC<{ toast: Toast; onDismiss: (id: string) => void }> = ({ to
 };
 
 // Toast Container
-const ToastContainer: React.FC<{ toasts: Toast[]; onDismiss: (id: string) => void }> = ({ toasts, onDismiss }) => (
+const ToastContainer: React.FC<{ toasts: ToastData[]; onDismiss: (id: string) => void }> = ({ toasts, onDismiss }) => (
   <div className="fixed top-4 right-4 z-50 space-y-2" aria-live="polite">
     {toasts.map(toast => (
       <Toast key={toast.id} toast={toast} onDismiss={onDismiss} />
@@ -237,7 +237,7 @@ const UsersList: React.FC = () => {
   const supabase = useSupabaseClient();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
-  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [toasts, setToasts] = useState<ToastData[]>([]);
   // Debounced search
   const [rawSearch, setRawSearch] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -252,7 +252,7 @@ const UsersList: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive' | 'emergency'>('all');
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
 
-  const addToast = useCallback((type: Toast['type'], message: string) => {
+  const addToast = useCallback((type: ToastData['type'], message: string) => {
     const id = Math.random().toString(36).substr(2, 9);
     setToasts(prev => [...prev, { id, type, message }]);
   }, []);

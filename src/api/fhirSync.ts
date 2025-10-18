@@ -510,7 +510,7 @@ export async function getFHIRComplianceMetrics(): Promise<ApiResponse> {
 // EXPORT
 // ============================================================================
 
-export default {
+const FHIRSyncAPI = {
   // Connection management
   getFHIRConnections,
   createFHIRConnection,
@@ -538,3 +538,5 @@ export default {
   getSyncStatistics,
   getFHIRComplianceMetrics
 };
+
+export default FHIRSyncAPI;

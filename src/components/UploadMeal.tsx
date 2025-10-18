@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useSupabaseClient, useUser } from '../contexts/AuthContext';
+import { useSupabaseClient } from '../contexts/AuthContext';
 
 interface MealFormData {
   name: string;

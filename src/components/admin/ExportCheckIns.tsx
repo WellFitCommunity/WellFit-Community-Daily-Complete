@@ -20,14 +20,14 @@ type CheckInRow = {
 
 type ExportFormat = 'csv' | 'json';
 
-interface Toast {
+interface ToastData {
   id: string;
   type: 'success' | 'error' | 'info' | 'warning';
   message: string;
 }
 
 // Toast Component
-const ToastNotification: React.FC<{ toast: Toast; onDismiss: (id: string) => void }> = ({ toast, onDismiss }) => {
+const ToastNotification: React.FC<{ toast: ToastData; onDismiss: (id: string) => void }> = ({ toast, onDismiss }) => {
   React.useEffect(() => {
     const timer = setTimeout(() => onDismiss(toast.id), 5000);
     return () => clearTimeout(timer);
@@ -65,7 +65,7 @@ const ToastNotification: React.FC<{ toast: Toast; onDismiss: (id: string) => voi
 };
 
 // Toast Container
-const ToastContainer: React.FC<{ toasts: Toast[]; onDismiss: (id: string) => void }> = ({ toasts, onDismiss }) => (
+const ToastContainer: React.FC<{ toasts: ToastData[]; onDismiss: (id: string) => void }> = ({ toasts, onDismiss }) => (
   <div className="fixed top-4 right-4 z-50 space-y-2" aria-live="polite">
     {toasts.map(toast => (
       <ToastNotification key={toast.id} toast={toast} onDismiss={onDismiss} />
@@ -92,7 +92,7 @@ const LoadingSpinner: React.FC<{ size?: 'sm' | 'md' | 'lg' }> = ({ size = 'md' }
 const ExportCheckIns: React.FC = () => {
   const supabase = useSupabaseClient();
   const [loading, setLoading] = useState(false);
-  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [toasts, setToasts] = useState<ToastData[]>([]);
   const [exportFormat, setExportFormat] = useState<ExportFormat>('csv');
   const [dateRange, setDateRange] = useState({
     startDate: '',
@@ -105,7 +105,7 @@ const ExportCheckIns: React.FC = () => {
     dateRange: string;
   } | null>(null);
 
-  const addToast = useCallback((type: Toast['type'], message: string) => {
+  const addToast = useCallback((type: ToastData['type'], message: string) => {
     const id = Math.random().toString(36).substr(2, 9);
     setToasts(prev => [...prev, { id, type, message }]);
   }, []);

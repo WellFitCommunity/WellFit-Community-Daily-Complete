@@ -12,8 +12,6 @@ const ClaudeTestWidget: React.FC = () => {
 
   // UI Rate Limiting
   const {
-    canMakeRequest,
-    remaining,
     isLimited,
     checkRateLimit,
     remainingDisplay,

@@ -286,7 +286,7 @@ export function sanitizeMedicalCode(code: string | null | undefined): string {
   return code.replace(/[^a-zA-Z0-9.-]/g, '').toUpperCase();
 }
 
-export default {
+const SanitizeUtils = {
   sanitize,
   sanitizeObject,
   sanitizeEmail,
@@ -299,3 +299,5 @@ export default {
   sanitizeMedicalCode,
   useSanitize
 };
+
+export default SanitizeUtils;

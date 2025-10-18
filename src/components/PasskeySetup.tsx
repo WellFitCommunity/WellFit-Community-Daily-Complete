@@ -4,7 +4,6 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { useSupabaseClient } from '../contexts/AuthContext';
 import {
   isPasskeySupported,
   isPlatformAuthenticatorAvailable,

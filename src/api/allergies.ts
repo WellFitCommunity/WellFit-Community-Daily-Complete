@@ -133,7 +133,7 @@ export async function checkMedicationAllergy(userId: string, medicationName: str
   }
 }
 
-export default {
+const AllergiesAPI = {
   getAllergies,
   getActiveAllergies,
   addAllergy,
@@ -141,3 +141,5 @@ export default {
   deleteAllergy,
   checkMedicationAllergy
 };
+
+export default AllergiesAPI;

@@ -23,14 +23,14 @@ interface ApiKey {
   user_id: string | null;
 }
 
-interface Toast {
+interface ToastData {
   id: string;
   type: 'success' | 'error' | 'info' | 'warning';
   message: string;
 }
 
 // Toast Component
-const ToastNotification: React.FC<{ toast: Toast; onDismiss: (id: string) => void }> = ({ toast, onDismiss }) => {
+const ToastNotification: React.FC<{ toast: ToastData; onDismiss: (id: string) => void }> = ({ toast, onDismiss }) => {
   useEffect(() => {
     const timer = setTimeout(() => onDismiss(toast.id), 5000);
     return () => clearTimeout(timer);
@@ -68,7 +68,7 @@ const ToastNotification: React.FC<{ toast: Toast; onDismiss: (id: string) => voi
 };
 
 // Toast Container
-const ToastContainer: React.FC<{ toasts: Toast[]; onDismiss: (id: string) => void }> = ({ toasts, onDismiss }) => (
+const ToastContainer: React.FC<{ toasts: ToastData[]; onDismiss: (id: string) => void }> = ({ toasts, onDismiss }) => (
   <div className="fixed top-4 right-4 z-50 space-y-2" aria-live="polite">
     {toasts.map(toast => (
       <ToastNotification key={toast.id} toast={toast} onDismiss={onDismiss} />
@@ -98,7 +98,7 @@ const ApiKeyManager: React.FC = () => {
   const [generatedKey, setGeneratedKey] = useState<string | null>(null);
   const [keyMasked, setKeyMasked] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [toasts, setToasts] = useState<ToastData[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<keyof ApiKey>('created_at');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
@@ -108,7 +108,7 @@ const ApiKeyManager: React.FC = () => {
   const generatedKeyRef = useRef<HTMLDivElement>(null);
   const orgNameInputRef = useRef<HTMLInputElement>(null);
 
-  const addToast = useCallback((type: Toast['type'], message: string) => {
+  const addToast = useCallback((type: ToastData['type'], message: string) => {
     const id = Math.random().toString(36).substr(2, 9);
     setToasts(prev => [...prev, { id, type, message }]);
   }, []);
