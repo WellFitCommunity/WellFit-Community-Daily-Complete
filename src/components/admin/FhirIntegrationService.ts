@@ -973,6 +973,200 @@ export class FHIRIntegrationService {
       throw error;
     }
   }
+
+  // ==== IMMUNIZATION RESOURCE MAPPING ====
+  private mapSiteCode(site: string): string {
+    const siteMap: Record<string, string> = {
+      'left arm': 'LA',
+      'right arm': 'RA',
+      'left deltoid': 'LD',
+      'right deltoid': 'RD',
+      'left thigh': 'LT',
+      'right thigh': 'RT'
+    };
+    return siteMap[site?.toLowerCase()] || 'LA';
+  }
+
+  private mapRouteCodeImmunization(route: string): string {
+    const routeMap: Record<string, string> = {
+      'intramuscular': 'IM',
+      'subcutaneous': 'SC',
+      'oral': 'PO',
+      'intranasal': 'NASINHL'
+    };
+    return routeMap[route?.toLowerCase()] || 'IM';
+  }
+
+  private mapImmunizationToFHIR(imm: any): any {
+    return {
+      resourceType: 'Immunization',
+      id: imm.id,
+      status: imm.status,
+      vaccineCode: {
+        coding: [{
+          system: 'http://hl7.org/fhir/sid/cvx',
+          code: imm.vaccine_code,
+          display: imm.vaccine_display || imm.vaccine_name
+        }]
+      },
+      patient: {
+        reference: `Patient/${imm.patient_id}`
+      },
+      occurrenceDateTime: imm.occurrence_datetime,
+      recorded: imm.created_at,
+      primarySource: imm.primary_source !== false,
+      lotNumber: imm.lot_number,
+      expirationDate: imm.expiration_date,
+      site: imm.site_display ? {
+        coding: [{
+          system: 'http://terminology.hl7.org/CodeSystem/v3-ActSite',
+          code: this.mapSiteCode(imm.site_display),
+          display: imm.site_display
+        }]
+      } : undefined,
+      route: imm.route_display ? {
+        coding: [{
+          system: 'http://terminology.hl7.org/CodeSystem/v3-RouteOfAdministration',
+          code: this.mapRouteCodeImmunization(imm.route_display),
+          display: imm.route_display
+        }]
+      } : undefined,
+      doseQuantity: imm.dose_quantity_value ? {
+        value: imm.dose_quantity_value,
+        unit: imm.dose_quantity_unit || 'mL',
+        system: 'http://unitsofmeasure.org',
+        code: imm.dose_quantity_unit || 'mL'
+      } : undefined,
+      performer: imm.performer_actor_display ? [{
+        actor: {
+          display: imm.performer_actor_display
+        }
+      }] : undefined,
+      note: imm.note ? [{
+        text: imm.note
+      }] : undefined,
+      protocolApplied: imm.protocol_dose_number_positive_int ? [{
+        doseNumberPositiveInt: imm.protocol_dose_number_positive_int,
+        seriesDosesPositiveInt: imm.protocol_series_doses_positive_int
+      }] : undefined,
+      reaction: imm.reaction_date ? [{
+        date: imm.reaction_date,
+        reported: imm.reaction_reported
+      }] : undefined
+    };
+  }
+
+  // ==== CAREPLAN RESOURCE MAPPING ====
+  private mapCarePlanToFHIR(plan: any): any {
+    return {
+      resourceType: 'CarePlan',
+      id: plan.id,
+      status: plan.status,
+      intent: plan.intent,
+      category: plan.category ? plan.category.map((cat: string) => ({
+        coding: [{
+          system: 'http://hl7.org/fhir/us/core/CodeSystem/careplan-category',
+          code: cat,
+          display: cat
+        }]
+      })) : undefined,
+      title: plan.title,
+      description: plan.description,
+      subject: {
+        reference: `Patient/${plan.patient_id}`
+      },
+      period: {
+        start: plan.period_start,
+        end: plan.period_end
+      },
+      created: plan.created || plan.created_at,
+      author: plan.author_display ? {
+        display: plan.author_display
+      } : undefined,
+      careTeam: plan.care_team_reference ? [{
+        reference: plan.care_team_reference,
+        display: plan.care_team_display
+      }] : undefined,
+      addresses: plan.addresses_condition_references ? plan.addresses_condition_references.map((ref: string, idx: number) => ({
+        reference: ref,
+        display: plan.addresses_condition_displays?.[idx]
+      })) : undefined,
+      goal: plan.goal_displays ? plan.goal_displays.map((g: string) => ({
+        display: g
+      })) : undefined,
+      activity: plan.activities ? (Array.isArray(plan.activities) ? plan.activities : []).map((a: any) => ({
+        detail: {
+          kind: a.kind || 'Task',
+          status: a.status,
+          description: a.detail || a.description,
+          scheduledTiming: a.scheduled_start ? {
+            repeat: {
+              boundsPeriod: {
+                start: a.scheduled_start,
+                end: a.scheduled_end
+              }
+            }
+          } : undefined
+        }
+      })) : undefined,
+      note: plan.note ? [{
+        text: plan.note
+      }] : undefined
+    };
+  }
+
+  // ==== COMPLETE EXPORT (ALL RESOURCES) ====
+  async exportPatientDataComplete(userId: string): Promise<FHIRBundle> {
+    try {
+      // Get base bundle with patient, observations, and medications
+      const bundle = await this.exportPatientDataWithMedications(userId);
+
+      // Fetch immunizations
+      const { data: immunizations, error: immError } = await this.supabase
+        .from('fhir_immunizations')
+        .select('*')
+        .eq('patient_id', userId)
+        .eq('status', 'completed')
+        .order('occurrence_datetime', { ascending: false });
+
+      if (immError) {
+        console.error('Failed to fetch immunizations:', immError);
+      } else if (immunizations && immunizations.length > 0) {
+        immunizations.forEach(imm => {
+          const fhirImmunization = this.mapImmunizationToFHIR(imm);
+          bundle.entry.push({
+            fullUrl: `urn:uuid:immunization-${imm.id}`,
+            resource: fhirImmunization
+          });
+        });
+      }
+
+      // Fetch care plans
+      const { data: carePlans, error: cpError } = await this.supabase
+        .from('fhir_care_plans')
+        .select('*')
+        .eq('patient_id', userId)
+        .in('status', ['active', 'on-hold'])
+        .order('created', { ascending: false });
+
+      if (cpError) {
+        console.error('Failed to fetch care plans:', cpError);
+      } else if (carePlans && carePlans.length > 0) {
+        carePlans.forEach(plan => {
+          const fhirCarePlan = this.mapCarePlanToFHIR(plan);
+          bundle.entry.push({
+            fullUrl: `urn:uuid:careplan-${plan.id}`,
+            resource: fhirCarePlan
+          });
+        });
+      }
+
+      return bundle;
+    } catch (error) {
+      console.error('FHIR complete export error:', error);
+      throw error;
+    }
+  }
 }
 
 // Usage Example:

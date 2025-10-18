@@ -1,5 +1,5 @@
-// src/components/CommunityMoments.tsx — hooks-based, CRA-safe
-// Compiles in CRA/Vite. Pagination, safer uploads, signed URLs (file_path), SSR guards.
+// src/components/CommunityMoments.tsx — SENIOR-FRIENDLY UX REDESIGN
+// Larger text, bigger buttons, easier emoji selection, warm and encouraging!
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useSupabaseClient, useSession, useUser } from '../contexts/AuthContext';
@@ -7,7 +7,6 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import AdminFeatureToggle from './admin/AdminFeatureToggle';
 import { useBranding } from '../BrandingContext';
 
-// If your editor complains about typings, keep these ts-ignores OR add src/types/vendor.d.ts per the notes.
 // @ts-ignore
 import Confetti from 'react-confetti';
 // @ts-ignore
@@ -19,9 +18,12 @@ import { createPortal } from 'react-dom';
 const BUCKET = 'community-moments';
 const PAGE_SIZE = 12;
 const MAX_FILE_MB = 20;
-const SIGNED_URL_TTL_SEC = 3600; // 1 hour
+const SIGNED_URL_TTL_SEC = 3600;
 
 const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
+
+// Popular emojis for seniors - easy to see and relatable
+const QUICK_EMOJIS = ['😊', '❤️', '🎉', '👍', '🌸', '☀️', '🎂', '🏆', '📸', '🌈', '⭐', '🎵'];
 
 interface Affirmation {
   text: string;
@@ -81,7 +83,6 @@ async function getSignedUrlIfPossible(client: SupabaseClient, path?: string): Pr
 }
 
 const CommunityMoments: React.FC = () => {
-  // ✅ Hooks-based client & identity (no direct singleton import)
   const supabase = useSupabaseClient();
   const session = useSession();
   const user = useUser();
@@ -102,9 +103,10 @@ const CommunityMoments: React.FC = () => {
 
   // Form state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [emoji, setEmoji] = useState('');
+  const [emoji, setEmoji] = useState('😊');
   const [tags, setTags] = useState('');
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
@@ -115,13 +117,35 @@ const CommunityMoments: React.FC = () => {
   const formRef = useRef<HTMLDivElement>(null);
   const { width, height } = useWindowSize();
 
-  // Split util
+  // Get user's first name for personalized greeting
+  const [userFirstName, setUserFirstName] = useState<string>('');
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!userId) return;
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('profiles')
+          .select('first_name')
+          .eq('user_id', userId)
+          .single();
+        if (!cancelled && data?.first_name) {
+          setUserFirstName(data.first_name);
+        }
+      } catch (err) {
+        console.error('Failed to load user name:', err);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [supabase, userId]);
+
   const splitFeatured = (rows: Moment[]) => {
     setFeatured(rows.filter((m) => !!m.is_gallery_high));
     setRegular(rows.filter((m) => !m.is_gallery_high));
   };
 
-  // Admin detect (runs when userId available)
+  // Admin detect
   useEffect(() => {
     let cancelled = false;
     if (!userId) return;
@@ -133,12 +157,10 @@ const CommunityMoments: React.FC = () => {
         if (!cancelled) setIsAdmin(false);
       }
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [supabase, userId]);
 
-  // Load pending photo count for admins
+  // Load pending count
   useEffect(() => {
     let cancelled = false;
     if (!isAdmin) return;
@@ -155,9 +177,7 @@ const CommunityMoments: React.FC = () => {
     };
 
     loadPendingCount();
-    // Poll every 30 seconds for updates
     const interval = setInterval(loadPendingCount, 30000);
-
     return () => {
       cancelled = true;
       clearInterval(interval);
@@ -181,9 +201,7 @@ const CommunityMoments: React.FC = () => {
         // no-op
       }
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [supabase]);
 
   // Fetch page 1
@@ -230,9 +248,7 @@ const CommunityMoments: React.FC = () => {
         if (!cancelled) setInitialLoading(false);
       }
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [supabase]);
 
   // Load more
@@ -278,7 +294,6 @@ const CommunityMoments: React.FC = () => {
     }
   };
 
-  // Parent handler to update UI immediately after toggle
   const handleFeatureChange = (id: string, next: boolean) => {
     const updated = moments.map((mm) => (mm.id === id ? { ...mm, is_gallery_high: next } : mm));
     setMoments(updated);
@@ -286,30 +301,43 @@ const CommunityMoments: React.FC = () => {
     setRegular(updated.filter((x) => !x.is_gallery_high));
   };
 
-  // File input validation
+  // File input with preview
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
       if (!file.type.startsWith('image/')) {
-        setError('Please upload an image file.');
+        setError('Please upload an image file (JPG, PNG, etc.)');
         return;
       }
       if (file.size > MAX_FILE_MB * 1024 * 1024) {
-        setError(`File too large. Max ${MAX_FILE_MB}MB.`);
+        setError(`File too large. Maximum size is ${MAX_FILE_MB}MB.`);
         return;
       }
       setSelectedFile(file);
       setError('');
+
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
-  // Emoji selection
+  // Quick emoji selection with celebration!
+  const selectQuickEmoji = (e: string) => {
+    setEmoji(e);
+    // Mini confetti burst when selecting emoji
+    setShowConfetti(true);
+    setTimeout(() => setShowConfetti(false), 800);
+  };
+
   const handleEmojiClick = (emojiObj: any) => {
     setEmoji(emojiObj?.emoji ?? '');
     setShowEmojiPicker(false);
   };
 
-  // Upload handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -336,7 +364,7 @@ const CommunityMoments: React.FC = () => {
           contentType: selectedFile.type,
         });
 
-      if (uploadError) throw new Error('File upload failed. Make sure the file is an image and under 5MB.');
+      if (uploadError) throw new Error('File upload failed. Please try a different photo.');
 
       const { data: publicUrlData } = supabase.storage.from(BUCKET).getPublicUrl(filePath);
 
@@ -355,25 +383,26 @@ const CommunityMoments: React.FC = () => {
       const { error: insertError } = await supabase.from('community_moments').insert([insertBody]);
       if (insertError) throw new Error('Failed to save moment.');
 
-      // Show success message about approval
-      alert('✅ Photo uploaded successfully! It will appear here once approved by our team.');
-
-      // Reset form
+      // Success!
       setSelectedFile(null);
+      setPreviewUrl(null);
       setTitle('');
       setDescription('');
-      setEmoji('');
+      setEmoji('😊');
       setTags('');
       if (fileInputRef.current) fileInputRef.current.value = '';
 
       setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 1500);
+      setTimeout(() => setShowConfetti(false), 3000);
 
       if (isBrowser) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
 
-      // Refresh first page
+      // Show success message
+      alert('🎉 Your photo has been uploaded! Our team will review it and it will appear here soon. Thank you for sharing!');
+
+      // Refresh
       setInitialLoading(true);
       const { data } = await supabase
         .from('community_moments')
@@ -411,7 +440,6 @@ const CommunityMoments: React.FC = () => {
     }
   };
 
-  // Moment Card (now accepts admin + callback)
   const MomentCard: React.FC<{
     m: Moment;
     featured?: boolean;
@@ -425,107 +453,167 @@ const CommunityMoments: React.FC = () => {
         const s = await getSignedUrlIfPossible(supabase, m.file_path);
         if (!cancelled) setUrl(s || m.file_url || null);
       })();
-      return () => {
-        cancelled = true;
-      };
+      return () => { cancelled = true; };
     }, [m.id, m.file_path, m.file_url]);
 
-    const tagClass = featured ? 'bg-[#8cc63f] text-white' : 'bg-gray-300 text-[#003865]';
     return (
-      <div className={`bg-white rounded-xl shadow p-4 flex flex-col items-center ${featured ? 'border-2 border-[#8cc63f]' : ''}`}>
+      <motion.div
+        className={`bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center transition-all hover:shadow-2xl ${featured ? 'border-4 border-yellow-400' : 'border-2 border-gray-200'}`}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        {featured && (
+          <div className="bg-yellow-400 text-gray-900 font-bold px-4 py-2 rounded-full mb-3 text-xl flex items-center gap-2">
+            <span className="text-2xl">⭐</span>
+            <span>Featured</span>
+          </div>
+        )}
+
         {url ? (
           <img
             src={url}
             alt={m.title || 'Community photo'}
-            className="w-full max-w-xs rounded mb-2 object-cover"
+            className="w-full max-w-md rounded-xl mb-4 object-cover shadow-lg"
+            style={{ maxHeight: '400px' }}
             loading="lazy"
           />
         ) : (
-          <div className="w-full max-w-xs h-56 bg-gray-100 animate-pulse rounded mb-2" aria-label="loading image" />
+          <div className="w-full max-w-md h-80 bg-gradient-to-br from-gray-100 to-gray-200 animate-pulse rounded-xl mb-4 flex items-center justify-center" aria-label="loading image">
+            <span className="text-6xl">📸</span>
+          </div>
         )}
-        <div className={`text-xl sm:text-2xl ${featured ? 'font-bold' : 'font-semibold'} text-[#003865]`}>
-          {m.title} {m.emoji}
+
+        <div className={`text-3xl font-bold text-[#003865] text-center mb-2`}>
+          <span className="text-4xl mr-2">{m.emoji}</span>
+          {m.title}
         </div>
-        <div className="text-base sm:text-lg text-gray-800 text-center">{m.description}</div>
+
+        <div className="text-xl text-gray-700 text-center mb-3 leading-relaxed">{m.description}</div>
+
         {m.tags && (
-          <div className="flex flex-wrap gap-1 mt-1 justify-center">
+          <div className="flex flex-wrap gap-2 mb-3 justify-center">
             {m.tags.split(',').map((tag) => (
-              <span key={tag} className={`${tagClass} px-2 py-0.5 rounded-full text-base`}>
-                {tag.trim()}
+              <span
+                key={tag}
+                className={`${featured ? 'bg-yellow-100 text-yellow-800 border-2 border-yellow-400' : 'bg-blue-100 text-blue-800 border-2 border-blue-300'} px-4 py-2 rounded-full text-lg font-semibold`}
+              >
+                #{tag.trim()}
               </span>
             ))}
           </div>
         )}
-        <div className="text-sm text-gray-400 mt-2">
-          {m.profile?.first_name} {m.profile?.last_name} • {new Date(m.created_at).toLocaleString()}
+
+        <div className="text-lg text-gray-500 mt-2 flex items-center gap-2">
+          <span className="text-2xl">👤</span>
+          <span className="font-semibold">
+            {m.profile?.first_name} {m.profile?.last_name}
+          </span>
+          <span className="mx-2">•</span>
+          <span>{new Date(m.created_at).toLocaleDateString()}</span>
         </div>
 
-        {/* Admin Feature/Unfeature button */}
         {isAdmin && (
-          <AdminFeatureToggle
-            momentId={m.id}
-            isFeatured={m.is_gallery_high}
-            onChanged={(next) => onFeatureChange(m.id, next)}
-          />
+          <div className="mt-4">
+            <AdminFeatureToggle
+              momentId={m.id}
+              isFeatured={m.is_gallery_high}
+              onChanged={(next) => onFeatureChange(m.id, next)}
+            />
+          </div>
         )}
-      </div>
+      </motion.div>
     );
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto">
+    <div className="w-full max-w-6xl mx-auto px-4 pb-12">
       {/* Confetti */}
       <AnimatePresence>
         {showConfetti && isBrowser && width > 0 && height > 0 && (
-          <Confetti width={width} height={height} numberOfPieces={200} recycle={false} />
+          <Confetti width={width} height={height} numberOfPieces={300} recycle={false} />
         )}
       </AnimatePresence>
 
-      {/* Header */}
-      <div className="bg-gradient-to-r from-[#003865] to-[#8cc63f] p-5 rounded-t-xl shadow flex flex-col items-center mb-4">
-        <div className="flex items-center gap-3">
-          <span className="text-4xl" aria-hidden>
-            🎉
-          </span>
-          <h1 className="text-3xl md:text-4xl font-bold text-white drop-shadow">Community Moments</h1>
-          <span className="text-4xl" aria-hidden>
-            📸
-          </span>
-        </div>
-        {affirmation && (
+      {/* Header - Warm and Inviting */}
+      <div
+        className="p-8 rounded-3xl shadow-2xl flex flex-col items-center mb-8"
+        style={{
+          background: `linear-gradient(to right, ${branding.primaryColor}, ${branding.secondaryColor || '#8cc63f'})`
+        }}
+      >
+        {/* Personalized Greeting */}
+        {userFirstName && (
           <motion.div
-            className="bg-[#8cc63f] text-white rounded-xl p-4 shadow mt-3 w-full max-w-xl text-center text-xl md:text-2xl font-semibold"
-            initial={{ scale: 0.7, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            aria-live="polite"
+            className="bg-white/30 backdrop-blur-sm px-8 py-4 rounded-2xl mb-4"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
           >
-            <span className="italic">“{affirmation.text}”</span>
-            <div className="text-base font-bold text-white mt-2">— {affirmation.author}</div>
+            <h2 className="text-3xl md:text-4xl font-bold text-white text-center drop-shadow-lg">
+              {(() => {
+                const hour = new Date().getHours();
+                if (hour < 12) return `Good morning, ${userFirstName}! ☀️`;
+                if (hour < 17) return `Good afternoon, ${userFirstName}! 🌤️`;
+                return `Good evening, ${userFirstName}! 🌙`;
+              })()}
+            </h2>
           </motion.div>
         )}
+
+        <motion.div
+          className="flex items-center gap-4 mb-4"
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <span className="text-6xl" aria-hidden>🎉</span>
+          <h1 className="text-5xl md:text-6xl font-bold text-white drop-shadow-lg">Community Moments</h1>
+          <span className="text-6xl" aria-hidden>📸</span>
+        </motion.div>
+
+        <p className="text-2xl text-white text-center mb-6 font-medium">
+          Share your memories, celebrate together!
+        </p>
+
+        {affirmation && (
+          <motion.div
+            className="bg-white/20 backdrop-blur-sm text-white rounded-2xl p-6 shadow-xl mb-6 w-full max-w-2xl text-center border-2 border-white/30"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            aria-live="polite"
+          >
+            <span className="text-3xl md:text-4xl font-semibold italic block mb-3">
+              "{affirmation.text}"
+            </span>
+            <div className="text-xl font-bold">— {affirmation.author}</div>
+          </motion.div>
+        )}
+
         <button
-          className="mt-6 bg-white font-bold px-6 py-2 rounded-xl shadow hover:bg-opacity-90 text-lg transition"
-          style={{ color: branding.primaryColor, backgroundColor: 'white' }}
+          className="bg-white font-bold px-10 py-5 rounded-2xl shadow-xl hover:scale-105 text-2xl transition-all duration-200 hover:shadow-2xl"
+          style={{ color: branding.primaryColor }}
           onClick={() => formRef.current?.scrollIntoView({ behavior: 'smooth' })}
           aria-label="Share your moment"
         >
-          + Share Your Moment
+          <span className="text-3xl mr-2">📷</span>
+          Share Your Moment
         </button>
 
-        {/* Admin: Pending Approval Notification */}
         {isAdmin && pendingCount > 0 && (
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="mt-4 bg-yellow-400 text-gray-900 rounded-xl p-4 shadow-lg w-full max-w-xl text-center"
+            className="mt-6 bg-yellow-400 text-gray-900 rounded-2xl p-5 shadow-lg w-full max-w-2xl text-center border-4 border-yellow-500"
           >
-            <div className="flex items-center justify-center gap-2 font-bold text-lg">
-              <span className="text-2xl">📸</span>
+            <div className="flex items-center justify-center gap-3 font-bold text-2xl">
+              <span className="text-3xl">📸</span>
               <span>{pendingCount} photo{pendingCount > 1 ? 's' : ''} awaiting approval</span>
             </div>
             <a
               href="/admin"
-              className="mt-2 inline-block text-sm underline hover:text-blue-800"
+              className="mt-3 inline-block text-lg underline hover:text-blue-800 font-semibold"
             >
               View in Admin Panel
             </a>
@@ -533,16 +621,14 @@ const CommunityMoments: React.FC = () => {
         )}
       </div>
 
-      {/* Featured */}
+      {/* Featured Moments */}
       {featured.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold mb-3 text-[#8cc63f] flex items-center gap-2">
-            <span className="text-2xl" aria-hidden>
-              ⭐
-            </span>{' '}
-            Featured Moments
+        <div className="mb-10">
+          <h2 className="text-4xl font-bold mb-6 text-[#003865] flex items-center gap-3">
+            <span className="text-5xl" aria-hidden>⭐</span>
+            Featured Community Moments
           </h2>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-2">
             {featured.map((m) => (
               <MomentCard key={m.id} m={m} featured isAdmin={isAdmin} onFeatureChange={handleFeatureChange} />
             ))}
@@ -550,149 +636,247 @@ const CommunityMoments: React.FC = () => {
         </div>
       )}
 
-      {/* Form */}
-      <div ref={formRef} className="mb-8 bg-white rounded-xl p-6 shadow border-2 border-[#003865]">
-        <h2 className="text-2xl font-bold text-[#003865] mb-2">Share Your Community Moment</h2>
-        <form onSubmit={handleSubmit}>
-          <label className="block font-semibold mb-1 text-lg" htmlFor="cm-photo">
-            Photo
-          </label>
-          <input
-            id="cm-photo"
-            type="file"
-            accept="image/*"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            className="mb-3 text-lg"
-            aria-required
-          />
+      {/* Upload Form - BIG and CLEAR */}
+      <div
+        ref={formRef}
+        className="mb-10 bg-gradient-to-br from-blue-50 to-green-50 rounded-3xl p-8 shadow-2xl border-4"
+        style={{ borderColor: branding.primaryColor }}
+      >
+        <h2
+          className="text-4xl font-bold mb-2 flex items-center gap-3"
+          style={{ color: branding.primaryColor }}
+        >
+          <span className="text-5xl">✨</span>
+          Share Your Community Moment
+        </h2>
+        <p className="text-xl text-gray-600 mb-6">Upload a photo and tell us your story!</p>
 
-          <label className="block font-semibold mb-1 text-lg" htmlFor="cm-title">
-            Title
-          </label>
-          <input
-            id="cm-title"
-            className="w-full border rounded p-2 mb-3 text-lg"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            maxLength={50}
-            required
-          />
-
-          <label className="block font-semibold mb-1 text-lg" htmlFor="cm-desc">
-            Description
-          </label>
-          <textarea
-            id="cm-desc"
-            className="w-full border rounded p-2 mb-3 text-lg"
-            placeholder="Share the story or memory behind this moment..."
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={3}
-            maxLength={240}
-            required
-          />
-
-          <div className="flex items-center mb-3">
-            <label className="font-semibold mr-3 text-lg" htmlFor="cm-emoji">
-              Emoji:
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Photo Upload */}
+          <div>
+            <label className="block font-bold mb-3 text-2xl text-[#003865]" htmlFor="cm-photo">
+              📷 Choose a Photo
             </label>
-            <motion.button
-              id="cm-emoji"
-              type="button"
-              className="px-3 py-1 border rounded bg-gray-100 text-3xl"
-              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-              variants={
-                {
-                  hidden: { scale: 0, opacity: 0, rotate: -90 },
-                  visible: { scale: 1.2, opacity: 1, rotate: 0, transition: { type: 'spring', stiffness: 300 } },
-                  tap: { scale: 1.4 },
-                } as any
-              }
-              initial="hidden"
-              animate="visible"
-              whileTap="tap"
-              aria-haspopup="dialog"
-              aria-expanded={showEmojiPicker}
-              style={{ fontSize: '2rem' }}
-            >
-              {emoji || '😊'}
-            </motion.button>
-            {showEmojiPicker &&
-              isBrowser &&
-              createPortal(
-                <div
-                  className="z-50 fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white border rounded shadow p-2"
-                  role="dialog"
-                  aria-label="Choose an emoji"
-                >
-                  {/* onEmojiClick type varies by version; using any */}
-                  {/* @ts-ignore */}
-                  <EmojiPicker onEmojiClick={handleEmojiClick} searchDisabled height={350} width={320} />
-                </div>,
-                document.body
-              )}
-            <span className="text-gray-600 text-base ml-3">Tap to choose an emoji</span>
+            <input
+              id="cm-photo"
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="w-full text-xl p-4 bg-white rounded-xl border-4 border-gray-300 focus:border-[#8cc63f] focus:outline-none cursor-pointer file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-xl file:font-bold file:bg-[#003865] file:text-white hover:file:bg-[#8cc63f] file:cursor-pointer"
+              aria-required
+            />
+            {previewUrl && (
+              <motion.div
+                className="mt-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                <p className="text-lg font-semibold text-green-600 mb-2">✓ Photo selected! Preview:</p>
+                <img
+                  src={previewUrl}
+                  alt="Preview"
+                  className="max-w-md rounded-xl shadow-lg border-4 border-green-400"
+                />
+              </motion.div>
+            )}
           </div>
 
-          <label className="block font-semibold mb-1 text-lg" htmlFor="cm-tags">
-            Tags <span className="text-gray-400 text-sm">(comma separated)</span>
-          </label>
-          <input
-            id="cm-tags"
-            className="w-full border rounded p-2 mb-3 text-lg"
-            value={tags}
-            onChange={(e) => setTags(e.target.value)}
-            placeholder="fun, family, sunday, event"
-            maxLength={60}
-          />
+          {/* Title */}
+          <div>
+            <label className="block font-bold mb-3 text-2xl text-[#003865]" htmlFor="cm-title">
+              ✏️ Give it a Title
+            </label>
+            <input
+              id="cm-title"
+              className="w-full border-4 border-gray-300 rounded-xl p-4 text-2xl focus:border-[#8cc63f] focus:outline-none"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Example: Sunday Family Picnic"
+              maxLength={50}
+              required
+            />
+          </div>
 
+          {/* Description */}
+          <div>
+            <label className="block font-bold mb-3 text-2xl text-[#003865]" htmlFor="cm-desc">
+              💬 Tell Your Story
+            </label>
+            <textarea
+              id="cm-desc"
+              className="w-full border-4 border-gray-300 rounded-xl p-4 text-2xl focus:border-[#8cc63f] focus:outline-none"
+              placeholder="Share the memory behind this photo..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={4}
+              maxLength={240}
+              required
+            />
+          </div>
+
+          {/* Emoji - LARGE and EASY */}
+          <div>
+            <label className="block font-bold mb-3 text-2xl text-[#003865]">
+              😊 Pick an Emoji (Optional)
+            </label>
+            <div className="flex flex-wrap gap-3 mb-4">
+              {QUICK_EMOJIS.map((e) => (
+                <motion.button
+                  key={e}
+                  type="button"
+                  onClick={() => selectQuickEmoji(e)}
+                  className={`text-6xl p-4 rounded-2xl transition-all ${emoji === e ? 'shadow-2xl scale-110' : 'bg-white shadow-lg'}`}
+                  style={{
+                    backgroundColor: emoji === e ? branding.secondaryColor || '#8cc63f' : 'white'
+                  }}
+                  whileHover={{ scale: 1.15, rotate: [0, -5, 5, -5, 0] }}
+                  whileTap={{ scale: 1.2, rotate: 15 }}
+                  transition={{ type: 'spring', stiffness: 300 }}
+                  aria-label={`Select ${e} emoji`}
+                >
+                  {e}
+                </motion.button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+              className="text-xl font-semibold text-[#003865] underline hover:text-[#8cc63f]"
+            >
+              Or browse more emojis...
+            </button>
+
+            {showEmojiPicker && isBrowser && createPortal(
+              <div
+                className="z-50 fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white border-4 border-[#003865] rounded-2xl shadow-2xl p-4"
+                role="dialog"
+                aria-label="Choose an emoji"
+              >
+                <button
+                  onClick={() => setShowEmojiPicker(false)}
+                  className="absolute top-2 right-2 text-3xl font-bold text-gray-600 hover:text-red-600 px-3"
+                  aria-label="Close emoji picker"
+                >
+                  ✕
+                </button>
+                {/* @ts-ignore */}
+                <EmojiPicker onEmojiClick={handleEmojiClick} searchDisabled={false} height={450} width={400} />
+              </div>,
+              document.body
+            )}
+          </div>
+
+          {/* Tags */}
+          <div>
+            <label className="block font-bold mb-3 text-2xl text-[#003865]" htmlFor="cm-tags">
+              🏷️ Add Tags (Optional)
+            </label>
+            <input
+              id="cm-tags"
+              className="w-full border-4 border-gray-300 rounded-xl p-4 text-2xl focus:border-[#8cc63f] focus:outline-none"
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+              placeholder="family, fun, celebration"
+              maxLength={60}
+            />
+          </div>
+
+          {/* Submit Button - HUGE */}
           <button
             type="submit"
             disabled={uploading}
-            className="bg-[#003865] hover:bg-[#8cc63f] disabled:opacity-60 text-white px-6 py-2 rounded-xl font-bold w-full text-xl transition"
+            className="disabled:opacity-60 disabled:cursor-not-allowed text-white px-12 py-6 rounded-2xl font-bold w-full text-3xl transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105"
+            style={{
+              background: uploading ? '#999' : `linear-gradient(to right, ${branding.primaryColor}, ${branding.secondaryColor || '#8cc63f'})`
+            }}
           >
-            {uploading ? 'Uploading…' : 'Share Moment'}
+            {uploading ? (
+              <span className="flex items-center justify-center gap-3">
+                <span className="animate-spin text-4xl">⏳</span>
+                Uploading Your Moment...
+              </span>
+            ) : (
+              <span className="flex items-center justify-center gap-3">
+                <span className="text-4xl">🚀</span>
+                Share My Moment!
+              </span>
+            )}
           </button>
+
           {error && (
-            <p className="text-red-600 text-lg mt-2" role="alert">
-              {error}
-            </p>
+            <div className="bg-red-100 border-4 border-red-400 text-red-800 p-5 rounded-2xl text-xl font-semibold" role="alert">
+              ⚠️ {error}
+            </div>
           )}
         </form>
       </div>
 
-      {/* All Moments */}
-      <h2 className="text-2xl font-bold mb-3 text-[#003865]">All Community Moments</h2>
+      {/* All Moments Gallery */}
+      <h2
+        className="text-4xl font-bold mb-6 flex items-center gap-3"
+        style={{ color: branding.primaryColor }}
+      >
+        <span className="text-5xl">🖼️</span>
+        All Community Moments
+      </h2>
+
       {initialLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="bg-white rounded-xl shadow p-4">
-              <div className="w-full h-56 bg-gray-100 animate-pulse rounded mb-2" />
-              <div className="h-6 bg-gray-100 animate-pulse rounded mb-2" />
-              <div className="h-4 bg-gray-100 animate-pulse rounded mb-1" />
-              <div className="h-4 bg-gray-100 animate-pulse rounded w-1/2" />
+            <div key={i} className="bg-white rounded-2xl shadow-xl p-6">
+              <div className="w-full h-80 bg-gradient-to-br from-gray-100 to-gray-200 animate-pulse rounded-xl mb-4" />
+              <div className="h-8 bg-gray-200 animate-pulse rounded-xl mb-3" />
+              <div className="h-6 bg-gray-200 animate-pulse rounded-xl mb-2" />
+              <div className="h-6 bg-gray-200 animate-pulse rounded-xl w-2/3" />
             </div>
           ))}
         </div>
       ) : (
         <>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-2">
             {regular.map((m) => (
               <MomentCard key={m.id} m={m} isAdmin={isAdmin} onFeatureChange={handleFeatureChange} />
             ))}
             {regular.length === 0 && (
-              <div className="text-gray-400 text-center text-xl py-8 col-span-full">No moments shared yet.</div>
+              <div className="text-gray-400 text-center text-2xl py-12 col-span-full bg-white rounded-2xl shadow-lg">
+                <p className="text-6xl mb-4">📸</p>
+                <p className="font-semibold">No moments shared yet.</p>
+                <p className="text-xl mt-2">Be the first to share!</p>
+              </div>
             )}
           </div>
+
           {hasMore && (
-            <div className="flex justify-center mt-6">
+            <div className="flex justify-center mt-8">
               <button
                 onClick={loadMore}
                 disabled={loadingMore}
-                className="bg-white border border-[#003865] text-[#003865] hover:bg-[#8cc63f] hover:text-white font-semibold px-6 py-2 rounded-xl shadow-sm transition"
+                className="bg-white border-4 font-bold px-10 py-5 rounded-2xl shadow-xl text-2xl transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed hover:text-white"
+                style={{
+                  borderColor: branding.primaryColor,
+                  color: branding.primaryColor
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = branding.secondaryColor || '#8cc63f';
+                  e.currentTarget.style.borderColor = branding.secondaryColor || '#8cc63f';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'white';
+                  e.currentTarget.style.borderColor = branding.primaryColor;
+                }}
               >
-                {loadingMore ? 'Loading…' : 'Load more'}
+                {loadingMore ? (
+                  <span className="flex items-center gap-3">
+                    <span className="animate-spin">⏳</span>
+                    Loading...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-3">
+                    <span>👇</span>
+                    Load More Moments
+                  </span>
+                )}
               </button>
             </div>
           )}
