@@ -595,8 +595,19 @@ export class FHIRInteroperabilityIntegrator {
   }
 
   private async importFHIRData(communityUserId: string, fhirData: any): Promise<void> {
-    // Import patient demographics
-    if (fhirData.patient) {
+    const currentUser = (await supabase.auth.getUser()).data.user;
+    const startTime = Date.now();
+
+    // SOC 2: Log PHI import attempt
+    await this.logAuditEvent('FHIR_IMPORT_STARTED', {
+      actor_user_id: currentUser?.id,
+      target_user_id: communityUserId,
+      timestamp: new Date().toISOString()
+    });
+
+    try {
+      // Import patient demographics
+      if (fhirData.patient) {
       const patient = fhirData.patient;
       const name = patient.name?.[0];
       const telecom = patient.telecom || [];
@@ -786,6 +797,59 @@ export class FHIRInteroperabilityIntegrator {
             .insert({ ...carePlanData, created_at: new Date().toISOString() });
         }
       }
+    }
+
+    // SOC 2: Log successful import completion
+    const duration = Date.now() - startTime;
+    await this.logAuditEvent('FHIR_IMPORT_COMPLETED', {
+      actor_user_id: currentUser?.id,
+      target_user_id: communityUserId,
+      duration_ms: duration,
+      resources_imported: {
+        immunizations: fhirData.immunizations?.length || 0,
+        carePlans: fhirData.carePlans?.length || 0
+      },
+      timestamp: new Date().toISOString()
+    });
+
+    } catch (error) {
+      // SOC 2: Log import failure (no PHI in logs)
+      await this.logSecurityEvent('FHIR_IMPORT_FAILED', {
+        actor_user_id: currentUser?.id,
+        target_user_id: communityUserId,
+        error_type: error instanceof Error ? error.constructor.name : 'Unknown',
+        error_message: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      });
+      throw error;
+    }
+  }
+
+  // SOC 2: Audit logging helper
+  private async logAuditEvent(eventType: string, metadata: any): Promise<void> {
+    try {
+      await supabase.from('audit_logs').insert({
+        event_type: eventType,
+        event_category: 'PHI_ACCESS',
+        metadata: metadata,
+        created_at: new Date().toISOString()
+      });
+    } catch (err) {
+      console.error('[CRITICAL] Audit logging failed:', err);
+    }
+  }
+
+  // SOC 2: Security event logging helper
+  private async logSecurityEvent(eventType: string, metadata: any): Promise<void> {
+    try {
+      await supabase.from('security_events').insert({
+        event_type: eventType,
+        severity: 'HIGH',
+        metadata: metadata,
+        created_at: new Date().toISOString()
+      });
+    } catch (err) {
+      console.error('[CRITICAL] Security event logging failed:', err);
     }
   }
 

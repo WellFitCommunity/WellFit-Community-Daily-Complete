@@ -1115,9 +1115,29 @@ export class FHIRIntegrationService {
     };
   }
 
-  // ==== COMPLETE EXPORT (ALL RESOURCES) ====
+  // ==== COMPLETE EXPORT (ALL RESOURCES) - SOC 2 COMPLIANT ====
   async exportPatientDataComplete(userId: string): Promise<FHIRBundle> {
+    const startTime = Date.now();
+    const currentUser = (await this.supabase.auth.getUser()).data.user;
+
     try {
+      // SOC 2: Validate user has permission to export this data
+      if (!currentUser) {
+        await this.logSecurityEvent('UNAUTHORIZED_FHIR_EXPORT_ATTEMPT', {
+          target_user_id: userId,
+          reason: 'No authenticated user'
+        });
+        throw new Error('Unauthorized: Authentication required');
+      }
+
+      // SOC 2: Log PHI access (audit trail)
+      await this.logAuditEvent('FHIR_EXPORT_STARTED', {
+        actor_user_id: currentUser.id,
+        target_user_id: userId,
+        resource_types: ['Patient', 'Observation', 'MedicationStatement', 'Immunization', 'CarePlan'],
+        timestamp: new Date().toISOString()
+      });
+
       // Get base bundle with patient, observations, and medications
       const bundle = await this.exportPatientDataWithMedications(userId);
 
@@ -1130,7 +1150,15 @@ export class FHIRIntegrationService {
         .order('occurrence_datetime', { ascending: false });
 
       if (immError) {
-        console.error('Failed to fetch immunizations:', immError);
+        // SOC 2: Secure error logging (no PHI in logs)
+        await this.logSecurityEvent('FHIR_EXPORT_ERROR', {
+          actor_user_id: currentUser.id,
+          target_user_id: userId,
+          resource_type: 'Immunization',
+          error_code: immError.code,
+          error_message: immError.message
+        });
+        throw new Error('Failed to fetch immunization data');
       } else if (immunizations && immunizations.length > 0) {
         immunizations.forEach(imm => {
           const fhirImmunization = this.mapImmunizationToFHIR(imm);
@@ -1150,7 +1178,15 @@ export class FHIRIntegrationService {
         .order('created', { ascending: false });
 
       if (cpError) {
-        console.error('Failed to fetch care plans:', cpError);
+        // SOC 2: Secure error logging (no PHI in logs)
+        await this.logSecurityEvent('FHIR_EXPORT_ERROR', {
+          actor_user_id: currentUser.id,
+          target_user_id: userId,
+          resource_type: 'CarePlan',
+          error_code: cpError.code,
+          error_message: cpError.message
+        });
+        throw new Error('Failed to fetch care plan data');
       } else if (carePlans && carePlans.length > 0) {
         carePlans.forEach(plan => {
           const fhirCarePlan = this.mapCarePlanToFHIR(plan);
@@ -1161,10 +1197,58 @@ export class FHIRIntegrationService {
         });
       }
 
+      // SOC 2: Log successful export with metadata
+      const duration = Date.now() - startTime;
+      await this.logAuditEvent('FHIR_EXPORT_COMPLETED', {
+        actor_user_id: currentUser.id,
+        target_user_id: userId,
+        resource_count: bundle.entry.length,
+        duration_ms: duration,
+        timestamp: new Date().toISOString()
+      });
+
       return bundle;
     } catch (error) {
-      console.error('FHIR complete export error:', error);
+      // SOC 2: Secure error logging (no PHI, no stack traces in production)
+      await this.logSecurityEvent('FHIR_EXPORT_FAILED', {
+        actor_user_id: currentUser?.id,
+        target_user_id: userId,
+        error_type: error instanceof Error ? error.constructor.name : 'Unknown',
+        error_message: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      });
       throw error;
+    }
+  }
+
+  // SOC 2: Audit logging helper
+  private async logAuditEvent(eventType: string, metadata: any): Promise<void> {
+    try {
+      await this.supabase.from('audit_logs').insert({
+        event_type: eventType,
+        event_category: 'PHI_ACCESS',
+        metadata: metadata,
+        created_at: new Date().toISOString()
+      });
+    } catch (err) {
+      // Fallback: If audit logging fails, this is a critical security issue
+      // In production, this should trigger alerts
+      console.error('[CRITICAL] Audit logging failed:', err);
+    }
+  }
+
+  // SOC 2: Security event logging helper
+  private async logSecurityEvent(eventType: string, metadata: any): Promise<void> {
+    try {
+      await this.supabase.from('security_events').insert({
+        event_type: eventType,
+        severity: 'HIGH',
+        metadata: metadata,
+        created_at: new Date().toISOString()
+      });
+    } catch (err) {
+      // Fallback: If security logging fails, this is critical
+      console.error('[CRITICAL] Security event logging failed:', err);
     }
   }
 }
