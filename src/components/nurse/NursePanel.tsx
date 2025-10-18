@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import RequireAdminAuth from '../auth/RequireAdminAuth';
 import AdminHeader from '../admin/AdminHeader';
 import UserQuestions from '../UserQuestions';
@@ -73,7 +72,7 @@ const NurseEnrollPatientSection: React.FC = () => {
     try {
       const tempPassword = generateTempPassword();
 
-      const { data, error } = await supabase.functions.invoke('enrollClient', {
+      const { error } = await supabase.functions.invoke('enrollClient', {
         body: {
           phone,
           password: tempPassword,
@@ -188,31 +187,133 @@ const NursePanel: React.FC = () => {
         {/* Header without API Key Manager */}
         <AdminHeader title="Nurse Dashboard" showRiskAssessment={true} />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
 
-          {/* Smart Shift Handoff - AI-Assisted Patient Prioritization */}
-          <CollapsibleSection title="Smart Shift Handoff - Patient Prioritization" icon="🔄" defaultOpen={true}>
-            <ShiftHandoffDashboard />
-          </CollapsibleSection>
+          {/* ============================================================ */}
+          {/* HOSPITAL NURSING TOOLS */}
+          {/* ============================================================ */}
+          <section>
+            <div className="mb-4 pb-2 border-b-2 border-blue-500">
+              <h2 className="text-2xl font-bold text-blue-800 flex items-center gap-2">
+                🏥 Hospital Nursing Tools
+              </h2>
+              <p className="text-sm text-gray-600 mt-1">
+                For acute care, ICU, ER, and med/surg nurses
+              </p>
+            </div>
 
-          {/* Emotional Resilience Hub - Nurse Wellness */}
-          <CollapsibleSection title="Emotional Resilience Hub 🧘" icon="🧘" defaultOpen={false}>
-            <ResilienceHubDashboard />
-          </CollapsibleSection>
+            <div className="space-y-6">
+              {/* Smart Shift Handoff - AI-Assisted Patient Prioritization */}
+              <CollapsibleSection title="Smart Shift Handoff - Patient Prioritization" icon="🔄" defaultOpen={true}>
+                <ShiftHandoffDashboard />
+              </CollapsibleSection>
+
+              {/* Emotional Resilience Hub - Hospital Nurses */}
+              <CollapsibleSection title="Emotional Resilience Hub - Prevent Burnout" icon="🧘" defaultOpen={false}>
+                <div className="mb-4 p-4 bg-teal-50 border border-teal-200 rounded-lg">
+                  <p className="text-teal-800 text-sm">
+                    <strong>For Hospital Nurses:</strong> Track shift-related stress, manage emotional exhaustion
+                    from high-acuity patients, and access support resources tailored for acute care settings.
+                  </p>
+                </div>
+                <ResilienceHubDashboard />
+              </CollapsibleSection>
+            </div>
+          </section>
+
+          {/* ============================================================ */}
+          {/* COMMUNITY CARE MANAGEMENT (CCM) TOOLS */}
+          {/* ============================================================ */}
+          <section>
+            <div className="mb-4 pb-2 border-b-2 border-green-500">
+              <h2 className="text-2xl font-bold text-green-800 flex items-center gap-2">
+                🏡 Community Care Management (CCM) Tools
+              </h2>
+              <p className="text-sm text-gray-600 mt-1">
+                For telehealth, home health, and chronic care nurses
+              </p>
+            </div>
+
+            <div className="space-y-6">
+              {/* Emotional Resilience Hub - CCM Nurses */}
+              <CollapsibleSection title="Emotional Resilience Hub - Prevent Burnout" icon="🧘" defaultOpen={false}>
+                <div className="mb-4 p-4 bg-teal-50 border border-teal-200 rounded-lg">
+                  <p className="text-teal-800 text-sm">
+                    <strong>For CCM Nurses:</strong> Track compassion fatigue, manage call volume stress,
+                    and access resources for remote care providers dealing with isolation and boundary challenges.
+                  </p>
+                </div>
+                <ResilienceHubDashboard />
+              </CollapsibleSection>
+
+              {/* Project Atlas: CCM Autopilot */}
+              <CollapsibleSection title="CCM Autopilot - Chronic Care Management" icon="⏱️">
+                <CCMTimeline />
+              </CollapsibleSection>
+
+              {/* Project Atlas: Revenue Dashboard */}
+              <CollapsibleSection title="Revenue Dashboard - Project Atlas" icon="💰">
+                <RevenueDashboard />
+              </CollapsibleSection>
+            </div>
+          </section>
+
+          {/* ============================================================ */}
+          {/* SHARED TOOLS (All Nurses) */}
+          {/* ============================================================ */}
+          <section>
+            <div className="mb-4 pb-2 border-b-2 border-purple-500">
+              <h2 className="text-2xl font-bold text-purple-800 flex items-center gap-2">
+                🛠️ Shared Tools - All Nurses
+              </h2>
+            </div>
+
+            <div className="space-y-6">
 
           {/* Patient Questions - Default Open for Quick Access */}
-          <CollapsibleSection title="Patient Questions & Responses" icon="💬" defaultOpen={true}>
+          <CollapsibleSection title="Patient Questions & Responses" icon="💬" defaultOpen={false}>
             <UserQuestions
               isAdmin={true}
               onSubmitQuestion={async (data) => {
-                console.log('Question submitted:', data);
+                const { error } = await supabase
+                  .from('user_questions')
+                  .insert({
+                    question_text: data.question_text,
+                    category: data.category,
+                    status: 'pending'
+                  });
+
+                if (error) {
+                  throw new Error(`Failed to submit question: ${error.message}`);
+                }
               }}
               onSubmitResponse={async (questionId, responseText) => {
-                console.log('Response submitted:', questionId, responseText);
+                const { error } = await supabase
+                  .from('user_questions')
+                  .update({
+                    response_text: responseText,
+                    status: 'answered',
+                    answered_at: new Date().toISOString()
+                  })
+                  .eq('id', questionId);
+
+                if (error) {
+                  throw new Error(`Failed to submit response: ${error.message}`);
+                }
               }}
               onLoadQuestions={async () => {
-                // Load questions from your database
-                return [];
+                const { data, error } = await supabase
+                  .from('user_questions')
+                  .select('*')
+                  .order('created_at', { ascending: false })
+                  .limit(50);
+
+                if (error) {
+                  // Return empty array on error - component will handle error state
+                  return [];
+                }
+
+                return data || [];
               }}
             />
           </CollapsibleSection>
@@ -220,16 +321,6 @@ const NursePanel: React.FC = () => {
           {/* Smart Medical Scribe */}
           <CollapsibleSection title="Smart Medical Scribe" icon="🎤">
             <SmartScribe />
-          </CollapsibleSection>
-
-          {/* Project Atlas: CCM Autopilot */}
-          <CollapsibleSection title="CCM Autopilot - Chronic Care Management" icon="⏱️">
-            <CCMTimeline />
-          </CollapsibleSection>
-
-          {/* Project Atlas: Revenue Dashboard */}
-          <CollapsibleSection title="Revenue Dashboard - Project Atlas" icon="💰">
-            <RevenueDashboard />
           </CollapsibleSection>
 
           {/* Risk Assessment */}
@@ -246,6 +337,8 @@ const NursePanel: React.FC = () => {
           <CollapsibleSection title="Reports & Analytics" icon="📊">
             <ReportsSection />
           </CollapsibleSection>
+            </div>
+          </section>
 
         </div>
       </div>
