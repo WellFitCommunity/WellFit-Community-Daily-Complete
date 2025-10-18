@@ -19,6 +19,20 @@ interface WhatsNewModalProps {
 
 const RECENT_FEATURES: Feature[] = [
   {
+    title: 'Physician Command Center',
+    description: 'Revolutionary AI-powered physician dashboard with real-time FHIR vitals, SmartScribe billing integration (CPT, ICD-10, HCPCS, SDOH Z-codes, CCM codes), patient intelligence summaries, revenue optimization, and comprehensive clinical decision support. Includes live patient selector, CCM eligibility detection, and automated revenue opportunity identification.',
+    category: 'new',
+    date: '2025-10-18',
+    icon: '🩺',
+  },
+  {
+    title: 'Role-Based Routing Fixed',
+    description: 'All 10 healthcare staff roles now properly recognized and routed after login. Nurses, physicians, NPs, PAs, clinical supervisors, and other clinical staff now bypass demographics and route to role-specific dashboards with proper PIN verification.',
+    category: 'fixed',
+    date: '2025-10-18',
+    icon: '🔐',
+  },
+  {
     title: 'Medicine Cabinet Connected',
     description: 'AI-powered Medicine Cabinet now accessible to seniors from their dashboard. Features medication label scanning with Claude Vision, adherence tracking, refill reminders, and drug interaction warnings.',
     category: 'new',
