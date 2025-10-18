@@ -1,17 +1,17 @@
-// src/pages/AdminLoginPage.tsx — PRODUCTION-READY (Maria copy-paste)
-// Purpose: Second-factor admin gate (PIN) after admin email login.
+// src/pages/AdminLoginPage.tsx — PRODUCTION-READY with full role-based routing
+// Purpose: Second-factor staff gate (PIN) after staff email/phone login.
 // Notes:
-// - Confirms admin via multiple sources, including a DB check on profiles.is_admin.
+// - Confirms staff/admin via multiple sources, including a DB check on profiles.is_admin.
 // - Two modes: "unlock" (enter PIN) and "setpin" (create/update PIN).
 // - Uses useAdminAuth().verifyPinAndLogin(pin, role) to unlock session.
 // - Expects an Edge Function 'admin_set_pin' to store hashed PIN server-side.
+// - Routes users to appropriate dashboard based on their role after PIN verification
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth, useSupabaseClient } from '../contexts/AuthContext';
 import { useAdminAuth } from '../contexts/AdminAuthContext';
-
-type AdminRole = 'admin' | 'super_admin';
+import { StaffRole, ROLE_DISPLAY_NAMES } from '../types/roles';
 
 type LocationState = {
   message?: string;
@@ -30,7 +30,8 @@ export default function AdminLoginPage() {
 
   // UI state
   const [mode, setMode] = useState<'unlock' | 'setpin'>('unlock');
-  const [role, setRole] = useState<AdminRole>('admin');
+  const [role, setRole] = useState<StaffRole>('admin');
+  const [detectedRole, setDetectedRole] = useState<StaffRole | null>(null);
   const [pin, setPin] = useState('');
   const [pin2, setPin2] = useState('');
   const [localErr, setLocalErr] = useState<string | null>(state.message || null);
@@ -44,23 +45,36 @@ export default function AdminLoginPage() {
     return user?.email || (user as any)?.phone || user?.user_metadata?.email || 'Unknown user';
   }, [user]);
 
-  // Fetch admin flag from DB (authoritative within app schema)
+  // Fetch admin flag AND role from DB (authoritative within app schema)
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      if (!user?.id) return setDbIsAdmin(false);
+      if (!user?.id) {
+        setDbIsAdmin(false);
+        setDetectedRole(null);
+        return;
+      }
+
       const { data, error: selErr } = await supabase
         .from('profiles')
-        .select('is_admin')
+        .select('is_admin, role')
         .eq('user_id', user.id)
         .maybeSingle();
 
       if (!cancelled) {
         if (selErr) {
-          console.warn('profiles.is_admin check failed:', selErr?.message);
+          console.warn('profiles check failed:', selErr?.message);
           setDbIsAdmin(null); // fall back to other checks
+          setDetectedRole(null);
         } else {
           setDbIsAdmin(Boolean(data?.is_admin));
+          const userRole = (data?.role || null) as StaffRole | null;
+          setDetectedRole(userRole);
+          // Auto-select detected role
+          if (userRole) {
+            setRole(userRole);
+          }
+          console.log('[AdminLoginPage] Detected role:', userRole);
         }
       }
     })();
@@ -146,7 +160,7 @@ export default function AdminLoginPage() {
 
     setBusy(true);
     try {
-      const { data, error: fnErr } = await supabase.functions.invoke('admin_set_pin', {
+      const { error: fnErr } = await supabase.functions.invoke('admin_set_pin', {
         body: { pin: p1, role }
       });
 
@@ -154,7 +168,6 @@ export default function AdminLoginPage() {
         setLocalErr(fnErr.message || 'Could not set PIN.');
         return;
       }
-      // Optional: inspect data for confirmation
       setSuccessMsg('PIN saved successfully. You can now unlock the Admin Panel.');
       setMode('unlock');
       setPin('');
@@ -165,6 +178,25 @@ export default function AdminLoginPage() {
       setBusy(false);
     }
   }
+
+  // Helper function to get dashboard route for a role
+  const getDashboardForRole = (staffRole: StaffRole): string => {
+    switch (staffRole) {
+      case 'nurse':
+      case 'nurse_practitioner':
+      case 'clinical_supervisor':
+        return '/nurse-dashboard';
+      case 'physician':
+      case 'doctor':
+        return '/physician-dashboard';
+      case 'admin':
+      case 'super_admin':
+      case 'department_head':
+        return '/admin';
+      default:
+        return '/admin'; // Fallback to admin panel
+    }
+  };
 
   async function handleUnlock(e?: React.FormEvent) {
     e?.preventDefault();
@@ -184,8 +216,11 @@ export default function AdminLoginPage() {
         return;
       }
 
-      // Redirect to intended path or admin home
-      const intendedPath = state.from?.pathname || '/admin';
+      // Redirect to role-specific dashboard
+      const defaultDashboard = getDashboardForRole(role);
+      const intendedPath = state.from?.pathname || defaultDashboard;
+
+      console.log('[AdminLoginPage] PIN verified for role:', role, '- redirecting to:', intendedPath);
       navigate(intendedPath, { replace: true });
     } catch (err: any) {
       setLocalErr(err?.message || 'Unable to verify PIN. Please try again.');
@@ -257,16 +292,24 @@ export default function AdminLoginPage() {
         <form className="grid gap-3" onSubmit={handleUnlock} noValidate>
           <div>
             <label htmlFor="role-select" className="block text-sm font-medium text-gray-700 mb-1">
-              Admin Role for this session
+              Your Role {detectedRole && <span className="text-xs text-gray-500">(detected: {ROLE_DISPLAY_NAMES[detectedRole]})</span>}
             </label>
             <select
               id="role-select"
               className="border border-gray-300 p-2 rounded w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               value={role}
-              onChange={(e) => setRole(e.target.value as AdminRole)}
+              onChange={(e) => setRole(e.target.value as StaffRole)}
             >
-              <option value="admin">Admin</option>
-              <option value="super_admin">Super Admin</option>
+              <option value="admin">Administrator</option>
+              <option value="super_admin">Super Administrator</option>
+              <option value="nurse">Nurse (RN/LPN)</option>
+              <option value="nurse_practitioner">Nurse Practitioner</option>
+              <option value="physician">Physician</option>
+              <option value="doctor">Doctor</option>
+              <option value="physician_assistant">Physician Assistant</option>
+              <option value="clinical_supervisor">Clinical Supervisor</option>
+              <option value="department_head">Department Head</option>
+              <option value="physical_therapist">Physical Therapist</option>
             </select>
           </div>
 
@@ -325,16 +368,24 @@ export default function AdminLoginPage() {
         <form className="grid gap-3" onSubmit={handleSetPin} noValidate>
           <div>
             <label htmlFor="role-select-set" className="block text-sm font-medium text-gray-700 mb-1">
-              Set PIN for Role
+              Set PIN for Role {detectedRole && <span className="text-xs text-gray-500">(detected: {ROLE_DISPLAY_NAMES[detectedRole]})</span>}
             </label>
             <select
               id="role-select-set"
               className="border border-gray-300 p-2 rounded w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               value={role}
-              onChange={(e) => setRole(e.target.value as AdminRole)}
+              onChange={(e) => setRole(e.target.value as StaffRole)}
             >
-              <option value="admin">Admin</option>
-              <option value="super_admin">Super Admin</option>
+              <option value="admin">Administrator</option>
+              <option value="super_admin">Super Administrator</option>
+              <option value="nurse">Nurse (RN/LPN)</option>
+              <option value="nurse_practitioner">Nurse Practitioner</option>
+              <option value="physician">Physician</option>
+              <option value="doctor">Doctor</option>
+              <option value="physician_assistant">Physician Assistant</option>
+              <option value="clinical_supervisor">Clinical Supervisor</option>
+              <option value="department_head">Department Head</option>
+              <option value="physical_therapist">Physical Therapist</option>
             </select>
           </div>
 

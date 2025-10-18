@@ -54,6 +54,7 @@ const DoctorsViewPage = React.lazy(() => import('./pages/DoctorsViewPage'));
 const AdminPanel = React.lazy(() => import('./components/admin/AdminPanel'));
 const AdminProfileEditorPage = React.lazy(() => import('./pages/AdminProfileEditorPage'));
 const NursePanel = React.lazy(() => import('./components/nurse/NursePanel'));
+const PhysicianPanel = React.lazy(() => import('./components/physician/PhysicianPanel'));
 const BulkEnrollmentPanel = React.lazy(() => import('./components/admin/BulkEnrollmentPanel'));
 const BulkExportPanel = React.lazy(() => import('./components/admin/BulkExportPanel'));
 const EnrollSeniorPage = React.lazy(() => import('./pages/EnrollSeniorPage'));
@@ -172,8 +173,18 @@ function Shell() {
                 path="/nurse-dashboard"
                 element={
                   <RequireAuth>
-                    <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'nurse']}>
+                    <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'nurse', 'nurse_practitioner', 'clinical_supervisor']}>
                       <NursePanel />
+                    </RequireAdminAuth>
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/physician-dashboard"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'physician', 'doctor', 'physician_assistant']}>
+                      <PhysicianPanel />
                     </RequireAdminAuth>
                   </RequireAuth>
                 }

@@ -135,9 +135,18 @@ const LoginPage: React.FC = () => {
     // 1. Forced password change applies to everyone (including admins)
     if (forcePwd) return '/change-password';
 
-    // 2. Admin/staff bypass demographics and consent - go straight to admin panel
-    if (role === 'admin' || role === 'super_admin' || roleCode === 1 || roleCode === 2) {
-      console.log('[LoginPage] Admin detected, bypassing onboarding');
+    // 2. Check if user has any staff role (admin, nurse, physician, etc.)
+    // All staff bypass demographics and consent - go straight to PIN verification
+    const staffRoles = [
+      'admin', 'super_admin', 'nurse', 'physician', 'doctor',
+      'nurse_practitioner', 'physician_assistant', 'clinical_supervisor',
+      'department_head', 'physical_therapist'
+    ];
+
+    const staffRoleCodes = [1, 2, 3, 5, 8, 9, 10, 11, 12]; // All staff role codes
+
+    if (staffRoles.includes(role) || staffRoleCodes.includes(roleCode)) {
+      console.log('[LoginPage] Staff role detected:', role, 'code:', roleCode, '- redirecting to admin-login for PIN');
       return '/admin-login';
     }
 
