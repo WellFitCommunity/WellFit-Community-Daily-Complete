@@ -14,6 +14,7 @@ import type {
   ProviderDailyCheckin,
 } from '../../types/nurseos';
 import DailyCheckinForm from './DailyCheckinForm';
+import PersonalizedGreeting from '../shared/PersonalizedGreeting';
 
 export const ResilienceHubDashboard: React.FC = () => {
   const user = useUser();
@@ -121,6 +122,12 @@ export const ResilienceHubDashboard: React.FC = () => {
 
   return (
     <div className="resilience-hub-dashboard">
+      {/* Personalized Greeting */}
+      <PersonalizedGreeting
+        userName={user?.email || user?.user_metadata?.full_name}
+        userRole="nurse"
+      />
+
       {/* Header */}
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-800 mb-1">Emotional Resilience Hub 🧘</h2>

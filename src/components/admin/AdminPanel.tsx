@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
+import { useUser } from '../../contexts/AuthContext';
 import RequireAdminAuth from 'components/auth/RequireAdminAuth';
 import AdminHeader from './AdminHeader';
 import WhatsNewModal from './WhatsNewModal';
@@ -22,6 +23,7 @@ import ClaimsSubmissionPanel from '../atlas/ClaimsSubmissionPanel';
 import ClaimsAppealsPanel from '../atlas/ClaimsAppealsPanel';
 import AdminTransferLogs from '../handoff/AdminTransferLogs';
 import PatientEngagementDashboard from './PatientEngagementDashboard';
+import PersonalizedGreeting from '../shared/PersonalizedGreeting';
 
 // Collapsible Section Component
 interface CollapsibleSectionProps {
@@ -72,6 +74,7 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
 
 const AdminPanel: React.FC = () => {
   const { adminRole } = useAdminAuth();
+  const user = useUser();
   const navigate = useNavigate();
   const [showWhatsNew, setShowWhatsNew] = useState(false);
 
@@ -91,6 +94,12 @@ const AdminPanel: React.FC = () => {
       <div className="min-h-screen bg-gray-50">
         <AdminHeader title="WellFit Admin Dashboard" showRiskAssessment={true} />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+          {/* Personalized Greeting */}
+          <PersonalizedGreeting
+            userName={user?.email || user?.user_metadata?.full_name}
+            userRole="admin"
+          />
 
           {/* What's New Modal */}
           <WhatsNewModal isOpen={showWhatsNew} onClose={() => setShowWhatsNew(false)} />

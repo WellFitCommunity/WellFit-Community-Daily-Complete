@@ -10,6 +10,7 @@ import { useUser } from '../../contexts/AuthContext';
 import { ShiftHandoffService } from '../../services/shiftHandoffService';
 import HandoffCelebration from './HandoffCelebration';
 import HandoffBypassModal, { BypassFormData } from './HandoffBypassModal';
+import PersonalizedGreeting from '../shared/PersonalizedGreeting';
 import type {
   ShiftHandoffSummary,
   HandoffDashboardMetrics,
@@ -268,6 +269,12 @@ export const ShiftHandoffDashboard: React.FC = () => {
 
   return (
     <div className="shift-handoff-dashboard">
+      {/* Personalized Greeting */}
+      <PersonalizedGreeting
+        userName={user?.email || user?.user_metadata?.full_name}
+        userRole="nurse"
+      />
+
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">

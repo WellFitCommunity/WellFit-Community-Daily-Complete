@@ -21,6 +21,7 @@ export const HandoffCelebration: React.FC<HandoffCelebrationProps> = ({
   bypassUsed = false,
   bypassNumber = 0,
 }) => {
+  const [showConfetti] = useState(true);
   const [bounceIndex, setBounceIndex] = useState(0);
 
   // Dancing healthcare workers (diverse representation)
