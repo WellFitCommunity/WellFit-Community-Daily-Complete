@@ -43,7 +43,7 @@ serve(async (req: Request): Promise<Response> => {
     const user = userData.user;
 
     const { data: row, error: pinErr } = await supabase
-      .from("admin_pins")
+      .from("staff_pins")
       .select("pin_hash")
       .eq("user_id", user.id)
       .eq("role", role)

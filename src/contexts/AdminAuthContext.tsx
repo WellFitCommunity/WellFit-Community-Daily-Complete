@@ -7,18 +7,29 @@ import React, {
   useState
 } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { StaffRole, RoleAccessScopes, roleHasAccess, ROLE_DISPLAY_NAMES } from '../types/roles';
 
-type AdminRole = 'admin' | 'super_admin';
+// Backwards compatibility: AdminRole is now StaffRole
+export type AdminRole = StaffRole;
 
 interface AdminAuthContextType {
   isAdminAuthenticated: boolean;
-  adminRole: AdminRole | null;
+  adminRole: StaffRole | null;
+  accessScopes: RoleAccessScopes | null;
   isLoading: boolean;
   error: string | null;
 
   // PIN flow
-  verifyPinAndLogin: (pin: string, role: AdminRole) => Promise<boolean>;
+  verifyPinAndLogin: (pin: string, role: StaffRole) => Promise<boolean>;
   logoutAdmin: () => void;
+
+  // Permission checks
+  hasAccess: (requiredRole: StaffRole) => boolean;
+  canViewNurse: boolean;
+  canViewPhysician: boolean;
+  canViewAdmin: boolean;
+  canSupervise: boolean;
+  canManageDepartment: boolean;
 
   // Use this to call admin-only Edge Functions (adds admin token header)
   invokeAdminFunction: <T = any>(
@@ -35,13 +46,14 @@ const adminTokenRefGlobal: { current: string | null } = { current: null };
 const SESSION_STORAGE_KEY = 'wellfit_admin_auth';
 interface AdminSessionData {
   isAuthenticated: boolean;
-  role: AdminRole | null;
+  role: StaffRole | null;
   expires_at: string | null; // ISO
 }
 
 export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
-  const [adminRole, setAdminRole] = useState<AdminRole | null>(null);
+  const [adminRole, setAdminRole] = useState<StaffRole | null>(null);
+  const [accessScopes, setAccessScopes] = useState<RoleAccessScopes | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
@@ -88,7 +100,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return () => clearExpiryTimer();
   }, []);
 
-  function persistSession(isAuthenticated: boolean, role: AdminRole | null, expires_at: string | null) {
+  function persistSession(isAuthenticated: boolean, role: StaffRole | null, expires_at: string | null) {
     if (isAuthenticated && role && expires_at) {
       const data: AdminSessionData = { isAuthenticated, role, expires_at };
       sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(data));
@@ -97,7 +109,26 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }
 
-  const verifyPinAndLogin = useCallback(async (pin: string, role: AdminRole): Promise<boolean> => {
+  // Fetch access scopes from database
+  const fetchAccessScopes = useCallback(async (userId: string): Promise<RoleAccessScopes | null> => {
+    try {
+      const { data, error } = await supabase.rpc('get_role_access_scopes', {
+        check_user_id: userId,
+      });
+
+      if (error) {
+        console.error('Error fetching access scopes:', error);
+        return null;
+      }
+
+      return data as RoleAccessScopes;
+    } catch (e) {
+      console.error('Failed to fetch access scopes:', e);
+      return null;
+    }
+  }, []);
+
+  const verifyPinAndLogin = useCallback(async (pin: string, role: StaffRole): Promise<boolean> => {
     setIsLoading(true);
     setError(null);
     try {
@@ -137,6 +168,13 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         adminTokenRef.current = token;
         adminTokenRefGlobal.current = token;
 
+        // Fetch access scopes for this user
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const scopes = await fetchAccessScopes(user.id);
+          setAccessScopes(scopes);
+        }
+
         return true;
       } else {
         setError(data?.error || 'Invalid PIN or unexpected response.');
@@ -159,6 +197,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const logoutAdmin = useCallback(() => {
     setIsAdminAuthenticated(false);
     setAdminRole(null);
+    setAccessScopes(null);
     setError(null);
     setExpiresAt(null);
     persistSession(false, null, null);
@@ -166,6 +205,22 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     adminTokenRef.current = null;
     adminTokenRefGlobal.current = null;
   }, []);
+
+  // Permission check helper
+  const hasAccess = useCallback(
+    (requiredRole: StaffRole): boolean => {
+      if (!adminRole) return false;
+      return roleHasAccess(adminRole, requiredRole);
+    },
+    [adminRole]
+  );
+
+  // Computed permission flags
+  const canViewNurse = accessScopes?.canViewNurse ?? false;
+  const canViewPhysician = accessScopes?.canViewPhysician ?? false;
+  const canViewAdmin = accessScopes?.canViewAdmin ?? false;
+  const canSupervise = accessScopes?.canSupervise ?? false;
+  const canManageDepartment = accessScopes?.canManageDepartment ?? false;
 
   // All admin-only functions should be called through this helper.
   // It adds the short-lived admin token in a header the server validates.
@@ -193,10 +248,17 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       value={{
         isAdminAuthenticated,
         adminRole,
+        accessScopes,
         isLoading,
         error,
         verifyPinAndLogin,
         logoutAdmin,
+        hasAccess,
+        canViewNurse,
+        canViewPhysician,
+        canViewAdmin,
+        canSupervise,
+        canManageDepartment,
         invokeAdminFunction,
       }}
     >

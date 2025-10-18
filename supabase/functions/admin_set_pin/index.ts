@@ -11,7 +11,18 @@ const supabase = createClient(SUPABASE_URL, SB_SECRET_KEY);
 
 const schema = z.object({
   pin: z.string().regex(/^\d{4,8}$/, "PIN must be 4–8 digits"),
-  role: z.enum(["admin", "super_admin"]).default("admin"),
+  role: z.enum([
+    "admin",
+    "super_admin",
+    "nurse",
+    "physician",
+    "doctor",
+    "nurse_practitioner",
+    "physician_assistant",
+    "clinical_supervisor",
+    "department_head",
+    "physical_therapist"
+  ]).default("admin"),
 });
 
 serve(async (req) => {
@@ -50,7 +61,7 @@ serve(async (req) => {
     const { pin, role } = parsed.data;
     const pin_hash = await hashPin(pin);
 
-    const { error } = await supabase.from("admin_pins").upsert({
+    const { error } = await supabase.from("staff_pins").upsert({
       user_id,
       role,
       pin_hash,

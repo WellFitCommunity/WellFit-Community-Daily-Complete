@@ -2,15 +2,16 @@
 import { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
+import { StaffRole } from '../../types/roles';
 
 interface RequireAdminAuthProps {
   children: ReactNode;
-  allowedRoles?: ('admin' | 'super_admin' | 'nurse')[];
+  allowedRoles?: StaffRole[];
 }
 
 export default function RequireAdminAuth({
   children,
-  allowedRoles = ['admin', 'super_admin', 'nurse'],
+  allowedRoles = ['admin', 'super_admin'],
 }: RequireAdminAuthProps) {
   const { isAdminAuthenticated, adminRole, isLoading } = useAdminAuth();
   const location = useLocation();
