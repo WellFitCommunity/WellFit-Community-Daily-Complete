@@ -125,7 +125,9 @@ function areArraysEqual(a?: unknown[], b?: unknown[]) {
 /** Wrapper to inject useful resetKeys like the current route */
 export default function ErrorBoundary(props: Omit<Props, 'resetKeys'> & { resetKeys?: unknown[] }) {
   const location = useLocation();
-  const navigate = useNavigate(); // keep useful for custom fallback if needed
+  // navigate is available for future custom fallback use
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const navigate = useNavigate();
 
   const routeKey = location.pathname + location.search;
   const combinedKeys = React.useMemo(

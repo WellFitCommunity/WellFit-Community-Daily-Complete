@@ -31,7 +31,7 @@ const AdminFeatureToggle: React.FC<Props> = ({
     if (localError) {
       setLocalError('');
     }
-  }, [isFeatured]);
+  }, [isFeatured, localError]);
 
   const getErrorMessage = (error: unknown): string => {
     if (error instanceof Error) {

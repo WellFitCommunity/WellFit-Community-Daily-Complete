@@ -43,7 +43,7 @@ interface Moment {
   emoji: string;
   tags: string;
   is_gallery_high: boolean;
-  is_approved?: boolean;
+  approval_status?: string;
   created_at: string;
   profile?: Profile;
 }
@@ -195,9 +195,10 @@ const CommunityMoments: React.FC = () => {
         const { data, error, count } = await supabase
           .from('community_moments')
           .select(
-            'id, user_id, file_url, file_path, title, description, emoji, tags, is_gallery_high, created_at, profile:profiles(first_name, last_name)',
+            'id, user_id, file_url, file_path, title, description, emoji, tags, is_gallery_high, approval_status, created_at, profile:profiles(first_name, last_name)',
             { count: 'exact' }
           )
+          .eq('approval_status', 'approved')
           .order('created_at', { ascending: false })
           .range(0, PAGE_SIZE - 1);
 
@@ -214,6 +215,7 @@ const CommunityMoments: React.FC = () => {
           emoji: r.emoji,
           tags: r.tags,
           is_gallery_high: !!r.is_gallery_high,
+          approval_status: r.approval_status,
           created_at: r.created_at,
           profile: r.profile,
         }));
@@ -243,8 +245,9 @@ const CommunityMoments: React.FC = () => {
       const { data, error } = await supabase
         .from('community_moments')
         .select(
-          'id, user_id, file_url, file_path, title, description, emoji, tags, is_gallery_high, created_at, profile:profiles(first_name, last_name)'
+          'id, user_id, file_url, file_path, title, description, emoji, tags, is_gallery_high, approval_status, created_at, profile:profiles(first_name, last_name)'
         )
+        .eq('approval_status', 'approved')
         .order('created_at', { ascending: false })
         .range(from, to);
       if (error) throw error;
@@ -259,6 +262,7 @@ const CommunityMoments: React.FC = () => {
         emoji: r.emoji,
         tags: r.tags,
         is_gallery_high: !!r.is_gallery_high,
+        approval_status: r.approval_status,
         created_at: r.created_at,
         profile: r.profile,
       }));
@@ -343,12 +347,16 @@ const CommunityMoments: React.FC = () => {
         emoji,
         tags: cleanTags,
         is_gallery_high: false,
+        approval_status: 'pending',
         file_path: filePath,
         file_url: publicUrlData?.publicUrl ?? '',
       };
 
       const { error: insertError } = await supabase.from('community_moments').insert([insertBody]);
       if (insertError) throw new Error('Failed to save moment.');
+
+      // Show success message about approval
+      alert('✅ Photo uploaded successfully! It will appear here once approved by our team.');
 
       // Reset form
       setSelectedFile(null);
@@ -370,8 +378,9 @@ const CommunityMoments: React.FC = () => {
       const { data } = await supabase
         .from('community_moments')
         .select(
-          'id, user_id, file_url, file_path, title, description, emoji, tags, is_gallery_high, created_at, profile:profiles(first_name, last_name)'
+          'id, user_id, file_url, file_path, title, description, emoji, tags, is_gallery_high, approval_status, created_at, profile:profiles(first_name, last_name)'
         )
+        .eq('approval_status', 'approved')
         .order('created_at', { ascending: false })
         .range(0, PAGE_SIZE - 1);
       const rows = (data ?? []) as any[];
@@ -385,6 +394,7 @@ const CommunityMoments: React.FC = () => {
         emoji: r.emoji,
         tags: r.tags,
         is_gallery_high: !!r.is_gallery_high,
+        approval_status: r.approval_status,
         created_at: r.created_at,
         profile: r.profile,
       }));

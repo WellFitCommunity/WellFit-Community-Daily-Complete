@@ -10,9 +10,7 @@ import TechTip from './TechTip';
 import PositiveAffirmations from './PositiveAffirmations';
 import EmergencyContact from '../features/EmergencyContact';
 import WhatsNewSeniorModal from '../WhatsNewSeniorModal';
-import HealthObservationsWidget from './HealthObservationsWidget';
-import CarePlansWidget from './CarePlansWidget';
-import VaccineGapsWidget from './VaccineGapsWidget';
+// Health widgets removed - now accessible via My Health Hub page
 
 const SeniorCommunityDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -266,7 +264,7 @@ const SeniorCommunityDashboard: React.FC = () => {
     }
   };
 
-  const logCheckIn = async (type: string, label: string, response: string, metadata?: any) => {
+  const logCheckIn = async (_type: string, label: string, response: string, metadata?: any) => {
     try {
       await supabase.from('check_ins').insert({
         user_id: user?.id,
@@ -616,32 +614,23 @@ const SeniorCommunityDashboard: React.FC = () => {
               <TechTip />
             </div>
 
-            {/* Health Observations */}
-            <HealthObservationsWidget />
-
-            {/* Vaccine Gaps */}
-            <VaccineGapsWidget />
-
-            {/* Care Plans */}
-            <CarePlansWidget />
-
-            {/* Medicine Cabinet */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <div className="text-center">
-                <div className="text-3xl mb-3">💊</div>
-                <h3 className="text-xl font-bold text-[#003865] mb-3">
-                  Medicine Cabinet
-                </h3>
-                <p className="text-gray-600 mb-4 text-sm">
-                  AI-powered medication tracking & management
-                </p>
-                <button
-                  onClick={() => navigate('/medicine-cabinet')}
-                  className="w-full p-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all transform hover:scale-105 text-lg font-semibold"
-                >
-                  Open Medicine Cabinet
-                </button>
-              </div>
+            {/* My Health Records Hub - Large, Easy-to-See Button */}
+            <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl shadow-lg p-8 text-center transform hover:scale-105 transition-all duration-300 hover:shadow-2xl">
+              <div className="text-5xl mb-4">🏥</div>
+              <h3 className="text-2xl font-bold text-white mb-3 drop-shadow-lg">
+                My Health Records
+              </h3>
+              <p className="text-white/90 mb-6 text-lg leading-relaxed">
+                View your vaccines, vitals, labs, medications, and care plans
+              </p>
+              <button
+                onClick={() => navigate('/my-health')}
+                className="w-full p-4 bg-white text-blue-700 rounded-lg hover:bg-gray-50 transition-all transform hover:scale-105 text-xl font-bold shadow-lg flex items-center justify-center gap-3"
+              >
+                <span className="text-2xl">📋</span>
+                <span>View My Health Records</span>
+                <span className="text-2xl">→</span>
+              </button>
             </div>
 
           </div>
