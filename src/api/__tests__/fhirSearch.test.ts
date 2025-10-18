@@ -28,19 +28,36 @@ describe('FHIR Search API', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    // Create chainable mock query
+    // Create fully chainable mock query object that is also awaitable
     mockQuery = {
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      lt: jest.fn().mockReturnThis(),
-      lte: jest.fn().mockReturnThis(),
-      gt: jest.fn().mockReturnThis(),
-      gte: jest.fn().mockReturnThis(),
-      contains: jest.fn().mockReturnThis(),
-      order: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockReturnThis(),
+      select: jest.fn(),
+      eq: jest.fn(),
+      lt: jest.fn(),
+      lte: jest.fn(),
+      gt: jest.fn(),
+      gte: jest.fn(),
+      contains: jest.fn(),
+      order: jest.fn(),
+      limit: jest.fn(),
+      neq: jest.fn(),
+      in: jest.fn(),
+      like: jest.fn(),
+      ilike: jest.fn(),
+      is: jest.fn(),
+      filter: jest.fn(),
+      range: jest.fn(),
+      // Make it awaitable - this is key for Supabase queries!
+      then: jest.fn((resolve) => resolve({ data: [], error: null })),
     };
 
+    // Make ALL methods return the same mockQuery object to maintain chain
+    Object.keys(mockQuery).forEach(key => {
+      if (key !== 'then') { // Don't override the 'then' method
+        mockQuery[key].mockReturnValue(mockQuery);
+      }
+    });
+
+    // Mock supabase.from() to return the mockQuery
     (supabase.from as any).mockReturnValue(mockQuery);
   });
 
@@ -51,7 +68,8 @@ describe('FHIR Search API', () => {
         { id: 'med-2', patient_id: 'patient-123', medication_display: 'Lisinopril 10mg' },
       ];
 
-      mockQuery.select.mockResolvedValue({ data: mockData, error: null });
+      // Set the data that will be returned when the query is awaited
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: mockData, error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123' };
       const result = await searchMedicationRequests(params);
@@ -67,7 +85,7 @@ describe('FHIR Search API', () => {
 
     it('should search by status', async () => {
       const mockData = [{ id: 'med-1', status: 'active' }];
-      mockQuery.select.mockResolvedValue({ data: mockData, error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: mockData, error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123', status: 'active' };
       await searchMedicationRequests(params);
@@ -77,7 +95,7 @@ describe('FHIR Search API', () => {
 
     it('should search by intent', async () => {
       const mockData = [{ id: 'med-1', intent: 'order' }];
-      mockQuery.select.mockResolvedValue({ data: mockData, error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: mockData, error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123', intent: 'order' };
       await searchMedicationRequests(params);
@@ -87,7 +105,7 @@ describe('FHIR Search API', () => {
 
     it('should search by medication code', async () => {
       const mockData = [{ id: 'med-1', medication_code: '123456' }];
-      mockQuery.select.mockResolvedValue({ data: mockData, error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: mockData, error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123', medication: '123456' };
       await searchMedicationRequests(params);
@@ -96,7 +114,7 @@ describe('FHIR Search API', () => {
     });
 
     it('should apply pagination', async () => {
-      mockQuery.select.mockResolvedValue({ data: [], error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: [], error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123', _count: 50 };
       await searchMedicationRequests(params);
@@ -105,7 +123,7 @@ describe('FHIR Search API', () => {
     });
 
     it('should apply default pagination when _count not specified', async () => {
-      mockQuery.select.mockResolvedValue({ data: [], error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: [], error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123' };
       await searchMedicationRequests(params);
@@ -114,7 +132,7 @@ describe('FHIR Search API', () => {
     });
 
     it('should apply sorting', async () => {
-      mockQuery.select.mockResolvedValue({ data: [], error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: [], error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123', _sort: '-authored_on' };
       await searchMedicationRequests(params);
@@ -124,7 +142,7 @@ describe('FHIR Search API', () => {
 
     it('should handle errors gracefully', async () => {
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-      mockQuery.select.mockResolvedValue({ data: null, error: new Error('Database error') });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: null, error: new Error('Database error') }));
 
       const params: FHIRSearchParams = { patient: 'patient-123' };
       const result = await searchMedicationRequests(params);
@@ -136,7 +154,7 @@ describe('FHIR Search API', () => {
     });
 
     it('should filter by _id', async () => {
-      mockQuery.select.mockResolvedValue({ data: [{ id: 'med-1' }], error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: [{ id: 'med-1' }], error: null }));
 
       const params: FHIRSearchParams = { _id: 'med-1' };
       await searchMedicationRequests(params);
@@ -148,7 +166,7 @@ describe('FHIR Search API', () => {
   describe('searchConditions', () => {
     it('should search by patient and category', async () => {
       const mockData = [{ id: 'cond-1', patient_id: 'patient-123', category: ['problem-list-item'] }];
-      mockQuery.select.mockResolvedValue({ data: mockData, error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: mockData, error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123', category: 'problem-list-item' };
       await searchConditions(params);
@@ -159,7 +177,7 @@ describe('FHIR Search API', () => {
 
     it('should search by clinical-status', async () => {
       const mockData = [{ id: 'cond-1', clinical_status: 'active' }];
-      mockQuery.select.mockResolvedValue({ data: mockData, error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: mockData, error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123', 'clinical-status': 'active' };
       await searchConditions(params);
@@ -169,7 +187,7 @@ describe('FHIR Search API', () => {
 
     it('should search by code', async () => {
       const mockData = [{ id: 'cond-1', code: 'I10' }];
-      mockQuery.select.mockResolvedValue({ data: mockData, error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: mockData, error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123', code: 'I10' };
       await searchConditions(params);
@@ -179,7 +197,7 @@ describe('FHIR Search API', () => {
 
     it('should search by onset-date with greater than prefix', async () => {
       const mockData = [{ id: 'cond-1', onset_datetime: '2025-01-01' }];
-      mockQuery.select.mockResolvedValue({ data: mockData, error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: mockData, error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123', 'onset-date': 'gt2025-01-01' };
       await searchConditions(params);
@@ -189,7 +207,7 @@ describe('FHIR Search API', () => {
 
     it('should search by recorded-date with less than prefix', async () => {
       const mockData = [{ id: 'cond-1', recorded_date: '2025-01-01' }];
-      mockQuery.select.mockResolvedValue({ data: mockData, error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: mockData, error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123', 'recorded-date': 'lt2025-12-31' };
       await searchConditions(params);
@@ -199,7 +217,7 @@ describe('FHIR Search API', () => {
 
     it('should search by verification-status', async () => {
       const mockData = [{ id: 'cond-1', verification_status: 'confirmed' }];
-      mockQuery.select.mockResolvedValue({ data: mockData, error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: mockData, error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123', 'verification-status': 'confirmed' };
       await searchConditions(params);
@@ -208,7 +226,7 @@ describe('FHIR Search API', () => {
     });
 
     it('should apply default sorting by recorded_date', async () => {
-      mockQuery.select.mockResolvedValue({ data: [], error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: [], error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123' };
       await searchConditions(params);
@@ -220,7 +238,7 @@ describe('FHIR Search API', () => {
   describe('searchDiagnosticReports', () => {
     it('should search by patient and category', async () => {
       const mockData = [{ id: 'report-1', patient_id: 'patient-123', category: ['LAB'] }];
-      mockQuery.select.mockResolvedValue({ data: mockData, error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: mockData, error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123', category: 'LAB' };
       await searchDiagnosticReports(params);
@@ -231,7 +249,7 @@ describe('FHIR Search API', () => {
 
     it('should search by status', async () => {
       const mockData = [{ id: 'report-1', status: 'final' }];
-      mockQuery.select.mockResolvedValue({ data: mockData, error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: mockData, error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123', status: 'final' };
       await searchDiagnosticReports(params);
@@ -241,7 +259,7 @@ describe('FHIR Search API', () => {
 
     it('should search by issued date with equal prefix', async () => {
       const mockData = [{ id: 'report-1', issued: '2025-01-15' }];
-      mockQuery.select.mockResolvedValue({ data: mockData, error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: mockData, error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123', issued: 'eq2025-01-15' };
       await searchDiagnosticReports(params);
@@ -251,7 +269,7 @@ describe('FHIR Search API', () => {
 
     it('should search by date parameter', async () => {
       const mockData = [{ id: 'report-1', issued: '2025-01-15' }];
-      mockQuery.select.mockResolvedValue({ data: mockData, error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: mockData, error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123', date: 'ge2025-01-01' };
       await searchDiagnosticReports(params);
@@ -261,7 +279,7 @@ describe('FHIR Search API', () => {
 
     it('should return Bundle with correct fullUrl', async () => {
       const mockData = [{ id: 'report-1' }];
-      mockQuery.select.mockResolvedValue({ data: mockData, error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: mockData, error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123' };
       const result = await searchDiagnosticReports(params);
@@ -273,7 +291,7 @@ describe('FHIR Search API', () => {
   describe('searchProcedures', () => {
     it('should search by patient', async () => {
       const mockData = [{ id: 'proc-1', patient_id: 'patient-123' }];
-      mockQuery.select.mockResolvedValue({ data: mockData, error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: mockData, error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123' };
       await searchProcedures(params);
@@ -283,7 +301,7 @@ describe('FHIR Search API', () => {
 
     it('should search by status and code', async () => {
       const mockData = [{ id: 'proc-1', status: 'completed', code: '99213' }];
-      mockQuery.select.mockResolvedValue({ data: mockData, error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: mockData, error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123', status: 'completed', code: '99213' };
       await searchProcedures(params);
@@ -294,7 +312,7 @@ describe('FHIR Search API', () => {
 
     it('should search by performed date', async () => {
       const mockData = [{ id: 'proc-1', performed_datetime: '2025-01-15' }];
-      mockQuery.select.mockResolvedValue({ data: mockData, error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: mockData, error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123', performed: 'le2025-01-31' };
       await searchProcedures(params);
@@ -304,7 +322,7 @@ describe('FHIR Search API', () => {
 
     it('should search by date parameter', async () => {
       const mockData = [{ id: 'proc-1', performed_datetime: '2025-01-15' }];
-      mockQuery.select.mockResolvedValue({ data: mockData, error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: mockData, error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123', date: 'gt2025-01-01' };
       await searchProcedures(params);
@@ -314,7 +332,7 @@ describe('FHIR Search API', () => {
 
     it('should search by encounter', async () => {
       const mockData = [{ id: 'proc-1', encounter_id: 'enc-123' }];
-      mockQuery.select.mockResolvedValue({ data: mockData, error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: mockData, error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123', encounter: 'enc-123' };
       await searchProcedures(params);
@@ -326,7 +344,7 @@ describe('FHIR Search API', () => {
   describe('searchAllergyIntolerances', () => {
     it('should search by patient', async () => {
       const mockData = [{ id: 'allergy-1', patient_id: 'patient-123' }];
-      mockQuery.select.mockResolvedValue({ data: mockData, error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: mockData, error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123' };
       await searchAllergyIntolerances(params);
@@ -336,7 +354,7 @@ describe('FHIR Search API', () => {
 
     it('should search by clinical-status', async () => {
       const mockData = [{ id: 'allergy-1', clinical_status: 'active' }];
-      mockQuery.select.mockResolvedValue({ data: mockData, error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: mockData, error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123', 'clinical-status': 'active' };
       await searchAllergyIntolerances(params);
@@ -346,7 +364,7 @@ describe('FHIR Search API', () => {
 
     it('should search by criticality', async () => {
       const mockData = [{ id: 'allergy-1', criticality: 'high' }];
-      mockQuery.select.mockResolvedValue({ data: mockData, error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: mockData, error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123', criticality: 'high' };
       await searchAllergyIntolerances(params);
@@ -356,7 +374,7 @@ describe('FHIR Search API', () => {
 
     it('should search by type', async () => {
       const mockData = [{ id: 'allergy-1', allergen_type: 'medication' }];
-      mockQuery.select.mockResolvedValue({ data: mockData, error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: mockData, error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123', type: 'medication' };
       await searchAllergyIntolerances(params);
@@ -366,7 +384,7 @@ describe('FHIR Search API', () => {
 
     it('should return Bundle with correct fullUrl', async () => {
       const mockData = [{ id: 'allergy-1' }];
-      mockQuery.select.mockResolvedValue({ data: mockData, error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: mockData, error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123' };
       const result = await searchAllergyIntolerances(params);
@@ -377,7 +395,7 @@ describe('FHIR Search API', () => {
 
   describe('FHIRSearchAPI.search', () => {
     it('should route to MedicationRequest search', async () => {
-      mockQuery.select.mockResolvedValue({ data: [{ id: 'med-1' }], error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: [{ id: 'med-1' }], error: null }));
 
       const result = await FHIRSearchAPI.search('MedicationRequest', { patient: 'patient-123' });
 
@@ -385,7 +403,7 @@ describe('FHIR Search API', () => {
     });
 
     it('should route to Condition search', async () => {
-      mockQuery.select.mockResolvedValue({ data: [{ id: 'cond-1' }], error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: [{ id: 'cond-1' }], error: null }));
 
       const result = await FHIRSearchAPI.search('Condition', { patient: 'patient-123' });
 
@@ -393,7 +411,7 @@ describe('FHIR Search API', () => {
     });
 
     it('should route to DiagnosticReport search', async () => {
-      mockQuery.select.mockResolvedValue({ data: [{ id: 'report-1' }], error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: [{ id: 'report-1' }], error: null }));
 
       const result = await FHIRSearchAPI.search('DiagnosticReport', { patient: 'patient-123' });
 
@@ -401,7 +419,7 @@ describe('FHIR Search API', () => {
     });
 
     it('should route to Procedure search', async () => {
-      mockQuery.select.mockResolvedValue({ data: [{ id: 'proc-1' }], error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: [{ id: 'proc-1' }], error: null }));
 
       const result = await FHIRSearchAPI.search('Procedure', { patient: 'patient-123' });
 
@@ -409,7 +427,7 @@ describe('FHIR Search API', () => {
     });
 
     it('should route to AllergyIntolerance search', async () => {
-      mockQuery.select.mockResolvedValue({ data: [{ id: 'allergy-1' }], error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: [{ id: 'allergy-1' }], error: null }));
 
       const result = await FHIRSearchAPI.search('AllergyIntolerance', { patient: 'patient-123' });
 
@@ -426,7 +444,7 @@ describe('FHIR Search API', () => {
 
   describe('Date search prefixes', () => {
     it('should handle eq (equals) prefix', async () => {
-      mockQuery.select.mockResolvedValue({ data: [], error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: [], error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123', date: 'eq2025-01-15' };
       await searchDiagnosticReports(params);
@@ -435,7 +453,7 @@ describe('FHIR Search API', () => {
     });
 
     it('should handle lt (less than) prefix', async () => {
-      mockQuery.select.mockResolvedValue({ data: [], error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: [], error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123', date: 'lt2025-01-15' };
       await searchDiagnosticReports(params);
@@ -444,7 +462,7 @@ describe('FHIR Search API', () => {
     });
 
     it('should handle le (less than or equal) prefix', async () => {
-      mockQuery.select.mockResolvedValue({ data: [], error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: [], error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123', date: 'le2025-01-15' };
       await searchDiagnosticReports(params);
@@ -453,7 +471,7 @@ describe('FHIR Search API', () => {
     });
 
     it('should handle gt (greater than) prefix', async () => {
-      mockQuery.select.mockResolvedValue({ data: [], error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: [], error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123', date: 'gt2025-01-15' };
       await searchDiagnosticReports(params);
@@ -462,7 +480,7 @@ describe('FHIR Search API', () => {
     });
 
     it('should handle ge (greater than or equal) prefix', async () => {
-      mockQuery.select.mockResolvedValue({ data: [], error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: [], error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123', date: 'ge2025-01-15' };
       await searchDiagnosticReports(params);
@@ -471,7 +489,7 @@ describe('FHIR Search API', () => {
     });
 
     it('should default to exact match without prefix', async () => {
-      mockQuery.select.mockResolvedValue({ data: [], error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: [], error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123', date: '2025-01-15' };
       await searchDiagnosticReports(params);
@@ -482,7 +500,7 @@ describe('FHIR Search API', () => {
 
   describe('Sorting', () => {
     it('should sort ascending by default', async () => {
-      mockQuery.select.mockResolvedValue({ data: [], error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: [], error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123', _sort: 'issued' };
       await searchDiagnosticReports(params);
@@ -491,7 +509,7 @@ describe('FHIR Search API', () => {
     });
 
     it('should sort descending with - prefix', async () => {
-      mockQuery.select.mockResolvedValue({ data: [], error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: [], error: null }));
 
       const params: FHIRSearchParams = { patient: 'patient-123', _sort: '-issued' };
       await searchDiagnosticReports(params);
@@ -506,7 +524,7 @@ describe('FHIR Search API', () => {
         { id: 'med-1', medication_display: 'Aspirin' },
         { id: 'med-2', medication_display: 'Lisinopril' },
       ];
-      mockQuery.select.mockResolvedValue({ data: mockData, error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: mockData, error: null }));
 
       const result = await searchMedicationRequests({ patient: 'patient-123' });
 
@@ -530,7 +548,7 @@ describe('FHIR Search API', () => {
     });
 
     it('should return empty bundle when no data', async () => {
-      mockQuery.select.mockResolvedValue({ data: [], error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: [], error: null }));
 
       const result = await searchMedicationRequests({ patient: 'patient-123' });
 
@@ -545,7 +563,7 @@ describe('FHIR Search API', () => {
 
   describe('Subject parameter (alias for patient)', () => {
     it('should accept subject parameter as alias for patient', async () => {
-      mockQuery.select.mockResolvedValue({ data: [], error: null });
+      mockQuery.then.mockImplementation((resolve) => resolve({ data: [], error: null }));
 
       const params: FHIRSearchParams = { subject: 'patient-123' };
       await searchMedicationRequests(params);

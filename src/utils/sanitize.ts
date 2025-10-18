@@ -171,7 +171,7 @@ export function sanitizePhone(phone: string | null | undefined): string {
  * @returns Safe filename
  */
 export function sanitizeFileName(filename: string | null | undefined): string {
-  if (!filename) return '';
+  if (!filename || filename.trim() === '') return 'unnamed';
 
   // Remove path separators and null bytes
   let safe = filename.replace(/[/\\:\0]/g, '');
