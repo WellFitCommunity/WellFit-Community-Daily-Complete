@@ -8,6 +8,8 @@ import RiskAssessmentManager from '../admin/RiskAssessmentManager';
 import ReportsSection from '../admin/ReportsSection';
 import CCMTimeline from '../atlas/CCMTimeline';
 import RevenueDashboard from '../atlas/RevenueDashboard';
+import ResilienceHubDashboard from '../nurseos/ResilienceHubDashboard';
+import ShiftHandoffDashboard from './ShiftHandoffDashboard';
 import { supabase } from '../../lib/supabaseClient';
 
 // Collapsible Section Component
@@ -187,6 +189,16 @@ const NursePanel: React.FC = () => {
         <AdminHeader title="Nurse Dashboard" showRiskAssessment={true} />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+          {/* Smart Shift Handoff - AI-Assisted Patient Prioritization */}
+          <CollapsibleSection title="Smart Shift Handoff - Patient Prioritization" icon="🔄" defaultOpen={true}>
+            <ShiftHandoffDashboard />
+          </CollapsibleSection>
+
+          {/* Emotional Resilience Hub - Nurse Wellness */}
+          <CollapsibleSection title="Emotional Resilience Hub 🧘" icon="🧘" defaultOpen={false}>
+            <ResilienceHubDashboard />
+          </CollapsibleSection>
 
           {/* Patient Questions - Default Open for Quick Access */}
           <CollapsibleSection title="Patient Questions & Responses" icon="💬" defaultOpen={true}>
