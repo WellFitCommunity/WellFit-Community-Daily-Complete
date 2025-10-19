@@ -19,6 +19,38 @@ interface PersonalizationRequest {
   requestType: string;
 }
 
+// ---------- PHI Redaction (HIPAA Compliance) ----------
+// Copied from coding-suggest/index.ts for consistency
+const redact = (s: string): string =>
+  s
+    .replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, "[EMAIL]")
+    .replace(/\+?1?[-.\s(]*\d{3}[-.\s)]*\d{3}[-.\s]*\d{4}\b/g, "[PHONE]")
+    .replace(/\b\d{3}-\d{2}-\d{4}\b/g, "[SSN]")
+    .replace(/\b\d{1,5}\s+[A-Za-z0-9'.\- ]+\b/g, (m) => (m.length > 6 ? "[ADDRESS]" : m))
+    .replace(/\b(19|20)\d{2}[-/](0?[1-9]|1[0-2])[-/](0?[1-9]|[12]\d|3[01])\b/g, "[DATE]");
+
+function deepDeidentify(obj: any): any {
+  if (obj == null) return obj;
+  if (Array.isArray(obj)) return obj.map(deepDeidentify);
+  if (typeof obj === "string") return redact(obj);
+  if (typeof obj === "object") {
+    const strip = new Set([
+      "patient_name", "first_name", "last_name", "middle_name",
+      "dob", "date_of_birth", "ssn", "email", "phone", "address",
+      "address_line1", "address_line2", "city", "state", "zip",
+      "mrn", "member_id", "insurance_id", "subscriber_name",
+      "patient_id", "person_id", "user_id", "uid"
+    ]);
+    const out: any = {};
+    for (const [k, v] of Object.entries(obj)) {
+      if (strip.has(k)) continue;
+      out[k] = deepDeidentify(v);
+    }
+    return out;
+  }
+  return obj;
+}
+
 serve(async (req) => {
   // CORS headers
   if (req.method === 'OPTIONS') {
@@ -39,9 +71,12 @@ serve(async (req) => {
       throw new Error('ANTHROPIC_API_KEY not configured');
     }
 
+    // HIPAA COMPLIANCE: Scrub PHI from prompt before sending to Claude
+    const scrubbedPrompt = redact(prompt);
+
     const startTime = Date.now();
 
-    // Call Claude API
+    // Call Claude API with scrubbed prompt
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -55,7 +90,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'user',
-            content: prompt,
+            content: scrubbedPrompt,
           },
         ],
       }),

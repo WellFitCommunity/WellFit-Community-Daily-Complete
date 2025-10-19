@@ -40,26 +40,22 @@ export interface UserPreferences {
 }
 
 export class UserBehaviorTracker {
-  private static STORAGE_KEY_PREFIX = 'admin_behavior_';
-
   /**
    * Track user interaction with dashboard section
+   * HIPAA COMPLIANCE: Only stores in database (no localStorage)
    */
   static async trackInteraction(interaction: UserInteraction): Promise<void> {
     try {
-      // Store in Supabase for long-term analytics
+      // Store in Supabase with RLS policies enforced
       await supabase.from('admin_usage_tracking').insert({
         user_id: interaction.userId,
         section_id: interaction.sectionId,
-        section_name: interaction.sectionName,
+        section_name: interaction.sectionName, // Must be generic, no PHI
         action: interaction.action,
         time_spent: interaction.timeSpent,
         role: interaction.role,
         created_at: interaction.timestamp.toISOString()
       });
-
-      // Also update localStorage for instant client-side personalization
-      this.updateLocalUsageData(interaction);
     } catch (error) {
       console.error('Failed to track interaction:', error);
       // Fail silently - tracking should never break the app
@@ -128,7 +124,7 @@ export class UserBehaviorTracker {
       return patterns.sort((a, b) => b.frequencyScore - a.frequencyScore);
     } catch (error) {
       console.error('Failed to get user patterns:', error);
-      return this.getLocalUsageData(userId);
+      return []; // Return empty array on error (no localStorage fallback)
     }
   }
 
@@ -149,76 +145,16 @@ export class UserBehaviorTracker {
   }
 
   /**
-   * Update local storage for instant personalization (fallback)
-   */
-  private static updateLocalUsageData(interaction: UserInteraction): void {
-    try {
-      const key = `${this.STORAGE_KEY_PREFIX}${interaction.userId}`;
-      const existing = localStorage.getItem(key);
-      const data = existing ? JSON.parse(existing) : { sections: {} };
-
-      if (!data.sections[interaction.sectionId]) {
-        data.sections[interaction.sectionId] = {
-          name: interaction.sectionName,
-          count: 0,
-          lastAccess: null
-        };
-      }
-
-      data.sections[interaction.sectionId].count++;
-      data.sections[interaction.sectionId].lastAccess = interaction.timestamp.toISOString();
-
-      localStorage.setItem(key, JSON.stringify(data));
-    } catch (error) {
-      console.error('Failed to update local usage data:', error);
-    }
-  }
-
-  /**
-   * Get local usage data (fallback when DB is unavailable)
-   */
-  private static getLocalUsageData(userId: string): UsagePattern[] {
-    try {
-      const key = `${this.STORAGE_KEY_PREFIX}${userId}`;
-      const data = localStorage.getItem(key);
-
-      if (!data) return [];
-
-      const parsed = JSON.parse(data);
-      const patterns: UsagePattern[] = [];
-
-      Object.entries(parsed.sections || {}).forEach(([sectionId, stats]: [string, any]) => {
-        patterns.push({
-          sectionId,
-          sectionName: stats.name,
-          openCount: stats.count,
-          totalTimeSpent: 0,
-          lastAccessed: new Date(stats.lastAccess),
-          frequencyScore: stats.count
-        });
-      });
-
-      return patterns.sort((a, b) => b.openCount - a.openCount);
-    } catch (error) {
-      console.error('Failed to get local usage data:', error);
-      return [];
-    }
-  }
-
-  /**
    * Clear user tracking data (for privacy/reset)
+   * HIPAA COMPLIANCE: Only database storage, no localStorage
    */
   static async clearUserData(userId: string): Promise<void> {
     try {
-      // Clear from database
+      // Clear from database only (RLS enforced)
       await supabase
         .from('admin_usage_tracking')
         .delete()
         .eq('user_id', userId);
-
-      // Clear from localStorage
-      const key = `${this.STORAGE_KEY_PREFIX}${userId}`;
-      localStorage.removeItem(key);
     } catch (error) {
       console.error('Failed to clear user data:', error);
     }

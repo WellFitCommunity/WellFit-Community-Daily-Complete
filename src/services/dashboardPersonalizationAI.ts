@@ -51,18 +51,22 @@ export class DashboardPersonalizationAI {
 
   /**
    * Get AI insights using Claude Haiku 4.5
+   * HIPAA COMPLIANCE: All calls logged to claude_usage_logs
    */
   private static async getAIInsights(
     preferences: UserPreferences,
     currentHour: number
   ): Promise<PersonalizationInsight[]> {
+    const requestId = crypto.randomUUID();
+    const startTime = Date.now();
+
     try {
       const model = getOptimalModel(RequestType.DASHBOARD_PREDICTION);
 
       // Build prompt for Claude
       const prompt = this.buildAnalysisPrompt(preferences, currentHour);
 
-      // Call Claude via Supabase Edge Function
+      // Call Claude via Supabase Edge Function (PHI scrubbing done in Edge Function)
       const { data, error } = await supabase.functions.invoke('claude-personalization', {
         body: {
           model,
@@ -74,8 +78,39 @@ export class DashboardPersonalizationAI {
 
       if (error) throw error;
 
+      const responseTime = Date.now() - startTime;
+
+      // HIPAA AUDIT LOGGING: Log successful AI call
+      await this.logAIUsage({
+        userId: preferences.userId,
+        requestId,
+        requestType: RequestType.DASHBOARD_PREDICTION,
+        model,
+        inputTokens: data.usage?.input_tokens || 0,
+        outputTokens: data.usage?.output_tokens || 0,
+        cost: this.calculateCost(data.usage),
+        responseTime,
+        success: true
+      });
+
       return this.parseAIResponse(data.content);
     } catch (error) {
+      const responseTime = Date.now() - startTime;
+
+      // HIPAA AUDIT LOGGING: Log failed AI call
+      await this.logAIUsage({
+        userId: preferences.userId,
+        requestId,
+        requestType: RequestType.DASHBOARD_PREDICTION,
+        model: getOptimalModel(RequestType.DASHBOARD_PREDICTION),
+        inputTokens: 0,
+        outputTokens: 0,
+        cost: 0,
+        responseTime,
+        success: false,
+        errorMessage: error instanceof Error ? error.message : 'Unknown error'
+      });
+
       console.error('AI insights failed, using pattern-based fallback:', error);
       return this.getPatternBasedInsights(preferences);
     }
@@ -286,6 +321,7 @@ Be concise and actionable. This powers real-time UI reorganization.`;
 
   /**
    * Track that user opened a section (for learning)
+   * HIPAA COMPLIANCE: Section names must be generic feature names only, no PHI
    */
   static async trackSectionOpen(
     userId: string,
@@ -293,13 +329,89 @@ Be concise and actionable. This powers real-time UI reorganization.`;
     sectionName: string,
     role: string
   ): Promise<void> {
+    // HIPAA COMPLIANCE: Validate section name contains no PHI
+    const sanitizedSectionName = this.sanitizeSectionName(sectionName);
+
     await UserBehaviorTracker.trackInteraction({
       userId,
       sectionId,
-      sectionName,
+      sectionName: sanitizedSectionName,
       action: 'open',
       timestamp: new Date(),
       role
     });
+  }
+
+  /**
+   * HIPAA COMPLIANCE: Ensure section names are de-identified
+   * Rejects names that look like PHI (patient names, emails, etc.)
+   */
+  private static sanitizeSectionName(name: string): string {
+    // Block common PHI patterns in section names
+    const phiPatterns = [
+      /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, // Email
+      /\b\d{3}-\d{2}-\d{4}\b/g, // SSN
+      /\b\d{3}[-.\s]\d{3}[-.\s]\d{4}\b/g, // Phone
+      /Patient:\s+[A-Z][a-z]+/i, // "Patient: John"
+      /Mr\.|Mrs\.|Ms\.|Dr\.\s+[A-Z][a-z]+/i, // "Dr. Smith"
+    ];
+
+    for (const pattern of phiPatterns) {
+      if (pattern.test(name)) {
+        console.warn(`HIPAA: Blocked PHI in section name: "${name}"`);
+        return 'generic-section'; // Fallback to generic name
+      }
+    }
+
+    return name;
+  }
+
+  /**
+   * HIPAA COMPLIANCE: Log AI usage to audit table
+   */
+  private static async logAIUsage(params: {
+    userId: string;
+    requestId: string;
+    requestType: string;
+    model: string;
+    inputTokens: number;
+    outputTokens: number;
+    cost: number;
+    responseTime: number;
+    success: boolean;
+    errorMessage?: string;
+  }): Promise<void> {
+    try {
+      await supabase.from('claude_usage_logs').insert({
+        user_id: params.userId,
+        request_id: params.requestId,
+        request_type: params.requestType,
+        model: params.model,
+        input_tokens: params.inputTokens,
+        output_tokens: params.outputTokens,
+        cost: params.cost,
+        response_time_ms: params.responseTime,
+        success: params.success,
+        error_code: params.success ? null : 'PERSONALIZATION_ERROR',
+        error_message: params.errorMessage || null,
+        created_at: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Failed to log AI usage (non-blocking):', error);
+      // Don't throw - audit logging failure should not break functionality
+    }
+  }
+
+  /**
+   * Calculate cost based on token usage
+   * Haiku 4.5: $0.0001/request (~$0.25 per 1M input tokens, $1.25 per 1M output)
+   */
+  private static calculateCost(usage?: { input_tokens?: number; output_tokens?: number }): number {
+    if (!usage) return 0;
+
+    const inputCost = (usage.input_tokens || 0) * 0.00000025; // $0.25 per 1M
+    const outputCost = (usage.output_tokens || 0) * 0.00000125; // $1.25 per 1M
+
+    return parseFloat((inputCost + outputCost).toFixed(4));
   }
 }
