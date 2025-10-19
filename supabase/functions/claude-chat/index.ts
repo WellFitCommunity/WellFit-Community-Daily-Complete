@@ -64,22 +64,82 @@ serve(async (req) => {
       apiKey: ANTHROPIC_API_KEY,
     });
 
+    // Generate request ID for tracking
+    const requestId = crypto.randomUUID();
+    const startTime = Date.now();
+    const modelUsed = model || "claude-3-5-sonnet-20241022";
+
     // Call Claude API
     const response = await anthropic.messages.create({
-      model: model || "claude-3-5-sonnet-20241022",
+      model: modelUsed,
       max_tokens: max_tokens || 4000,
       system: system || undefined,
       messages: messages,
     });
 
-    // Log usage for billing tracking
-    console.log(`[Claude API] User: ${user.id}, Model: ${model}, Input: ${response.usage.input_tokens}, Output: ${response.usage.output_tokens}`);
+    const responseTime = Date.now() - startTime;
+
+    // Calculate cost
+    const inputCost = (response.usage.input_tokens * 0.003) / 1000; // $3 per 1M tokens
+    const outputCost = (response.usage.output_tokens * 0.015) / 1000; // $15 per 1M tokens
+    const totalCost = inputCost + outputCost;
+
+    // HIPAA AUDIT LOGGING: Log to database (permanent record)
+    try {
+      await supabaseClient.from('claude_api_audit').insert({
+        request_id: requestId,
+        user_id: user.id,
+        request_type: 'chat',
+        model: modelUsed,
+        input_tokens: response.usage.input_tokens,
+        output_tokens: response.usage.output_tokens,
+        cost: totalCost,
+        response_time_ms: responseTime,
+        success: true,
+        phi_scrubbed: true,
+        metadata: {
+          max_tokens: max_tokens || 4000,
+          has_system: !!system,
+          message_count: messages.length
+        }
+      });
+    } catch (logError) {
+      // Don't fail request if logging fails, but log the error
+      console.error('[Audit Log Error]:', logError);
+    }
+
+    // Also log to console for real-time monitoring (temporary)
+    console.log(`[Claude API] RequestID: ${requestId}, User: ${user.id}, Model: ${modelUsed}, Input: ${response.usage.input_tokens}, Output: ${response.usage.output_tokens}, Cost: $${totalCost.toFixed(4)}, Time: ${responseTime}ms`);
 
     // Return response
     return new Response(JSON.stringify(response), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
+    // HIPAA AUDIT LOGGING: Log failure to database
+    try {
+      const requestId = crypto.randomUUID();
+      await supabaseClient.from('claude_api_audit').insert({
+        request_id: requestId,
+        user_id: user.id,
+        request_type: 'chat',
+        model: model || "claude-3-5-sonnet-20241022",
+        input_tokens: 0,
+        output_tokens: 0,
+        cost: 0,
+        response_time_ms: 0,
+        success: false,
+        error_code: error.name || 'UNKNOWN_ERROR',
+        error_message: error.message || error.toString(),
+        phi_scrubbed: true,
+        metadata: {
+          error_type: error.constructor.name
+        }
+      });
+    } catch (logError) {
+      console.error('[Audit Log Error]:', logError);
+    }
+
     console.error("[Claude API Error]:", error);
 
     return new Response(

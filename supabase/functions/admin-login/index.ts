@@ -67,6 +67,25 @@ serve(async (req: Request) => {
         );
       }
 
+      // HIPAA AUDIT LOGGING: Log successful admin login
+      try {
+        await supabaseAdmin.from('audit_logs').insert({
+          event_type: 'ADMIN_LOGIN_SUCCESS',
+          event_category: 'AUTHENTICATION',
+          actor_user_id: user.id,
+          actor_ip_address: req.headers.get('x-forwarded-for') || 'unknown',
+          actor_user_agent: req.headers.get('user-agent'),
+          action: 'ADMIN_LOGIN',
+          success: true,
+          metadata: {
+            expires_in: expiresIn,
+            admin_key_hash: adminKey.substring(0, 8) + '...' // First 8 chars only
+          }
+        });
+      } catch (logError) {
+        console.error('[Audit Log Error]:', logError);
+      }
+
       return new Response(
         JSON.stringify({
           success: true,
@@ -77,6 +96,26 @@ serve(async (req: Request) => {
         { status: 200, headers }
       );
     } else {
+      // HIPAA AUDIT LOGGING: Log failed admin login (invalid key)
+      try {
+        await supabaseAdmin.from('audit_logs').insert({
+          event_type: 'ADMIN_LOGIN_FAILED',
+          event_category: 'AUTHENTICATION',
+          actor_user_id: user.id,
+          actor_ip_address: req.headers.get('x-forwarded-for') || 'unknown',
+          actor_user_agent: req.headers.get('user-agent'),
+          action: 'ADMIN_LOGIN',
+          success: false,
+          error_code: 'INVALID_ADMIN_KEY',
+          error_message: 'Invalid admin key provided',
+          metadata: {
+            attempted_key_hash: adminKey.substring(0, 8) + '...'
+          }
+        });
+      } catch (logError) {
+        console.error('[Audit Log Error]:', logError);
+      }
+
       return new Response(
         JSON.stringify({ error: "Invalid admin key." }),
         { status: 401, headers }

@@ -129,6 +129,27 @@ serve(async (req: Request) => {
         status = 503;
       }
 
+      // HIPAA AUDIT LOGGING: Log failed login attempt to database
+      try {
+        await admin.from('audit_logs').insert({
+          event_type: 'USER_LOGIN_FAILED',
+          event_category: 'AUTHENTICATION',
+          actor_user_id: null, // Unknown - login failed
+          actor_ip_address: clientIp,
+          actor_user_agent: req.headers.get('user-agent'),
+          action: 'LOGIN',
+          success: false,
+          error_code: signInError.code || 'AUTH_ERROR',
+          error_message: signInError.message,
+          metadata: {
+            phone: e164,
+            error_type: msg.includes("invalid login") ? "INVALID_CREDENTIALS" : "OTHER"
+          }
+        });
+      } catch (logError) {
+        console.error('[Audit Log Error]:', logError);
+      }
+
       return new Response(JSON.stringify({ error: errorMessage, details: signInError.message }), { status, headers });
     }
 
@@ -155,6 +176,26 @@ serve(async (req: Request) => {
       }
     } catch (profileError) {
       console.warn("Profile routing unexpected error:", profileError);
+    }
+
+    // HIPAA AUDIT LOGGING: Log successful login to database
+    try {
+      await admin.from('audit_logs').insert({
+        event_type: 'USER_LOGIN_SUCCESS',
+        event_category: 'AUTHENTICATION',
+        actor_user_id: sessionData.user.id,
+        actor_ip_address: clientIp,
+        actor_user_agent: req.headers.get('user-agent'),
+        action: 'LOGIN',
+        success: true,
+        metadata: {
+          phone: e164,
+          next_route: nextRoute,
+          session_id: sessionData.session.access_token.substring(0, 16) + '...' // First 16 chars only
+        }
+      });
+    } catch (logError) {
+      console.error('[Audit Log Error]:', logError);
     }
 
     // ---- Success ----
