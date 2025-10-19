@@ -9,13 +9,13 @@ CREATE TABLE IF NOT EXISTS admin_usage_tracking (
   action TEXT NOT NULL CHECK (action IN ('open', 'close', 'click', 'view')),
   time_spent INTEGER, -- seconds spent in section
   role TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-
-  -- Indexes for fast queries
-  INDEX idx_usage_user_id (user_id),
-  INDEX idx_usage_created_at (created_at),
-  INDEX idx_usage_section_id (section_id)
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Create indexes for fast queries
+CREATE INDEX IF NOT EXISTS idx_usage_user_id ON admin_usage_tracking(user_id);
+CREATE INDEX IF NOT EXISTS idx_usage_created_at ON admin_usage_tracking(created_at);
+CREATE INDEX IF NOT EXISTS idx_usage_section_id ON admin_usage_tracking(section_id);
 
 -- Enable Row Level Security
 ALTER TABLE admin_usage_tracking ENABLE ROW LEVEL SECURITY;
