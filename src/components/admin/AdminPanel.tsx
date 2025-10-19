@@ -24,6 +24,10 @@ import ClaimsAppealsPanel from '../atlas/ClaimsAppealsPanel';
 import AdminTransferLogs from '../handoff/AdminTransferLogs';
 import PatientEngagementDashboard from './PatientEngagementDashboard';
 import PersonalizedGreeting from '../shared/PersonalizedGreeting';
+import { SOC2SecurityDashboard } from './SOC2SecurityDashboard';
+import { SOC2AuditDashboard } from './SOC2AuditDashboard';
+import { SOC2IncidentResponseDashboard } from './SOC2IncidentResponseDashboard';
+import { SOC2ExecutiveDashboard } from './SOC2ExecutiveDashboard';
 
 // Collapsible Section Component
 interface CollapsibleSectionProps {
@@ -290,6 +294,47 @@ const AdminPanel: React.FC = () => {
             headerColor="text-teal-800"
           >
             <AdminTransferLogs showExportButton={true} />
+          </CollapsibleSection>
+
+          {/* SOC 2 Compliance & Security Monitoring */}
+          <CollapsibleSection
+            title="SOC 2 Executive Summary"
+            subtitle="High-level security posture and compliance overview for leadership"
+            icon="📊"
+            headerColor="text-blue-900"
+            defaultOpen={false}
+          >
+            <SOC2ExecutiveDashboard />
+          </CollapsibleSection>
+
+          <CollapsibleSection
+            title="Security Operations Center"
+            subtitle="Real-time security monitoring, threat detection, and event tracking"
+            icon="🛡️"
+            headerColor="text-red-900"
+            defaultOpen={false}
+          >
+            <SOC2SecurityDashboard />
+          </CollapsibleSection>
+
+          <CollapsibleSection
+            title="Audit & Compliance Center"
+            subtitle="PHI access logs, audit trails, and SOC 2 compliance status"
+            icon="📋"
+            headerColor="text-indigo-900"
+            defaultOpen={false}
+          >
+            <SOC2AuditDashboard />
+          </CollapsibleSection>
+
+          <CollapsibleSection
+            title="Incident Response Center"
+            subtitle="Security incident investigation queue with SLA tracking"
+            icon="🚨"
+            headerColor="text-orange-900"
+            defaultOpen={false}
+          >
+            <SOC2IncidentResponseDashboard />
           </CollapsibleSection>
 
           {/* Core Admin Functions Grid */}
