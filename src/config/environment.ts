@@ -6,9 +6,9 @@ const envSchema = z.object({
   // Anthropic API Configuration - make optional to prevent crashes
   REACT_APP_ANTHROPIC_API_KEY: z.string().optional(),
 
-  // Claude Model Configuration - using latest Claude 3.5 Sonnet (Claude 4 equivalent)
-  REACT_APP_CLAUDE_DEFAULT_MODEL: z.string().default("claude-3-5-sonnet-20241022"),
-  REACT_APP_CLAUDE_ADMIN_MODEL: z.string().default("claude-3-5-sonnet-20241022"),
+  // Claude Model Configuration - Intelligent routing: Haiku 4.5 for UI, Sonnet 4.5 for revenue
+  REACT_APP_CLAUDE_DEFAULT_MODEL: z.string().default("claude-haiku-4-5-20250919"), // Fast UI/personalization
+  REACT_APP_CLAUDE_ADMIN_MODEL: z.string().default("claude-sonnet-4-5-20250929"), // Accurate billing/revenue
   REACT_APP_CLAUDE_MAX_TOKENS: z.coerce.number().default(4000),
   REACT_APP_CLAUDE_TIMEOUT: z.coerce.number().default(30000),
 

@@ -10,11 +10,12 @@ export enum UserRole {
 
 // Available Claude models with specific use cases
 export enum ClaudeModel {
-  HAIKU_3 = 'claude-3-haiku-20240307',
-  SONNET_3_5 = 'claude-3-5-sonnet-20241022',
+  HAIKU_3 = 'claude-3-haiku-20240307', // Legacy - being phased out
+  HAIKU_4_5 = 'claude-haiku-4-5-20250919', // LATEST: Ultra-fast, intelligent UI/UX personalization and pattern recognition
+  SONNET_3_5 = 'claude-3-5-sonnet-20241022', // Legacy - upgrade to 4.5
   SONNET_4 = 'claude-3-5-sonnet-20241022', // Legacy reference
-  SONNET_4_5 = 'claude-sonnet-4-5-20250929', // Latest model - best for complex agents and coding
-  OPUS_4_1 = 'claude-opus-4-1-20250805' // Advanced model for complex reasoning
+  SONNET_4_5 = 'claude-sonnet-4-5-20250929', // LATEST: Best for billing, revenue, medical coding - accuracy critical
+  OPUS_4_1 = 'claude-opus-4-1-20250805' // Advanced model for complex reasoning (reserved for future use)
 }
 
 // Request types for determining appropriate model
@@ -25,7 +26,16 @@ export enum RequestType {
   FHIR_ANALYSIS = 'fhir_analysis',
   RISK_ASSESSMENT = 'risk_assessment',
   CLINICAL_NOTES = 'clinical_notes',
-  HEALTH_INSIGHTS = 'health_insights'
+  HEALTH_INSIGHTS = 'health_insights',
+  // NEW: Smart dashboard and personalization types (use Haiku 4.5)
+  UI_PERSONALIZATION = 'ui_personalization',
+  USAGE_PATTERN_ANALYSIS = 'usage_pattern_analysis',
+  DASHBOARD_PREDICTION = 'dashboard_prediction',
+  // Revenue-critical types (use Sonnet 4.5)
+  MEDICAL_BILLING = 'medical_billing',
+  REVENUE_OPTIMIZATION = 'revenue_optimization',
+  CLAIMS_PROCESSING = 'claims_processing',
+  CPT_ICD_CODING = 'cpt_icd_coding'
 }
 
 // Health data context for Claude requests

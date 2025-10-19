@@ -8,11 +8,12 @@ export interface ModelSelectionStrategy {
 
 // Cost per 1K tokens for each model (input, output)
 const MODEL_COSTS = {
-  [ClaudeModel.HAIKU_3]: { input: 0.00025, output: 0.00125 },
-  [ClaudeModel.SONNET_3_5]: { input: 0.003, output: 0.015 },
+  [ClaudeModel.HAIKU_3]: { input: 0.00025, output: 0.00125 }, // Legacy
+  [ClaudeModel.HAIKU_4_5]: { input: 0.0001, output: 0.0005 }, // LATEST: Ultra-fast UI/personalization
+  [ClaudeModel.SONNET_3_5]: { input: 0.003, output: 0.015 }, // Legacy
   [ClaudeModel.SONNET_4]: { input: 0.003, output: 0.015 }, // Legacy
-  [ClaudeModel.SONNET_4_5]: { input: 0.003, output: 0.015 }, // Latest for admin/nurse
-  [ClaudeModel.OPUS_4_1]: { input: 0.015, output: 0.075 } // Premium
+  [ClaudeModel.SONNET_4_5]: { input: 0.003, output: 0.015 }, // LATEST: Revenue-critical billing
+  [ClaudeModel.OPUS_4_1]: { input: 0.015, output: 0.075 } // Premium (reserved)
 } as const;
 
 // Model capabilities and characteristics
@@ -22,6 +23,12 @@ const MODEL_CHARACTERISTICS = {
     cost: 'lowest',
     capability: 'basic',
     bestFor: ['simple_questions', 'basic_health_guidance']
+  },
+  [ClaudeModel.HAIKU_4_5]: {
+    speed: 'ultra_fast',
+    cost: 'ultra_low',
+    capability: 'intelligent',
+    bestFor: ['ui_personalization', 'pattern_recognition', 'dashboard_intelligence', 'quick_responses']
   },
   [ClaudeModel.SONNET_3_5]: {
     speed: 'fast',

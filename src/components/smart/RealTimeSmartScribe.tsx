@@ -1,4 +1,6 @@
 // src/components/smart/RealTimeSmartScribe.tsx
+// SmartScribe Atlas - AI-Powered Medical Transcription & Revenue Optimization
+// Uses Claude Sonnet 4.5 for maximum billing accuracy
 import React, { useState, useRef } from "react";
 import { supabase } from "../../lib/supabaseClient";
 

@@ -1,6 +1,7 @@
 // supabase/functions/realtime-medical-transcription/index.ts
+// SmartScribe Atlas - AI-Powered Medical Transcription & Billing Intelligence
 // Authenticated WS relay: Browser -> Edge WS -> Deepgram WS (opus)
-// Periodic de-identified transcript analysis with Claude.
+// Real-time transcript analysis with Claude Sonnet 4.5 for revenue-accurate coding
 //
 // Server env (set in Supabase):
 //   DEEPGRAM_API_KEY
@@ -171,7 +172,7 @@ async function analyzeCoding(rawTranscript: string, socket: WebSocket) {
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-3.7-sonnet-20250219",
+        model: "claude-sonnet-4-5-20250929", // Sonnet 4.5 - revenue-critical accuracy for billing codes
         max_tokens: 2000,
         messages: [{
           role: "user",

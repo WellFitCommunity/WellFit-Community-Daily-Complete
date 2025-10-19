@@ -88,11 +88,12 @@ class CostTracker {
   private readonly monthlyLimit: number = 500; // $500 monthly limit per user
 
   private readonly modelCosts = {
-    [ClaudeModel.HAIKU_3]: { input: 0.00025, output: 0.00125 },
-    [ClaudeModel.SONNET_3_5]: { input: 0.003, output: 0.015 },
+    [ClaudeModel.HAIKU_3]: { input: 0.00025, output: 0.00125 }, // Legacy
+    [ClaudeModel.HAIKU_4_5]: { input: 0.0001, output: 0.0005 }, // LATEST: Ultra-fast, ultra-cheap
+    [ClaudeModel.SONNET_3_5]: { input: 0.003, output: 0.015 }, // Legacy
     [ClaudeModel.SONNET_4]: { input: 0.003, output: 0.015 }, // Legacy
-    [ClaudeModel.SONNET_4_5]: { input: 0.003, output: 0.015 }, // Latest - Same pricing as Sonnet 3.5
-    [ClaudeModel.OPUS_4_1]: { input: 0.015, output: 0.075 } // Premium model pricing
+    [ClaudeModel.SONNET_4_5]: { input: 0.003, output: 0.015 }, // LATEST: Revenue-critical accuracy
+    [ClaudeModel.OPUS_4_1]: { input: 0.015, output: 0.075 } // Premium model pricing (reserved)
   };
 
   calculateCost(model: ClaudeModel, inputTokens: number, outputTokens: number): number {

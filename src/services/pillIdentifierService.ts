@@ -107,7 +107,7 @@ export interface PillLabelComparison {
 
 const CONFIG = {
   // Claude API Configuration
-  MODEL: process.env.REACT_APP_CLAUDE_DEFAULT_MODEL || 'claude-3-5-sonnet-20241022',
+  MODEL: process.env.REACT_APP_CLAUDE_DEFAULT_MODEL || 'claude-haiku-4-5-20250919', // Haiku 4.5 for fast pill identification
   MAX_TOKENS: 4000,
 
   // Image constraints

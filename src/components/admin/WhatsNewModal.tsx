@@ -3,6 +3,7 @@
 // Production-grade with accessibility, error handling, and analytics
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface Feature {
   title: string;
@@ -10,6 +11,7 @@ interface Feature {
   category: 'new' | 'improved' | 'fixed';
   date: string;
   icon: string;
+  link?: string; // Optional navigation link
 }
 
 interface WhatsNewModalProps {
@@ -24,6 +26,7 @@ const RECENT_FEATURES: Feature[] = [
     category: 'new',
     date: '2025-10-18',
     icon: '🩺',
+    link: '/physician',
   },
   {
     title: 'Role-Based Routing Fixed',
@@ -112,11 +115,47 @@ const RECENT_FEATURES: Feature[] = [
 ];
 
 const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
+  const navigate = useNavigate();
   const [hasSeenVersion, setHasSeenVersion] = useState(false);
+  const [dontShowAgain, setDontShowAgain] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const currentVersion = RECENT_FEATURES[0]?.date || '';
+
+  const handleClose = useCallback((permanentDismiss = false) => {
+    try {
+      if (permanentDismiss || dontShowAgain) {
+        // Permanently dismiss - set a far future version
+        localStorage.setItem('whatsNew_lastSeen', '9999-12-31');
+        localStorage.setItem('whatsNew_permanentlyDismissed', 'true');
+      } else {
+        // Mark current version as seen
+        localStorage.setItem('whatsNew_lastSeen', currentVersion);
+      }
+      setHasSeenVersion(true);
+
+      // Track modal dismissal (analytics placeholder)
+      if (window.gtag) {
+        window.gtag('event', 'whats_new_dismissed', {
+          version: currentVersion,
+          permanent: permanentDismiss || dontShowAgain,
+        });
+      }
+    } catch (err) {
+      console.error('Failed to save to localStorage:', err);
+      // Don't block close on storage error
+    }
+
+    onClose();
+  }, [currentVersion, dontShowAgain, onClose]);
+
+  const handleFeatureClick = useCallback((feature: Feature) => {
+    if (feature.link) {
+      navigate(feature.link);
+      handleClose(false);
+    }
+  }, [navigate, handleClose]);
 
   useEffect(() => {
     // Check if user has seen the current version with error handling
@@ -137,7 +176,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        handleClose();
+        handleClose(false);
       }
 
       // Trap tab focus within modal
@@ -164,7 +203,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
     setTimeout(() => closeButtonRef.current?.focus(), 100);
 
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen]);
+  }, [isOpen, handleClose]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -176,26 +215,6 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
       };
     }
   }, [isOpen]);
-
-  const handleClose = useCallback(() => {
-    try {
-      // Mark current version as seen with error handling
-      localStorage.setItem('whatsNew_lastSeen', currentVersion);
-      setHasSeenVersion(true);
-
-      // Track modal dismissal (analytics placeholder)
-      if (window.gtag) {
-        window.gtag('event', 'whats_new_dismissed', {
-          version: currentVersion,
-        });
-      }
-    } catch (err) {
-      console.error('Failed to save to localStorage:', err);
-      // Don't block close on storage error
-    }
-
-    onClose();
-  }, [currentVersion, onClose]);
 
   if (!isOpen) return null;
 
@@ -237,7 +256,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
         {/* Background overlay */}
         <div
           className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75"
-          onClick={handleClose}
+          onClick={() => handleClose(false)}
           aria-hidden="true"
         ></div>
 
@@ -262,7 +281,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
               </div>
               <button
                 ref={closeButtonRef}
-                onClick={handleClose}
+                onClick={() => handleClose(false)}
                 className="text-white hover:text-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-600 rounded-lg p-1"
                 aria-label="Close what's new modal"
                 type="button"
@@ -290,13 +309,32 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
               {RECENT_FEATURES.map((feature, index) => (
                 <div
                   key={index}
-                  className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                  onClick={() => handleFeatureClick(feature)}
+                  className={`border border-gray-200 rounded-lg p-4 transition-all ${
+                    feature.link
+                      ? 'cursor-pointer hover:shadow-lg hover:border-blue-400 hover:bg-blue-50'
+                      : 'hover:shadow-md'
+                  }`}
+                  role={feature.link ? 'button' : undefined}
+                  tabIndex={feature.link ? 0 : undefined}
+                  onKeyDown={(e) => {
+                    if (feature.link && (e.key === 'Enter' || e.key === ' ')) {
+                      e.preventDefault();
+                      handleFeatureClick(feature);
+                    }
+                  }}
+                  aria-label={feature.link ? `${feature.title} - Click to view` : feature.title}
                 >
                   <div className="flex items-start space-x-3">
                     <span className="text-3xl flex-shrink-0">{feature.icon}</span>
                     <div className="flex-grow">
                       <div className="flex items-center justify-between mb-2">
-                        <h4 className="text-lg font-semibold text-gray-900">{feature.title}</h4>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-lg font-semibold text-gray-900">{feature.title}</h4>
+                          {feature.link && (
+                            <span className="text-blue-500 text-sm" aria-hidden="true">→</span>
+                          )}
+                        </div>
                         <span
                           className={`px-2 py-1 rounded text-xs font-medium border ${getCategoryColor(
                             feature.category
@@ -306,13 +344,18 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
                         </span>
                       </div>
                       <p className="text-gray-700 text-sm mb-2">{feature.description}</p>
-                      <p className="text-xs text-gray-500">
-                        {new Date(feature.date).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })}
-                      </p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-gray-500">
+                          {new Date(feature.date).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}
+                        </p>
+                        {feature.link && (
+                          <span className="text-xs text-blue-600 font-medium">Click to view</span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -321,28 +364,56 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
           </div>
 
           {/* Footer */}
-          <div className="bg-gray-50 px-6 py-4 flex items-center justify-between">
-            <div className="text-sm text-gray-600">
-              {!hasSeenVersion && (
-                <span
-                  className="inline-flex items-center px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-medium mr-2"
-                  role="status"
-                  aria-live="polite"
-                >
-                  New updates available
+          <div className="bg-gray-50 px-6 py-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-sm text-gray-600">
+                {!hasSeenVersion && (
+                  <span
+                    className="inline-flex items-center px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-medium mr-2"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    New updates available
+                  </span>
+                )}
+                <span aria-label={`${RECENT_FEATURES.length} recent updates`}>
+                  {RECENT_FEATURES.length} recent update{RECENT_FEATURES.length !== 1 ? 's' : ''}
                 </span>
-              )}
-              <span aria-label={`${RECENT_FEATURES.length} recent updates`}>
-                {RECENT_FEATURES.length} recent update{RECENT_FEATURES.length !== 1 ? 's' : ''}
-              </span>
+              </div>
+              <button
+                onClick={() => handleClose(false)}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors font-medium"
+                type="button"
+              >
+                Got it!
+              </button>
             </div>
-            <button
-              onClick={handleClose}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors font-medium"
-              type="button"
-            >
-              Got it!
-            </button>
+
+            {/* Don't show again option */}
+            <div className="flex items-center justify-between border-t border-gray-200 pt-3">
+              <label className="flex items-center cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={dontShowAgain}
+                  onChange={(e) => setDontShowAgain(e.target.checked)}
+                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 cursor-pointer"
+                  aria-label="Don't show What's New automatically anymore"
+                />
+                <span className="ml-2 text-sm text-gray-600 group-hover:text-gray-800">
+                  Don't show automatically anymore
+                </span>
+              </label>
+              {dontShowAgain && (
+                <button
+                  onClick={() => handleClose(true)}
+                  className="px-4 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 transition-colors"
+                  type="button"
+                  aria-label="Confirm don't show again and close"
+                >
+                  Confirm & Close
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

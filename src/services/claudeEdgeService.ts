@@ -87,7 +87,7 @@ export class ClaudeEdgeService {
   ): Promise<string> {
     const response = await this.chat({
       messages: [{ role: 'user', content: prompt }],
-      model: options?.model || 'claude-3-5-sonnet-20241022',
+      model: options?.model || 'claude-haiku-4-5-20250919', // Default to Haiku 4.5 for speed
       max_tokens: options?.max_tokens || 4000,
       system: options?.system,
     });

@@ -178,10 +178,10 @@ const AdminPanel: React.FC = () => {
             <PatientEngagementDashboard />
           </CollapsibleSection>
 
-          {/* Smart Medical Scribe */}
+          {/* SmartScribe Atlas - Revenue-Critical AI Transcription */}
           <CollapsibleSection
-            title="Smart Medical Scribe"
-            subtitle="AI-powered medical transcription and coding assistance"
+            title="SmartScribe Atlas 💰"
+            subtitle="AI-powered transcription with Claude Sonnet 4.5 for maximum billing accuracy"
             icon="🎤"
             headerColor="text-purple-800"
           >

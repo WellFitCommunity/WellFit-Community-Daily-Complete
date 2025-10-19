@@ -1,5 +1,6 @@
 // Supabase Edge Function (Deno) — production-grade
-// - Uses Anthropic Claude Sonnet 4.5 (latest model for best medical coding)
+// - Uses Anthropic Claude Sonnet 4.5 (claude-sonnet-4-5-20250929) for maximum accuracy in medical coding
+// - Revenue-critical: Accurate codes = correct reimbursement
 // - De-identifies input aggressively
 // - Writes comprehensive audit row (no PHI)
 // - Production-ready error handling
@@ -204,7 +205,7 @@ serve(async (req) => {
     try {
       await sb.from("coding_audits").insert({
         encounter_id: null,
-        model: "claude-3-5-sonnet-latest",
+        model: "claude-sonnet-4-5-20250929", // Sonnet 4.5 - revenue-critical accuracy
         success: false,
         confidence: null,
         created_at: new Date().toISOString(),
