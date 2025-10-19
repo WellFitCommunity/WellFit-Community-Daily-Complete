@@ -92,11 +92,26 @@ export class MCPClient {
     try {
       // Edge function mode (production)
       if (this.config.edgeFunctionUrl) {
+        // Get auth token from Supabase session
+        const getAuthToken = () => {
+          try {
+            // Try to get from localStorage (Supabase stores it here)
+            const authData = localStorage.getItem('sb-xkybsjnvuohpqpbkikyn-auth-token');
+            if (authData) {
+              const parsed = JSON.parse(authData);
+              return parsed.access_token || '';
+            }
+          } catch (e) {
+            console.warn('[MCP] Could not retrieve auth token:', e);
+          }
+          return '';
+        };
+
         const response = await fetch(this.config.edgeFunctionUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('supabase.auth.token') || ''}`
+            'Authorization': `Bearer ${getAuthToken()}`
           },
           body: JSON.stringify({
             method: 'tools/call',

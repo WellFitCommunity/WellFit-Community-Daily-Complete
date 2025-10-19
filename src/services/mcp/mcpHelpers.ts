@@ -26,7 +26,7 @@ export async function analyzeText(params: {
     userId: params.userId
   });
 
-  return response.content[0]?.text || '';
+  return response.content?.[0]?.text || '';
 }
 
 /**
@@ -50,7 +50,7 @@ export async function generateSuggestion(params: {
     userId: params.userId
   });
 
-  return response.content[0]?.text || '';
+  return response.content?.[0]?.text || '';
 }
 
 /**
@@ -74,7 +74,7 @@ export async function summarizeContent(params: {
     userId: params.userId
   });
 
-  return response.content[0]?.text || '';
+  return response.content?.[0]?.text || '';
 }
 
 /**
