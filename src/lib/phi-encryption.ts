@@ -19,7 +19,30 @@ export async function setPHIEncryptionKey(key?: string): Promise<void> {
       new_value: encryptionKey,
       is_local: true
     });
+
+    // HIPAA COMPLIANCE: Log encryption key initialization to security_events
+    await logSecurityEvent({
+      event_type: 'ENCRYPTION_KEY_INITIALIZED',
+      severity: 'LOW',
+      description: 'PHI encryption key successfully initialized for session',
+      metadata: {
+        key_source: key ? 'provided' : process.env.PHI_ENCRYPTION_KEY ? 'environment' : 'generated',
+        timestamp: new Date().toISOString(),
+        session_id: crypto.randomUUID()
+      }
+    });
   } catch (error) {
+    // Log encryption failure as HIGH severity security event
+    await logSecurityEvent({
+      event_type: 'ENCRYPTION_KEY_FAILURE',
+      severity: 'HIGH',
+      description: `PHI encryption key initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      metadata: {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      }
+    }).catch(console.error); // Don't throw on logging failure
+
     console.error('Failed to set PHI encryption key:', error);
     throw new Error('PHI encryption setup failed');
   }
@@ -106,6 +129,32 @@ export const PHIUtils = {
     return supabase.from('risk_assessments').insert([assessmentData]);
   }
 };
+
+/**
+ * HIPAA COMPLIANCE: Log security events related to encryption
+ */
+async function logSecurityEvent(event: {
+  event_type: string;
+  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  description: string;
+  metadata?: Record<string, any>;
+}): Promise<void> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    await supabase.from('security_events').insert({
+      event_type: event.event_type,
+      severity: event.severity,
+      actor_user_id: user?.id || null,
+      description: event.description,
+      metadata: event.metadata || {},
+      requires_investigation: event.severity === 'HIGH' || event.severity === 'CRITICAL'
+    });
+  } catch (error) {
+    console.error('Failed to log security event (non-blocking):', error);
+    // Don't throw - audit logging failure should not break functionality
+  }
+}
 
 /**
  * Initialize PHI encryption on app startup

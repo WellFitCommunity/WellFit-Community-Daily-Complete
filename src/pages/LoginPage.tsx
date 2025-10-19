@@ -108,7 +108,7 @@ const LoginPage: React.FC = () => {
 
     const { data, error } = await supabase
       .from('profiles')
-      .select('force_password_change, consent, data_consent, demographics_complete, demographic_complete, onboarded, role, role_code')
+      .select('force_password_change, consent, demographics_complete, onboarded, role, role_code')
       .eq('user_id', uid)
       .maybeSingle();
 
@@ -124,8 +124,8 @@ const LoginPage: React.FC = () => {
     }
 
     const forcePwd = (data as any)?.force_password_change ?? false;
-    const consent  = (data as any)?.consent ?? (data as any)?.data_consent ?? false;
-    const demoDone = (data as any)?.demographics_complete ?? (data as any)?.demographic_complete ?? false;
+    const consent  = (data as any)?.consent ?? false;
+    const demoDone = (data as any)?.demographics_complete ?? false;
     const onboard  = (data as any)?.onboarded ?? false;
     const role = (data as any)?.role || '';
     const roleCode = (data as any)?.role_code || 0;

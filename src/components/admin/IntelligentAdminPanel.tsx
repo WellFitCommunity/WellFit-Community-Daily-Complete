@@ -22,7 +22,6 @@ import { AdaptiveCollapsibleSection } from './AdaptiveCollapsibleSection';
 import RequireAdminAuth from 'components/auth/RequireAdminAuth';
 import AdminHeader from './AdminHeader';
 import WhatsNewModal from './WhatsNewModal';
-import PersonalizedGreeting from '../shared/PersonalizedGreeting';
 
 // Import all dashboard components
 import UsersList from './UsersList';
@@ -497,6 +496,38 @@ const IntelligentAdminPanel: React.FC = () => {
               </button>
             </div>
           </div>
+
+          {/* Role Panel Navigation - Super Admin Only */}
+          {adminRole === 'super_admin' && (
+            <div className="bg-gradient-to-r from-teal-600 to-cyan-700 rounded-xl shadow-lg p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-white text-xl font-bold">🏥 View Role Dashboards</h2>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button
+                  onClick={() => navigate('/physician-dashboard')}
+                  className="bg-white text-blue-800 px-6 py-4 rounded-lg font-semibold hover:bg-blue-50 transition-colors shadow-md flex items-center justify-center"
+                >
+                  <span className="mr-2 text-2xl">👨‍⚕️</span>
+                  Physician Panel
+                </button>
+                <button
+                  onClick={() => navigate('/nurse-dashboard')}
+                  className="bg-white text-pink-700 px-6 py-4 rounded-lg font-semibold hover:bg-pink-50 transition-colors shadow-md flex items-center justify-center"
+                >
+                  <span className="mr-2 text-2xl">👩‍⚕️</span>
+                  Nurse Panel
+                </button>
+                <button
+                  onClick={() => navigate('/caregiver-dashboard')}
+                  className="bg-white text-purple-700 px-6 py-4 rounded-lg font-semibold hover:bg-purple-50 transition-colors shadow-md flex items-center justify-center"
+                >
+                  <span className="mr-2 text-2xl">🤝</span>
+                  Caregiver View
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* AI-Organized Sections */}
           <div className="space-y-6">

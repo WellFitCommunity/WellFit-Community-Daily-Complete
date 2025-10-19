@@ -51,7 +51,7 @@ const ConsentPhotoPage = React.lazy(() => import('./pages/ConsentPhotoPage'));
 const ConsentPrivacyPage = React.lazy(() => import('./pages/ConsentPrivacyPage'));
 const SelfReportingPage = React.lazy(() => import('./pages/SelfReportingPage'));
 const DoctorsViewPage = React.lazy(() => import('./pages/DoctorsViewPage'));
-const AdminPanel = React.lazy(() => import('./components/admin/AdminPanel'));
+const AdminPanel = React.lazy(() => import('./components/admin/IntelligentAdminPanel'));
 const AdminProfileEditorPage = React.lazy(() => import('./pages/AdminProfileEditorPage'));
 const NursePanel = React.lazy(() => import('./components/nurse/NursePanel'));
 const PhysicianPanel = React.lazy(() => import('./components/physician/PhysicianPanel'));
