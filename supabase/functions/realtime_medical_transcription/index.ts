@@ -59,6 +59,8 @@ serve(async (req: Request) => {
 
   const { socket, response } = Deno.upgradeWebSocket(req);
 
+  const userId = userData.user.id;
+
   // 3) Relay: browser <-> Deepgram
   let deepgramWs: WebSocket | null = null;
   let fullTranscript = "";
@@ -110,7 +112,7 @@ serve(async (req: Request) => {
             const now = Date.now();
             if (now - lastAnalysisTime >= ANALYSIS_INTERVAL_MS && fullTranscript.length > 50) {
               lastAnalysisTime = now;
-              analyzeCoding(fullTranscript, socket).catch((e) =>
+              analyzeCoding(fullTranscript, socket, userId, admin).catch((e) =>
                 console.error("Claude analysis error:", e)
               );
             }
@@ -160,7 +162,10 @@ serve(async (req: Request) => {
 });
 
 // 4) Periodic coding analysis (de-identified)
-async function analyzeCoding(rawTranscript: string, socket: WebSocket) {
+async function analyzeCoding(rawTranscript: string, socket: WebSocket, userId: string, supabaseClient: any) {
+  const requestId = crypto.randomUUID();
+  const startTime = Date.now();
+
   try {
     const transcript = deidentify(rawTranscript);
 
@@ -207,10 +212,41 @@ Return ONLY strict JSON:
 
     if (!res.ok) {
       console.error("Claude HTTP error", res.status, await res.text());
+
+      // HIPAA AUDIT LOGGING: Log API error
+      try {
+        await supabaseClient.from('claude_api_audit').insert({
+          request_id: requestId,
+          user_id: userId,
+          request_type: 'transcription',
+          model: 'claude-sonnet-4-5-20250929',
+          input_tokens: 0,
+          output_tokens: 0,
+          cost: 0,
+          response_time_ms: Date.now() - startTime,
+          success: false,
+          error_code: `HTTP_${res.status}`,
+          error_message: `Claude API HTTP error: ${res.status}`,
+          phi_scrubbed: true,
+          metadata: { transcript_length: rawTranscript.length }
+        });
+      } catch (logError) {
+        console.error('[Audit Log Error]:', logError);
+      }
+
       return;
     }
 
     const data = await res.json();
+    const responseTime = Date.now() - startTime;
+
+    // Calculate cost
+    const inputTokens = data.usage?.input_tokens || 0;
+    const outputTokens = data.usage?.output_tokens || 0;
+    const inputCost = (inputTokens * 0.003) / 1000;
+    const outputCost = (outputTokens * 0.015) / 1000;
+    const totalCost = inputCost + outputCost;
+
     const text: string = data?.content?.[0]?.text ?? "";
     const cleaned = text.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
 
@@ -218,8 +254,56 @@ Return ONLY strict JSON:
     try { parsed = JSON.parse(cleaned); }
     catch (e) {
       console.error("Claude JSON parse failed", e, cleaned.slice(0, 400));
+
+      // HIPAA AUDIT LOGGING: Log parse error
+      try {
+        await supabaseClient.from('claude_api_audit').insert({
+          request_id: requestId,
+          user_id: userId,
+          request_type: 'transcription',
+          model: 'claude-sonnet-4-5-20250929',
+          input_tokens: inputTokens,
+          output_tokens: outputTokens,
+          cost: totalCost,
+          response_time_ms: responseTime,
+          success: false,
+          error_code: 'JSON_PARSE_ERROR',
+          error_message: e.message,
+          phi_scrubbed: true,
+          metadata: { transcript_length: rawTranscript.length }
+        });
+      } catch (logError) {
+        console.error('[Audit Log Error]:', logError);
+      }
+
       return;
     }
+
+    // HIPAA AUDIT LOGGING: Log successful analysis
+    try {
+      await supabaseClient.from('claude_api_audit').insert({
+        request_id: requestId,
+        user_id: userId,
+        request_type: 'transcription',
+        model: 'claude-sonnet-4-5-20250929',
+        input_tokens: inputTokens,
+        output_tokens: outputTokens,
+        cost: totalCost,
+        response_time_ms: responseTime,
+        success: true,
+        phi_scrubbed: true,
+        metadata: {
+          transcript_length: rawTranscript.length,
+          suggested_codes_count: parsed.suggestedCodes?.length || 0,
+          revenue_increase: parsed.totalRevenueIncrease || 0,
+          compliance_risk: parsed.complianceRisk || 'low'
+        }
+      });
+    } catch (logError) {
+      console.error('[Audit Log Error]:', logError);
+    }
+
+    console.log(`[Medical Transcription] RequestID: ${requestId}, User: ${userId}, Input: ${inputTokens}, Output: ${outputTokens}, Cost: $${totalCost.toFixed(4)}, Time: ${responseTime}ms`);
 
     safeSend(socket, {
       type: "code_suggestion",
@@ -229,5 +313,26 @@ Return ONLY strict JSON:
     });
   } catch (e) {
     console.error("Claude analysis exception:", e);
+
+    // HIPAA AUDIT LOGGING: Log exception
+    try {
+      await supabaseClient.from('claude_api_audit').insert({
+        request_id: requestId,
+        user_id: userId,
+        request_type: 'transcription',
+        model: 'claude-sonnet-4-5-20250929',
+        input_tokens: 0,
+        output_tokens: 0,
+        cost: 0,
+        response_time_ms: Date.now() - startTime,
+        success: false,
+        error_code: e?.name || 'EXCEPTION',
+        error_message: e?.message || e?.toString(),
+        phi_scrubbed: true,
+        metadata: { transcript_length: rawTranscript.length }
+      });
+    } catch (logError) {
+      console.error('[Audit Log Error]:', logError);
+    }
   }
 }

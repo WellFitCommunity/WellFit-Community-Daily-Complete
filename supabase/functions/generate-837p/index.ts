@@ -368,6 +368,13 @@ serve(async (req: Request) => {
     }
     const currentUser: User = userData.user;
 
+    // Extract client IP for audit logging
+    const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+                     req.headers.get('cf-connecting-ip') ||
+                     req.headers.get('x-real-ip') || 'unknown';
+
+    const startTime = Date.now();
+
     // Load data (admin privileges)
     const enc = await getEncounterData(encounterId);
     const prov = await getProviderData(billingProviderId);
@@ -408,12 +415,70 @@ serve(async (req: Request) => {
 
     if (insertErr) {
       console.error("Failed to store claim:", insertErr);
+
+      // HIPAA AUDIT LOGGING: Log failed claim generation
+      try {
+        await adminClient.from('audit_logs').insert({
+          event_type: 'CLAIMS_GENERATION_FAILED',
+          event_category: 'FINANCIAL',
+          actor_user_id: currentUser.id,
+          actor_ip_address: clientIp,
+          actor_user_agent: req.headers.get('user-agent'),
+          operation: 'GENERATE_CLAIM',
+resource_type: 'auth_event',
+          success: false,
+          error_code: insertErr.code || 'CLAIM_STORAGE_ERROR',
+          error_message: insertErr.message,
+          metadata: {
+            encounter_id: enc.id,
+            billing_provider_id: billingProviderId,
+            payer_id: enc.payer_id,
+            control_number: stCtrl,
+            segment_count: segCount
+          }
+        });
+      } catch (logError) {
+        console.error('[Audit Log Error]:', logError);
+      }
+
       // Multi-status: return payload but include storage error context
       return new Response(
         JSON.stringify({ x12, claimId: enc.id, controlNumber: stCtrl, storeError: insertErr.message }),
         { status: 207, headers: corsHeaders(req, { "content-type": "application/json" }) }
       );
     }
+
+    const processingTime = Date.now() - startTime;
+
+    // HIPAA AUDIT LOGGING: Log successful claim generation
+    try {
+      await adminClient.from('audit_logs').insert({
+        event_type: 'CLAIMS_GENERATION_SUCCESS',
+        event_category: 'FINANCIAL',
+        actor_user_id: currentUser.id,
+        actor_ip_address: clientIp,
+        actor_user_agent: req.headers.get('user-agent'),
+        operation: 'GENERATE_CLAIM',
+resource_type: 'auth_event',
+        success: true,
+        metadata: {
+          encounter_id: enc.id,
+          billing_provider_id: billingProviderId,
+          payer_id: enc.payer_id,
+          patient_id: enc.patient_id,
+          control_number: stCtrl,
+          segment_count: segCount,
+          claim_type: '837P',
+          processing_time_ms: processingTime,
+          procedure_count: enc.procedures?.length || 0,
+          diagnosis_count: enc.diagnoses?.length || 0
+        }
+      });
+    } catch (logError) {
+      console.error('[Audit Log Error]:', logError);
+    }
+
+    console.log(`[Claims Generation] User: ${currentUser.id}, Encounter: ${enc.id}, Control: ${stCtrl}, Time: ${processingTime}ms`);
 
     // Success: return text (your UI treats it as a downloadable string)
     return new Response(x12, {

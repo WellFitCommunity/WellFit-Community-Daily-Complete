@@ -57,6 +57,11 @@ serve(async (req: Request) => {
     const body = await req.json();
     const { user_id } = body;
 
+    // Extract client IP for audit logging
+    const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+                     req.headers.get('cf-connecting-ip') ||
+                     req.headers.get('x-real-ip') || 'unknown';
+
     // Generate challenge
     const challenge = generateChallenge();
 
@@ -73,6 +78,26 @@ serve(async (req: Request) => {
 
     if (challengeError) {
       console.error('Failed to store challenge:', challengeError);
+
+      // HIPAA AUDIT LOGGING: Log failed passkey auth start
+      try {
+        await supabase.from('audit_logs').insert({
+          event_type: 'PASSKEY_AUTH_START_FAILED',
+          event_category: 'AUTHENTICATION',
+          actor_user_id: user_id || null,
+          actor_ip_address: clientIp,
+          actor_user_agent: req.headers.get('user-agent'),
+          operation: 'PASSKEY_AUTH_START',
+resource_type: 'auth_event',
+          success: false,
+          error_code: challengeError.code || 'CHALLENGE_ERROR',
+          error_message: challengeError.message,
+          metadata: { user_id }
+        });
+      } catch (logError) {
+        console.error('[Audit Log Error]:', logError);
+      }
+
       return new Response(JSON.stringify({ error: 'Failed to create challenge' }), { status: 500, headers });
     }
 
@@ -104,6 +129,27 @@ serve(async (req: Request) => {
       timeout: 60000,
       userVerification: "preferred" as const
     };
+
+    // HIPAA AUDIT LOGGING: Log successful passkey auth start
+    try {
+      await supabase.from('audit_logs').insert({
+        event_type: 'PASSKEY_AUTH_START_SUCCESS',
+        event_category: 'AUTHENTICATION',
+        actor_user_id: user_id || null,
+        actor_ip_address: clientIp,
+        actor_user_agent: req.headers.get('user-agent'),
+        operation: 'PASSKEY_AUTH_START',
+resource_type: 'auth_event',
+        success: true,
+        metadata: {
+          user_id,
+          has_credentials: !!allowCredentials,
+          credential_count: allowCredentials?.length || 0
+        }
+      });
+    } catch (logError) {
+      console.error('[Audit Log Error]:', logError);
+    }
 
     return new Response(JSON.stringify(options), { status: 200, headers });
 

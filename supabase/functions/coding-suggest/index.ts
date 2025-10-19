@@ -135,6 +135,19 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers, status: 204 });
   if (req.method !== "POST")  return new Response(JSON.stringify({ error: "Method Not Allowed" }), { headers, status: 405 });
 
+  // Get user for audit logging
+  const authHeader = req.headers.get("authorization");
+  let userId: string | null = null;
+  if (authHeader) {
+    try {
+      const token = authHeader.replace(/^Bearer /, "");
+      const { data } = await sb.auth.getUser(token);
+      userId = data?.user?.id || null;
+    } catch (e) {
+      console.warn("Failed to get user from token:", e);
+    }
+  }
+
   try {
     const body = await safeJson(req);
     const encounter = body?.encounter ?? body;
@@ -152,8 +165,11 @@ serve(async (req) => {
 
     // Claude call (model: claude-sonnet-4-5-20250929 - latest for best medical coding)
     const model = "claude-sonnet-4-5-20250929";
+    const requestId = crypto.randomUUID();
+    const startTime = Date.now();
     let text = "";
     let lastErr: any = null;
+    let claudeResponse: any = null;
 
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
@@ -166,6 +182,7 @@ serve(async (req) => {
           } as any),
           45_000
         );
+        claudeResponse = res;
         const first = (res as any)?.content?.[0];
         text = first?.text ?? "";
         if (!text) throw new Error("Empty response from model");
@@ -186,7 +203,44 @@ serve(async (req) => {
       parsed = { notes: "Model returned invalid JSON.", confidence: 10 };
     }
 
-    // Minimal audit (no PHI, no extra columns)
+    const responseTime = Date.now() - startTime;
+
+    // Calculate cost (Sonnet 4.5 pricing: $3 per 1M input, $15 per 1M output)
+    const inputTokens = claudeResponse?.usage?.input_tokens || 0;
+    const outputTokens = claudeResponse?.usage?.output_tokens || 0;
+    const inputCost = (inputTokens * 0.003) / 1000;
+    const outputCost = (outputTokens * 0.015) / 1000;
+    const totalCost = inputCost + outputCost;
+
+    // HIPAA AUDIT LOGGING: Log Claude API call to database (comprehensive)
+    try {
+      await sb.from('claude_api_audit').insert({
+        request_id: requestId,
+        user_id: userId,
+        request_type: 'medical_coding',
+        model,
+        input_tokens: inputTokens,
+        output_tokens: outputTokens,
+        cost: totalCost,
+        response_time_ms: responseTime,
+        success: true,
+        phi_scrubbed: true, // Confirmed - using deepDeidentify
+        metadata: {
+          encounter_id: encounterId,
+          confidence: parsed.confidence,
+          has_cpt: !!parsed.cpt?.length,
+          has_hcpcs: !!parsed.hcpcs?.length,
+          has_icd10: !!parsed.icd10?.length
+        }
+      });
+    } catch (logError) {
+      console.error('[Audit Log Error]:', logError);
+    }
+
+    // Also log to console for real-time monitoring
+    console.log(`[Medical Coding] RequestID: ${requestId}, User: ${userId}, Encounter: ${encounterId}, Input: ${inputTokens}, Output: ${outputTokens}, Cost: $${totalCost.toFixed(4)}, Time: ${responseTime}ms, Confidence: ${parsed.confidence}`);
+
+    // Minimal audit (no PHI, no extra columns) - keep existing for backward compatibility
     const { error: auditErr } = await sb.from("coding_audits").insert({
       encounter_id: encounterId,
       model,
@@ -201,7 +255,32 @@ serve(async (req) => {
 
   } catch (err: any) {
     console.error("coding-suggest error:", err);
-    // best-effort failure audit
+
+    // HIPAA AUDIT LOGGING: Log failure to database
+    try {
+      const requestId = crypto.randomUUID();
+      await sb.from('claude_api_audit').insert({
+        request_id: requestId,
+        user_id: userId,
+        request_type: 'medical_coding',
+        model: "claude-sonnet-4-5-20250929",
+        input_tokens: 0,
+        output_tokens: 0,
+        cost: 0,
+        response_time_ms: 0,
+        success: false,
+        error_code: err?.name || 'UNKNOWN_ERROR',
+        error_message: err?.message || err?.toString(),
+        phi_scrubbed: true,
+        metadata: {
+          error_type: err?.constructor?.name
+        }
+      });
+    } catch (logError) {
+      console.error('[Audit Log Error]:', logError);
+    }
+
+    // best-effort failure audit (keep existing for backward compatibility)
     try {
       await sb.from("coding_audits").insert({
         encounter_id: null,

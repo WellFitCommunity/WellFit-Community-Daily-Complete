@@ -1,6 +1,6 @@
 // src/components/UsersList.tsx (patched)
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import { useSupabaseClient } from '../../contexts/AuthContext';
+import { useSupabaseClient, useAuth } from '../../contexts/AuthContext';
 
 
 type Profile = {
@@ -235,6 +235,7 @@ const UserCard: React.FC<{
 
 const UsersList: React.FC = () => {
   const supabase = useSupabaseClient();
+  const { user: currentUser } = useAuth();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [toasts, setToasts] = useState<ToastData[]>([]);
@@ -260,6 +261,28 @@ const UsersList: React.FC = () => {
   const dismissToast = useCallback((id: string) => {
     setToasts(prev => prev.filter(toast => toast.id !== id));
   }, []);
+
+  // HIPAA AUDIT LOGGING: Log PHI access when viewing user details
+  const logPhiAccess = useCallback(async (patientUserId: string, accessType: 'READ' | 'VIEW_LIST') => {
+    if (!currentUser?.id) return;
+
+    try {
+      await supabase.rpc('log_phi_access', {
+        p_accessor_user_id: currentUser.id,
+        p_accessor_role: 'admin', // This is the admin panel
+        p_phi_type: 'patient_profile',
+        p_phi_resource_id: patientUserId,
+        p_patient_id: patientUserId,
+        p_access_type: accessType,
+        p_access_method: 'UI',
+        p_purpose: 'administrative_review',
+        p_ip_address: 'client_side' // Client-side IP not available; Edge Functions log server IP
+      });
+    } catch (logError) {
+      console.error('[PHI Access Log Error]:', logError);
+      // Don't block UI for logging failures
+    }
+  }, [currentUser, supabase]);
 
   const fetchProfiles = useCallback(async (showToast = false) => {
     setLoading(true);
@@ -340,6 +363,27 @@ const UsersList: React.FC = () => {
 
       setProfiles(enrichedProfiles);
       if (showToast) addToast('success', `Refreshed ${enrichedProfiles.length} users`);
+
+      // HIPAA AUDIT LOGGING: Log bulk PHI access when viewing user list
+      if (currentUser?.id && enrichedProfiles.length > 0) {
+        try {
+          await supabase.from('audit_logs').insert({
+            event_type: 'ADMIN_VIEW_USER_LIST',
+            event_category: 'ADMIN',
+            actor_user_id: currentUser.id,
+            operation: 'VIEW',
+            resource_type: 'user_list',
+            success: true,
+            metadata: {
+              user_count: enrichedProfiles.length,
+              has_emergency_users: enrichedProfiles.some(p => (p.emergency_check_ins ?? 0) > 0),
+              filter_status: filterStatus
+            }
+          });
+        } catch (logError) {
+          console.error('[Audit Log Error]:', logError);
+        }
+      }
     } catch (error) {
       console.error('Error fetching profiles:', error);
       const message = error instanceof Error ? error.message : 'Failed to load users';
@@ -348,7 +392,7 @@ const UsersList: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [supabase, addToast]);
+  }, [supabase, addToast, currentUser, filterStatus]);
 
   useEffect(() => {
     fetchProfiles();
@@ -622,7 +666,11 @@ const UsersList: React.FC = () => {
                   <UserCard
                     key={user.user_id}
                     user={user}
-                    onUserClick={setSelectedUser}
+                    onUserClick={(selectedUser) => {
+                      setSelectedUser(selectedUser);
+                      // HIPAA: Log PHI access when viewing user details
+                      logPhiAccess(selectedUser.user_id, 'READ');
+                    }}
                     isSelected={selectedUser?.user_id === user.user_id}
                   />
                 ))}

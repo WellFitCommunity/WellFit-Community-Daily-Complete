@@ -45,6 +45,11 @@ serve(async (req: Request) => {
   if (req.method !== "POST") return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers });
 
   try {
+    // Extract client IP for audit logging
+    const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+                     req.headers.get('cf-connecting-ip') ||
+                     req.headers.get('x-real-ip') || 'unknown';
+
     const token = req.headers.get("Authorization")?.replace(/^Bearer /, "") || "";
     if (!token) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
 
@@ -83,7 +88,31 @@ serve(async (req: Request) => {
     }
 
     const valid = await verifyPin(pin, pinRow!.pin_hash);
-    if (!valid) return new Response(JSON.stringify({ error: "Incorrect PIN" }), { status: 401, headers });
+    if (!valid) {
+      // HIPAA AUDIT LOGGING: Log failed PIN verification
+      try {
+        await supabase.from('audit_logs').insert({
+          event_type: 'ADMIN_PIN_VERIFICATION_FAILED',
+          event_category: 'AUTHENTICATION',
+          actor_user_id: user_id,
+          actor_ip_address: clientIp,
+          actor_user_agent: req.headers.get('user-agent'),
+          operation: 'VERIFY_ADMIN_PIN',
+resource_type: 'auth_event',
+          success: false,
+          error_code: 'INCORRECT_PIN',
+          error_message: 'Incorrect PIN provided',
+          metadata: { role }
+        });
+      } catch (logError) {
+        console.error('[Audit Log Error]:', logError);
+      }
+
+      // TODO: Add to security_events table if multiple failed attempts from same IP
+      // Check for burst of failed PIN attempts (potential brute force)
+
+      return new Response(JSON.stringify({ error: "Incorrect PIN" }), { status: 401, headers });
+    }
 
     const expires = new Date(Date.now() + ADMIN_SESSION_TTL_MIN * 60 * 1000);
     const admin_token = generateSecureToken();
@@ -95,6 +124,27 @@ serve(async (req: Request) => {
       expires_at: expires.toISOString(),
     });
     if (upErr) throw upErr;
+
+    // HIPAA AUDIT LOGGING: Log successful PIN verification and admin session creation
+    try {
+      await supabase.from('audit_logs').insert({
+        event_type: 'ADMIN_PIN_VERIFICATION_SUCCESS',
+        event_category: 'AUTHENTICATION',
+        actor_user_id: user_id,
+        actor_ip_address: clientIp,
+        actor_user_agent: req.headers.get('user-agent'),
+        operation: 'VERIFY_ADMIN_PIN',
+resource_type: 'auth_event',
+        success: true,
+        metadata: {
+          role,
+          session_expires: expires.toISOString(),
+          ttl_minutes: ADMIN_SESSION_TTL_MIN
+        }
+      });
+    } catch (logError) {
+      console.error('[Audit Log Error]:', logError);
+    }
 
     return new Response(
       JSON.stringify({ success: true, expires_at: expires.toISOString(), admin_token }),

@@ -52,6 +52,12 @@ serve(async (req: Request) => {
 
       const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+      // Extract client IP for logging
+      const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+                       req.headers.get('cf-connecting-ip') ||
+                       req.headers.get('x-real-ip') ||
+                       'unknown';
+
       // Create a secure admin session token using Supabase Auth
       const expiresIn = 60 * 60 * 8; // 8 hours
       const { data: adminSession, error: sessionError } = await supabase.auth.admin.createSession({
@@ -69,13 +75,14 @@ serve(async (req: Request) => {
 
       // HIPAA AUDIT LOGGING: Log successful admin login
       try {
-        await supabaseAdmin.from('audit_logs').insert({
+        await supabase.from('audit_logs').insert({
           event_type: 'ADMIN_LOGIN_SUCCESS',
           event_category: 'AUTHENTICATION',
-          actor_user_id: user.id,
-          actor_ip_address: req.headers.get('x-forwarded-for') || 'unknown',
+          actor_user_id: null, // Admin user (special case - no user_id)
+          actor_ip_address: clientIp,
           actor_user_agent: req.headers.get('user-agent'),
-          action: 'ADMIN_LOGIN',
+          operation: 'LOGIN',
+          resource_type: 'admin_session',
           success: true,
           metadata: {
             expires_in: expiresIn,
@@ -96,24 +103,70 @@ serve(async (req: Request) => {
         { status: 200, headers }
       );
     } else {
-      // HIPAA AUDIT LOGGING: Log failed admin login (invalid key)
-      try {
-        await supabaseAdmin.from('audit_logs').insert({
-          event_type: 'ADMIN_LOGIN_FAILED',
-          event_category: 'AUTHENTICATION',
-          actor_user_id: user.id,
-          actor_ip_address: req.headers.get('x-forwarded-for') || 'unknown',
-          actor_user_agent: req.headers.get('user-agent'),
-          action: 'ADMIN_LOGIN',
-          success: false,
-          error_code: 'INVALID_ADMIN_KEY',
-          error_message: 'Invalid admin key provided',
-          metadata: {
-            attempted_key_hash: adminKey.substring(0, 8) + '...'
+      // Extract client IP for logging
+      const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+                       req.headers.get('cf-connecting-ip') ||
+                       req.headers.get('x-real-ip') ||
+                       'unknown';
+
+      // Initialize Supabase client for logging
+      const supabaseUrl = Deno.env.get("SUPABASE_URL");
+      const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+      if (supabaseUrl && supabaseServiceKey) {
+        const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+        // HIPAA AUDIT LOGGING: Log failed admin login (invalid key)
+        try {
+          await supabase.from('audit_logs').insert({
+            event_type: 'ADMIN_LOGIN_FAILED',
+            event_category: 'AUTHENTICATION',
+            actor_user_id: null, // Unknown - login failed
+            actor_ip_address: clientIp,
+            actor_user_agent: req.headers.get('user-agent'),
+            operation: 'LOGIN',
+            resource_type: 'admin_session',
+            success: false,
+            error_code: 'INVALID_ADMIN_KEY',
+            error_message: 'Invalid admin key provided',
+            metadata: {
+              attempted_key_hash: adminKey.substring(0, 8) + '...'
+            }
+          });
+        } catch (logError) {
+          console.error('[Audit Log Error]:', logError);
+        }
+
+        // SOC 2 SECURITY EVENT LOGGING: Detect failed admin login bursts
+        try {
+          // Check for multiple failed admin login attempts in last 5 minutes
+          const since = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+          const { count: failedCount } = await supabase
+            .from('audit_logs')
+            .select('*', { count: 'exact', head: true })
+            .eq('event_type', 'ADMIN_LOGIN_FAILED')
+            .eq('actor_ip_address', clientIp)
+            .gte('timestamp', since);
+
+          // Log security event if 2+ failed admin attempts in 5 minutes (stricter than regular login)
+          if (failedCount && failedCount >= 2) {
+            await supabase.rpc('log_security_event', {
+              p_event_type: 'ADMIN_LOGIN_BURST',
+              p_severity: failedCount >= 3 ? 'CRITICAL' : 'HIGH',
+              p_description: `${failedCount} failed admin login attempts detected in 5 minutes from IP ${clientIp}`,
+              p_source_ip_address: clientIp,
+              p_user_id: null,
+              p_action_taken: failedCount >= 3 ? 'REQUIRES_INVESTIGATION' : 'MONITORING',
+              p_metadata: {
+                failed_attempt_count: failedCount,
+                time_window_minutes: 5,
+                user_agent: req.headers.get('user-agent')
+              }
+            });
           }
-        });
-      } catch (logError) {
-        console.error('[Audit Log Error]:', logError);
+        } catch (burstCheckError) {
+          console.error('[Failed Admin Login Burst Detection Error]:', burstCheckError);
+        }
       }
 
       return new Response(

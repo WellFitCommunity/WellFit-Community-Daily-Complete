@@ -84,6 +84,26 @@ serve(async (req: Request) => {
       if (countError) {
         console.warn("rate_limit_logins count failed (failing open):", countError);
       } else if ((count ?? 0) >= MAX_REQUESTS) {
+        // SOC 2 SECURITY EVENT LOGGING: Log rate limit trigger
+        try {
+          await admin.rpc('log_security_event', {
+            p_event_type: 'RATE_LIMIT_TRIGGERED',
+            p_severity: 'HIGH',
+            p_description: `Login rate limit exceeded: ${count} attempts in ${TIME_WINDOW_MINUTES} minutes from IP ${clientIp}`,
+            p_source_ip_address: clientIp,
+            p_user_id: null,
+            p_action_taken: 'REQUEST_BLOCKED',
+            p_metadata: {
+              attempt_count: count,
+              time_window_minutes: TIME_WINDOW_MINUTES,
+              max_allowed: MAX_REQUESTS,
+              requires_investigation: count >= MAX_REQUESTS * 2
+            }
+          });
+        } catch (logError) {
+          console.error('[Security Event Log Error]:', logError);
+        }
+
         return new Response(JSON.stringify({ error: "Too many login attempts. Try again later." }), { status: 429, headers });
       }
     }
@@ -137,7 +157,8 @@ serve(async (req: Request) => {
           actor_user_id: null, // Unknown - login failed
           actor_ip_address: clientIp,
           actor_user_agent: req.headers.get('user-agent'),
-          action: 'LOGIN',
+          operation: 'LOGIN',
+          resource_type: 'auth_session',
           success: false,
           error_code: signInError.code || 'AUTH_ERROR',
           error_message: signInError.message,
@@ -148,6 +169,40 @@ serve(async (req: Request) => {
         });
       } catch (logError) {
         console.error('[Audit Log Error]:', logError);
+      }
+
+      // SOC 2 SECURITY EVENT LOGGING: Detect failed login bursts
+      if (msg.includes("invalid login") && clientIp !== "unknown") {
+        try {
+          // Check for multiple failed login attempts in last 5 minutes
+          const since = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+          const { count: failedCount } = await admin
+            .from('audit_logs')
+            .select('*', { count: 'exact', head: true })
+            .eq('event_type', 'USER_LOGIN_FAILED')
+            .eq('actor_ip_address', clientIp)
+            .gte('timestamp', since);
+
+          // Log security event if 3+ failed attempts in 5 minutes
+          if (failedCount && failedCount >= 3) {
+            await admin.rpc('log_security_event', {
+              p_event_type: 'FAILED_LOGIN_BURST',
+              p_severity: failedCount >= 5 ? 'CRITICAL' : 'HIGH',
+              p_description: `${failedCount} failed login attempts detected in 5 minutes from IP ${clientIp}`,
+              p_source_ip_address: clientIp,
+              p_user_id: null,
+              p_action_taken: failedCount >= 5 ? 'POSSIBLE_BRUTE_FORCE' : 'MONITORING',
+              p_metadata: {
+                failed_attempt_count: failedCount,
+                time_window_minutes: 5,
+                phone_attempted: e164,
+                user_agent: req.headers.get('user-agent')
+              }
+            });
+          }
+        } catch (burstCheckError) {
+          console.error('[Failed Login Burst Detection Error]:', burstCheckError);
+        }
       }
 
       return new Response(JSON.stringify({ error: errorMessage, details: signInError.message }), { status, headers });
@@ -186,7 +241,8 @@ serve(async (req: Request) => {
         actor_user_id: sessionData.user.id,
         actor_ip_address: clientIp,
         actor_user_agent: req.headers.get('user-agent'),
-        action: 'LOGIN',
+        operation: 'LOGIN',
+        resource_type: 'auth_session',
         success: true,
         metadata: {
           phone: e164,

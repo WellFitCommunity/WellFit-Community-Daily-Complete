@@ -32,6 +32,19 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    // Get user for audit logging
+    const authHeader = req.headers.get("authorization");
+    let userId: string | null = null;
+    if (authHeader) {
+      try {
+        const token = authHeader.replace(/^Bearer /, "");
+        const { data } = await supabaseClient.auth.getUser(token);
+        userId = data?.user?.id || null;
+      } catch (e) {
+        console.warn("Failed to get user from token:", e);
+      }
+    }
+
     const { encounterId, patientId, clinicalNotes, existingCodes }: SDOHCodingRequest = await req.json()
 
     if (!encounterId) {
@@ -105,15 +118,17 @@ serve(async (req) => {
     }
 
     // Call Claude AI for enhanced analysis
-    const aiAnalysis = await analyzeWithClaude(analysisContext)
+    const startTime = Date.now();
+    const aiAnalysis = await analyzeWithClaude(analysisContext, userId, encounterId, supabaseClient);
+    const processingTime = Date.now() - startTime;
 
-    // Save coding audit log
+    // Save coding audit log (keep existing for backward compatibility)
     await supabaseClient.from('coding_audits').insert({
       encounter_id: encounterId,
-      model: 'claude-3.5-sonnet',
+      model: 'claude-sonnet-4-5-20250929',
       success: true,
       confidence: aiAnalysis.confidence,
-      processing_time_ms: Date.now() - Date.now() // Would track actual time
+      processing_time_ms: processingTime
     })
 
     return new Response(JSON.stringify(aiAnalysis), {
@@ -133,12 +148,15 @@ serve(async (req) => {
   }
 })
 
-async function analyzeWithClaude(context: any) {
+async function analyzeWithClaude(context: any, userId: string | null, encounterId: string, supabaseClient: any) {
   const claudeApiKey = Deno.env.get('ANTHROPIC_API_KEY')
 
   if (!claudeApiKey) {
     throw new Error('Claude API key not configured')
   }
+
+  const requestId = crypto.randomUUID();
+  const startTime = Date.now();
 
   const systemPrompt = `You are a medical coding specialist with expertise in social determinants of health (SDOH) and chronic care management (CCM) billing. Your role is to analyze clinical encounters and suggest appropriate ICD-10, CPT, and HCPCS codes with a focus on:
 
@@ -243,6 +261,14 @@ Format as JSON with this structure:
     }
 
     const result = await response.json()
+    const responseTime = Date.now() - startTime;
+
+    // Calculate cost (Sonnet 4.5 pricing)
+    const inputTokens = result.usage?.input_tokens || 0;
+    const outputTokens = result.usage?.output_tokens || 0;
+    const inputCost = (inputTokens * 0.003) / 1000;
+    const outputCost = (outputTokens * 0.015) / 1000;
+    const totalCost = inputCost + outputCost;
 
     // Parse the JSON response from Claude
     const content = result.content?.[0]?.text
@@ -259,16 +285,63 @@ Format as JSON with this structure:
 
       const analysis = JSON.parse(jsonMatch[0])
 
+      // HIPAA AUDIT LOGGING: Log successful Claude API call
+      try {
+        await supabaseClient.from('claude_api_audit').insert({
+          request_id: requestId,
+          user_id: userId,
+          request_type: 'sdoh_coding',
+          model: 'claude-sonnet-4-5-20250929',
+          input_tokens: inputTokens,
+          output_tokens: outputTokens,
+          cost: totalCost,
+          response_time_ms: responseTime,
+          success: true,
+          phi_scrubbed: true, // Patient data is de-identified
+          metadata: {
+            encounter_id: encounterId,
+            confidence: analysis.confidence,
+            ccm_eligible: analysis.ccmRecommendation?.eligible,
+            sdoh_factors_count: analysis.sdohAssessment?.identifiedFactors?.length || 0
+          }
+        });
+      } catch (logError) {
+        console.error('[Audit Log Error]:', logError);
+      }
+
+      console.log(`[SDOH Coding] RequestID: ${requestId}, User: ${userId}, Encounter: ${encounterId}, Input: ${inputTokens}, Output: ${outputTokens}, Cost: $${totalCost.toFixed(4)}, Time: ${responseTime}ms`);
+
       // Validate and enhance the response
       return {
         ...analysis,
         confidence: Math.min(Math.max(analysis.confidence || 75, 0), 100),
         timestamp: new Date().toISOString(),
-        model: 'claude-3.5-sonnet'
+        model: 'claude-sonnet-4-5-20250929'
       }
     } catch (parseError) {
       console.error('JSON parse error:', parseError)
       console.error('Claude response:', content)
+
+      // HIPAA AUDIT LOGGING: Log parse error
+      try {
+        await supabaseClient.from('claude_api_audit').insert({
+          request_id: requestId,
+          user_id: userId,
+          request_type: 'sdoh_coding',
+          model: 'claude-sonnet-4-5-20250929',
+          input_tokens: inputTokens,
+          output_tokens: outputTokens,
+          cost: totalCost,
+          response_time_ms: Date.now() - startTime,
+          success: false,
+          error_code: 'JSON_PARSE_ERROR',
+          error_message: parseError.message,
+          phi_scrubbed: true,
+          metadata: { encounter_id: encounterId }
+        });
+      } catch (logError) {
+        console.error('[Audit Log Error]:', logError);
+      }
 
       // Fallback response if JSON parsing fails
       return {
@@ -299,6 +372,27 @@ Format as JSON with this structure:
     }
   } catch (apiError) {
     console.error('Claude API error:', apiError)
+
+    // HIPAA AUDIT LOGGING: Log API error
+    try {
+      await supabaseClient.from('claude_api_audit').insert({
+        request_id: requestId,
+        user_id: userId,
+        request_type: 'sdoh_coding',
+        model: 'claude-sonnet-4-5-20250929',
+        input_tokens: 0,
+        output_tokens: 0,
+        cost: 0,
+        response_time_ms: Date.now() - startTime,
+        success: false,
+        error_code: apiError.name || 'CLAUDE_API_ERROR',
+        error_message: apiError.message,
+        phi_scrubbed: true,
+        metadata: { encounter_id: encounterId }
+      });
+    } catch (logError) {
+      console.error('[Audit Log Error]:', logError);
+    }
 
     // Fallback response for API errors
     return {

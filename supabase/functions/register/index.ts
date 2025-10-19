@@ -128,10 +128,36 @@ serve(async (req: Request) => {
     const payload: RegisterInput = parsed.data;
     const phoneNumber = normalizePhone(payload.phone);
 
+    // Extract client IP once for use throughout the function
+    const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+                     req.headers.get('cf-connecting-ip') ||
+                     req.headers.get('x-real-ip') || 'unknown';
+
     // Verify hCaptcha
     const captchaValid = await verifyHcaptcha(payload.hcaptcha_token);
     if (!captchaValid) {
       console.error("[register] hCaptcha verification failed for token:", payload.hcaptcha_token?.substring(0, 20) + "...");
+
+      // HIPAA AUDIT LOGGING: Log failed hCaptcha verification
+      const supabase = createClient(SB_URL, SB_SECRET_KEY);
+      try {
+        await supabase.from('audit_logs').insert({
+          event_type: 'USER_REGISTER_FAILED',
+          event_category: 'AUTHENTICATION',
+          actor_user_id: null,
+          actor_ip_address: clientIp,
+          actor_user_agent: req.headers.get('user-agent'),
+          operation: 'REGISTER',
+resource_type: 'auth_event',
+          success: false,
+          error_code: 'CAPTCHA_FAILED',
+          error_message: 'hCaptcha verification failed',
+          metadata: { phone: phoneNumber }
+        });
+      } catch (logError) {
+        console.error('[Audit Log Error]:', logError);
+      }
+
       return jsonResponse({ error: "Captcha verification failed. Please try again." }, 401, origin);
     }
 
@@ -145,6 +171,25 @@ serve(async (req: Request) => {
     const phoneExists = existingAuth?.users?.some(u => u.phone === phoneNumber);
 
     if (phoneExists) {
+      // HIPAA AUDIT LOGGING: Log duplicate phone registration attempt
+      try {
+        await supabase.from('audit_logs').insert({
+          event_type: 'USER_REGISTER_FAILED',
+          event_category: 'AUTHENTICATION',
+          actor_user_id: null,
+          actor_ip_address: clientIp,
+          actor_user_agent: req.headers.get('user-agent'),
+          operation: 'REGISTER',
+resource_type: 'auth_event',
+          success: false,
+          error_code: 'PHONE_ALREADY_REGISTERED',
+          error_message: 'Phone number already registered',
+          metadata: { phone: phoneNumber }
+        });
+      } catch (logError) {
+        console.error('[Audit Log Error]:', logError);
+      }
+
       return jsonResponse({ error: "Phone number already registered" }, 409, origin);
     }
 
@@ -155,6 +200,25 @@ serve(async (req: Request) => {
       .maybeSingle();
 
     if (existingPending) {
+      // HIPAA AUDIT LOGGING: Log duplicate pending registration attempt
+      try {
+        await supabase.from('audit_logs').insert({
+          event_type: 'USER_REGISTER_FAILED',
+          event_category: 'AUTHENTICATION',
+          actor_user_id: null,
+          actor_ip_address: clientIp,
+          actor_user_agent: req.headers.get('user-agent'),
+          operation: 'REGISTER',
+resource_type: 'auth_event',
+          success: false,
+          error_code: 'REGISTRATION_PENDING',
+          error_message: 'Registration already pending for this phone number',
+          metadata: { phone: phoneNumber }
+        });
+      } catch (logError) {
+        console.error('[Audit Log Error]:', logError);
+      }
+
       return jsonResponse({ error: "Registration already pending for this phone number. Check your SMS for verification code." }, 409, origin);
     }
 
@@ -179,6 +243,26 @@ serve(async (req: Request) => {
 
     if (pendingError) {
       console.error("[register] pending registration error:", pendingError.message);
+
+      // HIPAA AUDIT LOGGING: Log failed registration database error
+      try {
+        await supabase.from('audit_logs').insert({
+          event_type: 'USER_REGISTER_FAILED',
+          event_category: 'AUTHENTICATION',
+          actor_user_id: null,
+          actor_ip_address: clientIp,
+          actor_user_agent: req.headers.get('user-agent'),
+          operation: 'REGISTER',
+resource_type: 'auth_event',
+          success: false,
+          error_code: pendingError.code || 'DATABASE_ERROR',
+          error_message: pendingError.message,
+          metadata: { phone: phoneNumber, role: enforced.role_slug }
+        });
+      } catch (logError) {
+        console.error('[Audit Log Error]:', logError);
+      }
+
       return jsonResponse({ error: "Failed to process registration" }, 500, origin);
     }
 
@@ -210,6 +294,29 @@ serve(async (req: Request) => {
       // If SMS fails, remove pending registration
       await supabase.from("pending_registrations").delete().eq("phone", phoneNumber);
       return jsonResponse({ error: "Failed to send verification code. Please try again." }, 500, origin);
+    }
+
+    // HIPAA AUDIT LOGGING: Log successful registration start (pending SMS verification)
+    try {
+      await supabase.from('audit_logs').insert({
+        event_type: 'USER_REGISTER_PENDING',
+        event_category: 'AUTHENTICATION',
+        actor_user_id: null, // User not created yet, pending verification
+        actor_ip_address: clientIp,
+        actor_user_agent: req.headers.get('user-agent'),
+        operation: 'REGISTER',
+resource_type: 'auth_event',
+        success: true,
+        metadata: {
+          phone: phoneNumber,
+          role: enforced.role_slug,
+          step: 'pending_sms_verification',
+          first_name: payload.first_name,
+          last_name: payload.last_name
+        }
+      });
+    } catch (logError) {
+      console.error('[Audit Log Error]:', logError);
     }
 
     return jsonResponse({

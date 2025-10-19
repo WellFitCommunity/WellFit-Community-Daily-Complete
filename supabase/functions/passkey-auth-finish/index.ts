@@ -47,6 +47,11 @@ serve(async (req: Request) => {
     const body = await req.json();
     const { id, rawId, response } = body;
 
+    // Extract client IP for audit logging
+    const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+                     req.headers.get('cf-connecting-ip') ||
+                     req.headers.get('x-real-ip') || 'unknown';
+
     // Parse client data to verify challenge
     const clientDataJSON = JSON.parse(
       atob(response.clientDataJSON.replace(/-/g, '+').replace(/_/g, '/'))
@@ -63,6 +68,25 @@ serve(async (req: Request) => {
       .limit(1);
 
     if (challengeError || !challenges || challenges.length === 0) {
+      // HIPAA AUDIT LOGGING: Log invalid/expired challenge
+      try {
+        await supabase.from('audit_logs').insert({
+          event_type: 'PASSKEY_AUTH_FAILED',
+          event_category: 'AUTHENTICATION',
+          actor_user_id: null,
+          actor_ip_address: clientIp,
+          actor_user_agent: req.headers.get('user-agent'),
+          operation: 'PASSKEY_AUTH',
+resource_type: 'auth_event',
+          success: false,
+          error_code: 'INVALID_CHALLENGE',
+          error_message: 'Invalid or expired challenge',
+          metadata: { credential_id: rawId }
+        });
+      } catch (logError) {
+        console.error('[Audit Log Error]:', logError);
+      }
+
       return new Response(
         JSON.stringify({ error: 'Invalid or expired challenge' }),
         { status: 400, headers }
@@ -83,13 +107,33 @@ serve(async (req: Request) => {
       .single();
 
     if (credError || !credential) {
-      // Log failed authentication
+      // Log failed authentication (passkey-specific table)
       await supabase.from('passkey_audit_log').insert({
         credential_id: rawId,
-        action: 'failed_auth',
+        operation: 'failed_auth',
+resource_type: 'auth_event',
         success: false,
         error_message: 'Credential not found'
       });
+
+      // HIPAA AUDIT LOGGING: Log credential not found
+      try {
+        await supabase.from('audit_logs').insert({
+          event_type: 'PASSKEY_AUTH_FAILED',
+          event_category: 'AUTHENTICATION',
+          actor_user_id: null,
+          actor_ip_address: clientIp,
+          actor_user_agent: req.headers.get('user-agent'),
+          operation: 'PASSKEY_AUTH',
+resource_type: 'auth_event',
+          success: false,
+          error_code: 'CREDENTIAL_NOT_FOUND',
+          error_message: 'Credential not found',
+          metadata: { credential_id: rawId }
+        });
+      } catch (logError) {
+        console.error('[Audit Log Error]:', logError);
+      }
 
       return new Response(
         JSON.stringify({ error: 'Credential not found' }),
@@ -153,13 +197,35 @@ serve(async (req: Request) => {
       user: user
     };
 
-    // Log successful authentication
+    // Log successful authentication (passkey-specific table)
     await supabase.from('passkey_audit_log').insert({
       user_id: credential.user_id,
       credential_id: rawId,
-      action: 'authenticate',
+      operation: 'authenticate',
+resource_type: 'auth_event',
       success: true
     });
+
+    // HIPAA AUDIT LOGGING: Log successful passkey authentication
+    try {
+      await supabase.from('audit_logs').insert({
+        event_type: 'PASSKEY_AUTH_SUCCESS',
+        event_category: 'AUTHENTICATION',
+        actor_user_id: credential.user_id,
+        actor_ip_address: clientIp,
+        actor_user_agent: req.headers.get('user-agent'),
+        operation: 'PASSKEY_AUTH',
+resource_type: 'auth_event',
+        success: true,
+        metadata: {
+          credential_id: rawId,
+          user_id: credential.user_id,
+          counter: credential.counter + 1
+        }
+      });
+    } catch (logError) {
+      console.error('[Audit Log Error]:', logError);
+    }
 
     return new Response(
       JSON.stringify({
@@ -175,7 +241,8 @@ serve(async (req: Request) => {
 
     // Log failed authentication
     await supabase.from('passkey_audit_log').insert({
-      action: 'failed_auth',
+      operation: 'failed_auth',
+resource_type: 'auth_event',
       success: false,
       error_message: error?.message || 'Unknown error'
     }).catch(() => {});
