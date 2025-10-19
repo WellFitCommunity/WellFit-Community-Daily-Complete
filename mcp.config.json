@@ -1,0 +1,26 @@
+{
+  "mcpServers": {
+    "github": {
+      "url": "https://api.githubcopilot.com/mcp/",
+      "transport": "sse",
+      "description": "GitHub MCP server for repository operations",
+      "enabled": true
+    },
+    "claude": {
+      "command": "node",
+      "args": ["./supabase/functions/mcp-claude-server/index.js"],
+      "description": "Self-hosted Claude MCP server for AI operations",
+      "enabled": true,
+      "env": {
+        "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}",
+        "SUPABASE_URL": "${REACT_APP_SUPABASE_URL}",
+        "SUPABASE_SERVICE_ROLE_KEY": "${SUPABASE_SERVICE_ROLE_KEY}"
+      }
+    }
+  },
+  "features": {
+    "promptCaching": true,
+    "auditLogging": true,
+    "errorSanitization": true
+  }
+}
