@@ -364,7 +364,10 @@ const CommunityMoments: React.FC = () => {
           contentType: selectedFile.type,
         });
 
-      if (uploadError) throw new Error('File upload failed. Please try a different photo.');
+      if (uploadError) {
+        console.error('[CommunityMoments] Upload error:', uploadError);
+        throw new Error(`File upload failed: ${uploadError.message || 'Please try a different photo.'}`);
+      }
 
       const { data: publicUrlData } = supabase.storage.from(BUCKET).getPublicUrl(filePath);
 
@@ -381,7 +384,10 @@ const CommunityMoments: React.FC = () => {
       };
 
       const { error: insertError } = await supabase.from('community_moments').insert([insertBody]);
-      if (insertError) throw new Error('Failed to save moment.');
+      if (insertError) {
+        console.error('[CommunityMoments] Database insert error:', insertError);
+        throw new Error(`Failed to save moment: ${insertError.message || 'Unknown error'}`);
+      }
 
       // Success!
       setSelectedFile(null);
@@ -484,7 +490,7 @@ const CommunityMoments: React.FC = () => {
           </div>
         )}
 
-        <div className={`text-3xl font-bold text-[#003865] text-center mb-2`}>
+        <div className="text-3xl font-bold text-center mb-2" style={{ color: branding.primaryColor }}>
           <span className="text-4xl mr-2">{m.emoji}</span>
           {m.title}
         </div>
@@ -624,7 +630,7 @@ const CommunityMoments: React.FC = () => {
       {/* Featured Moments */}
       {featured.length > 0 && (
         <div className="mb-10">
-          <h2 className="text-4xl font-bold mb-6 text-[#003865] flex items-center gap-3">
+          <h2 className="text-4xl font-bold mb-6 flex items-center gap-3" style={{ color: branding.primaryColor }}>
             <span className="text-5xl" aria-hidden>⭐</span>
             Featured Community Moments
           </h2>
@@ -639,8 +645,11 @@ const CommunityMoments: React.FC = () => {
       {/* Upload Form - BIG and CLEAR */}
       <div
         ref={formRef}
-        className="mb-10 bg-gradient-to-br from-blue-50 to-green-50 rounded-3xl p-8 shadow-2xl border-4"
-        style={{ borderColor: branding.primaryColor }}
+        className="mb-10 rounded-3xl p-8 shadow-2xl border-4"
+        style={{
+          borderColor: branding.primaryColor,
+          background: `linear-gradient(to bottom right, ${branding.primaryColor}10, ${branding.secondaryColor}10)`
+        }}
       >
         <h2
           className="text-4xl font-bold mb-2 flex items-center gap-3"
@@ -654,16 +663,27 @@ const CommunityMoments: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Photo Upload */}
           <div>
-            <label className="block font-bold mb-3 text-2xl text-[#003865]" htmlFor="cm-photo">
+            <label className="block font-bold mb-3 text-2xl" htmlFor="cm-photo" style={{ color: branding.primaryColor }}>
               📷 Choose a Photo
             </label>
+            <style>{`
+              #cm-photo::file-selector-button {
+                background: ${branding.primaryColor};
+                color: white;
+              }
+              #cm-photo::file-selector-button:hover {
+                background: ${branding.secondaryColor};
+              }
+            `}</style>
             <input
               id="cm-photo"
               type="file"
               accept="image/*"
               ref={fileInputRef}
               onChange={handleFileChange}
-              className="w-full text-xl p-4 bg-white rounded-xl border-4 border-gray-300 focus:border-[#8cc63f] focus:outline-none cursor-pointer file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-xl file:font-bold file:bg-[#003865] file:text-white hover:file:bg-[#8cc63f] file:cursor-pointer"
+              className="w-full text-xl p-4 bg-white rounded-xl border-4 border-gray-300 focus:outline-none cursor-pointer file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-xl file:font-bold file:text-white file:cursor-pointer"
+              onFocus={(e) => e.currentTarget.style.borderColor = branding.secondaryColor}
+              onBlur={(e) => e.currentTarget.style.borderColor = '#d1d5db'}
               aria-required
             />
             {previewUrl && (
@@ -684,12 +704,14 @@ const CommunityMoments: React.FC = () => {
 
           {/* Title */}
           <div>
-            <label className="block font-bold mb-3 text-2xl text-[#003865]" htmlFor="cm-title">
+            <label className="block font-bold mb-3 text-2xl" htmlFor="cm-title" style={{ color: branding.primaryColor }}>
               ✏️ Give it a Title
             </label>
             <input
               id="cm-title"
-              className="w-full border-4 border-gray-300 rounded-xl p-4 text-2xl focus:border-[#8cc63f] focus:outline-none"
+              className="w-full border-4 border-gray-300 rounded-xl p-4 text-2xl focus:outline-none"
+              onFocus={(e) => e.currentTarget.style.borderColor = branding.secondaryColor}
+              onBlur={(e) => e.currentTarget.style.borderColor = '#d1d5db'}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Example: Sunday Family Picnic"
@@ -700,12 +722,14 @@ const CommunityMoments: React.FC = () => {
 
           {/* Description */}
           <div>
-            <label className="block font-bold mb-3 text-2xl text-[#003865]" htmlFor="cm-desc">
+            <label className="block font-bold mb-3 text-2xl" htmlFor="cm-desc" style={{ color: branding.primaryColor }}>
               💬 Tell Your Story
             </label>
             <textarea
               id="cm-desc"
-              className="w-full border-4 border-gray-300 rounded-xl p-4 text-2xl focus:border-[#8cc63f] focus:outline-none"
+              className="w-full border-4 border-gray-300 rounded-xl p-4 text-2xl focus:outline-none"
+              onFocus={(e) => e.currentTarget.style.borderColor = branding.secondaryColor}
+              onBlur={(e) => e.currentTarget.style.borderColor = '#d1d5db'}
               placeholder="Share the memory behind this photo..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -717,7 +741,7 @@ const CommunityMoments: React.FC = () => {
 
           {/* Emoji - LARGE and EASY */}
           <div>
-            <label className="block font-bold mb-3 text-2xl text-[#003865]">
+            <label className="block font-bold mb-3 text-2xl" style={{ color: branding.primaryColor }}>
               😊 Pick an Emoji (Optional)
             </label>
             <div className="flex flex-wrap gap-3 mb-4">
@@ -728,7 +752,7 @@ const CommunityMoments: React.FC = () => {
                   onClick={() => selectQuickEmoji(e)}
                   className={`text-6xl p-4 rounded-2xl transition-all ${emoji === e ? 'shadow-2xl scale-110' : 'bg-white shadow-lg'}`}
                   style={{
-                    backgroundColor: emoji === e ? branding.secondaryColor || '#8cc63f' : 'white'
+                    backgroundColor: emoji === e ? branding.secondaryColor : 'white'
                   }}
                   whileHover={{ scale: 1.15, rotate: [0, -5, 5, -5, 0] }}
                   whileTap={{ scale: 1.2, rotate: 15 }}
@@ -742,14 +766,18 @@ const CommunityMoments: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-              className="text-xl font-semibold text-[#003865] underline hover:text-[#8cc63f]"
+              className="text-xl font-semibold underline"
+              style={{ color: branding.primaryColor }}
+              onMouseEnter={(e) => e.currentTarget.style.color = branding.secondaryColor}
+              onMouseLeave={(e) => e.currentTarget.style.color = branding.primaryColor}
             >
               Or browse more emojis...
             </button>
 
             {showEmojiPicker && isBrowser && createPortal(
               <div
-                className="z-50 fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white border-4 border-[#003865] rounded-2xl shadow-2xl p-4"
+                className="z-50 fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white border-4 rounded-2xl shadow-2xl p-4"
+                style={{ borderColor: branding.primaryColor }}
                 role="dialog"
                 aria-label="Choose an emoji"
               >
@@ -769,12 +797,14 @@ const CommunityMoments: React.FC = () => {
 
           {/* Tags */}
           <div>
-            <label className="block font-bold mb-3 text-2xl text-[#003865]" htmlFor="cm-tags">
+            <label className="block font-bold mb-3 text-2xl" htmlFor="cm-tags" style={{ color: branding.primaryColor }}>
               🏷️ Add Tags (Optional)
             </label>
             <input
               id="cm-tags"
-              className="w-full border-4 border-gray-300 rounded-xl p-4 text-2xl focus:border-[#8cc63f] focus:outline-none"
+              className="w-full border-4 border-gray-300 rounded-xl p-4 text-2xl focus:outline-none"
+              onFocus={(e) => e.currentTarget.style.borderColor = branding.secondaryColor}
+              onBlur={(e) => e.currentTarget.style.borderColor = '#d1d5db'}
               value={tags}
               onChange={(e) => setTags(e.target.value)}
               placeholder="family, fun, celebration"
@@ -786,6 +816,8 @@ const CommunityMoments: React.FC = () => {
           <button
             type="submit"
             disabled={uploading}
+            aria-label={uploading ? "Uploading your moment, please wait" : "Share your moment"}
+            aria-disabled={uploading}
             className="disabled:opacity-60 disabled:cursor-not-allowed text-white px-12 py-6 rounded-2xl font-bold w-full text-3xl transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105"
             style={{
               background: uploading ? '#999' : `linear-gradient(to right, ${branding.primaryColor}, ${branding.secondaryColor || '#8cc63f'})`
@@ -817,14 +849,14 @@ const CommunityMoments: React.FC = () => {
         className="text-4xl font-bold mb-6 flex items-center gap-3"
         style={{ color: branding.primaryColor }}
       >
-        <span className="text-5xl">🖼️</span>
+        <span className="text-5xl" aria-hidden="true">🖼️</span>
         All Community Moments
       </h2>
 
       {initialLoading ? (
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2" role="status" aria-label="Loading community moments">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl shadow-xl p-6">
+            <div key={i} className="bg-white rounded-2xl shadow-xl p-6" aria-hidden="true">
               <div className="w-full h-80 bg-gradient-to-br from-gray-100 to-gray-200 animate-pulse rounded-xl mb-4" />
               <div className="h-8 bg-gray-200 animate-pulse rounded-xl mb-3" />
               <div className="h-6 bg-gray-200 animate-pulse rounded-xl mb-2" />
@@ -834,7 +866,7 @@ const CommunityMoments: React.FC = () => {
         </div>
       ) : (
         <>
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-2" role="feed" aria-label="Community moments gallery">
             {regular.map((m) => (
               <MomentCard key={m.id} m={m} isAdmin={isAdmin} onFeatureChange={handleFeatureChange} />
             ))}
@@ -852,14 +884,16 @@ const CommunityMoments: React.FC = () => {
               <button
                 onClick={loadMore}
                 disabled={loadingMore}
+                aria-label={loadingMore ? "Loading more moments" : "Load more moments"}
+                aria-disabled={loadingMore}
                 className="bg-white border-4 font-bold px-10 py-5 rounded-2xl shadow-xl text-2xl transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed hover:text-white"
                 style={{
                   borderColor: branding.primaryColor,
                   color: branding.primaryColor
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = branding.secondaryColor || '#8cc63f';
-                  e.currentTarget.style.borderColor = branding.secondaryColor || '#8cc63f';
+                  e.currentTarget.style.backgroundColor = branding.secondaryColor;
+                  e.currentTarget.style.borderColor = branding.secondaryColor;
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = 'white';

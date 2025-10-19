@@ -1,15 +1,13 @@
-// src/pages/DashboardPage.tsx - Updated to use new Senior Community Dashboard
+// src/pages/DashboardPage.tsx - Updated to route users to role-appropriate dashboards
 import React from 'react';
-import { useBranding } from '../BrandingContext';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { fetchMyProfile } from '../data/profile';
-import FhirAiDashboardRouter from '../components/FhirAiDashboardRouter';
 import SeniorCommunityDashboard from '../components/dashboard/SeniorCommunityDashboard';
 
 const Dashboard: React.FC = () => {
-  const { branding } = useBranding();
   const { user } = useAuth();
-  const [profile, setProfile] = React.useState<any>(null);
+  const navigate = useNavigate();
   const [loading, setLoading] = React.useState(true);
 
   // Load user profile to determine dashboard type
@@ -22,14 +20,57 @@ const Dashboard: React.FC = () => {
 
       try {
         const userProfile = await fetchMyProfile();
-        setProfile(userProfile);
+
+        // Check if user has a staff role that requires redirection
+        const role = userProfile?.role || '';
+        const roleCode = userProfile?.role_code || 0;
+
+        // Staff role names and codes
+        const adminRoles = ['admin', 'super_admin', 'department_head'];
+        const adminRoleCodes = [1, 2]; // Admin(1), Super_admin(2)
+
+        const nurseRoles = ['nurse', 'nurse_practitioner', 'clinical_supervisor'];
+        const nurseRoleCodes = [8, 9, 10]; // Nurse roles
+
+        const physicianRoles = ['physician', 'doctor', 'physician_assistant'];
+        const physicianRoleCodes = [3]; // Physician/Doctor roles
+
+        const caregiverRoles = ['caregiver'];
+        const caregiverRoleCodes = [6]; // Caregiver role
+
+        // Redirect staff to their appropriate dashboards
+        if (adminRoles.includes(role) || adminRoleCodes.includes(roleCode)) {
+          console.log('[Dashboard] Admin/Super Admin detected - redirecting to admin panel');
+          navigate('/admin', { replace: true });
+          return;
+        }
+
+        if (nurseRoles.includes(role) || nurseRoleCodes.includes(roleCode)) {
+          console.log('[Dashboard] Nurse detected - redirecting to nurse dashboard');
+          navigate('/nurse-dashboard', { replace: true });
+          return;
+        }
+
+        if (physicianRoles.includes(role) || physicianRoleCodes.includes(roleCode)) {
+          console.log('[Dashboard] Physician detected - redirecting to physician dashboard');
+          navigate('/physician-dashboard', { replace: true });
+          return;
+        }
+
+        if (caregiverRoles.includes(role) || caregiverRoleCodes.includes(roleCode)) {
+          console.log('[Dashboard] Caregiver detected - redirecting to caregiver dashboard');
+          navigate('/caregiver-dashboard', { replace: true });
+          return;
+        }
+
+        console.log('[Dashboard] Senior/regular user detected - showing senior dashboard');
       } catch (e) {
         console.warn('[Dashboard] fetchMyProfile failed:', (e as Error).message);
       } finally {
         setLoading(false);
       }
     })();
-  }, [user?.id]);
+  }, [user?.id, navigate]);
 
   // Loading state
   if (loading) {
@@ -43,13 +84,8 @@ const Dashboard: React.FC = () => {
     );
   }
 
-  // HIPAA-compliant access control based on role codes
-  const roleCode = profile?.role_code;
-  const roleName = profile?.role;
-
-  // Everyone gets the senior-friendly dashboard as the primary landing page
-  // Roles: Senior(4), Staff(3), Moderator(14), Volunteer(5), Caregiver(6), Contractor(11), User(13)
-  // Medical roles: Admin(1), Super_admin(2), Contractor_nurse(12)
+  // Regular users (seniors, volunteers, staff without admin role) get the senior-friendly dashboard
+  // Roles: Senior(4), Staff(3), Moderator(14), Volunteer(5), Contractor(11), User(13)
   return <SeniorCommunityDashboard />;
 };
 

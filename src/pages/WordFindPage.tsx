@@ -4,6 +4,7 @@ import Confetti from 'react-confetti';
 import { dailyThemes } from '../data/wordThemes';
 import { useSupabaseClient, useUser } from '../contexts/AuthContext';
 import { saveWordGameResult } from '../services/engagementTracking';
+import { useBranding } from '../BrandingContext';
 
 interface Point { r: number; c: number; }
 const ROWS = 12;
@@ -25,6 +26,7 @@ const WordFind: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const supabase = useSupabaseClient();
   const user = useUser();
+  const { branding } = useBranding();
 
   const todayIndex = useMemo(() => (new Date().getDate() - 1) % dailyThemes.length, []);
   const themeData = dailyThemes[todayIndex];
@@ -38,6 +40,8 @@ const WordFind: React.FC = () => {
   const [gamesPlayedToday, setGamesPlayedToday] = useState(0);
   const [startTime, setStartTime] = useState<number | null>(null);
   const [completionTime, setCompletionTime] = useState<number | null>(null);
+  const [hintsUsed, setHintsUsed] = useState(0);
+  const [revealedLetters, setRevealedLetters] = useState<Set<string>>(new Set());
 
   const GAMES_PLAYED_KEY = 'wordFindGamesPlayed';
   const TIME_TRACKING_KEY = 'wordFindTimeTracking';
@@ -129,6 +133,40 @@ const WordFind: React.FC = () => {
   const resetSelection = (seed?: Point) => {
     setSelection(seed ? [seed] : []);
     setLockedDir(null);
+  };
+
+  // Hint system - reveal first letter of an unfound word
+  const handleHint = () => {
+    const unfoundWords = words.filter(w => !found.has(w));
+    if (unfoundWords.length === 0) return;
+
+    // Pick a random unfound word
+    const targetWord = unfoundWords[Math.floor(Math.random() * unfoundWords.length)];
+
+    // Find first letter position in grid
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        if (grid[r][c] === targetWord[0]) {
+          // Check if this is the start of the target word in any direction
+          for (const dir of DIRECTIONS) {
+            let match = true;
+            for (let i = 0; i < targetWord.length; i++) {
+              const nr = r + dir.r * i;
+              const nc = c + dir.c * i;
+              if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS || grid[nr][nc] !== targetWord[i]) {
+                match = false;
+                break;
+              }
+            }
+            if (match) {
+              setRevealedLetters(prev => new Set(prev).add(toKey({ r, c })));
+              setHintsUsed(h => h + 1);
+              return;
+            }
+          }
+        }
+      }
+    }
   };
 
   const handleTap = (r: number, c: number) => {
@@ -250,7 +288,7 @@ const WordFind: React.FC = () => {
                   completion_time_seconds: timeInSeconds,
                   words_found: updated.size,
                   total_words: words.length,
-                  hints_used: 0,
+                  hints_used: hintsUsed,
                   difficulty_level: themeData.theme || 'medium',
                   completion_status: 'completed',
                   puzzle_id: `${today}-${todayIndex}`
@@ -272,90 +310,164 @@ const WordFind: React.FC = () => {
 
   return (
     <div className="min-h-screen" style={{
-      background: 'linear-gradient(to bottom right, #003865, #8cc63f)'
+      background: branding.gradient
     }}>
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
-        <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 max-w-2xl mx-auto">
+        <div className="bg-white rounded-xl shadow-lg p-4 sm:p-8 max-w-6xl mx-auto">
           <div ref={containerRef} className="text-center">
-      <h2 className="text-2xl font-bold mb-2">{themeData.theme} Word Find</h2>
-      <p className="text-sm mb-4">Tap letters to select in a straight line. Backwards works too.</p>
+      <h2 className="text-3xl sm:text-4xl font-bold mb-3" style={{ color: branding.primaryColor }}>{themeData.theme} Word Find</h2>
+      <p className="text-lg sm:text-xl mb-6 text-gray-700">Tap letters to select in a straight line. Backwards works too!</p>
 
-      {/* Responsive Grid */}
-      <div className="overflow-x-auto flex justify-center w-full">
-        <div
-          className="inline-grid gap-1 w-full select-none"
-          style={{
-            gridTemplateColumns: `repeat(${COLS}, minmax(28px, 1fr))`,
-            maxWidth: 480,
-            userSelect: 'none',
-            WebkitUserSelect: 'none',
-          }}
+      {/* Hint Button - BIG and FRIENDLY */}
+      <div className="mb-6 flex justify-center gap-4">
+        <button
+          onClick={handleHint}
+          disabled={found.size === words.length}
+          className="px-6 py-3 bg-yellow-500 text-white rounded-xl font-bold text-xl shadow-lg hover:bg-yellow-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all transform hover:scale-105"
+          aria-label="Get a hint to find a word"
+          aria-disabled={found.size === words.length}
         >
-          {grid.map((row, r) =>
-            row.map((ch, c) => {
-              const key = `${r},${c}`;
-              const isSel = selection.some(p => p.r === r && p.c === c);
+          💡 Need a Hint?
+        </button>
+        {hintsUsed > 0 && (
+          <div className="flex items-center text-lg text-gray-600" role="status" aria-live="polite">
+            <span>Hints used: {hintsUsed}</span>
+          </div>
+        )}
+      </div>
+
+      {/* TWO-COLUMN LAYOUT: Grid on LEFT, Words on RIGHT (side-by-side on tablet/desktop, stacked on mobile) */}
+      <div className="flex flex-col lg:flex-row gap-6 items-start justify-center">
+
+        {/* LEFT SIDE: The Puzzle Grid */}
+        <div className="flex-shrink-0">
+          <div
+            className="inline-grid gap-2 select-none"
+            role="grid"
+            aria-label="Word search puzzle grid"
+            style={{
+              gridTemplateColumns: `repeat(${COLS}, minmax(40px, 44px))`,
+              userSelect: 'none',
+              WebkitUserSelect: 'none',
+            }}
+          >
+            {grid.map((row, r) =>
+              row.map((ch, c) => {
+                const key = `${r},${c}`;
+                const isSel = selection.some(p => p.r === r && p.c === c);
+                const isHint = revealedLetters.has(key);
+                return (
+                  <div
+                    key={key}
+                    onClick={() => handleTap(r, c)}
+                    className={`border-2 rounded-lg cursor-pointer flex items-center justify-center
+                      text-xl sm:text-2xl font-bold transition-all transform active:scale-95
+                      ${isSel ? 'bg-blue-600 text-white border-blue-700 shadow-lg scale-105' :
+                        isHint ? 'bg-yellow-200 text-gray-800 border-yellow-400 animate-pulse' :
+                        'bg-white text-gray-800 border-gray-300 hover:bg-gray-50'}
+                    `}
+                    style={{
+                      width: 44,
+                      height: 44,
+                    }}
+                    role="button"
+                    aria-label={`Letter ${ch} at row ${r + 1}, column ${c + 1}${isHint ? ', hint' : ''}`}
+                  >
+                    {ch}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        {/* RIGHT SIDE: Word List Panel - ALWAYS VISIBLE! */}
+        <div className="flex-shrink-0 rounded-xl p-6 shadow-lg border-2"
+          role="complementary"
+          aria-label="Words to find"
+          style={{
+            minWidth: '280px',
+            maxWidth: '320px',
+            background: `linear-gradient(to bottom right, ${branding.primaryColor}15, ${branding.secondaryColor}15)`,
+            borderColor: branding.primaryColor
+          }}>
+          <h3 className="text-2xl font-bold mb-4 text-center" style={{ color: branding.primaryColor }}>📝 Find These Words</h3>
+
+          {/* Progress Bar */}
+          <div className="mb-4 bg-gray-200 rounded-full h-3 overflow-hidden" role="progressbar" aria-valuenow={found.size} aria-valuemin={0} aria-valuemax={words.length} aria-label="Words found progress">
+            <div
+              className="h-full transition-all duration-500"
+              style={{
+                width: `${(found.size / words.length) * 100}%`,
+                background: branding.secondaryColor
+              }}
+            />
+          </div>
+          <div className="text-center text-lg font-bold text-gray-700 mb-4" role="status" aria-live="polite">
+            {found.size} / {words.length} Found
+          </div>
+
+          {/* Word List - Vertical Stack */}
+          <div className="space-y-2" role="list" aria-label="Word list">
+            {words.map(w => {
+              const isFound = found.has(w);
               return (
                 <div
-                  key={key}
-                  onClick={() => handleTap(r, c)}
-                  className={`border rounded cursor-pointer flex items-center justify-center
-                    text-xs sm:text-base md:text-lg transition-colors
-                    ${isSel ? 'bg-blue-500 text-white' : 'bg-white text-black'}
-                  `}
-                  style={{
-                    minWidth: 28,
-                    minHeight: 28,
-                    width: '100%',
-                    aspectRatio: '1 / 1',
-                  }}
-                  role="button"
-                  aria-label={`Letter ${ch} at row ${r + 1}, column ${c + 1}`}
+                  key={w}
+                  role="listitem"
+                  aria-label={`${w}, ${isFound ? 'found' : 'not found yet'}`}
+                  className={`px-4 py-3 rounded-lg text-center font-bold text-xl transition-all ${
+                    isFound
+                      ? 'text-white shadow-md'
+                      : 'bg-white text-gray-800 border-2 border-gray-300'
+                  }`}
+                  style={isFound ? { background: branding.secondaryColor } : {}}
                 >
-                  {ch}
+                  {isFound && <span aria-hidden="true">✓ </span>}{isFound ? <s>{w}</s> : w}
                 </div>
               );
-            })
-          )}
+            })}
+          </div>
         </div>
+
       </div>
 
-      {/* Horizontal Word Bank, responsive & scrollable */}
-      <div className="mt-4 flex flex-col items-center w-full">
-        <h3 className="font-semibold mb-1">Words:</h3>
-        <div
-          className="flex flex-row gap-2 overflow-x-auto pb-2 w-full max-w-xl"
-          style={{ scrollSnapType: 'x mandatory' }}
-        >
-          {words.map(w => {
-            const isFound = found.has(w);
-            return (
-              <div
-                key={w}
-                className={`px-3 py-2 text-base md:text-lg font-medium ${
-                  isFound
-                    ? 'text-green-600 line-through'
-                    : 'text-gray-800'
-                }`}
-                style={{ minWidth: 75, textAlign: 'center', scrollSnapAlign: 'center' }}
-              >
-                {w}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Completion Stats */}
+      {/* Completion Stats - CELEBRATORY! */}
       {celebrate && completionTime !== null && (
-        <div className="mt-4 p-4 bg-green-50 border-2 border-green-400 rounded-lg">
-          <h3 className="font-bold text-green-800 text-xl mb-2">🎉 Puzzle Complete!</h3>
-          <p className="text-green-700">
-            Completion time: <span className="font-semibold">{Math.floor(completionTime / 60)}m {completionTime % 60}s</span>
+        <div className="mt-6 p-6 rounded-2xl shadow-xl" role="alert" aria-live="assertive" style={{
+          background: `linear-gradient(to right, ${branding.primaryColor}15, ${branding.secondaryColor}15)`,
+          border: `4px solid ${branding.secondaryColor}`
+        }}>
+          <h3 className="font-bold text-3xl mb-3" style={{ color: branding.primaryColor }}>🎉 Fantastic Job! 🎉</h3>
+          <p className="text-xl mb-2" style={{ color: branding.primaryColor }}>
+            You found all {words.length} words!
           </p>
-          <p className="text-green-600 text-sm mt-1">
-            Games played today: {gamesPlayedToday}
+          <p className="text-lg" style={{ color: branding.primaryColor }}>
+            ⏱️ Time: <span className="font-semibold">{Math.floor(completionTime / 60)}m {completionTime % 60}s</span>
           </p>
+          {hintsUsed > 0 && (
+            <p className="text-yellow-700 text-lg">
+              💡 Hints used: {hintsUsed}
+            </p>
+          )}
+          <p className="text-lg mt-2" style={{ color: branding.primaryColor }}>
+            🏆 Games completed today: {gamesPlayedToday}
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-6 py-3 text-white rounded-xl font-bold text-xl shadow-lg transition-all transform hover:scale-105"
+            aria-label="Play a new word find puzzle"
+            style={{
+              background: branding.primaryColor
+            }}
+            onMouseEnter={(e) => {
+              const primaryRGB = branding.primaryColor;
+              e.currentTarget.style.background = primaryRGB + 'dd';
+            }}
+            onMouseLeave={(e) => e.currentTarget.style.background = branding.primaryColor}
+          >
+            🎮 Play Again
+          </button>
         </div>
       )}
 

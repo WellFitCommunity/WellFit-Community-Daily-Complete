@@ -321,9 +321,9 @@ const MemoryLaneTriviaPage: React.FC = () => {
             <div className="mb-8">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-sm font-medium text-gray-700">Question {currentQuestionIndex + 1} of 5</span>
-                <span className="text-sm font-medium text-[#8cc63f]">{progress.correct_answers} correct</span>
+                <span className="text-sm font-medium text-[#8cc63f]" role="status" aria-live="polite">{progress.correct_answers} correct</span>
               </div>
-              <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
+              <div className="h-4 bg-gray-200 rounded-full overflow-hidden" role="progressbar" aria-valuenow={currentQuestionIndex + 1} aria-valuemin={1} aria-valuemax={5} aria-label="Question progress">
                 <div
                   className="h-full transition-all duration-500"
                   style={{
@@ -337,7 +337,7 @@ const MemoryLaneTriviaPage: React.FC = () => {
 
           {/* Game Completed */}
           {gameCompleted ? (
-            <div className="text-center space-y-6">
+            <div className="text-center space-y-6" role="alert" aria-live="assertive">
               <div className="rounded-xl p-8" style={{ background: 'linear-gradient(135deg, #e8f4f8 0%, #f0f8e8 100%)' }}>
                 {progress.perfect_score ? (
                   <>
@@ -361,10 +361,11 @@ const MemoryLaneTriviaPage: React.FC = () => {
               {/* Share Button */}
               <button
                 onClick={shareScore}
+                aria-label="Share your score to Community Moments"
                 className="mx-auto flex items-center gap-2 px-8 py-4 text-white font-bold text-lg rounded-xl transition shadow-lg"
                 style={{ background: 'linear-gradient(90deg, #8cc63f 0%, #003865 100%)' }}
               >
-                <Share2 size={24} />
+                <Share2 size={24} aria-hidden="true" />
                 Share Your Score
               </button>
 
@@ -402,19 +403,23 @@ const MemoryLaneTriviaPage: React.FC = () => {
               </div>
 
               {/* Answer Options */}
-              <div className="space-y-3">
+              <div className="space-y-3" role="radiogroup" aria-label="Answer options">
                 {['option_a', 'option_b', 'option_c', 'option_d'].map((optionKey, index) => {
                   const optionLetter = getOptionLetter(index);
+                  const optionText = currentQuestion[optionKey as keyof TriviaQuestion] as string;
                   return (
                     <button
                       key={optionLetter}
                       onClick={() => handleAnswerSelect(optionLetter)}
                       disabled={selectedAnswer !== null}
+                      role="radio"
+                      aria-checked={selectedAnswer === optionLetter}
+                      aria-label={`Option ${optionLetter}: ${optionText}`}
                       className={getButtonClass(optionLetter)}
                       style={getButtonStyle(optionLetter)}
                     >
-                      <span className="font-bold text-xl mr-3">{optionLetter}.</span>
-                      {currentQuestion[optionKey as keyof TriviaQuestion]}
+                      <span className="font-bold text-xl mr-3" aria-hidden="true">{optionLetter}.</span>
+                      {optionText}
                     </button>
                   );
                 })}
@@ -425,6 +430,8 @@ const MemoryLaneTriviaPage: React.FC = () => {
                 <div className="space-y-4">
                   <div
                     className="p-6 rounded-xl border-2 text-center"
+                    role="alert"
+                    aria-live="assertive"
                     style={{
                       backgroundColor: answeredCorrectly ? '#f0f8e8' : '#e8f4f8',
                       borderColor: answeredCorrectly ? '#8cc63f' : '#003865'
@@ -444,6 +451,7 @@ const MemoryLaneTriviaPage: React.FC = () => {
                   {/* Next Question Button */}
                   <button
                     onClick={handleNextQuestion}
+                    aria-label={currentQuestionIndex < questions.length - 1 ? 'Go to next question' : 'See your results'}
                     className="w-full py-6 text-white font-bold text-2xl rounded-xl transition shadow-lg hover:scale-105"
                     style={{
                       background: 'linear-gradient(90deg, #8cc63f 0%, #003865 100%)'
@@ -459,22 +467,24 @@ const MemoryLaneTriviaPage: React.FC = () => {
 
         {/* Trophy Gallery */}
         {trophies.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-xl p-6">
+          <div className="bg-white rounded-2xl shadow-xl p-6" role="region" aria-label="Trophy collection">
             <div className="flex items-center gap-2 mb-4">
-              <Award style={{ color: '#8cc63f' }} size={28} />
+              <Award style={{ color: '#8cc63f' }} size={28} aria-hidden="true" />
               <h3 className="text-2xl font-bold" style={{ color: '#003865' }}>Your Trophy Collection</h3>
             </div>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-3" role="list" aria-label="Perfect score trophies">
               {trophies.map((trophy, index) => (
                 <div
                   key={index}
+                  role="listitem"
+                  aria-label={`Perfect score trophy earned on ${new Date(trophy.earned_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}`}
                   className="flex flex-col items-center justify-center w-20 h-20 rounded-xl border-2 shadow-md hover:scale-110 transition-transform"
                   style={{
                     background: 'linear-gradient(135deg, #f0f8e8 0%, #e8f4f8 100%)',
                     borderColor: '#8cc63f'
                   }}
                 >
-                  <Trophy style={{ color: '#8cc63f' }} size={32} />
+                  <Trophy style={{ color: '#8cc63f' }} size={32} aria-hidden="true" />
                   <span className="text-xs font-semibold mt-1" style={{ color: '#003865' }}>
                     {new Date(trophy.earned_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </span>

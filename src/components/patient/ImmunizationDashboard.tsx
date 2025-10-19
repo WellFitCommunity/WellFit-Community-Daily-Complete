@@ -25,6 +25,7 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
   const [vaccineGaps, setVaccineGaps] = useState<VaccineGap[]>([]);
   const [filteredImmunizations, setFilteredImmunizations] = useState<FHIRImmunization[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [showAddForm, setShowAddForm] = useState(false);
   const [showTimeline, setShowTimeline] = useState(false);
@@ -41,11 +42,13 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
 
   const loadImmunizations = async () => {
     setLoading(true);
+    setError(null);
     try {
       const data = await FHIRService.Immunization.getByPatient(userId);
       setImmunizations(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to load immunizations:', error);
+      setError(error?.message || 'Failed to load immunization records. Please try again later.');
     }
     setLoading(false);
   };
@@ -54,8 +57,9 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
     try {
       const gaps = await FHIRService.Immunization.getVaccineGaps(userId);
       setVaccineGaps(gaps);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to load vaccine gaps:', error);
+      // Don't set main error for vaccine gaps - it's not critical
     }
   };
 
@@ -162,6 +166,25 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
+      {/* Error Display */}
+      {error && (
+        <div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-6">
+          <div className="flex items-start">
+            <span className="text-3xl mr-4">⚠️</span>
+            <div>
+              <h3 className="text-lg font-semibold text-red-800 mb-2">Unable to Load Immunization Records</h3>
+              <p className="text-red-700 mb-4">{error}</p>
+              <button
+                onClick={loadImmunizations}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header with Gradient */}
       <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl shadow-lg p-8 mb-6 text-white">
         <div className="flex justify-between items-start">

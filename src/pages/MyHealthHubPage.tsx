@@ -15,6 +15,12 @@ const MyHealthHubPage: React.FC = () => {
   const navigate = useNavigate();
   const { branding } = useBranding();
 
+  // Use branding colors for tile accents - alternating pattern
+  const getTileAccentColor = (index: number) => {
+    // Alternate between primary and secondary colors
+    return index % 2 === 0 ? branding.primaryColor : branding.secondaryColor;
+  };
+
   const healthTiles: HealthNavigationTile[] = [
     {
       id: 'vitals-labs',
@@ -22,7 +28,7 @@ const MyHealthHubPage: React.FC = () => {
       title: 'My Vitals & Labs',
       description: 'Track your blood pressure, heart rate, lab results, and more',
       route: '/health-observations',
-      color: 'from-blue-500 to-blue-600',
+      color: '', // Will use branding color
     },
     {
       id: 'vaccines',
@@ -30,7 +36,7 @@ const MyHealthHubPage: React.FC = () => {
       title: 'My Vaccines',
       description: 'View your immunization records and vaccine care gaps',
       route: '/immunizations',
-      color: 'from-purple-500 to-purple-600',
+      color: '', // Will use branding color
     },
     {
       id: 'medications',
@@ -38,7 +44,7 @@ const MyHealthHubPage: React.FC = () => {
       title: 'My Medications',
       description: 'AI-powered medication tracking and management',
       route: '/medicine-cabinet',
-      color: 'from-indigo-500 to-indigo-600',
+      color: '', // Will use branding color
     },
     {
       id: 'care-plans',
@@ -46,7 +52,7 @@ const MyHealthHubPage: React.FC = () => {
       title: 'My Care Plans',
       description: 'View your active care plans and health goals',
       route: '/care-plans',
-      color: 'from-emerald-500 to-emerald-600',
+      color: '', // Will use branding color
     },
   ];
 
@@ -69,19 +75,25 @@ const MyHealthHubPage: React.FC = () => {
         </div>
 
         {/* Navigation Tiles Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 mb-8">
-          {healthTiles.map((tile) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 mb-8" role="navigation" aria-label="Health records sections">
+          {healthTiles.map((tile, index) => (
             <button
               key={tile.id}
               onClick={() => navigate(tile.route)}
+              aria-label={`Go to ${tile.title}: ${tile.description}`}
               className="group relative bg-white rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 overflow-hidden p-8 sm:p-10 text-left"
               style={{ minHeight: '220px' }}
             >
-              {/* Gradient Background Accent */}
-              <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${tile.color} opacity-10 rounded-full -mr-16 -mt-16 group-hover:opacity-20 transition-opacity duration-300`}></div>
+              {/* Gradient Background Accent - Using Branding Colors */}
+              <div
+                className="absolute top-0 right-0 w-32 h-32 rounded-full -mr-16 -mt-16 opacity-10 group-hover:opacity-20 transition-opacity duration-300"
+                style={{
+                  background: `linear-gradient(to bottom right, ${getTileAccentColor(index)}, ${getTileAccentColor(index)}dd)`
+                }}
+              ></div>
 
               {/* Icon */}
-              <div className="text-6xl sm:text-7xl mb-4 relative z-10 transform group-hover:scale-110 transition-transform duration-300">
+              <div className="text-6xl sm:text-7xl mb-4 relative z-10 transform group-hover:scale-110 transition-transform duration-300" aria-hidden="true">
                 {tile.icon}
               </div>
 
@@ -110,33 +122,34 @@ const MyHealthHubPage: React.FC = () => {
         <div className="text-center mt-8">
           <button
             onClick={() => navigate('/dashboard')}
+            aria-label="Go back to main dashboard"
             className="inline-flex items-center gap-3 px-8 py-4 bg-white text-gray-700 rounded-xl font-semibold text-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
           >
-            <span className="text-2xl">←</span>
+            <span className="text-2xl" aria-hidden="true">←</span>
             <span>Back to Dashboard</span>
           </button>
         </div>
 
         {/* Quick Tips Section */}
-        <div className="mt-12 bg-white/95 backdrop-blur rounded-2xl shadow-xl p-6 sm:p-8">
+        <div className="mt-12 bg-white/95 backdrop-blur rounded-2xl shadow-xl p-6 sm:p-8" role="complementary" aria-label="Health tips">
           <h3 className="text-2xl sm:text-3xl font-bold mb-4" style={{ color: branding.primaryColor }}>
-            💡 Quick Tips
+            <span aria-hidden="true">💡</span> Quick Tips
           </h3>
-          <ul className="space-y-3 text-lg sm:text-xl text-gray-700">
-            <li className="flex items-start gap-3">
-              <span className="text-2xl flex-shrink-0">✅</span>
+          <ul className="space-y-3 text-lg sm:text-xl text-gray-700" role="list">
+            <li className="flex items-start gap-3" role="listitem">
+              <span className="text-2xl flex-shrink-0" aria-hidden="true">✅</span>
               <span>Keep your health records up to date for better care coordination</span>
             </li>
-            <li className="flex items-start gap-3">
-              <span className="text-2xl flex-shrink-0">📱</span>
+            <li className="flex items-start gap-3" role="listitem">
+              <span className="text-2xl flex-shrink-0" aria-hidden="true">📱</span>
               <span>Share your vaccine records with your healthcare providers</span>
             </li>
-            <li className="flex items-start gap-3">
-              <span className="text-2xl flex-shrink-0">🔔</span>
+            <li className="flex items-start gap-3" role="listitem">
+              <span className="text-2xl flex-shrink-0" aria-hidden="true">🔔</span>
               <span>Check for vaccine care gaps to stay protected</span>
             </li>
-            <li className="flex items-start gap-3">
-              <span className="text-2xl flex-shrink-0">💪</span>
+            <li className="flex items-start gap-3" role="listitem">
+              <span className="text-2xl flex-shrink-0" aria-hidden="true">💪</span>
               <span>Track your vitals regularly to monitor your health trends</span>
             </li>
           </ul>
