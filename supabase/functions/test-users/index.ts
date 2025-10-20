@@ -23,19 +23,26 @@ async function getCaller(req: Request) {
   const id = data?.user?.id ?? null;
   if (error || !id) return { id: null, roles: [] };
 
-  const { data: rows } = await supabase
-    .from("user_roles")
-    .select("roles!inner(name)")
-    .eq("user_id", id);
+  // Check role from profiles table instead of user_roles (simpler and more reliable)
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, role_code")
+    .eq("user_id", id)
+    .single();
 
-  const roles = (rows ?? []).map((r: any) => r.roles?.name).filter(Boolean);
+  if (!profile) return { id, roles: [] };
+
+  // Return role as array for compatibility
+  const roles = profile.role ? [profile.role] : [];
   return { id, roles };
 }
 
 // CORS Configuration
 const ALLOWED_ORIGINS = [
   "https://thewellfitcommunity.org",
+  "https://www.thewellfitcommunity.org",
   "https://wellfitcommunity.live",
+  "https://www.wellfitcommunity.live",
   "http://localhost:3100",
   "https://localhost:3100",
   "https://houston.thewellfitcommunity.org",
@@ -50,7 +57,7 @@ function getCorsHeaders(origin: string | null) {
     "Content-Type": "application/json",
     "Access-Control-Allow-Origin": allowedOrigin || "null",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, x-client-info, apikey",
     "Access-Control-Allow-Credentials": "true",
   });
 }

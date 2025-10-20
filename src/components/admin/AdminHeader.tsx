@@ -29,6 +29,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
   };
 
   const navigateTo = (path: string) => {
+    console.log('[AdminHeader] Navigating to:', path, 'as role:', adminRole);
     navigate(path);
   };
 
@@ -53,6 +54,18 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
 
           {/* Center section - Navigation buttons */}
           <div className="hidden lg:flex items-center space-x-2">
+            {/* Super Admin: View Senior Dashboard */}
+            {adminRole === 'super_admin' && (
+              <button
+                onClick={() => navigateTo('/dashboard')}
+                className="inline-flex items-center px-3 py-2 border border-white border-opacity-20 rounded-md text-sm font-medium bg-blue-500 bg-opacity-30 hover:bg-opacity-40 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-opacity-50 transition-all duration-200"
+                title="View the senior-facing dashboard"
+              >
+                <span className="mr-2">👤</span>
+                Senior View
+              </button>
+            )}
+
             {/* Quick Enroll */}
             <button
               onClick={() => navigateTo('/admin/enroll-senior')}
@@ -180,6 +193,18 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
 
                     <button
                       onClick={() => {
+                        navigateTo('/caregiver-dashboard');
+                        setShowSettingsDropdown(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
+                      title="View caregiver dashboard"
+                    >
+                      <span className="mr-3">👨‍👩‍👧</span>
+                      Caregiver Portal
+                    </button>
+
+                    <button
+                      onClick={() => {
                         navigateTo('/admin/settings');
                         setShowSettingsDropdown(false);
                       }}
@@ -236,6 +261,15 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
         {/* Mobile menu for quick actions */}
         <div className="lg:hidden pb-3">
           <div className="flex space-x-2 overflow-x-auto">
+            {/* Super Admin: View Senior Dashboard (mobile) */}
+            {adminRole === 'super_admin' && (
+              <button
+                onClick={() => navigateTo('/dashboard')}
+                className="flex-shrink-0 inline-flex items-center px-2 py-1 border border-white border-opacity-20 rounded text-xs font-medium bg-blue-500 bg-opacity-30 hover:bg-opacity-40"
+              >
+                👤 Senior View
+              </button>
+            )}
             <button
               onClick={() => navigateTo('/admin/enroll-senior')}
               className="flex-shrink-0 inline-flex items-center px-2 py-1 border border-white border-opacity-20 rounded text-xs font-medium bg-green-500 bg-opacity-20 hover:bg-opacity-30"

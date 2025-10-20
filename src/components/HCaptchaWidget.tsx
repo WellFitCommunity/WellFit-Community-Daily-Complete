@@ -129,13 +129,24 @@ const HCaptchaWidget = forwardRef<HCaptchaRef, Props>(
     }
 
     // Off-screen wrapper ensures no layout jump and keeps it effectively invisible.
-    // Use 'inert' instead of aria-hidden to prevent focus issues (accessibility fix)
-    // The 'inert' attribute prevents focus on invisible captcha widgets
+    // When invisible, we position it off-screen but allow focus for accessibility
+    // When visible, we show it normally
+    const containerStyle = size === 'invisible'
+      ? {
+          position: 'absolute' as const,
+          left: '-9999px',
+          top: '-9999px',
+          width: '1px',
+          height: '1px',
+          opacity: 0
+        }
+      : {};
+
     return (
       <div
-        style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }}
-        {...(size === 'invisible' ? { inert: '' as any } : {})}
+        style={containerStyle}
         aria-label="CAPTCHA verification widget"
+        role={size === 'invisible' ? 'presentation' : undefined}
       >
         <HCaptcha
           ref={widgetRef}

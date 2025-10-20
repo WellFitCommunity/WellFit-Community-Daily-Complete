@@ -64,7 +64,25 @@ serve(async (req) => {
   }
 
   try {
-    const { model, prompt, userId, requestType }: PersonalizationRequest = await req.json();
+    const body = await req.json();
+    const { model, prompt, userId, requestType }: PersonalizationRequest = body;
+
+    // Validate required fields
+    if (!model || !prompt || !userId || !requestType) {
+      return new Response(
+        JSON.stringify({
+          error: 'Missing required fields: model, prompt, userId, requestType',
+          received: { model: !!model, prompt: !!prompt, userId: !!userId, requestType: !!requestType }
+        }),
+        {
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          },
+        }
+      );
+    }
 
     // Validate Anthropic API key
     if (!ANTHROPIC_API_KEY) {
@@ -97,8 +115,13 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Claude API error: ${error}`);
+      const errorText = await response.text();
+      console.error('Claude API error:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText
+      });
+      throw new Error(`Claude API error (${response.status}): ${errorText}`);
     }
 
     const data = await response.json();
@@ -116,7 +139,7 @@ serve(async (req) => {
     const cost = ((data.usage?.input_tokens || 0) / 1_000_000 * inputCostPer1M) +
                  ((data.usage?.output_tokens || 0) / 1_000_000 * outputCostPer1M);
 
-    await supabase.from('claude_usage_logs').insert({
+    const { error: logError } = await supabase.from('claude_usage_logs').insert({
       user_id: userId,
       request_id: crypto.randomUUID(),
       model: model,
@@ -126,8 +149,12 @@ serve(async (req) => {
       cost: cost,
       response_time_ms: responseTime,
       success: true,
-      created_at: new Date().toISOString(),
     });
+
+    if (logError) {
+      console.error('Failed to log Claude usage:', logError);
+      // Don't fail the request if logging fails
+    }
 
     return new Response(
       JSON.stringify({
@@ -146,9 +173,24 @@ serve(async (req) => {
   } catch (error) {
     console.error('Personalization error:', error);
 
+    // More detailed error response for debugging
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+
+    // Log to help debug
+    console.error('Error details:', {
+      message: errorMessage,
+      stack: errorStack,
+      hasAnthropicKey: !!ANTHROPIC_API_KEY,
+      keyPrefix: ANTHROPIC_API_KEY ? ANTHROPIC_API_KEY.substring(0, 10) + '...' : 'MISSING'
+    });
+
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: errorMessage,
+        details: process.env.NODE_ENV === 'development' ? errorStack : undefined,
+        timestamp: new Date().toISOString(),
+        hint: 'Check Edge Function logs for more details'
       }),
       {
         status: 500,

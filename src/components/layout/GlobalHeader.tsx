@@ -19,7 +19,7 @@ const ROUTES = {
   doctors: '/doctors-view',
   trivia: '/trivia-game',
   community: '/community',
-  adminPanel: '/admin/panel',
+  adminPanel: '/admin',  // Fixed: was /admin/panel, should be /admin
   adminLogin: '/admin',
   logout: '/logout',
 };

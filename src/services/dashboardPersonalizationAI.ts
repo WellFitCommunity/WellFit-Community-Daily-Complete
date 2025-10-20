@@ -5,7 +5,7 @@
  * personalize the admin dashboard layout and content
  */
 
-import { UserBehaviorTracker, UsagePattern, UserPreferences } from './userBehaviorTracking';
+import { UserBehaviorTracker, UserPreferences } from './userBehaviorTracking';
 import { getOptimalModel } from './intelligentModelRouter';
 import { RequestType } from '../types/claude';
 import { supabase } from '../lib/supabaseClient';
@@ -382,7 +382,7 @@ Be concise and actionable. This powers real-time UI reorganization.`;
     errorMessage?: string;
   }): Promise<void> {
     try {
-      await supabase.from('claude_usage_logs').insert({
+      const { error: insertError } = await supabase.from('claude_usage_logs').insert({
         user_id: params.userId,
         request_id: params.requestId,
         request_type: params.requestType,
@@ -394,8 +394,12 @@ Be concise and actionable. This powers real-time UI reorganization.`;
         success: params.success,
         error_code: params.success ? null : 'PERSONALIZATION_ERROR',
         error_message: params.errorMessage || null,
-        created_at: new Date().toISOString()
+        // Don't set created_at - let the database default handle it
       });
+
+      if (insertError) {
+        console.error('Failed to log AI usage (non-blocking):', insertError);
+      }
     } catch (error) {
       console.error('Failed to log AI usage (non-blocking):', error);
       // Don't throw - audit logging failure should not break functionality

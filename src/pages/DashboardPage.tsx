@@ -25,23 +25,34 @@ const Dashboard: React.FC = () => {
         const role = userProfile?.role || '';
         const roleCode = userProfile?.role_code || 0;
 
+        console.log('[DashboardPage] User profile:', { role, roleCode, userId: user.id });
+
         // Staff role names and codes
-        const adminRoles = ['admin', 'super_admin', 'department_head'];
-        const adminRoleCodes = [1, 2]; // Admin(1), Super_admin(2)
+        // Note: super_admin (role_code=1) is NOT redirected - they can access both dashboards
+        const adminRoles = ['admin', 'department_head'];
+        const adminRoleCodes = [2, 11]; // Admin(2), Department_head(11) - excludes Super_admin(1)
 
         const nurseRoles = ['nurse', 'nurse_practitioner', 'clinical_supervisor'];
-        const nurseRoleCodes = [8, 9, 10]; // Nurse roles
+        const nurseRoleCodes = [3, 8, 10]; // Nurse(3), NP(8), Clinical_supervisor(10)
 
         const physicianRoles = ['physician', 'doctor', 'physician_assistant'];
-        const physicianRoleCodes = [3]; // Physician/Doctor roles
+        const physicianRoleCodes = [5, 9]; // Physician(5), PA(9)
 
+        // Caregiver: Only check by role name (no role_code check - it conflicts with volunteer=6)
         const caregiverRoles = ['caregiver'];
-        const caregiverRoleCodes = [6]; // Caregiver role
 
         // Redirect staff to their appropriate dashboards
+        // Super admins (role='super_admin' or role_code=1) are allowed to stay on senior dashboard
         if (adminRoles.includes(role) || adminRoleCodes.includes(roleCode)) {
-          console.log('[Dashboard] Admin/Super Admin detected - redirecting to admin panel');
+          console.log('[Dashboard] Admin detected - redirecting to admin panel');
           navigate('/admin', { replace: true });
+          return;
+        }
+
+        // IMPORTANT: Check caregiver BEFORE nurse (in case of any role overlap)
+        if (caregiverRoles.includes(role)) {
+          console.log('[Dashboard] Caregiver detected - redirecting to caregiver dashboard');
+          navigate('/caregiver-dashboard', { replace: true });
           return;
         }
 
@@ -54,12 +65,6 @@ const Dashboard: React.FC = () => {
         if (physicianRoles.includes(role) || physicianRoleCodes.includes(roleCode)) {
           console.log('[Dashboard] Physician detected - redirecting to physician dashboard');
           navigate('/physician-dashboard', { replace: true });
-          return;
-        }
-
-        if (caregiverRoles.includes(role) || caregiverRoleCodes.includes(roleCode)) {
-          console.log('[Dashboard] Caregiver detected - redirecting to caregiver dashboard');
-          navigate('/caregiver-dashboard', { replace: true });
           return;
         }
 

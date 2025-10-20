@@ -91,9 +91,18 @@ const SeniorCommunityDashboard: React.FC = () => {
   useEffect(() => {
     try {
       const lastSeenVersion = localStorage.getItem('seniorWhatsNew_lastSeen');
+      const permanentlyDismissed = localStorage.getItem('seniorWhatsNew_permanentlyDismissed');
       const currentVersion = '2025-10-16';
+
+      // Don't show if permanently dismissed
+      if (permanentlyDismissed === 'true') {
+        console.log('[WhatsNew Senior] Modal permanently dismissed by user');
+        return;
+      }
+
       if (lastSeenVersion !== currentVersion) {
         // Show modal after a short delay for better UX
+        console.log('[WhatsNew Senior] Showing modal for version:', currentVersion);
         setTimeout(() => setShowWhatsNew(true), 1000);
       }
     } catch (err) {

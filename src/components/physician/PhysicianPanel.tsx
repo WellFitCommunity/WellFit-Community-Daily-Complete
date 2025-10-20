@@ -146,7 +146,7 @@ const PatientSelector: React.FC<PatientSelectorProps> = ({ onSelectPatient, sele
       const { data, error } = await supabase
         .from('profiles')
         .select('user_id, first_name, last_name, dob, phone, email')
-        .or('role.eq.senior,role.eq.patient')
+        .in('role', ['senior', 'patient'])
         .order('last_name', { ascending: true })
         .limit(100);
 

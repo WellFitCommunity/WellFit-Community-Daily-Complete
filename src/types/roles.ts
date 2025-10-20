@@ -37,6 +37,7 @@ export type UserRole =
   | StaffRole
   | 'senior'    // Patients/members
   | 'volunteer' // Community volunteers
+  | 'caregiver' // Family caregivers (separate from staff)
   | 'staff';    // General staff
 
 // ============================================================================
@@ -68,6 +69,7 @@ export enum RoleCode {
   SENIOR = 4,
   PHYSICIAN = 5,
   VOLUNTEER = 6,
+  CAREGIVER = 6,  // Note: Caregiver shares code 6 with Volunteer in DB
   STAFF = 7,
   NURSE_PRACTITIONER = 8,
   PHYSICIAN_ASSISTANT = 9,
@@ -87,6 +89,7 @@ export const ROLE_TO_CODE: Record<UserRole, RoleCode> = {
   physician: RoleCode.PHYSICIAN,
   doctor: RoleCode.PHYSICIAN, // Synonym
   volunteer: RoleCode.VOLUNTEER,
+  caregiver: RoleCode.CAREGIVER, // Note: shares code with volunteer
   staff: RoleCode.STAFF,
   nurse_practitioner: RoleCode.NURSE_PRACTITIONER,
   physician_assistant: RoleCode.PHYSICIAN_ASSISTANT,

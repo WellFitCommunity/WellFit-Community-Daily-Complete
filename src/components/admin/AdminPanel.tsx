@@ -85,10 +85,18 @@ const AdminPanel: React.FC = () => {
   useEffect(() => {
     // Auto-show What's New modal if user hasn't seen latest updates
     const lastSeenVersion = localStorage.getItem('whatsNew_lastSeen');
+    const permanentlyDismissed = localStorage.getItem('whatsNew_permanentlyDismissed');
     const currentVersion = '2025-10-14'; // Update this when adding new features
+
+    // Don't show if permanently dismissed
+    if (permanentlyDismissed === 'true') {
+      console.log('[WhatsNew] Modal permanently dismissed by user');
+      return;
+    }
 
     if (lastSeenVersion !== currentVersion) {
       // Show after a short delay for better UX
+      console.log('[WhatsNew] Showing modal for version:', currentVersion);
       setTimeout(() => setShowWhatsNew(true), 1000);
     }
   }, []);

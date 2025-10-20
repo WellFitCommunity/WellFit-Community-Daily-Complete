@@ -40,7 +40,7 @@ export class CCMAutopilotService {
       // Get all scribe sessions this month
       const { data: scribeSessions, error: scribeError } = await supabase
         .from('scribe_sessions')
-        .select('patient_id, provider_id, duration_seconds, created_at')
+        .select('patient_id, provider_id, recording_duration_seconds, created_at')
         .gte('created_at', monthStart.toISOString())
         .lte('created_at', monthEnd.toISOString());
 
@@ -85,7 +85,7 @@ export class CCMAutopilotService {
         }
 
         const patient = patientMap.get(patientId)!;
-        const minutes = Math.round((session.duration_seconds || 0) / 60);
+        const minutes = Math.round((session.recording_duration_seconds || 0) / 60);
         patient.total_minutes += minutes;
         patient.activities.push({
           type: 'scribe_session',

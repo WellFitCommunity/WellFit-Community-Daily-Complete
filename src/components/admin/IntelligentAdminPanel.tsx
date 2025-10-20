@@ -332,9 +332,17 @@ const IntelligentAdminPanel: React.FC = () => {
   // Auto-show What's New modal
   useEffect(() => {
     const lastSeenVersion = localStorage.getItem('whatsNew_lastSeen');
+    const permanentlyDismissed = localStorage.getItem('whatsNew_permanentlyDismissed');
     const currentVersion = '2025-10-19'; // Update with new features
 
+    // Don't show if permanently dismissed OR if already seen this version
+    if (permanentlyDismissed === 'true') {
+      console.log('[WhatsNew] Modal permanently dismissed by user');
+      return;
+    }
+
     if (lastSeenVersion !== currentVersion) {
+      console.log('[WhatsNew] Showing modal for version:', currentVersion);
       setTimeout(() => setShowWhatsNew(true), 1000);
     }
   }, []);
