@@ -12,6 +12,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth, useSupabaseClient } from '../contexts/AuthContext';
 import { useAdminAuth } from '../contexts/AdminAuthContext';
 import { StaffRole, ROLE_DISPLAY_NAMES } from '../types/roles';
+import { useBranding } from '../BrandingContext';
 
 type LocationState = {
   message?: string;
@@ -23,6 +24,7 @@ export default function AdminLoginPage() {
   const location = useLocation();
   const state = (location.state as LocationState) || {};
   const supabase = useSupabaseClient();
+  const { branding } = useBranding();
 
   // App auth contexts
   const { user, isAdmin } = useAuth();
@@ -242,8 +244,11 @@ export default function AdminLoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="w-full max-w-md">
         {/* Simple Banner Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white text-center py-6 px-6 rounded-t-lg shadow-lg">
-          <h1 className="text-2xl font-bold">WellFit Community Admin Log in</h1>
+        <div
+          className="text-white text-center py-6 px-6 rounded-t-lg shadow-lg"
+          style={{ background: branding.gradient }}
+        >
+          <h1 className="text-2xl font-bold">{branding.appName} Admin Log in</h1>
         </div>
 
         {/* Card Content */}

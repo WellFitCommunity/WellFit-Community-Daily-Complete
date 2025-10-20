@@ -4,6 +4,7 @@
 import React, { useState, useRef, useCallback, FormEvent, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import HCaptchaWidget, { HCaptchaRef } from '../components/HCaptchaWidget';
+import { useBranding } from '../BrandingContext';
 
 type FormState = {
   phone: string;
@@ -30,6 +31,7 @@ const PUBLIC_ROLES = [
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
   const hcaptchaRef = useRef<HCaptchaRef>(null);
+  const { branding } = useBranding();
 
   const [formData, setFormData] = useState<FormState>({
     phone: '+1 ',
@@ -244,7 +246,9 @@ const RegisterPage: React.FC = () => {
   // ---------- RENDER ----------
   return (
     <div className="max-w-md mx-auto mt-8 p-6 bg-white rounded-xl shadow-md">
-      <h1 className="text-2xl font-bold text-center mb-6">Create Account</h1>
+      <h1 className="text-2xl font-bold text-center mb-6" style={{ color: branding.primaryColor }}>
+        Create Account - {branding.appName}
+      </h1>
 
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         <div className="grid grid-cols-2 gap-4">
@@ -439,7 +443,8 @@ const RegisterPage: React.FC = () => {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 bg-blue-600 text-white rounded disabled:opacity-50 hover:bg-blue-700"
+          className="w-full py-3 text-white rounded disabled:opacity-50 hover:opacity-90 transition-opacity"
+          style={{ backgroundColor: branding.primaryColor }}
         >
           {loading ? 'Creating Account...' : 'Create Account'}
         </button>

@@ -4,9 +4,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useSupabaseClient } from '../contexts/AuthContext';
-import { WELLFIT_COLORS, APP_INFO } from '../settings/settings';
+// Branding config replaces hardcoded WELLFIT_COLORS and APP_INFO
 import HCaptchaWidget, { HCaptchaRef } from '../components/HCaptchaWidget';
 import { isPasskeySupported, authenticateWithPasskey } from '../services/passkeyService';
+import { useBranding } from '../BrandingContext';
 
 type Mode = 'senior' | 'admin';
 
@@ -15,6 +16,7 @@ const isPhone = (val: string) => /^\d{10,15}$/.test(val.replace(/[^\d]/g, ''));
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const supabase = useSupabaseClient();
+  const { branding } = useBranding();
 
   const [mode, setMode] = useState<Mode>('senior');
   const [loading, setLoading] = useState(false);
@@ -40,9 +42,9 @@ const LoginPage: React.FC = () => {
   const [passkeySupported, setPasskeySupported] = useState(false);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
 
-  // colors
-  const primary = WELLFIT_COLORS.blue;   // #003865
-  const accent  = WELLFIT_COLORS.green;  // #8cc63f
+  // colors from branding config
+  const primary = branding.primaryColor;
+  const accent = branding.secondaryColor;
 
   // Debug info (dev only)
   const debug = useMemo(() => {
@@ -356,8 +358,8 @@ const LoginPage: React.FC = () => {
         style={{ borderColor: accent, borderWidth: '2px' }}
       >
         <img
-          src="/android-chrome-512x512.png"
-          alt={`${APP_INFO.name} Logo`}
+          src={branding.logoUrl}
+          alt={`${branding.appName} Logo`}
           className="h-16 w-auto mx-auto mb-4"
         />
 
@@ -398,13 +400,13 @@ const LoginPage: React.FC = () => {
       style={{ borderColor: accent, borderWidth: '2px' }}
     >
       <img
-        src="/android-chrome-512x512.png"
-        alt={`${APP_INFO.name} Logo`}
+        src={branding.logoUrl}
+        alt={`${branding.appName} Logo`}
         className="h-16 w-auto mx-auto mb-4"
       />
 
       <h1 className="text-2xl font-bold text-center mb-2" style={{ color: primary }}>
-        {APP_INFO.name}
+        {branding.appName}
       </h1>
 
       {/* Mode Toggle */}
