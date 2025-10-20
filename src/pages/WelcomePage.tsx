@@ -17,11 +17,27 @@ const WelcomePage: React.FC = () => {
 
     const checkSessionAndRedirect = async () => {
       console.log('[WelcomePage] Checking session...');
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!mounted || !session) {
-        console.log('[WelcomePage] No session found');
-        return;
-      }
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+
+        // Handle session expiry errors gracefully
+        if (error) {
+          if (error.message?.includes('Invalid Refresh Token') ||
+              error.message?.includes('Session Expired') ||
+              error.message?.includes('Revoked by Newer Login')) {
+            console.log('[WelcomePage] Session expired/revoked - clearing local storage');
+            // Clear stale tokens
+            await supabase.auth.signOut({ scope: 'local' });
+            return;
+          }
+          console.warn('[WelcomePage] Session check error:', error.message);
+          return;
+        }
+
+        if (!mounted || !session) {
+          console.log('[WelcomePage] No session found');
+          return;
+        }
 
       const userId = session.user?.id;
       if (!userId) {
@@ -81,6 +97,10 @@ const WelcomePage: React.FC = () => {
       // Seniors: redirect to dashboard, AuthGate will handle onboarding flow
       console.log('[WelcomePage] Senior user detected, redirecting to dashboard (AuthGate will handle onboarding)');
       navigate('/dashboard', { replace: true });
+      } catch (err) {
+        console.error('[WelcomePage] Unexpected error during session check:', err);
+        // On any error, just stay on welcome page
+      }
     };
 
     checkSessionAndRedirect();
