@@ -109,13 +109,23 @@ serve(async (req) => {
 
     // Log usage for cost tracking
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+    // Calculate cost based on model pricing (as of 2025)
+    const inputCostPer1M = model.includes('haiku') ? 0.80 : 3.00; // Haiku vs Sonnet
+    const outputCostPer1M = model.includes('haiku') ? 4.00 : 15.00;
+    const cost = ((data.usage?.input_tokens || 0) / 1_000_000 * inputCostPer1M) +
+                 ((data.usage?.output_tokens || 0) / 1_000_000 * outputCostPer1M);
+
     await supabase.from('claude_usage_logs').insert({
       user_id: userId,
+      request_id: crypto.randomUUID(),
       model: model,
       request_type: requestType,
       input_tokens: data.usage?.input_tokens || 0,
       output_tokens: data.usage?.output_tokens || 0,
+      cost: cost,
       response_time_ms: responseTime,
+      success: true,
       created_at: new Date().toISOString(),
     });
 
