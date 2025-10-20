@@ -20,7 +20,7 @@ interface PatientListItem {
   user_id: string;
   first_name: string;
   last_name: string;
-  date_of_birth: string;
+  dob: string;
   phone?: string;
   email?: string;
   risk_score?: number;
@@ -145,7 +145,7 @@ const PatientSelector: React.FC<PatientSelectorProps> = ({ onSelectPatient, sele
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('user_id, first_name, last_name, date_of_birth, phone, email')
+        .select('user_id, first_name, last_name, dob, phone, email')
         .or('role.eq.senior,role.eq.patient')
         .order('last_name', { ascending: true })
         .limit(100);
@@ -204,7 +204,7 @@ const PatientSelector: React.FC<PatientSelectorProps> = ({ onSelectPatient, sele
                 {patient.last_name}, {patient.first_name}
               </div>
               <div className="text-xs text-gray-600">
-                DOB: {new Date(patient.date_of_birth).toLocaleDateString()} • {patient.phone}
+                DOB: {new Date(patient.dob).toLocaleDateString()} • {patient.phone}
               </div>
             </button>
           ))}
@@ -255,8 +255,8 @@ const PatientSummaryCard: React.FC<PatientSummaryCardProps> = ({ summary, loadin
             {demographics.last_name}, {demographics.first_name}
           </h2>
           <p className="text-blue-100 mt-1">
-            DOB: {new Date(demographics.date_of_birth).toLocaleDateString()} •{' '}
-            Age: {new Date().getFullYear() - new Date(demographics.date_of_birth).getFullYear()}
+            DOB: {new Date(demographics.dob).toLocaleDateString()} •{' '}
+            Age: {new Date().getFullYear() - new Date(demographics.dob).getFullYear()}
           </p>
         </div>
         {ccmEligible && (
