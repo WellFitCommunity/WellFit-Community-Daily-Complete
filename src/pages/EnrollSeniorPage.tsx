@@ -94,7 +94,7 @@ const EnrollSeniorPage: React.FC = () => {
 
       // If test patient, use test_users function
       if (isTestPatient) {
-        const { data, error } = await supabase.functions.invoke('test-users/create', {
+        const { error } = await supabase.functions.invoke('test-users/create', {
           body: {
             phone,
             password: tempPassword,
@@ -115,7 +115,7 @@ const EnrollSeniorPage: React.FC = () => {
         const { data: sessionData } = await supabase.auth.getSession();
         const accessToken = sessionData.session?.access_token;
 
-        const { data, error } = await supabase.functions.invoke('enrollClient', {
+        const { error } = await supabase.functions.invoke('enrollClient', {
           body: enrollmentBody,
           headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined
         });
@@ -130,20 +130,8 @@ const EnrollSeniorPage: React.FC = () => {
 
       setGeneratedPassword(tempPassword);
 
-      // Reset form
-      setTimeout(() => {
-        setFirstName('');
-        setLastName('');
-        setPhone('');
-        setEmail('');
-        setDateOfBirth('');
-        setEmergencyContact('');
-        setEmergencyPhone('');
-        setCaregiverEmail('');
-        setNotes('');
-        setTestTag('');
-        setGeneratedPassword('');
-      }, 10000); // Clear after 10 seconds
+      // Don't auto-clear form or password - let admin manually clear or enroll another
+      // Password remains visible until page navigation or manual form reset
     } catch (error: any) {
       setMessage({
         type: 'error',
@@ -157,6 +145,21 @@ const EnrollSeniorPage: React.FC = () => {
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     alert('Copied to clipboard!');
+  };
+
+  const clearForm = () => {
+    setFirstName('');
+    setLastName('');
+    setPhone('');
+    setEmail('');
+    setDateOfBirth('');
+    setEmergencyContact('');
+    setEmergencyPhone('');
+    setCaregiverEmail('');
+    setNotes('');
+    setTestTag('');
+    setGeneratedPassword('');
+    setMessage(null);
   };
 
   return (
@@ -189,31 +192,45 @@ const EnrollSeniorPage: React.FC = () => {
 
           {/* Success/Error Message */}
           {message && (
-            <div className={`mb-6 p-4 rounded-lg ${
-              message.type === 'success' ? 'bg-green-100 border border-green-200' : 'bg-red-100 border border-red-200'
+            <div className={`mb-6 p-6 rounded-xl shadow-lg ${
+              message.type === 'success' ? 'bg-green-50 border-2 border-green-400' : 'bg-red-100 border border-red-200'
             }`}>
               <div className="flex items-start">
-                <span className={`mr-2 text-xl ${message.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+                <span className={`mr-3 text-3xl ${message.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
                   {message.type === 'success' ? '✅' : '❌'}
                 </span>
                 <div className="flex-1">
-                  <p className={`font-medium ${message.type === 'success' ? 'text-green-800' : 'text-red-800'}`}>
+                  <p className={`font-bold text-lg ${message.type === 'success' ? 'text-green-900' : 'text-red-800'}`}>
                     {message.text}
                   </p>
                   {generatedPassword && message.type === 'success' && (
-                    <div className="mt-3 p-3 bg-white rounded border border-green-300">
-                      <p className="text-sm font-medium text-gray-700 mb-1">Generated Password (save this!):</p>
-                      <div className="flex items-center justify-between">
-                        <code className="text-lg font-mono text-blue-600 bg-blue-50 px-3 py-2 rounded">
+                    <div className="mt-4 p-5 bg-yellow-100 rounded-lg border-3 border-yellow-400 shadow-md">
+                      <p className="text-lg font-bold text-gray-900 mb-3 flex items-center">
+                        <span className="text-2xl mr-2">🔑</span>
+                        TEMPORARY PASSWORD - SAVE THIS NOW!
+                      </p>
+                      <div className="bg-white p-4 rounded-lg border-2 border-blue-500 mb-3">
+                        <code className="text-3xl font-mono font-bold text-blue-700 block text-center tracking-wider">
                           {generatedPassword}
                         </code>
+                      </div>
+                      <div className="flex gap-3">
                         <button
                           onClick={() => copyToClipboard(generatedPassword)}
-                          className="ml-3 px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+                          className="flex-1 px-4 py-3 bg-blue-600 text-white text-lg font-bold rounded-lg hover:bg-blue-700 shadow-md transition-colors"
                         >
-                          Copy
+                          📋 Copy Password
+                        </button>
+                        <button
+                          onClick={clearForm}
+                          className="flex-1 px-4 py-3 bg-green-600 text-white text-lg font-bold rounded-lg hover:bg-green-700 shadow-md transition-colors"
+                        >
+                          ➕ Enroll Another Senior
                         </button>
                       </div>
+                      <p className="text-sm text-red-700 font-semibold mt-3 text-center">
+                        ⚠️ This password will only be shown once. Write it down or copy it now!
+                      </p>
                     </div>
                   )}
                 </div>
