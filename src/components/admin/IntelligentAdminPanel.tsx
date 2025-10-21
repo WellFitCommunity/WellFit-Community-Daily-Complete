@@ -42,6 +42,7 @@ import ClaimsAppealsPanel from '../atlas/ClaimsAppealsPanel';
 import AdminTransferLogs from '../handoff/AdminTransferLogs';
 import PatientEngagementDashboard from './PatientEngagementDashboard';
 import HospitalPatientEnrollment from './HospitalPatientEnrollment';
+import PaperFormScanner from './PaperFormScanner';
 import { SOC2SecurityDashboard } from './SOC2SecurityDashboard';
 import { SOC2AuditDashboard } from './SOC2AuditDashboard';
 import { SOC2IncidentResponseDashboard } from './SOC2IncidentResponseDashboard';
@@ -188,6 +189,17 @@ const IntelligentAdminPanel: React.FC = () => {
       icon: '🏥',
       headerColor: 'text-blue-800',
       component: <HospitalPatientEnrollment />,
+      category: 'admin',
+      priority: 'high',
+      defaultOpen: false,
+    },
+    {
+      id: 'paper-form-scanner',
+      title: 'Paper Form Scanner (AI-Powered OCR)',
+      subtitle: 'Upload photos of paper forms - AI extracts data automatically. Perfect for rural hospitals during outages. 50x faster than manual entry!',
+      icon: '📸',
+      headerColor: 'text-green-800',
+      component: <PaperFormScanner />,
       category: 'admin',
       priority: 'high',
       defaultOpen: false,
