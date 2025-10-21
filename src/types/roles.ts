@@ -69,13 +69,13 @@ export enum RoleCode {
   SENIOR = 4,
   PHYSICIAN = 5,
   VOLUNTEER = 6,
-  CAREGIVER = 6,  // Note: Caregiver shares code 6 with Volunteer in DB
   STAFF = 7,
   NURSE_PRACTITIONER = 8,
   PHYSICIAN_ASSISTANT = 9,
   CLINICAL_SUPERVISOR = 10,
   DEPARTMENT_HEAD = 11,
   PHYSICAL_THERAPIST = 12,
+  CAREGIVER = 13,  // Unique code for caregiver (family caregivers, not volunteers)
 }
 
 /**
@@ -89,7 +89,7 @@ export const ROLE_TO_CODE: Record<UserRole, RoleCode> = {
   physician: RoleCode.PHYSICIAN,
   doctor: RoleCode.PHYSICIAN, // Synonym
   volunteer: RoleCode.VOLUNTEER,
-  caregiver: RoleCode.CAREGIVER, // Note: shares code with volunteer
+  caregiver: RoleCode.CAREGIVER,
   staff: RoleCode.STAFF,
   nurse_practitioner: RoleCode.NURSE_PRACTITIONER,
   physician_assistant: RoleCode.PHYSICIAN_ASSISTANT,
@@ -114,6 +114,7 @@ export const CODE_TO_ROLE: Record<RoleCode, UserRole> = {
   [RoleCode.CLINICAL_SUPERVISOR]: 'clinical_supervisor',
   [RoleCode.DEPARTMENT_HEAD]: 'department_head',
   [RoleCode.PHYSICAL_THERAPIST]: 'physical_therapist',
+  [RoleCode.CAREGIVER]: 'caregiver',
 };
 
 // ============================================================================
