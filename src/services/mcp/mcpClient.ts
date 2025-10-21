@@ -123,7 +123,7 @@ export class MCPClient {
               }
             }
           }),
-          signal: AbortSignal.timeout(timeout)
+          signal: typeof AbortSignal.timeout === 'function' ? AbortSignal.timeout(timeout) : undefined
         });
 
         if (!response.ok) {
