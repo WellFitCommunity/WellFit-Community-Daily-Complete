@@ -53,10 +53,13 @@ describe('Role Permission Integration Tests', () => {
           required_role: requiredRole,
         });
 
-        // Error is expected if user doesn't exist
-        if (!error || error.message.includes('not found')) {
-          expect(typeof data).toBe('boolean');
+        // Error is expected if user doesn't exist - skip the test
+        if (error && !error.message.includes('not found')) {
+          throw error;
         }
+
+        // If no error or user not found, data should be boolean
+        expect(typeof data).toBe('boolean');
       });
     });
 
@@ -70,10 +73,13 @@ describe('Role Permission Integration Tests', () => {
           required_roles: requiredRoles,
         });
 
-        // Error is expected if user doesn't exist
-        if (!error || error.message.includes('not found')) {
-          expect(typeof data).toBe('boolean');
+        // Error is expected if user doesn't exist - skip the test
+        if (error && !error.message.includes('not found')) {
+          throw error;
         }
+
+        // If no error or user not found, data should be boolean
+        expect(typeof data).toBe('boolean');
       });
     });
 
@@ -87,11 +93,12 @@ describe('Role Permission Integration Tests', () => {
           target_department: targetDepartment,
         });
 
-        // Error is expected if user doesn't exist
+        // Error is expected if user doesn't exist - skip the test
         if (error && !error.message.includes('not found')) {
-          expect(error).toBeNull();
+          throw error;
         }
 
+        // If no error or user not found, data should be boolean
         expect(typeof data).toBe('boolean');
       });
     });

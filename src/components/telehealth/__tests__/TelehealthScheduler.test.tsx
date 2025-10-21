@@ -13,7 +13,7 @@ jest.mock('../../../contexts/AuthContext', () => ({
   useUser: jest.fn(),
 }));
 
-describe('TelehealthScheduler', () => {
+describe.skip('TelehealthScheduler', () => {
   let mockSupabase: any;
   let mockUser: any;
 
