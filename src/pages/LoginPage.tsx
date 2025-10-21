@@ -18,7 +18,8 @@ const LoginPage: React.FC = () => {
   const supabase = useSupabaseClient();
   const { branding } = useBranding();
 
-  const [mode, setMode] = useState<Mode>('senior');
+  // Default to admin mode for easier staff access
+  const [mode, setMode] = useState<Mode>('admin');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
 

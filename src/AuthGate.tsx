@@ -54,7 +54,12 @@ export default function AuthGate({ children }: { children: ReactNode }) {
         path === "/change-password" ||
         path === "/demographics" ||
         path === "/consent-photo" ||
-        path === "/consent-privacy";
+        path === "/consent-privacy" ||
+        path === "/login" ||
+        path === "/admin-login" ||
+        path === "/register" ||
+        path === "/verify" ||
+        path === "/";
 
       // Read ONLY from profiles; no joins = no RLS surprises
       const { data, error } = await supabase

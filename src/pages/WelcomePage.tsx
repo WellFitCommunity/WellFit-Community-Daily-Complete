@@ -159,9 +159,15 @@ const WelcomePage: React.FC = () => {
           Continue
         </button>
 
-        {/* Secondary hint */}
-        <p className="mt-3 text-sm text-gray-500">
-          Returning member? You can also <a href="/login" className="underline text-[#003865]">log in</a>.
+        {/* Login link - More prominent */}
+        <p className="mt-4 text-center">
+          <button
+            type="button"
+            onClick={() => navigate('/login')}
+            className="text-lg font-semibold text-[#003865] underline hover:text-[#8cc63f] transition-colors"
+          >
+            Already a member? Log in here
+          </button>
         </p>
 
         {/* Legal links */}

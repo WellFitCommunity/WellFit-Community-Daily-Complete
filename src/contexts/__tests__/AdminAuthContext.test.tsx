@@ -4,7 +4,8 @@
  * Tests authentication, authorization, and permission management
  */
 
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
+import { waitFor } from '@testing-library/dom';
 import { AdminAuthProvider, useAdminAuth } from '../AdminAuthContext';
 import { supabase } from '../../lib/supabaseClient';
 import { StaffRole, RoleAccessScopes } from '../../types/roles';

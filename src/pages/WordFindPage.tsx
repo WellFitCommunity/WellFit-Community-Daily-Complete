@@ -337,18 +337,19 @@ const WordFind: React.FC = () => {
       </div>
 
       {/* TWO-COLUMN LAYOUT: Grid on LEFT, Words on RIGHT (side-by-side on tablet/desktop, stacked on mobile) */}
-      <div className="flex flex-col lg:flex-row gap-6 items-start justify-center">
+      <div className="flex flex-col lg:flex-row gap-6 items-center lg:items-start justify-center">
 
-        {/* LEFT SIDE: The Puzzle Grid */}
-        <div className="flex-shrink-0">
+        {/* LEFT SIDE: The Puzzle Grid - Responsive sizing */}
+        <div className="flex-shrink-0 w-full max-w-md lg:max-w-none flex justify-center">
           <div
-            className="inline-grid gap-2 select-none"
+            className="inline-grid gap-1 sm:gap-2 select-none"
             role="grid"
             aria-label="Word search puzzle grid"
             style={{
-              gridTemplateColumns: `repeat(${COLS}, minmax(40px, 44px))`,
+              gridTemplateColumns: `repeat(${COLS}, minmax(32px, 1fr))`,
               userSelect: 'none',
               WebkitUserSelect: 'none',
+              maxWidth: '100%',
             }}
           >
             {grid.map((row, r) =>
@@ -361,14 +362,15 @@ const WordFind: React.FC = () => {
                     key={key}
                     onClick={() => handleTap(r, c)}
                     className={`border-2 rounded-lg cursor-pointer flex items-center justify-center
-                      text-xl sm:text-2xl font-bold transition-all transform active:scale-95
+                      text-base sm:text-xl md:text-2xl font-bold transition-all transform active:scale-95
                       ${isSel ? 'bg-blue-600 text-white border-blue-700 shadow-lg scale-105' :
                         isHint ? 'bg-yellow-200 text-gray-800 border-yellow-400 animate-pulse' :
                         'bg-white text-gray-800 border-gray-300 hover:bg-gray-50'}
                     `}
                     style={{
-                      width: 44,
-                      height: 44,
+                      aspectRatio: '1 / 1',
+                      minWidth: '32px',
+                      minHeight: '32px',
                     }}
                     role="button"
                     aria-label={`Letter ${ch} at row ${r + 1}, column ${c + 1}${isHint ? ', hint' : ''}`}
@@ -381,13 +383,13 @@ const WordFind: React.FC = () => {
           </div>
         </div>
 
-        {/* RIGHT SIDE: Word List Panel - ALWAYS VISIBLE! */}
-        <div className="flex-shrink-0 rounded-xl p-6 shadow-lg border-2"
+        {/* RIGHT SIDE: Word List Panel - ALWAYS VISIBLE! Responsive width */}
+        <div className="w-full lg:w-auto flex-shrink-0 rounded-xl p-4 sm:p-6 shadow-lg border-2"
           role="complementary"
           aria-label="Words to find"
           style={{
             minWidth: '280px',
-            maxWidth: '320px',
+            maxWidth: '100%',
             background: `linear-gradient(to bottom right, ${branding.primaryColor}15, ${branding.secondaryColor}15)`,
             borderColor: branding.primaryColor
           }}>
