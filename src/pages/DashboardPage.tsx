@@ -41,8 +41,16 @@ const Dashboard: React.FC = () => {
         // Caregiver: Only check by role name (no role_code check - it conflicts with volunteer=6)
         const caregiverRoles = ['caregiver'];
 
-        // Redirect staff to their appropriate dashboards
-        // Super admins (role='super_admin' or role_code=1) are allowed to stay on senior dashboard
+        // Super admins have access to BOTH dashboards - they should never be auto-redirected
+        const isSuperAdmin = role === 'super_admin' || roleCode === 1;
+
+        if (isSuperAdmin) {
+          console.log('[Dashboard] Super admin accessing senior dashboard - allowing access');
+          setLoading(false);
+          return;
+        }
+
+        // Redirect OTHER staff to their appropriate dashboards
         if (adminRoles.includes(role) || adminRoleCodes.includes(roleCode)) {
           console.log('[Dashboard] Admin detected - redirecting to admin panel');
           navigate('/admin', { replace: true });
