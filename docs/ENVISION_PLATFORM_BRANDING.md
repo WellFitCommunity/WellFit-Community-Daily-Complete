@@ -398,7 +398,8 @@ Envision: The Healthcare Navigation System
 ├── Atlas (Revenue Map)
 ├── Compass Riley (AI Guide)
 ├── Gateway (Data Port)
-└── Beacon (Early Warning System)
+├── Beacon (Early Warning System)
+└── Bridge (Universal EHR Tool)
 ```
 
 **In Marketing:**
@@ -410,3 +411,141 @@ Envision: The Healthcare Navigation System
 - Database: Keep existing table names (no changes needed)
 - APIs: Powered by Envision
 - Documentation: Reference full system name
+
+---
+
+## Role-Based Panel Names
+
+**Envision panels** are named using the navigation metaphor to create a cohesive user experience:
+
+### ⚓ **Safe Harbor** - Physician Panel
+*"First, do no harm"*
+
+**What it is:**
+- Protected clinical decision-making workspace for physicians
+- Where providers chart patient care safely
+- Integration point for Compass Riley AI scribe
+- Atlas billing intelligence embedded
+
+**Why "Safe Harbor":**
+- Reflects *Primum non nocere* (First, do no harm) - foundational medical oath
+- Safe harbor = protected space for careful clinical decisions
+- Legal "safe harbor" concept = protected zone (relevant for medical liability)
+- Nautical theme fits overall navigation metaphor
+
+**Icon:** ⚓🏥
+
+**Tagline:** "First, do no harm"
+
+**Colors:** Deep blue (#1E40AF), white accents
+
+---
+
+### 🏮 **Lighthouse** - Nurse Panel
+*"Vigilant care around the clock"*
+
+**What it is:**
+- 24/7 patient monitoring and care coordination hub
+- Early warning system integration (Beacon)
+- Handoff packet creation and management
+- Vital signs tracking and alerts
+
+**Why "Lighthouse":**
+- Nurses as vigilant watchers - scanning for danger
+- Light = visibility into patient status
+- Warning beacon = early detection (connects to Beacon product)
+- Guidance = directing patients through care journey
+- Continuous operation (lighthouse never sleeps = nurses work around the clock)
+
+**Icon:** 🏮 or 💡
+
+**Tagline:** "Vigilant care around the clock"
+
+**Alternate Taglines:**
+- "Illuminate patient needs before they escalate"
+- "Guide patients through their care journey"
+
+**Colors:** Amber (#F59E0B), warm yellows for alerts
+
+---
+
+### 🎯 **Mission Control** - Admin Panel
+*"Command center for system operations"*
+
+**What it is:**
+- Central operations hub for system administrators
+- Revenue cycle management (Atlas integration)
+- User management and permissions
+- Security and compliance dashboards (SOC 2)
+- System-wide analytics and reporting
+
+**Why "Mission Control":**
+- Command center overseeing entire healthcare navigation system
+- Like NASA Mission Control - multiple stations, coordinated operations
+- Real-time monitoring of all systems
+- Strategic oversight of clinical and financial operations
+
+**Icon:** 🎯 or 🗼
+
+**Tagline:** "Command center for system operations"
+
+**Alternate Taglines:**
+- "Oversee your healthcare navigation system"
+- "Navigate your organization to excellence"
+
+**Colors:** Professional grays (#475569), accent blues
+
+---
+
+### 🌉 **Bridge** - Universal EHR Integration Tool
+*"Connect any EHR to your navigation system"*
+
+**What it is:**
+- Universal EHR adapter for Epic, Cerner, Allscripts, etc.
+- Bidirectional data flow (unlike Gateway which is one-way)
+- Real-time sync capabilities
+- Custom mapping for non-standard EHR implementations
+- FHIR + HL7 support
+
+**Why "Bridge":**
+- Bridges the gap between external EHR systems and Envision
+- Connects disparate systems together
+- Navigation metaphor (bridges cross obstacles)
+- Complements Gateway (harbor) - Bridge brings you to the harbor
+
+**Icon:** 🌉
+
+**Tagline:** "Connect any EHR to your navigation system"
+
+**Alternate Taglines:**
+- "Bridge the gap between EHR systems"
+- "Your connection to any healthcare system"
+
+**Colors:** Teal (#06B6D4), connector theme
+
+**Key Difference from Gateway:**
+- **Gateway** = One-way import only (EHR → Envision), secure data docking
+- **Bridge** = Bidirectional adapter (EHR ↔ Envision), active connection
+
+---
+
+## Panel Naming Philosophy
+
+All panels follow the **navigation and safety** metaphor:
+
+| Panel | Role | Metaphor | Primary Function |
+|-------|------|----------|------------------|
+| **Safe Harbor** | Physician | Protected anchorage | Clinical decision-making zone |
+| **Lighthouse** | Nurse | Warning beacon | Patient monitoring & safety |
+| **Mission Control** | Admin | Command center | System oversight & operations |
+| **Bridge** | EHR Integration | Connector | Link external systems to platform |
+
+**The Complete Journey:**
+1. **Bridge** connects external EHR to Envision
+2. **Gateway** imports data securely (one-way)
+3. **Safe Harbor** (physicians) makes clinical decisions using that data
+4. **Lighthouse** (nurses) monitors patients vigilantly
+5. **Mission Control** (admins) oversees all operations
+6. **Compass Riley** guides documentation throughout
+7. **Atlas** maps revenue opportunities
+8. **Beacon** warns of clinical risks

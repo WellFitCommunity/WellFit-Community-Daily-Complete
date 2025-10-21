@@ -5,7 +5,7 @@
  * based on usage patterns powered by Claude Haiku 4.5
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { DashboardPersonalizationAI } from '../../services/dashboardPersonalizationAI';
 import { useUser } from '../../contexts/AuthContext';
 
@@ -34,7 +34,6 @@ export const AdaptiveCollapsibleSection: React.FC<AdaptiveCollapsibleSectionProp
 }) => {
   const user = useUser();
   const [isOpen, setIsOpen] = useState(defaultOpen);
-  const [isLearning, setIsLearning] = useState(false);
   const [openStartTime, setOpenStartTime] = useState<Date | null>(null);
 
   // Track open/close interactions
@@ -55,25 +54,12 @@ export const AdaptiveCollapsibleSection: React.FC<AdaptiveCollapsibleSectionProp
           userRole
         );
       } else if (openStartTime) {
-        // Closing section - calculate time spent
-        const timeSpent = Math.floor((new Date().getTime() - openStartTime.getTime()) / 1000);
-        // You could track close event with time spent here if needed
+        // Closing section - track close
         setOpenStartTime(null);
       }
     } catch (error) {
       console.error('Failed to track section interaction:', error);
     }
-  };
-
-  // Visual indicator that this section is learning user behavior
-  const renderLearningBadge = () => {
-    if (!isLearning) return null;
-
-    return (
-      <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-600 text-xs rounded-full font-medium">
-        🧠 AI Learning
-      </span>
-    );
   };
 
   // Priority badge for high-priority sections
@@ -103,7 +89,6 @@ export const AdaptiveCollapsibleSection: React.FC<AdaptiveCollapsibleSectionProp
                 {title}
               </h2>
               {renderPriorityBadge()}
-              {renderLearningBadge()}
             </div>
             {subtitle && <p className="text-sm text-gray-600 mt-1">{subtitle}</p>}
           </div>
