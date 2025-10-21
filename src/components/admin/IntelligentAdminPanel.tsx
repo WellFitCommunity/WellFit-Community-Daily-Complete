@@ -19,7 +19,6 @@ import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import { useUser } from '../../contexts/AuthContext';
 import { DashboardPersonalizationAI } from '../../services/dashboardPersonalizationAI';
 import { AdaptiveCollapsibleSection } from './AdaptiveCollapsibleSection';
-import { CategoryCollapsibleGroup } from './CategoryCollapsibleGroup';
 import RequireAdminAuth from 'components/auth/RequireAdminAuth';
 import AdminHeader from './AdminHeader';
 import WhatsNewModal from './WhatsNewModal';
@@ -71,13 +70,6 @@ const IntelligentAdminPanel: React.FC = () => {
   const [sections, setSections] = useState<DashboardSection[]>([]);
   const [welcomeMessage, setWelcomeMessage] = useState('');
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
-  const categoryOpenStates = {
-    revenue: true,
-    'patient-care': false,
-    clinical: false,
-    security: false,
-    admin: false,
-  };
 
   // Define all available sections
   const allSections: DashboardSection[] = [
@@ -414,18 +406,15 @@ const IntelligentAdminPanel: React.FC = () => {
       (section) => !section.roles || section.roles.includes(adminRole || 'admin')
     );
 
-    // Sort within each category by:
+    // Sort by:
     // 1. User's top sections (from AI)
     // 2. Priority (high > medium > low)
+    // 3. Category order (revenue > patient-care > clinical > security > admin)
 
+    const categoryOrder = { revenue: 1, 'patient-care': 2, clinical: 3, security: 4, admin: 5 };
     const priorityOrder = { high: 1, medium: 2, low: 3 };
 
     return visibleSections.sort((a, b) => {
-      // Keep same category together
-      if (a.category !== b.category) {
-        return 0; // Don't sort across categories
-      }
-
       // Check if in top sections
       const aInTop = layout.topSections?.includes(a.id);
       const bInTop = layout.topSections?.includes(b.id);
@@ -434,27 +423,12 @@ const IntelligentAdminPanel: React.FC = () => {
       if (!aInTop && bInTop) return 1;
 
       // Then by priority
-      return priorityOrder[a.priority] - priorityOrder[b.priority];
+      const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
+      if (priorityDiff !== 0) return priorityDiff;
+
+      // Then by category
+      return categoryOrder[a.category] - categoryOrder[b.category];
     });
-  }
-
-  // Group sections by category
-  function groupSectionsByCategory(sections: DashboardSection[]) {
-    const grouped: Record<string, DashboardSection[]> = {
-      revenue: [],
-      'patient-care': [],
-      clinical: [],
-      security: [],
-      admin: [],
-    };
-
-    sections.forEach(section => {
-      if (grouped[section.category]) {
-        grouped[section.category].push(section);
-      }
-    });
-
-    return grouped;
   }
 
   function getDefaultSections(): DashboardSection[] {
@@ -479,7 +453,7 @@ const IntelligentAdminPanel: React.FC = () => {
   return (
     <RequireAdminAuth allowedRoles={['admin', 'super_admin']}>
       <div className="min-h-screen bg-gray-50">
-        <AdminHeader title="🎯 Mission Control" showRiskAssessment={true} />
+        <AdminHeader title="Cutting Edge Admin Dashboard" showRiskAssessment={true} />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
           {/* Personalized Greeting */}
           <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl shadow-lg p-6 text-white">
@@ -587,155 +561,23 @@ const IntelligentAdminPanel: React.FC = () => {
             </div>
           )}
 
-          {/* AI-Organized Sections - Grouped by Category */}
+          {/* AI-Organized Sections */}
           <div className="space-y-6">
-            {(() => {
-              const groupedSections = groupSectionsByCategory(sections);
-
-              return (
-                <>
-                  {/* REVENUE & BILLING OPERATIONS */}
-                  {groupedSections.revenue.length > 0 && (
-                    <CategoryCollapsibleGroup
-                      categoryId="revenue"
-                      title="Revenue & Billing Operations"
-                      icon="💰"
-                      headerColor="text-green-800"
-                      defaultOpen={categoryOpenStates.revenue}
-                      userRole={adminRole || 'admin'}
-                    >
-                      {groupedSections.revenue.map((section) => (
-                        <AdaptiveCollapsibleSection
-                          key={section.id}
-                          sectionId={section.id}
-                          title={section.title}
-                          subtitle={section.subtitle}
-                          icon={section.icon}
-                          headerColor={section.headerColor}
-                          userRole={adminRole || 'admin'}
-                          priority={section.priority}
-                          defaultOpen={section.defaultOpen}
-                        >
-                          {section.component}
-                        </AdaptiveCollapsibleSection>
-                      ))}
-                    </CategoryCollapsibleGroup>
-                  )}
-
-                  {/* PATIENT CARE & ENGAGEMENT */}
-                  {groupedSections['patient-care'].length > 0 && (
-                    <CategoryCollapsibleGroup
-                      categoryId="patient-care"
-                      title="Patient Care & Engagement"
-                      icon="🏥"
-                      headerColor="text-blue-800"
-                      defaultOpen={categoryOpenStates['patient-care']}
-                      userRole={adminRole || 'admin'}
-                    >
-                      {groupedSections['patient-care'].map((section) => (
-                        <AdaptiveCollapsibleSection
-                          key={section.id}
-                          sectionId={section.id}
-                          title={section.title}
-                          subtitle={section.subtitle}
-                          icon={section.icon}
-                          headerColor={section.headerColor}
-                          userRole={adminRole || 'admin'}
-                          priority={section.priority}
-                          defaultOpen={section.defaultOpen}
-                        >
-                          {section.component}
-                        </AdaptiveCollapsibleSection>
-                      ))}
-                    </CategoryCollapsibleGroup>
-                  )}
-
-                  {/* CLINICAL DATA & FHIR */}
-                  {groupedSections.clinical.length > 0 && (
-                    <CategoryCollapsibleGroup
-                      categoryId="clinical"
-                      title="Clinical Data & FHIR"
-                      icon="🧬"
-                      headerColor="text-purple-800"
-                      defaultOpen={categoryOpenStates.clinical}
-                      userRole={adminRole || 'admin'}
-                    >
-                      {groupedSections.clinical.map((section) => (
-                        <AdaptiveCollapsibleSection
-                          key={section.id}
-                          sectionId={section.id}
-                          title={section.title}
-                          subtitle={section.subtitle}
-                          icon={section.icon}
-                          headerColor={section.headerColor}
-                          userRole={adminRole || 'admin'}
-                          priority={section.priority}
-                          defaultOpen={section.defaultOpen}
-                        >
-                          {section.component}
-                        </AdaptiveCollapsibleSection>
-                      ))}
-                    </CategoryCollapsibleGroup>
-                  )}
-
-                  {/* SECURITY & COMPLIANCE */}
-                  {groupedSections.security.length > 0 && (
-                    <CategoryCollapsibleGroup
-                      categoryId="security"
-                      title="Security & Compliance"
-                      icon="🛡️"
-                      headerColor="text-red-800"
-                      defaultOpen={categoryOpenStates.security}
-                      userRole={adminRole || 'admin'}
-                    >
-                      {groupedSections.security.map((section) => (
-                        <AdaptiveCollapsibleSection
-                          key={section.id}
-                          sectionId={section.id}
-                          title={section.title}
-                          subtitle={section.subtitle}
-                          icon={section.icon}
-                          headerColor={section.headerColor}
-                          userRole={adminRole || 'admin'}
-                          priority={section.priority}
-                          defaultOpen={section.defaultOpen}
-                        >
-                          {section.component}
-                        </AdaptiveCollapsibleSection>
-                      ))}
-                    </CategoryCollapsibleGroup>
-                  )}
-
-                  {/* SYSTEM ADMINISTRATION */}
-                  {groupedSections.admin.length > 0 && (
-                    <CategoryCollapsibleGroup
-                      categoryId="admin"
-                      title="System Administration"
-                      icon="⚙️"
-                      headerColor="text-gray-800"
-                      defaultOpen={categoryOpenStates.admin}
-                      userRole={adminRole || 'admin'}
-                    >
-                      {groupedSections.admin.map((section) => (
-                        <AdaptiveCollapsibleSection
-                          key={section.id}
-                          sectionId={section.id}
-                          title={section.title}
-                          subtitle={section.subtitle}
-                          icon={section.icon}
-                          headerColor={section.headerColor}
-                          userRole={adminRole || 'admin'}
-                          priority={section.priority}
-                          defaultOpen={section.defaultOpen}
-                        >
-                          {section.component}
-                        </AdaptiveCollapsibleSection>
-                      ))}
-                    </CategoryCollapsibleGroup>
-                  )}
-                </>
-              );
-            })()}
+            {sections.map((section) => (
+              <AdaptiveCollapsibleSection
+                key={section.id}
+                sectionId={section.id}
+                title={section.title}
+                subtitle={section.subtitle}
+                icon={section.icon}
+                headerColor={section.headerColor}
+                userRole={adminRole || 'admin'}
+                priority={section.priority}
+                defaultOpen={section.defaultOpen}
+              >
+                {section.component}
+              </AdaptiveCollapsibleSection>
+            ))}
           </div>
         </div>
       </div>

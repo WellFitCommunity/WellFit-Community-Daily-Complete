@@ -320,9 +320,7 @@ const PatientSummaryCard: React.FC<PatientSummaryCardProps> = ({ summary, loadin
 };
 
 // ============================================================================
-// MAIN PHYSICIAN PANEL COMPONENT - SAFE HARBOR
-// "First, do no harm"
-// Protected clinical decision-making workspace for physicians
+// MAIN PHYSICIAN PANEL COMPONENT
 // ============================================================================
 
 const PhysicianPanel: React.FC = () => {
@@ -903,9 +901,9 @@ const PhysicianPanel: React.FC = () => {
           <div className="text-center text-gray-500 text-sm py-6 border-t border-gray-200">
             <div className="flex items-center justify-center gap-2 mb-2">
               <CheckCircle className="w-4 h-4 text-green-600" />
-              <p className="font-semibold text-gray-700">⚓ Safe Harbor - Physician Panel</p>
+              <p className="font-semibold text-gray-700">WellFit Physician Command Center</p>
             </div>
-            <p>First, do no harm • HIPAA-Compliant • FHIR R4 • AI-Powered Clinical Intelligence</p>
+            <p>HIPAA-Compliant • FHIR R4 • AI-Powered Clinical Intelligence • Real-Time Revenue Optimization</p>
           </div>
 
         </div>
