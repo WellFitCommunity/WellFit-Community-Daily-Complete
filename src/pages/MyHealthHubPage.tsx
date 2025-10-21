@@ -23,6 +23,14 @@ const MyHealthHubPage: React.FC = () => {
 
   const healthTiles: HealthNavigationTile[] = [
     {
+      id: 'appointments',
+      icon: '📹',
+      title: 'My Appointments',
+      description: 'View and join your scheduled video doctor visits',
+      route: '/telehealth-appointments',
+      color: '', // Will use branding color
+    },
+    {
       id: 'vitals-labs',
       icon: '📊',
       title: 'My Vitals & Labs',
@@ -74,9 +82,43 @@ const MyHealthHubPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Navigation Tiles Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 mb-8" role="navigation" aria-label="Health records sections">
-          {healthTiles.map((tile, index) => (
+        {/* Navigation Tiles Grid - First row has Appointments, second row has 2x2 grid */}
+        <div className="mb-8">
+          {/* Featured: My Appointments (full width) */}
+          <div className="mb-6 sm:mb-8">
+            <button
+              onClick={() => navigate(healthTiles[0].route)}
+              aria-label={`Go to ${healthTiles[0].title}: ${healthTiles[0].description}`}
+              className="group relative bg-white rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 overflow-hidden p-8 sm:p-10 text-left w-full"
+              style={{ minHeight: '220px' }}
+            >
+              <div
+                className="absolute top-0 right-0 w-32 h-32 rounded-full -mr-16 -mt-16 opacity-10 group-hover:opacity-20 transition-opacity duration-300"
+                style={{
+                  background: `linear-gradient(to bottom right, ${branding.primaryColor}, ${branding.primaryColor}dd)`
+                }}
+              ></div>
+              <div className="text-6xl sm:text-7xl mb-4 relative z-10 transform group-hover:scale-110 transition-transform duration-300" aria-hidden="true">
+                {healthTiles[0].icon}
+              </div>
+              <h2
+                className="text-2xl sm:text-3xl font-bold mb-3 relative z-10"
+                style={{ color: branding.primaryColor }}
+              >
+                {healthTiles[0].title}
+              </h2>
+              <p className="text-lg sm:text-xl text-gray-600 leading-relaxed relative z-10">
+                {healthTiles[0].description}
+              </p>
+              <div className="absolute bottom-6 right-6 text-3xl opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition-all duration-300">
+                →
+              </div>
+            </button>
+          </div>
+
+          {/* Other Health Records (2x2 grid) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8" role="navigation" aria-label="Health records sections">
+          {healthTiles.slice(1).map((tile, index) => (
             <button
               key={tile.id}
               onClick={() => navigate(tile.route)}
@@ -88,7 +130,7 @@ const MyHealthHubPage: React.FC = () => {
               <div
                 className="absolute top-0 right-0 w-32 h-32 rounded-full -mr-16 -mt-16 opacity-10 group-hover:opacity-20 transition-opacity duration-300"
                 style={{
-                  background: `linear-gradient(to bottom right, ${getTileAccentColor(index)}, ${getTileAccentColor(index)}dd)`
+                  background: `linear-gradient(to bottom right, ${getTileAccentColor(index + 1)}, ${getTileAccentColor(index + 1)}dd)`
                 }}
               ></div>
 
@@ -116,6 +158,7 @@ const MyHealthHubPage: React.FC = () => {
               </div>
             </button>
           ))}
+          </div>
         </div>
 
         {/* Back to Dashboard Button */}

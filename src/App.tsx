@@ -76,6 +76,7 @@ const ImmunizationsPage = React.lazy(() => import('./pages/ImmunizationsPage'));
 const CarePlansPage = React.lazy(() => import('./pages/CarePlansPage'));
 const MedicineCabinet = React.lazy(() => import('./components/patient/MedicineCabinet'));
 const MyHealthHubPage = React.lazy(() => import('./pages/MyHealthHubPage'));
+const TelehealthAppointmentsPage = React.lazy(() => import('./pages/TelehealthAppointmentsPage'));
 
 function Shell() {
   const [branding, setBranding] = useState<BrandingConfig>(getCurrentBranding());
@@ -120,6 +121,7 @@ function Shell() {
               <Route path="/health-insights" element={<RequireAuth><HealthInsightsPage /></RequireAuth>} />
               <Route path="/health-dashboard" element={<RequireAuth><HealthTrackerPage /></RequireAuth>} />
               <Route path="/my-health" element={<RequireAuth><MyHealthHubPage /></RequireAuth>} />
+              <Route path="/telehealth-appointments" element={<RequireAuth><TelehealthAppointmentsPage /></RequireAuth>} />
               <Route path="/health-observations" element={<RequireAuth><HealthObservationsPage /></RequireAuth>} />
               <Route path="/immunizations" element={<RequireAuth><ImmunizationsPage /></RequireAuth>} />
               <Route path="/care-plans" element={<RequireAuth><CarePlansPage /></RequireAuth>} />

@@ -10,6 +10,7 @@ import TechTip from './TechTip';
 import PositiveAffirmations from './PositiveAffirmations';
 import EmergencyContact from '../features/EmergencyContact';
 import WhatsNewSeniorModal from '../WhatsNewSeniorModal';
+import UpcomingAppointmentBanner from './UpcomingAppointmentBanner';
 // Health widgets removed - now accessible via My Health Hub page
 
 const SeniorCommunityDashboard: React.FC = () => {
@@ -337,6 +338,9 @@ const SeniorCommunityDashboard: React.FC = () => {
             {t.dashboard.welcomeSubtitle}
           </p>
         </div>
+
+        {/* Upcoming Appointment Banner */}
+        <UpcomingAppointmentBanner />
 
         {/* Emergency Banner */}
         {showEmergencyBanner && (

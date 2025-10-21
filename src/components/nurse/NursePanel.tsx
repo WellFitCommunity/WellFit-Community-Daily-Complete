@@ -9,6 +9,7 @@ import CCMTimeline from '../atlas/CCMTimeline';
 import RevenueDashboard from '../atlas/RevenueDashboard';
 import ResilienceHubDashboard from '../nurseos/ResilienceHubDashboard';
 import ShiftHandoffDashboard from './ShiftHandoffDashboard';
+import TelehealthScheduler from '../telehealth/TelehealthScheduler';
 import { supabase } from '../../lib/supabaseClient';
 
 // Collapsible Section Component
@@ -235,6 +236,17 @@ const NursePanel: React.FC = () => {
             </div>
 
             <div className="space-y-6">
+              {/* Telehealth Appointment Scheduler */}
+              <CollapsibleSection title="Telehealth Video Appointments" icon="📹" defaultOpen={false}>
+                <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-blue-800 text-sm">
+                    <strong>Virtual Care Platform:</strong> Schedule video appointments with patients for remote consultations,
+                    chronic care check-ins, and follow-up visits. Patients receive SMS notifications and can join directly from their app.
+                  </p>
+                </div>
+                <TelehealthScheduler />
+              </CollapsibleSection>
+
               {/* Emotional Resilience Hub - CCM Nurses */}
               <CollapsibleSection title="Emotional Resilience Hub - Prevent Burnout" icon="🧘" defaultOpen={false}>
                 <div className="mb-4 p-4 bg-teal-50 border border-teal-200 rounded-lg">

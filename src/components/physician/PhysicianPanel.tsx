@@ -12,6 +12,7 @@ import { FHIRService } from '../../services/fhirResourceService';
 import { SDOHBillingService } from '../../services/sdohBillingService';
 import { PhysicianWellnessHub } from './PhysicianWellnessHub';
 import TelehealthConsultation from '../telehealth/TelehealthConsultation';
+import TelehealthScheduler from '../telehealth/TelehealthScheduler';
 import PhysicianClinicalResources from './PhysicianClinicalResources';
 
 // ============================================================================
@@ -601,6 +602,29 @@ const PhysicianPanel: React.FC = () => {
               </div>
             </div>
             <SmartScribe />
+          </CollapsibleSection>
+
+          {/* Telehealth Appointment Scheduler */}
+          <CollapsibleSection
+            title="Telehealth Video Appointments"
+            icon="📹"
+            defaultOpen={false}
+            category="clinical"
+            badge="Schedule"
+          >
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 mb-4">
+              <div className="flex items-start gap-3">
+                <Video className="w-6 h-6 text-blue-600 mt-1" />
+                <div>
+                  <h3 className="font-bold text-blue-900">Virtual Care Platform</h3>
+                  <p className="text-sm text-blue-800 mt-1">
+                    Schedule video appointments with patients. They'll receive SMS notifications and can join directly from their app - no links needed.
+                    Perfect for follow-ups, chronic care management, and urgent consultations.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <TelehealthScheduler />
           </CollapsibleSection>
 
           {/* Medical Practice Tools Grid */}
