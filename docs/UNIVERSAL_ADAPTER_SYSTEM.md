@@ -1,6 +1,13 @@
 # 🔧 Universal EHR/EMR Adapter System
 ## "The Universal Joint" - Connect ANY System in 10 Minutes
 
+**⚖️ PATENT PENDING** - AI-Powered Healthcare Integration Technology
+
+**© 2025 Envision Connect. All Rights Reserved.**
+*This technology includes proprietary methods for automatic EHR system detection, intelligent adapter configuration, and universal healthcare data integration. Patent pending.*
+
+**Note:** Envision Connect is the commercial entity. WellFit Community is the non-profit partner organization.
+
 ---
 
 ## 🎯 Concept
