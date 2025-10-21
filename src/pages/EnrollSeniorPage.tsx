@@ -9,6 +9,7 @@ const EnrollSeniorPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [generatedPassword, setGeneratedPassword] = useState<string>('');
+  const [newUserId, setNewUserId] = useState<string>('');
 
   // Form state
   const [firstName, setFirstName] = useState('');
@@ -94,7 +95,7 @@ const EnrollSeniorPage: React.FC = () => {
 
       // If test patient, use test_users function
       if (isTestPatient) {
-        const { error } = await supabase.functions.invoke('test-users/create', {
+        const { data, error } = await supabase.functions.invoke('test-users/create', {
           body: {
             phone,
             password: tempPassword,
@@ -106,6 +107,11 @@ const EnrollSeniorPage: React.FC = () => {
 
         if (error) throw error;
 
+        // Store user_id for demographics navigation
+        if (data?.user_id) {
+          setNewUserId(data.user_id);
+        }
+
         setMessage({
           type: 'success',
           text: `Test patient ${firstName} ${lastName} enrolled successfully!`
@@ -115,12 +121,17 @@ const EnrollSeniorPage: React.FC = () => {
         const { data: sessionData } = await supabase.auth.getSession();
         const accessToken = sessionData.session?.access_token;
 
-        const { error } = await supabase.functions.invoke('enrollClient', {
+        const { data, error } = await supabase.functions.invoke('enrollClient', {
           body: enrollmentBody,
           headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined
         });
 
         if (error) throw error;
+
+        // Store user_id for demographics navigation
+        if (data?.user_id) {
+          setNewUserId(data.user_id);
+        }
 
         setMessage({
           type: 'success',
@@ -159,7 +170,17 @@ const EnrollSeniorPage: React.FC = () => {
     setNotes('');
     setTestTag('');
     setGeneratedPassword('');
+    setNewUserId('');
     setMessage(null);
+  };
+
+  const handleCompleteDemographics = () => {
+    if (!newUserId) {
+      alert('No user ID found. Please enroll a senior first.');
+      return;
+    }
+    // Navigate to admin profile editor where admin can complete demographics for the senior
+    navigate(`/admin-profile-editor?user_id=${newUserId}`);
   };
 
   return (
@@ -214,16 +235,24 @@ const EnrollSeniorPage: React.FC = () => {
                           {generatedPassword}
                         </code>
                       </div>
-                      <div className="flex gap-3">
-                        <button
-                          onClick={() => copyToClipboard(generatedPassword)}
-                          className="flex-1 px-4 py-3 bg-blue-600 text-white text-lg font-bold rounded-lg hover:bg-blue-700 shadow-md transition-colors"
-                        >
-                          📋 Copy Password
-                        </button>
+                      <div className="flex flex-col gap-3">
+                        <div className="flex gap-3">
+                          <button
+                            onClick={() => copyToClipboard(generatedPassword)}
+                            className="flex-1 px-4 py-3 bg-blue-600 text-white text-lg font-bold rounded-lg hover:bg-blue-700 shadow-md transition-colors"
+                          >
+                            📋 Copy Password
+                          </button>
+                          <button
+                            onClick={handleCompleteDemographics}
+                            className="flex-1 px-4 py-3 bg-purple-600 text-white text-lg font-bold rounded-lg hover:bg-purple-700 shadow-md transition-colors"
+                          >
+                            📝 Complete Demographics
+                          </button>
+                        </div>
                         <button
                           onClick={clearForm}
-                          className="flex-1 px-4 py-3 bg-green-600 text-white text-lg font-bold rounded-lg hover:bg-green-700 shadow-md transition-colors"
+                          className="w-full px-4 py-3 bg-green-600 text-white text-lg font-bold rounded-lg hover:bg-green-700 shadow-md transition-colors"
                         >
                           ➕ Enroll Another Senior
                         </button>
