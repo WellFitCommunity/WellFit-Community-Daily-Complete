@@ -25,10 +25,12 @@ export interface AdapterMetadata {
 
 export interface AdapterConfig {
   endpoint: string;
-  authentication: {
-    type: 'oauth2' | 'api-key' | 'basic' | 'saml' | 'custom';
-    credentials: Record<string, string>;
-  };
+  authType?: 'oauth2' | 'api-key' | 'basic' | 'saml' | 'custom';
+  apiKey?: string;
+  clientId?: string;
+  clientSecret?: string;
+  username?: string;
+  password?: string;
   syncSchedule?: string;  // Cron expression
   dataMapping?: Record<string, string>;
   options?: Record<string, any>;
@@ -73,7 +75,7 @@ export interface EHRAdapter {
   supportsFeature(feature: string): boolean;
 }
 
-class UniversalAdapterRegistry {
+export class UniversalAdapterRegistry {
   private static instance: UniversalAdapterRegistry;
   private adapters: Map<string, new () => EHRAdapter> = new Map();
   private activeConnections: Map<string, EHRAdapter> = new Map();
@@ -224,6 +226,52 @@ class UniversalAdapterRegistry {
       this.disconnect(id)
     );
     await Promise.all(promises);
+  }
+
+  /**
+   * Test an adapter connection without persisting it
+   */
+  async testAdapter(
+    adapterId: string,
+    config: AdapterConfig
+  ): Promise<{ success: boolean; error?: string; capabilities?: string[] }> {
+    try {
+      const AdapterClass = this.adapters.get(adapterId);
+      if (!AdapterClass) {
+        return {
+          success: false,
+          error: `Adapter not found: ${adapterId}`
+        };
+      }
+
+      // Create temporary adapter instance
+      const adapter = new AdapterClass();
+
+      // Try to connect
+      await adapter.connect(config);
+
+      // Run test
+      const testResult = await adapter.test();
+
+      // Get capabilities
+      const capabilities = Object.entries(adapter.metadata.capabilities)
+        .filter(([_, enabled]) => enabled)
+        .map(([cap]) => cap);
+
+      // Disconnect
+      await adapter.disconnect();
+
+      return {
+        success: testResult.success,
+        error: testResult.success ? undefined : testResult.message,
+        capabilities
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Connection test failed'
+      };
+    }
   }
 }
 

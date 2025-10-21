@@ -28,6 +28,7 @@ import { SOC2SecurityDashboard } from './SOC2SecurityDashboard';
 import { SOC2AuditDashboard } from './SOC2AuditDashboard';
 import { SOC2IncidentResponseDashboard } from './SOC2IncidentResponseDashboard';
 import { SOC2ExecutiveDashboard } from './SOC2ExecutiveDashboard';
+import HospitalAdapterManagementPanel from './HospitalAdapterManagementPanel';
 
 // Collapsible Section Component
 interface CollapsibleSectionProps {
@@ -281,6 +282,17 @@ const AdminPanel: React.FC = () => {
               headerColor="text-teal-800"
             >
               <FHIRDataMapper />
+            </CollapsibleSection>
+
+            {/* Hospital EHR/EMR Adapter Management */}
+            <CollapsibleSection
+              title="Hospital EHR/EMR Integrations"
+              subtitle="Connect to Epic, Cerner, Athenahealth, and other hospital systems"
+              icon="🏥"
+              headerColor="text-blue-800"
+              defaultOpen={false}
+            >
+              <HospitalAdapterManagementPanel />
             </CollapsibleSection>
           </div>
 

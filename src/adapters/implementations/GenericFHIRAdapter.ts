@@ -36,7 +36,7 @@ export class GenericFHIRAdapter implements EHRAdapter {
     this.baseUrl = config.endpoint.replace(/\/$/, ''); // Remove trailing slash
 
     // Authenticate
-    await this.authenticate(config.authentication);
+    await this.authenticate(config);
 
     this.status = 'connected';
     console.log(`[GenericFHIR] Connected to ${this.baseUrl}`);
@@ -168,23 +168,37 @@ export class GenericFHIRAdapter implements EHRAdapter {
 
   // HELPER METHODS
 
-  private async authenticate(auth: AdapterConfig['authentication']): Promise<void> {
-    switch (auth.type) {
+  private async authenticate(config: AdapterConfig): Promise<void> {
+    const authType = config.authType || 'api-key';
+
+    switch (authType) {
       case 'oauth2':
-        this.authToken = await this.oauth2Flow(auth.credentials);
+        if (!config.clientId || !config.clientSecret) {
+          throw new Error('OAuth2 requires clientId and clientSecret');
+        }
+        this.authToken = await this.oauth2Flow({
+          clientId: config.clientId,
+          clientSecret: config.clientSecret
+        });
         break;
 
       case 'api-key':
-        this.authToken = auth.credentials.apiKey;
+        if (!config.apiKey) {
+          throw new Error('API Key authentication requires apiKey');
+        }
+        this.authToken = config.apiKey;
         break;
 
       case 'basic':
-        const encoded = btoa(`${auth.credentials.username}:${auth.credentials.password}`);
+        if (!config.username || !config.password) {
+          throw new Error('Basic auth requires username and password');
+        }
+        const encoded = btoa(`${config.username}:${config.password}`);
         this.authToken = `Basic ${encoded}`;
         break;
 
       default:
-        throw new Error(`Unsupported auth type: ${auth.type}`);
+        throw new Error(`Unsupported auth type: ${authType}`);
     }
   }
 
