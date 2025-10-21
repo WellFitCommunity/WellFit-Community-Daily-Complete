@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Activity, Heart, TrendingUp, DollarSign, AlertTriangle, CheckCircle, Users, FileText, Stethoscope, Pill, ClipboardList, LineChart, Brain, Award } from 'lucide-react';
+import { Activity, Heart, TrendingUp, DollarSign, AlertTriangle, CheckCircle, Users, FileText, Stethoscope, Pill, ClipboardList, LineChart, Brain, Award, Video } from 'lucide-react';
 import AdminHeader from '../admin/AdminHeader';
 import UserQuestions from '../UserQuestions';
 import SmartScribe from '../smart/RealTimeSmartScribe';
@@ -10,6 +10,8 @@ import RevenueDashboard from '../atlas/RevenueDashboard';
 import { useSupabaseClient } from '../../contexts/AuthContext';
 import { FHIRService } from '../../services/fhirResourceService';
 import { SDOHBillingService } from '../../services/sdohBillingService';
+import { PhysicianWellnessHub } from './PhysicianWellnessHub';
+import TelehealthConsultation from '../telehealth/TelehealthConsultation';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -331,6 +333,8 @@ const PhysicianPanel: React.FC = () => {
     pendingReviews: 0,
     todayRevenue: 0
   });
+  const [telehealthActive, setTelehealthActive] = useState(false);
+  const [telehealthEncounterType, setTelehealthEncounterType] = useState<'outpatient' | 'er' | 'urgent-care'>('outpatient');
 
   const loadDashboardStats = useCallback(async () => {
     try {
@@ -676,8 +680,91 @@ const PhysicianPanel: React.FC = () => {
                 <h3 className="font-bold text-gray-900 text-lg">Billing & Claims</h3>
                 <p className="text-sm text-gray-600 mt-1">X12 EDI claims, fee schedules & revenue analytics</p>
               </a>
+
+              {/* Telehealth - Outpatient */}
+              <button
+                onClick={() => {
+                  if (!selectedPatient) {
+                    alert('Please select a patient first');
+                    return;
+                  }
+                  setTelehealthEncounterType('outpatient');
+                  setTelehealthActive(true);
+                }}
+                className="bg-white p-5 rounded-lg shadow hover:shadow-xl transition-all border border-teal-200 hover:border-teal-400 group text-left"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="text-4xl">📹</div>
+                  <Video className="w-6 h-6 text-teal-600 group-hover:scale-110 transition-transform" />
+                </div>
+                <h3 className="font-bold text-gray-900 text-lg">Telehealth Visit</h3>
+                <p className="text-sm text-gray-600 mt-1">HIPAA-compliant video consultations with SmartScribe</p>
+              </button>
+
+              {/* Telehealth - ER */}
+              <button
+                onClick={() => {
+                  if (!selectedPatient) {
+                    alert('Please select a patient first');
+                    return;
+                  }
+                  setTelehealthEncounterType('er');
+                  setTelehealthActive(true);
+                }}
+                className="bg-white p-5 rounded-lg shadow hover:shadow-xl transition-all border border-red-300 hover:border-red-500 group text-left"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="text-4xl">🚨</div>
+                  <AlertTriangle className="w-6 h-6 text-red-600 group-hover:scale-110 transition-transform animate-pulse" />
+                </div>
+                <h3 className="font-bold text-gray-900 text-lg">ER Telehealth</h3>
+                <p className="text-sm text-gray-600 mt-1">Emergency remote consultation with stethoscope support</p>
+              </button>
+
+              {/* Telehealth - Urgent Care */}
+              <button
+                onClick={() => {
+                  if (!selectedPatient) {
+                    alert('Please select a patient first');
+                    return;
+                  }
+                  setTelehealthEncounterType('urgent-care');
+                  setTelehealthActive(true);
+                }}
+                className="bg-white p-5 rounded-lg shadow hover:shadow-xl transition-all border border-orange-200 hover:border-orange-400 group text-left"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="text-4xl">⚡</div>
+                  <Activity className="w-6 h-6 text-orange-600 group-hover:scale-110 transition-transform" />
+                </div>
+                <h3 className="font-bold text-gray-900 text-lg">Urgent Care Visit</h3>
+                <p className="text-sm text-gray-600 mt-1">Same-day telehealth for urgent but non-emergency care</p>
+              </button>
             </div>
           </div>
+
+          {/* Physician Wellness & Burnout Prevention */}
+          <CollapsibleSection
+            title="Physician Wellness & Burnout Prevention"
+            icon="🧘"
+            defaultOpen={false}
+            category="medical"
+            badge="Wellness"
+          >
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+              <div className="flex items-start gap-3">
+                <Heart className="w-5 h-5 text-blue-600 mt-0.5" />
+                <div>
+                  <h4 className="font-semibold text-blue-900">Provider Wellness Hub</h4>
+                  <p className="text-sm text-blue-800 mt-1">
+                    Monitor your burnout risk, track stress levels, access resilience training modules, and connect with peer support circles.
+                    Your wellbeing directly impacts patient care quality.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <PhysicianWellnessHub />
+          </CollapsibleSection>
 
           {/* Patient Communication */}
           <CollapsibleSection
@@ -823,6 +910,24 @@ const PhysicianPanel: React.FC = () => {
 
         </div>
       </div>
+
+      {/* Telehealth Modal */}
+      {telehealthActive && selectedPatient && (
+        <div className="fixed inset-0 z-50">
+          <TelehealthConsultation
+            patientId={selectedPatient.user_id}
+            patientName={`${selectedPatient.first_name} ${selectedPatient.last_name}`}
+            encounterType={telehealthEncounterType}
+            onEndCall={() => {
+              setTelehealthActive(false);
+              // Refresh patient summary after call ends
+              if (selectedPatient) {
+                handlePatientSelect(selectedPatient);
+              }
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 };

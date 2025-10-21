@@ -11,17 +11,23 @@ import { StaffRole, RoleAccessScopes } from '../../types/roles';
 import React from 'react';
 
 // Mock Supabase client
-jest.mock('../../lib/supabaseClient', () => ({
-  supabase: {
-    functions: {
-      invoke: jest.fn(),
+jest.mock('../../lib/supabaseClient', () => {
+  const mockInvoke = jest.fn();
+  const mockGetUser = jest.fn();
+  const mockRpc = jest.fn();
+
+  return {
+    supabase: {
+      functions: {
+        invoke: mockInvoke,
+      },
+      auth: {
+        getUser: mockGetUser,
+      },
+      rpc: mockRpc,
     },
-    auth: {
-      getUser: jest.fn(),
-    },
-    rpc: jest.fn(),
-  },
-}));
+  };
+});
 
 const mockSupabase = supabase as jest.Mocked<typeof supabase>;
 
@@ -65,7 +71,7 @@ describe('AdminAuthContext', () => {
     };
 
     it('should successfully authenticate nurse_practitioner with valid PIN', async () => {
-      mockSupabase.functions.invoke.mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
         data: {
           success: true,
           expires_at: new Date(Date.now() + 120 * 60 * 1000).toISOString(),
@@ -74,14 +80,17 @@ describe('AdminAuthContext', () => {
         error: null,
       });
 
-      mockSupabase.auth.getUser.mockResolvedValueOnce({
+      (mockSupabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
         data: { user: mockUser },
         error: null,
       } as any);
 
-      mockSupabase.rpc.mockResolvedValueOnce({
+      (mockSupabase.rpc as jest.Mock).mockResolvedValueOnce({
         data: mockAccessScopes,
         error: null,
+        count: null,
+        status: 200,
+        statusText: 'OK',
       });
 
       const { result } = renderHook(() => useAdminAuth(), { wrapper });
@@ -110,7 +119,7 @@ describe('AdminAuthContext', () => {
         roles: ['clinical_supervisor'],
       };
 
-      mockSupabase.functions.invoke.mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
         data: {
           success: true,
           expires_at: new Date(Date.now() + 120 * 60 * 1000).toISOString(),
@@ -119,12 +128,12 @@ describe('AdminAuthContext', () => {
         error: null,
       });
 
-      mockSupabase.auth.getUser.mockResolvedValueOnce({
+      (mockSupabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
         data: { user: mockUser },
         error: null,
       } as any);
 
-      mockSupabase.rpc.mockResolvedValueOnce({
+      (mockSupabase.rpc as jest.Mock).mockResolvedValueOnce({
         data: supervisorScopes,
         error: null,
       });
@@ -151,7 +160,7 @@ describe('AdminAuthContext', () => {
         roles: ['department_head'],
       };
 
-      mockSupabase.functions.invoke.mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
         data: {
           success: true,
           expires_at: new Date(Date.now() + 120 * 60 * 1000).toISOString(),
@@ -160,12 +169,12 @@ describe('AdminAuthContext', () => {
         error: null,
       });
 
-      mockSupabase.auth.getUser.mockResolvedValueOnce({
+      (mockSupabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
         data: { user: mockUser },
         error: null,
       } as any);
 
-      mockSupabase.rpc.mockResolvedValueOnce({
+      (mockSupabase.rpc as jest.Mock).mockResolvedValueOnce({
         data: deptHeadScopes,
         error: null,
       });
@@ -183,7 +192,7 @@ describe('AdminAuthContext', () => {
     });
 
     it('should fail authentication with invalid PIN', async () => {
-      mockSupabase.functions.invoke.mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
         data: {
           success: false,
           error: 'Incorrect PIN',
@@ -204,7 +213,7 @@ describe('AdminAuthContext', () => {
     });
 
     it('should fail authentication when Edge Function returns error', async () => {
-      mockSupabase.functions.invoke.mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
         data: null,
         error: { message: 'PIN not set' },
       });
@@ -236,7 +245,7 @@ describe('AdminAuthContext', () => {
       for (const role of roles) {
         jest.clearAllMocks();
 
-        mockSupabase.functions.invoke.mockResolvedValueOnce({
+        (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
           data: {
             success: true,
             expires_at: new Date(Date.now() + 120 * 60 * 1000).toISOString(),
@@ -245,12 +254,12 @@ describe('AdminAuthContext', () => {
           error: null,
         });
 
-        mockSupabase.auth.getUser.mockResolvedValueOnce({
+        (mockSupabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
           data: { user: mockUser },
           error: null,
         } as any);
 
-        mockSupabase.rpc.mockResolvedValueOnce({
+        (mockSupabase.rpc as jest.Mock).mockResolvedValueOnce({
           data: mockAccessScopes,
           error: null,
         });
@@ -268,7 +277,7 @@ describe('AdminAuthContext', () => {
 
   describe('logoutAdmin', () => {
     it('should clear all authentication state', async () => {
-      mockSupabase.functions.invoke.mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
         data: {
           success: true,
           expires_at: new Date(Date.now() + 120 * 60 * 1000).toISOString(),
@@ -277,12 +286,12 @@ describe('AdminAuthContext', () => {
         error: null,
       });
 
-      mockSupabase.auth.getUser.mockResolvedValueOnce({
+      (mockSupabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
         data: { user: { id: 'test-user-id', email: 'test@example.com' } },
         error: null,
       } as any);
 
-      mockSupabase.rpc.mockResolvedValueOnce({
+      (mockSupabase.rpc as jest.Mock).mockResolvedValueOnce({
         data: {
           canViewNurse: true,
           canViewPhysician: false,
@@ -293,6 +302,9 @@ describe('AdminAuthContext', () => {
           roles: ['nurse'],
         },
         error: null,
+        count: null,
+        status: 200,
+        statusText: 'OK',
       });
 
       const { result } = renderHook(() => useAdminAuth(), { wrapper });
@@ -320,7 +332,7 @@ describe('AdminAuthContext', () => {
 
   describe('hasAccess', () => {
     it('should correctly check role-based access for nurse_practitioner', async () => {
-      mockSupabase.functions.invoke.mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
         data: {
           success: true,
           expires_at: new Date(Date.now() + 120 * 60 * 1000).toISOString(),
@@ -329,12 +341,12 @@ describe('AdminAuthContext', () => {
         error: null,
       });
 
-      mockSupabase.auth.getUser.mockResolvedValueOnce({
+      (mockSupabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
         data: { user: { id: 'test-user-id', email: 'test@example.com' } },
         error: null,
       } as any);
 
-      mockSupabase.rpc.mockResolvedValueOnce({
+      (mockSupabase.rpc as jest.Mock).mockResolvedValueOnce({
         data: {
           canViewNurse: true,
           canViewPhysician: true,
@@ -345,6 +357,9 @@ describe('AdminAuthContext', () => {
           roles: ['nurse_practitioner'],
         },
         error: null,
+        count: null,
+        status: 200,
+        statusText: 'OK',
       });
 
       const { result } = renderHook(() => useAdminAuth(), { wrapper });
@@ -369,7 +384,7 @@ describe('AdminAuthContext', () => {
 
   describe('Session Persistence', () => {
     it('should persist session to sessionStorage', async () => {
-      mockSupabase.functions.invoke.mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
         data: {
           success: true,
           expires_at: new Date(Date.now() + 120 * 60 * 1000).toISOString(),
@@ -378,12 +393,12 @@ describe('AdminAuthContext', () => {
         error: null,
       });
 
-      mockSupabase.auth.getUser.mockResolvedValueOnce({
+      (mockSupabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
         data: { user: { id: 'test-user-id', email: 'test@example.com' } },
         error: null,
       } as any);
 
-      mockSupabase.rpc.mockResolvedValueOnce({
+      (mockSupabase.rpc as jest.Mock).mockResolvedValueOnce({
         data: {
           canViewNurse: true,
           canViewPhysician: false,
@@ -394,6 +409,9 @@ describe('AdminAuthContext', () => {
           roles: ['nurse'],
         },
         error: null,
+        count: null,
+        status: 200,
+        statusText: 'OK',
       });
 
       const { result } = renderHook(() => useAdminAuth(), { wrapper });
@@ -412,7 +430,7 @@ describe('AdminAuthContext', () => {
     });
 
     it('should clear sessionStorage on logout', async () => {
-      mockSupabase.functions.invoke.mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
         data: {
           success: true,
           expires_at: new Date(Date.now() + 120 * 60 * 1000).toISOString(),
@@ -421,12 +439,12 @@ describe('AdminAuthContext', () => {
         error: null,
       });
 
-      mockSupabase.auth.getUser.mockResolvedValueOnce({
+      (mockSupabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
         data: { user: { id: 'test-user-id', email: 'test@example.com' } },
         error: null,
       } as any);
 
-      mockSupabase.rpc.mockResolvedValueOnce({
+      (mockSupabase.rpc as jest.Mock).mockResolvedValueOnce({
         data: {
           canViewNurse: true,
           canViewPhysician: false,
@@ -437,6 +455,9 @@ describe('AdminAuthContext', () => {
           roles: ['nurse'],
         },
         error: null,
+        count: null,
+        status: 200,
+        statusText: 'OK',
       });
 
       const { result } = renderHook(() => useAdminAuth(), { wrapper });
@@ -457,7 +478,7 @@ describe('AdminAuthContext', () => {
 
   describe('Error Handling', () => {
     it('should handle missing admin_token in response', async () => {
-      mockSupabase.functions.invoke.mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
         data: {
           success: true,
           expires_at: new Date(Date.now() + 120 * 60 * 1000).toISOString(),
@@ -478,7 +499,7 @@ describe('AdminAuthContext', () => {
     });
 
     it('should handle network errors', async () => {
-      mockSupabase.functions.invoke.mockRejectedValueOnce(new Error('Network error'));
+      (mockSupabase.functions.invoke as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
 
       const { result } = renderHook(() => useAdminAuth(), { wrapper });
 

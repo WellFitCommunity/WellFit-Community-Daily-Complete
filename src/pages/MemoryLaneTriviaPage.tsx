@@ -1,5 +1,5 @@
 // Memory Lane Trivia - Era-based trivia game for seniors (1950s-1990s)
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Trophy, Brain, Clock, Star, Share2, Award, Sparkles } from 'lucide-react';
 import { useSupabaseClient, useUser } from '../contexts/AuthContext';
 import SmartBackButton from '../components/ui/SmartBackButton';
@@ -69,15 +69,7 @@ const MemoryLaneTriviaPage: React.FC = () => {
 
   const currentQuestion = questions[currentQuestionIndex];
 
-  // Load today's questions and progress
-  useEffect(() => {
-    if (user?.id) {
-      loadTriviaGame();
-      loadTrophies();
-    }
-  }, [user?.id]);
-
-  const loadTriviaGame = async () => {
+  const loadTriviaGame = useCallback(async () => {
     if (!user?.id) return;
 
     setLoading(true);
@@ -131,9 +123,9 @@ const MemoryLaneTriviaPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id, supabase]);
 
-  const loadTrophies = async () => {
+  const loadTrophies = useCallback(async () => {
     if (!user?.id) return;
 
     const { data } = await supabase
@@ -144,7 +136,15 @@ const MemoryLaneTriviaPage: React.FC = () => {
       .limit(30);
 
     setTrophies(data || []);
-  };
+  }, [user?.id, supabase]);
+
+  // Load today's questions and progress
+  useEffect(() => {
+    if (user?.id) {
+      loadTriviaGame();
+      loadTrophies();
+    }
+  }, [user?.id, loadTriviaGame, loadTrophies]);
 
   const handleAnswerSelect = async (answer: 'A' | 'B' | 'C' | 'D') => {
     if (selectedAnswer || !currentQuestion) return;

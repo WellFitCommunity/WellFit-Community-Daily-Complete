@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -22,11 +22,7 @@ export default function PhotoApprovalPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'pending' | 'approved' | 'rejected' | 'all'>('pending');
 
-  useEffect(() => {
-    fetchMoments();
-  }, [filter]);
-
-  const fetchMoments = async () => {
+  const fetchMoments = useCallback(async () => {
     setLoading(true);
     try {
       let query = supabase
@@ -63,7 +59,11 @@ export default function PhotoApprovalPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter]);
+
+  useEffect(() => {
+    fetchMoments();
+  }, [fetchMoments]);
 
   const handleApprove = async (momentId: string) => {
     try {

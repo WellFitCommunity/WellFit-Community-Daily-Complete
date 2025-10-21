@@ -180,28 +180,59 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
 
                   {/* Navigation Links */}
                   <div className="py-2">
-                    <button
-                      onClick={() => {
-                        navigateTo('/dashboard');
-                        setShowSettingsDropdown(false);
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
-                    >
-                      <span className="mr-3">🏠</span>
-                      Main Dashboard
-                    </button>
+                    {/* Super Admin Only: Cross-Panel Navigation */}
+                    {adminRole === 'super_admin' && (
+                      <>
+                        <button
+                          onClick={() => {
+                            navigateTo('/dashboard');
+                            setShowSettingsDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
+                        >
+                          <span className="mr-3">🏠</span>
+                          Senior Dashboard
+                        </button>
 
-                    <button
-                      onClick={() => {
-                        navigateTo('/caregiver-dashboard');
-                        setShowSettingsDropdown(false);
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
-                      title="View caregiver dashboard"
-                    >
-                      <span className="mr-3">👨‍👩‍👧</span>
-                      Caregiver Portal
-                    </button>
+                        <button
+                          onClick={() => {
+                            navigateTo('/caregiver-dashboard');
+                            setShowSettingsDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
+                          title="View caregiver dashboard"
+                        >
+                          <span className="mr-3">👨‍👩‍👧</span>
+                          Caregiver Portal
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            navigateTo('/nurse-dashboard');
+                            setShowSettingsDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
+                          title="View nurse dashboard"
+                        >
+                          <span className="mr-3">👩‍⚕️</span>
+                          Nurse Dashboard
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            navigateTo('/physician-dashboard');
+                            setShowSettingsDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
+                          title="View physician dashboard"
+                        >
+                          <span className="mr-3">🩺</span>
+                          Physician Dashboard
+                        </button>
+
+                        <div className="border-t border-gray-100 my-2" />
+                      </>
+                    )}
 
                     <button
                       onClick={() => {
