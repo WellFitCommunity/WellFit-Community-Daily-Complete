@@ -41,6 +41,7 @@ import ClaimsSubmissionPanel from '../atlas/ClaimsSubmissionPanel';
 import ClaimsAppealsPanel from '../atlas/ClaimsAppealsPanel';
 import AdminTransferLogs from '../handoff/AdminTransferLogs';
 import PatientEngagementDashboard from './PatientEngagementDashboard';
+import HospitalPatientEnrollment from './HospitalPatientEnrollment';
 import { SOC2SecurityDashboard } from './SOC2SecurityDashboard';
 import { SOC2AuditDashboard } from './SOC2AuditDashboard';
 import { SOC2IncidentResponseDashboard } from './SOC2IncidentResponseDashboard';
@@ -179,6 +180,17 @@ const IntelligentAdminPanel: React.FC = () => {
       component: <UsersList />,
       category: 'patient-care',
       priority: 'medium',
+    },
+    {
+      id: 'hospital-enrollment',
+      title: 'Hospital Patient Enrollment',
+      subtitle: 'Create test patients for backend testing (Physician/Nurse panels, handoffs, clinical workflows)',
+      icon: '🏥',
+      headerColor: 'text-blue-800',
+      component: <HospitalPatientEnrollment />,
+      category: 'admin',
+      priority: 'high',
+      defaultOpen: false,
     },
 
     // CLINICAL DATA (Category 3)

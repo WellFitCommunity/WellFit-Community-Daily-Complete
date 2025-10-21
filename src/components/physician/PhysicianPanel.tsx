@@ -12,6 +12,7 @@ import { FHIRService } from '../../services/fhirResourceService';
 import { SDOHBillingService } from '../../services/sdohBillingService';
 import { PhysicianWellnessHub } from './PhysicianWellnessHub';
 import TelehealthConsultation from '../telehealth/TelehealthConsultation';
+import PhysicianClinicalResources from './PhysicianClinicalResources';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -850,54 +851,27 @@ const PhysicianPanel: React.FC = () => {
             <RevenueDashboard />
           </CollapsibleSection>
 
-          {/* Quick Reference Guide */}
-          <div className="bg-gradient-to-r from-indigo-100 to-blue-100 rounded-xl p-6 border border-indigo-200">
-            <h3 className="text-xl font-bold text-indigo-900 mb-4 flex items-center gap-2">
-              <FileText className="w-6 h-6" />
-              Quick Clinical Reference
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow border border-indigo-100">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5" />
-                  <div>
-                    <div className="font-bold text-gray-900">Emergency Protocols</div>
-                    <div className="text-sm text-gray-600 mt-1">Rapid response guidelines for critical situations</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow border border-indigo-100">
-                <div className="flex items-start gap-3">
-                  <ClipboardList className="w-5 h-5 text-blue-600 mt-0.5" />
-                  <div>
-                    <div className="font-bold text-gray-900">Clinical Guidelines</div>
-                    <div className="text-sm text-gray-600 mt-1">Evidence-based treatment protocols & best practices</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow border border-indigo-100">
-                <div className="flex items-start gap-3">
-                  <Pill className="w-5 h-5 text-green-600 mt-0.5" />
-                  <div>
-                    <div className="font-bold text-gray-900">Formulary</div>
-                    <div className="text-sm text-gray-600 mt-1">Approved medication list with alternatives</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow border border-indigo-100">
-                <div className="flex items-start gap-3">
-                  <Users className="w-5 h-5 text-purple-600 mt-0.5" />
-                  <div>
-                    <div className="font-bold text-gray-900">Specialist Directory</div>
-                    <div className="text-sm text-gray-600 mt-1">Referral network contacts & specialties</div>
-                  </div>
+          {/* Clinical Resources Library */}
+          <CollapsibleSection
+            title="Clinical Resources & Quick Reference"
+            icon="📚"
+            defaultOpen={false}
+            category="clinical"
+          >
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+              <div className="flex items-start gap-3">
+                <FileText className="w-5 h-5 text-blue-600 mt-0.5" />
+                <div>
+                  <h4 className="font-semibold text-blue-900">Evidence-Based Clinical Resources</h4>
+                  <p className="text-sm text-blue-800 mt-1">
+                    Quick access to emergency protocols, clinical guidelines, drug references, and specialist directories.
+                    Curated evidence-based resources from trusted medical organizations.
+                  </p>
                 </div>
               </div>
             </div>
-          </div>
+            <PhysicianClinicalResources />
+          </CollapsibleSection>
 
           {/* System Info Footer */}
           <div className="text-center text-gray-500 text-sm py-6 border-t border-gray-200">
