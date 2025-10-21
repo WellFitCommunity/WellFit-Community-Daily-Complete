@@ -47,6 +47,88 @@ serve(async (req) => {
       throw new Error('ANTHROPIC_API_KEY not configured')
     }
 
+    // Get authorization header to identify user
+    const authHeader = req.headers.get('authorization');
+    let userId = null;
+
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user } } = await supabase.auth.getUser(token);
+      userId = user?.id;
+    }
+
+    // Fetch provider preferences if authenticated
+    let prefs = null;
+    if (userId) {
+      const { data } = await supabase
+        .from('provider_scribe_preferences')
+        .select('*')
+        .eq('provider_id', userId)
+        .single();
+      prefs = data;
+    }
+
+    // Get current context
+    const currentHour = new Date().getHours();
+    const timeOfDay = currentHour < 12 ? 'morning' : currentHour < 17 ? 'afternoon' : currentHour < 21 ? 'evening' : 'night';
+
+    // Build conversational prompt
+    let promptContent: string;
+
+    if (prefs) {
+      // Dynamic import of conversational prompts
+      const { getDocumentationPrompt } = await import("../_shared/conversationalScribePrompts.ts");
+
+      promptContent = getDocumentationPrompt(transcript, {
+        formality_level: prefs.formality_level || 'relaxed',
+        interaction_style: prefs.interaction_style || 'collaborative',
+        verbosity: prefs.verbosity || 'balanced',
+        humor_level: prefs.humor_level || 'light',
+        documentation_style: prefs.documentation_style || 'SOAP',
+        provider_type: prefs.provider_type || 'physician',
+        interaction_count: prefs.interaction_count || 0,
+        common_phrases: prefs.common_phrases || [],
+        preferred_specialties: prefs.preferred_specialties || [],
+        billing_preferences: prefs.billing_preferences || { balanced: true }
+      }, sessionType, {
+        time_of_day: timeOfDay,
+        current_mood: 'neutral'
+      });
+    } else {
+      // Default conversational prompt for unauthenticated users
+      promptContent = `You are an experienced medical scribe - like a trusted coworker who's been doing this for years.
+Analyze this medical transcript and provide structured, helpful output.
+
+Session Type: ${sessionType}
+Duration: ${duration} seconds
+Patient ID: ${patientId || 'Not specified'}
+
+Transcript:
+${transcript}
+
+Return JSON with this structure:
+{
+  "conversational_note": "Brief, friendly comment about the visit",
+  "summary": "Concise clinical summary (2-3 sentences)",
+  "clinicalNotes": "Detailed SOAP-style clinical notes",
+  "medicalCodes": [
+    {
+      "code": "ICD10/CPT/HCPCS code",
+      "type": "ICD10|CPT|HCPCS",
+      "description": "Code description",
+      "confidence": 0.85,
+      "reasoning": "Why this code fits"
+    }
+  ],
+  "actionItems": ["Specific, actionable items"],
+  "recommendations": ["Clinical recommendations"],
+  "keyFindings": ["Important findings"],
+  "questions_for_provider": ["Things you're unsure about"]
+}
+
+Be helpful and precise - suggest the RIGHT codes, not just any codes. Quality over quantity.`;
+    }
+
     // Process transcript with Claude AI
     const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -56,44 +138,12 @@ serve(async (req) => {
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-5-20250929', // Latest model for best nurse scribe performance
-        max_tokens: 4000, // Increased for more detailed clinical notes
+        model: 'claude-sonnet-4-5-20250929', // Latest model for best scribe performance
+        max_tokens: 4000,
         temperature: 0.1,
         messages: [{
           role: 'user',
-          content: `You are an expert medical scribe AI. Analyze this medical transcript and provide structured output.
-
-Session Type: ${sessionType}
-Duration: ${duration} seconds
-Patient ID: ${patientId || 'Not specified'}
-
-Transcript:
-${transcript}
-
-Please provide a JSON response with the following structure:
-{
-  "summary": "Concise clinical summary (2-3 sentences)",
-  "clinicalNotes": "Detailed SOAP-style clinical notes",
-  "medicalCodes": [
-    {
-      "code": "ICD10/CPT/HCPCS code",
-      "type": "ICD10|CPT|HCPCS",
-      "description": "Code description",
-      "confidence": 0.85
-    }
-  ],
-  "actionItems": ["Follow-up in 2 weeks", "Order lab work"],
-  "recommendations": ["Treatment recommendations"],
-  "keyFindings": ["Important clinical findings"]
-}
-
-Guidelines:
-- Only suggest codes you're confident about (>70% confidence)
-- Focus on clear, actionable items
-- Use standard medical terminology
-- Be conservative with diagnoses - suggest "rule out" when uncertain
-- Include relevant vital signs, symptoms, and assessment
-- Format as valid JSON only`
+          content: promptContent
         }]
       })
     })

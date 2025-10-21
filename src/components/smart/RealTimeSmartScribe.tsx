@@ -10,7 +10,15 @@ interface CodeSuggestion {
   description: string;
   reimbursement: number;
   confidence: number;
+  reasoning?: string;
   missingDocumentation?: string;
+}
+
+interface ConversationalMessage {
+  type: 'scribe' | 'system';
+  message: string;
+  timestamp: Date;
+  context?: 'greeting' | 'suggestion' | 'code' | 'reminder';
 }
 
 const RealTimeSmartScribe: React.FC = () => {
@@ -19,6 +27,8 @@ const RealTimeSmartScribe: React.FC = () => {
   const [revenueImpact, setRevenueImpact] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [status, setStatus] = useState("Ready");
+  const [conversationalMessages, setConversationalMessages] = useState<ConversationalMessage[]>([]);
+  const [scribeSuggestions, setScribeSuggestions] = useState<string[]>([]);
 
   const wsRef = useRef<WebSocket | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -65,8 +75,29 @@ const RealTimeSmartScribe: React.FC = () => {
           } else if (data.type === "code_suggestion") {
             setSuggestedCodes(Array.isArray(data.codes) ? data.codes : []);
             setRevenueImpact(Number(data.revenueIncrease || 0));
+
+            // Add conversational note if present
+            if (data.conversational_note) {
+              setConversationalMessages(prev => [...prev, {
+                type: 'scribe',
+                message: data.conversational_note,
+                timestamp: new Date(),
+                context: 'code'
+              }]);
+            }
+
+            // Add suggestions if present
+            if (data.suggestions && Array.isArray(data.suggestions)) {
+              setScribeSuggestions(data.suggestions);
+            }
           } else if (data.type === "ready") {
-            // Deepgram connected
+            // Deepgram connected - send greeting
+            setConversationalMessages([{
+              type: 'scribe',
+              message: "Hey! I'm Riley, your AI scribe. Listening and ready to help with documentation and billing. Just focus on the patient - I've got the charting.",
+              timestamp: new Date(),
+              context: 'greeting'
+            }]);
           }
         } catch {
           // ignore non-JSON frames
@@ -119,18 +150,55 @@ const RealTimeSmartScribe: React.FC = () => {
       {/* Header with Revenue Counter */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">💰 Smart Medical Billing Assistant</h2>
+          <h2 className="text-2xl font-bold text-gray-900">🧭 Compass Riley</h2>
           <p className="text-sm text-gray-600 mt-1">{status}</p>
         </div>
         {revenueImpact > 0 && (
           <div className="px-6 py-3 bg-gradient-to-r from-green-400 to-emerald-500 rounded-lg shadow-lg animate-pulse">
             <div className="text-white text-center">
-              <div className="text-xs font-medium">Additional Revenue</div>
+              <div className="text-xs font-medium">Revenue Captured</div>
               <div className="text-2xl font-bold">+${revenueImpact.toFixed(2)}</div>
             </div>
           </div>
         )}
       </div>
+
+      {/* Conversational Messages - Scribe Chat */}
+      {conversationalMessages.length > 0 && (
+        <div className="mb-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border-2 border-blue-200">
+          <div className="flex items-start gap-3">
+            <div className="text-3xl">💬</div>
+            <div className="flex-1 space-y-2">
+              {conversationalMessages.slice(-3).map((msg, idx) => (
+                <div key={idx} className="text-sm">
+                  <span className="font-semibold text-blue-900">Riley:</span>
+                  <span className="text-blue-800 ml-2">{msg.message}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Proactive Suggestions */}
+      {scribeSuggestions.length > 0 && (
+        <div className="mb-6 bg-amber-50 rounded-xl p-4 border-2 border-amber-200">
+          <div className="flex items-start gap-3">
+            <div className="text-2xl">💡</div>
+            <div className="flex-1">
+              <h4 className="font-semibold text-amber-900 mb-2">Quick Suggestions</h4>
+              <ul className="space-y-1">
+                {scribeSuggestions.map((suggestion, idx) => (
+                  <li key={idx} className="text-sm text-amber-800 flex items-start">
+                    <span className="mr-2">•</span>
+                    <span>{suggestion}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Recording Button */}
       <div className="flex justify-center mb-8">
@@ -170,12 +238,12 @@ const RealTimeSmartScribe: React.FC = () => {
         </div>
       )}
 
-      {/* Revenue Optimization Suggestions */}
+      {/* Billing Code Suggestions - With Reasoning */}
       {suggestedCodes.length > 0 && (
         <div>
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <span>💡</span>
-            Revenue Optimization Opportunities
+            <span>🎯</span>
+            Billing Opportunities (Precision-Matched)
           </h3>
           <div className="space-y-4">
             {suggestedCodes.map((code, idx) => (
@@ -191,26 +259,44 @@ const RealTimeSmartScribe: React.FC = () => {
                         {code.type}
                       </span>
                       <span className="text-xs text-gray-600 bg-white px-2 py-1 rounded">
-                        {Math.round(code.confidence * 100)}% confidence
+                        {Math.round(code.confidence * 100)}% confident
                       </span>
                     </div>
-                    <p className="text-sm text-gray-800 font-medium mb-3">{code.description}</p>
+                    <p className="text-sm text-gray-800 font-medium mb-2">{code.description}</p>
+
+                    {/* Reasoning - NEW! */}
+                    {code.reasoning && (
+                      <div className="mt-2 p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
+                        <p className="text-sm text-blue-900">
+                          <span className="font-bold">💭 Why this fits: </span>
+                          {code.reasoning}
+                        </p>
+                      </div>
+                    )}
 
                     {code.missingDocumentation && (
                       <div className="mt-3 p-3 bg-amber-100 border-l-4 border-amber-400 rounded">
                         <p className="text-sm text-amber-900">
-                          <span className="font-bold">💬 Suggest to doctor: </span>
-                          "{code.missingDocumentation}"
+                          <span className="font-bold">📝 To strengthen this code: </span>
+                          {code.missingDocumentation}
                         </p>
                       </div>
                     )}
                   </div>
 
                   <div className="text-right">
-                    <div className="text-3xl font-bold text-green-600">
-                      +${code.reimbursement.toFixed(2)}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">reimbursement</div>
+                    {code.reimbursement > 0 ? (
+                      <>
+                        <div className="text-3xl font-bold text-green-600">
+                          +${code.reimbursement.toFixed(2)}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">estimated</div>
+                      </>
+                    ) : (
+                      <div className="text-sm text-gray-500 italic">
+                        varies by<br />payer
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -224,10 +310,10 @@ const RealTimeSmartScribe: React.FC = () => {
         <div className="flex items-start gap-3">
           <span className="text-2xl">🔒</span>
           <div className="flex-1">
-            <h4 className="font-semibold text-blue-900 mb-1">HIPAA Compliance</h4>
+            <h4 className="font-semibold text-blue-900 mb-1">Privacy & Security</h4>
             <p className="text-sm text-blue-800">
-              Audio is encrypted in transit. Transcription runs on HIPAA-eligible services. We
-              de-identify before analysis. Configure retention in your policy (defaults recommended).
+              Compass Riley encrypts audio in transit and de-identifies PHI before AI analysis.
+              All transcription runs on HIPAA-compliant infrastructure. Your data stays secure.
             </p>
           </div>
         </div>

@@ -161,13 +161,69 @@ serve(async (req: Request) => {
   return response;
 });
 
-// 4) Periodic coding analysis (de-identified)
+// 4) Periodic coding analysis (de-identified) - NOW WITH CONVERSATIONAL AI
 async function analyzeCoding(rawTranscript: string, socket: WebSocket, userId: string, supabaseClient: any) {
   const requestId = crypto.randomUUID();
   const startTime = Date.now();
 
   try {
     const transcript = deidentify(rawTranscript);
+
+    // Fetch provider preferences for personalized interaction
+    const { data: prefs } = await supabaseClient
+      .from('provider_scribe_preferences')
+      .select('*')
+      .eq('provider_id', userId)
+      .single();
+
+    // Get current context
+    const currentHour = new Date().getHours();
+    const timeOfDay = currentHour < 12 ? 'morning' : currentHour < 17 ? 'afternoon' : currentHour < 21 ? 'evening' : 'night';
+
+    // Build conversational prompt (import will be added at top of file)
+    const { getRealtimeCodingPrompt } = await import("../_shared/conversationalScribePrompts.ts");
+
+    const conversationalPrompt = prefs
+      ? getRealtimeCodingPrompt(transcript, {
+          formality_level: prefs.formality_level || 'relaxed',
+          interaction_style: prefs.interaction_style || 'collaborative',
+          verbosity: prefs.verbosity || 'balanced',
+          humor_level: prefs.humor_level || 'light',
+          documentation_style: prefs.documentation_style || 'SOAP',
+          provider_type: prefs.provider_type || 'physician',
+          interaction_count: prefs.interaction_count || 0,
+          common_phrases: prefs.common_phrases || [],
+          preferred_specialties: prefs.preferred_specialties || [],
+          billing_preferences: prefs.billing_preferences || { balanced: true }
+        }, {
+          time_of_day: timeOfDay,
+          current_mood: prefs.last_interaction_at && (Date.now() - new Date(prefs.last_interaction_at).getTime() < 600000) ? 'focused' : 'neutral'
+        })
+      : `You are an experienced, intelligent medical scribe - like a trusted coworker. Analyze this transcript and suggest billing codes conversationally.
+
+TRANSCRIPT:
+${transcript}
+
+Return ONLY strict JSON:
+{
+  "conversational_note": "Brief friendly comment about what you heard",
+  "suggestedCodes": [
+    {
+      "code": "99214",
+      "type": "CPT",
+      "description": "Office visit, moderate complexity",
+      "reimbursement": 0,
+      "confidence": 0.85,
+      "reasoning": "Why this code fits",
+      "missingDocumentation": "Natural suggestion for documentation"
+    }
+  ],
+  "totalRevenueIncrease": 0,
+  "complianceRisk": "low",
+  "conversational_suggestions": ["Optional helpful hints"]
+}
+
+Be helpful, proactive, and conversational - like a colleague who spots opportunities.`;
 
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -181,31 +237,7 @@ async function analyzeCoding(rawTranscript: string, socket: WebSocket, userId: s
         max_tokens: 2000,
         messages: [{
           role: "user",
-          content: `You are a conservative, compliance-first medical coding assistant. Analyze the de-identified encounter and suggest codes justified by documentation.
-
-TRANSCRIPT:
-${transcript}
-
-Return ONLY strict JSON:
-{
-  "suggestedCodes": [
-    {
-      "code": "99214",
-      "type": "CPT",
-      "description": "Office visit, moderate complexity",
-      "reimbursement": 0,
-      "confidence": 0.0,
-      "missingDocumentation": "Short, specific prompt the clinician could add"
-    }
-  ],
-  "totalRevenueIncrease": 0,
-  "complianceRisk": "low" | "medium" | "high"
-}
-
-// Rules:
-// - If unsure, keep confidence <= 0.6 and include missingDocumentation.
-// - If reimbursement varies by payer/region, keep "reimbursement": 0.
-`
+          content: conversationalPrompt
         }]
       })
     });
@@ -305,11 +337,35 @@ Return ONLY strict JSON:
 
     console.log(`[Medical Transcription] RequestID: ${requestId}, User: ${userId}, Input: ${inputTokens}, Output: ${outputTokens}, Cost: $${totalCost.toFixed(4)}, Time: ${responseTime}ms`);
 
+    // Track interaction for learning
+    if (prefs) {
+      await supabaseClient.from('scribe_interaction_history').insert({
+        provider_id: userId,
+        interaction_type: 'code_recommendation',
+        scribe_message: parsed.conversational_note || null,
+        scribe_action: {
+          suggested_codes: parsed.suggestedCodes?.map((c: any) => c.code) || [],
+          revenue_impact: parsed.totalRevenueIncrease || 0
+        },
+        session_phase: 'active'
+      }).catch((err: any) => console.error('Failed to log interaction:', err));
+
+      // Update interaction count
+      await supabaseClient.rpc('learn_from_interaction', {
+        p_provider_id: userId,
+        p_interaction_type: 'code_recommendation',
+        p_was_helpful: null, // Will be updated based on provider response
+        p_sentiment: null
+      }).catch((err: any) => console.error('Failed to update learning:', err));
+    }
+
     safeSend(socket, {
       type: "code_suggestion",
+      conversational_note: parsed.conversational_note ?? null,
       codes: parsed.suggestedCodes ?? [],
       revenueIncrease: parsed.totalRevenueIncrease ?? 0,
       complianceRisk: parsed.complianceRisk ?? "low",
+      suggestions: parsed.conversational_suggestions ?? [],
     });
   } catch (e) {
     console.error("Claude analysis exception:", e);
