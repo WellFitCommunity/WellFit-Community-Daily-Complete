@@ -48,6 +48,7 @@ import { SOC2SecurityDashboard } from './SOC2SecurityDashboard';
 import { SOC2AuditDashboard } from './SOC2AuditDashboard';
 import { SOC2IncidentResponseDashboard } from './SOC2IncidentResponseDashboard';
 import { SOC2ExecutiveDashboard } from './SOC2ExecutiveDashboard';
+import { SystemAdminDashboard } from './SystemAdminDashboard';
 
 interface DashboardSection {
   id: string;
@@ -303,6 +304,17 @@ const IntelligentAdminPanel: React.FC = () => {
       component: <SOC2IncidentResponseDashboard />,
       category: 'security',
       priority: 'low',
+      roles: ['admin', 'super_admin'],
+    },
+    {
+      id: 'system-administration',
+      title: 'System Administration',
+      subtitle: 'Infrastructure health, database monitoring, active sessions, and system metrics',
+      icon: '⚙️',
+      headerColor: 'text-gray-900',
+      component: <SystemAdminDashboard />,
+      category: 'security',
+      priority: 'medium',
       roles: ['admin', 'super_admin'],
     },
 

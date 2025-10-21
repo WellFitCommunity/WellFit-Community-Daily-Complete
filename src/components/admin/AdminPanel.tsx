@@ -28,6 +28,7 @@ import { SOC2SecurityDashboard } from './SOC2SecurityDashboard';
 import { SOC2AuditDashboard } from './SOC2AuditDashboard';
 import { SOC2IncidentResponseDashboard } from './SOC2IncidentResponseDashboard';
 import { SOC2ExecutiveDashboard } from './SOC2ExecutiveDashboard';
+import { SystemAdminDashboard } from './SystemAdminDashboard';
 import HospitalAdapterManagementPanel from './HospitalAdapterManagementPanel';
 
 // Collapsible Section Component
@@ -355,6 +356,16 @@ const AdminPanel: React.FC = () => {
             defaultOpen={false}
           >
             <SOC2IncidentResponseDashboard />
+          </CollapsibleSection>
+
+          <CollapsibleSection
+            title="System Administration"
+            subtitle="Infrastructure health, database monitoring, active sessions, and system metrics"
+            icon="⚙️"
+            headerColor="text-gray-900"
+            defaultOpen={false}
+          >
+            <SystemAdminDashboard />
           </CollapsibleSection>
 
           {/* Core Admin Functions Grid */}
