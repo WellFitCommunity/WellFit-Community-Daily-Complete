@@ -1,5 +1,5 @@
 // AI-Powered EHR Adapter Configuration Assistant
-// Uses Claude Haiku 4.0 for fast, intelligent adapter setup guidance
+// Uses Claude Haiku 4.5 for fast, intelligent adapter setup guidance
 
 import Anthropic from '@anthropic-ai/sdk';
 
@@ -85,7 +85,7 @@ Respond in JSON format:
 
     try {
       const response = await this.client.messages.create({
-        model: 'claude-haiku-4-20250514',
+        model: 'claude-haiku-4.5-20250514',
         max_tokens: 1024,
         messages: [
           ...this.conversationHistory,
@@ -137,7 +137,7 @@ Provide actionable advice in 2-3 sentences.`;
 
     try {
       const response = await this.client.messages.create({
-        model: 'claude-haiku-4-20250514',
+        model: 'claude-haiku-4.5-20250514',
         max_tokens: 512,
         messages: [
           ...this.conversationHistory,
@@ -191,7 +191,7 @@ Respond in JSON:
 
     try {
       const response = await this.client.messages.create({
-        model: 'claude-haiku-4-20250514',
+        model: 'claude-haiku-4.5-20250514',
         max_tokens: 512,
         messages: [{ role: 'user', content: prompt }]
       });
@@ -246,7 +246,7 @@ Diagnose the issue and provide solutions in JSON format:
 
     try {
       const response = await this.client.messages.create({
-        model: 'claude-haiku-4-20250514',
+        model: 'claude-haiku-4.5-20250514',
         max_tokens: 1024,
         messages: [{ role: 'user', content: prompt }]
       });
@@ -310,7 +310,7 @@ Make it practical and hospital IT-friendly.`;
 
     try {
       const response = await this.client.messages.create({
-        model: 'claude-haiku-4-20250514',
+        model: 'claude-haiku-4.5-20250514',
         max_tokens: 2048,
         messages: [{ role: 'user', content: prompt }]
       });
