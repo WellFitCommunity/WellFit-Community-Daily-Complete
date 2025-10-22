@@ -6,6 +6,8 @@ import { SessionTimeoutProvider } from './contexts/SessionTimeoutContext';
 import { BrandingConfig, getCurrentBranding } from './branding.config';
 import { BrandingContext } from './BrandingContext';
 import { performanceMonitor } from './services/performanceMonitoring';
+import { getGuardianAgent } from './services/guardian-agent';
+import { GuardianErrorBoundary } from './components/GuardianErrorBoundary';
 
 // ❌ Do NOT import or use AuthProvider here — it lives in index.tsx
 // ❌ Do NOT import or use AdminAuthProvider here — it lives in index.tsx
@@ -77,6 +79,8 @@ const CarePlansPage = React.lazy(() => import('./pages/CarePlansPage'));
 const MedicineCabinet = React.lazy(() => import('./components/patient/MedicineCabinet'));
 const MyHealthHubPage = React.lazy(() => import('./pages/MyHealthHubPage'));
 const TelehealthAppointmentsPage = React.lazy(() => import('./pages/TelehealthAppointmentsPage'));
+const GuardianAgentDashboard = React.lazy(() => import('./components/admin/GuardianAgentDashboard'));
+const GuardianTestPage = React.lazy(() => import('./pages/GuardianTestPage'));
 
 function Shell() {
   const [branding, setBranding] = useState<BrandingConfig>(getCurrentBranding());
@@ -90,19 +94,38 @@ function Shell() {
     }
   }, [supabase, user?.id]);
 
+  // Initialize Guardian Agent
+  useEffect(() => {
+    const agent = getGuardianAgent({
+      autoHealEnabled: true,
+      learningEnabled: true,
+      hipaaComplianceMode: true,
+      requireApprovalForCritical: false,
+      maxConcurrentHealings: 5
+    });
+
+    agent.start();
+    console.log('🛡️ Guardian Agent is protecting your application');
+
+    return () => {
+      agent.stop();
+    };
+  }, []);
+
   useEffect(() => {
     setBranding(getCurrentBranding());
   }, [location.pathname]);
 
   return (
-    <BrandingContext.Provider value={{ branding, setBranding }}>
-      {/* SessionTimeout applies to the whole app */}
-      <SessionTimeoutProvider>
-        <AppHeader />
+    <GuardianErrorBoundary>
+      <BrandingContext.Provider value={{ branding, setBranding }}>
+        {/* SessionTimeout applies to the whole app */}
+        <SessionTimeoutProvider>
+          <AppHeader />
 
-        <AuthGate>
-          <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
-            <Routes>
+          <AuthGate>
+            <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
+              <Routes>
               {/* Public */}
               <Route path="/" element={<WelcomePage />} />
               <Route path="/register" element={<RegisterPage />} />
@@ -349,6 +372,30 @@ function Shell() {
                   </RequireAuth>
                 }
               />
+              <Route
+                path="/admin/guardian"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth allowedRoles={['admin', 'super_admin']}>
+                      <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
+                        <GuardianAgentDashboard />
+                      </Suspense>
+                    </RequireAdminAuth>
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/admin/guardian-test"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth allowedRoles={['admin', 'super_admin']}>
+                      <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
+                        <GuardianTestPage />
+                      </Suspense>
+                    </RequireAdminAuth>
+                  </RequireAuth>
+                }
+              />
 
               {/* Fallback */}
               <Route path="*" element={<NotFoundPage />} />
@@ -362,6 +409,7 @@ function Shell() {
         </AuthGate>
       </SessionTimeoutProvider>
     </BrandingContext.Provider>
+    </GuardianErrorBoundary>
   );
 }
 
