@@ -42,6 +42,7 @@ const PatientEngagementDashboard: React.FC = () => {
 
   useEffect(() => {
     loadEngagementData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Reset to page 1 when filters change

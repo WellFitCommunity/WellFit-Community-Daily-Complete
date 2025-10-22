@@ -371,6 +371,7 @@ const IntelligentAdminPanel: React.FC = () => {
   // Load personalized layout on mount
   useEffect(() => {
     loadPersonalizedDashboard();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, adminRole]);
 
   // Auto-show What's New modal

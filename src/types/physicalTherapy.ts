@@ -849,36 +849,112 @@ export interface BergBalanceScore {
 
 export interface CreatePTAssessmentRequest {
   patient_id: string;
+  encounter_id?: string;
   assessment_type: AssessmentType;
+  assessment_date?: string;
+  visit_number?: number;
   chief_complaint: string;
+  history_present_illness?: string;
+  mechanism_of_injury?: string;
+  onset_date?: string;
+  onset_type?: OnsetType;
+  prior_level_of_function?: string;
+  comorbidities?: string[];
+  medications_affecting_rehab?: string[];
+  surgical_history?: Record<string, any>;
+  imaging_results?: Record<string, any>;
+  precautions?: string[];
+  contraindications?: string[];
+  living_situation?: LivingSituation;
+  home_accessibility?: HomeAccessibility;
+  support_system?: string;
+  transportation_access?: TransportationAccess;
+  occupation?: string;
+  work_demands?: WorkDemands;
+  hobbies_recreational_activities?: string[];
+  patient_stated_goals?: string[];
+  participation_goals?: Record<string, any>;
+  cardiovascular_respiratory_findings?: string;
+  integumentary_findings?: string;
+  musculoskeletal_findings?: string;
+  neuromuscular_findings?: string;
+  pain_assessment?: PainAssessment;
+  range_of_motion_data?: ROMData[];
+  muscle_strength_data?: StrengthData[];
+  sensory_assessment?: Record<string, any>;
+  reflex_testing?: Record<string, any>;
+  special_tests?: Record<string, any>;
+  posture_analysis?: string;
+  gait_analysis?: GaitAnalysis;
+  balance_assessment?: BalanceAssessment;
+  coordination_assessment?: string;
+  bed_mobility_score?: number;
+  transfer_ability_score?: number;
+  ambulation_score?: number;
+  stair_negotiation_score?: number;
+  outcome_measures?: OutcomeMeasure[];
+  primary_diagnosis: string;
+  secondary_diagnoses?: string[];
   clinical_impression: string;
-  // ... other required fields
+  rehab_potential?: RehabPotential;
+  prognosis_narrative?: string;
+  expected_duration_weeks?: number;
+  expected_visit_frequency?: string;
+  barriers_to_recovery?: Record<string, any>;
+  clinical_reasoning?: string;
+  evidence_based_rationale?: string;
+  video_assessment_url?: string;
+  imaging_links?: string[];
 }
 
 export interface UpdatePTAssessmentRequest {
   assessment_id: string;
-  // ... fields to update
 }
 
 export interface CreateTreatmentPlanRequest {
   patient_id: string;
   assessment_id: string;
+  care_plan_id?: string;
   goals: SMARTGoal[];
   interventions: PTIntervention[];
   total_visits_authorized: number;
   frequency: string;
   start_date: string;
   projected_end_date: string;
+  treatment_approach?: string[];
+  clinical_practice_guidelines_followed?: string[];
+  hep_prescribed?: boolean;
+  hep_delivery_method?: HEPDeliveryMethod;
+  hep_compliance_tracking?: boolean;
+  discharge_criteria?: DischargeCriteria[];
+  discharge_destination?: DischargeDestination;
+  interdisciplinary_referrals?: string[];
 }
 
 export interface RecordTreatmentSessionRequest {
   patient_id: string;
   treatment_plan_id: string;
+  encounter_id?: string;
   session_date: string;
+  session_duration_minutes?: number;
   interventions_delivered: SessionIntervention[];
   progress_toward_goals: string;
   plan_for_next_visit: string;
   attendance_status: AttendanceStatus;
+  patient_reported_status?: string;
+  pain_level_today?: number;
+  hep_compliance?: HEPCompliance;
+  barriers_today?: string[];
+  vitals_if_needed?: Record<string, any>;
+  reassessments_today?: Record<string, any>;
+  functional_changes?: string;
+  clinical_decision_making?: string;
+  plan_modifications?: Record<string, any>;
+  goals_updated?: boolean;
+  exercise_videos_shared?: string[];
+  educational_materials_provided?: string[];
+  adverse_events?: string;
+  incident_report_filed?: boolean;
 }
 
 export interface AssignHEPRequest {
@@ -888,15 +964,30 @@ export interface AssignHEPRequest {
   exercises: HEPExercisePrescription[];
   delivery_method: HEPDeliveryType;
   overall_instructions?: string;
+  frequency_guidance?: string;
+  time_of_day_recommendation?: string;
+  expected_duration_minutes?: number;
+  patient_tracking_enabled?: boolean;
 }
 
 export interface RecordOutcomeMeasureRequest {
   patient_id: string;
+  assessment_id?: string;
+  session_id?: string;
   measure_acronym: string;
   measure_name: string;
   raw_score: number;
   administration_context: AdministrationContext;
   administration_date: string;
+  body_region?: string;
+  mcid?: number;
+  mdm?: number;
+  percentage_score?: number;
+  interpretation?: string;
+  tool_validation_reference?: string;
+  normative_data_reference?: string;
+  digital_form_used?: boolean;
+  auto_calculated?: boolean;
 }
 
 // =====================================================

@@ -550,21 +550,95 @@ export interface WearableGaitAnalysis {
 
 export interface CreateStrokeAssessmentRequest {
   patient_id: string;
+  encounter_id?: string;
   assessment_type: StrokeAssessmentType;
-  // ... NIH Stroke Scale scores
+  assessment_date?: string;
+  stroke_type?: StrokeType;
+  stroke_territory?: string;
+  last_known_well?: string;
+  symptom_onset?: string;
+  arrival_time?: string;
+  ct_time?: string;
+  time_to_assessment_minutes?: number;
+  loc_score?: number;
+  loc_questions_score?: number;
+  loc_commands_score?: number;
+  best_gaze_score?: number;
+  visual_fields_score?: number;
+  facial_palsy_score?: number;
+  left_arm_motor_score?: number;
+  right_arm_motor_score?: number;
+  left_leg_motor_score?: number;
+  right_leg_motor_score?: number;
+  limb_ataxia_score?: number;
+  sensory_score?: number;
+  best_language_score?: number;
+  dysarthria_score?: number;
+  extinction_inattention_score?: number;
+  tpa_administered?: boolean;
+  tpa_bolus_time?: string;
+  thrombectomy_eligible?: boolean;
+  thrombectomy_performed?: boolean;
+  groin_puncture_time?: string;
+  recanalization_time?: string;
+  clinical_notes?: string;
 }
 
 export interface CreateCognitiveAssessmentRequest {
   patient_id: string;
+  encounter_id?: string;
+  assessment_date?: string;
   assessment_tool: CognitiveAssessmentTool;
-  // ... MoCA or MMSE scores
+  years_education?: number;
+  moca_visuospatial?: number;
+  moca_naming?: number;
+  moca_attention?: number;
+  moca_language?: number;
+  moca_abstraction?: number;
+  moca_delayed_recall?: number;
+  moca_orientation?: number;
+  mmse_orientation_time?: number;
+  mmse_orientation_place?: number;
+  mmse_registration?: number;
+  mmse_attention_calculation?: number;
+  mmse_recall?: number;
+  mmse_naming?: number;
+  mmse_repetition?: number;
+  mmse_comprehension?: number;
+  mmse_reading?: number;
+  mmse_writing?: number;
+  mmse_drawing?: number;
+  concerns_noted?: string[];
+  behavioral_observations?: string;
+  informant_report?: string;
 }
 
 export interface CreateCaregiverAssessmentRequest {
   patient_id: string;
+  caregiver_id?: string;
   caregiver_name: string;
   caregiver_relationship: string;
-  // ... Zarit scores
+  caregiver_lives_with_patient?: boolean;
+  hours_caregiving_per_week?: number;
+  other_caregivers_available?: boolean;
+  zbi_feel_strain?: number;
+  zbi_time_affected?: number;
+  zbi_stressed?: number;
+  zbi_embarrassed?: number;
+  zbi_angry?: number;
+  zbi_relationships_affected?: number;
+  zbi_health_suffered?: number;
+  zbi_privacy_affected?: number;
+  zbi_social_life_affected?: number;
+  zbi_lost_control?: number;
+  zbi_uncertain_what_to_do?: number;
+  zbi_should_do_more?: number;
+  respite_care_needed?: boolean;
+  support_group_interest?: boolean;
+  counseling_needed?: boolean;
+  financial_assistance_needed?: boolean;
+  caregiver_concerns?: string;
+  interventions_recommended?: string[];
 }
 
 export interface ConnectWearableRequest {

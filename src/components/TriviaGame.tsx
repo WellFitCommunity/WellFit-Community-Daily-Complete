@@ -109,6 +109,7 @@ const TriviaGame: React.FC = () => {
   useEffect(() => {
     selectDailyQuestions();
     checkGamesPlayedToday();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const checkGamesPlayedToday = () => {
