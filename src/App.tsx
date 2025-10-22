@@ -81,6 +81,8 @@ const MyHealthHubPage = React.lazy(() => import('./pages/MyHealthHubPage'));
 const TelehealthAppointmentsPage = React.lazy(() => import('./pages/TelehealthAppointmentsPage'));
 const GuardianAgentDashboard = React.lazy(() => import('./components/admin/GuardianAgentDashboard'));
 const GuardianTestPage = React.lazy(() => import('./pages/GuardianTestPage'));
+const EMSPage = React.lazy(() => import('./pages/EMSPage'));
+const ERDashboardPage = React.lazy(() => import('./pages/ERDashboardPage'));
 
 function Shell() {
   const [branding, setBranding] = useState<BrandingConfig>(getCurrentBranding());
@@ -169,6 +171,10 @@ function Shell() {
 
               {/* Caregiver Dashboard */}
               <Route path="/caregiver-dashboard" element={<RequireAuth><CaregiverDashboardPage /></RequireAuth>} />
+
+              {/* EMS Prehospital Handoff System */}
+              <Route path="/ems" element={<RequireAuth><EMSPage /></RequireAuth>} />
+              <Route path="/er-dashboard" element={<RequireAuth><ERDashboardPage /></RequireAuth>} />
 
               {/* Post-login gated */}
               <Route path="/demographics" element={<RequireAuth><DemographicsPage /></RequireAuth>} />

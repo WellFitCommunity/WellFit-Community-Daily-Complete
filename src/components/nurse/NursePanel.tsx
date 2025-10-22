@@ -10,6 +10,7 @@ import RevenueDashboard from '../atlas/RevenueDashboard';
 import ResilienceHubDashboard from '../nurseos/ResilienceHubDashboard';
 import ShiftHandoffDashboard from './ShiftHandoffDashboard';
 import TelehealthScheduler from '../telehealth/TelehealthScheduler';
+import ERIncomingPatientBoard from '../ems/ERIncomingPatientBoard';
 import { supabase } from '../../lib/supabaseClient';
 
 // Collapsible Section Component
@@ -209,8 +210,20 @@ const NursePanel: React.FC = () => {
             </div>
 
             <div className="space-y-6">
+              {/* EMS Incoming Patients - Ambulance Handoffs */}
+              <CollapsibleSection title="EMS Incoming Patients - Ambulance Handoffs" icon="🚑" defaultOpen={true}>
+                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-800 text-sm">
+                    <strong>ER/Ambulance Communication:</strong> View incoming patients from ambulances in real-time.
+                    Paramedics send alerts with chief complaint, vitals, ETA, and critical alerts (STEMI, Stroke, Trauma).
+                    Prepare your team and complete handoff when patient arrives.
+                  </p>
+                </div>
+                <ERIncomingPatientBoard hospitalName="Your Hospital Name" />
+              </CollapsibleSection>
+
               {/* Smart Shift Handoff - AI-Assisted Patient Prioritization */}
-              <CollapsibleSection title="Smart Shift Handoff - Patient Prioritization" icon="🔄" defaultOpen={true}>
+              <CollapsibleSection title="Smart Shift Handoff - Patient Prioritization" icon="🔄" defaultOpen={false}>
                 <ShiftHandoffDashboard />
               </CollapsibleSection>
 

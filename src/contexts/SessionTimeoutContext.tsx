@@ -10,9 +10,12 @@ const toMs = (val: string | undefined, fallback: number) => {
   return Number.isFinite(n) && n > 0 ? n : fallback;
 };
 
-// Defaults (safe fallbacks)
-const DEFAULT_TIMEOUT_MS = toMs(process.env.REACT_APP_INACTIVITY_TIMEOUT_MS, 2 * 24 * 60 * 60 * 1000); // 2 days
-const DEFAULT_WARNING_MS = toMs(process.env.REACT_APP_TIMEOUT_WARNING_MS, 5 * 60 * 1000);              // 5 minutes
+// SOC2-Compliant Session Timeouts
+// CC6.1: Reasonable session timeout periods to prevent unauthorized access
+// - Seniors: 8 hours (480 minutes) - balances usability with security
+// - Staff: 4 hours enforced at admin PIN level (see AdminAuthContext.tsx)
+const DEFAULT_TIMEOUT_MS = toMs(process.env.REACT_APP_INACTIVITY_TIMEOUT_MS, 8 * 60 * 60 * 1000); // 8 hours
+const DEFAULT_WARNING_MS = toMs(process.env.REACT_APP_TIMEOUT_WARNING_MS, 5 * 60 * 1000);         // 5 minutes
 const THROTTLE_MS = 500;
 
 // ---------- types ----------

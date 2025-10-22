@@ -1,5 +1,6 @@
 // src/pages/LoginPage.tsx - PRODUCTION-READY with hCaptcha (CRA + Supabase v2)
 // Uses credentials.options.captchaToken to satisfy TypeScript, no casts needed.
+// SOC2 CC6.1: Includes rate limiting and account lockout protection
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
@@ -8,6 +9,12 @@ import { useSupabaseClient } from '../contexts/AuthContext';
 import HCaptchaWidget, { HCaptchaRef } from '../components/HCaptchaWidget';
 import { isPasskeySupported, authenticateWithPasskey } from '../services/passkeyService';
 import { useBranding } from '../BrandingContext';
+import {
+  isAccountLocked,
+  formatLockoutMessage,
+  recordLoginAttempt,
+  type AccountLockoutInfo,
+} from '../services/loginSecurityService';
 
 type Mode = 'senior' | 'admin';
 
@@ -256,14 +263,32 @@ const LoginPage: React.FC = () => {
     setLoading(true);
     try {
       const e164 = normalizeToE164(phone);
+
+      // SOC2 CC6.1: Check if account is locked before attempting login
+      const lockoutInfo = await isAccountLocked(e164);
+      if (lockoutInfo.isLocked) {
+        setError(formatLockoutMessage(lockoutInfo));
+        setLoading(false);
+        return;
+      }
+
       const token = await ensureCaptcha().catch(() => '');
 
       console.log('[LoginPage] Login attempt:', { phone: e164, hasToken: !!token, tokenPrefix: token?.substring(0, 20) });
 
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         phone: e164,
         password: seniorPassword,
         options: token ? { captchaToken: token } : {},
+      });
+
+      // SOC2 CC6.1: Record login attempt for audit trail
+      await recordLoginAttempt({
+        identifier: e164,
+        attemptType: 'password',
+        success: !signInError,
+        userId: data?.user?.id,
+        errorMessage: signInError?.message,
       });
 
       if (signInError) {
@@ -309,14 +334,33 @@ const LoginPage: React.FC = () => {
 
     setLoading(true);
     try {
+      const emailTrimmed = adminEmail.trim();
+
+      // SOC2 CC6.1: Check if account is locked before attempting login
+      const lockoutInfo = await isAccountLocked(emailTrimmed);
+      if (lockoutInfo.isLocked) {
+        setError(formatLockoutMessage(lockoutInfo));
+        setLoading(false);
+        return;
+      }
+
       const token = await ensureCaptcha().catch(() => '');
 
-      console.log('[LoginPage] Admin login attempt:', { email: adminEmail, hasToken: !!token, tokenPrefix: token?.substring(0, 20) });
+      console.log('[LoginPage] Admin login attempt:', { email: emailTrimmed, hasToken: !!token, tokenPrefix: token?.substring(0, 20) });
 
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: adminEmail.trim(),
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email: emailTrimmed,
         password: adminPassword,
         options: token ? { captchaToken: token } : {},
+      });
+
+      // SOC2 CC6.1: Record login attempt for audit trail
+      await recordLoginAttempt({
+        identifier: emailTrimmed,
+        attemptType: 'password',
+        success: !signInError,
+        userId: data?.user?.id,
+        errorMessage: signInError?.message,
       });
 
       if (signInError) {
