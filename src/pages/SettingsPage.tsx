@@ -298,7 +298,13 @@ const SettingsPage: React.FC = () => {
                               key={option.value}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setSettings({ ...settings, font_size: option.value as any });
+                                const newSize = option.value as any;
+                                setSettings({ ...settings, font_size: newSize });
+                                // Apply immediately
+                                document.documentElement.style.fontSize =
+                                  newSize === 'small' ? '14px' :
+                                  newSize === 'large' ? '18px' :
+                                  newSize === 'extra-large' ? '22px' : '16px';
                               }}
                               className={`p-3 border-2 rounded-lg ${option.size} font-semibold transition ${
                                 settings.font_size === option.value

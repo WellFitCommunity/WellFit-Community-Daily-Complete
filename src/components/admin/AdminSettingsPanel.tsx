@@ -111,12 +111,14 @@ const AdminSettingsPanel: React.FC = memo(() => {
     loadSettings();
   }, [user?.id, supabase]);
 
-  // Apply theme changes (session only)
+  // Apply theme changes and save to localStorage
   useEffect(() => {
     if (settings.theme === 'dark') {
       document.documentElement.classList.add('dark');
+      localStorage.setItem('admin_theme', 'dark');
     } else if (settings.theme === 'light') {
       document.documentElement.classList.remove('dark');
+      localStorage.setItem('admin_theme', 'light');
     } else {
       // Auto mode - check system preference
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -125,6 +127,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
       } else {
         document.documentElement.classList.remove('dark');
       }
+      localStorage.setItem('admin_theme', 'auto');
     }
   }, [settings.theme]);
 
