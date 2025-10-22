@@ -178,20 +178,20 @@ const MyHealthHubPage: React.FC = () => {
           <h3 className="text-2xl sm:text-3xl font-bold mb-4" style={{ color: branding.primaryColor }}>
             <span aria-hidden="true">💡</span> Quick Tips
           </h3>
-          <ul className="space-y-3 text-lg sm:text-xl text-gray-700" role="list">
-            <li className="flex items-start gap-3" role="listitem">
+          <ul className="space-y-3 text-lg sm:text-xl text-gray-700">
+            <li className="flex items-start gap-3">
               <span className="text-2xl flex-shrink-0" aria-hidden="true">✅</span>
               <span>Keep your health records up to date for better care coordination</span>
             </li>
-            <li className="flex items-start gap-3" role="listitem">
+            <li className="flex items-start gap-3">
               <span className="text-2xl flex-shrink-0" aria-hidden="true">📱</span>
               <span>Share your vaccine records with your healthcare providers</span>
             </li>
-            <li className="flex items-start gap-3" role="listitem">
+            <li className="flex items-start gap-3">
               <span className="text-2xl flex-shrink-0" aria-hidden="true">🔔</span>
               <span>Check for vaccine care gaps to stay protected</span>
             </li>
-            <li className="flex items-start gap-3" role="listitem">
+            <li className="flex items-start gap-3">
               <span className="text-2xl flex-shrink-0" aria-hidden="true">💪</span>
               <span>Track your vitals regularly to monitor your health trends</span>
             </li>
