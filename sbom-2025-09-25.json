@@ -7,7 +7,7 @@
     "timestamp": "2025-09-25T17:15:45.549Z",
     "tools": [
       {
-        "vendor": "WellFit Community",
+        "vendor": "Envision VirtualEdge Group LLC",
         "name": "SBOM Generator",
         "version": "1.0.0"
       }
@@ -16,7 +16,7 @@
       "type": "application",
       "name": "wellfit-community-daily",
       "version": "0.1.0",
-      "description": "WellFit Community Healthcare Platform - Comprehensive senior care and wellness management system",
+      "description": "Envision VirtualEdge Group LLC Healthcare Platform - Comprehensive senior care and wellness management system",
       "licenses": [
         {
           "license": {
@@ -25,7 +25,7 @@
         }
       ],
       "supplier": {
-        "name": "WellFit Community",
+        "name": "Envision VirtualEdge Group LLC",
         "url": [
           "https://thewellfitcommunity.org"
         ]

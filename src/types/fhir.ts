@@ -1016,6 +1016,557 @@ export interface FHIRAddress {
 }
 
 // ============================================================================
+// ALLERGY INTOLERANCE (US Core Required)
+// ============================================================================
+
+export interface FHIRAllergyIntolerance extends FHIRResource {
+  patient_id: string;
+  allergen_type: 'medication' | 'food' | 'environment' | 'biologic';
+  allergen_name: string;
+  allergen_code?: string;
+  allergen_code_system?: string; // RxNorm for medications, SNOMED CT for others
+
+  // Status fields
+  clinical_status: 'active' | 'inactive' | 'resolved';
+  verification_status: 'unconfirmed' | 'confirmed' | 'refuted' | 'entered-in-error';
+
+  // Severity and criticality
+  criticality?: 'low' | 'high' | 'unable-to-assess';
+  type?: 'allergy' | 'intolerance'; // True allergy vs. intolerance
+  category?: ('food' | 'medication' | 'environment' | 'biologic')[]; // Can have multiple
+
+  // Reaction details
+  reaction?: Array<{
+    substance?: CodeableConcept;
+    manifestation: CodeableConcept[]; // e.g., "Hives", "Anaphylaxis", "Rash"
+    description?: string;
+    severity?: 'mild' | 'moderate' | 'severe';
+    exposureRoute?: CodeableConcept; // oral, topical, inhalation, injection
+    onset?: string; // When reaction occurred
+    note?: string;
+  }>;
+
+  // Timing
+  onset_datetime?: string; // When allergy first identified
+  onset_age?: number; // Age when allergy started
+  onset_period?: Period;
+  onset_range?: { low: Quantity; high: Quantity };
+  onset_string?: string; // "childhood", "adulthood"
+
+  last_occurrence_date?: string; // Most recent reaction
+
+  // Recording details
+  recorded_by?: string; // Reference to Practitioner
+  recorded_date?: string;
+  asserter?: string; // Who reported (patient, family, provider)
+
+  // Additional context
+  notes?: string;
+  evidence?: {
+    code?: CodeableConcept[];
+    detail?: Reference[]; // References to Observation, DocumentReference
+  }[];
+}
+
+export interface CreateAllergyIntolerance extends Partial<FHIRAllergyIntolerance> {
+  patient_id: string;
+  allergen_type: 'medication' | 'food' | 'environment' | 'biologic';
+  allergen_name: string;
+  clinical_status: 'active' | 'inactive' | 'resolved';
+  verification_status: 'unconfirmed' | 'confirmed' | 'refuted' | 'entered-in-error';
+}
+
+// ============================================================================
+// ENCOUNTER (US Core Required)
+// ============================================================================
+
+export interface FHIREncounter extends FHIRResource {
+  patient_id: string;
+
+  // Status and class (required)
+  status: 'planned' | 'arrived' | 'triaged' | 'in-progress' | 'onleave' | 'finished' | 'cancelled' | 'entered-in-error' | 'unknown';
+  status_history?: Array<{
+    status: string;
+    period: Period;
+  }>;
+
+  // Class (inpatient, outpatient, emergency, etc.)
+  class_code: string; // 'IMP' (inpatient), 'AMB' (ambulatory), 'EMER' (emergency), etc.
+  class_display: string;
+  class_system?: string; // Default: http://terminology.hl7.org/CodeSystem/v3-ActCode
+
+  class_history?: Array<{
+    class_code: string;
+    class_display: string;
+    period: Period;
+  }>;
+
+  // Type of encounter (office visit, hospital admission, etc.)
+  type?: CodeableConcept[]; // Multiple types allowed
+
+  // Service type (e.g., cardiology, orthopedic surgery)
+  service_type?: CodeableConcept;
+
+  // Priority (routine, urgent, emergency)
+  priority?: CodeableConcept;
+
+  // Participants (providers involved)
+  participant?: Array<{
+    type?: CodeableConcept[]; // Role: primary performer, admitter, consultant, etc.
+    period?: Period;
+    individual_id?: string; // Reference to Practitioner
+    individual_display?: string;
+  }>;
+
+  // Appointment reference
+  appointment?: Reference[];
+
+  // Period
+  period_start?: string;
+  period_end?: string;
+
+  // Length of encounter in minutes
+  length_minutes?: number;
+
+  // Reason for encounter
+  reason_code?: CodeableConcept[]; // ICD-10, SNOMED CT
+  reason_reference?: Reference[]; // References to Condition, Procedure, Observation
+
+  // Diagnosis
+  diagnosis?: Array<{
+    condition_id?: string; // Reference to Condition
+    condition_display?: string;
+    use_code?: string; // 'AD' (admission), 'DD' (discharge), 'CC' (chief complaint)
+    use_display?: string;
+    rank?: number; // 1 = primary diagnosis
+  }>;
+
+  // Account/billing
+  account_id?: string;
+
+  // Hospitalization details (for inpatient encounters)
+  hospitalization?: {
+    pre_admission_identifier?: string;
+    origin?: Reference; // Where patient came from
+    admit_source?: CodeableConcept; // ER, physician referral, transfer
+    re_admission?: CodeableConcept; // If this is a re-admission
+    diet_preference?: CodeableConcept[];
+    special_courtesy?: CodeableConcept[]; // VIP, board member, etc.
+    special_arrangement?: CodeableConcept[]; // Wheelchair, interpreter, etc.
+    destination?: Reference; // Where patient went after
+    discharge_disposition?: CodeableConcept; // Home, SNF, expired, etc.
+  };
+
+  // Location history
+  location?: Array<{
+    location_id?: string;
+    location_display?: string;
+    status?: 'planned' | 'active' | 'reserved' | 'completed';
+    physical_type?: CodeableConcept; // Room, bed, ward
+    period_start?: string;
+    period_end?: string;
+  }>;
+
+  // Service provider organization
+  service_provider_id?: string;
+  service_provider_display?: string;
+
+  // Part of (for sub-encounters)
+  part_of_encounter_id?: string;
+}
+
+export interface CreateFHIREncounter extends Partial<FHIREncounter> {
+  patient_id: string;
+  status: 'planned' | 'arrived' | 'triaged' | 'in-progress' | 'onleave' | 'finished' | 'cancelled' | 'entered-in-error' | 'unknown';
+  class_code: string;
+  class_display: string;
+}
+
+// ============================================================================
+// DOCUMENT REFERENCE (US Core Required - for clinical notes)
+// ============================================================================
+
+export interface FHIRDocumentReference extends FHIRResource {
+  patient_id: string;
+
+  // Master identifier
+  master_identifier?: string;
+  identifier?: Array<{
+    system: string;
+    value: string;
+  }>;
+
+  // Status
+  status: 'current' | 'superseded' | 'entered-in-error';
+  doc_status?: 'preliminary' | 'final' | 'amended' | 'entered-in-error'; // Status of document
+
+  // Type of document (required for US Core)
+  type_code: string; // LOINC code
+  type_display: string;
+  type_system?: string; // Default: http://loinc.org
+
+  // Category (e.g., clinical note, discharge summary, lab report)
+  category?: CodeableConcept[];
+
+  // Subject (patient)
+  subject_id: string;
+  subject_display?: string;
+
+  // Date document was created
+  date?: string; // When document was created
+
+  // Author(s)
+  author?: Array<{
+    reference: string; // Practitioner, Patient, Organization
+    display?: string;
+  }>;
+
+  // Authenticator (who verified)
+  authenticator?: Reference;
+
+  // Custodian (organization responsible)
+  custodian?: Reference;
+
+  // Related documents
+  related_to?: Array<{
+    reference: string;
+    display?: string;
+  }>;
+
+  // Description
+  description?: string;
+
+  // Security label (confidentiality)
+  security_label?: CodeableConcept[];
+
+  // Content (the actual document)
+  content: Array<{
+    attachment: {
+      content_type: string; // 'text/plain', 'application/pdf', 'text/html', etc.
+      language?: string; // 'en-US'
+      data?: string; // Base64 encoded data
+      url?: string; // URL to retrieve document
+      size?: number; // Size in bytes
+      hash?: string; // SHA-1 hash
+      title?: string; // Label for display
+      creation?: string; // When attachment created
+    };
+    format?: CodeableConcept; // Format code (urn:ihe:pcc:* for C-CDA, etc.)
+  }>;
+
+  // Context (clinical context)
+  context?: {
+    encounter_id?: string; // Associated encounter
+    event?: CodeableConcept[]; // Type of care event (e.g., colonoscopy, appendectomy)
+    period?: Period; // Time of service
+    facility_type?: CodeableConcept; // Hospital, clinic, etc.
+    practice_setting?: CodeableConcept; // Cardiology, family practice, etc.
+    source_patient_info?: Reference; // Patient info at time of document creation
+    related?: Reference[]; // Related clinical resources
+  };
+}
+
+export interface CreateDocumentReference extends Partial<FHIRDocumentReference> {
+  patient_id: string;
+  status: 'current' | 'superseded' | 'entered-in-error';
+  type_code: string;
+  type_display: string;
+  content: Array<{
+    attachment: {
+      content_type: string;
+      data?: string;
+      url?: string;
+    };
+  }>;
+}
+
+// ============================================================================
+// INNOVATIVE: SOCIAL DETERMINANTS OF HEALTH (SDOH) - US Core 6.0+
+// WellFit differentiator: Built-in SDOH screening for health equity
+// ============================================================================
+
+export interface FHIRSDOHObservation extends FHIRResource {
+  patient_id: string;
+  status: 'final' | 'preliminary' | 'amended' | 'corrected' | 'cancelled' | 'entered-in-error';
+
+  // SDOH Category (LOINC-based)
+  category: 'food-insecurity' | 'housing-instability' | 'transportation' | 'financial-strain' | 'social-isolation' | 'education' | 'employment' | 'utility-needs' | 'safety' | 'health-literacy';
+
+  // Standard LOINC codes for SDOH screening
+  loinc_code: string; // e.g., 88122-7 (food insecurity), 71802-3 (housing instability)
+  loinc_display: string;
+
+  // Response (typically Yes/No or scale)
+  value_code?: string; // 'LA33-6' (Yes), 'LA32-8' (No)
+  value_display?: string;
+  value_text?: string; // Free text response
+  value_boolean?: boolean;
+  value_integer?: number; // For scaled responses (1-5, etc.)
+
+  // Risk level (auto-calculated or provider-assessed)
+  risk_level?: 'low' | 'moderate' | 'high' | 'critical';
+
+  // When assessed
+  effective_datetime: string;
+
+  // Who assessed
+  performer_id?: string; // Reference to Practitioner
+  performer_display?: string;
+
+  // Related intervention or referral
+  intervention_provided?: boolean;
+  referral_made?: boolean;
+  referral_to?: string; // Organization name (food bank, housing assistance, etc.)
+
+  // Follow-up
+  follow_up_needed?: boolean;
+  follow_up_date?: string;
+
+  notes?: string;
+}
+
+export interface CreateSDOHObservation extends Partial<FHIRSDOHObservation> {
+  patient_id: string;
+  status: 'final' | 'preliminary';
+  category: 'food-insecurity' | 'housing-instability' | 'transportation' | 'financial-strain' | 'social-isolation' | 'education' | 'employment' | 'utility-needs' | 'safety' | 'health-literacy';
+  loinc_code: string;
+  loinc_display: string;
+  effective_datetime: string;
+}
+
+// Standard SDOH screening questions (LOINC codes)
+export const SDOH_SCREENING_CODES = {
+  // Food Insecurity
+  FOOD_INSECURITY: {
+    code: '88122-7',
+    display: 'Within the past 12 months we worried whether our food would run out before we got money to buy more',
+    category: 'food-insecurity'
+  },
+  FOOD_RAN_OUT: {
+    code: '88123-5',
+    display: 'Within the past 12 months the food we bought just didn\'t last and we didn\'t have money to get more',
+    category: 'food-insecurity'
+  },
+
+  // Housing Instability
+  HOUSING_UNSTABLE: {
+    code: '71802-3',
+    display: 'Housing status',
+    category: 'housing-instability'
+  },
+  HOUSING_QUALITY: {
+    code: '93033-5',
+    display: 'Are you worried about losing your housing?',
+    category: 'housing-instability'
+  },
+
+  // Transportation
+  TRANSPORT_BARRIER: {
+    code: '93030-1',
+    display: 'Has lack of transportation kept you from medical appointments, meetings, work, or from getting things needed for daily living?',
+    category: 'transportation'
+  },
+
+  // Financial Strain
+  FINANCIAL_STRAIN: {
+    code: '93031-9',
+    display: 'In the past year, have you or any family members you live with been unable to get any of the following when it was really needed?',
+    category: 'financial-strain'
+  },
+  UTILITY_SHUTOFF: {
+    code: '93032-7',
+    display: 'Has the electric, gas, oil, or water company threatened to shut off services in your home?',
+    category: 'utility-needs'
+  },
+
+  // Social Isolation
+  SOCIAL_ISOLATION: {
+    code: '93029-3',
+    display: 'How often do you feel lonely or isolated from those around you?',
+    category: 'social-isolation'
+  },
+  SOCIAL_SUPPORT: {
+    code: '93038-4',
+    display: 'How often do you see or talk to people that you care about and feel close to?',
+    category: 'social-isolation'
+  },
+
+  // Safety
+  INTIMATE_PARTNER_VIOLENCE: {
+    code: '76501-6',
+    display: 'Within the past year, have you been afraid of your partner or ex-partner?',
+    category: 'safety'
+  },
+
+  // Education & Employment
+  EDUCATION_LEVEL: {
+    code: '82589-3',
+    display: 'Highest level of education',
+    category: 'education'
+  },
+  EMPLOYMENT_STATUS: {
+    code: '67875-5',
+    display: 'Employment status current',
+    category: 'employment'
+  },
+} as const;
+
+// ============================================================================
+// INNOVATIVE: MEDICATION AFFORDABILITY & ALTERNATIVES
+// WellFit differentiator: Real-time cost comparison + therapeutic alternatives
+// ============================================================================
+
+export interface MedicationAffordabilityCheck extends FHIRResource {
+  patient_id: string;
+  medication_name: string;
+  rxnorm_code?: string;
+  ndc_code?: string; // National Drug Code
+
+  // Prescription details
+  quantity: number;
+  days_supply: number;
+  dosage_form: string; // tablet, capsule, liquid, etc.
+  strength: string; // e.g., "10 mg"
+
+  // Cost data
+  average_retail_price?: number; // Without insurance
+  insurance_copay?: number; // With patient's insurance
+  goodrx_price?: number; // GoodRx discount
+  costplus_price?: number; // Mark Cuban Cost Plus Drugs
+  medicare_price?: number; // Medicare Part D
+
+  // Affordability assessment
+  is_affordable: boolean; // Based on patient's income or response
+  affordability_barrier?: 'high' | 'moderate' | 'low';
+  patient_expressed_concern?: boolean;
+
+  // Therapeutic alternatives (generic, biosimilar, or different class)
+  alternatives?: Array<{
+    medication_name: string;
+    rxnorm_code?: string;
+    type: 'generic' | 'biosimilar' | 'therapeutic-equivalent' | 'different-class';
+    average_retail_price?: number;
+    estimated_savings: number; // How much cheaper
+    clinical_note?: string; // "Equally effective for hypertension"
+  }>;
+
+  // Manufacturer assistance programs
+  patient_assistance_available?: boolean;
+  manufacturer_coupon_url?: string;
+
+  // Provider recommendation
+  provider_recommendation?: 'continue-brand' | 'switch-generic' | 'switch-alternative' | 'apply-assistance';
+  recommendation_reason?: string;
+
+  checked_date: string;
+  checked_by?: string; // Practitioner or system
+}
+
+// ============================================================================
+// INNOVATIVE: CARE COORDINATION HUB
+// WellFit differentiator: Real-time patient journey tracking across all touchpoints
+// ============================================================================
+
+export interface CareCoordinationEvent extends FHIRResource {
+  patient_id: string;
+
+  // Event details
+  event_type: 'appointment' | 'admission' | 'discharge' | 'transfer' | 'referral' | 'medication-change' | 'lab-order' | 'imaging-order' | 'procedure' | 'telehealth' | 'home-visit' | 'care-plan-update' | 'ems-transport' | 'readmission';
+  event_timestamp: string;
+  event_status: 'scheduled' | 'in-progress' | 'completed' | 'cancelled' | 'no-show';
+
+  // Location/Setting
+  care_setting: 'inpatient' | 'outpatient' | 'emergency' | 'home' | 'skilled-nursing' | 'telehealth' | 'ambulance';
+  location_name?: string;
+
+  // Participants
+  primary_provider_id?: string;
+  primary_provider_name?: string;
+  care_team_members?: Array<{
+    provider_id: string;
+    provider_name: string;
+    role: string; // 'physician', 'nurse', 'case-manager', etc.
+  }>;
+
+  // Clinical context
+  encounter_id?: string;
+  diagnosis_codes?: string[]; // ICD-10
+  chief_complaint?: string;
+
+  // Care coordination flags
+  handoff_occurred?: boolean; // Was there a handoff between providers?
+  handoff_quality?: 'complete' | 'incomplete' | 'missing-info';
+  care_gap_identified?: boolean; // Did we find a gap in care?
+  care_gap_description?: string;
+
+  // Patient engagement
+  patient_notified?: boolean;
+  patient_attended?: boolean; // For appointments
+  patient_satisfaction?: number; // 1-5 scale
+
+  // Outcomes
+  action_items?: string[]; // Follow-up tasks
+  next_appointment_scheduled?: boolean;
+  next_appointment_date?: string;
+
+  // Integration tracking
+  ehr_synced?: boolean;
+  external_system_id?: string; // ID in Epic, Cerner, etc.
+
+  notes?: string;
+}
+
+// ============================================================================
+// INNOVATIVE: HEALTH EQUITY ANALYTICS
+// WellFit differentiator: Built-in bias detection & disparities tracking
+// ============================================================================
+
+export interface HealthEquityMetrics extends FHIRResource {
+  patient_id: string;
+
+  // Demographic factors (de-identified for analytics)
+  age_group: '0-17' | '18-44' | '45-64' | '65-74' | '75+';
+  race_ethnicity?: string; // Self-reported, optional
+  preferred_language?: string;
+  insurance_type: 'medicare' | 'medicaid' | 'commercial' | 'uninsured' | 'va' | 'tricare';
+
+  // SDOH composite score (from SDOH screening)
+  sdoh_risk_score?: number; // 0-100 (higher = more barriers)
+  sdoh_barriers_count?: number; // How many SDOH issues
+
+  // Access metrics
+  avg_days_to_appointment?: number; // Time to get appointment
+  no_show_rate?: number; // Percentage of missed appointments
+  telehealth_adoption?: boolean;
+  transportation_barrier?: boolean;
+
+  // Clinical outcomes (aggregated)
+  chronic_conditions_controlled?: boolean; // BP, A1C, etc. at goal
+  preventive_care_up_to_date?: boolean; // Vaccines, screenings
+  medication_adherence_rate?: number; // 0-100%
+
+  // Healthcare utilization
+  er_visits_last_year?: number;
+  hospital_admissions_last_year?: number;
+  readmissions_30_day?: number;
+  primary_care_visits_last_year?: number;
+
+  // Disparities flags (compared to population average)
+  has_access_disparity?: boolean; // Longer wait times than average
+  has_outcome_disparity?: boolean; // Worse outcomes than average
+  has_utilization_disparity?: boolean; // More ER, less primary care
+
+  // Interventions provided
+  equity_interventions?: Array<{
+    intervention_type: 'transportation-assistance' | 'interpreter-services' | 'patient-navigator' | 'financial-assistance' | 'community-referral' | 'care-coordination' | 'telehealth-enabled';
+    intervention_date: string;
+    outcome?: string;
+  }>;
+
+  calculated_date: string;
+}
+
+// ============================================================================
 // ROLE CODE SYSTEM (1-18)
 // ============================================================================
 
