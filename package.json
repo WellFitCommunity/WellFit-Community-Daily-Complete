@@ -115,7 +115,12 @@
     "serve:3100": "npx serve -s build -l 3100",
     "sbom:generate": "node scripts/generate-sbom.js",
     "deps:audit": "npm audit --audit-level=moderate && npm outdated",
-    "deps:update": "npm update && npm run sbom:generate"
+    "deps:update": "npm update && npm run sbom:generate",
+    "disaster-recovery:drill:weekly": "./scripts/disaster-recovery/execute-weekly-drill.sh",
+    "disaster-recovery:drill:monthly": "./scripts/disaster-recovery/execute-monthly-drill.sh",
+    "pentest:daily": "./scripts/penetration-testing/daily-scan.sh",
+    "pentest:weekly": "./scripts/penetration-testing/weekly-scan.sh",
+    "compliance:report": "node scripts/compliance/generate-report.js"
   },
   "browserslist": {
     "production": [
