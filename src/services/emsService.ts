@@ -66,6 +66,7 @@ export interface IncomingPatient {
   alert_notes?: string;
   paramedic_name: string;
   unit_number: string;
+  receiving_hospital_name?: string;
   status: string;
   created_at: string;
 }

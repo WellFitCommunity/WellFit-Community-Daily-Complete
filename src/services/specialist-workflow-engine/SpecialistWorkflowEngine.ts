@@ -37,8 +37,8 @@ export class SpecialistWorkflowEngine {
       phiType: 'patient_record',
       phiResourceId: patientId,
       patientId,
-      accessType: 'read',
-      accessMethod: 'specialist_workflow',
+      accessType: 'view',
+      accessMethod: 'UI',
       purpose: 'treatment'
     });
 
@@ -169,7 +169,7 @@ export class SpecialistWorkflowEngine {
       phiResourceId: visitId,
       patientId: visit.patient_id,
       accessType: 'create',
-      accessMethod: 'specialist_workflow',
+      accessMethod: 'UI',
       purpose: 'treatment'
     });
   }

@@ -104,7 +104,7 @@ export class OfflineDataSync {
       const transaction = this.db!.transaction([storeName], 'readonly');
       const store = transaction.objectStore(storeName);
       const index = store.index('synced');
-      const request = index.getAll(false);
+      const request = index.getAll(IDBKeyRange.only(0)); // 0 = false/unsynced
 
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
@@ -357,7 +357,7 @@ export class OfflineDataSync {
       const transaction = this.db.transaction([storeName], 'readwrite');
       const store = transaction.objectStore(storeName);
       const index = store.index('synced');
-      const request = index.openCursor(true); // Only synced items
+      const request = index.openCursor(IDBKeyRange.only(1)); // 1 = true/synced items
 
       request.onsuccess = (event) => {
         const cursor = (event.target as IDBRequest).result;
