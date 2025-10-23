@@ -17,7 +17,7 @@ export class ErrorSignatureLibrary {
     this.addSignature({
       id: 'type-mismatch-undefined',
       category: 'type_mismatch',
-      pattern: /Cannot read propert(y|ies) of undefined/i,
+      pattern: /Cannot read propert(y|ies).*of undefined/i,
       stackTracePattern: /\.tsx?:\d+:\d+/,
       severity: 'high',
       description: 'Attempting to access property of undefined object',
@@ -39,7 +39,7 @@ export class ErrorSignatureLibrary {
     this.addSignature({
       id: 'type-mismatch-null',
       category: 'type_mismatch',
-      pattern: /Cannot read propert(y|ies) of null/i,
+      pattern: /Cannot read propert(y|ies).*of null/i,
       severity: 'high',
       description: 'Attempting to access property of null object',
       commonCauses: [

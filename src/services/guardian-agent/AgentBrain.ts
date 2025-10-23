@@ -92,8 +92,10 @@ export class AgentBrain {
 
     // Update metrics
     this.state.performanceMetrics.issuesDetected++;
+    const detectionTime = Math.max(1, Date.now() - startTime); // Ensure at least 1ms
     this.state.performanceMetrics.avgTimeToDetect =
-      (this.state.performanceMetrics.avgTimeToDetect + (Date.now() - startTime)) / 2;
+      (this.state.performanceMetrics.avgTimeToDetect * (this.state.performanceMetrics.issuesDetected - 1) + detectionTime) /
+      this.state.performanceMetrics.issuesDetected;
 
     // Add to active issues
     this.state.activeIssues.push(issue);
@@ -195,7 +197,12 @@ export class AgentBrain {
       return true;
     }
 
-    // Check if we have high confidence in healing strategies
+    // Medium severity issues with known healing strategies should be auto-healed
+    if (issue.severity === 'medium' && issue.signature.healingStrategies.length > 0) {
+      return true;
+    }
+
+    // Check if we have high confidence in healing strategies from knowledge base
     const knowledge = this.findRelevantKnowledge(issue.signature.id);
     if (knowledge && knowledge.successRate > 0.85) {
       return true;
@@ -241,7 +248,8 @@ export class AgentBrain {
     this.state.performanceMetrics.successRate =
       (this.state.performanceMetrics.issuesHealed / this.state.performanceMetrics.issuesDetected) * 100;
     this.state.performanceMetrics.avgTimeToHeal =
-      (this.state.performanceMetrics.avgTimeToHeal + result.metrics.timeToHeal) / 2;
+      (this.state.performanceMetrics.avgTimeToHeal * (this.state.performanceMetrics.issuesHealed - 1) + result.metrics.timeToHeal) /
+      this.state.performanceMetrics.issuesHealed;
 
     // Learn from result
     if (this.config.learningEnabled) {

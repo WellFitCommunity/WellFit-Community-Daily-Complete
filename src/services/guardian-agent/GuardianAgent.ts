@@ -49,6 +49,17 @@ export class GuardianAgent {
   }
 
   /**
+   * Resets the singleton instance (for testing only)
+   * @internal
+   */
+  static resetInstance(): void {
+    if (GuardianAgent.instance) {
+      GuardianAgent.instance.stop();
+    }
+    GuardianAgent.instance = null as any;
+  }
+
+  /**
    * Starts the Guardian Agent
    */
   start(): void {
