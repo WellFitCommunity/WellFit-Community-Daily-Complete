@@ -12,6 +12,7 @@
  */
 
 import { supabase } from '../lib/supabaseClient';
+import { logPhiAccess } from './phiAccessLogger';
 import { BillingService } from './billingService';
 import { SDOHBillingService } from './sdohBillingService';
 import { BillingDecisionTreeService } from './billingDecisionTreeService';
@@ -135,7 +136,17 @@ export class UnifiedBillingService {
     const recommendedActions: string[] = [];
 
     try {
-      console.log(`🚀 Starting billing workflow for encounter ${input.encounterId}`);
+      console.log(`🚀 Starting billing workflow for encounter`);
+
+      // HIPAA §164.312(b): Log PHI access for billing
+      await logPhiAccess({
+        phiType: 'billing',
+        phiResourceId: input.encounterId,
+        patientId: input.patientId,
+        accessType: 'view',
+        accessMethod: 'API',
+        purpose: 'payment',
+      });
 
       // STEP 1: Validate input and prerequisites
       const validationStep = await this.executeStep(

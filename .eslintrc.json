@@ -6,7 +6,9 @@
     }
   },
   "rules": {
-    "react/react-in-jsx-scope": "off"
+    "react/react-in-jsx-scope": "off",
+    "no-console": ["warn", { "allow": ["warn", "error"] }]
   }
 }
 // This ESLint configuration extends the default React app configuration
+// Note: console.log is restricted to prevent PHI exposure (HIPAA §164.312(a)(1))

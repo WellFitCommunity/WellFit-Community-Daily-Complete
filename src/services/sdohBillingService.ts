@@ -2,6 +2,7 @@
 // Integrates with existing WellFit billing infrastructure
 
 import { supabase } from '../lib/supabaseClient';
+import { logPhiAccess } from './phiAccessLogger';
 import type {
   SDOHAssessment,
   SDOHFactor,
@@ -22,6 +23,16 @@ import { FeeScheduleService } from './feeScheduleService';
 export class SDOHBillingService {
   // Z-Code and SDOH Assessment
   static async assessSDOHComplexity(patientId: string): Promise<SDOHAssessment> {
+    // HIPAA §164.312(b): Log PHI access
+    await logPhiAccess({
+      phiType: 'assessment',
+      phiResourceId: `sdoh_${patientId}`,
+      patientId,
+      accessType: 'view',
+      accessMethod: 'API',
+      purpose: 'treatment',
+    });
+
     // Get patient's recent check-ins and assessment data
     const { data: checkIns, error: checkInError } = await supabase
       .from('check_ins')

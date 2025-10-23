@@ -105,7 +105,7 @@ export class LabResultVaultService {
 
       if (error) throw error;
 
-      console.log(`Stored ${labs.length} lab results in vault for patient ${patientMRN}`);
+      console.log(`Stored ${labs.length} lab results in vault`);
     } catch (error) {
       console.error('Failed to store labs in vault:', error);
     }

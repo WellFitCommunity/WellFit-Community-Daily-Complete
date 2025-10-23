@@ -2,6 +2,7 @@
 // Handles patient encounters and clinical data for billing
 
 import { supabase } from '../lib/supabaseClient';
+import { logPhiAccess, extractPatientId } from './phiAccessLogger';
 import type {
   Encounter,
   EncounterProcedure,
@@ -20,6 +21,17 @@ export class EncounterService {
       .single();
 
     if (error) throw new Error(`Failed to create encounter: ${error.message}`);
+
+    // HIPAA §164.312(b): Log PHI access
+    await logPhiAccess({
+      phiType: 'encounter',
+      phiResourceId: data.id,
+      patientId: encounter.patient_id,
+      accessType: 'create',
+      accessMethod: 'API',
+      purpose: 'treatment',
+    });
+
     return data;
   }
 
@@ -37,6 +49,20 @@ export class EncounterService {
       .single();
 
     if (error) throw new Error(`Failed to get encounter: ${error.message}`);
+
+    // HIPAA §164.312(b): Log PHI access
+    const patientId = extractPatientId(data);
+    if (patientId) {
+      await logPhiAccess({
+        phiType: 'encounter',
+        phiResourceId: id,
+        patientId,
+        accessType: 'view',
+        accessMethod: 'API',
+        purpose: 'treatment',
+      });
+    }
+
     return this.transformEncounterData(data);
   }
 
@@ -54,6 +80,19 @@ export class EncounterService {
       .order('date_of_service', { ascending: false });
 
     if (error) throw new Error(`Failed to get encounters: ${error.message}`);
+
+    // HIPAA §164.312(b): Log bulk PHI access
+    if (data && data.length > 0) {
+      await logPhiAccess({
+        phiType: 'encounter',
+        phiResourceId: `patient_${patientId}_encounters`,
+        patientId,
+        accessType: 'view',
+        accessMethod: 'API',
+        purpose: 'treatment',
+      });
+    }
+
     return (data || []).map(this.transformEncounterData);
   }
 
@@ -66,6 +105,20 @@ export class EncounterService {
       .single();
 
     if (error) throw new Error(`Failed to update encounter: ${error.message}`);
+
+    // HIPAA §164.312(b): Log PHI access
+    const patientId = extractPatientId(data);
+    if (patientId) {
+      await logPhiAccess({
+        phiType: 'encounter',
+        phiResourceId: id,
+        patientId,
+        accessType: 'update',
+        accessMethod: 'API',
+        purpose: 'treatment',
+      });
+    }
+
     return data;
   }
 

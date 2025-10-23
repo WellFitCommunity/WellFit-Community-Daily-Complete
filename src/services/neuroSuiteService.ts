@@ -7,6 +7,7 @@
  */
 
 import { supabase } from '../lib/supabaseClient';
+import { logPhiAccess } from './phiAccessLogger';
 import type {
   StrokeAssessment,
   ModifiedRankinScale,
@@ -53,6 +54,16 @@ export class NeuroSuiteService {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
+
+      // HIPAA §164.312(b): Log PHI access
+      await logPhiAccess({
+        phiType: 'assessment',
+        phiResourceId: `stroke_assessment_${request.patient_id}`,
+        patientId: request.patient_id,
+        accessType: 'create',
+        accessMethod: 'API',
+        purpose: 'treatment',
+      });
 
       // Calculate NIHSS total score
       const nihssTotal = this.calculateNIHSS({

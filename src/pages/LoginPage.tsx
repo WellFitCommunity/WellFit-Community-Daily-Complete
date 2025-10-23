@@ -274,7 +274,7 @@ const LoginPage: React.FC = () => {
 
       const token = await ensureCaptcha().catch(() => '');
 
-      console.log('[LoginPage] Login attempt:', { phone: e164, hasToken: !!token, tokenPrefix: token?.substring(0, 20) });
+      console.log('[LoginPage] Login attempt:', { hasToken: !!token, phoneLength: e164?.length });
 
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         phone: e164,
@@ -346,7 +346,7 @@ const LoginPage: React.FC = () => {
 
       const token = await ensureCaptcha().catch(() => '');
 
-      console.log('[LoginPage] Admin login attempt:', { email: emailTrimmed, hasToken: !!token, tokenPrefix: token?.substring(0, 20) });
+      console.log('[LoginPage] Admin login attempt:', { hasToken: !!token, emailLength: emailTrimmed?.length });
 
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: emailTrimmed,

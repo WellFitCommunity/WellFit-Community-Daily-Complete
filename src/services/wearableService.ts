@@ -7,6 +7,7 @@
  */
 
 import { supabase } from '../lib/supabaseClient';
+import { logPhiAccess } from './phiAccessLogger';
 import type {
   WearableConnection,
   WearableVitalSign,
@@ -283,6 +284,16 @@ export class WearableService {
     days: number = 7
   ): Promise<WearableApiResponse<WearableVitalSign[]>> {
     try {
+      // HIPAA §164.312(b): Log PHI access
+      await logPhiAccess({
+        phiType: 'wearable_data',
+        phiResourceId: `vitals_${userId}_${vitalType}`,
+        patientId: userId,
+        accessType: 'view',
+        accessMethod: 'API',
+        purpose: 'treatment',
+      });
+
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - days);
 

@@ -3,6 +3,7 @@
 // Integrates ALL dimensions of wellbeing to identify at-risk patients
 
 import { SupabaseClient } from '@supabase/supabase-js';
+import { logPhiAccess } from './phiAccessLogger';
 
 /**
  * HOLISTIC RISK DIMENSIONS
@@ -554,6 +555,16 @@ export async function calculateHolisticRiskAssessment(
   userId: string
 ): Promise<HolisticRiskScores> {
   try {
+    // HIPAA §164.312(b): Log PHI access for risk assessment
+    await logPhiAccess({
+      phiType: 'assessment',
+      phiResourceId: `risk_assessment_${userId}`,
+      patientId: userId,
+      accessType: 'view',
+      accessMethod: 'API',
+      purpose: 'treatment',
+    });
+
     // Calculate all dimension scores in parallel
     const [
       engagement,

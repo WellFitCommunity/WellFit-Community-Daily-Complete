@@ -521,7 +521,7 @@ Provide a 2-3 sentence clinical summary suitable for the care team. Focus on wha
         if (!existingCheckIn || existingCheckIn.length === 0) {
           // Send check-in
           await this.sendDailyCheckIn(plan.profiles.id, 'sms');
-          console.log(`Sent automated check-in to patient ${plan.profiles.id}`);
+          console.log('Sent automated check-in to patient');
         }
       }
 
