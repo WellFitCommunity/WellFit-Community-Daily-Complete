@@ -19,6 +19,8 @@ import {
 import { ErrorSignatureLibrary } from './ErrorSignatureLibrary';
 import { HealingEngine } from './HealingEngine';
 import { LearningSystem } from './LearningSystem';
+import { AuditLogger } from './AuditLogger';
+import { SafetyValidator, RateLimiter, SandboxEnvironment } from './SafetyConstraints';
 
 export class AgentBrain {
   private state: AgentState;
@@ -26,6 +28,9 @@ export class AgentBrain {
   private signatureLibrary: ErrorSignatureLibrary;
   private healingEngine: HealingEngine;
   private learningSystem: LearningSystem;
+  private auditLogger: AuditLogger;
+  private rateLimiter: RateLimiter;
+  private sandbox: SandboxEnvironment;
   private observationBuffer: any[] = [];
   private patternCache: Map<string, KnowledgeEntry> = new Map();
 
@@ -34,6 +39,9 @@ export class AgentBrain {
     this.signatureLibrary = new ErrorSignatureLibrary();
     this.healingEngine = new HealingEngine(config);
     this.learningSystem = new LearningSystem();
+    this.auditLogger = new AuditLogger();
+    this.rateLimiter = new RateLimiter();
+    this.sandbox = new SandboxEnvironment();
 
     this.state = {
       isActive: true,
@@ -233,10 +241,43 @@ export class AgentBrain {
       requiresApproval: issue.severity === 'critical' && this.config.requireApprovalForCritical
     };
 
+    // ✅ SAFETY CHECK 1: Validate action is safe to execute
+    const safetyCheck = SafetyValidator.canExecuteAutonomously(action, issue);
+    if (!safetyCheck.allowed) {
+      console.warn(`[Guardian Agent] Action blocked: ${safetyCheck.reason}`);
+      await this.auditLogger.logBlockedAction(issue, action, safetyCheck.reason);
+      this.sandbox.storePendingFix(action.id, action, issue);
+      this.state.mode = 'monitor';
+      return;
+    }
+
+    // ✅ SAFETY CHECK 2: Rate limiting to prevent action storms
+    if (this.rateLimiter.isRateLimited(strategy)) {
+      console.warn(`[Guardian Agent] Action rate-limited: ${strategy}`);
+      await this.auditLogger.logBlockedAction(issue, action, `Rate limit exceeded for ${strategy}`);
+      this.state.mode = 'monitor';
+      return;
+    }
+
+    // ✅ SAFETY CHECK 3: Test in sandbox first
+    const sandboxTest = await this.sandbox.testFix(action, issue);
+    if (!sandboxTest.success) {
+      console.warn(`[Guardian Agent] Sandbox test failed:`, sandboxTest.errors);
+      await this.auditLogger.logBlockedAction(issue, action, `Sandbox test failed: ${sandboxTest.errors.join(', ')}`);
+      this.state.mode = 'monitor';
+      return;
+    }
+
     this.state.healingInProgress.push(action);
+
+    // Record action for rate limiting
+    this.rateLimiter.recordAction(strategy);
 
     // Execute healing
     const result = await this.healingEngine.execute(action, issue);
+
+    // ✅ AUDIT LOG: Record every healing attempt
+    await this.auditLogger.logHealingAction(issue, action, result);
 
     // Update state
     this.state.healingInProgress = this.state.healingInProgress.filter(a => a.id !== action.id);
@@ -432,5 +473,42 @@ export class AgentBrain {
 
   updateConfig(config: Partial<AgentConfig>): void {
     this.config = { ...this.config, ...config };
+  }
+
+  // ✅ AUDIT & COMPLIANCE METHODS
+
+  /**
+   * Get audit logs for compliance review
+   */
+  getAuditLogs(filters?: any) {
+    return this.auditLogger.getAuditLogs(filters);
+  }
+
+  /**
+   * Get pending review tickets
+   */
+  getPendingReviews() {
+    return this.auditLogger.getPendingReviewTickets();
+  }
+
+  /**
+   * Get sandboxed fixes awaiting approval
+   */
+  getPendingFixes() {
+    return this.sandbox.getPendingFixes();
+  }
+
+  /**
+   * Approve a review ticket
+   */
+  async approveReview(ticketId: string, reviewedBy: string, notes: string) {
+    await this.auditLogger.approveTicket(ticketId, reviewedBy, notes);
+  }
+
+  /**
+   * Reject a review ticket
+   */
+  async rejectReview(ticketId: string, reviewedBy: string, notes: string) {
+    await this.auditLogger.rejectTicket(ticketId, reviewedBy, notes);
   }
 }
