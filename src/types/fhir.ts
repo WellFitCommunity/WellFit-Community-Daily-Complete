@@ -1567,6 +1567,336 @@ export interface HealthEquityMetrics extends FHIRResource {
 }
 
 // ============================================================================
+// GOAL (US Core Required)
+// ============================================================================
+
+export interface FHIRGoal extends FHIRResource {
+  patient_id: string;
+
+  // Lifecycle status (required)
+  lifecycle_status: 'proposed' | 'planned' | 'accepted' | 'active' | 'on-hold' | 'completed' | 'cancelled' | 'entered-in-error' | 'rejected';
+
+  // Achievement status
+  achievement_status?: CodeableConcept; // in-progress, improving, worsening, no-change, achieved, sustaining, not-achieved, no-progress, not-attainable
+
+  // Category
+  category?: CodeableConcept[]; // dietary, safety, behavioral, nursing, physiotherapy, etc.
+
+  // Priority
+  priority?: CodeableConcept; // high-priority, medium-priority, low-priority
+
+  // Description (required for US Core)
+  description_code?: string; // SNOMED CT or LOINC
+  description_display: string; // "Lose 10 pounds", "Lower A1C to <7%"
+  description_text?: string;
+
+  // Subject (patient)
+  subject_id: string;
+  subject_display?: string;
+
+  // Start date
+  start_date?: string;
+  start_codeable_concept?: CodeableConcept;
+
+  // Target (measurable outcome)
+  target?: Array<{
+    measure?: CodeableConcept; // What to measure (A1C, weight, blood pressure)
+    detail_quantity?: Quantity; // Target value (e.g., 140 mmHg)
+    detail_range?: { low: Quantity; high: Quantity };
+    detail_codeable_concept?: CodeableConcept;
+    due_date?: string; // When to achieve by
+    due_duration?: { value: number; unit: string };
+  }>;
+
+  // Status date
+  status_date?: string;
+  status_reason?: string;
+
+  // Expressser (who stated the goal)
+  expressed_by_id?: string; // Practitioner or Patient
+  expressed_by_display?: string;
+
+  // Addresses (conditions this goal addresses)
+  addresses?: Array<{
+    reference: string; // Condition, Observation, MedicationStatement
+    display?: string;
+  }>;
+
+  // Notes
+  note?: string;
+
+  // Outcome
+  outcome_code?: CodeableConcept[];
+  outcome_reference?: Reference[]; // Observations measuring progress
+
+  // Audit
+  created_by?: string;
+  updated_by?: string;
+}
+
+export interface CreateGoal extends Partial<FHIRGoal> {
+  patient_id: string;
+  lifecycle_status: 'proposed' | 'planned' | 'accepted' | 'active' | 'on-hold' | 'completed' | 'cancelled' | 'entered-in-error' | 'rejected';
+  description_display: string;
+}
+
+// ============================================================================
+// LOCATION (US Core Required)
+// ============================================================================
+
+export interface FHIRLocation extends FHIRResource {
+  // Status
+  status: 'active' | 'suspended' | 'inactive';
+
+  // Operational status
+  operational_status?: CodeableConcept; // housekeeping, closed, contaminated, etc.
+
+  // Name (required)
+  name: string;
+  alias?: string[]; // Alternate names
+
+  // Description
+  description?: string;
+
+  // Mode
+  mode?: 'instance' | 'kind'; // Specific location vs. class of locations
+
+  // Type (required for US Core)
+  type?: CodeableConcept[]; // Room, bed, ward, clinic, etc.
+
+  // Telecom
+  telecom?: FHIRContactPoint[];
+
+  // Address
+  address?: FHIRAddress;
+
+  // Physical form
+  physical_type?: CodeableConcept; // Building, room, vehicle, house, etc.
+
+  // Position (GPS coordinates)
+  position?: {
+    longitude: number;
+    latitude: number;
+    altitude?: number;
+  };
+
+  // Managing organization
+  managing_organization_id?: string;
+  managing_organization_display?: string;
+
+  // Part of (parent location)
+  part_of_location_id?: string;
+  part_of_location_display?: string;
+
+  // Hours of operation
+  hours_of_operation?: Array<{
+    days_of_week?: ('mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun')[];
+    all_day?: boolean;
+    opening_time?: string; // HH:MM
+    closing_time?: string; // HH:MM
+  }>;
+
+  // Availability exceptions
+  availability_exceptions?: string; // "Closed on holidays"
+
+  // Endpoint (technical endpoints for system access)
+  endpoint_references?: string[];
+
+  // Audit
+  created_by?: string;
+  updated_by?: string;
+}
+
+export interface CreateLocation extends Partial<FHIRLocation> {
+  status: 'active' | 'suspended' | 'inactive';
+  name: string;
+}
+
+// ============================================================================
+// ORGANIZATION (US Core Required)
+// ============================================================================
+
+export interface FHIROrganization extends FHIRResource {
+  // Identifiers
+  npi?: string; // National Provider Identifier (Type 2)
+  tax_id?: string; // EIN
+  ccn?: string; // CMS Certification Number (for hospitals)
+
+  // Active status
+  active: boolean;
+
+  // Type (required for US Core)
+  type?: CodeableConcept[]; // prov (healthcare provider), dept (department), etc.
+
+  // Name (required)
+  name: string;
+  alias?: string[]; // Other names
+
+  // Telecom
+  telecom?: FHIRContactPoint[];
+
+  // Address
+  address?: FHIRAddress[];
+
+  // Part of (parent organization)
+  part_of_id?: string;
+  part_of_display?: string;
+
+  // Contact (administrative contacts)
+  contact?: Array<{
+    purpose?: CodeableConcept; // billing, admin, hr, etc.
+    name?: {
+      family?: string;
+      given?: string[];
+      prefix?: string[];
+      suffix?: string[];
+    };
+    telecom?: FHIRContactPoint[];
+    address?: FHIRAddress;
+  }>;
+
+  // Endpoint (technical endpoints)
+  endpoint_references?: string[];
+
+  // Audit
+  created_by?: string;
+  updated_by?: string;
+}
+
+export interface CreateOrganization extends Partial<FHIROrganization> {
+  active: boolean;
+  name: string;
+}
+
+// ============================================================================
+// MEDICATION (US Core Required)
+// ============================================================================
+
+export interface FHIRMedication extends FHIRResource {
+  // Code (required - RxNorm preferred)
+  code_system?: string; // http://www.nlm.nih.gov/research/umls/rxnorm
+  code: string; // RxNorm code
+  code_display: string; // Medication name
+  code_text?: string;
+
+  // Status
+  status?: 'active' | 'inactive' | 'entered-in-error';
+
+  // Manufacturer
+  manufacturer_id?: string;
+  manufacturer_display?: string;
+
+  // Form (tablet, capsule, liquid, etc.)
+  form?: CodeableConcept;
+
+  // Amount (concentration)
+  amount_numerator?: Quantity;
+  amount_denominator?: Quantity;
+
+  // Ingredient
+  ingredient?: Array<{
+    item_codeable_concept?: CodeableConcept;
+    item_reference?: string; // Reference to another Medication or Substance
+    is_active?: boolean;
+    strength_numerator?: Quantity;
+    strength_denominator?: Quantity;
+  }>;
+
+  // Batch info
+  batch?: {
+    lot_number?: string;
+    expiration_date?: string;
+  };
+
+  // Audit
+  created_by?: string;
+  updated_by?: string;
+}
+
+export interface CreateMedication extends Partial<FHIRMedication> {
+  code: string;
+  code_display: string;
+}
+
+// ============================================================================
+// PROVENANCE (US Core Required for data integrity)
+// ============================================================================
+
+export interface FHIRProvenance extends FHIRResource {
+  // Target (required - what this provenance is about)
+  target_references: string[]; // References to resources (Patient, Observation, etc.)
+  target_types?: string[]; // Resource types
+
+  // Occurred (when the activity occurred)
+  occurred_period_start?: string;
+  occurred_period_end?: string;
+  occurred_datetime?: string;
+
+  // Recorded (when provenance was recorded) - REQUIRED
+  recorded: string;
+
+  // Policy (authorization policy)
+  policy?: string[];
+
+  // Location (where activity occurred)
+  location_id?: string;
+  location_display?: string;
+
+  // Reason (why activity occurred)
+  reason?: CodeableConcept[];
+
+  // Activity (what was done) - REQUIRED
+  activity?: CodeableConcept; // created, updated, deleted, etc.
+
+  // Agent (who was involved) - REQUIRED
+  agent: Array<{
+    type?: CodeableConcept; // author, informant, custodian, assembler, etc.
+    role?: CodeableConcept[]; // Functional role
+    who_id: string; // Practitioner, Patient, Organization, Device
+    who_display?: string;
+    on_behalf_of_id?: string; // Organization
+    on_behalf_of_display?: string;
+  }>;
+
+  // Entity (what was involved)
+  entity?: Array<{
+    role: 'derivation' | 'revision' | 'quotation' | 'source' | 'removal';
+    what_id: string; // Reference to resource
+    what_display?: string;
+    agent?: Array<{
+      type?: CodeableConcept;
+      role?: CodeableConcept[];
+      who_id: string;
+      who_display?: string;
+    }>;
+  }>;
+
+  // Signature (digital signature)
+  signature?: Array<{
+    type: CodeableConcept[]; // verification, validation, etc.
+    when: string;
+    who_id: string;
+    who_display?: string;
+    on_behalf_of_id?: string;
+    target_format?: string; // mime type
+    sig_format?: string; // mime type of signature
+    data?: string; // base64 signature
+  }>;
+
+  // Audit
+  created_by?: string;
+}
+
+export interface CreateProvenance extends Partial<FHIRProvenance> {
+  target_references: string[];
+  recorded: string;
+  agent: Array<{
+    who_id: string;
+    type?: CodeableConcept;
+  }>;
+}
+
+// ============================================================================
 // ROLE CODE SYSTEM (1-18)
 // ============================================================================
 

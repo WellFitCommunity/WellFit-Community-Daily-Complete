@@ -20,6 +20,11 @@ import type {
   FHIRCarePlan,
   FHIRPractitioner,
   FHIRPractitionerRole,
+  FHIRGoal,
+  FHIRLocation,
+  FHIROrganization,
+  FHIRMedication,
+  FHIRProvenance,
   FHIRApiResponse,
   FHIRSearchParams,
 } from '../types/fhir';
@@ -2238,11 +2243,641 @@ export const HealthEquityService = {
 };
 
 // ============================================================================
+// GOAL SERVICE
+// ============================================================================
+
+export const GoalService = {
+  /**
+   * Get all goals for a patient
+   */
+  async getAll(patientId: string): Promise<FHIRApiResponse<any[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_goals')
+        .select('*')
+        .eq('patient_id', patientId)
+        .order('start_date', { ascending: false });
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch goals',
+      };
+    }
+  },
+
+  /**
+   * Get active goals
+   */
+  async getActive(patientId: string): Promise<FHIRApiResponse<any[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_goals')
+        .select('*')
+        .eq('patient_id', patientId)
+        .in('lifecycle_status', ['proposed', 'planned', 'accepted', 'active'])
+        .order('priority_code', { ascending: true, nullsFirst: false })
+        .order('start_date', { ascending: false });
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch active goals',
+      };
+    }
+  },
+
+  /**
+   * Get goals by category
+   */
+  async getByCategory(patientId: string, category: string): Promise<FHIRApiResponse<any[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_goals')
+        .select('*')
+        .eq('patient_id', patientId)
+        .contains('category', [category])
+        .order('start_date', { ascending: false });
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch goals by category',
+      };
+    }
+  },
+
+  /**
+   * Create a new goal
+   */
+  async create(goal: any): Promise<FHIRApiResponse<any>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_goals')
+        .insert([goal])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to create goal',
+      };
+    }
+  },
+
+  /**
+   * Update goal
+   */
+  async update(id: string, updates: any): Promise<FHIRApiResponse<any>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_goals')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to update goal',
+      };
+    }
+  },
+
+  /**
+   * Complete goal
+   */
+  async complete(id: string): Promise<FHIRApiResponse<any>> {
+    return this.update(id, {
+      lifecycle_status: 'completed',
+      status_date: new Date().toISOString(),
+    });
+  },
+};
+
+// ============================================================================
+// LOCATION SERVICE
+// ============================================================================
+
+export const LocationService = {
+  /**
+   * Get all active locations
+   */
+  async getAll(): Promise<FHIRApiResponse<any[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_locations')
+        .select('*')
+        .eq('status', 'active')
+        .order('name');
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch locations',
+      };
+    }
+  },
+
+  /**
+   * Get location by ID
+   */
+  async getById(id: string): Promise<FHIRApiResponse<any>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_locations')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch location',
+      };
+    }
+  },
+
+  /**
+   * Get locations by type
+   */
+  async getByType(typeCode: string): Promise<FHIRApiResponse<any[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_locations')
+        .select('*')
+        .contains('type', [typeCode])
+        .eq('status', 'active')
+        .order('name');
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch locations by type',
+      };
+    }
+  },
+
+  /**
+   * Create location
+   */
+  async create(location: any): Promise<FHIRApiResponse<any>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_locations')
+        .insert([location])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to create location',
+      };
+    }
+  },
+
+  /**
+   * Update location
+   */
+  async update(id: string, updates: any): Promise<FHIRApiResponse<any>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_locations')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to update location',
+      };
+    }
+  },
+};
+
+// ============================================================================
+// ORGANIZATION SERVICE
+// ============================================================================
+
+export const OrganizationService = {
+  /**
+   * Get all active organizations
+   */
+  async getAll(): Promise<FHIRApiResponse<any[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_organizations')
+        .select('*')
+        .eq('active', true)
+        .order('name');
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch organizations',
+      };
+    }
+  },
+
+  /**
+   * Get organization by ID
+   */
+  async getById(id: string): Promise<FHIRApiResponse<any>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_organizations')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch organization',
+      };
+    }
+  },
+
+  /**
+   * Get organization by NPI
+   */
+  async getByNPI(npi: string): Promise<FHIRApiResponse<any>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_organizations')
+        .select('*')
+        .eq('npi', npi)
+        .single();
+
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch organization by NPI',
+      };
+    }
+  },
+
+  /**
+   * Search organizations by name
+   */
+  async search(searchTerm: string): Promise<FHIRApiResponse<any[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_organizations')
+        .select('*')
+        .ilike('name', `%${searchTerm}%`)
+        .eq('active', true)
+        .order('name');
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to search organizations',
+      };
+    }
+  },
+
+  /**
+   * Create organization
+   */
+  async create(organization: any): Promise<FHIRApiResponse<any>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_organizations')
+        .insert([organization])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to create organization',
+      };
+    }
+  },
+
+  /**
+   * Update organization
+   */
+  async update(id: string, updates: any): Promise<FHIRApiResponse<any>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_organizations')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to update organization',
+      };
+    }
+  },
+};
+
+// ============================================================================
+// MEDICATION SERVICE
+// ============================================================================
+
+export const MedicationService = {
+  /**
+   * Get medication by ID
+   */
+  async getById(id: string): Promise<FHIRApiResponse<any>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_medications')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch medication',
+      };
+    }
+  },
+
+  /**
+   * Get medication by RxNorm code
+   */
+  async getByRxNorm(rxnormCode: string): Promise<FHIRApiResponse<any>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_medications')
+        .select('*')
+        .eq('code', rxnormCode)
+        .eq('code_system', 'http://www.nlm.nih.gov/research/umls/rxnorm')
+        .single();
+
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch medication by RxNorm',
+      };
+    }
+  },
+
+  /**
+   * Search medications by name
+   */
+  async search(searchTerm: string): Promise<FHIRApiResponse<any[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_medications')
+        .select('*')
+        .ilike('code_display', `%${searchTerm}%`)
+        .order('code_display');
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to search medications',
+      };
+    }
+  },
+
+  /**
+   * Create medication
+   */
+  async create(medication: any): Promise<FHIRApiResponse<any>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_medications')
+        .insert([medication])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to create medication',
+      };
+    }
+  },
+
+  /**
+   * Update medication
+   */
+  async update(id: string, updates: any): Promise<FHIRApiResponse<any>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_medications')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to update medication',
+      };
+    }
+  },
+};
+
+// ============================================================================
+// PROVENANCE SERVICE
+// ============================================================================
+
+export const ProvenanceService = {
+  /**
+   * Get provenance for a resource
+   */
+  async getForResource(resourceId: string, resourceType?: string): Promise<FHIRApiResponse<any[]>> {
+    try {
+      let query = supabase
+        .from('fhir_provenance')
+        .select('*')
+        .contains('target_references', [resourceId])
+        .order('recorded', { ascending: false });
+
+      if (resourceType) {
+        query = query.contains('target_types', [resourceType]);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch provenance',
+      };
+    }
+  },
+
+  /**
+   * Get provenance by agent (who did it)
+   */
+  async getByAgent(agentId: string): Promise<FHIRApiResponse<any[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_provenance')
+        .select('*')
+        .contains('agent', [{ who_id: agentId }])
+        .order('recorded', { ascending: false });
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch provenance by agent',
+      };
+    }
+  },
+
+  /**
+   * Get audit trail for patient
+   */
+  async getAuditTrail(patientId: string, days: number = 90): Promise<FHIRApiResponse<any[]>> {
+    try {
+      const since = new Date();
+      since.setDate(since.getDate() - days);
+
+      const { data, error } = await supabase
+        .from('fhir_provenance')
+        .select('*')
+        .contains('target_references', [patientId])
+        .gte('recorded', since.toISOString())
+        .order('recorded', { ascending: false });
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch audit trail',
+      };
+    }
+  },
+
+  /**
+   * Create provenance record
+   */
+  async create(provenance: any): Promise<FHIRApiResponse<any>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_provenance')
+        .insert([{
+          ...provenance,
+          recorded: provenance.recorded || new Date().toISOString(),
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to create provenance',
+      };
+    }
+  },
+
+  /**
+   * Record audit event (helper method)
+   */
+  async recordAudit(params: {
+    targetReferences: string[];
+    targetTypes?: string[];
+    activity: string;
+    agentId: string;
+    agentType?: string;
+    agentRole?: string;
+    onBehalfOfId?: string;
+    reason?: string;
+  }): Promise<FHIRApiResponse<any>> {
+    const provenance = {
+      target_references: params.targetReferences,
+      target_types: params.targetTypes,
+      recorded: new Date().toISOString(),
+      activity: {
+        code: params.activity,
+        system: 'http://terminology.hl7.org/CodeSystem/v3-DataOperation',
+      },
+      agent: [{
+        who_id: params.agentId,
+        type: params.agentType ? {
+          code: params.agentType,
+          system: 'http://terminology.hl7.org/CodeSystem/provenance-participant-type',
+        } : undefined,
+        role: params.agentRole ? [{
+          code: params.agentRole,
+          system: 'http://terminology.hl7.org/CodeSystem/v3-RoleCode',
+        }] : undefined,
+        on_behalf_of_id: params.onBehalfOfId,
+      }],
+      reason: params.reason ? [{
+        code: params.reason,
+        system: 'http://terminology.hl7.org/CodeSystem/v3-ActReason',
+      }] : undefined,
+    };
+
+    return this.create(provenance);
+  },
+};
+
+// ============================================================================
 // UNIFIED FHIR SERVICE (Single Entry Point)
 // ============================================================================
 
 export const FHIRService = {
-  // Core FHIR Resources (US Core)
+  // Core FHIR Resources (US Core - 18/18 COMPLETE)
   MedicationRequest: MedicationRequestService,
   Condition: ConditionService,
   DiagnosticReport: DiagnosticReportService,
@@ -2255,6 +2890,11 @@ export const FHIRService = {
   AllergyIntolerance: AllergyIntoleranceService,
   Encounter: EncounterService,
   DocumentReference: DocumentReferenceService,
+  Goal: GoalService,
+  Location: LocationService,
+  Organization: OrganizationService,
+  Medication: MedicationService,
+  Provenance: ProvenanceService,
 
   // WellFit Innovative Services (Differentiators)
   SDOH: SDOHService,
