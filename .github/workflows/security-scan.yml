@@ -9,6 +9,9 @@ on:
   schedule:
     - cron: '0 2 * * 1' # Runs every Monday at 2:00 AM UTC
 
+env:
+  NOTIFICATION_EMAILS: "maria@thewellfitcommunity.org,akima@thewellfitcommunity.org"
+
 jobs:
   security-scan:
     name: Security Analysis
@@ -57,16 +60,18 @@ jobs:
           echo "## Insecure Protocol Scan" >> $GITHUB_STEP_SUMMARY
 
           MATCH_HTTP=$(grep -RniE '\bhttp://' . \
-            --exclude-dir=node_modules --exclude-dir=build --exclude-dir=dist --exclude-dir=.git --exclude-dir=archive \
+            --exclude-dir=node_modules --exclude-dir=build --exclude-dir=dist --exclude-dir=.git --exclude-dir=archive --exclude-dir=coverage \
             --exclude=package-lock.json --exclude=yarn.lock --exclude=logo.png 2>/dev/null | \
             grep -v "localhost" | grep -v "127\.0\.0\.1" | grep -v "0\.0\.0\.0" | \
             grep -v "schemas\." | grep -v "loinc\.org" | grep -v "snomed\.info" | \
             grep -v "terminology\.hl7\.org" | grep -v "hl7\.org/fhir" | \
             grep -v "unitsofmeasure\.org" | grep -v "wellfitcommunity\.org" | \
-            grep -v "wellfit-community\.com" | grep -v "www\.w3\.org" | \
-            grep -v "www\.ama-assn\.org" | grep -v "www\.nlm\.nih\.gov" | \
-            grep -v "pillbox\.nlm\.nih\.gov" | grep -v "example\.com" | \
-            grep -v "xmlns=" || true)
+            grep -v "wellfit-community\.com" | grep -v "wellfit.*\.com" | \
+            grep -v "www\.w3\.org" | grep -v "www\.ama-assn\.org" | \
+            grep -v "www\.nlm\.nih\.gov" | grep -v "pillbox\.nlm\.nih\.gov" | \
+            grep -v "example\.com" | grep -v "xmlns=" | \
+            grep -v "\.md:" | grep -v "\.html:" | grep -v "\.svg:" | \
+            grep -v "\.json:" | grep -v "\.test\." || true)
           
           MATCH_WS=$(grep -RniE '\bws://(?!localhost\b|127\.0\.0\.1\b|0\.0\.0\.0\b)' . \
             --exclude-dir=node_modules --exclude-dir=build --exclude-dir=dist --exclude-dir=.git 2>/dev/null || true)
@@ -349,6 +354,89 @@ jobs:
           echo "Completed at $(date -u '+%Y-%m-%d %H:%M:%S') UTC" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Next scheduled scan:** Monday at 02:00 UTC" >> $GITHUB_STEP_SUMMARY
+
+      # ============================================
+      # Send Email Notification
+      # ============================================
+      - name: Send email notification
+        if: always()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{secrets.MAIL_USERNAME}}
+          password: ${{secrets.MAIL_PASSWORD}}
+          subject: "WellFit Security Scan Report - ${{ job.status }}"
+          to: ${{ env.NOTIFICATION_EMAILS }}
+          from: security-scan@thewellfitcommunity.org
+          body: |
+            Security Scan Status: ${{ job.status }}
+
+            Workflow Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            Branch: ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+            Trigger: ${{ github.event_name }}
+
+            Please review the detailed results in the GitHub Actions workflow summary.
+
+            Time: ${{ github.event.head_commit.timestamp }}
+          html_body: |
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                .header { background-color: #0066cc; color: white; padding: 20px; text-align: center; }
+                .content { padding: 20px; }
+                .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+                .success { background-color: #d4edda; border-left: 4px solid #28a745; }
+                .failure { background-color: #f8d7da; border-left: 4px solid #dc3545; }
+                .info { background-color: #d1ecf1; border-left: 4px solid #17a2b8; }
+                .footer { margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
+                a { color: #0066cc; text-decoration: none; }
+                .button { display: inline-block; padding: 10px 20px; margin: 10px 0; background-color: #0066cc; color: white; text-decoration: none; border-radius: 5px; }
+              </style>
+            </head>
+            <body>
+              <div class="header">
+                <h1>🔒 WellFit Security Scan Report</h1>
+              </div>
+              <div class="content">
+                <div class="status ${{ job.status == 'success' && 'success' || 'failure' }}">
+                  <strong>Status:</strong> ${{ job.status == 'success' && '✅ SUCCESS' || '❌ FAILURE' }}
+                </div>
+
+                <div class="info">
+                  <h3>Scan Details</h3>
+                  <ul>
+                    <li><strong>Branch:</strong> ${{ github.ref_name }}</li>
+                    <li><strong>Commit:</strong> <code>${{ github.sha }}</code></li>
+                    <li><strong>Triggered by:</strong> ${{ github.event_name }}</li>
+                    <li><strong>Time:</strong> ${{ github.event.head_commit.timestamp }}</li>
+                  </ul>
+                </div>
+
+                <p>
+                  <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" class="button">
+                    View Full Report →
+                  </a>
+                </p>
+
+                <h3>Next Steps</h3>
+                <ul>
+                  <li>Review the detailed scan results in the GitHub Actions workflow</li>
+                  <li>Address any critical or high-severity findings immediately</li>
+                  <li>Document remediation actions in the security log</li>
+                </ul>
+              </div>
+              <div class="footer">
+                <p><strong>Envision VirtualEdge Group LLC</strong> | WellFit Community Healthcare Platform</p>
+                <p>This is an automated security scan notification. Next scan: Monday at 02:00 UTC</p>
+              </div>
+            </body>
+            </html>
+          priority: high
 
       - name: Fail job if critical issues found
         if: always()

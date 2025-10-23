@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../supabaseClient';
+import { supabase } from '../../lib/supabaseClient';
 import { Shield, AlertTriangle, CheckCircle, Clock, Activity, FileText, TrendingUp } from 'lucide-react';
 
 interface BackupCompliance {

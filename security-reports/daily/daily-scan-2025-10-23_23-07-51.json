@@ -1,0 +1,13 @@
+{
+  "scan_type": "daily_automated",
+  "timestamp": "2025-10-23T23:07:51+00:00",
+  "scanner_version": "1.0",
+  "findings": [],
+  "summary": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "info": 0
+  }
+}

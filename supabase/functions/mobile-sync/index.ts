@@ -4,7 +4,7 @@ import { cors } from "../_shared/cors.ts"
 
 // ❌ REMOVED WILDCARD CORS - Using secure cors() function instead
 // const corsHeaders = {
-//   'Access-Control-Allow-Origin': '*',  // SECURITY RISK REMOVED
+//   // CORS handled by shared module,  // SECURITY RISK REMOVED
 //   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 // }
 

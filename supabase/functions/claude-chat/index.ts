@@ -3,18 +3,15 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import Anthropic from "npm:@anthropic-ai/sdk@0.20.9";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return handleOptions(req);
   }
+
+  const { headers: corsHeaders } = corsFromRequest(req);
 
   try {
     // Get Anthropic API key from Supabase secrets

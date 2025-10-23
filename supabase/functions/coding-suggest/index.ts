@@ -8,6 +8,7 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Anthropic from "npm:@anthropic-ai/sdk@0.63.1";
+import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 
 // Flip to true only when you need extra response diagnostics
 const DEBUG = false;
@@ -113,13 +114,6 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   });
 }
 
-// CORS
-function cors(headers: Headers, origin: string | null) {
-  headers.set("Access-Control-Allow-Origin", origin ?? "*");
-  headers.set("Access-Control-Allow-Headers", "authorization, x-client-info, apikey, content-type");
-  headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
-}
-
 // Safe JSON parse (handles missing/invalid body)
 async function safeJson(req: Request): Promise<any> {
   const text = await req.text();
@@ -129,10 +123,10 @@ async function safeJson(req: Request): Promise<any> {
 
 // ---------- Handler ----------
 serve(async (req) => {
-  const headers = new Headers({ "Content-Type": "application/json" });
-  cors(headers, req.headers.get("origin"));
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") return handleOptions(req);
 
-  if (req.method === "OPTIONS") return new Response(null, { headers, status: 204 });
+  const { headers } = corsFromRequest(req);
   if (req.method !== "POST")  return new Response(JSON.stringify({ error: "Method Not Allowed" }), { headers, status: 405 });
 
   // Get user for audit logging
