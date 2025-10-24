@@ -172,7 +172,23 @@ const LoginPage: React.FC = () => {
     // Only check consent after demographics is complete
     if (!consent) return '/consent-photo';
 
-    // 5. All onboarding complete - go to dashboard
+    // 5. Seniors should set caregiver PIN after consent (optional but recommended)
+    // Check if senior has set caregiver PIN - only for seniors (role_code 4)
+    const isSenior = role === 'senior' || roleCode === 4;
+    if (isSenior) {
+      const { data: pinData } = await supabase
+        .from('caregiver_pins')
+        .select('senior_user_id')
+        .eq('senior_user_id', uid)
+        .maybeSingle();
+
+      if (!pinData) {
+        console.log('[LoginPage] Senior has no caregiver PIN set - redirecting to PIN setup');
+        return '/set-caregiver-pin';
+      }
+    }
+
+    // 6. All onboarding complete - go to dashboard
     return '/dashboard';
   };
   // --------------------------------------------------------------------------

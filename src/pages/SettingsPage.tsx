@@ -145,7 +145,7 @@ const SettingsPage: React.FC = () => {
       id: 'security',
       title: 'Security & Login',
       icon: '🔐',
-      description: 'Manage biometric login and security settings'
+      description: 'Manage biometric login, caregiver PIN, and security settings'
     },
     {
       id: 'notifications',
@@ -322,11 +322,33 @@ const SettingsPage: React.FC = () => {
 
                   {/* Security Settings */}
                   {section.id === 'security' && user && (
-                    <PasskeySetup
-                      userId={user.id}
-                      userName={user.email || user.phone || 'user'}
-                      displayName={settings.preferred_name || 'User'}
-                    />
+                    <div className="space-y-4">
+                      {/* Caregiver PIN */}
+                      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="font-semibold text-[#003865] mb-1">🔐 Caregiver PIN</div>
+                            <p className="text-gray-600 text-sm mb-3">
+                              Set a 4-digit PIN that caregivers can use to access your health information.
+                              This is different from your password and is only for caregiver access.
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => navigate('/set-caregiver-pin')}
+                          className="w-full mt-2 px-4 py-3 bg-[#003865] text-white rounded-lg hover:bg-[#8cc63f] transition font-semibold"
+                        >
+                          Set/Update Caregiver PIN
+                        </button>
+                      </div>
+
+                      {/* Passkey Setup */}
+                      <PasskeySetup
+                        userId={user.id}
+                        userName={user.email || user.phone || 'user'}
+                        displayName={settings.preferred_name || 'User'}
+                      />
+                    </div>
                   )}
 
                   {/* Notification Settings */}

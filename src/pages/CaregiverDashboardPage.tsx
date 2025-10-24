@@ -80,20 +80,28 @@ const CaregiverDashboardPage: React.FC = () => {
         return;
       }
 
-      // Validate PIN against senior's stored PIN
+      // Validate PIN against senior's stored hashed PIN in caregiver_pins table
       const { data: authData, error: authError } = await supabase
-        .from('phone_auth')
-        .select('pin')
-        .eq('user_id', seniorData.user_id)
+        .from('caregiver_pins')
+        .select('pin_hash')
+        .eq('senior_user_id', seniorData.user_id)
         .single();
 
       if (authError || !authData) {
-        setError('Senior PIN not set up. Please contact support.');
+        setError('Senior PIN not set up. Please ask the senior to set their caregiver PIN in Settings.');
         return;
       }
 
-      // Check PIN (Note: In production, this should be hashed comparison)
-      if (authData.pin !== seniorPin) {
+      // Verify PIN using PBKDF2 comparison via edge function
+      const { data: verifyData, error: verifyError } = await supabase.functions.invoke('hash-pin', {
+        body: {
+          pin: seniorPin,
+          action: 'verify',
+          storedHash: authData.pin_hash
+        }
+      });
+
+      if (verifyError || !verifyData?.valid) {
         setError('Invalid PIN. Please try again.');
         return;
       }

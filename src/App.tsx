@@ -64,6 +64,7 @@ const CommunityMoments = React.lazy(() => import('./components/CommunityMoments'
 const DemographicsPage = React.lazy(() => import('./pages/DemographicsPage'));
 const TriviaGame = React.lazy(() => import('./components/TriviaGame'));
 const CaregiverDashboardPage = React.lazy(() => import('./pages/CaregiverDashboardPage'));
+const SetCaregiverPinPage = React.lazy(() => import('./pages/SetCaregiverPinPage'));
 const HealthInsightsPage = React.lazy(() => import('./pages/HealthInsightsPage'));
 const QuestionsPage = React.lazy(() => import('./pages/QuestionsPage'));
 const AdminQuestionsPage = React.lazy(() => import('./pages/AdminQuestionsPage'));
@@ -171,6 +172,7 @@ function Shell() {
 
               {/* Caregiver Dashboard */}
               <Route path="/caregiver-dashboard" element={<RequireAuth><CaregiverDashboardPage /></RequireAuth>} />
+              <Route path="/set-caregiver-pin" element={<RequireAuth><SetCaregiverPinPage /></RequireAuth>} />
 
               {/* EMS Prehospital Handoff System */}
               <Route path="/ems" element={<RequireAuth><EMSPage /></RequireAuth>} />
