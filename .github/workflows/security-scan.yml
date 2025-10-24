@@ -10,7 +10,7 @@ on:
     - cron: '0 2 * * 1' # Runs every Monday at 2:00 AM UTC
 
 env:
-  NOTIFICATION_EMAILS: "maria@thewellfitcommunity.org,akima@thewellfitcommunity.org"
+  NOTIFICATION_EMAILS: "maria@thewellfitcommunity.org"
 
 jobs:
   security-scan:
