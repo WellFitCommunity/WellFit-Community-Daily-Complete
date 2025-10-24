@@ -15,12 +15,12 @@ CREATE TABLE IF NOT EXISTS public.phi_access_logs (
 
   -- What was accessed
   action TEXT NOT NULL, -- 'VITALS_CAPTURE', 'MEDICATION_PHOTO_CAPTURE', 'SDOH_ASSESSMENT', etc.
-  patient_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  visit_id UUID REFERENCES public.field_visits(id) ON DELETE SET NULL,
+  patient_id UUID NOT NULL REFERENCES public.profiles(user_id) ON DELETE CASCADE,
+  visit_id UUID, -- Will reference field_visits when that table is created
   data_types TEXT[] NOT NULL, -- ['blood_pressure', 'medication_photos', etc.]
 
   -- Where and when
-  timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  access_timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   ip_address TEXT,
   device_id TEXT,
   kiosk_id TEXT,
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS public.phi_access_logs (
 -- Indexes for query performance
 CREATE INDEX idx_phi_access_logs_patient ON public.phi_access_logs(patient_id);
 CREATE INDEX idx_phi_access_logs_user ON public.phi_access_logs(user_id);
-CREATE INDEX idx_phi_access_logs_timestamp ON public.phi_access_logs(timestamp DESC);
+CREATE INDEX idx_phi_access_logs_timestamp ON public.phi_access_logs(access_timestamp DESC);
 CREATE INDEX idx_phi_access_logs_action ON public.phi_access_logs(action);
 CREATE INDEX idx_phi_access_logs_visit ON public.phi_access_logs(visit_id);
 
@@ -75,7 +75,7 @@ CREATE OR REPLACE FUNCTION public.get_patient_phi_access_log(
   p_limit INTEGER DEFAULT 100
 )
 RETURNS TABLE (
-  timestamp TIMESTAMPTZ,
+  access_timestamp TIMESTAMPTZ,
   action TEXT,
   user_role TEXT,
   device_id TEXT,
@@ -95,14 +95,14 @@ BEGIN
 
   RETURN QUERY
   SELECT
-    pal.timestamp,
+    pal.access_timestamp,
     pal.action,
     pal.user_role,
     pal.device_id,
     pal.data_types
   FROM public.phi_access_logs pal
   WHERE pal.patient_id = p_patient_id
-  ORDER BY pal.timestamp DESC
+  ORDER BY pal.access_timestamp DESC
   LIMIT p_limit;
 END;
 $$;
@@ -140,7 +140,7 @@ BEGIN
     COUNT(DISTINCT pal.patient_id) as unique_patients,
     COUNT(DISTINCT pal.device_id) as unique_devices
   FROM public.phi_access_logs pal
-  WHERE pal.timestamp BETWEEN p_start_date AND p_end_date
+  WHERE pal.access_timestamp BETWEEN p_start_date AND p_end_date
   GROUP BY pal.action
   ORDER BY access_count DESC;
 END;
@@ -200,11 +200,11 @@ CREATE TRIGGER prevent_phi_access_log_delete
 --   -- Move logs older than 6 years to archive
 --   INSERT INTO public.phi_access_logs_archive
 --   SELECT * FROM public.phi_access_logs
---   WHERE timestamp < NOW() - INTERVAL '6 years';
+--   WHERE access_timestamp < NOW() - INTERVAL '6 years';
 --
 --   -- Delete from active table
 --   DELETE FROM public.phi_access_logs
---   WHERE timestamp < NOW() - INTERVAL '6 years';
+--   WHERE access_timestamp < NOW() - INTERVAL '6 years';
 -- END;
 -- $$;
 

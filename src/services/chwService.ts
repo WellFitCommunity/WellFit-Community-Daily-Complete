@@ -93,7 +93,7 @@ export class CHWService {
       user_role: 'kiosk_system',
       device_id: params.device_id || 'unknown',
       kiosk_id: params.kiosk_id,
-      timestamp: new Date().toISOString(),
+      access_timestamp: new Date().toISOString(),
       ip_address: await this.getClientIP(),
     };
 
