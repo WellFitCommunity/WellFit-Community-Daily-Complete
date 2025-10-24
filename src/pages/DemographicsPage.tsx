@@ -62,7 +62,7 @@ const DemographicsPage: React.FC = () => {
     phone: '',
     dob: '',
     address: '',
-    pin: '',
+    pin: '', // Kept for backward compatibility but not used in this flow
     gender: '',
     ethnicity: '',
     marital_status: '',
@@ -184,7 +184,7 @@ const DemographicsPage: React.FC = () => {
   };
 
   const nextStep = () => {
-    if (currentStep < 6) { // Now includes PIN step
+    if (currentStep < 5) { // 5 steps total (removed PIN step - handled separately)
       setCurrentStep(currentStep + 1);
     }
   };
@@ -201,7 +201,7 @@ const DemographicsPage: React.FC = () => {
     setError(null);
 
     try {
-      const { error: profileError } = await supabase
+      const { error: profileError} = await supabase
         .from('profiles')
         .update({
           gender: formData.gender,
@@ -242,6 +242,33 @@ const DemographicsPage: React.FC = () => {
     }
   };
 
+  // Skip demographics and go straight to consent
+  const skipToConsent = async () => {
+    setSaving(true);
+    setError(null);
+
+    try {
+      // Mark that they skipped demographics for now
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          demographics_step: 0, // Mark as skipped
+          demographics_complete: false
+        })
+        .eq('user_id', user!.id);
+
+      if (profileError) throw profileError;
+
+      // Go to consent flow
+      navigate('/consent-photo');
+    } catch (err) {
+      console.error('Error skipping demographics:', err);
+      setError('Unable to proceed. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleSubmit = async () => {
     setSubmitting(true);
     setError(null);
@@ -249,12 +276,6 @@ const DemographicsPage: React.FC = () => {
     // Validate required fields
     if (!formData.first_name || !formData.last_name || !formData.phone) {
       setError('Please complete your basic information.');
-      setSubmitting(false);
-      return;
-    }
-
-    if (!/^\d{4}$/.test(formData.pin)) {
-      setError('Please create a 4-digit PIN for caregiver access.');
       setSubmitting(false);
       return;
     }
@@ -286,38 +307,11 @@ const DemographicsPage: React.FC = () => {
           food_security: formData.food_security,
           social_support: formData.social_support,
           demographics_complete: true,
-          demographics_step: null, // Clear step since completed
-          onboarded: true
+          demographics_step: null // Clear step since completed
         })
         .eq('user_id', user!.id);
 
       if (profileError) throw profileError;
-
-      // Store PIN separately for caregiver read-only access
-      // FIXED 2025-10-03: Hash PIN securely using Web Crypto Edge Function
-      // Security: PBKDF2 with 100k iterations, SHA-256, 16-byte random salt
-      // Caregivers will use this PIN for view-only access to senior's progress
-      const { data: pinHashData, error: pinHashError } = await supabase.functions.invoke('hash-pin', {
-        body: { pin: formData.pin }
-      });
-
-      if (pinHashError) {
-        console.error('PIN hashing failed:', pinHashError);
-        throw new Error('Failed to securely store caregiver PIN. Please try again.');
-      }
-
-      // Store hashed PIN (format: base64(salt):base64(hash))
-      const { error: pinError } = await supabase
-        .from('phone_auth')
-        .upsert({
-          user_id: user!.id,  // Link to senior's account
-          phone: formData.phone,
-          pin_hash: pinHashData.hashed,  // Securely hashed PIN for caregiver access
-          verified: true,
-          verified_at: new Date().toISOString()
-        });
-
-      if (pinError) throw pinError;
 
       // Navigate to consent forms after demographics completion
       navigate('/consent-photo');
@@ -362,7 +356,7 @@ const DemographicsPage: React.FC = () => {
           </p>
           <div className="mt-4">
             <div className="flex justify-center space-x-2">
-              {[1, 2, 3, 4, 5, 6].map((step) => (
+              {[1, 2, 3, 4, 5].map((step) => (
                 <div
                   key={step}
                   className={`w-3 h-3 rounded-full ${
@@ -373,7 +367,7 @@ const DemographicsPage: React.FC = () => {
                 />
               ))}
             </div>
-            <p className="text-sm text-gray-500 mt-2">Step {currentStep} of 6</p>
+            <p className="text-sm text-gray-500 mt-2">Step {currentStep} of 5</p>
           </div>
         </div>
 
@@ -714,43 +708,6 @@ const DemographicsPage: React.FC = () => {
             </div>
           )}
 
-          {/* Step 6: PIN for Caregiver Access */}
-          {currentStep === 6 && (
-            <div className="space-y-6">
-              <h2 className="text-xl font-semibold mb-4">Caregiver Access PIN</h2>
-
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                <h3 className="text-lg font-medium text-blue-800 mb-2">Why do you need a PIN?</h3>
-                <p className="text-blue-700">
-                  Your PIN allows trusted caregivers, family members, or healthcare providers to view
-                  your health information and check-ins in <strong>read-only mode</strong>. They cannot
-                  change anything - only see how you're doing to help care for you.
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-lg font-medium text-gray-700 mb-2">
-                  Create a 4-digit PIN
-                </label>
-                <p className="text-gray-600 mb-3">
-                  Choose 4 numbers that you can remember easily, like a special date or simple pattern
-                </p>
-                <input
-                  type="password"
-                  value={formData.pin}
-                  onChange={(e) => handleInputChange('pin', e.target.value)}
-                  className="w-full p-4 text-2xl text-center border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 tracking-widest"
-                  placeholder="••••"
-                  maxLength={4}
-                  inputMode="numeric"
-                  pattern="\d{4}"
-                />
-                <p className="text-sm text-gray-500 mt-2">
-                  This PIN is private and should only be shared with people you trust to help with your care
-                </p>
-              </div>
-            </div>
-          )}
 
           {/* Navigation Buttons */}
           <div className="flex justify-between items-center mt-8">
@@ -764,6 +721,17 @@ const DemographicsPage: React.FC = () => {
             )}
 
             <div className="flex gap-3 ml-auto">
+              {/* Skip to Consent Button - Only on first step */}
+              {currentStep === 1 && (
+                <button
+                  onClick={skipToConsent}
+                  disabled={saving}
+                  className="px-6 py-3 text-lg font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50"
+                >
+                  {saving ? 'Skipping...' : 'Skip to Consent'}
+                </button>
+              )}
+
               {/* Save for Later Button */}
               <button
                 onClick={saveProgress}
@@ -774,7 +742,7 @@ const DemographicsPage: React.FC = () => {
               </button>
 
               {/* Next/Complete Button */}
-              {currentStep < 6 ? (
+              {currentStep < 5 ? (
                 <button
                   onClick={nextStep}
                   className="px-6 py-3 text-lg font-medium text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -789,21 +757,18 @@ const DemographicsPage: React.FC = () => {
                   className="px-8 py-3 text-lg font-medium text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
                   style={{ backgroundColor: WELLFIT_COLORS.green }}
                 >
-                  {submitting ? 'Saving...' : 'Complete Setup'}
+                  {submitting ? 'Saving...' : 'Continue to Consent'}
                 </button>
               )}
             </div>
           </div>
 
           {/* Progress Message */}
-          {currentStep < 6 && (
-            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <p className="text-yellow-800 text-center text-sm">
-                💡 <strong>Tip:</strong> You can click "Save for Later" and continue this anytime.
-                We'll remember where you left off!
-              </p>
-            </div>
-          )}
+          <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <p className="text-yellow-800 text-center text-sm">
+              💡 <strong>Tip:</strong> You can click "Save for Later" to return to the dashboard and complete this later, or "Skip to Consent" to continue registration.
+            </p>
+          </div>
         </div>
       </div>
     </div>

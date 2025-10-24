@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useSupabaseClient, useSession, useUser } from '../contexts/AuthContext';
 
 interface Profile {
@@ -26,6 +27,7 @@ const AdminProfileEditor: React.FC = () => {
   const supabase = useSupabaseClient();
   const session = useSession();
   const user = useUser();
+  const [searchParams] = useSearchParams();
 
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [selectedId, setSelectedId] = useState<string>('');
@@ -64,9 +66,15 @@ const AdminProfileEditor: React.FC = () => {
       }
     })();
 
-    const storedId = localStorage.getItem('selectedSeniorId');
-    if (storedId) setSelectedId(storedId);
-  }, [supabase]);
+    // Check for URL parameter first, then fall back to localStorage
+    const userIdFromUrl = searchParams.get('user_id');
+    if (userIdFromUrl) {
+      setSelectedId(userIdFromUrl);
+    } else {
+      const storedId = localStorage.getItem('selectedSeniorId');
+      if (storedId) setSelectedId(storedId);
+    }
+  }, [supabase, searchParams]);
 
   useEffect(() => {
     if (!selectedId) {

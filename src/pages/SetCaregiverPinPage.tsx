@@ -131,7 +131,20 @@ const SetCaregiverPinPage: React.FC = () => {
         if (insertError) throw insertError;
       }
 
-      // Success! Continue to next step in onboarding
+      // Mark onboarding as complete
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          onboarded: true
+        })
+        .eq('user_id', user?.id);
+
+      if (profileError) {
+        console.warn('Failed to mark onboarding complete:', profileError);
+        // Don't fail the whole process, just warn
+      }
+
+      // Success! Continue to dashboard
       navigate('/dashboard');
     } catch (e: any) {
       console.error('Error setting PIN:', e);

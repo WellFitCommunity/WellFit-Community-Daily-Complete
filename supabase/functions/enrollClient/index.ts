@@ -196,7 +196,7 @@ serve(async (req: Request) => {
     }
 
     return new Response(JSON.stringify({ success: true, user_id: newUserId }), {
-      status: 201,
+      status: 200,
       headers,
     });
   } catch (err: any) {

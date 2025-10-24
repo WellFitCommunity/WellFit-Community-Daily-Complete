@@ -117,8 +117,8 @@ const ConsentPrivacyPage: React.FC = () => {
       localStorage.removeItem('lastName');
 
       setFeedback('Privacy consent submitted. Thank you!');
-      // Move to dashboard
-      setTimeout(() => navigate('/dashboard'), 1200);
+      // Move to PIN setup for caregiver access
+      setTimeout(() => navigate('/set-caregiver-pin'), 1200);
     } catch (err) {
       console.error('Error saving privacy consent data:', err);
       setError('An unexpected error occurred while saving your consent. Please try again.');
