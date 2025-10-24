@@ -5,7 +5,10 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
+import bcrypt from 'bcryptjs';
+import { supabase } from '../../lib/supabaseClient';
 import { chwService } from '../../services/chwService';
+import { validateName, validateDOB, validateSSNLast4, validatePIN, RateLimiter } from '../../utils/kioskValidation';
 
 interface KioskCheckInProps {
   kioskId: string;
@@ -28,10 +31,14 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [patientId, setPatientId] = useState('');
+  const [notification, setNotification] = useState<{type: 'info' | 'warning' | 'error', message: string} | null>(null);
 
   // CRITICAL FIX: Inactivity timeout (2 minutes)
   const INACTIVITY_TIMEOUT = 120000; // 2 minutes in milliseconds
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Rate limiting for failed lookups
+  const rateLimiterRef = useRef<RateLimiter>(new RateLimiter(5, 300000)); // 5 attempts per 5 minutes
 
   // Reset all state and return to language selection
   const resetSession = () => {
@@ -54,8 +61,17 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
 
     timeoutRef.current = setTimeout(() => {
       // Session timed out - clear all PHI and return to start
-      resetSession();
-      alert('Session timed out for security. Please start over.');
+      setNotification({
+        type: 'warning',
+        message: language === 'en'
+          ? 'Session timed out for security. Please start over.'
+          : 'La sesión expiró por seguridad. Por favor, comience de nuevo.'
+      });
+      // Wait for user to see notification, then reset
+      setTimeout(() => {
+        resetSession();
+        setNotification(null);
+      }, 5000);
     }, INACTIVITY_TIMEOUT);
   };
 
@@ -143,61 +159,185 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
     setLoading(true);
     setError('');
 
-    try {
-      // HIGH FIX: Actual patient lookup with multi-factor verification
-      const { supabase } = await import('../../lib/supabaseClient');
+    // FIXED: Comprehensive input validation and rate limiting
+    const rateLimitKey = `${kioskId}-lookup`;
 
-      // Query profiles table with multiple identifiers
+    try {
+
+      // Check rate limit
+      if (rateLimiterRef.current.isRateLimited(rateLimitKey)) {
+        setError(language === 'en'
+          ? 'Too many failed attempts. Please wait 5 minutes or contact staff for assistance.'
+          : 'Demasiados intentos fallidos. Espere 5 minutos o contacte al personal.');
+        await chwService.logSecurityEvent({
+          event_type: 'rate_limit_exceeded',
+          severity: 'high',
+          kiosk_id: kioskId,
+          details: { limit_type: 'patient_lookup' }
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Validate first name
+      const firstNameValidation = validateName(firstName);
+      if (!firstNameValidation.valid) {
+        setError(firstNameValidation.error || t.notFound);
+        setLoading(false);
+        return;
+      }
+
+      // Validate last name
+      const lastNameValidation = validateName(lastName);
+      if (!lastNameValidation.valid) {
+        setError(lastNameValidation.error || t.notFound);
+        setLoading(false);
+        return;
+      }
+
+      // Validate DOB
+      const dobValidation = validateDOB(dob);
+      if (!dobValidation.valid) {
+        setError(dobValidation.error || t.notFound);
+        setLoading(false);
+        return;
+      }
+
+      // Validate SSN
+      const ssnValidation = validateSSNLast4(lastFourSSN);
+      if (!ssnValidation.valid) {
+        setError(ssnValidation.error || t.notFound);
+        setLoading(false);
+        return;
+      }
+
+      // Validate PIN (if provided)
+      const pinValidation = validatePIN(pin);
+      if (!pinValidation.valid) {
+        setError(pinValidation.error || 'Invalid PIN');
+        setLoading(false);
+        return;
+      }
+
+      // Use sanitized values
+      const sanitizedFirstName = firstNameValidation.sanitized;
+      const sanitizedLastName = lastNameValidation.sanitized;
+      const sanitizedSSN = ssnValidation.sanitized;
+      const sanitizedPIN = pinValidation.sanitized;
+
+      // Query profiles table with sanitized inputs
       const { data: patients, error } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, date_of_birth')
-        .ilike('first_name', firstName.trim())
-        .ilike('last_name', lastName.trim())
+        .select('id, first_name, last_name, date_of_birth, ssn_last_four, caregiver_pin_hash')
+        .ilike('first_name', sanitizedFirstName)
+        .ilike('last_name', sanitizedLastName)
         .limit(5);
 
       if (error) {
-        console.error('[Patient Lookup] Database error:', error);
+        // Log error without exposing PHI
+        await chwService.logSecurityEvent({
+          event_type: 'patient_lookup_error',
+          severity: 'medium',
+          details: { error_code: error.code },
+          kiosk_id: kioskId
+        });
         setError(t.notFound);
         return;
       }
 
       if (!patients || patients.length === 0) {
+        rateLimiterRef.current.recordAttempt(rateLimitKey);
+        await chwService.logSecurityEvent({
+          event_type: 'patient_lookup_no_match',
+          severity: 'low',
+          details: { attempted_name_length: `${sanitizedFirstName.length},${sanitizedLastName.length}` },
+          kiosk_id: kioskId
+        });
         setError(t.notFound);
         return;
       }
 
-      // Match date of birth
+      // Multi-factor verification: DOB + Last 4 SSN
       const matchedPatient = patients.find(p => {
         const dbDOB = new Date(p.date_of_birth).toISOString().split('T')[0];
-        return dbDOB === dob;
+        const dobMatch = dbDOB === dob;
+        const ssnMatch = p.ssn_last_four === sanitizedSSN;
+        return dobMatch && ssnMatch;
       });
 
       if (!matchedPatient) {
+        rateLimiterRef.current.recordAttempt(rateLimitKey);
+        await chwService.logSecurityEvent({
+          event_type: 'patient_lookup_verification_failed',
+          severity: 'medium',
+          details: { verification_type: 'dob_ssn_mismatch' },
+          kiosk_id: kioskId
+        });
         setError(t.notFound);
         return;
       }
 
-      // If PIN provided, verify it
-      if (pin) {
-        const { data: pinData } = await supabase
-          .from('profiles')
-          .select('caregiver_pin_hash')
-          .eq('id', matchedPatient.id)
-          .single();
-
-        // TODO: Implement actual PIN verification with bcrypt
-        // For now, just check if PIN exists
-        if (!pinData?.caregiver_pin_hash) {
+      // If PIN provided, verify it with bcrypt
+      if (sanitizedPIN) {
+        if (!matchedPatient.caregiver_pin_hash) {
+          rateLimiterRef.current.recordAttempt(rateLimitKey);
+          await chwService.logSecurityEvent({
+            event_type: 'pin_verification_failed',
+            severity: 'medium',
+            patient_id: matchedPatient.id,
+            details: { reason: 'no_pin_set' },
+            kiosk_id: kioskId
+          });
           setError('PIN verification failed. Please try without PIN or contact staff.');
           return;
         }
+
+        // FIXED: Actual bcrypt verification
+        const pinValid = await bcrypt.compare(sanitizedPIN, matchedPatient.caregiver_pin_hash);
+
+        if (!pinValid) {
+          rateLimiterRef.current.recordAttempt(rateLimitKey);
+          await chwService.logSecurityEvent({
+            event_type: 'pin_verification_failed',
+            severity: 'high',
+            patient_id: matchedPatient.id,
+            details: { reason: 'incorrect_pin' },
+            kiosk_id: kioskId
+          });
+          setError('PIN verification failed. Please check your PIN or contact staff.');
+          return;
+        }
+
+        await chwService.logSecurityEvent({
+          event_type: 'pin_verification_success',
+          severity: 'low',
+          patient_id: matchedPatient.id,
+          kiosk_id: kioskId
+        });
       }
 
-      // Success - patient found
+      // Success - patient found and verified, clear rate limit
+      rateLimiterRef.current.clearAttempts(rateLimitKey);
+
+      await chwService.logSecurityEvent({
+        event_type: 'patient_lookup_success',
+        severity: 'low',
+        patient_id: matchedPatient.id,
+        details: { verification_method: sanitizedPIN ? 'dob_ssn_pin' : 'dob_ssn' },
+        kiosk_id: kioskId
+      });
+
       setPatientId(matchedPatient.id);
       setStep('privacy');
     } catch (err) {
-      console.error('[Patient Lookup] Error:', err);
+      // Log error without PHI
+      rateLimiterRef.current.recordAttempt(rateLimitKey);
+      await chwService.logSecurityEvent({
+        event_type: 'patient_lookup_exception',
+        severity: 'high',
+        details: { error_type: err instanceof Error ? err.name : 'unknown' },
+        kiosk_id: kioskId
+      });
       setError(t.notFound);
     } finally {
       setLoading(false);
@@ -240,10 +380,28 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
     }
   };
 
+  // Notification component
+  const NotificationBanner = () => {
+    if (!notification) return null;
+
+    const bgColor = {
+      info: 'bg-blue-100 border-blue-500',
+      warning: 'bg-yellow-100 border-yellow-500',
+      error: 'bg-red-100 border-red-500'
+    }[notification.type];
+
+    return (
+      <div className={`fixed top-4 left-1/2 transform -translate-x-1/2 ${bgColor} border-4 px-8 py-6 rounded-2xl shadow-2xl z-50 max-w-2xl`}>
+        <p className="text-2xl font-bold text-gray-800">{notification.message}</p>
+      </div>
+    );
+  };
+
   // Language Selection
   if (step === 'language') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center p-8">
+        <NotificationBanner />
         <div className="bg-white rounded-3xl shadow-2xl p-12 max-w-2xl w-full text-center">
           <h1 className="text-5xl font-bold text-gray-800 mb-12">{t.welcome}</h1>
           <p className="text-3xl text-gray-600 mb-12">{t.selectLanguage}</p>
@@ -276,6 +434,7 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
   if (step === 'lookup') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center p-8">
+        <NotificationBanner />
         <div className="bg-white rounded-3xl shadow-2xl p-12 max-w-3xl w-full">
           <h2 className="text-4xl font-bold text-gray-800 mb-8 text-center">{t.patientLookup}</h2>
 
@@ -377,6 +536,7 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
   // Privacy Consent
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center p-8">
+      <NotificationBanner />
       <div className="bg-white rounded-3xl shadow-2xl p-12 max-w-3xl w-full">
         <h2 className="text-4xl font-bold text-gray-800 mb-8 text-center">{t.privacy}</h2>
 

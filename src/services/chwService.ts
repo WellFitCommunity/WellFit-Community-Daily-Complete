@@ -363,7 +363,8 @@ export class CHWService {
           captured_at: new Date()
         }
       },
-      photos: photos.map(p => p.photo_data),
+      // FIXED: Store encrypted photos, not plain photos
+      photos: encryptedPhotos.map(p => p.photo_data),
       updated_at: new Date()
     };
 
@@ -371,13 +372,14 @@ export class CHWService {
     if (!navigator.onLine) {
       await offlineSync.saveOffline('visits', photoData);
 
-      // Save individual photos
-      for (const photo of photos) {
+      // Save individual encrypted photos
+      for (const photo of encryptedPhotos) {
         await offlineSync.saveOffline('photos', {
           id: photo.id,
           visit_id: visitId,
-          data: photo.photo_data,
+          data: photo.photo_data, // Already encrypted
           type: 'medication',
+          encrypted: true,
           metadata: {
             medication_name: photo.medication_name,
             notes: photo.notes
@@ -402,13 +404,14 @@ export class CHWService {
 
       if (error) throw error;
 
-      // Upload photos
-      for (const photo of photos) {
+      // Upload encrypted photos
+      for (const photo of encryptedPhotos) {
         await offlineSync.saveOffline('photos', {
           id: photo.id,
           visit_id: visitId,
-          data: photo.photo_data,
+          data: photo.photo_data, // Already encrypted
           type: 'medication',
+          encrypted: true,
           metadata: {
             medication_name: photo.medication_name,
             notes: photo.notes
@@ -419,12 +422,13 @@ export class CHWService {
     } catch (error) {
       console.warn('[CHWService] Saving medication photos offline:', error);
       await offlineSync.saveOffline('visits', photoData);
-      for (const photo of photos) {
+      for (const photo of encryptedPhotos) {
         await offlineSync.saveOffline('photos', {
           id: photo.id,
           visit_id: visitId,
-          data: photo.photo_data,
+          data: photo.photo_data, // Already encrypted
           type: 'medication',
+          encrypted: true,
           metadata: {
             medication_name: photo.medication_name,
             notes: photo.notes
@@ -760,6 +764,47 @@ export class CHWService {
     }
 
     return alerts;
+  }
+
+  /**
+   * Log security events for audit trail
+   * HIPAA § 164.312(b) - Audit controls
+   */
+  async logSecurityEvent(params: {
+    event_type: string;
+    severity: 'low' | 'medium' | 'high' | 'critical';
+    patient_id?: string;
+    visit_id?: string;
+    details?: Record<string, any>;
+    kiosk_id?: string;
+  }): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('security_events')
+        .insert({
+          event_type: params.event_type,
+          severity: params.severity,
+          patient_id: params.patient_id,
+          visit_id: params.visit_id,
+          details: params.details || {},
+          kiosk_id: params.kiosk_id,
+          user_role: 'kiosk_system',
+          ip_address: await this.getClientIP(),
+          created_at: new Date()
+        });
+
+      if (error) {
+        // Fallback to console if DB logging fails, but sanitize PHI
+        console.error('[Security Event] Failed to log:', {
+          event_type: params.event_type,
+          severity: params.severity,
+          error_code: error.code
+        });
+      }
+    } catch (err) {
+      // Silent fail - don't block user flow for logging failures
+      console.error('[Security Event] Exception:', err instanceof Error ? err.message : 'unknown');
+    }
   }
 
   /**
