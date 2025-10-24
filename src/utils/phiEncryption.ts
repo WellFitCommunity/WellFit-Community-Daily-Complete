@@ -100,9 +100,8 @@ export async function decryptPHI(
  * - Key Management Service (AWS KMS, Azure Key Vault, etc.)
  */
 async function getMasterEncryptionKey(): Promise<CryptoKey> {
-  // Check for environment variable first
-  const keyMaterial = import.meta.env.VITE_PHI_ENCRYPTION_KEY ||
-                      process.env.REACT_APP_PHI_ENCRYPTION_KEY;
+  // Check for environment variable first (Create React App uses REACT_APP_ prefix)
+  const keyMaterial = process.env.REACT_APP_PHI_ENCRYPTION_KEY;
 
   if (!keyMaterial) {
     // CRITICAL: In production, this should FAIL
