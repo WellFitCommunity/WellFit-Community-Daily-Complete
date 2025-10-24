@@ -440,10 +440,11 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
 
           <div className="space-y-6">
             <div>
-              <label className="block text-2xl font-medium text-gray-700 mb-3">
+              <label htmlFor="firstName" className="block text-2xl font-medium text-gray-700 mb-3">
                 {t.firstName}
               </label>
               <input
+                id="firstName"
                 type="text"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
@@ -453,10 +454,11 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
             </div>
 
             <div>
-              <label className="block text-2xl font-medium text-gray-700 mb-3">
+              <label htmlFor="lastName" className="block text-2xl font-medium text-gray-700 mb-3">
                 {t.lastName}
               </label>
               <input
+                id="lastName"
                 type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
@@ -466,10 +468,11 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
             </div>
 
             <div>
-              <label className="block text-2xl font-medium text-gray-700 mb-3">
+              <label htmlFor="dob" className="block text-2xl font-medium text-gray-700 mb-3">
                 {t.dateOfBirth}
               </label>
               <input
+                id="dob"
                 type="date"
                 value={dob}
                 onChange={(e) => setDob(e.target.value)}
@@ -478,10 +481,11 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
             </div>
 
             <div>
-              <label className="block text-2xl font-medium text-gray-700 mb-3">
+              <label htmlFor="lastFourSSN" className="block text-2xl font-medium text-gray-700 mb-3">
                 {t.lastFour}
               </label>
               <input
+                id="lastFourSSN"
                 type="text"
                 value={lastFourSSN}
                 onChange={(e) => setLastFourSSN(e.target.value.replace(/\D/g, '').slice(0, 4))}
@@ -492,10 +496,11 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
             </div>
 
             <div>
-              <label className="block text-2xl font-medium text-gray-700 mb-3">
+              <label htmlFor="pin" className="block text-2xl font-medium text-gray-700 mb-3">
                 {t.pin}
               </label>
               <input
+                id="pin"
                 type="password"
                 value={pin}
                 onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
