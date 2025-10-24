@@ -636,77 +636,161 @@ const PhysicianPanel: React.FC = () => {
               Clinical Tools & Medical Records
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <a
-                href="/my-health"
-                className="bg-white p-5 rounded-lg shadow hover:shadow-xl transition-all border border-blue-200 hover:border-blue-400 group"
+              {/* Patient Records */}
+              <button
+                onClick={() => {
+                  if (!selectedPatient) {
+                    alert('Please select a patient first');
+                    return;
+                  }
+                  window.location.href = `/my-health?patientId=${selectedPatient.user_id}`;
+                }}
+                disabled={!selectedPatient}
+                className={`p-5 rounded-lg shadow transition-all border group text-left ${
+                  selectedPatient
+                    ? 'bg-white border-blue-200 hover:border-blue-400 hover:shadow-xl cursor-pointer'
+                    : 'bg-gray-100 border-gray-300 cursor-not-allowed opacity-60'
+                }`}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="text-4xl">📋</div>
-                  <Activity className="w-6 h-6 text-blue-600 group-hover:scale-110 transition-transform" />
+                  <Activity className={`w-6 h-6 transition-transform ${selectedPatient ? 'text-blue-600 group-hover:scale-110' : 'text-gray-400'}`} />
                 </div>
-                <h3 className="font-bold text-gray-900 text-lg">Patient Records</h3>
-                <p className="text-sm text-gray-600 mt-1">FHIR-compliant health records with complete medical history</p>
-              </a>
+                <h3 className={`font-bold text-lg ${selectedPatient ? 'text-gray-900' : 'text-gray-500'}`}>Patient Records</h3>
+                <p className={`text-sm mt-1 ${selectedPatient ? 'text-gray-600' : 'text-gray-400'}`}>
+                  {selectedPatient ? 'FHIR-compliant health records with complete medical history' : 'Select a patient first'}
+                </p>
+              </button>
 
-              <a
-                href="/medicine-cabinet"
-                className="bg-white p-5 rounded-lg shadow hover:shadow-xl transition-all border border-green-200 hover:border-green-400 group"
+              {/* Medications */}
+              <button
+                onClick={() => {
+                  if (!selectedPatient) {
+                    alert('Please select a patient first');
+                    return;
+                  }
+                  window.location.href = `/medicine-cabinet?patientId=${selectedPatient.user_id}`;
+                }}
+                disabled={!selectedPatient}
+                className={`p-5 rounded-lg shadow transition-all border group text-left ${
+                  selectedPatient
+                    ? 'bg-white border-green-200 hover:border-green-400 hover:shadow-xl cursor-pointer'
+                    : 'bg-gray-100 border-gray-300 cursor-not-allowed opacity-60'
+                }`}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="text-4xl">💊</div>
-                  <Pill className="w-6 h-6 text-green-600 group-hover:scale-110 transition-transform" />
+                  <Pill className={`w-6 h-6 transition-transform ${selectedPatient ? 'text-green-600 group-hover:scale-110' : 'text-gray-400'}`} />
                 </div>
-                <h3 className="font-bold text-gray-900 text-lg">Medications</h3>
-                <p className="text-sm text-gray-600 mt-1">E-prescribing, medication reconciliation & adherence tracking</p>
-              </a>
+                <h3 className={`font-bold text-lg ${selectedPatient ? 'text-gray-900' : 'text-gray-500'}`}>Medications</h3>
+                <p className={`text-sm mt-1 ${selectedPatient ? 'text-gray-600' : 'text-gray-400'}`}>
+                  {selectedPatient ? 'E-prescribing, medication reconciliation & adherence tracking' : 'Select a patient first'}
+                </p>
+              </button>
 
-              <a
-                href="/care-plans"
-                className="bg-white p-5 rounded-lg shadow hover:shadow-xl transition-all border border-purple-200 hover:border-purple-400 group"
+              {/* Care Plans */}
+              <button
+                onClick={() => {
+                  if (!selectedPatient) {
+                    alert('Please select a patient first');
+                    return;
+                  }
+                  window.location.href = `/care-plans?patientId=${selectedPatient.user_id}`;
+                }}
+                disabled={!selectedPatient}
+                className={`p-5 rounded-lg shadow transition-all border group text-left ${
+                  selectedPatient
+                    ? 'bg-white border-purple-200 hover:border-purple-400 hover:shadow-xl cursor-pointer'
+                    : 'bg-gray-100 border-gray-300 cursor-not-allowed opacity-60'
+                }`}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="text-4xl">🗂️</div>
-                  <ClipboardList className="w-6 h-6 text-purple-600 group-hover:scale-110 transition-transform" />
+                  <ClipboardList className={`w-6 h-6 transition-transform ${selectedPatient ? 'text-purple-600 group-hover:scale-110' : 'text-gray-400'}`} />
                 </div>
-                <h3 className="font-bold text-gray-900 text-lg">Care Plans</h3>
-                <p className="text-sm text-gray-600 mt-1">Evidence-based treatment protocols & care coordination</p>
-              </a>
+                <h3 className={`font-bold text-lg ${selectedPatient ? 'text-gray-900' : 'text-gray-500'}`}>Care Plans</h3>
+                <p className={`text-sm mt-1 ${selectedPatient ? 'text-gray-600' : 'text-gray-400'}`}>
+                  {selectedPatient ? 'Evidence-based treatment protocols & care coordination' : 'Select a patient first'}
+                </p>
+              </button>
 
-              <a
-                href="/health-observations"
-                className="bg-white p-5 rounded-lg shadow hover:shadow-xl transition-all border border-indigo-200 hover:border-indigo-400 group"
+              {/* Lab Results */}
+              <button
+                onClick={() => {
+                  if (!selectedPatient) {
+                    alert('Please select a patient first');
+                    return;
+                  }
+                  window.location.href = `/health-observations?patientId=${selectedPatient.user_id}`;
+                }}
+                disabled={!selectedPatient}
+                className={`p-5 rounded-lg shadow transition-all border group text-left ${
+                  selectedPatient
+                    ? 'bg-white border-indigo-200 hover:border-indigo-400 hover:shadow-xl cursor-pointer'
+                    : 'bg-gray-100 border-gray-300 cursor-not-allowed opacity-60'
+                }`}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="text-4xl">🔬</div>
-                  <FileText className="w-6 h-6 text-indigo-600 group-hover:scale-110 transition-transform" />
+                  <FileText className={`w-6 h-6 transition-transform ${selectedPatient ? 'text-indigo-600 group-hover:scale-110' : 'text-gray-400'}`} />
                 </div>
-                <h3 className="font-bold text-gray-900 text-lg">Lab Results</h3>
-                <p className="text-sm text-gray-600 mt-1">LOINC-coded observations, diagnostics & trending</p>
-              </a>
+                <h3 className={`font-bold text-lg ${selectedPatient ? 'text-gray-900' : 'text-gray-500'}`}>Lab Results</h3>
+                <p className={`text-sm mt-1 ${selectedPatient ? 'text-gray-600' : 'text-gray-400'}`}>
+                  {selectedPatient ? 'LOINC-coded observations, diagnostics & trending' : 'Select a patient first'}
+                </p>
+              </button>
 
-              <a
-                href="/immunizations"
-                className="bg-white p-5 rounded-lg shadow hover:shadow-xl transition-all border border-pink-200 hover:border-pink-400 group"
+              {/* Immunizations */}
+              <button
+                onClick={() => {
+                  if (!selectedPatient) {
+                    alert('Please select a patient first');
+                    return;
+                  }
+                  window.location.href = `/immunizations?patientId=${selectedPatient.user_id}`;
+                }}
+                disabled={!selectedPatient}
+                className={`p-5 rounded-lg shadow transition-all border group text-left ${
+                  selectedPatient
+                    ? 'bg-white border-pink-200 hover:border-pink-400 hover:shadow-xl cursor-pointer'
+                    : 'bg-gray-100 border-gray-300 cursor-not-allowed opacity-60'
+                }`}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="text-4xl">💉</div>
-                  <CheckCircle className="w-6 h-6 text-pink-600 group-hover:scale-110 transition-transform" />
+                  <CheckCircle className={`w-6 h-6 transition-transform ${selectedPatient ? 'text-pink-600 group-hover:scale-110' : 'text-gray-400'}`} />
                 </div>
-                <h3 className="font-bold text-gray-900 text-lg">Immunizations</h3>
-                <p className="text-sm text-gray-600 mt-1">CVX-coded vaccination records & schedule gaps</p>
-              </a>
+                <h3 className={`font-bold text-lg ${selectedPatient ? 'text-gray-900' : 'text-gray-500'}`}>Immunizations</h3>
+                <p className={`text-sm mt-1 ${selectedPatient ? 'text-gray-600' : 'text-gray-400'}`}>
+                  {selectedPatient ? 'CVX-coded vaccination records & schedule gaps' : 'Select a patient first'}
+                </p>
+              </button>
 
-              <a
-                href="/billing"
-                className="bg-white p-5 rounded-lg shadow hover:shadow-xl transition-all border border-amber-200 hover:border-amber-400 group"
+              {/* Billing & Claims */}
+              <button
+                onClick={() => {
+                  if (!selectedPatient) {
+                    alert('Please select a patient first');
+                    return;
+                  }
+                  window.location.href = `/billing?patientId=${selectedPatient.user_id}`;
+                }}
+                disabled={!selectedPatient}
+                className={`p-5 rounded-lg shadow transition-all border group text-left ${
+                  selectedPatient
+                    ? 'bg-white border-amber-200 hover:border-amber-400 hover:shadow-xl cursor-pointer'
+                    : 'bg-gray-100 border-gray-300 cursor-not-allowed opacity-60'
+                }`}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="text-4xl">💰</div>
-                  <DollarSign className="w-6 h-6 text-amber-600 group-hover:scale-110 transition-transform" />
+                  <DollarSign className={`w-6 h-6 transition-transform ${selectedPatient ? 'text-amber-600 group-hover:scale-110' : 'text-gray-400'}`} />
                 </div>
-                <h3 className="font-bold text-gray-900 text-lg">Billing & Claims</h3>
-                <p className="text-sm text-gray-600 mt-1">X12 EDI claims, fee schedules & revenue analytics</p>
-              </a>
+                <h3 className={`font-bold text-lg ${selectedPatient ? 'text-gray-900' : 'text-gray-500'}`}>Billing & Claims</h3>
+                <p className={`text-sm mt-1 ${selectedPatient ? 'text-gray-600' : 'text-gray-400'}`}>
+                  {selectedPatient ? 'X12 EDI claims, fee schedules & revenue analytics' : 'Select a patient first'}
+                </p>
+              </button>
 
               {/* Telehealth - Outpatient */}
               <button
@@ -718,14 +802,21 @@ const PhysicianPanel: React.FC = () => {
                   setTelehealthEncounterType('outpatient');
                   setTelehealthActive(true);
                 }}
-                className="bg-white p-5 rounded-lg shadow hover:shadow-xl transition-all border border-teal-200 hover:border-teal-400 group text-left"
+                disabled={!selectedPatient}
+                className={`p-5 rounded-lg shadow transition-all border group text-left ${
+                  selectedPatient
+                    ? 'bg-white border-teal-200 hover:border-teal-400 hover:shadow-xl cursor-pointer'
+                    : 'bg-gray-100 border-gray-300 cursor-not-allowed opacity-60'
+                }`}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="text-4xl">📹</div>
-                  <Video className="w-6 h-6 text-teal-600 group-hover:scale-110 transition-transform" />
+                  <Video className={`w-6 h-6 transition-transform ${selectedPatient ? 'text-teal-600 group-hover:scale-110' : 'text-gray-400'}`} />
                 </div>
-                <h3 className="font-bold text-gray-900 text-lg">Telehealth Visit</h3>
-                <p className="text-sm text-gray-600 mt-1">HIPAA-compliant video consultations with SmartScribe</p>
+                <h3 className={`font-bold text-lg ${selectedPatient ? 'text-gray-900' : 'text-gray-500'}`}>Telehealth Visit</h3>
+                <p className={`text-sm mt-1 ${selectedPatient ? 'text-gray-600' : 'text-gray-400'}`}>
+                  {selectedPatient ? 'HIPAA-compliant video consultations with SmartScribe' : 'Select a patient first'}
+                </p>
               </button>
 
               {/* Telehealth - ER */}
@@ -738,14 +829,21 @@ const PhysicianPanel: React.FC = () => {
                   setTelehealthEncounterType('er');
                   setTelehealthActive(true);
                 }}
-                className="bg-white p-5 rounded-lg shadow hover:shadow-xl transition-all border border-red-300 hover:border-red-500 group text-left"
+                disabled={!selectedPatient}
+                className={`p-5 rounded-lg shadow transition-all border group text-left ${
+                  selectedPatient
+                    ? 'bg-white border-red-300 hover:border-red-500 hover:shadow-xl cursor-pointer'
+                    : 'bg-gray-100 border-gray-300 cursor-not-allowed opacity-60'
+                }`}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="text-4xl">🚨</div>
-                  <AlertTriangle className="w-6 h-6 text-red-600 group-hover:scale-110 transition-transform animate-pulse" />
+                  <AlertTriangle className={`w-6 h-6 transition-transform ${selectedPatient ? 'text-red-600 group-hover:scale-110 animate-pulse' : 'text-gray-400'}`} />
                 </div>
-                <h3 className="font-bold text-gray-900 text-lg">ER Telehealth</h3>
-                <p className="text-sm text-gray-600 mt-1">Emergency remote consultation with stethoscope support</p>
+                <h3 className={`font-bold text-lg ${selectedPatient ? 'text-gray-900' : 'text-gray-500'}`}>ER Telehealth</h3>
+                <p className={`text-sm mt-1 ${selectedPatient ? 'text-gray-600' : 'text-gray-400'}`}>
+                  {selectedPatient ? 'Emergency remote consultation with stethoscope support' : 'Select a patient first'}
+                </p>
               </button>
 
               {/* Telehealth - Urgent Care */}
@@ -758,14 +856,21 @@ const PhysicianPanel: React.FC = () => {
                   setTelehealthEncounterType('urgent-care');
                   setTelehealthActive(true);
                 }}
-                className="bg-white p-5 rounded-lg shadow hover:shadow-xl transition-all border border-orange-200 hover:border-orange-400 group text-left"
+                disabled={!selectedPatient}
+                className={`p-5 rounded-lg shadow transition-all border group text-left ${
+                  selectedPatient
+                    ? 'bg-white border-orange-200 hover:border-orange-400 hover:shadow-xl cursor-pointer'
+                    : 'bg-gray-100 border-gray-300 cursor-not-allowed opacity-60'
+                }`}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="text-4xl">⚡</div>
-                  <Activity className="w-6 h-6 text-orange-600 group-hover:scale-110 transition-transform" />
+                  <Activity className={`w-6 h-6 transition-transform ${selectedPatient ? 'text-orange-600 group-hover:scale-110' : 'text-gray-400'}`} />
                 </div>
-                <h3 className="font-bold text-gray-900 text-lg">Urgent Care Visit</h3>
-                <p className="text-sm text-gray-600 mt-1">Same-day telehealth for urgent but non-emergency care</p>
+                <h3 className={`font-bold text-lg ${selectedPatient ? 'text-gray-900' : 'text-gray-500'}`}>Urgent Care Visit</h3>
+                <p className={`text-sm mt-1 ${selectedPatient ? 'text-gray-600' : 'text-gray-400'}`}>
+                  {selectedPatient ? 'Same-day telehealth for urgent but non-emergency care' : 'Select a patient first'}
+                </p>
               </button>
             </div>
           </div>

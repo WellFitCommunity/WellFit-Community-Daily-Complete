@@ -147,11 +147,23 @@ const RealTimeSmartScribe: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-xl">
-      {/* Header with Revenue Counter */}
+      {/* Header with Revenue Counter and Recording Status */}
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">🧭 Compass Riley</h2>
-          <p className="text-sm text-gray-600 mt-1">{status}</p>
+        <div className="flex items-center gap-4">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">🧭 Compass Riley</h2>
+            <p className="text-sm text-gray-600 mt-1">{status}</p>
+          </div>
+          {/* Live Recording Indicator */}
+          {isRecording && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-full shadow-lg animate-pulse">
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
+              </span>
+              <span className="font-bold text-sm">LIVE RECORDING</span>
+            </div>
+          )}
         </div>
         {revenueImpact > 0 && (
           <div className="px-6 py-3 bg-gradient-to-r from-green-400 to-emerald-500 rounded-lg shadow-lg animate-pulse">
@@ -228,12 +240,43 @@ const RealTimeSmartScribe: React.FC = () => {
       {/* Live Transcript */}
       {transcript && (
         <div className="mb-8">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-            <span>📝</span>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <span className={isRecording ? 'animate-pulse' : ''}>📝</span>
+              Live Transcript
+              {isRecording && <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-semibold">CAPTURING</span>}
+            </h3>
+            <div className="text-sm text-gray-600">
+              {transcript.split(' ').length} words
+            </div>
+          </div>
+          <div className={`rounded-xl p-6 max-h-96 overflow-y-auto border-2 shadow-inner ${
+            isRecording
+              ? 'bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 border-blue-300 animate-pulse-slow'
+              : 'bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200'
+          }`}>
+            <p className="text-lg leading-relaxed text-gray-900 font-medium">{transcript}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Show placeholder when recording but no transcript yet */}
+      {isRecording && !transcript && (
+        <div className="mb-8">
+          <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2 mb-3">
+            <span className="animate-pulse">📝</span>
             Live Transcript
+            <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-semibold">LISTENING</span>
           </h3>
-          <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 max-h-80 overflow-y-auto border-2 border-gray-200 shadow-inner">
-            <p className="text-base leading-relaxed text-gray-800">{transcript}</p>
+          <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-xl p-6 border-2 border-blue-300">
+            <div className="flex items-center justify-center gap-3 text-gray-500">
+              <div className="flex gap-1">
+                <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{animationDelay: '0ms'}}></span>
+                <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{animationDelay: '150ms'}}></span>
+                <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{animationDelay: '300ms'}}></span>
+              </div>
+              <p className="text-base italic">Waiting for speech...</p>
+            </div>
           </div>
         </div>
       )}
