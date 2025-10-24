@@ -1,11 +1,13 @@
 /**
  * CHW Service Layer
  * Handles all Community Health Worker kiosk operations with offline-first capabilities
+ * HIPAA Compliant: Includes encryption, consent verification, and audit logging
  */
 
 import { supabase } from '../lib/supabaseClient';
 import { offlineSync } from './specialist-workflow-engine/OfflineDataSync';
 import { FieldVisit, SpecialistAssessment, SpecialistAlert } from './specialist-workflow-engine/types';
+import { encryptPHI, decryptPHI } from '../utils/phiEncryption';
 
 // Kiosk-specific types
 export interface KioskSession {
@@ -69,6 +71,79 @@ export class CHWService {
   async initialize(): Promise<void> {
     await offlineSync.initialize();
     offlineSync.startAutoSync(30000); // Sync every 30 seconds when online
+  }
+
+  /**
+   * HIPAA COMPLIANCE: Log PHI access for audit trail
+   * § 164.312(b) - Audit controls
+   */
+  private async logPHIAccess(params: {
+    action: string;
+    patient_id: string;
+    visit_id?: string;
+    data_types: string[];
+    device_id?: string;
+    kiosk_id?: string;
+  }): Promise<void> {
+    const auditLog = {
+      action: params.action,
+      patient_id: params.patient_id,
+      visit_id: params.visit_id,
+      data_types: params.data_types,
+      user_role: 'kiosk_system',
+      device_id: params.device_id || 'unknown',
+      kiosk_id: params.kiosk_id,
+      timestamp: new Date().toISOString(),
+      ip_address: await this.getClientIP(),
+    };
+
+    try {
+      // Log to phi_access_logs table
+      await supabase.from('phi_access_logs').insert(auditLog);
+    } catch (error) {
+      // CRITICAL: If audit logging fails, we should not proceed
+      console.error('[HIPAA AUDIT] Failed to log PHI access:', error);
+      throw new Error('Audit logging failed. Cannot proceed with PHI operation for compliance reasons.');
+    }
+  }
+
+  /**
+   * HIPAA COMPLIANCE: Verify patient consent before PHI operations
+   * § 164.508 - Uses and disclosures requiring authorization
+   */
+  private async verifyConsent(
+    patientId: string,
+    consentType: 'kiosk_usage' | 'photo_capture' | 'medication_photo' | 'data_sharing'
+  ): Promise<boolean> {
+    try {
+      const { data, error } = await supabase.rpc('has_active_consent', {
+        p_patient_id: patientId,
+        p_consent_type: consentType,
+      });
+
+      if (error) {
+        console.error('[HIPAA Consent] Failed to verify consent:', error);
+        return false;
+      }
+
+      return data === true;
+    } catch (error) {
+      console.error('[HIPAA Consent] Consent verification error:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get client IP address for audit logging
+   */
+  private async getClientIP(): Promise<string> {
+    try {
+      // In a real implementation, this would come from the server
+      // For kiosk mode, we might get it from a device-specific API
+      return 'kiosk-local';
+    } catch {
+      return 'unknown';
+    }
   }
 
   /**
@@ -150,11 +225,29 @@ export class CHWService {
 
   /**
    * Capture vital signs with validation
+   * HIPAA COMPLIANT: Logs PHI access
    */
   async captureVitals(
     visitId: string,
     vitalsData: VitalsData
   ): Promise<void> {
+    // Get patient ID for audit logging
+    const { data: visit } = await supabase
+      .from('field_visits')
+      .select('patient_id')
+      .eq('id', visitId)
+      .single();
+
+    if (visit) {
+      // BLOCKER FIX: Log PHI access for vitals capture
+      await this.logPHIAccess({
+        action: 'VITALS_CAPTURE',
+        patient_id: visit.patient_id,
+        visit_id: visitId,
+        data_types: ['blood_pressure', 'heart_rate', 'oxygen_saturation', 'temperature'],
+      });
+    }
+
     // Validate vitals and check for critical values
     const alerts = this.validateVitals(vitalsData);
 
@@ -214,19 +307,59 @@ export class CHWService {
 
   /**
    * Photo-based medication reconciliation
+   * HIPAA COMPLIANT: Verifies consent and encrypts photos before storage
    */
   async photoMedicationReconciliation(
     visitId: string,
     photos: MedicationPhoto[]
   ): Promise<void> {
+    // BLOCKER FIX #1: Get patient ID from visit
+    const { data: visit, error: visitError } = await supabase
+      .from('field_visits')
+      .select('patient_id')
+      .eq('id', visitId)
+      .single();
+
+    if (visitError || !visit) {
+      throw new Error('Visit not found. Cannot capture medication photos.');
+    }
+
+    const patientId = visit.patient_id;
+
+    // BLOCKER FIX #2: Verify consent BEFORE capturing photos
+    const hasConsent = await this.verifyConsent(patientId, 'medication_photo');
+    if (!hasConsent) {
+      throw new Error(
+        'Patient has not consented to medication photo capture. ' +
+        'Please obtain consent before proceeding.'
+      );
+    }
+
+    // BLOCKER FIX #3: Encrypt all photos before storage
+    const encryptedPhotos = await Promise.all(
+      photos.map(async (photo) => ({
+        ...photo,
+        photo_data: await encryptPHI(photo.photo_data, patientId),
+        encrypted: true,
+      }))
+    );
+
+    // BLOCKER FIX #4: Log PHI access for audit trail
+    await this.logPHIAccess({
+      action: 'MEDICATION_PHOTO_CAPTURE',
+      patient_id: patientId,
+      visit_id: visitId,
+      data_types: ['medication_photos'],
+    });
+
     const photoData = {
       id: visitId,
       current_step: 3,
       completed_steps: [1, 2, 3],
       data: {
         medications: {
-          photos: photos,
-          count: photos.length,
+          photos: encryptedPhotos,
+          count: encryptedPhotos.length,
           captured_at: new Date().toISOString()
         }
       },
