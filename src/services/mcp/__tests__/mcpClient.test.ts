@@ -4,14 +4,14 @@
  */
 
 // Mock the MCP SDK before importing
+import { MCPClient, createClaudeMCPClient } from '../mcpClient';
+
 jest.mock('@modelcontextprotocol/sdk/client/index.js', () => ({
   Client: jest.fn()
 }));
 jest.mock('@modelcontextprotocol/sdk/client/stdio.js', () => ({
   StdioClientTransport: jest.fn()
 }));
-
-import { MCPClient, createClaudeMCPClient } from '../mcpClient';
 
 // Mock fetch
 global.fetch = jest.fn() as jest.Mock;

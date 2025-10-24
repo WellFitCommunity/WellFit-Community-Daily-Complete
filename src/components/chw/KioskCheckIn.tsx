@@ -145,10 +145,10 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
 
     try {
       // HIGH FIX: Actual patient lookup with multi-factor verification
-      const { data: supabase } = await import('../../lib/supabaseClient');
+      const { supabase } = await import('../../lib/supabaseClient');
 
       // Query profiles table with multiple identifiers
-      const { data: patients, error } = await supabase.supabase
+      const { data: patients, error } = await supabase
         .from('profiles')
         .select('id, first_name, last_name, date_of_birth')
         .ilike('first_name', firstName.trim())
@@ -179,7 +179,7 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
 
       // If PIN provided, verify it
       if (pin) {
-        const { data: pinData } = await supabase.supabase
+        const { data: pinData } = await supabase
           .from('profiles')
           .select('caregiver_pin_hash')
           .eq('id', matchedPatient.id)

@@ -5,7 +5,7 @@
  */
 
 import { renderHook, act } from '@testing-library/react';
-import { waitFor } from '@testing-library/dom';
+import { waitFor } from '@testing-library/react';
 import { AdminAuthProvider, useAdminAuth } from '../AdminAuthContext';
 import { supabase } from '../../lib/supabaseClient';
 import { StaffRole, RoleAccessScopes } from '../../types/roles';

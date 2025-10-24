@@ -15,9 +15,11 @@ export const KioskDashboard: React.FC<KioskDashboardProps> = ({
   kioskId,
   locationName
 }) => {
-  const [syncStatus, setSyncStatus] = useState({
-    pending: { visits: 0, assessments: 0, photos: 0, alerts: 0 },
-    lastSync: undefined as number | undefined
+  const [syncStatus, setSyncStatus] = useState<{
+    pending: { visits: number; assessments: number; photos: number; alerts: number };
+    lastSync?: number;
+  }>({
+    pending: { visits: 0, assessments: 0, photos: 0, alerts: 0 }
   });
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [syncing, setSyncing] = useState(false);

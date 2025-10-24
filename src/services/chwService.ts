@@ -93,7 +93,7 @@ export class CHWService {
       user_role: 'kiosk_system',
       device_id: params.device_id || 'unknown',
       kiosk_id: params.kiosk_id,
-      access_timestamp: new Date().toISOString(),
+      access_timestamp: new Date(),
       ip_address: await this.getClientIP(),
     };
 
@@ -176,7 +176,7 @@ export class CHWService {
       patient_id: patientId,
       visit_type: 'kiosk-check-in',
       workflow_template_id: this.WORKFLOW_TEMPLATE_ID,
-      check_in_time: new Date().toISOString(),
+      check_in_time: new Date(),
       current_step: 1,
       completed_steps: [],
       data: {
@@ -187,8 +187,8 @@ export class CHWService {
       voice_notes: [],
       offline_captured: !navigator.onLine,
       status: 'in_progress',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      created_at: new Date(),
+      updated_at: new Date()
     };
 
     // Add GPS location if provided
@@ -257,7 +257,7 @@ export class CHWService {
       current_step: 2,
       completed_steps: [1, 2],
       data: { vitals: vitalsData },
-      updated_at: new Date().toISOString()
+      updated_at: new Date()
     };
 
     // Save offline-first
@@ -360,11 +360,11 @@ export class CHWService {
         medications: {
           photos: encryptedPhotos,
           count: encryptedPhotos.length,
-          captured_at: new Date().toISOString()
+          captured_at: new Date()
         }
       },
       photos: photos.map(p => p.photo_data),
-      updated_at: new Date().toISOString()
+      updated_at: new Date()
     };
 
     // Save offline-first
@@ -457,7 +457,7 @@ export class CHWService {
         barrier_count: this.countSDOHBarriers(sdohData)
       },
       requires_review: riskScore >= 5, // High risk
-      created_at: new Date().toISOString()
+      created_at: new Date()
     };
 
     // Create alerts for high-risk SDOH issues
@@ -475,7 +475,7 @@ export class CHWService {
         id: visitId,
         current_step: 4,
         completed_steps: [1, 2, 3, 4],
-        updated_at: new Date().toISOString()
+        updated_at: new Date()
       });
       return;
     }
@@ -499,7 +499,7 @@ export class CHWService {
         .update({
           current_step: 4,
           completed_steps: [1, 2, 3, 4],
-          updated_at: new Date().toISOString()
+          updated_at: new Date()
         })
         .eq('id', visitId);
     } catch (error) {
@@ -512,7 +512,7 @@ export class CHWService {
         id: visitId,
         current_step: 4,
         completed_steps: [1, 2, 3, 4],
-        updated_at: new Date().toISOString()
+        updated_at: new Date()
       });
     }
   }
@@ -526,15 +526,15 @@ export class CHWService {
   ): Promise<void> {
     const visitUpdate = {
       id: visitId,
-      check_out_time: new Date().toISOString(),
+      check_out_time: new Date(),
       current_step: 8,
       completed_steps: [1, 2, 3, 4, 5, 6, 7, 8],
       status: 'completed',
       data: {
         completion_notes: additionalNotes,
-        completed_at: new Date().toISOString()
+        completed_at: new Date()
       },
-      updated_at: new Date().toISOString()
+      updated_at: new Date()
     };
 
     // Save offline-first
@@ -597,7 +597,7 @@ export class CHWService {
    */
   private validateVitals(vitals: VitalsData): Partial<SpecialistAlert>[] {
     const alerts: Partial<SpecialistAlert>[] = [];
-    const now = new Date().toISOString();
+    const now = new Date();
 
     // Critical BP high
     if (vitals.systolic && vitals.systolic > 180) {
@@ -709,7 +709,7 @@ export class CHWService {
    */
   private generateSDOHAlerts(visitId: string, sdoh: SDOHData): Partial<SpecialistAlert>[] {
     const alerts: Partial<SpecialistAlert>[] = [];
-    const now = new Date().toISOString();
+    const now = new Date();
 
     if (sdoh.food_insecurity) {
       alerts.push({

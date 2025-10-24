@@ -8,7 +8,7 @@ import { claudeService } from '../services/claudeService';
  */
 export async function testClaudeService() {
   console.log('🧪 Testing Claude Service Integration...');
-  console.log('=' .repeat(50));
+  console.log('='.repeat(50));
 
   try {
     // Test 1: Service initialization
