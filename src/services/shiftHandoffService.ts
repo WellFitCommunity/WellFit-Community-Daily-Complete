@@ -6,6 +6,7 @@
 // ============================================================================
 
 import { supabase } from '../lib/supabaseClient';
+import { auditLogger } from './auditLogger';
 import type {
   ShiftHandoffRiskScore,
   ShiftHandoffSummary,
@@ -35,7 +36,10 @@ export async function getCurrentShiftHandoff(
     });
 
   if (error) {
-    console.error('ShiftHandoffService.getCurrentShiftHandoff error:', error);
+    await auditLogger.error('HANDOFF_LOAD_FAILED', error, {
+      shiftType,
+      errorCode: error.code
+    });
     throw new Error(`Failed to get shift handoff: ${error.message}`);
   }
 
@@ -62,7 +66,11 @@ export async function nurseReviewHandoffRisk(
     });
 
   if (error) {
-    console.error('ShiftHandoffService.nurseReviewHandoffRisk error:', error);
+    await auditLogger.error('NURSE_REVIEW_FAILED', error, {
+      riskScoreId: input.risk_score_id,
+      nurseRiskLevel: input.nurse_risk_level,
+      errorCode: error.code
+    });
     throw new Error(`Failed to review handoff risk: ${error.message}`);
   }
 
@@ -91,7 +99,10 @@ export async function bulkConfirmAutoScores(
     .in('id', riskScoreIds);
 
   if (error) {
-    console.error('ShiftHandoffService.bulkConfirmAutoScores error:', error);
+    await auditLogger.error('BULK_CONFIRM_FAILED', error, {
+      riskScoreIds,
+      errorCode: error.code
+    });
     throw new Error(`Failed to bulk confirm: ${error.message}`);
   }
 
@@ -151,7 +162,11 @@ export async function createAutoRiskScore(
     .single();
 
   if (error) {
-    console.error('ShiftHandoffService.createAutoRiskScore error:', error);
+    await auditLogger.error('CREATE_AUTO_SCORE_FAILED', error, {
+      patientId,
+      shiftType,
+      errorCode: error.code
+    });
     throw new Error(`Failed to create auto risk score: ${error.message}`);
   }
 
@@ -166,16 +181,16 @@ export async function createAutoRiskScore(
 export async function refreshAllAutoScores(
   shiftType: ShiftType
 ): Promise<number> {
-  // Get all admitted patients
+  // Get all currently admitted patients using proper admission tracking
   const { data: patients, error: patientsError } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('role', 'senior')
-    .eq('admitted', true); // Assuming there's an 'admitted' flag
+    .rpc('get_admitted_patients');
 
   if (patientsError) {
-    console.error('ShiftHandoffService.refreshAllAutoScores error:', patientsError);
-    throw new Error(`Failed to get patients: ${patientsError.message}`);
+    await auditLogger.error('REFRESH_AUTO_SCORES_FAILED', patientsError, {
+      shiftType,
+      errorCode: patientsError.code
+    });
+    throw new Error(`Failed to get admitted patients: ${patientsError.message}`);
   }
 
   if (!patients || patients.length === 0) {
@@ -184,7 +199,7 @@ export async function refreshAllAutoScores(
 
   // Create/update auto-scores for each patient
   const results = await Promise.allSettled(
-    patients.map(patient => createAutoRiskScore(patient.id, shiftType))
+    patients.map((patient: { patient_id: string }) => createAutoRiskScore(patient.patient_id, shiftType))
   );
 
   const successCount = results.filter(r => r.status === 'fulfilled').length;
@@ -236,7 +251,11 @@ export async function logHandoffEvent(
     .single();
 
   if (error) {
-    console.error('ShiftHandoffService.logHandoffEvent error:', error);
+    await auditLogger.error('LOG_HANDOFF_EVENT_FAILED', error, {
+      riskScoreId: input.risk_score_id,
+      eventType: input.event_type,
+      errorCode: error.code
+    });
     throw new Error(`Failed to log event: ${error.message}`);
   }
 
@@ -262,7 +281,10 @@ export async function getHandoffDashboardMetrics(
     .eq('shift_type', shiftType);
 
   if (error) {
-    console.error('ShiftHandoffService.getHandoffDashboardMetrics error:', error);
+    await auditLogger.error('DASHBOARD_METRICS_FAILED', error, {
+      shiftType,
+      errorCode: error.code
+    });
     throw new Error(`Failed to get metrics: ${error.message}`);
   }
 
@@ -311,18 +333,20 @@ async function getLatestVitals(patientId: string): Promise<any | null> {
     .limit(10);
 
   if (error) {
-    console.warn('Failed to get vitals:', error);
+    await auditLogger.warn('VITALS_FETCH_FAILED', { patientId, error: error.message });
     return null;
   }
 
   // Parse FHIR observations into simple vitals object
+  // Note: obs.code is TEXT field containing LOINC code
   const vitals: any = {};
-  data?.forEach(obs => {
-    if (obs.code === '8462-4') vitals.systolic_bp = obs.value_quantity?.value;
-    if (obs.code === '8867-4') vitals.heart_rate = obs.value_quantity?.value;
-    if (obs.code === '9279-1') vitals.respiratory_rate = obs.value_quantity?.value;
-    if (obs.code === '8310-5') vitals.temperature = obs.value_quantity?.value;
-    if (obs.code === '2708-6') vitals.oxygen_sat = obs.value_quantity?.value;
+  data?.forEach((obs: any) => {
+    if (obs.code === '8462-4') vitals.systolic_bp = obs.value_quantity_value;
+    if (obs.code === '8480-6') vitals.diastolic_bp = obs.value_quantity_value;
+    if (obs.code === '8867-4') vitals.heart_rate = obs.value_quantity_value;
+    if (obs.code === '9279-1') vitals.respiratory_rate = obs.value_quantity_value;
+    if (obs.code === '8310-5') vitals.temperature = obs.value_quantity_value;
+    if (obs.code === '2708-6') vitals.oxygen_sat = obs.value_quantity_value;
   });
 
   return vitals;
@@ -342,7 +366,7 @@ async function getRecentEvents(patientId: string): Promise<ShiftHandoffEvent[]> 
     .order('event_time', { ascending: false });
 
   if (error) {
-    console.warn('Failed to get recent events:', error);
+    await auditLogger.warn('EVENTS_FETCH_FAILED', { patientId, error: error.message });
     return [];
   }
 
@@ -363,7 +387,7 @@ async function getPatientDiagnosis(patientId: string): Promise<string | null> {
     .single();
 
   if (error) {
-    console.warn('Failed to get diagnosis:', error);
+    await auditLogger.warn('DIAGNOSIS_FETCH_FAILED', { patientId, error: error.message });
     return null;
   }
 
@@ -435,7 +459,7 @@ async function calculateEarlyWarningScoreFromVitals(vitals: any): Promise<number
     .rpc('calculate_early_warning_score', input);
 
   if (error) {
-    console.warn('Failed to calculate MEWS:', error);
+    await auditLogger.warn('MEWS_CALCULATION_FAILED', { error: error.message });
     return 0;
   }
 
@@ -455,9 +479,35 @@ function calculateEventRiskScore(events: ShiftHandoffEvent[]): number {
 }
 
 /**
+ * Format time difference as human-readable string
+ */
+function formatTimeSince(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffDays > 0) {
+    return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+  } else if (diffHours > 0) {
+    return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+  } else if (diffMinutes > 0) {
+    return `${diffMinutes} min${diffMinutes > 1 ? 's' : ''} ago`;
+  } else {
+    return 'just now';
+  }
+}
+
+/**
  * Build clinical snapshot for handoff report
  */
 function buildClinicalSnapshot(vitals: any, events: ShiftHandoffEvent[], diagnosis: string | null): any {
+  // Calculate time since last observation/assessment
+  const lastAssessmentTime = vitals?.recorded_at
+    ? formatTimeSince(new Date(vitals.recorded_at))
+    : 'No recent vitals';
+
   return {
     bp_trend: vitals?.systolic_bp ? `${vitals.systolic_bp}/${vitals.diastolic_bp || 'N/A'}` : 'N/A',
     o2_sat: vitals?.oxygen_sat ? `${vitals.oxygen_sat}%` : 'N/A',
@@ -465,7 +515,7 @@ function buildClinicalSnapshot(vitals: any, events: ShiftHandoffEvent[], diagnos
     temp: vitals?.temperature || null,
     recent_events: events.slice(0, 3).map(e => e.event_description),
     prn_meds_today: events.filter(e => e.event_type === 'prn_administered').length,
-    last_assessment: '2 hours ago', // TODO: Calculate from last observation
+    last_assessment: lastAssessmentTime,
     diagnosis: diagnosis || 'Unknown',
   };
 }
@@ -520,7 +570,9 @@ export async function getNurseBypassCount(): Promise<number> {
     });
 
   if (error) {
-    console.error('ShiftHandoffService.getNurseBypassCount error:', error);
+    await auditLogger.error('BYPASS_COUNT_FAILED', error, {
+      errorCode: error.code
+    });
     return 0; // Fail open - allow bypass if can't get count
   }
 
@@ -561,7 +613,11 @@ export async function logEmergencyBypass(
     });
 
   if (error) {
-    console.error('ShiftHandoffService.logEmergencyBypass error:', error);
+    await auditLogger.error('EMERGENCY_BYPASS_LOG_FAILED', error, {
+      shiftType,
+      reason: overrideReason,
+      errorCode: error.code
+    });
     throw new Error(`Failed to log bypass: ${error.message}`);
   }
 
