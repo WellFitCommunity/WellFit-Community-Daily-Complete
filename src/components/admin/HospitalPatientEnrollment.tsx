@@ -92,16 +92,17 @@ const HospitalPatientEnrollment: React.FC = () => {
         p_enrollment_notes: formData.enrollmentNotes || null
       });
 
-      if (error) throw error;
+      // Check if function returned a patient ID (success) even if error is present
+      if (data && typeof data === 'string') {
+        // SUCCESS - Patient enrolled
+        setEnrollmentResult([{
+          patientId: data,
+          patientName: `${formData.firstName} ${formData.lastName}`,
+          roomNumber: formData.roomNumber || 'N/A',
+          status: '✓ Successfully Enrolled'
+        }]);
 
-      setEnrollmentResult([{
-        patientId: data,
-        patientName: `${formData.firstName} ${formData.lastName}`,
-        roomNumber: formData.roomNumber || 'N/A',
-        status: 'success'
-      }]);
-
-      // Reset form
+        // Reset form
       setFormData({
         firstName: '',
         lastName: '',
@@ -116,14 +117,18 @@ const HospitalPatientEnrollment: React.FC = () => {
         enrollmentNotes: ''
       });
 
-      // Reload patients list
-      await loadHospitalPatients();
+        // Reload patients list
+        await loadHospitalPatients();
+      } else {
+        // ACTUAL ERROR - No patient ID returned
+        throw new Error(error?.message || 'Enrollment failed - no patient ID returned');
+      }
     } catch (error: any) {
       setEnrollmentResult([{
         patientId: null,
         patientName: `${formData.firstName} ${formData.lastName}`,
         roomNumber: formData.roomNumber || 'N/A',
-        status: `error: ${error.message}`
+        status: `✗ Failed: ${error.message}`
       }]);
     } finally {
       setLoading(false);
@@ -202,14 +207,24 @@ const HospitalPatientEnrollment: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl p-6 text-white">
-        <div className="flex items-center gap-3 mb-2">
-          <Hospital className="w-8 h-8" />
-          <h2 className="text-2xl font-bold">Hospital Patient Enrollment</h2>
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl p-6 text-white border-4 border-blue-800">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-3">
+            <Hospital className="w-10 h-10" />
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-3xl font-bold">HOSPITAL Patient Enrollment</h2>
+                <span className="px-3 py-1 bg-blue-800 text-white text-xs font-bold rounded-full">INPATIENT</span>
+              </div>
+              <p className="text-blue-200 text-sm mt-1">For admitted patients - backend testing only, no login required</p>
+            </div>
+          </div>
         </div>
-        <p className="text-blue-100">
-          Enroll patients for backend testing - no login required. Perfect for testing physician/nurse panels, handoffs, and clinical workflows.
-        </p>
+        <div className="mt-3 bg-blue-800 rounded-lg p-3">
+          <p className="text-sm font-semibold text-blue-100">
+            🏥 Hospital Mode: Patients enrolled here will appear in physician/nurse panels for testing clinical workflows, handoffs, and EHR features.
+          </p>
+        </div>
       </div>
 
       {/* Mode Selector */}

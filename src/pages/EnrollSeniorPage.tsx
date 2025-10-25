@@ -105,17 +105,18 @@ const EnrollSeniorPage: React.FC = () => {
           }
         });
 
-        if (error) throw error;
-
-        // Store user_id for demographics navigation
+        // Check if user_id returned (success) even if error present
         if (data?.user_id) {
+          // SUCCESS
           setNewUserId(data.user_id);
+          setMessage({
+            type: 'success',
+            text: `✓ Test patient ${firstName} ${lastName} enrolled successfully!`
+          });
+        } else {
+          // ACTUAL FAILURE
+          throw new Error(error?.message || 'No user ID returned - enrollment failed');
         }
-
-        setMessage({
-          type: 'success',
-          text: `Test patient ${firstName} ${lastName} enrolled successfully!`
-        });
       } else {
         // Regular enrollment
         const { data: sessionData } = await supabase.auth.getSession();
@@ -126,17 +127,18 @@ const EnrollSeniorPage: React.FC = () => {
           headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined
         });
 
-        if (error) throw error;
-
-        // Store user_id for demographics navigation
+        // Check if user_id returned (success) even if error present
         if (data?.user_id) {
+          // SUCCESS
           setNewUserId(data.user_id);
+          setMessage({
+            type: 'success',
+            text: `✓ ${firstName} ${lastName} enrolled successfully!`
+          });
+        } else {
+          // ACTUAL FAILURE
+          throw new Error(error?.message || 'No user ID returned - enrollment failed');
         }
-
-        setMessage({
-          type: 'success',
-          text: `${firstName} ${lastName} enrolled successfully!`
-        });
       }
 
       setGeneratedPassword(tempPassword);
@@ -146,7 +148,7 @@ const EnrollSeniorPage: React.FC = () => {
     } catch (error: any) {
       setMessage({
         type: 'error',
-        text: `Enrollment failed: ${error.message || 'Unknown error'}`
+        text: `✗ Enrollment failed: ${error.message || 'Unknown error'}`
       });
     } finally {
       setLoading(false);
@@ -201,13 +203,23 @@ const EnrollSeniorPage: React.FC = () => {
           </button>
 
           {/* Header Card */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-            <div className="flex items-center">
-              <span className="text-4xl mr-4">➕</span>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Enroll Senior Patient</h1>
-                <p className="text-gray-600 mt-1">Register a new senior patient into the WellFit system</p>
+          <div className="bg-gradient-to-r from-green-600 to-emerald-700 rounded-xl p-6 mb-6 text-white border-4 border-green-800">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-3">
+                <span className="text-5xl">🏘️</span>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-3xl font-bold">COMMUNITY Patient Enrollment</h1>
+                    <span className="px-3 py-1 bg-green-800 text-white text-xs font-bold rounded-full">OUTPATIENT</span>
+                  </div>
+                  <p className="text-green-200 text-sm mt-1">For community seniors - creates full login account with app access</p>
+                </div>
               </div>
+            </div>
+            <div className="mt-3 bg-green-800 rounded-lg p-3">
+              <p className="text-sm font-semibold text-green-100">
+                🏡 Community Mode: Patients enrolled here get login credentials and full app access for daily check-ins, health tracking, and community features.
+              </p>
             </div>
           </div>
 
