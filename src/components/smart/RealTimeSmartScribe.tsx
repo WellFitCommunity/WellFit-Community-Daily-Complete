@@ -3,6 +3,7 @@
 // Uses Claude Sonnet 4.5 for maximum billing accuracy
 import React, { useState, useRef } from "react";
 import { supabase } from "../../lib/supabaseClient";
+import { auditLogger } from "../../services/auditLogger";
 
 interface CodeSuggestion {
   code: string;
@@ -105,7 +106,11 @@ const RealTimeSmartScribe: React.FC = () => {
       };
 
       ws.onerror = (err) => {
-        console.error("WebSocket error:", err);
+        // HIPAA Audit: Log transcription connection failures
+        auditLogger.error('SCRIBE_WEBSOCKET_ERROR', err instanceof Error ? err : new Error('WebSocket connection failed'), {
+          component: 'RealTimeSmartScribe',
+          wsUrl: wsUrl
+        });
         setStatus("Connection error");
       };
 
@@ -129,7 +134,11 @@ const RealTimeSmartScribe: React.FC = () => {
       mediaRecorderRef.current = mr;
     } catch (error: any) {
       setStatus("Error: " + (error?.message ?? "Failed to start"));
-      console.error("Recording error:", error);
+      // HIPAA Audit: Log medical transcription recording failures
+      auditLogger.error('SCRIBE_RECORDING_FAILED', error, {
+        component: 'RealTimeSmartScribe',
+        operation: 'startRecording'
+      });
     }
   };
 

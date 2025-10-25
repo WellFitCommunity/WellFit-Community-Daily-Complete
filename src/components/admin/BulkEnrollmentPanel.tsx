@@ -241,6 +241,10 @@ Mary,Smith,+15551234568,mary.smith@email.com,1938-07-22,Bob Smith,+15559876544,D
 
           if (error) throw error;
 
+          // enrollClient returns {success: true, user_id: string}
+          // Store user_id in record for audit trail
+          const enrolledUserId = data?.user_id;
+
           // Update record as successful
           setEnrollmentJob(prev => prev ? {
             ...prev,
@@ -250,7 +254,7 @@ Mary,Smith,+15551234568,mary.smith@email.com,1938-07-22,Bob Smith,+15559876544,D
               idx === recordIndex ? {
                 ...r,
                 status: 'success',
-                userId: data?.user?.id
+                userId: enrolledUserId || 'unknown'
               } : r
             )
           } : null);

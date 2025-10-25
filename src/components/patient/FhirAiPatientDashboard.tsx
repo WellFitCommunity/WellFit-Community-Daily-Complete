@@ -8,6 +8,7 @@ import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { useAuth } from '../../contexts/AuthContext';
 import EnhancedFhirService from '../admin/EnhancedFhirService';
+import { auditLogger } from '../../services/auditLogger';
 
 interface PatientDashboardProps {
   supabaseUrl: string;
@@ -275,15 +276,11 @@ const FhirAiPatientDashboard: React.FC<PatientDashboardProps> = ({ supabaseUrl, 
       setLoading(true);
       setError(null);
 
-      console.log('[PatientDashboard] Loading insights for user:', user.id);
+      // HIPAA Audit: Log patient dashboard access
+      auditLogger.debug('[PatientDashboard] Loading insights for user', { userId: user.id });
 
       // Get enhanced patient data
       const enhancedData = await fhirService.exportEnhancedPatientData(user.id);
-      console.log('[PatientDashboard] Enhanced data received:', {
-        hasAiInsights: !!enhancedData.aiInsights,
-        hasVitalsTrends: !!enhancedData.aiInsights?.vitalsTrends,
-        trendsCount: enhancedData.aiInsights?.vitalsTrends?.length || 0
-      });
 
       const aiInsights = enhancedData.aiInsights;
 
@@ -297,15 +294,14 @@ const FhirAiPatientDashboard: React.FC<PatientDashboardProps> = ({ supabaseUrl, 
         aiInsights.lastCheckIn === 'Never';
 
       if (hasNoData) {
-        console.log('[PatientDashboard] No real health data found - showing onboarding');
+        // HIPAA Audit: Log no health data (first-time user)
+        auditLogger.debug('[PatientDashboard] No health data - showing onboarding', { userId: user.id });
         setInsights(null);
         setHealthMetrics([]);
         setLastUpdated(new Date());
         setLoading(false);
         return;
       }
-
-      console.log('[PatientDashboard] Health data found, rendering dashboard');
 
       // Transform AI insights into patient-friendly format
       const patientInsights: PatientInsights = {
@@ -334,10 +330,10 @@ const FhirAiPatientDashboard: React.FC<PatientDashboardProps> = ({ supabaseUrl, 
       setLastUpdated(new Date());
 
     } catch (error) {
-      console.error('[PatientDashboard] Error loading patient insights:', error);
-      console.error('[PatientDashboard] Error details:', {
-        message: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined
+      // HIPAA Audit: Log patient dashboard load failure
+      await auditLogger.error('PATIENT_DASHBOARD_LOAD_FAILED', error instanceof Error ? error : new Error('Unknown error'), {
+        userId: user?.id,
+        component: 'FhirAiPatientDashboard'
       });
 
       // If it's a "no data" type error, show the no-data state instead

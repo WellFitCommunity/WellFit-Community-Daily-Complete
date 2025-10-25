@@ -13,6 +13,7 @@
 
 import { supabase } from '../lib/supabaseClient';
 import { logPhiAccess } from './phiAccessLogger';
+import { auditLogger } from './auditLogger';
 import { BillingService } from './billingService';
 import { SDOHBillingService } from './sdohBillingService';
 import { BillingDecisionTreeService } from './billingDecisionTreeService';
@@ -136,7 +137,14 @@ export class UnifiedBillingService {
     const recommendedActions: string[] = [];
 
     try {
-      console.log(`🚀 Starting billing workflow for encounter`);
+      // HIPAA Audit: Log billing workflow start
+      await auditLogger.billing('WORKFLOW_START', true, {
+        encounterId: input.encounterId,
+        patientId: input.patientId,
+        provider: input.providerId,
+        enableAI: input.enableAIAssist !== false,
+        enableSDOH: input.enableSDOHAnalysis !== false
+      });
 
       // HIPAA §164.312(b): Log PHI access for billing
       await logPhiAccess({
@@ -380,10 +388,15 @@ export class UnifiedBillingService {
         recommendedActions.push('Complete missing documentation to improve audit readiness');
       }
 
-      console.log(`✅ Billing workflow completed successfully for encounter ${input.encounterId}`);
-      console.log(`   Total charges: $${totalCharges.toFixed(2)}`);
-      console.log(`   Estimated reimbursement: $${estimatedReimbursement.toFixed(2)}`);
-      console.log(`   Manual review required: ${requiresManualReview}`);
+      // HIPAA Audit: Log successful billing workflow completion
+      await auditLogger.billing('WORKFLOW_COMPLETE', true, {
+        encounterId: input.encounterId,
+        patientId: input.patientId,
+        totalCharges,
+        estimatedReimbursement,
+        requiresManualReview,
+        claimLinesCount: claimLines?.length || 0
+      });
 
       return {
         success: true,
@@ -405,7 +418,13 @@ export class UnifiedBillingService {
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error(`❌ Billing workflow failed: ${errorMessage}`);
+
+      // HIPAA Audit: Log billing workflow failure
+      await auditLogger.billing('WORKFLOW_FAILED', false, {
+        encounterId: input.encounterId,
+        patientId: input.patientId,
+        error: errorMessage
+      });
 
       errors.push({
         code: 'WORKFLOW_ERROR',
@@ -457,7 +476,8 @@ export class UnifiedBillingService {
       step.status = 'completed';
       step.details = { success: true };
 
-      console.log(`  ✓ ${stepName} completed in ${step.duration}ms`);
+      // HIPAA Audit: Log billing step completion (debug level)
+      auditLogger.debug(`Billing step completed: ${stepName} (${step.duration}ms)`);
 
       return { success: true, result };
     } catch (error) {
@@ -468,7 +488,11 @@ export class UnifiedBillingService {
       step.status = 'failed';
       step.error = errorMessage;
 
-      console.error(`  ✗ ${stepName} failed: ${errorMessage}`);
+      // HIPAA Audit: Log billing step failure (error level)
+      await auditLogger.error(`BILLING_STEP_FAILED_${stepId.toUpperCase()}`, error instanceof Error ? error : new Error(errorMessage), {
+        stepName,
+        duration: step.duration
+      });
 
       return { success: false, error: errorMessage };
     }

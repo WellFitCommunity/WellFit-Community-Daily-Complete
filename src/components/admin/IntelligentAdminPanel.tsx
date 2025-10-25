@@ -18,6 +18,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import { useUser } from '../../contexts/AuthContext';
 import { DashboardPersonalizationAI } from '../../services/dashboardPersonalizationAI';
+import { auditLogger } from '../../services/auditLogger';
 import { AdaptiveCollapsibleSection } from './AdaptiveCollapsibleSection';
 import { CategoryCollapsibleGroup } from './CategoryCollapsibleGroup';
 import RequireAdminAuth from 'components/auth/RequireAdminAuth';
@@ -143,7 +144,7 @@ const IntelligentAdminPanel: React.FC = () => {
         <SDOHCoderAssist
           encounterId="demo-encounter-id"
           patientId="demo-patient-id"
-          onSaved={(data) => console.log('Coding saved:', data)}
+          onSaved={(data) => auditLogger.debug('SDOH coding saved', data)}
         />
       ),
       category: 'revenue',
@@ -382,12 +383,12 @@ const IntelligentAdminPanel: React.FC = () => {
 
     // Don't show if permanently dismissed OR if already seen this version
     if (permanentlyDismissed === 'true') {
-      console.log('[WhatsNew] Modal permanently dismissed by user');
+      auditLogger.debug('[WhatsNew] Modal permanently dismissed by user');
       return;
     }
 
     if (lastSeenVersion !== currentVersion) {
-      console.log('[WhatsNew] Showing modal for version:', currentVersion);
+      auditLogger.debug('[WhatsNew] Showing modal for version', { version: currentVersion });
       setTimeout(() => setShowWhatsNew(true), 1000);
     }
   }, []);
@@ -413,7 +414,11 @@ const IntelligentAdminPanel: React.FC = () => {
       const organizedSections = organizeSections(layout);
       setSections(organizedSections);
     } catch (error) {
-      console.error('Failed to load personalized dashboard:', error);
+      // HIPAA Audit: Log dashboard personalization failure
+      await auditLogger.error('ADMIN_DASHBOARD_PERSONALIZATION_FAILED', error instanceof Error ? error : new Error('Unknown error'), {
+        userId: user?.id,
+        adminRole: adminRole || 'admin'
+      });
       // Fallback to default layout
       setSections(getDefaultSections());
     } finally {

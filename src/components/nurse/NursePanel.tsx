@@ -12,6 +12,7 @@ import ShiftHandoffDashboard from './ShiftHandoffDashboard';
 import TelehealthScheduler from '../telehealth/TelehealthScheduler';
 import ERIncomingPatientBoard from '../ems/ERIncomingPatientBoard';
 import { supabase } from '../../lib/supabaseClient';
+import { auditLogger } from '../../services/auditLogger';
 
 // Collapsible Section Component
 interface CollapsibleSectionProps {
@@ -74,21 +75,39 @@ const NurseEnrollPatientSection: React.FC = () => {
     try {
       const tempPassword = generateTempPassword();
 
-      const { error } = await supabase.functions.invoke('enrollClient', {
+      // Get auth token for proper authorization
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+
+      const { data, error } = await supabase.functions.invoke('enrollClient', {
         body: {
           phone,
           password: tempPassword,
           first_name: firstName,
           last_name: lastName,
           email: email || undefined
-        }
+        },
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined
       });
 
-      if (error) throw error;
+      if (error) {
+        throw new Error(error.message || 'Enrollment failed');
+      }
+
+      // enrollClient returns {success: true, user_id: string}
+      const enrolledUserId = data?.user_id;
+
+      // HIPAA Audit: Log successful enrollment
+      await auditLogger.auth('REGISTRATION', true, {
+        enrolledUserId,
+        enrolledBy: 'nurse',
+        patientName: `${firstName} ${lastName}`,
+        phone
+      });
 
       setMessage({
         type: 'success',
-        text: `${firstName} ${lastName} enrolled successfully! Temp password: ${tempPassword}`
+        text: `✅ ${firstName} ${lastName} enrolled successfully! Temp password: ${tempPassword}`
       });
 
       // Reset form
@@ -97,9 +116,15 @@ const NurseEnrollPatientSection: React.FC = () => {
       setPhone('');
       setEmail('');
     } catch (error: any) {
+      // HIPAA Audit: Log enrollment failure (CRITICAL - replaces console.error)
+      await auditLogger.error('NURSE_ENROLLMENT_FAILED', error, {
+        attemptedPhone: phone,
+        patientName: `${firstName} ${lastName}`
+      });
+
       setMessage({
         type: 'error',
-        text: `Enrollment failed: ${error.message}`
+        text: `❌ Enrollment failed: ${error.message || 'Unknown error. Please try again.'}`
       });
     } finally {
       setLoading(false);

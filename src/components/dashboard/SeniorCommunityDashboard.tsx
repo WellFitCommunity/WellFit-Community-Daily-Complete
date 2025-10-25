@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSupabaseClient, useUser } from '../../contexts/AuthContext';
 import { useBranding } from '../../BrandingContext';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { auditLogger } from '../../services/auditLogger';
 import WeatherWidget from './WeatherWidget';
 import DailyScripture from './DailyScripture';
 import TechTip from './TechTip';
@@ -62,7 +63,8 @@ const SeniorCommunityDashboard: React.FC = () => {
           setRecentCommunityPhoto(data.file_url);
         }
       } catch (error) {
-        console.log('No recent community photos found');
+        // Silent fail - no photos is normal for new installations
+        auditLogger.debug('No recent community photos found');
       }
     };
 
@@ -79,7 +81,8 @@ const SeniorCommunityDashboard: React.FC = () => {
             setCaregiverPhone(data.caregiver_phone);
           }
         } catch (error) {
-          console.log('No caregiver contact found');
+          // Silent fail - no caregiver is normal
+          auditLogger.debug('No caregiver contact found');
         }
       }
     };
@@ -97,17 +100,19 @@ const SeniorCommunityDashboard: React.FC = () => {
 
       // Don't show if permanently dismissed
       if (permanentlyDismissed === 'true') {
-        console.log('[WhatsNew Senior] Modal permanently dismissed by user');
+        auditLogger.debug('[WhatsNew Senior] Modal permanently dismissed by user');
         return;
       }
 
       if (lastSeenVersion !== currentVersion) {
         // Show modal after a short delay for better UX
-        console.log('[WhatsNew Senior] Showing modal for version:', currentVersion);
+        auditLogger.debug('[WhatsNew Senior] Showing modal for version', { version: currentVersion });
         setTimeout(() => setShowWhatsNew(true), 1000);
       }
     } catch (err) {
-      console.error('Failed to check What\'s New status:', err);
+      auditLogger.error('WHATS_NEW_CHECK_FAILED', err instanceof Error ? err : new Error('Unknown error'), {
+        component: 'SeniorCommunityDashboard'
+      });
     }
   }, []);
 
@@ -269,8 +274,19 @@ const SeniorCommunityDashboard: React.FC = () => {
           priority: type === 'fallen' ? 'high' : 'medium'
         }
       });
+
+      // HIPAA Audit: Log emergency alert sent
+      await auditLogger.security('EMERGENCY_ALERT_SENT', type === 'fallen' ? 'high' : 'medium', {
+        userId: user?.id,
+        alertType: type,
+        description
+      });
     } catch (error) {
-      console.error('Failed to send team alert:', error);
+      // HIPAA Audit: Log emergency alert failure (CRITICAL)
+      await auditLogger.error('EMERGENCY_ALERT_FAILED', error instanceof Error ? error : new Error('Unknown error'), {
+        userId: user?.id,
+        alertType: type
+      });
     }
   };
 
@@ -283,8 +299,19 @@ const SeniorCommunityDashboard: React.FC = () => {
         metadata: metadata || {},
         created_at: new Date().toISOString()
       });
+
+      // HIPAA Audit: Log patient check-in
+      await auditLogger.clinical('CHECK_IN', true, {
+        userId: user?.id,
+        label,
+        hasMetadata: !!metadata
+      });
     } catch (error) {
-      console.error('Failed to log check-in:', error);
+      // HIPAA Audit: Log check-in failure
+      await auditLogger.error('CHECK_IN_FAILED', error instanceof Error ? error : new Error('Unknown error'), {
+        userId: user?.id,
+        label
+      });
     }
   };
 
@@ -313,8 +340,17 @@ const SeniorCommunityDashboard: React.FC = () => {
       });
 
       alert('Photo uploaded successfully! 📸');
+
+      // HIPAA Audit: Log photo upload (non-PHI)
+      await auditLogger.info('COMMUNITY_PHOTO_UPLOADED', {
+        userId: user?.id,
+        fileName
+      });
     } catch (error) {
-      console.error('Upload failed:', error);
+      // HIPAA Audit: Log upload failure
+      await auditLogger.error('PHOTO_UPLOAD_FAILED', error instanceof Error ? error : new Error('Unknown error'), {
+        userId: user?.id
+      });
       alert('Upload failed. Please try again.');
     }
   };
