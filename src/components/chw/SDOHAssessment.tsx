@@ -15,7 +15,6 @@ interface SDOHAssessmentProps {
   onSkip: () => void;
 }
 
-type QuestionId = keyof Omit<SDOHData, 'notes' | 'assessed_at'>;
 
 export const SDOHAssessment: React.FC<SDOHAssessmentProps> = ({
   visitId,
@@ -197,7 +196,6 @@ export const SDOHAssessment: React.FC<SDOHAssessmentProps> = ({
         <label className="block text-2xl text-gray-800 mb-4 font-medium">{label}</label>
         <div className="flex gap-4">
           <button
-            role="button"
             name="yes"
             onClick={() => handleAnswer(questionId, true)}
             className={`flex-1 text-2xl font-bold py-6 px-8 rounded-xl transition-all ${
@@ -209,7 +207,6 @@ export const SDOHAssessment: React.FC<SDOHAssessmentProps> = ({
             {t.yes}
           </button>
           <button
-            role="button"
             name="no"
             onClick={() => handleAnswer(questionId, false)}
             className={`flex-1 text-2xl font-bold py-6 px-8 rounded-xl transition-all ${
@@ -278,7 +275,6 @@ export const SDOHAssessment: React.FC<SDOHAssessmentProps> = ({
                   ].map(option => (
                     <button
                       key={option.value}
-                      role="button"
                       onClick={() => handleAnswer('housing_status', option.value)}
                       className={`w-full text-left text-xl font-bold py-5 px-6 rounded-xl transition-all ${
                         answers.housing_status === option.value
@@ -324,7 +320,6 @@ export const SDOHAssessment: React.FC<SDOHAssessmentProps> = ({
                   {[t.never, t.rarely, t.sometimes, t.often, t.always].map(option => (
                     <button
                       key={option}
-                      role="button"
                       onClick={() => handleAnswer('social_isolation_frequency', option)}
                       className={`w-full text-left text-xl font-bold py-5 px-6 rounded-xl transition-all ${
                         answers.social_isolation_frequency === option
