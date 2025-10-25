@@ -57,8 +57,138 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = ({
 
   const [soapNote, setSoapNote] = useState<SOAPNote | null>(null);
 
+  // Assistance Level state (1-10 scale) - persists to database
+  const [assistanceLevel, setAssistanceLevel] = useState<number>(5);
+  const [assistanceLevelLoaded, setAssistanceLevelLoaded] = useState(false);
+
   const wsRef = useRef<WebSocket | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+
+  // Get assistance level description and settings
+  // NOTE: This controls Riley's CONVERSATIONAL coaching only, NOT billing code accuracy
+  const getAssistanceSettings = (level: number) => {
+    if (level <= 2) {
+      return {
+        label: 'Minimal',
+        description: 'Quiet mode - codes only, no coaching',
+        color: 'text-gray-600',
+        bgColor: 'bg-gray-100',
+        borderColor: 'border-gray-300',
+        showConversationalMessages: false,
+        showSuggestions: false,
+        showReasoningDetails: false
+      };
+    } else if (level <= 4) {
+      return {
+        label: 'Low',
+        description: 'Brief notes - minimal conversation, key alerts only',
+        color: 'text-blue-600',
+        bgColor: 'bg-blue-100',
+        borderColor: 'border-blue-300',
+        showConversationalMessages: true,
+        showSuggestions: false,
+        showReasoningDetails: false
+      };
+    } else if (level <= 6) {
+      return {
+        label: 'Moderate',
+        description: 'Balanced - helpful reminders and suggestions',
+        color: 'text-green-600',
+        bgColor: 'bg-green-100',
+        borderColor: 'border-green-300',
+        showConversationalMessages: true,
+        showSuggestions: true,
+        showReasoningDetails: false
+      };
+    } else if (level <= 8) {
+      return {
+        label: 'High',
+        description: 'Proactive - detailed coaching with explanations',
+        color: 'text-amber-600',
+        bgColor: 'bg-amber-100',
+        borderColor: 'border-amber-300',
+        showConversationalMessages: true,
+        showSuggestions: true,
+        showReasoningDetails: true
+      };
+    } else {
+      return {
+        label: 'Maximum',
+        description: 'Full teaching mode - educational and comprehensive',
+        color: 'text-purple-600',
+        bgColor: 'bg-purple-100',
+        borderColor: 'border-purple-300',
+        showConversationalMessages: true,
+        showSuggestions: true,
+        showReasoningDetails: true
+      };
+    }
+  };
+
+  const assistanceSettings = getAssistanceSettings(assistanceLevel);
+
+  // Load assistance level from provider preferences on mount
+  useEffect(() => {
+    const loadAssistanceLevel = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: prefs, error } = await supabase
+          .from('provider_scribe_preferences')
+          .select('verbosity')
+          .eq('provider_id', user.id)
+          .single();
+
+        if (prefs && !error && prefs.verbosity !== null) {
+          // Map verbosity to assistance level (1-10 scale)
+          setAssistanceLevel(prefs.verbosity);
+          setAssistanceLevelLoaded(true);
+        } else {
+          // No preference found, use default (5)
+          setAssistanceLevelLoaded(true);
+        }
+      } catch (error) {
+        console.error('Failed to load assistance level:', error);
+        setAssistanceLevelLoaded(true);
+      }
+    };
+
+    loadAssistanceLevel();
+  }, []);
+
+  // Save assistance level to provider preferences when changed
+  const handleAssistanceLevelChange = async (newLevel: number) => {
+    setAssistanceLevel(newLevel);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Upsert provider preferences
+      const { error } = await supabase
+        .from('provider_scribe_preferences')
+        .upsert({
+          provider_id: user.id,
+          verbosity: newLevel,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'provider_id'
+        });
+
+      if (error) {
+        console.error('Failed to save assistance level:', error);
+      } else {
+        auditLogger.info('SCRIBE_ASSISTANCE_LEVEL_UPDATED', {
+          providerId: user.id,
+          newLevel,
+          label: getAssistanceSettings(newLevel).label
+        });
+      }
+    } catch (error) {
+      console.error('Error saving assistance level:', error);
+    }
+  };
 
   // Timer effect - updates every second during recording
   useEffect(() => {
@@ -326,8 +456,76 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = ({
         )}
       </div>
 
+      {/* Assistance Level Control */}
+      <div className={`mb-6 p-5 rounded-xl border-2 ${assistanceSettings.borderColor} ${assistanceSettings.bgColor}`}>
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h3 className="font-bold text-gray-900 flex items-center gap-2">
+              <span>🎚️</span>
+              Riley Assistance Level
+            </h3>
+            <p className={`text-sm ${assistanceSettings.color} font-medium mt-1`}>
+              {assistanceSettings.label}: {assistanceSettings.description}
+            </p>
+          </div>
+          <div className={`px-4 py-2 rounded-lg font-bold text-2xl ${assistanceSettings.bgColor} ${assistanceSettings.color} border-2 ${assistanceSettings.borderColor}`}>
+            {assistanceLevel}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <span className="text-xs text-gray-500 font-medium">Minimal (1)</span>
+          <input
+            type="range"
+            min="1"
+            max="10"
+            value={assistanceLevel}
+            onChange={(e) => handleAssistanceLevelChange(Number(e.target.value))}
+            disabled={isRecording || !assistanceLevelLoaded}
+            className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{
+              background: isRecording ? '#e5e7eb' : `linear-gradient(to right, #9ca3af 0%, #3b82f6 25%, #10b981 50%, #f59e0b 75%, #9333ea 100%)`
+            }}
+          />
+          <span className="text-xs text-gray-500 font-medium">Maximum (10)</span>
+        </div>
+
+        <div className="mt-3 grid grid-cols-5 gap-2 text-xs">
+          <div className={`text-center p-2 rounded ${assistanceLevel <= 2 ? 'bg-gray-200 font-bold' : 'text-gray-400'}`}>
+            1-2: Quiet
+          </div>
+          <div className={`text-center p-2 rounded ${assistanceLevel >= 3 && assistanceLevel <= 4 ? 'bg-blue-200 font-bold' : 'text-gray-400'}`}>
+            3-4: Low
+          </div>
+          <div className={`text-center p-2 rounded ${assistanceLevel >= 5 && assistanceLevel <= 6 ? 'bg-green-200 font-bold' : 'text-gray-400'}`}>
+            5-6: Moderate
+          </div>
+          <div className={`text-center p-2 rounded ${assistanceLevel >= 7 && assistanceLevel <= 8 ? 'bg-amber-200 font-bold' : 'text-gray-400'}`}>
+            7-8: High
+          </div>
+          <div className={`text-center p-2 rounded ${assistanceLevel >= 9 ? 'bg-purple-200 font-bold' : 'text-gray-400'}`}>
+            9-10: Max
+          </div>
+        </div>
+
+        <div className="mt-3 text-xs text-gray-600 bg-white p-3 rounded border border-gray-300">
+          <div className="flex items-center justify-between">
+            <div>
+              <strong>Note:</strong> Assistance level controls Riley's conversational coaching only.
+              <strong className="text-blue-700"> All billing codes remain accurate regardless of this setting.</strong>
+            </div>
+            {assistanceLevelLoaded && (
+              <span className="text-green-600 font-semibold flex items-center gap-1 ml-3">
+                <span>✓</span>
+                <span>Auto-saved</span>
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Conversational Messages - Scribe Chat */}
-      {conversationalMessages.length > 0 && (
+      {assistanceSettings.showConversationalMessages && conversationalMessages.length > 0 && (
         <div className="mb-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border-2 border-blue-200">
           <div className="flex items-start gap-3">
             <div className="text-3xl">💬</div>
@@ -344,7 +542,7 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = ({
       )}
 
       {/* Proactive Suggestions */}
-      {scribeSuggestions.length > 0 && (
+      {assistanceSettings.showSuggestions && scribeSuggestions.length > 0 && (
         <div className="mb-6 bg-amber-50 rounded-xl p-4 border-2 border-amber-200">
           <div className="flex items-start gap-3">
             <div className="text-2xl">💡</div>
@@ -487,8 +685,8 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = ({
                     </div>
                     <p className="text-sm text-gray-800 font-medium mb-2">{code.description}</p>
 
-                    {/* Reasoning - NEW! */}
-                    {code.reasoning && (
+                    {/* Reasoning - Shows based on assistance level */}
+                    {assistanceSettings.showReasoningDetails && code.reasoning && (
                       <div className="mt-2 p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
                         <p className="text-sm text-blue-900">
                           <span className="font-bold">💭 Why this fits: </span>
@@ -497,7 +695,7 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = ({
                       </div>
                     )}
 
-                    {code.missingDocumentation && (
+                    {assistanceSettings.showReasoningDetails && code.missingDocumentation && (
                       <div className="mt-3 p-3 bg-amber-100 border-l-4 border-amber-400 rounded">
                         <p className="text-sm text-amber-900">
                           <span className="font-bold">📝 To strengthen this code: </span>
