@@ -252,7 +252,7 @@ export async function logHandoffEvent(
 
   if (error) {
     await auditLogger.error('LOG_HANDOFF_EVENT_FAILED', error, {
-      riskScoreId: input.risk_score_id,
+      riskScoreId: riskScore.id,
       eventType: input.event_type,
       errorCode: error.code
     });
