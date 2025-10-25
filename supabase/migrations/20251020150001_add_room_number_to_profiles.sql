@@ -16,6 +16,7 @@ DROP FUNCTION IF EXISTS public.get_current_shift_handoff(TEXT);
 
 CREATE OR REPLACE FUNCTION public.get_current_shift_handoff(p_shift_type TEXT DEFAULT 'night')
 RETURNS TABLE (
+  risk_score_id UUID,
   patient_id UUID,
   patient_name TEXT,
   room_number TEXT,
@@ -31,6 +32,7 @@ RETURNS TABLE (
 BEGIN
   RETURN QUERY
   SELECT
+    hrs.id AS risk_score_id,
     hrs.patient_id,
     COALESCE(p.first_name || ' ' || p.last_name, 'Unknown Patient') AS patient_name,
     p.room_number,

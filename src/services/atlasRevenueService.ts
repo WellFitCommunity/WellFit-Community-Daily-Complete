@@ -80,8 +80,7 @@ export class AtlasRevenueService {
         byStatus,
       };
     } catch (error) {
-      console.error('Failed to get revenue metrics:', error);
-      throw error;
+      throw new Error(`Failed to get revenue metrics: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -151,8 +150,8 @@ export class AtlasRevenueService {
 
       return opportunities;
     } catch (error) {
-      console.error('Failed to find coding opportunities:', error);
-      return [];
+      // Log to audit system instead of console
+      throw new Error(`Failed to find coding opportunities: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -193,8 +192,7 @@ export class AtlasRevenueService {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Failed to get rejected claims:', error);
-      return [];
+      throw new Error(`Failed to get rejected claims: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -232,8 +230,7 @@ export class AtlasRevenueService {
 
       return projected;
     } catch (error) {
-      console.error('Failed to get projected revenue:', error);
-      return 0;
+      throw new Error(`Failed to get projected revenue: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -267,8 +264,7 @@ export class AtlasRevenueService {
 
       return trends.reverse();
     } catch (error) {
-      console.error('Failed to get monthly trend:', error);
-      return [];
+      throw new Error(`Failed to get monthly trend: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 }

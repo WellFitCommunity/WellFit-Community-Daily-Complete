@@ -148,6 +148,7 @@ export type EventSeverity = 'minor' | 'moderate' | 'major' | 'critical';
  * Current shift handoff summary (returned by get_current_shift_handoff function)
  */
 export interface ShiftHandoffSummary {
+  risk_score_id: string; // UUID of the risk score record for confirm/escalate actions
   patient_id: string;
   patient_name: string;
   room_number: string | null;
@@ -189,6 +190,7 @@ export interface NurseReviewInput {
  * Manual event entry form
  */
 export interface ManualEventInput {
+  risk_score_id: string;
   patient_id: string;
   event_type: EventType;
   event_severity: EventSeverity;

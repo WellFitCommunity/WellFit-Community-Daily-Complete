@@ -160,7 +160,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
     // Get risk score IDs for selected patients
     const riskScoreIds = handoffSummary
       .filter(p => selectedPatients.has(p.patient_id))
-      .map(p => p.patient_id); // TODO: Need to get actual risk_score_id
+      .map(p => p.risk_score_id);
 
     try {
       await ShiftHandoffService.bulkConfirmAutoScores(riskScoreIds);
@@ -442,21 +442,21 @@ export const ShiftHandoffDashboard: React.FC = () => {
                 {/* One-click actions */}
                 <div className="flex gap-2">
                   <button
-                    onClick={() => handleConfirm(patient.patient_id, patient.patient_id)}
+                    onClick={() => handleConfirm(patient.risk_score_id, patient.patient_id)}
                     className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
                     title="Confirm auto-score"
                   >
                     ✓ Confirm
                   </button>
                   <button
-                    onClick={() => handleEscalate(patient.patient_id, patient.patient_id)}
+                    onClick={() => handleEscalate(patient.risk_score_id, patient.patient_id)}
                     className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium"
                     title="Escalate risk level"
                   >
                     ⬆ Escalate
                   </button>
                   <button
-                    onClick={() => handleDeEscalate(patient.patient_id, patient.patient_id)}
+                    onClick={() => handleDeEscalate(patient.risk_score_id, patient.patient_id)}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
                     title="De-escalate risk level"
                   >

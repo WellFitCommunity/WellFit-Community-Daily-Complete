@@ -94,6 +94,7 @@ async function getEncounterData(encounterId: string) {
     .from("encounters")
     .select(`
       id,
+      patient_id,
       date_of_service,
       claim_frequency_code,
       subscriber_relation_code,
@@ -119,6 +120,7 @@ async function getEncounterData(encounterId: string) {
 
   return {
     id: data.id,
+    patient_id: data.patient_id,
     date_of_service: data.date_of_service,
     claim_frequency_code: data.claim_frequency_code ?? "1",
     subscriber_relation_code: data.subscriber_relation_code ?? "18",
