@@ -127,6 +127,27 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = ({
 
   const assistanceSettings = getAssistanceSettings(assistanceLevel);
 
+  // Map verbosity text to numeric scale and vice versa
+  const verbosityToLevel = (verbosity: string): number => {
+    switch (verbosity) {
+      case 'minimal': return 2;
+      case 'low': return 4;
+      case 'balanced': return 5;
+      case 'moderate': return 6;
+      case 'high': return 8;
+      case 'maximum': return 10;
+      default: return 5;
+    }
+  };
+
+  const levelToVerbosity = (level: number): string => {
+    if (level <= 2) return 'minimal';
+    if (level <= 4) return 'low';
+    if (level <= 6) return level === 5 ? 'balanced' : 'moderate';
+    if (level <= 8) return 'high';
+    return 'maximum';
+  };
+
   // Load assistance level from provider preferences on mount
   useEffect(() => {
     const loadAssistanceLevel = async () => {
@@ -141,11 +162,11 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = ({
           .single();
 
         if (prefs && !error && prefs.verbosity !== null) {
-          // Map verbosity to assistance level (1-10 scale)
-          setAssistanceLevel(prefs.verbosity);
+          // Map verbosity text to numeric level
+          setAssistanceLevel(verbosityToLevel(prefs.verbosity));
           setAssistanceLevelLoaded(true);
         } else {
-          // No preference found, use default (5)
+          // No preference found, use default (5 = balanced)
           setAssistanceLevelLoaded(true);
         }
       } catch (error) {
@@ -165,12 +186,14 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      const verbosityText = levelToVerbosity(newLevel);
+
       // Upsert provider preferences
       const { error } = await supabase
         .from('provider_scribe_preferences')
         .upsert({
           provider_id: user.id,
-          verbosity: newLevel,
+          verbosity: verbosityText,
           updated_at: new Date().toISOString()
         }, {
           onConflict: 'provider_id'
@@ -182,6 +205,7 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = ({
         auditLogger.info('SCRIBE_ASSISTANCE_LEVEL_UPDATED', {
           providerId: user.id,
           newLevel,
+          verbosityText,
           label: getAssistanceSettings(newLevel).label
         });
       }
