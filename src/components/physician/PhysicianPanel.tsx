@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Activity, Heart, TrendingUp, DollarSign, AlertTriangle, CheckCircle, Users, FileText, Stethoscope, Pill, ClipboardList, LineChart, Brain, Award, Video } from 'lucide-react';
 import AdminHeader from '../admin/AdminHeader';
 import UserQuestions from '../UserQuestions';
@@ -327,6 +328,7 @@ const PatientSummaryCard: React.FC<PatientSummaryCardProps> = ({ summary, loadin
 
 const PhysicianPanel: React.FC = () => {
   const supabase = useSupabaseClient();
+  const navigate = useNavigate();
 
   const [selectedPatient, setSelectedPatient] = useState<PatientListItem | null>(null);
   const [patientSummary, setPatientSummary] = useState<PatientSummary | null>(null);
@@ -662,7 +664,7 @@ const PhysicianPanel: React.FC = () => {
                     alert('Please select a patient first');
                     return;
                   }
-                  window.location.href = `/my-health?patientId=${selectedPatient.user_id}`;
+                  navigate(`/my-health?patientId=${selectedPatient.user_id}`);
                 }}
                 disabled={!selectedPatient}
                 className={`p-5 rounded-lg shadow transition-all border group text-left ${
@@ -688,7 +690,7 @@ const PhysicianPanel: React.FC = () => {
                     alert('Please select a patient first');
                     return;
                   }
-                  window.location.href = `/medicine-cabinet?patientId=${selectedPatient.user_id}`;
+                  navigate(`/medicine-cabinet?patientId=${selectedPatient.user_id}`);
                 }}
                 disabled={!selectedPatient}
                 className={`p-5 rounded-lg shadow transition-all border group text-left ${
@@ -714,7 +716,7 @@ const PhysicianPanel: React.FC = () => {
                     alert('Please select a patient first');
                     return;
                   }
-                  window.location.href = `/care-plans?patientId=${selectedPatient.user_id}`;
+                  navigate(`/care-plans?patientId=${selectedPatient.user_id}`);
                 }}
                 disabled={!selectedPatient}
                 className={`p-5 rounded-lg shadow transition-all border group text-left ${
@@ -740,7 +742,7 @@ const PhysicianPanel: React.FC = () => {
                     alert('Please select a patient first');
                     return;
                   }
-                  window.location.href = `/health-observations?patientId=${selectedPatient.user_id}`;
+                  navigate(`/health-observations?patientId=${selectedPatient.user_id}`);
                 }}
                 disabled={!selectedPatient}
                 className={`p-5 rounded-lg shadow transition-all border group text-left ${
@@ -766,7 +768,7 @@ const PhysicianPanel: React.FC = () => {
                     alert('Please select a patient first');
                     return;
                   }
-                  window.location.href = `/immunizations?patientId=${selectedPatient.user_id}`;
+                  navigate(`/immunizations?patientId=${selectedPatient.user_id}`);
                 }}
                 disabled={!selectedPatient}
                 className={`p-5 rounded-lg shadow transition-all border group text-left ${
@@ -792,7 +794,7 @@ const PhysicianPanel: React.FC = () => {
                     alert('Please select a patient first');
                     return;
                   }
-                  window.location.href = `/billing?patientId=${selectedPatient.user_id}`;
+                  navigate(`/billing?patientId=${selectedPatient.user_id}`);
                 }}
                 disabled={!selectedPatient}
                 className={`p-5 rounded-lg shadow transition-all border group text-left ${
