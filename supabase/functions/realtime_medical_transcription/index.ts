@@ -199,31 +199,64 @@ async function analyzeCoding(rawTranscript: string, socket: WebSocket, userId: s
           time_of_day: timeOfDay,
           current_mood: prefs.last_interaction_at && (Date.now() - new Date(prefs.last_interaction_at).getTime() < 600000) ? 'focused' : 'neutral'
         })
-      : `You are an experienced, intelligent medical scribe - like a trusted coworker. Analyze this transcript and suggest billing codes conversationally.
+      : `You are an experienced, intelligent medical scribe with deep clinical knowledge. Analyze this encounter transcript and generate:
 
-TRANSCRIPT:
+1. **Complete SOAP Note** - Professional clinical documentation ready for EHR
+2. **Billing Codes** - Accurate CPT, ICD-10, HCPCS codes
+3. **Conversational Coaching** - Helpful suggestions for the provider
+
+TRANSCRIPT (PHI-SCRUBBED):
 ${transcript}
 
 Return ONLY strict JSON:
 {
-  "conversational_note": "Brief friendly comment about what you heard",
+  "conversational_note": "Brief friendly comment about the encounter (1-2 sentences, conversational tone)",
+
+  "soapNote": {
+    "subjective": "Chief complaint, HPI (onset, location, duration, character, alleviating/aggravating factors, radiation, timing, severity - OLDCARTS), and pertinent ROS. Write as a physician would chart in their EHR. 2-4 sentences.",
+    "objective": "Vital signs if mentioned, physical exam findings, relevant labs/imaging results. Use clinical terminology. 2-3 sentences.",
+    "assessment": "Primary and secondary diagnoses with clinical reasoning. Link symptoms to diagnoses. Include ICD-10 codes. 2-3 sentences.",
+    "plan": "Treatment plan including: medications (with dosing), procedures, referrals, patient education, follow-up timeline. Be specific and actionable. 3-5 bullet points.",
+    "hpi": "Detailed narrative HPI suitable for medical chart. Include all OLDCARTS elements mentioned. 3-5 sentences.",
+    "ros": "Pertinent positive and negative findings from review of systems. Format: 'Constitutional: denies fever, chills. Cardiovascular: endorses dyspnea on exertion. Respiratory: denies cough.' 2-4 sentences."
+  },
+
   "suggestedCodes": [
     {
       "code": "99214",
       "type": "CPT",
-      "description": "Office visit, moderate complexity",
-      "reimbursement": 0,
-      "confidence": 0.85,
-      "reasoning": "Why this code fits",
-      "missingDocumentation": "Natural suggestion for documentation"
+      "description": "Office/outpatient visit, established patient, 30-39 minutes",
+      "reimbursement": 164.00,
+      "confidence": 0.92,
+      "reasoning": "Detailed history, detailed exam, moderate complexity MDM based on transcript",
+      "missingDocumentation": "Document time spent counseling if >50% of visit"
+    },
+    {
+      "code": "E11.65",
+      "type": "ICD10",
+      "description": "Type 2 diabetes mellitus with hyperglycemia",
+      "confidence": 0.95,
+      "reasoning": "Patient has documented T2DM with elevated blood sugar"
     }
   ],
-  "totalRevenueIncrease": 0,
+
+  "totalRevenueIncrease": 164.00,
   "complianceRisk": "low",
-  "conversational_suggestions": ["Optional helpful hints"]
+  "conversational_suggestions": [
+    "Great job documenting the patient's diabetes management",
+    "Consider adding PHQ-9 for depression screening to capture Z-code"
+  ]
 }
 
-Be helpful, proactive, and conversational - like a colleague who spots opportunities.`;
+**CRITICAL REQUIREMENTS:**
+- SOAP note must be complete, professional, and EHR-ready
+- Use proper medical terminology and standard abbreviations
+- Assessment must include ICD-10 diagnoses where applicable
+- Plan must be specific (include doses, frequencies, quantities for medications)
+- HPI must address OLDCARTS when mentioned: Onset, Location, Duration, Character, Alleviating/Aggravating factors, Radiation, Timing, Severity
+- Be thorough but concise - this goes directly in the patient's medical record
+- If the transcript is too brief (<50 words), generate a minimal SOAP note based on available information
+- Never make up clinical details not in the transcript - use "not documented" if missing`;
 
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -366,6 +399,14 @@ Be helpful, proactive, and conversational - like a colleague who spots opportuni
       revenueIncrease: parsed.totalRevenueIncrease ?? 0,
       complianceRisk: parsed.complianceRisk ?? "low",
       suggestions: parsed.conversational_suggestions ?? [],
+      soapNote: {
+        subjective: parsed.soapNote?.subjective ?? null,
+        objective: parsed.soapNote?.objective ?? null,
+        assessment: parsed.soapNote?.assessment ?? null,
+        plan: parsed.soapNote?.plan ?? null,
+        hpi: parsed.soapNote?.hpi ?? null,
+        ros: parsed.soapNote?.ros ?? null
+      }
     });
   } catch (e) {
     console.error("Claude analysis exception:", e);

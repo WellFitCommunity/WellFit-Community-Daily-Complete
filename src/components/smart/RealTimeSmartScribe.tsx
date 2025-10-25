@@ -1,7 +1,7 @@
 // src/components/smart/RealTimeSmartScribe.tsx
 // SmartScribe Atlas - AI-Powered Medical Transcription & Revenue Optimization
 // Uses Claude Sonnet 4.5 for maximum billing accuracy
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { auditLogger } from "../../services/auditLogger";
 
@@ -22,7 +22,17 @@ interface ConversationalMessage {
   context?: 'greeting' | 'suggestion' | 'code' | 'reminder';
 }
 
-const RealTimeSmartScribe: React.FC = () => {
+interface RealTimeSmartScribeProps {
+  selectedPatientId?: string;
+  selectedPatientName?: string;
+  onSessionComplete?: (sessionId: string) => void;
+}
+
+const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = ({
+  selectedPatientId,
+  selectedPatientName,
+  onSessionComplete
+}) => {
   const [transcript, setTranscript] = useState("");
   const [suggestedCodes, setSuggestedCodes] = useState<CodeSuggestion[]>([]);
   const [revenueImpact, setRevenueImpact] = useState(0);
@@ -31,8 +41,38 @@ const RealTimeSmartScribe: React.FC = () => {
   const [conversationalMessages, setConversationalMessages] = useState<ConversationalMessage[]>([]);
   const [scribeSuggestions, setScribeSuggestions] = useState<string[]>([]);
 
+  // Timer state for recording duration
+  const [recordingStartTime, setRecordingStartTime] = useState<number | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
+  // SOAP Note state
+  interface SOAPNote {
+    subjective: string;
+    objective: string;
+    assessment: string;
+    plan: string;
+    hpi: string;
+    ros: string;
+  }
+
+  const [soapNote, setSoapNote] = useState<SOAPNote | null>(null);
+
   const wsRef = useRef<WebSocket | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+
+  // Timer effect - updates every second during recording
+  useEffect(() => {
+    if (!isRecording || !recordingStartTime) {
+      setElapsedSeconds(0);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setElapsedSeconds(Math.floor((Date.now() - recordingStartTime) / 1000));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isRecording, recordingStartTime]);
 
   const startRecording = async () => {
     try {
@@ -66,6 +106,7 @@ const RealTimeSmartScribe: React.FC = () => {
       ws.onopen = () => {
         setStatus("🔴 Recording in progress…");
         setIsRecording(true);
+        setRecordingStartTime(Date.now());
       };
 
       ws.onmessage = (event) => {
@@ -76,6 +117,18 @@ const RealTimeSmartScribe: React.FC = () => {
           } else if (data.type === "code_suggestion") {
             setSuggestedCodes(Array.isArray(data.codes) ? data.codes : []);
             setRevenueImpact(Number(data.revenueIncrease || 0));
+
+            // Update SOAP note if present
+            if (data.soapNote) {
+              setSoapNote({
+                subjective: data.soapNote.subjective || '',
+                objective: data.soapNote.objective || '',
+                assessment: data.soapNote.assessment || '',
+                plan: data.soapNote.plan || '',
+                hpi: data.soapNote.hpi || '',
+                ros: data.soapNote.ros || ''
+              });
+            }
 
             // Add conversational note if present
             if (data.conversational_note) {
@@ -142,15 +195,104 @@ const RealTimeSmartScribe: React.FC = () => {
     }
   };
 
-  const stopRecording = () => {
+  const stopRecording = async () => {
     try {
+      const endTime = Date.now();
+      const durationSeconds = recordingStartTime
+        ? Math.floor((endTime - recordingStartTime) / 1000)
+        : 0;
+
+      // Stop media recorder
       if (mediaRecorderRef.current?.state === "recording") {
         mediaRecorderRef.current.stop();
       }
       wsRef.current?.close();
+
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        auditLogger.error('SCRIBE_SAVE_NO_USER', new Error('No authenticated user'));
+        setStatus('Recording stopped (not saved - no user)');
+        setIsRecording(false);
+        setRecordingStartTime(null);
+        setElapsedSeconds(0);
+        return;
+      }
+
+      // Validate patient context
+      if (!selectedPatientId) {
+        auditLogger.error('SCRIBE_SAVE_NO_PATIENT', new Error('No patient selected'));
+        setStatus('Recording stopped (not saved - no patient selected)');
+        setIsRecording(false);
+        setRecordingStartTime(null);
+        setElapsedSeconds(0);
+        return;
+      }
+
+      // Save scribe session to database
+      const { data: session, error } = await supabase
+        .from('scribe_sessions')
+        .insert({
+          patient_id: selectedPatientId,
+          created_by: user.id,
+          provider_id: user.id,
+          recording_started_at: new Date(recordingStartTime!).toISOString(),
+          recording_ended_at: new Date(endTime).toISOString(),
+          recording_duration_seconds: durationSeconds,
+          transcription_text: transcript || '',
+          transcription_status: transcript ? 'completed' : 'empty',
+          transcription_completed_at: new Date().toISOString(),
+          ai_note_subjective: soapNote?.subjective || null,
+          ai_note_objective: soapNote?.objective || null,
+          ai_note_assessment: soapNote?.assessment || null,
+          ai_note_plan: soapNote?.plan || null,
+          ai_note_hpi: soapNote?.hpi || null,
+          ai_note_ros: soapNote?.ros || null,
+          suggested_cpt_codes: suggestedCodes.filter(c => c.type === 'CPT').map(c => ({
+            code: c.code,
+            description: c.description,
+            reimbursement: c.reimbursement,
+            confidence: c.confidence
+          })),
+          suggested_icd10_codes: suggestedCodes.filter(c => c.type === 'ICD10').map(c => ({
+            code: c.code,
+            description: c.description,
+            confidence: c.confidence
+          })),
+          clinical_time_minutes: Math.floor(durationSeconds / 60),
+          is_ccm_eligible: durationSeconds >= 1200,
+          ccm_complexity: durationSeconds >= 2400 ? 'complex' : durationSeconds >= 1200 ? 'moderate' : null,
+          model_version: 'claude-sonnet-4-5-20250929'
+        })
+        .select()
+        .single();
+
+      if (error) {
+        auditLogger.error('SCRIBE_SESSION_SAVE_FAILED', error, {
+          patientId: selectedPatientId,
+          duration: durationSeconds
+        });
+        setStatus('Error saving session: ' + error.message);
+      } else {
+        auditLogger.clinical('SCRIBE_SESSION_COMPLETED', true, {
+          sessionId: session.id,
+          patientId: selectedPatientId,
+          durationSeconds,
+          codesGenerated: suggestedCodes.length,
+          ccmEligible: durationSeconds >= 1200
+        });
+        setStatus(`✓ Session saved (${Math.floor(durationSeconds / 60)} min, ${suggestedCodes.length} codes)`);
+
+        // Call parent callback if provided
+        onSessionComplete?.(session.id);
+      }
+    } catch (error: any) {
+      auditLogger.error('SCRIBE_STOP_RECORDING_FAILED', error);
+      setStatus('Error: ' + (error?.message ?? 'Failed to save'));
     } finally {
       setIsRecording(false);
-      setStatus("Recording stopped");
+      setRecordingStartTime(null);
+      setElapsedSeconds(0);
     }
   };
 
@@ -218,6 +360,35 @@ const RealTimeSmartScribe: React.FC = () => {
               </ul>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Recording Timer */}
+      {isRecording && (
+        <div className="flex items-center justify-center gap-6 mb-6 p-4 bg-gray-50 rounded-xl border-2 border-gray-200">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">⏱️</span>
+            <div>
+              <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">Recording Duration</div>
+              <div className="text-3xl font-mono font-bold text-gray-900">
+                {Math.floor(elapsedSeconds / 60)}:{(elapsedSeconds % 60).toString().padStart(2, '0')}
+              </div>
+            </div>
+          </div>
+
+          {elapsedSeconds >= 1200 && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-green-100 border-2 border-green-500 rounded-lg animate-pulse">
+              <span className="text-green-600 text-xl">✓</span>
+              <span className="text-sm font-semibold text-green-900">CCM Eligible (20+ min)</span>
+            </div>
+          )}
+
+          {elapsedSeconds >= 2400 && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-blue-100 border-2 border-blue-500 rounded-lg">
+              <span className="text-blue-600 text-xl">⬆</span>
+              <span className="text-sm font-semibold text-blue-900">Extended CCM (40+ min)</span>
+            </div>
+          )}
         </div>
       )}
 
@@ -353,6 +524,93 @@ const RealTimeSmartScribe: React.FC = () => {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* SOAP Note Display - CLINICAL DOCUMENTATION */}
+      {soapNote && (
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <span>📋</span>
+              Clinical Documentation (SOAP Note)
+            </h3>
+            <button
+              onClick={() => {
+                const soapText = `SUBJECTIVE:\n${soapNote.subjective}\n\nOBJECTIVE:\n${soapNote.objective}\n\nASSESSMENT:\n${soapNote.assessment}\n\nPLAN:\n${soapNote.plan}`;
+                navigator.clipboard.writeText(soapText);
+                setStatus('✓ SOAP note copied to clipboard!');
+                setTimeout(() => setStatus('Ready'), 3000);
+              }}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium flex items-center gap-2 transition-all"
+            >
+              <span>📋</span>
+              Copy to Clipboard
+            </button>
+          </div>
+
+          <div className="bg-white rounded-xl border-2 border-gray-300 shadow-lg overflow-hidden">
+            {/* Subjective */}
+            <div className="border-b-2 border-gray-200">
+              <div className="px-6 py-3 bg-gradient-to-r from-blue-50 to-indigo-50">
+                <h4 className="font-bold text-lg text-blue-900">S - SUBJECTIVE</h4>
+              </div>
+              <div className="px-6 py-4">
+                <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">{soapNote.subjective}</p>
+              </div>
+            </div>
+
+            {/* Objective */}
+            <div className="border-b-2 border-gray-200">
+              <div className="px-6 py-3 bg-gradient-to-r from-green-50 to-emerald-50">
+                <h4 className="font-bold text-lg text-green-900">O - OBJECTIVE</h4>
+              </div>
+              <div className="px-6 py-4">
+                <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">{soapNote.objective}</p>
+              </div>
+            </div>
+
+            {/* Assessment */}
+            <div className="border-b-2 border-gray-200">
+              <div className="px-6 py-3 bg-gradient-to-r from-amber-50 to-yellow-50">
+                <h4 className="font-bold text-lg text-amber-900">A - ASSESSMENT</h4>
+              </div>
+              <div className="px-6 py-4">
+                <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">{soapNote.assessment}</p>
+              </div>
+            </div>
+
+            {/* Plan */}
+            <div>
+              <div className="px-6 py-3 bg-gradient-to-r from-purple-50 to-indigo-50">
+                <h4 className="font-bold text-lg text-purple-900">P - PLAN</h4>
+              </div>
+              <div className="px-6 py-4">
+                <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">{soapNote.plan}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* HPI & ROS Expandable Sections */}
+          <div className="mt-4 grid grid-cols-2 gap-4">
+            <details className="bg-gray-50 rounded-lg border border-gray-300">
+              <summary className="px-4 py-3 cursor-pointer font-semibold text-gray-900 hover:bg-gray-100 transition-colors">
+                📝 Detailed HPI
+              </summary>
+              <div className="px-4 py-3 border-t border-gray-300">
+                <p className="text-gray-800 text-sm leading-relaxed">{soapNote.hpi}</p>
+              </div>
+            </details>
+
+            <details className="bg-gray-50 rounded-lg border border-gray-300">
+              <summary className="px-4 py-3 cursor-pointer font-semibold text-gray-900 hover:bg-gray-100 transition-colors">
+                🔍 Review of Systems
+              </summary>
+              <div className="px-4 py-3 border-t border-gray-300">
+                <p className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">{soapNote.ros}</p>
+              </div>
+            </details>
           </div>
         </div>
       )}

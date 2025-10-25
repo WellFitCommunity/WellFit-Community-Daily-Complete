@@ -603,7 +603,26 @@ const PhysicianPanel: React.FC = () => {
                 </div>
               </div>
             </div>
-            <SmartScribe />
+            {selectedPatient ? (
+              <SmartScribe
+                selectedPatientId={selectedPatient.user_id}
+                selectedPatientName={`${selectedPatient.first_name} ${selectedPatient.last_name}`}
+                onSessionComplete={(sessionId) => {
+                  console.log('✓ Scribe session completed:', sessionId);
+                }}
+              />
+            ) : (
+              <div className="text-center py-12 bg-yellow-50 rounded-xl border-2 border-yellow-200">
+                <div className="text-6xl mb-4">⚠️</div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Patient Selection Required</h3>
+                <p className="text-gray-600 mb-4">
+                  Please select a patient from the list above before starting a scribe session.
+                </p>
+                <p className="text-sm text-gray-500">
+                  The scribe needs to know which patient chart to document.
+                </p>
+              </div>
+            )}
           </CollapsibleSection>
 
           {/* Telehealth Appointment Scheduler */}
