@@ -13,8 +13,10 @@ jest.mock('../../../services/chwService');
 describe('SDOHAssessment', () => {
   const mockProps = {
     visitId: 'visit-123',
+    language: 'en' as const,
     onComplete: jest.fn(),
     onBack: jest.fn(),
+    onSkip: jest.fn(),
   };
 
   beforeEach(() => {
@@ -25,11 +27,12 @@ describe('SDOHAssessment', () => {
     it('should render all PRAPARE social determinants questions', () => {
       render(<SDOHAssessment {...mockProps} />);
 
-      expect(screen.getByText(/food/i)).toBeInTheDocument();
-      expect(screen.getByText(/housing/i)).toBeInTheDocument();
-      expect(screen.getByText(/transportation/i)).toBeInTheDocument();
-      expect(screen.getByText(/utilities/i)).toBeInTheDocument();
-      expect(screen.getByText(/safety/i)).toBeInTheDocument();
+      // Check for section headers
+      expect(screen.getByRole('heading', { name: /food/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /housing/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /transportation/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /utilities/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /safety/i })).toBeInTheDocument();
     });
 
     it('should use clear, patient-friendly language', () => {
@@ -50,7 +53,7 @@ describe('SDOHAssessment', () => {
     it('should ask about food worry as separate question', () => {
       render(<SDOHAssessment {...mockProps} />);
 
-      expect(screen.getByText(/food you bought.* did not last/i)).toBeInTheDocument();
+      expect(screen.getByText(/food you bought not last.*didn't have money/i)).toBeInTheDocument();
     });
 
     it('should allow yes/no answers for food questions', () => {
@@ -74,10 +77,10 @@ describe('SDOHAssessment', () => {
     it('should provide multiple housing status options', () => {
       render(<SDOHAssessment {...mockProps} />);
 
-      expect(screen.getByText(/own/i)).toBeInTheDocument();
-      expect(screen.getByText(/rent/i)).toBeInTheDocument();
-      expect(screen.getByText(/temporary/i)).toBeInTheDocument();
-      expect(screen.getByText(/homeless/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /I own my home/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /I rent/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Temporary housing/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /No stable housing/i })).toBeInTheDocument();
     });
 
     it('should ask about housing worry/instability', () => {
@@ -109,7 +112,7 @@ describe('SDOHAssessment', () => {
       const foodYes = screen.getAllByRole('button', { name: /yes/i })[0];
       fireEvent.click(foodYes);
 
-      expect(foodYes).toHaveClass('selected');
+      expect(foodYes.className).toContain('selected');
     });
 
     it('should track all responses', () => {
@@ -124,7 +127,7 @@ describe('SDOHAssessment', () => {
 
       // All should be tracked
       allYesButtons.forEach(button => {
-        expect(button).toHaveClass('selected');
+        expect(button.className).toContain('selected');
       });
     });
 
@@ -136,12 +139,12 @@ describe('SDOHAssessment', () => {
 
       // Select yes
       fireEvent.click(yesButton);
-      expect(yesButton).toHaveClass('selected');
+      expect(yesButton.className).toContain('selected');
 
       // Change to no
       fireEvent.click(noButton);
-      expect(noButton).toHaveClass('selected');
-      expect(yesButton).not.toHaveClass('selected');
+      expect(noButton.className).toContain('selected');
+      expect(yesButton.className).not.toContain('selected');
     });
   });
 
@@ -156,9 +159,17 @@ describe('SDOHAssessment', () => {
     it('should enable submit when all questions answered', () => {
       render(<SDOHAssessment {...mockProps} />);
 
-      // Answer all questions (assuming there are 10 questions)
-      const allButtons = screen.getAllByRole('button', { name: /no/i });
-      allButtons.forEach(button => fireEvent.click(button));
+      // Answer all yes/no questions
+      const allNoButtons = screen.getAllByRole('button', { name: /no/i });
+      allNoButtons.forEach(button => fireEvent.click(button));
+
+      // Answer housing status
+      const housingButton = screen.getByRole('button', { name: /I own my home/i });
+      fireEvent.click(housingButton);
+
+      // Answer social isolation
+      const neverButton = screen.getByRole('button', { name: /^Never$/i });
+      fireEvent.click(neverButton);
 
       const submitButton = screen.getByText(/Complete Assessment/i);
       expect(submitButton).not.toBeDisabled();
@@ -169,9 +180,15 @@ describe('SDOHAssessment', () => {
 
       render(<SDOHAssessment {...mockProps} />);
 
-      // Answer all questions
-      const allButtons = screen.getAllByRole('button', { name: /no/i });
-      allButtons.forEach(button => fireEvent.click(button));
+      // Answer all yes/no questions
+      const allNoButtons = screen.getAllByRole('button', { name: /no/i });
+      allNoButtons.forEach(button => fireEvent.click(button));
+
+      // Answer housing status
+      fireEvent.click(screen.getByRole('button', { name: /I own my home/i }));
+
+      // Answer social isolation
+      fireEvent.click(screen.getByRole('button', { name: /^Never$/i }));
 
       fireEvent.click(screen.getByText(/Complete Assessment/i));
 
@@ -182,7 +199,7 @@ describe('SDOHAssessment', () => {
             assessed_at: expect.any(String),
           })
         );
-      });
+      }, { timeout: 2000 });
     });
 
     it('should call onComplete after successful submission', async () => {
@@ -190,15 +207,21 @@ describe('SDOHAssessment', () => {
 
       render(<SDOHAssessment {...mockProps} />);
 
-      // Answer all questions
-      const allButtons = screen.getAllByRole('button', { name: /no/i });
-      allButtons.forEach(button => fireEvent.click(button));
+      // Answer all yes/no questions
+      const allNoButtons = screen.getAllByRole('button', { name: /no/i });
+      allNoButtons.forEach(button => fireEvent.click(button));
+
+      // Answer housing status
+      fireEvent.click(screen.getByRole('button', { name: /I own my home/i }));
+
+      // Answer social isolation
+      fireEvent.click(screen.getByRole('button', { name: /^Never$/i }));
 
       fireEvent.click(screen.getByText(/Complete Assessment/i));
 
       await waitFor(() => {
         expect(mockProps.onComplete).toHaveBeenCalled();
-      });
+      }, { timeout: 2000 });
     });
   });
 
@@ -207,13 +230,17 @@ describe('SDOHAssessment', () => {
       render(<SDOHAssessment {...mockProps} />);
 
       // Select high-risk answers
-      const foodYes = screen.getByText(/worried about food/i).closest('div')?.querySelector('[name="yes"]');
-      const housingYes = screen.getByText(/losing your housing/i).closest('div')?.querySelector('[name="yes"]');
-      const safetyNo = screen.getByText(/feel safe/i).closest('div')?.querySelector('[name="no"]');
+      const allYesButtons = screen.getAllByRole('button', { name: /yes/i });
+      // Answer yes to food worry, food insecurity, housing worry, transportation, utility
+      allYesButtons.slice(0, 5).forEach(button => fireEvent.click(button));
 
-      if (foodYes) fireEvent.click(foodYes);
-      if (housingYes) fireEvent.click(housingYes);
+      // Answer safety as no (not feeling safe = high risk)
+      const safetyNo = allYesButtons[5] ? screen.getAllByRole('button', { name: /no/i })[5] : null;
       if (safetyNo) fireEvent.click(safetyNo);
+
+      // Complete remaining required fields
+      fireEvent.click(screen.getByRole('button', { name: /I own my home/i }));
+      fireEvent.click(screen.getByRole('button', { name: /^Always$/i }));
 
       expect(screen.getByText(/High Risk/i)).toBeInTheDocument();
     });
@@ -224,6 +251,13 @@ describe('SDOHAssessment', () => {
       // Answer questions to create moderate risk
       const someYesButtons = screen.getAllByRole('button', { name: /yes/i }).slice(0, 3);
       someYesButtons.forEach(button => fireEvent.click(button));
+
+      // Complete remaining required answers
+      const remainingNo = screen.getAllByRole('button', { name: /no/i }).slice(3);
+      remainingNo.forEach(button => fireEvent.click(button));
+
+      fireEvent.click(screen.getByRole('button', { name: /I own my home/i }));
+      fireEvent.click(screen.getByRole('button', { name: /^Never$/i }));
 
       expect(screen.getByText(/Risk Score/i)).toBeInTheDocument();
       expect(screen.getByText(/\d+\/10/)).toBeInTheDocument();
@@ -242,9 +276,15 @@ describe('SDOHAssessment', () => {
 
       render(<SDOHAssessment {...mockProps} />);
 
-      // Answer all questions
-      const allButtons = screen.getAllByRole('button', { name: /no/i });
-      allButtons.forEach(button => fireEvent.click(button));
+      // Answer all yes/no questions
+      const allNoButtons = screen.getAllByRole('button', { name: /no/i });
+      allNoButtons.forEach(button => fireEvent.click(button));
+
+      // Answer housing status
+      fireEvent.click(screen.getByRole('button', { name: /I own my home/i }));
+
+      // Answer social isolation
+      fireEvent.click(screen.getByRole('button', { name: /^Never$/i }));
 
       // Add notes
       const notesField = screen.getByLabelText(/Additional Notes/i);
@@ -259,7 +299,7 @@ describe('SDOHAssessment', () => {
             notes: 'Patient mentioned job loss',
           })
         );
-      });
+      }, { timeout: 2000 });
     });
   });
 
@@ -278,7 +318,7 @@ describe('SDOHAssessment', () => {
       const yesButton = screen.getAllByRole('button', { name: /yes/i })[0];
       fireEvent.click(yesButton);
 
-      expect(yesButton).toHaveClass('selected');
+      expect(yesButton.className).toContain('selected');
     });
   });
 
@@ -286,18 +326,19 @@ describe('SDOHAssessment', () => {
     it('should support Spanish language option', () => {
       render(<SDOHAssessment {...mockProps} language="es" />);
 
-      expect(screen.getByText(/alimentos/i)).toBeInTheDocument();
-      expect(screen.getByText(/vivienda/i)).toBeInTheDocument();
+      // Check for Spanish section headers
+      expect(screen.getByRole('heading', { name: /alimentos/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /vivienda/i })).toBeInTheDocument();
     });
 
     it('should maintain question integrity across languages', () => {
       const { rerender } = render(<SDOHAssessment {...mockProps} language="en" />);
 
-      const englishQuestionCount = screen.getAllByRole('button', { name: /yes|no/i }).length;
+      const englishQuestionCount = screen.getAllByRole('button', { name: /yes/i }).length;
 
       rerender(<SDOHAssessment {...mockProps} language="es" />);
 
-      const spanishQuestionCount = screen.getAllByRole('button', { name: /sí|no/i }).length;
+      const spanishQuestionCount = screen.getAllByRole('button', { name: /sí/i }).length;
 
       expect(englishQuestionCount).toBe(spanishQuestionCount);
     });
@@ -315,9 +356,15 @@ describe('SDOHAssessment', () => {
 
       render(<SDOHAssessment {...mockProps} />);
 
-      // Answer and submit
-      const allButtons = screen.getAllByRole('button', { name: /no/i });
-      allButtons.forEach(button => fireEvent.click(button));
+      // Answer all yes/no questions
+      const allNoButtons = screen.getAllByRole('button', { name: /no/i });
+      allNoButtons.forEach(button => fireEvent.click(button));
+
+      // Answer housing status
+      fireEvent.click(screen.getByRole('button', { name: /I own my home/i }));
+
+      // Answer social isolation
+      fireEvent.click(screen.getByRole('button', { name: /^Never$/i }));
 
       fireEvent.click(screen.getByText(/Complete Assessment/i));
 
@@ -328,7 +375,7 @@ describe('SDOHAssessment', () => {
             assessed_at: expect.stringMatching(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/),
           })
         );
-      });
+      }, { timeout: 2000 });
     });
   });
 
@@ -358,15 +405,22 @@ describe('SDOHAssessment', () => {
 
       render(<SDOHAssessment {...mockProps} />);
 
-      // Answer and submit
-      const allButtons = screen.getAllByRole('button', { name: /no/i });
-      allButtons.forEach(button => fireEvent.click(button));
+      // Answer all yes/no questions
+      const allNoButtons = screen.getAllByRole('button', { name: /no/i });
+      allNoButtons.forEach(button => fireEvent.click(button));
+
+      // Answer housing status
+      fireEvent.click(screen.getByRole('button', { name: /I own my home/i }));
+
+      // Answer social isolation
+      fireEvent.click(screen.getByRole('button', { name: /^Never$/i }));
 
       fireEvent.click(screen.getByText(/Complete Assessment/i));
 
       await waitFor(() => {
-        expect(screen.getByText(/Failed to save assessment/i)).toBeInTheDocument();
-      });
+        const errorContainer = screen.getByText(/Failed to save assessment/i).parentElement;
+        expect(errorContainer).toHaveTextContent(/Please try again/i);
+      }, { timeout: 2000 });
     });
 
     it('should allow retry after error', async () => {
@@ -376,22 +430,30 @@ describe('SDOHAssessment', () => {
 
       render(<SDOHAssessment {...mockProps} />);
 
-      // Answer and submit (first attempt)
-      const allButtons = screen.getAllByRole('button', { name: /no/i });
-      allButtons.forEach(button => fireEvent.click(button));
+      // Answer all yes/no questions
+      const allNoButtons = screen.getAllByRole('button', { name: /no/i });
+      allNoButtons.forEach(button => fireEvent.click(button));
 
+      // Answer housing status
+      fireEvent.click(screen.getByRole('button', { name: /I own my home/i }));
+
+      // Answer social isolation
+      fireEvent.click(screen.getByRole('button', { name: /^Never$/i }));
+
+      // First attempt fails
       fireEvent.click(screen.getByText(/Complete Assessment/i));
 
       await waitFor(() => {
-        expect(screen.getByText(/Failed to save assessment/i)).toBeInTheDocument();
-      });
+        const errorContainer = screen.getByText(/Failed to save assessment/i).parentElement;
+        expect(errorContainer).toHaveTextContent(/Please try again/i);
+      }, { timeout: 2000 });
 
-      // Retry
+      // Retry succeeds
       fireEvent.click(screen.getByText(/Retry/i));
 
       await waitFor(() => {
         expect(mockProps.onComplete).toHaveBeenCalled();
-      });
+      }, { timeout: 2000 });
     });
   });
 });

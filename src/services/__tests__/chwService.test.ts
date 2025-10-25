@@ -477,6 +477,20 @@ describe('CHWService', () => {
         value: false,
       });
 
+      // Mock supabase to provide select and insert methods for offline scenario
+      const mockSelect = jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          single: jest.fn().mockResolvedValue({ data: { patient_id: 'patient-123' }, error: null })
+        })
+      });
+
+      const mockInsert = jest.fn().mockResolvedValue({ error: null });
+
+      mockSupabaseFrom.mockReturnValue({
+        select: mockSelect,
+        insert: mockInsert,
+      });
+
       const visitId = 'offline-visit-123';
       const vitals: VitalsData = {
         systolic: 120,
@@ -499,8 +513,18 @@ describe('CHWService', () => {
         eq: jest.fn().mockResolvedValue({ error: null }),
       });
 
+      const mockSelect = jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          single: jest.fn().mockResolvedValue({ data: { patient_id: 'patient-123' }, error: null })
+        })
+      });
+
+      const mockInsert = jest.fn().mockResolvedValue({ error: null });
+
       mockSupabaseFrom.mockReturnValue({
         update: mockUpdate,
+        select: mockSelect,
+        insert: mockInsert,
       });
 
       const visitId = 'online-visit-123';
