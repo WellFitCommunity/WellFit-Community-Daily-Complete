@@ -15,6 +15,7 @@ import {
   recordLoginAttempt,
   type AccountLockoutInfo,
 } from '../services/loginSecurityService';
+import { auditLogger } from '../services/auditLogger';
 
 type Mode = 'senior' | 'admin';
 
@@ -123,13 +124,13 @@ const LoginPage: React.FC = () => {
       .maybeSingle();
 
     if (error) {
-      console.warn('[LoginPage] Profile fetch error:', error.message);
+      auditLogger.warn('PROFILE_FETCH_ERROR', { error: error.message, userId: uid });
       return '/dashboard';
     }
 
     // If no profile exists, go to dashboard and let AuthGate handle it
     if (!data) {
-      console.warn('[LoginPage] No profile found for user, redirecting to dashboard');
+      auditLogger.warn('NO_PROFILE_FOUND', { userId: uid, redirectTo: '/dashboard' });
       return '/dashboard';
     }
 
@@ -140,7 +141,7 @@ const LoginPage: React.FC = () => {
     const role = (data as any)?.role || '';
     const roleCode = (data as any)?.role_code || 0;
 
-    console.log('[LoginPage] Profile data:', { forcePwd, consent, demoDone, onboard, role, roleCode });
+    auditLogger.debug('Login page profile data loaded', { forcePwd, consent, demoDone, onboard, role, roleCode });
 
     // 1. Forced password change applies to everyone (including admins)
     if (forcePwd) return '/change-password';
@@ -156,7 +157,7 @@ const LoginPage: React.FC = () => {
     const staffRoleCodes = [1, 2, 3, 5, 8, 9, 10, 11, 12]; // All staff role codes
 
     if (staffRoles.includes(role) || staffRoleCodes.includes(roleCode)) {
-      console.log('[LoginPage] Staff role detected:', role, 'code:', roleCode, '- redirecting to admin-login for PIN');
+      auditLogger.auth('LOGIN', true, { userType: 'staff', role, roleCode, redirectTo: '/admin-login' });
       return '/admin-login';
     }
 
@@ -183,7 +184,7 @@ const LoginPage: React.FC = () => {
         .maybeSingle();
 
       if (!pinData) {
-        console.log('[LoginPage] Senior has no caregiver PIN set - redirecting to PIN setup');
+        auditLogger.info('SENIOR_CAREGIVER_PIN_SETUP_REQUIRED', { userId: uid, redirectTo: '/set-caregiver-pin' });
         return '/set-caregiver-pin';
       }
     }
@@ -202,7 +203,7 @@ const LoginPage: React.FC = () => {
     (async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!cancel && session) {
-        console.log('[LoginPage] User already logged in');
+        auditLogger.info('USER_ALREADY_LOGGED_IN', { userId: session.user?.id });
         setAlreadyLoggedIn(true);
         setExistingUserEmail(session.user?.email || session.user?.phone || 'current user');
       }
@@ -218,7 +219,7 @@ const LoginPage: React.FC = () => {
   };
 
   const handleContinueAsLoggedIn = async () => {
-    console.log('[LoginPage] Continuing as logged-in user...');
+    auditLogger.info('USER_CONTINUING_EXISTING_SESSION', {});
     const route = await nextRouteForUser();
     navigate(route, { replace: true });
   };
@@ -239,7 +240,7 @@ const LoginPage: React.FC = () => {
       const t = await captchaRef.current?.execute();
       return t || '';
     } catch (error) {
-      console.error('hCaptcha execution failed:', error);
+      auditLogger.error('HCAPTCHA_EXECUTION_FAILED', error instanceof Error ? error : new Error(String(error)));
       return '';
     }
   };
@@ -256,7 +257,7 @@ const LoginPage: React.FC = () => {
       const route = await nextRouteForUser();
       navigate(route, { replace: true });
     } catch (err: any) {
-      console.error('Passkey login failed:', err);
+      auditLogger.auth('LOGIN_FAILED', false, { method: 'passkey', error: err.message });
       setError(err.message || 'Biometric login failed. Please try password login instead.');
     } finally {
       setPasskeyLoading(false);
@@ -290,7 +291,7 @@ const LoginPage: React.FC = () => {
 
       const token = await ensureCaptcha().catch(() => '');
 
-      console.log('[LoginPage] Login attempt:', { hasToken: !!token, phoneLength: e164?.length });
+      auditLogger.auth('LOGIN', true, { method: 'phone_password', hasToken: !!token, phoneLength: e164?.length });
 
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         phone: e164,
@@ -320,19 +321,19 @@ const LoginPage: React.FC = () => {
         } else if (msg.includes('confirm')) {
           setError('Account not confirmed. Please complete verification.');
         } else {
-          // For debugging: show actual error in console
-          console.error('[LoginPage] Unhandled auth error:', signInError.message);
+          // Log unhandled auth error for audit trail
+          auditLogger.auth('LOGIN_FAILED', false, { method: 'phone_password', error: signInError.message });
           setError('An error occurred during login. Please try again.');
         }
         return;
       }
 
-      console.log('[LoginPage] Senior login successful, determining route...');
+      auditLogger.auth('LOGIN', true, { method: 'phone_password', userType: 'senior' });
       const route = await nextRouteForUser();
-      console.log('[LoginPage] Senior navigating to:', route);
+      auditLogger.info('SENIOR_LOGIN_NAVIGATION', { route });
       navigate(route, { replace: true });
     } catch (err: any) {
-      console.error('[LoginPage] Senior login error:', err);
+      auditLogger.auth('LOGIN_FAILED', false, { method: 'phone_password', error: err?.message });
       setError(err?.message || 'Unexpected error during login.');
     } finally {
       setLoading(false);
@@ -362,7 +363,7 @@ const LoginPage: React.FC = () => {
 
       const token = await ensureCaptcha().catch(() => '');
 
-      console.log('[LoginPage] Admin login attempt:', { hasToken: !!token, emailLength: emailTrimmed?.length });
+      auditLogger.auth('LOGIN', true, { method: 'email_password', userType: 'admin', hasToken: !!token, emailLength: emailTrimmed?.length });
 
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: emailTrimmed,
@@ -392,19 +393,19 @@ const LoginPage: React.FC = () => {
         } else if (msg.includes('confirm')) {
           setError('Email not confirmed. Please check your inbox.');
         } else {
-          // For debugging: show actual error in console
-          console.error('[LoginPage] Unhandled admin auth error:', signInError.message);
+          // Log unhandled admin auth error for audit trail
+          auditLogger.auth('LOGIN_FAILED', false, { method: 'email_password', userType: 'admin', error: signInError.message });
           setError('An error occurred during admin login. Please try again.');
         }
         return;
       }
 
-      console.log('[LoginPage] Admin login successful, determining route...');
+      auditLogger.auth('LOGIN', true, { method: 'email_password', userType: 'admin' });
       const route = await nextRouteForUser();
-      console.log('[LoginPage] Admin navigating to:', route);
+      auditLogger.info('ADMIN_LOGIN_NAVIGATION', { route });
       navigate(route, { replace: true });
     } catch (err: any) {
-      console.error('[LoginPage] Admin login error:', err);
+      auditLogger.auth('LOGIN_FAILED', false, { method: 'email_password', userType: 'admin', error: err?.message });
       setError(err?.message || 'Unexpected error during admin login.');
     } finally {
       setLoading(false);
@@ -625,7 +626,7 @@ const LoginPage: React.FC = () => {
             size="invisible"
             onVerify={(t: string) => setCaptchaToken(t)}
             onExpire={() => setCaptchaToken(null)}
-            onError={(msg: string) => console.error('hCaptcha error:', msg)}
+            onError={(msg: string) => auditLogger.error('HCAPTCHA_ERROR', new Error(msg))}
           />
         </form>
       ) : (
@@ -730,7 +731,7 @@ const LoginPage: React.FC = () => {
             size="invisible"
             onVerify={(t: string) => setCaptchaToken(t)}
             onExpire={() => setCaptchaToken(null)}
-            onError={(msg: string) => console.error('hCaptcha error:', msg)}
+            onError={(msg: string) => auditLogger.error('HCAPTCHA_ERROR', new Error(msg))}
           />
         </form>
       )}

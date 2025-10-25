@@ -1,4 +1,5 @@
 module.exports = {
+  extends: ['plugin:security/recommended-legacy'],
   plugins: ['security'],
   env: {
     node: true,
@@ -13,7 +14,7 @@ module.exports = {
     }
   },
   rules: {
-    // Security-focused rules
+    // Security-focused rules (augmenting the recommended preset)
     'security/detect-object-injection': 'error',
     'security/detect-eval-with-expression': 'error',
     'security/detect-non-literal-regexp': 'warn',
@@ -39,7 +40,8 @@ module.exports = {
       parser: '@typescript-eslint/parser',
       plugins: ['@typescript-eslint', 'security'],
       extends: [
-        'plugin:@typescript-eslint/recommended'
+        'plugin:@typescript-eslint/recommended',
+        'plugin:security/recommended-legacy'
       ]
     }
   ]

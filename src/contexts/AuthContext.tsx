@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { Session, User, AuthChangeEvent } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabaseClient';
+import { auditLogger } from '../services/auditLogger';
 
 type AuthContextValue = {
   supabase: typeof supabase;
@@ -56,7 +57,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Handle session expiry gracefully
   const handleSessionExpiry = React.useCallback(async () => {
     try {
-      console.log('[Auth] Handling session expiry - clearing auth state');
+      auditLogger.auth('LOGOUT', true, { reason: 'session_expiry', action: 'clearing_auth_state' });
 
       // Clear all auth state
       setSession(null);
@@ -75,11 +76,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Redirect to login if not already there
       const currentPath = window.location.pathname;
       if (currentPath !== '/login' && currentPath !== '/register' && currentPath !== '/') {
-        console.log('[Auth] Redirecting to login due to session expiry');
+        auditLogger.auth('LOGOUT', true, { reason: 'session_expiry', action: 'redirect_to_login', from_path: currentPath });
         window.location.href = '/login';
       }
     } catch (error) {
-      console.error('[Auth] Error during session expiry handling:', error);
+      auditLogger.error('SESSION_EXPIRY_HANDLING_FAILED', error instanceof Error ? error : new Error(String(error)));
       // Force redirect even if cleanup fails
       window.location.href = '/login';
     }
@@ -121,9 +122,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return;
         }
 
-        if (process.env.NODE_ENV !== 'production') {
-          console.warn('[Auth] user_roles fetch failed:', selErr.message);
-        }
+        auditLogger.warn('USER_ROLES_FETCH_FAILED', { error: selErr.message, userId: u.id });
         setDbAdmin(null);
         return;
       }
@@ -139,9 +138,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      if (process.env.NODE_ENV !== 'production') {
-        console.warn('[Auth] refreshDbRoles exception:', e);
-      }
+      auditLogger.warn('REFRESH_DB_ROLES_EXCEPTION', { error: e.message });
       setDbAdmin(null);
     }
   }
@@ -164,9 +161,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return;
           }
 
-          if (process.env.NODE_ENV !== 'production') {
-            console.error('[Auth] getSession error:', error.message);
-          }
+          auditLogger.error('AUTH_GET_SESSION_ERROR', new Error(error.message), { context: 'initial_load' });
         }
 
         if (cancelled) return;
@@ -196,13 +191,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Subscribe to auth changes
     const { data: sub } = supabase.auth.onAuthStateChange(
       async (event: AuthChangeEvent, newSession: Session | null) => {
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('[Auth] State change:', event, Boolean(newSession));
-        }
+        auditLogger.debug(`Auth state change: ${event}`, { hasSession: Boolean(newSession) });
 
         // Handle session expiry/refresh token errors
         if (event === 'TOKEN_REFRESHED' && !newSession) {
-          console.warn('[Auth] Token refresh failed - session expired');
+          auditLogger.auth('LOGOUT', false, { reason: 'token_refresh_failed', event });
           await handleSessionExpiry();
           return;
         }
@@ -390,7 +383,7 @@ export function withAuthErrorHandling<T extends (...args: any[]) => Promise<any>
             if (handled) return;
           }
         } catch (e) {
-          console.warn('[Auth] Could not access auth context for error handling');
+          auditLogger.warn('AUTH_ERROR_HANDLER_UNAVAILABLE', { error: e instanceof Error ? e.message : String(e) });
         }
 
         // Fallback: clear storage and redirect

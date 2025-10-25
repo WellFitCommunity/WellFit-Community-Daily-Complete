@@ -188,15 +188,16 @@ jobs:
       # ============================================
       - name: Run ESLint Security Scan
         run: |
-          npm install --save-dev eslint eslint-plugin-security
-          echo "module.exports = { extends: ['plugin:security/recommended'], plugins: ['security'], env: { node: true, es6: true }, parserOptions: { ecmaVersion: 2021, sourceType: 'module' } };" > .eslintrc.security.js
+          npm install --save-dev eslint eslint-plugin-security @typescript-eslint/parser @typescript-eslint/eslint-plugin
+
+          # Use the existing .eslintrc.security.js configuration file
           npx eslint --config .eslintrc.security.js --ext .js,.ts,.tsx src/ supabase/ --format json > eslint-security.json || true
 
           echo "## ESLint Security Scan" >> $GITHUB_STEP_SUMMARY
-          
+
           if [ -s eslint-security.json ]; then
             ISSUES=$(jq '[.[].messages] | flatten | length' eslint-security.json)
-            
+
             if [ "$ISSUES" -gt 0 ]; then
               echo "### Findings: $ISSUES issue(s) (informational)" >> $GITHUB_STEP_SUMMARY
               jq -r '
