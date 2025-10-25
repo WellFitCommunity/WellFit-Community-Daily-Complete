@@ -11,6 +11,7 @@ import { ShiftHandoffService } from '../../services/shiftHandoffService';
 import HandoffCelebration from './HandoffCelebration';
 import HandoffBypassModal, { BypassFormData } from './HandoffBypassModal';
 import PersonalizedGreeting from '../shared/PersonalizedGreeting';
+import { auditLogger } from '../../services/auditLogger';
 import type {
   ShiftHandoffSummary,
   HandoffDashboardMetrics,
@@ -55,7 +56,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
       setMetrics(dashboardMetrics);
       setCurrentBypassCount(bypassCount);
     } catch (err) {
-      console.error('ShiftHandoffDashboard load error:', err);
+      auditLogger.error('HANDOFF_LOAD_FAILED', err instanceof Error ? err : new Error('Failed to load handoff data'), { shiftType });
       setError(err instanceof Error ? err.message : 'Failed to load handoff data');
     } finally {
       setLoading(false);
@@ -92,8 +93,9 @@ export const ShiftHandoffDashboard: React.FC = () => {
       // Reload metrics to update pending count
       const updatedMetrics = await ShiftHandoffService.getHandoffDashboardMetrics(shiftType);
       setMetrics(updatedMetrics);
+      auditLogger.clinical('HANDOFF_RISK_CONFIRMED', true, { patientId, riskScoreId });
     } catch (err) {
-      console.error('Failed to confirm:', err);
+      auditLogger.error('HANDOFF_CONFIRM_FAILED', err instanceof Error ? err : new Error('Failed'), { patientId });
       alert('Failed to confirm risk score');
     }
   };

@@ -267,6 +267,7 @@ resource_type: 'auth_event',
     }
 
     // Send SMS verification code via Twilio
+    let smsSent = false;
     try {
       const smsResponse = await fetch(`${SB_URL}/functions/v1/sms-send-code`, {
         method: "POST",
@@ -277,23 +278,62 @@ resource_type: 'auth_event',
         body: JSON.stringify({ phone: phoneNumber })
       });
 
-      if (!smsResponse.ok) {
-        console.error("[register] SMS send failed:", await smsResponse.text());
-        // If SMS fails, remove pending registration
-        await supabase.from("pending_registrations").delete().eq("phone", phoneNumber);
-        return jsonResponse({ error: "Failed to send verification code. Please try again." }, 500, origin);
-      } else {
+      if (smsResponse.ok) {
         // Mark SMS as sent
         await supabase
           .from("pending_registrations")
           .update({ verification_code_sent: true })
           .eq("phone", phoneNumber);
+        smsSent = true;
+
+        // AUDIT LOG: SMS sent successfully
+        await supabase.from('audit_logs').insert({
+          event_type: 'SMS_VERIFICATION_SENT',
+          event_category: 'AUTHENTICATION',
+          actor_user_id: null,
+          actor_ip_address: clientIp,
+          actor_user_agent: req.headers.get('user-agent'),
+          operation: 'SEND_SMS',
+          resource_type: 'verification_code',
+          success: true,
+          metadata: { phone: phoneNumber }
+        });
+      } else {
+        const errorText = await smsResponse.text();
+        console.error("[register] SMS send failed:", errorText);
+
+        // AUDIT LOG: SMS send failed
+        await supabase.from('audit_logs').insert({
+          event_type: 'SMS_VERIFICATION_FAILED',
+          event_category: 'AUTHENTICATION',
+          actor_user_id: null,
+          actor_ip_address: clientIp,
+          actor_user_agent: req.headers.get('user-agent'),
+          operation: 'SEND_SMS',
+          resource_type: 'verification_code',
+          success: false,
+          error_code: 'SMS_SEND_FAILED',
+          error_message: errorText,
+          metadata: { phone: phoneNumber }
+        });
       }
     } catch (smsError) {
       console.error("[register] SMS send error:", smsError);
-      // If SMS fails, remove pending registration
-      await supabase.from("pending_registrations").delete().eq("phone", phoneNumber);
-      return jsonResponse({ error: "Failed to send verification code. Please try again." }, 500, origin);
+
+      // AUDIT LOG: SMS send exception
+      await supabase.from('audit_logs').insert({
+        event_type: 'SMS_VERIFICATION_ERROR',
+        event_category: 'AUTHENTICATION',
+        actor_user_id: null,
+        actor_ip_address: clientIp,
+        actor_user_agent: req.headers.get('user-agent'),
+        operation: 'SEND_SMS',
+        resource_type: 'verification_code',
+        success: false,
+        error_code: 'SMS_EXCEPTION',
+        error_message: smsError instanceof Error ? smsError.message : String(smsError),
+        metadata: { phone: phoneNumber }
+      });
     }
 
     // HIPAA AUDIT LOGGING: Log successful registration start (pending SMS verification)
@@ -319,11 +359,17 @@ resource_type: 'auth_event',
       console.error('[Audit Log Error]:', logError);
     }
 
+    // Return success with appropriate message based on SMS status
+    const message = smsSent
+      ? "Verification code sent! Check your phone and enter the code to complete registration."
+      : "Registration received! You can proceed to verify your account.";
+
     return jsonResponse({
       success: true,
-      message: "Verification code sent! Check your phone and enter the code to complete registration.",
+      message: message,
       pending: true,
       phone: phoneNumber,
+      sms_sent: smsSent
     }, 201);
 
   } catch (e) {
