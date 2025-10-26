@@ -4,6 +4,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { auditLogger } from "../../services/auditLogger";
+import { VoiceLearningService, ProviderVoiceProfile } from "../../services/voiceLearningService";
 
 interface CodeSuggestion {
   code: string;
@@ -60,6 +61,14 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = ({
   // Assistance Level state (1-10 scale) - persists to database
   const [assistanceLevel, setAssistanceLevel] = useState<number>(5);
   const [assistanceLevelLoaded, setAssistanceLevelLoaded] = useState(false);
+
+  // Voice Learning state
+  const [voiceProfile, setVoiceProfile] = useState<ProviderVoiceProfile | null>(null);
+  const [showCorrectionModal, setShowCorrectionModal] = useState(false);
+  const [correctionHeard, setCorrectionHeard] = useState('');
+  const [correctionCorrect, setCorrectionCorrect] = useState('');
+  const [selectedTextForCorrection, setSelectedTextForCorrection] = useState('');
+  const [correctionsAppliedCount, setCorrectionsAppliedCount] = useState(0);
 
   const wsRef = useRef<WebSocket | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -178,6 +187,27 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = ({
     loadAssistanceLevel();
   }, []);
 
+  // Load voice profile on mount
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const profile = await VoiceLearningService.loadVoiceProfile(user.id);
+        setVoiceProfile(profile);
+
+        if (profile && profile.corrections.length > 0) {
+          setStatus(`Voice learning active (${profile.corrections.length} corrections learned)`);
+        }
+      } catch (error) {
+        console.error('Failed to load voice profile:', error);
+      }
+    };
+
+    loadProfile();
+  }, []);
+
   // Save assistance level to provider preferences when changed
   const handleAssistanceLevelChange = async (newLevel: number) => {
     setAssistanceLevel(newLevel);
@@ -267,7 +297,18 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = ({
         try {
           const data = JSON.parse(event.data);
           if (data.type === "transcript" && data.isFinal) {
-            setTranscript((prev) => (prev ? `${prev} ${data.text}` : data.text));
+            let text = data.text;
+
+            // Apply learned voice corrections
+            if (voiceProfile) {
+              const result = VoiceLearningService.applyCorrections(text, voiceProfile);
+              text = result.corrected;
+              if (result.appliedCount > 0) {
+                setCorrectionsAppliedCount(prev => prev + result.appliedCount);
+              }
+            }
+
+            setTranscript((prev) => (prev ? `${prev} ${text}` : text));
           } else if (data.type === "code_suggestion") {
             setSuggestedCodes(Array.isArray(data.codes) ? data.codes : []);
             setRevenueImpact(Number(data.revenueIncrease || 0));
@@ -644,13 +685,32 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = ({
       {transcript && (
         <div className="mb-8">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-              <span className={isRecording ? 'animate-pulse' : ''}>📝</span>
-              Live Transcript
-              {isRecording && <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-semibold">CAPTURING</span>}
-            </h3>
-            <div className="text-sm text-gray-600">
-              {transcript.split(' ').length} words
+            <div className="flex items-center gap-2">
+              <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <span className={isRecording ? 'animate-pulse' : ''}>📝</span>
+                Live Transcript
+                {isRecording && <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-semibold">CAPTURING</span>}
+              </h3>
+              {correctionsAppliedCount > 0 && (
+                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-semibold">
+                  ✓ {correctionsAppliedCount} corrections applied
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="text-sm text-gray-600">
+                {transcript.split(' ').length} words
+              </div>
+              <button
+                onClick={() => {
+                  setSelectedTextForCorrection(transcript);
+                  setShowCorrectionModal(true);
+                }}
+                className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium transition-all"
+                title="Teach Riley a voice correction"
+              >
+                🎓 Teach Correction
+              </button>
             </div>
           </div>
           <div className={`rounded-xl p-6 max-h-96 overflow-y-auto border-2 shadow-inner ${
@@ -843,6 +903,104 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Voice Correction Modal */}
+      {showCorrectionModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 m-4">
+            <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <span>🎓</span>
+              Teach Voice Correction
+            </h3>
+
+            <p className="text-sm text-gray-600 mb-4">
+              Help Riley learn your voice! When the AI mishears a word or medical term, teach the correction here.
+            </p>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                What did the AI hear? (incorrect)
+              </label>
+              <input
+                type="text"
+                value={correctionHeard}
+                onChange={(e) => setCorrectionHeard(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="e.g., hyper blue semen"
+              />
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                What did you actually say? (correct)
+              </label>
+              <input
+                type="text"
+                value={correctionCorrect}
+                onChange={(e) => setCorrectionCorrect(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="e.g., hyperglycemia"
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={async () => {
+                  if (!correctionHeard.trim() || !correctionCorrect.trim()) {
+                    setStatus('Please fill in both fields');
+                    return;
+                  }
+
+                  const { data: { user } } = await supabase.auth.getUser();
+                  if (user) {
+                    try {
+                      await VoiceLearningService.addCorrection(
+                        user.id,
+                        correctionHeard.trim(),
+                        correctionCorrect.trim()
+                      );
+                      const updated = await VoiceLearningService.loadVoiceProfile(user.id);
+                      setVoiceProfile(updated);
+                      setShowCorrectionModal(false);
+                      setCorrectionHeard('');
+                      setCorrectionCorrect('');
+                      setStatus(`✓ Correction learned! Riley will now correct "${correctionHeard}" to "${correctionCorrect}"`);
+                      setTimeout(() => setStatus('Ready'), 5000);
+                    } catch (error) {
+                      setStatus('Error saving correction');
+                      console.error('Failed to save correction:', error);
+                    }
+                  }
+                }}
+                className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium transition-all"
+              >
+                Save Correction
+              </button>
+              <button
+                onClick={() => {
+                  setShowCorrectionModal(false);
+                  setCorrectionHeard('');
+                  setCorrectionCorrect('');
+                }}
+                className="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-all"
+              >
+                Cancel
+              </button>
+            </div>
+
+            {voiceProfile && voiceProfile.corrections.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <p className="text-xs text-gray-600">
+                  You have {voiceProfile.corrections.length} correction{voiceProfile.corrections.length !== 1 ? 's' : ''} learned.
+                  {voiceProfile.totalSessions > 0 && (
+                    <> Accuracy improved by {Math.round((voiceProfile.accuracyCurrent - voiceProfile.accuracyBaseline) * 100) / 100}% over {voiceProfile.totalSessions} session{voiceProfile.totalSessions !== 1 ? 's' : ''}.</>
+                  )}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

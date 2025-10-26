@@ -25,6 +25,7 @@
     "exceljs": "^4.4.0",
     "firebase": "^11.7.3",
     "framer-motion": "^12.23.22",
+    "idb": "^8.0.3",
     "jotai": "^2.15.0",
     "libphonenumber-js": "^1.12.9",
     "lucide-react": "^0.544.0",
