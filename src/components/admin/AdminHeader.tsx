@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 
@@ -14,13 +14,51 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
   const navigate = useNavigate();
   const { adminRole, logoutAdmin } = useAdminAuth();
   const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    // Initialize from localStorage
+    const savedTheme = localStorage.getItem('admin_theme');
+    if (savedTheme === 'dark') return true;
+    if (savedTheme === 'light') return false;
+    // Auto mode - check system preference
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  // Apply theme on mount and when darkMode changes
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
+
+  // Listen for theme changes from localStorage (e.g., from AdminSettingsPanel)
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'admin_theme') {
+        const newTheme = e.newValue;
+        if (newTheme === 'dark') {
+          setDarkMode(true);
+        } else if (newTheme === 'light') {
+          setDarkMode(false);
+        } else if (newTheme === 'auto') {
+          setDarkMode(window.matchMedia('(prefers-color-scheme: dark)').matches);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   const toggleDarkMode = () => {
     const newMode = !darkMode;
     setDarkMode(newMode);
 
-    // Apply theme to document (session only)
+    // Save to localStorage to persist across sessions
+    localStorage.setItem('admin_theme', newMode ? 'dark' : 'light');
+
+    // Apply theme to document
     if (newMode) {
       document.documentElement.classList.add('dark');
     } else {
