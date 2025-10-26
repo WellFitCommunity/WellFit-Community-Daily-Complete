@@ -9,6 +9,7 @@ import { performanceMonitor } from './services/performanceMonitoring';
 import { getGuardianAgent } from './services/guardian-agent';
 import { GuardianErrorBoundary } from './components/GuardianErrorBoundary';
 import { smartRecordingStrategy } from './services/guardian-agent/SmartRecordingStrategy';
+import { realtimeSecurityMonitor } from './services/guardian-agent/RealtimeSecurityMonitor';
 
 // ❌ Do NOT import or use AuthProvider here — it lives in index.tsx
 // ❌ Do NOT import or use AdminAuthProvider here — it lives in index.tsx
@@ -135,6 +136,25 @@ function Shell() {
       smartRecordingStrategy.stopSmartRecording();
     };
   }, [supabase]);
+
+  // 🔒 SOC 2 Real-Time Security Monitoring
+  // Monitors security_events and security_alerts tables for compliance
+  useEffect(() => {
+    const initSecurityMonitoring = async () => {
+      try {
+        await realtimeSecurityMonitor.startMonitoring();
+        console.log('🔒 SOC 2 Security Monitoring: ACTIVE');
+      } catch (error) {
+        console.error('Failed to start SOC 2 monitoring:', error);
+      }
+    };
+
+    initSecurityMonitoring();
+
+    return () => {
+      realtimeSecurityMonitor.stopMonitoring();
+    };
+  }, []);
 
   useEffect(() => {
     setBranding(getCurrentBranding());
