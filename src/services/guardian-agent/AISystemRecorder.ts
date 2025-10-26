@@ -184,13 +184,18 @@ export class AISystemRecorder {
   captureError(component: string, error: Error, metadata?: Record<string, any>) {
     if (!this.isRecording) return;
 
+    const contextMeta = this.getContextMetadata();
     const snapshot: SystemSnapshot = {
       id: this.generateSnapshotId(),
       timestamp: new Date().toISOString(),
       type: 'error',
       component,
       metadata: {
-        ...this.getContextMetadata(),
+        user_id: contextMeta.user_id,
+        session_id: contextMeta.session_id,
+        url: contextMeta.url,
+        user_agent: contextMeta.user_agent,
+        viewport: contextMeta.viewport,
         context: {
           ...metadata,
           error_name: error.name,
