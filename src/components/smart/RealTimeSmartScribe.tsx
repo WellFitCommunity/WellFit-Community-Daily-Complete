@@ -452,7 +452,7 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = ({
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-xl">
-      {/* Header with Revenue Counter and Recording Status */}
+      {/* Header with Recording Status */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
           <div>
@@ -470,11 +470,12 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = ({
             </div>
           )}
         </div>
-        {revenueImpact > 0 && (
-          <div className="px-6 py-3 bg-gradient-to-r from-green-400 to-emerald-500 rounded-lg shadow-lg animate-pulse">
-            <div className="text-white text-center">
-              <div className="text-xs font-medium">Revenue Captured</div>
-              <div className="text-2xl font-bold">+${revenueImpact.toFixed(2)}</div>
+        {/* Documentation Quality Indicator */}
+        {suggestedCodes.length > 0 && (
+          <div className="px-6 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-lg shadow-lg">
+            <div className="text-center">
+              <div className="text-xs font-medium text-blue-700">Documentation Quality</div>
+              <div className="text-2xl font-bold text-blue-900">{suggestedCodes.length} codes captured</div>
             </div>
           </div>
         )}
@@ -730,18 +731,10 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = ({
                   </div>
 
                   <div className="text-right">
-                    {code.reimbursement > 0 ? (
-                      <>
-                        <div className="text-3xl font-bold text-green-600">
-                          +${code.reimbursement.toFixed(2)}
-                        </div>
-                        <div className="text-xs text-gray-500 mt-1">estimated</div>
-                      </>
-                    ) : (
-                      <div className="text-sm text-gray-500 italic">
-                        varies by<br />payer
-                      </div>
-                    )}
+                    <div className="px-3 py-2 bg-white border-2 border-green-300 rounded-lg">
+                      <div className="text-xs text-green-700 font-medium">Billable</div>
+                      <div className="text-sm text-green-900 font-semibold">{code.type}</div>
+                    </div>
                   </div>
                 </div>
               </div>

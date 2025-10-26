@@ -213,6 +213,54 @@ const NurseEnrollPatientSection: React.FC = () => {
  * 24/7 patient monitoring and care coordination hub
  */
 const NursePanel: React.FC = () => {
+  // Patient selection for documentation (similar to PhysicianPanel)
+  const [selectedPatient, setSelectedPatient] = useState<{
+    user_id: string;
+    first_name: string;
+    last_name: string;
+  } | null>(null);
+  const [myPatients, setMyPatients] = useState<any[]>([]);
+  const [loadingPatients, setLoadingPatients] = useState(false);
+
+  // Load nurse's assigned patients (from care_team table)
+  React.useEffect(() => {
+    const loadMyPatients = async () => {
+      setLoadingPatients(true);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Get patients assigned to this nurse via care_team
+        const { data: assignments } = await supabase
+          .from('care_team')
+          .select(`
+            patient_id,
+            profiles!care_team_patient_id_fkey (
+              user_id,
+              first_name,
+              last_name,
+              date_of_birth,
+              room_number
+            )
+          `)
+          .eq('nurse_id', user.id);
+
+        if (assignments) {
+          const patients = assignments
+            .map(a => a.profiles)
+            .filter(p => p !== null);
+          setMyPatients(patients as any[]);
+        }
+      } catch (error) {
+        auditLogger.error('NURSE_LOAD_PATIENTS_FAILED', error instanceof Error ? error : new Error('Failed to load patients'));
+      } finally {
+        setLoadingPatients(false);
+      }
+    };
+
+    loadMyPatients();
+  }, []);
+
   return (
     <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'nurse']}>
       <div className="min-h-screen bg-gray-50">
@@ -220,6 +268,67 @@ const NursePanel: React.FC = () => {
         <AdminHeader title="🏮 Lighthouse - Nurse Dashboard" showRiskAssessment={true} />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+
+          {/* Patient Selection for Documentation */}
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <span>👤</span>
+              Select Patient for Documentation
+            </h3>
+
+            {loadingPatients ? (
+              <div className="text-center py-4 text-gray-600">Loading your assigned patients...</div>
+            ) : myPatients.length === 0 ? (
+              <div className="text-center py-4 text-gray-500">
+                No patients currently assigned. Patients will appear here when assigned via care team.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {myPatients.map((patient: any) => (
+                  <button
+                    key={patient.user_id}
+                    onClick={() => setSelectedPatient(patient)}
+                    className={`p-4 rounded-lg border-2 text-left transition-all ${
+                      selectedPatient?.user_id === patient.user_id
+                        ? 'border-blue-500 bg-blue-50 shadow-md'
+                        : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+                    }`}
+                  >
+                    <div className="font-bold text-gray-900">
+                      {patient.first_name} {patient.last_name}
+                    </div>
+                    {patient.room_number && (
+                      <div className="text-sm text-gray-600 mt-1">Room: {patient.room_number}</div>
+                    )}
+                    {patient.date_of_birth && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        DOB: {new Date(patient.date_of_birth).toLocaleDateString()}
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {selectedPatient && (
+              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm text-blue-700 font-medium">Currently Selected:</div>
+                    <div className="text-lg font-bold text-blue-900">
+                      {selectedPatient.first_name} {selectedPatient.last_name}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSelectedPatient(null)}
+                    className="px-3 py-1 bg-white border border-blue-300 rounded-lg text-blue-700 hover:bg-blue-100 text-sm"
+                  >
+                    Clear Selection
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* ============================================================ */}
           {/* HOSPITAL NURSING TOOLS */}
@@ -374,8 +483,37 @@ const NursePanel: React.FC = () => {
           </CollapsibleSection>
 
           {/* Smart Medical Scribe */}
-          <CollapsibleSection title="Smart Medical Scribe" icon="🎤">
-            <SmartScribe />
+          <CollapsibleSection title="Smart Medical Scribe - Nursing Documentation" icon="🎤">
+            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-blue-800 text-sm">
+                <strong>Nursing Documentation AI:</strong> Record nursing assessments, patient observations,
+                care interventions, and shift notes. AI captures clinical details for accurate documentation
+                and helps identify billable nursing activities (wound care, patient education, medication administration, etc.).
+              </p>
+            </div>
+            {selectedPatient ? (
+              <SmartScribe
+                selectedPatientId={selectedPatient.user_id}
+                selectedPatientName={`${selectedPatient.first_name} ${selectedPatient.last_name}`}
+                onSessionComplete={(sessionId) => {
+                  console.log('✓ Nurse scribe session completed:', sessionId);
+                  auditLogger.clinical('NURSE_SCRIBE_SESSION_COMPLETED', true, {
+                    sessionId,
+                    patientId: selectedPatient.user_id,
+                    nurseId: selectedPatient.user_id
+                  });
+                }}
+              />
+            ) : (
+              <div className="text-center py-12 bg-yellow-50 rounded-xl border-2 border-yellow-200">
+                <div className="text-6xl mb-4">👆</div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Patient Selection Required</h3>
+                <p className="text-gray-600 max-w-md mx-auto">
+                  Please select a patient from the list above before starting a nursing documentation session.
+                  This ensures your notes are properly linked to the correct patient chart.
+                </p>
+              </div>
+            )}
           </CollapsibleSection>
 
           {/* Risk Assessment */}

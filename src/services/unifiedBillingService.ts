@@ -171,6 +171,102 @@ export class UnifiedBillingService {
         throw new Error('Input validation failed');
       }
 
+      // STEP 1.5: Retrieve scribe session data if available
+      const scribeStep = await this.executeStep(
+        'retrieve_scribe_data',
+        'Retrieve AI Scribe Session Data',
+        async () => {
+          const { data: scribeSession } = await supabase
+            .from('scribe_sessions')
+            .select('*')
+            .eq('encounter_id', input.encounterId)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          return { scribeSession };
+        },
+        workflowSteps
+      );
+
+      // Pre-populate codes from scribe session if available
+      if (scribeStep.result?.scribeSession) {
+        const scribeSession = scribeStep.result.scribeSession;
+
+        // Pre-populate CPT codes from AI suggestions if not already provided
+        if ((!input.procedures || input.procedures.length === 0) && scribeSession.suggested_cpt_codes) {
+          input.procedures = (scribeSession.suggested_cpt_codes as any[]).map(c => ({
+            cptCode: c.code,
+            description: c.description
+          }));
+
+          auditLogger.info('BILLING_SCRIBE_CODES_LOADED', {
+            encounterId: input.encounterId,
+            cptCodesLoaded: input.procedures.length
+          });
+        }
+
+        // Pre-populate ICD-10 codes from AI suggestions if not already provided
+        if ((!input.diagnoses || input.diagnoses.length === 0) && scribeSession.suggested_icd10_codes) {
+          input.diagnoses = (scribeSession.suggested_icd10_codes as any[]).map(c => ({
+            icd10Code: c.code,
+            term: c.description
+          }));
+
+          auditLogger.info('BILLING_SCRIBE_DIAGNOSES_LOADED', {
+            encounterId: input.encounterId,
+            icd10CodesLoaded: input.diagnoses.length
+          });
+        }
+
+        // Add CCM code if eligible and time documented
+        if (scribeSession.is_ccm_eligible && scribeSession.clinical_time_minutes >= 20) {
+          const ccmCode = {
+            cptCode: '99490',
+            description: `Chronic Care Management - ${scribeSession.clinical_time_minutes} minutes`
+          };
+
+          if (!input.procedures) {
+            input.procedures = [ccmCode];
+          } else {
+            // Add CCM code if not already present
+            const hasCCM = input.procedures.some(p => p.cptCode === '99490' || p.cptCode === '99439');
+            if (!hasCCM) {
+              input.procedures.push(ccmCode);
+            }
+          }
+
+          auditLogger.billing('CCM_CODE_AUTO_ADDED', true, {
+            encounterId: input.encounterId,
+            clinicalMinutes: scribeSession.clinical_time_minutes,
+            code: '99490'
+          });
+        }
+
+        // Add extended CCM code if 40+ minutes
+        if (scribeSession.clinical_time_minutes >= 40) {
+          const extendedCCM = {
+            cptCode: '99439',
+            description: `Extended CCM - Each Additional 20 minutes`
+          };
+
+          if (!input.procedures) {
+            input.procedures = [extendedCCM];
+          } else {
+            const hasExtendedCCM = input.procedures.some(p => p.cptCode === '99439');
+            if (!hasExtendedCCM) {
+              input.procedures.push(extendedCCM);
+            }
+          }
+
+          auditLogger.billing('EXTENDED_CCM_CODE_AUTO_ADDED', true, {
+            encounterId: input.encounterId,
+            clinicalMinutes: scribeSession.clinical_time_minutes,
+            code: '99439'
+          });
+        }
+      }
+
       // STEP 2: Run decision tree analysis (if enabled)
       let decisionTreeResult: DecisionTreeResult | undefined;
       if (input.enableDecisionTree !== false) {
