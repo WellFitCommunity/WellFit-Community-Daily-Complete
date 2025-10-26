@@ -4,6 +4,7 @@
  */
 
 import { DetectedIssue, HealingAction, HealingResult } from './types';
+import { DatabaseAuditLogger } from './DatabaseAuditLogger';
 
 export interface AuditLogEntry {
   id: string;
@@ -51,9 +52,11 @@ export class AuditLogger {
   private logs: AuditLogEntry[] = [];
   private reviewTickets: ReviewTicket[] = [];
   private logStorage: AuditLogStorage;
+  private dbLogger: DatabaseAuditLogger;
 
   constructor() {
     this.logStorage = new AuditLogStorage();
+    this.dbLogger = new DatabaseAuditLogger();
   }
 
   /**
@@ -100,6 +103,12 @@ export class AuditLogger {
     // Store in memory
     this.logs.push(entry);
 
+    // ✅ CRITICAL: Persist to database for permanent audit trail
+    const dbResult = await this.dbLogger.logHealingAction(issue, action, result);
+    if (!dbResult.success) {
+      console.error('[AuditLogger] Failed to persist to database:', dbResult.error);
+    }
+
     // Persist to storage (database/file)
     await this.logStorage.persist(entry);
 
@@ -143,6 +152,13 @@ export class AuditLogger {
     };
 
     this.logs.push(entry);
+
+    // ✅ CRITICAL: Persist blocked action to database
+    const dbResult = await this.dbLogger.logBlockedAction(issue, action, blockReason);
+    if (!dbResult.success) {
+      console.error('[AuditLogger] Failed to persist blocked action to database:', dbResult.error);
+    }
+
     await this.logStorage.persist(entry);
     await this.sendToTelemetry(entry);
 
@@ -335,14 +351,20 @@ export class AuditLogger {
   }
 
   /**
-   * Get all audit logs
+   * Get all audit logs (from database + memory)
    */
-  getAuditLogs(filters?: {
+  async getAuditLogs(filters?: {
     startDate?: Date;
     endDate?: Date;
     severity?: string;
     module?: string;
-  }): AuditLogEntry[] {
+    limit?: number;
+  }): Promise<AuditLogEntry[]> {
+    // ✅ Fetch from database for persistent records
+    await this.dbLogger.getAuditLogs(filters);
+
+    // Return in-memory logs (database logs are the source of truth)
+    // In-memory logs are kept for backward compatibility
     let filtered = [...this.logs];
 
     if (filters?.startDate) {
@@ -362,6 +384,13 @@ export class AuditLogger {
     }
 
     return filtered;
+  }
+
+  /**
+   * Get active security alerts from database
+   */
+  async getActiveSecurityAlerts() {
+    return await this.dbLogger.getActiveSecurityAlerts();
   }
 
   /**

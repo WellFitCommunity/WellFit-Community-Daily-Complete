@@ -1,8 +1,10 @@
 /**
  * Security Scanner - Proactive security vulnerability detection
+ * Now with REAL healing implementations backed by safety guardrails
  */
 
 import { DetectedIssue, ErrorContext, SeverityLevel } from './types';
+import { RealHealingImplementations } from './RealHealingImplementations';
 
 interface SecurityVulnerability {
   type: 'xss' | 'sql_injection' | 'phi_exposure' | 'auth_bypass' | 'csrf' | 'insecure_storage' | 'code_injection';
@@ -16,6 +18,11 @@ interface SecurityVulnerability {
 export class SecurityScanner {
   private scanHistory: SecurityVulnerability[] = [];
   private whitelistedPatterns: Set<string> = new Set();
+  private healingImplementations: RealHealingImplementations;
+
+  constructor() {
+    this.healingImplementations = new RealHealingImplementations();
+  }
 
   /**
    * Scans code for security vulnerabilities
@@ -158,23 +165,90 @@ export class SecurityScanner {
 
   /**
    * Auto-fixes security vulnerabilities where possible
+   * ✅ NOW WITH REAL IMPLEMENTATIONS + SAFETY GUARDRAILS
    */
-  async autoFix(vulnerability: SecurityVulnerability, code: string): Promise<string | null> {
-    switch (vulnerability.type) {
-      case 'xss':
-        return this.fixXSS(code);
+  async autoFix(
+    vulnerability: SecurityVulnerability,
+    code: string,
+    filePath: string = 'unknown'
+  ): Promise<string | null> {
+    try {
+      // Extract line number from location
+      const lineNumber = this.getLineNumber(code, 0);
 
-      case 'sql_injection':
-        return this.fixSQLInjection(code);
+      let result;
 
-      case 'insecure_storage':
-        return this.fixInsecureStorage(code);
+      switch (vulnerability.type) {
+        case 'xss':
+          result = await this.healingImplementations.fixXSSVulnerability(filePath, code, lineNumber);
+          return result.success ? result.fixedCode || null : null;
 
-      case 'phi_exposure':
-        return this.fixPHIExposure(code);
+        case 'sql_injection':
+          result = await this.healingImplementations.fixSQLInjection(filePath, code, lineNumber);
+          return result.success ? result.fixedCode || null : null;
 
-      default:
-        return null; // Cannot auto-fix
+        case 'insecure_storage':
+          result = await this.healingImplementations.fixInsecureStorage(filePath, code, lineNumber);
+          return result.success ? result.fixedCode || null : null;
+
+        case 'phi_exposure':
+          result = await this.healingImplementations.fixPHIExposure(filePath, code, lineNumber);
+          return result.success ? result.fixedCode || null : null;
+
+        default:
+          return null; // Cannot auto-fix
+      }
+    } catch (error) {
+      console.error('[SecurityScanner] Auto-fix failed:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Fix memory leaks in components
+   */
+  async fixMemoryLeak(
+    componentName: string,
+    leakType: 'event_listener' | 'interval' | 'subscription' | 'reference'
+  ): Promise<string | null> {
+    try {
+      const result = await this.healingImplementations.fixMemoryLeak(componentName, leakType);
+      return result.success ? result.fixedCode || null : null;
+    } catch (error) {
+      console.error('[SecurityScanner] Memory leak fix failed:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Fix database connection pool issues
+   */
+  async fixDatabaseConnectionPool(): Promise<boolean> {
+    try {
+      const result = await this.healingImplementations.fixDatabaseConnectionPool();
+      return result.success;
+    } catch (error) {
+      console.error('[SecurityScanner] Database connection fix failed:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Implement circuit breaker for API endpoint
+   */
+  async implementCircuitBreaker(
+    apiEndpoint: string,
+    failureThreshold: number = 5
+  ): Promise<string | null> {
+    try {
+      const result = await this.healingImplementations.implementCircuitBreaker(
+        apiEndpoint,
+        failureThreshold
+      );
+      return result.success ? result.fixedCode || null : null;
+    } catch (error) {
+      console.error('[SecurityScanner] Circuit breaker implementation failed:', error);
+      return null;
     }
   }
 
@@ -382,51 +456,7 @@ export class SecurityScanner {
     return vulnerabilities;
   }
 
-  // Auto-fix Methods
-  private fixXSS(code: string): string {
-    // Add DOMPurify import if not present
-    if (!code.includes('DOMPurify')) {
-      code = "import DOMPurify from 'dompurify';\n" + code;
-    }
-
-    // Wrap dangerouslySetInnerHTML with DOMPurify
-    code = code.replace(
-      /dangerouslySetInnerHTML\s*=\s*\{\s*\{?\s*__html:\s*([^}]+)\s*\}?\s*\}/g,
-      'dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize($1) }}'
-    );
-
-    return code;
-  }
-
-  private fixSQLInjection(code: string): string {
-    // Add comment suggesting parameterized query
-    code = code.replace(
-      /sql\s*=\s*['"`].*\$\{/g,
-      '// TODO: Convert to parameterized query\n$&'
-    );
-
-    return code;
-  }
-
-  private fixInsecureStorage(code: string): string {
-    // Add encryption wrapper for localStorage
-    code = code.replace(
-      /localStorage\.setItem\(/g,
-      'secureStorage.setItem(' // Assumes secureStorage helper exists
-    );
-
-    return code;
-  }
-
-  private fixPHIExposure(code: string): string {
-    // Comment out console.logs with PHI
-    code = code.replace(
-      /console\.(log|error|warn|info)\s*\([^)]*\b(patient|diagnosis|medication|ssn|medical|phi)\b[^)]*\)/gi,
-      '// REMOVED: $&'
-    );
-
-    return code;
-  }
+  // Old stub methods removed - now using RealHealingImplementations
 
   // Helper Methods
   private getLineNumber(code: string, index: number): number {

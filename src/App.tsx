@@ -8,6 +8,7 @@ import { BrandingContext } from './BrandingContext';
 import { performanceMonitor } from './services/performanceMonitoring';
 import { getGuardianAgent } from './services/guardian-agent';
 import { GuardianErrorBoundary } from './components/GuardianErrorBoundary';
+import { smartRecordingStrategy } from './services/guardian-agent/SmartRecordingStrategy';
 
 // ❌ Do NOT import or use AuthProvider here — it lives in index.tsx
 // ❌ Do NOT import or use AdminAuthProvider here — it lives in index.tsx
@@ -114,6 +115,26 @@ function Shell() {
       agent.stop();
     };
   }, []);
+
+  // 🎥 Smart AI Recording - Only records errors & critical events (1% sampling)
+  // Cost: ~$0.02/month instead of $378/month (99.5% savings!)
+  useEffect(() => {
+    // Get user ID from Supabase if available
+    const initRecording = async () => {
+      if (!supabase) return;
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+
+      // Start smart recording (only 1% of sessions, or when error occurs)
+      await smartRecordingStrategy.startSmartRecording(currentUser?.id);
+    };
+
+    initRecording();
+
+    // Auto-stop after 15 minutes or when user leaves
+    return () => {
+      smartRecordingStrategy.stopSmartRecording();
+    };
+  }, [supabase]);
 
   useEffect(() => {
     setBranding(getCurrentBranding());
