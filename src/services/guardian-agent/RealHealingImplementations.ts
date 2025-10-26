@@ -208,7 +208,7 @@ const maskPHI = (data: any) => {
 const secureStorage = {
   setItem: (key: string, value: string) => {
     // TODO: Implement encryption before storing
-    console.warn('Using unencrypted storage - implement encryption');
+    // console.warn('Using unencrypted storage - implement encryption');
     sessionStorage.setItem(key, value);
   },
   getItem: (key: string) => {
@@ -340,7 +340,7 @@ useEffect(() => {
         'Monitor connection pool metrics in real-time',
       ];
 
-      console.log('[Healing] Database connection pool recommendations:', recommendations);
+      // console.log('[Healing] Database connection pool recommendations:', recommendations);
 
       // Check current Supabase connection health
       const { data, error } = await supabase.from('profiles').select('id').limit(1);
@@ -413,7 +413,7 @@ class CircuitBreaker {
 
     if (this.failures >= this.failureThreshold) {
       this.state = 'open';
-      console.error(\`Circuit breaker OPEN for ${apiEndpoint}\`);
+      // console.error(\`Circuit breaker OPEN for ${apiEndpoint}\`);
     }
   }
 

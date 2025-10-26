@@ -85,11 +85,11 @@ export class SmartRecordingStrategy {
 
     // Only record 1% of sessions by default
     if (!this.shouldStartRecording()) {
-      console.log('[SmartRecording] Skipping - not in sample');
+      // console.log('[SmartRecording] Skipping - not in sample');
       return null;
     }
 
-    console.log('[SmartRecording] 🎥 Recording started (sampled)');
+    // console.log('[SmartRecording] 🎥 Recording started (sampled)');
     return await aiSystemRecorder.startRecording(userId);
   }
 
@@ -108,7 +108,7 @@ export class SmartRecordingStrategy {
     }
 
     // Not recording yet, but this is important - start now!
-    console.log(`[SmartRecording] 🚨 Critical ${eventType} - Starting recording`);
+    // console.log(`[SmartRecording] 🚨 Critical ${eventType} - Starting recording`);
 
     this.shouldRecordThisSession = true;
     this.sessionStartTime = new Date();
@@ -125,23 +125,23 @@ export class SmartRecordingStrategy {
   async shouldKeepRecording(): Promise<boolean> {
     // Always keep if there were errors or security events
     if (this.errorCount > 0) {
-      console.log('[SmartRecording] ✅ Keeping - contains errors');
+      // console.log('[SmartRecording] ✅ Keeping - contains errors');
       return true;
     }
 
     if (this.securityEventCount > 0) {
-      console.log('[SmartRecording] ✅ Keeping - contains security events');
+      // console.log('[SmartRecording] ✅ Keeping - contains security events');
       return true;
     }
 
     // Keep 1% of successful sessions for learning
     if (this.config.samplingRate > 0 && Math.random() < this.config.samplingRate) {
-      console.log('[SmartRecording] ✅ Keeping - random sample for learning');
+      // console.log('[SmartRecording] ✅ Keeping - random sample for learning');
       return true;
     }
 
     // Otherwise, discard
-    console.log('[SmartRecording] ❌ Discarding - no critical events');
+    // console.log('[SmartRecording] ❌ Discarding - no critical events');
     return false;
   }
 
@@ -159,11 +159,11 @@ export class SmartRecordingStrategy {
     if (shouldKeep) {
       // Save the recording
       const recording = await aiSystemRecorder.stopRecording();
-      console.log('[SmartRecording] 💾 Recording saved:', recording?.session_id);
+      // console.log('[SmartRecording] 💾 Recording saved:', recording?.session_id);
     } else {
       // Discard the recording (don't save to database)
       await aiSystemRecorder.stopRecording();
-      console.log('[SmartRecording] 🗑️ Recording discarded (no critical events)');
+      // console.log('[SmartRecording] 🗑️ Recording discarded (no critical events)');
 
       // TODO: In production, we'd delete from database here
       // For now, recording is still saved but we log the intent
@@ -204,7 +204,7 @@ export class SmartRecordingStrategy {
     durationMinutes: number = 5,
     userId?: string
   ): Promise<string> {
-    console.log(`[SmartRecording] 🎬 MANUAL RECORDING STARTED: "${tag}"`);
+    // console.log(`[SmartRecording] 🎬 MANUAL RECORDING STARTED: "${tag}"`);
 
     this.manualRecordingActive = true;
     this.manualRecordingTag = tag;
@@ -217,7 +217,7 @@ export class SmartRecordingStrategy {
     // Auto-stop after duration
     setTimeout(() => {
       if (this.manualRecordingActive) {
-        console.log(`[SmartRecording] ⏰ Manual recording "${tag}" auto-stopped after ${durationMinutes} min`);
+        // console.log(`[SmartRecording] ⏰ Manual recording "${tag}" auto-stopped after ${durationMinutes} min`);
         this.stopManualRecording();
       }
     }, durationMinutes * 60 * 1000);
@@ -230,11 +230,11 @@ export class SmartRecordingStrategy {
    */
   async stopManualRecording(): Promise<void> {
     if (!this.manualRecordingActive) {
-      console.log('[SmartRecording] No manual recording active');
+      // console.log('[SmartRecording] No manual recording active');
       return;
     }
 
-    console.log(`[SmartRecording] 🛑 MANUAL RECORDING STOPPED: "${this.manualRecordingTag}"`);
+    // console.log(`[SmartRecording] 🛑 MANUAL RECORDING STOPPED: "${this.manualRecordingTag}"`);
 
     this.manualRecordingActive = false;
 
@@ -242,7 +242,7 @@ export class SmartRecordingStrategy {
     const recording = await aiSystemRecorder.stopRecording();
 
     if (recording && this.manualRecordingTag) {
-      console.log(`[SmartRecording] 💾 Manual recording "${this.manualRecordingTag}" saved:`, recording.session_id);
+      // console.log(`[SmartRecording] 💾 Manual recording "${this.manualRecordingTag}" saved:`, recording.session_id);
 
       // Tag it in database so you can find it later
       // TODO: Add tag to metadata

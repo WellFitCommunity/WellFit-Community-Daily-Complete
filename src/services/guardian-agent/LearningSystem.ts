@@ -75,7 +75,7 @@ export class LearningSystem {
     const features = this.featureExtractor.extractFromError(errorInfo, context);
     const patternKey = this.generatePatternKey(features);
 
-    console.log(`[Learning System] New pattern detected: ${patternKey}`);
+    // console.log(`[Learning System] New pattern detected: ${patternKey}`);
 
     // Create new pattern entry
     this.patterns.set(patternKey, {
@@ -88,7 +88,7 @@ export class LearningSystem {
     // Suggest potential healing strategies based on similar patterns
     const similarPatterns = this.findSimilarPatterns(features);
     if (similarPatterns.length > 0) {
-      console.log(`[Learning System] Found ${similarPatterns.length} similar patterns to learn from`);
+      // console.log(`[Learning System] Found ${similarPatterns.length} similar patterns to learn from`);
     }
   }
 
@@ -117,7 +117,7 @@ export class LearningSystem {
       .slice(0, 3);
 
     if (optimalStrategies.length > 0) {
-      console.log(`[Learning System] Optimal strategies for pattern:`, optimalStrategies);
+      // console.log(`[Learning System] Optimal strategies for pattern:`, optimalStrategies);
     }
 
     // Detect anti-patterns (consistently failing strategies)
@@ -125,7 +125,7 @@ export class LearningSystem {
       .filter(([_, stats]) => stats.total >= 3 && (stats.success / stats.total) < 0.3);
 
     if (failingStrategies.length > 0) {
-      console.log(`[Learning System] Detected failing strategies:`, failingStrategies);
+      // console.log(`[Learning System] Detected failing strategies:`, failingStrategies);
     }
   }
 

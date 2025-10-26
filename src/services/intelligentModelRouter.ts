@@ -127,9 +127,9 @@ export class IntelligentModelRouter {
    */
   static logRoutingDecision(requestType: RequestType, decision: ModelRoutingDecision) {
     if (process.env.NODE_ENV === 'development') {
-      console.log(`[Model Router] ${requestType} → ${decision.model}`);
-      console.log(`  Reason: ${decision.reason}`);
-      console.log(`  Cost: $${decision.estimatedCostPerRequest.toFixed(4)} | Speed: ${decision.expectedResponseTime}`);
+      // console.log(`[Model Router] ${requestType} → ${decision.model}`);
+      // console.log(`  Reason: ${decision.reason}`);
+      // console.log(`  Cost: $${decision.estimatedCostPerRequest.toFixed(4)} | Speed: ${decision.expectedResponseTime}`);
     }
   }
 }

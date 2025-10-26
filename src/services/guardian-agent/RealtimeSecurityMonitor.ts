@@ -55,7 +55,7 @@ export class RealtimeSecurityMonitor {
    */
   async startMonitoring(): Promise<void> {
     if (this.isMonitoring) {
-      console.warn('[RealtimeSecurityMonitor] Already monitoring');
+      // console.warn('[RealtimeSecurityMonitor] Already monitoring');
       return;
     }
 
@@ -89,7 +89,7 @@ export class RealtimeSecurityMonitor {
         )
         .subscribe((status) => {
           if (status === 'SUBSCRIBED') {
-            console.log('[RealtimeSecurityMonitor] ✅ Subscribed to security_alerts');
+            // console.log('[RealtimeSecurityMonitor] ✅ Subscribed to security_alerts');
           }
         });
 
@@ -110,14 +110,14 @@ export class RealtimeSecurityMonitor {
         )
         .subscribe((status) => {
           if (status === 'SUBSCRIBED') {
-            console.log('[RealtimeSecurityMonitor] ✅ Subscribed to security_events');
+            // console.log('[RealtimeSecurityMonitor] ✅ Subscribed to security_events');
           }
         });
 
       this.isMonitoring = true;
-      console.log('[RealtimeSecurityMonitor] 🚀 Real-time monitoring started');
+      // console.log('[RealtimeSecurityMonitor] 🚀 Real-time monitoring started');
     } catch (error) {
-      console.error('[RealtimeSecurityMonitor] Failed to start monitoring:', error);
+      // console.error('[RealtimeSecurityMonitor] Failed to start monitoring:', error);
       throw error;
     }
   }
@@ -137,7 +137,7 @@ export class RealtimeSecurityMonitor {
     }
 
     this.isMonitoring = false;
-    console.log('[RealtimeSecurityMonitor] Monitoring stopped');
+    // console.log('[RealtimeSecurityMonitor] Monitoring stopped');
   }
 
   /**
@@ -158,17 +158,11 @@ export class RealtimeSecurityMonitor {
    * Handle new security alert
    */
   private handleNewAlert(alert: SecurityAlert): void {
-    console.log(`[RealtimeSecurityMonitor] 🚨 NEW ALERT: ${alert.severity.toUpperCase()} - ${alert.title}`);
+    // console.log(`[RealtimeSecurityMonitor] 🚨 NEW ALERT: ${alert.severity.toUpperCase()} - ${alert.title}`);
 
     // Log to console for visibility
     if (alert.severity === 'critical' || alert.severity === 'high') {
-      console.error(
-        `[CRITICAL ALERT] ${alert.title}`,
-        `\nType: ${alert.alert_type}`,
-        `\nSeverity: ${alert.severity}`,
-        `\nDescription: ${alert.description || 'N/A'}`,
-        `\nTime: ${alert.created_at}`
-      );
+      // Logging removed - use audit system instead
     }
 
     // Notify all registered callbacks
@@ -176,7 +170,7 @@ export class RealtimeSecurityMonitor {
       try {
         callback(alert);
       } catch (error) {
-        console.error('[RealtimeSecurityMonitor] Alert callback error:', error);
+        // console.error('[RealtimeSecurityMonitor] Alert callback error:', error);
       }
     });
   }
@@ -185,7 +179,7 @@ export class RealtimeSecurityMonitor {
    * Handle alert update
    */
   private handleAlertUpdate(alert: SecurityAlert): void {
-    console.log(`[RealtimeSecurityMonitor] 🔄 ALERT UPDATE: ${alert.title} - Status: ${alert.status}`);
+    // console.log(`[RealtimeSecurityMonitor] 🔄 ALERT UPDATE: ${alert.title} - Status: ${alert.status}`);
   }
 
   /**
@@ -194,12 +188,7 @@ export class RealtimeSecurityMonitor {
   private handleNewEvent(event: SecurityEvent): void {
     // Only log high-priority events to avoid noise
     if (event.severity === 'HIGH' || event.severity === 'CRITICAL' || event.requires_investigation) {
-      console.log(
-        `[RealtimeSecurityMonitor] ⚠️ SECURITY EVENT: ${event.event_type}`,
-        `\nSeverity: ${event.severity}`,
-        `\nDescription: ${event.description}`,
-        `\nTime: ${event.timestamp}`
-      );
+      // Logging removed - use audit system instead
     }
 
     // Notify all registered callbacks
@@ -207,7 +196,7 @@ export class RealtimeSecurityMonitor {
       try {
         callback(event);
       } catch (error) {
-        console.error('[RealtimeSecurityMonitor] Event callback error:', error);
+        // console.error('[RealtimeSecurityMonitor] Event callback error:', error);
       }
     });
   }
@@ -241,13 +230,13 @@ export class RealtimeSecurityMonitor {
         .limit(limit);
 
       if (error) {
-        console.error('[RealtimeSecurityMonitor] Failed to fetch critical alerts:', error);
+        // console.error('[RealtimeSecurityMonitor] Failed to fetch critical alerts:', error);
         return [];
       }
 
       return data || [];
     } catch (error) {
-      console.error('[RealtimeSecurityMonitor] Exception fetching critical alerts:', error);
+      // console.error('[RealtimeSecurityMonitor] Exception fetching critical alerts:', error);
       return [];
     }
   }
@@ -269,7 +258,7 @@ export class RealtimeSecurityMonitor {
         .gte('timestamp', since);
 
       if (error) {
-        console.error('[RealtimeSecurityMonitor] Failed to fetch statistics:', error);
+        // console.error('[RealtimeSecurityMonitor] Failed to fetch statistics:', error);
         return { total: 0, byType: {}, bySeverity: {} };
       }
 
@@ -286,7 +275,7 @@ export class RealtimeSecurityMonitor {
 
       return stats;
     } catch (error) {
-      console.error('[RealtimeSecurityMonitor] Exception fetching statistics:', error);
+      // console.error('[RealtimeSecurityMonitor] Exception fetching statistics:', error);
       return { total: 0, byType: {}, bySeverity: {} };
     }
   }

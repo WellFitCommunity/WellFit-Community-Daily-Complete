@@ -35,7 +35,7 @@ export class GuardianAgent {
     this.monitoring = new MonitoringSystem(this.brain, this.security);
     this.startTime = new Date();
 
-    console.log('🛡️ [Guardian Agent] Initialized and ready to protect your application');
+    // console.log('🛡️ [Guardian Agent] Initialized and ready to protect your application');
   }
 
   /**
@@ -63,7 +63,7 @@ export class GuardianAgent {
    * Starts the Guardian Agent
    */
   start(): void {
-    console.log('🚀 [Guardian Agent] Starting autonomous protection...');
+    // console.log('🚀 [Guardian Agent] Starting autonomous protection...');
 
     // Start continuous monitoring
     this.monitoring.start(this.config.monitoringIntervalMs);
@@ -74,14 +74,14 @@ export class GuardianAgent {
     // Register global error boundaries
     this.registerGlobalErrorHandlers();
 
-    console.log('✅ [Guardian Agent] Active and monitoring');
+    // console.log('✅ [Guardian Agent] Active and monitoring');
   }
 
   /**
    * Stops the Guardian Agent
    */
   stop(): void {
-    console.log('🛑 [Guardian Agent] Stopping...');
+    // console.log('🛑 [Guardian Agent] Stopping...');
     this.monitoring.stop();
   }
 
@@ -98,7 +98,7 @@ export class GuardianAgent {
    * Performs comprehensive security scan
    */
   private async performSecurityScan(): Promise<void> {
-    console.log('[Guardian Agent] Performing security scan...');
+    // console.log('[Guardian Agent] Performing security scan...');
 
     // Scan for PHI exposure in console logs
     this.scanConsoleLogs();
@@ -130,7 +130,7 @@ export class GuardianAgent {
         recentActions: []
       }).then(vulnerabilities => {
         if (vulnerabilities.length > 0) {
-          console.error('[Guardian Agent] PHI detected in console.log - blocking output');
+          // console.error('[Guardian Agent] PHI detected in console.log - blocking output');
           return; // Don't log PHI
         }
         originalConsoleLog.apply(console, args);
@@ -160,16 +160,16 @@ export class GuardianAgent {
         );
 
         if (vulnerabilities.length > 0) {
-          console.warn(`[Guardian Agent] Insecure data in localStorage: ${key}`);
+          // console.warn(`[Guardian Agent] Insecure data in localStorage: ${key}`);
           // Auto-heal: encrypt or remove
           if (this.config.autoHealEnabled) {
             localStorage.removeItem(key);
-            console.log(`[Guardian Agent] Removed insecure data from localStorage`);
+            // console.log(`[Guardian Agent] Removed insecure data from localStorage`);
           }
         }
       }
     } catch (error) {
-      console.error('[Guardian Agent] Error scanning localStorage:', error);
+      // console.error('[Guardian Agent] Error scanning localStorage:', error);
     }
   }
 
@@ -185,7 +185,7 @@ export class GuardianAgent {
         // Basic JWT expiration check
         const payload = JSON.parse(atob(token.split('.')[1]));
         if (payload.exp && payload.exp * 1000 < Date.now()) {
-          console.warn('[Guardian Agent] Expired token detected');
+          // console.warn('[Guardian Agent] Expired token detected');
 
           if (this.config.autoHealEnabled) {
             // Auto-heal: attempt token refresh
@@ -194,7 +194,7 @@ export class GuardianAgent {
         }
       } catch (error) {
         // Invalid token format
-        console.error('[Guardian Agent] Invalid token format detected');
+        // console.error('[Guardian Agent] Invalid token format detected');
       }
     }
   }
@@ -203,7 +203,7 @@ export class GuardianAgent {
    * Attempts to refresh authentication token
    */
   private async attemptTokenRefresh(): Promise<void> {
-    console.log('[Guardian Agent] Attempting token refresh...');
+    // console.log('[Guardian Agent] Attempting token refresh...');
     // Implementation depends on your auth system
     // This is a placeholder for the auto-healing mechanism
   }
@@ -255,7 +255,7 @@ export class GuardianAgent {
   updateConfig(config: Partial<AgentConfig>): void {
     this.config = { ...this.config, ...config };
     this.brain.updateConfig(this.config);
-    console.log('[Guardian Agent] Configuration updated');
+    // console.log('[Guardian Agent] Configuration updated');
   }
 
   /**

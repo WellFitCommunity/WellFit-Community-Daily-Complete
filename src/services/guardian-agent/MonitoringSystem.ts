@@ -49,7 +49,7 @@ export class MonitoringSystem {
     if (this.isMonitoring) return;
 
     this.isMonitoring = true;
-    console.log('[Monitoring System] Starting continuous monitoring...');
+    // console.log('[Monitoring System] Starting continuous monitoring...');
 
     // Performance monitoring
     this.setupPerformanceMonitoring();
@@ -83,7 +83,7 @@ export class MonitoringSystem {
       this.performanceObserver.disconnect();
     }
 
-    console.log('[Monitoring System] Monitoring stopped');
+    // console.log('[Monitoring System] Monitoring stopped');
   }
 
   /**
@@ -229,7 +229,7 @@ export class MonitoringSystem {
    * Handles detected anomaly - triggers autonomous healing
    */
   private async handleAnomaly(anomaly: Anomaly): Promise<void> {
-    console.log(`[Monitoring System] Anomaly detected: ${anomaly.description}`);
+    // console.log(`[Monitoring System] Anomaly detected: ${anomaly.description}`);
 
     // Create detected issue for the agent brain
     const issue: DetectedIssue = {
@@ -253,7 +253,7 @@ export class MonitoringSystem {
 
     if (detectedIssue) {
       anomaly.autoHealed = true;
-      console.log(`[Monitoring System] Anomaly handled autonomously`);
+      // console.log(`[Monitoring System] Anomaly handled autonomously`);
     }
   }
 
@@ -275,7 +275,7 @@ export class MonitoringSystem {
 
       this.performanceObserver.observe({ entryTypes: ['measure', 'navigation'] });
     } catch (error) {
-      console.warn('[Monitoring System] Performance monitoring not available');
+      // console.warn('[Monitoring System] Performance monitoring not available');
     }
   }
 
@@ -378,7 +378,7 @@ export class MonitoringSystem {
    * Handles slow operations
    */
   private async handleSlowOperation(entry: PerformanceEntry): Promise<void> {
-    console.warn(`[Monitoring System] Slow operation detected: ${entry.name} (${entry.duration}ms)`);
+    // console.warn(`[Monitoring System] Slow operation detected: ${entry.name} (${entry.duration}ms)`);
 
     await this.agentBrain.analyze(
       new Error(`Slow operation: ${entry.name}`),
@@ -394,7 +394,7 @@ export class MonitoringSystem {
    * Handles slow API calls
    */
   private async handleSlowAPI(url: string, duration: number): Promise<void> {
-    console.warn(`[Monitoring System] Slow API call: ${url} (${duration}ms)`);
+    // console.warn(`[Monitoring System] Slow API call: ${url} (${duration}ms)`);
 
     await this.agentBrain.analyze(
       new Error(`Slow API response`),

@@ -25,13 +25,13 @@ class OfflineStorage {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
 
       request.onerror = () => {
-        console.error('[OfflineStorage] Failed to open database');
+        // console.error('[OfflineStorage] Failed to open database');
         reject(request.error);
       };
 
       request.onsuccess = () => {
         this.db = request.result;
-        console.log('[OfflineStorage] Database initialized successfully');
+        // console.log('[OfflineStorage] Database initialized successfully');
         resolve();
       };
 
@@ -52,7 +52,7 @@ class OfflineStorage {
           measurementsStore.createIndex('timestamp', 'timestamp', { unique: false });
         }
 
-        console.log('[OfflineStorage] Database schema created');
+        // console.log('[OfflineStorage] Database schema created');
       };
     });
   }
@@ -76,12 +76,12 @@ class OfflineStorage {
       const request = store.add(report);
 
       request.onsuccess = () => {
-        console.log('[OfflineStorage] Report saved offline:', report.id);
+        // console.log('[OfflineStorage] Report saved offline:', report.id);
         resolve(report.id);
       };
 
       request.onerror = () => {
-        console.error('[OfflineStorage] Failed to save report');
+        // console.error('[OfflineStorage] Failed to save report');
         reject(request.error);
       };
     });
@@ -110,7 +110,7 @@ class OfflineStorage {
       };
 
       request.onerror = () => {
-        console.error('[OfflineStorage] Failed to get pending reports');
+        // console.error('[OfflineStorage] Failed to get pending reports');
         reject(request.error);
       };
     });
@@ -132,7 +132,7 @@ class OfflineStorage {
           const updateRequest = store.put(report);
 
           updateRequest.onsuccess = () => {
-            console.log('[OfflineStorage] Report marked as synced:', reportId);
+            // console.log('[OfflineStorage] Report marked as synced:', reportId);
             resolve();
           };
 
@@ -156,7 +156,7 @@ class OfflineStorage {
       const request = store.delete(reportId);
 
       request.onsuccess = () => {
-        console.log('[OfflineStorage] Report deleted:', reportId);
+        // console.log('[OfflineStorage] Report deleted:', reportId);
         resolve();
       };
 
@@ -201,7 +201,7 @@ class OfflineStorage {
     syncFunction: (reportData: any) => Promise<boolean>
   ): Promise<{ success: number; failed: number }> {
     if (this.syncInProgress) {
-      console.log('[OfflineStorage] Sync already in progress');
+      // console.log('[OfflineStorage] Sync already in progress');
       return { success: 0, failed: 0 };
     }
 
@@ -210,7 +210,7 @@ class OfflineStorage {
     let success = 0;
     let failed = 0;
 
-    console.log(`[OfflineStorage] Syncing ${pending.length} pending reports...`);
+    // console.log(`[OfflineStorage] Syncing ${pending.length} pending reports...`);
 
     for (const report of pending) {
       try {
@@ -220,20 +220,20 @@ class OfflineStorage {
         if (synced) {
           await this.deleteReport(report.id);
           success++;
-          console.log(`[OfflineStorage] Synced report ${report.id}`);
+          // console.log(`[OfflineStorage] Synced report ${report.id}`);
         } else {
           await this.incrementAttempts(report.id);
           failed++;
         }
       } catch (error) {
-        console.error(`[OfflineStorage] Failed to sync report ${report.id}:`, error);
+        // console.error(`[OfflineStorage] Failed to sync report ${report.id}:`, error);
         await this.incrementAttempts(report.id);
         failed++;
       }
     }
 
     this.syncInProgress = false;
-    console.log(`[OfflineStorage] Sync complete: ${success} success, ${failed} failed`);
+    // console.log(`[OfflineStorage] Sync complete: ${success} success, ${failed} failed`);
 
     return { success, failed };
   }
@@ -256,7 +256,7 @@ class OfflineStorage {
       const request = store.add(measurement);
 
       request.onsuccess = () => {
-        console.log('[OfflineStorage] Measurement saved:', measurement.id);
+        // console.log('[OfflineStorage] Measurement saved:', measurement.id);
         resolve(measurement.id);
       };
 
@@ -296,7 +296,7 @@ class OfflineStorage {
       transaction.objectStore(MEASUREMENTS_STORE).clear();
 
       transaction.oncomplete = () => {
-        console.log('[OfflineStorage] All data cleared');
+        // console.log('[OfflineStorage] All data cleared');
         resolve();
       };
 

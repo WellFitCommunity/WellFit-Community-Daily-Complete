@@ -168,7 +168,7 @@ export class HealingEngine {
    */
   private async executeStep(step: HealingStep, issue: DetectedIssue): Promise<boolean> {
     try {
-      console.log(`[Healing Engine] Executing step ${step.order}: ${step.action}`);
+      // console.log(`[Healing Engine] Executing step ${step.order}: ${step.action}`);
 
       // Simulate step execution with timeout
       const result = await Promise.race([
@@ -179,7 +179,7 @@ export class HealingEngine {
       // Validate step result
       return this.validateStep(step, result);
     } catch (error) {
-      console.error(`[Healing Engine] Step ${step.order} failed:`, error);
+      // console.error(`[Healing Engine] Step ${step.order} failed:`, error);
       return false;
     }
   }
