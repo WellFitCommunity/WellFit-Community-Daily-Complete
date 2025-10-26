@@ -1,10 +1,8 @@
 // Claude Edge Function Service - Secure server-side Claude API calls
 // This replaces the insecure client-side claudeService for production use
 
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || '';
+import { supabase } from '../lib/supabaseClient';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 export interface ClaudeMessage {
   role: 'user' | 'assistant';
@@ -36,10 +34,11 @@ export interface ClaudeChatResponse {
 
 export class ClaudeEdgeService {
   private static instance: ClaudeEdgeService | null = null;
-  private supabase: ReturnType<typeof createClient>;
+  private supabase: SupabaseClient;
 
   private constructor() {
-    this.supabase = createClient(supabaseUrl, supabaseAnonKey);
+    // Use the singleton Supabase client - DO NOT create a new client
+    this.supabase = supabase;
   }
 
   public static getInstance(): ClaudeEdgeService {

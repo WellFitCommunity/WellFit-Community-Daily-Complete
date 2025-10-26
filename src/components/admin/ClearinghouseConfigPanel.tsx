@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '../../lib/supabaseClient';
+import { useAuth } from '../../contexts/AuthContext';
 import { Save, Eye, EyeOff, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 
 interface ClearinghouseConfig {

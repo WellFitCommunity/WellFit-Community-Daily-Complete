@@ -1,10 +1,5 @@
 // lib/testUsers.ts
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_PUBLISHABLE_KEY! // or SB_PUBLISHABLE_API_KEY
-);
+import { supabase } from './supabaseClient';
 
 export async function createTestPatient(opts: {
   full_name?: string;
