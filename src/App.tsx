@@ -86,6 +86,9 @@ const GuardianAgentDashboard = React.lazy(() => import('./components/admin/Guard
 const GuardianTestPage = React.lazy(() => import('./pages/GuardianTestPage'));
 const EMSPage = React.lazy(() => import('./pages/EMSPage'));
 const ERDashboardPage = React.lazy(() => import('./pages/ERDashboardPage'));
+const SystemAdministrationPage = React.lazy(() => import('./pages/SystemAdministrationPage'));
+const AdminSettingsPage = React.lazy(() => import('./pages/AdminSettingsPage'));
+const AuditLogsPage = React.lazy(() => import('./pages/AuditLogsPage'));
 
 function Shell() {
   const [branding, setBranding] = useState<BrandingConfig>(getCurrentBranding());
@@ -359,21 +362,9 @@ function Shell() {
                 path="/admin/settings"
                 element={
                   <RequireAuth>
-                    <RequireAdminAuth allowedRoles={['admin', 'super_admin']}>
-                      <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
-                        <div className="min-h-screen bg-gray-50 py-8">
-                          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                            <div className="mb-4">
-                              <SmartBackButton />
-                            </div>
-                            <h1 className="text-3xl font-bold text-gray-900 mb-6">Admin Settings</h1>
-                            <div className="bg-white rounded-lg shadow p-6">
-                              <p className="text-gray-600">Admin settings configuration coming soon.</p>
-                            </div>
-                          </div>
-                        </div>
-                      </Suspense>
-                    </RequireAdminAuth>
+                    <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
+                      <AdminSettingsPage />
+                    </Suspense>
                   </RequireAuth>
                 }
               />
@@ -381,21 +372,9 @@ function Shell() {
                 path="/admin/audit-logs"
                 element={
                   <RequireAuth>
-                    <RequireAdminAuth allowedRoles={['admin', 'super_admin']}>
-                      <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
-                        <div className="min-h-screen bg-gray-50 py-8">
-                          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                            <div className="mb-4">
-                              <SmartBackButton />
-                            </div>
-                            <h1 className="text-3xl font-bold text-gray-900 mb-6">Audit Logs</h1>
-                            <div className="bg-white rounded-lg shadow p-6">
-                              <p className="text-gray-600">Audit log viewer coming soon.</p>
-                            </div>
-                          </div>
-                        </div>
-                      </Suspense>
-                    </RequireAdminAuth>
+                    <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
+                      <AuditLogsPage />
+                    </Suspense>
                   </RequireAuth>
                 }
               />
@@ -403,21 +382,9 @@ function Shell() {
                 path="/admin/system"
                 element={
                   <RequireAuth>
-                    <RequireAdminAuth allowedRoles={['super_admin']}>
-                      <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
-                        <div className="min-h-screen bg-gray-50 py-8">
-                          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                            <div className="mb-4">
-                              <SmartBackButton />
-                            </div>
-                            <h1 className="text-3xl font-bold text-gray-900 mb-6">System Administration</h1>
-                            <div className="bg-white rounded-lg shadow p-6">
-                              <p className="text-gray-600">System administration panel coming soon.</p>
-                            </div>
-                          </div>
-                        </div>
-                      </Suspense>
-                    </RequireAdminAuth>
+                    <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
+                      <SystemAdministrationPage />
+                    </Suspense>
                   </RequireAuth>
                 }
               />
