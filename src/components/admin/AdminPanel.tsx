@@ -52,25 +52,25 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <section className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+    <section className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg border-2 border-[#E8EAED] overflow-hidden hover:border-[#1BA39C] transition-all">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors border-b border-gray-200"
+        className="w-full px-6 py-4 flex items-center justify-between hover:bg-gradient-to-r hover:from-[#E0F7F6] hover:to-[#F4FADC] transition-all border-b-2 border-[#E8EAED]"
       >
         <div className="flex items-center flex-1">
           <span className="text-2xl mr-3">{icon}</span>
           <div className="text-left">
             <h2 className={`text-xl font-semibold ${headerColor}`}>{title}</h2>
-            {subtitle && <p className="text-sm text-gray-600 mt-1">{subtitle}</p>}
+            {subtitle && <p className="text-sm text-[#6B7280] mt-1">{subtitle}</p>}
           </div>
         </div>
-        <span className={`text-gray-500 transform transition-transform duration-200 text-xl ${isOpen ? 'rotate-180' : ''}`}>
+        <span className={`text-[#1BA39C] transform transition-transform duration-200 text-xl font-bold ${isOpen ? 'rotate-180' : ''}`}>
           ⌄
         </span>
       </button>
 
       {isOpen && (
-        <div className="p-6">
+        <div className="p-6 bg-white">
           {children}
         </div>
       )}
@@ -105,7 +105,7 @@ const AdminPanel: React.FC = () => {
 
   return (
     <RequireAdminAuth allowedRoles={['admin', 'super_admin']}>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gradient-to-br from-[#E0F7F6] via-gray-50 to-[#F4FADC]">
         <AdminHeader title="Envision Atlus - Admin Dashboard" showRiskAssessment={true} />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
@@ -119,12 +119,15 @@ const AdminPanel: React.FC = () => {
           <WhatsNewModal isOpen={showWhatsNew} onClose={() => setShowWhatsNew(false)} />
 
           {/* Quick Actions Bar */}
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl shadow-lg p-6">
+          <div className="bg-gradient-to-r from-[#1BA39C] to-[#158A84] rounded-xl shadow-2xl p-6 border-2 border-[#C8E63D]">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-white text-xl font-bold">Quick Actions</h2>
+              <h2 className="text-white text-xl font-bold flex items-center gap-2">
+                <span className="text-[#C8E63D]">⚡</span>
+                Quick Actions
+              </h2>
               <button
                 onClick={() => setShowWhatsNew(true)}
-                className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
+                className="bg-[#C8E63D] hover:bg-[#D9F05C] text-[#2D3339] px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-md hover:shadow-lg flex items-center space-x-2"
                 title="View recent updates"
               >
                 <span>✨</span>
@@ -134,42 +137,42 @@ const AdminPanel: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
               <button
                 onClick={() => navigate('/admin/enroll-senior')}
-                className="bg-white text-emerald-700 px-6 py-4 rounded-lg font-semibold hover:bg-emerald-50 transition-colors shadow-md flex items-center justify-center"
+                className="bg-white text-[#2D3339] px-6 py-4 rounded-lg font-bold hover:bg-[#C8E63D] hover:scale-105 transition-all shadow-lg hover:shadow-xl flex items-center justify-center border-2 border-transparent hover:border-[#1BA39C]"
               >
                 <span className="mr-2 text-2xl">➕</span>
                 Enroll Senior
               </button>
               <button
                 onClick={() => navigate('/admin/bulk-enroll')}
-                className="bg-white text-blue-700 px-6 py-4 rounded-lg font-semibold hover:bg-blue-50 transition-colors shadow-md flex items-center justify-center"
+                className="bg-white text-[#2D3339] px-6 py-4 rounded-lg font-bold hover:bg-[#C8E63D] hover:scale-105 transition-all shadow-lg hover:shadow-xl flex items-center justify-center border-2 border-transparent hover:border-[#1BA39C]"
               >
                 <span className="mr-2 text-2xl">👥</span>
                 Bulk Enroll
               </button>
               <button
                 onClick={() => navigate('/admin/bulk-export')}
-                className="bg-white text-indigo-700 px-6 py-4 rounded-lg font-semibold hover:bg-indigo-50 transition-colors shadow-md flex items-center justify-center"
+                className="bg-white text-[#2D3339] px-6 py-4 rounded-lg font-bold hover:bg-[#C8E63D] hover:scale-105 transition-all shadow-lg hover:shadow-xl flex items-center justify-center border-2 border-transparent hover:border-[#1BA39C]"
               >
                 <span className="mr-2 text-2xl">📤</span>
                 Bulk Export
               </button>
               <button
                 onClick={() => navigate('/admin/photo-approval')}
-                className="bg-white text-yellow-700 px-6 py-4 rounded-lg font-semibold hover:bg-yellow-50 transition-colors shadow-md flex items-center justify-center"
+                className="bg-white text-[#2D3339] px-6 py-4 rounded-lg font-bold hover:bg-[#C8E63D] hover:scale-105 transition-all shadow-lg hover:shadow-xl flex items-center justify-center border-2 border-transparent hover:border-[#1BA39C]"
               >
                 <span className="mr-2 text-2xl">📸</span>
                 Approve Photos
               </button>
               <button
                 onClick={() => navigate('/admin-questions')}
-                className="bg-white text-purple-700 px-6 py-4 rounded-lg font-semibold hover:bg-purple-50 transition-colors shadow-md flex items-center justify-center"
+                className="bg-white text-[#2D3339] px-6 py-4 rounded-lg font-bold hover:bg-[#C8E63D] hover:scale-105 transition-all shadow-lg hover:shadow-xl flex items-center justify-center border-2 border-transparent hover:border-[#1BA39C]"
               >
                 <span className="mr-2 text-2xl">💬</span>
                 Questions
               </button>
               <button
                 onClick={() => navigate('/admin-profile-editor')}
-                className="bg-white text-green-700 px-6 py-4 rounded-lg font-semibold hover:bg-green-50 transition-colors shadow-md flex items-center justify-center"
+                className="bg-white text-[#2D3339] px-6 py-4 rounded-lg font-bold hover:bg-[#C8E63D] hover:scale-105 transition-all shadow-lg hover:shadow-xl flex items-center justify-center border-2 border-transparent hover:border-[#1BA39C]"
               >
                 <span className="mr-2 text-2xl">✏️</span>
                 Edit Profiles
@@ -182,7 +185,7 @@ const AdminPanel: React.FC = () => {
             title="Patient Engagement & Risk Assessment"
             subtitle="Monitor senior activity levels to identify at-risk patients - includes trivia, games, check-ins, questions"
             icon="📊"
-            headerColor="text-indigo-800"
+            headerColor="text-[#1BA39C]"
             defaultOpen={false}
           >
             <PatientEngagementDashboard />
@@ -193,7 +196,7 @@ const AdminPanel: React.FC = () => {
             title="SmartScribe Atlas 💰"
             subtitle="AI-powered transcription with Claude Sonnet 4.5 for maximum billing accuracy"
             icon="🎤"
-            headerColor="text-purple-800"
+            headerColor="text-[#C8E63D]"
           >
             <SmartScribe />
           </CollapsibleSection>
@@ -203,7 +206,7 @@ const AdminPanel: React.FC = () => {
             title="CCM Autopilot - Chronic Care Management"
             subtitle="Automatic tracking of 20+ minute patient interactions for CCM billing"
             icon="⏱️"
-            headerColor="text-purple-800"
+            headerColor="text-[#1BA39C]"
           >
             <CCMTimeline />
           </CollapsibleSection>
@@ -213,7 +216,7 @@ const AdminPanel: React.FC = () => {
             title="Revenue Dashboard - Project Atlas"
             subtitle="Real-time revenue analytics and optimization opportunities"
             icon="💰"
-            headerColor="text-green-800"
+            headerColor="text-[#C8E63D]"
           >
             <RevenueDashboard />
           </CollapsibleSection>
@@ -223,7 +226,7 @@ const AdminPanel: React.FC = () => {
             title="Claims Submission Center"
             subtitle="Generate and submit 837P claims to clearinghouses"
             icon="📋"
-            headerColor="text-blue-800"
+            headerColor="text-[#1BA39C]"
           >
             <ClaimsSubmissionPanel />
           </CollapsibleSection>
@@ -233,7 +236,7 @@ const AdminPanel: React.FC = () => {
             title="Claims Appeals & Resubmission"
             subtitle="AI-assisted appeal letters for denied claims"
             icon="🔄"
-            headerColor="text-red-800"
+            headerColor="text-[#158A84]"
           >
             <ClaimsAppealsPanel />
           </CollapsibleSection>
@@ -243,7 +246,7 @@ const AdminPanel: React.FC = () => {
             title="SDOH Billing Encoder"
             subtitle="Social determinants of health-aware medical coding"
             icon="🏥"
-            headerColor="text-indigo-800"
+            headerColor="text-[#1BA39C]"
           >
             <SDOHCoderAssist
               encounterId="demo-encounter-id"
@@ -257,7 +260,7 @@ const AdminPanel: React.FC = () => {
             title="AI-Enhanced FHIR Analytics"
             subtitle="Real-time patient insights and clinical decision support"
             icon="🧠"
-            headerColor="text-purple-800"
+            headerColor="text-[#1BA39C]"
           >
             <FhirAiDashboard
               supabaseUrl={process.env.REACT_APP_SUPABASE_URL || ''}
@@ -271,7 +274,7 @@ const AdminPanel: React.FC = () => {
               title="FHIR Questionnaire Builder"
               subtitle="Create standardized clinical questionnaires using AI"
               icon="📝"
-              headerColor="text-blue-800"
+              headerColor="text-[#1BA39C]"
             >
               <FHIRFormBuilderEnhanced />
             </CollapsibleSection>
@@ -280,7 +283,7 @@ const AdminPanel: React.FC = () => {
               title="FHIR Data Mapper"
               subtitle="Transform legacy data into FHIR-compliant formats"
               icon="🔄"
-              headerColor="text-teal-800"
+              headerColor="text-[#158A84]"
             >
               <FHIRDataMapper />
             </CollapsibleSection>
@@ -290,7 +293,7 @@ const AdminPanel: React.FC = () => {
               title="Hospital EHR/EMR Integrations"
               subtitle="Connect to Epic, Cerner, Athenahealth, and other hospital systems"
               icon="🏥"
-              headerColor="text-blue-800"
+              headerColor="text-[#1BA39C]"
               defaultOpen={false}
             >
               <HospitalAdapterManagementPanel />
@@ -302,7 +305,7 @@ const AdminPanel: React.FC = () => {
             title="Billing & Claims Management"
             subtitle="Monitor claims processing and revenue tracking"
             icon="💳"
-            headerColor="text-green-800"
+            headerColor="text-[#C8E63D]"
           >
             <BillingDashboard />
           </CollapsibleSection>
@@ -312,7 +315,7 @@ const AdminPanel: React.FC = () => {
             title="Patient Handoff System"
             subtitle="Secure transfer of care between facilities - HIPAA compliant audit trail"
             icon="🏥"
-            headerColor="text-teal-800"
+            headerColor="text-[#1BA39C]"
           >
             <AdminTransferLogs showExportButton={true} />
           </CollapsibleSection>
@@ -322,7 +325,7 @@ const AdminPanel: React.FC = () => {
             title="SOC 2 Executive Summary"
             subtitle="High-level security posture and compliance overview for leadership"
             icon="📊"
-            headerColor="text-blue-900"
+            headerColor="text-[#2D3339]"
             defaultOpen={false}
           >
             <SOC2ExecutiveDashboard />
@@ -332,7 +335,7 @@ const AdminPanel: React.FC = () => {
             title="Security Operations Center"
             subtitle="Real-time security monitoring, threat detection, and event tracking"
             icon="🛡️"
-            headerColor="text-red-900"
+            headerColor="text-[#158A84]"
             defaultOpen={false}
           >
             <SOC2SecurityDashboard />
@@ -342,7 +345,7 @@ const AdminPanel: React.FC = () => {
             title="Audit & Compliance Center"
             subtitle="PHI access logs, audit trails, and SOC 2 compliance status"
             icon="📋"
-            headerColor="text-indigo-900"
+            headerColor="text-[#1BA39C]"
             defaultOpen={false}
           >
             <SOC2AuditDashboard />
@@ -352,7 +355,7 @@ const AdminPanel: React.FC = () => {
             title="Incident Response Center"
             subtitle="Security incident investigation queue with SLA tracking"
             icon="🚨"
-            headerColor="text-orange-900"
+            headerColor="text-[#C8E63D]"
             defaultOpen={false}
           >
             <SOC2IncidentResponseDashboard />
@@ -362,7 +365,7 @@ const AdminPanel: React.FC = () => {
             title="System Administration"
             subtitle="Infrastructure health, database monitoring, active sessions, and system metrics"
             icon="⚙️"
-            headerColor="text-gray-900"
+            headerColor="text-[#2D3339]"
             defaultOpen={false}
           >
             <SystemAdminDashboard />
@@ -374,7 +377,7 @@ const AdminPanel: React.FC = () => {
               title="User Management"
               subtitle="Manage patient and staff accounts"
               icon="👥"
-              headerColor="text-gray-800"
+              headerColor="text-[#1BA39C]"
             >
               <UsersList />
             </CollapsibleSection>
@@ -383,7 +386,7 @@ const AdminPanel: React.FC = () => {
               title="Reports & Analytics"
               subtitle="System-wide analytics and insights"
               icon="📊"
-              headerColor="text-gray-800"
+              headerColor="text-[#1BA39C]"
             >
               <ReportsSection />
             </CollapsibleSection>
@@ -394,7 +397,7 @@ const AdminPanel: React.FC = () => {
             title="Data Export & Advanced Tools"
             subtitle="Export data and access advanced administrative functions"
             icon="📤"
-            headerColor="text-gray-800"
+            headerColor="text-[#158A84]"
           >
             <ExportCheckIns />
           </CollapsibleSection>
@@ -405,14 +408,14 @@ const AdminPanel: React.FC = () => {
               title="Super Admin Features"
               subtitle="Advanced system administration and AI testing"
               icon="🔐"
-              headerColor="text-blue-800"
+              headerColor="text-[#2D3339]"
             >
-              <div className="bg-green-50 rounded-lg p-6">
-                <h3 className="text-lg font-medium text-green-700 mb-4 flex items-center">
+              <div className="bg-gradient-to-br from-[#E0F7F6] to-[#F4FADC] rounded-lg p-6 border-2 border-[#1BA39C]">
+                <h3 className="text-lg font-bold text-[#2D3339] mb-4 flex items-center">
                   <span className="mr-2">🧠</span>
                   Claude AI Service Test
                 </h3>
-                <p className="text-green-600 text-sm mb-4">Test and validate AI service integration</p>
+                <p className="text-[#158A84] text-sm mb-4 font-medium">Test and validate AI service integration</p>
                 <ClaudeTestWidget />
               </div>
             </CollapsibleSection>
@@ -424,7 +427,7 @@ const AdminPanel: React.FC = () => {
               title="API Key Manager"
               subtitle="Generate and manage API keys for system integrations"
               icon="🔑"
-              headerColor="text-yellow-800"
+              headerColor="text-[#C8E63D]"
             >
               <ApiKeyManager />
             </CollapsibleSection>

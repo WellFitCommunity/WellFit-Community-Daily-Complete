@@ -200,24 +200,27 @@ export const SystemAdminDashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center bg-gradient-to-r from-[#1BA39C] to-[#158A84] rounded-xl p-6 shadow-xl border-2 border-[#C8E63D]">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">System Administration</h2>
-          <p className="text-sm text-gray-600 mt-1">
+          <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+            <span className="text-[#C8E63D]">⚙️</span>
+            System Administration
+          </h2>
+          <p className="text-sm text-white/90 mt-1 font-medium">
             Infrastructure monitoring • Last updated: {lastRefresh.toLocaleTimeString()}
           </p>
         </div>
         <div className="flex items-center space-x-3">
-          <div className="flex items-center space-x-2 px-4 py-2 bg-white rounded-lg border-2"
+          <div className="flex items-center space-x-2 px-4 py-2 bg-white/95 rounded-lg border-2 shadow-md"
                style={{ borderColor: healthStatus.color === 'red' ? '#ef4444' : healthStatus.color === 'yellow' ? '#eab308' : '#10b981' }}>
             <span className="text-2xl">{healthStatus.icon}</span>
-            <span className="font-semibold text-gray-700">System {healthStatus.status}</span>
+            <span className="font-bold text-[#2D3339]">System {healthStatus.status}</span>
           </div>
           <button
             onClick={loadSystemData}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-6 py-2 bg-[#C8E63D] text-[#2D3339] font-bold rounded-lg hover:bg-[#D9F05C] transition-all shadow-md hover:shadow-lg"
           >
-            Refresh
+            🔄 Refresh
           </button>
         </div>
       </div>
@@ -232,139 +235,142 @@ export const SystemAdminDashboard: React.FC = () => {
       {metrics && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Total Users */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Total Users</CardTitle>
+          <Card className="border-2 border-[#E8EAED] hover:border-[#1BA39C] transition-all shadow-lg">
+            <CardHeader className="pb-2 bg-gradient-to-br from-[#E0F7F6] to-white">
+              <CardTitle className="text-sm font-bold text-[#158A84]">Total Users</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <div className="text-3xl font-bold text-blue-600">{metrics.total_users}</div>
+                <div className="text-3xl font-bold text-[#1BA39C]">{metrics.total_users}</div>
                 <span className="text-3xl">👥</span>
               </div>
-              <p className="text-xs text-gray-500 mt-1">Registered accounts</p>
+              <p className="text-xs text-[#6B7280] mt-1 font-medium">Registered accounts</p>
             </CardContent>
           </Card>
 
           {/* Active Sessions */}
-          <Card className={metrics.active_sessions > 50 ? 'border-green-500 border-2' : ''}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Active Sessions</CardTitle>
+          <Card className={`shadow-lg border-2 ${metrics.active_sessions > 50 ? 'border-[#C8E63D]' : 'border-[#E8EAED]'} hover:border-[#1BA39C] transition-all`}>
+            <CardHeader className="pb-2 bg-gradient-to-br from-[#F4FADC] to-white">
+              <CardTitle className="text-sm font-bold text-[#A8C230]">Active Sessions</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <div className="text-3xl font-bold text-green-600">{metrics.active_sessions}</div>
+                <div className="text-3xl font-bold text-[#C8E63D]">{metrics.active_sessions}</div>
                 <span className="text-3xl">🔌</span>
               </div>
-              <p className="text-xs text-gray-500 mt-1">Last 24 hours</p>
+              <p className="text-xs text-[#6B7280] mt-1 font-medium">Last 24 hours</p>
             </CardContent>
           </Card>
 
           {/* Average Response Time */}
-          <Card className={metrics.avg_response_time_ms > 3000 ? 'border-orange-500 border-2' : ''}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Avg Response Time</CardTitle>
+          <Card className={`shadow-lg border-2 ${metrics.avg_response_time_ms > 3000 ? 'border-orange-500' : 'border-[#E8EAED]'} hover:border-[#1BA39C] transition-all`}>
+            <CardHeader className="pb-2 bg-gradient-to-br from-gray-50 to-white">
+              <CardTitle className="text-sm font-bold text-[#2D3339]">Avg Response Time</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
                 <div className={`text-3xl font-bold ${
                   metrics.avg_response_time_ms > 3000 ? 'text-red-600' :
                   metrics.avg_response_time_ms > 1000 ? 'text-yellow-600' :
-                  'text-green-600'
+                  'text-[#C8E63D]'
                 }`}>
                   {formatDuration(metrics.avg_response_time_ms)}
                 </div>
                 <span className="text-3xl">⚡</span>
               </div>
-              <p className="text-xs text-gray-500 mt-1">24h average</p>
+              <p className="text-xs text-[#6B7280] mt-1 font-medium">24h average</p>
             </CardContent>
           </Card>
 
           {/* Error Rate */}
-          <Card className={metrics.error_rate_24h > 50 ? 'border-red-500 border-2' : ''}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Errors (24h)</CardTitle>
+          <Card className={`shadow-lg border-2 ${metrics.error_rate_24h > 50 ? 'border-red-500' : 'border-[#E8EAED]'} hover:border-[#1BA39C] transition-all`}>
+            <CardHeader className="pb-2 bg-gradient-to-br from-red-50 to-white">
+              <CardTitle className="text-sm font-bold text-red-800">Errors (24h)</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
                 <div className={`text-3xl font-bold ${
                   metrics.error_rate_24h > 100 ? 'text-red-600' :
                   metrics.error_rate_24h > 50 ? 'text-orange-600' :
-                  'text-green-600'
+                  'text-[#C8E63D]'
                 }`}>
                   {metrics.error_rate_24h}
                 </div>
                 <span className="text-3xl">⚠️</span>
               </div>
-              <p className="text-xs text-gray-500 mt-1">Application errors</p>
+              <p className="text-xs text-[#6B7280] mt-1 font-medium">Application errors</p>
             </CardContent>
           </Card>
 
           {/* API Calls */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">API Calls</CardTitle>
+          <Card className="border-2 border-[#E8EAED] hover:border-[#1BA39C] transition-all shadow-lg">
+            <CardHeader className="pb-2 bg-gradient-to-br from-purple-50 to-white">
+              <CardTitle className="text-sm font-bold text-purple-700">API Calls</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <div className="text-3xl font-bold text-purple-600">{metrics.api_calls_24h}</div>
+                <div className="text-3xl font-bold text-[#1BA39C]">{metrics.api_calls_24h}</div>
                 <span className="text-3xl">📡</span>
               </div>
-              <p className="text-xs text-gray-500 mt-1">Last 24 hours</p>
+              <p className="text-xs text-[#6B7280] mt-1 font-medium">Last 24 hours</p>
             </CardContent>
           </Card>
 
           {/* System Uptime */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">System Uptime</CardTitle>
+          <Card className="border-2 border-[#E8EAED] hover:border-[#1BA39C] transition-all shadow-lg">
+            <CardHeader className="pb-2 bg-gradient-to-br from-[#F4FADC] to-white">
+              <CardTitle className="text-sm font-bold text-[#A8C230]">System Uptime</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <div className="text-3xl font-bold text-green-600">{metrics.uptime_percentage}%</div>
+                <div className="text-3xl font-bold text-[#C8E63D]">{metrics.uptime_percentage}%</div>
                 <span className="text-3xl">⏱️</span>
               </div>
-              <p className="text-xs text-gray-500 mt-1">30-day average</p>
+              <p className="text-xs text-[#6B7280] mt-1 font-medium">30-day average</p>
             </CardContent>
           </Card>
 
           {/* Database Size */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Database Size</CardTitle>
+          <Card className="border-2 border-[#E8EAED] hover:border-[#1BA39C] transition-all shadow-lg">
+            <CardHeader className="pb-2 bg-gradient-to-br from-[#E0F7F6] to-white">
+              <CardTitle className="text-sm font-bold text-[#158A84]">Database Size</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <div className="text-3xl font-bold text-indigo-600">
+                <div className="text-3xl font-bold text-[#1BA39C]">
                   {metrics.database_size_mb > 0 ? formatBytes(metrics.database_size_mb * 1024 * 1024) : 'N/A'}
                 </div>
                 <span className="text-3xl">💾</span>
               </div>
-              <p className="text-xs text-gray-500 mt-1">Total storage used</p>
+              <p className="text-xs text-[#6B7280] mt-1 font-medium">Total storage used</p>
             </CardContent>
           </Card>
 
           {/* Pending Migrations */}
-          <Card className={metrics.pending_migrations > 0 ? 'border-yellow-500 border-2' : ''}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Pending Migrations</CardTitle>
+          <Card className={`shadow-lg border-2 ${metrics.pending_migrations > 0 ? 'border-yellow-500' : 'border-[#E8EAED]'} hover:border-[#1BA39C] transition-all`}>
+            <CardHeader className="pb-2 bg-gradient-to-br from-yellow-50 to-white">
+              <CardTitle className="text-sm font-bold text-yellow-800">Pending Migrations</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <div className={`text-3xl font-bold ${metrics.pending_migrations > 0 ? 'text-yellow-600' : 'text-green-600'}`}>
+                <div className={`text-3xl font-bold ${metrics.pending_migrations > 0 ? 'text-yellow-600' : 'text-[#C8E63D]'}`}>
                   {metrics.pending_migrations}
                 </div>
                 <span className="text-3xl">🔄</span>
               </div>
-              <p className="text-xs text-gray-500 mt-1">Database migrations</p>
+              <p className="text-xs text-[#6B7280] mt-1 font-medium">Database migrations</p>
             </CardContent>
           </Card>
         </div>
       )}
 
       {/* Active User Sessions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Active User Sessions</CardTitle>
+      <Card className="border-2 border-[#E8EAED] hover:border-[#1BA39C] transition-all shadow-xl">
+        <CardHeader className="bg-gradient-to-r from-[#E0F7F6] to-white border-b-2 border-[#E8EAED]">
+          <CardTitle className="text-[#2D3339] font-bold flex items-center gap-2">
+            <span className="text-[#1BA39C]">🔌</span>
+            Active User Sessions
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {activeSessions.length === 0 ? (
@@ -433,9 +439,12 @@ export const SystemAdminDashboard: React.FC = () => {
 
       {/* System Health Recommendations */}
       {metrics && (
-        <Card>
-          <CardHeader>
-            <CardTitle>System Health Recommendations</CardTitle>
+        <Card className="border-2 border-[#E8EAED] hover:border-[#1BA39C] transition-all shadow-xl">
+          <CardHeader className="bg-gradient-to-r from-[#F4FADC] to-white border-b-2 border-[#E8EAED]">
+            <CardTitle className="text-[#2D3339] font-bold flex items-center gap-2">
+              <span className="text-[#C8E63D]">💡</span>
+              System Health Recommendations
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">

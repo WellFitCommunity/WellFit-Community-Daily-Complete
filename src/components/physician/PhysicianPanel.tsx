@@ -102,28 +102,42 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
     revenue: 'bg-amber-600'
   };
 
+  const categoryColorsBranded = {
+    medical: 'border-l-4 border-l-[#1BA39C] bg-gradient-to-r from-[#E0F7F6] to-white',
+    administrative: 'border-l-4 border-l-[#C8E63D] bg-gradient-to-r from-[#F4FADC] to-white',
+    clinical: 'border-l-4 border-l-[#158A84] bg-gradient-to-r from-[#E0F7F6] to-white',
+    revenue: 'border-l-4 border-l-[#C8E63D] bg-gradient-to-r from-[#F4FADC] to-white'
+  };
+
+  const badgeColorsBranded = {
+    medical: 'bg-[#1BA39C]',
+    administrative: 'bg-[#C8E63D] text-[#2D3339]',
+    clinical: 'bg-[#158A84]',
+    revenue: 'bg-[#C8E63D] text-[#2D3339]'
+  };
+
   return (
-    <section className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+    <section className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg border-2 border-[#E8EAED] overflow-hidden hover:border-[#1BA39C] transition-all">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full px-6 py-4 flex items-center justify-between hover:${categoryColors[category]} transition-all`}
+        className={`w-full px-6 py-4 flex items-center justify-between hover:${categoryColorsBranded[category]} transition-all`}
       >
         <div className="flex items-center gap-3">
           <span className="text-2xl">{icon}</span>
-          <h2 className="text-xl font-semibold text-gray-800">{title}</h2>
+          <h2 className="text-xl font-bold text-[#2D3339]">{title}</h2>
           {badge !== undefined && (
-            <span className={`px-2 py-1 text-xs font-bold text-white rounded-full ${badgeColors[category]}`}>
+            <span className={`px-2 py-1 text-xs font-bold rounded-full shadow-sm ${badgeColorsBranded[category]}`}>
               {badge}
             </span>
           )}
         </div>
-        <span className={`text-gray-500 transform transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
+        <span className={`text-[#1BA39C] font-bold transform transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
           ▼
         </span>
       </button>
 
       {isOpen && (
-        <div className="px-6 py-4 border-t border-gray-200">
+        <div className="px-6 py-4 border-t-2 border-[#E8EAED] bg-white">
           {children}
         </div>
       )}
@@ -522,24 +536,24 @@ const PhysicianPanel: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-[#E0F7F6] via-gray-50 to-[#F4FADC]">
       <AdminHeader title="🩺 Envision Atlus - Physician Dashboard" />
 
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-7xl mx-auto space-y-6">
 
           {/* Hero Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl shadow-xl p-8 text-white">
+          <div className="bg-gradient-to-r from-[#1BA39C] to-[#158A84] rounded-2xl shadow-2xl p-8 text-white border-4 border-[#C8E63D]">
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-4xl font-bold mb-2 flex items-center gap-3">
-                  <Stethoscope className="w-10 h-10" />
+                  <Stethoscope className="w-10 h-10 text-[#C8E63D]" />
                   Physician Command Center
                 </h1>
-                <p className="text-blue-100 text-lg">AI-Powered Clinical Intelligence & Revenue Optimization Platform</p>
+                <p className="text-white/90 text-lg font-medium">AI-Powered Clinical Intelligence & Revenue Optimization Platform</p>
               </div>
               <div className="flex items-center gap-3">
-                <Brain className="w-16 h-16 text-blue-200 opacity-50" />
+                <Brain className="w-16 h-16 text-[#C8E63D] opacity-50" />
               </div>
             </div>
           </div>
@@ -547,14 +561,14 @@ const PhysicianPanel: React.FC = () => {
           {/* Quick Stats Dashboard */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {quickStats.map((stat, index) => (
-              <div key={index} className="bg-white rounded-lg shadow-lg p-4 border-l-4 border-l-blue-600 hover:shadow-xl transition-shadow cursor-pointer">
+              <div key={index} className="bg-gradient-to-br from-white to-gray-50 rounded-lg shadow-xl p-4 border-l-4 border-l-[#1BA39C] hover:shadow-2xl hover:border-l-[#C8E63D] transition-all cursor-pointer border-2 border-[#E8EAED]">
                 <div className="flex items-center justify-between mb-2">
-                  <div className="text-sm text-gray-600 font-medium">{stat.label}</div>
-                  <div className={`p-2 rounded-lg ${stat.color} text-white`}>
+                  <div className="text-sm text-[#6B7280] font-bold">{stat.label}</div>
+                  <div className={`p-2 rounded-lg ${stat.color} text-white shadow-md`}>
                     {stat.icon}
                   </div>
                 </div>
-                <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
+                <div className="text-2xl font-bold text-[#2D3339]">{stat.value}</div>
                 {stat.trend && (
                   <div className={`flex items-center gap-1 mt-1 text-xs ${stat.trend.positive ? 'text-green-600' : 'text-red-600'}`}>
                     <TrendingUp className={`w-3 h-3 ${stat.trend.positive ? '' : 'rotate-180'}`} />
@@ -651,9 +665,9 @@ const PhysicianPanel: React.FC = () => {
           </CollapsibleSection>
 
           {/* Medical Practice Tools Grid */}
-          <div className="bg-blue-50 rounded-xl p-6 border-2 border-blue-200">
-            <h2 className="text-2xl font-bold text-blue-900 mb-4 flex items-center gap-3">
-              <Stethoscope className="w-7 h-7" />
+          <div className="bg-gradient-to-br from-[#E0F7F6] to-white rounded-xl p-6 border-2 border-[#1BA39C] shadow-xl">
+            <h2 className="text-2xl font-bold text-[#2D3339] mb-4 flex items-center gap-3">
+              <Stethoscope className="w-7 h-7 text-[#1BA39C]" />
               Clinical Tools & Medical Records
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
