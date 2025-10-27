@@ -323,6 +323,30 @@ const ParamedicHandoffForm: React.FC = () => {
             <option value="45">45 minutes</option>
             <option value="60">60 minutes</option>
           </select>
+
+          {/* Calculated Arrival Time Display */}
+          <div style={{
+            marginTop: '0.5rem',
+            padding: '1rem',
+            backgroundColor: '#dbeafe',
+            borderRadius: '8px',
+            border: '2px solid #3b82f6',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '0.875rem', color: '#1e40af', fontWeight: 'bold', marginBottom: '0.25rem' }}>
+              ESTIMATED ARRIVAL TIME
+            </div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1e3a8a' }}>
+              {new Date(Date.now() + parseInt(etaMinutes) * 60 * 1000).toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+              })}
+            </div>
+            <div style={{ fontSize: '0.75rem', color: '#1e40af', marginTop: '0.25rem' }}>
+              ({etaMinutes} minutes from now)
+            </div>
+          </div>
         </div>
 
         {/* Notes */}

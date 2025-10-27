@@ -1,6 +1,7 @@
 // src/components/ems/ERIncomingPatientBoard.tsx
 // ER Dashboard showing incoming ambulances in real-time
 // Real-time updates via Supabase subscriptions
+// Includes coordinated response and provider sign-off
 
 import React, { useEffect, useState } from 'react';
 import {
@@ -14,6 +15,9 @@ import {
   getAlertBadges,
   type IncomingPatient,
 } from '../../services/emsService';
+import { integrateEMSHandoff } from '../../services/emsIntegrationService';
+import CoordinatedResponseDashboard from './CoordinatedResponseDashboard';
+import ProviderSignoffForm from './ProviderSignoffForm';
 
 interface ERIncomingPatientBoardProps {
   hospitalName?: string;
@@ -25,6 +29,10 @@ const ERIncomingPatientBoard: React.FC<ERIncomingPatientBoardProps> = ({ hospita
   const [error, setError] = useState<string | null>(null);
   const [celebrationActive, setCelebrationActive] = useState(false);
   const [celebrationMessage, setCelebrationMessage] = useState('');
+
+  // Modal states for coordinated response and provider signoff
+  const [selectedPatientForResponse, setSelectedPatientForResponse] = useState<IncomingPatient | null>(null);
+  const [selectedPatientForSignoff, setSelectedPatientForSignoff] = useState<IncomingPatient | null>(null);
 
   // Load initial data
   useEffect(() => {
@@ -156,7 +164,24 @@ Lives depend on complete, accurate handoffs.
 
     // All validation passed - proceed with handoff
     try {
+      // Step 1: Transfer patient to ER
       await transferPatientToER(patientId);
+
+      // Step 2: Integrate handoff into patient chart (creates patient, encounter, vitals)
+      console.log('[ER Board] Integrating EMS handoff into patient chart...');
+      const integrationResult = await integrateEMSHandoff(patientId, patient as any);
+
+      if (integrationResult.success) {
+        console.log('[ER Board] ✅ Integration complete:', {
+          patientId: integrationResult.patientId,
+          encounterId: integrationResult.encounterId,
+          vitalsRecorded: integrationResult.observationIds?.length,
+          billingCodes: integrationResult.billingCodes?.length,
+        });
+      } else {
+        console.warn('[ER Board] ⚠️ Integration failed:', integrationResult.error);
+        // Don't block handoff completion if integration fails
+      }
 
       // ✅ VALIDATION PASSED - CELEBRATION TIME! 🎉
       const messages = [
@@ -509,14 +534,56 @@ Error Code: ${err.code || 'UNKNOWN'}
               )}
 
               {/* Action Buttons */}
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                 {patient.status === 'en_route' && (
+                  <>
+                    <button
+                      onClick={() => handleAcknowledge(patient.id)}
+                      style={{
+                        flex: 1,
+                        minWidth: '150px',
+                        padding: '0.75rem',
+                        backgroundColor: '#2563eb',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '1rem',
+                        fontWeight: 'bold',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      ✓ Acknowledge
+                    </button>
+                    {badges.length > 0 && (
+                      <button
+                        onClick={() => setSelectedPatientForResponse(patient)}
+                        style={{
+                          flex: 1,
+                          minWidth: '150px',
+                          padding: '0.75rem',
+                          backgroundColor: '#8b5cf6',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '8px',
+                          fontSize: '1rem',
+                          fontWeight: 'bold',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        🚨 View Response Status
+                      </button>
+                    )}
+                  </>
+                )}
+
+                {(patient.status === 'acknowledged' || patient.status === 'en_route') && badges.length > 0 && (
                   <button
-                    onClick={() => handleAcknowledge(patient.id)}
+                    onClick={() => setSelectedPatientForResponse(patient)}
                     style={{
                       flex: 1,
+                      minWidth: '150px',
                       padding: '0.75rem',
-                      backgroundColor: '#2563eb',
+                      backgroundColor: '#8b5cf6',
                       color: 'white',
                       border: 'none',
                       borderRadius: '8px',
@@ -525,7 +592,7 @@ Error Code: ${err.code || 'UNKNOWN'}
                       cursor: 'pointer'
                     }}
                   >
-                    ✓ Acknowledge
+                    🚨 Response Status
                   </button>
                 )}
 
@@ -534,6 +601,7 @@ Error Code: ${err.code || 'UNKNOWN'}
                     onClick={() => handlePatientArrived(patient.id)}
                     style={{
                       flex: 1,
+                      minWidth: '150px',
                       padding: '0.75rem',
                       backgroundColor: '#f59e0b',
                       color: 'white',
@@ -549,38 +617,165 @@ Error Code: ${err.code || 'UNKNOWN'}
                 )}
 
                 {patient.status === 'arrived' && (
-                  <button
-                    onClick={() => handleCompleteHandoff(patient.id, patient.chief_complaint, patient)}
-                    style={{
-                      flex: 1,
-                      padding: '0.75rem',
-                      backgroundColor: '#059669',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '1.125rem',
-                      fontWeight: 'bold',
-                      cursor: 'pointer',
-                      boxShadow: '0 4px 12px rgba(5, 150, 105, 0.4)',
-                      transition: 'all 0.3s ease'
-                    }}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.transform = 'scale(1.05)';
-                      e.currentTarget.style.backgroundColor = '#047857';
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.transform = 'scale(1)';
-                      e.currentTarget.style.backgroundColor = '#059669';
-                    }}
-                  >
-                    🎉 Complete Handoff!
-                  </button>
+                  <>
+                    <button
+                      onClick={() => setSelectedPatientForSignoff(patient)}
+                      style={{
+                        flex: 1,
+                        minWidth: '150px',
+                        padding: '0.75rem',
+                        backgroundColor: '#3b82f6',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '1rem',
+                        fontWeight: 'bold',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      ✍️ Provider Sign-Off
+                    </button>
+                    <button
+                      onClick={() => handleCompleteHandoff(patient.id, patient.chief_complaint, patient)}
+                      style={{
+                        flex: 1,
+                        minWidth: '150px',
+                        padding: '0.75rem',
+                        backgroundColor: '#059669',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '1.125rem',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 12px rgba(5, 150, 105, 0.4)',
+                        transition: 'all 0.3s ease'
+                      }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.transform = 'scale(1.05)';
+                        e.currentTarget.style.backgroundColor = '#047857';
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.transform = 'scale(1)';
+                        e.currentTarget.style.backgroundColor = '#059669';
+                      }}
+                    >
+                      🎉 Complete Handoff!
+                    </button>
+                  </>
                 )}
               </div>
             </div>
           );
         })}
       </div>
+
+      {/* Coordinated Response Modal */}
+      {selectedPatientForResponse && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9998,
+          padding: '1rem',
+          overflow: 'auto'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            maxWidth: '1200px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflow: 'auto',
+            position: 'relative'
+          }}>
+            <button
+              onClick={() => setSelectedPatientForResponse(null)}
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                padding: '0.5rem 1rem',
+                backgroundColor: '#ef4444',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                zIndex: 10
+              }}
+            >
+              ✕ Close
+            </button>
+            <CoordinatedResponseDashboard
+              handoffId={selectedPatientForResponse.id}
+              chiefComplaint={selectedPatientForResponse.chief_complaint}
+              etaMinutes={Math.max(0, selectedPatientForResponse.minutes_until_arrival)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Provider Sign-Off Modal */}
+      {selectedPatientForSignoff && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9998,
+          padding: '1rem',
+          overflow: 'auto'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            maxWidth: '900px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflow: 'auto',
+            position: 'relative',
+            padding: '1rem'
+          }}>
+            <button
+              onClick={() => setSelectedPatientForSignoff(null)}
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                padding: '0.5rem 1rem',
+                backgroundColor: '#ef4444',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                zIndex: 10
+              }}
+            >
+              ✕ Close
+            </button>
+            <ProviderSignoffForm
+              handoff={selectedPatientForSignoff}
+              onSignoffComplete={() => {
+                setSelectedPatientForSignoff(null);
+                loadPatients();
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
