@@ -295,23 +295,23 @@ export const PersonalizedGreeting: React.FC<PersonalizedGreetingProps> = ({
   }
 
   return (
-    <div className="bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 border-2 border-blue-200 rounded-xl p-6 mb-6 shadow-lg">
+    <div className="bg-gradient-to-r from-[#E0F7F6] via-[#F4FADC] to-[#E0F7F6] border-2 border-[#1BA39C] rounded-xl p-6 mb-6 shadow-xl">
       {/* Main Greeting */}
       <div className="mb-4">
-        <h2 className="text-3xl font-bold text-gray-800 mb-2">
+        <h2 className="text-3xl font-bold text-[#2D3339] mb-2">
           {fullGreeting}! 👋
         </h2>
-        <p className="text-lg text-gray-700 font-medium">
-          Today's going to be an awesome day! ✨
+        <p className="text-lg text-[#158A84] font-bold">
+          Welcome to Envision Atlus - Today's going to be an awesome day! ✨
         </p>
       </div>
 
       {/* Daily Inspirational Quote */}
-      <div className="bg-white bg-opacity-70 rounded-lg p-4 border-l-4 border-blue-500">
-        <p className="text-gray-800 italic text-base leading-relaxed mb-2">
+      <div className="bg-white bg-opacity-90 rounded-lg p-4 border-l-4 border-[#C8E63D] shadow-md">
+        <p className="text-[#2D3339] italic text-base leading-relaxed mb-2 font-medium">
           "{dailyQuote.quote}"
         </p>
-        <p className="text-gray-600 text-sm font-semibold text-right">
+        <p className="text-[#158A84] text-sm font-bold text-right">
           — {dailyQuote.author}
         </p>
       </div>
