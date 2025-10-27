@@ -106,37 +106,37 @@ const BillingDashboard: React.FC<BillingDashboardProps> = ({ className = '' }) =
     <div className={className}>
       {/* Billing Overview Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-gradient-to-br from-white to-gray-50 border-2 border-[#E8EAED] hover:border-[#1BA39C] rounded-lg p-4 shadow-lg transition-all">
+        <div className="bg-white border border-black hover:border-2 hover:border-[#1BA39C] rounded-lg p-4 shadow-lg transition-all">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-bold text-[#6B7280]">Total Claims</p>
-              <p className="text-2xl font-bold text-[#2D3339]">{metrics?.totalClaims || 0}</p>
+              <p className="text-2xl font-bold text-black">{metrics?.totalClaims || 0}</p>
             </div>
-            <div className="h-12 w-12 bg-gradient-to-br from-[#E0F7F6] to-[#1BA39C] rounded-lg flex items-center justify-center shadow-md">
+            <div className="h-12 w-12 bg-[#1BA39C] rounded-lg flex items-center justify-center shadow-md border border-black">
               <span className="text-white text-xl">📄</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-white to-gray-50 border-2 border-[#E8EAED] hover:border-[#C8E63D] rounded-lg p-4 shadow-lg transition-all">
+        <div className="bg-white border border-black hover:border-2 hover:border-[#1BA39C] rounded-lg p-4 shadow-lg transition-all">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-bold text-[#6B7280]">Total Revenue</p>
-              <p className="text-2xl font-bold text-[#2D3339]">
+              <p className="text-2xl font-bold text-black">
                 {formatCurrency(metrics?.totalAmount || 0)}
               </p>
             </div>
             <div className="h-12 w-12 bg-gradient-to-br from-[#F4FADC] to-[#C8E63D] rounded-lg flex items-center justify-center shadow-md">
-              <span className="text-[#2D3339] text-xl font-bold">💰</span>
+              <span className="text-black text-xl font-bold">💰</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-white to-gray-50 border-2 border-[#E8EAED] hover:border-[#1BA39C] rounded-lg p-4 shadow-lg transition-all">
+        <div className="bg-white border border-black hover:border-[#1BA39C] rounded-lg p-4 shadow-lg transition-all">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-bold text-[#6B7280]">Active Providers</p>
-              <p className="text-2xl font-bold text-[#2D3339]">{providers.length}</p>
+              <p className="text-2xl font-bold text-black">{providers.length}</p>
             </div>
             <div className="h-12 w-12 bg-gradient-to-br from-purple-100 to-purple-400 rounded-lg flex items-center justify-center shadow-md">
               <span className="text-white text-xl">🏥</span>
@@ -147,8 +147,8 @@ const BillingDashboard: React.FC<BillingDashboardProps> = ({ className = '' }) =
 
       {/* Claims by Status */}
       {metrics && (
-        <div className="bg-gradient-to-br from-white to-gray-50 border-2 border-[#E8EAED] hover:border-[#1BA39C] rounded-lg p-6 mb-6 shadow-xl transition-all">
-          <h3 className="text-lg font-bold text-[#2D3339] mb-4 flex items-center gap-2">
+        <div className="bg-white border border-black hover:border-[#1BA39C] rounded-lg p-6 mb-6 shadow-xl transition-all">
+          <h3 className="text-lg font-bold text-black mb-4 flex items-center gap-2">
             <span className="text-[#1BA39C]">📊</span>
             Claims by Status
           </h3>
@@ -166,16 +166,16 @@ const BillingDashboard: React.FC<BillingDashboardProps> = ({ className = '' }) =
       )}
 
       {/* Recent Claims - Enhanced Table */}
-      <div className="bg-gradient-to-br from-white to-gray-50 border-2 border-[#E8EAED] hover:border-[#1BA39C] rounded-lg shadow-xl overflow-hidden mb-6 transition-all">
+      <div className="bg-white border border-black hover:border-[#1BA39C] rounded-lg shadow-xl overflow-hidden mb-6 transition-all">
         <div className="px-6 py-4 border-b-2 border-[#E8EAED] bg-gradient-to-r from-[#E0F7F6] to-white">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-bold text-[#2D3339] flex items-center gap-2">
+            <h3 className="text-lg font-bold text-black flex items-center gap-2">
               <span className="text-[#1BA39C]">📋</span>
               Recent Claims
             </h3>
             <button
               onClick={loadBillingData}
-              className="inline-flex items-center px-4 py-2 text-sm font-bold text-[#2D3339] bg-[#C8E63D] hover:bg-[#D9F05C] rounded-md transition-all shadow-md hover:shadow-lg"
+              className="inline-flex items-center px-4 py-2 text-sm font-bold text-black bg-[#C8E63D] hover:bg-[#D9F05C] rounded-md transition-all shadow-md hover:shadow-lg"
             >
               <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -263,37 +263,37 @@ const BillingDashboard: React.FC<BillingDashboardProps> = ({ className = '' }) =
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-gradient-to-br from-white to-gray-50 border-2 border-[#E8EAED] hover:border-[#1BA39C] rounded-lg p-6 shadow-xl transition-all">
-          <h3 className="text-lg font-bold text-[#2D3339] mb-4 flex items-center gap-2">
+        <div className="bg-white border border-black hover:border-[#1BA39C] rounded-lg p-6 shadow-xl transition-all">
+          <h3 className="text-lg font-bold text-black mb-4 flex items-center gap-2">
             <span className="text-[#C8E63D]">⚡</span>
             Quick Actions
           </h3>
           <div className="space-y-3">
-            <button className="w-full text-left px-4 py-3 bg-gradient-to-r from-[#E0F7F6] to-white hover:from-[#1BA39C] hover:to-[#158A84] hover:text-white rounded-lg transition-all shadow-md hover:shadow-lg border-2 border-[#E8EAED] hover:border-[#C8E63D] group">
+            <button className="w-full text-left px-4 py-3 bg-gradient-to-r from-[#E0F7F6] to-white hover:from-[#1BA39C] hover:to-[#158A84] hover:text-white rounded-lg transition-all shadow-md hover:shadow-lg border border-black hover:border-[#C8E63D] group">
               <div className="flex items-center">
                 <span className="mr-3 text-xl">➕</span>
                 <div>
-                  <p className="font-bold text-[#2D3339] group-hover:text-white">Create New Claim</p>
+                  <p className="font-bold text-black group-hover:text-white">Create New Claim</p>
                   <p className="text-sm text-[#6B7280] group-hover:text-white/90">Generate a new billing claim</p>
                 </div>
               </div>
             </button>
 
-            <button className="w-full text-left px-4 py-3 bg-gradient-to-r from-[#F4FADC] to-white hover:from-[#C8E63D] hover:to-[#A8C230] rounded-lg transition-all shadow-md hover:shadow-lg border-2 border-[#E8EAED] hover:border-[#1BA39C] group">
+            <button className="w-full text-left px-4 py-3 bg-gradient-to-r from-[#F4FADC] to-white hover:from-[#C8E63D] hover:to-[#A8C230] rounded-lg transition-all shadow-md hover:shadow-lg border border-black hover:border-[#1BA39C] group">
               <div className="flex items-center">
                 <span className="mr-3 text-xl">🔄</span>
                 <div>
-                  <p className="font-bold text-[#2D3339]">Sync with Clearinghouse</p>
+                  <p className="font-bold text-black">Sync with Clearinghouse</p>
                   <p className="text-sm text-[#6B7280]">Update claim statuses</p>
                 </div>
               </div>
             </button>
 
-            <button className="w-full text-left px-4 py-3 bg-gradient-to-r from-purple-50 to-white hover:from-purple-400 hover:to-purple-600 hover:text-white rounded-lg transition-all shadow-md hover:shadow-lg border-2 border-[#E8EAED] hover:border-[#1BA39C] group">
+            <button className="w-full text-left px-4 py-3 bg-gradient-to-r from-purple-50 to-white hover:from-purple-400 hover:to-purple-600 hover:text-white rounded-lg transition-all shadow-md hover:shadow-lg border border-black hover:border-[#1BA39C] group">
               <div className="flex items-center">
                 <span className="mr-3 text-xl">📊</span>
                 <div>
-                  <p className="font-bold text-[#2D3339] group-hover:text-white">Generate Report</p>
+                  <p className="font-bold text-black group-hover:text-white">Generate Report</p>
                   <p className="text-sm text-[#6B7280] group-hover:text-white/90">Billing analytics report</p>
                 </div>
               </div>
@@ -301,29 +301,29 @@ const BillingDashboard: React.FC<BillingDashboardProps> = ({ className = '' }) =
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-white to-gray-50 border-2 border-[#E8EAED] hover:border-[#1BA39C] rounded-lg p-6 shadow-xl transition-all">
-          <h3 className="text-lg font-bold text-[#2D3339] mb-4 flex items-center gap-2">
+        <div className="bg-white border border-black hover:border-[#1BA39C] rounded-lg p-6 shadow-xl transition-all">
+          <h3 className="text-lg font-bold text-black mb-4 flex items-center gap-2">
             <span className="text-[#1BA39C]">✅</span>
             System Status
           </h3>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-bold text-[#2D3339]">Billing Service</span>
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-[#F4FADC] to-[#C8E63D] text-[#2D3339] shadow-md">
+              <span className="text-sm font-bold text-black">Billing Service</span>
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-[#F4FADC] to-[#C8E63D] text-black shadow-md">
                 ✅ Online
               </span>
             </div>
 
             <div className="flex items-center justify-between">
-              <span className="text-sm font-bold text-[#2D3339]">X12 Generation</span>
+              <span className="text-sm font-bold text-black">X12 Generation</span>
               <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-[#E0F7F6] to-[#1BA39C] text-white shadow-md">
                 ✅ Ready
               </span>
             </div>
 
             <div className="flex items-center justify-between">
-              <span className="text-sm font-bold text-[#2D3339]">Coding AI</span>
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-[#F4FADC] to-[#C8E63D] text-[#2D3339] shadow-md">
+              <span className="text-sm font-bold text-black">Coding AI</span>
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-[#F4FADC] to-[#C8E63D] text-black shadow-md">
                 ✅ Active
               </span>
             </div>

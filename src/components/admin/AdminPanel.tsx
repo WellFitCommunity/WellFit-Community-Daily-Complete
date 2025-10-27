@@ -52,10 +52,10 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <section className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg border-2 border-[#E8EAED] overflow-hidden hover:border-[#1BA39C] transition-all">
+    <section className="bg-white rounded-xl shadow-lg border border-black overflow-hidden hover:border-2 hover:border-[#1BA39C] transition-all">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-6 py-4 flex items-center justify-between hover:bg-gradient-to-r hover:from-[#E0F7F6] hover:to-[#F4FADC] transition-all border-b-2 border-[#E8EAED]"
+        className="w-full px-6 py-4 flex items-center justify-between bg-[#E8F8F7] hover:bg-[#D1F2F0] transition-all border-b border-black"
       >
         <div className="flex items-center flex-1">
           <span className="text-2xl mr-3">{icon}</span>
@@ -70,7 +70,7 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
       </button>
 
       {isOpen && (
-        <div className="p-6 bg-white">
+        <div className="p-6 bg-white border-t border-black">
           {children}
         </div>
       )}
@@ -105,7 +105,7 @@ const AdminPanel: React.FC = () => {
 
   return (
     <RequireAdminAuth allowedRoles={['admin', 'super_admin']}>
-      <div className="min-h-screen bg-gradient-to-br from-[#E0F7F6] via-gray-50 to-[#F4FADC]">
+      <div className="min-h-screen bg-[#E8F8F7]">
         <AdminHeader title="Envision Atlus - Admin Dashboard" showRiskAssessment={true} />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
@@ -118,16 +118,16 @@ const AdminPanel: React.FC = () => {
           {/* What's New Modal */}
           <WhatsNewModal isOpen={showWhatsNew} onClose={() => setShowWhatsNew(false)} />
 
-          {/* Quick Actions Bar */}
-          <div className="bg-gradient-to-r from-[#1BA39C] to-[#158A84] rounded-xl shadow-2xl p-6 border-2 border-[#C8E63D]">
+          {/* Quick Actions Bar - SILVER STATEMENT HERO */}
+          <div className="bg-gradient-to-r from-[#C0C5CB] to-[#A8ADB3] rounded-xl shadow-2xl p-6 border-2 border-black">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-white text-xl font-bold flex items-center gap-2">
-                <span className="text-[#C8E63D]">⚡</span>
+              <h2 className="text-black text-xl font-bold flex items-center gap-2">
+                <span className="text-[#1BA39C]">⚡</span>
                 Quick Actions
               </h2>
               <button
                 onClick={() => setShowWhatsNew(true)}
-                className="bg-[#C8E63D] hover:bg-[#D9F05C] text-[#2D3339] px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-md hover:shadow-lg flex items-center space-x-2"
+                className="bg-[#C8E63D] hover:bg-[#A8C230] text-black px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-md hover:shadow-lg flex items-center space-x-2 border-2 border-black"
                 title="View recent updates"
               >
                 <span>✨</span>
@@ -137,42 +137,42 @@ const AdminPanel: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
               <button
                 onClick={() => navigate('/admin/enroll-senior')}
-                className="bg-white text-[#2D3339] px-6 py-4 rounded-lg font-bold hover:bg-[#C8E63D] hover:scale-105 transition-all shadow-lg hover:shadow-xl flex items-center justify-center border-2 border-transparent hover:border-[#1BA39C]"
+                className="bg-white text-black px-6 py-4 rounded-lg font-bold hover:bg-[#E8F8F7] hover:scale-105 transition-all shadow-lg hover:shadow-xl flex items-center justify-center border-2 border-black"
               >
                 <span className="mr-2 text-2xl">➕</span>
                 Enroll Senior
               </button>
               <button
                 onClick={() => navigate('/admin/bulk-enroll')}
-                className="bg-white text-[#2D3339] px-6 py-4 rounded-lg font-bold hover:bg-[#C8E63D] hover:scale-105 transition-all shadow-lg hover:shadow-xl flex items-center justify-center border-2 border-transparent hover:border-[#1BA39C]"
+                className="bg-white text-black px-6 py-4 rounded-lg font-bold hover:bg-[#E8F8F7] hover:scale-105 transition-all shadow-lg hover:shadow-xl flex items-center justify-center border-2 border-black"
               >
                 <span className="mr-2 text-2xl">👥</span>
                 Bulk Enroll
               </button>
               <button
                 onClick={() => navigate('/admin/bulk-export')}
-                className="bg-white text-[#2D3339] px-6 py-4 rounded-lg font-bold hover:bg-[#C8E63D] hover:scale-105 transition-all shadow-lg hover:shadow-xl flex items-center justify-center border-2 border-transparent hover:border-[#1BA39C]"
+                className="bg-white text-black px-6 py-4 rounded-lg font-bold hover:bg-[#E8F8F7] hover:scale-105 transition-all shadow-lg hover:shadow-xl flex items-center justify-center border-2 border-black"
               >
                 <span className="mr-2 text-2xl">📤</span>
                 Bulk Export
               </button>
               <button
                 onClick={() => navigate('/admin/photo-approval')}
-                className="bg-white text-[#2D3339] px-6 py-4 rounded-lg font-bold hover:bg-[#C8E63D] hover:scale-105 transition-all shadow-lg hover:shadow-xl flex items-center justify-center border-2 border-transparent hover:border-[#1BA39C]"
+                className="bg-white text-black px-6 py-4 rounded-lg font-bold hover:bg-[#E8F8F7] hover:scale-105 transition-all shadow-lg hover:shadow-xl flex items-center justify-center border-2 border-black"
               >
                 <span className="mr-2 text-2xl">📸</span>
                 Approve Photos
               </button>
               <button
                 onClick={() => navigate('/admin-questions')}
-                className="bg-white text-[#2D3339] px-6 py-4 rounded-lg font-bold hover:bg-[#C8E63D] hover:scale-105 transition-all shadow-lg hover:shadow-xl flex items-center justify-center border-2 border-transparent hover:border-[#1BA39C]"
+                className="bg-white text-black px-6 py-4 rounded-lg font-bold hover:bg-[#E8F8F7] hover:scale-105 transition-all shadow-lg hover:shadow-xl flex items-center justify-center border-2 border-black"
               >
                 <span className="mr-2 text-2xl">💬</span>
                 Questions
               </button>
               <button
                 onClick={() => navigate('/admin-profile-editor')}
-                className="bg-white text-[#2D3339] px-6 py-4 rounded-lg font-bold hover:bg-[#C8E63D] hover:scale-105 transition-all shadow-lg hover:shadow-xl flex items-center justify-center border-2 border-transparent hover:border-[#1BA39C]"
+                className="bg-white text-black px-6 py-4 rounded-lg font-bold hover:bg-[#E8F8F7] hover:scale-105 transition-all shadow-lg hover:shadow-xl flex items-center justify-center border-2 border-black"
               >
                 <span className="mr-2 text-2xl">✏️</span>
                 Edit Profiles
@@ -408,10 +408,10 @@ const AdminPanel: React.FC = () => {
               title="Super Admin Features"
               subtitle="Advanced system administration and AI testing"
               icon="🔐"
-              headerColor="text-[#2D3339]"
+              headerColor="text-black"
             >
-              <div className="bg-gradient-to-br from-[#E0F7F6] to-[#F4FADC] rounded-lg p-6 border-2 border-[#1BA39C]">
-                <h3 className="text-lg font-bold text-[#2D3339] mb-4 flex items-center">
+              <div className="bg-[#E8F8F7] rounded-lg p-6 border border-black">
+                <h3 className="text-lg font-bold text-black mb-4 flex items-center">
                   <span className="mr-2">🧠</span>
                   Claude AI Service Test
                 </h3>

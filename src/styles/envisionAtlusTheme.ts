@@ -1,107 +1,178 @@
 /**
- * Envision Atlus Brand Theme
+ * Envision Atlus Brand Theme - Professional EMR/EHR Design
  *
- * Professional EMR/EHR branding for the backend admin and clinical systems.
- * Replaces the sterile white medical aesthetic with modern, sophisticated colors.
+ * Brand Color Hierarchy:
+ * - TEAL (#1BA39C) = DOMINANT - Main backgrounds, primary UI areas, hero sections
+ * - SILVER (#C0C5CB) = STATEMENT - Important callouts, featured sections, focal points
+ * - BLACK (#000000) = BORDERS - All borders, dividers, outlines
+ * - LIME (#C8E63D) = ACCENT - Subtle highlights, CTA buttons, success states
+ *
+ * Design Philosophy: Modern, sophisticated, professional
+ * Replaces sterile white medical aesthetic with branded identity
  */
 
 export const EnvisionAtlusTheme = {
-  // Primary brand colors from logo
+  // Core brand colors with correct hierarchy
   colors: {
-    // Main brand colors
-    primary: {
+    // DOMINANT: Teal - Use liberally throughout interface
+    dominant: {
       teal: '#1BA39C',
       tealLight: '#26C6BF',
       tealDark: '#158A84',
-      tealPale: '#E0F7F6',
+      tealPale: '#E8F8F7',      // Very light teal for backgrounds
+      tealSubtle: '#D1F2F0',    // Subtle teal for hover states
     },
+
+    // STATEMENT: Silver/Metallic - Use for hero sections and focal points
+    statement: {
+      silver: '#C0C5CB',
+      silverLight: '#D8DCE0',
+      silverDark: '#A8ADB3',
+      platinum: '#E8EAED',
+      steel: '#8B9199',
+      gunmetal: '#6B7280',      // Darker metallic for text on silver
+    },
+
+    // BORDERS: Black - Use for ALL borders and dividers
+    border: {
+      black: '#000000',
+      blackSoft: '#1A1A1A',     // Slightly softer for less harsh borders
+      blackSubtle: '#2D2D2D',   // Very subtle variation
+    },
+
+    // ACCENT: Lime - Use sparingly for highlights and CTAs
     accent: {
       lime: '#C8E63D',
       limeLight: '#D9F05C',
       limeDark: '#A8C230',
       limePale: '#F4FADC',
-    },
-    metallic: {
-      silver: '#C0C5CB',
-      steel: '#8B9199',
-      charcoal: '#2D3339',
-      platinum: '#E8EAED',
+      limeSubtle: '#E8F5C8',
     },
 
-    // Semantic colors
-    success: '#10B981',
-    warning: '#F59E0B',
-    error: '#EF4444',
-    info: '#3B82F6',
+    // Semantic colors (status indicators)
+    semantic: {
+      success: '#10B981',
+      warning: '#F59E0B',
+      error: '#EF4444',
+      info: '#3B82F6',
+    },
 
-    // Neutral palette
+    // Neutral palette for text and subtle backgrounds
     neutral: {
+      white: '#FFFFFF',
       50: '#F9FAFB',
       100: '#F3F4F6',
       200: '#E5E7EB',
-      300: '#D1D5DB',
-      400: '#9CA3AF',
-      500: '#6B7280',
-      600: '#4B5563',
-      700: '#374151',
       800: '#1F2937',
       900: '#111827',
     },
   },
 
-  // Background gradients
+  // Professional gradient combinations
   gradients: {
-    primary: 'linear-gradient(135deg, #1BA39C 0%, #158A84 100%)',
-    accent: 'linear-gradient(135deg, #C8E63D 0%, #A8C230 100%)',
-    dark: 'linear-gradient(135deg, #2D3339 0%, #1F2937 100%)',
-    hero: 'linear-gradient(135deg, #1BA39C 0%, #158A84 50%, #2D3339 100%)',
-    subtle: 'linear-gradient(135deg, #E0F7F6 0%, #F4FADC 100%)',
+    // Teal dominant gradients
+    tealHero: 'linear-gradient(135deg, #1BA39C 0%, #158A84 100%)',
+    tealSubtle: 'linear-gradient(135deg, #E8F8F7 0%, #D1F2F0 100%)',
+    tealToSilver: 'linear-gradient(135deg, #1BA39C 0%, #C0C5CB 100%)',
+
+    // Silver statement gradients
+    silverHero: 'linear-gradient(135deg, #C0C5CB 0%, #A8ADB3 100%)',
+    silverSheen: 'linear-gradient(135deg, #E8EAED 0%, #C0C5CB 50%, #D8DCE0 100%)',
+
+    // Accent gradients (use sparingly)
+    limeAccent: 'linear-gradient(135deg, #C8E63D 0%, #A8C230 100%)',
   },
 
-  // Component-specific styles
+  // Component styling guidelines
   components: {
+    // Hero sections - Silver statement with black border
+    hero: {
+      background: 'linear-gradient(135deg, #C0C5CB 0%, #A8ADB3 100%)',
+      border: '2px solid #000000',
+      text: '#1A1A1A',
+      shadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+    },
+
+    // Main content areas - Teal dominant
+    content: {
+      background: '#1BA39C',
+      backgroundLight: '#E8F8F7',
+      border: '1px solid #000000',
+      text: '#FFFFFF',
+    },
+
+    // Cards - White with black borders, teal accents
     card: {
-      background: 'white',
-      border: '#E5E7EB',
-      shadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-      shadowHover: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+      background: '#FFFFFF',
+      border: '1px solid #000000',
+      borderHover: '2px solid #1BA39C',
+      shadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+      shadowHover: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
     },
 
+    // Headers - Silver statement pieces
     header: {
-      background: 'linear-gradient(135deg, #1BA39C 0%, #158A84 100%)',
-      text: 'white',
-      accent: '#C8E63D',
+      background: 'linear-gradient(135deg, #C0C5CB 0%, #A8ADB3 100%)',
+      border: '2px solid #000000',
+      text: '#1A1A1A',
+      accent: '#1BA39C',
     },
 
+    // Sidebar/Navigation - Teal dominant
     sidebar: {
-      background: '#2D3339',
-      text: '#E8EAED',
-      hover: '#1BA39C',
+      background: '#1BA39C',
+      border: '1px solid #000000',
+      text: '#FFFFFF',
+      textMuted: '#D1F2F0',
+      hover: '#C0C5CB',
       active: '#C8E63D',
     },
 
+    // Buttons
     button: {
+      // Primary CTA - Lime accent
       primary: {
-        background: '#1BA39C',
-        hover: '#158A84',
-        text: 'white',
-      },
-      secondary: {
         background: '#C8E63D',
         hover: '#A8C230',
-        text: '#2D3339',
+        text: '#1A1A1A',
+        border: '2px solid #000000',
       },
+      // Secondary - Teal dominant
+      secondary: {
+        background: '#1BA39C',
+        hover: '#158A84',
+        text: '#FFFFFF',
+        border: '2px solid #000000',
+      },
+      // Tertiary - Silver statement
+      tertiary: {
+        background: '#C0C5CB',
+        hover: '#A8ADB3',
+        text: '#1A1A1A',
+        border: '2px solid #000000',
+      },
+      // Ghost - Outline only
       ghost: {
         background: 'transparent',
-        hover: '#E0F7F6',
+        hover: '#E8F8F7',
         text: '#1BA39C',
+        border: '2px solid #000000',
       },
     },
 
+    // Badges and tags
     badge: {
-      teal: 'bg-[#E0F7F6] text-[#158A84] border border-[#1BA39C]',
-      lime: 'bg-[#F4FADC] text-[#A8C230] border border-[#C8E63D]',
-      gray: 'bg-gray-100 text-gray-700 border border-gray-300',
+      teal: 'bg-[#E8F8F7] text-[#158A84] border-2 border-black',
+      silver: 'bg-[#E8EAED] text-[#6B7280] border-2 border-black',
+      lime: 'bg-[#F4FADC] text-[#A8C230] border-2 border-black',
+    },
+
+    // Section headers
+    section: {
+      background: '#E8F8F7',
+      border: '1px solid #000000',
+      borderAccent: '3px solid #1BA39C',
+      text: '#1A1A1A',
     },
   },
 
@@ -121,6 +192,12 @@ export const EnvisionAtlusTheme = {
       '3xl': '1.875rem',
       '4xl': '2.25rem',
     },
+    fontWeight: {
+      normal: '400',
+      medium: '500',
+      semibold: '600',
+      bold: '700',
+    },
   },
 
   // Spacing
@@ -131,10 +208,12 @@ export const EnvisionAtlusTheme = {
     lg: '1.5rem',
     xl: '2rem',
     '2xl': '3rem',
+    '3xl': '4rem',
   },
 
   // Border radius
   borderRadius: {
+    none: '0',
     sm: '0.25rem',
     md: '0.5rem',
     lg: '0.75rem',
@@ -143,62 +222,110 @@ export const EnvisionAtlusTheme = {
   },
 };
 
-// Tailwind utility class mappings for easy use in components
+// Tailwind utility class mappings - Professional design system
 export const atlasClasses = {
+  // === BORDERS - ALL BLACK ===
+  border: 'border-black',
+  border2: 'border-2 border-black',
+  borderT: 'border-t border-black',
+  borderB: 'border-b border-black',
+  borderL: 'border-l border-black',
+  borderR: 'border-r border-black',
+
+  // === DOMINANT TEAL - Use throughout ===
   // Backgrounds
-  bgPrimary: 'bg-[#1BA39C]',
-  bgPrimaryLight: 'bg-[#26C6BF]',
-  bgPrimaryDark: 'bg-[#158A84]',
-  bgPrimaryPale: 'bg-[#E0F7F6]',
+  bgTeal: 'bg-[#1BA39C]',
+  bgTealLight: 'bg-[#26C6BF]',
+  bgTealDark: 'bg-[#158A84]',
+  bgTealPale: 'bg-[#E8F8F7]',
+  bgTealSubtle: 'bg-[#D1F2F0]',
 
-  bgAccent: 'bg-[#C8E63D]',
-  bgAccentLight: 'bg-[#D9F05C]',
-  bgAccentDark: 'bg-[#A8C230]',
-  bgAccentPale: 'bg-[#F4FADC]',
-
-  bgMetallic: 'bg-[#C0C5CB]',
-  bgSteel: 'bg-[#8B9199]',
-  bgCharcoal: 'bg-[#2D3339]',
-  bgPlatinum: 'bg-[#E8EAED]',
-
-  // Text colors
-  textPrimary: 'text-[#1BA39C]',
-  textPrimaryDark: 'text-[#158A84]',
-  textAccent: 'text-[#C8E63D]',
-  textAccentDark: 'text-[#A8C230]',
-  textCharcoal: 'text-[#2D3339]',
-  textSteel: 'text-[#8B9199]',
-
-  // Border colors
-  borderPrimary: 'border-[#1BA39C]',
-  borderAccent: 'border-[#C8E63D]',
-  borderCharcoal: 'border-[#2D3339]',
-  borderPlatinum: 'border-[#E8EAED]',
-
-  // Gradients (using from-to pattern)
-  gradientHero: 'bg-gradient-to-br from-[#1BA39C] via-[#158A84] to-[#2D3339]',
-  gradientPrimary: 'bg-gradient-to-r from-[#1BA39C] to-[#158A84]',
-  gradientAccent: 'bg-gradient-to-r from-[#C8E63D] to-[#A8C230]',
-  gradientDark: 'bg-gradient-to-br from-[#2D3339] to-[#1F2937]',
-  gradientSubtle: 'bg-gradient-to-br from-[#E0F7F6] to-[#F4FADC]',
+  // Text
+  textTeal: 'text-[#1BA39C]',
+  textTealDark: 'text-[#158A84]',
 
   // Hover states
-  hoverPrimary: 'hover:bg-[#158A84]',
-  hoverAccent: 'hover:bg-[#A8C230]',
-  hoverPrimaryPale: 'hover:bg-[#E0F7F6]',
+  hoverBgTeal: 'hover:bg-[#1BA39C]',
+  hoverBgTealDark: 'hover:bg-[#158A84]',
+  hoverBgTealPale: 'hover:bg-[#E8F8F7]',
 
-  // Button styles
-  btnPrimary: 'bg-[#1BA39C] hover:bg-[#158A84] text-white font-semibold px-6 py-3 rounded-lg transition-all shadow-md hover:shadow-lg',
-  btnAccent: 'bg-[#C8E63D] hover:bg-[#A8C230] text-[#2D3339] font-semibold px-6 py-3 rounded-lg transition-all shadow-md hover:shadow-lg',
-  btnGhost: 'bg-transparent hover:bg-[#E0F7F6] text-[#1BA39C] font-semibold px-6 py-3 rounded-lg transition-all border-2 border-[#1BA39C]',
+  // === STATEMENT SILVER - Use for focal points ===
+  // Backgrounds
+  bgSilver: 'bg-[#C0C5CB]',
+  bgSilverLight: 'bg-[#D8DCE0]',
+  bgSilverDark: 'bg-[#A8ADB3]',
+  bgPlatinum: 'bg-[#E8EAED]',
 
-  // Card styles
-  cardAtlas: 'bg-white rounded-xl shadow-md border border-[#E8EAED] hover:shadow-lg transition-shadow',
-  cardAtlasDark: 'bg-[#2D3339] rounded-xl shadow-md border border-[#8B9199] text-white',
+  // Text
+  textSilver: 'text-[#6B7280]',
+  textGunmetal: 'text-[#6B7280]',
 
-  // Section headers
-  headerAtlas: 'bg-gradient-to-r from-[#1BA39C] to-[#158A84] text-white px-6 py-4 rounded-t-xl',
-  headerAtlasDark: 'bg-[#2D3339] text-[#C8E63D] px-6 py-4 rounded-t-xl border-b-2 border-[#1BA39C]',
+  // Hover states
+  hoverBgSilver: 'hover:bg-[#C0C5CB]',
+  hoverBgSilverDark: 'hover:bg-[#A8ADB3]',
+
+  // === ACCENT LIME - Use sparingly ===
+  // Backgrounds
+  bgLime: 'bg-[#C8E63D]',
+  bgLimeDark: 'bg-[#A8C230]',
+  bgLimePale: 'bg-[#F4FADC]',
+
+  // Text
+  textLime: 'text-[#C8E63D]',
+  textLimeDark: 'text-[#A8C230]',
+
+  // Hover states
+  hoverBgLime: 'hover:bg-[#C8E63D]',
+  hoverBgLimeDark: 'hover:bg-[#A8C230]',
+
+  // === GRADIENTS ===
+  gradientTealHero: 'bg-gradient-to-br from-[#1BA39C] to-[#158A84]',
+  gradientTealSubtle: 'bg-gradient-to-br from-[#E8F8F7] to-[#D1F2F0]',
+  gradientSilverHero: 'bg-gradient-to-br from-[#C0C5CB] to-[#A8ADB3]',
+  gradientSilverSheen: 'bg-gradient-to-br from-[#E8EAED] via-[#C0C5CB] to-[#D8DCE0]',
+
+  // === BUTTON PRESETS ===
+  // Primary CTA - Lime accent with black border
+  btnPrimary: 'bg-[#C8E63D] hover:bg-[#A8C230] text-black font-semibold px-6 py-3 rounded-lg border-2 border-black transition-all shadow-md hover:shadow-lg',
+
+  // Secondary - Teal dominant with black border
+  btnSecondary: 'bg-[#1BA39C] hover:bg-[#158A84] text-white font-semibold px-6 py-3 rounded-lg border-2 border-black transition-all shadow-md hover:shadow-lg',
+
+  // Tertiary - Silver statement with black border
+  btnTertiary: 'bg-[#C0C5CB] hover:bg-[#A8ADB3] text-black font-semibold px-6 py-3 rounded-lg border-2 border-black transition-all shadow-md hover:shadow-lg',
+
+  // Ghost - Outline with black border
+  btnGhost: 'bg-transparent hover:bg-[#E8F8F7] text-[#1BA39C] font-semibold px-6 py-3 rounded-lg border-2 border-black transition-all',
+
+  // === CARD PRESETS ===
+  // Standard card - White with black border
+  card: 'bg-white rounded-xl shadow-md border border-black hover:shadow-lg transition-shadow',
+
+  // Teal card - Dominant color
+  cardTeal: 'bg-[#E8F8F7] rounded-xl shadow-md border border-black hover:border-2 hover:border-[#1BA39C] transition-all',
+
+  // Silver statement card
+  cardSilver: 'bg-gradient-to-br from-[#C0C5CB] to-[#A8ADB3] rounded-xl shadow-lg border-2 border-black text-black',
+
+  // === SECTION HEADERS ===
+  // Silver hero header - Statement piece
+  headerHero: 'bg-gradient-to-r from-[#C0C5CB] to-[#A8ADB3] text-black px-6 py-4 rounded-t-xl border-2 border-black font-bold text-xl',
+
+  // Teal section header - Dominant use
+  headerSection: 'bg-[#E8F8F7] text-[#1A1A1A] px-6 py-3 rounded-t-xl border border-black border-b-0 font-semibold',
+
+  // Accent header - Lime (use sparingly)
+  headerAccent: 'bg-[#C8E63D] text-black px-6 py-3 rounded-t-xl border-2 border-black font-bold',
+
+  // === UTILITY CLASSES ===
+  // Shadows
+  shadow: 'shadow-md',
+  shadowLg: 'shadow-lg',
+  shadowXl: 'shadow-xl',
+
+  // Transitions
+  transition: 'transition-all duration-200',
+  transitionSlow: 'transition-all duration-300',
 };
 
 export default EnvisionAtlusTheme;

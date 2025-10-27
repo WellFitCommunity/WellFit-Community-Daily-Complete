@@ -316,7 +316,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
         {/* Metrics Bar */}
         {metrics && (
           <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
-            <div className="bg-gradient-to-br from-white to-gray-50 rounded-lg border-2 border-[#E8EAED] hover:border-[#1BA39C] p-3 shadow-md transition-all">
+            <div className="bg-white rounded-lg border border-black hover:border-[#1BA39C] p-3 shadow-md transition-all">
               <div className="text-2xl font-bold text-gray-800">{metrics.total_patients}</div>
               <div className="text-xs text-gray-600">Total Patients</div>
             </div>
@@ -385,7 +385,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
           handoffSummary.map((patient, index) => (
             <div
               key={patient.patient_id}
-              className={`bg-gradient-to-br from-white to-gray-50 rounded-lg border-2 shadow-lg hover:shadow-xl transition-all ${
+              className={`bg-white rounded-lg border-2 shadow-lg hover:shadow-xl transition-all ${
                 patient.final_risk_level === 'CRITICAL' ? 'border-red-500' :
                 patient.final_risk_level === 'HIGH' ? 'border-orange-500' :
                 patient.final_risk_level === 'MEDIUM' ? 'border-yellow-500' :

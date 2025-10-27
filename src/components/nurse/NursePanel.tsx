@@ -30,14 +30,14 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <section className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg border-2 border-[#E8EAED] overflow-hidden hover:border-[#1BA39C] transition-all">
+    <section className="bg-white rounded-xl shadow-lg border border-black overflow-hidden hover:border-2 hover:border-[#1BA39C] transition-all">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-6 py-4 flex items-center justify-between hover:bg-gradient-to-r hover:from-[#E0F7F6] hover:to-[#F4FADC] transition-all"
+        className="w-full px-6 py-4 flex items-center justify-between bg-[#E8F8F7] hover:bg-[#D1F2F0] transition-all border-b border-black"
       >
         <div className="flex items-center">
           <span className="text-2xl mr-3">{icon}</span>
-          <h2 className="text-xl font-bold text-[#2D3339]">{title}</h2>
+          <h2 className="text-xl font-bold text-black">{title}</h2>
         </div>
         <span className={`text-[#1BA39C] font-bold transform transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
           ▼
@@ -45,7 +45,7 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
       </button>
 
       {isOpen && (
-        <div className="px-6 py-4 border-t-2 border-[#E8EAED] bg-white">
+        <div className="px-6 py-4 bg-white">
           {children}
         </div>
       )}
@@ -262,15 +262,15 @@ const NursePanel: React.FC = () => {
 
   return (
     <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'nurse']}>
-      <div className="min-h-screen bg-gradient-to-br from-[#E0F7F6] via-gray-50 to-[#F4FADC]">
+      <div className="min-h-screen bg-[#E8F8F7]">
         {/* Header without API Key Manager */}
         <AdminHeader title="🏮 Envision Atlus - Nurse Dashboard" showRiskAssessment={true} />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
 
           {/* Patient Selection for Documentation */}
-          <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-xl border-2 border-[#1BA39C] p-6">
-            <h3 className="text-lg font-bold text-[#2D3339] mb-4 flex items-center gap-2">
+          <div className="bg-white rounded-xl shadow-xl border border-black p-6">
+            <h3 className="text-lg font-bold text-black mb-4 flex items-center gap-2">
               <span className="text-[#1BA39C]">👤</span>
               Select Patient for Documentation
             </h3>
@@ -289,8 +289,8 @@ const NursePanel: React.FC = () => {
                     onClick={() => setSelectedPatient(patient)}
                     className={`p-4 rounded-lg border-2 text-left transition-all ${
                       selectedPatient?.user_id === patient.user_id
-                        ? 'border-[#C8E63D] bg-gradient-to-br from-[#E0F7F6] to-[#F4FADC] shadow-lg'
-                        : 'border-[#E8EAED] hover:border-[#1BA39C] hover:bg-gradient-to-br hover:from-[#E0F7F6] hover:to-white'
+                        ? 'border-[#1BA39C] bg-[#E8F8F7] shadow-lg'
+                        : 'border-black hover:border-[#1BA39C] hover:bg-[#E8F8F7]'
                     }`}
                   >
                     <div className="font-bold text-gray-900">
