@@ -303,7 +303,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
                 onClick={() => setShiftType(shift)}
                 className={`px-4 py-2 rounded-lg font-medium ${
                   shiftType === shift
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-[#1BA39C] text-white font-bold'
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
               >
@@ -316,7 +316,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
         {/* Metrics Bar */}
         {metrics && (
           <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
-            <div className="bg-white rounded-lg border border-gray-200 p-3">
+            <div className="bg-gradient-to-br from-white to-gray-50 rounded-lg border-2 border-[#E8EAED] hover:border-[#1BA39C] p-3 shadow-md transition-all">
               <div className="text-2xl font-bold text-gray-800">{metrics.total_patients}</div>
               <div className="text-xs text-gray-600">Total Patients</div>
             </div>
@@ -336,7 +336,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
               <div className="text-2xl font-bold text-purple-700">{metrics.nurse_adjusted_count}</div>
               <div className="text-xs text-purple-700">Nurse Adjusted</div>
             </div>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <div className="bg-gradient-to-br from-[#E0F7F6] to-white border-2 border-[#1BA39C] rounded-lg p-3 shadow-md">
               <div className="text-2xl font-bold text-blue-700">{metrics.avg_auto_score}</div>
               <div className="text-xs text-blue-700">Avg Auto Score</div>
             </div>
@@ -345,7 +345,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
 
         {/* Bulk actions */}
         {selectedPatients.size > 0 && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <div className="bg-gradient-to-r from-[#E0F7F6] to-[#F4FADC] border-2 border-[#1BA39C] rounded-lg p-4 mb-4 shadow-lg">
             <div className="flex items-center justify-between">
               <div className="text-blue-900 font-medium">
                 {selectedPatients.size} patient{selectedPatients.size !== 1 ? 's' : ''} selected
@@ -353,13 +353,13 @@ export const ShiftHandoffDashboard: React.FC = () => {
               <div className="flex gap-2">
                 <button
                   onClick={handleBulkConfirm}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                  className="px-4 py-2 bg-[#C8E63D] text-[#2D3339] rounded-lg hover:bg-[#D9F05C] font-bold shadow-md hover:shadow-lg transition-all"
                 >
-                  Bulk Confirm
+                  ✅ Bulk Confirm
                 </button>
                 <button
                   onClick={() => setSelectedPatients(new Set())}
-                  className="px-4 py-2 border border-blue-600 text-blue-700 rounded-lg hover:bg-blue-50 font-medium"
+                  className="px-4 py-2 border-2 border-[#1BA39C] text-[#1BA39C] rounded-lg hover:bg-[#E0F7F6] font-bold transition-all"
                 >
                   Clear Selection
                 </button>
@@ -385,7 +385,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
           handoffSummary.map((patient, index) => (
             <div
               key={patient.patient_id}
-              className={`bg-white rounded-lg border-2 ${
+              className={`bg-gradient-to-br from-white to-gray-50 rounded-lg border-2 shadow-lg hover:shadow-xl transition-all ${
                 patient.final_risk_level === 'CRITICAL' ? 'border-red-500' :
                 patient.final_risk_level === 'HIGH' ? 'border-orange-500' :
                 patient.final_risk_level === 'MEDIUM' ? 'border-yellow-500' :
@@ -393,7 +393,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
               } overflow-hidden`}
             >
               {/* Header */}
-              <div className="p-4 flex items-center justify-between bg-gray-50">
+              <div className="p-4 flex items-center justify-between bg-gradient-to-r from-[#E0F7F6] to-white border-b-2 border-[#E8EAED]">
                 <div className="flex items-center gap-4">
                   {/* Selection checkbox */}
                   <input
@@ -457,7 +457,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
                   </button>
                   <button
                     onClick={() => handleDeEscalate(patient.risk_score_id, patient.patient_id)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                    className="px-4 py-2 bg-[#1BA39C] text-white rounded-lg hover:bg-[#158A84] font-bold shadow-md hover:shadow-lg transition-all"
                     title="De-escalate risk level"
                   >
                     ⬇ De-escalate
