@@ -6,7 +6,6 @@ import SmartScribe from '../smart/RealTimeSmartScribe';
 import RiskAssessmentManager from '../admin/RiskAssessmentManager';
 import ReportsSection from '../admin/ReportsSection';
 import CCMTimeline from '../atlas/CCMTimeline';
-import RevenueDashboard from '../atlas/RevenueDashboard';
 import ResilienceHubDashboard from '../nurseos/ResilienceHubDashboard';
 import ShiftHandoffDashboard from './ShiftHandoffDashboard';
 import TelehealthScheduler from '../telehealth/TelehealthScheduler';
@@ -265,7 +264,7 @@ const NursePanel: React.FC = () => {
     <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'nurse']}>
       <div className="min-h-screen bg-gray-50">
         {/* Header without API Key Manager */}
-        <AdminHeader title="🏮 Lighthouse - Nurse Dashboard" showRiskAssessment={true} />
+        <AdminHeader title="🏮 Envision Atlus - Nurse Dashboard" showRiskAssessment={true} />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
 
@@ -413,11 +412,6 @@ const NursePanel: React.FC = () => {
               {/* Project Atlas: CCM Autopilot */}
               <CollapsibleSection title="CCM Autopilot - Chronic Care Management" icon="⏱️">
                 <CCMTimeline />
-              </CollapsibleSection>
-
-              {/* Project Atlas: Revenue Dashboard */}
-              <CollapsibleSection title="Revenue Dashboard - Project Atlas" icon="💰">
-                <RevenueDashboard />
               </CollapsibleSection>
             </div>
           </section>

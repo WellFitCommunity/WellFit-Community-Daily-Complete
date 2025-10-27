@@ -248,7 +248,8 @@ export default function AdminLoginPage() {
           className="text-white text-center py-6 px-6 rounded-t-lg shadow-lg"
           style={{ background: branding.gradient }}
         >
-          <h1 className="text-2xl font-bold">{branding.appName} Admin Log in</h1>
+          <h1 className="text-2xl font-bold">Envision Atlus - Admin Login</h1>
+          <p className="text-sm text-blue-100 mt-1">Envision VirtualEdge Group LLC</p>
         </div>
 
         {/* Card Content */}

@@ -79,12 +79,12 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
           <div className="flex items-center space-x-4">
             <div className="flex items-center">
               <div className="h-8 w-8 bg-white bg-opacity-20 rounded-lg flex items-center justify-center mr-3">
-                <span className="text-sm font-bold">WF</span>
+                <span className="text-sm font-bold">EA</span>
               </div>
               <div>
                 <h1 className="text-xl font-bold">{title}</h1>
                 <div className="text-xs text-blue-100">
-                  {adminRole === 'super_admin' ? 'Super Administrator' : 'Administrator'}
+                  Envision VirtualEdge Group LLC - Envision Atlus
                 </div>
               </div>
             </div>
