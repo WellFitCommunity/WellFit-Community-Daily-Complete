@@ -4,7 +4,8 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4?dts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { cors } from "../_shared/cors.ts";
-import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
+// FIX: Use hash library that works in Edge Functions (no Workers required)
+import { hash } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 
 // ---------- ENV ----------
 const SB_URL = Deno.env.get("SUPABASE_URL") || Deno.env.get("SB_URL") || "";
@@ -223,8 +224,8 @@ resource_type: 'auth_event',
     }
 
     // Hash password before storing
-    const saltRounds = 12;
-    const hashedPassword = await bcrypt.hash(payload.password, saltRounds);
+    // FIX: Use bcrypt hash function directly (compatible with Edge Functions)
+    const hashedPassword = await hash(payload.password);
 
     // Store registration data in pending table with hashed password
     const { error: pendingError } = await supabase
@@ -242,7 +243,7 @@ resource_type: 'auth_event',
       });
 
     if (pendingError) {
-      console.error("[register] pending registration error:", pendingError.message);
+      console.error("[register] Database error code:", pendingError.code);
 
       // HIPAA AUDIT LOGGING: Log failed registration database error
       try {
@@ -373,7 +374,7 @@ resource_type: 'auth_event',
     }, 201);
 
   } catch (e) {
-    console.error("[register] unhandled:", e);
+    console.error("[register] Unhandled error:", e instanceof Error ? e.name : "Unknown");
     return jsonResponse({ error: "Internal server error" }, 500, origin);
   }
 });

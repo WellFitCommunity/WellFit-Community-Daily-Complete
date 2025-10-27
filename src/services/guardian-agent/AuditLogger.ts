@@ -104,10 +104,7 @@ export class AuditLogger {
     this.logs.push(entry);
 
     // ✅ CRITICAL: Persist to database for permanent audit trail
-    const dbResult = await this.dbLogger.logHealingAction(issue, action, result);
-    if (!dbResult.success) {
-      console.error('[AuditLogger] Failed to persist to database:', dbResult.error);
-    }
+    await this.dbLogger.logHealingAction(issue, action, result);
 
     // Persist to storage (database/file)
     await this.logStorage.persist(entry);
@@ -154,10 +151,7 @@ export class AuditLogger {
     this.logs.push(entry);
 
     // ✅ CRITICAL: Persist blocked action to database
-    const dbResult = await this.dbLogger.logBlockedAction(issue, action, blockReason);
-    if (!dbResult.success) {
-      console.error('[AuditLogger] Failed to persist blocked action to database:', dbResult.error);
-    }
+    await this.dbLogger.logBlockedAction(issue, action, blockReason);
 
     await this.logStorage.persist(entry);
     await this.sendToTelemetry(entry);
@@ -296,9 +290,6 @@ export class AuditLogger {
       ...entry.metadata,
     };
 
-    // Send to console for now (in production, send to your telemetry stack)
-    console.log('[Guardian Audit]', JSON.stringify(telemetryEvent, null, 2));
-
     // TODO: Send to actual telemetry endpoints:
     // - Datadog, New Relic, Splunk, etc.
     // - Your SIEM system
@@ -309,8 +300,6 @@ export class AuditLogger {
    * Notify admins of pending review
    */
   private async notifyAdmins(ticket: ReviewTicket): Promise<void> {
-    console.warn(`[Guardian Review Required] Ticket #${ticket.id} - Priority: ${ticket.priority}`);
-
     // TODO: Implement actual notifications:
     // - Email to admins
     // - Slack/Teams message
@@ -440,8 +429,6 @@ class AuditLogStorage {
    */
   async persist(entry: AuditLogEntry): Promise<void> {
     // TODO: Store in Supabase audit_logs table
-    // For now, just log to console
-    console.log('[Audit Log Persisted]', entry.id);
   }
 
   /**

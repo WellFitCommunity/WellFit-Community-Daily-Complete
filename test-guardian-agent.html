@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guardian Agent Test - Simple Demo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #2563eb;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      color: #64748b;
+      margin-bottom: 30px;
+    }
+    .test-section {
+      margin: 20px 0;
+      padding: 20px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+    }
+    .test-section h2 {
+      color: #334155;
+      margin-top: 0;
+    }
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 5px;
+    }
+    button:hover {
+      background: #1d4ed8;
+    }
+    button.danger {
+      background: #dc2626;
+    }
+    button.danger:hover {
+      background: #b91c1c;
+    }
+    button.success {
+      background: #16a34a;
+    }
+    button.success:hover {
+      background: #15803d;
+    }
+    .log {
+      background: #1e293b;
+      color: #e2e8f0;
+      padding: 15px;
+      border-radius: 6px;
+      margin-top: 15px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .log-entry {
+      margin: 5px 0;
+    }
+    .log-error {
+      color: #ef4444;
+    }
+    .log-success {
+      color: #22c55e;
+    }
+    .log-warning {
+      color: #f59e0b;
+    }
+    .log-info {
+      color: #3b82f6;
+    }
+    .status {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-left: 10px;
+    }
+    .status.running {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    .status.success {
+      background: #dcfce7;
+      color: #166534;
+    }
+    .status.error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🛡️ Guardian Agent Test Suite</h1>
+    <p class="subtitle">Simple tests to see Guardian Agent in action (no coding required!)</p>
+
+    <!-- Test 1: PHI Detection -->
+    <div class="test-section">
+      <h2>Test 1: PHI Exposure Detection</h2>
+      <p>This simulates accidentally logging patient data (SSN). Guardian should detect and alert you.</p>
+      <button onclick="testPHIDetection()">🔍 Test PHI Detection</button>
+      <div id="log1" class="log"></div>
+    </div>
+
+    <!-- Test 2: Memory Leak -->
+    <div class="test-section">
+      <h2>Test 2: Memory Leak Detection</h2>
+      <p>Creates a memory leak by not cleaning up intervals. Guardian should detect it.</p>
+      <button onclick="testMemoryLeak()">💾 Test Memory Leak</button>
+      <button class="danger" onclick="stopMemoryLeak()">🛑 Stop Leak</button>
+      <div id="log2" class="log"></div>
+    </div>
+
+    <!-- Test 3: API Failure -->
+    <div class="test-section">
+      <h2>Test 3: API Failure Detection</h2>
+      <p>Simulates an API call that fails. Guardian should offer healing strategies.</p>
+      <button onclick="testAPIFailure()">🌐 Test API Failure</button>
+      <div id="log3" class="log"></div>
+    </div>
+
+    <!-- Test 4: Check Guardian Status -->
+    <div class="test-section">
+      <h2>Test 4: Guardian Status Check</h2>
+      <p>Check if Guardian Agent is running and monitoring your application.</p>
+      <button class="success" onclick="checkGuardianStatus()">✅ Check Guardian Status</button>
+      <div id="log4" class="log"></div>
+    </div>
+
+    <!-- Instructions -->
+    <div class="test-section" style="border-color: #3b82f6; background: #eff6ff;">
+      <h2>📋 How to Use This Test Page</h2>
+      <ol>
+        <li><strong>Open your WellFit application</strong> in another tab (make sure it's running)</li>
+        <li><strong>Click each test button</strong> to trigger different scenarios</li>
+        <li><strong>Watch the logs</strong> below each test to see what happens</li>
+        <li><strong>Check the Security Panel</strong> in your app to see Guardian's alerts</li>
+        <li><strong>Look for Guardian Eyes recordings</strong> showing when each issue occurred</li>
+      </ol>
+    </div>
+  </div>
+
+  <script>
+    // Helper function to log messages
+    function log(elementId, message, type = 'info') {
+      const logEl = document.getElementById(elementId);
+      const entry = document.createElement('div');
+      entry.className = `log-entry log-${type}`;
+      const timestamp = new Date().toLocaleTimeString();
+      entry.textContent = `[${timestamp}] ${message}`;
+      logEl.appendChild(entry);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    // Test 1: PHI Detection
+    function testPHIDetection() {
+      log('log1', 'Starting PHI Detection Test...', 'info');
+
+      // Simulate logging PHI (this is what Guardian should catch)
+      const fakePHI = {
+        patientName: 'John Doe',
+        ssn: '123-45-6789',
+        dob: '1980-01-01'
+      };
+
+      log('log1', 'Simulating console.log with PHI...', 'warning');
+      console.log('GUARDIAN TEST - Patient Data:', fakePHI);
+
+      log('log1', 'PHI logged to console (Guardian should detect this!)', 'error');
+      log('log1', 'Check your Security Panel for an alert', 'info');
+      log('log1', 'Expected Alert: "PHI Exposure in Console Log"', 'success');
+    }
+
+    // Test 2: Memory Leak
+    let leakInterval = null;
+    let leakArray = [];
+
+    function testMemoryLeak() {
+      log('log2', 'Starting Memory Leak Test...', 'info');
+
+      if (leakInterval) {
+        log('log2', 'Leak already running! Stop it first.', 'warning');
+        return;
+      }
+
+      log('log2', 'Creating memory leak (filling array without cleanup)...', 'warning');
+
+      leakInterval = setInterval(() => {
+        // Add data to array without ever clearing it
+        leakArray.push(new Array(10000).fill('leak'));
+        log('log2', `Array size: ${leakArray.length * 10000} items`, 'error');
+
+        if (leakArray.length > 10) {
+          log('log2', 'Guardian should detect this memory leak soon...', 'warning');
+        }
+      }, 1000);
+
+      log('log2', 'Memory leak active! Watch for Guardian alert.', 'error');
+    }
+
+    function stopMemoryLeak() {
+      if (leakInterval) {
+        clearInterval(leakInterval);
+        leakInterval = null;
+        leakArray = [];
+        log('log2', 'Memory leak stopped and cleaned up!', 'success');
+      } else {
+        log('log2', 'No active leak to stop.', 'info');
+      }
+    }
+
+    // Test 3: API Failure
+    async function testAPIFailure() {
+      log('log3', 'Starting API Failure Test...', 'info');
+
+      try {
+        log('log3', 'Calling fake API endpoint (will fail)...', 'warning');
+
+        const response = await fetch('https://api.example.com/nonexistent-endpoint-12345');
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+      } catch (error) {
+        log('log3', `API Error: ${error.message}`, 'error');
+        log('log3', 'Guardian should detect this API failure', 'warning');
+        log('log3', 'Expected: Circuit breaker or retry strategy', 'info');
+
+        // Report to Guardian if available
+        if (window.guardianAgent) {
+          log('log3', 'Reporting error to Guardian Agent...', 'info');
+          window.guardianAgent.reportIssue(error, {
+            component: 'TestAPICall',
+            endpoint: '/nonexistent-endpoint-12345'
+          });
+          log('log3', 'Error reported to Guardian!', 'success');
+        } else {
+          log('log3', 'Guardian Agent not found in window (app might not be running)', 'warning');
+        }
+      }
+    }
+
+    // Test 4: Check Guardian Status
+    function checkGuardianStatus() {
+      log('log4', 'Checking Guardian Agent status...', 'info');
+
+      // Check if Guardian is available
+      if (typeof window.guardianAgent !== 'undefined') {
+        log('log4', '✅ Guardian Agent is RUNNING!', 'success');
+
+        try {
+          const state = window.guardianAgent.getState();
+          log('log4', `Active Issues: ${state.activeIssues?.length || 0}`, 'info');
+          log('log4', `Recent Healings: ${state.recentHealings?.length || 0}`, 'info');
+          log('log4', `Learning Enabled: ${state.config?.learningEnabled ? 'Yes' : 'No'}`, 'info');
+          log('log4', `Auto-Heal Enabled: ${state.config?.autoHealEnabled ? 'Yes' : 'No'}`, 'info');
+        } catch (err) {
+          log('log4', 'Guardian found but could not get state', 'warning');
+        }
+      } else {
+        log('log4', '❌ Guardian Agent NOT found', 'error');
+        log('log4', 'Make sure your WellFit app is running', 'warning');
+        log('log4', 'Guardian needs to be initialized in your main app', 'info');
+      }
+
+      // Check for Guardian Eyes
+      if (typeof window.guardianEyes !== 'undefined') {
+        log('log4', '✅ Guardian Eyes is RUNNING!', 'success');
+
+        try {
+          const isRecording = window.guardianEyes.isRecording?.() || false;
+          log('log4', `Recording Status: ${isRecording ? 'Active' : 'Inactive'}`, isRecording ? 'success' : 'warning');
+        } catch (err) {
+          log('log4', 'Guardian Eyes found but could not get status', 'warning');
+        }
+      } else {
+        log('log4', '⚠️ Guardian Eyes NOT found', 'warning');
+      }
+
+      log('log4', 'Status check complete!', 'success');
+    }
+
+    // Auto-check status on page load
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        log('log4', 'Page loaded. Checking Guardian status...', 'info');
+        checkGuardianStatus();
+      }, 1000);
+    });
+  </script>
+</body>
+</html>

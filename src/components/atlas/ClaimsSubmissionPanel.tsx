@@ -1,15 +1,21 @@
 // Claims Submission Panel - Submit and track medical claims
-// Integrates with Atlas billing workflow
+// Integrates with Atlas billing workflow using UnifiedBillingService
+// NOW CONNECTED: SmartScribe → UnifiedBillingService → Atlas
 
 import React, { useState, useEffect } from 'react';
 import { BillingService } from '../../services/billingService';
+import { UnifiedBillingService } from '../../services/unifiedBillingService';
 import { EncounterService } from '../../services/encounterService';
+import type { BillingWorkflowResult } from '../../services/unifiedBillingService';
 
 interface ClaimFormData {
   encounterId: string;
   billingProviderId: string;
   payerId: string;
   claimType: string;
+  patientId: string;
+  encounterType: 'office_visit' | 'telehealth' | 'emergency' | 'procedure' | 'surgery';
+  placeOfService: string;
 }
 
 export const ClaimsSubmissionPanel: React.FC = () => {
@@ -18,14 +24,18 @@ export const ClaimsSubmissionPanel: React.FC = () => {
     billingProviderId: '',
     payerId: '',
     claimType: '837P',
+    patientId: '',
+    encounterType: 'office_visit',
+    placeOfService: '11', // Office
   });
 
   const [providers, setProviders] = useState<any[]>([]);
   const [payers, setPayers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState<{ success: boolean; message: string; claimId?: string } | null>(null);
+  const [result, setResult] = useState<{ success: boolean; message: string; claimId?: string; workflowResult?: BillingWorkflowResult } | null>(null);
   const [x12Content, setX12Content] = useState<string | null>(null);
+  const [workflowResult, setWorkflowResult] = useState<BillingWorkflowResult | null>(null);
 
   useEffect(() => {
     loadLookupData();
@@ -77,6 +87,7 @@ export const ClaimsSubmissionPanel: React.FC = () => {
     e.preventDefault();
     setSubmitting(true);
     setResult(null);
+    setWorkflowResult(null);
 
     try {
       // Validate encounter has required data
@@ -91,33 +102,47 @@ export const ClaimsSubmissionPanel: React.FC = () => {
         return;
       }
 
-      // Create claim
-      const claim = await BillingService.createClaim({
-        encounter_id: formData.encounterId,
-        payer_id: formData.payerId,
-        billing_provider_id: formData.billingProviderId,
-        claim_type: formData.claimType,
-        status: 'generated',
-        total_charge: encounterData.totalCharges,
+      // ✅ NEW: Use UnifiedBillingService with FULL smart scribe integration
+      // This will:
+      // - Load scribe session data automatically
+      // - Pre-populate AI-suggested CPT/ICD-10 codes
+      // - Auto-add CCM billing codes if eligible (20+ minutes)
+      // - Include SDOH codes and complexity assessment
+      // - Run decision tree analysis
+      // - Validate billing compliance
+      const billingWorkflowResult = await UnifiedBillingService.processBillingWorkflow({
+        encounterId: formData.encounterId,
+        patientId: formData.patientId,
+        providerId: formData.billingProviderId,
+        payerId: formData.payerId,
+        serviceDate: encounterData.encounter.date_of_service,
+        encounterType: formData.encounterType,
+        diagnoses: encounterData.diagnoses?.map((d: any) => ({
+          term: d.description || d.term,
+          icd10Code: d.code || d.icd10Code,
+        })) || [],
+        procedures: encounterData.procedures?.map((p: any) => ({
+          description: p.description,
+          cptCode: p.code || p.cptCode,
+        })) || [],
+        placeOfService: formData.placeOfService,
+        enableAIAssist: true,
+        enableSDOHAnalysis: true,
+        enableDecisionTree: true,
+        autoSubmit: true,
       });
 
-      // Add claim lines from encounter procedures
-      for (let i = 0; i < encounterData.procedures.length; i++) {
-        const proc = encounterData.procedures[i];
-        await BillingService.addClaimLine({
-          claim_id: claim.id,
-          code_system: 'CPT',
-          procedure_code: proc.code,
-          modifiers: proc.modifiers || [],
-          units: proc.units || 1,
-          charge_amount: proc.charge_amount || 0,
-          diagnosis_pointers: proc.diagnosis_pointers || [1],
-          service_date: proc.service_date || encounterData.encounter.date_of_service,
-          position: i + 1,
+      setWorkflowResult(billingWorkflowResult);
+
+      if (!billingWorkflowResult.success) {
+        setResult({
+          success: false,
+          message: `Billing workflow failed: ${billingWorkflowResult.errors.map(e => e.message).join(', ')}`,
         });
+        return;
       }
 
-      // Generate X12 837P file
+      // Generate X12 837P file (already done if autoSubmit=true, but we need content for display)
       const x12Data = await BillingService.generateX12Claim(
         formData.encounterId,
         formData.billingProviderId
@@ -126,13 +151,35 @@ export const ClaimsSubmissionPanel: React.FC = () => {
       // Save X12 content for display and download
       setX12Content(x12Data);
 
-      // Update claim with X12 content
-      await BillingService.updateClaimStatus(claim.id, 'submitted', 'Claim generated and ready for submission');
+      // Build success message with smart insights
+      const successMessages = [];
+      successMessages.push('Claim created successfully with AI-powered coding!');
+
+      if (billingWorkflowResult.codingSuggestions && 'sdohAssessment' in billingWorkflowResult.codingSuggestions && billingWorkflowResult.codingSuggestions.sdohAssessment) {
+        const sdoh = billingWorkflowResult.codingSuggestions.sdohAssessment;
+        if (sdoh.ccmEligible) {
+          successMessages.push(`CCM Eligible: ${sdoh.ccmTier} tier automatically added`);
+        }
+      }
+
+      if (billingWorkflowResult.claimLines && billingWorkflowResult.claimLines.length > 0) {
+        const ccmLines = billingWorkflowResult.claimLines.filter(
+          line => line.procedure_code === '99490' || line.procedure_code === '99439'
+        );
+        if (ccmLines.length > 0) {
+          successMessages.push(`${ccmLines.length} CCM billing code(s) auto-added from scribe session`);
+        }
+      }
+
+      if (billingWorkflowResult.warnings.length > 0) {
+        successMessages.push(`${billingWorkflowResult.warnings.length} coding optimization(s) suggested`);
+      }
 
       setResult({
         success: true,
-        message: 'Claim created successfully! Ready for clearinghouse submission.',
-        claimId: claim.id,
+        message: successMessages.join(' • '),
+        claimId: billingWorkflowResult.claim?.id,
+        workflowResult: billingWorkflowResult,
       });
 
       // Reset form
@@ -141,6 +188,9 @@ export const ClaimsSubmissionPanel: React.FC = () => {
         billingProviderId: formData.billingProviderId,
         payerId: formData.payerId,
         claimType: '837P',
+        patientId: '',
+        encounterType: 'office_visit',
+        placeOfService: '11',
       });
     } catch (error: any) {
       setResult({
@@ -184,8 +234,61 @@ export const ClaimsSubmissionPanel: React.FC = () => {
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             <p className="text-xs text-gray-500 mt-1">
-              The encounter must have procedures and diagnoses added before submitting
+              System will auto-load scribe session data and AI-suggested codes
             </p>
+          </div>
+
+          {/* Patient ID */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Patient ID <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={formData.patientId}
+              onChange={(e) => setFormData({ ...formData, patientId: e.target.value })}
+              placeholder="Enter patient UUID"
+              required
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          {/* Encounter Type */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Encounter Type <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={formData.encounterType}
+              onChange={(e) => setFormData({ ...formData, encounterType: e.target.value as any })}
+              required
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="office_visit">Office Visit</option>
+              <option value="telehealth">Telehealth</option>
+              <option value="emergency">Emergency</option>
+              <option value="procedure">Procedure</option>
+              <option value="surgery">Surgery</option>
+            </select>
+          </div>
+
+          {/* Place of Service */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Place of Service <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={formData.placeOfService}
+              onChange={(e) => setFormData({ ...formData, placeOfService: e.target.value })}
+              required
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="11">11 - Office</option>
+              <option value="02">02 - Telehealth</option>
+              <option value="23">23 - Emergency Room</option>
+              <option value="21">21 - Inpatient Hospital</option>
+              <option value="22">22 - Outpatient Hospital</option>
+            </select>
           </div>
 
           {/* Billing Provider */}
@@ -293,6 +396,98 @@ export const ClaimsSubmissionPanel: React.FC = () => {
         </div>
       )}
 
+      {/* Workflow Insights - Show what UnifiedBillingService found */}
+      {workflowResult && workflowResult.success && (
+        <div className="mt-6 p-6 bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-xl">
+          <h3 className="text-lg font-bold text-purple-900 mb-4 flex items-center">
+            <span className="mr-2">🤖</span>
+            Smart Billing Workflow Insights
+          </h3>
+
+          {/* Financial Summary */}
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="p-4 bg-white rounded-lg shadow">
+              <div className="text-xs text-gray-600 mb-1">Total Charges</div>
+              <div className="text-2xl font-bold text-gray-900">
+                ${workflowResult.totalCharges.toFixed(2)}
+              </div>
+            </div>
+            <div className="p-4 bg-white rounded-lg shadow">
+              <div className="text-xs text-gray-600 mb-1">Est. Reimbursement</div>
+              <div className="text-2xl font-bold text-green-600">
+                ${workflowResult.estimatedReimbursement.toFixed(2)}
+              </div>
+            </div>
+          </div>
+
+          {/* Workflow Steps */}
+          <div className="mb-4">
+            <div className="text-sm font-semibold text-purple-900 mb-2">Workflow Steps Completed:</div>
+            <div className="space-y-2">
+              {workflowResult.workflowSteps.map((step, idx) => (
+                <div key={idx} className="flex items-center gap-2 text-sm">
+                  <span className={
+                    step.status === 'completed' ? 'text-green-600' :
+                    step.status === 'failed' ? 'text-red-600' :
+                    'text-gray-400'
+                  }>
+                    {step.status === 'completed' ? '✓' : step.status === 'failed' ? '✗' : '○'}
+                  </span>
+                  <span className="text-gray-700">{step.stepName}</span>
+                  {step.duration && (
+                    <span className="text-xs text-gray-500">({step.duration}ms)</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Warnings */}
+          {workflowResult.warnings.length > 0 && (
+            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
+              <div className="text-sm font-semibold text-yellow-900 mb-2">
+                ⚠️ Coding Optimizations ({workflowResult.warnings.length})
+              </div>
+              <div className="space-y-1">
+                {workflowResult.warnings.slice(0, 3).map((warning, idx) => (
+                  <div key={idx} className="text-xs text-yellow-800">
+                    • {warning.message}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Recommended Actions */}
+          {workflowResult.recommendedActions.length > 0 && (
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded">
+              <div className="text-sm font-semibold text-blue-900 mb-2">
+                💡 Recommended Actions
+              </div>
+              <div className="space-y-1">
+                {workflowResult.recommendedActions.map((action, idx) => (
+                  <div key={idx} className="text-xs text-blue-800">
+                    • {action}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Manual Review Flag */}
+          {workflowResult.requiresManualReview && (
+            <div className="mt-4 p-3 bg-red-50 border-2 border-red-300 rounded">
+              <div className="text-sm font-bold text-red-900 mb-1">
+                🚨 Manual Review Required
+              </div>
+              <div className="text-xs text-red-800">
+                {workflowResult.manualReviewReasons.join(' • ')}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* X12 Content Display */}
       {x12Content && result?.success && (
         <div className="mt-6 p-6 bg-gray-50 border-2 border-blue-200 rounded-lg">
@@ -342,14 +537,23 @@ export const ClaimsSubmissionPanel: React.FC = () => {
 
       {/* Instructions */}
       <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <h3 className="font-semibold text-blue-900 mb-2">📝 Submission Workflow</h3>
+        <h3 className="font-semibold text-blue-900 mb-2">📝 Smart Billing Workflow (AI-Powered)</h3>
         <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
-          <li>Complete patient encounter with procedures and diagnoses</li>
-          <li>Select billing provider and insurance payer</li>
-          <li>System generates 837P X12 file automatically</li>
-          <li>Claim is marked as "submitted" and ready for clearinghouse</li>
+          <li>Complete patient encounter (SmartScribe auto-records codes)</li>
+          <li>Enter encounter and patient IDs</li>
+          <li>System auto-loads scribe session with AI-suggested codes</li>
+          <li>CCM billing codes (99490/99439) auto-added if 20+ minutes</li>
+          <li>SDOH codes auto-included based on patient assessment</li>
+          <li>Decision tree validates medical necessity</li>
+          <li>837P X12 file generated with compliance validation</li>
           <li>Monitor claim status in Revenue Dashboard</li>
         </ol>
+        <div className="mt-3 p-3 bg-purple-50 border border-purple-200 rounded">
+          <p className="text-xs text-purple-900 font-semibold">
+            🤖 NEW: This panel now uses UnifiedBillingService - the complete integration of SmartScribe AI coding,
+            SDOH assessment, CCM time tracking, and Atlas revenue optimization.
+          </p>
+        </div>
       </div>
     </div>
   );

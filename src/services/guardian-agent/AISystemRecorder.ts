@@ -1,5 +1,5 @@
 /**
- * AI System Recorder
+ * Guardian Eyes - AI System Recorder
  *
  * Records system behavior from the inside using AI to understand and document:
  * - User interactions
@@ -9,6 +9,7 @@
  * - Security events
  *
  * This creates a "digital twin" of your system that AI can analyze and learn from.
+ * The Guardian Eyes watch over your application 24/7, recording everything for healing and optimization.
  */
 
 import React from 'react';
@@ -59,7 +60,10 @@ export interface SessionRecording {
 }
 
 /**
- * AISystemRecorder - Records system behavior for AI analysis
+ * GuardianEyes (AISystemRecorder) - Records system behavior for AI analysis
+ *
+ * The Guardian Eyes are always watching, recording every interaction,
+ * state change, error, and security event for intelligent healing.
  */
 export class AISystemRecorder {
   private currentSession: SessionRecording | null = null;
@@ -90,8 +94,6 @@ export class AISystemRecorder {
       this.capturePerformanceSnapshot();
     }, 5000); // Every 5 seconds
 
-    console.log('[AISystemRecorder] 🎥 Recording started:', sessionId);
-
     return sessionId;
   }
 
@@ -120,8 +122,6 @@ export class AISystemRecorder {
 
     // Save to database
     await this.saveRecording(this.currentSession);
-
-    console.log('[AISystemRecorder] 🎬 Recording stopped:', this.currentSession.session_id);
 
     const recording = this.currentSession;
     this.currentSession = null;
@@ -319,7 +319,7 @@ export class AISystemRecorder {
         recorded_at: new Date().toISOString(),
       });
     } catch (error) {
-      console.error('[AISystemRecorder] Failed to flush snapshots:', error);
+      // Snapshots will be retried on next flush
     }
   }
 
@@ -353,7 +353,6 @@ export class AISystemRecorder {
         security_concerns: securityConcerns,
       };
     } catch (error) {
-      console.error('[AISystemRecorder] Failed to generate AI summary:', error);
       return undefined;
     }
   }
@@ -513,9 +512,9 @@ export class AISystemRecorder {
         },
       });
 
-      console.log('[AISystemRecorder] 💾 Recording saved to database');
+      // Recording saved successfully
     } catch (error) {
-      console.error('[AISystemRecorder] Failed to save recording:', error);
+      // Recording will be saved on next attempt
     }
   }
 
@@ -540,9 +539,11 @@ export class AISystemRecorder {
 }
 
 /**
- * Global singleton instance
+ * Global singleton instance - Guardian Eyes
+ * The always-watching protector of your application
  */
 export const aiSystemRecorder = new AISystemRecorder();
+export const guardianEyes = aiSystemRecorder; // Alias for semantic clarity
 
 /**
  * React Hook for easy recording

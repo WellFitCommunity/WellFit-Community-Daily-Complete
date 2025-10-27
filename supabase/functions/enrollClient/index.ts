@@ -150,8 +150,10 @@ serve(async (req: Request) => {
     // FIXED 2025-10-03: Changed 'id' to 'user_id' to match schema in
     // migration 20250916000000_new_init_roles_and_security.sql:5-16
     // Added all fields from EnrollSeniorPage to avoid data loss
+    // FIXED 2025-10-26: Added role_id: 4 (senior) - was defaulting to 1 (admin) causing security issue
     const { error: perr } = await supabase.from("profiles").insert({
       user_id: newUserId,  // ✅ FIXED: Was 'id', now 'user_id' (matches schema)
+      role_id: 4,  // ✅ FIXED 2025-10-26: Explicitly set role_id to 4 (senior) - was missing, defaulting to 1 (admin)
       phone,
       first_name,
       last_name,

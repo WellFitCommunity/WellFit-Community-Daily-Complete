@@ -21,6 +21,8 @@ import { HealingEngine } from './HealingEngine';
 import { LearningSystem } from './LearningSystem';
 import { AuditLogger } from './AuditLogger';
 import { SafetyValidator, RateLimiter, SandboxEnvironment } from './SafetyConstraints';
+import { GuardianAlertService } from './GuardianAlertService';
+import { aiSystemRecorder } from './AISystemRecorder';
 
 export class AgentBrain {
   private state: AgentState;
@@ -244,7 +246,6 @@ export class AgentBrain {
     // ✅ SAFETY CHECK 1: Validate action is safe to execute
     const safetyCheck = SafetyValidator.canExecuteAutonomously(action, issue);
     if (!safetyCheck.allowed) {
-      console.warn(`[Guardian Agent] Action blocked: ${safetyCheck.reason}`);
       await this.auditLogger.logBlockedAction(issue, action, safetyCheck.reason);
       this.sandbox.storePendingFix(action.id, action, issue);
       this.state.mode = 'monitor';
@@ -253,7 +254,6 @@ export class AgentBrain {
 
     // ✅ SAFETY CHECK 2: Rate limiting to prevent action storms
     if (this.rateLimiter.isRateLimited(strategy)) {
-      console.warn(`[Guardian Agent] Action rate-limited: ${strategy}`);
       await this.auditLogger.logBlockedAction(issue, action, `Rate limit exceeded for ${strategy}`);
       this.state.mode = 'monitor';
       return;
@@ -262,7 +262,6 @@ export class AgentBrain {
     // ✅ SAFETY CHECK 3: Test in sandbox first
     const sandboxTest = await this.sandbox.testFix(action, issue);
     if (!sandboxTest.success) {
-      console.warn(`[Guardian Agent] Sandbox test failed:`, sandboxTest.errors);
       await this.auditLogger.logBlockedAction(issue, action, `Sandbox test failed: ${sandboxTest.errors.join(', ')}`);
       this.state.mode = 'monitor';
       return;
@@ -278,6 +277,9 @@ export class AgentBrain {
 
     // ✅ AUDIT LOG: Record every healing attempt
     await this.auditLogger.logHealingAction(issue, action, result);
+
+    // ✅ NEW: Send alert to Security Panel with Guardian Eyes recording link
+    await this.sendSecurityPanelAlert(issue, action, result);
 
     // Update state
     this.state.healingInProgress = this.state.healingInProgress.filter(a => a.id !== action.id);
@@ -360,9 +362,8 @@ export class AgentBrain {
       }
     }
 
-    // Analyze why it failed
-    const failureReason = this.analyzeFailure(result);
-    console.log(`[Guardian Agent] Healing failed: ${failureReason}. Adapting strategy...`);
+    // Analyze why it failed and adapt strategy
+    this.analyzeFailure(result);
   }
 
   /**
@@ -397,6 +398,123 @@ export class AgentBrain {
         adaptations: []
       });
     }
+  }
+
+  /**
+   * Send alert to Security Panel with Guardian Eyes recording link
+   */
+  private async sendSecurityPanelAlert(
+    issue: DetectedIssue,
+    action: HealingAction,
+    result: HealingResult
+  ): Promise<void> {
+    try {
+      // Get current Guardian Eyes recording session ID
+      const recordingStatus = aiSystemRecorder.getStatus();
+      const sessionId = recordingStatus.session_id;
+
+      // Send appropriate alert based on issue category
+      if (issue.signature.category === 'phi_exposure_risk' ||
+          issue.signature.category === 'hipaa_violation') {
+        // PHI exposure - critical alert
+        await GuardianAlertService.alertPHIExposure({
+          location: this.getPHILocation(issue.context),
+          phi_type: this.getPHIType(issue.context),
+          component: issue.context.component || 'unknown',
+          session_recording_id: sessionId,
+          user_id: issue.context.userId,
+        });
+      } else if (issue.signature.category === 'security_vulnerability') {
+        // Security vulnerability - warning/critical alert
+        await GuardianAlertService.alertSecurityVulnerability({
+          vulnerability_type: this.getVulnerabilityType(issue.signature),
+          file_path: issue.context.filePath || 'unknown',
+          line_number: issue.context.lineNumber || 0,
+          code_snippet: issue.stackTrace || '',
+          session_recording_id: sessionId,
+          generated_fix: result.success ? this.extractGeneratedFix(result) : undefined,
+        });
+      } else if (issue.signature.category === 'memory_leak') {
+        // Memory leak - warning alert
+        await GuardianAlertService.alertMemoryLeak({
+          component: issue.context.component || 'unknown',
+          memory_usage_mb: this.getMemoryUsage(),
+          leak_type: this.getLeakType(issue.context),
+          session_recording_id: sessionId,
+          generated_fix: result.success ? this.extractGeneratedFix(result) : undefined,
+        });
+      } else if (result.success && action.steps.length > 0) {
+        // Generic healing fix generated - info alert
+        await GuardianAlertService.alertHealingGenerated({
+          issue_type: issue.signature.category,
+          file_path: issue.context.filePath || 'unknown',
+          line_number: issue.context.lineNumber || 0,
+          original_code: issue.stackTrace || '',
+          fixed_code: this.extractGeneratedFix(result) || 'Fix applied',
+          session_recording_id: sessionId,
+          healing_operation_id: action.id,
+        });
+      }
+    } catch (error) {
+      // Don't fail healing if alert sending fails
+      console.error('[Guardian Brain] Failed to send security alert:', error);
+    }
+  }
+
+  /**
+   * Helper methods for alert generation
+   */
+  private getPHILocation(context: ErrorContext): 'console_log' | 'error_message' | 'local_storage' | 'network_request' {
+    if (context.component?.includes('console') || context.filePath?.includes('console')) {
+      return 'console_log';
+    }
+    if (context.component?.includes('storage') || context.apiEndpoint?.includes('storage')) {
+      return 'local_storage';
+    }
+    if (context.apiEndpoint) {
+      return 'network_request';
+    }
+    return 'error_message';
+  }
+
+  private getPHIType(context: ErrorContext): 'ssn' | 'mrn' | 'patient_name' | 'dob' | 'diagnosis' {
+    const contextStr = JSON.stringify(context).toLowerCase();
+    if (contextStr.includes('ssn') || contextStr.includes('social')) return 'ssn';
+    if (contextStr.includes('mrn') || contextStr.includes('medical record')) return 'mrn';
+    if (contextStr.includes('patient') && contextStr.includes('name')) return 'patient_name';
+    if (contextStr.includes('dob') || contextStr.includes('birth')) return 'dob';
+    return 'diagnosis';
+  }
+
+  private getVulnerabilityType(signature: ErrorSignature): 'xss' | 'sql_injection' | 'phi_exposure' | 'insecure_storage' {
+    const category = signature.category.toLowerCase();
+    if (category.includes('xss') || category.includes('cross-site')) return 'xss';
+    if (category.includes('sql') || category.includes('injection')) return 'sql_injection';
+    if (category.includes('phi') || category.includes('hipaa')) return 'phi_exposure';
+    return 'insecure_storage';
+  }
+
+  private getLeakType(context: ErrorContext): 'event_listener' | 'interval' | 'subscription' {
+    const contextStr = JSON.stringify(context).toLowerCase();
+    if (contextStr.includes('listener') || contextStr.includes('event')) return 'event_listener';
+    if (contextStr.includes('interval') || contextStr.includes('timeout')) return 'interval';
+    return 'subscription';
+  }
+
+  private getMemoryUsage(): number {
+    if ('memory' in performance) {
+      const memory = (performance as any).memory;
+      return Math.round(memory.usedJSHeapSize / (1024 * 1024)); // Convert to MB
+    }
+    return 0;
+  }
+
+  private extractGeneratedFix(result: HealingResult): string | undefined {
+    // Extract fix code from result if available
+    if (result.outcomeDescription) {
+      return result.outcomeDescription;
+    }
+    return undefined;
   }
 
   // Helper methods
@@ -446,8 +564,7 @@ export class AgentBrain {
   }
 
   private requestApproval(issue: DetectedIssue): void {
-    console.log(`[Guardian Agent] Requesting approval for critical issue: ${issue.id}`);
-    // Implement approval workflow
+    // TODO: Implement approval workflow - notify admins via audit logger
   }
 
   private generateId(prefix: string): string {
