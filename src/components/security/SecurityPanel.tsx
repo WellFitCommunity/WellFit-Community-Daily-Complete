@@ -70,17 +70,17 @@ export const SecurityPanel: React.FC = () => {
     loadAlerts();
   };
 
-  const handleApproveFix = async (alert: GuardianAlert) => {
+  const handleApproveFix = async (guardianAlert: GuardianAlert) => {
     if (!user) return;
 
-    if (!alert.generated_fix) {
-      alert('No fix available for this alert');
+    if (!guardianAlert.generated_fix) {
+      window.alert('No fix available for this alert');
       return;
     }
 
-    const confirmed = confirm(
-      `Create Pull Request to fix ${alert.title}?\n\n` +
-      `File: ${alert.generated_fix.file_path}\n\n` +
+    const confirmed = window.confirm(
+      `Create Pull Request to fix ${guardianAlert.title}?\n\n` +
+      `File: ${guardianAlert.generated_fix.file_path}\n\n` +
       `This will:\n` +
       `1. Create a new Git branch\n` +
       `2. Apply the generated code fix\n` +
@@ -107,14 +107,14 @@ export const SecurityPanel: React.FC = () => {
       document.body.appendChild(loadingMessage);
 
       // Call the approve & create PR service
-      const result = await GuardianAlertService.approveAndCreatePR(alert.id, user.id);
+      const result = await GuardianAlertService.approveAndCreatePR(guardianAlert.id, user.id);
 
       // Remove loading message
       document.body.removeChild(loadingMessage);
 
       if (result.success) {
         // Show success message
-        alert(
+        window.alert(
           `✅ Pull Request Created!\n\n` +
           `PR URL: ${result.prUrl}\n` +
           `PR #${result.prNumber}\n\n` +
@@ -128,7 +128,7 @@ export const SecurityPanel: React.FC = () => {
         loadAlerts();
       } else {
         // Show error message
-        alert(
+        window.alert(
           `❌ Failed to Create PR\n\n` +
           `Error: ${result.message}\n\n` +
           `${result.error || ''}\n\n` +
@@ -139,7 +139,7 @@ export const SecurityPanel: React.FC = () => {
         );
       }
     } catch (error) {
-      alert(`Error: ${error instanceof Error ? error.message : String(error)}`);
+      window.alert(`Error: ${error instanceof Error ? error.message : String(error)}`);
     }
   };
 

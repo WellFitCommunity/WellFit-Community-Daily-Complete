@@ -67,6 +67,8 @@ export interface GuardianAlert {
     auto_healable?: boolean;
     requires_immediate_action?: boolean;
     estimated_impact?: string;
+    pr_url?: string;
+    pr_number?: number;
   };
 }
 
@@ -120,7 +122,10 @@ export class GuardianAlertService {
       if (error) throw error;
 
       // Audit log
-      await auditLogger.security('GUARDIAN_ALERT_CREATED', true, {
+      const auditSeverity = fullAlert.severity === 'emergency' ? 'critical' :
+                           fullAlert.severity === 'critical' ? 'critical' :
+                           fullAlert.severity === 'warning' ? 'medium' : 'low';
+      await auditLogger.security('GUARDIAN_ALERT_CREATED', auditSeverity, {
         alertId: fullAlert.id,
         severity: fullAlert.severity,
         category: fullAlert.category,
@@ -490,7 +495,7 @@ This is an automated alert from the WellFit Guardian Agent.
       })
       .eq('id', alertId);
 
-    await auditLogger.security('GUARDIAN_ALERT_ACKNOWLEDGED', true, {
+    await auditLogger.security('GUARDIAN_ALERT_ACKNOWLEDGED', 'low', {
       alertId,
       userId,
     });
@@ -510,7 +515,7 @@ This is an automated alert from the WellFit Guardian Agent.
       })
       .eq('id', alertId);
 
-    await auditLogger.security('GUARDIAN_ALERT_RESOLVED', true, {
+    await auditLogger.security('GUARDIAN_ALERT_RESOLVED', 'low', {
       alertId,
       userId,
       notes,
@@ -554,7 +559,7 @@ This is an automated alert from the WellFit Guardian Agent.
       }
 
       // Audit log the approval
-      await auditLogger.security('GUARDIAN_FIX_APPROVED', true, {
+      await auditLogger.security('GUARDIAN_FIX_APPROVED', 'medium', {
         alertId,
         userId,
         filePath: alert.generated_fix.file_path,
@@ -596,16 +601,16 @@ This is an automated alert from the WellFit Guardian Agent.
           resolution_notes: `Pull request created: ${result.prUrl}`,
           acknowledged_by: userId,
           acknowledged_at: new Date().toISOString(),
-          metadata: supabase.raw('metadata || ?', JSON.stringify({
+          metadata: {
             pr_url: result.prUrl,
             pr_number: result.prNumber,
             pr_created_at: new Date().toISOString(),
             pr_created_by: userId,
-          })),
+          },
         })
         .eq('id', alertId);
 
-      await auditLogger.security('GUARDIAN_PR_CREATED', true, {
+      await auditLogger.security('GUARDIAN_PR_CREATED', 'medium', {
         alertId,
         userId,
         prUrl: result.prUrl,

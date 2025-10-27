@@ -352,6 +352,7 @@ Co-Authored-By: Guardian <noreply@guardian.ai>`;
    * Generate PR body with Guardian Eyes link and code diff
    */
   private static generatePRBody(params: {
+    alertId: string;
     alertTitle: string;
     alertDescription: string;
     alertCategory: string;
@@ -416,10 +417,23 @@ If this is a false positive, please close the PR and update Guardian's detection
    */
   private static async savePRInfo(alertId: string, prUrl: string, prNumber?: number): Promise<void> {
     try {
+      // Get current metadata and merge with new PR info
+      const { data: alert } = await supabase
+        .from('guardian_alerts')
+        .select('metadata')
+        .eq('id', alertId)
+        .single();
+
+      const updatedMetadata = {
+        ...(alert?.metadata || {}),
+        pr_url: prUrl,
+        pr_number: prNumber,
+      };
+
       await supabase
         .from('guardian_alerts')
         .update({
-          metadata: supabase.raw('metadata || ?', JSON.stringify({ pr_url: prUrl, pr_number: prNumber })),
+          metadata: updatedMetadata,
         })
         .eq('id', alertId);
     } catch (error) {
