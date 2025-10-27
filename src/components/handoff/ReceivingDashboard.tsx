@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import HandoffService from '../../services/handoffService';
+import { integrateHospitalTransfer } from '../../services/hospitalTransferIntegrationService';
 import MedicationReconciliationAlert from './MedicationReconciliationAlert';
 import LabResultVault from './LabResultVault';
 import { TransferPacketSkeleton } from '../ui/skeleton';
@@ -63,8 +64,11 @@ const ReceivingDashboard: React.FC<ReceivingFacilityDashboardProps> = ({
   const handleAcknowledge = async () => {
     if (!selectedPacket) return;
 
-    // Optimistic UI update - remove packet from list immediately
+    // Save packet reference before optimistic update
+    const packet = selectedPacket;
     const packetId = selectedPacket.id;
+
+    // Optimistic UI update - remove packet from list immediately
     setPackets(prev => prev.filter(p => p.id !== packetId));
     setSelectedPacket(null);
     setAcknowledgementNotes('');
@@ -74,10 +78,28 @@ const ReceivingDashboard: React.FC<ReceivingFacilityDashboardProps> = ({
 
     setAcknowledging(true);
     try {
+      // Step 1: Acknowledge the packet
       await HandoffService.acknowledgePacket({
         packet_id: packetId,
         acknowledgement_notes: acknowledgementNotes,
       });
+
+      // Step 2: Integrate transfer into patient chart (creates patient, encounter, vitals, billing)
+      console.log('[Receiving Dashboard] Integrating hospital transfer into patient chart...');
+      const integrationResult = await integrateHospitalTransfer(packetId, packet as any);
+
+      if (integrationResult.success) {
+        console.log('[Receiving Dashboard] ✅ Integration complete:', {
+          patientId: integrationResult.patientId,
+          encounterId: integrationResult.encounterId,
+          vitalsRecorded: integrationResult.observationIds?.length,
+          billingCodes: integrationResult.billingCodes?.length,
+        });
+        toast.success('Patient chart created and transfer integrated!', { autoClose: 3000 });
+      } else {
+        console.warn('[Receiving Dashboard] ⚠️ Integration failed:', integrationResult.error);
+        toast.warning('Transfer acknowledged but integration incomplete. Please review patient chart.', { autoClose: 5000 });
+      }
 
       // Refresh to ensure sync with server
       loadPackets();
