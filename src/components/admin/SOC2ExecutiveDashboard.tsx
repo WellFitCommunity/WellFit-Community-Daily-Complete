@@ -70,13 +70,6 @@ export const SOC2ExecutiveDashboard: React.FC = () => {
     return 'F';
   };
 
-  const getComplianceColor = (score: number): string => {
-    if (score >= 95) return 'text-green-600';
-    if (score >= 80) return 'text-blue-600';
-    if (score >= 70) return 'text-yellow-600';
-    return 'text-red-600';
-  };
-
   const getTrendIcon = (trend: 'UP' | 'DOWN' | 'STABLE'): string => {
     switch (trend) {
       case 'UP': return '📈';
@@ -114,7 +107,7 @@ export const SOC2ExecutiveDashboard: React.FC = () => {
         <div>
           <h2 className="text-3xl font-bold text-gray-900">Executive Security Summary</h2>
           <p className="text-sm text-gray-600 mt-1">
-            SOC 2 compliance overview • Updated: {lastRefresh.toLocaleTimeString()}
+            Technical Controls Readiness • Updated: {lastRefresh.toLocaleTimeString()}
           </p>
         </div>
         <button
@@ -124,6 +117,15 @@ export const SOC2ExecutiveDashboard: React.FC = () => {
           Refresh
         </button>
       </div>
+
+      {/* Disclaimer */}
+      <Alert className="bg-blue-50 border-blue-200">
+        <AlertDescription className="text-blue-900">
+          <strong>Note:</strong> This dashboard measures <strong>technical implementation</strong> of SOC 2 controls (encryption, audit logging, access controls).
+          Full SOC 2 compliance requires additional documentation including policies, procedures, training records, and vendor assessments maintained in your compliance binder.
+          A formal SOC 2 Type I or Type II audit by a qualified CPA firm is required for official certification.
+        </AlertDescription>
+      </Alert>
 
       {error && (
         <Alert className="bg-red-50 border-red-200">
@@ -142,13 +144,13 @@ export const SOC2ExecutiveDashboard: React.FC = () => {
                   <div className="text-3xl font-semibold mb-2 opacity-90">
                     Grade: {getComplianceGrade(summary.complianceScore)}
                   </div>
-                  <div className="text-lg opacity-80">SOC 2 Compliance Score</div>
+                  <div className="text-lg opacity-80">Technical Controls Readiness</div>
                 </div>
                 <div className="md:col-span-2 flex flex-col justify-center space-y-4">
-                  <h3 className="text-2xl font-bold">Overall Security Posture</h3>
+                  <h3 className="text-2xl font-bold">Technical Security Posture</h3>
                   <p className="text-lg opacity-90">
                     {summary.complianceScore === 100 ? (
-                      'Your organization is fully compliant with all SOC 2 Trust Service Criteria. Excellent security posture maintained.'
+                      'All technical controls are properly implemented. System is SOC 2 audit-ready from a technical perspective. Documentation and formal audit still required for certification.'
                     ) : summary.complianceScore >= 90 ? (
                       'Your organization demonstrates strong compliance with SOC 2 standards. Minor improvements recommended.'
                     ) : summary.complianceScore >= 80 ? (
