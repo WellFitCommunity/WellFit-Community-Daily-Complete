@@ -35,7 +35,10 @@ export enum RequestType {
   MEDICAL_BILLING = 'medical_billing',
   REVENUE_OPTIMIZATION = 'revenue_optimization',
   CLAIMS_PROCESSING = 'claims_processing',
-  CPT_ICD_CODING = 'cpt_icd_coding'
+  CPT_ICD_CODING = 'cpt_icd_coding',
+  // NEW: Claude Care Assistant types
+  TRANSLATION = 'translation', // Language translation with cultural context (use Haiku 4.5)
+  ADMINISTRATIVE_TASK = 'administrative_task' // Administrative task automation (varies by role)
 }
 
 // Health data context for Claude requests

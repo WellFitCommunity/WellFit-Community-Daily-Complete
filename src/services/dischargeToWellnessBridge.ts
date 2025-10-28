@@ -435,7 +435,7 @@ Questions? Call your care coordinator anytime.`;
     return {
       overall_risk_level: riskLevel,
       risk_score: riskScore,
-      warning_signs_detected: warningSignsDetected.map((w) => w.code_display || w.alert_type),
+      warning_signs_detected: warningSignsDetected.map((w) => w.alert_type),
       diagnosis_specific_concerns: warningSignsDetected,
       requires_immediate_intervention: riskLevel === 'critical' || riskLevel === 'high',
       recommended_actions: recommendedActions,

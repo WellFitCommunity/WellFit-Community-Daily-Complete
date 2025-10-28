@@ -22,6 +22,8 @@ export type StaffRole =
   | 'physician'           // Level 5: Attending physicians
   | 'doctor'              // Level 5: Synonym for physician
   | 'nurse'               // Level 5: RNs, LPNs
+  | 'case_manager'        // Level 5: Care coordination and discharge planning
+  | 'social_worker'       // Level 5: Psychosocial services and community resources
   | 'physical_therapist'  // Level 6: Allied health (future)
   | 'admin';              // Level 7: Administrative staff
 
@@ -76,6 +78,8 @@ export enum RoleCode {
   DEPARTMENT_HEAD = 11,
   PHYSICAL_THERAPIST = 12,
   CAREGIVER = 13,  // Unique code for caregiver (family caregivers, not volunteers)
+  CASE_MANAGER = 14,  // Care coordination and discharge planning
+  SOCIAL_WORKER = 15,  // Psychosocial services and community resources
 }
 
 /**
@@ -96,6 +100,8 @@ export const ROLE_TO_CODE: Record<UserRole, RoleCode> = {
   clinical_supervisor: RoleCode.CLINICAL_SUPERVISOR,
   department_head: RoleCode.DEPARTMENT_HEAD,
   physical_therapist: RoleCode.PHYSICAL_THERAPIST,
+  case_manager: RoleCode.CASE_MANAGER,
+  social_worker: RoleCode.SOCIAL_WORKER,
 };
 
 /**
@@ -115,6 +121,8 @@ export const CODE_TO_ROLE: Record<RoleCode, UserRole> = {
   [RoleCode.DEPARTMENT_HEAD]: 'department_head',
   [RoleCode.PHYSICAL_THERAPIST]: 'physical_therapist',
   [RoleCode.CAREGIVER]: 'caregiver',
+  [RoleCode.CASE_MANAGER]: 'case_manager',
+  [RoleCode.SOCIAL_WORKER]: 'social_worker',
 };
 
 // ============================================================================
@@ -163,6 +171,8 @@ export const ROLE_HIERARCHY: Record<StaffRole, StaffRole[]> = {
     'physician',
     'doctor',
     'nurse',
+    'case_manager',
+    'social_worker',
     'physical_therapist',
     'admin',
   ],
@@ -174,6 +184,8 @@ export const ROLE_HIERARCHY: Record<StaffRole, StaffRole[]> = {
     'physician',
     'doctor',
     'nurse',
+    'case_manager',
+    'social_worker',
   ],
   clinical_supervisor: [
     'clinical_supervisor',
@@ -182,12 +194,16 @@ export const ROLE_HIERARCHY: Record<StaffRole, StaffRole[]> = {
     'physician',
     'doctor',
     'nurse',
+    'case_manager',
+    'social_worker',
   ],
   nurse_practitioner: ['nurse_practitioner', 'nurse', 'physician', 'doctor'],
   physician_assistant: ['physician_assistant', 'physician', 'doctor', 'nurse'],
   physician: ['physician', 'doctor'],
   doctor: ['physician', 'doctor'],
   nurse: ['nurse'],
+  case_manager: ['case_manager'], // Care coordination role
+  social_worker: ['social_worker'], // Psychosocial services role
   physical_therapist: ['physical_therapist'],
   admin: ['admin'],
 };
@@ -222,6 +238,8 @@ export const ROLE_DISPLAY_NAMES: Record<StaffRole, string> = {
   physician: 'Physician',
   doctor: 'Doctor',
   nurse: 'Nurse',
+  case_manager: 'Case Manager',
+  social_worker: 'Social Worker',
   physical_therapist: 'Physical Therapist',
   admin: 'Administrator',
 };

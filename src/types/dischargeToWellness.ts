@@ -340,20 +340,5 @@ export const DIAGNOSIS_WARNING_SIGNS: DiagnosisSpecificWarningSign[] = [
   }
 ];
 
-export default {
-  WellnessEnrollmentRequest,
-  WellnessEnrollmentResponse,
-  DiagnosisSpecificWarningSign,
-  ReadmissionRiskAnalysis,
-  EnhancedCheckInResponse,
-  MentalHealthScreeningTrigger,
-  MentalHealthScreeningResult,
-  DischargedPatientSummary,
-  CareTeamDashboardMetrics,
-  DischargeToWellnessServiceResponse,
-  WellnessAppOnboardingData,
-  PatientWellnessTrend,
-  WellnessBridgeConfig,
-  DEFAULT_WELLNESS_BRIDGE_CONFIG,
-  DIAGNOSIS_WARNING_SIGNS,
-};
+// All types exported as named exports above
+// No default export needed for type-only module
