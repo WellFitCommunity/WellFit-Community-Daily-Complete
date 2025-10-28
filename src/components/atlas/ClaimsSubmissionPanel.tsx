@@ -1,6 +1,6 @@
 // Claims Submission Panel - Submit and track medical claims
-// Integrates with Atlas billing workflow using UnifiedBillingService
-// NOW CONNECTED: SmartScribe → UnifiedBillingService → Atlas
+// Integrates with Atlus billing workflow using UnifiedBillingService
+// NOW CONNECTED: SmartScribe → UnifiedBillingService → Atlus
 
 import React, { useState, useEffect } from 'react';
 import { BillingService } from '../../services/billingService';
@@ -551,7 +551,7 @@ export const ClaimsSubmissionPanel: React.FC = () => {
         <div className="mt-3 p-3 bg-purple-50 border border-purple-200 rounded">
           <p className="text-xs text-purple-900 font-semibold">
             🤖 NEW: This panel now uses UnifiedBillingService - the complete integration of SmartScribe AI coding,
-            SDOH assessment, CCM time tracking, and Atlas revenue optimization.
+            SDOH assessment, CCM time tracking, and Atlus revenue optimization.
           </p>
         </div>
       </div>

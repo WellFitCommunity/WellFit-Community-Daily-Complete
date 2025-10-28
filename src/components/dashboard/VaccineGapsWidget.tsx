@@ -28,8 +28,10 @@ const VaccineGapsWidget: React.FC = () => {
 
     setLoading(true);
     try {
-      const data = await FHIRService.Immunization.getVaccineGaps(user.id);
-      setGaps(data.slice(0, 3)); // Show top 3 gaps
+      const result = await FHIRService.Immunization.getVaccineGaps(user.id);
+      if (result.success && Array.isArray(result.data)) {
+        setGaps(result.data.slice(0, 3)); // Show top 3 gaps
+      }
     } catch (error) {
       console.error('Failed to load vaccine gaps:', error);
     }

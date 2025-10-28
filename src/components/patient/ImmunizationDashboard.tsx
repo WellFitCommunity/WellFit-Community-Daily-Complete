@@ -44,8 +44,12 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
     setLoading(true);
     setError(null);
     try {
-      const data = await FHIRService.Immunization.getByPatient(userId);
-      setImmunizations(data);
+      const result = await FHIRService.Immunization.getByPatient(userId);
+      if (result.success && result.data) {
+        setImmunizations(result.data);
+      } else if (!result.success) {
+        setError(result.error || 'Failed to load immunization records.');
+      }
     } catch (error: any) {
       console.error('Failed to load immunizations:', error);
       setError(error?.message || 'Failed to load immunization records. Please try again later.');
@@ -55,8 +59,10 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
 
   const loadVaccineGaps = async () => {
     try {
-      const gaps = await FHIRService.Immunization.getVaccineGaps(userId);
-      setVaccineGaps(gaps);
+      const result = await FHIRService.Immunization.getVaccineGaps(userId);
+      if (result.success && result.data) {
+        setVaccineGaps(result.data);
+      }
     } catch (error: any) {
       console.error('Failed to load vaccine gaps:', error);
       // Don't set main error for vaccine gaps - it's not critical

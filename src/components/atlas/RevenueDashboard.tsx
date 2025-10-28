@@ -1,8 +1,8 @@
 // Revenue Dashboard - Analytics and revenue leakage detection
-// Project Atlas Pillar 3: Revenue optimization and cash flow visibility
+// Project Atlus Pillar 3: Revenue optimization and cash flow visibility
 
 import React, { useEffect, useState } from 'react';
-import { AtlasRevenueService } from '../../services/atlasRevenueService';
+import { AtlusRevenueService } from '../../services/atlasRevenueService';
 
 interface RevenueMetrics {
   totalClaims: number;
@@ -42,8 +42,8 @@ export const RevenueDashboard: React.FC = () => {
     setLoading(true);
     try {
       const [metricsData, opportunitiesData] = await Promise.all([
-        AtlasRevenueService.getRevenueMetrics(dateRange.from, dateRange.to),
-        AtlasRevenueService.findCodingOpportunities(dateRange.from, dateRange.to),
+        AtlusRevenueService.getRevenueMetrics(dateRange.from, dateRange.to),
+        AtlusRevenueService.findCodingOpportunities(dateRange.from, dateRange.to),
       ]);
 
       setMetrics(metricsData);
@@ -68,7 +68,7 @@ export const RevenueDashboard: React.FC = () => {
     <div className="max-w-7xl mx-auto p-6 bg-white rounded-xl shadow-xl">
       {/* Header */}
       <div className="mb-6">
-        <h2 className="text-3xl font-bold text-gray-900">📊 Revenue Dashboard - Project Atlas</h2>
+        <h2 className="text-3xl font-bold text-gray-900">📊 Revenue Dashboard - Project Atlus</h2>
         <p className="text-sm text-gray-600 mt-1">
           Real-time revenue analytics and optimization opportunities
         </p>

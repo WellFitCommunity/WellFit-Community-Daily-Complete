@@ -163,9 +163,13 @@ function Shell() {
     setBranding(getCurrentBranding());
   }, [location.pathname]);
 
+  const refreshBranding = async () => {
+    setBranding(getCurrentBranding());
+  };
+
   return (
     <GuardianErrorBoundary>
-      <BrandingContext.Provider value={{ branding, setBranding }}>
+      <BrandingContext.Provider value={{ branding, setBranding, loading: false, refreshBranding }}>
         {/* SessionTimeout applies to the whole app */}
         <SessionTimeoutProvider>
           <AppHeader />

@@ -21,13 +21,17 @@ const CarePlansWidget: React.FC = () => {
     if (!user?.id) return;
 
     try {
-      const [current, active] = await Promise.all([
+      const [currentResult, activeResult] = await Promise.all([
         FHIRService.CarePlan.getCurrent(user.id),
         FHIRService.CarePlan.getActive(user.id),
       ]);
 
-      setCurrentPlan(current);
-      setActivePlans(active || []);
+      if (currentResult.success && currentResult.data) {
+        setCurrentPlan(currentResult.data);
+      }
+      if (activeResult.success && activeResult.data) {
+        setActivePlans(activeResult.data);
+      }
     } catch (error) {
       console.error('Failed to load care plans:', error);
     } finally {

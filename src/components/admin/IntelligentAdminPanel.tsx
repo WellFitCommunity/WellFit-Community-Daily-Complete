@@ -85,8 +85,8 @@ const IntelligentAdminPanel: React.FC = () => {
   const allSections: DashboardSection[] = [
     // REVENUE & BILLING (Category 1)
     {
-      id: 'smartscribe-atlas',
-      title: 'SmartScribe Atlas 💰',
+      id: 'smartscribe-atlus',
+      title: 'SmartScribe Atlus 💰',
       subtitle: 'AI transcription with Claude Sonnet 4.5 for maximum billing accuracy',
       icon: '🎤',
       headerColor: 'text-purple-800',

@@ -18,6 +18,8 @@ import type {
   CreateObservation,
   FHIRImmunization,
   FHIRCarePlan,
+  FHIRCareTeam,
+  FHIRCareTeamMember,
   FHIRPractitioner,
   FHIRPractitionerRole,
   FHIRGoal,
@@ -886,366 +888,955 @@ export class ObservationService {
 // IMMUNIZATION SERVICE
 // ============================================================================
 
-const ImmunizationService = {
+export class ImmunizationService {
   /**
    * Get all immunizations for a patient
    */
-  async getByPatient(patientId: string): Promise<FHIRImmunization[]> {
-    const { data, error } = await supabase
-      .from('fhir_immunizations')
-      .select('*')
-      .eq('patient_id', patientId)
-      .order('occurrence_datetime', { ascending: false });
+  static async getByPatient(patientId: string): Promise<FHIRApiResponse<FHIRImmunization[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_immunizations')
+        .select('*')
+        .eq('patient_id', patientId)
+        .order('occurrence_datetime', { ascending: false });
 
-    if (error) throw error;
-    return data || [];
-  },
-
-  /**
-   * Get immunization history (helper function)
-   */
-  async getHistory(patientId: string, days: number = 365): Promise<any[]> {
-    const { data, error } = await supabase
-      .rpc('get_patient_immunizations', {
-        p_patient_id: patientId,
-        p_days: days
-      });
-
-    if (error) throw error;
-    return data || [];
-  },
-
-  /**
-   * Get immunizations by vaccine type
-   */
-  async getByVaccineCode(patientId: string, vaccineCode: string): Promise<any[]> {
-    const { data, error } = await supabase
-      .rpc('get_immunizations_by_vaccine', {
-        p_patient_id: patientId,
-        p_vaccine_code: vaccineCode
-      });
-
-    if (error) throw error;
-    return data || [];
-  },
-
-  /**
-   * Check if vaccine is due (care gap)
-   */
-  async checkVaccineDue(
-    patientId: string,
-    vaccineCode: string,
-    monthsSinceLast: number = 12
-  ): Promise<boolean> {
-    const { data, error } = await supabase
-      .rpc('check_vaccine_due', {
-        p_patient_id: patientId,
-        p_vaccine_code: vaccineCode,
-        p_months_since_last: monthsSinceLast
-      });
-
-    if (error) throw error;
-    return data || false;
-  },
-
-  /**
-   * Get vaccine gaps (care opportunities)
-   */
-  async getVaccineGaps(patientId: string): Promise<any[]> {
-    const { data, error } = await supabase
-      .rpc('get_vaccine_gaps', {
-        p_patient_id: patientId
-      });
-
-    if (error) throw error;
-    return data || [];
-  },
-
-  /**
-   * Create new immunization record
-   */
-  async create(immunization: Partial<FHIRImmunization>): Promise<FHIRImmunization> {
-    const { data, error } = await supabase
-      .from('fhir_immunizations')
-      .insert(immunization)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  },
-
-  /**
-   * Update immunization record
-   */
-  async update(id: string, updates: Partial<FHIRImmunization>): Promise<FHIRImmunization> {
-    const { data, error } = await supabase
-      .from('fhir_immunizations')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  },
-
-  /**
-   * Delete immunization record
-   */
-  async delete(id: string): Promise<void> {
-    const { error } = await supabase
-      .from('fhir_immunizations')
-      .delete()
-      .eq('id', id);
-
-    if (error) throw error;
-  },
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch immunizations',
+      };
+    }
+  }
 
   /**
    * Get immunization by ID
    */
-  async getById(id: string): Promise<FHIRImmunization | null> {
-    const { data, error } = await supabase
-      .from('fhir_immunizations')
-      .select('*')
-      .eq('id', id)
-      .single();
+  static async getById(id: string): Promise<FHIRApiResponse<FHIRImmunization | null>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_immunizations')
+        .select('*')
+        .eq('id', id)
+        .single();
 
-    if (error) {
-      if (error.code === 'PGRST116') return null; // Not found
-      throw error;
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return { success: true, data: null }; // Not found
+        }
+        throw error;
+      }
+      return { success: true, data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch immunization',
+      };
     }
-    return data;
-  },
+  }
 
   /**
    * Get completed immunizations only
    */
-  async getCompleted(patientId: string): Promise<FHIRImmunization[]> {
-    const { data, error } = await supabase
-      .from('fhir_immunizations')
-      .select('*')
-      .eq('patient_id', patientId)
-      .eq('status', 'completed')
-      .order('occurrence_datetime', { ascending: false });
+  static async getCompleted(patientId: string): Promise<FHIRApiResponse<FHIRImmunization[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_immunizations')
+        .select('*')
+        .eq('patient_id', patientId)
+        .eq('status', 'completed')
+        .order('occurrence_datetime', { ascending: false });
 
-    if (error) throw error;
-    return data || [];
-  },
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch completed immunizations',
+      };
+    }
+  }
+
+  /**
+   * Get immunization history using database function
+   */
+  static async getHistory(
+    patientId: string,
+    days: number = 365
+  ): Promise<FHIRApiResponse<any[]>> {
+    try {
+      const { data, error } = await supabase.rpc('get_patient_immunizations', {
+        p_patient_id: patientId,
+        p_days: days,
+      });
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch immunization history',
+      };
+    }
+  }
+
+  /**
+   * Get immunizations by vaccine type
+   */
+  static async getByVaccineCode(
+    patientId: string,
+    vaccineCode: string
+  ): Promise<FHIRApiResponse<any[]>> {
+    try {
+      const { data, error } = await supabase.rpc('get_immunizations_by_vaccine', {
+        p_patient_id: patientId,
+        p_vaccine_code: vaccineCode,
+      });
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return {
+        success: false,
+        error:
+          error instanceof Error ? error.message : 'Failed to fetch immunizations by vaccine code',
+      };
+    }
+  }
+
+  /**
+   * Check if vaccine is due (care gap detection)
+   */
+  static async checkVaccineDue(
+    patientId: string,
+    vaccineCode: string,
+    monthsSinceLast: number = 12
+  ): Promise<FHIRApiResponse<boolean>> {
+    try {
+      const { data, error } = await supabase.rpc('check_vaccine_due', {
+        p_patient_id: patientId,
+        p_vaccine_code: vaccineCode,
+        p_months_since_last: monthsSinceLast,
+      });
+
+      if (error) throw error;
+      return { success: true, data: data || false };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to check vaccine due status',
+      };
+    }
+  }
+
+  /**
+   * Get vaccine gaps (care opportunities)
+   */
+  static async getVaccineGaps(patientId: string): Promise<FHIRApiResponse<any[]>> {
+    try {
+      const { data, error } = await supabase.rpc('get_vaccine_gaps', {
+        p_patient_id: patientId,
+      });
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch vaccine gaps',
+      };
+    }
+  }
+
+  /**
+   * Create new immunization record
+   */
+  static async create(
+    immunization: Partial<FHIRImmunization>
+  ): Promise<FHIRApiResponse<FHIRImmunization>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_immunizations')
+        .insert(immunization)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to create immunization',
+      };
+    }
+  }
+
+  /**
+   * Update immunization record
+   */
+  static async update(
+    id: string,
+    updates: Partial<FHIRImmunization>
+  ): Promise<FHIRApiResponse<FHIRImmunization>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_immunizations')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to update immunization',
+      };
+    }
+  }
+
+  /**
+   * Delete immunization record
+   */
+  static async delete(id: string): Promise<FHIRApiResponse<void>> {
+    try {
+      const { error } = await supabase.from('fhir_immunizations').delete().eq('id', id);
+
+      if (error) throw error;
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to delete immunization',
+      };
+    }
+  }
 
   /**
    * Search immunizations with filters
    */
-  async search(params: {
+  static async search(params: {
     patientId?: string;
     status?: string;
     vaccineCode?: string;
     fromDate?: string;
     toDate?: string;
-  }): Promise<FHIRImmunization[]> {
-    let query = supabase.from('fhir_immunizations').select('*');
+  }): Promise<FHIRApiResponse<FHIRImmunization[]>> {
+    try {
+      let query = supabase.from('fhir_immunizations').select('*');
 
-    if (params.patientId) {
-      query = query.eq('patient_id', params.patientId);
-    }
-    if (params.status) {
-      query = query.eq('status', params.status);
-    }
-    if (params.vaccineCode) {
-      query = query.eq('vaccine_code', params.vaccineCode);
-    }
-    if (params.fromDate) {
-      query = query.gte('occurrence_datetime', params.fromDate);
-    }
-    if (params.toDate) {
-      query = query.lte('occurrence_datetime', params.toDate);
-    }
+      if (params.patientId) {
+        query = query.eq('patient_id', params.patientId);
+      }
+      if (params.status) {
+        query = query.eq('status', params.status);
+      }
+      if (params.vaccineCode) {
+        query = query.eq('vaccine_code', params.vaccineCode);
+      }
+      if (params.fromDate) {
+        query = query.gte('occurrence_datetime', params.fromDate);
+      }
+      if (params.toDate) {
+        query = query.lte('occurrence_datetime', params.toDate);
+      }
 
-    query = query.order('occurrence_datetime', { ascending: false });
+      query = query.order('occurrence_datetime', { ascending: false });
 
-    const { data, error } = await query;
-    if (error) throw error;
-    return data || [];
-  },
-};
+      const { data, error } = await query;
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to search immunizations',
+      };
+    }
+  }
+}
 
 // ============================================================================
 // CARE PLAN SERVICE
 // ============================================================================
 
-const CarePlanService = {
+export class CarePlanService {
   /**
    * Get all care plans for a patient
    */
-  async getByPatient(patientId: string): Promise<FHIRCarePlan[]> {
-    const { data, error } = await supabase
-      .from('fhir_care_plans')
-      .select('*')
-      .eq('patient_id', patientId)
-      .order('created', { ascending: false });
+  static async getByPatient(patientId: string): Promise<FHIRApiResponse<FHIRCarePlan[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_care_plans')
+        .select('*')
+        .eq('patient_id', patientId)
+        .order('created', { ascending: false });
 
-    if (error) throw error;
-    return data || [];
-  },
-
-  /**
-   * Get active care plans
-   */
-  async getActive(patientId: string): Promise<any[]> {
-    const { data, error } = await supabase
-      .rpc('get_active_care_plans', {
-        p_patient_id: patientId
-      });
-
-    if (error) throw error;
-    return data || [];
-  },
-
-  /**
-   * Get current care plan (most recent active)
-   */
-  async getCurrent(patientId: string): Promise<any | null> {
-    const { data, error } = await supabase
-      .rpc('get_current_care_plan', {
-        p_patient_id: patientId
-      });
-
-    if (error) throw error;
-    return data && data.length > 0 ? data[0] : null;
-  },
-
-  /**
-   * Get care plans by status
-   */
-  async getByStatus(patientId: string, status: string): Promise<any[]> {
-    const { data, error } = await supabase
-      .rpc('get_care_plans_by_status', {
-        p_patient_id: patientId,
-        p_status: status
-      });
-
-    if (error) throw error;
-    return data || [];
-  },
-
-  /**
-   * Get care plans by category
-   */
-  async getByCategory(patientId: string, category: string): Promise<any[]> {
-    const { data, error } = await supabase
-      .rpc('get_care_plans_by_category', {
-        p_patient_id: patientId,
-        p_category: category
-      });
-
-    if (error) throw error;
-    return data || [];
-  },
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch care plans',
+      };
+    }
+  }
 
   /**
    * Get care plan by ID
    */
-  async getById(id: string): Promise<FHIRCarePlan | null> {
-    const { data, error } = await supabase
-      .from('fhir_care_plans')
-      .select('*')
-      .eq('id', id)
-      .single();
+  static async getById(id: string): Promise<FHIRApiResponse<FHIRCarePlan | null>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_care_plans')
+        .select('*')
+        .eq('id', id)
+        .single();
 
-    if (error) throw error;
-    return data;
-  },
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return { success: true, data: null }; // Not found
+        }
+        throw error;
+      }
+      return { success: true, data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch care plan',
+      };
+    }
+  }
+
+  /**
+   * Get active care plans using database function
+   */
+  static async getActive(patientId: string): Promise<FHIRApiResponse<any[]>> {
+    try {
+      const { data, error } = await supabase.rpc('get_active_care_plans', {
+        p_patient_id: patientId,
+      });
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch active care plans',
+      };
+    }
+  }
+
+  /**
+   * Get current care plan (most recent active)
+   */
+  static async getCurrent(patientId: string): Promise<FHIRApiResponse<any | null>> {
+    try {
+      const { data, error } = await supabase.rpc('get_current_care_plan', {
+        p_patient_id: patientId,
+      });
+
+      if (error) throw error;
+      return { success: true, data: data && data.length > 0 ? data[0] : null };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch current care plan',
+      };
+    }
+  }
+
+  /**
+   * Get care plans by status
+   */
+  static async getByStatus(
+    patientId: string,
+    status: string
+  ): Promise<FHIRApiResponse<any[]>> {
+    try {
+      const { data, error} = await supabase.rpc('get_care_plans_by_status', {
+        p_patient_id: patientId,
+        p_status: status,
+      });
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch care plans by status',
+      };
+    }
+  }
+
+  /**
+   * Get care plans by category
+   */
+  static async getByCategory(
+    patientId: string,
+    category: string
+  ): Promise<FHIRApiResponse<any[]>> {
+    try {
+      const { data, error } = await supabase.rpc('get_care_plans_by_category', {
+        p_patient_id: patientId,
+        p_category: category,
+      });
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch care plans by category',
+      };
+    }
+  }
 
   /**
    * Get activity summary for a care plan
    */
-  async getActivitiesSummary(carePlanId: string): Promise<any> {
-    const { data, error } = await supabase
-      .rpc('get_care_plan_activities_summary', {
-        p_care_plan_id: carePlanId
+  static async getActivitiesSummary(carePlanId: string): Promise<FHIRApiResponse<any>> {
+    try {
+      const { data, error } = await supabase.rpc('get_care_plan_activities_summary', {
+        p_care_plan_id: carePlanId,
       });
 
-    if (error) throw error;
-    return data && data.length > 0 ? data[0] : null;
-  },
+      if (error) throw error;
+      return { success: true, data: data && data.length > 0 ? data[0] : null };
+    } catch (error) {
+      return {
+        success: false,
+        error:
+          error instanceof Error ? error.message : 'Failed to fetch care plan activities summary',
+      };
+    }
+  }
 
   /**
    * Create a new care plan
    */
-  async create(carePlan: Partial<FHIRCarePlan>): Promise<FHIRCarePlan> {
-    const { data, error } = await supabase
-      .from('fhir_care_plans')
-      .insert([carePlan])
-      .select()
-      .single();
+  static async create(carePlan: Partial<FHIRCarePlan>): Promise<FHIRApiResponse<FHIRCarePlan>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_care_plans')
+        .insert([carePlan])
+        .select()
+        .single();
 
-    if (error) throw error;
-    return data;
-  },
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to create care plan',
+      };
+    }
+  }
 
   /**
    * Update a care plan
    */
-  async update(id: string, updates: Partial<FHIRCarePlan>): Promise<FHIRCarePlan> {
-    const { data, error } = await supabase
-      .from('fhir_care_plans')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
+  static async update(
+    id: string,
+    updates: Partial<FHIRCarePlan>
+  ): Promise<FHIRApiResponse<FHIRCarePlan>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_care_plans')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
 
-    if (error) throw error;
-    return data;
-  },
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to update care plan',
+      };
+    }
+  }
 
   /**
    * Delete a care plan
    */
-  async delete(id: string): Promise<void> {
-    const { error } = await supabase
-      .from('fhir_care_plans')
-      .delete()
-      .eq('id', id);
+  static async delete(id: string): Promise<FHIRApiResponse<void>> {
+    try {
+      const { error } = await supabase.from('fhir_care_plans').delete().eq('id', id);
 
-    if (error) throw error;
-  },
+      if (error) throw error;
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to delete care plan',
+      };
+    }
+  }
 
   /**
    * Advanced search with filters
    */
-  async search(params: {
+  static async search(params: {
     patientId?: string;
     status?: string;
     category?: string;
     fromDate?: string;
     toDate?: string;
-  }): Promise<FHIRCarePlan[]> {
-    let query = supabase.from('fhir_care_plans').select('*');
+  }): Promise<FHIRApiResponse<FHIRCarePlan[]>> {
+    try {
+      let query = supabase.from('fhir_care_plans').select('*');
 
-    if (params.patientId) {
-      query = query.eq('patient_id', params.patientId);
-    }
-    if (params.status) {
-      query = query.eq('status', params.status);
-    }
-    if (params.category) {
-      query = query.contains('category', [params.category]);
-    }
-    if (params.fromDate) {
-      query = query.gte('period_start', params.fromDate);
-    }
-    if (params.toDate) {
-      query = query.lte('period_end', params.toDate);
-    }
+      if (params.patientId) {
+        query = query.eq('patient_id', params.patientId);
+      }
+      if (params.status) {
+        query = query.eq('status', params.status);
+      }
+      if (params.category) {
+        query = query.contains('category', [params.category]);
+      }
+      if (params.fromDate) {
+        query = query.gte('period_start', params.fromDate);
+      }
+      if (params.toDate) {
+        query = query.lte('period_end', params.toDate);
+      }
 
-    query = query.order('created', { ascending: false });
+      query = query.order('created', { ascending: false });
 
-    const { data, error } = await query;
-    if (error) throw error;
-    return data || [];
-  },
-};
+      const { data, error } = await query;
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to search care plans',
+      };
+    }
+  }
+
+  /**
+   * Complete a care plan (set status to 'completed')
+   */
+  static async complete(id: string): Promise<FHIRApiResponse<FHIRCarePlan>> {
+    return this.update(id, {
+      status: 'completed',
+      period_end: new Date().toISOString(),
+    });
+  }
+
+  /**
+   * Activate a care plan
+   */
+  static async activate(id: string): Promise<FHIRApiResponse<FHIRCarePlan>> {
+    return this.update(id, {
+      status: 'active',
+      period_start: new Date().toISOString(),
+    });
+  }
+
+  /**
+   * Put care plan on hold
+   */
+  static async hold(id: string, reason?: string): Promise<FHIRApiResponse<FHIRCarePlan>> {
+    const updates: Partial<FHIRCarePlan> = {
+      status: 'on-hold',
+    };
+    if (reason) {
+      updates.note = reason;
+    }
+    return this.update(id, updates);
+  }
+}
+
+// ============================================================================
+// CARE TEAM SERVICE
+// ============================================================================
+
+export class CareTeamService {
+  /**
+   * Get all care teams for a patient
+   */
+  static async getByPatient(patientId: string): Promise<FHIRApiResponse<FHIRCareTeam[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_care_teams')
+        .select('*')
+        .eq('patient_id', patientId)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch care teams',
+      };
+    }
+  }
+
+  /**
+   * Get care team by ID
+   */
+  static async getById(id: string): Promise<FHIRApiResponse<FHIRCareTeam | null>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_care_teams')
+        .select('*')
+        .eq('id', id)
+        .is('deleted_at', null)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return { success: true, data: null }; // Not found
+        }
+        throw error;
+      }
+      return { success: true, data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch care team',
+      };
+    }
+  }
+
+  /**
+   * Get active care teams for a patient
+   */
+  static async getActive(patientId: string): Promise<FHIRApiResponse<FHIRCareTeam[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_care_teams')
+        .select('*')
+        .eq('patient_id', patientId)
+        .eq('status', 'active')
+        .is('deleted_at', null)
+        .or('period_end.is.null,period_end.gte.' + new Date().toISOString())
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch active care teams',
+      };
+    }
+  }
+
+  /**
+   * Get care teams by status
+   */
+  static async getByStatus(
+    patientId: string,
+    status: string
+  ): Promise<FHIRApiResponse<FHIRCareTeam[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_care_teams')
+        .select('*')
+        .eq('patient_id', patientId)
+        .eq('status', status)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch care teams by status',
+      };
+    }
+  }
+
+  /**
+   * Create a new care team
+   */
+  static async create(careTeam: Partial<FHIRCareTeam>): Promise<FHIRApiResponse<FHIRCareTeam>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_care_teams')
+        .insert([careTeam])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to create care team',
+      };
+    }
+  }
+
+  /**
+   * Update a care team
+   */
+  static async update(
+    id: string,
+    updates: Partial<FHIRCareTeam>
+  ): Promise<FHIRApiResponse<FHIRCareTeam>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_care_teams')
+        .update(updates)
+        .eq('id', id)
+        .is('deleted_at', null)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to update care team',
+      };
+    }
+  }
+
+  /**
+   * Soft delete a care team
+   */
+  static async delete(id: string): Promise<FHIRApiResponse<void>> {
+    try {
+      const { error } = await supabase
+        .from('fhir_care_teams')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', id);
+
+      if (error) throw error;
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to delete care team',
+      };
+    }
+  }
+
+  /**
+   * Activate a care team
+   */
+  static async activate(id: string): Promise<FHIRApiResponse<FHIRCareTeam>> {
+    return this.update(id, {
+      status: 'active',
+      period_start: new Date().toISOString(),
+    });
+  }
+
+  /**
+   * Suspend a care team
+   */
+  static async suspend(id: string, reason?: string): Promise<FHIRApiResponse<FHIRCareTeam>> {
+    const updates: Partial<FHIRCareTeam> = {
+      status: 'suspended',
+    };
+    if (reason) {
+      updates.note = reason;
+    }
+    return this.update(id, updates);
+  }
+
+  /**
+   * End a care team (set period_end and status to inactive)
+   */
+  static async end(id: string): Promise<FHIRApiResponse<FHIRCareTeam>> {
+    return this.update(id, {
+      status: 'inactive',
+      period_end: new Date().toISOString(),
+    });
+  }
+
+  // ============================================================================
+  // CARE TEAM MEMBERS
+  // ============================================================================
+
+  /**
+   * Get all members of a care team
+   */
+  static async getMembers(careTeamId: string): Promise<FHIRApiResponse<FHIRCareTeamMember[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_care_team_members')
+        .select('*')
+        .eq('care_team_id', careTeamId)
+        .order('sequence', { ascending: true, nullsFirst: false })
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch care team members',
+      };
+    }
+  }
+
+  /**
+   * Get active members of a care team
+   */
+  static async getActiveMembers(
+    careTeamId: string
+  ): Promise<FHIRApiResponse<FHIRCareTeamMember[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_care_team_members')
+        .select('*')
+        .eq('care_team_id', careTeamId)
+        .or('period_end.is.null,period_end.gte.' + new Date().toISOString())
+        .order('sequence', { ascending: true, nullsFirst: false })
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch active care team members',
+      };
+    }
+  }
+
+  /**
+   * Get primary contact for a care team
+   */
+  static async getPrimaryContact(
+    careTeamId: string
+  ): Promise<FHIRApiResponse<FHIRCareTeamMember | null>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_care_team_members')
+        .select('*')
+        .eq('care_team_id', careTeamId)
+        .eq('is_primary_contact', true)
+        .or('period_end.is.null,period_end.gte.' + new Date().toISOString())
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return { success: true, data: null }; // Not found
+        }
+        throw error;
+      }
+      return { success: true, data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch primary contact',
+      };
+    }
+  }
+
+  /**
+   * Add a member to a care team
+   */
+  static async addMember(
+    member: Partial<FHIRCareTeamMember>
+  ): Promise<FHIRApiResponse<FHIRCareTeamMember>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_care_team_members')
+        .insert([member])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to add care team member',
+      };
+    }
+  }
+
+  /**
+   * Update a care team member
+   */
+  static async updateMember(
+    id: string,
+    updates: Partial<FHIRCareTeamMember>
+  ): Promise<FHIRApiResponse<FHIRCareTeamMember>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_care_team_members')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to update care team member',
+      };
+    }
+  }
+
+  /**
+   * Remove a member from a care team (set period_end)
+   */
+  static async removeMember(id: string): Promise<FHIRApiResponse<FHIRCareTeamMember>> {
+    return this.updateMember(id, {
+      period_end: new Date().toISOString(),
+    });
+  }
+
+  /**
+   * Delete a care team member
+   */
+  static async deleteMember(id: string): Promise<FHIRApiResponse<void>> {
+    try {
+      const { error } = await supabase.from('fhir_care_team_members').delete().eq('id', id);
+
+      if (error) throw error;
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to delete care team member',
+      };
+    }
+  }
+
+  /**
+   * Get members by role
+   */
+  static async getMembersByRole(
+    careTeamId: string,
+    roleCode: string
+  ): Promise<FHIRApiResponse<FHIRCareTeamMember[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('fhir_care_team_members')
+        .select('*')
+        .eq('care_team_id', careTeamId)
+        .eq('role_code', roleCode)
+        .or('period_end.is.null,period_end.gte.' + new Date().toISOString())
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch members by role',
+      };
+    }
+  }
+}
 
 // ============================================================================
 // PRACTITIONER SERVICE
@@ -2877,7 +3468,7 @@ export const ProvenanceService = {
 // ============================================================================
 
 export const FHIRService = {
-  // Core FHIR Resources (US Core - 18/18 COMPLETE)
+  // Core FHIR Resources (US Core - 13/13 COMPLETE)
   MedicationRequest: MedicationRequestService,
   Condition: ConditionService,
   DiagnosticReport: DiagnosticReportService,
@@ -2885,6 +3476,7 @@ export const FHIRService = {
   Observation: ObservationService,
   Immunization: ImmunizationService,
   CarePlan: CarePlanService,
+  CareTeam: CareTeamService,
   Practitioner: PractitionerService,
   PractitionerRole: PractitionerRoleService,
   AllergyIntolerance: AllergyIntoleranceService,

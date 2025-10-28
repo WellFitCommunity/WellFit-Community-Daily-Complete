@@ -26,8 +26,10 @@ const ImmunizationTimeline: React.FC<ImmunizationTimelineProps> = ({ userId, onB
   const loadImmunizations = async () => {
     setLoading(true);
     try {
-      const data = await FHIRService.Immunization.getHistory(userId, timeRange);
-      setImmunizations(data);
+      const result = await FHIRService.Immunization.getHistory(userId, timeRange);
+      if (result.success && result.data) {
+        setImmunizations(result.data);
+      }
     } catch (error) {
       console.error('Failed to load immunizations:', error);
     }

@@ -870,6 +870,53 @@ export const SENIOR_CARE_ACTIVITIES = {
   COGNITIVE_ASSESSMENT: { code: '113024003', display: 'Cognitive assessment' },
   SOCIAL_SUPPORT: { code: '410155007', display: 'Social support' },
 } as const;
+
+// ============================================================================
+// CARE TEAM
+// ============================================================================
+
+export interface FHIRCareTeam extends FHIRResource {
+  patient_id: string;
+  status: 'draft' | 'active' | 'suspended' | 'inactive' | 'entered-in-error';
+  name?: string;
+  category?: string[];
+  period_start?: string;
+  period_end?: string;
+  encounter_reference?: string;
+  encounter_display?: string;
+  managing_organization_reference?: string;
+  managing_organization_display?: string;
+  telecom?: any;
+  reason_code?: string[];
+  reason_display?: string[];
+  note?: string;
+  version_id?: number;
+  created_by?: string;
+  updated_by?: string;
+  deleted_at?: string;
+}
+
+export interface FHIRCareTeamMember {
+  id?: string;
+  care_team_id: string;
+  role_code?: string;
+  role_display?: string;
+  role_system?: string;
+  member_reference: string;
+  member_display: string;
+  member_type?: string;
+  member_user_id?: string;
+  on_behalf_of_reference?: string;
+  on_behalf_of_display?: string;
+  period_start?: string;
+  period_end?: string;
+  is_primary_contact?: boolean;
+  telecom?: any;
+  sequence?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
 // ============================================================================
 // PRACTITIONER & PRACTITIONER ROLE
 // ============================================================================

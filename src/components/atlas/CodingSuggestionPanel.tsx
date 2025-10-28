@@ -1,4 +1,4 @@
-// Real-time coding suggestion panel for Project Atlas
+// Real-time coding suggestion panel for Project Atlus
 // Wraps SmartScribe and shows revenue optimization opportunities
 
 import React, { useEffect, useState } from 'react';

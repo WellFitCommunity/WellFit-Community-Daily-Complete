@@ -409,7 +409,7 @@ const NursePanel: React.FC = () => {
                 <ResilienceHubDashboard />
               </CollapsibleSection>
 
-              {/* Project Atlas: CCM Autopilot */}
+              {/* Project Atlus: CCM Autopilot */}
               <CollapsibleSection title="CCM Autopilot - Chronic Care Management" icon="⏱️">
                 <CCMTimeline />
               </CollapsibleSection>

@@ -1,5 +1,5 @@
 // CCM Timeline Component - Shows CCM-eligible patients
-// Project Atlas Pillar 2: Chronic Care Management automation
+// Project Atlus Pillar 2: Chronic Care Management automation
 
 import React, { useEffect, useState } from 'react';
 import { CCMAutopilotService } from '../../services/ccmAutopilotService';

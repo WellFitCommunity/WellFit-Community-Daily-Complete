@@ -33,20 +33,24 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
   const loadCarePlans = async () => {
     setLoading(true);
     try {
-      const data = await FHIRService.CarePlan.getByPatient(userId);
-      setCarePlans(data);
+      const result = await FHIRService.CarePlan.getByPatient(userId);
+      if (result.success && result.data) {
+        setCarePlans(result.data);
 
-      // Load activity summaries for each plan
-      const summaries: Record<string, any> = {};
-      for (const plan of data) {
-        try {
-          const summary = await FHIRService.CarePlan.getActivitiesSummary(plan.id);
-          summaries[plan.id] = summary;
-        } catch (error) {
-          console.error(`Failed to load summary for plan ${plan.id}:`, error);
+        // Load activity summaries for each plan
+        const summaries: Record<string, any> = {};
+        for (const plan of result.data) {
+          try {
+            const summaryResult = await FHIRService.CarePlan.getActivitiesSummary(plan.id);
+            if (summaryResult.success && summaryResult.data) {
+              summaries[plan.id] = summaryResult.data;
+            }
+          } catch (error) {
+            console.error(`Failed to load summary for plan ${plan.id}:`, error);
+          }
         }
+        setActivitySummaries(summaries);
       }
-      setActivitySummaries(summaries);
     } catch (error) {
       console.error('Failed to load care plans:', error);
     }

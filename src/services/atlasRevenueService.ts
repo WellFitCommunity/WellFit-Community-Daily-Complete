@@ -1,5 +1,5 @@
-// Atlas Revenue Service - Revenue analytics and leakage detection
-// Project Atlas Pillar 3: Revenue optimization
+// Atlus Revenue Service - Revenue analytics and leakage detection
+// Project Atlus Pillar 3: Revenue optimization
 
 import { supabase } from '../lib/supabaseClient';
 import { BillingService } from './billingService';
@@ -25,7 +25,7 @@ interface CodeOpportunity {
   description: string;
 }
 
-export class AtlasRevenueService {
+export class AtlusRevenueService {
   /**
    * Get comprehensive revenue metrics for a date range
    */
@@ -269,4 +269,4 @@ export class AtlasRevenueService {
   }
 }
 
-export default AtlasRevenueService;
+export default AtlusRevenueService;

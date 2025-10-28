@@ -481,9 +481,9 @@ const AdminPanel: React.FC = () => {
             <PatientEngagementDashboard />
           </CollapsibleSection>
 
-          {/* SmartScribe Atlas - Revenue-Critical AI Transcription */}
+          {/* SmartScribe Atlus - Revenue-Critical AI Transcription */}
           <CollapsibleSection
-            title="SmartScribe Atlas 💰"
+            title="SmartScribe Atlus 💰"
             subtitle="AI-powered transcription with Claude Sonnet 4.5 for maximum billing accuracy"
             icon="🎤"
             headerColor="text-[#C8E63D]"
@@ -491,7 +491,7 @@ const AdminPanel: React.FC = () => {
             <SmartScribe />
           </CollapsibleSection>
 
-          {/* Project Atlas: CCM Autopilot */}
+          {/* Project Atlus: CCM Autopilot */}
           <CollapsibleSection
             title="CCM Autopilot - Chronic Care Management"
             subtitle="Automatic tracking of 20+ minute patient interactions for CCM billing"
@@ -501,9 +501,9 @@ const AdminPanel: React.FC = () => {
             <CCMTimeline />
           </CollapsibleSection>
 
-          {/* Project Atlas: Revenue Dashboard */}
+          {/* Project Atlus: Revenue Dashboard */}
           <CollapsibleSection
-            title="Revenue Dashboard - Project Atlas"
+            title="Revenue Dashboard - Project Atlus"
             subtitle="Real-time revenue analytics and optimization opportunities"
             icon="💰"
             headerColor="text-[#C8E63D]"
@@ -511,7 +511,7 @@ const AdminPanel: React.FC = () => {
             <RevenueDashboard />
           </CollapsibleSection>
 
-          {/* Project Atlas: Claims Submission */}
+          {/* Project Atlus: Claims Submission */}
           <CollapsibleSection
             title="Claims Submission Center"
             subtitle="Generate and submit 837P claims to clearinghouses"
@@ -521,7 +521,7 @@ const AdminPanel: React.FC = () => {
             <ClaimsSubmissionPanel />
           </CollapsibleSection>
 
-          {/* Project Atlas: Claims Appeals */}
+          {/* Project Atlus: Claims Appeals */}
           <CollapsibleSection
             title="Claims Appeals & Resubmission"
             subtitle="AI-assisted appeal letters for denied claims"
@@ -741,7 +741,7 @@ const AdminPanel: React.FC = () => {
               </CollapsibleSection>
 
               <CollapsibleSection
-                title="SmartScribe Atlas"
+                title="SmartScribe Atlus"
                 subtitle="AI-powered clinical documentation with Claude Sonnet 4.5"
                 icon="🎤"
                 headerColor="text-[#C8E63D]"
@@ -807,7 +807,7 @@ const AdminPanel: React.FC = () => {
           {activeTab === 'billing' && (
             <div className="space-y-6">
               <CollapsibleSection
-                title="Revenue Dashboard - Project Atlas"
+                title="Revenue Dashboard - Project Atlus"
                 subtitle="Real-time revenue analytics and optimization opportunities"
                 icon="💰"
                 headerColor="text-[#C8E63D]"

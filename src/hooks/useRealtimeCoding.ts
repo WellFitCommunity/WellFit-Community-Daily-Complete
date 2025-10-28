@@ -1,4 +1,4 @@
-// Real-time coding hook for Project Atlas
+// Real-time coding hook for Project Atlus
 // Monitors coding_recommendations table for live updates
 
 import { useState, useEffect } from 'react';
