@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
+import { useBranding } from '../../BrandingContext';
 
 interface AdminHeaderProps {
   title?: string;
@@ -13,6 +14,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
 }) => {
   const navigate = useNavigate();
   const { adminRole, logoutAdmin } = useAdminAuth();
+  const { branding } = useBranding(); // Get dynamic branding from database
   const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     // Initialize from localStorage
@@ -71,20 +73,48 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
     navigate(path);
   };
 
+  // Dynamic branding colors
+  const primaryColor = branding?.primaryColor || '#158A84';
+  const secondaryColor = branding?.secondaryColor || '#C8E63D';
+  const appName = branding?.appName || 'WellFit Community';
+  const gradient = branding?.gradient || `linear-gradient(to right, ${primaryColor}, ${secondaryColor}, ${primaryColor})`;
+
   return (
-    <div className="bg-gradient-to-r from-[#158A84] via-[#1BA39C] to-[#158A84] text-white shadow-2xl border-b-4 border-[#C8E63D]">
+    <div
+      className="text-white shadow-2xl border-b-4"
+      style={{
+        background: gradient,
+        borderBottomColor: secondaryColor
+      }}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Left section - Title and role */}
           <div className="flex items-center space-x-4">
             <div className="flex items-center">
-              <div className="h-10 w-10 bg-[#C8E63D] rounded-lg flex items-center justify-center mr-3 border-2 border-white shadow-lg">
-                <span className="text-sm font-bold text-black">EA</span>
-              </div>
+              {branding?.logoUrl ? (
+                <img
+                  src={branding.logoUrl}
+                  alt={appName}
+                  className="h-10 w-10 rounded-lg mr-3 border-2 border-white shadow-lg object-contain bg-white"
+                />
+              ) : (
+                <div
+                  className="h-10 w-10 rounded-lg flex items-center justify-center mr-3 border-2 border-white shadow-lg"
+                  style={{ backgroundColor: secondaryColor }}
+                >
+                  <span className="text-sm font-bold text-black">
+                    {appName.substring(0, 2).toUpperCase()}
+                  </span>
+                </div>
+              )}
               <div>
                 <h1 className="text-xl font-bold text-white drop-shadow-md">{title}</h1>
-                <div className="text-xs text-[#C8E63D] font-semibold">
-                  Envision VirtualEdge Group LLC - Envision Atlus
+                <div
+                  className="text-xs font-semibold"
+                  style={{ color: secondaryColor }}
+                >
+                  {appName}
                 </div>
               </div>
             </div>

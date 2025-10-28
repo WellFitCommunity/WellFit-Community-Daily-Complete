@@ -1,21 +1,23 @@
 // src/BrandingContext.tsx
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { BrandingConfig } from './branding.config';
-import { getCurrentBranding } from './branding.config';
-
-// Fallback/initial branding config
-const fallbackBranding: BrandingConfig = getCurrentBranding();
+import { getCurrentBranding, defaultBranding } from './branding.config';
+import { getCurrentTenantBranding } from './services/tenantBrandingService';
 
 // Shape exposed via context
 export type BrandingContextValue = {
   branding: BrandingConfig;
   setBranding: React.Dispatch<React.SetStateAction<BrandingConfig>>;
+  loading: boolean;
+  refreshBranding: () => Promise<void>;
 };
 
-// Create the context with a safe default so consumers don’t crash
+// Create the context with a safe default so consumers don't crash
 export const BrandingContext = createContext<BrandingContextValue>({
-  branding: fallbackBranding,
+  branding: defaultBranding,
   setBranding: () => {}, // no-op; replaced by provider
+  loading: true,
+  refreshBranding: async () => {},
 });
 
 // ✅ Hook for consumers
@@ -24,12 +26,35 @@ export function useBranding() {
 }
 
 // ✅ Provider (this is what index.tsx should import)
+// Now loads branding from database instead of hardcoded config
 export function BrandingProvider({ children }: { children: React.ReactNode }) {
-  const [branding, setBranding] = useState<BrandingConfig>(fallbackBranding);
+  const [branding, setBranding] = useState<BrandingConfig>(defaultBranding);
+  const [loading, setLoading] = useState(true);
+
+  const loadBranding = async () => {
+    setLoading(true);
+    try {
+      // Try database first
+      const dbBranding = await getCurrentTenantBranding();
+      setBranding(dbBranding);
+    } catch (error) {
+      console.error('[BrandingContext] Failed to load from database, using fallback:', error);
+      // Fallback to hardcoded config if database fails
+      setBranding(getCurrentBranding());
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadBranding();
+  }, []);
 
   const value: BrandingContextValue = {
     branding,
     setBranding,
+    loading,
+    refreshBranding: loadBranding,
   };
 
   return (
