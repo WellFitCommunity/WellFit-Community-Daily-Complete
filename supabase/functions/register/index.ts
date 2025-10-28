@@ -4,8 +4,7 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4?dts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { cors } from "../_shared/cors.ts";
-// FIX: Use hash library that works in Edge Functions (no Workers required)
-import { hash } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
+import { hashPassword } from "../_shared/crypto.ts";
 
 // ---------- ENV ----------
 const SB_URL = Deno.env.get("SUPABASE_URL") || Deno.env.get("SB_URL") || "";
@@ -224,8 +223,8 @@ resource_type: 'auth_event',
     }
 
     // Hash password before storing
-    // FIX: Use bcrypt hash function directly (compatible with Edge Functions)
-    const hashedPassword = await hash(payload.password);
+    // Using Web Crypto API (PBKDF2) - compatible with Deno Edge Functions
+    const hashedPassword = await hashPassword(payload.password);
 
     // Store registration data in pending table with hashed password
     const { error: pendingError } = await supabase

@@ -1,7 +1,7 @@
 // supabase/functions/admin_start_session/index.ts
 import { serve } from "https://deno.land/std/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
+import { verifyPin } from "../_shared/crypto.ts";
 
 import { handleOptions, withCors } from "../_shared/cors.ts";
 
@@ -59,7 +59,7 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    const valid = await bcrypt.compare(pin, row.pin_hash);
+    const valid = await verifyPin(pin, row.pin_hash);
     if (!valid) {
       return withCors(
         req,
