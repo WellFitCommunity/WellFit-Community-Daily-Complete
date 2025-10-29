@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import FHIRService from '../../services/fhirResourceService';
 import type { FHIRImmunization } from '../../types/fhir';
 import { VACCINE_NAMES, SENIOR_VACCINE_CODES } from '../../types/fhir';
@@ -19,11 +19,7 @@ const ImmunizationTimeline: React.FC<ImmunizationTimelineProps> = ({ userId, onB
   const [selectedVaccine, setSelectedVaccine] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<number>(365); // days
 
-  useEffect(() => {
-    loadImmunizations();
-  }, [userId, timeRange]);
-
-  const loadImmunizations = async () => {
+  const loadImmunizations = useCallback(async () => {
     setLoading(true);
     try {
       const result = await FHIRService.Immunization.getHistory(userId, timeRange);
@@ -34,7 +30,11 @@ const ImmunizationTimeline: React.FC<ImmunizationTimelineProps> = ({ userId, onB
 
     }
     setLoading(false);
-  };
+  }, [userId, timeRange]);
+
+  useEffect(() => {
+    loadImmunizations();
+  }, [loadImmunizations]);
 
   const getVaccineIcon = (vaccineCode: string) => {
     if (vaccineCode === SENIOR_VACCINE_CODES.FLU) return '💉';

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import FHIRService from '../../services/fhirResourceService';
 import type { FHIRCarePlan, CarePlanActivity } from '../../types/fhir';
 import { CARE_PLAN_CATEGORY_NAMES } from '../../types/fhir';
@@ -21,16 +21,7 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
   const [selectedPlan, setSelectedPlan] = useState<FHIRCarePlan | null>(null);
   const [activitySummaries, setActivitySummaries] = useState<Record<string, any>>({});
 
-  useEffect(() => {
-    loadCarePlans();
-    loadCurrentPlan();
-  }, [userId]);
-
-  useEffect(() => {
-    filterPlans();
-  }, [activeTab, carePlans]);
-
-  const loadCarePlans = async () => {
+  const loadCarePlans = useCallback(async () => {
     setLoading(true);
     try {
       const result = await FHIRService.CarePlan.getByPatient(userId);
@@ -55,18 +46,18 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
 
     }
     setLoading(false);
-  };
+  }, [userId]);
 
-  const loadCurrentPlan = async () => {
+  const loadCurrentPlan = useCallback(async () => {
     try {
       const current = await FHIRService.CarePlan.getCurrent(userId);
       setCurrentPlan(current);
     } catch (error) {
 
     }
-  };
+  }, [userId]);
 
-  const filterPlans = () => {
+  const filterPlans = useCallback(() => {
     let filtered = carePlans;
 
     switch (activeTab) {
@@ -81,7 +72,16 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
     }
 
     setFilteredPlans(filtered);
-  };
+  }, [activeTab, carePlans]);
+
+  useEffect(() => {
+    loadCarePlans();
+    loadCurrentPlan();
+  }, [loadCarePlans, loadCurrentPlan]);
+
+  useEffect(() => {
+    filterPlans();
+  }, [filterPlans]);
 
   const handleCarePlanCreated = () => {
     loadCarePlans();

@@ -5,7 +5,7 @@
 // Features: Risk badge, check-in prompt, 30-day stress chart, module CTA
 // ============================================================================
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useUser } from '../../contexts/AuthContext';
 import { getDashboardStats, getMyCheckins } from '../../services/resilienceHubService';
 import type {
@@ -36,7 +36,7 @@ export const ResilienceHubDashboard: React.FC = () => {
   const [showResourceLibrary, setShowResourceLibrary] = useState(false);
 
   // Load dashboard data
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -57,13 +57,13 @@ export const ResilienceHubDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (user) {
       loadDashboardData();
     }
-  }, [user]);
+  }, [user, loadDashboardData]);
 
   // Get risk badge color
   const getRiskBadgeColor = (risk: BurnoutRiskLevel): string => {
