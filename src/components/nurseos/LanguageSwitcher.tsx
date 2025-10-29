@@ -5,7 +5,7 @@
 // Design: Compact flag-based switcher
 // ============================================================================
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import type { Language } from '../../i18n/resilienceHubTranslations';
 
 interface LanguageSwitcherProps {

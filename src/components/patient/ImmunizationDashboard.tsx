@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import FHIRService from '../../services/fhirResourceService';
 import type { FHIRImmunization } from '../../types/fhir';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { VACCINE_NAMES, SENIOR_VACCINE_CODES } from '../../types/fhir';
 import ImmunizationTimeline from './ImmunizationTimeline';
 import ImmunizationEntry from './ImmunizationEntry';

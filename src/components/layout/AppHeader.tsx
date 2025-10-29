@@ -3,17 +3,17 @@ import { useLocation } from 'react-router-dom';
 import GlobalHeader from './GlobalHeader';
 import WelcomeHeader from './WelcomeHeader';
 
-// Optional: a slimmer admin header
-function AdminHeader() {
-  return (
-    <header className="w-full bg-gray-900 text-white shadow-md">
-      <div className="max-w-7xl mx-auto h-12 px-4 flex items-center justify-between">
-        <div className="font-semibold tracking-tight">Admin Console</div>
-        <div className="text-xs opacity-80">WellFit • Secure Area</div>
-      </div>
-    </header>
-  );
-}
+// Optional: a slimmer admin header (currently unused, kept for future)
+// function AdminHeader() {
+//   return (
+//     <header className="w-full bg-gray-900 text-white shadow-md">
+//       <div className="max-w-7xl mx-auto h-12 px-4 flex items-center justify-between">
+//         <div className="font-semibold tracking-tight">Admin Console</div>
+//         <div className="text-xs opacity-80">WellFit • Secure Area</div>
+//       </div>
+//     </header>
+//   );
+// }
 
 const WELCOME_ROUTES = ['/', '/welcome']; // add others if needed
 const AUTH_ROUTES = ['/login', '/register', '/verify', '/admin-login', '/reset-password', '/change-password']; // auth pages with no header
@@ -30,6 +30,7 @@ export default function AppHeader() {
     (p) => pathname === p || pathname.startsWith(`${p}/`)
   );
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const isAdmin = pathname === ADMIN_PREFIX || pathname.startsWith(`${ADMIN_PREFIX}/`);
 
   if (isWelcome) return <WelcomeHeader />;

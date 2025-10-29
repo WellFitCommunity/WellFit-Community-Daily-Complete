@@ -7,7 +7,7 @@ import { BrandingConfig, getCurrentBranding } from './branding.config';
 import { BrandingContext } from './BrandingContext';
 import { performanceMonitor } from './services/performanceMonitoring';
 import { GuardianErrorBoundary } from './components/GuardianErrorBoundary';
-import { performSecurityScan, monitorSystemHealth } from './services/guardianAgentClient';
+import { performSecurityScan } from './services/guardianAgentClient';
 
 // ❌ Do NOT import or use AuthProvider here — it lives in index.tsx
 // ❌ Do NOT import or use AdminAuthProvider here — it lives in index.tsx
