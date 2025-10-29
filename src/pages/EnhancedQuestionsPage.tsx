@@ -1,5 +1,5 @@
 // src/pages/EnhancedQuestionsPage.tsx - Senior-Friendly Questions with AI & Voice
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mic, MicOff, Send, Lightbulb, MessageCircle } from 'lucide-react';
 import { useSupabaseClient, useUser } from '../contexts/AuthContext';
@@ -141,12 +141,7 @@ const EnhancedQuestionsPage: React.FC = () => {
     };
   }, []);
 
-  // Load questions
-  useEffect(() => {
-    loadQuestions();
-  }, [user]);
-
-  const loadQuestions = async () => {
+  const loadQuestions = useCallback(async () => {
     if (!user?.id) return;
 
     setLoading(true);
@@ -185,7 +180,11 @@ const EnhancedQuestionsPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id, supabase]);
+
+  useEffect(() => {
+    loadQuestions();
+  }, [loadQuestions]);
 
   const detectUrgency = (text: string): Question['urgency'] => {
     const lowerText = text.toLowerCase();

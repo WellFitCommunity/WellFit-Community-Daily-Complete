@@ -5,7 +5,7 @@
  * Allows super admins to grant/revoke staff roles (admin, nurse, physician, etc.)
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSupabaseClient } from '../../contexts/AuthContext';
 import { Alert, AlertDescription } from '../ui/alert';
 import { UserPlus, UserMinus, Shield, Search, Filter } from 'lucide-react';
@@ -40,15 +40,7 @@ const UserRoleManager: React.FC = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  useEffect(() => {
-    loadUsers();
-  }, []);
-
-  useEffect(() => {
-    filterUsers();
-  }, [searchQuery, roleFilter, users]);
-
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -85,9 +77,9 @@ const UserRoleManager: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [supabase]);
 
-  const filterUsers = () => {
+  const filterUsers = useCallback(() => {
     let filtered = [...users];
 
     // Search filter
@@ -110,7 +102,15 @@ const UserRoleManager: React.FC = () => {
     }
 
     setFilteredUsers(filtered);
-  };
+  }, [searchQuery, roleFilter, users]);
+
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
+
+  useEffect(() => {
+    filterUsers();
+  }, [filterUsers]);
 
   const grantRole = async () => {
     if (!selectedUser || !selectedRole) return;

@@ -5,7 +5,7 @@
  * Searchable, filterable interface for compliance and security reviews.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import RequireAdminAuth from '../components/auth/RequireAdminAuth';
 import AdminHeader from '../components/admin/AdminHeader';
 import SmartBackButton from '../components/ui/SmartBackButton';
@@ -38,15 +38,7 @@ const AuditLogsPage: React.FC = () => {
     end: new Date().toISOString().split('T')[0]
   });
 
-  useEffect(() => {
-    loadAuditLogs();
-  }, [dateRange]);
-
-  useEffect(() => {
-    filterLogs();
-  }, [searchQuery, actionFilter, logs]);
-
-  const loadAuditLogs = async () => {
+  const loadAuditLogs = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -141,9 +133,9 @@ const AuditLogsPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [dateRange, supabase]);
 
-  const filterLogs = () => {
+  const filterLogs = useCallback(() => {
     let filtered = [...logs];
 
     // Search filter
@@ -164,7 +156,15 @@ const AuditLogsPage: React.FC = () => {
     }
 
     setFilteredLogs(filtered);
-  };
+  }, [searchQuery, actionFilter, logs]);
+
+  useEffect(() => {
+    loadAuditLogs();
+  }, [loadAuditLogs]);
+
+  useEffect(() => {
+    filterLogs();
+  }, [filterLogs]);
 
   const exportLogs = () => {
     const csv = [
