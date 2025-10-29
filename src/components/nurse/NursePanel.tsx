@@ -514,7 +514,7 @@ const NursePanel: React.FC = () => {
                 selectedPatientId={selectedPatient.user_id}
                 selectedPatientName={`${selectedPatient.first_name} ${selectedPatient.last_name}`}
                 onSessionComplete={(sessionId) => {
-                  console.log('✓ Nurse scribe session completed:', sessionId);
+
                   auditLogger.clinical('NURSE_SCRIBE_SESSION_COMPLETED', true, {
                     sessionId,
                     patientId: selectedPatient.user_id,

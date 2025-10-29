@@ -53,7 +53,7 @@ const SetCaregiverPinPage: React.FC = () => {
           setExistingPin(true);
         }
       } catch (e) {
-        console.error('Error checking PIN status:', e);
+
       }
     })();
   }, [user?.id, supabase]);
@@ -140,14 +140,14 @@ const SetCaregiverPinPage: React.FC = () => {
         .eq('user_id', user?.id);
 
       if (profileError) {
-        console.warn('Failed to mark onboarding complete:', profileError);
+
         // Don't fail the whole process, just warn
       }
 
       // Success! Continue to dashboard
       navigate('/dashboard');
     } catch (e: any) {
-      console.error('Error setting PIN:', e);
+
       setError(e?.message || 'Failed to set PIN. Please try again.');
     } finally {
       setLoading(false);

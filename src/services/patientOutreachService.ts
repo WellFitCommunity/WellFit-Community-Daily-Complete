@@ -111,7 +111,7 @@ export class PatientOutreachService {
       return savedCheckIn;
 
     } catch (error: any) {
-      console.error('Failed to send daily check-in:', error);
+
       throw new Error(`Check-in failed: ${error.message}`);
     }
   }
@@ -178,7 +178,7 @@ export class PatientOutreachService {
       return updatedCheckIn;
 
     } catch (error: any) {
-      console.error('Failed to record check-in response:', error);
+
       throw new Error(`Response recording failed: ${error.message}`);
     }
   }
@@ -333,7 +333,7 @@ Provide a 2-3 sentence clinical summary suitable for the care team. Focus on wha
       const twilioConfigured = process.env.REACT_APP_TWILIO_ENABLED === 'true';
 
       if (!twilioConfigured) {
-        console.log('[DEMO MODE] Would send SMS to', phoneNumber, ':', message);
+
         return;
       }
 
@@ -348,10 +348,10 @@ Provide a 2-3 sentence clinical summary suitable for the care team. Focus on wha
 
       if (error) throw error;
 
-      console.log('SMS sent successfully:', data);
+
 
     } catch (error: any) {
-      console.error('SMS sending failed:', error);
+
       // Don't throw - SMS failure shouldn't break the check-in creation
       // Log to monitoring system instead
     }
@@ -421,7 +421,7 @@ Provide a 2-3 sentence clinical summary suitable for the care team. Focus on wha
       return results;
 
     } catch (error: any) {
-      console.error('Outreach campaign failed:', error);
+
       throw new Error(`Campaign failed: ${error.message}`);
     }
   }
@@ -500,7 +500,7 @@ Provide a 2-3 sentence clinical summary suitable for the care team. Focus on wha
         .in('priority', ['high', 'critical']);
 
       if (!activePlans || activePlans.length === 0) {
-        console.log('No active high-priority care plans requiring check-ins');
+
         return;
       }
 
@@ -521,12 +521,12 @@ Provide a 2-3 sentence clinical summary suitable for the care team. Focus on wha
         if (!existingCheckIn || existingCheckIn.length === 0) {
           // Send check-in
           await this.sendDailyCheckIn(plan.profiles.id, 'sms');
-          console.log('Sent automated check-in to patient');
+
         }
       }
 
     } catch (error: any) {
-      console.error('Automated check-in scheduling failed:', error);
+
     }
   }
 }

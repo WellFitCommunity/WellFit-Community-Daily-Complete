@@ -116,7 +116,7 @@ async function createOrFindPatient(
     }
 
     // Create profile
-    const { data: profile, error: profileError } = await supabase
+    const { data: _profile, error: profileError } = await supabase
       .from('profiles')
       .insert({
         user_id: newUser.user.id,
@@ -251,7 +251,7 @@ async function documentEMSVitals(
           observationIds.push(data.id);
         }
       } catch (err) {
-        console.error(`Failed to record ${mapping.display}:`, err);
+
       }
     }
   }
@@ -320,7 +320,7 @@ async function generateBillingCodesFromHandoff(
       })
       .eq('id', encounterId);
   } catch (err) {
-    console.error('Failed to store billing codes:', err);
+
   }
 
   return billingCodes;
@@ -344,7 +344,7 @@ async function linkHandoffToPatient(
       })
       .eq('id', handoffId);
   } catch (err) {
-    console.error('Failed to link handoff to patient:', err);
+
   }
 }
 
@@ -403,6 +403,7 @@ export async function getHandoffIntegrationStatus(
   }
 }
 
+// eslint-disable-next-line import/no-anonymous-default-export
 export default {
   integrateEMSHandoff,
   getHandoffIntegrationStatus,

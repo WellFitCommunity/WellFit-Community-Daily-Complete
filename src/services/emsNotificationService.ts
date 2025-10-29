@@ -51,7 +51,7 @@ export async function getCoordinatedResponseStatus(
 
     return { data: data as CoordinatedResponseStatus[], error: null };
   } catch (err) {
-    console.error('[EMS Notification Service] Error getting response status:', err);
+
     return { data: null, error: err as Error };
   }
 }
@@ -81,7 +81,7 @@ export async function acknowledgeDepartmentDispatch(
 
     return { data, error: null };
   } catch (err) {
-    console.error('[EMS Notification Service] Error acknowledging dispatch:', err);
+
     return { data: null, error: err as Error };
   }
 }
@@ -104,7 +104,7 @@ export async function markDepartmentReady(
 
     return { data, error: null };
   } catch (err) {
-    console.error('[EMS Notification Service] Error marking ready:', err);
+
     return { data: null, error: err as Error };
   }
 }
@@ -178,7 +178,7 @@ export async function createProviderSignoff(signoff: {
 
     return { data, error: null };
   } catch (err) {
-    console.error('[EMS Notification Service] Error creating signoff:', err);
+
     return { data: null, error: err as Error };
   }
 }
@@ -200,7 +200,7 @@ export async function getProviderSignoffs(
 
     return { data, error: null };
   } catch (err) {
-    console.error('[EMS Notification Service] Error fetching signoffs:', err);
+
     return { data: null, error: err as Error };
   }
 }
@@ -231,13 +231,13 @@ export async function sendDepartmentNotification(
     });
 
     if (error) {
-      console.error('[EMS Notification Service] Notification send error:', error);
+
       return { data: null, error };
     }
 
     return { data, error: null };
   } catch (err) {
-    console.error('[EMS Notification Service] Notification failed:', err);
+
     return { data: null, error: err as Error };
   }
 }
@@ -299,6 +299,7 @@ export function getDepartmentReadinessSummary(
   };
 }
 
+// eslint-disable-next-line import/no-anonymous-default-export
 export default {
   getCoordinatedResponseStatus,
   acknowledgeDepartmentDispatch,

@@ -95,11 +95,11 @@ export async function logPhiAccess({
     });
 
     if (error) {
-      console.error('[PHI Logger] Failed to log PHI access:', error);
+
     }
   } catch (err) {
     // Silently fail - don't break user experience if logging fails
-    console.error('[PHI Logger] Unexpected error:', err);
+
   }
 }
 
@@ -150,7 +150,7 @@ export async function logBulkPhiAccess(
         },
       });
     } catch (err) {
-      console.error('[PHI Logger] Failed to log bulk access summary:', err);
+
     }
   }
 }

@@ -89,7 +89,7 @@ export function validateTenantConfig(subdomain: string): boolean {
  */
 export function simulateTenant(subdomain: string): void {
   if (process.env.NODE_ENV !== 'development') {
-    console.warn('simulateTenant only works in development mode');
+
     return;
   }
 
@@ -102,7 +102,7 @@ export function simulateTenant(subdomain: string): void {
     writable: true
   });
 
-  console.log(`Simulating tenant: ${subdomain}`);
+
   console.log('Current branding:', getCurrentBranding());
 
   // Restore original hostname after 10 seconds
@@ -111,6 +111,6 @@ export function simulateTenant(subdomain: string): void {
       value: originalHostname,
       writable: true
     });
-    console.log('Restored original hostname');
+
   }, 10000);
 }

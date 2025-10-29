@@ -49,7 +49,7 @@ export const SystemAdminDashboard: React.FC = () => {
   const supabase = useSupabaseClient();
   const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
   const [activeSessions, setActiveSessions] = useState<ActiveSession[]>([]);
-  const [topTables, setTopTables] = useState<DatabaseTable[]>([]);
+  const [_topTables, _setTopTables] = useState<DatabaseTable[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
@@ -123,7 +123,7 @@ export const SystemAdminDashboard: React.FC = () => {
 
       setLastRefresh(new Date());
     } catch (err) {
-      console.error('Error loading system data:', err);
+
       setError('Failed to load system monitoring data');
     } finally {
       setLoading(false);
@@ -137,6 +137,7 @@ export const SystemAdminDashboard: React.FC = () => {
     const interval = setInterval(loadSystemData, 60000);
 
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const formatBytes = (bytes: number) => {

@@ -115,7 +115,7 @@ const TelehealthCall: React.FC<TelehealthConsultationProps> = ({
 
       return encounter.id;
     } catch (error: any) {
-      console.error('Error creating encounter:', error);
+
       throw error;
     }
   }, [patientId, encounterType]);
@@ -154,7 +154,7 @@ const TelehealthCall: React.FC<TelehealthConsultationProps> = ({
         setCallState((prev) => ({ ...prev, isInCall: true, isJoining: false }));
       }
     } catch (error: any) {
-      console.error('Error creating room:', error);
+
       setCallState((prev) => ({
         ...prev,
         error: error.message || 'Failed to create telehealth session',
@@ -168,19 +168,19 @@ const TelehealthCall: React.FC<TelehealthConsultationProps> = ({
     if (!daily) return;
 
     const handleParticipantJoined = (event: DailyEventObject) => {
-      console.log('Participant joined:', event.participant);
+
       setParticipants((prev) => [...prev, event.participant?.user_id || 'unknown']);
     };
 
     const handleParticipantLeft = (event: DailyEventObject) => {
-      console.log('Participant left:', event.participant);
+
       setParticipants((prev) =>
         prev.filter((id) => id !== event.participant?.user_id)
       );
     };
 
     const handleError = (event: DailyEventObject) => {
-      console.error('Daily.co error:', event);
+
       setCallState((prev) => ({
         ...prev,
         error: event.errorMsg || 'Call error occurred',
@@ -259,7 +259,7 @@ const TelehealthCall: React.FC<TelehealthConsultationProps> = ({
 
       if (onEndCall) onEndCall();
     } catch (error) {
-      console.error('Error ending call:', error);
+
     }
   }, [daily, callState.encounterId, onEndCall]);
 
@@ -295,7 +295,7 @@ const TelehealthCall: React.FC<TelehealthConsultationProps> = ({
         alert('No stethoscope device found. Please ensure your Bluetooth stethoscope is paired.');
       }
     } catch (error) {
-      console.error('Error connecting stethoscope:', error);
+
       alert('Failed to connect stethoscope. Please check Bluetooth settings.');
     }
   }, [daily]);

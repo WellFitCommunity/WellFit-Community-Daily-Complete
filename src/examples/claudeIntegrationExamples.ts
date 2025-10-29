@@ -8,7 +8,7 @@ import { claudeService, UserRole, RequestType, ClaudeRequestContext, HealthDataC
  * Uses cost-effective Haiku model for simple questions
  */
 export async function seniorPatientExample() {
-  console.log('🧓 Senior Patient Example: Simple Health Question');
+
 
   const context: ClaudeRequestContext = {
     userId: 'senior-patient-123',
@@ -24,13 +24,13 @@ export async function seniorPatientExample() {
       context
     );
 
-    console.log('✅ Senior Patient Response:');
-    console.log(response.content);
+
+
     console.log(`💰 Cost: $${response.cost.toFixed(4)} | Model: ${response.model} | Time: ${response.responseTime}ms`);
 
     return response;
   } catch (error) {
-    console.error('❌ Senior patient example failed:', error);
+
     throw error;
   }
 }
@@ -40,7 +40,7 @@ export async function seniorPatientExample() {
  * Uses advanced Sonnet model for complex population analysis
  */
 export async function adminAnalyticsExample() {
-  console.log('👨‍💼 Admin Example: Population Health Analytics');
+
 
   // Sample population data
   const healthData: HealthDataContext[] = [
@@ -95,13 +95,13 @@ export async function adminAnalyticsExample() {
       context
     );
 
-    console.log('✅ Admin Analytics Response:');
-    console.log(response.content);
+
+
     console.log(`💰 Cost: $${response.cost.toFixed(4)} | Model: ${response.model} | Time: ${response.responseTime}ms`);
 
     return response;
   } catch (error) {
-    console.error('❌ Admin analytics example failed:', error);
+
     throw error;
   }
 }
@@ -111,7 +111,7 @@ export async function adminAnalyticsExample() {
  * Uses Sonnet 3.5 for balanced capability and cost
  */
 export async function healthDataInterpretationExample() {
-  console.log('📊 Health Data Interpretation Example');
+
 
   const healthContext: HealthDataContext = {
     patientId: 'patient-health-data',
@@ -146,13 +146,13 @@ export async function healthDataInterpretationExample() {
       context
     );
 
-    console.log('✅ Health Data Interpretation Response:');
-    console.log(response.content);
+
+
     console.log(`💰 Cost: $${response.cost.toFixed(4)} | Model: ${response.model} | Time: ${response.responseTime}ms`);
 
     return response;
   } catch (error) {
-    console.error('❌ Health data interpretation example failed:', error);
+
     throw error;
   }
 }
@@ -162,7 +162,7 @@ export async function healthDataInterpretationExample() {
  * Uses advanced model for clinical decision support
  */
 export async function riskAssessmentExample() {
-  console.log('⚠️ Risk Assessment Example');
+
 
   // Sample functional assessment data
   const assessmentData = {
@@ -184,15 +184,15 @@ export async function riskAssessmentExample() {
   try {
     const riskAnalysis = await claudeService.analyzeRiskAssessment(assessmentData);
 
-    console.log('✅ Risk Assessment Analysis:');
-    console.log(`Risk Level: ${riskAnalysis.suggestedRiskLevel}`);
+
+
     console.log(`Risk Factors: ${riskAnalysis.riskFactors.join(', ')}`);
     console.log(`Recommendations: ${riskAnalysis.recommendations.join(', ')}`);
-    console.log(`Clinical Notes: ${riskAnalysis.clinicalNotes}`);
+
 
     return riskAnalysis;
   } catch (error) {
-    console.error('❌ Risk assessment example failed:', error);
+
     throw error;
   }
 }
@@ -202,12 +202,12 @@ export async function riskAssessmentExample() {
  * Demonstrates monitoring capabilities
  */
 export async function serviceMonitoringExample() {
-  console.log('📈 Service Monitoring Example');
+
 
   try {
     // Test connection
     const connectionTest = await claudeService.testConnection();
-    console.log('Connection Test:', connectionTest);
+
 
     // Get service status
     const status = claudeService.getServiceStatus();
@@ -246,7 +246,7 @@ export async function serviceMonitoringExample() {
 
     return { connectionTest, status, costInfo, rateLimitInfo, spendingSummary };
   } catch (error) {
-    console.error('❌ Service monitoring example failed:', error);
+
     throw error;
   }
 }
@@ -256,17 +256,17 @@ export async function serviceMonitoringExample() {
  * Runs all examples to demonstrate the system
  */
 export async function runCompleteIntegrationTest() {
-  console.log('🚀 Starting Complete Claude Integration Test Suite');
+
   console.log('='.repeat(60));
 
   try {
     // Initialize the service
-    console.log('1️⃣ Initializing Claude service...');
+
     await claudeService.initialize();
-    console.log('✅ Service initialized successfully\n');
+
 
     // Run all examples
-    console.log('2️⃣ Running integration examples...\n');
+
 
     const results = {
       seniorPatient: await seniorPatientExample(),
@@ -277,13 +277,13 @@ export async function runCompleteIntegrationTest() {
     };
 
     console.log('\n' + '='.repeat(60));
-    console.log('🎉 All integration tests completed successfully!');
-    console.log('\n📊 Test Summary:');
-    console.log(`• Senior Patient Response: ${results.seniorPatient.content.length} characters`);
-    console.log(`• Admin Analytics: ${results.adminAnalytics.content.length} characters`);
-    console.log(`• Health Data Interpretation: ${results.healthDataInterpretation.content.length} characters`);
-    console.log(`• Risk Assessment: ${results.riskAssessment.suggestedRiskLevel} risk level`);
-    console.log(`• Service Monitoring: ${results.serviceMonitoring.status.isHealthy ? 'Healthy' : 'Unhealthy'}`);
+
+
+
+
+
+
+
 
     const totalCost = [
       results.seniorPatient.cost,
@@ -296,7 +296,7 @@ export async function runCompleteIntegrationTest() {
 
     return results;
   } catch (error) {
-    console.error('❌ Integration test suite failed:', error);
+
     throw error;
   }
 }

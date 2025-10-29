@@ -185,13 +185,13 @@ export class SOC2MonitoringService {
         .single();
 
       if (error) {
-        console.error('Error fetching security metrics:', error);
+
         return null;
       }
 
       return data as SecurityMetrics;
     } catch (error) {
-      console.error('Exception fetching security metrics:', error);
+
       return null;
     }
   }
@@ -230,13 +230,13 @@ export class SOC2MonitoringService {
       const { data, error } = await query;
 
       if (error) {
-        console.error('Error fetching security events:', error);
+
         return [];
       }
 
       return (data as SecurityEvent[]) || [];
     } catch (error) {
-      console.error('Exception fetching security events:', error);
+
       return [];
     }
   }
@@ -280,13 +280,13 @@ export class SOC2MonitoringService {
       const { data, error } = await query;
 
       if (error) {
-        console.error('Error fetching audit logs:', error);
+
         return [];
       }
 
       return (data as AuditLog[]) || [];
     } catch (error) {
-      console.error('Exception fetching audit logs:', error);
+
       return [];
     }
   }
@@ -302,13 +302,13 @@ export class SOC2MonitoringService {
         .limit(limit);
 
       if (error) {
-        console.error('Error fetching PHI access audit:', error);
+
         return [];
       }
 
       return (data as PHIAccessAudit[]) || [];
     } catch (error) {
-      console.error('Exception fetching PHI access audit:', error);
+
       return [];
     }
   }
@@ -324,13 +324,13 @@ export class SOC2MonitoringService {
         .limit(limit);
 
       if (error) {
-        console.error('Error fetching security events analysis:', error);
+
         return [];
       }
 
       return (data as SecurityEventsAnalysis[]) || [];
     } catch (error) {
-      console.error('Exception fetching security events analysis:', error);
+
       return [];
     }
   }
@@ -345,13 +345,13 @@ export class SOC2MonitoringService {
         .select('*');
 
       if (error) {
-        console.error('Error fetching audit summary stats:', error);
+
         return [];
       }
 
       return (data as AuditSummaryStats[]) || [];
     } catch (error) {
-      console.error('Exception fetching audit summary stats:', error);
+
       return [];
     }
   }
@@ -366,13 +366,13 @@ export class SOC2MonitoringService {
         .select('*');
 
       if (error) {
-        console.error('Error fetching encryption status:', error);
+
         return [];
       }
 
       return (data as EncryptionStatus[]) || [];
     } catch (error) {
-      console.error('Exception fetching encryption status:', error);
+
       return [];
     }
   }
@@ -387,13 +387,13 @@ export class SOC2MonitoringService {
         .select('*');
 
       if (error) {
-        console.error('Error fetching incident response queue:', error);
+
         return [];
       }
 
       return (data as IncidentResponseItem[]) || [];
     } catch (error) {
-      console.error('Exception fetching incident response queue:', error);
+
       return [];
     }
   }
@@ -408,13 +408,13 @@ export class SOC2MonitoringService {
         .select('*');
 
       if (error) {
-        console.error('Error fetching compliance status:', error);
+
         return [];
       }
 
       return (data as ComplianceStatus[]) || [];
     } catch (error) {
-      console.error('Exception fetching compliance status:', error);
+
       return [];
     }
   }
@@ -438,13 +438,13 @@ export class SOC2MonitoringService {
         .eq('id', eventId);
 
       if (error) {
-        console.error('Error marking event as investigated:', error);
+
         return false;
       }
 
       return true;
     } catch (error) {
-      console.error('Exception marking event as investigated:', error);
+
       return false;
     }
   }
@@ -469,13 +469,13 @@ export class SOC2MonitoringService {
       });
 
       if (error) {
-        console.error('Error creating security event:', error);
+
         return false;
       }
 
       return true;
     } catch (error) {
-      console.error('Exception creating security event:', error);
+
       return false;
     }
   }
@@ -518,7 +518,7 @@ export class SOC2MonitoringService {
         trendDirection,
       };
     } catch (error) {
-      console.error('Exception getting executive summary:', error);
+
       return null;
     }
   }

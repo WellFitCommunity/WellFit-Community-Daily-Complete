@@ -17,7 +17,7 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
   const handleLanguageChange = (lang: Language) => {
     setLanguage(lang);
     // Optional: Show a toast notification
-    console.log(`Language changed to ${lang === 'en' ? 'English' : 'Español'}`);
+    // console.log(`Language changed to ${lang === 'en' ? 'English' : 'Español'}`);
   };
 
   return (

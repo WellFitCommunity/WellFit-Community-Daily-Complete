@@ -186,7 +186,7 @@ export class FHIREncounterWrapper {
       const billingEncounter = await EncounterService.getEncounter(encounterId);
       return this.toFHIR(billingEncounter);
     } catch (error) {
-      console.error('Failed to get FHIR encounter:', error);
+
       return null;
     }
   }
@@ -199,7 +199,7 @@ export class FHIREncounterWrapper {
       const billingEncounters = await EncounterService.getEncountersByPatient(patientId);
       return billingEncounters.map((enc) => this.toFHIR(enc));
     } catch (error) {
-      console.error('Failed to get patient encounters:', error);
+
       return [];
     }
   }
@@ -234,7 +234,7 @@ export class FHIREncounterWrapper {
 
       return fhirEncounters;
     } catch (error) {
-      console.error('Failed to search encounters:', error);
+
       return [];
     }
   }
@@ -298,7 +298,7 @@ export class FHIREncounterWrapper {
 
       return bundle;
     } catch (error) {
-      console.error('Failed to create encounter bundle:', error);
+
       return null;
     }
   }

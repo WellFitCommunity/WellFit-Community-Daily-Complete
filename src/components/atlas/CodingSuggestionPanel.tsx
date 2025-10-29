@@ -49,7 +49,7 @@ export const CodingSuggestionPanel: React.FC<CodingSuggestionPanelProps> = ({
           setSuggestions(parsed);
         }
       } catch (err) {
-        console.error('Failed to fetch coding suggestions:', err);
+
       } finally {
         setLoading(false);
       }

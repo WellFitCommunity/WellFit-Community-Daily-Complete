@@ -98,7 +98,7 @@ export class PTSessionService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('PTSessionService.createPTSession error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -138,7 +138,7 @@ export class PTSessionService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
-      console.error('PTSessionService.getSessionsByTreatmentPlan error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -160,7 +160,7 @@ export class PTSessionService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('PTSessionService.getSessionById error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -182,7 +182,7 @@ export class PTSessionService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
-      console.error('PTSessionService.getSessionsByPatient error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -206,7 +206,7 @@ export class PTSessionService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('PTSessionService.updateSession error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -236,7 +236,7 @@ export class PTSessionService {
 
       return { success: true };
     } catch (error: any) {
-      console.error('PTSessionService.requestCoSignature error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -263,7 +263,7 @@ export class PTSessionService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('PTSessionService.coSignSession error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -290,7 +290,7 @@ export class PTSessionService {
 
       return { success: true, data: total };
     } catch (error: any) {
-      console.error('PTSessionService.calculateTotalBillableUnits error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -320,7 +320,7 @@ export class PTSessionService {
 
       return { success: true, data: filtered };
     } catch (error: any) {
-      console.error('PTSessionService.getSessionsNeedingCoSignature error:', error);
+
       return { success: false, error: error.message };
     }
   }

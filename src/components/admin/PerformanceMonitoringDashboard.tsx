@@ -77,7 +77,7 @@ const PerformanceMonitoringDashboard: React.FC<PerformanceDashboardProps> = ({ c
         setMetrics(metricsData);
       }
     } catch (err) {
-      console.error('Failed to load monitoring data:', err);
+
     } finally {
       setLoading(false);
     }

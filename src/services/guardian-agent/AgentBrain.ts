@@ -11,7 +11,7 @@ import {
   AgentState,
   AgentConfig,
   KnowledgeEntry,
-  ErrorCategory,
+  // ErrorCategory,
   SeverityLevel,
   HealingStrategy,
   ErrorContext
@@ -457,7 +457,7 @@ export class AgentBrain {
       }
     } catch (error) {
       // Don't fail healing if alert sending fails
-      console.error('[Guardian Brain] Failed to send security alert:', error);
+
     }
   }
 

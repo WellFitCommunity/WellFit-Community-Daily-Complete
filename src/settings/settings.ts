@@ -47,7 +47,7 @@ export function assertClientSupabaseEnv() {
     if (IS_PROD) {
       // In production, log instead of throwing to avoid a blank screen.
       // eslint-disable-next-line no-console
-      console.error(msg);
+
       return;
     }
     throw new Error(msg);
@@ -88,7 +88,7 @@ try {
 } catch {
   if (!IS_PROD) {
     // eslint-disable-next-line no-console
-    console.warn("[FIREBASE] ./firebase not found; FIREBASE export is undefined in dev.");
+
   }
 }
 export const FIREBASE = FIREBASE_SAFE;

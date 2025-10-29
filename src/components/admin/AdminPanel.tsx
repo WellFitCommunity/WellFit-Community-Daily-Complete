@@ -219,7 +219,7 @@ const AdminPanel: React.FC = () => {
         pendingClaims: pendingClaims || 0
       });
     } catch (error) {
-      console.error('Error loading metrics:', error);
+
     } finally {
       setMetricsLoading(false);
     }
@@ -237,13 +237,13 @@ const AdminPanel: React.FC = () => {
 
     // Don't show if permanently dismissed
     if (permanentlyDismissed === 'true') {
-      console.log('[WhatsNew] Modal permanently dismissed by user');
+
       return;
     }
 
     if (lastSeenVersion !== currentVersion) {
       // Show after a short delay for better UX
-      console.log('[WhatsNew] Showing modal for version:', currentVersion);
+
       setTimeout(() => setShowWhatsNew(true), 1000);
     }
   }, []);

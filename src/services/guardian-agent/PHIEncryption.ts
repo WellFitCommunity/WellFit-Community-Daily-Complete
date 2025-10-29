@@ -342,7 +342,7 @@ export class PHIEncryption {
     const newKey = this.generateKeyForTenant(tenantId);
     this.keys.set(newKey.id, newKey);
 
-    console.log(`[PHI Encryption] Rotated key for tenant ${tenantId}: ${newKey.id}`);
+
 
     return newKey;
   }
@@ -444,7 +444,7 @@ export class PHIEncryption {
     this.auditLogs.push(log);
 
     // In production: Send to audit database
-    console.log('[PHI Encryption Audit]', log);
+
   }
 }
 

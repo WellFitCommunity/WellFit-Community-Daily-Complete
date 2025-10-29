@@ -73,11 +73,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
       if (cancelled) return;
 
       if (error) {
-        console.warn(
-          "[AuthGate] profiles read error (non-blocking):",
-          error.message,
-        );
-        return; // fail open: don’t break login
+        return; // fail open: don't break login
       }
 
       const p: ProfileRow = data || {};
@@ -132,6 +128,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, session?.access_token, location.pathname, navigate, supabase]);
 
   return <>{children}</>;

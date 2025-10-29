@@ -69,7 +69,6 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
   };
 
   const navigateTo = (path: string) => {
-    console.log('[AdminHeader] Navigating to:', path, 'as role:', adminRole);
     navigate(path);
   };
 

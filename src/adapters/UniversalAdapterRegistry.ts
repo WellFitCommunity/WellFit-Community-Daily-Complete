@@ -117,7 +117,7 @@ export class UniversalAdapterRegistry {
   getAdapter(id: string): EHRAdapter | null {
     const AdapterClass = this.adapters.get(id);
     if (!AdapterClass) {
-      console.error(`[Registry] Adapter not found: ${id}`);
+
       return null;
     }
     return new AdapterClass();
@@ -127,7 +127,7 @@ export class UniversalAdapterRegistry {
    * Auto-detect which adapter to use based on endpoint
    */
   async detectAdapter(endpoint: string): Promise<AdapterMetadata | null> {
-    console.log(`[Registry] Auto-detecting adapter for: ${endpoint}`);
+
 
     // Try FHIR capability statement first
     try {
@@ -141,27 +141,27 @@ export class UniversalAdapterRegistry {
 
         // Detect based on software name
         if (software.includes('epic')) {
-          console.log('[Registry] Detected: Epic FHIR');
+
           return this.getAdapter('epic-fhir')?.metadata || null;
         } else if (software.includes('cerner')) {
-          console.log('[Registry] Detected: Cerner FHIR');
+
           return this.getAdapter('cerner-fhir')?.metadata || null;
         } else if (software.includes('athena')) {
-          console.log('[Registry] Detected: Athenahealth FHIR');
+
           return this.getAdapter('athena-fhir')?.metadata || null;
         } else {
-          console.log('[Registry] Detected: Generic FHIR server');
+
           return this.getAdapter('generic-fhir')?.metadata || null;
         }
       }
     } catch (error) {
-      console.warn('[Registry] FHIR detection failed, trying HL7...');
+
     }
 
     // Check for HL7 v2 interface
     // (Would need actual HL7 connection test here)
 
-    console.warn('[Registry] Could not auto-detect adapter');
+
     return null;
   }
 
@@ -179,7 +179,7 @@ export class UniversalAdapterRegistry {
         return { success: false, error: `Adapter not found: ${adapterId}` };
       }
 
-      console.log(`[Registry] Connecting to ${adapter.metadata.name}...`);
+
       await adapter.connect(config);
 
       const testResult = await adapter.test();
@@ -190,10 +190,10 @@ export class UniversalAdapterRegistry {
       const connId = connectionId || `${adapterId}-${Date.now()}`;
       this.activeConnections.set(connId, adapter);
 
-      console.log(`[Registry] Connected successfully: ${connId}`);
+
       return { success: true, connection: adapter };
     } catch (error: any) {
-      console.error(`[Registry] Connection failed:`, error);
+
       return { success: false, error: error.message };
     }
   }
@@ -213,7 +213,7 @@ export class UniversalAdapterRegistry {
     if (adapter) {
       await adapter.disconnect();
       this.activeConnections.delete(connectionId);
-      console.log(`[Registry] Disconnected: ${connectionId}`);
+
     }
   }
 
@@ -221,7 +221,7 @@ export class UniversalAdapterRegistry {
    * Disconnect all active connections
    */
   async disconnectAll(): Promise<void> {
-    console.log(`[Registry] Disconnecting ${this.activeConnections.size} connections...`);
+
     const promises = Array.from(this.activeConnections.keys()).map((id) =>
       this.disconnect(id)
     );
@@ -280,21 +280,21 @@ export const adapterRegistry = UniversalAdapterRegistry.getInstance();
 
 // Helper function to quickly test an adapter
 export async function testAdapter(adapterId: string, config: AdapterConfig): Promise<void> {
-  console.log(`\n🔧 Testing Adapter: ${adapterId}\n`);
+
 
   const result = await adapterRegistry.connect(adapterId, config, 'test-connection');
 
   if (!result.success) {
-    console.error(`❌ Connection failed: ${result.error}`);
+
     return;
   }
 
   const adapter = result.connection!;
 
-  console.log(`✅ Connected to ${adapter.metadata.name}`);
-  console.log(`📋 Capabilities:`);
+
+
   Object.entries(adapter.metadata.capabilities).forEach(([key, value]) => {
-    console.log(`   ${value ? '✅' : '❌'} ${key}`);
+
   });
 
   // Try fetching a sample patient
@@ -302,9 +302,9 @@ export async function testAdapter(adapterId: string, config: AdapterConfig): Pro
     const patients = await adapter.fetchPatients({ limit: 1 });
     console.log(`✅ Sample data fetch successful (${patients.length} patients)`);
   } catch (error: any) {
-    console.warn(`⚠️  Sample data fetch failed: ${error.message}`);
+
   }
 
   await adapterRegistry.disconnect('test-connection');
-  console.log(`\n✅ Test complete!\n`);
+
 }

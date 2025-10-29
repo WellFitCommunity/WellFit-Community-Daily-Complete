@@ -72,7 +72,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
           .single();
 
         if (error && error.code !== 'PGRST116') {
-          console.error('Error loading admin settings:', error);
+
           return;
         }
 
@@ -102,7 +102,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
           });
         }
       } catch (error) {
-        console.error('Error loading admin settings:', error);
+
       } finally {
         setLoading(false);
       }
@@ -160,15 +160,15 @@ const AdminSettingsPanel: React.FC = memo(() => {
         .upsert(settingsData, { onConflict: 'user_id' });
 
       if (error) {
-        console.error('Failed to save settings:', error);
+
         alert('Failed to save settings. Please try again.');
         return;
       }
 
       setLastSaved(new Date());
-      console.log('Settings saved successfully:', settings);
+
     } catch (error) {
-      console.error('Failed to save settings:', error);
+
       alert('Failed to save settings. Please try again.');
     } finally {
       setSaving(false);

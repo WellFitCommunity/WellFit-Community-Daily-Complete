@@ -58,7 +58,7 @@ const TriviaGame: React.FC = () => {
         }
       }
     } catch (error) {
-      console.error("Error reading daily trivia from localStorage:", error);
+      // console.error("Error reading daily trivia from localStorage:", error);
       // Proceed to select new questions if localStorage is corrupt or inaccessible
     }
 
@@ -188,7 +188,7 @@ const TriviaGame: React.FC = () => {
 
           localStorage.setItem(TIME_TRACKING_KEY, JSON.stringify(timeData));
         } catch (error) {
-          console.error('Failed to save time tracking:', error);
+          // console.error('Failed to save time tracking:', error);
         }
 
         // ✅ SAVE TO DATABASE (the fix!)
@@ -211,9 +211,9 @@ const TriviaGame: React.FC = () => {
               questions_attempted: currentQuestions.map(q => q.id),
               completion_status: 'completed'
             });
-            console.log('✅ Trivia game result saved to database');
+            // console.log('✅ Trivia game result saved to database');
           } catch (error) {
-            console.error('Failed to save trivia result to database:', error);
+            // console.error('Failed to save trivia result to database:', error);
           }
         }
       }

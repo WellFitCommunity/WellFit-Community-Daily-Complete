@@ -57,7 +57,7 @@ export class FeeScheduleService {
       .single();
 
     if (error) {
-      console.error('Error fetching fee schedule:', error);
+
       return null;
     }
 
@@ -75,7 +75,7 @@ export class FeeScheduleService {
     // Get active fee schedule
     const feeSchedule = await this.getActiveFeeSchedule(payerType);
     if (!feeSchedule) {
-      console.warn(`No active fee schedule found for ${payerType}`);
+
       return null;
     }
 
@@ -89,7 +89,7 @@ export class FeeScheduleService {
       .single();
 
     if (error) {
-      console.warn(`Rate not found for code ${code}:`, error);
+
       return null;
     }
 
@@ -115,7 +115,7 @@ export class FeeScheduleService {
     // Get active fee schedule
     const feeSchedule = await this.getActiveFeeSchedule(payerType);
     if (!feeSchedule) {
-      console.warn(`No active fee schedule found for ${payerType}`);
+
       return ratesMap;
     }
 
@@ -128,7 +128,7 @@ export class FeeScheduleService {
       .in('code', codes);
 
     if (error) {
-      console.error('Error fetching code rates:', error);
+
       return ratesMap;
     }
 
@@ -226,7 +226,7 @@ export class FeeScheduleService {
         return rate.rate;
       }
     } catch (error) {
-      console.warn('Database lookup failed, using fallback rates', error);
+
     }
 
     // Fallback to hardcoded rates
@@ -253,7 +253,7 @@ export class FeeScheduleService {
       .single();
 
     if (error) {
-      console.error('Error upserting fee schedule:', error);
+
       return null;
     }
 
@@ -284,7 +284,7 @@ export class FeeScheduleService {
       .upsert(ratesToInsert, { onConflict: 'fee_schedule_id,code_type,code' });
 
     if (error) {
-      console.error('Error bulk upserting rates:', error);
+
       return false;
     }
 

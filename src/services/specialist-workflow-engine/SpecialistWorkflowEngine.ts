@@ -291,7 +291,7 @@ export class SpecialistWorkflowEngine {
       .insert(alert);
 
     if (error) {
-      console.error('[SpecialistWorkflowEngine] Failed to create alert:', error);
+
       return;
     }
 
@@ -314,7 +314,7 @@ export class SpecialistWorkflowEngine {
       .eq('is_active', true);
 
     if (error || !users || users.length === 0) {
-      console.error('[SpecialistWorkflowEngine] No users found for role:', rule.notifyRole);
+
       return;
     }
 

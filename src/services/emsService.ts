@@ -92,7 +92,7 @@ export async function createPrehospitalHandoff(
 
     return { data, error: null };
   } catch (err) {
-    console.error('[EMS Service] Error creating handoff:', err);
+
     return { data: null, error: err as Error };
   }
 }
@@ -116,7 +116,7 @@ export async function updatePrehospitalHandoff(
 
     return { data, error: null };
   } catch (err) {
-    console.error('[EMS Service] Error updating handoff:', err);
+
     return { data: null, error: err as Error };
   }
 }
@@ -136,7 +136,7 @@ export async function getIncomingPatients(
 
     return { data: data as IncomingPatient[], error: null };
   } catch (err) {
-    console.error('[EMS Service] Error fetching incoming patients:', err);
+
     return { data: null, error: err as Error };
   }
 }
@@ -166,7 +166,7 @@ export async function acknowledgeHandoff(
 
     return { data, error: null };
   } catch (err) {
-    console.error('[EMS Service] Error acknowledging handoff:', err);
+
     return { data: null, error: err as Error };
   }
 }
@@ -192,7 +192,7 @@ export async function markPatientArrived(
 
     return { data, error: null };
   } catch (err) {
-    console.error('[EMS Service] Error marking arrived:', err);
+
     return { data: null, error: err as Error };
   }
 }
@@ -223,7 +223,7 @@ export async function transferPatientToER(
 
     return { data, error: null };
   } catch (err) {
-    console.error('[EMS Service] Error transferring patient:', err);
+
     return { data: null, error: err as Error };
   }
 }

@@ -101,7 +101,7 @@ const HospitalAdapterManagementPanel: React.FC = () => {
         alert('Could not auto-detect adapter type. Please select manually or check the endpoint URL.');
       }
     } catch (error) {
-      console.error('Auto-detection failed:', error);
+
       alert('Auto-detection failed. Please check the endpoint URL and try again.');
     } finally {
       setDetecting(false);
@@ -193,7 +193,7 @@ const HospitalAdapterManagementPanel: React.FC = () => {
       alert('✅ Adapter connected successfully!');
       setShowAddDialog(false);
     } catch (error: any) {
-      console.error('Connection error:', error);
+
       alert(`❌ Connection failed: ${error.message}`);
     }
   };
@@ -213,7 +213,7 @@ const HospitalAdapterManagementPanel: React.FC = () => {
       loadConnectionStatuses();
       alert('Adapter disconnected successfully.');
     } catch (error: any) {
-      console.error('Disconnect error:', error);
+
       alert(`Failed to disconnect: ${error.message}`);
     }
   };

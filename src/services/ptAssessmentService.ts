@@ -105,7 +105,7 @@ export class PTAssessmentService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('PTAssessmentService.createPTAssessment error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -127,7 +127,7 @@ export class PTAssessmentService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
-      console.error('PTAssessmentService.getPTAssessments error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -149,7 +149,7 @@ export class PTAssessmentService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('PTAssessmentService.getPTAssessmentById error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -173,7 +173,7 @@ export class PTAssessmentService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('PTAssessmentService.updatePTAssessment error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -193,7 +193,7 @@ export class PTAssessmentService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('PTAssessmentService.calculateFunctionalImprovement error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -218,7 +218,7 @@ export class PTAssessmentService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('PTAssessmentService.getInitialEvaluation error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -243,7 +243,7 @@ export class PTAssessmentService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('PTAssessmentService.getDischargeEvaluation error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -272,7 +272,7 @@ export class PTAssessmentService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('PTAssessmentService.signAssessment error:', error);
+
       return { success: false, error: error.message };
     }
   }

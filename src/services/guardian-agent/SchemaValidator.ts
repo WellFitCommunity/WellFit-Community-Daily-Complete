@@ -408,7 +408,7 @@ export class SchemaLockedTool<TInput, TOutput> {
         output: outputValidation.data!,
       };
     } catch (error) {
-      console.error(`[SchemaValidator] ${this.toolName} execution failed:`, error);
+
       return {
         success: false,
         errors: [error instanceof Error ? error.message : String(error)],

@@ -6,7 +6,7 @@ import {
   DetectedIssue,
   HealingAction,
   HealingResult,
-  KnowledgeEntry,
+  // KnowledgeEntry,
   ErrorContext
 } from './types';
 
@@ -98,6 +98,7 @@ export class LearningSystem {
   private async analyzePattern(pattern: Pattern): Promise<void> {
     // Calculate overall success rate
     const successCount = pattern.outcomes.filter(o => o.success).length;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const successRate = successCount / pattern.outcomes.length;
 
     // Find best performing strategy
@@ -135,7 +136,8 @@ export class LearningSystem {
   private findSimilarPatterns(features: string[]): Pattern[] {
     const similar: Pattern[] = [];
 
-    for (const [_, pattern] of this.patterns) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    for (const [_key, pattern] of this.patterns) {
       const similarity = this.calculateSimilarity(features, pattern.features);
       if (similarity > 0.7) {
         similar.push(pattern);

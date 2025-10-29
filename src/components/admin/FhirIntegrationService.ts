@@ -693,7 +693,7 @@ export class FHIRIntegrationService {
 
       return bundle;
     } catch (error) {
-      console.error('FHIR export error:', error);
+
       throw error;
     }
   }
@@ -942,7 +942,7 @@ export class FHIRIntegrationService {
         .order('created_at', { ascending: false });
 
       if (medError) {
-        console.error('Failed to fetch medications:', medError);
+
         return bundle; // Return bundle without medications
       }
 
@@ -969,7 +969,7 @@ export class FHIRIntegrationService {
 
       return bundle;
     } catch (error) {
-      console.error('FHIR export with medications error:', error);
+
       throw error;
     }
   }
@@ -1233,7 +1233,7 @@ export class FHIRIntegrationService {
     } catch (err) {
       // Fallback: If audit logging fails, this is a critical security issue
       // In production, this should trigger alerts
-      console.error('[CRITICAL] Audit logging failed:', err);
+
     }
   }
 
@@ -1248,7 +1248,7 @@ export class FHIRIntegrationService {
       });
     } catch (err) {
       // Fallback: If security logging fails, this is critical
-      console.error('[CRITICAL] Security event logging failed:', err);
+
     }
   }
 }

@@ -66,7 +66,7 @@ const UpcomingAppointmentBanner: React.FC = () => {
           });
         }
       } catch (error) {
-        console.error('Error loading upcoming appointment:', error);
+
       }
     };
 

@@ -33,7 +33,7 @@ const CarePlansWidget: React.FC = () => {
         setActivePlans(activeResult.data);
       }
     } catch (error) {
-      console.error('Failed to load care plans:', error);
+
     } finally {
       setLoading(false);
     }

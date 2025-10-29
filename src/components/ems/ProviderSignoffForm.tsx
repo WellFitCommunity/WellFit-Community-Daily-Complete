@@ -80,7 +80,7 @@ const ProviderSignoffForm: React.FC<ProviderSignoffFormProps> = ({
         }
       }, 2000);
     } catch (err: any) {
-      console.error('Error submitting signoff:', err);
+
       setError(err.message || 'Failed to submit sign-off');
     } finally {
       setLoading(false);

@@ -47,7 +47,7 @@ export function ClearinghouseConfigPanel() {
         });
       }
     } catch (error) {
-      console.error('Error loading config:', error);
+
     }
   };
 
@@ -72,7 +72,7 @@ export function ClearinghouseConfigPanel() {
       setMessage('✅ Configuration saved securely in Vault!');
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {
-      console.error('Error saving config:', error);
+
       setMessage('❌ Error saving configuration');
     } finally {
       setSaving(false);

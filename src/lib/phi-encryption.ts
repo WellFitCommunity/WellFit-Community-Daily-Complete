@@ -43,7 +43,7 @@ export async function setPHIEncryptionKey(key?: string): Promise<void> {
       }
     }).catch(console.error); // Don't throw on logging failure
 
-    console.error('Failed to set PHI encryption key:', error);
+
     throw new Error('PHI encryption setup failed');
   }
 }
@@ -163,9 +163,9 @@ async function logSecurityEvent(event: {
 export async function initializePHIEncryption(): Promise<void> {
   try {
     await setPHIEncryptionKey();
-    console.log('✅ PHI encryption initialized');
+
   } catch (error) {
-    console.error('❌ PHI encryption initialization failed:', error);
+
     // In production, you might want to prevent app startup if encryption fails
   }
 }

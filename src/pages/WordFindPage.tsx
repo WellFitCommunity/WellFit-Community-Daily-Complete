@@ -293,11 +293,11 @@ const WordFind: React.FC = () => {
                   completion_status: 'completed',
                   puzzle_id: `${today}-${todayIndex}`
                 }).catch((error) => {
-                  console.error('Failed to save word game result to database:', error);
+
                 });
               }
             } catch (error) {
-              console.error('Failed to save time tracking:', error);
+
             }
           }
         }

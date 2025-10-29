@@ -54,7 +54,7 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
       );
       setUpcomingVisits(upcoming.filter(v => !today.find(t => t.id === v.id)));
     } catch (error) {
-      console.error('Failed to load visits:', error);
+
     } finally {
       setLoading(false);
     }
@@ -68,7 +68,7 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
       const status = await offlineSync.getSyncStatus();
       setSyncStatus(status);
     } catch (error) {
-      console.error('Failed to initialize offline sync:', error);
+
     }
   };
 
@@ -77,7 +77,7 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
       await fieldVisitManager.startVisit(visitId);
       window.location.href = `/specialist/visit/${visitId}`;
     } catch (error) {
-      console.error('Failed to start visit:', error);
+
       alert('Failed to start visit. Please try again.');
     }
   };
@@ -88,7 +88,7 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
       setSyncStatus(await offlineSync.getSyncStatus());
       alert(`Synced: ${result.visits} visits, ${result.assessments} assessments, ${result.photos} photos`);
     } catch (error) {
-      console.error('Sync failed:', error);
+
       alert('Sync failed. Will retry automatically.');
     }
   };

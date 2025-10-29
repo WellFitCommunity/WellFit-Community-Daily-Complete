@@ -25,7 +25,7 @@ const Dashboard: React.FC = () => {
         const role = userProfile?.role || '';
         const roleCode = userProfile?.role_code || 0;
 
-        console.log('[DashboardPage] User profile:', { role, roleCode, userId: user.id });
+
 
         // Staff role names and codes
         // Note: super_admin (role_code=1) is NOT redirected - they can access both dashboards
@@ -45,40 +45,40 @@ const Dashboard: React.FC = () => {
         const isSuperAdmin = role === 'super_admin' || roleCode === 1;
 
         if (isSuperAdmin) {
-          console.log('[Dashboard] Super admin accessing senior dashboard - allowing access');
+
           setLoading(false);
           return;
         }
 
         // Redirect OTHER staff to their appropriate dashboards
         if (adminRoles.includes(role) || adminRoleCodes.includes(roleCode)) {
-          console.log('[Dashboard] Admin detected - redirecting to admin panel');
+
           navigate('/admin', { replace: true });
           return;
         }
 
         // IMPORTANT: Check caregiver BEFORE nurse (in case of any role overlap)
         if (caregiverRoles.includes(role)) {
-          console.log('[Dashboard] Caregiver detected - redirecting to caregiver dashboard');
+
           navigate('/caregiver-dashboard', { replace: true });
           return;
         }
 
         if (nurseRoles.includes(role) || nurseRoleCodes.includes(roleCode)) {
-          console.log('[Dashboard] Nurse detected - redirecting to nurse dashboard');
+
           navigate('/nurse-dashboard', { replace: true });
           return;
         }
 
         if (physicianRoles.includes(role) || physicianRoleCodes.includes(roleCode)) {
-          console.log('[Dashboard] Physician detected - redirecting to physician dashboard');
+
           navigate('/physician-dashboard', { replace: true });
           return;
         }
 
-        console.log('[Dashboard] Senior/regular user detected - showing senior dashboard');
+
       } catch (e) {
-        console.warn('[Dashboard] fetchMyProfile failed:', (e as Error).message);
+        // Removed console statement.message);
       } finally {
         setLoading(false);
       }

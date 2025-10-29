@@ -4,7 +4,6 @@
  */
 
 export { GuardianAgent, getGuardianAgent } from './GuardianAgent';
-export { GuardianAgentDashboard } from '../../components/admin/GuardianAgentDashboard';
 
 // Export types for external use
 export type {

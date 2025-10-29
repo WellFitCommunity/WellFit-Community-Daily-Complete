@@ -8,7 +8,7 @@
  * @version 1.0.0
  */
 
-import Anthropic from '@anthropic-ai/sdk';
+import { loadAnthropicSDK } from './anthropicLoader';
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -102,16 +102,18 @@ const CONFIG = {
 // ============================================================================
 
 export class MedicationLabelReaderService {
-  private anthropic: Anthropic | null = null;
+  private anthropic: any = null;
   private apiKey: string | null = null;
 
   constructor(apiKey?: string) {
     this.apiKey = apiKey || process.env.REACT_APP_ANTHROPIC_API_KEY || null;
 
     if (this.apiKey) {
-      this.anthropic = new Anthropic({
-        apiKey: this.apiKey,
-        dangerouslyAllowBrowser: true // For client-side usage
+      loadAnthropicSDK().then((Anthropic: any) => {
+        this.anthropic = new Anthropic({
+          apiKey: this.apiKey,
+          dangerouslyAllowBrowser: true // For client-side usage
+        });
       });
     }
   }

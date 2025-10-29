@@ -84,7 +84,7 @@ export class ReadmissionTrackingService {
 
       return data;
     } catch (error: any) {
-      console.error('Failed to log readmission event:', error);
+
       throw new Error(`Readmission logging failed: ${error.message}`);
     }
   }
@@ -196,7 +196,7 @@ export class ReadmissionTrackingService {
       }
 
     } catch (error) {
-      console.error('High risk workflow trigger failed:', error);
+
       // Don't throw - we don't want to fail the readmission logging
     }
   }
@@ -283,7 +283,7 @@ Format as JSON with this structure:
       });
 
     } catch (error) {
-      console.error('Automated care plan generation failed:', error);
+
       // Create basic plan as fallback
       await supabase.from('care_coordination_plans').insert({
         patient_id: readmission.patient_id,
@@ -376,7 +376,7 @@ Format as JSON with this structure:
 
       return metrics;
     } catch (error: any) {
-      console.error('High utilizer identification failed:', error);
+
       throw new Error(`Failed to identify high utilizers: ${error.message}`);
     }
   }

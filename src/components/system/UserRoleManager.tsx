@@ -66,7 +66,7 @@ const UserRoleManager: React.FC = () => {
         .select('user_id, role');
 
       if (rolesError && rolesError.code !== 'PGRST116') {
-        console.warn('Could not load user_roles:', rolesError);
+
       }
 
       // Merge the data
@@ -80,7 +80,7 @@ const UserRoleManager: React.FC = () => {
       setUsers(usersWithRoles);
       setFilteredUsers(usersWithRoles);
     } catch (error) {
-      console.error('Error loading users:', error);
+
       setMessage({ type: 'error', text: 'Failed to load users' });
     } finally {
       setLoading(false);
@@ -142,7 +142,7 @@ const UserRoleManager: React.FC = () => {
       setSelectedRole('');
       await loadUsers();
     } catch (error: any) {
-      console.error('Error granting role:', error);
+
       setMessage({ type: 'error', text: error.message || 'Failed to grant role' });
     } finally {
       setActionLoading(false);
@@ -179,7 +179,7 @@ const UserRoleManager: React.FC = () => {
       setMessage({ type: 'success', text: `Successfully revoked ${role} role from ${userEmail}` });
       await loadUsers();
     } catch (error: any) {
-      console.error('Error revoking role:', error);
+
       setMessage({ type: 'error', text: error.message || 'Failed to revoke role' });
     } finally {
       setActionLoading(false);

@@ -189,7 +189,7 @@ const AdminTransferLogs: React.FC<AdminTransferLogsProps> = ({
 
       toast.success('Export completed successfully!');
     } catch (error: any) {
-      console.error('Export error:', error);
+
       toast.error(`Failed to export: ${error.message}`);
     } finally {
       setExporting(false);

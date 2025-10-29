@@ -184,7 +184,7 @@ export class EnhancedFhirService {
       };
 
     } catch (error) {
-      console.error('Enhanced patient data export error:', error);
+
       throw new Error(`Failed to export enhanced patient data: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -219,7 +219,7 @@ export class EnhancedFhirService {
       };
 
     } catch (error) {
-      console.error('Population dashboard generation error:', error);
+
       throw new Error(`Failed to generate population dashboard: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -242,7 +242,7 @@ export class EnhancedFhirService {
       };
 
     } catch (error) {
-      console.error('Clinical decision support error:', error);
+
       throw new Error(`Failed to generate clinical decision support: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -259,7 +259,7 @@ export class EnhancedFhirService {
       };
 
     } catch (error) {
-      console.error('Quality metrics assessment error:', error);
+
       throw new Error(`Failed to assess quality metrics: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -279,7 +279,7 @@ export class EnhancedFhirService {
           }
         }
       } catch (error) {
-        console.error('Real-time monitoring error:', error);
+
       }
     }, 60000); // Check every minute
   }
@@ -316,7 +316,7 @@ export class EnhancedFhirService {
       return { cleaned: cleanedCount, issues };
 
     } catch (error) {
-      console.error('Data validation error:', error);
+
       throw new Error(`Failed to validate and clean data: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -341,7 +341,7 @@ export class EnhancedFhirService {
       };
 
     } catch (error) {
-      console.error('Automated reports generation error:', error);
+
       throw new Error(`Failed to generate automated reports: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -377,7 +377,7 @@ export class EnhancedFhirService {
       return data;
 
     } catch (error) {
-      console.error('Error fetching comprehensive patient data:', error);
+
       throw error;
     }
   }
@@ -395,7 +395,7 @@ export class EnhancedFhirService {
           try {
             return await this.fetchComprehensivePatientData(profile.user_id);
           } catch (error) {
-            console.error(`Error fetching data for patient ${profile.user_id}:`, error);
+
             return { profile, checkIns: [], vitals: [], healthEntries: [] };
           }
         })
@@ -405,7 +405,7 @@ export class EnhancedFhirService {
       return populationData;
 
     } catch (error) {
-      console.error('Error fetching population data:', error);
+
       throw error;
     }
   }
@@ -867,7 +867,7 @@ export class EnhancedFhirService {
     for (const alert of alerts) {
       if (alert.severity === 'CRITICAL') {
         // In production, this would trigger actual emergency protocols
-        console.log(`CRITICAL ALERT for patient ${patientId}: ${alert.message}`);
+
 
         // Store alert in database
         await this.supabase.from('emergency_alerts').insert({
@@ -941,7 +941,7 @@ export class EnhancedFhirService {
   }> {
     try {
       // Simple demo implementation - will be enhanced later
-      console.log('Syncing SMART session:', smartSession);
+
       
       return {
         patientData: { id: 'demo-patient', name: 'Demo Patient' },
@@ -950,7 +950,7 @@ export class EnhancedFhirService {
       };
 
     } catch (error) {
-      console.error('SMART sync error:', error);
+
       throw new Error(`Failed to sync SMART data: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -958,7 +958,7 @@ export class EnhancedFhirService {
   // Helper method for future EHR integration
   private async syncPatientToWellFit(fhirPatient: any, observations: any[]): Promise<void> {
     // Placeholder for future implementation
-    console.log('Syncing patient to WellFit:', fhirPatient.id);
+
   }
 }
 

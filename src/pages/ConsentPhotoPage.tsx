@@ -104,7 +104,7 @@ const ConsentPhotoPage: React.FC = () => {
       // Move to the next step in your consent flow
       setTimeout(() => navigate('/consent-privacy'), 1200);
     } catch (err) {
-      console.error('Error saving photo consent data:', err);
+
       setError('An unexpected error occurred while saving your consent. Please try again.');
     } finally {
       setSubmitting(false);

@@ -55,7 +55,7 @@ export default function PhotoApprovalPage() {
 
       setPendingMoments(transformedData);
     } catch (error) {
-      console.error('Error fetching moments:', error);
+
     } finally {
       setLoading(false);
     }
@@ -79,7 +79,7 @@ export default function PhotoApprovalPage() {
       if (error) throw error;
       fetchMoments();
     } catch (error) {
-      console.error('Error approving moment:', error);
+
       alert('Failed to approve photo');
     }
   };
@@ -100,7 +100,7 @@ export default function PhotoApprovalPage() {
       if (error) throw error;
       fetchMoments();
     } catch (error) {
-      console.error('Error rejecting moment:', error);
+
       alert('Failed to reject photo');
     }
   };

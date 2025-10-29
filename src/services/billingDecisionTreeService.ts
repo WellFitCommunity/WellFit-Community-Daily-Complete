@@ -20,9 +20,9 @@ import type {
   MedicalNecessityCheck,
   EMDocumentationElements,
   DecisionTreeConfig,
-  CodingRule,
-  CPTLookupEntry,
-  ModifierLookupEntry
+  // CodingRule - unused type
+  // CPTLookupEntry - unused type
+  // ModifierLookupEntry - unused type
 } from '../types/billingDecisionTree';
 
 export class BillingDecisionTreeService {
@@ -266,7 +266,7 @@ export class BillingDecisionTreeService {
     input: DecisionTreeInput,
     decisions: DecisionNode[]
   ): Promise<EligibilityCheckResult> {
-    const nodeStart = Date.now();
+    const _nodeStart = Date.now();
 
     // Check patient eligibility in database
     const eligibility = await this.validateEligibility(input.patientId, input.payerId);

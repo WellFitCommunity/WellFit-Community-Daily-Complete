@@ -160,7 +160,7 @@ const TechTip: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error('Failed to log tech tip engagement:', error);
+
     }
 
     // Hide feedback message after 3 seconds

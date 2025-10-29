@@ -22,6 +22,7 @@ const CrossRoleContextModule: React.FC<Props> = ({ userRole, patientId, userId }
 
   useEffect(() => {
     loadContextEntries();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [patientId]);
 
   const loadContextEntries = async () => {
@@ -30,7 +31,7 @@ const CrossRoleContextModule: React.FC<Props> = ({ userRole, patientId, userId }
       const entries = await ClaudeCareAssistant.getCareContext(patientId);
       setContextEntries(entries);
     } catch (err) {
-      console.error('Failed to load care context:', err);
+
       setError('Failed to load care context');
     } finally {
       setLoading(false);
@@ -60,7 +61,7 @@ const CrossRoleContextModule: React.FC<Props> = ({ userRole, patientId, userId }
       setNewContext('');
       await loadContextEntries();
     } catch (err) {
-      console.error('Failed to share context:', err);
+
       setError('Failed to share context');
     } finally {
       setLoading(false);

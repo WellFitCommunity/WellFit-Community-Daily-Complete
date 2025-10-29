@@ -27,7 +27,7 @@ export function useFormDraftRecovery<T extends Record<string, any>>(
         return { ...initialData, ...parsed };
       }
     } catch (error) {
-      console.error('Failed to load form draft:', error);
+
     }
     return initialData;
   });
@@ -43,7 +43,7 @@ export function useFormDraftRecovery<T extends Record<string, any>>(
       const saved = localStorage.getItem(storageKey);
       setHasDraft(!!saved);
     } catch (error) {
-      console.error('Failed to check for draft:', error);
+
     }
   }, [storageKey, enabled]);
 
@@ -67,7 +67,7 @@ export function useFormDraftRecovery<T extends Record<string, any>>(
           setHasDraft(true);
         }
       } catch (error) {
-        console.error('Failed to save form draft:', error);
+
       }
     }, debounceMs);
 
@@ -85,7 +85,7 @@ export function useFormDraftRecovery<T extends Record<string, any>>(
       setLastSaved(null);
       setFormData(initialData);
     } catch (error) {
-      console.error('Failed to clear form draft:', error);
+
     }
   }, [storageKey, initialData]);
 
@@ -99,7 +99,7 @@ export function useFormDraftRecovery<T extends Record<string, any>>(
       }
       return false;
     } catch (error) {
-      console.error('Failed to restore draft:', error);
+
       return false;
     }
   }, [storageKey, initialData]);

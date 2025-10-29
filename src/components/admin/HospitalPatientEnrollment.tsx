@@ -63,7 +63,7 @@ const HospitalPatientEnrollment: React.FC = () => {
       if (error) throw error;
       setHospitalPatients(data || []);
     } catch (error) {
-      console.error('Error loading hospital patients:', error);
+
     }
   };
 

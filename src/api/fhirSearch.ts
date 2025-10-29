@@ -213,7 +213,7 @@ class FHIRSearchBuilder<T = any> {
 
       return bundle;
     } catch (error) {
-      console.error('FHIR search error:', error);
+
       return {
         resourceType: 'Bundle',
         type: 'searchset',

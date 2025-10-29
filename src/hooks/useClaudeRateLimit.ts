@@ -132,7 +132,7 @@ export function useClaudeRateLimit({
         });
       }
     } catch (error) {
-      console.warn('Failed to sync rate limits with server:', error);
+
     }
   }, [userId, rateLimitState.remaining]);
 

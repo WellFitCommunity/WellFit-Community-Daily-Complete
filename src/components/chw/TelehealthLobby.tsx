@@ -127,7 +127,7 @@ export const TelehealthLobby: React.FC<TelehealthLobbyProps> = ({
       }, 5000);
 
     } catch (err) {
-      console.error('Device test error:', err);
+
       setDeviceCheck({ camera: false, microphone: false, speakers: false });
     } finally {
       setTestingDevices(false);

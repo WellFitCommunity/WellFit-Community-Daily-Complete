@@ -135,7 +135,7 @@ export class ToolRegistry {
     this.tools.set(metadata.id, metadata);
     this.checksumCache.set(metadata.id, metadata.checksum);
 
-    console.log(`[ToolRegistry] Registered tool: ${metadata.name} v${metadata.version}`);
+
   }
 
   /**

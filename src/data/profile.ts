@@ -30,7 +30,7 @@ export async function fetchMyProfile(): Promise<Profile | null> {
     .maybeSingle(); // ✅ no exception when missing
   if (error) {
     // PGRST116 = no rows; treat as null
-    if ((error as any).code !== 'PGRST116') console.warn('[fetchMyProfile]', error.message);
+    if ((error as any).code !== 'PGRST116') // Removed console statement
     return null;
   }
   return (data as Profile) ?? null;
@@ -46,7 +46,7 @@ export async function upsertMyProfile(patch: Partial<Profile>): Promise<Profile 
     .select()
     .single();
   if (error) {
-    console.warn('[upsertMyProfile]', error.message);
+
     return null;
   }
   return data as Profile;
@@ -62,7 +62,7 @@ export async function updateMyProfile(patch: Partial<Profile>): Promise<Profile 
     .select()
     .single();
   if (error) {
-    console.warn('[updateMyProfile]', error.message);
+
     return null;
   }
   return data as Profile;

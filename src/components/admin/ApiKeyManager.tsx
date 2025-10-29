@@ -147,7 +147,7 @@ const ApiKeyManager: React.FC = () => {
         addToast('success', `Refreshed ${data.length} API keys`);
       }
     } catch (error) {
-      console.error('Error fetching API keys:', error);
+
       const message = error instanceof Error ? error.message : 'Unexpected error fetching API keys';
       addToast('error', message);
       setApiKeys([]);
@@ -211,7 +211,7 @@ const ApiKeyManager: React.FC = () => {
       );
 
       if (functionError) {
-        console.error('Supabase function error:', functionError);
+
 
         let displayError = `Error generating API key: ${functionError.message}`;
         try {
@@ -227,7 +227,7 @@ const ApiKeyManager: React.FC = () => {
       }
 
       if (!functionData?.api_key) {
-        console.error('Unexpected response from generate-api-key function:', functionData);
+
         throw new Error('API Key generation did not return a key. Please check function logs.');
       }
 
@@ -248,7 +248,7 @@ const ApiKeyManager: React.FC = () => {
 
       await fetchApiKeys(false);
     } catch (error) {
-      console.error('Client-side error calling generate-api-key function:', error);
+
       const message = error instanceof Error ? error.message : 'Unexpected error generating key';
       addToast('error', message);
     } finally {
@@ -278,7 +278,7 @@ const ApiKeyManager: React.FC = () => {
       addToast('success', `API key for "${orgName}" ${newStatus} successfully`);
       await fetchApiKeys(false);
     } catch (error) {
-      console.error('Error updating key status:', error);
+
       const message = error instanceof Error ? error.message : 'Unexpected error updating key status';
       addToast('error', message);
     } finally {
@@ -317,7 +317,7 @@ const ApiKeyManager: React.FC = () => {
       addToast('warning', `API key for "${orgName}" has been permanently revoked`);
       await fetchApiKeys(false);
     } catch (error) {
-      console.error('Error revoking key:', error);
+
       const message = error instanceof Error ? error.message : 'Unexpected error revoking key';
       addToast('error', message);
     } finally {
@@ -328,7 +328,7 @@ const ApiKeyManager: React.FC = () => {
   const copyToClipboard = async (text: string, label: string = 'API Key') => {
     // Input validation
     if (!text || typeof text !== 'string') {
-      console.error('Invalid text provided to copyToClipboard');
+
       addToast('error', 'Cannot copy empty value');
       return;
     }
@@ -361,7 +361,7 @@ const ApiKeyManager: React.FC = () => {
         }, 500);
       }
     } catch (error) {
-      console.error('Failed to copy to clipboard:', error);
+
 
       // Fallback: Provide manual copy instructions
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -383,7 +383,7 @@ const ApiKeyManager: React.FC = () => {
           return;
         }
       } catch (fallbackError) {
-        console.error('Fallback copy method failed:', fallbackError);
+
       }
 
       addToast('error', `Failed to copy: ${errorMessage}. Please copy manually.`);
@@ -532,7 +532,7 @@ const ApiKeyManager: React.FC = () => {
 
       addToast('success', `Exported ${exportData.length} API keys to ${filename}`);
     } catch (error) {
-      console.error('Export error:', error);
+
       addToast('error', 'Failed to export data to CSV');
     }
   };

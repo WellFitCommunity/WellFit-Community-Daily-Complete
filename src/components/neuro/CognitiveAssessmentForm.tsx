@@ -123,7 +123,7 @@ export const CognitiveAssessmentForm: React.FC<CognitiveAssessmentFormProps> = (
         alert(`Error saving assessment: ${response.error}`);
       }
     } catch (error) {
-      console.error('Error submitting cognitive assessment:', error);
+
       alert('Failed to save assessment');
     } finally {
       setSubmitting(false);

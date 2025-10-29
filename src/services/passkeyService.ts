@@ -228,7 +228,7 @@ export async function completePasskeyRegistration(
     return data;
 
   } catch (error: any) {
-    console.error('Passkey registration error:', error);
+
 
     if (error.name === 'NotAllowedError') {
       throw new Error('Registration was cancelled or timed out');
@@ -323,7 +323,7 @@ export async function completePasskeyAuthentication(
     return data;
 
   } catch (error: any) {
-    console.error('Passkey authentication error:', error);
+
 
     if (error.name === 'NotAllowedError') {
       throw new Error('Authentication was cancelled or timed out');

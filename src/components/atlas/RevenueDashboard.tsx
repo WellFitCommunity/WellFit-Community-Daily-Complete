@@ -36,6 +36,7 @@ export const RevenueDashboard: React.FC = () => {
 
   useEffect(() => {
     loadDashboard();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateRange]);
 
   const loadDashboard = async () => {
@@ -49,7 +50,7 @@ export const RevenueDashboard: React.FC = () => {
       setMetrics(metricsData);
       setOpportunities(opportunitiesData);
     } catch (error) {
-      console.error('Failed to load revenue dashboard:', error);
+
     } finally {
       setLoading(false);
     }

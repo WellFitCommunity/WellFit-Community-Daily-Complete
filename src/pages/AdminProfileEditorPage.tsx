@@ -60,7 +60,7 @@ const AdminProfileEditor: React.FC = () => {
         if (error) throw error;
         setProfiles((data as Profile[]) || []);
       } catch (err) {
-        console.error('Error fetching profiles:', err);
+
       } finally {
         setIsLoadingProfiles(false);
       }
@@ -97,7 +97,7 @@ const AdminProfileEditor: React.FC = () => {
         if (error) throw error;
         setNotes((data as AdminNote[]) || []);
       } catch (err) {
-        console.error(`Error fetching notes for ${selectedId}:`, err);
+
       } finally {
         setIsLoadingNotes(false);
       }

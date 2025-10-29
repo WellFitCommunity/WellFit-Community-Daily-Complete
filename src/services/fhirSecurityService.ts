@@ -143,7 +143,7 @@ export class ErrorSanitizer {
       });
     } catch (logError) {
       // Never let logging break the app
-      console.error('[CRITICAL] Error logging failed:', logError);
+
     }
   }
 }
@@ -326,10 +326,10 @@ export class AuditLogger {
       });
 
       if (error) {
-        console.error('[CRITICAL] Audit logging failed:', error);
+
       }
     } catch (error) {
-      console.error('[CRITICAL] Audit logging exception:', error);
+
     }
   }
 
@@ -398,13 +398,13 @@ export class RateLimiter {
       });
 
       if (error) {
-        console.error('Rate limit check failed:', error);
+
         return true; // Fail open (allow request)
       }
 
       return data === true;
     } catch (error) {
-      console.error('Rate limit exception:', error);
+
       return true; // Fail open
     }
   }

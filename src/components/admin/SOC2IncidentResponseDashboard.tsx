@@ -33,7 +33,7 @@ export const SOC2IncidentResponseDashboard: React.FC = () => {
       setIncidents(data);
       setLastRefresh(new Date());
     } catch (err) {
-      console.error('Error loading incidents:', err);
+
       setError('Failed to load incident response queue');
     } finally {
       setLoading(false);
@@ -47,6 +47,7 @@ export const SOC2IncidentResponseDashboard: React.FC = () => {
     const interval = setInterval(loadIncidents, 30000);
 
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleResolveIncident = async () => {
@@ -69,7 +70,7 @@ export const SOC2IncidentResponseDashboard: React.FC = () => {
         alert('Failed to resolve incident');
       }
     } catch (err) {
-      console.error('Error resolving incident:', err);
+
       alert('Error resolving incident');
     } finally {
       setSubmittingResolution(false);

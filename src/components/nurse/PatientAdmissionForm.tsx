@@ -52,7 +52,7 @@ export const PatientAdmissionForm: React.FC<PatientAdmissionFormProps> = ({
         }))
       );
     } catch (err) {
-      console.error('Failed to load patients:', err);
+
       setError('Failed to load patient list');
     }
   };

@@ -25,7 +25,7 @@ const HealthInsightsWidget: React.FC<HealthInsightsProps> = ({ healthData, onClo
   useEffect(() => {
     if (hasHealthData(healthData)) {
       generateInsights().catch(err => {
-        console.error('Failed to generate insights:', err);
+
         setInsights('Unable to generate insights at this time. Please try again later.');
       });
     }
@@ -57,7 +57,7 @@ const HealthInsightsWidget: React.FC<HealthInsightsProps> = ({ healthData, onClo
       setSuggestions(healthSuggestions.slice(0, 3));
 
     } catch (error) {
-      console.error('Error generating health insights:', error);
+
       // Use fallback insights when AI is unavailable
       setInsights(generateFallbackInsights(healthData));
       setSuggestions(['Keep tracking your health daily', 'Stay hydrated', 'Get adequate rest']);

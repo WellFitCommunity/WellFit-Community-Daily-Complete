@@ -75,7 +75,7 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
         if (onClose) onClose();
       }, 1500);
     } catch (err) {
-      console.error('DailyCheckinForm submit error:', err);
+
       setError(err instanceof Error ? err.message : 'Failed to save check-in. Please try again.');
     } finally {
       setIsSubmitting(false);

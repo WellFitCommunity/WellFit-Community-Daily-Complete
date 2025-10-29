@@ -102,7 +102,7 @@ export class CHWService {
       await supabase.from('phi_access_logs').insert(auditLog);
     } catch (error) {
       // CRITICAL: If audit logging fails, we should not proceed
-      console.error('[HIPAA AUDIT] Failed to log PHI access:', error);
+
       throw new Error('Audit logging failed. Cannot proceed with PHI operation for compliance reasons.');
     }
   }
@@ -122,13 +122,13 @@ export class CHWService {
       });
 
       if (error) {
-        console.error('[HIPAA Consent] Failed to verify consent:', error);
+
         return false;
       }
 
       return data === true;
     } catch (error) {
-      console.error('[HIPAA Consent] Consent verification error:', error);
+
       return false;
     }
   }
@@ -217,7 +217,7 @@ export class CHWService {
       return data as FieldVisit;
     } catch (error) {
       // Fallback to offline storage
-      console.warn('[CHWService] Saving visit offline:', error);
+
       await offlineSync.saveOffline('visits', visit);
       return visit as FieldVisit;
     }
@@ -293,11 +293,11 @@ export class CHWService {
           .insert(alerts);
 
         if (alertError) {
-          console.error('[CHWService] Failed to create alerts:', alertError);
+
         }
       }
     } catch (error) {
-      console.warn('[CHWService] Saving vitals offline:', error);
+
       await offlineSync.saveOffline('visits', visitUpdate);
       for (const alert of alerts) {
         await offlineSync.saveOffline('alerts', alert);
@@ -420,7 +420,7 @@ export class CHWService {
         });
       }
     } catch (error) {
-      console.warn('[CHWService] Saving medication photos offline:', error);
+
       await offlineSync.saveOffline('visits', photoData);
       for (const photo of encryptedPhotos) {
         await offlineSync.saveOffline('photos', {
@@ -507,7 +507,7 @@ export class CHWService {
         })
         .eq('id', visitId);
     } catch (error) {
-      console.warn('[CHWService] Saving SDOH assessment offline:', error);
+
       await offlineSync.saveOffline('assessments', assessment);
       for (const alert of alerts) {
         await offlineSync.saveOffline('alerts', alert);
@@ -563,7 +563,7 @@ export class CHWService {
 
       if (error) throw error;
     } catch (error) {
-      console.warn('[CHWService] Saving visit completion offline:', error);
+
       await offlineSync.saveOffline('visits', visitUpdate);
     }
   }
@@ -803,7 +803,7 @@ export class CHWService {
       }
     } catch (err) {
       // Silent fail - don't block user flow for logging failures
-      console.error('[Security Event] Exception:', err instanceof Error ? err.message : 'unknown');
+
     }
   }
 

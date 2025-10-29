@@ -136,7 +136,7 @@ const NurseQuestionManager: React.FC = () => {
       localStorage.setItem(draftKey, JSON.stringify(draft));
       setLastSaved(new Date());
     } catch (error) {
-      console.error('Autosave failed:', error);
+
     } finally {
       setAutoSaving(false);
     }
@@ -154,7 +154,7 @@ const NurseQuestionManager: React.FC = () => {
         return true;
       }
     } catch (error) {
-      console.error('Failed to load draft:', error);
+
     }
     return false;
   };
@@ -165,7 +165,7 @@ const NurseQuestionManager: React.FC = () => {
       localStorage.removeItem(draftKey);
       setLastSaved(null);
     } catch (error) {
-      console.error('Failed to clear draft:', error);
+
     }
   };
 
@@ -187,7 +187,7 @@ const NurseQuestionManager: React.FC = () => {
         }
       })));
     } catch (error) {
-      console.error('Failed to load questions:', error);
+
       setQuestions(mockQuestions);
     }
   };
@@ -279,7 +279,7 @@ Format your response as a clear, professional message that can be sent to the pa
 
       setAiSuggestion(aiSuggestion);
     } catch (error: any) {
-      console.error('AI suggestion failed:', error);
+
       // Provide helpful fallback message
       setAiSuggestion({
         response: `Unable to generate AI suggestion at this time. Error: ${error.message || 'Unknown error'}. Please provide a manual response based on your clinical judgment.`,
@@ -341,7 +341,7 @@ Format your response as a clear, professional message that can be sent to the pa
       setShowAiHelp(false);
 
     } catch (error) {
-      console.error('Failed to submit response:', error);
+
     } finally {
       setSubmitting(false);
     }
@@ -401,7 +401,7 @@ Format your response as a clear, professional message that can be sent to the pa
                   }
                 })));
               } catch (error) {
-                console.error('Failed to fetch queue:', error);
+
               }
             }}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -428,7 +428,7 @@ Format your response as a clear, professional message that can be sent to the pa
                   }
                 })));
               } catch (error) {
-                console.error('Failed to fetch my questions:', error);
+
               }
             }}
             className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
@@ -499,7 +499,7 @@ Format your response as a clear, professional message that can be sent to the pa
                     try {
                       await claimQuestion(question.id);
                     } catch (error) {
-                      console.error('Failed to claim question:', error);
+
                     }
                   }
                   selectQuestion(question);

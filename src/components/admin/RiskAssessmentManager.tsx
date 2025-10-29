@@ -67,7 +67,7 @@ const RiskAssessmentManager: React.FC = () => {
       setAssessments(enrichedAssessments);
 
     } catch (err) {
-      console.error('Error loading data:', err);
+
       setError(err instanceof Error ? err.message : 'Failed to load data');
     } finally {
       setLoading(false);

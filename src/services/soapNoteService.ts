@@ -196,7 +196,7 @@ export async function saveSOAPNote(
       .select('id');
 
     if (saveError) {
-      console.error('Error saving SOAP notes:', saveError);
+
       throw new Error(`Failed to save SOAP notes: ${saveError.message}`);
     }
 
@@ -209,7 +209,7 @@ export async function saveSOAPNote(
 
     return { success: true, note_ids };
   } catch (error) {
-    console.error('Error in saveSOAPNote:', error);
+
     throw error;
   }
 }
@@ -227,7 +227,7 @@ export async function getSOAPNote(
     .in('type', ['subjective', 'objective', 'assessment', 'plan', 'hpi', 'ros']);
 
   if (error) {
-    console.error('Error fetching SOAP note:', error);
+
     throw new Error(`Failed to fetch SOAP note: ${error.message}`);
   }
 
@@ -277,7 +277,7 @@ export async function updateSOAPNote(
           .eq('type', type);
 
         if (error) {
-          console.error(`Error updating ${type}:`, error);
+
           throw new Error(`Failed to update ${type}: ${error.message}`);
         }
       }
@@ -288,7 +288,7 @@ export async function updateSOAPNote(
 
     return { success: true };
   } catch (error) {
-    console.error('Error in updateSOAPNote:', error);
+
     throw error;
   }
 }
@@ -518,7 +518,7 @@ async function logSOAPNoteAccess(
       ip_address: 'server-side' // In production, capture real IP
     });
   } catch (error) {
-    console.error('Error logging SOAP note access:', error);
+
     // Don't throw - audit logging failure shouldn't break clinical workflow
   }
 }

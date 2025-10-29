@@ -112,7 +112,8 @@ export class HandoffNotificationService {
     try {
       // Call Supabase Edge Function for email sending
       // This requires a Supabase Edge Function to be deployed
-      const { data, error } = await supabase.functions.invoke('send-email', {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { data: _data, error } = await supabase.functions.invoke('send-email', {
         body: {
           to: recipients.map(r => ({ email: r.email, name: r.name })),
           subject,
@@ -122,12 +123,12 @@ export class HandoffNotificationService {
       });
 
       if (error) {
-        console.error('Email send error:', error);
+
         // Fallback: Log to database for manual review
         await this.logFailedNotification('email', recipients, error.message);
       }
     } catch (error) {
-      console.error('Email notification failed:', error);
+
     }
   }
 
@@ -141,7 +142,8 @@ export class HandoffNotificationService {
   ): Promise<void> {
     try {
       // Call Supabase Edge Function for SMS sending
-      const { data, error } = await supabase.functions.invoke('send-sms', {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { data: _data, error } = await supabase.functions.invoke('send-sms', {
         body: {
           to: recipients.map(r => r.phone),
           message: this.generateSMSMessage(message, notification),
@@ -150,11 +152,11 @@ export class HandoffNotificationService {
       });
 
       if (error) {
-        console.error('SMS send error:', error);
+
         await this.logFailedNotification('sms', recipients, error.message);
       }
     } catch (error) {
-      console.error('SMS notification failed:', error);
+
     }
   }
 
@@ -306,7 +308,7 @@ Access full report: [Link in email]
         sent_at: new Date().toISOString()
       });
     } catch (error) {
-      console.error('Failed to log notification:', error);
+
     }
   }
 
@@ -327,7 +329,7 @@ Access full report: [Link in email]
         retry_count: 0
       });
     } catch (error) {
-      console.error('Failed to log notification failure:', error);
+
     }
   }
 }

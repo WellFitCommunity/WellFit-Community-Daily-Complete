@@ -51,7 +51,7 @@ const DatabaseAdminPanel: React.FC = () => {
             .select('*', { count: 'exact', head: true });
 
           if (error) {
-            console.warn(`Could not get count for ${tableName}:`, error);
+
             return { table_name: tableName, row_count: 0, table_size: 'N/A' };
           }
 
@@ -72,7 +72,7 @@ const DatabaseAdminPanel: React.FC = () => {
         largest_tables: tableCounts.sort((a, b) => b.row_count - a.row_count).slice(0, 5)
       });
     } catch (error) {
-      console.error('Error loading database stats:', error);
+
       setMessage({ type: 'error', text: 'Failed to load database statistics' });
     } finally {
       setLoading(false);

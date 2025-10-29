@@ -111,7 +111,7 @@ const HealthHistory: React.FC = () => {
           throw new Error('Unable to load health data');
         }
       } catch (err: any) {
-        console.error('Error fetching health data:', err);
+
         setError('Unable to load your health history');
       } finally {
         setLoading(false);

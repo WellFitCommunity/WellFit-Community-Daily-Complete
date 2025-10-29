@@ -239,7 +239,7 @@ export default function CheckInTracker({ showBackButton = false }: CheckInTracke
         setGlucose('');
       }
     } catch (e: any) {
-      console.error('create-checkin error:', e);
+
       setInfoMessage({
         type: 'error',
         text: `Local save OK. Cloud save failed: ${e?.message || 'Unknown error'}`,

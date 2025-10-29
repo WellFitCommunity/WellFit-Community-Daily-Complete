@@ -51,7 +51,7 @@ export const KioskDashboard: React.FC<KioskDashboardProps> = ({
       const status = await chwService.getSyncStatus();
       setSyncStatus(status);
     } catch (err) {
-      console.error('Failed to load sync status:', err);
+
     }
   };
 
@@ -67,7 +67,7 @@ export const KioskDashboard: React.FC<KioskDashboardProps> = ({
       setLastSyncResult(result);
       await loadSyncStatus();
     } catch (err) {
-      console.error('Sync failed:', err);
+
     } finally {
       setSyncing(false);
     }

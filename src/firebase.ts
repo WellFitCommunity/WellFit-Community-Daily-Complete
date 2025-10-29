@@ -31,7 +31,7 @@ export function getFirebaseApp(): Maybe<FirebaseApp> {
   const cfg = FIREBASE as unknown as FirebaseClientConfig;
   if (!cfg?.apiKey || !cfg?.projectId || !cfg?.appId) {
     if (process.env.NODE_ENV !== 'production') {
-      console.warn('[firebase] Missing config envs; skipping Firebase init.');
+
     }
     return null;
   }

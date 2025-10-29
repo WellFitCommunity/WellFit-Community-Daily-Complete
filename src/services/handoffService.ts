@@ -4,7 +4,7 @@
 import { supabase } from '../lib/supabaseClient';
 import type {
   HandoffPacket,
-  HandoffSection,
+  // HandoffSection - unused type
   HandoffAttachment,
   HandoffLog,
   CreateHandoffPacketRequest,
@@ -75,7 +75,7 @@ export class HandoffService {
         access_url: accessUrl,
       };
     } catch (error: any) {
-      console.error('Error creating handoff packet:', error);
+
       throw new Error(`Failed to create handoff packet: ${error.message}`);
     }
   }
@@ -275,7 +275,7 @@ export class HandoffService {
               .eq('id', request.packet_id);
           }
         } catch (notifyError) {
-          console.error('Failed to send notification:', notifyError);
+
           // Don't fail the entire operation if notification fails
         }
       }
@@ -301,6 +301,7 @@ export class HandoffService {
         throw new Error('Must be authenticated to acknowledge packet');
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { data, error } = await supabase.rpc('acknowledge_handoff_packet', {
         packet_id: request.packet_id,
         acknowledger_id: user.id,
@@ -572,7 +573,7 @@ export class HandoffService {
       });
     } catch (error) {
       // Don't throw - logging errors shouldn't break main flow
-      console.error('Failed to log event:', error);
+
     }
   }
 
@@ -654,7 +655,7 @@ export class HandoffService {
       if (error) throw error;
       return encrypted || data; // Fallback to plaintext if encryption fails (logged in DB)
     } catch (error) {
-      console.error('PHI encryption error:', error);
+
       // In production, you may want to throw instead of fallback
       return data;
     }
@@ -674,7 +675,7 @@ export class HandoffService {
       if (error) throw error;
       return decrypted || encryptedData; // Fallback to showing encrypted if decryption fails
     } catch (error) {
-      console.error('PHI decryption error:', error);
+
       return encryptedData;
     }
   }

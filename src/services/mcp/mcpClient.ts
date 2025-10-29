@@ -73,7 +73,7 @@ export class MCPClient {
         this.initialized = true;
       }
     } catch (error) {
-      console.error('[MCP Client] Initialization failed:', error);
+
       throw new Error(`MCP initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -102,7 +102,7 @@ export class MCPClient {
               return parsed.access_token || '';
             }
           } catch (e) {
-            console.warn('[MCP] Could not retrieve auth token:', e);
+
           }
           return '';
         };
@@ -152,7 +152,7 @@ export class MCPClient {
       throw new Error('MCP client not initialized');
 
     } catch (error) {
-      console.error('[MCP Client] Tool call failed:', error);
+
       throw error;
     }
   }
@@ -184,7 +184,7 @@ export class MCPClient {
 
       return [] as any[];
     } catch (error) {
-      console.error('[MCP Client] List tools failed:', error);
+
       return [];
     }
   }

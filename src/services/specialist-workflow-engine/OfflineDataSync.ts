@@ -22,7 +22,7 @@ export class OfflineDataSync {
       request.onerror = () => reject(request.error);
       request.onsuccess = () => {
         this.db = request.result;
-        console.log('[OfflineDataSync] IndexedDB initialized');
+
         resolve();
       };
 
@@ -54,7 +54,7 @@ export class OfflineDataSync {
           alertStore.createIndex('synced', 'synced', { unique: false });
         }
 
-        console.log('[OfflineDataSync] IndexedDB schema created');
+
       };
     });
   }
@@ -83,7 +83,7 @@ export class OfflineDataSync {
       const request = store.put(enrichedData);
 
       request.onsuccess = () => {
-        console.log(`[OfflineDataSync] Saved to ${storeName}:`, data.id);
+
         resolve();
       };
       request.onerror = () => reject(request.error);
@@ -159,11 +159,11 @@ export class OfflineDataSync {
 
     // Also sync on network reconnection
     window.addEventListener('online', () => {
-      console.log('[OfflineDataSync] Network reconnected, syncing...');
+
       this.syncAll();
     });
 
-    console.log('[OfflineDataSync] Auto-sync started');
+
   }
 
   /**
@@ -173,7 +173,7 @@ export class OfflineDataSync {
     if (this.syncInterval) {
       clearInterval(this.syncInterval);
       this.syncInterval = null;
-      console.log('[OfflineDataSync] Auto-sync stopped');
+
     }
   }
 
@@ -208,11 +208,11 @@ export class OfflineDataSync {
       // Finally alerts
       result.alerts = await this.syncStore('alerts', 'specialist_alerts');
 
-      console.log('[OfflineDataSync] Sync complete:', result);
+
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       result.errors.push(errorMsg);
-      console.error('[OfflineDataSync] Sync failed:', error);
+
     }
 
     return result;
@@ -239,7 +239,7 @@ export class OfflineDataSync {
           .upsert(cleanData, { onConflict: 'id' });
 
         if (error) {
-          console.error(`[OfflineDataSync] Failed to sync ${storeName}:`, error);
+
           continue;
         }
 
@@ -247,7 +247,7 @@ export class OfflineDataSync {
         await this.markAsSynced(storeName, item.id);
         syncedCount++;
       } catch (error) {
-        console.error(`[OfflineDataSync] Error syncing ${storeName} item:`, error);
+
       }
     }
 
@@ -280,7 +280,7 @@ export class OfflineDataSync {
           });
 
         if (uploadError) {
-          console.error('[OfflineDataSync] Failed to upload photo:', uploadError);
+
           continue;
         }
 
@@ -296,14 +296,14 @@ export class OfflineDataSync {
         });
 
         if (updateError) {
-          console.error('[OfflineDataSync] Failed to link photo to visit:', updateError);
+
           continue;
         }
 
         await this.markAsSynced('photos', photo.id);
         syncedCount++;
       } catch (error) {
-        console.error('[OfflineDataSync] Error syncing photo:', error);
+
       }
     }
 
@@ -368,7 +368,7 @@ export class OfflineDataSync {
       };
     }
 
-    console.log('[OfflineDataSync] Synced data cleared');
+
   }
 
   /**

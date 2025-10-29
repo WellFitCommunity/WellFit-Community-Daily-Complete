@@ -115,9 +115,11 @@ export class GuardianAgent {
    */
   private scanConsoleLogs(): void {
     // Override console methods to scan for PHI
+    // eslint-disable-next-line no-console
     const originalConsoleLog = console.log;
     const agent = this;
 
+    // eslint-disable-next-line no-console
     console.log = function(...args) {
       // Scan arguments for PHI patterns
       const argsString = args.map(a =>

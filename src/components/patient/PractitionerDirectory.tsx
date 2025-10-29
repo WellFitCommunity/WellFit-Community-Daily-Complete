@@ -35,7 +35,7 @@ const PractitionerDirectory: React.FC<PractitionerDirectoryProps> = ({
       const data = await PractitionerService.getAll();
       setPractitioners(data);
     } catch (error) {
-      console.error('Failed to load practitioners:', error);
+
     }
     setLoading(false);
   };

@@ -20,6 +20,9 @@ import { DemoModeProvider } from './contexts/DemoModeContext';
 // Claude init
 import { claudeService } from './services/claudeService';
 
+// Guardian Agent init
+import { GuardianAgent } from './services/guardian-agent/GuardianAgent';
+
 function DemoModeBridge({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const id = user?.id ?? null;
@@ -37,14 +40,29 @@ function DemoModeBridge({ children }: { children: React.ReactNode }) {
 claudeService
   .initialize()
   .then(() => {
-    console.log('✅ Claude AI service initialized and ready');
+
   })
   .catch((error) => {
-    console.warn(
-      '⚠️ Claude AI service initialization failed (limited AI features):',
-      error?.message ?? error
-    );
+    // Claude AI service initialization failed (limited AI features)
   });
+
+// Initialize Guardian Agent - monitors app health, security, and auto-heals issues
+const guardianAgent = GuardianAgent.getInstance({
+  autoHealEnabled: true,
+  requireApprovalForCritical: false,
+  learningEnabled: true,
+  hipaaComplianceMode: true,
+  monitoringIntervalMs: 5000,
+  securityScanIntervalMs: 60000
+});
+
+// Start Guardian monitoring
+guardianAgent.start();
+
+// Expose Guardian to window for debugging
+if (typeof window !== 'undefined') {
+  (window as any).__guardianAgent = guardianAgent;
+}
 
 const root = createRoot(document.getElementById('root')!);
 
@@ -88,7 +106,7 @@ root.render(
  */
 register({
   onSuccess: () => {
-    console.log('[WellFit] Offline support ready.');
+
   },
   onUpdate: () => {
     // Proactive toast; user can reload immediately

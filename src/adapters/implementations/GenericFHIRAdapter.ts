@@ -39,7 +39,7 @@ export class GenericFHIRAdapter implements EHRAdapter {
     await this.authenticate(config);
 
     this.status = 'connected';
-    console.log(`[GenericFHIR] Connected to ${this.baseUrl}`);
+
   }
 
   async test(): Promise<{ success: boolean; message: string; details?: any }> {
@@ -66,7 +66,7 @@ export class GenericFHIRAdapter implements EHRAdapter {
 
   async disconnect(): Promise<void> {
     this.status = 'disconnected';
-    console.log('[GenericFHIR] Disconnected');
+
   }
 
   getConnectionStatus(): 'connected' | 'disconnected' | 'error' {

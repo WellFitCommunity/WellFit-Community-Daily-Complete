@@ -88,7 +88,7 @@ export const MedicationPhotoCapture: React.FC<MedicationPhotoCaptureProps> = ({
       }
     } catch (err) {
       setError(t.cameraError);
-      console.error('Camera error:', err);
+
     }
   };
 

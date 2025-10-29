@@ -80,7 +80,7 @@ export const FHIRConflictResolution: React.FC = () => {
 
       setConflicts(mappedConflicts);
     } catch (error) {
-      console.error('Failed to fetch conflicts:', error);
+
     } finally {
       setLoading(false);
     }
@@ -127,7 +127,7 @@ export const FHIRConflictResolution: React.FC = () => {
       await fetchConflicts();
       setSelectedConflict(null);
     } catch (error) {
-      console.error('Failed to resolve conflict:', error);
+
       alert('Failed to resolve conflict. Please try again.');
     } finally {
       setResolving(false);
@@ -144,25 +144,25 @@ export const FHIRConflictResolution: React.FC = () => {
     switch (action) {
       case 'use_fhir':
         // Update community data with FHIR data
-        console.log('Applying FHIR data to community database...');
+
         // TODO: Implement resource-specific update logic
         break;
 
       case 'use_community':
         // Keep community data, update sync log
-        console.log('Keeping community data, marking FHIR as synced...');
+
         // TODO: Update sync log
         break;
 
       case 'merge':
         // Merge both datasets
-        console.log('Merging FHIR and community data...');
+
         // TODO: Implement smart merge logic
         break;
 
       case 'manual':
         // Do nothing - admin will manually fix
-        console.log('Manual resolution selected - no automatic action');
+
         break;
     }
   };

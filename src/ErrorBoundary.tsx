@@ -31,7 +31,7 @@ class InnerErrorBoundary extends React.Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Your existing console
-    console.error('🔥 ErrorBoundary caught:', error, errorInfo);
+
     // Optional external reporter
     this.props.onError?.(error, errorInfo);
   }

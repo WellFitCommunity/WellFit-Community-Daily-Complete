@@ -34,7 +34,7 @@ function parseEnvironment() {
       REACT_APP_DEMO_ENABLED: process.env.REACT_APP_DEMO_ENABLED,
     });
   } catch (error) {
-    console.error('❌ Environment validation failed:', error);
+
     throw new Error(`Environment configuration error: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
@@ -46,7 +46,7 @@ export const env = parseEnvironment();
 export function validateEnvironment(): { success: boolean; message: string; details?: any } {
   try {
     const validatedEnv = parseEnvironment();
-    console.log('✅ Environment variables validated successfully');
+
 
     return {
       success: true,
@@ -61,7 +61,7 @@ export function validateEnvironment(): { success: boolean; message: string; deta
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown validation error';
-    console.error('❌ Environment validation failed:', errorMessage);
+
 
     return {
       success: false,

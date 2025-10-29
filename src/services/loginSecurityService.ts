@@ -31,7 +31,7 @@ export async function isAccountLocked(identifier: string): Promise<AccountLockou
     });
 
     if (error) {
-      console.error('[LoginSecurity] Error checking account lock status:', error);
+
       return { isLocked: false };
     }
 
@@ -63,7 +63,7 @@ export async function isAccountLocked(identifier: string): Promise<AccountLockou
 
     return { isLocked: data };
   } catch (err) {
-    console.error('[LoginSecurity] Unexpected error checking lock:', err);
+
     return { isLocked: false };
   }
 }
@@ -82,13 +82,13 @@ export async function getFailedLoginCount(
     });
 
     if (error) {
-      console.error('[LoginSecurity] Error getting failed login count:', error);
+
       return 0;
     }
 
     return data || 0;
   } catch (err) {
-    console.error('[LoginSecurity] Unexpected error getting failed count:', err);
+
     return 0;
   }
 }
@@ -115,10 +115,10 @@ export async function recordLoginAttempt(attempt: LoginAttemptData): Promise<voi
     });
 
     if (error) {
-      console.error('[LoginSecurity] Error recording login attempt:', error);
+
     }
   } catch (err) {
-    console.error('[LoginSecurity] Unexpected error recording attempt:', err);
+
   }
 }
 

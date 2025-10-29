@@ -57,7 +57,7 @@ export class UserBehaviorTracker {
         created_at: interaction.timestamp.toISOString()
       });
     } catch (error) {
-      console.error('Failed to track interaction:', error);
+
       // Fail silently - tracking should never break the app
     }
   }
@@ -123,7 +123,7 @@ export class UserBehaviorTracker {
       // Sort by frequency score
       return patterns.sort((a, b) => b.frequencyScore - a.frequencyScore);
     } catch (error) {
-      console.error('Failed to get user patterns:', error);
+
       return []; // Return empty array on error (no localStorage fallback)
     }
   }
@@ -156,7 +156,7 @@ export class UserBehaviorTracker {
         .delete()
         .eq('user_id', userId);
     } catch (error) {
-      console.error('Failed to clear user data:', error);
+
     }
   }
 }

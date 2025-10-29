@@ -32,13 +32,14 @@ const CoordinatedResponseDashboard: React.FC<CoordinatedResponseDashboardProps> 
 
     // Subscribe to real-time updates
     const subscription = subscribeToDepartmentDispatches(handoffId, (payload) => {
-      console.log('[Coordinated Response] Real-time update:', payload);
+
       loadDispatches(); // Reload on any change
     });
 
     return () => {
       subscription.unsubscribe();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [handoffId]);
 
   const loadDispatches = async () => {

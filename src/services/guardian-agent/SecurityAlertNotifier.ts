@@ -272,7 +272,7 @@ export class SecurityAlertNotifier {
         ],
       };
 
-      console.log('[SecurityAlertNotifier] 💬 Sending Slack notification:', slackMessage);
+
 
       // TODO: Send to Slack webhook
       // const response = await fetch(webhookUrl, {
@@ -325,7 +325,7 @@ export class SecurityAlertNotifier {
         },
       };
 
-      console.log('[SecurityAlertNotifier] 🚨 Sending PagerDuty notification:', pagerDutyEvent);
+
 
       // TODO: Send to PagerDuty Events API
       // const response = await fetch('https://events.pagerduty.com/v2/enqueue', {
@@ -367,7 +367,7 @@ export class SecurityAlertNotifier {
         channels: results,
       });
     } catch (error) {
-      console.error('[SecurityAlertNotifier] Failed to log notification attempt:', error);
+
     }
   }
 

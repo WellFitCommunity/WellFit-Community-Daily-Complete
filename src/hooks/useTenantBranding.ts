@@ -30,7 +30,7 @@ export function useTenantBranding() {
       const tenantBranding = await getCurrentTenantBranding();
       setBranding(tenantBranding);
     } catch (err) {
-      console.error('[useTenantBranding] Error loading branding:', err);
+
       setError(err instanceof Error ? err.message : 'Failed to load branding');
       setBranding(defaultBranding); // Fallback to default
     } finally {
@@ -73,7 +73,7 @@ export function useTenantBrandingBySubdomain(subdomain: string | null) {
         const tenantBranding = await fetchTenantBrandingBySubdomain(subdomain);
         setBranding(tenantBranding);
       } catch (err) {
-        console.error('[useTenantBrandingBySubdomain] Error:', err);
+
         setError(err instanceof Error ? err.message : 'Failed to load branding');
       } finally {
         setLoading(false);

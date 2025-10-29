@@ -51,7 +51,7 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
         setError(result.error || 'Failed to load immunization records.');
       }
     } catch (error: any) {
-      console.error('Failed to load immunizations:', error);
+
       setError(error?.message || 'Failed to load immunization records. Please try again later.');
     }
     setLoading(false);
@@ -64,7 +64,7 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
         setVaccineGaps(result.data);
       }
     } catch (error: any) {
-      console.error('Failed to load vaccine gaps:', error);
+
       // Don't set main error for vaccine gaps - it's not critical
     }
   };

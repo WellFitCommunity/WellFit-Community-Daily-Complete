@@ -58,7 +58,7 @@ export class LabResultVaultService {
 
       return parsedLabs;
     } catch (error) {
-      console.error('Lab PDF parsing error:', error);
+
       // Fallback: Use regex-based extraction for common formats
       return this.fallbackRegexParsing(file);
     }
@@ -71,7 +71,7 @@ export class LabResultVaultService {
   private static async fallbackRegexParsing(file: File): Promise<ParsedLabResult[]> {
     // This would use pdf.js or similar to extract text, then regex patterns
     // For MVP, return empty array - Claude AI is primary method
-    console.warn('Fallback parsing not implemented - Claude AI recommended');
+
     return [];
   }
 
@@ -105,9 +105,9 @@ export class LabResultVaultService {
 
       if (error) throw error;
 
-      console.log(`Stored ${labs.length} lab results in vault`);
+
     } catch (error) {
-      console.error('Failed to store labs in vault:', error);
+
     }
   }
 
@@ -140,7 +140,7 @@ export class LabResultVaultService {
 
       return data as ParsedLabResult[];
     } catch (error) {
-      console.error('Failed to get lab history:', error);
+
       return [];
     }
   }
@@ -331,7 +331,7 @@ export class LabResultVaultService {
 
       return data as ParsedLabResult[];
     } catch (error) {
-      console.error('Failed to auto-populate labs:', error);
+
       return [];
     }
   }

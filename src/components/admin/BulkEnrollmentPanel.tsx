@@ -34,7 +34,7 @@ interface BulkEnrollmentJob {
 const BulkEnrollmentPanel: React.FC = () => {
   const { adminRole } = useAdminAuth();
   const [enrollmentJob, setEnrollmentJob] = useState<BulkEnrollmentJob | null>(null);
-  const [csvData, setCsvData] = useState<string>('');
+  const [_csvData, setCsvData] = useState<string>('');
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [previewRecords, setPreviewRecords] = useState<EnrollmentRecord[]>([]);
   const [showPreview, setShowPreview] = useState(false);
@@ -351,7 +351,7 @@ Mary,Smith,+15551234568,mary.smith@email.com,1938-07-22,Bob Smith,+15559876544,D
         const { error } = await supabase.auth.admin.deleteUser(record.userId);
 
         if (error) {
-          console.error(`Failed to delete user ${record.userId}:`, error);
+
           rollbackErrors++;
         } else {
           rolledBackCount++;
@@ -364,7 +364,7 @@ Mary,Smith,+15551234568,mary.smith@email.com,1938-07-22,Bob Smith,+15559876544,D
           } : null);
         }
       } catch (error) {
-        console.error(`Rollback error for user ${record.userId}:`, error);
+
         rollbackErrors++;
       }
     }

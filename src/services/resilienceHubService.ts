@@ -66,7 +66,7 @@ export async function submitDailyCheckin(
     .single();
 
   if (error) {
-    console.error('ResilienceHubService.submitDailyCheckin error:', error);
+
     throw new Error(`Failed to submit check-in: ${error.message}`);
   }
 
@@ -95,7 +95,7 @@ export async function getMyCheckins(
     .order('checkin_date', { ascending: false });
 
   if (error) {
-    console.error('ResilienceHubService.getMyCheckins error:', error);
+
     throw new Error(`Failed to fetch check-ins: ${error.message}`);
   }
 
@@ -120,7 +120,7 @@ export async function hasCheckedInToday(): Promise<boolean> {
     .maybeSingle();
 
   if (error) {
-    console.error('ResilienceHubService.hasCheckedInToday error:', error);
+
     return false;
   }
 
@@ -140,7 +140,7 @@ export async function getStressTrend(): Promise<StressTrendAnalysis> {
   });
 
   if (error) {
-    console.error('ResilienceHubService.getStressTrend error:', error);
+
     throw new Error(`Failed to get stress trend: ${error.message}`);
   }
 
@@ -188,7 +188,7 @@ export async function submitBurnoutAssessment(
     .single();
 
   if (error) {
-    console.error('ResilienceHubService.submitBurnoutAssessment error:', error);
+
     throw new Error(`Failed to submit assessment: ${error.message}`);
   }
 
@@ -210,7 +210,7 @@ export async function getMyAssessments(): Promise<ProviderBurnoutAssessment[]> {
     .order('assessment_date', { ascending: false });
 
   if (error) {
-    console.error('ResilienceHubService.getMyAssessments error:', error);
+
     throw new Error(`Failed to fetch assessments: ${error.message}`);
   }
 
@@ -230,7 +230,7 @@ export async function getLatestBurnoutRisk(): Promise<BurnoutRiskLevel> {
   });
 
   if (error) {
-    console.error('ResilienceHubService.getLatestBurnoutRisk error:', error);
+
     return 'unknown';
   }
 
@@ -250,7 +250,7 @@ export async function checkInterventionNeeded(): Promise<boolean> {
   });
 
   if (error) {
-    console.error('ResilienceHubService.checkInterventionNeeded error:', error);
+
     return false;
   }
 
@@ -282,7 +282,7 @@ export async function getActiveModules(
   const { data, error } = await query;
 
   if (error) {
-    console.error('ResilienceHubService.getActiveModules error:', error);
+
     throw new Error(`Failed to fetch modules: ${error.message}`);
   }
 
@@ -321,7 +321,7 @@ export async function trackModuleStart(moduleId: string): Promise<void> {
   );
 
   if (error) {
-    console.error('ResilienceHubService.trackModuleStart error:', error);
+
     throw new Error(`Failed to track module start: ${error.message}`);
   }
 }
@@ -352,7 +352,7 @@ export async function trackModuleCompletion(
     .eq('module_id', moduleId);
 
   if (error) {
-    console.error('ResilienceHubService.trackModuleCompletion error:', error);
+
     throw new Error(`Failed to track completion: ${error.message}`);
   }
 }
@@ -372,7 +372,7 @@ export async function getMyCompletions(): Promise<ProviderTrainingCompletion[]> 
     .order('started_at', { ascending: false });
 
   if (error) {
-    console.error('ResilienceHubService.getMyCompletions error:', error);
+
     throw new Error(`Failed to fetch completions: ${error.message}`);
   }
 
@@ -410,7 +410,7 @@ export async function getResources(filters?: {
   const { data, error } = await query;
 
   if (error) {
-    console.error('ResilienceHubService.getResources error:', error);
+
     throw new Error(`Failed to fetch resources: ${error.message}`);
   }
 
@@ -430,7 +430,7 @@ export async function trackResourceView(resourceId: string): Promise<void> {
 
   // Note: If increment RPC doesn't exist, we can do manual update
   if (error) {
-    console.warn('ResilienceHubService.trackResourceView: RPC increment not available, using manual update');
+
 
     const { data: resource } = await supabase
       .from('resilience_resources')
@@ -470,7 +470,7 @@ export async function getMyCircles(): Promise<ProviderSupportCircle[]> {
     .eq('is_active', true);
 
   if (error) {
-    console.error('ResilienceHubService.getMyCircles error:', error);
+
     throw new Error(`Failed to fetch circles: ${error.message}`);
   }
 
@@ -495,7 +495,7 @@ export async function getCircleReflections(
     .limit(limit);
 
   if (error) {
-    console.error('ResilienceHubService.getCircleReflections error:', error);
+
     throw new Error(`Failed to fetch reflections: ${error.message}`);
   }
 
@@ -532,7 +532,7 @@ export async function postReflection(
     .single();
 
   if (error) {
-    console.error('ResilienceHubService.postReflection error:', error);
+
     throw new Error(`Failed to post reflection: ${error.message}`);
   }
 
@@ -557,7 +557,7 @@ export async function markReflectionHelpful(reflectionId: string): Promise<void>
       .eq('id', reflectionId);
 
     if (error) {
-      console.error('ResilienceHubService.markReflectionHelpful error:', error);
+
       throw new Error(`Failed to mark helpful: ${error.message}`);
     }
   }

@@ -68,7 +68,7 @@ export class PTTreatmentPlanService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('PTTreatmentPlanService.createTreatmentPlan error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -93,7 +93,7 @@ export class PTTreatmentPlanService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('PTTreatmentPlanService.getActiveTreatmentPlan error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -115,7 +115,7 @@ export class PTTreatmentPlanService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('PTTreatmentPlanService.getTreatmentPlanById error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -137,7 +137,7 @@ export class PTTreatmentPlanService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
-      console.error('PTTreatmentPlanService.getTreatmentPlans error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -185,7 +185,7 @@ export class PTTreatmentPlanService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('PTTreatmentPlanService.updateGoalProgress error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -205,7 +205,7 @@ export class PTTreatmentPlanService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('PTTreatmentPlanService.evaluateDischargeReadiness error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -241,7 +241,7 @@ export class PTTreatmentPlanService {
         },
       };
     } catch (error: any) {
-      console.error('PTTreatmentPlanService.getTreatmentPlanWithSessions error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -261,7 +261,7 @@ export class PTTreatmentPlanService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('PTTreatmentPlanService.incrementVisitsUsed error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -291,7 +291,7 @@ export class PTTreatmentPlanService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('PTTreatmentPlanService.updatePlanStatus error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -315,7 +315,7 @@ export class PTTreatmentPlanService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('PTTreatmentPlanService.updateTreatmentPlan error:', error);
+
       return { success: false, error: error.message };
     }
   }

@@ -133,7 +133,7 @@ const PatientWaitingRoomInner: React.FC<PatientWaitingRoomProps> = ({
         }));
       }
     } catch (error: any) {
-      console.error('Error joining room:', error);
+
       setRoomState((prev) => ({
         ...prev,
         isLoading: false,
@@ -213,7 +213,7 @@ const PatientWaitingRoomInner: React.FC<PatientWaitingRoomProps> = ({
 
       if (onCallEnded) onCallEnded();
     } catch (error) {
-      console.error('Error ending call:', error);
+
     }
   }, [daily, onCallEnded]);
 

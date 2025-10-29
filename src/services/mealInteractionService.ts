@@ -41,12 +41,12 @@ export async function submitMealInteraction(
       .single();
 
     if (error) {
-      console.error('Failed to submit meal interaction:', error);
+
     }
 
     return { data, error };
   } catch (err) {
-    console.error('Exception submitting meal interaction:', err);
+
     return { data: null, error: err };
   }
 }
@@ -71,7 +71,7 @@ export async function uploadMealPhoto(
       });
 
     if (uploadError) {
-      console.error('Failed to upload meal photo:', uploadError);
+
       return { data: null, error: uploadError };
     }
 
@@ -94,13 +94,13 @@ export async function uploadMealPhoto(
       .single();
 
     if (error) {
-      console.error('Failed to update meal interaction with photo:', error);
+
       return { data: null, error };
     }
 
     return { data, error: null };
   } catch (err) {
-    console.error('Exception uploading meal photo:', err);
+
     return { data: null, error: err };
   }
 }
@@ -124,12 +124,12 @@ export async function getUserMealInteraction(
       .maybeSingle();
 
     if (error) {
-      console.error('Failed to get user meal interaction:', error);
+
     }
 
     return { data, error };
   } catch (err) {
-    console.error('Exception getting user meal interaction:', err);
+
     return { data: null, error: err };
   }
 }
@@ -150,12 +150,12 @@ export async function getUserPlannedMeals(
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Failed to get planned meals:', error);
+
     }
 
     return { data: data || [], error };
   } catch (err) {
-    console.error('Exception getting planned meals:', err);
+
     return { data: [], error: err };
   }
 }
@@ -180,12 +180,12 @@ export async function getAllMealPhotos(
       .order('photo_uploaded_at', { ascending: false });
 
     if (error) {
-      console.error('Failed to get meal photos:', error);
+
     }
 
     return { data: data || [], error };
   } catch (err) {
-    console.error('Exception getting meal photos:', err);
+
     return { data: [], error: err };
   }
 }

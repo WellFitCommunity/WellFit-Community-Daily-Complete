@@ -14,7 +14,7 @@ const LogoutPage: React.FC = () => {
       try {
         await supabase.auth.signOut(); // await to ensure state is clean
       } catch (e) {
-        console.warn('[logout] signOut failed:', (e as Error)?.message);
+        // Removed console statement?.message);
       } finally {
         try {
           localStorage.removeItem('wellfitPhone');

@@ -76,7 +76,7 @@ const SmartCallbackPage: React.FC = () => {
         }, 3000);
 
       } catch (error) {
-        console.error('SMART callback error:', error);
+
         setStatus('error');
         setMessage(error instanceof Error ? error.message : 'Unknown error occurred');
       }

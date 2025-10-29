@@ -45,7 +45,7 @@ export const useRealtimeCoding = (encounterId?: string) => {
         setRecommendations(data || []);
       } catch (err: any) {
         setError(err.message || 'Failed to fetch coding recommendations');
-        console.error('useRealtimeCoding error:', err);
+
       } finally {
         setLoading(false);
       }
@@ -65,7 +65,7 @@ export const useRealtimeCoding = (encounterId?: string) => {
           filter: `encounter_id=eq.${encounterId}`,
         },
         (payload) => {
-          console.log('Coding recommendation updated:', payload);
+
           fetchRecommendations();
         }
       )

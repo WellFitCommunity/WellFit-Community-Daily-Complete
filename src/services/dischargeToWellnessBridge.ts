@@ -146,7 +146,7 @@ export class DischargeToWellnessBridgeService {
 
       return { success: true, data: response };
     } catch (error: any) {
-      console.error('Wellness enrollment failed:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -204,7 +204,7 @@ Questions? Call your care coordinator anytime.`;
 
       return { success: true, data: true };
     } catch (error: any) {
-      console.error('Invitation sending failed:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -335,7 +335,7 @@ Questions? Call your care coordinator anytime.`;
 
       return { success: true, data: result };
     } catch (error: any) {
-      console.error('Check-in analysis failed:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -484,7 +484,7 @@ Provide a 2-3 sentence clinical summary. Focus on:
       const aiResponse = await claudeService.generateMedicalAnalytics(prompt, [], context);
       return aiResponse.content;
     } catch (error) {
-      console.error('AI summary generation failed:', error);
+
       return `Patient check-in shows ${riskAnalysis.overall_risk_level} risk. ${riskAnalysis.warning_signs_detected.length > 0 ? `Concerns detected: ${riskAnalysis.warning_signs_detected.join(', ')}` : 'No major concerns detected.'}`;
     }
   }
@@ -513,7 +513,7 @@ Provide a 2-3 sentence clinical summary. Focus on:
         status: 'active',
       });
     } catch (error) {
-      console.error('Care team notification failed:', error);
+
     }
   }
 
@@ -636,7 +636,7 @@ Provide a 2-3 sentence clinical summary. Focus on:
 
       return { success: true, data: null }; // Screening sent, no result yet
     } catch (error: any) {
-      console.error('Mental health trigger check failed:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -701,7 +701,7 @@ Takes only 2 minutes. Your responses help your care team support you better.`;
         });
       }
     } catch (error) {
-      console.error('Screening send failed:', error);
+
     }
   }
 
@@ -771,7 +771,7 @@ Takes only 2 minutes. Your responses help your care team support you better.`;
 
       return { success: true, data: metrics };
     } catch (error: any) {
-      console.error('Dashboard retrieval failed:', error);
+
       return { success: false, error: error.message };
     }
   }

@@ -54,7 +54,7 @@ const ResetPasswordPage: React.FC = () => {
         setTimeout(() => navigate('/login', { replace: true }), 5000);
       }
     } catch (e: unknown) {
-      console.error('Reset password error:', e);
+
       setErr('Could not send reset email. Please try again.');
     } finally {
       setBusy(false);

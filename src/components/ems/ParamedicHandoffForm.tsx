@@ -87,7 +87,7 @@ const ParamedicHandoffForm: React.FC = () => {
         resetForm();
       }, 3000);
     } catch (err: any) {
-      console.error('Error submitting handoff:', err);
+
       setError(err.message || 'Failed to send handoff');
     } finally {
       setLoading(false);

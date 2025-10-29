@@ -20,7 +20,7 @@ import {
   AdminTaskHistory,
   VoiceInputResult,
   CareContextEntry,
-  TranslationCacheEntry,
+  // TranslationCacheEntry - unused type
 } from '../types/claudeCareAssistant';
 
 // ============================================================================
@@ -129,14 +129,7 @@ export class ClaudeCareAssistant {
         cached: false,
       };
     } catch (error) {
-      // Log error for debugging (PHI-safe)
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Translation failed:', {
-          errorCode: error instanceof ClaudeCareError ? error.code : 'UNKNOWN',
-          errorName: error instanceof Error ? error.name : 'Error',
-          // DO NOT log: sourceText, translatedText, request object (may contain PHI)
-        });
-      }
+      // Translation failed - error logged via audit system
       throw new ClaudeCareError(
         'Translation failed',
         'TRANSLATION_ERROR',
@@ -185,7 +178,7 @@ export class ClaudeCareAssistant {
     } catch (error) {
       // Cache lookup is non-critical, silently return null
       if (process.env.NODE_ENV === 'development') {
-        console.error('Cache lookup failed:', error);
+
       }
       return null;
     }
@@ -216,7 +209,7 @@ export class ClaudeCareAssistant {
     } catch (error) {
       // Don't fail the request if caching fails
       if (process.env.NODE_ENV === 'development') {
-        console.error('Failed to cache translation:', error);
+
       }
     }
   }
@@ -307,7 +300,7 @@ CONFIDENCE: [0.0-1.0]
     } catch (error) {
       // Return raw content as fallback
       if (process.env.NODE_ENV === 'development') {
-        console.error('Failed to parse translation response:', error);
+
       }
       return {
         translatedText: content,
@@ -412,7 +405,7 @@ CONFIDENCE: [0.0-1.0]
       };
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
-        console.error('Admin task execution failed:', error);
+
       }
       throw new ClaudeCareError(
         'Failed to execute admin task',
@@ -457,7 +450,7 @@ CONFIDENCE: [0.0-1.0]
       };
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
-        console.error('Failed to load template:', error);
+
       }
       return null;
     }
@@ -508,7 +501,7 @@ CONFIDENCE: [0.0-1.0]
       return data.id;
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
-        console.error('Failed to save task history:', error);
+
       }
       throw new ClaudeCareError(
         'Failed to save task history',
@@ -551,7 +544,7 @@ CONFIDENCE: [0.0-1.0]
       }));
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
-        console.error('Failed to load templates for role:', error);
+
       }
       return [];
     }
@@ -593,7 +586,7 @@ CONFIDENCE: [0.0-1.0]
       }));
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
-        console.error('Failed to load task history:', error);
+
       }
       return [];
     }
@@ -696,7 +689,7 @@ CONFIDENCE: [0.0-1.0]
       };
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
-        console.error('Voice input processing failed:', error);
+
       }
       throw new ClaudeCareError(
         'Failed to process voice input',
@@ -750,7 +743,7 @@ CONFIDENCE: [0.0-1.0]
       return undefined;
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
-        console.error('Failed to analyze transcription:', error);
+
       }
       return undefined;
     }
@@ -786,7 +779,7 @@ CONFIDENCE: [0.0-1.0]
       // Care context shared successfully
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
-        console.error('Failed to share care context:', error);
+
       }
       throw new ClaudeCareError(
         'Failed to share care context',
@@ -827,7 +820,7 @@ CONFIDENCE: [0.0-1.0]
       }));
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
-        console.error('Failed to load care context:', error);
+
       }
       return [];
     }

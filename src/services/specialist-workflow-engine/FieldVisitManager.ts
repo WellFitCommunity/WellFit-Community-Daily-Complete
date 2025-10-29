@@ -14,7 +14,7 @@ export class FieldVisitManager {
   async getCurrentLocation(): Promise<GeolocationCoordinates | null> {
     return new Promise((resolve) => {
       if (!navigator.geolocation) {
-        console.warn('[FieldVisitManager] Geolocation not supported');
+
         resolve(null);
         return;
       }
@@ -22,7 +22,7 @@ export class FieldVisitManager {
       navigator.geolocation.getCurrentPosition(
         (position) => resolve(position.coords),
         (error) => {
-          console.error('[FieldVisitManager] Location error:', error);
+
           resolve(null);
         },
         {
@@ -114,7 +114,7 @@ export class FieldVisitManager {
     });
 
     if (geoError) {
-      console.error('[FieldVisitManager] Service area check failed:', geoError);
+
       return true; // Fail open for now
     }
 
@@ -273,7 +273,7 @@ export class FieldVisitManager {
       .single();
 
     if (error) {
-      console.error('[FieldVisitManager] Failed to fetch visit:', error);
+
       return null;
     }
 

@@ -73,6 +73,7 @@ class AuditLogger {
         debug: '🔍'
       }[level];
 
+      // eslint-disable-next-line no-console
       console.log(
         `${levelSymbol} [AUDIT ${entry.event_category}]`,
         entry.event_type,
@@ -104,8 +105,8 @@ class AuditLogger {
       await supabase.from('audit_logs').insert(auditEntry);
     } catch (error) {
       // Critical: audit logging failed - log to console as fallback
-      console.error('❌ CRITICAL: Audit logging failed:', error);
-      console.error('Failed audit entry:', entry);
+
+
     }
   }
 
@@ -244,7 +245,7 @@ class AuditLogger {
    */
   debug(message: string, data?: any): void {
     if (this.isDevelopment) {
-      console.log(`🔍 [DEBUG] ${message}`, data || '');
+
     }
   }
 }

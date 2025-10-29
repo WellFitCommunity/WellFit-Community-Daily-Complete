@@ -58,7 +58,7 @@ export const PasskeySetup: React.FC<PasskeySetupProps> = ({
       const creds = await getUserPasskeys();
       setCredentials(creds);
     } catch (err: any) {
-      console.error('Failed to load credentials:', err);
+
     }
   };
 
@@ -85,7 +85,7 @@ export const PasskeySetup: React.FC<PasskeySetupProps> = ({
         onSuccess();
       }
     } catch (err: any) {
-      console.error('Registration failed:', err);
+
       setError(err.message || 'Failed to register biometric authentication');
     } finally {
       setLoading(false);
@@ -103,7 +103,7 @@ export const PasskeySetup: React.FC<PasskeySetupProps> = ({
       setSuccess('Biometric authentication removed');
       await loadCredentials();
     } catch (err: any) {
-      console.error('Delete failed:', err);
+
       setError(err.message || 'Failed to remove biometric authentication');
     }
   };

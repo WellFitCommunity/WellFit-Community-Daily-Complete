@@ -117,13 +117,13 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       });
 
       if (error) {
-        console.error('Error fetching access scopes:', error);
+
         return null;
       }
 
       return data as RoleAccessScopes;
     } catch (e) {
-      console.error('Failed to fetch access scopes:', e);
+
       return null;
     }
   }, []);

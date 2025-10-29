@@ -119,7 +119,7 @@ export class PhysicalTherapyService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('PhysicalTherapyService.createAssessment error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -141,7 +141,7 @@ export class PhysicalTherapyService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
-      console.error('PhysicalTherapyService.getAssessmentsByPatient error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -163,7 +163,7 @@ export class PhysicalTherapyService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('PhysicalTherapyService.getAssessmentById error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -193,7 +193,7 @@ export class PhysicalTherapyService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('PhysicalTherapyService.updateAssessment error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -243,7 +243,7 @@ export class PhysicalTherapyService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('PhysicalTherapyService.createTreatmentPlan error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -268,7 +268,7 @@ export class PhysicalTherapyService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('PhysicalTherapyService.getActiveTreatmentPlan error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -290,7 +290,7 @@ export class PhysicalTherapyService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('PhysicalTherapyService.getTreatmentPlanById error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -335,7 +335,7 @@ export class PhysicalTherapyService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('PhysicalTherapyService.updateGoalProgress error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -355,7 +355,7 @@ export class PhysicalTherapyService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('PhysicalTherapyService.evaluateDischargeReadiness error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -424,7 +424,7 @@ export class PhysicalTherapyService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('PhysicalTherapyService.recordSession error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -446,7 +446,7 @@ export class PhysicalTherapyService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
-      console.error('PhysicalTherapyService.getSessionsByTreatmentPlan error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -484,7 +484,7 @@ export class PhysicalTherapyService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('PhysicalTherapyService.requestCoSignature error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -513,7 +513,7 @@ export class PhysicalTherapyService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('PhysicalTherapyService.coSignSession error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -557,7 +557,7 @@ export class PhysicalTherapyService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('PhysicalTherapyService.assignHEP error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -582,7 +582,7 @@ export class PhysicalTherapyService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('PhysicalTherapyService.getActiveHEP error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -649,7 +649,7 @@ export class PhysicalTherapyService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('PhysicalTherapyService.recordOutcomeMeasure error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -677,7 +677,7 @@ export class PhysicalTherapyService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
-      console.error('PhysicalTherapyService.getOutcomeMeasures error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -701,7 +701,7 @@ export class PhysicalTherapyService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
-      console.error('PhysicalTherapyService.getTherapistCaseload error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -721,7 +721,7 @@ export class PhysicalTherapyService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('PhysicalTherapyService.calculateFunctionalImprovement error:', error);
+
       return { success: false, error: error.message };
     }
   }

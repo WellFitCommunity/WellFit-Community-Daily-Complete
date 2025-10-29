@@ -116,7 +116,7 @@ const LiteSenderPortal: React.FC<LiteSenderPortalProps> = ({
         toast.info('No previous transfer found for this MRN. Please enter patient information.');
       }
     } catch (error) {
-      console.error('Error looking up patient:', error);
+
       toast.info('No previous transfer found. Please enter patient information.');
     } finally {
       setIsLookingUpPatient(false);
@@ -254,7 +254,7 @@ const LiteSenderPortal: React.FC<LiteSenderPortalProps> = ({
         onPacketCreated(packet, access_url);
       }
     } catch (error: any) {
-      console.error('Error submitting handoff:', error);
+
       toast.error(`Failed to submit: ${error.message}`);
     } finally {
       setIsSubmitting(false);

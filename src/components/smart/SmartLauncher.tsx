@@ -34,7 +34,7 @@ const SmartLauncher: React.FC<SmartLauncherProps> = ({ onLaunch }) => {
       window.location.href = authUrl;
 
     } catch (error) {
-      console.error('SMART launch error:', error);
+
       setError(error instanceof Error ? error.message : 'Failed to launch SMART app');
       setLaunching(null);
     }

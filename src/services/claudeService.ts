@@ -1,5 +1,5 @@
 // Enhanced Claude AI Service for WellFit Community - Production Ready Implementation
-import Anthropic from '@anthropic-ai/sdk';
+import { loadAnthropicSDK } from './anthropicLoader';
 import { env, validateEnvironment } from '../config/environment';
 import {
   UserRole,
@@ -129,7 +129,7 @@ class CostTracker {
     const percentUsed = (currentSpend / this.monthlyLimit) * 100;
 
     if (percentUsed >= 80) {
-      console.warn(`⚠️ Budget Alert: User ${userId} has used ${percentUsed.toFixed(1)}% of their monthly Claude budget`);
+      // console.warn(`⚠️ Budget Alert: User ${userId} has used ${percentUsed.toFixed(1)}% of their monthly Claude budget`);
     }
   }
 
@@ -149,7 +149,7 @@ class CostTracker {
   // Reset daily counters (call this daily via cron job)
   resetDailySpend(): void {
     this.dailySpend.clear();
-    console.log('✅ Daily Claude spending counters reset');
+    // console.log('✅ Daily Claude spending counters reset');
   }
 
   // Get spending summary for reporting
@@ -177,7 +177,7 @@ class CircuitBreaker {
     if (this.state === 'OPEN') {
       if (this.shouldAttemptReset()) {
         this.state = 'HALF_OPEN';
-        console.log('🔄 Circuit breaker attempting reset...');
+        // console.log('🔄 Circuit breaker attempting reset...');
       } else {
         throw new ClaudeServiceError(
           'Claude service temporarily unavailable due to repeated failures',
@@ -203,7 +203,7 @@ class CircuitBreaker {
 
   private onSuccess(): void {
     if (this.state === 'HALF_OPEN') {
-      console.log('✅ Circuit breaker reset - service restored');
+      // Service restored
     }
     this.failureCount = 0;
     this.state = 'CLOSED';
@@ -215,7 +215,7 @@ class CircuitBreaker {
 
     if (this.failureCount >= this.failureThreshold) {
       this.state = 'OPEN';
-      console.error('🚨 Circuit breaker opened due to repeated failures:', error);
+      // Circuit breaker opened due to repeated failures
     }
   }
 
@@ -235,7 +235,7 @@ class CircuitBreaker {
 // Main Claude Service Class - Production Ready
 class ClaudeService {
   private static instance: ClaudeService | null = null;
-  private client: Anthropic | null = null;
+  private client: any = null;
   private rateLimiter: RateLimiter;
   private costTracker: CostTracker;
   private circuitBreaker: CircuitBreaker;
@@ -261,8 +261,6 @@ class ClaudeService {
    */
   public async initialize(): Promise<void> {
     try {
-      console.log('🚀 Initializing Claude service...');
-
       // Validate environment configuration
       const envValidation = validateEnvironment();
       if (!envValidation.success) {
@@ -275,15 +273,16 @@ class ClaudeService {
       const apiKey = env.REACT_APP_ANTHROPIC_API_KEY || process.env.REACT_APP_ANTHROPIC_API_KEY;
 
       if (!apiKey) {
-        console.warn('ANTHROPIC_API_KEY not found - Claude service will be limited to Edge Functions only');
         // Don't throw error, just log warning to prevent crashes
         return;
       }
 
       if (!apiKey.startsWith('sk-ant-')) {
-        console.warn('Invalid ANTHROPIC_API_KEY format - should start with "sk-ant-"');
         return;
       }
+
+      // Lazy load Anthropic SDK
+      const Anthropic = await loadAnthropicSDK();
 
       // Initialize Anthropic client
       this.client = new Anthropic({
@@ -302,13 +301,13 @@ class ClaudeService {
       }
 
       this.isInitialized = true;
-      console.log('✅ Claude service initialized successfully');
-      console.log(`📊 Default model: ${this.defaultModel}`);
-      console.log(`🔒 API key valid: ${env.REACT_APP_ANTHROPIC_API_KEY ? env.REACT_APP_ANTHROPIC_API_KEY.substring(0, 10) + '...' : 'Not available'}`);
+      // console.log('✅ Claude service initialized successfully');
+      // console.log(`📊 Default model: ${this.defaultModel}`);
+      // console.log(`🔒 API key valid: ${env.REACT_APP_ANTHROPIC_API_KEY ? env.REACT_APP_ANTHROPIC_API_KEY.substring(0, 10) + '...' : 'Not available'}`);
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown initialization error';
-      console.error('❌ Claude service initialization failed:', errorMessage);
+      // console.error('❌ Claude service initialization failed:', errorMessage);
 
       // Reset state on failure
       this.isInitialized = false;
@@ -327,7 +326,7 @@ class ClaudeService {
   public async healthCheck(): Promise<boolean> {
     try {
       if (!this.client) {
-        console.warn('⚠️ Health check failed: No client initialized');
+        // console.warn('⚠️ Health check failed: No client initialized');
         return false;
       }
 
@@ -341,14 +340,14 @@ class ClaudeService {
       const isHealthy = response.content.length > 0 && response.content[0]?.type === 'text';
 
       if (isHealthy) {
-        console.log('✅ Claude health check passed');
+        // console.log('✅ Claude health check passed');
       } else {
-        console.warn('⚠️ Claude health check returned unexpected response');
+        // console.warn('⚠️ Claude health check returned unexpected response');
       }
 
       return isHealthy;
     } catch (error) {
-      console.error('❌ Claude health check failed:', error);
+      // console.error('❌ Claude health check failed:', error);
       return false;
     }
   }
@@ -402,7 +401,7 @@ class ClaudeService {
       };
 
     } catch (error: any) {
-      console.error('Claude connection test failed:', error);
+      // console.error('Claude connection test failed:', error);
       return {
         success: false,
         message: `❌ Claude AI connection failed: ${error.message || 'Unknown error'}`
@@ -481,7 +480,7 @@ class ClaudeService {
       return response.content;
 
     } catch (error) {
-      console.error('Claude chat error:', error);
+      // console.error('Claude chat error:', error);
       return "I'm sorry, I'm having trouble connecting right now. Please try again in a moment.";
     }
   }
@@ -510,7 +509,7 @@ class ClaudeService {
       return response.content;
 
     } catch (error) {
-      console.error('Claude health interpretation error:', error);
+      // console.error('Claude health interpretation error:', error);
       return "I'm having trouble reading your health data right now. Please try again later.";
     }
   }
@@ -546,7 +545,7 @@ class ClaudeService {
       return this.parseRiskAnalysis(response.content);
 
     } catch (error) {
-      console.error('Claude risk analysis error:', error);
+      // console.error('Claude risk analysis error:', error);
       return {
         suggestedRiskLevel: 'MODERATE',
         riskFactors: ['AI analysis failed'],
@@ -579,7 +578,7 @@ class ClaudeService {
       return response.content;
 
     } catch (error) {
-      console.error('Claude clinical notes error:', error);
+      // console.error('Claude clinical notes error:', error);
       return "Clinical notes generation failed. Please document assessment manually.";
     }
   }
@@ -610,7 +609,7 @@ class ClaudeService {
         ["Keep up your daily check-ins!", "Stay hydrated throughout the day."];
 
     } catch (error) {
-      console.error('Claude suggestions error:', error);
+      // console.error('Claude suggestions error:', error);
       return ["Keep up your daily check-ins!", "Stay hydrated throughout the day.", "Take a short walk if you feel up to it."];
     }
   }
@@ -685,7 +684,7 @@ class ClaudeService {
       this.costTracker.recordSpending(context.userId, actualCost);
 
       // Log successful request
-      console.log(`✅ Claude request completed: ${context.requestType} | Model: ${model} | Cost: $${actualCost.toFixed(4)} | Time: ${responseTime}ms`);
+      // console.log(`✅ Claude request completed: ${context.requestType} | Model: ${model} | Cost: $${actualCost.toFixed(4)} | Time: ${responseTime}ms`);
 
       return {
         content: response.content[0]?.type === 'text' ? response.content[0].text : '',
@@ -700,13 +699,6 @@ class ClaudeService {
       };
 
     } catch (error) {
-      console.error('❌ Claude API request failed:', {
-        requestId: context.requestId,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        model,
-        userId: context.userId
-      });
-
       throw new ClaudeServiceError(
         'Failed to generate response from Claude API',
         'API_REQUEST_FAILED',
@@ -1045,7 +1037,7 @@ Most Common Conditions: ${Array.from(conditionCounts.entries())
    * Administrative methods
    */
   public async resetService(): Promise<void> {
-    console.log('🔄 Resetting Claude service...');
+    // console.log('🔄 Resetting Claude service...');
     this.isInitialized = false;
     this.client = null;
     this.lastHealthCheck = undefined;

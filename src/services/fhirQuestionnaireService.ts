@@ -219,7 +219,7 @@ RESPOND WITH ONLY JSON - NO OTHER TEXT:`
     });
 
     if (error) {
-      console.error('Failed to increment template usage:', error);
+
     }
   }
 

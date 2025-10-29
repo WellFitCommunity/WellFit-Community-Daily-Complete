@@ -108,7 +108,7 @@ const ConsentPrivacyPage: React.FC = () => {
         .eq('user_id', userId);
 
       if (profileError) {
-        console.warn('Failed to update consent status in profiles:', profileError);
+
         // Don't fail the whole process, just warn
       }
 
@@ -120,7 +120,7 @@ const ConsentPrivacyPage: React.FC = () => {
       // Move to PIN setup for caregiver access
       setTimeout(() => navigate('/set-caregiver-pin'), 1200);
     } catch (err) {
-      console.error('Error saving privacy consent data:', err);
+
       setError('An unexpected error occurred while saving your consent. Please try again.');
     } finally {
       setSubmitting(false);

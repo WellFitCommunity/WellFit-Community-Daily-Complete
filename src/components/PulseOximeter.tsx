@@ -63,7 +63,7 @@ const PulseOximeter: React.FC<PulseOximeterProps> = ({ onMeasurementComplete, on
       setFlashlightStatus(enable ? 'on' : 'off');
       setFlashlightError(null);
     } catch (e) {
-      console.error('Flashlight toggle error:', e);
+
       setFlashlightStatus('error');
       setFlashlightError('Failed to control flashlight. It may not be supported on this device.');
     }
@@ -84,7 +84,7 @@ const PulseOximeter: React.FC<PulseOximeterProps> = ({ onMeasurementComplete, on
         });
       } catch (torchError) {
         // Fallback: Try without torch constraint if initial request fails
-        console.warn('Camera with torch failed, trying without torch:', torchError);
+
         try {
           stream = await navigator.mediaDevices.getUserMedia({
             video: {
@@ -95,7 +95,7 @@ const PulseOximeter: React.FC<PulseOximeterProps> = ({ onMeasurementComplete, on
           setFlashlightError('Flashlight unavailable. Continuing without flashlight - ensure good lighting.');
         } catch (fallbackError) {
           // Second fallback: Try any camera
-          console.warn('Back camera failed, trying any camera:', fallbackError);
+
           stream = await navigator.mediaDevices.getUserMedia({
             video: true
           });
@@ -126,7 +126,7 @@ const PulseOximeter: React.FC<PulseOximeterProps> = ({ onMeasurementComplete, on
             setFlashlightStatus('on');
             setFlashlightError(null);
           } catch (e) {
-            console.warn('Flashlight not supported:', e);
+
             setFlashlightStatus('unsupported');
             setFlashlightError('Flashlight not available on this device. Measurement will continue without it.');
           }
@@ -153,7 +153,7 @@ const PulseOximeter: React.FC<PulseOximeterProps> = ({ onMeasurementComplete, on
       setIsActive(true);
       setInstruction('Keep your finger still and steady');
     } catch (error) {
-      console.error('Error accessing camera:', error);
+
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
       // Provide specific guidance based on error type
@@ -337,7 +337,7 @@ const PulseOximeter: React.FC<PulseOximeterProps> = ({ onMeasurementComplete, on
     // Signal quality check - perfusion index should be > 0.3% for reliable readings
     if (perfusionIndex < 0.3) {
       // Poor signal quality - return conservative estimate
-      console.warn('Poor signal quality detected, SpO2 reading may be unreliable');
+
       return 95; // Conservative safe value
     }
 

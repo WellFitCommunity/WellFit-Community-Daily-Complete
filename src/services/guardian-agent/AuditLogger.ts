@@ -273,7 +273,8 @@ export class AuditLogger {
    */
   private async sendToTelemetry(entry: AuditLogEntry): Promise<void> {
     // Format for telemetry stack
-    const telemetryEvent = {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const telemetryEvent = {
       timestamp: entry.timestamp.toISOString(),
       tenant: entry.tenant,
       module: entry.module,
@@ -436,7 +437,7 @@ class AuditLogStorage {
    */
   async persistTicket(ticket: ReviewTicket): Promise<void> {
     // TODO: Store in Supabase review_tickets table
-    console.log('[Review Ticket Created]', ticket.id);
+
   }
 
   /**
@@ -444,6 +445,6 @@ class AuditLogStorage {
    */
   async updateTicket(ticket: ReviewTicket): Promise<void> {
     // TODO: Update in database
-    console.log('[Review Ticket Updated]', ticket.id, ticket.status);
+
   }
 }

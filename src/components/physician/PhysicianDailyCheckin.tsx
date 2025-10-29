@@ -73,7 +73,7 @@ export const PhysicianDailyCheckin: React.FC<PhysicianDailyCheckinProps> = ({
 
       onSuccess();
     } catch (err) {
-      console.error('Failed to submit check-in:', err);
+
       setError(err instanceof Error ? err.message : 'Failed to submit check-in');
     } finally {
       setSubmitting(false);

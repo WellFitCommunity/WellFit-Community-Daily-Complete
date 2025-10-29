@@ -79,7 +79,7 @@ const ActiveSessionManager: React.FC = () => {
       setSessions(formattedSessions);
       setLastRefresh(new Date());
     } catch (error) {
-      console.error('Error loading sessions:', error);
+
       if (!silent) {
         setMessage({ type: 'error', text: 'Failed to load active sessions' });
       }
@@ -112,7 +112,7 @@ const ActiveSessionManager: React.FC = () => {
 
       await loadSessions(true);
     } catch (error: any) {
-      console.error('Error revoking session:', error);
+
       setMessage({
         type: 'error',
         text: error.message || 'Failed to revoke session'
@@ -147,7 +147,7 @@ const ActiveSessionManager: React.FC = () => {
 
       await loadSessions(true);
     } catch (error: any) {
-      console.error('Error revoking all sessions:', error);
+
       setMessage({
         type: 'error',
         text: error.message || 'Failed to revoke sessions'

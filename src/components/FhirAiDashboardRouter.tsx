@@ -56,7 +56,7 @@ const FhirAiDashboardRouter: React.FC<DashboardRouterProps> = ({
         .eq('user_id', user.id);
 
       if (rolesError) {
-        console.error('Error fetching user roles:', rolesError);
+
       }
 
       // Check profile for patient role
@@ -67,7 +67,7 @@ const FhirAiDashboardRouter: React.FC<DashboardRouterProps> = ({
         .single();
 
       if (profileError && profileError.code !== 'PGRST116') {
-        console.error('Error fetching profile:', profileError);
+
       }
 
       // Determine user capabilities
@@ -97,7 +97,7 @@ const FhirAiDashboardRouter: React.FC<DashboardRouterProps> = ({
       }
 
     } catch (error) {
-      console.error('Error checking user roles:', error);
+
       setError('Unable to determine user permissions');
     } finally {
       setLoading(false);

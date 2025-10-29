@@ -96,10 +96,10 @@ export class ProposeWorkflow {
 
     this.proposals.set(proposalId, proposal);
 
-    console.log(`[Propose Workflow] Created proposal ${proposalId}`);
-    console.log(`  Branch: ${branchName}`);
+
+
     console.log(`  Changes: ${changes.length} file(s)`);
-    console.log(`  Status: draft`);
+
 
     return proposal;
   }
@@ -128,8 +128,8 @@ export class ProposeWorkflow {
 
     this.proposals.set(proposalId, proposal);
 
-    console.log(`[Propose Workflow] Submitted proposal as PR #${prNumber}`);
-    console.log(`  URL: ${prUrl}`);
+
+
     console.log(`  Reviewers: ${proposal.reviewers.join(', ')}`);
 
     // Simulate running tests
@@ -159,7 +159,7 @@ export class ProposeWorkflow {
 
     this.proposals.set(proposalId, proposal);
 
-    console.log(`[Propose Workflow] Proposal ${proposalId} approved by ${approvedBy}`);
+
 
     return proposal;
   }
@@ -186,8 +186,8 @@ export class ProposeWorkflow {
 
     this.proposals.set(proposalId, proposal);
 
-    console.log(`[Propose Workflow] Proposal ${proposalId} rejected by ${rejectedBy}`);
-    console.log(`  Reason: ${reason}`);
+
+
 
     return proposal;
   }
@@ -216,7 +216,7 @@ export class ProposeWorkflow {
 
     this.proposals.set(proposalId, proposal);
 
-    console.log(`[Propose Workflow] Merged proposal ${proposalId}`);
+
 
     return proposal;
   }
@@ -235,8 +235,8 @@ export class ProposeWorkflow {
 
     this.proposals.set(proposalId, proposal);
 
-    console.log(`[Propose Workflow] Closed proposal ${proposalId}`);
-    console.log(`  Reason: ${reason}`);
+
+
 
     return proposal;
   }
@@ -275,7 +275,7 @@ export class ProposeWorkflow {
     proposal.testResults = testResults;
     this.proposals.set(proposalId, proposal);
 
-    console.log(`[Propose Workflow] Tests completed for proposal ${proposalId}`);
+
     testResults.forEach((result) => {
       console.log(`  ${result.testSuite}: ${result.passed ? '✓ PASS' : '✗ FAIL'} (${result.duration}ms)`);
     });

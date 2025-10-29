@@ -158,7 +158,7 @@ const ExportCheckIns: React.FC = () => {
         .in('user_id', userIds);
 
       if (e2) {
-        console.warn(`Warning: Could not fetch all user profiles: ${e2.message}`);
+
         addToast('warning', 'Some user profile data may be incomplete');
       }
 
@@ -205,7 +205,7 @@ const ExportCheckIns: React.FC = () => {
         timeZoneName: 'short'
       });
     } catch (error) {
-      console.warn('Invalid date:', dateString);
+
       return dateString;
     }
   };
@@ -324,7 +324,7 @@ const ExportCheckIns: React.FC = () => {
         addToast('success', `Successfully exported ${data.length} check-ins to JSON`);
       }
     } catch (error) {
-      console.error('Export error:', error);
+
       const message = error instanceof Error ? error.message : 'Export failed with unknown error';
       addToast('error', `Export failed: ${message}`);
     } finally {

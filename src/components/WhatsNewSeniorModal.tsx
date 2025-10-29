@@ -67,7 +67,7 @@ const WhatsNewSeniorModal: React.FC<WhatsNewSeniorModalProps> = ({ isOpen, onClo
         localStorage.setItem('seniorWhatsNew_lastSeen', currentVersion);
       }
     } catch (err) {
-      console.error('Failed to save to localStorage:', err);
+
     }
     onClose();
   }, [currentVersion, dontShowAgain, onClose]);

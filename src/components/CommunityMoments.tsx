@@ -134,7 +134,7 @@ const CommunityMoments: React.FC = () => {
           setUserFirstName(data.first_name);
         }
       } catch (err) {
-        console.error('Failed to load user name:', err);
+
       }
     })();
     return () => { cancelled = true; };
@@ -172,7 +172,7 @@ const CommunityMoments: React.FC = () => {
           setPendingCount(data || 0);
         }
       } catch (err) {
-        console.error('Failed to load pending count:', err);
+
       }
     };
 
@@ -242,7 +242,7 @@ const CommunityMoments: React.FC = () => {
         setPage(1);
         setHasMore(((count ?? 0) as number) > normalized.length);
       } catch (e) {
-        console.error('Community moments error:', e);
+
         setError(e instanceof Error ? e.message : 'Failed to load moments. Please refresh the page.');
       } finally {
         if (!cancelled) setInitialLoading(false);
@@ -365,7 +365,7 @@ const CommunityMoments: React.FC = () => {
         });
 
       if (uploadError) {
-        console.error('[CommunityMoments] Upload error:', uploadError);
+
         throw new Error(`File upload failed: ${uploadError.message || 'Please try a different photo.'}`);
       }
 
@@ -385,7 +385,7 @@ const CommunityMoments: React.FC = () => {
 
       const { error: insertError } = await supabase.from('community_moments').insert([insertBody]);
       if (insertError) {
-        console.error('[CommunityMoments] Database insert error:', insertError);
+
         throw new Error(`Failed to save moment: ${insertError.message || 'Unknown error'}`);
       }
 

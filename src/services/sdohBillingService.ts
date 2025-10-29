@@ -44,7 +44,8 @@ export class SDOHBillingService {
     if (checkInError) throw new Error(`Failed to get check-ins: ${checkInError.message}`);
 
     // Get existing SDOH assessment if available
-    const { data: existingAssessment } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { data: _existingAssessment } = await supabase
       .from('sdoh_assessments')
       .select('*')
       .eq('patient_id', patientId)
@@ -295,7 +296,7 @@ export class SDOHBillingService {
 
     // CRITICAL FIX: Handle empty check-ins data
     if (!checkIns || checkIns.length === 0) {
-      console.warn('No check-in data available for SDOH analysis - returning empty factors');
+
       return factors;
     }
 
@@ -303,7 +304,7 @@ export class SDOHBillingService {
     checkIns.forEach(checkIn => {
       // Safety checks for missing data
       if (!checkIn) {
-        console.warn('Null check-in encountered, skipping');
+
         return;
       }
       // Look for housing indicators

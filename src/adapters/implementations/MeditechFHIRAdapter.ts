@@ -73,7 +73,7 @@ export class MeditechFHIRAdapter implements EHRAdapter {
 
     // FHIR is only fully supported on Expanse 8.0+
     if (this.config.platform !== 'expanse') {
-      console.warn('[Meditech] FHIR support is limited on MAGIC/Client-Server platforms. Expanse recommended.');
+
     }
 
     this.baseUrl = config.endpoint?.replace(/\/$/, '') || '';
@@ -88,7 +88,7 @@ export class MeditechFHIRAdapter implements EHRAdapter {
     await this.authenticate(this.config);
 
     this.status = 'connected';
-    console.log(`[Meditech] Connected to ${this.baseUrl}`);
+
     console.log(`[Meditech] Platform: ${this.config.platform.toUpperCase()}, Environment: ${this.config.environment || 'production'}`);
   }
 
@@ -134,7 +134,7 @@ export class MeditechFHIRAdapter implements EHRAdapter {
     this.authToken = '';
     this.refreshToken = '';
     this.tokenExpiry = null;
-    console.log('[Meditech] Disconnected');
+
   }
 
   getConnectionStatus(): 'connected' | 'disconnected' | 'error' {
@@ -259,7 +259,7 @@ export class MeditechFHIRAdapter implements EHRAdapter {
       );
       return this.extractResources(bundle);
     } catch (error) {
-      console.warn('[Meditech] CarePlan resource may not be supported on this version');
+
       return [];
     }
   }
@@ -282,7 +282,7 @@ export class MeditechFHIRAdapter implements EHRAdapter {
       const bundle = await this.fetchFHIR(`/DiagnosticReport?${searchParams}`);
       return this.extractResources(bundle);
     } catch (error) {
-      console.warn('[Meditech] DiagnosticReport may not be available');
+
       return [];
     }
   }
@@ -340,7 +340,7 @@ export class MeditechFHIRAdapter implements EHRAdapter {
       this.tokenExpiry = new Date(Date.now() + data.expires_in * 1000);
     }
 
-    console.log(`[Meditech] Authenticated. Token expires in ${data.expires_in}s`);
+
   }
 
   /**
@@ -377,7 +377,7 @@ export class MeditechFHIRAdapter implements EHRAdapter {
       this.tokenExpiry = new Date(Date.now() + data.expires_in * 1000);
     }
 
-    console.log('[Meditech] Token refreshed');
+
   }
 
   // ========================================================================
@@ -387,7 +387,7 @@ export class MeditechFHIRAdapter implements EHRAdapter {
   private async fetchFHIR(path: string, options?: RequestInit): Promise<any> {
     // Check token expiry
     if (this.tokenExpiry && new Date() >= this.tokenExpiry) {
-      console.log('[Meditech] Token expired, refreshing...');
+
       await this.refreshAccessToken();
     }
 

@@ -124,7 +124,7 @@ export const StrokeAssessmentForm: React.FC<StrokeAssessmentFormProps> = ({
         alert(`Error saving assessment: ${response.error}`);
       }
     } catch (error) {
-      console.error('Error submitting stroke assessment:', error);
+
       alert('Failed to save assessment');
     } finally {
       setSubmitting(false);

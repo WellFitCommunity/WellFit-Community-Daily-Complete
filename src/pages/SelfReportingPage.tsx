@@ -304,7 +304,7 @@ const SelfReportingPage: React.FC = () => {
           setFeedbackMessage('✅ Report saved successfully!');
         } catch (error) {
           // If online but save failed, save offline
-          console.warn('[SelfReporting] Online save failed, saving offline:', error);
+
           await offlineStorage.savePendingReport(currentUser.id, payload);
           setFeedbackMessage('✅ Report saved! Will sync when connection improves.');
         }
@@ -331,7 +331,7 @@ const SelfReportingPage: React.FC = () => {
         try {
           await fetchReports(currentUser.id);
         } catch (error) {
-          console.warn('[SelfReporting] Failed to refresh reports:', error);
+
         }
       }
     } catch (error) {

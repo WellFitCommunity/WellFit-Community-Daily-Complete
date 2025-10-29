@@ -34,7 +34,7 @@ const PractitionerProfile: React.FC<PractitionerProfileProps> = ({
       setPractitioner(practitionerData);
       setRoles(rolesData);
     } catch (err) {
-      console.error('Failed to load practitioner:', err);
+
       setError('Failed to load practitioner profile');
     }
     setLoading(false);

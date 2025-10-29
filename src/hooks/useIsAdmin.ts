@@ -34,7 +34,7 @@ export function useIsAdmin() {
         if (cancelled) return;
 
         if (error) {
-          console.error('useIsAdmin profile fetch error:', error);
+
           setIsAdmin(false);
           return;
         }
@@ -47,7 +47,7 @@ export function useIsAdmin() {
 
         setIsAdmin(hasMedicalAccess);
       } catch (error) {
-        console.error('useIsAdmin error:', error);
+
         setIsAdmin(false);
       }
     })();

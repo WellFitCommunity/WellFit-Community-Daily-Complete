@@ -146,7 +146,7 @@ export class PostAcuteTransferService {
         .eq('id', handoffResult.packet.id);
 
       if (updateError) {
-        console.error('Failed to mark as post-acute transfer:', updateError);
+
       }
 
       // Update discharge plan with handoff packet ID
@@ -165,7 +165,7 @@ export class PostAcuteTransferService {
         access_url: handoffResult.access_url
       };
     } catch (error: any) {
-      console.error('Post-acute transfer creation failed:', error);
+
       return {
         success: false,
         error: error.message || 'Unknown error'
@@ -193,7 +193,7 @@ export class PostAcuteTransferService {
         handoff_packet_id: handoffPacketId
       };
     } catch (error: any) {
-      console.error('Failed to send post-acute transfer:', error);
+
       return {
         success: false,
         error: error.message
@@ -335,7 +335,7 @@ export class PostAcuteTransferService {
       }
 
     } catch (error) {
-      console.error('Error gathering clinical data:', error);
+
       // Continue with partial data
     }
 
@@ -367,7 +367,7 @@ export class PostAcuteTransferService {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Failed to get post-acute transfers:', error);
+
       return [];
     }
 
@@ -397,7 +397,7 @@ export class PostAcuteTransferService {
       .single();
 
     if (error) {
-      console.error('Failed to get transfer packet:', error);
+
       return null;
     }
 
@@ -463,7 +463,7 @@ ${packet.sender_notes ? `\nNotes:\n${packet.sender_notes}` : ''}
 
       return summary;
     } catch (error) {
-      console.error('Failed to generate transfer summary:', error);
+
       return 'Error generating summary';
     }
   }

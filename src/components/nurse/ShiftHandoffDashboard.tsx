@@ -120,7 +120,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
       // Reload data to get updated priority
       loadHandoffData();
     } catch (err) {
-      console.error('Failed to escalate:', err);
+
       alert('Failed to escalate risk');
     }
   };
@@ -145,7 +145,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
       // Reload data
       loadHandoffData();
     } catch (err) {
-      console.error('Failed to de-escalate:', err);
+
       alert('Failed to de-escalate risk');
     }
   };
@@ -167,7 +167,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
       setSelectedPatients(new Set());
       loadHandoffData();
     } catch (err) {
-      console.error('Bulk confirm failed:', err);
+
       alert('Failed to bulk confirm');
     }
   };

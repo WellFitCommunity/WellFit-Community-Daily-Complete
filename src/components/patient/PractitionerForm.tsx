@@ -65,7 +65,7 @@ const PractitionerForm: React.FC<PractitionerFormProps> = ({
         setActive(data.active);
       }
     } catch (err) {
-      console.error('Failed to load practitioner:', err);
+
       setError('Failed to load practitioner data');
     }
     setLoading(false);
@@ -117,7 +117,7 @@ const PractitionerForm: React.FC<PractitionerFormProps> = ({
         onSave(result);
       }
     } catch (err) {
-      console.error('Failed to save practitioner:', err);
+
       setError(err instanceof Error ? err.message : 'Failed to save practitioner');
     }
     setSaving(false);

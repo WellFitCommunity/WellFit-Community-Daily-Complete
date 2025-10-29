@@ -41,7 +41,7 @@ const VoiceInputModule: React.FC<Props> = ({ userRole, userId }) => {
       setIsRecording(true);
       setError(null);
     } catch (err) {
-      console.error('Failed to start recording:', err);
+
       setError('Microphone access denied. Please enable microphone permissions.');
     }
   };
@@ -70,7 +70,7 @@ const VoiceInputModule: React.FC<Props> = ({ userRole, userId }) => {
       setSuggestedTemplate(result.suggestedTemplate);
       setConfidence(result.confidence || 0);
     } catch (err) {
-      console.error('Voice processing failed:', err);
+
       setError('Failed to process voice input. Please try again.');
     } finally {
       setLoading(false);

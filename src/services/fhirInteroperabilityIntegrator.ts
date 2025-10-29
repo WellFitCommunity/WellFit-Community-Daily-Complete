@@ -125,7 +125,7 @@ export class FHIRInteroperabilityIntegrator {
 
       return this.mapConnectionFromDB(data);
     } catch (error) {
-      console.error('Failed to create FHIR connection:', error);
+
       throw new Error(`Failed to create connection: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -144,7 +144,7 @@ export class FHIRInteroperabilityIntegrator {
 
       return (data || []).map(this.mapConnectionFromDB);
     } catch (error) {
-      console.error('Failed to fetch FHIR connections:', error);
+
       return [];
     }
   }
@@ -270,7 +270,7 @@ export class FHIRInteroperabilityIntegrator {
       if (mapError) throw mapError;
 
       if (!mappings || mappings.length === 0) {
-        console.warn('No patient mappings found for this connection');
+
         result.endTime = new Date().toISOString();
         return result;
       }
@@ -512,10 +512,10 @@ export class FHIRInteroperabilityIntegrator {
 
     const interval = setInterval(async () => {
       try {
-        console.log(`Auto-sync triggered for connection ${connectionId}`);
+
         await this.syncFromFHIR(connectionId);
       } catch (error) {
-        console.error(`Auto-sync failed for connection ${connectionId}:`, error);
+
       }
     }, intervalMs);
 
@@ -835,7 +835,7 @@ export class FHIRInteroperabilityIntegrator {
         created_at: new Date().toISOString()
       });
     } catch (err) {
-      console.error('[CRITICAL] Audit logging failed:', err);
+
     }
   }
 
@@ -849,7 +849,7 @@ export class FHIRInteroperabilityIntegrator {
         created_at: new Date().toISOString()
       });
     } catch (err) {
-      console.error('[CRITICAL] Security event logging failed:', err);
+
     }
   }
 

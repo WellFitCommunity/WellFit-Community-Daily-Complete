@@ -58,7 +58,7 @@ const SettingsPage: React.FC = () => {
           .single();
 
         if (error) {
-          console.error('Error loading profile:', error);
+
         }
 
         if (profile) {
@@ -75,7 +75,7 @@ const SettingsPage: React.FC = () => {
           });
         }
       } catch (error) {
-        console.error('Error loading settings:', error);
+
       } finally {
         setLoading(false);
       }
@@ -107,7 +107,7 @@ const SettingsPage: React.FC = () => {
         .eq('user_id', user.id);
 
       if (error) {
-        console.error('Save error:', error);
+
         throw error;
       }
 
@@ -120,7 +120,7 @@ const SettingsPage: React.FC = () => {
         settings.font_size === 'extra-large' ? '22px' : '16px';
 
     } catch (error: any) {
-      console.error('Settings save error:', error);
+
       setMessage({ type: 'error', text: t.settings.saveFailed });
     } finally {
       setSaving(false);

@@ -93,7 +93,7 @@ export class WearableService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('WearableService.connectDevice error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -151,7 +151,7 @@ export class WearableService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('WearableService.disconnectDevice error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -173,7 +173,7 @@ export class WearableService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
-      console.error('WearableService.getConnectedDevices error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -224,7 +224,7 @@ export class WearableService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('WearableService.storeVitalSign error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -268,7 +268,7 @@ export class WearableService {
     alertType?: 'high' | 'low' | 'irregular'
   ): Promise<void> {
     // TODO: Integrate with notification system
-    console.log(`VITAL ALERT: User ${userId} - ${vitalType} ${alertType}: ${value}`);
+
     // In production, this would:
     // 1. Send push notification to care team
     // 2. Create alert in dashboard
@@ -309,7 +309,7 @@ export class WearableService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
-      console.error('WearableService.getVitalsTrend error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -355,7 +355,7 @@ export class WearableService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('WearableService.storeActivityData error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -381,7 +381,7 @@ export class WearableService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
-      console.error('WearableService.getActivitySummary error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -429,7 +429,7 @@ export class WearableService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('WearableService.processFallDetection error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -447,9 +447,9 @@ export class WearableService {
     }
   ): Promise<void> {
     // TODO: Integrate with emergency notification system
-    console.log(`FALL ALERT: User ${userId} fell at ${fallData.detectedAt}`);
+
     if (fallData.latitude && fallData.longitude) {
-      console.log(`Location: ${fallData.latitude}, ${fallData.longitude}`);
+
     }
 
     // In production, this would:
@@ -481,7 +481,7 @@ export class WearableService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
-      console.error('WearableService.getFallDetectionHistory error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -510,7 +510,7 @@ export class WearableService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('WearableService.updateFallResponse error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -537,7 +537,7 @@ export class WearableService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
-      console.error('WearableService.getFallHistory error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -593,7 +593,7 @@ export class WearableService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('WearableService.storeGaitAnalysis error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -616,14 +616,14 @@ export class WearableService {
       // 3. Store in wearable_vital_signs, wearable_activity_data tables
       // 4. Update last_sync timestamp
 
-      console.log(`Syncing data for device ${request.device_id} from ${request.start_date} to ${request.end_date}`);
+
 
       return {
         success: true,
         data: { synced: 0, failed: 0 },
       };
     } catch (error: any) {
-      console.error('WearableService.syncWearableData error:', error);
+
       return { success: false, error: error.message };
     }
   }

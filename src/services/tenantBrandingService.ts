@@ -31,12 +31,12 @@ export async function fetchTenantBrandingBySubdomain(
     });
 
     if (error) {
-      console.error('[TenantBranding] Error fetching branding:', error);
+
       return null;
     }
 
     if (!data || data.length === 0) {
-      console.warn(`[TenantBranding] No branding found for subdomain: ${subdomain}`);
+
       return null;
     }
 
@@ -61,7 +61,7 @@ export async function fetchTenantBrandingBySubdomain(
       themeSettings: tenant.theme_settings || {},
     };
   } catch (error) {
-    console.error('[TenantBranding] Exception fetching branding:', error);
+
     return null;
   }
 }
@@ -81,7 +81,7 @@ export async function fetchTenantBrandingById(
       .single();
 
     if (error) {
-      console.error('[TenantBranding] Error fetching branding by ID:', error);
+
       return null;
     }
 
@@ -106,7 +106,7 @@ export async function fetchTenantBrandingById(
       themeSettings: data.theme_settings || {},
     };
   } catch (error) {
-    console.error('[TenantBranding] Exception fetching branding by ID:', error);
+
     return null;
   }
 }
@@ -130,7 +130,7 @@ export async function fetchAllActiveTenants(): Promise<
     const { data, error } = await supabase.rpc('get_all_active_tenants');
 
     if (error) {
-      console.error('[TenantBranding] Error fetching all tenants:', error);
+
       return [];
     }
 
@@ -145,7 +145,7 @@ export async function fetchAllActiveTenants(): Promise<
       isActive: tenant.is_active,
     }));
   } catch (error) {
-    console.error('[TenantBranding] Exception fetching all tenants:', error);
+
     return [];
   }
 }
@@ -179,15 +179,15 @@ export async function updateTenantBranding(
       .eq('id', tenantId);
 
     if (error) {
-      console.error('[TenantBranding] Error updating branding:', error);
+
       return { success: false, error: error.message };
     }
 
-    console.log(`[TenantBranding] Successfully updated branding for tenant ${tenantId}`);
+
 
     return { success: true };
   } catch (error) {
-    console.error('[TenantBranding] Exception updating branding:', error);
+
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -231,7 +231,7 @@ export async function uploadTenantLogo(
       });
 
     if (error) {
-      console.error('[TenantBranding] Error uploading logo:', error);
+
       return { success: false, error: error.message };
     }
 
@@ -252,7 +252,7 @@ export async function uploadTenantLogo(
 
     return { success: true, url: publicUrl };
   } catch (error) {
-    console.error('[TenantBranding] Exception uploading logo:', error);
+
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

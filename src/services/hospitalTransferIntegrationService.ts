@@ -23,7 +23,7 @@ export async function integrateHospitalTransfer(
   packet: HandoffPacket
 ): Promise<HospitalTransferIntegrationResult> {
   try {
-    console.log('[Hospital Transfer Integration] Starting integration for packet:', packetId);
+
 
     // Get current user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -32,7 +32,7 @@ export async function integrateHospitalTransfer(
     }
 
     // Step 1: Create or find patient record
-    console.log('[Hospital Transfer Integration] Step 1: Creating/finding patient record...');
+
     const patientResult = await createOrFindPatient(packet, user.id);
     if (!patientResult.success || !patientResult.patientId) {
       return { success: false, error: `Failed to create patient: ${patientResult.error}` };
@@ -40,7 +40,7 @@ export async function integrateHospitalTransfer(
     const patientId = patientResult.patientId;
 
     // Step 2: Create hospital transfer encounter
-    console.log('[Hospital Transfer Integration] Step 2: Creating transfer encounter...');
+
     const encounterResult = await createTransferEncounter(packetId, patientId, packet, user.id);
     if (!encounterResult.success || !encounterResult.encounterId) {
       return {
@@ -52,18 +52,18 @@ export async function integrateHospitalTransfer(
     const encounterId = encounterResult.encounterId;
 
     // Step 3: Document vitals from transfer packet (if available)
-    console.log('[Hospital Transfer Integration] Step 3: Documenting vitals...');
+
     const vitalResults = await documentTransferVitals(encounterId, patientId, packet, user.id);
 
     // Step 4: Generate billing codes based on transfer urgency and clinical data
-    console.log('[Hospital Transfer Integration] Step 4: Generating billing codes...');
+
     const billingCodes = await generateBillingCodesFromTransfer(encounterId, packet, user.id);
 
     // Step 5: Link handoff packet to patient and encounter
-    console.log('[Hospital Transfer Integration] Step 5: Linking handoff to patient/encounter...');
+
     await linkHandoffToPatient(packetId, patientId, encounterId);
 
-    console.log('[Hospital Transfer Integration] ✅ Integration complete');
+
     return {
       success: true,
       patientId,
@@ -72,7 +72,7 @@ export async function integrateHospitalTransfer(
       billingCodes,
     };
   } catch (error: any) {
-    console.error('[Hospital Transfer Integration] ❌ Integration failed:', error);
+
     return {
       success: false,
       error: error.message || 'Unknown error during integration',
@@ -113,13 +113,13 @@ async function createOrFindPatient(
         .limit(1);
 
       if (existingPatients && existingPatients.length > 0) {
-        console.log('[Hospital Transfer] Found existing patient by MRN:', packet.patient_mrn);
+
         return { success: true, patientId: existingPatients[0].id };
       }
     }
 
     // Create new patient profile
-    console.log('[Hospital Transfer] Creating new patient profile...');
+
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .insert({
@@ -135,10 +135,10 @@ async function createOrFindPatient(
 
     if (profileError) throw profileError;
 
-    console.log('[Hospital Transfer] ✅ Patient created:', profile.id);
+
     return { success: true, patientId: profile.id };
   } catch (error: any) {
-    console.error('[Hospital Transfer] Error creating patient:', error);
+
     return { success: false, error: error.message };
   }
 }
@@ -176,10 +176,10 @@ async function createTransferEncounter(
 
     if (encounterError) throw encounterError;
 
-    console.log('[Hospital Transfer] ✅ Encounter created:', encounter.id);
+
     return { success: true, encounterId: encounter.id };
   } catch (error: any) {
-    console.error('[Hospital Transfer] Error creating encounter:', error);
+
     return { success: false, error: error.message };
   }
 }
@@ -196,7 +196,7 @@ async function documentTransferVitals(
   const observationIds: string[] = [];
 
   if (!packet.clinical_data?.vitals) {
-    console.log('[Hospital Transfer] No vitals to document');
+
     return observationIds;
   }
 
@@ -313,10 +313,10 @@ async function documentTransferVitals(
       .select('id');
 
     if (error) {
-      console.error('[Hospital Transfer] Error inserting vitals:', error);
+
     } else if (data) {
       observationIds.push(...data.map((obs) => obs.id));
-      console.log(`[Hospital Transfer] ✅ ${observations.length} vitals documented`);
+
     }
   }
 
@@ -389,12 +389,12 @@ async function generateBillingCodesFromTransfer(
     .select('code');
 
   if (error) {
-    console.error('[Hospital Transfer] Error inserting billing codes:', error);
+
     return [];
   }
 
   const codes = data?.map((bc) => bc.code) || [];
-  console.log(`[Hospital Transfer] ✅ ${codes.length} billing codes generated:`, codes);
+
   return codes;
 }
 
@@ -416,11 +416,11 @@ async function linkHandoffToPatient(
     .eq('id', packetId);
 
   if (error) {
-    console.error('[Hospital Transfer] Error linking handoff:', error);
+
     throw error;
   }
 
-  console.log('[Hospital Transfer] ✅ Handoff linked to patient/encounter');
+
 }
 
 export default {

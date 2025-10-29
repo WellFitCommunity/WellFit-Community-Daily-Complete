@@ -4,7 +4,7 @@
  */
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { getGuardianAgent } from '../services/guardian-agent/GuardianAgent';
+import { logGuardianAuditEvent } from '../services/guardianAgentClient';
 
 interface Props {
   children: ReactNode;
@@ -25,7 +25,6 @@ interface State {
  * Automatically attempts to heal errors and recover gracefully
  */
 export class GuardianErrorBoundary extends Component<Props, State> {
-  private agent = getGuardianAgent();
 
   constructor(props: Props) {
     super(props);
@@ -46,7 +45,7 @@ export class GuardianErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    console.error('[Guardian Error Boundary] Caught error:', error, errorInfo);
+    // console.error('[Guardian Error Boundary] Caught error:', error, errorInfo);
 
     this.setState({
       errorInfo,
@@ -64,19 +63,17 @@ export class GuardianErrorBoundary extends Component<Props, State> {
 
   private async reportAndHeal(error: Error, errorInfo: ErrorInfo): Promise<void> {
     try {
-      // Report to Guardian Agent
-      await this.agent.reportIssue(error, {
-        component: errorInfo.componentStack?.split('\n')[1]?.trim(),
-        environmentState: {
-          componentStack: errorInfo.componentStack
-        },
-        recentActions: []
+      // Report to Guardian Agent via Edge Function
+      await logGuardianAuditEvent({
+        event_type: 'REACT_ERROR',
+        severity: 'HIGH',
+        description: `${error.message} in ${errorInfo.componentStack?.split('\n')[1]?.trim()}`,
+        requires_investigation: true
       });
 
       // Attempt automatic recovery
       await this.attemptRecovery();
     } catch (healingError) {
-      console.error('[Guardian Error Boundary] Healing failed:', healingError);
       this.setState({ isHealing: false });
     }
   }
@@ -86,7 +83,6 @@ export class GuardianErrorBoundary extends Component<Props, State> {
 
     // Don't attempt recovery more than 3 times
     if (healingAttempts >= 3) {
-      console.warn('[Guardian Error Boundary] Max healing attempts reached');
       this.setState({ isHealing: false });
       return;
     }
@@ -103,8 +99,6 @@ export class GuardianErrorBoundary extends Component<Props, State> {
       isHealing: false,
       healingAttempts: prevState.healingAttempts + 1
     }));
-
-    console.log('[Guardian Error Boundary] Attempting recovery...');
   }
 
   private handleReset = (): void => {

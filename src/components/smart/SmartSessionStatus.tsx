@@ -33,7 +33,7 @@ const SmartSessionStatus: React.FC = () => {
           clearSession();
         }
       } catch (error) {
-        console.error('Invalid SMART session data:', error);
+
         clearSession();
       }
     }

@@ -198,7 +198,7 @@ export default function MealDetailPage() {
         setTimeout(() => setInteractionMessage(''), 3000);
       }
     } catch (error) {
-      console.error('Failed to submit meal interaction:', error);
+
     }
   };
 
@@ -220,7 +220,7 @@ export default function MealDetailPage() {
       setPhotoFile(null);
       setTimeout(() => setInteractionMessage(''), 5000);
     } catch (error) {
-      console.error('Failed to upload meal photo:', error);
+
       setInteractionMessage('Failed to upload photo. Please try again.');
     } finally {
       setUploadingPhoto(false);

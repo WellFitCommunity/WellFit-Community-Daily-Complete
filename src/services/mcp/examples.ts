@@ -32,7 +32,7 @@ export async function exampleGenerateBillingCodes(userId: string) {
     userId
   });
 
-  console.log('Suggested billing codes:', codes);
+
   // Expected output:
   // {
   //   cpt: ['99285', '93000', '71046'],
@@ -70,7 +70,7 @@ export async function exampleNurseHandoffSummary(
     userId: nurseId
   });
 
-  console.log('Handoff summary:', summary);
+
   // Expected output:
   // "Patient admitted with chest pain, found to have STEMI. Successfully underwent PCI with
   // stent to RCA. Currently stable on dual antiplatelet therapy. Pain well-controlled at 2/10."
@@ -119,7 +119,7 @@ export async function exampleSDOHRiskAssessment(
   });
 
   const result = JSON.parse(analysis);
-  console.log('SDOH Assessment:', result);
+
   // Expected output:
   // {
   //   riskLevel: "high",
@@ -171,7 +171,7 @@ export async function exampleMedicationInteractionCheck(
   });
 
   const result = JSON.parse(analysis);
-  console.log('Medication analysis:', result);
+
 
   return result;
 }
@@ -242,7 +242,7 @@ export async function examplePatientEducation(
     userId: providerId
   });
 
-  console.log('Patient education material:', explanation);
+
 
   return explanation;
 }

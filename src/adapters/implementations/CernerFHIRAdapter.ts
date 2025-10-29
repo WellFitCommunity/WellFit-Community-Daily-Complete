@@ -89,8 +89,8 @@ export class CernerFHIRAdapter implements EHRAdapter {
     await this.authenticate(this.config);
 
     this.status = 'connected';
-    console.log(`[Cerner] Connected to ${this.baseUrl}`);
-    console.log(`[Cerner] Millennium Version: ${this.config.millenniumVersion || 'Unknown'}`);
+
+
   }
 
   async test(): Promise<{ success: boolean; message: string; details?: any }> {
@@ -135,7 +135,7 @@ export class CernerFHIRAdapter implements EHRAdapter {
     this.authToken = '';
     this.refreshToken = '';
     this.tokenExpiry = null;
-    console.log('[Cerner] Disconnected');
+
   }
 
   getConnectionStatus(): 'connected' | 'disconnected' | 'error' {
@@ -333,7 +333,7 @@ export class CernerFHIRAdapter implements EHRAdapter {
       this.tokenExpiry = new Date(Date.now() + data.expires_in * 1000);
     }
 
-    console.log(`[Cerner] Authenticated. Token expires in ${data.expires_in}s`);
+
   }
 
   /**
@@ -354,7 +354,7 @@ export class CernerFHIRAdapter implements EHRAdapter {
       return config.token_endpoint;
     } catch (error) {
       // Fallback to Cerner's authorization server
-      console.warn('[Cerner] Using fallback token endpoint');
+
       return `${this.authUrl}/protocol/openid-connect/token`;
     }
   }
@@ -393,7 +393,7 @@ export class CernerFHIRAdapter implements EHRAdapter {
       this.tokenExpiry = new Date(Date.now() + data.expires_in * 1000);
     }
 
-    console.log('[Cerner] Token refreshed');
+
   }
 
   // ========================================================================
@@ -403,7 +403,7 @@ export class CernerFHIRAdapter implements EHRAdapter {
   private async fetchFHIR(path: string, options?: RequestInit): Promise<any> {
     // Check token expiry
     if (this.tokenExpiry && new Date() >= this.tokenExpiry) {
-      console.log('[Cerner] Token expired, refreshing...');
+
       await this.refreshAccessToken();
     }
 

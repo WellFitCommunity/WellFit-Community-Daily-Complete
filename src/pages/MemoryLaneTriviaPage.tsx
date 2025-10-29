@@ -119,7 +119,7 @@ const MemoryLaneTriviaPage: React.FC = () => {
         setCurrentQuestionIndex(attemptedCount);
       }
     } catch (error) {
-      console.error('Failed to load trivia:', error);
+
     } finally {
       setLoading(false);
     }
@@ -241,7 +241,7 @@ const MemoryLaneTriviaPage: React.FC = () => {
 
       alert('Score shared to Community Moments!');
     } catch (error) {
-      console.error('Failed to share score:', error);
+
     }
   };
 

@@ -112,7 +112,7 @@ export class CCMAutopilotService {
 
       return eligiblePatients;
     } catch (error) {
-      console.error('CCM Autopilot error:', error);
+
       throw error;
     }
   }
@@ -196,7 +196,7 @@ export class CCMAutopilotService {
 
       return false;
     } catch (error) {
-      console.error('Error checking CCM billing status:', error);
+
       return false;
     }
   }

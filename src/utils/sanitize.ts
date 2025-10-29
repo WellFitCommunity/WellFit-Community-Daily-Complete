@@ -135,7 +135,7 @@ export function sanitizeEmail(email: string | null | undefined): string {
   const trimmed = email.trim().toLowerCase();
 
   if (!emailRegex.test(trimmed)) {
-    console.warn('Invalid email format detected:', email);
+
     return '';
   }
 
@@ -215,10 +215,11 @@ export function sanitizeURL(url: string | null | undefined): string {
   const trimmed = url.trim().toLowerCase();
 
   // Block dangerous protocols
+  // eslint-disable-next-line no-script-url
   const dangerousProtocols = ['javascript:', 'data:', 'vbscript:', 'file:'];
   for (const protocol of dangerousProtocols) {
     if (trimmed.startsWith(protocol)) {
-      console.warn('Dangerous URL protocol detected:', url);
+
       return '';
     }
   }
@@ -227,7 +228,7 @@ export function sanitizeURL(url: string | null | undefined): string {
   if (!trimmed.match(/^(https?|mailto|tel):/)) {
     // Relative URLs are OK
     if (!trimmed.startsWith('/') && !trimmed.startsWith('#')) {
-      console.warn('Non-standard URL format:', url);
+
       return '';
     }
   }

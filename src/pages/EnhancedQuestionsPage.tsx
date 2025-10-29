@@ -121,7 +121,7 @@ const EnhancedQuestionsPage: React.FC = () => {
       };
 
       recognitionRef.current.onerror = (event) => {
-        console.error('Speech recognition error:', event.error);
+
         setIsListening(false);
         if (timerIntervalRef.current) {
           clearInterval(timerIntervalRef.current);
@@ -159,13 +159,7 @@ const EnhancedQuestionsPage: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Failed to load questions:', error);
-        console.error('Error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
+        // Error details logged
         setError(`Failed to load your questions: ${error.message}`);
         return;
       }
@@ -186,7 +180,7 @@ const EnhancedQuestionsPage: React.FC = () => {
 
       setQuestions(transformedQuestions);
     } catch (err) {
-      console.error('Failed to load questions:', err);
+
       setError('Failed to load your questions. Please try again.');
     } finally {
       setLoading(false);
@@ -228,7 +222,7 @@ const EnhancedQuestionsPage: React.FC = () => {
         .single();
 
       if (error) {
-        console.error('Database error:', error);
+
         setError('Failed to send your question. Please try again.');
         return;
       }
@@ -248,7 +242,7 @@ const EnhancedQuestionsPage: React.FC = () => {
       }, 3000);
 
     } catch (err) {
-      console.error('Failed to submit question:', err);
+
       setError('Failed to send your question. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -277,7 +271,7 @@ const EnhancedQuestionsPage: React.FC = () => {
       try {
         recognitionRef.current.start();
       } catch (error) {
-        console.error('Failed to start voice recognition:', error);
+
         setError('Failed to start voice recognition. Please try again.');
         setIsListening(false);
         if (timerIntervalRef.current) {
@@ -293,7 +287,7 @@ const EnhancedQuestionsPage: React.FC = () => {
       try {
         recognitionRef.current.stop();
       } catch (error) {
-        console.error('Error stopping recognition:', error);
+
       }
       setIsListening(false);
       if (timerIntervalRef.current) {

@@ -47,7 +47,7 @@ const SimpleFhirAiWidget: React.FC = () => {
 
         setHealthStatus(simpleStatus);
       } catch (error) {
-        console.error('Error loading health status:', error);
+
         // Set safe default
         setHealthStatus({
           healthScore: 0,

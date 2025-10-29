@@ -65,7 +65,7 @@ export const NeuroSuiteDashboard: React.FC = () => {
         setRecentAlerts((prev) => [...prev, ...caregiverAlerts]);
       }
     } catch (error) {
-      console.error('Error loading dashboard data:', error);
+
     } finally {
       setLoading(false);
     }

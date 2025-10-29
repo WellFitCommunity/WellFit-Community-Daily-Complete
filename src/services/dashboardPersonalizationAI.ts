@@ -44,7 +44,7 @@ export class DashboardPersonalizationAI {
       // Build layout based on patterns and AI insights
       return this.buildLayout(preferences, aiInsights);
     } catch (error) {
-      console.error('Failed to generate personalized layout:', error);
+
       return this.getDefaultLayout(role);
     }
   }
@@ -111,7 +111,7 @@ export class DashboardPersonalizationAI {
         errorMessage: error instanceof Error ? error.message : 'Unknown error'
       });
 
-      console.error('AI insights failed, using pattern-based fallback:', error);
+
       return this.getPatternBasedInsights(preferences);
     }
   }
@@ -196,7 +196,7 @@ Be concise and actionable. This powers real-time UI reorganization.`;
 
       return insights;
     } catch (error) {
-      console.error('Failed to parse AI response:', error);
+
       return [];
     }
   }
@@ -358,7 +358,7 @@ Be concise and actionable. This powers real-time UI reorganization.`;
 
     for (const pattern of phiPatterns) {
       if (pattern.test(name)) {
-        console.warn(`HIPAA: Blocked PHI in section name: "${name}"`);
+
         return 'generic-section'; // Fallback to generic name
       }
     }
@@ -398,10 +398,10 @@ Be concise and actionable. This powers real-time UI reorganization.`;
       });
 
       if (insertError) {
-        console.error('Failed to log AI usage (non-blocking):', insertError);
+        // Removed console statement:', insertError);
       }
     } catch (error) {
-      console.error('Failed to log AI usage (non-blocking):', error);
+      // Removed console statement:', error);
       // Don't throw - audit logging failure should not break functionality
     }
   }

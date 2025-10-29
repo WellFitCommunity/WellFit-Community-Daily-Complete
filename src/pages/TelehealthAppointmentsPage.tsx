@@ -94,7 +94,7 @@ const TelehealthAppointmentsPage: React.FC = () => {
 
         setAppointments(formattedAppointments);
       } catch (error) {
-        console.error('Error loading appointments:', error);
+
       } finally {
         setLoading(false);
       }

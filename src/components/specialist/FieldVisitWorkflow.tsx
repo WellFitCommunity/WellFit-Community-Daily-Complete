@@ -49,7 +49,7 @@ export const FieldVisitWorkflow: React.FC<FieldVisitWorkflowProps> = ({ visitId 
       const step = workflowEngine.getCurrentStep(visitData.current_step);
       setCurrentStep(step || null);
     } catch (error) {
-      console.error('Failed to load visit:', error);
+
       alert('Failed to load visit');
     } finally {
       setLoading(false);
@@ -70,7 +70,7 @@ export const FieldVisitWorkflow: React.FC<FieldVisitWorkflowProps> = ({ visitId 
       await loadVisit(); // Reload to get updated status
       alert('Checked in successfully!');
     } catch (error) {
-      console.error('Check-in failed:', error);
+
       alert('Check-in failed. Please try again.');
     }
   };
@@ -88,7 +88,7 @@ export const FieldVisitWorkflow: React.FC<FieldVisitWorkflowProps> = ({ visitId 
       alert('Visit completed successfully!');
       window.location.href = '/specialist/dashboard';
     } catch (error) {
-      console.error('Check-out failed:', error);
+
       alert('Check-out failed. Please try again.');
     }
   };
@@ -110,7 +110,7 @@ export const FieldVisitWorkflow: React.FC<FieldVisitWorkflowProps> = ({ visitId 
       setStepData({}); // Reset form
       alert('Step completed!');
     } catch (error) {
-      console.error('Failed to save step:', error);
+
       alert('Failed to save. Data will be synced when online.');
     } finally {
       setSaving(false);

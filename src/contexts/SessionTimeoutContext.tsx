@@ -69,10 +69,10 @@ export const SessionTimeoutProvider: React.FC<SessionTimeoutProviderProps> = ({
       }
     } catch (error) {
       if (error instanceof Error && error.name === 'InvalidStateError') {
-        console.warn('[SessionTimeout] BroadcastChannel is closed, marking as closed');
+
         isChannelClosedRef.current = true;
       } else {
-        console.warn('[SessionTimeout] BroadcastChannel error:', error);
+
       }
     }
   }, []);
@@ -81,9 +81,11 @@ export const SessionTimeoutProvider: React.FC<SessionTimeoutProviderProps> = ({
     const alreadyOnLogin = location.pathname.startsWith('/login');
     try {
       const { error } = await supabase.auth.signOut();
-      if (error) console.warn('[SessionTimeout] signOut error:', error.message);
+      if (error) {
+        // Signout error - handled silently
+      }
     } catch (err) {
-      console.warn('[SessionTimeout] Unexpected logout error:', (err as Error)?.message);
+      // Signout error - handled silently
     }
     safePostMessage({ type: 'LOGOUT' });
     if (!alreadyOnLogin) navigate('/login', { replace: true });
@@ -120,7 +122,7 @@ export const SessionTimeoutProvider: React.FC<SessionTimeoutProviderProps> = ({
         bcRef.current = new BroadcastChannel('session-timeout');
         isChannelClosedRef.current = false;
       } catch (error) {
-        console.warn('[SessionTimeout] Failed to create BroadcastChannel:', error);
+
       }
     }
 
@@ -159,7 +161,7 @@ export const SessionTimeoutProvider: React.FC<SessionTimeoutProviderProps> = ({
         try {
           bc.close();
         } catch (error) {
-          console.warn('[SessionTimeout] Error closing BroadcastChannel:', error);
+
         }
         isChannelClosedRef.current = true;
       }

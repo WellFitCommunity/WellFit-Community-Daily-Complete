@@ -38,7 +38,7 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
       const dbBranding = await getCurrentTenantBranding();
       setBranding(dbBranding);
     } catch (error) {
-      console.error('[BrandingContext] Failed to load from database, using fallback:', error);
+
       // Fallback to hardcoded config if database fails
       setBranding(getCurrentBranding());
     } finally {

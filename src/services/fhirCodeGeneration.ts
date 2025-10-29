@@ -142,11 +142,11 @@ ${rules.map(rule => `      // ${rule.sourceField} -> ${rule.fhirPath}${rule.tran
 
       const { error } = await supabase.from('profiles').upsert(profileData);
       if (error) {
-        console.error('Failed to sync patient to WellFit:', error);
+
         throw new Error(\`Patient sync failed: \${error.message}\`);
       }
     } catch (error) {
-      console.error('Error syncing patient:', error);
+
       throw error;
     }
   }
@@ -175,16 +175,16 @@ ${rules.map(rule => `      // ${rule.sourceField} -> ${rule.fhirPath}${rule.tran
           checkInData.glucose_mg_dl = observation.valueQuantity?.value;
           break;
         default:
-          console.warn(\`Unknown LOINC code for WellFit mapping: \${loincCode}\`);
+
       }
 
       const { error } = await supabase.from('check_ins').insert(checkInData);
       if (error) {
-        console.error('Failed to sync observation to WellFit:', error);
+
         throw new Error(\`Observation sync failed: \${error.message}\`);
       }
     } catch (error) {
-      console.error('Error syncing observation:', error);
+
       throw error;
     }
   }
@@ -221,8 +221,10 @@ ${validationRules.map(rule => `    // Validate ${rule.sourceField}: ${rule.valid
       case 'required':
         return value != null && value !== '';
       case 'email':
+        // eslint-disable-next-line no-useless-escape
         return !value || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
       case 'phone':
+        // eslint-disable-next-line no-useless-escape
         return !value || /^[+]?[\d\s\-()]+$/.test(value);
       case 'date':
         return !value || !isNaN(Date.parse(value));

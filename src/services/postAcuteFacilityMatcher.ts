@@ -93,7 +93,7 @@ export class PostAcuteFacilityMatcher {
         matched_facilities: matchedFacilities
       };
     } catch (error: any) {
-      console.error('Post-acute recommendation failed:', error);
+
       throw new Error(`Failed to generate recommendation: ${error.message}`);
     }
   }
@@ -185,13 +185,13 @@ Be evidence-based and follow Medicare/Medicaid eligibility criteria.`;
           throw new Error('No JSON found in AI response');
         }
       } catch (parseError) {
-        console.error('Failed to parse AI recommendation:', parseError);
+
         recommendation = this.getFallbackRecommendation(needs);
       }
 
       return recommendation;
     } catch (error) {
-      console.error('AI recommendation failed:', error);
+
       return this.getFallbackRecommendation(needs);
     }
   }
@@ -252,7 +252,7 @@ Be evidence-based and follow Medicare/Medicaid eligibility criteria.`;
 
       return matchedFacilities;
     } catch (error) {
-      console.error('Facility matching failed:', error);
+
       return [];
     }
   }

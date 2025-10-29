@@ -45,7 +45,7 @@ const ERIncomingPatientBoard: React.FC<ERIncomingPatientBoardProps> = ({ hospita
     if (!hospitalName) return;
 
     const subscription = subscribeToIncomingPatients(hospitalName, (payload) => {
-      console.log('[ER Board] Real-time update:', payload);
+
       // Reload patients on any change
       loadPatients();
     });
@@ -75,7 +75,7 @@ const ERIncomingPatientBoard: React.FC<ERIncomingPatientBoardProps> = ({ hospita
       setPatients(data || []);
       setError(null);
     } catch (err: any) {
-      console.error('[ER Board] Error loading patients:', err);
+
       setError(err.message);
     } finally {
       setLoading(false);
@@ -87,7 +87,7 @@ const ERIncomingPatientBoard: React.FC<ERIncomingPatientBoardProps> = ({ hospita
       await acknowledgeHandoff(patientId, 'ER notified, preparing for arrival');
       loadPatients(); // Refresh
     } catch (err: any) {
-      console.error('[ER Board] Error acknowledging:', err);
+
       alert('Failed to acknowledge: ' + err.message);
     }
   };
@@ -97,7 +97,7 @@ const ERIncomingPatientBoard: React.FC<ERIncomingPatientBoardProps> = ({ hospita
       await markPatientArrived(patientId);
       loadPatients(); // Refresh
     } catch (err: any) {
-      console.error('[ER Board] Error marking arrived:', err);
+
       alert('Failed to mark arrived: ' + err.message);
     }
   };
@@ -168,18 +168,13 @@ Lives depend on complete, accurate handoffs.
       await transferPatientToER(patientId);
 
       // Step 2: Integrate handoff into patient chart (creates patient, encounter, vitals)
-      console.log('[ER Board] Integrating EMS handoff into patient chart...');
+
       const integrationResult = await integrateEMSHandoff(patientId, patient as any);
 
       if (integrationResult.success) {
-        console.log('[ER Board] ✅ Integration complete:', {
-          patientId: integrationResult.patientId,
-          encounterId: integrationResult.encounterId,
-          vitalsRecorded: integrationResult.observationIds?.length,
-          billingCodes: integrationResult.billingCodes?.length,
-        });
+        // Integration complete
       } else {
-        console.warn('[ER Board] ⚠️ Integration failed:', integrationResult.error);
+
         // Don't block handoff completion if integration fails
       }
 
@@ -202,7 +197,7 @@ Lives depend on complete, accurate handoffs.
 
       loadPatients(); // Refresh
     } catch (err: any) {
-      console.error('[ER Board] Error completing handoff:', err);
+
 
       // Database/network error - different from validation error
       const technicalErrorMessage = `

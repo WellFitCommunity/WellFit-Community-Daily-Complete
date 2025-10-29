@@ -45,7 +45,7 @@ export async function encryptPHI(
     // Return as base64
     return arrayBufferToBase64(combined);
   } catch (error) {
-    console.error('[PHI Encryption] Encryption failed:', error);
+
     throw new Error('Failed to encrypt PHI data. Cannot proceed without encryption.');
   }
 }
@@ -87,7 +87,7 @@ export async function decryptPHI(
     const decoder = new TextDecoder();
     return decoder.decode(decryptedData);
   } catch (error) {
-    console.error('[PHI Encryption] Decryption failed:', error);
+
     throw new Error('Failed to decrypt PHI data. Data may be corrupted.');
   }
 }
@@ -106,7 +106,7 @@ async function getMasterEncryptionKey(): Promise<CryptoKey> {
   if (!keyMaterial) {
     // CRITICAL: In production, this should FAIL
     // For development, we'll generate a temporary key
-    console.warn('[PHI Encryption] WARNING: No master encryption key found. Using temporary key. DO NOT USE IN PRODUCTION!');
+
 
     // Generate temporary key (DO NOT USE IN PRODUCTION)
     return await crypto.subtle.generateKey(
@@ -189,13 +189,13 @@ export async function validateEncryption(): Promise<boolean> {
     const decrypted = await decryptPHI(encrypted, testPatientId);
 
     if (decrypted !== testData) {
-      console.error('[PHI Encryption] Validation failed: Decrypted data does not match');
+
       return false;
     }
 
     return true;
   } catch (error) {
-    console.error('[PHI Encryption] Validation failed:', error);
+
     return false;
   }
 }

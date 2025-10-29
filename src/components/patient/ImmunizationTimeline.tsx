@@ -31,7 +31,7 @@ const ImmunizationTimeline: React.FC<ImmunizationTimelineProps> = ({ userId, onB
         setImmunizations(result.data);
       }
     } catch (error) {
-      console.error('Failed to load immunizations:', error);
+
     }
     setLoading(false);
   };

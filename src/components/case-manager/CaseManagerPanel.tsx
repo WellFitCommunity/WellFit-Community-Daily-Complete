@@ -47,7 +47,7 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
 };
 
 const CaseManagerPanel: React.FC = () => {
-  const [selectedPatient, setSelectedPatient] = useState<{
+  const [selectedPatient, _setSelectedPatient] = useState<{
     user_id: string;
     first_name: string;
     last_name: string;

@@ -79,12 +79,12 @@ export async function saveTriviaGameResult(
       .single();
 
     if (error) {
-      console.error('Failed to save trivia game result:', error);
+
     }
 
     return { data, error };
   } catch (err) {
-    console.error('Exception saving trivia game result:', err);
+
     return { data: null, error: err };
   }
 }
@@ -116,12 +116,12 @@ export async function saveWordGameResult(
       .single();
 
     if (error) {
-      console.error('Failed to save word game result:', error);
+
     }
 
     return { data, error };
   } catch (err) {
-    console.error('Exception saving word game result:', err);
+
     return { data: null, error: err };
   }
 }
@@ -147,12 +147,12 @@ export async function submitUserQuestion(
       .single();
 
     if (error) {
-      console.error('Failed to submit question:', error);
+
     }
 
     return { data, error };
   } catch (err) {
-    console.error('Exception submitting question:', err);
+
     return { data: null, error: err };
   }
 }
@@ -178,12 +178,12 @@ export async function respondToUserQuestion(
       .single();
 
     if (error) {
-      console.error('Failed to respond to question:', error);
+
     }
 
     return { data, error };
   } catch (err) {
-    console.error('Exception responding to question:', err);
+
     return { data: null, error: err };
   }
 }
@@ -217,12 +217,12 @@ export async function loadUserQuestions(
     const { data, error } = await query;
 
     if (error) {
-      console.error('Failed to load questions:', error);
+
     }
 
     return { data: data || [], error };
   } catch (err) {
-    console.error('Exception loading questions:', err);
+
     return { data: [], error: err };
   }
 }
@@ -249,12 +249,12 @@ export async function saveSelfReportSubmission(
       .single();
 
     if (error) {
-      console.error('Failed to save self-report:', error);
+
     }
 
     return { data, error };
   } catch (err) {
-    console.error('Exception saving self-report:', err);
+
     return { data: null, error: err };
   }
 }
@@ -274,12 +274,12 @@ export async function getPatientEngagementScore(
       .single();
 
     if (error) {
-      console.error('Failed to get engagement score:', error);
+
     }
 
     return { data, error };
   } catch (err) {
-    console.error('Exception getting engagement score:', err);
+
     return { data: null, error: err };
   }
 }
@@ -297,12 +297,12 @@ export async function getAllPatientEngagementScores(
       .order('engagement_score', { ascending: false });
 
     if (error) {
-      console.error('Failed to get all engagement scores:', error);
+
     }
 
     return { data: data || [], error };
   } catch (err) {
-    console.error('Exception getting all engagement scores:', err);
+
     return { data: [], error: err };
   }
 }

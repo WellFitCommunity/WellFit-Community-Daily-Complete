@@ -101,7 +101,7 @@ export async function calculateEngagementRisk(
 
     return { score: riskScore, dataPoints: totalActivities };
   } catch (err) {
-    console.error('Error calculating engagement risk:', err);
+
     return { score: 5.0, dataPoints: 0 };
   }
 }
@@ -250,7 +250,7 @@ export async function calculateVitalsRisk(
     const normalizedScore = riskFactors > 0 ? (riskScore / riskFactors) * 3.33 : 5.0;
     return { score: Math.min(10, normalizedScore), dataPoints: data.length };
   } catch (err) {
-    console.error('Error calculating vitals risk:', err);
+
     return { score: 5.0, dataPoints: 0 };
   }
 }
@@ -337,7 +337,7 @@ export async function calculateMentalHealthRisk(
     const averageRisk = moodCount > 0 ? riskScore / moodCount : 5.0;
     return { score: Math.min(10, averageRisk), dataPoints: data.length };
   } catch (err) {
-    console.error('Error calculating mental health risk:', err);
+
     return { score: 5.0, dataPoints: 0 };
   }
 }
@@ -407,7 +407,7 @@ export async function calculateSocialIsolationRisk(
     const averageRisk = interactionCount > 0 ? isolationScore / interactionCount : 7.0;
     return { score: Math.min(10, averageRisk), dataPoints: data.length };
   } catch (err) {
-    console.error('Error calculating social isolation risk:', err);
+
     return { score: 7.0, dataPoints: 0 };
   }
 }
@@ -473,7 +473,7 @@ export async function calculatePhysicalActivityRisk(
     const averageRisk = activityCount > 0 ? activityScore / activityCount : 6.0;
     return { score: Math.min(10, averageRisk), dataPoints: data.length };
   } catch (err) {
-    console.error('Error calculating physical activity risk:', err);
+
     return { score: 6.0, dataPoints: 0 };
   }
 }
@@ -513,7 +513,7 @@ export async function calculateMedicationAdherenceRisk(
 
     return { score: 3.0, dataPoints: data.length }; // Default low risk if no concerns mentioned
   } catch (err) {
-    console.error('Error calculating medication adherence risk:', err);
+
     return { score: 5.0, dataPoints: 0 };
   }
 }
@@ -541,7 +541,7 @@ export async function getClinicalRiskScore(
     // overall_score from risk assessment is already 0-10
     return { score: data.overall_score || 5.0, dataPoints: 1 };
   } catch (err) {
-    console.error('Error getting clinical risk score:', err);
+
     return { score: 5.0, dataPoints: 0 };
   }
 }
@@ -655,7 +655,7 @@ export async function calculateHolisticRiskAssessment(
       }
     };
   } catch (err) {
-    console.error('Error calculating holistic risk:', err);
+
     throw err;
   }
 }

@@ -437,7 +437,7 @@ If this is a false positive, please close the PR and update Guardian's detection
         })
         .eq('id', alertId);
     } catch (error) {
-      console.error('[GitService] Failed to save PR info:', error);
+
     }
   }
 
@@ -452,7 +452,7 @@ If this is a false positive, please close the PR and update Guardian's detection
 
       await execAsync(`git checkout main && git branch -D ${branchName}`);
     } catch (error) {
-      console.error('[GitService] Failed to delete branch:', error);
+
     }
   }
 

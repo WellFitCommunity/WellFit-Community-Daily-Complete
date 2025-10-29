@@ -30,7 +30,7 @@ export default function DataManagementPanel() {
       if (error) throw error;
       setDataStatus(data);
     } catch (error) {
-      console.error('Error loading data status:', error);
+
       alert('Failed to load data status. Please try again.');
     }
     setLoading(false);
@@ -58,7 +58,7 @@ export default function DataManagementPanel() {
 
       alert('Your data has been downloaded successfully!');
     } catch (error) {
-      console.error('Error exporting data:', error);
+
       alert('Failed to export data. Please try again.');
     }
     setLoading(false);
@@ -87,7 +87,7 @@ export default function DataManagementPanel() {
       await supabase.auth.signOut();
       window.location.href = '/';
     } catch (error) {
-      console.error('Error deleting account:', error);
+
       alert('Failed to delete account. Please contact support.');
     }
     setLoading(false);

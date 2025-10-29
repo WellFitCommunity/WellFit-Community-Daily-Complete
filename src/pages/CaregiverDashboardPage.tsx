@@ -51,7 +51,7 @@ const CaregiverDashboardPage: React.FC = () => {
 
         setCaregiverProfile(data);
       } catch (e) {
-        console.error('Error loading caregiver profile:', e);
+
         navigate('/login');
       }
     })();
@@ -116,7 +116,7 @@ const CaregiverDashboardPage: React.FC = () => {
       });
 
       if (logError) {
-        console.error('Critical: Failed to log caregiver access for compliance:', logError);
+
         setError('System error: Unable to record access for compliance. Please contact support.');
         return;
       }

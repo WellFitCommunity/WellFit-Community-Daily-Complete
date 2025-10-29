@@ -26,7 +26,7 @@ const HealthObservationsWidget: React.FC = () => {
         setLatestObservations(response.data.slice(0, 3));
       }
     } catch (error) {
-      console.error('Failed to load observations:', error);
+
     } finally {
       setLoading(false);
     }

@@ -43,7 +43,7 @@ const TranslationModule: React.FC<Props> = ({ userRole }) => {
       setCached(response.cached);
     } catch (err) {
       setError('Translation failed. Please try again.');
-      console.error('Translation error:', err);
+
     } finally {
       setLoading(false);
     }
@@ -61,7 +61,7 @@ const TranslationModule: React.FC<Props> = ({ userRole }) => {
       await navigator.clipboard.writeText(translatedText);
       alert('Translation copied to clipboard!');
     } catch (err) {
-      console.error('Failed to copy:', err);
+
     }
   };
 

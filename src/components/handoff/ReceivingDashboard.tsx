@@ -57,7 +57,7 @@ const ReceivingDashboard: React.FC<ReceivingFacilityDashboardProps> = ({
       const data = await HandoffService.getAttachments(packetId);
       setAttachments(data);
     } catch (error: any) {
-      console.error('Failed to load attachments:', error);
+
     }
   };
 
@@ -85,7 +85,7 @@ const ReceivingDashboard: React.FC<ReceivingFacilityDashboardProps> = ({
       });
 
       // Step 2: Integrate transfer into patient chart (creates patient, encounter, vitals, billing)
-      console.log('[Receiving Dashboard] Integrating hospital transfer into patient chart...');
+
       const integrationResult = await integrateHospitalTransfer(packetId, packet as any);
 
       if (integrationResult.success) {
@@ -97,7 +97,7 @@ const ReceivingDashboard: React.FC<ReceivingFacilityDashboardProps> = ({
         });
         toast.success('Patient chart created and transfer integrated!', { autoClose: 3000 });
       } else {
-        console.warn('[Receiving Dashboard] ⚠️ Integration failed:', integrationResult.error);
+
         toast.warning('Transfer acknowledged but integration incomplete. Please review patient chart.', { autoClose: 5000 });
       }
 

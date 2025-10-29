@@ -92,7 +92,7 @@ const AdminFeatureToggle: React.FC<Props> = ({
       
       // Log error for debugging (in development)
       if (process.env.NODE_ENV === 'development') {
-        console.error('AdminFeatureToggle error:', error);
+
       }
     } finally {
       setBusy(false);

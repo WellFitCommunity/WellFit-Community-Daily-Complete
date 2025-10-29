@@ -70,11 +70,11 @@ export const requestNotificationPermission = async (): Promise<void> => {
 
     // Optional: show foreground messages as console or toast
     onMessage(messaging, (payload) => {
-      console.log('Foreground push:', payload);
+
       // You can show a toast here with react-toastify if you want
     });
   } catch (err) {
-    console.error('Push setup failed:', err);
+
     alert('Push notification setup failed.');
   }
 };

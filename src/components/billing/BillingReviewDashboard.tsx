@@ -129,7 +129,7 @@ export function BillingReviewDashboard() {
 
       setClaims(filteredClaims);
     } catch (error) {
-      console.error('Error loading claims:', error);
+
     } finally {
       setLoading(false);
     }
@@ -154,7 +154,7 @@ export function BillingReviewDashboard() {
         alert(data?.error || 'Failed to approve claim');
       }
     } catch (error) {
-      console.error('Error approving claim:', error);
+
       alert('Error approving claim');
     }
   };
@@ -186,7 +186,7 @@ export function BillingReviewDashboard() {
         alert(data?.error || 'Failed to submit claim');
       }
     } catch (error) {
-      console.error('Error submitting claim:', error);
+
       alert('Error submitting claim');
     }
   };
@@ -210,7 +210,7 @@ export function BillingReviewDashboard() {
       setSelectedClaim(null);
       loadClaims();
     } catch (error) {
-      console.error('Error rejecting claim:', error);
+
       alert('Error rejecting claim');
     }
   };

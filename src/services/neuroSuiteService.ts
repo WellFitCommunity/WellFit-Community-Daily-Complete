@@ -140,7 +140,7 @@ export class NeuroSuiteService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('NeuroSuiteService.createStrokeAssessment error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -214,7 +214,7 @@ export class NeuroSuiteService {
 
       return { success: true, data: diffMinutes };
     } catch (error: any) {
-      console.error('NeuroSuiteService.calculateDoorToNeedleTime error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -236,7 +236,7 @@ export class NeuroSuiteService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
-      console.error('NeuroSuiteService.getStrokeAssessmentsByPatient error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -277,7 +277,7 @@ export class NeuroSuiteService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('NeuroSuiteService.createMRS error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -302,7 +302,7 @@ export class NeuroSuiteService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('NeuroSuiteService.get90DayOutcome error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -403,7 +403,7 @@ export class NeuroSuiteService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('NeuroSuiteService.createCognitiveAssessment error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -444,7 +444,7 @@ export class NeuroSuiteService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
-      console.error('NeuroSuiteService.getCognitiveAssessmentHistory error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -464,7 +464,7 @@ export class NeuroSuiteService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('NeuroSuiteService.calculateCognitiveDeclineRate error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -535,7 +535,7 @@ export class NeuroSuiteService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('NeuroSuiteService.createDementiaStaging error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -597,7 +597,7 @@ export class NeuroSuiteService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
-      console.error('NeuroSuiteService.getDementiaStagingHistory error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -674,7 +674,7 @@ export class NeuroSuiteService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('NeuroSuiteService.createCaregiverAssessment error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -705,7 +705,7 @@ export class NeuroSuiteService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
-      console.error('NeuroSuiteService.getCaregiverBurdenHistory error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -723,7 +723,7 @@ export class NeuroSuiteService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
-      console.error('NeuroSuiteService.identifyHighBurdenCaregivers error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -771,7 +771,7 @@ export class NeuroSuiteService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('NeuroSuiteService.createNeuroCarePlan error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -796,7 +796,7 @@ export class NeuroSuiteService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('NeuroSuiteService.getActiveCarePlan error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -820,7 +820,7 @@ export class NeuroSuiteService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
-      console.error('NeuroSuiteService.getActiveStrokePatients error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -840,7 +840,7 @@ export class NeuroSuiteService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
-      console.error('NeuroSuiteService.getDementiaPatientsNeedingReassessment error:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -860,7 +860,7 @@ export class NeuroSuiteService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('NeuroSuiteService.calculateStrokeOutcomeImprovement error:', error);
+
       return { success: false, error: error.message };
     }
   }

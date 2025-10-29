@@ -2,7 +2,7 @@
  * Monitoring System - Continuous health monitoring and anomaly detection
  */
 
-import { DetectedIssue, ErrorContext, AgentState } from './types';
+import { DetectedIssue, ErrorContext/*, AgentState*/ } from './types';
 import { AgentBrain } from './AgentBrain';
 import { SecurityScanner } from './SecurityScanner';
 

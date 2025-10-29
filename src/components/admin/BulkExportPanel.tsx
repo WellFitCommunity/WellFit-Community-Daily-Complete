@@ -150,7 +150,7 @@ const BulkExportPanel: React.FC = () => {
       pollJobProgress(jobId);
 
     } catch (error) {
-      console.error('Export failed:', error);
+
       alert(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
@@ -181,7 +181,7 @@ const BulkExportPanel: React.FC = () => {
           setTimeout(poll, 2000);
         }
       } catch (error) {
-        console.error('Failed to poll job status:', error);
+
         setActiveJobs(prev => prev.map(job =>
           job.id === jobId
             ? { ...job, status: 'failed', error: 'Failed to get job status' }

@@ -312,7 +312,7 @@ const DoctorsView: React.FC = () => {
       setCommunityEngagement({ lastAttendedAt, countLast30Days });
 
     } catch (e: any) {
-      console.error('Error fetching data for DoctorsView:', e);
+
       setError('Failed to load data. Please refresh the page.');
     } finally {
       setLoading(false);

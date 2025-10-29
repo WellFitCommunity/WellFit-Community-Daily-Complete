@@ -42,7 +42,7 @@ export const SOC2ExecutiveDashboard: React.FC = () => {
       setComplianceDetails(complianceData);
       setLastRefresh(new Date());
     } catch (err) {
-      console.error('Error loading executive data:', err);
+
       setError('Failed to load executive summary');
     } finally {
       setLoading(false);
@@ -56,6 +56,7 @@ export const SOC2ExecutiveDashboard: React.FC = () => {
     const interval = setInterval(loadExecutiveData, 60000);
 
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getComplianceGrade = (score: number): string => {

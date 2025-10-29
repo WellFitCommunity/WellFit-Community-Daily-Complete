@@ -16,7 +16,6 @@ const WelcomePage: React.FC = () => {
     let mounted = true;
 
     const checkSessionAndRedirect = async () => {
-      console.log('[WelcomePage] Checking session...');
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
 
@@ -25,27 +24,21 @@ const WelcomePage: React.FC = () => {
           if (error.message?.includes('Invalid Refresh Token') ||
               error.message?.includes('Session Expired') ||
               error.message?.includes('Revoked by Newer Login')) {
-            console.log('[WelcomePage] Session expired/revoked - clearing local storage');
             // Clear stale tokens
             await supabase.auth.signOut({ scope: 'local' });
             return;
           }
-          console.warn('[WelcomePage] Session check error:', error.message);
           return;
         }
 
         if (!mounted || !session) {
-          console.log('[WelcomePage] No session found');
           return;
         }
 
       const userId = session.user?.id;
       if (!userId) {
-        console.log('[WelcomePage] No user ID in session');
         return;
       }
-
-      console.log('[WelcomePage] User logged in, fetching profile...');
 
       // Fetch profile to check role
       const { data: profile, error: profileError } = await supabase
@@ -59,46 +52,37 @@ const WelcomePage: React.FC = () => {
       // If profile doesn't exist or error, don't auto-redirect
       // Let user click login button to trigger proper error handling
       if (profileError) {
-        console.error('[WelcomePage] Error fetching profile:', profileError.message);
         return;
       }
 
       if (!profile) {
-        console.warn('[WelcomePage] No profile found for user. User should register or contact support.');
         return;
       }
 
       const role = profile?.role || '';
       const roleCode = profile?.role_code || 0;
 
-      console.log('[WelcomePage] User profile:', { role, roleCode, onboarded: profile.onboarded, consent: profile.consent, force_password_change: profile.force_password_change });
-
       // Force password change takes priority
       if (profile.force_password_change) {
-        console.log('[WelcomePage] Force password change required');
         navigate('/change-password', { replace: true });
         return;
       }
 
       // Admin/super_admin go to admin login
       if (role === 'admin' || role === 'super_admin' || roleCode === 1 || roleCode === 2) {
-        console.log('[WelcomePage] Admin detected, redirecting to admin-login');
         navigate('/admin-login', { replace: true });
         return;
       }
 
       // Caregiver goes to caregiver dashboard
       if (role === 'caregiver' || roleCode === 6) {
-        console.log('[WelcomePage] Caregiver detected, redirecting to caregiver-dashboard');
         navigate('/caregiver-dashboard', { replace: true });
         return;
       }
 
       // Seniors: redirect to dashboard, AuthGate will handle onboarding flow
-      console.log('[WelcomePage] Senior user detected, redirecting to dashboard (AuthGate will handle onboarding)');
       navigate('/dashboard', { replace: true });
       } catch (err) {
-        console.error('[WelcomePage] Unexpected error during session check:', err);
         // On any error, just stay on welcome page
       }
     };

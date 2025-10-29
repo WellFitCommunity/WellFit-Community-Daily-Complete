@@ -67,10 +67,10 @@ const AdminProfileEditor: React.FC = () => {
         // ip_address and user_agent could be added here if available
       });
       if (error) {
-        console.error('Error logging profile view:', error);
+
       }
     } catch (err) {
-      console.error('Exception while logging profile view:', err);
+
     }
   };
 

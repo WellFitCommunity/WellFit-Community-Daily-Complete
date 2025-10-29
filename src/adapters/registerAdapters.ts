@@ -16,7 +16,7 @@ import { MeditechFHIRAdapter } from './implementations/MeditechFHIRAdapter';
  * Call this on application initialization
  */
 export function registerAllAdapters(): void {
-  console.log('[AdapterRegistry] Registering all EHR adapters...');
+
 
   // Generic FHIR R4 (works with any FHIR server)
   const genericAdapter = new GenericFHIRAdapter();
@@ -34,7 +34,7 @@ export function registerAllAdapters(): void {
   const meditechAdapter = new MeditechFHIRAdapter();
   adapterRegistry.registerAdapter(meditechAdapter.metadata, MeditechFHIRAdapter);
 
-  console.log('[AdapterRegistry] Registered adapters:');
+
   adapterRegistry.listAdapters().forEach(adapter => {
     console.log(`  - ${adapter.name} (${adapter.id}) by ${adapter.vendor}`);
   });

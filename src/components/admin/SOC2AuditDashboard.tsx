@@ -39,7 +39,7 @@ export const SOC2AuditDashboard: React.FC = () => {
       setComplianceStatus(complianceData);
       setLastRefresh(new Date());
     } catch (err) {
-      console.error('Error loading audit data:', err);
+
       setError('Failed to load audit and compliance data');
     } finally {
       setLoading(false);
@@ -53,6 +53,7 @@ export const SOC2AuditDashboard: React.FC = () => {
     const interval = setInterval(loadAuditData, 60000);
 
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getRiskLevelColor = (risk: string) => {

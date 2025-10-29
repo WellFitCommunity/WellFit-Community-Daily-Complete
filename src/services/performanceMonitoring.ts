@@ -82,10 +82,11 @@ class PerformanceMonitor {
         browser_info: this.getBrowserInfo()
       });
 
-      if (error) console.error('Failed to log error:', error);
+      if (error) {
+        // Performance metric logging error - fail silently
+      }
     } catch (err) {
       // Fail silently to avoid infinite loops
-      console.error('Monitoring error:', err);
     }
   }
 
@@ -113,7 +114,7 @@ class PerformanceMonitor {
 
       perfObserver.observe({ entryTypes: ['navigation'] });
     } catch (err) {
-      console.warn('Performance observer not supported');
+
     }
   }
 
@@ -126,7 +127,7 @@ class PerformanceMonitor {
         user_id: this.userId
       });
     } catch (err) {
-      console.error('Failed to track metric:', err);
+
     }
   }
 
@@ -181,7 +182,7 @@ class PerformanceMonitor {
         user_id: this.userId
       });
     } catch (err) {
-      console.error('Failed to track feature usage:', err);
+
     }
   }
 

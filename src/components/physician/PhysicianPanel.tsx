@@ -175,7 +175,7 @@ const PatientSelector: React.FC<PatientSelectorProps> = ({ onSelectPatient, sele
       const mapped = (data || []).map(p => ({ ...p, id: p.user_id }));
       setPatients(mapped);
     } catch (error) {
-      console.error('Error loading patients:', error);
+
     } finally {
       setLoading(false);
     }
@@ -372,7 +372,7 @@ const PhysicianPanel: React.FC = () => {
         todayRevenue: 0
       });
     } catch (error) {
-      console.error('Error loading dashboard stats:', error);
+
     }
   }, [supabase]);
 
@@ -503,7 +503,7 @@ const PhysicianPanel: React.FC = () => {
 
       setPatientSummary(summary);
     } catch (error) {
-      console.error('Error loading patient summary:', error);
+
     } finally {
       setLoading(false);
     }
@@ -625,7 +625,7 @@ const PhysicianPanel: React.FC = () => {
                 selectedPatientId={selectedPatient.user_id}
                 selectedPatientName={`${selectedPatient.first_name} ${selectedPatient.last_name}`}
                 onSessionComplete={(sessionId) => {
-                  console.log('✓ Scribe session completed:', sessionId);
+
                 }}
               />
             ) : (

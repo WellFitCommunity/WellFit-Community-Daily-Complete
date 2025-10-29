@@ -78,7 +78,7 @@ export class MentalHealthService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('Error creating service request:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -100,7 +100,7 @@ export class MentalHealthService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
-      console.error('Error fetching service requests:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -136,7 +136,7 @@ export class MentalHealthService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('Error updating service request:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -178,7 +178,7 @@ export class MentalHealthService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('Error scheduling session:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -205,7 +205,7 @@ export class MentalHealthService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('Error starting session:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -252,7 +252,7 @@ export class MentalHealthService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('Error completing session:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -273,7 +273,7 @@ export class MentalHealthService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
-      console.error('Error fetching pending sessions:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -361,7 +361,7 @@ export class MentalHealthService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('Error creating risk assessment:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -385,7 +385,7 @@ export class MentalHealthService {
 
       return { success: true, data: data || null };
     } catch (error: any) {
-      console.error('Error fetching risk assessment:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -444,7 +444,7 @@ export class MentalHealthService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('Error creating safety plan:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -469,7 +469,7 @@ export class MentalHealthService {
 
       return { success: true, data: data || null };
     } catch (error: any) {
-      console.error('Error fetching safety plan:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -495,7 +495,7 @@ export class MentalHealthService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
-      console.error('Error fetching escalations:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -525,7 +525,7 @@ export class MentalHealthService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('Error resolving escalation:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -566,7 +566,7 @@ export class MentalHealthService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('Error creating flag:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -589,7 +589,7 @@ export class MentalHealthService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
-      console.error('Error fetching flags:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -616,7 +616,7 @@ export class MentalHealthService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('Error deactivating flag:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -647,7 +647,7 @@ export class MentalHealthService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('Error creating discharge checklist:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -679,7 +679,7 @@ export class MentalHealthService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('Error updating discharge checklist:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -703,7 +703,7 @@ export class MentalHealthService {
 
       return { success: true, data: data || null };
     } catch (error: any) {
-      console.error('Error fetching discharge checklist:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -723,7 +723,7 @@ export class MentalHealthService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
-      console.error('Error fetching discharge blockers:', error);
+
       return { success: false, error: error.message };
     }
   }
@@ -812,7 +812,7 @@ export class MentalHealthService {
 
       return { success: true, data: summary };
     } catch (error: any) {
-      console.error('Error fetching dashboard summary:', error);
+
       return { success: false, error: error.message };
     }
   }

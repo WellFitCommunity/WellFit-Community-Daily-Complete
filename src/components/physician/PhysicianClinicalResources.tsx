@@ -142,7 +142,7 @@ const PhysicianClinicalResources: React.FC = () => {
 
       setResources(physicianResources);
     } catch (error) {
-      console.error('Error loading physician resources:', error);
+
     } finally {
       setLoading(false);
     }
@@ -152,7 +152,7 @@ const PhysicianClinicalResources: React.FC = () => {
     try {
       await ResilienceHubService.trackResourceView(resourceId);
     } catch (error) {
-      console.error('Error tracking resource view:', error);
+
     }
   };
 

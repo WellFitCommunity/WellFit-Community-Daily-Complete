@@ -6,10 +6,8 @@ import { SessionTimeoutProvider } from './contexts/SessionTimeoutContext';
 import { BrandingConfig, getCurrentBranding } from './branding.config';
 import { BrandingContext } from './BrandingContext';
 import { performanceMonitor } from './services/performanceMonitoring';
-import { getGuardianAgent } from './services/guardian-agent';
 import { GuardianErrorBoundary } from './components/GuardianErrorBoundary';
-import { smartRecordingStrategy } from './services/guardian-agent/SmartRecordingStrategy';
-import { realtimeSecurityMonitor } from './services/guardian-agent/RealtimeSecurityMonitor';
+import { performSecurityScan, monitorSystemHealth } from './services/guardianAgentClient';
 
 // ❌ Do NOT import or use AuthProvider here — it lives in index.tsx
 // ❌ Do NOT import or use AdminAuthProvider here — it lives in index.tsx
@@ -84,8 +82,9 @@ const CarePlansPage = React.lazy(() => import('./pages/CarePlansPage'));
 const MedicineCabinet = React.lazy(() => import('./components/patient/MedicineCabinet'));
 const MyHealthHubPage = React.lazy(() => import('./pages/MyHealthHubPage'));
 const TelehealthAppointmentsPage = React.lazy(() => import('./pages/TelehealthAppointmentsPage'));
+// Guardian moved to Edge Functions
 const GuardianAgentDashboard = React.lazy(() => import('./components/admin/GuardianAgentDashboard'));
-const GuardianTestPage = React.lazy(() => import('./pages/GuardianTestPage'));
+// const GuardianTestPage = React.lazy(() => import('./pages/GuardianTestPage'));
 const EMSPage = React.lazy(() => import('./pages/EMSPage'));
 const ERDashboardPage = React.lazy(() => import('./pages/ERDashboardPage'));
 const SystemAdministrationPage = React.lazy(() => import('./pages/SystemAdministrationPage'));
@@ -104,62 +103,15 @@ function Shell() {
     }
   }, [supabase, user?.id]);
 
-  // Initialize Guardian Agent
+  // Guardian Agent moved to Edge Function - call API for security scans
   useEffect(() => {
-    const agent = getGuardianAgent({
-      autoHealEnabled: true,
-      learningEnabled: true,
-      hipaaComplianceMode: true,
-      requireApprovalForCritical: false,
-      maxConcurrentHealings: 5
-    });
-
-    agent.start();
-    console.log('🛡️ Guardian Agent is protecting your application');
-
-    return () => {
-      agent.stop();
+    const runSecurityCheck = async () => {
+      await performSecurityScan();
     };
+    runSecurityCheck();
   }, []);
 
-  // 🎥 Smart AI Recording - Only records errors & critical events (1% sampling)
-  // Cost: ~$0.02/month instead of $378/month (99.5% savings!)
-  useEffect(() => {
-    // Get user ID from Supabase if available
-    const initRecording = async () => {
-      if (!supabase) return;
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-
-      // Start smart recording (only 1% of sessions, or when error occurs)
-      await smartRecordingStrategy.startSmartRecording(currentUser?.id);
-    };
-
-    initRecording();
-
-    // Auto-stop after 15 minutes or when user leaves
-    return () => {
-      smartRecordingStrategy.stopSmartRecording();
-    };
-  }, [supabase]);
-
-  // 🔒 SOC 2 Real-Time Security Monitoring
-  // Monitors security_events and security_alerts tables for compliance
-  useEffect(() => {
-    const initSecurityMonitoring = async () => {
-      try {
-        await realtimeSecurityMonitor.startMonitoring();
-        console.log('🔒 SOC 2 Security Monitoring: ACTIVE');
-      } catch (error) {
-        console.error('Failed to start SOC 2 monitoring:', error);
-      }
-    };
-
-    initSecurityMonitoring();
-
-    return () => {
-      realtimeSecurityMonitor.stopMonitoring();
-    };
-  }, []);
+  // Recording and monitoring moved to Edge Functions
 
   useEffect(() => {
     setBranding(getCurrentBranding());
@@ -414,25 +366,15 @@ function Shell() {
                   </RequireAuth>
                 }
               />
+
+              {/* Guardian Agent Dashboard */}
               <Route
                 path="/admin/guardian"
                 element={
                   <RequireAuth>
-                    <RequireAdminAuth allowedRoles={['admin', 'super_admin']}>
-                      <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
+                    <RequireAdminAuth allowedRoles={['super_admin', 'admin']}>
+                      <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading Guardian...</div>}>
                         <GuardianAgentDashboard />
-                      </Suspense>
-                    </RequireAdminAuth>
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/admin/guardian-test"
-                element={
-                  <RequireAuth>
-                    <RequireAdminAuth allowedRoles={['admin', 'super_admin']}>
-                      <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
-                        <GuardianTestPage />
                       </Suspense>
                     </RequireAdminAuth>
                   </RequireAuth>

@@ -37,6 +37,7 @@ const AdminTaskModule: React.FC<Props> = ({
     if (userId) {
       loadTaskHistory();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userRole, userId]);
 
   const loadTemplates = async () => {
@@ -44,7 +45,7 @@ const AdminTaskModule: React.FC<Props> = ({
       const loaded = await ClaudeCareAssistant.getTemplatesForRole(userRole);
       setTemplates(loaded);
     } catch (err) {
-      console.error('Failed to load templates:', err);
+
       setError('Failed to load templates');
     }
   };
@@ -56,7 +57,7 @@ const AdminTaskModule: React.FC<Props> = ({
       const history = await ClaudeCareAssistant.getUserTaskHistory(userId, 10);
       setTaskHistory(history);
     } catch (err) {
-      console.error('Failed to load task history:', err);
+
     }
   };
 
@@ -114,7 +115,7 @@ const AdminTaskModule: React.FC<Props> = ({
       // Reload task history
       await loadTaskHistory();
     } catch (err) {
-      console.error('Task generation failed:', err);
+
       setError('Failed to generate task. Please try again.');
     } finally {
       setLoading(false);
@@ -126,7 +127,7 @@ const AdminTaskModule: React.FC<Props> = ({
       await navigator.clipboard.writeText(generatedContent);
       alert('Content copied to clipboard!');
     } catch (err) {
-      console.error('Failed to copy:', err);
+
     }
   };
 

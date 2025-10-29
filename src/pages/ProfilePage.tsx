@@ -52,7 +52,7 @@ const ProfilePage: React.FC = () => {
       if (error) throw error;
       setProfile(data);
     } catch (error) {
-      console.error('Error loading profile:', error);
+
     } finally {
       setLoading(false);
     }
@@ -78,7 +78,7 @@ const ProfilePage: React.FC = () => {
 
       setCheckInCount(checkIns || 0);
     } catch (error) {
-      console.error('Error loading stats:', error);
+
     }
   };
 
@@ -145,7 +145,7 @@ const ProfilePage: React.FC = () => {
       setProfile({ ...profile, avatar_url: urlData.publicUrl });
       setMessage({ type: 'success', text: 'Profile photo updated successfully!' });
     } catch (error: any) {
-      console.error('Error uploading avatar:', error);
+
       setMessage({ type: 'error', text: 'Failed to upload photo. Please try again.' });
     } finally {
       setUploading(false);

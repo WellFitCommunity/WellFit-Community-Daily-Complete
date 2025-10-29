@@ -37,7 +37,7 @@ export const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onClose }) => 
       const data = await getResources(filters);
       setResources(data);
     } catch (err) {
-      console.error('ResourceLibrary load error:', err);
+
       setError(err instanceof Error ? err.message : 'Failed to load resources');
     } finally {
       setLoading(false);
@@ -54,7 +54,7 @@ export const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onClose }) => 
     try {
       await trackResourceView(resource.id);
     } catch (err) {
-      console.error('Failed to track resource view:', err);
+
     }
 
     // Open URL if exists

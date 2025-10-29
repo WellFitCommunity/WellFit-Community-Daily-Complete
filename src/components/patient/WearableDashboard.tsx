@@ -67,7 +67,7 @@ export const WearableDashboard: React.FC = () => {
         setFalls(fallsResponse.data);
       }
     } catch (error) {
-      console.error('Error loading dashboard data:', error);
+
     } finally {
       setLoading(false);
     }
@@ -99,7 +99,7 @@ export const WearableDashboard: React.FC = () => {
         alert(`Error connecting device: ${response.error}`);
       }
     } catch (error) {
-      console.error('Error connecting device:', error);
+
       alert('Failed to connect device');
     }
   };
@@ -117,7 +117,7 @@ export const WearableDashboard: React.FC = () => {
         alert(`Error disconnecting device: ${response.error}`);
       }
     } catch (error) {
-      console.error('Error disconnecting device:', error);
+
       alert('Failed to disconnect device');
     }
   };
@@ -138,7 +138,7 @@ export const WearableDashboard: React.FC = () => {
         loadDashboardData();
       }
     } catch (error) {
-      console.error('Error responding to fall alert:', error);
+
     }
   };
 

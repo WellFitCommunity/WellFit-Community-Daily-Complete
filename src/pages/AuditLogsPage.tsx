@@ -60,7 +60,7 @@ const AuditLogsPage: React.FC = () => {
         .limit(500);
 
       if (phiError && phiError.code !== 'PGRST116') {
-        console.error('Error loading PHI logs:', phiError);
+
       }
 
       // Load staff auth attempts
@@ -73,7 +73,7 @@ const AuditLogsPage: React.FC = () => {
         .limit(500);
 
       if (authError && authError.code !== 'PGRST116') {
-        console.error('Error loading auth logs:', authError);
+
       }
 
       // Load staff audit logs
@@ -86,7 +86,7 @@ const AuditLogsPage: React.FC = () => {
         .limit(500);
 
       if (staffError && staffError.code !== 'PGRST116') {
-        console.error('Error loading staff logs:', staffError);
+
       }
 
       // Combine and format all logs
@@ -137,7 +137,7 @@ const AuditLogsPage: React.FC = () => {
       setLogs(combinedLogs);
       setFilteredLogs(combinedLogs);
     } catch (error) {
-      console.error('Error loading audit logs:', error);
+
     } finally {
       setLoading(false);
     }

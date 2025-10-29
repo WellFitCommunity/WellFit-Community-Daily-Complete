@@ -179,7 +179,7 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = ({
           setAssistanceLevelLoaded(true);
         }
       } catch (error) {
-        console.error('Failed to load assistance level:', error);
+
         setAssistanceLevelLoaded(true);
       }
     };
@@ -201,7 +201,7 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = ({
           setStatus(`Voice learning active (${profile.corrections.length} corrections learned)`);
         }
       } catch (error) {
-        console.error('Failed to load voice profile:', error);
+
       }
     };
 
@@ -230,7 +230,7 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = ({
         });
 
       if (error) {
-        console.error('Failed to save assistance level:', error);
+
       } else {
         auditLogger.info('SCRIBE_ASSISTANCE_LEVEL_UPDATED', {
           providerId: user.id,
@@ -240,7 +240,7 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = ({
         });
       }
     } catch (error) {
-      console.error('Error saving assistance level:', error);
+
     }
   };
 
@@ -968,7 +968,7 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = ({
                       setTimeout(() => setStatus('Ready'), 5000);
                     } catch (error) {
                       setStatus('Error saving correction');
-                      console.error('Failed to save correction:', error);
+
                     }
                   }
                 }}

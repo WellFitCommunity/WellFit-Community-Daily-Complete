@@ -3,7 +3,7 @@
  * Now with REAL healing implementations backed by safety guardrails
  */
 
-import { DetectedIssue, ErrorContext, SeverityLevel } from './types';
+import { /* DetectedIssue, */ ErrorContext, SeverityLevel } from './types';
 import { RealHealingImplementations } from './RealHealingImplementations';
 
 interface SecurityVulnerability {
@@ -199,7 +199,7 @@ export class SecurityScanner {
           return null; // Cannot auto-fix
       }
     } catch (error) {
-      console.error('[SecurityScanner] Auto-fix failed:', error);
+
       return null;
     }
   }
@@ -215,7 +215,7 @@ export class SecurityScanner {
       const result = await this.healingImplementations.fixMemoryLeak(componentName, leakType);
       return result.success ? result.fixedCode || null : null;
     } catch (error) {
-      console.error('[SecurityScanner] Memory leak fix failed:', error);
+
       return null;
     }
   }
@@ -228,7 +228,7 @@ export class SecurityScanner {
       const result = await this.healingImplementations.fixDatabaseConnectionPool();
       return result.success;
     } catch (error) {
-      console.error('[SecurityScanner] Database connection fix failed:', error);
+
       return false;
     }
   }
@@ -247,7 +247,7 @@ export class SecurityScanner {
       );
       return result.success ? result.fixedCode || null : null;
     } catch (error) {
-      console.error('[SecurityScanner] Circuit breaker implementation failed:', error);
+
       return null;
     }
   }

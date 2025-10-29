@@ -84,8 +84,8 @@ export class EpicFHIRAdapter implements EHRAdapter {
     await this.authenticate(this.config);
 
     this.status = 'connected';
-    console.log(`[Epic] Connected to ${this.baseUrl}`);
-    console.log(`[Epic] Client Version: ${this.config.epicClientVersion || 'Unknown'}`);
+
+
   }
 
   async test(): Promise<{ success: boolean; message: string; details?: any }> {
@@ -130,7 +130,7 @@ export class EpicFHIRAdapter implements EHRAdapter {
       try {
         await this.revokeToken();
       } catch (error) {
-        console.warn('[Epic] Token revocation failed:', error);
+
       }
     }
 
@@ -138,7 +138,7 @@ export class EpicFHIRAdapter implements EHRAdapter {
     this.authToken = '';
     this.refreshToken = '';
     this.tokenExpiry = null;
-    console.log('[Epic] Disconnected');
+
   }
 
   getConnectionStatus(): 'connected' | 'disconnected' | 'error' {
@@ -400,7 +400,7 @@ export class EpicFHIRAdapter implements EHRAdapter {
       this.tokenExpiry = new Date(Date.now() + data.expires_in * 1000);
     }
 
-    console.log(`[Epic] Authenticated successfully. Token expires in ${data.expires_in}s`);
+
   }
 
   /**
@@ -421,7 +421,7 @@ export class EpicFHIRAdapter implements EHRAdapter {
       return config.token_endpoint;
     } catch (error) {
       // Fallback to Epic's standard token endpoint
-      console.warn('[Epic] Could not discover token endpoint, using default');
+
       return 'https://fhir.epic.com/interconnect-fhir-oauth/oauth2/token';
     }
   }
@@ -459,7 +459,7 @@ export class EpicFHIRAdapter implements EHRAdapter {
       this.tokenExpiry = new Date(Date.now() + data.expires_in * 1000);
     }
 
-    console.log('[Epic] Token refreshed successfully');
+
   }
 
   /**
@@ -483,9 +483,9 @@ export class EpicFHIRAdapter implements EHRAdapter {
         }),
       });
 
-      console.log('[Epic] Token revoked');
+
     } catch (error) {
-      console.warn('[Epic] Token revocation failed:', error);
+
     }
   }
 
@@ -499,7 +499,7 @@ export class EpicFHIRAdapter implements EHRAdapter {
   private async fetchFHIR(path: string, options?: RequestInit): Promise<any> {
     // Check token expiry and refresh if needed
     if (this.tokenExpiry && new Date() >= this.tokenExpiry) {
-      console.log('[Epic] Token expired, refreshing...');
+
       await this.refreshAccessToken();
     }
 

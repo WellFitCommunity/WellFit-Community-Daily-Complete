@@ -13,7 +13,7 @@
 
 import { supabase } from '../../lib/supabaseClient';
 import { DetectedIssue, HealingAction, HealingResult } from './types';
-import { AuditLogEntry, ReviewTicket } from './AuditLogger';
+import { /* AuditLogEntry, ReviewTicket */ } from './AuditLogger';
 
 export interface SecurityEvent {
   id?: string;
@@ -89,7 +89,7 @@ export class DatabaseAuditLogger {
         error: securityEventResult.error || auditLogResult.error,
       };
     } catch (error) {
-      console.error('[DatabaseAuditLogger] Failed to log healing action:', error);
+
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -126,7 +126,7 @@ export class DatabaseAuditLogger {
       });
 
       if (error) {
-        console.error('[DatabaseAuditLogger] Failed to log blocked action:', error);
+
         return { success: false, error: error.message };
       }
 
@@ -135,7 +135,7 @@ export class DatabaseAuditLogger {
 
       return { success: true };
     } catch (error) {
-      console.error('[DatabaseAuditLogger] Exception logging blocked action:', error);
+
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -181,13 +181,13 @@ export class DatabaseAuditLogger {
       });
 
       if (error) {
-        console.error('[DatabaseAuditLogger] Security event error:', error);
+
         return { success: false, error: error.message };
       }
 
       return { success: true };
     } catch (error) {
-      console.error('[DatabaseAuditLogger] Exception in logSecurityEvent:', error);
+
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -230,13 +230,13 @@ export class DatabaseAuditLogger {
       });
 
       if (error) {
-        console.error('[DatabaseAuditLogger] Audit log error:', error);
+
         return { success: false, error: error.message };
       }
 
       return { success: true };
     } catch (error) {
-      console.error('[DatabaseAuditLogger] Exception in logAuditEntry:', error);
+
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -278,10 +278,10 @@ export class DatabaseAuditLogger {
       const { error } = await supabase.from('security_alerts').insert(alert);
 
       if (error) {
-        console.error('[DatabaseAuditLogger] Failed to create security alert:', error);
+
       }
     } catch (error) {
-      console.error('[DatabaseAuditLogger] Exception creating security alert:', error);
+
     }
   }
 
@@ -318,7 +318,7 @@ export class DatabaseAuditLogger {
 
       await supabase.from('security_alerts').insert(alert);
     } catch (error) {
-      console.error('[DatabaseAuditLogger] Exception creating blocked action alert:', error);
+
     }
   }
 
@@ -348,10 +348,10 @@ export class DatabaseAuditLogger {
       });
 
       if (error) {
-        console.error('[DatabaseAuditLogger] Failed to log admin action:', error);
+
       }
     } catch (error) {
-      console.error('[DatabaseAuditLogger] Exception logging admin action:', error);
+
     }
   }
 
@@ -394,13 +394,13 @@ export class DatabaseAuditLogger {
       const { data, error } = await query;
 
       if (error) {
-        console.error('[DatabaseAuditLogger] Failed to retrieve audit logs:', error);
+
         return [];
       }
 
       return data || [];
     } catch (error) {
-      console.error('[DatabaseAuditLogger] Exception retrieving audit logs:', error);
+
       return [];
     }
   }
@@ -418,13 +418,13 @@ export class DatabaseAuditLogger {
         .limit(100);
 
       if (error) {
-        console.error('[DatabaseAuditLogger] Failed to retrieve security alerts:', error);
+
         return [];
       }
 
       return data || [];
     } catch (error) {
-      console.error('[DatabaseAuditLogger] Exception retrieving security alerts:', error);
+
       return [];
     }
   }

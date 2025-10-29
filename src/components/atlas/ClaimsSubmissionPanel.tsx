@@ -51,7 +51,7 @@ export const ClaimsSubmissionPanel: React.FC = () => {
       setProviders(providersData);
       setPayers(payersData);
     } catch (error) {
-      console.error('Failed to load lookup data:', error);
+
     } finally {
       setLoading(false);
     }
@@ -78,7 +78,7 @@ export const ClaimsSubmissionPanel: React.FC = () => {
       await navigator.clipboard.writeText(x12Content);
       alert('X12 content copied to clipboard!');
     } catch (error) {
-      console.error('Failed to copy to clipboard:', error);
+
       alert('Failed to copy to clipboard');
     }
   };

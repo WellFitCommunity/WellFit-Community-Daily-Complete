@@ -122,14 +122,14 @@ RESPOND WITH ONLY JSON - NO OTHER TEXT:`
           
           setGeneratedQuestionnaire(questionnaire);
         } catch (parseError) {
-          console.error('JSON parsing error:', parseError);
+
           setError('Failed to generate valid FHIR questionnaire. Please try rephrasing your request.');
         }
       } else {
         setError('No response from AI service');
       }
     } catch (error) {
-      console.error('Form generation error:', error);
+
       setError('Failed to generate form. Please check your connection and try again.');
     } finally {
       setIsGenerating(false);

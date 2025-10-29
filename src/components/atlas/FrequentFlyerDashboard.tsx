@@ -86,7 +86,7 @@ export const FrequentFlyerDashboard: React.FC = () => {
       setMetrics(dashboardMetrics);
 
     } catch (error) {
-      console.error('Failed to load dashboard:', error);
+
     } finally {
       setLoading(false);
     }
@@ -378,7 +378,7 @@ const PatientDetailModal: React.FC<PatientDetailModalProps> = ({ patient, onClos
       const plans = await CareCoordinationService.getPatientCarePlans(patient.patient_id, false);
       setCarePlans(plans);
     } catch (error) {
-      console.error('Failed to load patient details:', error);
+
     }
   };
 

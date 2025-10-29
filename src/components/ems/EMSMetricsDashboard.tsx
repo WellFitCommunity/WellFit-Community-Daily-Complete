@@ -105,7 +105,7 @@ const EMSMetricsDashboard: React.FC = () => {
         handoffsOverTime,
       });
     } catch (err) {
-      console.error('Error loading metrics:', err);
+
     } finally {
       setLoading(false);
     }

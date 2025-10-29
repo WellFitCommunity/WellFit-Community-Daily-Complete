@@ -49,7 +49,7 @@ export const MentalHealthDashboard: React.FC = () => {
         setError(response.error || 'Failed to load dashboard');
       }
     } catch (err) {
-      console.error('Dashboard load error:', err);
+
       setError('Failed to load dashboard data');
     } finally {
       setLoading(false);

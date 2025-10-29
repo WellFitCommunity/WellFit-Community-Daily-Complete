@@ -70,7 +70,7 @@ const TelehealthScheduler: React.FC = () => {
         setSearchResults(data || []);
         setShowSearchResults(true);
       } catch (error) {
-        console.error('Error searching patients:', error);
+
       }
     };
 
@@ -124,7 +124,7 @@ const TelehealthScheduler: React.FC = () => {
 
         setAppointments(formattedAppointments);
       } catch (error) {
-        console.error('Error loading appointments:', error);
+
       } finally {
         setLoadingAppointments(false);
       }
@@ -210,7 +210,7 @@ const TelehealthScheduler: React.FC = () => {
       );
 
       if (notifError) {
-        console.warn('Notification sending failed:', notifError);
+
         // Don't fail the whole operation if notification fails
       }
 
@@ -228,7 +228,7 @@ const TelehealthScheduler: React.FC = () => {
       setEncounterType('outpatient');
       setReasonForVisit('');
     } catch (error: any) {
-      console.error('Error scheduling appointment:', error);
+
       setMessage({
         type: 'error',
         text: `Failed to schedule appointment: ${error.message}`,

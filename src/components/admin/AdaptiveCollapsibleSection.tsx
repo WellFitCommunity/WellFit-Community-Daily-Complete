@@ -58,7 +58,7 @@ export const AdaptiveCollapsibleSection: React.FC<AdaptiveCollapsibleSectionProp
         setOpenStartTime(null);
       }
     } catch (error) {
-      console.error('Failed to track section interaction:', error);
+
     }
   };
 

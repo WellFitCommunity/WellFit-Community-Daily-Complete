@@ -71,7 +71,7 @@ export const HandoffBypassModal: React.FC<HandoffBypassModalProps> = ({
       await onBypass(formData);
       // Success handled by parent component
     } catch (err) {
-      console.error('Bypass submission failed:', err);
+
       setError(err instanceof Error ? err.message : 'Failed to log bypass');
       setIsSubmitting(false);
     }

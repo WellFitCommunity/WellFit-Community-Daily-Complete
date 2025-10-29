@@ -46,13 +46,13 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
               summaries[plan.id] = summaryResult.data;
             }
           } catch (error) {
-            console.error(`Failed to load summary for plan ${plan.id}:`, error);
+
           }
         }
         setActivitySummaries(summaries);
       }
     } catch (error) {
-      console.error('Failed to load care plans:', error);
+
     }
     setLoading(false);
   };
@@ -62,7 +62,7 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
       const current = await FHIRService.CarePlan.getCurrent(userId);
       setCurrentPlan(current);
     } catch (error) {
-      console.error('Failed to load current care plan:', error);
+
     }
   };
 

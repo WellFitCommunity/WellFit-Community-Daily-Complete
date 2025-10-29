@@ -95,7 +95,7 @@ const ExtractedDataPreview: React.FC<ExtractedDataPreviewProps> = ({
     try {
       await onEnroll(editedData);
     } catch (error) {
-      console.error('Enrollment error:', error);
+
       alert('Failed to enroll patient. Please try again.');
     } finally {
       setIsEnrolling(false);

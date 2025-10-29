@@ -109,7 +109,7 @@ export class CareCoordinationService {
       if (error) throw error;
       return data;
     } catch (error: any) {
-      console.error('Failed to create care plan:', error);
+
       throw new Error(`Care plan creation failed: ${error.message}`);
     }
   }
@@ -132,7 +132,7 @@ export class CareCoordinationService {
       if (error) throw error;
       return data;
     } catch (error: any) {
-      console.error('Failed to update care plan:', error);
+
       throw new Error(`Care plan update failed: ${error.message}`);
     }
   }
@@ -229,7 +229,7 @@ export class CareCoordinationService {
       if (error) throw error;
       return data;
     } catch (error: any) {
-      console.error('Failed to create alert:', error);
+
       throw new Error(`Alert creation failed: ${error.message}`);
     }
   }
@@ -285,7 +285,7 @@ export class CareCoordinationService {
       if (error) throw error;
       return data;
     } catch (error: any) {
-      console.error('Failed to update alert:', error);
+
       throw new Error(`Alert update failed: ${error.message}`);
     }
   }
@@ -425,14 +425,14 @@ Make recommendations specific to the patient's situation and plan type.`;
           };
         }
       } catch (parseError) {
-        console.error('Failed to parse AI recommendations:', parseError);
+
       }
 
       // Fallback to template-based plan
       return this.getTemplatePlan(planType);
 
     } catch (error: any) {
-      console.error('AI care plan generation failed:', error);
+
       return this.getTemplatePlan(planType);
     }
   }

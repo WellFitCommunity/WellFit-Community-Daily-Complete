@@ -227,7 +227,7 @@ const PaperFormScanner: React.FC = () => {
             .eq('user_id', data);
 
           if (updateError) {
-            console.error('Failed to update additional fields:', updateError);
+
           }
         }
 
@@ -250,7 +250,7 @@ const PaperFormScanner: React.FC = () => {
         }!`
       );
     } catch (error) {
-      console.error('Enrollment error:', error);
+
       throw error;
     }
   };

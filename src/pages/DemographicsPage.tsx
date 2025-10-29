@@ -157,7 +157,7 @@ const DemographicsPage: React.FC = () => {
           }
         }
       } catch (err) {
-        console.error('Error loading profile:', err);
+
         setError('Unable to load your information. Please try again.');
       } finally {
         setLoading(false);
@@ -235,7 +235,7 @@ const DemographicsPage: React.FC = () => {
       // Navigate to dashboard with saved progress
       navigate('/dashboard');
     } catch (err) {
-      console.error('Error saving progress:', err);
+
       setError('Unable to save your progress. Please try again.');
     } finally {
       setSaving(false);
@@ -262,7 +262,7 @@ const DemographicsPage: React.FC = () => {
       // Go to consent flow
       navigate('/consent-photo');
     } catch (err) {
-      console.error('Error skipping demographics:', err);
+
       setError('Unable to proceed. Please try again.');
     } finally {
       setSaving(false);
@@ -316,7 +316,7 @@ const DemographicsPage: React.FC = () => {
       // Navigate to consent forms after demographics completion
       navigate('/consent-photo');
     } catch (err) {
-      console.error('Error saving demographics:', err);
+
       setError('Unable to save your information. Please try again.');
     } finally {
       setSubmitting(false);

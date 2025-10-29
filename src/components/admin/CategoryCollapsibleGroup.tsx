@@ -54,7 +54,7 @@ export const CategoryCollapsibleGroup: React.FC<CategoryCollapsibleGroupProps> =
         setOpenStartTime(null);
       }
     } catch (error) {
-      console.error('Failed to track category interaction:', error);
+
     }
   };
 

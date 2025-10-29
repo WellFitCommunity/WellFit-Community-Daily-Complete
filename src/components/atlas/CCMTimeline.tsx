@@ -24,6 +24,7 @@ export const CCMTimeline: React.FC = () => {
 
   useEffect(() => {
     loadCCMData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedMonth]);
 
   const loadCCMData = async () => {
@@ -35,7 +36,7 @@ export const CCMTimeline: React.FC = () => {
       const revenueData = CCMAutopilotService.calculateCCMRevenue(eligiblePatients);
       setRevenue(revenueData);
     } catch (error) {
-      console.error('Failed to load CCM data:', error);
+
     } finally {
       setLoading(false);
     }

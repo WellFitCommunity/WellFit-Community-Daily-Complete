@@ -279,7 +279,7 @@ const UsersList: React.FC = () => {
         p_ip_address: 'client_side' // Client-side IP not available; Edge Functions log server IP
       });
     } catch (logError) {
-      console.error('[PHI Access Log Error]:', logError);
+
       // Don't block UI for logging failures
     }
   }, [currentUser, supabase]);
@@ -333,7 +333,7 @@ const UsersList: React.FC = () => {
             .select('user_id, created_at, is_emergency')
             .in('user_id', ids);
           if (checkInsError) {
-            console.warn('check_ins fallback chunk failed:', checkInsError.message);
+
             continue;
           }
           if (checkIns) allCheckIns.push(...checkIns);
@@ -381,11 +381,11 @@ const UsersList: React.FC = () => {
             }
           });
         } catch (logError) {
-          console.error('[Audit Log Error]:', logError);
+
         }
       }
     } catch (error) {
-      console.error('Error fetching profiles:', error);
+
       const message = error instanceof Error ? error.message : 'Failed to load users';
       addToast('error', message);
       setProfiles([]);

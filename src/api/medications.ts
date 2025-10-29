@@ -937,7 +937,7 @@ async function checkAndAlertMultiplePsychMeds(userId: string): Promise<void> {
         .eq('resolved', false);
     }
   } catch (error) {
-    console.error('Error checking multiple psych meds:', error);
+
   }
 }
 

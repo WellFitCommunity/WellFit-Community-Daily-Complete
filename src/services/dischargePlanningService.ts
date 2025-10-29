@@ -47,7 +47,7 @@ export class DischargePlanningService {
       );
 
       if (riskError) {
-        console.error('Risk score calculation failed:', riskError);
+
       }
 
       const calculatedRiskScore = riskScore || 50; // Fallback to moderate risk
@@ -84,7 +84,7 @@ export class DischargePlanningService {
 
       return plan;
     } catch (error: any) {
-      console.error('Failed to create discharge plan:', error);
+
       throw new Error(`Discharge plan creation failed: ${error.message}`);
     }
   }
@@ -270,7 +270,7 @@ Format as JSON:
           recommendations = JSON.parse(jsonMatch[0]);
         }
       } catch (parseError) {
-        console.error('Failed to parse AI recommendations:', parseError);
+
         recommendations = this.getDefaultRecommendations();
       }
 
@@ -285,7 +285,7 @@ Format as JSON:
         .eq('id', planId);
 
     } catch (error) {
-      console.error('Failed to generate discharge recommendations:', error);
+
       // Don't throw - recommendations are nice-to-have
     }
   }
@@ -350,7 +350,7 @@ Format as JSON:
         .eq('id', planId);
 
     } catch (error) {
-      console.error('Failed to generate billing codes:', error);
+
       throw error;
     }
   }
@@ -444,7 +444,7 @@ Format as JSON:
         status: 'active'
       });
     } catch (error) {
-      console.error('Failed to create follow-up alert:', error);
+
     }
   }
 

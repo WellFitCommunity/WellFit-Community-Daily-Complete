@@ -1,7 +1,7 @@
 // AI-Powered EHR Adapter Configuration Assistant
 // Uses Claude Haiku 4.5 for fast, intelligent adapter setup guidance
 
-import Anthropic from '@anthropic-ai/sdk';
+import { loadAnthropicSDK } from './anthropicLoader';
 
 // Create React App uses REACT_APP_ prefix for environment variables
 // Access via process.env (available in CRA)
@@ -21,13 +21,14 @@ interface AdapterAssistantResponse {
 }
 
 export class AIAdapterAssistant {
-  private client: Anthropic;
+  private client: any = null;
   private conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }> = [];
 
-  constructor() {
+  async initialize() {
     if (!ANTHROPIC_API_KEY) {
-      console.warn('[AIAdapterAssistant] No Anthropic API key found. AI features will be disabled.');
+      return;
     }
+    const Anthropic = await loadAnthropicSDK();
     this.client = new Anthropic({
       apiKey: ANTHROPIC_API_KEY,
       dangerouslyAllowBrowser: true // Only for demo - move to backend in production
@@ -43,6 +44,7 @@ export class AIAdapterAssistant {
     url?: string;
     additionalInfo?: string;
   }): Promise<AdapterAssistantResponse> {
+    if (!this.client) await this.initialize();
     const prompt = `You are an expert EHR/EMR integration specialist helping a hospital configure their electronic health record system connection.
 
 Hospital Information:
@@ -116,7 +118,7 @@ Respond in JSON format:
         questions: ['Could you provide more details about your EHR system?']
       };
     } catch (error: any) {
-      console.error('[AIAdapterAssistant] Error:', error);
+      // console.error('[AIAdapterAssistant] Error:', error);
       return {
         message: `I encountered an error analyzing your hospital system. Please try again or configure manually. Error: ${error.message}`,
         confidence: 'low',
@@ -156,7 +158,7 @@ Provide actionable advice in 2-3 sentences.`;
 
       return assistantMessage;
     } catch (error: any) {
-      console.error('[AIAdapterAssistant] Error:', error);
+      // console.error('[AIAdapterAssistant] Error:', error);
       return `I encountered an error: ${error.message}`;
     }
   }
@@ -210,7 +212,7 @@ Respond in JSON:
         warnings: ['Could not validate URL format']
       };
     } catch (error: any) {
-      console.error('[AIAdapterAssistant] Error:', error);
+      // console.error('[AIAdapterAssistant] Error:', error);
       return {
         isValid: false,
         warnings: [`Validation error: ${error.message}`]
@@ -267,7 +269,7 @@ Diagnose the issue and provide solutions in JSON format:
         nextSteps: ['Review logs', 'Check credentials', 'Contact hospital IT']
       };
     } catch (error: any) {
-      console.error('[AIAdapterAssistant] Error:', error);
+      // console.error('[AIAdapterAssistant] Error:', error);
       return {
         diagnosis: `Troubleshooting failed: ${error.message}`,
         possibleCauses: ['AI assistant unavailable'],
@@ -331,7 +333,7 @@ Make it practical and hospital IT-friendly.`;
         prerequisites: ['Contact support for detailed guide']
       };
     } catch (error: any) {
-      console.error('[AIAdapterAssistant] Error:', error);
+      // console.error('[AIAdapterAssistant] Error:', error);
       return {
         title: 'Setup Guide Unavailable',
         steps: [],

@@ -37,7 +37,7 @@ export class WorkflowTemplateRegistry {
    */
   register(workflow: SpecialistWorkflow): void {
     this.templates.set(workflow.id, workflow);
-    console.log(`[WorkflowRegistry] Registered: ${workflow.name}`);
+
   }
 
   /**

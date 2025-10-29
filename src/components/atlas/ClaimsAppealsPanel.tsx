@@ -34,7 +34,7 @@ export const ClaimsAppealsPanel: React.FC = () => {
       const claims = await AtlusRevenueService.getRejectedClaims(20);
       setRejectedClaims(claims as RejectedClaim[]);
     } catch (error) {
-      console.error('Failed to load rejected claims:', error);
+
     } finally {
       setLoading(false);
     }
@@ -93,7 +93,7 @@ Generated: ${new Date().toISOString()}
 
       setAppealLetter(letter);
     } catch (error) {
-      console.error('Failed to generate appeal letter:', error);
+
     } finally {
       setGeneratingLetter(false);
     }

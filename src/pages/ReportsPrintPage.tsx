@@ -110,7 +110,7 @@ const ReportsPrintPage: React.FC = () => {
       }
 
       if (e1) {
-        console.error('check_ins count error:', e1.message);
+
       }
 
       setStats((s) => ({
@@ -119,7 +119,7 @@ const ReportsPrintPage: React.FC = () => {
         activeUsers: totalUsersCount,
       }));
     } catch (e: any) {
-      console.error(e);
+
       setError('Failed to load engagement stats.');
     }
   }, [supabase]);
@@ -199,7 +199,7 @@ const ReportsPrintPage: React.FC = () => {
         setTruncated(false);
       }
     } catch (e: any) {
-      console.error(e);
+
       setError(e?.message || 'Failed to load reports.');
       setRows([]);
       setTruncated(false);

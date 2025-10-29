@@ -379,7 +379,7 @@ const FhirAiDashboard: React.FC<DashboardProps> = ({ supabaseUrl, supabaseKey })
           try {
             return await fhirService.exportEnhancedPatientData(item.patientId);
           } catch (error) {
-            console.error(`Error loading enhanced data for patient ${item.patientId}:`, error);
+
             return null;
           }
         })
@@ -396,7 +396,7 @@ const FhirAiDashboard: React.FC<DashboardProps> = ({ supabaseUrl, supabaseKey })
       }));
 
     } catch (error) {
-      console.error('Dashboard data loading error:', error);
+
       setState(prev => ({
         ...prev,
         loading: false,
@@ -439,10 +439,10 @@ const FhirAiDashboard: React.FC<DashboardProps> = ({ supabaseUrl, supabaseKey })
           await loadDashboardData();
           break;
         default:
-          console.log(`Quick action: ${action}`, context);
+
       }
     } catch (error) {
-      console.error(`Quick action error (${action}):`, error);
+      // Removed console statement:`, error);
     }
   };
 
@@ -712,7 +712,7 @@ const FhirAiDashboard: React.FC<DashboardProps> = ({ supabaseUrl, supabaseKey })
             <CardContent>
               <SmartLauncher
                 onLaunch={(ehrSystem) => {
-                  console.log(`Launching SMART app for ${ehrSystem}`);
+
                 }}
               />
            </CardContent>

@@ -94,7 +94,6 @@ export default function UserQuestions({
         setQuestions(mockQuestions);
       }
     } catch (err) {
-      console.error('Failed to load questions:', err);
       setError(err instanceof Error ? err.message : 'Failed to load questions');
       // Fallback to mock data
       setQuestions(mockQuestions);
@@ -118,7 +117,6 @@ export default function UserQuestions({
         });
       } else {
         // Mock submission
-        console.log('Mock question submission:', { question_text: newQuestion, category });
       }
       
       setSuccess('Question submitted successfully!');
@@ -126,7 +124,6 @@ export default function UserQuestions({
       setCategory('general');
       loadQuestions();
     } catch (err) {
-      console.error('Failed to submit question:', err);
       setError(err instanceof Error ? err.message : 'Failed to submit question');
     } finally {
       setSubmitting(false);
@@ -144,7 +141,6 @@ export default function UserQuestions({
         await onSubmitResponse(questionId, responseText.trim());
       } else {
         // Mock response submission
-        console.log('Mock response submission:', { questionId, response: responseText });
       }
       
       setSuccess('Response submitted successfully!');
@@ -152,7 +148,6 @@ export default function UserQuestions({
       setRespondingTo(null);
       loadQuestions();
     } catch (err) {
-      console.error('Failed to submit response:', err);
       setError(err instanceof Error ? err.message : 'Failed to submit response');
     } finally {
       setSubmitting(false);

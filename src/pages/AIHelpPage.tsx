@@ -113,7 +113,7 @@ const AIHelpPage: React.FC = () => {
         setUserActivity(activity);
         generateContextualSuggestions(activity);
       } catch (error) {
-        console.error('Error loading user activity:', error);
+
       }
     };
 
@@ -249,7 +249,7 @@ const AIHelpPage: React.FC = () => {
 
       setChatMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
-      console.error('Chat error:', error);
+
       // Fallback to local response
       const response = generateAIResponse(userMessage);
       const assistantMessage: ChatMessage = {

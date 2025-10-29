@@ -36,7 +36,7 @@ export const SOC2SecurityDashboard: React.FC = () => {
       setRecentEvents(eventsData);
       setLastRefresh(new Date());
     } catch (err) {
-      console.error('Error loading security data:', err);
+
       setError('Failed to load security monitoring data');
     } finally {
       setLoading(false);
@@ -50,6 +50,7 @@ export const SOC2SecurityDashboard: React.FC = () => {
     const interval = setInterval(loadSecurityData, 30000);
 
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getSeverityColor = (severity: string) => {

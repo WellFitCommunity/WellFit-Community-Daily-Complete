@@ -343,7 +343,8 @@ useEffect(() => {
       // console.log('[Healing] Database connection pool recommendations:', recommendations);
 
       // Check current Supabase connection health
-      const { data, error } = await supabase.from('profiles').select('id').limit(1);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { data, error } = await supabase.from('profiles').select('id').limit(1);
 
       if (error) {
         throw new Error(`Database connection check failed: ${error.message}`);

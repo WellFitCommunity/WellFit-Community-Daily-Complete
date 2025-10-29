@@ -95,6 +95,7 @@ export class GuardianAlertService {
 
     try {
       // Save to database
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { data, error } = await supabase
         .from('guardian_alerts')
         .insert({
@@ -187,7 +188,7 @@ export class GuardianAlertService {
         created_at: new Date().toISOString(),
       });
     } catch (error) {
-      console.error('[Guardian Alert] Failed to notify Security Panel:', error);
+
     }
   }
 
@@ -207,6 +208,7 @@ export class GuardianAlertService {
 
       // In production, integrate with email service (SendGrid, AWS SES, etc.)
       // For now, log the email that would be sent
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const emailContent = {
         to: securityTeam.map(u => u.email),
         subject: `🚨 Guardian Alert: ${alert.title}`,
@@ -238,7 +240,7 @@ This is an automated alert from the WellFit Guardian Agent.
       // TODO: Integrate with actual email service
       // await emailService.send(emailContent);
     } catch (error) {
-      console.error('[Guardian Alert] Failed to send email:', error);
+
     }
   }
 

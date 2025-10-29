@@ -33,7 +33,7 @@ const VaccineGapsWidget: React.FC = () => {
         setGaps(result.data.slice(0, 3)); // Show top 3 gaps
       }
     } catch (error) {
-      console.error('Failed to load vaccine gaps:', error);
+
     }
     setLoading(false);
   };

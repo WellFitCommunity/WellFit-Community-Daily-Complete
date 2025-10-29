@@ -288,7 +288,7 @@ export function useMedicineCabinet(userId: string): UseMedicineCabinetReturn {
         setPsychAlerts(alertsResponse.data);
       }
     } catch (err) {
-      console.error('Error checking psych meds:', err);
+
     }
   }, [userId]);
 

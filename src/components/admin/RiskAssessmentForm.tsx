@@ -186,7 +186,7 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
       onSubmit?.(result.data as RiskAssessment);
 
     } catch (err) {
-      console.error('Error saving assessment:', err);
+
       setError(err instanceof Error ? err.message : 'Failed to save assessment');
     } finally {
       setLoading(false);
@@ -221,7 +221,7 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
       setAiAnalysis(analysis);
       setSuccess('AI analysis completed successfully. Review suggestions below.');
     } catch (err) {
-      console.error('AI analysis failed:', err);
+
       setError('AI analysis is currently unavailable. Please continue with manual assessment.');
     } finally {
       setAnalyzingAI(false);

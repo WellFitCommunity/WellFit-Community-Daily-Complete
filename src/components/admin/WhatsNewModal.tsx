@@ -143,7 +143,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
         });
       }
     } catch (err) {
-      console.error('Failed to save to localStorage:', err);
+
       // Don't block close on storage error
     }
 
@@ -163,7 +163,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
       const lastSeenVersion = localStorage.getItem('whatsNew_lastSeen');
       setHasSeenVersion(lastSeenVersion === currentVersion);
     } catch (err) {
-      console.error('Failed to read from localStorage:', err);
+
       setError('Unable to load preferences');
       // Gracefully degrade - assume not seen
       setHasSeenVersion(false);

@@ -128,7 +128,7 @@ const ClaudeBillingMonitoringDashboard: React.FC = () => {
         generateInsights()
       ]);
     } catch (error) {
-      console.error('Failed to load metrics:', error);
+
     } finally {
       setLoading(false);
     }
@@ -242,7 +242,7 @@ const ClaudeBillingMonitoringDashboard: React.FC = () => {
       });
 
     } catch (error) {
-      console.error('Failed to load Claude metrics:', error);
+
     }
   };
 
@@ -286,7 +286,7 @@ const ClaudeBillingMonitoringDashboard: React.FC = () => {
       });
 
     } catch (error) {
-      console.error('Failed to load billing metrics:', error);
+
     }
   };
 

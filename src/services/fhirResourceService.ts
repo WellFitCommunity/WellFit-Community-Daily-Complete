@@ -22,13 +22,13 @@ import type {
   FHIRCareTeamMember,
   FHIRPractitioner,
   FHIRPractitionerRole,
-  FHIRGoal,
-  FHIRLocation,
-  FHIROrganization,
-  FHIRMedication,
-  FHIRProvenance,
+  // FHIRGoal - unused type
+  // FHIRLocation - unused type
+  // FHIROrganization - unused type
+  // FHIRMedication - unused type
+  // FHIRProvenance - unused type
   FHIRApiResponse,
-  FHIRSearchParams,
+  // FHIRSearchParams - unused type
 } from '../types/fhir';
 
 // ============================================================================

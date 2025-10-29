@@ -39,12 +39,12 @@ export async function getSignedUrl(
     .createSignedUrl(path, expiresIn);
 
   if (error) {
-    console.error('Signed URL generation failed:', error.message);
+
     return null;
   }
 
   if (!data || !data.signedUrl) {
-    console.error('No signed URL returned for path:', path);
+
     return null;
   }
 

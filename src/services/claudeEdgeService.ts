@@ -58,7 +58,7 @@ export class ClaudeEdgeService {
       });
 
       if (error) {
-        console.error('[Claude Edge] Error:', error);
+
         throw new Error(`Claude API error: ${error.message}`);
       }
 
@@ -68,7 +68,7 @@ export class ClaudeEdgeService {
 
       return data as ClaudeChatResponse;
     } catch (error) {
-      console.error('[Claude Edge] Request failed:', error);
+
       throw error;
     }
   }

@@ -65,7 +65,7 @@ export default function AdminLoginPage() {
 
       if (!cancelled) {
         if (selErr) {
-          console.warn('profiles check failed:', selErr?.message);
+
           setDbIsAdmin(null); // fall back to other checks
           setDetectedRole(null);
         } else {
@@ -76,7 +76,7 @@ export default function AdminLoginPage() {
           if (userRole) {
             setRole(userRole);
           }
-          console.log('[AdminLoginPage] Detected role:', userRole);
+
         }
       }
     })();
@@ -222,7 +222,7 @@ export default function AdminLoginPage() {
       const defaultDashboard = getDashboardForRole(role);
       const intendedPath = state.from?.pathname || defaultDashboard;
 
-      console.log('[AdminLoginPage] PIN verified for role:', role, '- redirecting to:', intendedPath);
+
       navigate(intendedPath, { replace: true });
     } catch (err: any) {
       setLocalErr(err?.message || 'Unable to verify PIN. Please try again.');
