@@ -118,7 +118,7 @@ const AIHelpPage: React.FC = () => {
     };
 
     loadUserActivity();
-  }, [user?.id, supabase]);
+  }, [user?.id, user?.created_at, user?.last_sign_in_at, supabase]);
 
   // Generate contextual suggestions based on user activity
   const generateContextualSuggestions = (activity: UserActivity) => {
