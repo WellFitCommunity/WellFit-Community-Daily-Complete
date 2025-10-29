@@ -11,7 +11,7 @@
  * - FHIR sync status
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useUser } from '../../contexts/AuthContext';
 import { useMedicineCabinet } from '../../hooks/useMedicineCabinet';
 import { Medication } from '../../api/medications';
@@ -74,21 +74,22 @@ export function MedicineCabinet() {
   const [scannedData, setScannedData] = useState<any>(null);
 
   // Load analytics data
+  const loadAnalytics = useCallback(async () => {
+    if (userId) {
+      const [adherence, refills, upcoming] = await Promise.all([
+        getAdherence(),
+        getNeedingRefill(7),
+        getUpcomingDoses(24)
+      ]);
+      setAdherenceData(adherence || []);
+      setNeedingRefill(refills);
+      setUpcomingDoses(upcoming);
+    }
+  }, [userId, getAdherence, getNeedingRefill, getUpcomingDoses]);
+
   useEffect(() => {
-    const loadAnalytics = async () => {
-      if (userId) {
-        const [adherence, refills, upcoming] = await Promise.all([
-          getAdherence(),
-          getNeedingRefill(7),
-          getUpcomingDoses(24)
-        ]);
-        setAdherenceData(adherence || []);
-        setNeedingRefill(refills);
-        setUpcomingDoses(upcoming);
-      }
-    };
     loadAnalytics();
-  }, [userId, medications.length]);
+  }, [loadAnalytics]);
 
   // Handle image scan
   const handleImageScan = async (file: File) => {

@@ -5,7 +5,7 @@
  * Provides IT staff with essential database administration capabilities.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSupabaseClient } from '../../contexts/AuthContext';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Database, Download, Upload, RefreshCw, HardDrive, TrendingUp } from 'lucide-react';
@@ -28,11 +28,7 @@ const DatabaseAdminPanel: React.FC = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
 
-  useEffect(() => {
-    loadDatabaseStats();
-  }, []);
-
-  const loadDatabaseStats = async () => {
+  const loadDatabaseStats = useCallback(async () => {
     try {
       setLoading(true);
       setMessage(null);
@@ -77,7 +73,11 @@ const DatabaseAdminPanel: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [supabase]);
+
+  useEffect(() => {
+    loadDatabaseStats();
+  }, [loadDatabaseStats]);
 
   const triggerBackup = async () => {
     setActionLoading(true);

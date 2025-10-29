@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import FHIRService from '../../services/fhirResourceService';
 import type { FHIRImmunization } from '../../types/fhir';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -32,16 +32,7 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
   const [showTimeline, setShowTimeline] = useState(false);
   const [selectedImmunization, setSelectedImmunization] = useState<FHIRImmunization | null>(null);
 
-  useEffect(() => {
-    loadImmunizations();
-    loadVaccineGaps();
-  }, [userId]);
-
-  useEffect(() => {
-    filterImmunizations();
-  }, [activeTab, immunizations]);
-
-  const loadImmunizations = async () => {
+  const loadImmunizations = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -56,9 +47,9 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
       setError(error?.message || 'Failed to load immunization records. Please try again later.');
     }
     setLoading(false);
-  };
+  }, [userId]);
 
-  const loadVaccineGaps = async () => {
+  const loadVaccineGaps = useCallback(async () => {
     try {
       const result = await FHIRService.Immunization.getVaccineGaps(userId);
       if (result.success && result.data) {
@@ -68,9 +59,9 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
 
       // Don't set main error for vaccine gaps - it's not critical
     }
-  };
+  }, [userId]);
 
-  const filterImmunizations = () => {
+  const filterImmunizations = useCallback(() => {
     let filtered = immunizations;
 
     switch (activeTab) {
@@ -86,7 +77,16 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
     }
 
     setFilteredImmunizations(filtered);
-  };
+  }, [activeTab, immunizations]);
+
+  useEffect(() => {
+    loadImmunizations();
+    loadVaccineGaps();
+  }, [loadImmunizations, loadVaccineGaps]);
+
+  useEffect(() => {
+    filterImmunizations();
+  }, [filterImmunizations]);
 
   const handleImmunizationCreated = () => {
     loadImmunizations();

@@ -1,7 +1,7 @@
 // Admin Transfer Logs - Complete audit trail for all patient handoffs
 // Export to CSV/Excel for compliance reporting
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import * as XLSX from 'exceljs';
 import HandoffService from '../../services/handoffService';
@@ -30,11 +30,7 @@ const AdminTransferLogs: React.FC<AdminTransferLogsProps> = ({
     defaultFilters || {}
   );
 
-  useEffect(() => {
-    loadData();
-  }, [filters]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       const [packetsData, statsData] = await Promise.all([
@@ -48,7 +44,11 @@ const AdminTransferLogs: React.FC<AdminTransferLogsProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const exportToExcel = async () => {
     try {

@@ -5,7 +5,7 @@
  * Critical for security incident response and user account management.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSupabaseClient } from '../../contexts/AuthContext';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Power, RefreshCw, Monitor, Smartphone, Tablet, Clock } from 'lucide-react';
@@ -33,21 +33,7 @@ const ActiveSessionManager: React.FC = () => {
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [autoRefresh, setAutoRefresh] = useState(true);
 
-  useEffect(() => {
-    loadSessions();
-  }, []);
-
-  useEffect(() => {
-    if (!autoRefresh) return;
-
-    const interval = setInterval(() => {
-      loadSessions(true);
-    }, 30000); // Refresh every 30 seconds
-
-    return () => clearInterval(interval);
-  }, [autoRefresh]);
-
-  const loadSessions = async (silent = false) => {
+  const loadSessions = useCallback(async (silent = false) => {
     try {
       if (!silent) setLoading(true);
       setMessage(null);
@@ -86,7 +72,21 @@ const ActiveSessionManager: React.FC = () => {
     } finally {
       if (!silent) setLoading(false);
     }
-  };
+  }, [supabase]);
+
+  useEffect(() => {
+    loadSessions();
+  }, [loadSessions]);
+
+  useEffect(() => {
+    if (!autoRefresh) return;
+
+    const interval = setInterval(() => {
+      loadSessions(true);
+    }, 30000); // Refresh every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [autoRefresh, loadSessions]);
 
   const revokeSession = async (sessionId: string, userEmail: string) => {
     if (!window.confirm(`Are you sure you want to terminate the session for ${userEmail}? This will immediately log them out.`)) {

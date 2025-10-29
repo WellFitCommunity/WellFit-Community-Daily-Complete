@@ -5,7 +5,7 @@
 // Features: Category filtering, featured resources, quick access to 988
 // ============================================================================
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { getResources, trackResourceView } from '../../services/resilienceHubService';
 import type { ResilienceResource } from '../../types/nurseos';
 
@@ -21,7 +21,7 @@ export const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onClose }) => 
   const [error, setError] = useState<string | null>(null);
 
   // Load resources
-  const loadResources = async () => {
+  const loadResources = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -42,11 +42,11 @@ export const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onClose }) => 
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedType, selectedCategory]);
 
   useEffect(() => {
     loadResources();
-  }, [selectedType, selectedCategory]);
+  }, [loadResources]);
 
   // Handle resource click
   const handleResourceClick = async (resource: ResilienceResource) => {

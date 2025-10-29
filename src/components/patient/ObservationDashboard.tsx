@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import FHIRService from '../../services/fhirResourceService';
 import type { Observation } from '../../types/fhir';
 import ObservationTimeline from './ObservationTimeline';
@@ -19,24 +19,16 @@ const ObservationDashboard: React.FC<ObservationDashboardProps> = ({ userId, rea
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedObservation, setSelectedObservation] = useState<Observation | null>(null);
 
-  useEffect(() => {
-    loadObservations();
-  }, [userId]);
-
-  useEffect(() => {
-    filterObservations();
-  }, [activeTab, observations]);
-
-  const loadObservations = async () => {
+  const loadObservations = useCallback(async () => {
     setLoading(true);
     const response = await FHIRService.Observation.getByPatient(userId);
     if (response.success && response.data) {
       setObservations(response.data);
     }
     setLoading(false);
-  };
+  }, [userId]);
 
-  const filterObservations = () => {
+  const filterObservations = useCallback(() => {
     let filtered = observations;
 
     switch (activeTab) {
@@ -54,7 +46,15 @@ const ObservationDashboard: React.FC<ObservationDashboardProps> = ({ userId, rea
     }
 
     setFilteredObservations(filtered);
-  };
+  }, [activeTab, observations]);
+
+  useEffect(() => {
+    loadObservations();
+  }, [loadObservations]);
+
+  useEffect(() => {
+    filterObservations();
+  }, [filterObservations]);
 
   const handleObservationCreated = () => {
     loadObservations();
