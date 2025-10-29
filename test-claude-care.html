@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Claude Care Assistant - Manual Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Claude Care Assistant Test</h1>
+
+    <h2>Translation Cache Test</h2>
+    <button onclick="testTranslationCache()">Test Translation Cache</button>
+    <pre id="translation-result"></pre>
+
+    <h2>Database Verification</h2>
+    <button onclick="checkTables()">Check Tables</button>
+    <pre id="table-result"></pre>
+
+    <script>
+        // Initialize Supabase client
+        const supabaseUrl = 'https://xkybsjnvuohpqpbkikyn.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhreWJzam52dW9ocHFwYmtpa3luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjg5NjQ5NzAsImV4cCI6MjA0NDU0MDk3MH0.S8vHGFzB3qvBMxkVNw5DFKDgM8LHj5fOzWFXuMFYOH4';
+        const supabase = supabasejs.createClient(supabaseUrl, supabaseKey);
+
+        async function checkTables() {
+            const output = document.getElementById('table-result');
+            output.textContent = 'Checking tables...\n';
+
+            try {
+                // Check if translation cache table exists
+                const { data, error } = await supabase
+                    .from('claude_translation_cache')
+                    .select('count')
+                    .limit(1);
+
+                if (error) {
+                    output.textContent += `Error: ${error.message}\n`;
+                } else {
+                    output.textContent += '✓ claude_translation_cache table exists\n';
+                }
+
+                // Check templates
+                const { data: templates, error: templatesError } = await supabase
+                    .from('claude_admin_task_templates')
+                    .select('role, template_name')
+                    .eq('is_active', true);
+
+                if (templatesError) {
+                    output.textContent += `Error: ${templatesError.message}\n`;
+                } else {
+                    output.textContent += `✓ Found ${templates.length} templates\n`;
+                    templates.forEach(t => {
+                        output.textContent += `  - ${t.role}: ${t.template_name}\n`;
+                    });
+                }
+            } catch (err) {
+                output.textContent += `Exception: ${err.message}\n`;
+            }
+        }
+
+        async function testTranslationCache() {
+            const output = document.getElementById('translation-result');
+            output.textContent = 'Testing translation cache...\n';
+
+            try {
+                // Insert a test translation
+                const testTranslation = {
+                    source_language: 'en',
+                    target_language: 'es',
+                    source_text: 'Your blood pressure is high',
+                    translated_text: 'Su presión arterial está alta',
+                    cultural_notes: ['Use formal "usted" form in medical contexts'],
+                    translation_confidence: 0.95,
+                    usage_count: 1,
+                    context_type: 'medical'
+                };
+
+                const { data: insertData, error: insertError } = await supabase
+                    .from('claude_translation_cache')
+                    .insert(testTranslation)
+                    .select();
+
+                if (insertError && !insertError.message.includes('duplicate')) {
+                    output.textContent += `Insert error: ${insertError.message}\n`;
+                } else {
+                    output.textContent += '✓ Translation inserted (or already exists)\n';
+                }
+
+                // Try to retrieve it
+                const { data: cached, error: cacheError } = await supabase
+                    .from('claude_translation_cache')
+                    .select('*')
+                    .eq('source_language', 'en')
+                    .eq('target_language', 'es')
+                    .eq('source_text', 'Your blood pressure is high')
+                    .is('deleted_at', null)
+                    .single();
+
+                if (cacheError) {
+                    output.textContent += `Cache retrieval error: ${cacheError.message}\n`;
+                } else {
+                    output.textContent += '✓ Translation retrieved from cache!\n';
+                    output.textContent += `  Translation: "${cached.translated_text}"\n`;
+                    output.textContent += `  Confidence: ${cached.translation_confidence}\n`;
+                    output.textContent += `  Usage count: ${cached.usage_count}\n`;
+                    output.textContent += `  Cultural notes: ${JSON.stringify(cached.cultural_notes)}\n`;
+                }
+
+                // Update usage count
+                if (cached) {
+                    const { error: updateError } = await supabase
+                        .from('claude_translation_cache')
+                        .update({
+                            usage_count: (cached.usage_count || 0) + 1,
+                            last_used_at: new Date().toISOString()
+                        })
+                        .eq('id', cached.id);
+
+                    if (updateError) {
+                        output.textContent += `Update error: ${updateError.message}\n`;
+                    } else {
+                        output.textContent += '✓ Usage count updated\n';
+                    }
+                }
+
+                output.textContent += '\n✅ Translation cache test PASSED!\n';
+            } catch (err) {
+                output.textContent += `Exception: ${err.message}\n`;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -12,6 +12,7 @@ import TelehealthScheduler from '../telehealth/TelehealthScheduler';
 import ERIncomingPatientBoard from '../ems/ERIncomingPatientBoard';
 import { supabase } from '../../lib/supabaseClient';
 import { auditLogger } from '../../services/auditLogger';
+import ClaudeCareAssistantPanel from '../claude-care/ClaudeCareAssistantPanel';
 
 // Collapsible Section Component
 interface CollapsibleSectionProps {
@@ -369,6 +370,29 @@ const NursePanel: React.FC = () => {
                   </p>
                 </div>
                 <ResilienceHubDashboard />
+              </CollapsibleSection>
+
+              {/* Claude Care Assistant - AI Administrative Automation for Nurses */}
+              <CollapsibleSection title="Claude Care Assistant - AI Admin Automation" icon="🤖" defaultOpen={false}>
+                <div className="mb-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                  <p className="text-purple-800 text-sm">
+                    <strong>Reduce Administrative Burden:</strong> Automate incident reports, supply justifications,
+                    handoff notes, and patient education materials with AI. Translate in 50+ languages.
+                    Use voice input for hands-free documentation. Save time for patient care.
+                  </p>
+                  <div className="mt-2 flex gap-2 flex-wrap">
+                    <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">Incident Reports</span>
+                    <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">Supply Justification</span>
+                    <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">Handoff Notes</span>
+                    <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">Translation (50+ Languages)</span>
+                    <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">Voice Input</span>
+                  </div>
+                </div>
+                <ClaudeCareAssistantPanel
+                  userRole="nurse"
+                  patientId={selectedPatient?.user_id}
+                  userId={selectedPatient?.user_id}
+                />
               </CollapsibleSection>
             </div>
           </section>

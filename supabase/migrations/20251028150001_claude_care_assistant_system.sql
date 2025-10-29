@@ -283,7 +283,7 @@ CREATE POLICY "Admins can manage templates"
     EXISTS (
       SELECT 1 FROM public.profiles
       WHERE id = auth.uid()
-      AND role_code IN ('ADMIN', 'SUPER_ADMIN')
+      AND role_id IN (1, 2) -- 1=admin, 2=super_admin
     )
   );
 
@@ -308,7 +308,7 @@ CREATE POLICY "Admins can read all task history"
     EXISTS (
       SELECT 1 FROM public.profiles
       WHERE id = auth.uid()
-      AND role_code IN ('ADMIN', 'SUPER_ADMIN')
+      AND role_id IN (1, 2) -- 1=admin, 2=super_admin
     )
   );
 
@@ -417,9 +417,9 @@ COMMENT ON TABLE public.claude_voice_input_sessions IS
 
 DO $$
 BEGIN
-  RAISE NOTICE '✅ Claude Care Assistant schema created successfully!';
-  RAISE NOTICE '📊 Created 5 tables: translation_cache, task_templates, task_history, care_context, voice_sessions';
-  RAISE NOTICE '🔒 RLS policies enabled for HIPAA compliance';
-  RAISE NOTICE '⚡ Postgres 17 optimizations: Full-text search, GIN indexes, generated columns';
-  RAISE NOTICE '💰 Translation cache ready to reduce API costs by 60-80%';
+  RAISE NOTICE 'Claude Care Assistant schema created successfully!';
+  RAISE NOTICE 'Created 5 tables: translation_cache, task_templates, task_history, care_context, voice_sessions';
+  RAISE NOTICE 'RLS policies enabled for HIPAA compliance';
+  RAISE NOTICE 'Postgres 17 optimizations: Full-text search, GIN indexes, generated columns';
+  RAISE NOTICE 'Translation cache ready to reduce API costs by 60-80%%';
 END $$;

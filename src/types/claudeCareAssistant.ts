@@ -5,8 +5,7 @@
 // Zero tech debt: Works with existing role system
 // ============================================================================
 
-import { UserRole } from './roles';
-import { ClaudeModel, RequestType } from './claude';
+import { ClaudeModel } from './claude';
 
 // ============================================================================
 // TRANSLATION TYPES

@@ -15,6 +15,7 @@ import { PhysicianWellnessHub } from './PhysicianWellnessHub';
 import TelehealthConsultation from '../telehealth/TelehealthConsultation';
 import TelehealthScheduler from '../telehealth/TelehealthScheduler';
 import PhysicianClinicalResources from './PhysicianClinicalResources';
+import ClaudeCareAssistantPanel from '../claude-care/ClaudeCareAssistantPanel';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -662,6 +663,40 @@ const PhysicianPanel: React.FC = () => {
               </div>
             </div>
             <TelehealthScheduler />
+          </CollapsibleSection>
+
+          {/* Claude Care Assistant - AI-Powered Administrative Automation */}
+          <CollapsibleSection
+            title="Claude Care Assistant - AI Admin Automation"
+            icon="🤖"
+            defaultOpen={false}
+            category="administrative"
+            badge="AI-Powered"
+          >
+            <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4 mb-4">
+              <div className="flex items-start gap-3">
+                <Brain className="w-6 h-6 text-purple-600 mt-1" />
+                <div>
+                  <h3 className="font-bold text-purple-900">Reduce Administrative Burden with AI</h3>
+                  <p className="text-sm text-purple-800 mt-1">
+                    Automate prior authorizations, insurance appeals, peer review prep, and referral letters with AI.
+                    Translate patient communications in 50+ languages with cultural context. Save hours every day.
+                  </p>
+                  <div className="mt-2 flex gap-2 flex-wrap">
+                    <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">Prior Auth</span>
+                    <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">Insurance Appeals</span>
+                    <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">Translation (50+ Languages)</span>
+                    <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">Voice Input</span>
+                    <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">Team Collaboration</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <ClaudeCareAssistantPanel
+              userRole="physician"
+              patientId={selectedPatient?.user_id}
+              userId={selectedPatient?.user_id}
+            />
           </CollapsibleSection>
 
           {/* Medical Practice Tools Grid */}
