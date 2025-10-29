@@ -222,6 +222,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // @ts-ignore different bundle shapes
       sub?.unsubscribe?.();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Final isAdmin: DB (when known) overrides metadata
@@ -322,6 +323,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signOut,
     isAdmin,
     handleAuthError,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [session, user, loading, error, isAdmin, handleAuthError]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

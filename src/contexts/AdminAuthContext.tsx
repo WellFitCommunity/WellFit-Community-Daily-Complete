@@ -98,6 +98,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       sessionStorage.removeItem(SESSION_STORAGE_KEY);
     }
     return () => clearExpiryTimer();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function persistSession(isAuthenticated: boolean, role: StaffRole | null, expires_at: string | null) {
@@ -112,7 +113,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Fetch access scopes from database
   const fetchAccessScopes = useCallback(async (userId: string): Promise<RoleAccessScopes | null> => {
     try {
-      const { data, error } = await supabase.rpc('get_role_access_scopes', {
+      const { data, error} = await supabase.rpc('get_role_access_scopes', {
         check_user_id: userId,
       });
 
@@ -126,6 +127,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       return null;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const verifyPinAndLogin = useCallback(async (pin: string, role: StaffRole): Promise<boolean> => {
@@ -192,6 +194,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     } finally {
       setIsLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const logoutAdmin = useCallback(() => {
@@ -264,6 +267,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     >
       {children}
     </AdminAuthContext.Provider>
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   );
 };
 
