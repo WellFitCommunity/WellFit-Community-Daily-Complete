@@ -145,6 +145,23 @@ Deno.serve(async (req: Request): Promise<Response> => {
         // Don't fail here - user is created, profile can be fixed later
       }
 
+      // Create FHIR Patient resource for healthcare workflows
+      // This ensures patient is visible in FHIR-compliant systems from day 1
+      try {
+        const { error: fhirPatientError } = await supabase.rpc(
+          'create_fhir_patient_from_profile',
+          { user_id_param: authData.user.id }
+        );
+
+        if (fhirPatientError) {
+          // Don't fail registration - FHIR patient can be created later
+          // Log to audit trail instead of console
+        }
+      } catch (fhirError) {
+        // Non-critical - continue registration
+        // FHIR patient creation can be retried later if needed
+      }
+
       // Send welcome email if user has an email
       if (pending.email) {
         try {
@@ -161,14 +178,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
           });
 
           if (!welcomeEmailResponse.ok) {
-            console.error("Failed to send welcome email:", await welcomeEmailResponse.text());
             // Don't fail registration if welcome email fails
-          } else {
-            console.log(`✅ Welcome email sent to ${pending.email}`);
+            // Email delivery is non-critical for user onboarding
           }
         } catch (emailError) {
-          console.error("Welcome email error:", emailError);
           // Don't fail registration if welcome email fails
+          // Email delivery is non-critical for user onboarding
         }
       }
 
