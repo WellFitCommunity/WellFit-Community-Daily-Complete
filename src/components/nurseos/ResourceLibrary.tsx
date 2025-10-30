@@ -11,9 +11,10 @@ import type { ResilienceResource } from '../../types/nurseos';
 
 interface ResourceLibraryProps {
   onClose: () => void;
+  userRole?: string; // 'physician', 'nurse', 'care_manager', etc.
 }
 
-export const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onClose }) => {
+export const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onClose, userRole }) => {
   const [resources, setResources] = useState<ResilienceResource[]>([]);
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -26,12 +27,15 @@ export const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onClose }) => 
       setLoading(true);
       setError(null);
 
-      const filters: { category?: string; resource_type?: string } = {};
+      const filters: { category?: string; resource_type?: string; userRole?: string } = {};
       if (selectedCategory !== 'all') {
         filters.category = selectedCategory;
       }
       if (selectedType !== 'all') {
         filters.resource_type = selectedType;
+      }
+      if (userRole) {
+        filters.userRole = userRole;
       }
 
       const data = await getResources(filters);
@@ -42,7 +46,7 @@ export const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onClose }) => 
     } finally {
       setLoading(false);
     }
-  }, [selectedType, selectedCategory]);
+  }, [selectedType, selectedCategory, userRole]);
 
   useEffect(() => {
     loadResources();

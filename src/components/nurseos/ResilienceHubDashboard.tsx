@@ -380,6 +380,7 @@ export const ResilienceHubDashboard: React.FC = () => {
       {showResourceLibrary && (
         <ResourceLibrary
           onClose={() => setShowResourceLibrary(false)}
+          userRole="nurse"
         />
       )}
     </div>

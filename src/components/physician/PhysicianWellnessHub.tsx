@@ -419,7 +419,7 @@ export const PhysicianWellnessHub: React.FC = () => {
       )}
 
       {showResourceLibrary && (
-        <ResourceLibrary onClose={() => setShowResourceLibrary(false)} />
+        <ResourceLibrary onClose={() => setShowResourceLibrary(false)} userRole="physician" />
       )}
 
       {/* Celebration Modal */}

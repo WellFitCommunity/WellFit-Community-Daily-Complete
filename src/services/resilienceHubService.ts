@@ -386,12 +386,13 @@ export async function getMyCompletions(): Promise<ProviderTrainingCompletion[]> 
 
 /**
  * Get active resilience resources
- * @param filters Optional filters (category, resource_type)
- * @returns Array of active resources
+ * @param filters Optional filters (category, resource_type, userRole)
+ * @returns Array of active resources filtered by role
  */
 export async function getResources(filters?: {
   category?: string;
   resource_type?: string;
+  userRole?: string;
 }): Promise<ResilienceResource[]> {
   let query = supabase
     .from('resilience_resources')
@@ -411,11 +412,23 @@ export async function getResources(filters?: {
   const { data, error } = await query;
 
   if (error) {
-
+    await auditLogger.error('RESILIENCE_RESOURCES_FETCH_FAILED', error.message, {
+      filters,
+      errorCode: error.code,
+    });
     throw new Error(`Failed to fetch resources: ${error.message}`);
   }
 
-  return data || [];
+  // Client-side filtering by role (target_audience is an array field)
+  let filteredData = data || [];
+  if (filters?.userRole) {
+    filteredData = filteredData.filter((resource) => {
+      const targetAudience = resource.target_audience || [];
+      return targetAudience.includes('all') || targetAudience.includes(filters.userRole);
+    });
+  }
+
+  return filteredData;
 }
 
 /**
