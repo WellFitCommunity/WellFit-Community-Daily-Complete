@@ -10,8 +10,7 @@ import RequireAdminAuth from '../components/auth/RequireAdminAuth';
 import AdminHeader from '../components/admin/AdminHeader';
 import SmartBackButton from '../components/ui/SmartBackButton';
 import { useSupabaseClient } from '../contexts/AuthContext';
-import { Alert, AlertDescription } from '../components/ui/alert';
-import { Search, Filter, Download, Calendar, User, Shield } from 'lucide-react';
+import { Search, Filter, Download, Calendar, Shield } from 'lucide-react';
 
 interface AuditLog {
   id: string;

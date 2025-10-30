@@ -4,12 +4,10 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import SMARTClient from '../lib/smartOnFhir';
-import { useAuth } from '../contexts/AuthContext';
 
 const SmartCallbackPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
   const [message, setMessage] = useState('Connecting to EHR system...');
   const [patientData, setPatientData] = useState<any>(null);

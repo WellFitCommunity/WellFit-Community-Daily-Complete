@@ -221,11 +221,9 @@ ${validationRules.map(rule => `    // Validate ${rule.sourceField}: ${rule.valid
       case 'required':
         return value != null && value !== '';
       case 'email':
-        // eslint-disable-next-line no-useless-escape
-        return !value || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+        return !value || /^[^ @]+@[^ @]+.[^ @]+$/.test(value);
       case 'phone':
-        // eslint-disable-next-line no-useless-escape
-        return !value || /^[+]?[\d\s\-()]+$/.test(value);
+        return !value || /^[+]?[\d ()-]+$/.test(value);
       case 'date':
         return !value || !isNaN(Date.parse(value));
       case 'numeric':

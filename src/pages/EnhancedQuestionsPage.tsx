@@ -1,6 +1,5 @@
 // src/pages/EnhancedQuestionsPage.tsx - Senior-Friendly Questions with AI & Voice
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Mic, MicOff, Send, Lightbulb, MessageCircle } from 'lucide-react';
 import { useSupabaseClient, useUser } from '../contexts/AuthContext';
 import { useBranding } from '../BrandingContext';
@@ -63,7 +62,6 @@ const URGENT_KEYWORDS = [
 ];
 
 const EnhancedQuestionsPage: React.FC = () => {
-  const navigate = useNavigate();
   const { branding } = useBranding();
   const supabase = useSupabaseClient();
   const user = useUser();

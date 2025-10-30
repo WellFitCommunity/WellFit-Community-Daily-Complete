@@ -47,22 +47,19 @@ export default function ChangePasswordPage() {
 
   // 1) Claim/establish session from the reset link, then mark sessionReady=true
   useEffect(() => {
-    let did = false;
-
     (async () => {
       try {
         // A) Newer flow: query param with code
         const q = readQueryParams();
 if (q.type === 'recovery' && q.code) {
   // Exchange code for a session (must pass full URL, not just code)
-  const { data, error } = await supabase.auth.exchangeCodeForSession(window.location.href);
+  const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
   if (error) throw error;
 
   // Clean the URL (remove code/type)
   window.history.replaceState({}, document.title, window.location.pathname);
 
   setSessionReady(true);
-  did = true;
   return;
 }
 
@@ -77,7 +74,6 @@ if (q.type === 'recovery' && q.code) {
           // Clean the hash
           window.history.replaceState({}, document.title, window.location.pathname);
           setSessionReady(true);
-          did = true;
           return;
         }
 
@@ -89,8 +85,6 @@ if (q.type === 'recovery' && q.code) {
         setSessionReady(false);
       }
     })();
-
-    return () => { did = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -19,7 +19,6 @@ const SetCaregiverPinPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [existingPin, setExistingPin] = useState(false);
   const [skipAllowed, setSkipAllowed] = useState(false);
-  const [userRole, setUserRole] = useState('');
 
   // Check if user already has a PIN set
   useEffect(() => {
@@ -35,8 +34,6 @@ const SetCaregiverPinPage: React.FC = () => {
           .single();
 
         if (profileData) {
-          setUserRole(profileData.role || '');
-
           // Only seniors need caregiver PINs
           const isSenior = profileData.role === 'senior' || profileData.role_code === 4;
           setSkipAllowed(!isSenior); // Allow skip for non-seniors

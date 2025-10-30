@@ -25,9 +25,6 @@ type Recipe = {
   steps?: string[];
 };
 
-const WELLFIT_BLUE = '#003865';
-const WELLFIT_GREEN = '#8cc63f';
-
 // Change this to 'supabase' later when MealsService is ready.
 // You can also drive this with process.env.REACT_APP_MEALS_SOURCE.
 const MEALS_SOURCE: 'local' | 'supabase' =

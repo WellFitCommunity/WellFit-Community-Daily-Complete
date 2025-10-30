@@ -191,7 +191,7 @@ const StatsCard: React.FC<{
 };
 
 const DoctorsView: React.FC = () => {
-  const { branding } = useBranding();
+  useBranding();
   const supabase = useSupabaseClient();
   const user = useUser();
   const userId = user?.id ?? null;

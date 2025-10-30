@@ -13,7 +13,6 @@ import {
   isAccountLocked,
   formatLockoutMessage,
   recordLoginAttempt,
-  type AccountLockoutInfo,
 } from '../services/loginSecurityService';
 import { auditLogger } from '../services/auditLogger';
 
