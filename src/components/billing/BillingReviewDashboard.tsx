@@ -163,31 +163,31 @@ export function BillingReviewDashboard() {
     if (!user) return;
 
     const confirmSubmit = window.confirm(
-      'Submit this claim to the clearinghouse? This action cannot be undone.'
+      'Mark this claim ready for hospital submission? The hospital billing staff will submit to the clearinghouse.'
     );
 
     if (!confirmSubmit) return;
 
     try {
-      const { data, error } = await supabase.rpc('submit_claim_to_clearinghouse', {
+      const { data, error } = await supabase.rpc('mark_claim_ready_for_hospital', {
         p_claim_id: claimId,
-        p_submitter_id: user.id,
-        p_clearinghouse_name: 'waystar'  // TODO: Make configurable
+        p_reviewer_id: user.id,
+        p_notes: reviewNotes || 'Approved for hospital submission'
       });
 
       if (error) throw error;
 
       if (data?.success) {
-        alert('Claim submitted successfully!');
+        alert('Claim approved and marked ready for hospital submission!');
         setSelectedClaim(null);
         setReviewNotes('');
         loadClaims();
       } else {
-        alert(data?.error || 'Failed to submit claim');
+        alert(data?.error || 'Failed to mark claim ready');
       }
     } catch (error) {
 
-      alert('Error submitting claim');
+      alert('Error marking claim ready');
     }
   };
 
@@ -567,7 +567,7 @@ export function BillingReviewDashboard() {
               </div>
 
               <p className="text-xs text-gray-500 text-center mt-3">
-                Claim will be submitted to clearinghouse after approval
+                Claim will be ready for hospital billing staff after approval (Texas compliance)
               </p>
             </div>
           ) : (

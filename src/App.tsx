@@ -83,7 +83,7 @@ const MedicineCabinet = React.lazy(() => import('./components/patient/MedicineCa
 const MyHealthHubPage = React.lazy(() => import('./pages/MyHealthHubPage'));
 const TelehealthAppointmentsPage = React.lazy(() => import('./pages/TelehealthAppointmentsPage'));
 // Guardian moved to Edge Functions
-const GuardianAgentDashboard = React.lazy(() => import('./components/admin/GuardianAgentDashboard'));
+// const GuardianAgentDashboard = React.lazy(() => import('./components/admin/GuardianAgentDashboard'));
 // const GuardianTestPage = React.lazy(() => import('./pages/GuardianTestPage'));
 const EMSPage = React.lazy(() => import('./pages/EMSPage'));
 const ERDashboardPage = React.lazy(() => import('./pages/ERDashboardPage'));
@@ -374,7 +374,8 @@ function Shell() {
                   <RequireAuth>
                     <RequireAdminAuth allowedRoles={['super_admin', 'admin']}>
                       <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading Guardian...</div>}>
-                        <GuardianAgentDashboard />
+                        {/* <GuardianAgentDashboard /> */}
+                        <div>Guardian Agent moved to Edge Functions</div>
                       </Suspense>
                     </RequireAdminAuth>
                   </RequireAuth>

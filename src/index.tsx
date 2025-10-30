@@ -21,7 +21,7 @@ import { DemoModeProvider } from './contexts/DemoModeContext';
 import { claudeService } from './services/claudeService';
 
 // Guardian Agent init
-import { GuardianAgent } from './services/guardian-agent/GuardianAgent';
+// import { GuardianAgent } from './services/guardian-agent/GuardianAgent'; // Disabled - Node.js modules
 
 function DemoModeBridge({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -46,23 +46,9 @@ claudeService
     // Claude AI service initialization failed (limited AI features)
   });
 
-// Initialize Guardian Agent - monitors app health, security, and auto-heals issues
-const guardianAgent = GuardianAgent.getInstance({
-  autoHealEnabled: true,
-  requireApprovalForCritical: false,
-  learningEnabled: true,
-  hipaaComplianceMode: true,
-  monitoringIntervalMs: 5000,
-  securityScanIntervalMs: 60000
-});
-
-// Start Guardian monitoring
-guardianAgent.start();
-
-// Expose Guardian to window for debugging
-if (typeof window !== 'undefined') {
-  (window as any).__guardianAgent = guardianAgent;
-}
+// Guardian Agent removed - it's a backend service that requires Node.js
+// It should run as a separate Edge Function or backend service, not in the browser
+// The browser cannot access file system, child processes, or other Node.js APIs
 
 const root = createRoot(document.getElementById('root')!);
 
