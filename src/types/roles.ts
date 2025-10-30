@@ -21,11 +21,13 @@ export type StaffRole =
   | 'physician_assistant' // Level 4: Advanced practice (collaborative)
   | 'physician'           // Level 5: Attending physicians
   | 'doctor'              // Level 5: Synonym for physician
-  | 'nurse'               // Level 5: RNs, LPNs
-  | 'case_manager'        // Level 5: Care coordination and discharge planning
-  | 'social_worker'       // Level 5: Psychosocial services and community resources
-  | 'physical_therapist'  // Level 6: Allied health (future)
-  | 'admin';              // Level 7: Administrative staff
+  | 'nurse'                    // Level 5: RNs, LPNs
+  | 'case_manager'             // Level 5: Care coordination and discharge planning
+  | 'social_worker'            // Level 5: Psychosocial services and community resources
+  | 'community_health_worker'  // Level 5: CHW field workers
+  | 'chw'                      // Level 5: Synonym for community_health_worker
+  | 'physical_therapist'       // Level 6: Allied health (future)
+  | 'admin';                   // Level 7: Administrative staff
 
 /**
  * Legacy admin roles (for backwards compatibility)
@@ -80,6 +82,8 @@ export enum RoleCode {
   CAREGIVER = 13,  // Unique code for caregiver (family caregivers, not volunteers)
   CASE_MANAGER = 14,  // Care coordination and discharge planning
   SOCIAL_WORKER = 15,  // Psychosocial services and community resources
+  COMMUNITY_HEALTH_WORKER = 17,  // Community Health Worker (CHW)
+  CHW = 18,  // Synonym for COMMUNITY_HEALTH_WORKER
 }
 
 /**
@@ -102,6 +106,8 @@ export const ROLE_TO_CODE: Record<UserRole, RoleCode> = {
   physical_therapist: RoleCode.PHYSICAL_THERAPIST,
   case_manager: RoleCode.CASE_MANAGER,
   social_worker: RoleCode.SOCIAL_WORKER,
+  community_health_worker: RoleCode.COMMUNITY_HEALTH_WORKER,
+  chw: RoleCode.CHW,
 };
 
 /**
@@ -123,6 +129,8 @@ export const CODE_TO_ROLE: Record<RoleCode, UserRole> = {
   [RoleCode.CAREGIVER]: 'caregiver',
   [RoleCode.CASE_MANAGER]: 'case_manager',
   [RoleCode.SOCIAL_WORKER]: 'social_worker',
+  [RoleCode.COMMUNITY_HEALTH_WORKER]: 'community_health_worker',
+  [RoleCode.CHW]: 'chw',
 };
 
 // ============================================================================
@@ -173,6 +181,8 @@ export const ROLE_HIERARCHY: Record<StaffRole, StaffRole[]> = {
     'nurse',
     'case_manager',
     'social_worker',
+    'community_health_worker',
+    'chw',
     'physical_therapist',
     'admin',
   ],
@@ -204,6 +214,8 @@ export const ROLE_HIERARCHY: Record<StaffRole, StaffRole[]> = {
   nurse: ['nurse'],
   case_manager: ['case_manager'], // Care coordination role
   social_worker: ['social_worker'], // Psychosocial services role
+  community_health_worker: ['community_health_worker', 'chw'], // CHW field workers
+  chw: ['community_health_worker', 'chw'], // Synonym for community_health_worker
   physical_therapist: ['physical_therapist'],
   admin: ['admin'],
 };
@@ -240,6 +252,8 @@ export const ROLE_DISPLAY_NAMES: Record<StaffRole, string> = {
   nurse: 'Nurse',
   case_manager: 'Case Manager',
   social_worker: 'Social Worker',
+  community_health_worker: 'Community Health Worker',
+  chw: 'CHW',
   physical_therapist: 'Physical Therapist',
   admin: 'Administrator',
 };

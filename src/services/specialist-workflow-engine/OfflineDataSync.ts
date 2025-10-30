@@ -4,7 +4,6 @@
  */
 
 import { supabase } from '../../lib/supabaseClient';
-import { OfflineSyncJob } from './types';
 
 export class OfflineDataSync {
   private db: IDBDatabase | null = null;

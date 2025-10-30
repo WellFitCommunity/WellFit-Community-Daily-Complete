@@ -8,20 +8,20 @@ import React, { useState, useEffect } from 'react';
 import { chwService, SDOHData } from '../../services/chwService';
 
 interface SDOHAssessmentProps {
-  visitId: string;
-  language: 'en' | 'es';
-  onComplete: () => void;
-  onBack: () => void;
-  onSkip: () => void;
+  visitId?: string;
+  language?: 'en' | 'es';
+  onComplete?: () => void;
+  onBack?: () => void;
+  onSkip?: () => void;
 }
 
 
 export const SDOHAssessment: React.FC<SDOHAssessmentProps> = ({
-  visitId,
-  language,
-  onComplete,
-  onBack,
-  onSkip
+  visitId = 'demo-visit-001',
+  language = 'en',
+  onComplete = () => {},
+  onBack = () => {},
+  onSkip = () => {}
 }) => {
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [notes, setNotes] = useState('');
@@ -413,3 +413,5 @@ export const SDOHAssessment: React.FC<SDOHAssessmentProps> = ({
     </div>
   );
 };
+
+export default SDOHAssessment;

@@ -16,6 +16,7 @@ import TelehealthConsultation from '../telehealth/TelehealthConsultation';
 import TelehealthScheduler from '../telehealth/TelehealthScheduler';
 import PhysicianClinicalResources from './PhysicianClinicalResources';
 import ClaudeCareAssistantPanel from '../claude-care/ClaudeCareAssistantPanel';
+import CHWAlertsWidget from '../chw/CHWAlertsWidget';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -579,6 +580,9 @@ const PhysicianPanel: React.FC = () => {
               </div>
             ))}
           </div>
+
+          {/* CHW Field Alerts */}
+          <CHWAlertsWidget userRole="physician" userId={localStorage.getItem('userId') || ''} maxAlerts={5} />
 
           {/* Patient Selection & Summary */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

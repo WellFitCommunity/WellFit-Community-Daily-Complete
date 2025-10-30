@@ -7,17 +7,17 @@ import React, { useState, useRef } from 'react';
 import { chwService, MedicationPhoto } from '../../services/chwService';
 
 interface MedicationPhotoCaptureProps {
-  visitId: string;
-  language: 'en' | 'es';
-  onComplete: () => void;
-  onBack: () => void;
+  visitId?: string;
+  language?: 'en' | 'es';
+  onComplete?: () => void;
+  onBack?: () => void;
 }
 
 export const MedicationPhotoCapture: React.FC<MedicationPhotoCaptureProps> = ({
-  visitId,
-  language,
-  onComplete,
-  onBack
+  visitId = 'demo-visit-001',
+  language = 'en',
+  onComplete = () => {},
+  onBack = () => {}
 }) => {
   const [photos, setPhotos] = useState<MedicationPhoto[]>([]);
   const [currentPhoto, setCurrentPhoto] = useState<string | null>(null);
@@ -335,3 +335,5 @@ export const MedicationPhotoCapture: React.FC<MedicationPhotoCaptureProps> = ({
     </div>
   );
 };
+
+export default MedicationPhotoCapture;

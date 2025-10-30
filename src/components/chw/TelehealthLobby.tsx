@@ -6,19 +6,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 interface TelehealthLobbyProps {
-  visitId: string;
-  patientName: string;
-  language: 'en' | 'es';
-  onJoinCall: () => void;
-  onCancel: () => void;
+  visitId?: string;
+  patientName?: string;
+  language?: 'en' | 'es';
+  onJoinCall?: () => void;
+  onCancel?: () => void;
 }
 
 export const TelehealthLobby: React.FC<TelehealthLobbyProps> = ({
-  visitId,
-  patientName,
-  language,
-  onJoinCall,
-  onCancel
+  visitId = 'demo-visit-001',
+  patientName = 'Demo Patient',
+  language = 'en',
+  onJoinCall = () => {},
+  onCancel = () => {}
 }) => {
   const [deviceCheck, setDeviceCheck] = useState({
     camera: false,
@@ -283,3 +283,5 @@ export const TelehealthLobby: React.FC<TelehealthLobbyProps> = ({
     </div>
   );
 };
+
+export default TelehealthLobby;

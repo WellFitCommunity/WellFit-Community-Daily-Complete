@@ -15,7 +15,6 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAdminAuth } from '../contexts/AdminAuthContext';
 import { useUser } from '../contexts/AuthContext';
 import RequireAdminAuth from '../components/auth/RequireAdminAuth';
 import AdminHeader from '../components/admin/AdminHeader';
@@ -86,7 +85,6 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
 };
 
 const SystemAdministrationPage: React.FC = () => {
-  const { adminRole } = useAdminAuth();
   const user = useUser();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<SystemTabKey>('overview');

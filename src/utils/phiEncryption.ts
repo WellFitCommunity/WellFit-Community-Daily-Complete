@@ -142,13 +142,13 @@ async function derivePatientKey(
   patientId: string
 ): Promise<CryptoKey> {
   // Export master key to derive from it
-  // Note: In production, use a KDF like PBKDF2 or HKDF
-  // This is a simplified version
-  const encoder = new TextEncoder();
-  const salt = encoder.encode(`wellfit-phi-${patientId}`);
+  // Note: In production, use a KDF like PBKDF2 or HKDF with patient-specific salt
+  // This is a simplified version - patientId would be used in proper KDF
+  // const encoder = new TextEncoder();
+  // const salt = encoder.encode(`wellfit-phi-${patientId}`);
 
   // For simplicity, we'll use the master key directly
-  // In production, implement proper HKDF
+  // In production, implement proper HKDF with the salt
   return masterKey;
 }
 

@@ -8,17 +8,17 @@ import React, { useState, useEffect } from 'react';
 import { chwService, VitalsData } from '../../services/chwService';
 
 interface CHWVitalsCaptureProps {
-  visitId: string;
-  language: 'en' | 'es';
-  onComplete: () => void;
-  onBack: () => void;
+  visitId?: string;
+  language?: 'en' | 'es';
+  onComplete?: () => void;
+  onBack?: () => void;
 }
 
 export const CHWVitalsCapture: React.FC<CHWVitalsCaptureProps> = ({
-  visitId,
-  language,
-  onComplete,
-  onBack
+  visitId = 'demo-visit-001',
+  language = 'en',
+  onComplete = () => {},
+  onBack = () => {}
 }) => {
   const [vitals, setVitals] = useState<Partial<VitalsData>>({
     captured_at: new Date().toISOString(),
@@ -493,3 +493,5 @@ export const CHWVitalsCapture: React.FC<CHWVitalsCaptureProps> = ({
     </div>
   );
 };
+
+export default CHWVitalsCapture;

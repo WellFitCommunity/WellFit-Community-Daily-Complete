@@ -7,7 +7,7 @@
 import { supabase } from '../lib/supabaseClient';
 import { offlineSync } from './specialist-workflow-engine/OfflineDataSync';
 import { FieldVisit, SpecialistAssessment, SpecialistAlert } from './specialist-workflow-engine/types';
-import { encryptPHI, decryptPHI } from '../utils/phiEncryption';
+import { encryptPHI } from '../utils/phiEncryption';
 
 // Kiosk-specific types
 export interface KioskSession {
@@ -137,13 +137,9 @@ export class CHWService {
    * Get client IP address for audit logging
    */
   private async getClientIP(): Promise<string> {
-    try {
-      // In a real implementation, this would come from the server
-      // For kiosk mode, we might get it from a device-specific API
-      return 'kiosk-local';
-    } catch {
-      return 'unknown';
-    }
+    // In a real implementation, this would come from the server
+    // For kiosk mode, we might get it from a device-specific API
+    return 'kiosk-local';
   }
 
   /**
@@ -794,12 +790,8 @@ export class CHWService {
         });
 
       if (error) {
-        // Fallback to console if DB logging fails, but sanitize PHI
-        console.error('[Security Event] Failed to log:', {
-          event_type: params.event_type,
-          severity: params.severity,
-          error_code: error.code
-        });
+        // DB logging failed - silently fail to not block user workflow
+        // Security events are logged best-effort only
       }
     } catch (err) {
       // Silent fail - don't block user flow for logging failures

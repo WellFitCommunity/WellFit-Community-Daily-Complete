@@ -34,7 +34,7 @@ interface BulkEnrollmentJob {
 const BulkEnrollmentPanel: React.FC = () => {
   const { adminRole } = useAdminAuth();
   const [enrollmentJob, setEnrollmentJob] = useState<BulkEnrollmentJob | null>(null);
-  const [_csvData, setCsvData] = useState<string>('');
+  const [, setCsvData] = useState<string>('');
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [previewRecords, setPreviewRecords] = useState<EnrollmentRecord[]>([]);
   const [showPreview, setShowPreview] = useState(false);

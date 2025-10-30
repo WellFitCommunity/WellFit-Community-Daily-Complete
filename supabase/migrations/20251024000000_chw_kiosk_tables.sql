@@ -8,7 +8,7 @@
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS public.chw_kiosk_sessions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  patient_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  patient_id UUID NOT NULL REFERENCES public.profiles(user_id) ON DELETE CASCADE,
   kiosk_id TEXT NOT NULL,
   location_name TEXT NOT NULL,
   location_gps GEOGRAPHY(POINT, 4326),
@@ -54,7 +54,7 @@ COMMENT ON COLUMN public.chw_kiosk_sessions.session_data IS 'Flexible JSONB for 
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS public.chw_patient_consent (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  patient_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  patient_id UUID NOT NULL REFERENCES public.profiles(user_id) ON DELETE CASCADE,
 
   -- Consent types
   consent_type TEXT NOT NULL CHECK (consent_type IN (
@@ -89,16 +89,14 @@ CREATE TABLE IF NOT EXISTS public.chw_patient_consent (
   revocation_reason TEXT,
 
   -- Audit trail
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-
-  -- Ensure unique active consent per type
-  CONSTRAINT unique_active_consent UNIQUE(patient_id, consent_type) WHERE (NOT revoked)
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE INDEX idx_chw_patient_consent_patient ON public.chw_patient_consent(patient_id);
 CREATE INDEX idx_chw_patient_consent_type ON public.chw_patient_consent(consent_type);
 CREATE INDEX idx_chw_patient_consent_kiosk ON public.chw_patient_consent(kiosk_id);
 CREATE INDEX idx_chw_patient_consent_expires ON public.chw_patient_consent(expires_at);
+CREATE UNIQUE INDEX idx_chw_patient_consent_active_unique ON public.chw_patient_consent(patient_id, consent_type) WHERE (NOT revoked);
 
 COMMENT ON TABLE public.chw_patient_consent IS 'HIPAA-compliant consent tracking for kiosk usage';
 

@@ -7,13 +7,13 @@ import React, { useState, useEffect } from 'react';
 import { chwService } from '../../services/chwService';
 
 interface KioskDashboardProps {
-  kioskId: string;
-  locationName: string;
+  kioskId?: string;
+  locationName?: string;
 }
 
 export const KioskDashboard: React.FC<KioskDashboardProps> = ({
-  kioskId,
-  locationName
+  kioskId = 'kiosk-web-001',
+  locationName = 'Web Kiosk'
 }) => {
   const [syncStatus, setSyncStatus] = useState<{
     pending: { visits: number; assessments: number; photos: number; alerts: number };
@@ -298,3 +298,5 @@ export const KioskDashboard: React.FC<KioskDashboardProps> = ({
     </div>
   );
 };
+
+export default KioskDashboard;

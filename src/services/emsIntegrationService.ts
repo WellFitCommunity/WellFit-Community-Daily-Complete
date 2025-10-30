@@ -82,14 +82,14 @@ export async function integrateEMSHandoff(
  */
 async function createOrFindPatient(
   handoff: PrehospitalHandoff,
-  userId: string
+  _userId: string
 ): Promise<{ success: boolean; patientId?: string; error?: string }> {
   try {
     // For EMS arrivals, we often don't have full patient identity
     // Create a temporary patient record that can be matched later
     const tempPatientName = `EMS-${handoff.unit_number}-${new Date().toISOString().split('T')[0]}`;
 
-    const { data: existingPatient, error: searchError } = await supabase
+    const { data: existingPatient } = await supabase
       .from('profiles')
       .select('user_id')
       .eq('first_name', tempPatientName)
@@ -116,7 +116,7 @@ async function createOrFindPatient(
     }
 
     // Create profile
-    const { data: _profile, error: profileError } = await supabase
+    const { error: profileError } = await supabase
       .from('profiles')
       .insert({
         user_id: newUser.user.id,
@@ -265,7 +265,7 @@ async function documentEMSVitals(
 async function generateBillingCodesFromHandoff(
   encounterId: string,
   handoff: PrehospitalHandoff,
-  providerId: string
+  _providerId: string
 ): Promise<any[]> {
   const billingCodes: any[] = [];
 

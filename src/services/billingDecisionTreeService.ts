@@ -63,7 +63,7 @@ export class BillingDecisionTreeService {
    */
   static async processEncounter(
     input: DecisionTreeInput,
-    config: DecisionTreeConfig = this.defaultConfig
+    _config: DecisionTreeConfig = this.defaultConfig
   ): Promise<DecisionTreeResult> {
     const decisions: DecisionNode[] = [];
     const validationErrors: ValidationIssue[] = [];
@@ -266,7 +266,6 @@ export class BillingDecisionTreeService {
     input: DecisionTreeInput,
     decisions: DecisionNode[]
   ): Promise<EligibilityCheckResult> {
-    const _nodeStart = Date.now();
 
     // Check patient eligibility in database
     const eligibility = await this.validateEligibility(input.patientId, input.payerId);
@@ -647,7 +646,7 @@ export class BillingDecisionTreeService {
    * Determine applicable modifiers
    */
   static async determineModifiers(
-    cptCode: string,
+    _cptCode: string,
     circumstances: string[]
   ): Promise<ModifierDecision> {
     const modifiersApplied: string[] = [];
@@ -684,7 +683,7 @@ export class BillingDecisionTreeService {
   static async lookupFee(
     cptCode: string,
     payerId: string,
-    providerId: string
+    _providerId: string
   ): Promise<FeeScheduleResult> {
     try {
       // First, try to find contracted rate

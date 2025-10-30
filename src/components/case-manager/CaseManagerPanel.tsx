@@ -5,6 +5,7 @@
 import React, { useState } from 'react';
 import AdminHeader from '../admin/AdminHeader';
 import ClaudeCareAssistantPanel from '../claude-care/ClaudeCareAssistantPanel';
+import CHWAlertsWidget from '../chw/CHWAlertsWidget';
 import RequireAdminAuth from '../auth/RequireAdminAuth';
 
 interface CollapsibleSectionProps {
@@ -72,6 +73,9 @@ const CaseManagerPanel: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {/* CHW Field Alerts */}
+          <CHWAlertsWidget userRole="case_manager" userId={localStorage.getItem('userId') || ''} maxAlerts={5} />
 
           {/* Quick Stats */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

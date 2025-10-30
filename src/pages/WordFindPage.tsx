@@ -123,12 +123,15 @@ const WordFind: React.FC = () => {
     if (selection.length === 0) return '';
     return selection.map(p => grid[p.r]?.[p.c] ?? '').join('');
   }, [selection, grid]);
+  // Reversed selection text for bidirectional word matching
   const selectionTextRev = useMemo(() => selectionText.split('').reverse().join(''), [selectionText]);
 
-  const startsAny = (prefix: string) =>
-    words.some(w => w.startsWith(prefix)) || words.some(w => w.startsWith(prefix.split('').reverse().join('')));
+  const startsAny = (prefix: string) => {
+    const prefixRev = prefix.split('').reverse().join('');
+    return words.some(w => w.startsWith(prefix)) || words.some(w => w.startsWith(prefixRev));
+  };
   const equalsAny = (s: string) =>
-    words.includes(s) || words.includes(s.split('').reverse().join(''));
+    words.includes(s) || words.includes(selectionTextRev);
 
   const resetSelection = (seed?: Point) => {
     setSelection(seed ? [seed] : []);

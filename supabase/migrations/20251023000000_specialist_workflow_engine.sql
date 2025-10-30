@@ -11,7 +11,7 @@ CREATE EXTENSION IF NOT EXISTS postgis;
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS public.specialist_providers (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.profiles(user_id) ON DELETE CASCADE,
   specialist_type TEXT NOT NULL CHECK (specialist_type IN (
     'CHW', 'AgHealth', 'MAT', 'WoundCare', 'Geriatric', 'Telepsych', 'RT', 'Custom'
   )),
@@ -38,7 +38,7 @@ CREATE INDEX idx_specialist_providers_service_area ON public.specialist_provider
 CREATE TABLE IF NOT EXISTS public.field_visits (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   specialist_id UUID NOT NULL REFERENCES public.specialist_providers(id) ON DELETE CASCADE,
-  patient_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  patient_id UUID NOT NULL REFERENCES public.profiles(user_id) ON DELETE CASCADE,
   visit_type TEXT NOT NULL,
   workflow_template_id TEXT NOT NULL,
   scheduled_at TIMESTAMPTZ,
@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS public.specialist_assessments (
   photos TEXT[] DEFAULT ARRAY[]::TEXT[],
   calculated_scores JSONB DEFAULT '{}'::jsonb,
   requires_review BOOLEAN DEFAULT false,
-  reviewed_by UUID REFERENCES public.profiles(id),
+  reviewed_by UUID REFERENCES public.profiles(user_id),
   reviewed_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -98,11 +98,11 @@ CREATE TABLE IF NOT EXISTS public.specialist_alerts (
   triggered_by JSONB NOT NULL,
   triggered_at TIMESTAMPTZ DEFAULT NOW(),
   notify_role TEXT NOT NULL,
-  notify_user_id UUID REFERENCES public.profiles(id),
+  notify_user_id UUID REFERENCES public.profiles(user_id),
   message TEXT NOT NULL,
   acknowledged BOOLEAN DEFAULT false,
   acknowledged_at TIMESTAMPTZ,
-  acknowledged_by UUID REFERENCES public.profiles(id),
+  acknowledged_by UUID REFERENCES public.profiles(user_id),
   escalated BOOLEAN DEFAULT false,
   escalated_at TIMESTAMPTZ,
   resolved BOOLEAN DEFAULT false,

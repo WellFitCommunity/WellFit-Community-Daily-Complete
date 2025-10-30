@@ -91,6 +91,14 @@ const SystemAdministrationPage = React.lazy(() => import('./pages/SystemAdminist
 const AdminSettingsPage = React.lazy(() => import('./pages/AdminSettingsPage'));
 const AuditLogsPage = React.lazy(() => import('./pages/AuditLogsPage'));
 
+// CHW (Community Health Worker) Components
+const KioskCheckIn = React.lazy(() => import('./components/chw/KioskCheckIn'));
+const CHWVitalsCapture = React.lazy(() => import('./components/chw/CHWVitalsCapture'));
+const MedicationPhotoCapture = React.lazy(() => import('./components/chw/MedicationPhotoCapture'));
+const SDOHAssessment = React.lazy(() => import('./components/chw/SDOHAssessment'));
+const TelehealthLobby = React.lazy(() => import('./components/chw/TelehealthLobby'));
+const KioskDashboard = React.lazy(() => import('./components/chw/KioskDashboard'));
+
 function Shell() {
   const [branding, setBranding] = useState<BrandingConfig>(getCurrentBranding());
   const location = useLocation();
@@ -244,6 +252,77 @@ function Shell() {
                   </RequireAuth>
                 }
               />
+
+              {/* CHW (Community Health Worker) Routes */}
+              <Route
+                path="/kiosk/check-in"
+                element={
+                  <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
+                    <KioskCheckIn />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/chw/vitals-capture"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'nurse', 'community_health_worker', 'chw']}>
+                      <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
+                        <CHWVitalsCapture />
+                      </Suspense>
+                    </RequireAdminAuth>
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/chw/medication-photo"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'nurse', 'community_health_worker', 'chw']}>
+                      <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
+                        <MedicationPhotoCapture />
+                      </Suspense>
+                    </RequireAdminAuth>
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/chw/sdoh-assessment"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'nurse', 'case_manager', 'social_worker', 'community_health_worker', 'chw']}>
+                      <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
+                        <SDOHAssessment />
+                      </Suspense>
+                    </RequireAdminAuth>
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/chw/telehealth-lobby"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'physician', 'nurse', 'community_health_worker', 'chw']}>
+                      <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
+                        <TelehealthLobby />
+                      </Suspense>
+                    </RequireAdminAuth>
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/chw/dashboard"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'nurse', 'community_health_worker', 'chw']}>
+                      <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
+                        <KioskDashboard />
+                      </Suspense>
+                    </RequireAdminAuth>
+                  </RequireAuth>
+                }
+              />
+
               <Route
                 path="/admin/enroll-senior"
                 element={

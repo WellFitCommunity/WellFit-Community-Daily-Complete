@@ -11,15 +11,15 @@ import { chwService } from '../../services/chwService';
 import { validateName, validateDOB, validateSSNLast4, validatePIN, RateLimiter } from '../../utils/kioskValidation';
 
 interface KioskCheckInProps {
-  kioskId: string;
-  locationName: string;
-  onCheckInComplete: (visitId: string, patientId: string) => void;
+  kioskId?: string;
+  locationName?: string;
+  onCheckInComplete?: (visitId: string, patientId: string) => void;
 }
 
 export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
-  kioskId,
-  locationName,
-  onCheckInComplete
+  kioskId = 'kiosk-web-001',
+  locationName = 'Web Kiosk',
+  onCheckInComplete = () => {}
 }) => {
   const [step, setStep] = useState<'lookup' | 'privacy' | 'language'>('language');
   const [language, setLanguage] = useState<'en' | 'es'>('en');
@@ -571,3 +571,5 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
     </div>
   );
 };
+
+export default KioskCheckIn;
