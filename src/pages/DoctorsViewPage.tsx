@@ -191,7 +191,7 @@ const StatsCard: React.FC<{
 };
 
 const DoctorsView: React.FC = () => {
-  useBranding();
+  const { branding } = useBranding();
   const supabase = useSupabaseClient();
   const user = useUser();
   const userId = user?.id ?? null;
@@ -508,14 +508,16 @@ const DoctorsView: React.FC = () => {
               <div className="flex items-center space-x-3">
                 <button
                   onClick={() => fetchData(userId!)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                  className="px-4 py-2 text-white rounded-lg hover:opacity-90 transition-colors flex items-center space-x-2"
+                  style={{ backgroundColor: branding.primaryColor }}
                 >
                   <Activity className="w-4 h-4" />
                   <span>Refresh</span>
                 </button>
                 <Link
                   to="/questions"
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2"
+                  className="px-4 py-2 text-white rounded-lg hover:opacity-90 transition-colors flex items-center space-x-2"
+                  style={{ backgroundColor: branding.secondaryColor }}
                 >
                   <FileText className="w-4 h-4" />
                   <span>Ask Care Team</span>
@@ -552,7 +554,7 @@ const DoctorsView: React.FC = () => {
               value={latestCheckIn ? new Date(latestCheckIn.created_at).toLocaleDateString() : 'N/A'}
               subtitle={latestCheckIn ? 'Check-in completed' : 'No recent data'}
               icon={Calendar}
-              color="bg-indigo-600"
+              color="bg-blue-600"
             />
           </div>
 
@@ -742,7 +744,7 @@ const DoctorsView: React.FC = () => {
               </div>
 
               {/* Quick Actions */}
-              <div className="bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl shadow-lg p-6 text-white">
+              <div className="rounded-2xl shadow-lg p-6 text-white" style={{ background: branding.gradient }}>
                 <h3 className="text-lg font-bold mb-4">Quick Actions</h3>
                 <div className="space-y-3">
                   <Link
