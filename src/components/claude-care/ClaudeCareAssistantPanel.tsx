@@ -21,6 +21,8 @@ interface Props {
 const ClaudeCareAssistantPanel: React.FC<Props> = ({ userRole, patientId, userId }) => {
   const [activeTab, setActiveTab] = useState<'translation' | 'tasks' | 'voice' | 'context'>('tasks');
   const [moduleConfig, setModuleConfig] = useState<ClaudeCareModuleConfig | null>(null);
+  const [voiceTemplateId, setVoiceTemplateId] = useState<string | undefined>();
+  const [voiceTranscription, setVoiceTranscription] = useState<string | undefined>();
 
   useEffect(() => {
     // Load module configuration for role
@@ -40,6 +42,16 @@ const ClaudeCareAssistantPanel: React.FC<Props> = ({ userRole, patientId, userId
       }
     }
   }, [userRole]);
+
+  // Handler for voice input to populate admin task form
+  const handleVoicePopulateTask = (templateId: string, transcription: string) => {
+    // Store the voice data
+    setVoiceTemplateId(templateId);
+    setVoiceTranscription(transcription);
+
+    // Switch to the tasks tab
+    setActiveTab('tasks');
+  };
 
   if (!moduleConfig) {
     return (
@@ -159,6 +171,12 @@ const ClaudeCareAssistantPanel: React.FC<Props> = ({ userRole, patientId, userId
             userId={userId}
             availableTaskTypes={moduleConfig.availableTaskTypes}
             preferredModel={moduleConfig.preferredModel}
+            voiceTemplateId={voiceTemplateId}
+            voiceTranscription={voiceTranscription}
+            onVoiceDataUsed={() => {
+              setVoiceTemplateId(undefined);
+              setVoiceTranscription(undefined);
+            }}
           />
         )}
 
@@ -167,7 +185,11 @@ const ClaudeCareAssistantPanel: React.FC<Props> = ({ userRole, patientId, userId
         )}
 
         {activeTab === 'voice' && moduleConfig.enabledFeatures.voiceInput && (
-          <VoiceInputModule userRole={userRole} userId={userId} />
+          <VoiceInputModule
+            userRole={userRole}
+            userId={userId}
+            onPopulateTaskForm={handleVoicePopulateTask}
+          />
         )}
 
         {activeTab === 'context' && moduleConfig.enabledFeatures.crossRoleContext && patientId && (

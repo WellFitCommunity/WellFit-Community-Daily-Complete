@@ -8,9 +8,10 @@ import { ClaudeCareAssistant } from '../../services/claudeCareAssistant';
 interface Props {
   userRole: string;
   userId?: string;
+  onPopulateTaskForm?: (templateId: string, transcription: string) => void;
 }
 
-const VoiceInputModule: React.FC<Props> = ({ userRole, userId }) => {
+const VoiceInputModule: React.FC<Props> = ({ userRole, userId, onPopulateTaskForm }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [transcription, setTranscription] = useState('');
   const [suggestedTemplate, setSuggestedTemplate] = useState<string | undefined>();
@@ -87,8 +88,23 @@ const VoiceInputModule: React.FC<Props> = ({ userRole, userId }) => {
   };
 
   const handleUseTranscription = () => {
-    // TODO: Implement logic to populate admin task form with transcription
-    alert('This would populate the admin task form with the transcription.');
+    if (!suggestedTemplate) {
+      alert('No template suggestion available. Please try recording again.');
+      return;
+    }
+
+    if (onPopulateTaskForm) {
+      // Call the parent component's callback to switch to the tasks tab and populate the form
+      onPopulateTaskForm(suggestedTemplate, transcription);
+
+      // Clear the transcription after use
+      setTranscription('');
+      setSuggestedTemplate(undefined);
+      setConfidence(0);
+    } else {
+      // Fallback if no callback is provided
+      alert(`Template: ${suggestedTemplate}\n\nTranscription: ${transcription}\n\nPlease switch to the Admin Tasks tab to continue.`);
+    }
   };
 
   return (

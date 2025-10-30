@@ -7,6 +7,7 @@
 // ============================================================================
 
 import { supabase } from '../lib/supabaseClient';
+import { auditLogger } from './auditLogger';
 import type {
   ProviderBurnoutAssessment,
   ProviderDailyCheckin,
@@ -568,6 +569,36 @@ export async function markReflectionHelpful(reflectionId: string): Promise<void>
 // ============================================================================
 
 /**
+ * Calculate check-in streak for current user
+ * @returns Number of consecutive days with check-ins (including today)
+ */
+export async function getCheckinStreak(): Promise<number> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return 0;
+
+  try {
+    const { data, error } = await supabase.rpc('calculate_checkin_streak', {
+      p_user_id: user.id,
+    });
+
+    if (error) {
+      await auditLogger.error('RESILIENCE_CHECKIN_STREAK_FAILED', error.message, {
+        userId: user.id,
+        errorCode: error.code,
+      });
+      return 0;
+    }
+
+    return (data as number) || 0;
+  } catch (err) {
+    await auditLogger.error('RESILIENCE_CHECKIN_STREAK_ERROR', err instanceof Error ? err : String(err), {
+      userId: user.id,
+    });
+    return 0;
+  }
+}
+
+/**
  * Get dashboard summary stats for current user
  * @returns Dashboard stats object
  */
@@ -585,6 +616,7 @@ export async function getDashboardStats(): Promise<ResilienceHubDashboardStats> 
     stressTrend,
     interventionNeeded,
     circles,
+    streakDays,
   ] = await Promise.all([
     getLatestBurnoutRisk(),
     hasCheckedInToday(),
@@ -592,6 +624,7 @@ export async function getDashboardStats(): Promise<ResilienceHubDashboardStats> 
     getStressTrend().catch(() => null),
     checkInterventionNeeded(),
     getMyCircles().catch(() => []),
+    getCheckinStreak(),
   ]);
 
   const completedModules = completions.filter((c) => c.completion_percentage === 100).length;
@@ -609,7 +642,7 @@ export async function getDashboardStats(): Promise<ResilienceHubDashboardStats> 
   return {
     current_burnout_risk: burnoutRisk,
     has_checked_in_today: checkedInToday,
-    check_in_streak_days: 0, // TODO: Implement streak calculation
+    check_in_streak_days: streakDays,
     modules_completed: completedModules,
     modules_in_progress: inProgressModules,
     avg_stress_7_days: stressTrend?.avg_stress_7_days || null,
@@ -629,6 +662,7 @@ export const ResilienceHubService = {
   getMyCheckins,
   hasCheckedInToday,
   getStressTrend,
+  getCheckinStreak,
 
   // Burnout assessments
   submitBurnoutAssessment,

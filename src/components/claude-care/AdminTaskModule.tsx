@@ -14,6 +14,9 @@ interface Props {
   userId?: string;
   availableTaskTypes: string[];
   preferredModel: ClaudeModel;
+  voiceTemplateId?: string;
+  voiceTranscription?: string;
+  onVoiceDataUsed?: () => void;
 }
 
 const AdminTaskModule: React.FC<Props> = ({
@@ -21,6 +24,9 @@ const AdminTaskModule: React.FC<Props> = ({
   userId,
   availableTaskTypes,
   preferredModel,
+  voiceTemplateId,
+  voiceTranscription,
+  onVoiceDataUsed,
 }) => {
   const [templates, setTemplates] = useState<AdminTaskTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<AdminTaskTemplate | null>(null);
@@ -39,6 +45,51 @@ const AdminTaskModule: React.FC<Props> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userRole, userId]);
+
+  // Handle voice input auto-population
+  useEffect(() => {
+    if (voiceTemplateId && voiceTranscription && templates.length > 0) {
+      // Find the template by ID
+      const template = templates.find((t) => t.id === voiceTemplateId);
+
+      if (template) {
+        // Select the template
+        setSelectedTemplate(template);
+        setGeneratedContent('');
+        setError(null);
+
+        // Initialize input data with the transcription in a relevant field
+        const initialData: Record<string, any> = {};
+        Object.keys(template.requiredFields).forEach((field) => {
+          initialData[field] = '';
+        });
+
+        // Try to populate the first text field with the transcription
+        // Common field names for transcription content
+        const transcriptionFields = ['patient_info', 'clinical_details', 'reason', 'description', 'details', 'notes'];
+        const targetField = Object.keys(template.requiredFields).find(
+          (field) => transcriptionFields.includes(field.toLowerCase())
+        );
+
+        if (targetField) {
+          initialData[targetField] = voiceTranscription;
+        } else {
+          // If no specific field found, use the first field
+          const firstField = Object.keys(template.requiredFields)[0];
+          if (firstField) {
+            initialData[firstField] = voiceTranscription;
+          }
+        }
+
+        setInputData(initialData);
+
+        // Notify parent that voice data has been used
+        if (onVoiceDataUsed) {
+          onVoiceDataUsed();
+        }
+      }
+    }
+  }, [voiceTemplateId, voiceTranscription, templates, onVoiceDataUsed]);
 
   const loadTemplates = async () => {
     try {
