@@ -7,7 +7,7 @@ import { BrandingConfig, getCurrentBranding } from './branding.config';
 import { BrandingContext } from './BrandingContext';
 import { performanceMonitor } from './services/performanceMonitoring';
 import { GuardianErrorBoundary } from './components/GuardianErrorBoundary';
-import { performSecurityScan } from './services/guardianAgentClient';
+import { GuardianAgent } from './services/guardian-agent/GuardianAgent';
 
 // ❌ Do NOT import or use AuthProvider here — it lives in index.tsx
 // ❌ Do NOT import or use AdminAuthProvider here — it lives in index.tsx
@@ -111,12 +111,21 @@ function Shell() {
     }
   }, [supabase, user?.id]);
 
-  // Guardian Agent moved to Edge Function - call API for security scans
+  // Initialize Guardian Agent - Self-healing system
   useEffect(() => {
-    const runSecurityCheck = async () => {
-      await performSecurityScan();
+    const guardian = GuardianAgent.getInstance({
+      autoHealEnabled: true,
+      requireApprovalForCritical: false,
+      learningEnabled: true,
+      hipaaComplianceMode: true
+    });
+
+    guardian.start();
+    // Guardian Agent is now active and monitoring
+
+    return () => {
+      guardian.stop();
     };
-    runSecurityCheck();
   }, []);
 
   // Recording and monitoring moved to Edge Functions
