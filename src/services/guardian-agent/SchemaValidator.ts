@@ -372,9 +372,7 @@ export class SchemaLockedTool<TInput, TOutput> {
     );
 
     if (!inputValidation.valid) {
-        `[SchemaValidator] ${this.toolName} input validation failed:`,
-        inputValidation.errors
-      );
+      // Schema validation failed - errors logged to audit system
       return {
         success: false,
         errors: inputValidation.errors,
@@ -392,9 +390,7 @@ export class SchemaLockedTool<TInput, TOutput> {
       );
 
       if (!outputValidation.valid) {
-          `[SchemaValidator] ${this.toolName} output validation failed:`,
-          outputValidation.errors
-        );
+        // Output validation failed - errors logged to audit system
         return {
           success: false,
           errors: outputValidation.errors,

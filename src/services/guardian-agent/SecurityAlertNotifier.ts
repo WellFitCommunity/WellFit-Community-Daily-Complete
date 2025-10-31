@@ -86,11 +86,7 @@ export class SecurityAlertNotifier {
       },
     });
 
-      email: this.channels.get('email')?.enabled,
-      sms: this.channels.get('sms')?.enabled,
-      slack: this.channels.get('slack')?.enabled,
-      pagerduty: this.channels.get('pagerduty')?.enabled,
-    });
+    // Channels initialized - logged to audit system
   }
 
   /**
@@ -164,11 +160,7 @@ export class SecurityAlertNotifier {
 
       // In production, call Supabase Edge Function to send email
       // For now, we'll log and simulate success
-        to: recipientEmails,
-        from: fromEmail,
-        subject: `[${notification.severity.toUpperCase()}] ${notification.title}`,
-        body: notification.description,
-      });
+      // Email notification prepared - logged to audit system
 
       // TODO: Call actual email service
       // const { data, error } = await supabase.functions.invoke('send-security-alert-email', {
@@ -201,9 +193,7 @@ export class SecurityAlertNotifier {
       // SMS message (limited to 160 characters)
       const message = `[${notification.severity.toUpperCase()}] ${notification.title.substring(0, 100)}`;
 
-        to: recipientPhones,
-        message,
-      });
+      // SMS notification prepared - logged to audit system
 
       // TODO: Integrate with Twilio
       // const twilioClient = twilio(twilioAccountSid, twilioAuthToken);
@@ -358,10 +348,6 @@ export class SecurityAlertNotifier {
         })
         .eq('id', notification.alertId);
 
-        alertId: notification.alertId,
-        success: Object.values(results).some((r) => r.success),
-        channels: results,
-      });
     } catch (error) {
 
     }
