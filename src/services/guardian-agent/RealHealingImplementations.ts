@@ -202,25 +202,13 @@ const maskPHI = (data: any) => {
       const localStorageRegex = /localStorage\.(setItem|getItem|removeItem)/g;
 
       if (localStorageRegex.test(code)) {
-        // Add secure storage wrapper
-        const secureStorageHelper = `
-// Secure Storage Wrapper
-const secureStorage = {
-  setItem: (key: string, value: string) => {
-    // TODO: Implement encryption before storing
-    sessionStorage.setItem(key, value);
-  },
-  getItem: (key: string) => {
-    // TODO: Implement decryption after retrieving
-    return sessionStorage.getItem(key);
-  },
-  removeItem: (key: string) => {
-    sessionStorage.removeItem(key);
-  }
-};
+        // Add import for HIPAA-compliant secure storage with AES-GCM encryption
+        const secureStorageImport = `
+// HIPAA-compliant secure storage with AES-GCM encryption
+import { secureStorage } from '../../utils/secureStorage';
 
 `;
-        fixedCode = secureStorageHelper + code.replace(
+        fixedCode = secureStorageImport + code.replace(
           /localStorage\./g,
           'secureStorage.'
         );
