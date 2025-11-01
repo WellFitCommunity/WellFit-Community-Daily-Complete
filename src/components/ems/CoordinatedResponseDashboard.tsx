@@ -2,15 +2,15 @@
 // Shows all departments dispatched for an EMS handoff and their readiness status
 // Real-time updates as departments acknowledge and prepare
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   getCoordinatedResponseStatus,
   acknowledgeDepartmentDispatch,
   markDepartmentReady,
-  subscribeToDepartmentDispatches,
   getDepartmentReadinessSummary,
   type CoordinatedResponseStatus,
 } from '../../services/emsNotificationService';
+import useRealtimeSubscription from '../../hooks/useRealtimeSubscription';
 
 interface CoordinatedResponseDashboardProps {
   handoffId: string;
@@ -23,39 +23,20 @@ const CoordinatedResponseDashboard: React.FC<CoordinatedResponseDashboardProps> 
   chiefComplaint,
   etaMinutes,
 }) => {
-  const [dispatches, setDispatches] = useState<CoordinatedResponseStatus[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    loadDispatches();
-
-    // Subscribe to real-time updates
-    const subscription = subscribeToDepartmentDispatches(handoffId, (payload) => {
-
-      loadDispatches(); // Reload on any change
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [handoffId]);
-
-  const loadDispatches = async () => {
-    setLoading(true);
-    setError(null);
-
-    const { data, error: err } = await getCoordinatedResponseStatus(handoffId);
-
-    if (err) {
-      setError(err.message);
-    } else {
-      setDispatches(data || []);
+  // Enterprise-grade subscription with automatic cleanup
+  const { data: dispatches, loading, error: subscriptionError, refresh } = useRealtimeSubscription<CoordinatedResponseStatus>({
+    table: 'ems_department_dispatches',
+    event: '*',
+    schema: 'public',
+    filter: `handoff_id=eq.${handoffId}`,
+    componentName: 'CoordinatedResponseDashboard',
+    initialFetch: async () => {
+      const { data } = await getCoordinatedResponseStatus(handoffId);
+      return data || [];
     }
+  });
 
-    setLoading(false);
-  };
+  const error = subscriptionError ? subscriptionError.message : null;
 
   const handleAcknowledge = async (dispatchId: string, departmentName: string) => {
     const userName = prompt(`Confirm you are acknowledging for ${departmentName}.\n\nEnter your name:`);
@@ -69,7 +50,7 @@ const CoordinatedResponseDashboard: React.FC<CoordinatedResponseDashboardProps> 
       alert(`Error: ${err.message}`);
     } else {
       alert(`✅ ${departmentName} acknowledged!`);
-      loadDispatches();
+      refresh();
     }
   };
 
@@ -96,11 +77,11 @@ const CoordinatedResponseDashboard: React.FC<CoordinatedResponseDashboardProps> 
       alert(`Error: ${err.message}`);
     } else {
       alert(`✅ ${departmentName} is READY!`);
-      loadDispatches();
+      refresh();
     }
   };
 
-  const summary = getDepartmentReadinessSummary(dispatches);
+  const summary = getDepartmentReadinessSummary(dispatches || []);
 
   if (loading) {
     return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading coordinated response...</div>;
@@ -114,7 +95,7 @@ const CoordinatedResponseDashboard: React.FC<CoordinatedResponseDashboardProps> 
     );
   }
 
-  if (dispatches.length === 0) {
+  if (!dispatches || dispatches.length === 0) {
     return (
       <div style={{ padding: '2rem', backgroundColor: '#f3f4f6', borderRadius: '8px', textAlign: 'center' }}>
         No departments dispatched for this handoff.

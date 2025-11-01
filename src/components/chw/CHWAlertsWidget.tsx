@@ -4,9 +4,10 @@
  * Used by Physician, Nurse, and Case Manager panels
  */
 
-import React, { useState, useEffect } from 'react';
-import { AlertTriangle, Bell, CheckCircle, Clock, XCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { AlertTriangle, Bell, CheckCircle, Clock } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
+import useRealtimeSubscription from '../../hooks/useRealtimeSubscription';
 
 interface SpecialistAlert {
   id: string;
@@ -36,34 +37,26 @@ export const CHWAlertsWidget: React.FC<CHWAlertsWidgetProps> = ({
   userId,
   maxAlerts = 10
 }) => {
-  const [alerts, setAlerts] = useState<SpecialistAlert[]>([]);
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'unacknowledged' | 'critical'>('unacknowledged');
 
-  useEffect(() => {
-    loadAlerts();
-
-    // Subscribe to real-time updates
-    const subscription = supabase
-      .channel('chw_alerts')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'specialist_alerts'
-      }, () => {
-        loadAlerts();
-      })
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
+  const getRoleMapping = (role: string): string => {
+    const roleMap: Record<string, string> = {
+      'physician': 'physician',
+      'doctor': 'physician',
+      'nurse': 'nurse',
+      'case_manager': 'case_manager',
+      'social_worker': 'case_manager'
     };
-  }, [userRole, filter]);
+    return roleMap[role] || 'physician';
+  };
 
-  const loadAlerts = async () => {
-    try {
-      setLoading(true);
-
+  // Enterprise-grade subscription with automatic cleanup
+  const { data: allAlerts, loading, refresh } = useRealtimeSubscription<any>({
+    table: 'specialist_alerts',
+    event: '*',
+    schema: 'public',
+    componentName: 'CHWAlertsWidget',
+    initialFetch: async () => {
       let query = supabase
         .from('specialist_alerts')
         .select(`
@@ -86,36 +79,19 @@ export const CHWAlertsWidget: React.FC<CHWAlertsWidgetProps> = ({
       }
 
       const { data, error } = await query;
-
       if (error) throw error;
 
       // Flatten patient info
-      const formattedAlerts = (data || []).map((alert: any) => ({
+      return (data || []).map((alert: any) => ({
         ...alert,
         patient_name: alert.field_visits?.profiles
           ? `${alert.field_visits.profiles.first_name} ${alert.field_visits.profiles.last_name}`
           : 'Unknown Patient'
       }));
-
-      setAlerts(formattedAlerts);
-    } catch (error) {
-      // Silent fail - alerts will retry on next subscription event
-      setAlerts([]);
-    } finally {
-      setLoading(false);
     }
-  };
+  });
 
-  const getRoleMapping = (role: string): string => {
-    const roleMap: Record<string, string> = {
-      'physician': 'physician',
-      'doctor': 'physician',
-      'nurse': 'nurse',
-      'case_manager': 'case_manager',
-      'social_worker': 'case_manager'
-    };
-    return roleMap[role] || 'physician';
-  };
+  const alerts: SpecialistAlert[] = allAlerts || [];
 
   const acknowledgeAlert = async (alertId: string) => {
     try {
@@ -130,7 +106,7 @@ export const CHWAlertsWidget: React.FC<CHWAlertsWidgetProps> = ({
 
       if (error) throw error;
 
-      await loadAlerts();
+      await refresh();
     } catch (error) {
       // Silent fail - user can retry
     }
@@ -148,7 +124,7 @@ export const CHWAlertsWidget: React.FC<CHWAlertsWidgetProps> = ({
 
       if (error) throw error;
 
-      await loadAlerts();
+      await refresh();
     } catch (error) {
       // Silent fail - user can retry
     }

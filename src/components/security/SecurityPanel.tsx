@@ -9,9 +9,10 @@
  * NO STUB, NO TEMPORARY CODE - THIS IS THE FINAL IMPLEMENTATION
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
+import useRealtimeSubscription from '../../hooks/useRealtimeSubscription';
 
 interface SecurityAlert {
   id: string;
@@ -30,54 +31,38 @@ interface SecurityAlert {
 
 export const SecurityPanel: React.FC = () => {
   const { user } = useAuth();
-  const [alerts, setAlerts] = useState<SecurityAlert[]>([]);
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'critical'>('pending');
   const [selectedAlert, setSelectedAlert] = useState<SecurityAlert | null>(null);
 
-  useEffect(() => {
-    loadAlerts();
-
-    // Subscribe to real-time updates
-    const subscription = supabase
-      .channel('security-alerts')
-      .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'security_alerts' },
-        () => {
-          loadAlerts();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [filter]);
-
-  const loadAlerts = async () => {
-    try {
-      let query = supabase
+  // Enterprise-grade subscription with automatic cleanup
+  const { data: allAlerts, loading, refresh } = useRealtimeSubscription<SecurityAlert>({
+    table: 'security_alerts',
+    event: '*',
+    schema: 'public',
+    componentName: 'SecurityPanel',
+    initialFetch: async () => {
+      const { data, error } = await supabase
         .from('security_alerts')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (filter === 'pending') {
-        query = query.eq('status', 'pending');
-      } else if (filter === 'critical') {
-        query = query.in('severity', ['critical', 'high']);
-      }
-
-      const { data, error } = await query;
-
       if (error) throw error;
-      setAlerts(data || []);
-    } catch (error) {
-      // Error handled silently - no PHI in console
-      setAlerts([]);
-    } finally {
-      setLoading(false);
+      return data || [];
     }
-  };
+  });
+
+  // Filter alerts based on selected filter
+  const alerts = useMemo(() => {
+    if (!allAlerts) return [];
+
+    if (filter === 'pending') {
+      return allAlerts.filter(alert => alert.status === 'pending');
+    } else if (filter === 'critical') {
+      return allAlerts.filter(alert => ['critical', 'high'].includes(alert.severity));
+    }
+
+    return allAlerts;
+  }, [allAlerts, filter]);
 
   const updateAlertStatus = async (alertId: string, status: 'acknowledged' | 'resolved' | 'ignored') => {
     try {
@@ -99,7 +84,7 @@ export const SecurityPanel: React.FC = () => {
 
       if (error) throw error;
 
-      await loadAlerts();
+      await refresh();
       setSelectedAlert(null);
     } catch (error) {
       // Error handled silently - no PHI in console
