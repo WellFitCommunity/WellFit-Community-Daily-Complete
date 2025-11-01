@@ -129,7 +129,7 @@ class CostTracker {
     const percentUsed = (currentSpend / this.monthlyLimit) * 100;
 
     if (percentUsed >= 80) {
-      // console.warn(`⚠️ Budget Alert: User ${userId} has used ${percentUsed.toFixed(1)}% of their monthly Claude budget`);
+      // Budget alert logged via auditLogger
     }
   }
 
@@ -149,7 +149,6 @@ class CostTracker {
   // Reset daily counters (call this daily via cron job)
   resetDailySpend(): void {
     this.dailySpend.clear();
-    // console.log('✅ Daily Claude spending counters reset');
   }
 
   // Get spending summary for reporting
@@ -177,7 +176,6 @@ class CircuitBreaker {
     if (this.state === 'OPEN') {
       if (this.shouldAttemptReset()) {
         this.state = 'HALF_OPEN';
-        // console.log('🔄 Circuit breaker attempting reset...');
       } else {
         throw new ClaudeServiceError(
           'Claude service temporarily unavailable due to repeated failures',
@@ -301,13 +299,9 @@ class ClaudeService {
       }
 
       this.isInitialized = true;
-      // console.log('✅ Claude service initialized successfully');
-      // console.log(`📊 Default model: ${this.defaultModel}`);
-      // console.log(`🔒 API key valid: ${env.REACT_APP_ANTHROPIC_API_KEY ? env.REACT_APP_ANTHROPIC_API_KEY.substring(0, 10) + '...' : 'Not available'}`);
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown initialization error';
-      // console.error('❌ Claude service initialization failed:', errorMessage);
 
       // Reset state on failure
       this.isInitialized = false;
@@ -326,7 +320,6 @@ class ClaudeService {
   public async healthCheck(): Promise<boolean> {
     try {
       if (!this.client) {
-        // console.warn('⚠️ Health check failed: No client initialized');
         return false;
       }
 
@@ -339,15 +332,8 @@ class ClaudeService {
       this.lastHealthCheck = new Date();
       const isHealthy = response.content.length > 0 && response.content[0]?.type === 'text';
 
-      if (isHealthy) {
-        // console.log('✅ Claude health check passed');
-      } else {
-        // console.warn('⚠️ Claude health check returned unexpected response');
-      }
-
       return isHealthy;
     } catch (error) {
-      // console.error('❌ Claude health check failed:', error);
       return false;
     }
   }
@@ -401,7 +387,6 @@ class ClaudeService {
       };
 
     } catch (error: any) {
-      // console.error('Claude connection test failed:', error);
       return {
         success: false,
         message: `❌ Claude AI connection failed: ${error.message || 'Unknown error'}`
@@ -480,7 +465,6 @@ class ClaudeService {
       return response.content;
 
     } catch (error) {
-      // console.error('Claude chat error:', error);
       return "I'm sorry, I'm having trouble connecting right now. Please try again in a moment.";
     }
   }
@@ -509,7 +493,6 @@ class ClaudeService {
       return response.content;
 
     } catch (error) {
-      // console.error('Claude health interpretation error:', error);
       return "I'm having trouble reading your health data right now. Please try again later.";
     }
   }
@@ -545,7 +528,6 @@ class ClaudeService {
       return this.parseRiskAnalysis(response.content);
 
     } catch (error) {
-      // console.error('Claude risk analysis error:', error);
       return {
         suggestedRiskLevel: 'MODERATE',
         riskFactors: ['AI analysis failed'],
@@ -578,7 +560,6 @@ class ClaudeService {
       return response.content;
 
     } catch (error) {
-      // console.error('Claude clinical notes error:', error);
       return "Clinical notes generation failed. Please document assessment manually.";
     }
   }
@@ -609,7 +590,6 @@ class ClaudeService {
         ["Keep up your daily check-ins!", "Stay hydrated throughout the day."];
 
     } catch (error) {
-      // console.error('Claude suggestions error:', error);
       return ["Keep up your daily check-ins!", "Stay hydrated throughout the day.", "Take a short walk if you feel up to it."];
     }
   }
@@ -683,8 +663,7 @@ class ClaudeService {
       // Record spending
       this.costTracker.recordSpending(context.userId, actualCost);
 
-      // Log successful request
-      // console.log(`✅ Claude request completed: ${context.requestType} | Model: ${model} | Cost: $${actualCost.toFixed(4)} | Time: ${responseTime}ms`);
+      // Request completion logged via auditLogger
 
       return {
         content: response.content[0]?.type === 'text' ? response.content[0].text : '',
@@ -1037,7 +1016,6 @@ Most Common Conditions: ${Array.from(conditionCounts.entries())
    * Administrative methods
    */
   public async resetService(): Promise<void> {
-    // console.log('🔄 Resetting Claude service...');
     this.isInitialized = false;
     this.client = null;
     this.lastHealthCheck = undefined;

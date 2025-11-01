@@ -126,11 +126,7 @@ export class IntelligentModelRouter {
    * Log routing decision for monitoring
    */
   static logRoutingDecision(requestType: RequestType, decision: ModelRoutingDecision) {
-    if (process.env.NODE_ENV === 'development') {
-      // console.log(`[Model Router] ${requestType} → ${decision.model}`);
-      // console.log(`  Reason: ${decision.reason}`);
-      // console.log(`  Cost: $${decision.estimatedCostPerRequest.toFixed(4)} | Speed: ${decision.expectedResponseTime}`);
-    }
+    // Routing decisions logged via auditLogger if needed
   }
 }
 

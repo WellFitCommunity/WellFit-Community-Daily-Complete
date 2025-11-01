@@ -118,7 +118,6 @@ Respond in JSON format:
         questions: ['Could you provide more details about your EHR system?']
       };
     } catch (error: any) {
-      // console.error('[AIAdapterAssistant] Error:', error);
       return {
         message: `I encountered an error analyzing your hospital system. Please try again or configure manually. Error: ${error.message}`,
         confidence: 'low',
@@ -158,7 +157,6 @@ Provide actionable advice in 2-3 sentences.`;
 
       return assistantMessage;
     } catch (error: any) {
-      // console.error('[AIAdapterAssistant] Error:', error);
       return `I encountered an error: ${error.message}`;
     }
   }
@@ -212,7 +210,6 @@ Respond in JSON:
         warnings: ['Could not validate URL format']
       };
     } catch (error: any) {
-      // console.error('[AIAdapterAssistant] Error:', error);
       return {
         isValid: false,
         warnings: [`Validation error: ${error.message}`]
@@ -269,7 +266,6 @@ Diagnose the issue and provide solutions in JSON format:
         nextSteps: ['Review logs', 'Check credentials', 'Contact hospital IT']
       };
     } catch (error: any) {
-      // console.error('[AIAdapterAssistant] Error:', error);
       return {
         diagnosis: `Troubleshooting failed: ${error.message}`,
         possibleCauses: ['AI assistant unavailable'],
@@ -333,7 +329,6 @@ Make it practical and hospital IT-friendly.`;
         prerequisites: ['Contact support for detailed guide']
       };
     } catch (error: any) {
-      // console.error('[AIAdapterAssistant] Error:', error);
       return {
         title: 'Setup Guide Unavailable',
         steps: [],

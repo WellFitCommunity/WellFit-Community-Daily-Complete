@@ -39,15 +39,5 @@ export function assertSupabaseEnv(): void {
     );
   }
 
-  // Optional: single-line masked log to prove they're present at runtime
-  try {
-    const masked = SB_PUBLISHABLE_KEY
-      ? SB_PUBLISHABLE_KEY.slice(0, 4) + "•••" + SB_PUBLISHABLE_KEY.slice(-4)
-      : "missing";
-    // eslint-disable-next-line no-console
-    console.debug("[SB CONFIG OK]", {
-      hasUrl,
-      keyMask: masked,
-    });
-  } catch {}
+  // Config validated successfully
 }

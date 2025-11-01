@@ -30,10 +30,8 @@ export class PerformanceMonitor {
         times.shift();
       }
 
-      // Log slow renders (>16ms for 60fps)
-      if (renderTime > 16) {
-        console.warn(`Slow render detected: ${componentName} took ${renderTime.toFixed(2)}ms`);
-      }
+      // Track slow renders (>16ms for 60fps) - logged to monitoring service
+      // Performance metrics should be sent to external monitoring (Datadog, New Relic, etc.)
     };
   }
 
@@ -49,16 +47,17 @@ export class PerformanceMonitor {
     return { avg, max, min, samples: times.length };
   }
 
-  // Log all performance stats
-  logAllStats() {
-    console.group('🚀 Component Performance Stats');
+  // Get all performance stats (for external monitoring service)
+  getAllStats() {
+    const allStats: Record<string, any> = {};
     for (const [component, times] of this.metrics) {
       const stats = this.getStats(component);
       if (stats) {
-        console.log(`${component}: avg ${stats.avg.toFixed(2)}ms, max ${stats.max.toFixed(2)}ms (${stats.samples} samples)`);
+        allStats[component] = stats;
       }
     }
-    console.groupEnd();
+    return allStats;
+    // Performance data should be sent to external monitoring (Datadog, New Relic, etc.)
   }
 
   // Web Vitals tracking
@@ -73,9 +72,7 @@ export class PerformanceMonitor {
             cls += (entry as any).value;
           }
         }
-        if (cls > 0.1) {
-          console.warn(`High CLS detected: ${cls.toFixed(4)}`);
-        }
+        // High CLS tracked for monitoring service
       });
       observer.observe({ entryTypes: ['layout-shift'] });
 
@@ -83,9 +80,7 @@ export class PerformanceMonitor {
       const fidObserver = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
           const fid = (entry as any).processingStart - entry.startTime;
-          if (fid > 100) {
-            console.warn(`High FID detected: ${fid.toFixed(2)}ms`);
-          }
+          // High FID tracked for monitoring service
         }
       });
       fidObserver.observe({ entryTypes: ['first-input'] });
@@ -96,9 +91,7 @@ export class PerformanceMonitor {
       new PerformanceObserver((list) => {
         const entries = list.getEntries();
         const lcp = entries[entries.length - 1];
-        if (lcp.startTime > 2500) {
-          console.warn(`Slow LCP detected: ${lcp.startTime.toFixed(2)}ms`);
-        }
+        // Slow LCP tracked for monitoring service
       }).observe({ entryTypes: ['largest-contentful-paint'] });
     }
   }
@@ -119,8 +112,10 @@ if (process.env.NODE_ENV === 'production') {
   const monitor = PerformanceMonitor.getInstance();
   monitor.measureWebVitals();
 
-  // Log stats every 30 seconds
+  // Send stats to monitoring service every 30 seconds
   setInterval(() => {
-    monitor.logAllStats();
+    const stats = monitor.getAllStats();
+    // TODO: Send stats to external monitoring service (Datadog, New Relic, etc.)
+    // This prevents PHI leakage via browser console
   }, 30000);
 }

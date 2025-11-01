@@ -570,15 +570,26 @@ This is an automated alert from the WellFit Guardian Agent.
 
       // Create PR using GitService
       const result = await GitService.createFixPullRequest({
-        alertId: alert.id,
-        alertTitle: alert.title,
-        alertDescription: alert.description,
-        alertCategory: alert.category,
-        alertSeverity: alert.severity,
-        filePath: alert.generated_fix.file_path,
-        originalCode: alert.generated_fix.original_code,
-        fixedCode: alert.generated_fix.fixed_code,
-        sessionRecordingUrl: alert.session_recording_url,
+        issue: {
+          id: alert.id,
+          category: alert.category,
+          severity: alert.severity,
+          description: alert.description,
+          affectedResources: [alert.generated_fix.file_path],
+        },
+        action: {
+          id: `fix-${alert.id}`,
+          strategy: 'auto_fix',
+          description: `Guardian Agent auto-fix for ${alert.category}`,
+        },
+        changes: [
+          {
+            filePath: alert.generated_fix.file_path,
+            oldContent: alert.generated_fix.original_code,
+            newContent: alert.generated_fix.fixed_code,
+            operation: 'update',
+          },
+        ],
         reviewers,
       });
 

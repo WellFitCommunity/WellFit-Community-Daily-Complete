@@ -5,6 +5,7 @@ import { useUser, useSupabaseClient } from '../../contexts/AuthContext';
 import RequireAdminAuth from 'components/auth/RequireAdminAuth';
 import AdminHeader from './AdminHeader';
 import WhatsNewModal from './WhatsNewModal';
+import { auditLogger } from '../../services/auditLogger';
 import {
   Users, TrendingUp, DollarSign, Activity, AlertTriangle,
   CheckCircle, Clock, BarChart3, Shield, Search, Filter,
@@ -541,7 +542,7 @@ const AdminPanel: React.FC = () => {
             <SDOHCoderAssist
               encounterId="demo-encounter-id"
               patientId="demo-patient-id"
-              onSaved={(data) => console.log('Coding saved:', data)}
+              onSaved={(data) => auditLogger.clinical('CODING_SAVED', true, { encounterId: 'demo-encounter-id', patientId: 'demo-patient-id' })}
             />
           </CollapsibleSection>
 
@@ -854,7 +855,7 @@ const AdminPanel: React.FC = () => {
                 <SDOHCoderAssist
                   encounterId="demo-encounter-id"
                   patientId="demo-patient-id"
-                  onSaved={(data) => console.log('Coding saved:', data)}
+                  onSaved={(data) => auditLogger.clinical('CODING_SAVED', true, { encounterId: 'demo-encounter-id', patientId: 'demo-patient-id' })}
                 />
               </CollapsibleSection>
 

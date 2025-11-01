@@ -260,7 +260,7 @@ export class PillIdentifierService {
               apiSources.push('nih_pillbox');
             }
           } catch (error) {
-            // console.warn('Pillbox API query failed, using AI-only results:', error);
+            // Pillbox API query failed, using AI-only results
           }
         }
 
@@ -462,7 +462,6 @@ Now analyze the pill image and return the JSON:`;
       return null;
 
     } catch (error) {
-      // console.error('Pillbox API query failed:', error);
       return null;
     }
   }
