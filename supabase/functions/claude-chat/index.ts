@@ -1,11 +1,14 @@
 // Supabase Edge Function: claude-chat
 // Secure server-side Claude API integration
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { createUserClient } from '../_shared/supabaseClient.ts';
 import Anthropic from "npm:@anthropic-ai/sdk@0.20.9";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
+import { createLogger } from '../_shared/auditLogger.ts';
 
 serve(async (req) => {
+  const logger = createLogger('claude-chat', req);
+
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return handleOptions(req);
@@ -21,15 +24,7 @@ serve(async (req) => {
     }
 
     // Verify user authentication
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      {
-        global: {
-          headers: { Authorization: req.headers.get("Authorization")! },
-        },
-      }
-    );
+    const supabaseClient = createUserClient(req.headers.get("Authorization"));
 
     const {
       data: { user },
@@ -102,11 +97,19 @@ serve(async (req) => {
       });
     } catch (logError) {
       // Don't fail request if logging fails, but log the error
-      console.error('[Audit Log Error]:', logError);
+      logger.error('Audit log insertion failed', { error: logError instanceof Error ? logError.message : String(logError) });
     }
 
     // Also log to console for real-time monitoring (temporary)
-    console.log(`[Claude API] RequestID: ${requestId}, User: ${user.id}, Model: ${modelUsed}, Input: ${response.usage.input_tokens}, Output: ${response.usage.output_tokens}, Cost: $${totalCost.toFixed(4)}, Time: ${responseTime}ms`);
+    logger.info('Claude API request completed', {
+      requestId,
+      userId: user.id,
+      model: modelUsed,
+      inputTokens: response.usage.input_tokens,
+      outputTokens: response.usage.output_tokens,
+      cost: totalCost,
+      responseTimeMs: responseTime
+    });
 
     // Return response
     return new Response(JSON.stringify(response), {
@@ -134,10 +137,10 @@ serve(async (req) => {
         }
       });
     } catch (logError) {
-      console.error('[Audit Log Error]:', logError);
+      logger.error('Audit log insertion failed', { error: logError instanceof Error ? logError.message : String(logError) });
     }
 
-    console.error("[Claude API Error]:", error);
+    logger.error('Claude API request failed', { error: error instanceof Error ? error.message : String(error) });
 
     return new Response(
       JSON.stringify({

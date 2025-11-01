@@ -4,6 +4,7 @@
 // Production-grade service for complete discharge planning workflow
 
 import { supabase } from '../lib/supabaseClient';
+import { PAGINATION_LIMITS, applyLimit } from '../utils/pagination';
 import { claudeService } from './claudeService';
 import { UserRole, RequestType, ClaudeRequestContext } from '../types/claude';
 import { ReadmissionTrackingService } from './readmissionTrackingService';
@@ -177,29 +178,31 @@ export class DischargePlanningService {
    * Get all active discharge plans (ready for discharge or pending items)
    */
   static async getActiveDischargePlans(): Promise<DischargePlan[]> {
-    const { data, error } = await supabase
+    const query = supabase
       .from('discharge_plans')
       .select('*')
       .in('status', ['draft', 'pending_items', 'ready'])
       .order('planned_discharge_date', { ascending: true });
 
-    if (error) throw new Error(`Failed to get active discharge plans: ${error.message}`);
-    return data || [];
+    // Apply pagination limit to prevent unbounded queries
+    // Limit to 50 most recent discharge plans for performance
+    return await applyLimit<DischargePlan>(query, PAGINATION_LIMITS.DISCHARGE_PLANS);
   }
 
   /**
    * Get high-risk discharge plans (readmission risk >= 60)
    */
   static async getHighRiskDischargePlans(): Promise<DischargePlan[]> {
-    const { data, error } = await supabase
+    const query = supabase
       .from('discharge_plans')
       .select('*')
       .gte('readmission_risk_score', 60)
       .in('status', ['draft', 'pending_items', 'ready'])
       .order('readmission_risk_score', { ascending: false });
 
-    if (error) throw new Error(`Failed to get high-risk plans: ${error.message}`);
-    return data || [];
+    // Apply pagination limit to prevent unbounded queries
+    // Limit to 50 highest-risk discharge plans for performance
+    return await applyLimit<DischargePlan>(query, PAGINATION_LIMITS.DISCHARGE_PLANS);
   }
 
   /**
@@ -359,29 +362,31 @@ Format as JSON:
    * Get pending post-discharge follow-ups
    */
   static async getPendingFollowUps(): Promise<PostDischargeFollowUp[]> {
-    const { data, error } = await supabase
+    const query = supabase
       .from('post_discharge_follow_ups')
       .select('*')
       .in('status', ['pending', 'attempted'])
       .lte('scheduled_datetime', new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()) // Due within 24 hours
       .order('scheduled_datetime', { ascending: true });
 
-    if (error) throw new Error(`Failed to get pending follow-ups: ${error.message}`);
-    return data || [];
+    // Apply pagination limit to prevent unbounded queries
+    // Limit to 100 most urgent follow-ups for performance
+    return await applyLimit<PostDischargeFollowUp>(query, PAGINATION_LIMITS.ALERTS);
   }
 
   /**
    * Get follow-ups for a discharge plan
    */
   static async getFollowUpsForPlan(planId: string): Promise<PostDischargeFollowUp[]> {
-    const { data, error } = await supabase
+    const query = supabase
       .from('post_discharge_follow_ups')
       .select('*')
       .eq('discharge_plan_id', planId)
       .order('scheduled_datetime', { ascending: true });
 
-    if (error) throw new Error(`Failed to get follow-ups: ${error.message}`);
-    return data || [];
+    // Apply pagination limit to prevent unbounded queries
+    // Limit to 50 follow-ups per discharge plan
+    return await applyLimit<PostDischargeFollowUp>(query, PAGINATION_LIMITS.DISCHARGE_PLANS);
   }
 
   /**
@@ -471,10 +476,9 @@ Format as JSON:
       query = query.gte('cms_star_rating', minStarRating);
     }
 
-    const { data, error } = await query;
-
-    if (error) throw new Error(`Failed to search facilities: ${error.message}`);
-    return data || [];
+    // Apply pagination limit to prevent unbounded queries
+    // Limit to 100 facilities for performance
+    return await applyLimit<PostAcuteFacility>(query, PAGINATION_LIMITS.FACILITIES);
   }
 
   /**
@@ -483,7 +487,7 @@ Format as JSON:
   static async getFacilitiesWithBeds(
     facilityType: PostAcuteFacility['facility_type']
   ): Promise<PostAcuteFacility[]> {
-    const { data, error } = await supabase
+    const query = supabase
       .from('post_acute_facilities')
       .select('*')
       .eq('facility_type', facilityType)
@@ -491,8 +495,9 @@ Format as JSON:
       .gt('available_beds', 0)
       .order('available_beds', { ascending: false });
 
-    if (error) throw new Error(`Failed to get facilities: ${error.message}`);
-    return data || [];
+    // Apply pagination limit to prevent unbounded queries
+    // Limit to 100 facilities with available beds
+    return await applyLimit<PostAcuteFacility>(query, PAGINATION_LIMITS.FACILITIES);
   }
 
   // ============================================================================

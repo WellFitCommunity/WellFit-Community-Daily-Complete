@@ -14,7 +14,8 @@
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createAdminClient } from '../_shared/supabaseClient.ts';
+import { createLogger } from '../_shared/auditLogger.ts';
 
 const DEEPGRAM_API_KEY = Deno.env.get("DEEPGRAM_API_KEY")!;
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY")!;
@@ -22,8 +23,14 @@ const SB_URL = Deno.env.get("SB_URL") ?? Deno.env.get("SUPABASE_URL")!;
 const SB_SECRET_KEY =
   Deno.env.get("SB_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
+const initLogger = createLogger('realtime_medical_transcription');
 if (!DEEPGRAM_API_KEY || !ANTHROPIC_API_KEY || !SB_URL || !SB_SECRET_KEY) {
-  console.error("Missing required env vars (DEEPGRAM_API_KEY, ANTHROPIC_API_KEY, SB_URL, SB_SECRET_KEY).");
+  initLogger.error("Missing required env vars", {
+    hasDeepgram: !!DEEPGRAM_API_KEY,
+    hasAnthropic: !!ANTHROPIC_API_KEY,
+    hasSbUrl: !!SB_URL,
+    hasSbSecret: !!SB_SECRET_KEY
+  });
 }
 
 const ANALYSIS_INTERVAL_MS = 10_000;
@@ -43,6 +50,8 @@ function safeSend(ws: WebSocket, payload: unknown) {
 }
 
 serve(async (req: Request) => {
+  const logger = createLogger('realtime_medical_transcription', req);
+
   // 1) Require WS upgrade
   if ((req.headers.get("upgrade") || "").toLowerCase() !== "websocket") {
     return new Response("Expected WebSocket", { status: 426 });
@@ -51,15 +60,22 @@ serve(async (req: Request) => {
   // 2) Auth via access_token (from your existing Scribe component)
   const url = new URL(req.url);
   const access_token = url.searchParams.get("access_token") ?? "";
-  if (!access_token) return new Response("Unauthorized", { status: 401 });
+  if (!access_token) {
+    logger.security('WebSocket connection attempted without access token');
+    return new Response("Unauthorized", { status: 401 });
+  }
 
-  const admin = createClient(SB_URL, SB_SECRET_KEY, { auth: { persistSession: false } });
+  const admin = createAdminClient();
   const { data: userData, error: userErr } = await admin.auth.getUser(access_token);
-  if (userErr || !userData?.user) return new Response("Unauthorized", { status: 401 });
+  if (userErr || !userData?.user) {
+    logger.security('WebSocket authentication failed', { error: userErr?.message });
+    return new Response("Unauthorized", { status: 401 });
+  }
 
   const { socket, response } = Deno.upgradeWebSocket(req);
 
   const userId = userData.user.id;
+  logger.info('WebSocket connection established', { userId });
 
   // 3) Relay: browser <-> Deepgram
   let deepgramWs: WebSocket | null = null;
@@ -112,19 +128,19 @@ serve(async (req: Request) => {
             const now = Date.now();
             if (now - lastAnalysisTime >= ANALYSIS_INTERVAL_MS && fullTranscript.length > 50) {
               lastAnalysisTime = now;
-              analyzeCoding(fullTranscript, socket, userId, admin).catch((e) =>
-                console.error("Claude analysis error:", e)
+              analyzeCoding(fullTranscript, socket, userId, admin, logger).catch((e) =>
+                logger.error("Claude analysis error", { error: e instanceof Error ? e.message : String(e) })
               );
             }
           }
         }
       } catch (e) {
-        console.error("Deepgram message parse error:", e);
+        logger.error("Deepgram message parse error", { error: e instanceof Error ? e.message : String(e) });
       }
     };
 
     deepgramWs.onerror = (e: Event) => {
-      console.error("Deepgram error:", e);
+      logger.error("Deepgram WebSocket error", { userId });
       safeSend(socket, { type: "error", message: "Transcription error" });
     };
   };
@@ -151,7 +167,7 @@ serve(async (req: Request) => {
         deepgramWs.send(buf);
       }
     } catch (e) {
-      console.warn("Unrecognized WS frame; dropping", e);
+      logger.warn("Unrecognized WS frame; dropping", { error: e instanceof Error ? e.message : String(e) });
     }
   };
 
@@ -162,7 +178,7 @@ serve(async (req: Request) => {
 });
 
 // 4) Periodic coding analysis (de-identified) - NOW WITH CONVERSATIONAL AI
-async function analyzeCoding(rawTranscript: string, socket: WebSocket, userId: string, supabaseClient: any) {
+async function analyzeCoding(rawTranscript: string, socket: WebSocket, userId: string, supabaseClient: any, logger: any) {
   const requestId = crypto.randomUUID();
   const startTime = Date.now();
 
@@ -276,7 +292,8 @@ Return ONLY strict JSON:
     });
 
     if (!res.ok) {
-      console.error("Claude HTTP error", res.status, await res.text());
+      const errorText = await res.text();
+      logger.error("Claude HTTP error", { status: res.status, error: errorText, userId });
 
       // HIPAA AUDIT LOGGING: Log API error
       try {
@@ -296,7 +313,7 @@ Return ONLY strict JSON:
           metadata: { transcript_length: rawTranscript.length }
         });
       } catch (logError) {
-        console.error('[Audit Log Error]:', logError);
+        logger.error('Audit log insertion failed', { error: logError instanceof Error ? logError.message : String(logError) });
       }
 
       return;
@@ -318,7 +335,7 @@ Return ONLY strict JSON:
     let parsed: any;
     try { parsed = JSON.parse(cleaned); }
     catch (e) {
-      console.error("Claude JSON parse failed", e, cleaned.slice(0, 400));
+      logger.error("Claude JSON parse failed", { error: e instanceof Error ? e.message : String(e), responsePreview: cleaned.slice(0, 400) });
 
       // HIPAA AUDIT LOGGING: Log parse error
       try {
@@ -338,7 +355,7 @@ Return ONLY strict JSON:
           metadata: { transcript_length: rawTranscript.length }
         });
       } catch (logError) {
-        console.error('[Audit Log Error]:', logError);
+        logger.error('Audit log insertion failed', { error: logError instanceof Error ? logError.message : String(logError) });
       }
 
       return;
@@ -365,31 +382,39 @@ Return ONLY strict JSON:
         }
       });
     } catch (logError) {
-      console.error('[Audit Log Error]:', logError);
+      logger.error('Audit log insertion failed', { error: logError instanceof Error ? logError.message : String(logError) });
     }
 
-    console.log(`[Medical Transcription] RequestID: ${requestId}, User: ${userId}, Input: ${inputTokens}, Output: ${outputTokens}, Cost: $${totalCost.toFixed(4)}, Time: ${responseTime}ms`);
+    logger.phi('Medical transcription analysis completed', {
+      requestId,
+      userId,
+      inputTokens,
+      outputTokens,
+      cost: totalCost,
+      responseTimeMs: responseTime
+    });
 
-    // Track interaction for learning
+    // Track interaction for learning (batched to avoid sequential waits)
     if (prefs) {
-      await supabaseClient.from('scribe_interaction_history').insert({
-        provider_id: userId,
-        interaction_type: 'code_recommendation',
-        scribe_message: parsed.conversational_note || null,
-        scribe_action: {
-          suggested_codes: parsed.suggestedCodes?.map((c: any) => c.code) || [],
-          revenue_impact: parsed.totalRevenueIncrease || 0
-        },
-        session_phase: 'active'
-      }).catch((err: any) => console.error('Failed to log interaction:', err));
+      await Promise.all([
+        supabaseClient.from('scribe_interaction_history').insert({
+          provider_id: userId,
+          interaction_type: 'code_recommendation',
+          scribe_message: parsed.conversational_note || null,
+          scribe_action: {
+            suggested_codes: parsed.suggestedCodes?.map((c: any) => c.code) || [],
+            revenue_impact: parsed.totalRevenueIncrease || 0
+          },
+          session_phase: 'active'
+        }).catch((err: any) => logger.error('Failed to log interaction', { error: err.message })),
 
-      // Update interaction count
-      await supabaseClient.rpc('learn_from_interaction', {
-        p_provider_id: userId,
-        p_interaction_type: 'code_recommendation',
-        p_was_helpful: null, // Will be updated based on provider response
-        p_sentiment: null
-      }).catch((err: any) => console.error('Failed to update learning:', err));
+        supabaseClient.rpc('learn_from_interaction', {
+          p_provider_id: userId,
+          p_interaction_type: 'code_recommendation',
+          p_was_helpful: null,
+          p_sentiment: null
+        }).catch((err: any) => logger.error('Failed to update learning', { error: err.message }))
+      ]);
     }
 
     safeSend(socket, {
@@ -409,7 +434,7 @@ Return ONLY strict JSON:
       }
     });
   } catch (e) {
-    console.error("Claude analysis exception:", e);
+    logger.error("Claude analysis exception", { error: e instanceof Error ? e.message : String(e), userId });
 
     // HIPAA AUDIT LOGGING: Log exception
     try {
@@ -429,7 +454,7 @@ Return ONLY strict JSON:
         metadata: { transcript_length: rawTranscript.length }
       });
     } catch (logError) {
-      console.error('[Audit Log Error]:', logError);
+      logger.error('Audit log insertion failed', { error: logError instanceof Error ? logError.message : String(logError) });
     }
   }
 }

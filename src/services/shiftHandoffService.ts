@@ -7,6 +7,7 @@
 
 import { supabase } from '../lib/supabaseClient';
 import { auditLogger } from './auditLogger';
+import { PAGINATION_LIMITS, applyLimit } from '../utils/pagination';
 import type {
   ShiftHandoffRiskScore,
   ShiftHandoffSummary,
@@ -274,13 +275,17 @@ export async function logHandoffEvent(
 export async function getHandoffDashboardMetrics(
   shiftType: ShiftType
 ): Promise<HandoffDashboardMetrics> {
-  const { data, error } = await supabase
+  // Limit to 100 shift scores (scoped to single shift - reasonable for daily metrics)
+  const query = supabase
     .from('shift_handoff_risk_scores')
     .select('final_risk_level, nurse_reviewed, auto_composite_score, nurse_risk_level')
     .eq('shift_date', new Date().toISOString().split('T')[0])
     .eq('shift_type', shiftType);
 
-  if (error) {
+  let data;
+  try {
+    data = await applyLimit<any>(query, 100);
+  } catch (error: any) {
     await auditLogger.error('DASHBOARD_METRICS_FAILED', error, {
       shiftType,
       errorCode: error.code
@@ -358,19 +363,20 @@ async function getLatestVitals(patientId: string): Promise<any | null> {
 async function getRecentEvents(patientId: string): Promise<ShiftHandoffEvent[]> {
   const eightHoursAgo = new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString();
 
-  const { data, error } = await supabase
+  // Limit to 50 events per 8-hour window (scoped to single patient - reasonable for shift summary)
+  const query = supabase
     .from('shift_handoff_events')
     .select('*')
     .eq('patient_id', patientId)
     .gte('event_time', eightHoursAgo)
     .order('event_time', { ascending: false });
 
-  if (error) {
+  try {
+    return await applyLimit<ShiftHandoffEvent>(query, 50);
+  } catch (error: any) {
     await auditLogger.warn('EVENTS_FETCH_FAILED', { patientId, error: error.message });
     return [];
   }
-
-  return data || [];
 }
 
 /**

@@ -6,6 +6,7 @@
  */
 
 import { supabase } from '../lib/supabaseClient';
+import { PAGINATION_LIMITS, applyLimit } from '../utils/pagination';
 
 export interface UserInteraction {
   userId: string;
@@ -70,13 +71,15 @@ export class UserBehaviorTracker {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-      const { data, error } = await supabase
+      const query = supabase
         .from('admin_usage_tracking')
         .select('*')
         .eq('user_id', userId)
         .gte('created_at', thirtyDaysAgo.toISOString());
 
-      if (error) throw error;
+      // Apply pagination limit to prevent unbounded queries
+      // Limit to 200 most recent tracking events for performance
+      const data = await applyLimit<any>(query, PAGINATION_LIMITS.TRACKING_EVENTS);
 
       // Aggregate usage data by section
       const sectionStats = new Map<string, {
@@ -86,7 +89,7 @@ export class UserBehaviorTracker {
         lastAccess: Date;
       }>();
 
-      data?.forEach(record => {
+      data.forEach(record => {
         const existing = sectionStats.get(record.section_id) || {
           name: record.section_name,
           opens: 0,

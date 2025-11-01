@@ -8,6 +8,7 @@
 
 import { supabase } from '../lib/supabaseClient';
 import { logPhiAccess } from './phiAccessLogger';
+import { PAGINATION_LIMITS, applyLimit } from '../utils/pagination';
 import type {
   StrokeAssessment,
   ModifiedRankinScale,
@@ -226,15 +227,15 @@ export class NeuroSuiteService {
     patientId: string
   ): Promise<NeuroApiResponse<StrokeAssessment[]>> {
     try {
-      const { data, error } = await supabase
+      // Limit to 50 stroke assessments per patient (scoped to single patient - PAGINATION_LIMITS.ASSESSMENTS)
+      const query = supabase
         .from('neuro_stroke_assessments')
         .select('*')
         .eq('patient_id', patientId)
         .order('assessment_date', { ascending: false });
 
-      if (error) throw error;
-
-      return { success: true, data: data || [] };
+      const data = await applyLimit<StrokeAssessment>(query, PAGINATION_LIMITS.ASSESSMENTS);
+      return { success: true, data };
     } catch (error: any) {
 
       return { success: false, error: error.message };
@@ -289,6 +290,7 @@ export class NeuroSuiteService {
     patientId: string
   ): Promise<NeuroApiResponse<ModifiedRankinScale | null>> {
     try {
+      // Already has .limit(1) - this is properly bounded
       const { data, error } = await supabase
         .from('neuro_modified_rankin_scale')
         .select('*')
@@ -434,15 +436,15 @@ export class NeuroSuiteService {
     patientId: string
   ): Promise<NeuroApiResponse<CognitiveAssessment[]>> {
     try {
-      const { data, error } = await supabase
+      // Limit to 50 cognitive assessments per patient (scoped to single patient - PAGINATION_LIMITS.ASSESSMENTS)
+      const query = supabase
         .from('neuro_cognitive_assessments')
         .select('*')
         .eq('patient_id', patientId)
         .order('assessment_date', { ascending: false });
 
-      if (error) throw error;
-
-      return { success: true, data: data || [] };
+      const data = await applyLimit<CognitiveAssessment>(query, PAGINATION_LIMITS.ASSESSMENTS);
+      return { success: true, data };
     } catch (error: any) {
 
       return { success: false, error: error.message };
@@ -587,15 +589,15 @@ export class NeuroSuiteService {
     patientId: string
   ): Promise<NeuroApiResponse<DementiaStaging[]>> {
     try {
-      const { data, error } = await supabase
+      // Limit to 50 dementia staging assessments per patient (scoped to single patient - PAGINATION_LIMITS.ASSESSMENTS)
+      const query = supabase
         .from('neuro_dementia_staging')
         .select('*')
         .eq('patient_id', patientId)
         .order('assessment_date', { ascending: false });
 
-      if (error) throw error;
-
-      return { success: true, data: data || [] };
+      const data = await applyLimit<DementiaStaging>(query, PAGINATION_LIMITS.ASSESSMENTS);
+      return { success: true, data };
     } catch (error: any) {
 
       return { success: false, error: error.message };
@@ -695,15 +697,15 @@ export class NeuroSuiteService {
     patientId: string
   ): Promise<NeuroApiResponse<CaregiverAssessment[]>> {
     try {
-      const { data, error } = await supabase
+      // Limit to 50 caregiver assessments per patient (scoped to single patient - PAGINATION_LIMITS.ASSESSMENTS)
+      const query = supabase
         .from('neuro_caregiver_assessments')
         .select('*')
         .eq('patient_id', patientId)
         .order('assessment_date', { ascending: false });
 
-      if (error) throw error;
-
-      return { success: true, data: data || [] };
+      const data = await applyLimit<CaregiverAssessment>(query, PAGINATION_LIMITS.ASSESSMENTS);
+      return { success: true, data };
     } catch (error: any) {
 
       return { success: false, error: error.message };
@@ -783,6 +785,7 @@ export class NeuroSuiteService {
     patientId: string
   ): Promise<NeuroApiResponse<NeuroCarePlan | null>> {
     try {
+      // Already has .limit(1) - this is properly bounded
       const { data, error } = await supabase
         .from('neuro_care_plans')
         .select('*')

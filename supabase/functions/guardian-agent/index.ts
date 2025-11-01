@@ -3,7 +3,7 @@
 // Guardian Eyes recording functionality is integrated here
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createAdminClient, batchQueries } from '../_shared/supabaseClient.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -35,9 +35,7 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    const supabase = createAdminClient()
 
     const { action, data } = await req.json()
 
@@ -85,14 +83,35 @@ serve(async (req) => {
 async function runMonitoringChecks(supabase: any): Promise<SecurityAlert[]> {
   const alerts: SecurityAlert[] = []
 
-  // Check 1: Failed login attempts
-  const { data: failedLogins } = await supabase
-    .from('audit_logs')
-    .select('*')
-    .eq('event_type', 'login_failed')
-    .gte('created_at', new Date(Date.now() - 3600000).toISOString())
-    .limit(10)
+  // Batch all monitoring queries in parallel for better performance
+  const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
 
+  const [
+    { data: failedLogins },
+    { data: dbErrors },
+    { data: phiAccess },
+    { data: slowQueries }
+  ] = await batchQueries([
+    () => supabase
+      .from('audit_logs')
+      .select('*')
+      .eq('event_type', 'login_failed')
+      .gte('created_at', oneHourAgo)
+      .limit(10),
+    () => supabase
+      .from('system_errors')
+      .select('*')
+      .gte('created_at', oneHourAgo)
+      .limit(10),
+    () => supabase
+      .from('phi_access_logs')
+      .select('*')
+      .gte('accessed_at', oneHourAgo),
+    () => supabase
+      .rpc('get_slow_queries', { threshold_ms: 1000 })
+  ]);
+
+  // Check 1: Failed login attempts
   if (failedLogins && failedLogins.length > 5) {
     alerts.push({
       severity: 'high',
@@ -104,12 +123,6 @@ async function runMonitoringChecks(supabase: any): Promise<SecurityAlert[]> {
   }
 
   // Check 2: Database errors
-  const { data: dbErrors } = await supabase
-    .from('system_errors')
-    .select('*')
-    .gte('created_at', new Date(Date.now() - 3600000).toISOString())
-    .limit(10)
-
   if (dbErrors && dbErrors.length > 0) {
     alerts.push({
       severity: 'medium',
@@ -121,11 +134,6 @@ async function runMonitoringChecks(supabase: any): Promise<SecurityAlert[]> {
   }
 
   // Check 3: PHI access patterns
-  const { data: phiAccess } = await supabase
-    .from('phi_access_logs')
-    .select('*')
-    .gte('accessed_at', new Date(Date.now() - 3600000).toISOString())
-
   if (phiAccess) {
     const unusualAccess = phiAccess.filter((access: any) => {
       // Check for unusual patterns (e.g., accessing many records quickly)
@@ -144,9 +152,6 @@ async function runMonitoringChecks(supabase: any): Promise<SecurityAlert[]> {
   }
 
   // Check 4: Performance issues
-  const { data: slowQueries } = await supabase
-    .rpc('get_slow_queries', { threshold_ms: 1000 })
-
   if (slowQueries && slowQueries.length > 0) {
     alerts.push({
       severity: 'low',
@@ -157,15 +162,15 @@ async function runMonitoringChecks(supabase: any): Promise<SecurityAlert[]> {
     })
   }
 
-  // Save alerts to database
-  for (const alert of alerts) {
-    await supabase
-      .from('security_alerts')
-      .insert({
-        ...alert,
-        status: 'pending',
-        created_at: new Date().toISOString()
-      })
+  // Batch insert all alerts at once
+  if (alerts.length > 0) {
+    const alertsToInsert = alerts.map(alert => ({
+      ...alert,
+      status: 'pending',
+      created_at: new Date().toISOString()
+    }));
+
+    await supabase.from('security_alerts').insert(alertsToInsert);
   }
 
   return alerts

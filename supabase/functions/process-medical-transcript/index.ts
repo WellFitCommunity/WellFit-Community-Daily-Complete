@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createAdminClient } from '../_shared/supabaseClient.ts'
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 
 const corsHeaders = {
@@ -38,10 +37,8 @@ serve(async (req) => {
       )
     }
 
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const supabase = createClient(supabaseUrl, supabaseKey)
+    // Initialize Supabase client with connection pooling
+    const supabase = createAdminClient()
 
     // Get Claude API key
     const claudeApiKey = Deno.env.get('ANTHROPIC_API_KEY')

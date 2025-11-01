@@ -8,6 +8,7 @@
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
+import { PAGINATION_LIMITS, applyLimit } from '../utils/pagination';
 
 // ============================================================================
 // TypeScript Interfaces
@@ -340,16 +341,13 @@ export class SOC2MonitoringService {
    */
   async getAuditSummaryStats(): Promise<AuditSummaryStats[]> {
     try {
-      const { data, error } = await this.supabase
+      const query = this.supabase
         .from('audit_summary_stats')
         .select('*');
 
-      if (error) {
-
-        return [];
-      }
-
-      return (data as AuditSummaryStats[]) || [];
+      // Apply pagination limit to prevent unbounded queries
+      // Limit to 100 audit summary stats for performance
+      return await applyLimit<AuditSummaryStats>(query, PAGINATION_LIMITS.AUDIT_LOGS);
     } catch (error) {
 
       return [];
@@ -361,16 +359,13 @@ export class SOC2MonitoringService {
    */
   async getEncryptionStatus(): Promise<EncryptionStatus[]> {
     try {
-      const { data, error } = await this.supabase
+      const query = this.supabase
         .from('encryption_status_view')
         .select('*');
 
-      if (error) {
-
-        return [];
-      }
-
-      return (data as EncryptionStatus[]) || [];
+      // Apply pagination limit to prevent unbounded queries
+      // Limit to 100 encryption keys for performance
+      return await applyLimit<EncryptionStatus>(query, PAGINATION_LIMITS.AUDIT_LOGS);
     } catch (error) {
 
       return [];
@@ -382,16 +377,13 @@ export class SOC2MonitoringService {
    */
   async getIncidentResponseQueue(): Promise<IncidentResponseItem[]> {
     try {
-      const { data, error } = await this.supabase
+      const query = this.supabase
         .from('incident_response_queue')
         .select('*');
 
-      if (error) {
-
-        return [];
-      }
-
-      return (data as IncidentResponseItem[]) || [];
+      // Apply pagination limit to prevent unbounded queries
+      // Limit to 100 incident response items for performance
+      return await applyLimit<IncidentResponseItem>(query, PAGINATION_LIMITS.ALERTS);
     } catch (error) {
 
       return [];
@@ -403,16 +395,13 @@ export class SOC2MonitoringService {
    */
   async getComplianceStatus(): Promise<ComplianceStatus[]> {
     try {
-      const { data, error } = await this.supabase
+      const query = this.supabase
         .from('compliance_status')
         .select('*');
 
-      if (error) {
-
-        return [];
-      }
-
-      return (data as ComplianceStatus[]) || [];
+      // Apply pagination limit to prevent unbounded queries
+      // Limit to 100 compliance controls for performance
+      return await applyLimit<ComplianceStatus>(query, PAGINATION_LIMITS.AUDIT_LOGS);
     } catch (error) {
 
       return [];

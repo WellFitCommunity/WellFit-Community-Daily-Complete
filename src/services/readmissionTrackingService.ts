@@ -3,6 +3,7 @@
 // White-label ready - configurable for any healthcare organization
 
 import { supabase } from '../lib/supabaseClient';
+import { PAGINATION_LIMITS, applyLimit } from '../utils/pagination';
 import { claudeService } from './claudeService';
 import { UserRole, RequestType, ClaudeRequestContext } from '../types/claude';
 
@@ -311,18 +312,20 @@ Format as JSON with this structure:
         .split('T')[0];
       const endDate = new Date().toISOString().split('T')[0];
 
-      // Query all admissions in period
-      const { data: admissions, error } = await supabase
+      // Query all admissions in period with pagination limit
+      const query = supabase
         .from('patient_readmissions')
         .select('*')
         .gte('admission_date', startDate)
         .lte('admission_date', endDate);
 
-      if (error) throw error;
+      // Apply pagination limit to prevent unbounded queries
+      // Limit to recent encounters for performance
+      const admissions = await applyLimit<any>(query, PAGINATION_LIMITS.ENCOUNTERS * 10); // Higher limit for analysis
 
       // Group by patient
       const patientMap = new Map<string, any[]>();
-      admissions?.forEach(admission => {
+      admissions.forEach(admission => {
         const existing = patientMap.get(admission.patient_id) || [];
         existing.push(admission);
         patientMap.set(admission.patient_id, existing);
@@ -385,29 +388,31 @@ Format as JSON with this structure:
    * Get readmission events for a patient
    */
   static async getPatientReadmissions(patientId: string): Promise<ReadmissionEvent[]> {
-    const { data, error } = await supabase
+    const query = supabase
       .from('patient_readmissions')
       .select('*')
       .eq('patient_id', patientId)
       .order('admission_date', { ascending: false });
 
-    if (error) throw new Error(`Failed to fetch readmissions: ${error.message}`);
-    return data || [];
+    // Apply pagination limit to prevent unbounded queries
+    // Limit to 50 most recent readmission events per patient
+    return await applyLimit<ReadmissionEvent>(query, PAGINATION_LIMITS.ENCOUNTERS);
   }
 
   /**
    * Get all active high-risk patients
    */
   static async getActiveHighRiskPatients(): Promise<any[]> {
-    const { data, error } = await supabase
+    const query = supabase
       .from('patient_readmissions')
       .select('*, profiles(*)')
       .eq('high_utilizer_flag', true)
       .gte('admission_date', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString())
       .order('risk_score', { ascending: false });
 
-    if (error) throw new Error(`Failed to fetch high-risk patients: ${error.message}`);
-    return data || [];
+    // Apply pagination limit to prevent unbounded queries
+    // Limit to 100 highest-risk patients for performance
+    return await applyLimit<any>(query, PAGINATION_LIMITS.ALERTS);
   }
 
   // Helper methods

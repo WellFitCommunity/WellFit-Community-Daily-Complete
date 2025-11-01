@@ -8,6 +8,7 @@
 
 import { supabase } from '../lib/supabaseClient';
 import { logPhiAccess } from './phiAccessLogger';
+import { PAGINATION_LIMITS, applyLimit } from '../utils/pagination';
 import type {
   WearableConnection,
   WearableVitalSign,
@@ -297,7 +298,9 @@ export class WearableService {
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - days);
 
-      const { data, error } = await supabase
+      // CRITICAL FIX: Wearable vitals can be 1 reading/min = 10,080 records/week
+      // Without limit, this was causing memory exhaustion and slow queries
+      const query = supabase
         .from('wearable_vital_signs')
         .select('*')
         .eq('user_id', userId)
@@ -305,9 +308,9 @@ export class WearableService {
         .gte('measured_at', startDate.toISOString())
         .order('measured_at', { ascending: true });
 
-      if (error) throw error;
+      const data = await applyLimit<WearableVitalSign>(query, PAGINATION_LIMITS.WEARABLE_VITALS);
 
-      return { success: true, data: data || [] };
+      return { success: true, data };
     } catch (error: any) {
 
       return { success: false, error: error.message };
@@ -369,7 +372,8 @@ export class WearableService {
     endDate: string
   ): Promise<WearableApiResponse<WearableActivityData[]>> {
     try {
-      const { data, error } = await supabase
+      // HIGH RISK: Activity summaries are daily, but unbounded date ranges can load years of data
+      const query = supabase
         .from('wearable_activity_data')
         .select('*')
         .eq('user_id', userId)
@@ -377,9 +381,9 @@ export class WearableService {
         .lte('date', endDate)
         .order('date', { ascending: true });
 
-      if (error) throw error;
+      const data = await applyLimit<WearableActivityData>(query, PAGINATION_LIMITS.WEARABLE_ACTIVITIES);
 
-      return { success: true, data: data || [] };
+      return { success: true, data };
     } catch (error: any) {
 
       return { success: false, error: error.message };
@@ -470,16 +474,17 @@ export class WearableService {
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - days);
 
-      const { data, error } = await supabase
+      // MEDIUM RISK: Fall detections are infrequent, but apply limit for safety
+      const query = supabase
         .from('wearable_fall_detections')
         .select('*')
         .eq('user_id', userId)
         .gte('detected_at', startDate.toISOString())
         .order('detected_at', { ascending: false });
 
-      if (error) throw error;
+      const data = await applyLimit<WearableFallDetection>(query, 100);
 
-      return { success: true, data: data || [] };
+      return { success: true, data };
     } catch (error: any) {
 
       return { success: false, error: error.message };

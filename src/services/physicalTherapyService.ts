@@ -7,6 +7,7 @@
  */
 
 import { supabase } from '../lib/supabaseClient';
+import { PAGINATION_LIMITS, applyLimit } from '../utils/pagination';
 import type {
   PTFunctionalAssessment,
   PTTreatmentPlan,
@@ -131,15 +132,15 @@ export class PhysicalTherapyService {
     patientId: string
   ): Promise<PTApiResponse<PTFunctionalAssessment[]>> {
     try {
-      const { data, error } = await supabase
+      // Limit to 50 PT assessments per patient (scoped to single patient - PAGINATION_LIMITS.ASSESSMENTS)
+      const query = supabase
         .from('pt_functional_assessments')
         .select('*')
         .eq('patient_id', patientId)
         .order('assessment_date', { ascending: false });
 
-      if (error) throw error;
-
-      return { success: true, data: data || [] };
+      const data = await applyLimit<PTFunctionalAssessment>(query, PAGINATION_LIMITS.ASSESSMENTS);
+      return { success: true, data };
     } catch (error: any) {
 
       return { success: false, error: error.message };
@@ -436,15 +437,15 @@ export class PhysicalTherapyService {
     planId: string
   ): Promise<PTApiResponse<PTTreatmentSession[]>> {
     try {
-      const { data, error } = await supabase
+      // Limit to 50 sessions per treatment plan (scoped to single plan - reasonable for typical PT episode)
+      const query = supabase
         .from('pt_treatment_sessions')
         .select('*')
         .eq('treatment_plan_id', planId)
         .order('session_date', { ascending: false });
 
-      if (error) throw error;
-
-      return { success: true, data: data || [] };
+      const data = await applyLimit<PTTreatmentSession>(query, 50);
+      return { success: true, data };
     } catch (error: any) {
 
       return { success: false, error: error.message };
@@ -662,6 +663,7 @@ export class PhysicalTherapyService {
     measureAcronym?: string
   ): Promise<PTApiResponse<PTOutcomeMeasure[]>> {
     try {
+      // Limit to 50 outcome measures per patient (scoped to single patient - PAGINATION_LIMITS.ASSESSMENTS)
       let query = supabase
         .from('pt_outcome_measures')
         .select('*')
@@ -671,11 +673,10 @@ export class PhysicalTherapyService {
         query = query.eq('measure_acronym', measureAcronym);
       }
 
-      const { data, error } = await query.order('administration_date', { ascending: false });
+      query = query.order('administration_date', { ascending: false });
 
-      if (error) throw error;
-
-      return { success: true, data: data || [] };
+      const data = await applyLimit<PTOutcomeMeasure>(query, PAGINATION_LIMITS.ASSESSMENTS);
+      return { success: true, data };
     } catch (error: any) {
 
       return { success: false, error: error.message };

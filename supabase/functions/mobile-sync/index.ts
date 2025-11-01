@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createUserClient, batchQueries } from '../_shared/supabaseClient.ts'
 import { cors } from "../_shared/cors.ts"
+import { createLogger } from '../_shared/auditLogger.ts'
 
 // ❌ REMOVED WILDCARD CORS - Using secure cors() function instead
 // const corsHeaders = {
@@ -67,6 +68,8 @@ interface SyncRequest {
 }
 
 serve(async (req: Request) => {
+  const logger = createLogger('mobile-sync', req);
+
   // Handle CORS with secure origin validation
   const origin = req.headers.get('origin');
   const { headers: corsHeaders, allowed } = cors(origin, {
@@ -97,14 +100,8 @@ serve(async (req: Request) => {
       )
     }
 
-    // Initialize Supabase client
-    const supabaseUrl = (globalThis as any).Deno?.env?.get('SUPABASE_URL') ?? '';
-    const supabaseKey = (globalThis as any).Deno?.env?.get('SUPABASE_ANON_KEY') ?? '';
-    const supabaseClient = createClient(
-      supabaseUrl,
-      supabaseKey,
-      { global: { headers: { Authorization: authHeader } } }
-    )
+    // Initialize Supabase client with connection pooling
+    const supabaseClient = createUserClient(authHeader)
 
     // Get user from auth
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser()
@@ -241,19 +238,22 @@ serve(async (req: Request) => {
           { data_type: 'incidents', count: results.emergency_incidents_synced }
         ]
 
-        for (const update of syncUpdates) {
-          if (update.count > 0) {
-            await supabaseClient
-              .from('mobile_sync_status')
-              .upsert({
-                patient_id: user.id,
-                device_id: syncData.device_id,
-                data_type: update.data_type,
-                last_sync_at: new Date().toISOString(),
-                last_successful_upload: new Date().toISOString(),
-                pending_upload_count: 0
-              }, { onConflict: 'patient_id,device_id,data_type' })
-          }
+        // Batch sync status updates
+        const syncStatusUpdates = syncUpdates
+          .filter(update => update.count > 0)
+          .map(update => ({
+            patient_id: user.id,
+            device_id: syncData.device_id,
+            data_type: update.data_type,
+            last_sync_at: new Date().toISOString(),
+            last_successful_upload: new Date().toISOString(),
+            pending_upload_count: 0
+          }));
+
+        if (syncStatusUpdates.length > 0) {
+          await supabaseClient
+            .from('mobile_sync_status')
+            .upsert(syncStatusUpdates, { onConflict: 'patient_id,device_id,data_type' });
         }
       }
 
@@ -273,45 +273,57 @@ serve(async (req: Request) => {
 
       let data = {}
 
-      if (!dataType || dataType === 'geofence_zones') {
-        // Get active geofence zones
-        const { data: zones } = await supabaseClient
-          .from('geofence_zones')
-          .select('*')
-          .eq('patient_id', user.id)
-          .eq('is_active', true)
+      // Batch all data fetching operations in parallel for better performance
+      const queries = [];
 
-        data = { ...data, geofence_zones: zones || [] }
+      if (!dataType || dataType === 'geofence_zones') {
+        queries.push(
+          supabaseClient
+            .from('geofence_zones')
+            .select('*')
+            .eq('patient_id', user.id)
+            .eq('is_active', true)
+        );
+      } else {
+        queries.push(Promise.resolve({ data: null }));
       }
 
       if (!dataType || dataType === 'emergency_contacts') {
-        // Get emergency contacts
-        const { data: contacts } = await supabaseClient
-          .from('mobile_emergency_contacts')
-          .select('*')
-          .eq('patient_id', user.id)
-          .eq('is_active', true)
-          .order('priority_order')
-
-        data = { ...data, emergency_contacts: contacts || [] }
+        queries.push(
+          supabaseClient
+            .from('mobile_emergency_contacts')
+            .select('*')
+            .eq('patient_id', user.id)
+            .eq('is_active', true)
+            .order('priority_order')
+        );
+      } else {
+        queries.push(Promise.resolve({ data: null }));
       }
 
       if (!dataType || dataType === 'recent_vitals') {
-        // Get recent vitals for comparison
         let query = supabaseClient
           .from('mobile_vitals')
           .select('*')
           .eq('patient_id', user.id)
           .order('measured_at', { ascending: false })
-          .limit(50)
+          .limit(50);
 
         if (since) {
-          query = query.gte('measured_at', since)
+          query = query.gte('measured_at', since);
         }
 
-        const { data: vitals } = await query
-        data = { ...data, recent_vitals: vitals || [] }
+        queries.push(query);
+      } else {
+        queries.push(Promise.resolve({ data: null }));
       }
+
+      // Execute all queries in parallel
+      const [zonesResult, contactsResult, vitalsResult] = await Promise.all(queries);
+
+      if (zonesResult.data) data = { ...data, geofence_zones: zonesResult.data };
+      if (contactsResult.data) data = { ...data, emergency_contacts: contactsResult.data };
+      if (vitalsResult.data) data = { ...data, recent_vitals: vitalsResult.data };
 
       return new Response(
         JSON.stringify(data),
@@ -330,7 +342,7 @@ serve(async (req: Request) => {
     )
 
   } catch (error) {
-    console.error('Mobile sync error:', error)
+    logger.error('Mobile sync error', { error: error instanceof Error ? error.message : String(error) })
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       {
@@ -343,8 +355,11 @@ serve(async (req: Request) => {
 
 // Helper function to trigger AI vitals analysis
 async function triggerVitalsAnalysis(supabaseClient: any, patientId: string, vitals: VitalData[]) {
+  const logger = createLogger('mobile-sync');
   try {
-    // Check for abnormal vitals and create alerts
+    // Check for abnormal vitals and batch create alerts
+    const alerts = [];
+
     for (const vital of vitals) {
       let isAbnormal = false
       let alertMessage = ''
@@ -362,25 +377,30 @@ async function triggerVitalsAnalysis(supabaseClient: any, patientId: string, vit
       }
 
       if (isAbnormal) {
-        await supabaseClient
-          .from('emergency_alerts')
-          .insert({
-            patient_id: patientId,
-            alert_type: 'VITAL_ANOMALY',
-            severity: vital.value_primary < 50 || vital.value_primary > 150 ? 'CRITICAL' : 'WARNING',
-            message: alertMessage,
-            probability_score: vital.confidence_score || 85,
-            action_required: true
-          })
+        alerts.push({
+          patient_id: patientId,
+          alert_type: 'VITAL_ANOMALY',
+          severity: vital.value_primary < 50 || vital.value_primary > 150 ? 'CRITICAL' : 'WARNING',
+          message: alertMessage,
+          probability_score: vital.confidence_score || 85,
+          action_required: true
+        });
       }
     }
+
+    // Batch insert all alerts
+    if (alerts.length > 0) {
+      await supabaseClient.from('emergency_alerts').insert(alerts);
+      logger.phi('Vitals anomaly detected', { patientId, alertCount: alerts.length });
+    }
   } catch (error) {
-    console.error('Vitals analysis error:', error)
+    logger.error('Vitals analysis error', { error: error instanceof Error ? error.message : String(error), patientId })
   }
 }
 
 // Helper function to check geofence alerts
 async function checkGeofenceAlerts(supabaseClient: any, patientId: string, events: GeofenceEvent[]) {
+  const logger = createLogger('mobile-sync');
   try {
     const breachEvents = events.filter(e => e.event_type === 'breach' || e.event_type === 'exit')
 
@@ -394,14 +414,16 @@ async function checkGeofenceAlerts(supabaseClient: any, patientId: string, event
           message: `Patient has left designated safe zone`,
           action_required: true
         })
+      logger.security('Geofence breach detected', { patientId, breachCount: breachEvents.length });
     }
   } catch (error) {
-    console.error('Geofence alert error:', error)
+    logger.error('Geofence alert error', { error: error instanceof Error ? error.message : String(error), patientId })
   }
 }
 
 // Helper function to trigger emergency response
 async function triggerEmergencyResponse(supabaseClient: any, patientId: string, incidents: EmergencyIncident[]) {
+  const logger = createLogger('mobile-sync');
   try {
     const criticalIncidents = incidents.filter(i => i.severity === 'critical' || i.severity === 'high')
 
@@ -415,8 +437,9 @@ async function triggerEmergencyResponse(supabaseClient: any, patientId: string, 
           message: `Emergency incident detected via mobile app`,
           action_required: true
         })
+      logger.security('Critical emergency incident detected', { patientId, incidentCount: criticalIncidents.length });
     }
   } catch (error) {
-    console.error('Emergency response error:', error)
+    logger.error('Emergency response error', { error: error instanceof Error ? error.message : String(error), patientId })
   }
 }

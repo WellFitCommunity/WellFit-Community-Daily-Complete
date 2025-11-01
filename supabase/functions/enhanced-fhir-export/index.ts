@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createUserClient, batchQueries } from '../_shared/supabaseClient.ts'
 import { cors } from "../_shared/cors.ts"
 
 // Strict CORS policy matching other functions
@@ -50,11 +50,7 @@ serve(async (req) => {
       )
     }
 
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
-    )
+    const supabaseClient = createUserClient(authHeader)
 
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser()
     if (authError || !user) {
@@ -140,13 +136,46 @@ async function generateEnhancedFHIRBundle(
   const bundleId = `bundle-${patientId}-${Date.now()}`
   const entries = []
 
-  // 1. Patient Resource
-  const { data: patientProfile } = await supabaseClient
-    .from('profiles')
-    .select('*')
-    .eq('user_id', patientId)
-    .single()
+  // Batch all initial data fetching in parallel
+  const baseQueries = [
+    () => supabaseClient.from('profiles').select('*').eq('user_id', patientId).single(),
+    () => supabaseClient.from('check_ins').select('*').eq('user_id', patientId).gte('created_at', startDate).lte('created_at', endDate)
+  ];
 
+  // Add mobile data queries if requested
+  if (includeMobileData) {
+    baseQueries.push(
+      () => supabaseClient.from('mobile_vitals').select('*').eq('patient_id', patientId).gte('measured_at', startDate).lte('measured_at', endDate),
+      () => supabaseClient.from('mobile_emergency_incidents').select('*').eq('patient_id', patientId).gte('triggered_at', startDate).lte('triggered_at', endDate),
+      () => supabaseClient.from('movement_patterns').select('*').eq('patient_id', patientId).gte('date_tracked', startDate.split('T')[0]).lte('date_tracked', endDate.split('T')[0])
+    );
+  } else {
+    baseQueries.push(
+      () => Promise.resolve({ data: null }),
+      () => Promise.resolve({ data: null }),
+      () => Promise.resolve({ data: null })
+    );
+  }
+
+  // Add AI assessments query if requested
+  if (includeAIAssessments) {
+    baseQueries.push(
+      () => supabaseClient.from('ai_risk_assessments').select('*').eq('patient_id', patientId).gte('assessed_at', startDate).lte('assessed_at', endDate)
+    );
+  } else {
+    baseQueries.push(() => Promise.resolve({ data: null }));
+  }
+
+  const [
+    { data: patientProfile },
+    { data: checkIns },
+    { data: mobileVitals },
+    { data: emergencyIncidents },
+    { data: movementPatterns },
+    { data: riskAssessments }
+  ] = await batchQueries(baseQueries);
+
+  // 1. Patient Resource
   if (patientProfile) {
     entries.push({
       fullUrl: `Patient/${patientId}`,
@@ -190,13 +219,6 @@ async function generateEnhancedFHIRBundle(
   }
 
   // 2. Web App Check-ins as Observations
-  const { data: checkIns } = await supabaseClient
-    .from('check_ins')
-    .select('*')
-    .eq('user_id', patientId)
-    .gte('created_at', startDate)
-    .lte('created_at', endDate)
-
   for (const checkIn of checkIns || []) {
     // Heart Rate Observation
     if (checkIn.heart_rate) {
@@ -404,17 +426,9 @@ async function generateEnhancedFHIRBundle(
     }
   }
 
-  // 3. Mobile App Data (if requested)
-  if (includeMobileData) {
-    // Mobile Vitals
-    const { data: mobileVitals } = await supabaseClient
-      .from('mobile_vitals')
-      .select('*')
-      .eq('patient_id', patientId)
-      .gte('measured_at', startDate)
-      .lte('measured_at', endDate)
-
-    for (const vital of mobileVitals || []) {
+  // 3. Mobile App Data (already fetched in batch)
+  if (includeMobileData && mobileVitals) {
+    for (const vital of mobileVitals) {
       entries.push({
         fullUrl: `Observation/mobile-${vital.measurement_type}-${vital.id}`,
         resource: {
@@ -469,14 +483,7 @@ async function generateEnhancedFHIRBundle(
       })
     }
 
-    // Emergency Incidents as DiagnosticReports
-    const { data: emergencyIncidents } = await supabaseClient
-      .from('mobile_emergency_incidents')
-      .select('*')
-      .eq('patient_id', patientId)
-      .gte('triggered_at', startDate)
-      .lte('triggered_at', endDate)
-
+    // Emergency Incidents as DiagnosticReports (already fetched)
     for (const incident of emergencyIncidents || []) {
       entries.push({
         fullUrl: `DiagnosticReport/emergency-${incident.id}`,
@@ -524,14 +531,7 @@ async function generateEnhancedFHIRBundle(
       })
     }
 
-    // Location Data as Observations (daily summaries)
-    const { data: movementPatterns } = await supabaseClient
-      .from('movement_patterns')
-      .select('*')
-      .eq('patient_id', patientId)
-      .gte('date_tracked', startDate.split('T')[0])
-      .lte('date_tracked', endDate.split('T')[0])
-
+    // Location Data as Observations (daily summaries, already fetched)
     for (const pattern of movementPatterns || []) {
       entries.push({
         fullUrl: `Observation/movement-${pattern.id}`,
@@ -604,16 +604,9 @@ async function generateEnhancedFHIRBundle(
     }
   }
 
-  // 4. AI Risk Assessments (if requested)
-  if (includeAIAssessments) {
-    const { data: riskAssessments } = await supabaseClient
-      .from('ai_risk_assessments')
-      .select('*')
-      .eq('patient_id', patientId)
-      .gte('assessed_at', startDate)
-      .lte('assessed_at', endDate)
-
-    for (const assessment of riskAssessments || []) {
+  // 4. AI Risk Assessments (already fetched in batch)
+  if (includeAIAssessments && riskAssessments) {
+    for (const assessment of riskAssessments) {
       entries.push({
         fullUrl: `RiskAssessment/ai-${assessment.id}`,
         resource: {

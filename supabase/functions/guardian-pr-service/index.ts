@@ -15,7 +15,7 @@
  */
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createAdminClient } from '../_shared/supabaseClient.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -62,8 +62,6 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     const githubToken = Deno.env.get('GITHUB_TOKEN') ?? ''
     const githubOwner = Deno.env.get('GITHUB_OWNER') ?? ''
     const githubRepo = Deno.env.get('GITHUB_REPO') ?? ''
@@ -80,7 +78,7 @@ serve(async (req) => {
       )
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    const supabase = createAdminClient()
     const { action, data } = await req.json() as { action: string; data: PRRequest }
 
     switch (action) {
@@ -176,16 +174,38 @@ async function createPullRequest(
       throw new Error(`Failed to create branch: ${errorData.message || createBranchResponse.statusText}`)
     }
 
-    // 3. Create commits for each file change
-    for (const change of prRequest.changes) {
-      await createCommit(
+    // 3. Create commits for each file change (batched for better performance)
+    // Note: GitHub API requires sequential commits, but we can batch the file fetches
+    const fileChecks = await Promise.all(
+      prRequest.changes.map(change =>
+        (change.operation === 'update' || change.operation === 'delete')
+          ? fetch(
+              `https://api.github.com/repos/${owner}/${repo}/contents/${change.filePath}?ref=${branchName}`,
+              {
+                headers: {
+                  'Authorization': `Bearer ${githubToken}`,
+                  'Accept': 'application/vnd.github.v3+json',
+                },
+              }
+            ).then(res => res.ok ? res.json() : null)
+          : Promise.resolve(null)
+      )
+    );
+
+    // Now create commits with pre-fetched SHAs
+    for (let i = 0; i < prRequest.changes.length; i++) {
+      const change = prRequest.changes[i];
+      const fileSha = fileChecks[i]?.sha;
+
+      await createCommitWithSha(
         githubToken,
         owner,
         repo,
         branchName,
         change,
+        fileSha,
         `Guardian Agent: ${prRequest.action.strategy} - ${change.filePath}`
-      )
+      );
     }
 
     // 4. Create the pull request
@@ -248,36 +268,17 @@ async function createPullRequest(
 }
 
 /**
- * Create a commit on a branch
+ * Create a commit on a branch with pre-fetched SHA (optimized version)
  */
-async function createCommit(
+async function createCommitWithSha(
   githubToken: string,
   owner: string,
   repo: string,
   branch: string,
   change: CodeChange,
+  currentSha: string | undefined,
   message: string
 ): Promise<void> {
-  // Get current file content and SHA (if updating)
-  let currentSha: string | undefined
-
-  if (change.operation === 'update' || change.operation === 'delete') {
-    const fileResponse = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/contents/${change.filePath}?ref=${branch}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${githubToken}`,
-          'Accept': 'application/vnd.github.v3+json',
-        },
-      }
-    )
-
-    if (fileResponse.ok) {
-      const fileData = await fileResponse.json()
-      currentSha = fileData.sha
-    }
-  }
-
   // Create or update file
   const updateFileResponse = await fetch(
     `https://api.github.com/repos/${owner}/${repo}/contents/${change.filePath}`,

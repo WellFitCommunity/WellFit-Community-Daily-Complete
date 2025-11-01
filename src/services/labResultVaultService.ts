@@ -2,6 +2,7 @@
 // Saves receiving hospitals 10-15 minutes by auto-extracting lab values from PDFs
 
 import { supabase } from '../lib/supabaseClient';
+import { PAGINATION_LIMITS, applyLimit } from '../utils/pagination';
 import type { LabResult } from '../types/handoff';
 
 export interface ParsedLabResult extends LabResult {
@@ -134,11 +135,9 @@ export class LabResultVaultService {
         query = query.ilike('test_name', `%${testName}%`);
       }
 
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      return data as ParsedLabResult[];
+      // Apply pagination limit to prevent unbounded queries
+      // Limit to 50 most recent lab results for performance
+      return await applyLimit<ParsedLabResult>(query, PAGINATION_LIMITS.LABS);
     } catch (error) {
 
       return [];
@@ -321,15 +320,15 @@ export class LabResultVaultService {
    */
   static async autoPopulateLabsForPacket(packetId: string): Promise<ParsedLabResult[]> {
     try {
-      const { data, error } = await supabase
+      const query = supabase
         .from('lab_results')
         .select('*')
         .eq('handoff_packet_id', packetId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-
-      return data as ParsedLabResult[];
+      // Apply pagination limit to prevent unbounded queries
+      // Limit to 50 most recent lab results per packet
+      return await applyLimit<ParsedLabResult>(query, PAGINATION_LIMITS.LABS);
     } catch (error) {
 
       return [];

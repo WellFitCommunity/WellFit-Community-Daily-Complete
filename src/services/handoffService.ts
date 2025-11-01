@@ -2,6 +2,7 @@
 // Service layer for secure patient transfers between healthcare facilities
 
 import { supabase } from '../lib/supabaseClient';
+import { PAGINATION_LIMITS, applyLimit } from '../utils/pagination';
 import type {
   HandoffPacket,
   // HandoffSection - unused type
@@ -456,15 +457,14 @@ export class HandoffService {
    */
   static async getAttachments(packetId: string): Promise<HandoffAttachment[]> {
     try {
-      const { data, error } = await supabase
+      // Limit to 100 attachments per handoff (scoped to single packet - reasonable limit)
+      const query = supabase
         .from('handoff_attachments')
         .select('*')
         .eq('handoff_packet_id', packetId)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
-
-      return data || [];
+      return applyLimit<HandoffAttachment>(query, 100);
     } catch (error: any) {
       throw new Error(`Failed to get attachments: ${error.message}`);
     }
@@ -535,15 +535,14 @@ export class HandoffService {
    */
   static async getLogs(packetId: string): Promise<HandoffLog[]> {
     try {
-      const { data, error } = await supabase
+      // Limit to 100 audit logs per handoff (scoped to single packet - reasonable for compliance tracking)
+      const query = supabase
         .from('handoff_logs')
         .select('*')
         .eq('handoff_packet_id', packetId)
         .order('timestamp', { ascending: false });
 
-      if (error) throw error;
-
-      return data || [];
+      return applyLimit<HandoffLog>(query, 100);
     } catch (error: any) {
       throw new Error(`Failed to get audit logs: ${error.message}`);
     }

@@ -3,6 +3,7 @@
 // White-label ready - configurable for any healthcare organization
 
 import { supabase } from '../lib/supabaseClient';
+import { PAGINATION_LIMITS, applyLimit } from '../utils/pagination';
 import { claudeService } from './claudeService';
 import { UserRole, RequestType, ClaudeRequestContext } from '../types/claude';
 
@@ -176,15 +177,16 @@ export class CareCoordinationService {
   static async getCarePlansNeedingReview(): Promise<CarePlan[]> {
     const today = new Date().toISOString().split('T')[0];
 
-    const { data, error } = await supabase
+    const query = supabase
       .from('care_coordination_plans')
       .select('*, profiles(*)')
       .eq('status', 'active')
       .lte('next_review_date', today)
       .order('next_review_date', { ascending: true });
 
-    if (error) throw new Error(`Failed to fetch care plans for review: ${error.message}`);
-    return data || [];
+    // Apply pagination limit to prevent unbounded queries
+    // Limit to 50 care plans needing review for performance
+    return await applyLimit<CarePlan>(query, PAGINATION_LIMITS.CARE_PLANS);
   }
 
   /**
@@ -305,10 +307,9 @@ export class CareCoordinationService {
       query = query.eq('assigned_to', assignedToUserId);
     }
 
-    const { data, error } = await query;
-
-    if (error) throw new Error(`Failed to fetch alerts: ${error.message}`);
-    return data || [];
+    // Apply pagination limit to prevent unbounded queries
+    // Limit to 100 most critical alerts for performance
+    return await applyLimit<CareTeamAlert>(query, PAGINATION_LIMITS.ALERTS);
   }
 
   /**
