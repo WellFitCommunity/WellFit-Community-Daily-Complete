@@ -1,6 +1,10 @@
 import React, { useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { getSignedUrl } from "../../utils/getSignedUrl";
+import {
+  enterpriseFileUpload,
+  type UploadProgress,
+} from "../../services/EnterpriseFileUploadService";
 
 interface PhotoUploadProps {
   context: "meal" | "community";
@@ -47,6 +51,7 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ context, recordId, onSuccess 
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<{ type?: "success" | "error"; text?: string }>({});
   const [caption, setCaption] = useState(""); // community only
+  const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     if (!e.target.files?.length) return;
@@ -80,21 +85,24 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ context, recordId, onSuccess 
         globalThis.crypto?.randomUUID?.() ??
         `${Date.now()}_${Math.random().toString(36).slice(2)}`;
       const safeId = recordId ? safeSegment(recordId) : "";
-      const cacheControl = "public, max-age=31536000, immutable";
 
       if (context === "community") {
-        // ===== Community Moments (PRIVATE bucket) =====
+        // ===== Community Moments (PRIVATE bucket) - ENTERPRISE UPLOAD =====
         const storagePath = `community/${uid}/${unique}.${ext}`;
 
-        // IMPORTANT: use the correct bucket
-        const { error: upErr } = await supabase.storage
-          .from(COMMUNITY_BUCKET)
-          .upload(storagePath, file, {
-            upsert: false,
-            contentType: file.type,
-            cacheControl,
-          });
-        if (upErr) throw upErr;
+        // Use enterprise upload service with chunking, validation, and audit trail
+        const result = await enterpriseFileUpload.upload({
+          bucket: COMMUNITY_BUCKET,
+          path: storagePath,
+          file,
+          onProgress: setUploadProgress,
+          containsPHI: false, // Community photos are not PHI
+          dataClassification: 'internal',
+        });
+
+        if (!result.success) {
+          throw new Error(result.error || 'Upload failed');
+        }
 
         // Insert metadata row for moderation workflow
         const { error: rowErr } = await supabase.from("community_photos").insert({
@@ -108,11 +116,13 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ context, recordId, onSuccess 
         setCaption("");
         setMessage({ type: "success", text: "Uploaded! Pending admin approval." });
 
-        // Return a signed URL so the uploader can preview their own image immediately
-        const viewUrl = await getViewUrl(COMMUNITY_BUCKET, storagePath);
-        onSuccess?.({ storagePath, publicUrl: viewUrl });
+        // Return signed URL from enterprise upload
+        onSuccess?.({
+          storagePath,
+          publicUrl: result.signedUrl || await getViewUrl(COMMUNITY_BUCKET, storagePath)
+        });
       } else {
-        // ===== Per-record (e.g., meals) =====
+        // ===== Per-record (e.g., meals) - ENTERPRISE UPLOAD =====
         if (!recordId) {
           setMessage({ type: "error", text: "Missing recordId for this upload." });
           return;
@@ -121,18 +131,27 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ context, recordId, onSuccess 
         const bucketName = `${context}-photos`; // e.g., "meal-photos"
         const filePath = `${safeId}/${unique}.${ext}`;
 
-        const { error } = await supabase.storage.from(bucketName).upload(filePath, file, {
-          upsert: false,
-          contentType: file.type,
-          cacheControl,
+        // Use enterprise upload service with full validation
+        const result = await enterpriseFileUpload.upload({
+          bucket: bucketName,
+          path: filePath,
+          file,
+          onProgress: setUploadProgress,
+          containsPHI: false,
+          dataClassification: 'internal',
         });
-        if (error) throw error;
+
+        if (!result.success) {
+          throw new Error(result.error || 'Upload failed');
+        }
 
         setMessage({ type: "success", text: "Upload successful!" });
 
-        // Signed URL works regardless of bucket privacy
-        const viewUrl = await getViewUrl(bucketName, filePath);
-        onSuccess?.({ storagePath: filePath, publicUrl: viewUrl });
+        // Return signed URL from enterprise upload
+        onSuccess?.({
+          storagePath: filePath,
+          publicUrl: result.signedUrl || await getViewUrl(bucketName, filePath)
+        });
       }
     } catch (err) {
       const text =
@@ -175,7 +194,25 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ context, recordId, onSuccess 
         className="block w-full text-base text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600"
       />
 
-      {uploading && <p className="text-base text-gray-600">Uploading…</p>}
+      {uploading && uploadProgress && (
+        <div className="space-y-2">
+          <div className="w-full bg-gray-200 rounded-full h-2.5">
+            <div
+              className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+              style={{ width: `${uploadProgress.percentage}%` }}
+            />
+          </div>
+          <p className="text-sm text-gray-600">
+            {uploadProgress.message || `Uploading... ${Math.round(uploadProgress.percentage)}%`}
+          </p>
+          {uploadProgress.totalChunks > 1 && (
+            <p className="text-xs text-gray-500">
+              Chunk {uploadProgress.currentChunk} of {uploadProgress.totalChunks}
+            </p>
+          )}
+        </div>
+      )}
+      {uploading && !uploadProgress && <p className="text-base text-gray-600">Uploading…</p>}
       {message.text && (
         <p
           role="status"
