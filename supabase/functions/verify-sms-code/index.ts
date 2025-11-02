@@ -165,7 +165,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
       // Send welcome email if user has an email
       if (pending.email) {
         try {
-          const welcomeEmailResponse = await fetch(`${SB_URL}/functions/v1/send_welcome_email`, {
+          // Use functions subdomain for edge function calls
+          const functionsUrl = SB_URL.replace('.supabase.co', '.functions.supabase.co');
+          const welcomeEmailResponse = await fetch(`${functionsUrl}/functions/v1/send_welcome_email`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
