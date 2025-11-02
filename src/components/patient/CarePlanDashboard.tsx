@@ -352,7 +352,7 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
                       <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-300">
                         {plan.intent}
                       </span>
-                      {plan.category.map((cat, idx) => (
+                      {Array.isArray(plan.category) && plan.category.map((cat, idx) => (
                         <span key={idx} className="px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-300">
                           {CARE_PLAN_CATEGORY_NAMES[cat] || cat}
                         </span>
@@ -438,16 +438,18 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
               </div>
 
               {/* Categories */}
-              <div>
-                <h3 className="font-semibold text-gray-700 mb-2">Categories</h3>
-                <div className="flex flex-wrap gap-2">
-                  {selectedPlan.category.map((cat, idx) => (
-                    <span key={idx} className="px-3 py-1 rounded-lg bg-purple-50 text-purple-700 border border-purple-200 text-sm">
-                      {CARE_PLAN_CATEGORY_NAMES[cat] || cat}
-                    </span>
-                  ))}
+              {Array.isArray(selectedPlan.category) && selectedPlan.category.length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-gray-700 mb-2">Categories</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedPlan.category.map((cat, idx) => (
+                      <span key={idx} className="px-3 py-1 rounded-lg bg-purple-50 text-purple-700 border border-purple-200 text-sm">
+                        {CARE_PLAN_CATEGORY_NAMES[cat] || cat}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Period */}
               <div>
@@ -476,7 +478,7 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
               )}
 
               {/* Goals */}
-              {selectedPlan.goal_displays && selectedPlan.goal_displays.length > 0 && (
+              {Array.isArray(selectedPlan.goal_displays) && selectedPlan.goal_displays.length > 0 && (
                 <div>
                   <h3 className="font-semibold text-gray-700 mb-2">Goals</h3>
                   <ul className="space-y-2">
@@ -491,7 +493,7 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
               )}
 
               {/* Conditions Addressed */}
-              {selectedPlan.addresses_condition_displays && selectedPlan.addresses_condition_displays.length > 0 && (
+              {Array.isArray(selectedPlan.addresses_condition_displays) && selectedPlan.addresses_condition_displays.length > 0 && (
                 <div>
                   <h3 className="font-semibold text-gray-700 mb-2">Addresses Conditions</h3>
                   <ul className="space-y-1">
@@ -505,7 +507,7 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
               )}
 
               {/* Activities */}
-              {selectedPlan.activities && selectedPlan.activities.length > 0 && (
+              {Array.isArray(selectedPlan.activities) && selectedPlan.activities.length > 0 && (
                 <div>
                   <h3 className="font-semibold text-gray-700 mb-3">Activities</h3>
                   <div className="space-y-3">
