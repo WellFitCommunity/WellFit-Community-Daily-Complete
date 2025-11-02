@@ -16,9 +16,11 @@ type FormState = {
   roleLabel: string; // labels only (server enforces)
 };
 
-const FUNCTIONS_URL =
-  process.env.REACT_APP_SUPABASE_FUNCTIONS_URL ||
-  `${process.env.REACT_APP_SB_URL || process.env.REACT_APP_SUPABASE_URL}/functions/v1`;
+// Use the dedicated register URL if available, otherwise construct from Supabase URL
+const REGISTER_URL =
+  process.env.REACT_APP_SUPABASE_REGISTER_URL ||
+  (process.env.REACT_APP_SUPABASE_FUNCTIONS_URL && `${process.env.REACT_APP_SUPABASE_FUNCTIONS_URL}/register`) ||
+  `${(process.env.REACT_APP_SB_URL || process.env.REACT_APP_SUPABASE_URL || '').replace('.supabase.co', '.functions.supabase.co')}/functions/v1/register`;
 
 const PUBLIC_ROLES = [
   'Senior',
@@ -219,7 +221,7 @@ const RegisterPage: React.FC = () => {
         hcaptcha_token: token,
       };
 
-      const res = await fetch(`${FUNCTIONS_URL}/register`, {
+      const res = await fetch(REGISTER_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
