@@ -359,87 +359,41 @@ jobs:
           echo "**Next scheduled scan:** Monday at 02:00 UTC" >> $GITHUB_STEP_SUMMARY
 
       # ============================================
-      # Send Email Notification
+      # Send Email Notification via MailerSend
       # ============================================
-      - name: Send email notification
+      - name: Send email notification via MailerSend
         if: always()
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 587
-          username: ${{secrets.MAIL_USERNAME}}
-          password: ${{secrets.MAIL_PASSWORD}}
-          subject: "WellFit Security Scan Report - ${{ job.status }}"
-          to: ${{ env.NOTIFICATION_EMAILS }}
-          from: security-scan@thewellfitcommunity.org
-          body: |
-            Security Scan Status: ${{ job.status }}
+        run: |
+          # Determine status emoji and color
+          if [ "${{ job.status }}" == "success" ]; then
+            STATUS_EMOJI="✅"
+            STATUS_TEXT="SUCCESS"
+            STATUS_COLOR="#28a745"
+          else
+            STATUS_EMOJI="❌"
+            STATUS_TEXT="FAILURE"
+            STATUS_COLOR="#dc3545"
+          fi
 
-            Workflow Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
-            Branch: ${{ github.ref_name }}
-            Commit: ${{ github.sha }}
-            Trigger: ${{ github.event_name }}
-
-            Please review the detailed results in the GitHub Actions workflow summary.
-
-            Time: ${{ github.event.head_commit.timestamp }}
-          html_body: |
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <style>
-                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                .header { background-color: #0066cc; color: white; padding: 20px; text-align: center; }
-                .content { padding: 20px; }
-                .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
-                .success { background-color: #d4edda; border-left: 4px solid #28a745; }
-                .failure { background-color: #f8d7da; border-left: 4px solid #dc3545; }
-                .info { background-color: #d1ecf1; border-left: 4px solid #17a2b8; }
-                .footer { margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
-                a { color: #0066cc; text-decoration: none; }
-                .button { display: inline-block; padding: 10px 20px; margin: 10px 0; background-color: #0066cc; color: white; text-decoration: none; border-radius: 5px; }
-              </style>
-            </head>
-            <body>
-              <div class="header">
-                <h1>🔒 WellFit Security Scan Report</h1>
-              </div>
-              <div class="content">
-                <div class="status ${{ job.status == 'success' && 'success' || 'failure' }}">
-                  <strong>Status:</strong> ${{ job.status == 'success' && '✅ SUCCESS' || '❌ FAILURE' }}
-                </div>
-
-                <div class="info">
-                  <h3>Scan Details</h3>
-                  <ul>
-                    <li><strong>Branch:</strong> ${{ github.ref_name }}</li>
-                    <li><strong>Commit:</strong> <code>${{ github.sha }}</code></li>
-                    <li><strong>Triggered by:</strong> ${{ github.event_name }}</li>
-                    <li><strong>Time:</strong> ${{ github.event.head_commit.timestamp }}</li>
-                  </ul>
-                </div>
-
-                <p>
-                  <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" class="button">
-                    View Full Report →
-                  </a>
-                </p>
-
-                <h3>Next Steps</h3>
-                <ul>
-                  <li>Review the detailed scan results in the GitHub Actions workflow</li>
-                  <li>Address any critical or high-severity findings immediately</li>
-                  <li>Document remediation actions in the security log</li>
-                </ul>
-              </div>
-              <div class="footer">
-                <p><strong>Envision VirtualEdge Group LLC</strong> | WellFit Community Healthcare Platform</p>
-                <p>This is an automated security scan notification. Next scan: Monday at 02:00 UTC</p>
-              </div>
-            </body>
-            </html>
-          priority: high
+          # Send email via MailerSend API
+          curl -X POST "https://api.mailersend.com/v1/email" \
+            -H "Authorization: Bearer ${{ secrets.MAILERSEND_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "from": {
+                "email": "security-scan@thewellfitcommunity.org",
+                "name": "WellFit Security Scan"
+              },
+              "to": [
+                {
+                  "email": "'"${{ env.NOTIFICATION_EMAILS }}"'",
+                  "name": "Security Team"
+                }
+              ],
+              "subject": "WellFit Security Scan Report - '"${{ job.status }}"'",
+              "text": "Security Scan Status: '"${{ job.status }}"'\n\nWorkflow Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\n\nBranch: ${{ github.ref_name }}\nCommit: ${{ github.sha }}\nTrigger: ${{ github.event_name }}\n\nPlease review the detailed results in the GitHub Actions workflow summary.\n\nTime: ${{ github.event.head_commit.timestamp }}",
+              "html": "<!DOCTYPE html><html><head><style>body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }.header { background-color: #0066cc; color: white; padding: 20px; text-align: center; }.content { padding: 20px; }.status { padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid '"$STATUS_COLOR"'; background-color: '"$([ "${{ job.status }}" == "success" ] && echo "#d4edda" || echo "#f8d7da")"'; }.info { background-color: #f8f9fa; padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid #17a2b8; }.footer { margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; text-align: center; }a { color: #0066cc; text-decoration: none; }.button { display: inline-block; padding: 12px 24px; margin: 15px 0; background-color: #0066cc; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; }ul { padding-left: 20px; }li { margin: 8px 0; }code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-family: monospace; }</style></head><body><div class=\"header\"><h1>🔒 WellFit Security Scan Report</h1></div><div class=\"content\"><div class=\"status\"><strong>Status:</strong> '"$STATUS_EMOJI $STATUS_TEXT"'</div><div class=\"info\"><h3>Scan Details</h3><ul><li><strong>Branch:</strong> ${{ github.ref_name }}</li><li><strong>Commit:</strong> <code>${{ github.sha }}</code></li><li><strong>Triggered by:</strong> ${{ github.event_name }}</li><li><strong>Time:</strong> ${{ github.event.head_commit.timestamp }}</li></ul></div><p style=\"text-align: center;\"><a href=\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\" class=\"button\">View Full Report →</a></p><h3>Next Steps</h3><ul><li>Review the detailed scan results in the GitHub Actions workflow</li><li>Address any critical or high-severity findings immediately</li><li>Document remediation actions in the security log</li></ul></div><div class=\"footer\"><p><strong>Envision VirtualEdge Group LLC</strong> | WellFit Community Healthcare Platform</p><p>This is an automated security scan notification. Next scan: Monday at 02:00 UTC</p></div></body></html>"
+            }' || echo "⚠️ Email notification failed, but continuing workflow"
 
       - name: Fail job if critical issues found
         if: always()
