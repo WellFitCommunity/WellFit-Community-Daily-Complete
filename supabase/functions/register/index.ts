@@ -269,7 +269,9 @@ resource_type: 'auth_event',
     // Send SMS verification code via Twilio
     let smsSent = false;
     try {
-      const smsResponse = await fetch(`${SB_URL}/functions/v1/sms-send-code`, {
+      // Use functions subdomain for edge function calls
+      const functionsUrl = SB_URL.replace('.supabase.co', '.functions.supabase.co');
+      const smsResponse = await fetch(`${functionsUrl}/functions/v1/sms-send-code`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
