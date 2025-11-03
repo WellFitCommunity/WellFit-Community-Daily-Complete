@@ -137,7 +137,8 @@ serve(async (req: Request) => {
     // Verify hCaptcha
     const captchaValid = await verifyHcaptcha(payload.hcaptcha_token);
     if (!captchaValid) {
-      console.error("[register] hCaptcha verification failed for token:", payload.hcaptcha_token?.substring(0, 20) + "...");
+      // Note: Removed console.error to fix false positive in secret detection scan
+      // hCaptcha failure is already logged via HIPAA audit logger below
 
       // HIPAA AUDIT LOGGING: Log failed hCaptcha verification
       const supabase = createClient(SB_URL, SB_SECRET_KEY);
