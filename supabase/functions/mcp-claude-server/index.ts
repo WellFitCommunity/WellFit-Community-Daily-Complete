@@ -6,9 +6,7 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import Anthropic from "npm:@anthropic-ai/sdk@0.63.1";
-import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 
 // Environment
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;

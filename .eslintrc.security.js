@@ -67,12 +67,13 @@ module.exports = {
       }
     },
     {
-      // Test files - more lenient
+      // Test files - more lenient (testing XSS vectors requires unsafe strings)
       files: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx', '**/test/**', '**/__tests__/**'],
       rules: {
         '@typescript-eslint/no-explicit-any': 'off',
         '@typescript-eslint/no-non-null-assertion': 'off',
-        'security/detect-object-injection': 'off'
+        'security/detect-object-injection': 'off',
+        'no-script-url': 'off' // Test files legitimately test XSS vectors
       }
     }
   ]

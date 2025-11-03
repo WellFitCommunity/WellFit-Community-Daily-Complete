@@ -22,13 +22,12 @@ describe('Role Permission Integration Tests', () => {
 
         const testUserId = 'test-super-admin-id'; // Mock user ID
 
-        const { data, error } = await supabase.rpc('get_role_access_scopes', {
+        const { data: _data, error } = await supabase.rpc('get_role_access_scopes', {
           check_user_id: testUserId,
         });
 
         if (error && error.message.includes('not found')) {
           // Test user doesn't exist - that's okay for CI/CD
-          console.log('Test user not found - skipping');
           return;
         }
 
@@ -48,7 +47,7 @@ describe('Role Permission Integration Tests', () => {
         const testUserId = 'test-user-id';
         const requiredRole = 'nurse';
 
-        const { data, error } = await supabase.rpc('user_has_role', {
+        const { data: _data, error } = await supabase.rpc('user_has_role', {
           check_user_id: testUserId,
           required_role: requiredRole,
         });
@@ -68,7 +67,7 @@ describe('Role Permission Integration Tests', () => {
         const testUserId = 'test-user-id';
         const requiredRoles: StaffRole[] = ['nurse', 'physician', 'nurse_practitioner'];
 
-        const { data, error } = await supabase.rpc('user_has_any_role', {
+        const { data: _data, error } = await supabase.rpc('user_has_any_role', {
           check_user_id: testUserId,
           required_roles: requiredRoles,
         });
@@ -88,7 +87,7 @@ describe('Role Permission Integration Tests', () => {
         const testUserId = 'test-user-id';
         const targetDepartment = 'nursing';
 
-        const { data, error } = await supabase.rpc('user_can_access_department', {
+        const { data: _data, error } = await supabase.rpc('user_can_access_department', {
           check_user_id: testUserId,
           target_department: targetDepartment,
         });
@@ -107,15 +106,10 @@ describe('Role Permission Integration Tests', () => {
   skipIfNoSupabase('Table Structure', () => {
     describe('user_roles table', () => {
       it('should have correct schema', async () => {
-        const { data, error } = await supabase
+        const { data: _data, error } = await supabase
           .from('user_roles')
           .select('*')
           .limit(1);
-
-        // Empty table is okay
-        if (error) {
-          console.error('Error querying user_roles:', error);
-        }
 
         // Just verify the query works - table exists
         expect(error).toBeNull();
@@ -124,7 +118,7 @@ describe('Role Permission Integration Tests', () => {
 
     describe('staff_pins table', () => {
       it('should exist and be queryable', async () => {
-        const { data, error } = await supabase
+        const { data: _data, error } = await supabase
           .from('staff_pins')
           .select('user_id, role')
           .limit(1);
@@ -136,7 +130,7 @@ describe('Role Permission Integration Tests', () => {
 
     describe('staff_auth_attempts table', () => {
       it('should exist for audit logging', async () => {
-        const { data, error } = await supabase
+        const { data: _data, error } = await supabase
           .from('staff_auth_attempts')
           .select('id')
           .limit(1);
@@ -151,7 +145,7 @@ describe('Role Permission Integration Tests', () => {
 
     describe('staff_audit_log table', () => {
       it('should exist for action auditing', async () => {
-        const { data, error } = await supabase
+        const { data: _data, error } = await supabase
           .from('staff_audit_log')
           .select('id')
           .limit(1);
@@ -181,7 +175,7 @@ describe('Role Permission Integration Tests', () => {
 
       // We can't actually insert without a valid user_id, but we can verify
       // the role enum accepts these values by checking constraint metadata
-      const { data, error } = await supabase
+      const { data: _data, error } = await supabase
         .from('user_roles')
         .select('role')
         .limit(1);
@@ -196,7 +190,7 @@ describe('Edge Function Integration Tests', () => {
 
   skipIfNoSupabase('verify-admin-pin function', () => {
     it('should reject invalid PIN format', async () => {
-      const { data, error } = await supabase.functions.invoke('verify-admin-pin', {
+      const { data: _data, error } = await supabase.functions.invoke('verify-admin-pin', {
         body: {
           pin: 'abc', // Invalid - must be digits
           role: 'nurse',
@@ -218,7 +212,7 @@ describe('Edge Function Integration Tests', () => {
       ];
 
       for (const role of validRoles) {
-        const { data, error } = await supabase.functions.invoke('verify-admin-pin', {
+        const { data: _data, error } = await supabase.functions.invoke('verify-admin-pin', {
           body: {
             pin: '1234',
             role: role,
@@ -238,7 +232,7 @@ describe('Edge Function Integration Tests', () => {
       const validRoles: StaffRole[] = ['nurse', 'physician', 'nurse_practitioner', 'physician_assistant'];
 
       for (const role of validRoles) {
-        const { data, error } = await supabase.functions.invoke('admin_set_pin', {
+        const { data: _data, error } = await supabase.functions.invoke('admin_set_pin', {
           body: {
             pin: '1234',
             role: role,
