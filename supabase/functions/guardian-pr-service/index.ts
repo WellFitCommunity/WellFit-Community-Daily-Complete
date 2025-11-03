@@ -16,11 +16,7 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createAdminClient } from '../_shared/supabaseClient.ts'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { corsFromRequest, handleOptions } from '../_shared/cors.ts'
 
 interface CodeChange {
   filePath: string;
@@ -58,7 +54,18 @@ interface GitHubPRResponse {
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return handleOptions(req)
+  }
+
+  // Get CORS headers for this origin
+  const { headers: corsHeaders, allowed } = corsFromRequest(req);
+
+  // Reject requests from unauthorized origins
+  if (!allowed) {
+    return new Response(JSON.stringify({ error: "Origin not allowed" }), {
+      status: 403,
+      headers: corsHeaders,
+    });
   }
 
   try {
@@ -85,21 +92,21 @@ serve(async (req) => {
       case 'create_pr': {
         const result = await createPullRequest(supabase, githubToken, githubOwner, githubRepo, data)
         return new Response(JSON.stringify(result), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: corsHeaders,
         })
       }
 
       case 'get_pr_status': {
         const status = await getPRStatus(githubToken, githubOwner, githubRepo, data.prNumber)
         return new Response(JSON.stringify(status), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: corsHeaders,
         })
       }
 
       case 'merge_pr': {
         const mergeResult = await mergePR(supabase, githubToken, githubOwner, githubRepo, data.prNumber)
         return new Response(JSON.stringify(mergeResult), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: corsHeaders,
         })
       }
 
@@ -114,7 +121,7 @@ serve(async (req) => {
       }),
       {
         status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: corsHeaders,
       }
     )
   }

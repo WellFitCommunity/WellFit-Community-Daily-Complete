@@ -4,11 +4,7 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createAdminClient, batchQueries } from '../_shared/supabaseClient.ts'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { corsFromRequest, handleOptions } from '../_shared/cors.ts'
 
 interface GuardianEyesSnapshot {
   timestamp: string;
@@ -31,7 +27,18 @@ interface SecurityAlert {
 serve(async (req) => {
   // Handle CORS
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return handleOptions(req)
+  }
+
+  // Get CORS headers for this origin
+  const { headers: corsHeaders, allowed } = corsFromRequest(req);
+
+  // Reject requests from unauthorized origins
+  if (!allowed) {
+    return new Response(JSON.stringify({ error: "Origin not allowed" }), {
+      status: 403,
+      headers: corsHeaders,
+    });
   }
 
   try {
@@ -44,7 +51,7 @@ serve(async (req) => {
         // Run system monitoring checks
         const alerts = await runMonitoringChecks(supabase)
         return new Response(JSON.stringify({ success: true, alerts }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: corsHeaders,
         })
 
       case 'record':
@@ -52,21 +59,21 @@ serve(async (req) => {
         const snapshot = data as GuardianEyesSnapshot
         await recordSnapshot(supabase, snapshot)
         return new Response(JSON.stringify({ success: true }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: corsHeaders,
         })
 
       case 'analyze':
         // Analyze recent recordings for patterns
         const analysis = await analyzeRecordings(supabase)
         return new Response(JSON.stringify({ success: true, analysis }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: corsHeaders,
         })
 
       case 'heal':
         // Auto-heal detected issues
         const healingResult = await autoHeal(supabase, data.alertId)
         return new Response(JSON.stringify({ success: true, result: healingResult }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: corsHeaders,
         })
 
       default:
@@ -75,7 +82,7 @@ serve(async (req) => {
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), {
       status: 400,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: corsHeaders,
     })
   }
 })

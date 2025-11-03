@@ -4,6 +4,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -29,14 +30,19 @@ interface DrugInteractionResponse {
 
 serve(async (req) => {
   try {
-    // CORS headers
+    // Handle preflight OPTIONS request
     if (req.method === "OPTIONS") {
-      return new Response("ok", {
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "POST",
-          "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-        },
+      return handleOptions(req, { methods: ["POST"] });
+    }
+
+    // Get CORS headers for this origin
+    const { headers: corsHeaders, allowed } = corsFromRequest(req);
+
+    // Reject requests from unauthorized origins
+    if (!allowed) {
+      return new Response(JSON.stringify({ error: "Origin not allowed" }), {
+        status: 403,
+        headers: corsHeaders,
       });
     }
 
@@ -254,14 +260,12 @@ serve(async (req) => {
       } as DrugInteractionResponse),
       {
         status: 200,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
+        headers: corsHeaders,
       }
     );
   } catch (error) {
     console.error("Drug interaction check error:", error);
+    const { headers: corsHeaders } = corsFromRequest(req);
     return new Response(
       JSON.stringify({
         error: "Failed to check drug interactions",
@@ -269,10 +273,7 @@ serve(async (req) => {
       }),
       {
         status: 500,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
+        headers: corsHeaders,
       }
     );
   }
