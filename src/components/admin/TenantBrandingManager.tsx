@@ -369,7 +369,7 @@ const TenantBrandingManager: React.FC = () => {
           {/* Save Button */}
           <div className="flex justify-end gap-4">
             <button
-              onClick={() => loadTenantBranding(selectedTenantId!)}
+              onClick={() => selectedTenantId && loadTenantBranding(selectedTenantId)}
               className="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
               disabled={saving}
             >

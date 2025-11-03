@@ -380,8 +380,8 @@ export class EpicFHIRAdapter implements EHRAdapter {
       },
       body: new URLSearchParams({
         grant_type: 'client_credentials',
-        client_id: config.clientId!,
-        client_secret: config.clientSecret,
+        client_id: config.clientId || '',
+        client_secret: config.clientSecret || '',
         scope: 'system/*.read', // Epic backend services scope
       }),
     });
@@ -444,7 +444,7 @@ export class EpicFHIRAdapter implements EHRAdapter {
       body: new URLSearchParams({
         grant_type: 'refresh_token',
         refresh_token: this.refreshToken,
-        client_id: this.config.clientId!,
+        client_id: this.config.clientId || '',
       }),
     });
 
@@ -479,7 +479,7 @@ export class EpicFHIRAdapter implements EHRAdapter {
         },
         body: new URLSearchParams({
           token: this.authToken.replace('Bearer ', ''),
-          client_id: this.config.clientId!,
+          client_id: this.config.clientId || '',
         }),
       });
 
@@ -566,7 +566,6 @@ export class EpicFHIRAdapter implements EHRAdapter {
       const resetTime = new Date(this.requestWindowStart.getTime() + 60 * 60 * 1000);
       const waitMs = resetTime.getTime() - now.getTime();
 
-      console.warn(`[Epic] Rate limit reached. Waiting ${Math.ceil(waitMs / 1000)}s...`);
       await new Promise(resolve => setTimeout(resolve, waitMs));
 
       // Reset after waiting

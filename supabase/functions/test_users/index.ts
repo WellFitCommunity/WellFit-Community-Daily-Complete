@@ -6,9 +6,9 @@ import { createClient, type PostgrestError } from "https://esm.sh/@supabase/supa
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 
 // Environment (set in Supabase dashboard -> Functions)
-const SERVICE_URL = Deno.env.get("SERVICE_URL")!;
-const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY")!;
-const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+const SERVICE_URL = Deno.env.get("SERVICE_URL");
+const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY");
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
 
 type CreateBody = {
   email?: string;

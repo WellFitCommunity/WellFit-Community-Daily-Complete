@@ -864,21 +864,21 @@ export class FHIRIntegrationService {
 
       // Add purpose as note
       if (medication.purpose) {
-        statement.note!.push({
+        statement.note?.push({
           text: `Purpose: ${medication.purpose}`
         });
       }
 
       // Add side effects as note
       if (medication.side_effects && medication.side_effects.length > 0) {
-        statement.note!.push({
+        statement.note?.push({
           text: `Side effects: ${medication.side_effects.join(', ')}`
         });
       }
 
       // Add warnings as note
       if (medication.warnings && medication.warnings.length > 0) {
-        statement.note!.push({
+        statement.note?.push({
           text: `Warnings: ${medication.warnings.join(', ')}`
         });
       }

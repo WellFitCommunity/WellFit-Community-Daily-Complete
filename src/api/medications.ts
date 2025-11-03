@@ -372,7 +372,7 @@ export async function extractMedicationFromImage(
         // Link extraction to medication
         await supabase
           .from('medication_image_extractions')
-          .update({ medication_id: createResult.data!.id })
+          .update({ medication_id: createResult.data?.id })
           .eq('user_id', userId)
           .is('medication_id', null)
           .order('created_at', { ascending: false })
@@ -452,7 +452,7 @@ export async function confirmMedication(
       // Link extraction to medication
       await supabase
         .from('medication_image_extractions')
-        .update({ medication_id: result.data!.id })
+        .update({ medication_id: result.data?.id })
         .eq('id', extractionId);
     }
 

@@ -120,15 +120,15 @@ interface DailyHealthLog {
 }
 
 interface DailyAggregates {
-  bloodPressure: { systolic: number | null; diastolic: number | null; count: number } | null;
-  heartRate: { avg: number | null; min: number | null; max: number | null; count: number } | null;
-  bloodSugar: { avg: number | null; min: number | null; max: number | null; count: number } | null;
-  bloodOxygen: { avg: number | null; min: number | null; max: number | null; count: number } | null;
-  weight: { avg: number | null; count: number } | null;
-  mood: { predominant: string | null; entries: string[] } | null;
-  physicalActivity: { entries: string[] } | null;
-  socialEngagement: { entries: string[] } | null;
-  symptoms: { entries: string[] } | null;
+  bloodPressure: { systolic: number | null; diastolic: number | null; count: number };
+  heartRate: { avg: number | null; min: number | null; max: number | null; count: number };
+  bloodSugar: { avg: number | null; min: number | null; max: number | null; count: number };
+  bloodOxygen: { avg: number | null; min: number | null; max: number | null; count: number };
+  weight: { avg: number | null; count: number };
+  mood: { predominant: string | null; entries: string[] };
+  physicalActivity: { entries: string[] };
+  socialEngagement: { entries: string[] };
+  symptoms: { entries: string[] };
 }
 
 interface WeeklyHealthSummary {
@@ -1052,8 +1052,10 @@ export class FhirAiService {
         });
       }
 
-      const log = dailyLogs.get(dateStr)!;
-      log.readings.push(entry);
+      const log = dailyLogs.get(dateStr);
+      if (log) {
+        log.readings.push(entry);
+      }
     }
 
     // Calculate aggregates for each day
@@ -1079,7 +1081,7 @@ export class FhirAiService {
       const weekEnd = Math.min(weekStart + 7, sortedDates.length);
       const weekDates = sortedDates.slice(weekStart, weekEnd);
 
-      const weeklyData = weekDates.map(date => dailyLogs.get(date)!);
+      const weeklyData = weekDates.map(date => dailyLogs.get(date)).filter((log): log is DailyHealthLog => log !== undefined);
       const weekSummary = this.calculateWeeklySummary(weeklyData, weekDates[0], weekDates[weekDates.length - 1]);
 
       weeklySummaries.push(weekSummary);
@@ -1168,55 +1170,55 @@ export class FhirAiService {
       if (reading.mood) moods.push(reading.mood);
 
       // Activities
-      if (reading.physical_activity) aggregates.physicalActivity!.entries.push(reading.physical_activity);
-      if (reading.social_engagement) aggregates.socialEngagement!.entries.push(reading.social_engagement);
+      if (reading.physical_activity) aggregates.physicalActivity.entries.push(reading.physical_activity);
+      if (reading.social_engagement) aggregates.socialEngagement.entries.push(reading.social_engagement);
 
       // Symptoms and notes
-      if (reading.symptoms) aggregates.symptoms!.entries.push(reading.symptoms);
-      if (reading.activity_description) aggregates.symptoms!.entries.push(reading.activity_description);
+      if (reading.symptoms) aggregates.symptoms.entries.push(reading.symptoms);
+      if (reading.activity_description) aggregates.symptoms.entries.push(reading.activity_description);
     }
 
     // Calculate blood pressure
     if (bpSystolic.length > 0 && bpDiastolic.length > 0) {
-      aggregates.bloodPressure!.systolic = Math.round(this.average(bpSystolic));
-      aggregates.bloodPressure!.diastolic = Math.round(this.average(bpDiastolic));
-      aggregates.bloodPressure!.count = Math.min(bpSystolic.length, bpDiastolic.length);
+      aggregates.bloodPressure.systolic = Math.round(this.average(bpSystolic));
+      aggregates.bloodPressure.diastolic = Math.round(this.average(bpDiastolic));
+      aggregates.bloodPressure.count = Math.min(bpSystolic.length, bpDiastolic.length);
     }
 
     // Calculate heart rate
     if (heartRates.length > 0) {
-      aggregates.heartRate!.avg = Math.round(this.average(heartRates));
-      aggregates.heartRate!.min = Math.min(...heartRates);
-      aggregates.heartRate!.max = Math.max(...heartRates);
-      aggregates.heartRate!.count = heartRates.length;
+      aggregates.heartRate.avg = Math.round(this.average(heartRates));
+      aggregates.heartRate.min = Math.min(...heartRates);
+      aggregates.heartRate.max = Math.max(...heartRates);
+      aggregates.heartRate.count = heartRates.length;
     }
 
     // Calculate blood sugar
     if (bloodSugars.length > 0) {
-      aggregates.bloodSugar!.avg = Math.round(this.average(bloodSugars));
-      aggregates.bloodSugar!.min = Math.min(...bloodSugars);
-      aggregates.bloodSugar!.max = Math.max(...bloodSugars);
-      aggregates.bloodSugar!.count = bloodSugars.length;
+      aggregates.bloodSugar.avg = Math.round(this.average(bloodSugars));
+      aggregates.bloodSugar.min = Math.min(...bloodSugars);
+      aggregates.bloodSugar.max = Math.max(...bloodSugars);
+      aggregates.bloodSugar.count = bloodSugars.length;
     }
 
     // Calculate blood oxygen
     if (bloodOxygens.length > 0) {
-      aggregates.bloodOxygen!.avg = Math.round(this.average(bloodOxygens));
-      aggregates.bloodOxygen!.min = Math.min(...bloodOxygens);
-      aggregates.bloodOxygen!.max = Math.max(...bloodOxygens);
-      aggregates.bloodOxygen!.count = bloodOxygens.length;
+      aggregates.bloodOxygen.avg = Math.round(this.average(bloodOxygens));
+      aggregates.bloodOxygen.min = Math.min(...bloodOxygens);
+      aggregates.bloodOxygen.max = Math.max(...bloodOxygens);
+      aggregates.bloodOxygen.count = bloodOxygens.length;
     }
 
     // Calculate weight
     if (weights.length > 0) {
-      aggregates.weight!.avg = parseFloat(this.average(weights).toFixed(1));
-      aggregates.weight!.count = weights.length;
+      aggregates.weight.avg = parseFloat(this.average(weights).toFixed(1));
+      aggregates.weight.count = weights.length;
     }
 
     // Calculate mood
     if (moods.length > 0) {
-      aggregates.mood!.predominant = this.getMostFrequent(moods);
-      aggregates.mood!.entries = moods;
+      aggregates.mood.predominant = this.getMostFrequent(moods);
+      aggregates.mood.entries = moods;
     }
 
     return aggregates;

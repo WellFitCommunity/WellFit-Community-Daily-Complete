@@ -167,7 +167,7 @@ export class TokenAuthenticator {
       },
     };
 
-    // Store in memory cache (never localStorage!)
+    // Store in memory cache (never localStorage)
     const cacheKey = this.getCacheKey(params.action.id, params.issue.id);
     this.tokenCache.set(cacheKey, claims);
 

@@ -430,7 +430,7 @@ export class UnifiedBillingService {
           if (finalCoding.cptCodes) {
             for (const cpt of finalCoding.cptCodes) {
               const line = await BillingService.addClaimLine({
-                claim_id: claim!.id,
+                claim_id: claim?.id,
                 code_system: 'CPT',
                 procedure_code: cpt.code,
                 modifiers: cpt.modifiers || [],
@@ -641,13 +641,13 @@ export class UnifiedBillingService {
       presentingDiagnoses: input.diagnoses
         .filter(d => d.term) // Filter out entries without term
         .map(d => ({
-          term: d.term!,
+          term: d.term,
           icd10Code: d.icd10Code
         })),
       proceduresPerformed: (input.procedures || [])
         .filter(p => p.description) // Filter out entries without description
         .map(p => ({
-          description: p.description!,
+          description: p.description,
           cptCode: p.cptCode
         })),
       timeSpent: input.timeSpent,

@@ -31,7 +31,7 @@ declare namespace NodeJS {
     FIREBASE_MEASUREMENT_ID?: string;
 
     SB_PUBLISHABLE_API_KEY?: string;  // frontend anon/publishable key
-    SB_SECRET_KEY?: string;           // backend service role key (server only!)
+    SB_SECRET_KEY?: string;           // backend service role key (server only)
 
     // Legacy naming (still supported for CRA / fallbacks)
     REACT_APP_SUPABASE_ANON_KEY?: string;

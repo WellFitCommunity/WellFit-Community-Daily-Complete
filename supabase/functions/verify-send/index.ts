@@ -1,9 +1,9 @@
 // Deno Edge Function (Supabase) - Send verification code via Twilio Verify
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
-const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID")!;
-const TWILIO_AUTH_TOKEN  = Deno.env.get("TWILIO_AUTH_TOKEN")!;
-const VERIFY_SID         = Deno.env.get("TWILIO_VERIFY_SERVICE_SID")!;
+const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
+const TWILIO_AUTH_TOKEN  = Deno.env.get("TWILIO_AUTH_TOKEN");
+const VERIFY_SID         = Deno.env.get("TWILIO_VERIFY_SERVICE_SID");
 
 // CORS Configuration - Explicit allowlist for security
 const ALLOWED_ORIGINS = [

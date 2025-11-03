@@ -299,7 +299,7 @@ export default function UserQuestions({
                     <div className="text-sm text-blue-600 font-medium mb-1">Care Team Response:</div>
                     <p className="text-gray-800">{question.response_text}</p>
                     <div className="text-xs text-gray-500 mt-1">
-                      Responded: {formatDate(question.responded_at!)}
+                      Responded: {formatDate(question.responded_at)}
                     </div>
                   </div>
                 )}

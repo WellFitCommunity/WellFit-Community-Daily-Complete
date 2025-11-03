@@ -82,7 +82,7 @@ export class SMARTClient {
       code_challenge_method: this.config.codeChallengeMethod
     });
 
-    return `${this.endpoints!.authorization}?${params.toString()}`;
+    return `${this.endpoints?.authorization}?${params.toString()}`;
   }
 
   // Exchange authorization code for access token
@@ -100,7 +100,7 @@ export class SMARTClient {
       await this.discoverEndpoints();
     }
 
-    const response = await fetch(this.endpoints!.token, {
+    const response = await fetch(this.endpoints?.token, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -139,7 +139,7 @@ export class SMARTClient {
       await this.discoverEndpoints();
     }
 
-    const response = await fetch(`${this.endpoints!.fhirBase}/Patient/${patientId}`, {
+    const response = await fetch(`${this.endpoints?.fhirBase}/Patient/${patientId}`, {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Accept': 'application/fhir+json'

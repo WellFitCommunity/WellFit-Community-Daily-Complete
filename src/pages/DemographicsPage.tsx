@@ -228,7 +228,7 @@ const DemographicsPage: React.FC = () => {
           demographics_step: currentStep, // Save current step
           demographics_complete: false // Not finished yet
         })
-        .eq('user_id', user!.id);
+        .eq('user_id', user?.id);
 
       if (profileError) throw profileError;
 
@@ -255,7 +255,7 @@ const DemographicsPage: React.FC = () => {
           demographics_step: 0, // Mark as skipped
           demographics_complete: false
         })
-        .eq('user_id', user!.id);
+        .eq('user_id', user?.id);
 
       if (profileError) throw profileError;
 
@@ -309,7 +309,7 @@ const DemographicsPage: React.FC = () => {
           demographics_complete: true,
           demographics_step: null // Clear step since completed
         })
-        .eq('user_id', user!.id);
+        .eq('user_id', user?.id);
 
       if (profileError) throw profileError;
 

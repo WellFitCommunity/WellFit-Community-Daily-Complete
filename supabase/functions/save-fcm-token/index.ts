@@ -25,8 +25,8 @@ async function getAuthenticatedUser(req: Request, supabaseClient: SupabaseClient
   }
   // Re-create client with the user's token to get their session
   const userSupabaseClient = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_ANON_KEY')!,
+    Deno.env.get('SUPABASE_URL'),
+    Deno.env.get('SUPABASE_ANON_KEY'),
     { global: { headers: { Authorization: authHeader } } }
   );
   const { data: { user }, error } = await userSupabaseClient.auth.getUser();
@@ -71,9 +71,8 @@ serve(async (req) => {
 
     // Use service role client for database operations
     const serviceRoleClient = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
+      Deno.env.get('SUPABASE_URL'),
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'));
 
     // Get authenticated user ID
     const user = await getAuthenticatedUser(req, serviceRoleClient);

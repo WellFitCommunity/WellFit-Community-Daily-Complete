@@ -142,7 +142,7 @@ export class PillIdentifierService {
     if (this.apiKey) {
       loadAnthropicSDK().then((Anthropic: any) => {
         this.anthropic = new Anthropic({
-          apiKey: this.apiKey!,
+          apiKey: this.apiKey,
           dangerouslyAllowBrowser: true
         });
       });

@@ -8,8 +8,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const DAILY_API_KEY = Deno.env.get("DAILY_API_KEY");
 const DAILY_API_URL = "https://api.daily.co/v1";
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
 if (!DAILY_API_KEY) {
   throw new Error("DAILY_API_KEY not configured");

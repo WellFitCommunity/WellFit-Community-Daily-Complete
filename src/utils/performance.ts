@@ -22,7 +22,7 @@ export class PerformanceMonitor {
         this.metrics.set(componentName, []);
       }
 
-      const times = this.metrics.get(componentName)!;
+      const times = this.metrics.get(componentName);
       times.push(renderTime);
 
       // Keep only last 100 measurements

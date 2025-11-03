@@ -328,9 +328,9 @@ export function useSmartRecording() {
  * - TOTAL: ~$144/month
  *
  * WITH Smart Recording (1% sampling + errors only):
- * - Storage: 0.93 GB/month × $0.021/GB = $0.02/month (99.5% savings!)
- * - DB Writes: 186K/month × $0.000025 = $4.65/month (94.8% savings!)
- * - AI (Claude Haiku 3.5): 186K sessions × 1K tokens × $0.25/1M = $0.05/month (99.9% savings!)
+ * - Storage: 0.93 GB/month × $0.021/GB = $0.02/month (99.5% savings)
+ * - DB Writes: 186K/month × $0.000025 = $4.65/month (94.8% savings)
+ * - AI (Claude Haiku 3.5): 186K sessions × 1K tokens × $0.25/1M = $0.05/month (99.9% savings)
  * - TOTAL: ~$4.72/month
  *
  * 🎉 TOTAL SAVINGS: 96.7% ($144 → $4.72)

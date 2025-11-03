@@ -109,7 +109,9 @@ export const FHIRConflictResolution: React.FC = () => {
       if (updateError) throw updateError;
 
       // Apply the resolution
-      await applyResolution(selectedConflict!, action);
+      if (selectedConflict) {
+        await applyResolution(selectedConflict, action);
+      }
 
       // Log audit event
       await supabase.from('audit_logs').insert({

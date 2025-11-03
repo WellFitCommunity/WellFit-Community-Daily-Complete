@@ -38,8 +38,8 @@ serve(async (req: Request) => {
     }
 
     // ✅ SB_* env names (no "supabase" in names)
-    const SB_URL = Deno.env.get("SB_URL")!;
-    const SB_ANON_KEY = Deno.env.get("SB_ANON_KEY")!;
+    const SB_URL = Deno.env.get("SB_URL");
+    const SB_ANON_KEY = Deno.env.get("SB_ANON_KEY");
     const sb = createClient(SB_URL, SB_ANON_KEY, {
       global: { headers: { Authorization: auth } },
     });

@@ -81,7 +81,7 @@ const ImmunizationTimeline: React.FC<ImmunizationTimelineProps> = ({ userId, onB
     if (!dateMap.has(dateKey)) {
       dateMap.set(dateKey, []);
     }
-    dateMap.get(dateKey)!.push(imm);
+    dateMap.get(dateKey)?.push(imm);
   });
 
   dateMap.forEach((imms, date) => {

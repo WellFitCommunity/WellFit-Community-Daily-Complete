@@ -19,11 +19,10 @@ const logger = createLogger("send-checkin-reminders");
 validateEnvVars(["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "FCM_SERVER_KEY"]);
 
 const supabase = createClient<DatabaseTypes>(
-  Deno.env.get("SUPABASE_URL")!,
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-);
+  Deno.env.get("SUPABASE_URL"),
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
 
-const FCM_SERVER_KEY = Deno.env.get("FCM_SERVER_KEY")!;
+const FCM_SERVER_KEY = Deno.env.get("FCM_SERVER_KEY");
 
 // --- Helpers ---
 type TokenRow = {
@@ -136,7 +135,7 @@ serve(async () => {
 
     // Prepare tokens and a log map: index → { userId, token }
     const validRows = rows.filter((r) => !!r.token);
-    const tokens = validRows.map((r) => r.token!) as string[];
+    const tokens = validRows.map((r) => r.token) as string[];
     const batches = chunk(tokens, MAX_TOKENS_PER_BATCH);
 
     logger.info("Prepared tokens", { totalTokens: tokens.length, batches: batches.length });
@@ -172,7 +171,7 @@ serve(async () => {
             code === "InvalidRegistration" ||
             code === "MismatchSenderId"
           ) {
-            await removeInvalidToken(row.user_id, row.token!);
+            await removeInvalidToken(row.user_id, row.token);
             removedTokenCount++;
           }
         }

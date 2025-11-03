@@ -28,11 +28,10 @@ class InactivityReminderService {
     validateEnvVars(["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "FCM_SERVER_KEY"]);
 
     this.supabase = createClient<DatabaseTypes>(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+      Deno.env.get("SUPABASE_URL"),
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
 
-    this.fcmServerKey = Deno.env.get("FCM_SERVER_KEY")!;
+    this.fcmServerKey = Deno.env.get("FCM_SERVER_KEY");
   }
 
   async findInactiveUsers(): Promise<

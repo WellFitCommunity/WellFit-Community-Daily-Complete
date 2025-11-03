@@ -19,9 +19,8 @@ const logger = createLogger("notify-stale-checkins");
 validateEnvVars(["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"]);
 
 const supabase = createClient<DatabaseTypes>(
-  Deno.env.get("SUPABASE_URL")!,
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-);
+  Deno.env.get("SUPABASE_URL"),
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
 
 type StaleRow = { user_id: string; last_checkin: string | null };
 type Profile = { full_name: string | null; emergency_email: string | null };

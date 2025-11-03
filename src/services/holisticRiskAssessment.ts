@@ -229,7 +229,7 @@ export async function calculateVitalsRisk(
 
     // Weight trend analysis (if multiple readings)
     if (data.length >= 3) {
-      const weights = data.slice(0, 3).filter(r => r.weight).map(r => r.weight!);
+      const weights = data.slice(0, 3).filter(r => r.weight).map(r => r.weight);
       if (weights.length >= 2) {
         const weightChange = Math.abs(weights[0] - weights[weights.length - 1]);
         const percentChange = (weightChange / weights[weights.length - 1]) * 100;

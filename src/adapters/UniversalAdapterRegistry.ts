@@ -95,7 +95,6 @@ export class UniversalAdapterRegistry {
    * Register a new adapter implementation
    */
   registerAdapter(metadata: AdapterMetadata, AdapterClass: new () => EHRAdapter) {
-    console.log(`[Registry] Registering adapter: ${metadata.name} (${metadata.id})`);
     this.adapters.set(metadata.id, AdapterClass);
   }
 
@@ -289,9 +288,11 @@ export async function testAdapter(adapterId: string, config: AdapterConfig): Pro
     return;
   }
 
-  const adapter = result.connection!;
+  const adapter = result.connection;
 
-
+  if (!adapter) {
+    return;
+  }
 
   Object.entries(adapter.metadata.capabilities).forEach(([key, value]) => {
 
@@ -300,7 +301,6 @@ export async function testAdapter(adapterId: string, config: AdapterConfig): Pro
   // Try fetching a sample patient
   try {
     const patients = await adapter.fetchPatients({ limit: 1 });
-    console.log(`✅ Sample data fetch successful (${patients.length} patients)`);
   } catch (error: any) {
 
   }

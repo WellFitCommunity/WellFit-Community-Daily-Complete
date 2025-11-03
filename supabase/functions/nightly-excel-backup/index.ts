@@ -40,12 +40,11 @@ class BackupService {
     validateEnvVars(["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "BACKUP_BUCKET", "BACKUP_PATH_PREFIX"]);
 
     this.supabase = createClient<DatabaseTypes>(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+      Deno.env.get("SUPABASE_URL"),
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
 
-    this.backupBucket = Deno.env.get("BACKUP_BUCKET")!;
-    this.backupPathPrefix = Deno.env.get("BACKUP_PATH_PREFIX")!;
+    this.backupBucket = Deno.env.get("BACKUP_BUCKET");
+    this.backupPathPrefix = Deno.env.get("BACKUP_PATH_PREFIX");
     this.mailerSendApiKey = Deno.env.get("MAILERSEND_API_KEY");
     this.adminEmails = (Deno.env.get("ADMIN_EMAILS") || "").split(",").map((s) => s.trim()).filter(Boolean);
   }

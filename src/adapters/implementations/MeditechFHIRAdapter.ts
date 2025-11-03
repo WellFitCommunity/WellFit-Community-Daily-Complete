@@ -89,7 +89,6 @@ export class MeditechFHIRAdapter implements EHRAdapter {
 
     this.status = 'connected';
 
-    console.log(`[Meditech] Platform: ${this.config.platform.toUpperCase()}, Environment: ${this.config.environment || 'production'}`);
   }
 
   async test(): Promise<{ success: boolean; message: string; details?: any }> {
@@ -321,8 +320,8 @@ export class MeditechFHIRAdapter implements EHRAdapter {
       },
       body: new URLSearchParams({
         grant_type: 'client_credentials',
-        client_id: config.clientId,
-        client_secret: config.clientSecret,
+        client_id: config.clientId || '',
+        client_secret: config.clientSecret || '',
         scope: 'patient/*.read user/*.read', // Meditech SMART scopes
       }),
     });
@@ -361,8 +360,8 @@ export class MeditechFHIRAdapter implements EHRAdapter {
       body: new URLSearchParams({
         grant_type: 'refresh_token',
         refresh_token: this.refreshToken,
-        client_id: this.config.clientId!,
-        client_secret: this.config.clientSecret!,
+        client_id: this.config.clientId || '',
+        client_secret: this.config.clientSecret || '',
       }),
     });
 
@@ -448,7 +447,6 @@ export class MeditechFHIRAdapter implements EHRAdapter {
       const resetTime = new Date(this.requestWindowStart.getTime() + 60 * 60 * 1000);
       const waitMs = resetTime.getTime() - now.getTime();
 
-      console.warn(`[Meditech] Rate limit reached. Waiting ${Math.ceil(waitMs / 1000)}s...`);
       await new Promise(resolve => setTimeout(resolve, waitMs));
 
       this.requestCount = 0;

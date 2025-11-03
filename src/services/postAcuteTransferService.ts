@@ -106,7 +106,7 @@ export class PostAcuteTransferService {
         dischargePlan
       );
 
-      // Create handoff packet (reusing existing handoff system!)
+      // Create handoff packet (reusing existing handoff system)
       const handoffRequest: CreateHandoffPacketRequest = {
         patient_name: patient.full_name || 'Unknown Patient',
         patient_dob: patient.date_of_birth || '1970-01-01',

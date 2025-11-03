@@ -26,7 +26,7 @@ serve(async (req) => {
     const { action, userId, confirmDeletion }: DataRequest = await req.json();
 
     // Get the authenticated user
-    const authHeader = req.headers.get('Authorization')!;
+    const authHeader = req.headers.get('Authorization');
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 

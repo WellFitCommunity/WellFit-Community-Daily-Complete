@@ -113,11 +113,14 @@ const HospitalAdapterManagementPanel: React.FC = () => {
 
     // Update status to testing
     const newStatus = new Map(connections);
-    newStatus.set(adapterId, {
-      ...connections.get(adapterId)!,
-      status: 'testing'
-    });
-    setConnections(newStatus);
+    const existingConnection = connections.get(adapterId);
+    if (existingConnection) {
+      newStatus.set(adapterId, {
+        ...existingConnection,
+        status: 'testing'
+      });
+      setConnections(newStatus);
+    }
 
     try {
       const adapter = registry.getAdapter(adapterId);

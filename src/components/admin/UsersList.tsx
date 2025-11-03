@@ -716,7 +716,7 @@ const UsersList: React.FC = () => {
                     {filteredAndSortedProfiles.map((user, index) => {
                       const age = user.dob ? (() => {
                         try {
-                          const birthDate = new Date(user.dob!);
+                          const birthDate = new Date(user.dob);
                           const today = new Date();
                           let age = today.getFullYear() - birthDate.getFullYear();
                           const monthDiff = today.getMonth() - birthDate.getMonth();
@@ -790,7 +790,7 @@ const UsersList: React.FC = () => {
                                   {new Date(user.last_check_in).toLocaleDateString()}
                                 </div>
                                 <div className="text-xs text-gray-500">
-                                  {Math.floor(daysSinceLastCheckIn!)} days ago
+                                  {Math.floor(daysSinceLastCheckIn)} days ago
                                 </div>
                               </div>
                             ) : (
@@ -860,7 +860,7 @@ const UsersList: React.FC = () => {
                           })}
                           {(() => {
                             try {
-                              const birthDate = new Date(selectedUser.dob!);
+                              const birthDate = new Date(selectedUser.dob);
                               const today = new Date();
                               let age = today.getFullYear() - birthDate.getFullYear();
                               const monthDiff = today.getMonth() - birthDate.getMonth();

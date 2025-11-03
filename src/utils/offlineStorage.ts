@@ -25,13 +25,11 @@ class OfflineStorage {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
 
       request.onerror = () => {
-        // console.error('[OfflineStorage] Failed to open database');
         reject(request.error);
       };
 
       request.onsuccess = () => {
         this.db = request.result;
-        // console.log('[OfflineStorage] Database initialized successfully');
         resolve();
       };
 
@@ -52,7 +50,6 @@ class OfflineStorage {
           measurementsStore.createIndex('timestamp', 'timestamp', { unique: false });
         }
 
-        // console.log('[OfflineStorage] Database schema created');
       };
     });
   }
@@ -71,17 +68,15 @@ class OfflineStorage {
     };
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([REPORTS_STORE], 'readwrite');
+      const transaction = this.db?.transaction([REPORTS_STORE], 'readwrite');
       const store = transaction.objectStore(REPORTS_STORE);
       const request = store.add(report);
 
       request.onsuccess = () => {
-        // console.log('[OfflineStorage] Report saved offline:', report.id);
         resolve(report.id);
       };
 
       request.onerror = () => {
-        // console.error('[OfflineStorage] Failed to save report');
         reject(request.error);
       };
     });
@@ -92,7 +87,7 @@ class OfflineStorage {
     if (!this.db) await this.initialize();
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([REPORTS_STORE], 'readonly');
+      const transaction = this.db?.transaction([REPORTS_STORE], 'readonly');
       const store = transaction.objectStore(REPORTS_STORE);
       const request = store.getAll();
 
@@ -110,7 +105,6 @@ class OfflineStorage {
       };
 
       request.onerror = () => {
-        // console.error('[OfflineStorage] Failed to get pending reports');
         reject(request.error);
       };
     });
@@ -121,7 +115,7 @@ class OfflineStorage {
     if (!this.db) await this.initialize();
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([REPORTS_STORE], 'readwrite');
+      const transaction = this.db?.transaction([REPORTS_STORE], 'readwrite');
       const store = transaction.objectStore(REPORTS_STORE);
       const getRequest = store.get(reportId);
 
@@ -132,7 +126,6 @@ class OfflineStorage {
           const updateRequest = store.put(report);
 
           updateRequest.onsuccess = () => {
-            // console.log('[OfflineStorage] Report marked as synced:', reportId);
             resolve();
           };
 
@@ -151,12 +144,11 @@ class OfflineStorage {
     if (!this.db) await this.initialize();
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([REPORTS_STORE], 'readwrite');
+      const transaction = this.db?.transaction([REPORTS_STORE], 'readwrite');
       const store = transaction.objectStore(REPORTS_STORE);
       const request = store.delete(reportId);
 
       request.onsuccess = () => {
-        // console.log('[OfflineStorage] Report deleted:', reportId);
         resolve();
       };
 
@@ -169,7 +161,7 @@ class OfflineStorage {
     if (!this.db) await this.initialize();
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([REPORTS_STORE], 'readwrite');
+      const transaction = this.db?.transaction([REPORTS_STORE], 'readwrite');
       const store = transaction.objectStore(REPORTS_STORE);
       const getRequest = store.get(reportId);
 
@@ -201,7 +193,6 @@ class OfflineStorage {
     syncFunction: (reportData: any) => Promise<boolean>
   ): Promise<{ success: number; failed: number }> {
     if (this.syncInProgress) {
-      // console.log('[OfflineStorage] Sync already in progress');
       return { success: 0, failed: 0 };
     }
 
@@ -210,7 +201,6 @@ class OfflineStorage {
     let success = 0;
     let failed = 0;
 
-    // console.log(`[OfflineStorage] Syncing ${pending.length} pending reports...`);
 
     for (const report of pending) {
       try {
@@ -220,20 +210,17 @@ class OfflineStorage {
         if (synced) {
           await this.deleteReport(report.id);
           success++;
-          // console.log(`[OfflineStorage] Synced report ${report.id}`);
         } else {
           await this.incrementAttempts(report.id);
           failed++;
         }
       } catch (error) {
-        // console.error(`[OfflineStorage] Failed to sync report ${report.id}:`, error);
         await this.incrementAttempts(report.id);
         failed++;
       }
     }
 
     this.syncInProgress = false;
-    // console.log(`[OfflineStorage] Sync complete: ${success} success, ${failed} failed`);
 
     return { success, failed };
   }
@@ -251,12 +238,11 @@ class OfflineStorage {
     };
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([MEASUREMENTS_STORE], 'readwrite');
+      const transaction = this.db?.transaction([MEASUREMENTS_STORE], 'readwrite');
       const store = transaction.objectStore(MEASUREMENTS_STORE);
       const request = store.add(measurement);
 
       request.onsuccess = () => {
-        // console.log('[OfflineStorage] Measurement saved:', measurement.id);
         resolve(measurement.id);
       };
 
@@ -269,7 +255,7 @@ class OfflineStorage {
     if (!this.db) await this.initialize();
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([MEASUREMENTS_STORE], 'readonly');
+      const transaction = this.db?.transaction([MEASUREMENTS_STORE], 'readonly');
       const store = transaction.objectStore(MEASUREMENTS_STORE);
       const index = store.index('userId');
       const request = index.getAll(userId);
@@ -290,13 +276,12 @@ class OfflineStorage {
     if (!this.db) await this.initialize();
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([REPORTS_STORE, MEASUREMENTS_STORE], 'readwrite');
+      const transaction = this.db?.transaction([REPORTS_STORE, MEASUREMENTS_STORE], 'readwrite');
 
       transaction.objectStore(REPORTS_STORE).clear();
       transaction.objectStore(MEASUREMENTS_STORE).clear();
 
       transaction.oncomplete = () => {
-        // console.log('[OfflineStorage] All data cleared');
         resolve();
       };
 

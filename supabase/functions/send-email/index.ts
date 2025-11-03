@@ -5,8 +5,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
-const MAILERSEND_API_KEY = Deno.env.get("MAILERSEND_API_KEY")!;
-const MAILERSEND_FROM_EMAIL = Deno.env.get("MAILERSEND_FROM_EMAIL")!;
+const MAILERSEND_API_KEY = Deno.env.get("MAILERSEND_API_KEY");
+const MAILERSEND_FROM_EMAIL = Deno.env.get("MAILERSEND_FROM_EMAIL");
 const MAILERSEND_FROM_NAME = Deno.env.get("MAILERSEND_FROM_NAME") || "WellFit Patient Handoff";
 
 if (!MAILERSEND_API_KEY || !MAILERSEND_FROM_EMAIL) {

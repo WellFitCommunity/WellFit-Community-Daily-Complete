@@ -358,11 +358,11 @@ export class AuditLogger {
     let filtered = [...this.logs];
 
     if (filters?.startDate) {
-      filtered = filtered.filter((log) => log.timestamp >= filters.startDate!);
+      filtered = filtered.filter((log) => log.timestamp >= filters.startDate);
     }
 
     if (filters?.endDate) {
-      filtered = filtered.filter((log) => log.timestamp <= filters.endDate!);
+      filtered = filtered.filter((log) => log.timestamp <= filters.endDate);
     }
 
     if (filters?.severity) {

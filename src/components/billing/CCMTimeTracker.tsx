@@ -45,7 +45,7 @@ export function CCMTimeTracker({ onSave, onCancel, initialData }: Props) {
 
     if (timer.isRunning && timer.startTime) {
       interval = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - timer.startTime!.getTime()) / 1000);
+        const elapsed = Math.floor((Date.now() - timer.startTime?.getTime()) / 1000);
         setTimer(prev => ({ ...prev, elapsed }));
       }, 1000);
     }

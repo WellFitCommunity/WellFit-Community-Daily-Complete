@@ -185,7 +185,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
     });
   };
 
-  // Accept handoff (trigger celebration!)
+  // Accept handoff (trigger celebration)
   const handleAcceptHandoff = () => {
     // Check if all patients have been reviewed
     const allReviewed = metrics && metrics.pending_nurse_review === 0;
@@ -285,7 +285,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
             <p className="text-gray-600">AI-scored patient risks — quick review in 5-10 minutes</p>
           </div>
 
-          {/* Accept Handoff Button (BIG AND PROMINENT!) */}
+          {/* Accept Handoff Button (BIG AND PROMINENT) */}
           <button
             onClick={handleAcceptHandoff}
             className="mx-4 px-8 py-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl hover:from-green-600 hover:to-green-700 transition-all transform hover:scale-105 flex items-center gap-2"

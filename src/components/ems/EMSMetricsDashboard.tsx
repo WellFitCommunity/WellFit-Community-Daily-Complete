@@ -64,8 +64,8 @@ const EMSMetricsDashboard: React.FC = () => {
 
       const avgDoorToTreatmentMinutes = doorToTreatmentData && doorToTreatmentData.length > 0
         ? doorToTreatmentData.reduce((sum, h) => {
-            const arrived = new Date(h.time_arrived_hospital!).getTime();
-            const transferred = new Date(h.transferred_at!).getTime();
+            const arrived = new Date(h.time_arrived_hospital).getTime();
+            const transferred = new Date(h.transferred_at).getTime();
             return sum + (transferred - arrived) / 60000; // milliseconds to minutes
           }, 0) / doorToTreatmentData.length
         : 0;
@@ -80,7 +80,7 @@ const EMSMetricsDashboard: React.FC = () => {
       const avgDepartmentResponseMinutes = deptResponseData && deptResponseData.length > 0
         ? deptResponseData.reduce((sum, d) => {
             const dispatched = new Date(d.dispatched_at).getTime();
-            const acknowledged = new Date(d.acknowledged_at!).getTime();
+            const acknowledged = new Date(d.acknowledged_at).getTime();
             return sum + (acknowledged - dispatched) / 60000;
           }, 0) / deptResponseData.length
         : 0;
@@ -133,8 +133,8 @@ const EMSMetricsDashboard: React.FC = () => {
 
       if (data && data.length > 0) {
         const avgMinutes = data.reduce((sum, h) => {
-          const arrived = new Date(h.time_arrived_hospital!).getTime();
-          const transferred = new Date(h.transferred_at!).getTime();
+          const arrived = new Date(h.time_arrived_hospital).getTime();
+          const transferred = new Date(h.transferred_at).getTime();
           return sum + (transferred - arrived) / 60000;
         }, 0) / data.length;
 
@@ -162,14 +162,14 @@ const EMSMetricsDashboard: React.FC = () => {
 
     data.forEach((d) => {
       const dispatched = new Date(d.dispatched_at).getTime();
-      const acknowledged = new Date(d.acknowledged_at!).getTime();
+      const acknowledged = new Date(d.acknowledged_at).getTime();
       const minutes = (acknowledged - dispatched) / 60000;
 
       if (!deptMap.has(d.department_name)) {
         deptMap.set(d.department_name, { totalTime: 0, count: 0 });
       }
 
-      const dept = deptMap.get(d.department_name)!;
+      const dept = deptMap.get(d.department_name);
       dept.totalTime += minutes;
       dept.count++;
     });

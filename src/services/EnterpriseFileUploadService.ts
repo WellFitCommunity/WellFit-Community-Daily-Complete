@@ -163,7 +163,7 @@ export class EnterpriseFileUploadService {
 
       // Step 5: Update audit record
       if (result.success) {
-        await this.updateUploadAudit(this.uploadAuditId!, 'completed', fileHash);
+        await this.updateUploadAudit(this.uploadAuditId, 'completed', fileHash);
 
         onProgress?.({
           bytesUploaded: file.size,
@@ -175,10 +175,10 @@ export class EnterpriseFileUploadService {
           message: 'Upload completed successfully',
         });
       } else {
-        await this.updateUploadAudit(this.uploadAuditId!, 'failed', undefined, result.error);
+        await this.updateUploadAudit(this.uploadAuditId, 'failed', undefined, result.error);
       }
 
-      return { ...result, auditId: this.uploadAuditId! };
+      return { ...result, auditId: this.uploadAuditId};
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Upload failed';
 
@@ -369,7 +369,7 @@ export class EnterpriseFileUploadService {
           uploaded = true;
 
           // Update audit record with progress
-          await this.updateChunkProgress(this.uploadAuditId!, i + 1, totalChunks);
+          await this.updateChunkProgress(this.uploadAuditId, i + 1, totalChunks);
         } catch (error) {
           retries++;
 

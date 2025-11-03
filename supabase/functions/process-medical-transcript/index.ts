@@ -229,8 +229,8 @@ Be helpful and precise - suggest the RIGHT codes, not just any codes. Quality ov
 
     // Log error for monitoring
     try {
-      const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
+      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
       const supabase = createClient(supabaseUrl, supabaseKey)
 
       await supabase

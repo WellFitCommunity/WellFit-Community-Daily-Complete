@@ -2,11 +2,10 @@ import { serve } from "https://deno.land/std@0.181.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js";
 
 const supabase = createClient(
-  Deno.env.get("SUPABASE_URL")!,
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-);
+  Deno.env.get("SUPABASE_URL"),
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
 
-const FCM_SERVER_KEY = Deno.env.get("FCM_SERVER_KEY")!;
+const FCM_SERVER_KEY = Deno.env.get("FCM_SERVER_KEY");
 
 function isTuesdayOrFriday(): boolean {
   const today = new Date().getUTCDay(); // 0 = Sunday

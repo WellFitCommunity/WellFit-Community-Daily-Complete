@@ -46,7 +46,7 @@ const ObservationTimeline: React.FC<ObservationTimelineProps> = ({ observations 
       .filter(obs => obs.code === selectedCode && obs.value_quantity_value !== undefined)
       .map(obs => ({
         date: obs.effective_datetime || obs.issued || '',
-        value: obs.value_quantity_value!,
+        value: obs.value_quantity_value,
         interpretation: obs.interpretation_display?.[0]
       }))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());

@@ -48,14 +48,13 @@ function preflight(req: Request): Response {
 
 // Admin: service role (bypasses RLS where needed)
 const adminClient = createClient(
-  Deno.env.get("SUPABASE_URL")!,
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-);
+  Deno.env.get("SUPABASE_URL"),
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
 
 // Per-request user client (for resolving the calling user via JWT)
 function makeUserClient(req: Request) {
-  const anon = Deno.env.get("SUPABASE_ANON_KEY")!;
-  const url = Deno.env.get("SUPABASE_URL")!;
+  const anon = Deno.env.get("SUPABASE_ANON_KEY");
+  const url = Deno.env.get("SUPABASE_URL");
   const auth = req.headers.get("authorization") ?? "";
   return createClient(url, anon, { global: { headers: { Authorization: auth } } });
 }

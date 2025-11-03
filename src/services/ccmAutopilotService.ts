@@ -61,7 +61,7 @@ export class CCMAutopilotService {
           });
         }
 
-        const patient = patientMap.get(patientId)!;
+        const patient = patientMap.get(patientId);
         patient.total_minutes += 5;
         patient.activities.push({
           type: 'check_in',
@@ -84,7 +84,7 @@ export class CCMAutopilotService {
           });
         }
 
-        const patient = patientMap.get(patientId)!;
+        const patient = patientMap.get(patientId);
         const minutes = Math.round((session.recording_duration_seconds || 0) / 60);
         patient.total_minutes += minutes;
         patient.activities.push({

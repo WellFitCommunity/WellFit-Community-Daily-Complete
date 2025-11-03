@@ -23,8 +23,8 @@ type CodingSuggestion = {
 };
 
 // ---------- Env ----------
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY") || Deno.env.get("CLAUDE_API_KEY");
 
 if (!SUPABASE_URL || !SERVICE_KEY) throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
@@ -47,7 +47,7 @@ const redact = (s: string): string =>
 
 function ageBandFromDOB(dob?: string | null): string | null {
   if (!truthy(dob)) return null;
-  const d = new Date(dob!);
+  const d = new Date(dob);
   if (Number.isNaN(d.getTime())) return null;
   const age = Math.floor((Date.now() - d.getTime()) / (365.25 * 24 * 3600 * 1000));
   if (age < 0 || age > 120) return null;

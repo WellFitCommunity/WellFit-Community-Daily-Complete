@@ -370,7 +370,7 @@ class ClaudeService {
     }
 
     try {
-      const response = await this.client!.messages.create({
+      const response = await this.client?.messages.create({
         model: this.defaultModel,
         max_tokens: 50,
         messages: [{
@@ -643,7 +643,7 @@ class ClaudeService {
 
     try {
       const response = await this.circuitBreaker.execute(async () => {
-        return await this.client!.messages.create({
+        return await this.client?.messages.create({
           model,
           max_tokens: maxTokens,
           messages: [{ role: 'user', content: prompt }],

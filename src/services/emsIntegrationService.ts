@@ -36,7 +36,7 @@ export async function integrateEMSHandoff(
       return { success: false, error: patientResult.error };
     }
 
-    const patientId = patientResult.patientId!;
+    const patientId = patientResult.patientId;
 
     // Step 2: Create ER encounter
     const encounterResult = await createEREncounter(handoffId, patientId, handoffData, user.id);
@@ -44,7 +44,7 @@ export async function integrateEMSHandoff(
       return { success: false, error: encounterResult.error };
     }
 
-    const encounterId = encounterResult.encounterId!;
+    const encounterId = encounterResult.encounterId;
 
     // Step 3: Document vitals from EMS
     const vitalResults = await documentEMSVitals(encounterId, patientId, handoffData, user.id);

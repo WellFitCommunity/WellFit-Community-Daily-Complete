@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
 
   try {
     // Get Supabase client with user context
-    const authHeader = req.headers.get('Authorization')!;
+    const authHeader = req.headers.get('Authorization');
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',

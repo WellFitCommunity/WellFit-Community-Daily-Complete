@@ -4,8 +4,8 @@ import { z } from "https://esm.sh/zod@3.23.8?target=deno";
 import { cors } from "../_shared/cors.ts";
 import { verifyPin, generateSecureToken } from "../_shared/crypto.ts";
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SB_SECRET_KEY = Deno.env.get("SB_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+const SB_SECRET_KEY = Deno.env.get("SB_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 const ADMIN_SESSION_TTL_MIN = 120;
 
 const supabase = createClient(SUPABASE_URL, SB_SECRET_KEY);
@@ -87,7 +87,7 @@ serve(async (req: Request) => {
       throw pinErr;
     }
 
-    const valid = await verifyPin(pin, pinRow!.pin_hash);
+    const valid = await verifyPin(pin, pinRow?.pin_hash);
     if (!valid) {
       // HIPAA AUDIT LOGGING: Log failed PIN verification
       try {

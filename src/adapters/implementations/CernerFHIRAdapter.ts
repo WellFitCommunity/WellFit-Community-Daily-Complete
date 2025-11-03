@@ -314,8 +314,8 @@ export class CernerFHIRAdapter implements EHRAdapter {
       },
       body: new URLSearchParams({
         grant_type: 'client_credentials',
-        client_id: config.clientId,
-        client_secret: config.clientSecret,
+        client_id: config.clientId || '',
+        client_secret: config.clientSecret || '',
         scope: 'system/Patient.read system/Observation.read system/Encounter.read system/Condition.read system/Medication*.read system/Procedure.read system/Immunization.read system/AllergyIntolerance.read system/CarePlan.read',
       }),
     });
@@ -377,8 +377,8 @@ export class CernerFHIRAdapter implements EHRAdapter {
       body: new URLSearchParams({
         grant_type: 'refresh_token',
         refresh_token: this.refreshToken,
-        client_id: this.config.clientId!,
-        client_secret: this.config.clientSecret!,
+        client_id: this.config.clientId || '',
+        client_secret: this.config.clientSecret || '',
       }),
     });
 
@@ -464,7 +464,6 @@ export class CernerFHIRAdapter implements EHRAdapter {
       const resetTime = new Date(this.requestWindowStart.getTime() + 60 * 60 * 1000);
       const waitMs = resetTime.getTime() - now.getTime();
 
-      console.warn(`[Cerner] Rate limit reached. Waiting ${Math.ceil(waitMs / 1000)}s...`);
       await new Promise(resolve => setTimeout(resolve, waitMs));
 
       this.requestCount = 0;

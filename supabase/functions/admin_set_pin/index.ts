@@ -4,8 +4,8 @@ import { z } from "https://esm.sh/zod@3.23.8?target=deno";
 import { cors } from "../_shared/cors.ts";
 import { hashPin } from "../_shared/crypto.ts";
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SB_SECRET_KEY = Deno.env.get("SB_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+const SB_SECRET_KEY = Deno.env.get("SB_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
 const supabase = createClient(SUPABASE_URL, SB_SECRET_KEY);
 

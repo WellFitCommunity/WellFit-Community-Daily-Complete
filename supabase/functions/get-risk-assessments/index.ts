@@ -51,9 +51,9 @@ serve(async (req: Request) => {
 
   try {
     // Required env vars
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-    const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const PHI_KEY = Deno.env.get("PHI_ENCRYPTION_KEY")!;
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const PHI_KEY = Deno.env.get("PHI_ENCRYPTION_KEY");
     if (!SUPABASE_URL || !SERVICE_ROLE || !PHI_KEY) {
       return new Response(
         "Missing env: SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY / PHI_ENCRYPTION_KEY",

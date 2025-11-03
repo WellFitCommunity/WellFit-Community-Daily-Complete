@@ -36,7 +36,7 @@ const ClaudeTestWidget: React.FC = () => {
     setTestResult(null);
 
     try {
-      // Use coding-suggest function for testing (it works!)
+      // Use coding-suggest function for testing (it works)
       const { supabase } = await import('../../lib/supabaseClient');
       const { data, error } = await supabase.functions.invoke('coding-suggest', {
         body: {

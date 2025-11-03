@@ -381,7 +381,7 @@ export class SchemaLockedTool<TInput, TOutput> {
 
     try {
       // Execute with validated input
-      const output = await executor(inputValidation.data!);
+      const output = await executor(inputValidation.data);
 
       // Validate output
       const outputValidation = this.validator.validateOutput<TOutput>(
@@ -399,7 +399,7 @@ export class SchemaLockedTool<TInput, TOutput> {
 
       return {
         success: true,
-        output: outputValidation.data!,
+        output: outputValidation.data,
       };
     } catch (error) {
 

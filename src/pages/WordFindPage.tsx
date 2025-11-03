@@ -282,7 +282,7 @@ const WordFind: React.FC = () => {
                 }
               }
 
-              // ✅ SAVE TO DATABASE (the fix!)
+              // ✅ SAVE TO DATABASE (the fix)
               if (user?.id) {
                 saveWordGameResult(supabase, {
                   user_id: user.id,

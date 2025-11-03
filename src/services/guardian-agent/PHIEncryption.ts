@@ -177,7 +177,7 @@ export class PHIEncryption {
       const plaintext = JSON.stringify(value);
 
       // In production: Use Web Crypto API or Node crypto
-      // For now: Base64 encoding (NOT SECURE - demo only!)
+      // For now: Base64 encoding (NOT SECURE - demo only)
       const ciphertext = Buffer.from(plaintext).toString('base64');
       const iv = this.generateIV();
       const tag = this.generateTag();
@@ -235,7 +235,7 @@ export class PHIEncryption {
       }
 
       // In production: Use Web Crypto API or Node crypto
-      // For now: Base64 decoding (NOT SECURE - demo only!)
+      // For now: Base64 decoding (NOT SECURE - demo only)
       const plaintext = Buffer.from(encrypted.ciphertext, 'base64').toString('utf-8');
       const value = JSON.parse(plaintext) as T;
 
@@ -389,7 +389,7 @@ export class PHIEncryption {
     const keyId = `key-${tenantId}-${Date.now()}`;
 
     // In production: Generate key using Web Crypto API or KMS
-    // For now: Random buffer (NOT SECURE - demo only!)
+    // For now: Random buffer (NOT SECURE - demo only)
     const key = Buffer.from(Math.random().toString(36));
 
     return {
