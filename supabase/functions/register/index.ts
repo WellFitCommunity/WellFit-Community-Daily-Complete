@@ -9,6 +9,7 @@ import { hashPassword } from "../_shared/crypto.ts";
 // ---------- ENV ----------
 const SB_URL = Deno.env.get("SUPABASE_URL") || Deno.env.get("SB_URL") || "";
 const SB_SECRET_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("SB_SECRET_KEY") || "";
+const SB_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SB_PUBLISHABLE_API_KEY") || "";
 const HCAPTCHA_SECRET = Deno.env.get("HCAPTCHA_SECRET") || "";
 
 function getCorsHeaders(origin: string | null) {
@@ -271,11 +272,14 @@ resource_type: 'auth_event',
     try {
       // Use functions subdomain for edge function calls
       const functionsUrl = SB_URL.replace('.supabase.co', '.functions.supabase.co');
-      const smsResponse = await fetch(`${functionsUrl}/functions/v1/sms-send-code`, {
+      // IMPORTANT: sms-send-code expects anon key, NOT service role key
+      // Service role key causes "Invalid JWT" error
+      const smsResponse = await fetch(`${functionsUrl}/sms-send-code`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${SB_SECRET_KEY}`
+          "apikey": SB_ANON_KEY,
+          "Authorization": `Bearer ${SB_ANON_KEY}`
         },
         body: JSON.stringify({ phone: phoneNumber })
       });
