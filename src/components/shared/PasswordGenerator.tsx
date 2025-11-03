@@ -15,6 +15,7 @@
 
 import React, { useState } from 'react';
 import { RefreshCw, Copy, Eye, EyeOff, CheckCircle } from 'lucide-react';
+import { auditLogger } from '../../services/auditLogger';
 
 interface PasswordGeneratorProps {
   onPasswordGenerated: (password: string) => void;
@@ -75,11 +76,20 @@ const PasswordGenerator: React.FC<PasswordGeneratorProps> = ({
     return password.join('');
   };
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     const newPassword = generateSecurePassword();
     setGeneratedPassword(newPassword);
     onPasswordGenerated(newPassword);
     setCopied(false);
+
+    // HIPAA Audit: Log password generation (without exposing the password)
+    await auditLogger.auth('REGISTRATION', true, {
+      action: 'PASSWORD_GENERATED',
+      passwordLength: newPassword.length,
+      generationMethod: 'crypto.getRandomValues',
+      component: 'PasswordGenerator',
+      timestamp: new Date().toISOString()
+    });
   };
 
   const handleCopy = async () => {
@@ -89,9 +99,24 @@ const PasswordGenerator: React.FC<PasswordGeneratorProps> = ({
       await navigator.clipboard.writeText(generatedPassword);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+
+      // HIPAA Audit: Log password copy action (security tracking)
+      await auditLogger.auth('REGISTRATION', true, {
+        action: 'PASSWORD_COPIED_TO_CLIPBOARD',
+        component: 'PasswordGenerator',
+        timestamp: new Date().toISOString()
+      });
     } catch (error) {
       // Failed to copy - clipboard API not available or permission denied
       setCopied(false);
+
+      // HIPAA Audit: Log clipboard failure
+      await auditLogger.auth('REGISTRATION', false, {
+        action: 'PASSWORD_COPY_FAILED',
+        component: 'PasswordGenerator',
+        error: 'Clipboard API unavailable or permission denied',
+        timestamp: new Date().toISOString()
+      });
     }
   };
 
