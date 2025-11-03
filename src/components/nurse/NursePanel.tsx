@@ -14,6 +14,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { auditLogger } from '../../services/auditLogger';
 import ClaudeCareAssistantPanel from '../claude-care/ClaudeCareAssistantPanel';
 import CHWAlertsWidget from '../chw/CHWAlertsWidget';
+import PasswordGenerator from '../shared/PasswordGenerator';
 
 // Collapsible Section Component
 interface CollapsibleSectionProps {
@@ -61,6 +62,7 @@ const NurseEnrollPatientSection: React.FC = () => {
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState(''); // ← NEW: Store generated password
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -70,11 +72,16 @@ const NurseEnrollPatientSection: React.FC = () => {
       return;
     }
 
+    // Validate password was generated
+    if (!password) {
+      setMessage({ type: 'error', text: 'Please generate a password for the patient' });
+      return;
+    }
+
     setLoading(true);
     setMessage(null);
 
     try {
-      const tempPassword = generateTempPassword();
 
       // Get auth token for proper authorization
       const { data: sessionData } = await supabase.auth.getSession();
@@ -83,7 +90,7 @@ const NurseEnrollPatientSection: React.FC = () => {
       const { data, error } = await supabase.functions.invoke('enrollClient', {
         body: {
           phone,
-          password: tempPassword,
+          password: password, // ← Use the password from the generator
           first_name: firstName,
           last_name: lastName,
           email: email || undefined
@@ -108,7 +115,7 @@ const NurseEnrollPatientSection: React.FC = () => {
 
       setMessage({
         type: 'success',
-        text: `✅ ${firstName} ${lastName} enrolled successfully! Temp password: ${tempPassword}`
+        text: `✅ ${firstName} ${lastName} enrolled successfully! Patient can now log in with the generated password.`
       });
 
       // Reset form
@@ -116,6 +123,7 @@ const NurseEnrollPatientSection: React.FC = () => {
       setLastName('');
       setPhone('');
       setEmail('');
+      setPassword(''); // ← Clear password
     } catch (error: any) {
       // HIPAA Audit: Log enrollment failure (CRITICAL - uses proper audit logging)
       await auditLogger.error('NURSE_ENROLLMENT_FAILED', error, {
@@ -130,15 +138,6 @@ const NurseEnrollPatientSection: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const generateTempPassword = (): string => {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
-    let password = '';
-    for (let i = 0; i < 12; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return password;
   };
 
   return (
@@ -195,6 +194,15 @@ const NurseEnrollPatientSection: React.FC = () => {
             placeholder="email@example.com"
           />
         </div>
+      </div>
+
+      {/* PASSWORD GENERATOR - THE KEY COMPONENT YOU NEEDED! */}
+      <div className="mb-4">
+        <PasswordGenerator
+          onPasswordGenerated={(generatedPassword) => setPassword(generatedPassword)}
+          showPassword={true}
+          autoGenerate={false}
+        />
       </div>
 
       <button

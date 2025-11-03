@@ -41,6 +41,9 @@ if (DEV_ALLOW_LOCAL) {
 }
 const ALLOWED_ORIGINS: string[] = Array.from(allowedSet);
 
+/** GitHub Codespaces pattern for dynamic environment URLs */
+const CODESPACES_PATTERN = /^https:\/\/[a-z0-9-]+\.app\.github\.dev$/;
+
 /** Options for CORS header generation */
 export interface CorsOptions {
   methods?: string[];        // e.g., ["GET","POST","OPTIONS"]
@@ -123,8 +126,12 @@ export function cors(
       const isLocal =
         (u.hostname === "localhost" || u.hostname === "127.0.0.1") && u.port === "3100";
 
-      if (ALLOWED_ORIGINS.indexOf(normalized) !== -1 || (DEV_ALLOW_LOCAL && isLocal)) {
+      // Check for GitHub Codespaces URLs (dynamic preview URLs)
+      const isCodespaces = CODESPACES_PATTERN.test(normalized);
+
+      if (ALLOWED_ORIGINS.indexOf(normalized) !== -1 || (DEV_ALLOW_LOCAL && isLocal) || isCodespaces) {
         headers["Access-Control-Allow-Origin"] = normalized;
+        headers["Access-Control-Allow-Credentials"] = "true";
         allowed = true;
       }
     } catch (e) {

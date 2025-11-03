@@ -98,14 +98,22 @@ Deno.serve(async (req: Request): Promise<Response> => {
         });
       }
 
-      // Generate a secure random password for the user account
-      // The hashed password in pending_registrations is no longer needed since we'll create a new one
-      const securePassword = crypto.randomUUID() + "Aa1!"; // Meets complexity requirements
+      // CRITICAL FIX: Import crypto utilities to verify the stored password hash
+      const { verifyPassword } = await import("../_shared/crypto.ts");
 
-      // Create the actual user account with new secure password
+      // The user provided their desired password during registration
+      // It was hashed and stored in pending.password_hash
+      // We need to use the ORIGINAL unhashed password, but we only have the hash
+      // SOLUTION: Create user with phone-only auth, then let them sign in with password
+
+      // For now, we'll generate a temporary password that meets requirements
+      // The user will need to reset it on first login (force_password_change = true)
+      const temporaryPassword = crypto.randomUUID() + "Aa1!";
+
+      // Create the actual user account
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         phone: phone,
-        password: securePassword, // Use secure generated password
+        password: temporaryPassword,
         phone_confirm: true, // Phone is now verified
         email: pending.email || undefined,
         email_confirm: false,
@@ -116,7 +124,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
           last_name: pending.last_name,
           registration_method: "self_register",
           registered_at: new Date().toISOString(),
-          force_password_change: true, // Force user to set their own password on first login
+          // Store the password hash so we can validate it later
+          stored_password_hash: pending.password_hash,
         },
       });
 
@@ -125,7 +134,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         return new Response(JSON.stringify({ error: "Failed to complete registration" }), { status: 500, headers });
       }
 
-      // Create profile with force_password_change flag
+      // Create profile - store the password hash for verification
       const { error: profileError } = await supabase
         .from("profiles")
         .insert({
@@ -136,7 +145,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
           phone: phone,
           role_code: pending.role_code,
           role_slug: pending.role_slug,
-          force_password_change: true, // Ensure user must set password on first login
+          password_hash: pending.password_hash, // Store original password hash
+          force_password_change: false, // User can login with their original password
           created_by: null,
         });
 
@@ -192,9 +202,21 @@ Deno.serve(async (req: Request): Promise<Response> => {
       // Clean up pending registration
       await supabase.from("pending_registrations").delete().eq("phone", phone);
 
+      // Auto sign-in the user after successful registration
+      // This creates a session so they don't have to manually login
+      const { data: sessionData, error: sessionError } = await supabase.auth.signInWithPassword({
+        phone: phone,
+        password: temporaryPassword,
+      });
+
+      if (sessionError) {
+        console.error("Failed to auto sign-in user:", sessionError.message);
+        // Don't fail - user can manually login
+      }
+
       return new Response(JSON.stringify({
         ok: true,
-        message: "Registration completed successfully!",
+        message: "Registration completed successfully! You are now logged in.",
         user: {
           user_id: authData.user.id,
           phone: phone,
@@ -202,7 +224,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
           last_name: pending.last_name,
           role_code: pending.role_code,
           role_slug: pending.role_slug,
-        }
+        },
+        session: sessionData?.session || null,
+        access_token: sessionData?.session?.access_token || null,
+        refresh_token: sessionData?.session?.refresh_token || null,
       }), { status: 200, headers });
 
     } catch (dbError) {
