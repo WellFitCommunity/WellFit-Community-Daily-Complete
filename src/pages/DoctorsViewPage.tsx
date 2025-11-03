@@ -283,7 +283,7 @@ const DoctorsView: React.FC = () => {
           reviewToDisplay = {
             status: `Reviewed by ${mostRecentReviewedHealthEntry.reviewed_by_name || 'Care Team'}`,
             reviewed_by_name: mostRecentReviewedHealthEntry.reviewed_by_name || 'Care Team',
-            reviewed_at: mostRecentReviewedHealthEntry.reviewed_at,
+            reviewed_at: mostRecentReviewedHealthEntry.reviewed_at ?? null,
             reviewed_item_type: `Health Entry`,
             reviewed_item_date: mostRecentReviewedHealthEntry.created_at,
           };
@@ -507,7 +507,7 @@ const DoctorsView: React.FC = () => {
               </div>
               <div className="flex items-center space-x-3">
                 <button
-                  onClick={() => fetchData(userId)}
+                  onClick={() => userId && fetchData(userId)}
                   className="px-4 py-2 text-white rounded-lg hover:opacity-90 transition-colors flex items-center space-x-2"
                   style={{ backgroundColor: branding.primaryColor }}
                 >
@@ -680,7 +680,7 @@ const DoctorsView: React.FC = () => {
                       </p>
                     )}
                     <p className="text-xs text-gray-600">
-                      {careTeamReview.reviewed_item_type} • {new Date(careTeamReview.reviewed_item_date).toLocaleDateString()}
+                      {careTeamReview.reviewed_item_type}{careTeamReview.reviewed_item_date && ` • ${new Date(careTeamReview.reviewed_item_date).toLocaleDateString()}`}
                     </p>
                   </div>
                 ) : (

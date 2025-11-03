@@ -431,7 +431,7 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = ({
           patient_id: selectedPatientId,
           created_by: user.id,
           provider_id: user.id,
-          recording_started_at: new Date(recordingStartTime).toISOString(),
+          recording_started_at: new Date(recordingStartTime ?? endTime).toISOString(),
           recording_ended_at: new Date(endTime).toISOString(),
           recording_duration_seconds: durationSeconds,
           transcription_text: transcript || '',

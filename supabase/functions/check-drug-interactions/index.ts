@@ -77,7 +77,7 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Checking interactions for RxCUI: ${medication_rxcui}, Patient: ${patient_id}`);
+    console.log(`Checking drug interactions for RxCUI: ${medication_rxcui}`);
 
     // Step 1: Get patient's active medications
     const { data: activeMeds, error: medsError } = await supabase

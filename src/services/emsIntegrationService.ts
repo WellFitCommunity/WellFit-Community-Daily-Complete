@@ -32,16 +32,16 @@ export async function integrateEMSHandoff(
 
     // Step 1: Create or find patient record
     const patientResult = await createOrFindPatient(handoffData, user.id);
-    if (!patientResult.success) {
-      return { success: false, error: patientResult.error };
+    if (!patientResult.success || !patientResult.patientId) {
+      return { success: false, error: patientResult.error || 'Failed to create patient' };
     }
 
     const patientId = patientResult.patientId;
 
     // Step 2: Create ER encounter
     const encounterResult = await createEREncounter(handoffId, patientId, handoffData, user.id);
-    if (!encounterResult.success) {
-      return { success: false, error: encounterResult.error };
+    if (!encounterResult.success || !encounterResult.encounterId) {
+      return { success: false, error: encounterResult.error || 'Failed to create encounter' };
     }
 
     const encounterId = encounterResult.encounterId;

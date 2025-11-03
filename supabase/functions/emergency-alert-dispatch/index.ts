@@ -74,18 +74,18 @@ async function sendEmailWithRetry(
 ): Promise<EmailResult> {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      console.log(`Attempt ${attempt}: Sending email to ${recipient}`);
-      
+      console.log(`Attempt ${attempt}: Sending emergency alert email`);
+
       const { error } = await supabaseClient.functions.invoke(SEND_EMAIL_FUNCTION_NAME, {
         body: { ...emailPayload, to: recipient }
       });
 
       if (!error) {
-        console.log(`✅ Email successfully sent to ${recipient}`);
+        console.log('✅ Emergency alert email sent successfully');
         return { success: true, recipient };
       }
 
-      console.error(`❌ Attempt ${attempt} failed for ${recipient}:`, error.message);
+      console.error(`❌ Attempt ${attempt} failed:`, error.message);
       
       if (attempt === maxRetries) {
         return { success: false, recipient, error: error.message };
@@ -161,7 +161,7 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ''
     );
 
-    console.log(`📋 Fetching profile for user: ${user_id}`);
+    console.log('📋 Fetching user profile for emergency alert');
 
     // Fetch user profile
     const { data: profile, error: profileError } = await supabaseClient
@@ -171,7 +171,7 @@ serve(async (req) => {
       .single();
 
     if (profileError || !profile) {
-      console.error(`❌ Profile fetch failed for user ${user_id}:`, profileError);
+      console.error('❌ Profile fetch failed:', profileError?.message || 'Unknown error');
       
       // Log failed alert
       await supabaseClient.from('alerts').insert({
@@ -194,8 +194,8 @@ serve(async (req) => {
                     "Unknown User";
     const caregiverEmail = profile.caregiver_email;
 
-    console.log(`👤 Processing alert for: ${userName}`);
-    console.log(`👥 Caregiver email: ${caregiverEmail || 'Not provided'}`);
+    console.log('👤 Processing emergency alert for patient');
+    console.log(`👥 Caregiver email ${caregiverEmail ? 'provided' : 'not provided'}`);
 
     // Prepare email content
     const emailContent = formatEmergencyEmailContent(

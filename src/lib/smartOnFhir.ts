@@ -100,7 +100,11 @@ export class SMARTClient {
       await this.discoverEndpoints();
     }
 
-    const response = await fetch(this.endpoints?.token, {
+    if (!this.endpoints?.token) {
+      throw new Error('Token endpoint not discovered');
+    }
+
+    const response = await fetch(this.endpoints.token, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',

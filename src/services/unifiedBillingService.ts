@@ -419,6 +419,10 @@ export class UnifiedBillingService {
 
       const claim = claimStep.result;
 
+      if (!claim?.id) {
+        throw new Error('Failed to create claim');
+      }
+
       // STEP 8: Create claim lines
       const claimLinesStep = await this.executeStep(
         'create_claim_lines',
@@ -430,7 +434,7 @@ export class UnifiedBillingService {
           if (finalCoding.cptCodes) {
             for (const cpt of finalCoding.cptCodes) {
               const line = await BillingService.addClaimLine({
-                claim_id: claim?.id,
+                claim_id: claim.id,
                 code_system: 'CPT',
                 procedure_code: cpt.code,
                 modifiers: cpt.modifiers || [],
@@ -639,13 +643,13 @@ export class UnifiedBillingService {
       encounterType: input.encounterType,
       chiefComplaint: input.chiefComplaint,
       presentingDiagnoses: input.diagnoses
-        .filter(d => d.term) // Filter out entries without term
+        .filter((d): d is { term: string; icd10Code?: string } => !!d.term)
         .map(d => ({
           term: d.term,
           icd10Code: d.icd10Code
         })),
       proceduresPerformed: (input.procedures || [])
-        .filter(p => p.description) // Filter out entries without description
+        .filter((p): p is { description: string; cptCode?: string } => !!p.description)
         .map(p => ({
           description: p.description,
           cptCode: p.cptCode

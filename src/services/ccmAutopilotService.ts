@@ -62,12 +62,14 @@ export class CCMAutopilotService {
         }
 
         const patient = patientMap.get(patientId);
-        patient.total_minutes += 5;
-        patient.activities.push({
-          type: 'check_in',
-          timestamp: checkIn.timestamp || checkIn.created_at,
-          duration_minutes: 5,
-        });
+        if (patient) {
+          patient.total_minutes += 5;
+          patient.activities.push({
+            type: 'check_in',
+            timestamp: checkIn.timestamp || checkIn.created_at,
+            duration_minutes: 5,
+          });
+        }
       });
 
       // Process scribe sessions
@@ -85,13 +87,15 @@ export class CCMAutopilotService {
         }
 
         const patient = patientMap.get(patientId);
-        const minutes = Math.round((session.recording_duration_seconds || 0) / 60);
-        patient.total_minutes += minutes;
-        patient.activities.push({
-          type: 'scribe_session',
-          timestamp: session.created_at,
-          duration_minutes: minutes,
-        });
+        if (patient) {
+          const minutes = Math.round((session.recording_duration_seconds || 0) / 60);
+          patient.total_minutes += minutes;
+          patient.activities.push({
+            type: 'scribe_session',
+            timestamp: session.created_at,
+            duration_minutes: minutes,
+          });
+        }
       });
 
       // Determine billable codes

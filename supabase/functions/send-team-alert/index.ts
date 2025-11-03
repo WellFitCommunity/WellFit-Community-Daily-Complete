@@ -104,7 +104,7 @@ Please check on this user as soon as possible.
           }
         })
       } catch (emailError) {
-        console.error(`Failed to send email to ${recipient}:`, emailError)
+        console.error('Failed to send team alert email:', emailError)
       }
     }
 

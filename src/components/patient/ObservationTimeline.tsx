@@ -56,7 +56,8 @@ const ObservationTimeline: React.FC<ObservationTimelineProps> = ({ observations 
   const getChartData = () => {
     if (trendData.length === 0) return null;
 
-    const values = trendData.map(d => d.value);
+    const values = trendData.map(d => d.value).filter((v): v is number => v !== undefined);
+    if (values.length === 0) return null;
     const min = Math.min(...values);
     const max = Math.max(...values);
     const range = max - min;
@@ -180,13 +181,15 @@ const ObservationTimeline: React.FC<ObservationTimelineProps> = ({ observations 
                 ))}
 
                 {/* Data line and points */}
-                {trendData.map((point, index) => {
+                {trendData.filter(p => p.value !== undefined).map((point, index) => {
+                  if (point.value === undefined) return null;
                   const x = 80 + (index * ((100 / trendData.length) * 8));
                   const y = 250 - ((point.value - chartData.min) / chartData.range) * 200;
 
                   // Draw line to next point
                   if (index < trendData.length - 1) {
                     const nextPoint = trendData[index + 1];
+                    if (nextPoint.value === undefined) return null;
                     const nextX = 80 + ((index + 1) * ((100 / trendData.length) * 8));
                     const nextY = 250 - ((nextPoint.value - chartData.min) / chartData.range) * 200;
 
@@ -314,19 +317,19 @@ const ObservationTimeline: React.FC<ObservationTimelineProps> = ({ observations 
             <div className="bg-green-50 rounded-lg p-4 border border-green-200">
               <div className="text-sm text-green-600 font-medium">Average</div>
               <div className="text-2xl font-bold text-green-900 mt-1">
-                {(trendData.reduce((sum, p) => sum + p.value, 0) / trendData.length).toFixed(1)} {selectedType?.unit}
+                {(trendData.reduce((sum, p) => sum + (p.value ?? 0), 0) / trendData.length).toFixed(1)} {selectedType?.unit}
               </div>
             </div>
             <div className="bg-red-50 rounded-lg p-4 border border-red-200">
               <div className="text-sm text-red-600 font-medium">Maximum</div>
               <div className="text-2xl font-bold text-red-900 mt-1">
-                {Math.max(...trendData.map(p => p.value)).toFixed(1)} {selectedType?.unit}
+                {Math.max(...trendData.map(p => p.value ?? 0)).toFixed(1)} {selectedType?.unit}
               </div>
             </div>
             <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
               <div className="text-sm text-orange-600 font-medium">Minimum</div>
               <div className="text-2xl font-bold text-orange-900 mt-1">
-                {Math.min(...trendData.map(p => p.value)).toFixed(1)} {selectedType?.unit}
+                {Math.min(...trendData.map(p => p.value ?? 0)).toFixed(1)} {selectedType?.unit}
               </div>
             </div>
           </div>

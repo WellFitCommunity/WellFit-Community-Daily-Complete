@@ -78,6 +78,10 @@ export class OfflineDataSync {
 
     return new Promise((resolve, reject) => {
       const transaction = this.db?.transaction([storeName], 'readwrite');
+      if (!transaction) {
+        reject(new Error('Database transaction failed'));
+        return;
+      }
       const store = transaction.objectStore(storeName);
       const request = store.put(enrichedData);
 
@@ -101,6 +105,10 @@ export class OfflineDataSync {
 
     return new Promise((resolve, reject) => {
       const transaction = this.db?.transaction([storeName], 'readonly');
+      if (!transaction) {
+        reject(new Error('Database transaction failed'));
+        return;
+      }
       const store = transaction.objectStore(storeName);
       const index = store.index('synced');
       const request = index.getAll(IDBKeyRange.only(0)); // 0 = false/unsynced
@@ -123,6 +131,10 @@ export class OfflineDataSync {
 
     return new Promise((resolve, reject) => {
       const transaction = this.db?.transaction([storeName], 'readwrite');
+      if (!transaction) {
+        reject(new Error('Database transaction failed'));
+        return;
+      }
       const store = transaction.objectStore(storeName);
       const getRequest = store.get(id);
 

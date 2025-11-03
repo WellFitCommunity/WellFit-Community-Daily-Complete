@@ -47,7 +47,7 @@ function normalizeCondition(condition: Condition): Condition {
     code_code: condition.code_code || condition.code,
     // Sync simplified string → FHIR array (for database/EHR)
     category: condition.category || (condition.category_code ? [condition.category_code] : undefined),
-    code: condition.code || condition.code_code,
+    code: condition.code || condition.code_code || '',
   };
 }
 

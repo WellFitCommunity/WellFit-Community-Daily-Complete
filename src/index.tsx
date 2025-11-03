@@ -50,7 +50,11 @@ claudeService
 // It should run as a separate Edge Function or backend service, not in the browser
 // The browser cannot access file system, child processes, or other Node.js APIs
 
-const root = createRoot(document.getElementById('root'));
+const rootElement = document.getElementById('root');
+if (!rootElement) {
+  throw new Error('Root element not found');
+}
+const root = createRoot(rootElement);
 
 root.render(
   <React.StrictMode>

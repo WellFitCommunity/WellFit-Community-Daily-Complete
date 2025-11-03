@@ -784,13 +784,13 @@ const UsersList: React.FC = () => {
                             </div>
                           </td>
                           <td className="border border-gray-300 px-4 py-3">
-                            {user.last_check_in ? (
+                            {user.last_check_in && daysSinceLastCheckIn !== null ? (
                               <div className="text-sm">
                                 <div className="font-medium">
                                   {new Date(user.last_check_in).toLocaleDateString()}
                                 </div>
                                 <div className="text-xs text-gray-500">
-                                  {Math.floor(daysSinceLastCheckIn)} days ago
+                                  {Math.floor(daysSinceLastCheckIn!)} days ago
                                 </div>
                               </div>
                             ) : (

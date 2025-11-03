@@ -68,7 +68,8 @@ class OfflineStorage {
     };
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db?.transaction([REPORTS_STORE], 'readwrite');
+      // Safe: initialize() was called above if db was null
+      const transaction = this.db!.transaction([REPORTS_STORE], 'readwrite');
       const store = transaction.objectStore(REPORTS_STORE);
       const request = store.add(report);
 
@@ -87,7 +88,8 @@ class OfflineStorage {
     if (!this.db) await this.initialize();
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db?.transaction([REPORTS_STORE], 'readonly');
+      // Safe: initialize() was called above if db was null
+      const transaction = this.db!.transaction([REPORTS_STORE], 'readonly');
       const store = transaction.objectStore(REPORTS_STORE);
       const request = store.getAll();
 
@@ -115,7 +117,8 @@ class OfflineStorage {
     if (!this.db) await this.initialize();
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db?.transaction([REPORTS_STORE], 'readwrite');
+      // Safe: initialize() was called above if db was null
+      const transaction = this.db!.transaction([REPORTS_STORE], 'readwrite');
       const store = transaction.objectStore(REPORTS_STORE);
       const getRequest = store.get(reportId);
 
@@ -144,7 +147,8 @@ class OfflineStorage {
     if (!this.db) await this.initialize();
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db?.transaction([REPORTS_STORE], 'readwrite');
+      // Safe: initialize() was called above if db was null
+      const transaction = this.db!.transaction([REPORTS_STORE], 'readwrite');
       const store = transaction.objectStore(REPORTS_STORE);
       const request = store.delete(reportId);
 
@@ -161,7 +165,8 @@ class OfflineStorage {
     if (!this.db) await this.initialize();
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db?.transaction([REPORTS_STORE], 'readwrite');
+      // Safe: initialize() was called above if db was null
+      const transaction = this.db!.transaction([REPORTS_STORE], 'readwrite');
       const store = transaction.objectStore(REPORTS_STORE);
       const getRequest = store.get(reportId);
 
@@ -238,7 +243,8 @@ class OfflineStorage {
     };
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db?.transaction([MEASUREMENTS_STORE], 'readwrite');
+      // Safe: initialize() was called above if db was null
+      const transaction = this.db!.transaction([MEASUREMENTS_STORE], 'readwrite');
       const store = transaction.objectStore(MEASUREMENTS_STORE);
       const request = store.add(measurement);
 
@@ -255,7 +261,8 @@ class OfflineStorage {
     if (!this.db) await this.initialize();
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db?.transaction([MEASUREMENTS_STORE], 'readonly');
+      // Safe: initialize() was called above if db was null
+      const transaction = this.db!.transaction([MEASUREMENTS_STORE], 'readonly');
       const store = transaction.objectStore(MEASUREMENTS_STORE);
       const index = store.index('userId');
       const request = index.getAll(userId);
@@ -276,7 +283,8 @@ class OfflineStorage {
     if (!this.db) await this.initialize();
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db?.transaction([REPORTS_STORE, MEASUREMENTS_STORE], 'readwrite');
+      // Safe: initialize() was called above if db was null
+      const transaction = this.db!.transaction([REPORTS_STORE, MEASUREMENTS_STORE], 'readwrite');
 
       transaction.objectStore(REPORTS_STORE).clear();
       transaction.objectStore(MEASUREMENTS_STORE).clear();

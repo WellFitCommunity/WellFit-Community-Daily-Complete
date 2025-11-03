@@ -613,6 +613,7 @@ export class HandoffService {
 
       if (acknowledgedPackets.length > 0) {
         const totalMinutes = acknowledgedPackets.reduce((sum, p) => {
+          if (!p.sent_at || !p.acknowledged_at) return sum;
           const sentTime = new Date(p.sent_at).getTime();
           const ackTime = new Date(p.acknowledged_at).getTime();
           return sum + (ackTime - sentTime) / 1000 / 60;

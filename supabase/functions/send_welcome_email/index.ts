@@ -80,7 +80,7 @@ serve(async (req) => {
       ]
     };
 
-    console.log(`📨 Sending welcome email template ${WELCOME_TEMPLATE_ID} to: ${email}`);
+    console.log(`📨 Sending welcome email template ${WELCOME_TEMPLATE_ID}`);
 
     const resp = await fetch('https://api.mailersend.com/v1/email', {
       method: 'POST',
@@ -100,7 +100,7 @@ serve(async (req) => {
       }), { status: resp.status, headers });
     }
 
-    console.log(`✅ Welcome email template sent successfully to: ${email}`);
+    console.log('✅ Welcome email template sent successfully');
     return new Response(
       JSON.stringify({
         success: true,

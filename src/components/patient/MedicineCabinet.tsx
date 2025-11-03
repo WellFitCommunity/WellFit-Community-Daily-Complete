@@ -523,7 +523,7 @@ function MedicationCard({
               Needs review - AI wasn't fully confident
             </div>
           )}
-          {needsRefillSoon && (
+          {needsRefillSoon && medication.next_refill_date && (
             <div className="bg-orange-50 border border-orange-200 text-orange-800 px-3 py-2 rounded-lg text-xs flex items-center gap-2">
               <Calendar className="w-4 h-4" />
               Refill needed by {new Date(medication.next_refill_date).toLocaleDateString()}

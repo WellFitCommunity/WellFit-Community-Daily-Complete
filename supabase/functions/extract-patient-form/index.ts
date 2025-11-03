@@ -224,12 +224,8 @@ DO NOT include any text before or after the JSON. Return ONLY the JSON object.`,
       );
     }
 
-    // Log successful extraction
-    console.log('Successfully extracted patient data:', {
-      name: `${extractedData.firstName} ${extractedData.lastName}`,
-      mrn: extractedData.mrn,
-      confidence: extractedData.confidence,
-    });
+    // Log successful extraction (PHI-free)
+    console.log('Successfully extracted patient data - confidence:', extractedData.confidence);
 
     // Return extracted data
     return new Response(

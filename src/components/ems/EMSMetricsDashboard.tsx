@@ -170,8 +170,10 @@ const EMSMetricsDashboard: React.FC = () => {
       }
 
       const dept = deptMap.get(d.department_name);
-      dept.totalTime += minutes;
-      dept.count++;
+      if (dept) {
+        dept.totalTime += minutes;
+        dept.count++;
+      }
     });
 
     return Array.from(deptMap.entries())

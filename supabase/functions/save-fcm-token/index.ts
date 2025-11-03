@@ -102,7 +102,7 @@ serve(async (req) => {
       });
     }
 
-    console.log('FCM token saved successfully for user:', user_id, data);
+    console.log('FCM token saved successfully');
     return new Response(JSON.stringify({ success: true, message: 'FCM token saved.', data }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },

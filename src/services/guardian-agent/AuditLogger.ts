@@ -358,19 +358,23 @@ export class AuditLogger {
     let filtered = [...this.logs];
 
     if (filters?.startDate) {
-      filtered = filtered.filter((log) => log.timestamp >= filters.startDate);
+      const startDate = filters.startDate;
+      filtered = filtered.filter((log) => log.timestamp >= startDate);
     }
 
     if (filters?.endDate) {
-      filtered = filtered.filter((log) => log.timestamp <= filters.endDate);
+      const endDate = filters.endDate;
+      filtered = filtered.filter((log) => log.timestamp <= endDate);
     }
 
     if (filters?.severity) {
-      filtered = filtered.filter((log) => log.severity === filters.severity);
+      const severity = filters.severity;
+      filtered = filtered.filter((log) => log.severity === severity);
     }
 
     if (filters?.module) {
-      filtered = filtered.filter((log) => log.module === filters.module);
+      const module = filters.module;
+      filtered = filtered.filter((log) => log.module === module);
     }
 
     return filtered;

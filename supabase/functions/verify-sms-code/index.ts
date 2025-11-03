@@ -92,7 +92,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         .maybeSingle();
 
       if (pendingError || !pending) {
-        console.error("No pending registration found for phone:", phone);
+        console.error("No pending registration found");
         return new Response(JSON.stringify({ error: "No pending registration found. Please register again." }), {
           status: 404, headers,
         });

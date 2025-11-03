@@ -369,7 +369,9 @@ export class EnterpriseFileUploadService {
           uploaded = true;
 
           // Update audit record with progress
-          await this.updateChunkProgress(this.uploadAuditId, i + 1, totalChunks);
+          if (this.uploadAuditId) {
+            await this.updateChunkProgress(this.uploadAuditId, i + 1, totalChunks);
+          }
         } catch (error) {
           retries++;
 

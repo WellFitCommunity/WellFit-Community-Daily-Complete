@@ -371,7 +371,7 @@ export class SchemaLockedTool<TInput, TOutput> {
       input
     );
 
-    if (!inputValidation.valid) {
+    if (!inputValidation.valid || !inputValidation.data) {
       // Schema validation failed - errors logged to audit system
       return {
         success: false,
