@@ -1,0 +1,331 @@
+================================================================================
+WellFit Community - Third-Party Services Inventory Summary
+================================================================================
+
+DOCUMENT CREATED: 2025-11-04
+LOCATION: /workspaces/WellFit-Community-Daily-Complete/THIRD_PARTY_SERVICES_INVENTORY.md
+FULL REPORT: 19KB markdown file with complete details
+
+================================================================================
+QUICK REFERENCE - TOP 11 EXTERNAL SERVICES
+================================================================================
+
+1. ANTHROPIC CLAUDE (AI/ML)
+   - Primary: Haiku 4.5 + Sonnet 4.5 dual-model strategy
+   - Cost: $50-1,200/month
+   - Status: Production - core to system
+   - Budget: $50/day, $500/month
+   - Endpoints: Edge Functions (claude-chat, realtime_medical_transcription)
+
+2. DEEPGRAM (SPEECH-TO-TEXT)
+   - Model: Nova-2-Medical (specialized)
+   - Cost: $200-400/month
+   - Status: Production - real-time medical scribe
+   - Integration: WebSocket relay with Claude analysis every 10s
+   
+3. SUPABASE (CLOUD BACKEND)
+   - Components: PostgreSQL, Auth, 60+ Edge Functions, Real-time
+   - Cost: $100-300/month
+   - Status: Production - critical infrastructure
+   - Database: HIPAA-compliant, multi-tenant PostgreSQL
+
+4. FIREBASE (ANALYTICS & MESSAGING)
+   - Features: Cloud Messaging (FCM), Google Analytics, Cloud Storage
+   - Cost: $0-50/month
+   - Status: Production - push notifications
+   - FCM for patient check-in reminders
+
+5. DAILY.CO (TELEHEALTH VIDEO)
+   - Features: HIPAA-compliant video rooms, recording
+   - Cost: $300-800/month (based on consultation hours)
+   - Status: Production - real-time consultations
+   - Integration: Token-based room access
+
+6. TWILIO (SMS COMMUNICATIONS)
+   - Use Cases: Verification codes, patient check-ins, alerts
+   - Cost: $200-400/month (~4,000 SMS/month)
+   - Status: Production - patient engagement
+   - Rate: ~$0.0075 per SMS (US)
+
+7. MAILERSEND (EMAIL DELIVERY)
+   - Features: SMTP, templates, transactional email
+   - Cost: $0-25/month
+   - Status: Production - welcome emails
+   - Template: Welcome email template ID v69oxl5w0zzl785k
+
+8. HCAPTCHA (BOT PROTECTION)
+   - Coverage: Registration, login, sensitive forms
+   - Cost: $0/month (free tier)
+   - Status: Production - security
+   - Requires server-side verification in Edge Functions
+
+9. EPIC EHR (HEALTHCARE INTEGRATION)
+   - Protocol: FHIR R4 with SMART on FHIR OAuth
+   - Cost: $0 (org license-dependent)
+   - Status: Configured (organization-dependent setup)
+   - Integration: Bi-directional patient data sync
+
+10. CERNER EHR (HEALTHCARE INTEGRATION)
+    - Protocol: FHIR R4
+    - Cost: $0 (org license-dependent)
+    - Status: Configured (organization-dependent setup)
+    - Integration: Alternative to Epic
+
+11. WEATHER API (OPTIONAL)
+    - Provider: WeatherAPI.com
+    - Cost: $0/month (free tier, 1M calls/month)
+    - Status: Production - senior dashboard widget
+    - Component: WeatherWidget.tsx
+
+================================================================================
+TOTAL ESTIMATED MONTHLY COST
+================================================================================
+
+Minimum (Low Usage):      $850/month
+Typical (Medium Usage):   $1,500-2,500/month
+Maximum (High Usage):     $3,175/month
+
+Cost Scaling Factors:
+- Claude AI: User volume + AI feature adoption
+- Deepgram: Telehealth consultation hours
+- Daily.co: Video participant-hours
+- Twilio: Patient engagement (check-ins, alerts)
+- Supabase: Database operations + function invocations
+
+================================================================================
+NPM DEPENDENCIES SUMMARY
+================================================================================
+
+Production Dependencies: 44 packages
+Key Packages:
+- @anthropic-ai/sdk (0.64.0)
+- @supabase/supabase-js (2.58.0)
+- @daily-co/daily-js (0.85.0), @daily-co/daily-react (0.23.2)
+- firebase (11.7.3)
+- twilio (5.7.0)
+- react (18.3.1), react-dom (18.3.1)
+- react-router-dom (6.30.1)
+
+Development Dependencies: 30+ packages
+- TypeScript (4.9.5)
+- React Scripts (5.0.1)
+- ESLint, Tailwind, PostCSS
+
+Node.js Requirement: 20.x (specified in package.json)
+
+================================================================================
+CRITICAL SECURITY NOTES
+================================================================================
+
+IMMEDIATE ACTION REQUIRED:
+API keys currently exposed in .env.local files - SECURITY RISK
+
+Current Issues:
+- ANTHROPIC_API_KEY stored in .env.local
+- TWILIO_AUTH_TOKEN exposed
+- MAILERSEND_API_KEY in plaintext
+- DEEPGRAM_API_KEY not encrypted
+
+Recommended Solutions:
+1. Move secrets to Supabase Secrets Manager (Edge Functions)
+2. Use Vercel Environment Variables (encrypted)
+3. Implement AWS Secrets Manager
+4. Use HashiCorp Vault for enterprise deployment
+
+Environment Variable Categories:
+- REACT_APP_* = Client-safe (can be public)
+- No prefix = Server-side secrets (must be protected)
+- Deno.env.get() = Supabase secrets (Edge Functions)
+
+================================================================================
+SERVICE HEALTH & MONITORING
+================================================================================
+
+Health Check Methods:
+- Claude: claudeService.testConnection()
+- Supabase: Direct client health check
+- Firebase: FCM token registration
+- Daily.co: Room creation test
+- Twilio: SMS send verification
+
+Incident Response Patterns:
+- Circuit breaker for Claude (automatic fallback)
+- Exponential backoff retry mechanisms
+- Comprehensive HIPAA audit logging
+- Cost alerts for budget overruns
+- Request ID correlation for troubleshooting
+
+================================================================================
+COMPLIANCE & REQUIREMENTS
+================================================================================
+
+HIPAA Compliance:
+- Full audit logging required
+- 7-year retention (2555 days)
+- PHI encryption at rest and in transit
+- Encryption key: PHI-ENCRYPT-2025-WELLFIT-SECURE-KEY-V1
+
+SOC2 Controls:
+- Data residency in US
+- Access logging and monitoring
+- Rate limiting (60 req/min per user)
+- Secure session management
+
+Rate Limiting Configuration:
+- API_RATE_LIMIT_REQUESTS: 60
+- API_RATE_LIMIT_WINDOW: 60,000ms (per minute)
+
+================================================================================
+INTEGRATION READINESS STATUS
+================================================================================
+
+PRODUCTION READY:
+✓ Anthropic Claude
+✓ Deepgram
+✓ Supabase (core infrastructure)
+✓ Firebase
+✓ Daily.co
+✓ Twilio
+✓ MailerSend
+✓ hCaptcha
+✓ Weather API
+✓ MCP SDK
+
+CONDITIONAL/ORGANIZATION-DEPENDENT:
+~ Epic EHR (requires org-specific client ID)
+~ Cerner EHR (requires org-specific client ID)
+
+================================================================================
+EDGE FUNCTION INVENTORY (60+ TOTAL)
+================================================================================
+
+Core Services:
+- claude-chat: Secure Claude API wrapper
+- realtime_medical_transcription: Deepgram + Claude analysis
+- process-medical-transcript: Async transcript processing
+- coding-suggest: Medical code suggestions
+
+Communication:
+- send_email, send_welcome_email: MailerSend integration
+- send-sms, sms-send-code, verify-sms-code: Twilio SMS
+- send-appointment-reminder: Patient reminders
+
+Telehealth:
+- create-telehealth-room: Daily.co room creation
+- create-patient-telehealth-token: Token generation
+
+Authentication:
+- register, login, admin-login: User authentication
+- passkey-register-start/finish: WebAuthn flow
+- passkey-auth-start/finish: WebAuthn authentication
+- verify-hcaptcha: hCaptcha verification
+- admin_set_pin, verify-admin-pin: PIN authentication
+
+Healthcare:
+- enhanced-fhir-export: FHIR data export
+- sdoh-coding-suggest: Social Determinant coding
+- check-drug-interactions: Drug interaction analysis
+- extract-patient-form: Form data extraction
+
+Additional:
+- guardian-agent: Autonomous healing agent
+- mobile-sync: Mobile app synchronization
+- emergency-alert-dispatch: Critical alerts
+- nightly-excel-backup: Data backups
+
+================================================================================
+DEPLOYMENT & INFRASTRUCTURE
+================================================================================
+
+Hosting Platform:
+- Primary: Vercel (production deployment)
+- Database: Supabase PostgreSQL (AWS-hosted)
+- Functions: Supabase Edge Functions + Vercel Serverless
+
+Environment Files:
+- Development: .env.development
+- Production: .env.production
+- Supabase Local: supabase/.env.local
+
+Database Migrations:
+Location: supabase/migrations/
+Total: 40+ migration files
+Includes: FHIR resources, wearable integration, EMS integration
+
+================================================================================
+VERSION COMPATIBILITY MATRIX
+================================================================================
+
+Node.js:        20.x (required)
+React:          18.3.1
+TypeScript:     4.9.5
+Supabase:       2.58.0
+Firebase:       11.7.3
+Anthropic SDK:  0.64.0
+
+Browser Support (Production):
+- >0.2% market share
+- Not dead
+- Not op_mini
+
+Development Browsers:
+- Latest Chrome
+- Latest Firefox
+- Latest Safari
+
+================================================================================
+RECOMMENDATIONS & ACTION ITEMS
+================================================================================
+
+IMMEDIATE (Week 1):
+1. Move API keys to Supabase Secrets Manager
+2. Audit all exposed credentials
+3. Implement secrets rotation policy
+4. Document API key management procedures
+
+SHORT-TERM (Month 1):
+1. Build service health monitoring dashboard
+2. Add circuit breakers for all external APIs
+3. Implement automated cost tracking/alerting
+4. Create incident response playbooks
+
+MEDIUM-TERM (Quarter 1):
+1. Add multi-service failover capability
+2. Implement API rate limiting at load balancer
+3. Set up comprehensive API usage analytics
+4. Prepare for multi-region deployment
+
+LONG-TERM (Year 1):
+1. Evaluate cost optimization (model switching)
+2. Consider multi-cloud strategy
+3. Plan for Epic/Cerner certified EHR integration
+4. Implement advanced observability (distributed tracing)
+
+================================================================================
+DOCUMENT REFERENCES
+================================================================================
+
+Full Report Location:
+/workspaces/WellFit-Community-Daily-Complete/THIRD_PARTY_SERVICES_INVENTORY.md
+
+Related Documentation:
+- README.md: Project overview
+- docs/CLAUDE_SETUP.md: Claude AI setup
+- docs/DEPLOYMENT_GUIDE.md: Deployment instructions
+- docs/HIPAA_COMPLIANCE.md: Compliance details
+- docs/FHIR_INTEROPERABILITY_GUIDE.md: EHR integration
+- AI_INTEGRATIONS_COMPREHENSIVE.md: Detailed AI integration
+
+Environment Configuration Files:
+- .env.example: Template configuration
+- .env.development: Development settings
+- .env.production: Production settings
+- supabase/.env.local: Supabase configuration
+
+Service Configuration Files:
+- src/config/environment.ts: Environment validation
+- src/settings/firebase.ts: Firebase configuration
+- src/lib/supabaseClient.ts: Supabase initialization
+- supabase/functions/_shared/: Shared utilities
+
+================================================================================
