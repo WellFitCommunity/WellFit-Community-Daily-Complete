@@ -22,6 +22,14 @@
  * MedicationsAPI.getMedications();
  */
 
+// Import all modules first (ESLint requires imports at top)
+import * as MedicationCrud from './medications/MedicationCrud';
+import * as MedicationExtraction from './medications/MedicationExtraction';
+import * as MedicationReminders from './medications/MedicationReminders';
+import * as MedicationAdherence from './medications/MedicationAdherence';
+import * as PillIdentification from './medications/PillIdentification';
+import * as PsychMedManagement from './medications/PsychMedManagement';
+
 // Re-export everything from modular structure for backwards compatibility
 export type { ApiResponse, Medication, MedicationReminder, MedicationDoseTaken } from './medications/types';
 
@@ -74,14 +82,6 @@ export {
 } from './medications/PsychMedManagement';
 
 // Default export for backwards compatibility with existing code
-// Re-create the default export object without circular import
-import * as MedicationCrud from './medications/MedicationCrud';
-import * as MedicationExtraction from './medications/MedicationExtraction';
-import * as MedicationReminders from './medications/MedicationReminders';
-import * as MedicationAdherence from './medications/MedicationAdherence';
-import * as PillIdentification from './medications/PillIdentification';
-import * as PsychMedManagement from './medications/PsychMedManagement';
-
 const MedicationsAPI = {
   ...MedicationCrud,
   ...MedicationExtraction,
