@@ -1,0 +1,114 @@
+/**
+ * FHIR Encounter Service
+ * Manages patient encounter records (visits, admissions, etc.) (FHIR R4)
+ *
+ * @see https://hl7.org/fhir/R4/encounter.html
+ */
+
+import { supabase } from '../../lib/supabaseClient';
+
+export const EncounterService = {
+  // Get encounters for a patient
+  async getAll(patientId: string, options: { status?: string; class_code?: string } = {}) {
+    let query = supabase
+      .from('encounters')
+      .select('*')
+      .eq('patient_id', patientId)
+      .order('period_start', { ascending: false });
+
+    if (options.status) {
+      query = query.eq('status', options.status);
+    }
+
+    if (options.class_code) {
+      query = query.eq('class_code', options.class_code);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data || [];
+  },
+
+  // Get active encounters (status = 'in-progress')
+  async getActive(patientId: string) {
+    const { data, error } = await supabase
+      .from('encounters')
+      .select('*')
+      .eq('patient_id', patientId)
+      .in('status', ['arrived', 'triaged', 'in-progress', 'onleave'])
+      .order('period_start', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  // Get by encounter class (inpatient, outpatient, emergency)
+  async getByClass(patientId: string, classCode: string) {
+    const { data, error } = await supabase
+      .from('encounters')
+      .select('*')
+      .eq('patient_id', patientId)
+      .eq('class_code', classCode)
+      .order('period_start', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  // Get recent encounters (last 30 days)
+  async getRecent(patientId: string, days: number = 30) {
+    const since = new Date();
+    since.setDate(since.getDate() - days);
+
+    const { data, error } = await supabase
+      .from('encounters')
+      .select('*')
+      .eq('patient_id', patientId)
+      .gte('period_start', since.toISOString())
+      .order('period_start', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  // Create encounter
+  async create(encounter: any) {
+    const { data, error } = await supabase
+      .from('encounters')
+      .insert([encounter])
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  // Update encounter
+  async update(id: string, updates: any) {
+    const { data, error } = await supabase
+      .from('encounters')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  // Complete encounter (set status to 'finished' and period_end)
+  async complete(id: string) {
+    const { data, error } = await supabase
+      .from('encounters')
+      .update({
+        status: 'finished',
+        period_end: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+};
