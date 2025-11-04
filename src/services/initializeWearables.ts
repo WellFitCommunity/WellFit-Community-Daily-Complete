@@ -9,14 +9,14 @@ import { registerAllWearableAdapters } from '../adapters/wearables';
  */
 export function initializeWearables(): void {
   try {
-    
+    console.log('🔧 Initializing wearable integration system...');
 
     // Register all adapters
     registerAllWearableAdapters();
 
-    
+    console.log('✅ Wearable integration system initialized successfully');
   } catch (error) {
-    
+    console.error('❌ Failed to initialize wearable system:', error);
     // Don't throw - wearables are optional feature, app should continue
   }
 }

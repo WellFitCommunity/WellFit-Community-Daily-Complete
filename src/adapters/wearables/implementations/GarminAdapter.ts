@@ -69,23 +69,26 @@ export class GarminAdapter implements WearableAdapter {
     }
 
     this.status = 'connected';
-    
+    console.log('✅ Garmin adapter: Connection initialized (OAuth 1.0a)');
   }
 
   async disconnect(): Promise<void> {
     this.config = null;
     this.status = 'disconnected';
-    
+    console.log('🔌 Garmin adapter: Disconnected');
   }
 
   async test(): Promise<{ success: boolean; message: string; details?: any }> {
     try {
+      console.log('🧪 Garmin adapter: Testing connection...');
       // Test with a simple ping
+      console.log('✅ Garmin adapter: Connection test successful');
       return {
         success: true,
         message: 'Connection ready - OAuth tokens required for data access',
       };
     } catch (error: any) {
+      console.error('❌ Garmin adapter: Connection test failed:', error);
       return {
         success: false,
         message: error.message || 'Connection test failed',

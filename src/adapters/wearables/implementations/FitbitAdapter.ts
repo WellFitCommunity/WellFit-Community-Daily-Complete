@@ -86,8 +86,9 @@ export class FitbitAdapter implements WearableAdapter {
       throw new Error('Fitbit OAuth2 requires clientId and clientSecret');
     }
 
+    console.log('🔗 Fitbit adapter: Initializing connection...');
     this.status = 'connected';
-    
+    console.log('✅ Fitbit adapter: Connection initialized (OAuth2 ready)');
   }
 
   async disconnect(): Promise<void> {
@@ -107,9 +108,9 @@ export class FitbitAdapter implements WearableAdapter {
           }),
         });
 
-        
+        console.log('✅ Fitbit adapter: OAuth tokens revoked');
       } catch (error) {
-        
+        console.error('⚠️ Fitbit adapter: Failed to revoke tokens:', error);
       }
     }
 
@@ -118,17 +119,20 @@ export class FitbitAdapter implements WearableAdapter {
     this.userId = '';
     this.config = null;
     this.status = 'disconnected';
-    
+    console.log('🔌 Fitbit adapter: Disconnected');
   }
 
   async test(): Promise<{ success: boolean; message: string; details?: any }> {
     try {
+      console.log('🧪 Fitbit adapter: Testing connection...');
       // Test by fetching user profile
       const response = await this.makeRequest('/1/user/-/profile.json', 'GET');
 
       if (response.ok) {
         const data = await response.json();
         this.userId = data.user.encodedId;
+
+        console.log(`✅ Fitbit adapter: Connection test successful (User: ${data.user.displayName})`);
 
         return {
           success: true,
@@ -142,11 +146,13 @@ export class FitbitAdapter implements WearableAdapter {
         };
       }
 
+      console.error(`❌ Fitbit adapter: Connection test failed (${response.status})`);
       return {
         success: false,
         message: `Connection test failed: ${response.status} ${response.statusText}`,
       };
     } catch (error: any) {
+      console.error('❌ Fitbit adapter: Connection test error:', error);
       return {
         success: false,
         message: error.message || 'Connection test failed',
@@ -183,6 +189,7 @@ export class FitbitAdapter implements WearableAdapter {
       throw new Error('OAuth credentials not configured');
     }
 
+    console.log('🔐 Fitbit adapter: Handling OAuth callback...');
     const authHeader = 'Basic ' + btoa(`${this.config.clientId}:${this.config.clientSecret}`);
 
     const response = await fetch(`${this.FITBIT_AUTH_BASE}/token`, {
@@ -201,6 +208,7 @@ export class FitbitAdapter implements WearableAdapter {
 
     if (!response.ok) {
       const error = await response.text();
+      console.error(`❌ Fitbit adapter: OAuth token exchange failed:`, error);
       throw new Error(`OAuth token exchange failed: ${response.statusText} - ${error}`);
     }
 
@@ -212,7 +220,7 @@ export class FitbitAdapter implements WearableAdapter {
     // Fitbit tokens expire in seconds
     this.tokenExpiry = new Date(Date.now() + data.expires_in * 1000);
 
-    
+    console.log(`✅ Fitbit adapter: OAuth successful (User ID: ${this.userId})`);
 
     return {
       accessToken: data.access_token,

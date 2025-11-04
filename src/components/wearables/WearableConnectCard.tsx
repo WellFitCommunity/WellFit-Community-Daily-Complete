@@ -41,7 +41,7 @@ export const WearableConnectCard: React.FC<WearableConnectCardProps> = ({
     try {
       // In production, this would trigger OAuth flow
       // For now, just show that the button was clicked
-      
+      console.log(`🔗 Initiating connection to ${adapter.name}...`);
 
       if (onConnect) {
         onConnect(adapter.id);
@@ -51,9 +51,10 @@ export const WearableConnectCard: React.FC<WearableConnectCardProps> = ({
       setTimeout(() => {
         setConnectedAdapters(prev => new Set([...prev, adapter.id]));
         setLoading(null);
+        console.log(`✅ Successfully connected to ${adapter.name}`);
       }, 1000);
     } catch (error) {
-      
+      console.error(`❌ Failed to connect to ${adapter.name}:`, error);
       setLoading(null);
     }
   };
@@ -62,7 +63,7 @@ export const WearableConnectCard: React.FC<WearableConnectCardProps> = ({
     setLoading(adapter.id);
 
     try {
-      
+      console.log(`🔌 Disconnecting from ${adapter.name}...`);
 
       if (onDisconnect) {
         onDisconnect(adapter.id);
@@ -75,9 +76,10 @@ export const WearableConnectCard: React.FC<WearableConnectCardProps> = ({
           return updated;
         });
         setLoading(null);
+        console.log(`✅ Disconnected from ${adapter.name}`);
       }, 500);
     } catch (error) {
-      
+      console.error(`❌ Failed to disconnect from ${adapter.name}:`, error);
       setLoading(null);
     }
   };

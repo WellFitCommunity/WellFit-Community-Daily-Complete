@@ -615,6 +615,7 @@ export class WearableService {
     request: WearableDataSyncRequest
   ): Promise<WearableApiResponse<{ synced: number; failed: number }>> {
     try {
+      console.log(`🔄 Starting wearable data sync for ${request.deviceType}...`);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
@@ -638,6 +639,8 @@ export class WearableService {
       if (!adapter) {
         throw new Error(`No active adapter for ${request.deviceType}`);
       }
+
+      console.log(`📡 Using adapter: ${adapterId}`);
 
       let syncedCount = 0;
       let failedCount = 0;
@@ -664,12 +667,12 @@ export class WearableService {
               );
               syncedCount++;
             } catch (error) {
-              
+              console.error(`❌ Failed to store vital sign:`, error);
               failedCount++;
             }
           }
         } catch (error) {
-          
+          console.error(`❌ Failed to fetch vitals from ${request.deviceType}:`, error);
           failedCount++;
         }
       }
@@ -682,6 +685,8 @@ export class WearableService {
             startDate: request.startDate || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
             endDate: request.endDate || new Date(),
           });
+
+          console.log(`📊 Fetched ${activities.length} activity records`);
 
           for (const activity of activities) {
             try {
@@ -698,12 +703,12 @@ export class WearableService {
               );
               syncedCount++;
             } catch (error) {
-              
+              console.error(`❌ Failed to store activity data:`, error);
               failedCount++;
             }
           }
         } catch (error) {
-          
+          console.error(`❌ Failed to fetch activity from ${request.deviceType}:`, error);
           failedCount++;
         }
       }
@@ -724,12 +729,14 @@ export class WearableService {
         purpose: 'operations',
       });
 
+      console.log(`✅ Sync complete: ${syncedCount} synced, ${failedCount} failed`);
+
       return {
         success: true,
         data: { synced: syncedCount, failed: failedCount },
       };
     } catch (error: any) {
-      
+      console.error(`❌ Wearable sync failed:`, error);
       return { success: false, error: error.message };
     }
   }
