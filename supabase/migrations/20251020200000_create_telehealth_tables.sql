@@ -36,11 +36,11 @@ CREATE TABLE IF NOT EXISTS telehealth_sessions (
 );
 
 -- Add indexes for performance
-CREATE INDEX idx_telehealth_sessions_encounter ON telehealth_sessions(encounter_id);
-CREATE INDEX idx_telehealth_sessions_patient ON telehealth_sessions(patient_id);
-CREATE INDEX idx_telehealth_sessions_provider ON telehealth_sessions(provider_id);
-CREATE INDEX idx_telehealth_sessions_status ON telehealth_sessions(status);
-CREATE INDEX idx_telehealth_sessions_started ON telehealth_sessions(started_at DESC);
+CREATE INDEX IF NOT EXISTS idx_telehealth_sessions_encounter ON telehealth_sessions(encounter_id);
+CREATE INDEX IF NOT EXISTS idx_telehealth_sessions_patient ON telehealth_sessions(patient_id);
+CREATE INDEX IF NOT EXISTS idx_telehealth_sessions_provider ON telehealth_sessions(provider_id);
+CREATE INDEX IF NOT EXISTS idx_telehealth_sessions_status ON telehealth_sessions(status);
+CREATE INDEX IF NOT EXISTS idx_telehealth_sessions_started ON telehealth_sessions(started_at DESC);
 
 -- Telehealth session events (for analytics and compliance)
 CREATE TABLE IF NOT EXISTS telehealth_session_events (
@@ -70,9 +70,9 @@ CREATE TABLE IF NOT EXISTS telehealth_session_events (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_telehealth_events_session ON telehealth_session_events(session_id);
-CREATE INDEX idx_telehealth_events_type ON telehealth_session_events(event_type);
-CREATE INDEX idx_telehealth_events_created ON telehealth_session_events(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_telehealth_events_session ON telehealth_session_events(session_id);
+CREATE INDEX IF NOT EXISTS idx_telehealth_events_type ON telehealth_session_events(event_type);
+CREATE INDEX IF NOT EXISTS idx_telehealth_events_created ON telehealth_session_events(created_at DESC);
 
 -- Add telehealth fields to encounters table if they don't exist
 DO $$

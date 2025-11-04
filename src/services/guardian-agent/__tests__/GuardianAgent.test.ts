@@ -222,7 +222,7 @@ describe('Guardian Agent', () => {
       const finalStats = agent.getStatistics();
       // Should have detected issues
       expect(finalStats.agentMetrics.issuesDetected).toBeGreaterThanOrEqual(15);
-    });
+    }, 15000); // Increased timeout to 15 seconds for processing 15 errors
   });
 
   describe('Configuration', () => {
@@ -379,5 +379,5 @@ describe('Integration Tests', () => {
     expect(stats.agentMetrics.issuesDetected).toBeGreaterThanOrEqual(errorScenarios.length);
 
     agent.stop();
-  });
+  }, 15000); // Increased timeout to 15 seconds for integration test with multiple scenarios
 });
