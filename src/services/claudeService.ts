@@ -84,8 +84,8 @@ class RateLimiter {
 class CostTracker {
   private dailySpend: Map<string, number> = new Map();
   private monthlySpend: Map<string, number> = new Map();
-  private readonly dailyLimit: number = 50; // $50 daily limit per user
-  private readonly monthlyLimit: number = 500; // $500 monthly limit per user
+  private readonly dailyLimit: number = 25; // $25 daily limit per user
+  private readonly monthlyLimit: number = 350; // $350 monthly limit per user
 
   private readonly modelCosts = {
     [ClaudeModel.HAIKU_3]: { input: 0.00025, output: 0.00125 }, // Legacy

@@ -648,9 +648,13 @@ export interface ConnectWearableRequest {
 }
 
 export interface WearableDataSyncRequest {
-  device_id: string;
-  start_date: string;
-  end_date: string;
+  device_id?: string;
+  deviceType: WearableDeviceType;
+  start_date?: string;
+  end_date?: string;
+  startDate?: Date;
+  endDate?: Date;
+  dataTypes?: Array<'vitals' | 'activity' | 'sleep'>;
 }
 
 // =====================================================

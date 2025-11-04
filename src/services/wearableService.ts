@@ -9,6 +9,7 @@
 import { supabase } from '../lib/supabaseClient';
 import { logPhiAccess } from './phiAccessLogger';
 import { PAGINATION_LIMITS, applyLimit } from '../utils/pagination';
+import { wearableRegistry } from '../adapters/wearables';
 import type {
   WearableConnection,
   WearableVitalSign,
@@ -614,22 +615,136 @@ export class WearableService {
     request: WearableDataSyncRequest
   ): Promise<WearableApiResponse<{ synced: number; failed: number }>> {
     try {
-      // This is a placeholder for actual device API integration
-      // In production, this would:
-      // 1. Call device-specific API (Apple HealthKit, Fitbit API, etc.)
-      // 2. Fetch data for date range
-      // 3. Store in wearable_vital_signs, wearable_activity_data tables
-      // 4. Update last_sync timestamp
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
 
+      // Get wearable connection details
+      const { data: connection, error: connError } = await supabase
+        .from('wearable_connections')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('device_type', request.deviceType)
+        .eq('is_active', true)
+        .single();
 
+      if (connError || !connection) {
+        throw new Error(`Device not connected: ${request.deviceType}`);
+      }
+
+      // Get adapter from registry
+      const adapterId = this.mapDeviceTypeToAdapter(request.deviceType);
+      const adapter = wearableRegistry.getConnection(connection.connection_id);
+
+      if (!adapter) {
+        throw new Error(`No active adapter for ${request.deviceType}`);
+      }
+
+      let syncedCount = 0;
+      let failedCount = 0;
+
+      // Sync vitals if requested
+      if (request.dataTypes?.includes('vitals')) {
+        try {
+          const vitals = await adapter.fetchVitals({
+            userId: user.id,
+            startDate: request.startDate,
+            endDate: request.endDate,
+          });
+
+          for (const vital of vitals) {
+            try {
+              await this.storeVitalSign(
+                user.id,
+                connection.connection_id,
+                vital.type as 'heart_rate' | 'blood_pressure' | 'oxygen_saturation' | 'temperature' | 'respiratory_rate',
+                typeof vital.value === 'object' ? vital.value.systolic : vital.value,
+                vital.unit,
+                vital.timestamp.toISOString(),
+                vital.metadata?.context as 'resting' | 'active' | 'sleeping' | undefined
+              );
+              syncedCount++;
+            } catch (error) {
+              
+              failedCount++;
+            }
+          }
+        } catch (error) {
+          
+          failedCount++;
+        }
+      }
+
+      // Sync activity if requested
+      if (request.dataTypes?.includes('activity')) {
+        try {
+          const activities = await adapter.fetchActivity({
+            userId: user.id,
+            startDate: request.startDate || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+            endDate: request.endDate || new Date(),
+          });
+
+          for (const activity of activities) {
+            try {
+              await this.storeActivityData(
+                user.id,
+                connection.connection_id,
+                activity.date.toISOString().split('T')[0],
+                {
+                  steps: activity.steps,
+                  distance_meters: activity.distanceMeters,
+                  calories_burned: activity.caloriesBurned,
+                  active_minutes: activity.activeMinutes,
+                }
+              );
+              syncedCount++;
+            } catch (error) {
+              
+              failedCount++;
+            }
+          }
+        } catch (error) {
+          
+          failedCount++;
+        }
+      }
+
+      // Update last sync timestamp
+      await supabase
+        .from('wearable_connections')
+        .update({ last_sync_at: new Date().toISOString() })
+        .eq('connection_id', connection.connection_id);
+
+      // Log PHI access
+      await logPhiAccess({
+        phiType: 'wearable_data',
+        phiResourceId: connection.connection_id,
+        patientId: user.id,
+        accessType: 'create',
+        accessMethod: 'API',
+        purpose: 'operations',
+      });
 
       return {
         success: true,
-        data: { synced: 0, failed: 0 },
+        data: { synced: syncedCount, failed: failedCount },
       };
     } catch (error: any) {
-
+      
       return { success: false, error: error.message };
     }
+  }
+
+  /**
+   * Map device type to adapter ID
+   */
+  private static mapDeviceTypeToAdapter(deviceType: WearableDeviceType): string {
+    const mapping: Record<string, string> = {
+      'apple_watch': 'apple-healthkit',
+      'fitbit': 'fitbit',
+      'garmin': 'garmin',
+      'withings': 'withings',
+    };
+
+    return mapping[deviceType] || 'generic';
   }
 }

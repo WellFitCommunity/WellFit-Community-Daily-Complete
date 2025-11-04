@@ -122,13 +122,12 @@ function Shell() {
 
     guardian.start();
     // Guardian Agent is now active and monitoring
+    // Guardian Eyes recording is managed by SmartRecordingStrategy
 
     return () => {
       guardian.stop();
     };
   }, []);
-
-  // Recording and monitoring moved to Edge Functions
 
   useEffect(() => {
     setBranding(getCurrentBranding());

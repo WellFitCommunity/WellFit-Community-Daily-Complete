@@ -1967,8 +1967,8 @@ src/
   - **Claude Opus 4.1:** Complex reasoning (reserved)
 - **Real-Time Transcription:** Deepgram nova-2-medical model
 - **Cost Controls:**
-  - Per-user daily limit: $50
-  - Per-user monthly limit: $500
+  - Per-user daily limit: $25
+  - Per-user monthly limit: $350
   - Rate limiting: 60 requests/minute per user
   - Circuit breaker on repeated failures
   - Token cost estimation before each request

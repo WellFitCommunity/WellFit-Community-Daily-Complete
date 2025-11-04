@@ -20,6 +20,9 @@ import { DemoModeProvider } from './contexts/DemoModeContext';
 // Claude init
 import { claudeService } from './services/claudeService';
 
+// Wearable adapters init
+import { initializeWearables } from './services/initializeWearables';
+
 // Guardian Agent init
 // import { GuardianAgent } from './services/guardian-agent/GuardianAgent'; // Disabled - Node.js modules
 
@@ -45,6 +48,9 @@ claudeService
   .catch((error) => {
     // Claude AI service initialization failed (limited AI features)
   });
+
+// Initialize wearable adapters
+initializeWearables();
 
 // Guardian Agent removed - it's a backend service that requires Node.js
 // It should run as a separate Edge Function or backend service, not in the browser
