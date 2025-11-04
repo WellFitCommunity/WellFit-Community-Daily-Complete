@@ -271,8 +271,8 @@ resource_type: 'auth_event',
     // Send SMS verification code via Twilio
     let smsSent = false;
     try {
-      // Use functions subdomain for edge function calls
-      const functionsUrl = SB_URL.replace('.supabase.co', '.functions.supabase.co');
+      // Correct Edge Functions URL format (not .functions.supabase.co subdomain)
+      const functionsUrl = `${SB_URL}/functions/v1`;
       // IMPORTANT: sms-send-code expects anon key, NOT service role key
       // Service role key causes "Invalid JWT" error
       const smsResponse = await fetch(`${functionsUrl}/sms-send-code`, {
