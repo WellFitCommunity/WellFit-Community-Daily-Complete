@@ -93,6 +93,7 @@ ALTER TABLE telehealth_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE telehealth_session_events ENABLE ROW LEVEL SECURITY;
 
 -- Providers can see their own sessions
+DROP POLICY IF EXISTS telehealth_sessions_provider_access ON telehealth_sessions;
 CREATE POLICY telehealth_sessions_provider_access ON telehealth_sessions
   FOR ALL
   USING (
@@ -100,6 +101,7 @@ CREATE POLICY telehealth_sessions_provider_access ON telehealth_sessions
   );
 
 -- Patients can see their own sessions
+DROP POLICY IF EXISTS telehealth_sessions_patient_access ON telehealth_sessions;
 CREATE POLICY telehealth_sessions_patient_access ON telehealth_sessions
   FOR SELECT
   USING (
@@ -107,11 +109,13 @@ CREATE POLICY telehealth_sessions_patient_access ON telehealth_sessions
   );
 
 -- Admins can see all sessions (using helper function)
+DROP POLICY IF EXISTS telehealth_sessions_admin_access ON telehealth_sessions;
 CREATE POLICY telehealth_sessions_admin_access ON telehealth_sessions
   FOR ALL
   USING (is_admin());
 
 -- Session events follow same access as sessions
+DROP POLICY IF EXISTS telehealth_events_access ON telehealth_session_events;
 CREATE POLICY telehealth_events_access ON telehealth_session_events
   FOR ALL
   USING (
@@ -135,6 +139,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trigger_update_telehealth_session_updated_at ON telehealth_sessions;
 CREATE TRIGGER trigger_update_telehealth_session_updated_at
   BEFORE UPDATE ON telehealth_sessions
   FOR EACH ROW
