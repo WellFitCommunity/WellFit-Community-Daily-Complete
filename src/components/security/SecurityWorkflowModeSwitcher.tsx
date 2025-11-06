@@ -1,18 +1,21 @@
 // =====================================================
-// WORKFLOW MODE SWITCHER
-// Purpose: Focus modes to reduce cognitive overload
-// Filters/highlights sections based on workflow context
+// SECURITY PANEL WORKFLOW MODE SWITCHER
+// Purpose: Focus modes for security/compliance teams
+// Reduces cognitive overload for HIPAA/SOC2 workflows
 // =====================================================
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Stethoscope,
-  ClipboardList,
-  Heart,
+  Shield,
+  Lock,
+  Eye,
+  AlertTriangle,
+  FileText,
+  Settings,
   Zap,
   CheckCircle,
-  Settings,
+  Activity,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
@@ -21,27 +24,27 @@ import { useAuth } from '../../contexts/AuthContext';
 // TYPES
 // =====================================================
 
-export type WorkflowMode = 'all' | 'clinical' | 'administrative' | 'wellness';
+export type SecurityWorkflowMode = 'all' | 'compliance' | 'monitoring' | 'incidents' | 'audits';
 
-export interface WorkflowModeConfig {
-  id: WorkflowMode;
+export interface SecurityWorkflowModeConfig {
+  id: SecurityWorkflowMode;
   label: string;
   description: string;
   icon: React.ComponentType<any>;
   gradient: string;
-  sections: string[]; // IDs of sections to show/prioritize
+  sections: string[];
 }
 
-interface WorkflowModeSwitcherProps {
-  currentMode: WorkflowMode;
-  onModeChange: (mode: WorkflowMode) => void;
+interface SecurityWorkflowModeSwitcherProps {
+  currentMode: SecurityWorkflowMode;
+  onModeChange: (mode: SecurityWorkflowMode) => void;
 }
 
 // =====================================================
 // WORKFLOW MODE CONFIGURATIONS
 // =====================================================
 
-export const WORKFLOW_MODES: Record<WorkflowMode, WorkflowModeConfig> = {
+export const SECURITY_WORKFLOW_MODES: Record<SecurityWorkflowMode, SecurityWorkflowModeConfig> = {
   all: {
     id: 'all',
     label: 'All Sections',
@@ -50,73 +53,90 @@ export const WORKFLOW_MODES: Record<WorkflowMode, WorkflowModeConfig> = {
     gradient: 'from-gray-400 to-gray-600',
     sections: [],
   },
-  clinical: {
-    id: 'clinical',
-    label: 'Clinical Focus',
-    description: 'Patient care, vitals, medications, notes',
-    icon: Stethoscope,
-    gradient: 'from-blue-400 via-cyan-500 to-teal-500',
+  compliance: {
+    id: 'compliance',
+    label: 'HIPAA/SOC2 Compliance',
+    description: 'Compliance monitoring, policies, certifications',
+    icon: Shield,
+    gradient: 'from-blue-400 via-indigo-500 to-purple-500',
     sections: [
-      'patient-summary',
-      'smart-scribe',
-      'telehealth',
-      'medications',
-      'vitals',
-      'conditions',
-      'labs',
-      'risk-assessment',
-      'ccm',
-      'clinical-resources',
+      'compliance-dashboard',
+      'hipaa-controls',
+      'soc2-controls',
+      'policy-management',
+      'certification-status',
+      'risk-assessments',
+      'compliance-reports',
     ],
   },
-  administrative: {
-    id: 'administrative',
-    label: 'Administrative',
-    description: 'Documentation, reports, compliance',
-    icon: ClipboardList,
+  monitoring: {
+    id: 'monitoring',
+    label: 'Security Monitoring',
+    description: 'Real-time alerts, PHI access, anomalies',
+    icon: Eye,
+    gradient: 'from-green-400 via-teal-500 to-cyan-500',
+    sections: [
+      'security-alerts',
+      'guardian-eyes',
+      'phi-access-logs',
+      'behavioral-analytics',
+      'anomaly-detection',
+      'real-time-monitoring',
+    ],
+  },
+  incidents: {
+    id: 'incidents',
+    label: 'Incident Response',
+    description: 'Security incidents, breaches, investigations',
+    icon: AlertTriangle,
+    gradient: 'from-red-400 via-orange-500 to-amber-500',
+    sections: [
+      'active-incidents',
+      'breach-notifications',
+      'incident-timeline',
+      'investigation-tools',
+      'forensics',
+      'remediation-tracking',
+    ],
+  },
+  audits: {
+    id: 'audits',
+    label: 'Audit Logs & Reports',
+    description: 'Audit trails, access logs, compliance reports',
+    icon: FileText,
     gradient: 'from-purple-400 via-pink-500 to-rose-500',
     sections: [
-      'reports',
-      'quality-metrics',
-      'documentation',
-      'user-questions',
-    ],
-  },
-  wellness: {
-    id: 'wellness',
-    label: 'Wellness Hub',
-    description: 'Community programs, SDOH, prevention',
-    icon: Heart,
-    gradient: 'from-green-400 via-emerald-500 to-teal-500',
-    sections: [
-      'physician-wellness',
-      'chw-alerts',
-      'community-programs',
-      'sdoh',
+      'audit-logs',
+      'access-control-logs',
+      'phi-access-tracking',
+      'mfa-enforcement',
+      'audit-reports',
+      'export-logs',
     ],
   },
 };
 
 // =====================================================
-// WORKFLOW MODE SWITCHER COMPONENT
+// SECURITY WORKFLOW MODE SWITCHER COMPONENT
 // =====================================================
 
-export const WorkflowModeSwitcher: React.FC<WorkflowModeSwitcherProps> = ({
+export const SecurityWorkflowModeSwitcher: React.FC<SecurityWorkflowModeSwitcherProps> = ({
   currentMode,
   onModeChange,
 }) => {
   const { user } = useAuth();
 
-  const handleModeChange = async (mode: WorkflowMode) => {
+  const handleModeChange = async (mode: SecurityWorkflowMode) => {
     onModeChange(mode);
 
     // Save preference
     if (!user || mode === 'all') return;
 
     const fieldMap = {
-      clinical: 'last_clinical_mode',
-      administrative: 'last_admin_mode',
-      wellness: 'last_wellness_mode',
+      compliance: 'last_compliance_mode',
+      monitoring: 'last_monitoring_mode',
+      incidents: 'last_incidents_mode',
+      audits: 'last_audits_mode',
     };
 
     const field = fieldMap[mode as keyof typeof fieldMap];
@@ -124,7 +144,7 @@ export const WorkflowModeSwitcher: React.FC<WorkflowModeSwitcherProps> = ({
 
     try {
       await supabase
-        .from('physician_workflow_preferences')
+        .from('security_workflow_preferences')
         .upsert({
           user_id: user.id,
           [field]: new Date().toISOString(),
@@ -138,14 +158,14 @@ export const WorkflowModeSwitcher: React.FC<WorkflowModeSwitcherProps> = ({
     <div className="bg-white rounded-xl shadow-lg p-4 border border-gray-200">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Zap className="w-5 h-5 text-blue-600" />
-          <h3 className="font-bold text-gray-800">Workflow Mode</h3>
+          <Zap className="w-5 h-5 text-red-600" />
+          <h3 className="font-bold text-gray-800">Security Workflow Mode</h3>
         </div>
-        <div className="text-xs text-gray-500">Filter sections by workflow</div>
+        <div className="text-xs text-gray-500">Focus on specific security tasks</div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        {Object.values(WORKFLOW_MODES).map((mode) => {
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        {Object.values(SECURITY_WORKFLOW_MODES).map((mode) => {
           const Icon = mode.icon;
           const isActive = currentMode === mode.id;
 
@@ -210,16 +230,16 @@ export const WorkflowModeSwitcher: React.FC<WorkflowModeSwitcherProps> = ({
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg border border-blue-200"
+          className="mt-4 p-3 bg-gradient-to-r from-red-50 to-orange-50 rounded-lg border border-red-200"
         >
           <div className="flex items-start gap-2">
-            <Zap className="w-4 h-4 text-blue-600 mt-0.5" />
+            <Activity className="w-4 h-4 text-red-600 mt-0.5" />
             <div className="text-xs text-gray-700">
               <span className="font-semibold">
-                {WORKFLOW_MODES[currentMode].label} mode active:
+                {SECURITY_WORKFLOW_MODES[currentMode].label} mode active:
               </span>{' '}
-              Showing {WORKFLOW_MODES[currentMode].sections.length} focused sections.
-              Switch modes or press Cmd+K for quick access.
+              Showing {SECURITY_WORKFLOW_MODES[currentMode].sections.length} focused sections.
+              Press Cmd+K for quick access.
             </div>
           </div>
         </motion.div>
@@ -232,62 +252,17 @@ export const WorkflowModeSwitcher: React.FC<WorkflowModeSwitcherProps> = ({
 // SECTION FILTER HOOK
 // =====================================================
 
-export const useSectionFilter = (
-  mode: WorkflowMode,
+export const useSecuritySectionFilter = (
+  mode: SecurityWorkflowMode,
   sectionId: string
 ): { visible: boolean; prioritized: boolean } => {
   if (mode === 'all') {
     return { visible: true, prioritized: false };
   }
 
-  const config = WORKFLOW_MODES[mode];
+  const config = SECURITY_WORKFLOW_MODES[mode];
   const visible = config.sections.includes(sectionId);
   const prioritized = visible;
 
   return { visible, prioritized };
-};
-
-// =====================================================
-// WORKFLOW MODE PERSISTENCE
-// =====================================================
-
-export const saveWorkflowPreference = async (
-  userId: string,
-  mode: WorkflowMode,
-  sectionOrder: string[]
-) => {
-  try {
-    await supabase.from('physician_workflow_preferences').upsert({
-      user_id: userId,
-      preferred_mode: mode,
-      section_order: sectionOrder,
-      updated_at: new Date().toISOString(),
-    });
-  } catch (error) {
-    // Error handled silently
-  }
-};
-
-export const loadWorkflowPreference = async (
-  userId: string
-): Promise<{ mode: WorkflowMode; sectionOrder: string[] } | null> => {
-  try {
-    const { data, error } = await supabase
-      .from('physician_workflow_preferences')
-      .select('preferred_mode, section_order')
-      .eq('user_id', userId)
-      .single();
-
-    if (error && error.code !== 'PGRST116') throw error;
-
-    return data
-      ? {
-          mode: (data.preferred_mode as WorkflowMode) || 'all',
-          sectionOrder: data.section_order || [],
-        }
-      : null;
-  } catch (error) {
-    // Error handled silently
-    return null;
-  }
 };

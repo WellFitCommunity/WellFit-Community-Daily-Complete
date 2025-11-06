@@ -4,6 +4,8 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, Video, Search, UserPlus, CheckCircle, XCircle } from 'lucide-react';
 import { useSupabaseClient, useUser } from '../../contexts/AuthContext';
+import { InputValidator } from '../../services/inputValidator';
+import { auditLogger } from '../../services/auditLogger';
 
 interface Patient {
   user_id: string;
@@ -59,10 +61,36 @@ const TelehealthScheduler: React.FC = () => {
 
     const searchPatients = async () => {
       try {
+        // SECURITY: Sanitize input to prevent SQL injection (HIPAA §164.312(a)(1))
+        // Remove special characters that could be used for injection: %, ,, ;, etc.
+        const sanitized = InputValidator.sanitizeText(searchQuery, 100)
+          .replace(/[%,;'"\\]/g, '')
+          .trim();
+
+        // Additional validation: require at least 2 characters after sanitization
+        if (sanitized.length < 2) {
+          setSearchResults([]);
+          setShowSearchResults(false);
+          return;
+        }
+
+        // HIPAA §164.312(b): Audit patient profile search operations
+        await auditLogger.info('PATIENT_PROFILE_SEARCH', {
+          event_category: 'PHI_ACCESS',
+          operation: 'search',
+          resource_type: 'profiles',
+          metadata: {
+            search_length: sanitized.length,
+            query_sanitized: true,
+            context: 'telehealth_scheduler'
+          },
+          success: true
+        });
+
         const { data, error } = await supabase
           .from('profiles')
           .select('user_id, full_name, first_name, last_name, phone, email, dob')
-          .or(`full_name.ilike.%${searchQuery}%,first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`)
+          .or(`full_name.ilike.%${sanitized}%,first_name.ilike.%${sanitized}%,last_name.ilike.%${sanitized}%,phone.ilike.%${sanitized}%`)
           .limit(10);
 
         if (error) throw error;

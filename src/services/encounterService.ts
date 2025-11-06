@@ -3,6 +3,8 @@
 
 import { supabase } from '../lib/supabaseClient';
 import { logPhiAccess, extractPatientId } from './phiAccessLogger';
+import { InputValidator } from './inputValidator';
+import { auditLogger } from './auditLogger';
 import type {
   Encounter,
   EncounterProcedure,
@@ -266,10 +268,33 @@ export class EncounterService {
   }
 
   static async searchPatients(query: string): Promise<Patient[]> {
+    // SECURITY: Sanitize input to prevent SQL injection (HIPAA §164.312(a)(1))
+    // Remove special characters that could be used for injection: %, ,, ;, etc.
+    const sanitized = InputValidator.sanitizeText(query, 100)
+      .replace(/[%,;'"\\]/g, '')
+      .trim();
+
+    // Require minimum 2 characters to prevent full table scans
+    if (sanitized.length < 2) {
+      return [];
+    }
+
+    // HIPAA §164.312(b): Audit patient search operations
+    await auditLogger.info('PATIENT_SEARCH', {
+      event_category: 'PHI_ACCESS',
+      operation: 'search',
+      resource_type: 'patients',
+      metadata: {
+        search_length: sanitized.length,
+        query_sanitized: true
+      },
+      success: true
+    });
+
     const { data, error } = await supabase
       .from('patients')
       .select('*')
-      .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%,member_id.ilike.%${query}%`)
+      .or(`first_name.ilike.%${sanitized}%,last_name.ilike.%${sanitized}%,member_id.ilike.%${sanitized}%`)
       .limit(20);
 
     if (error) throw new Error(`Failed to search patients: ${error.message}`);
