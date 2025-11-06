@@ -36,7 +36,6 @@ export interface PatientSummary {
   pendingLabs: number;
   sdohComplexity: number;
   ccmEligible: boolean;
-  revenueOpportunity: number;
 }
 
 export interface QuickStat {

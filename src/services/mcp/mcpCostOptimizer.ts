@@ -190,7 +190,7 @@ export class MCPCostOptimizer {
   private constructor(config: Partial<CostOptimizationConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
     this.mcpClient = new MCPClient({
-      edgeFunctionUrl: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mcp-claude-server`,
+      edgeFunctionUrl: `${(import.meta as any).env?.VITE_SUPABASE_URL || ''}/functions/v1/mcp-claude-server`,
     });
     this.cache = new PromptCache();
     this.costTracker = new CostTracker();

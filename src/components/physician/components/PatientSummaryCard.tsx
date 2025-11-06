@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Users, Award, DollarSign } from 'lucide-react';
+import { Users, Award } from 'lucide-react';
 import type { PatientSummary } from './types';
 
 interface PatientSummaryCardProps {
@@ -34,7 +34,7 @@ export const PatientSummaryCard: React.FC<PatientSummaryCardProps> = ({ summary,
     );
   }
 
-  const { demographics, vitals, activeConditions, activeMedications, sdohComplexity, ccmEligible, revenueOpportunity } = summary;
+  const { demographics, vitals, activeConditions, activeMedications, sdohComplexity, ccmEligible } = summary;
 
   return (
     <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl shadow-xl p-6 text-white">
@@ -89,17 +89,6 @@ export const PatientSummaryCard: React.FC<PatientSummaryCardProps> = ({ summary,
           <div className="text-xl font-bold">{sdohComplexity}/10</div>
         </div>
       </div>
-
-      {revenueOpportunity > 0 && (
-        <div className="mt-4 bg-amber-500 bg-opacity-30 border border-amber-400 rounded-lg p-3 flex items-center gap-2">
-          <DollarSign className="w-5 h-5 text-amber-200" />
-          <div className="text-sm">
-            <span className="font-semibold">Revenue Opportunity:</span>{' '}
-            <span className="text-amber-200 font-bold">${revenueOpportunity.toLocaleString()}</span>
-            {' '}in unbilled codes detected
-          </div>
-        </div>
-      )}
     </div>
   );
 };

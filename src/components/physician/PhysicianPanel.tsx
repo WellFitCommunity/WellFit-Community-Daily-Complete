@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Activity, Heart, TrendingUp, DollarSign, AlertTriangle, CheckCircle, Users, FileText, Stethoscope, Pill, ClipboardList, LineChart, Brain, Award, Video } from 'lucide-react';
+import { Activity, Heart, TrendingUp, AlertTriangle, CheckCircle, Users, FileText, Stethoscope, Pill, ClipboardList, Brain, Award, Video } from 'lucide-react';
 import AdminHeader from '../admin/AdminHeader';
 import UserQuestions from '../UserQuestions';
 import SmartScribe from '../smart/RealTimeSmartScribe';
 import RiskAssessmentManager from '../admin/RiskAssessmentManager';
 import ReportsSection from '../admin/ReportsSection';
 import CCMTimeline from '../atlas/CCMTimeline';
-import RevenueDashboard from '../atlas/RevenueDashboard';
 import { useSupabaseClient } from '../../contexts/AuthContext';
 import { FHIRService } from '../../services/fhirResourceService';
 import { SDOHBillingService } from '../../services/sdohBillingService';
@@ -27,6 +26,10 @@ import type { PatientListItem, PatientVitals, PatientSummary, QuickStat } from '
 // Import AI Transparency components
 import { PersonalizedGreeting, DashboardPersonalizationIndicator, VoiceProfileMaturity } from '../ai-transparency';
 
+// Import Cognitive Load Reduction components
+import { CommandPalette, type CommandAction } from './CommandPalette';
+import { WorkflowModeSwitcher, type WorkflowMode } from './WorkflowModeSwitcher';
+
 // ============================================================================
 // MAIN PHYSICIAN PANEL COMPONENT - SAFE HARBOR
 // "First, do no harm"
@@ -43,11 +46,15 @@ const PhysicianPanel: React.FC = () => {
   const [dashboardStats, setDashboardStats] = useState({
     totalPatients: 0,
     ccmEligible: 0,
-    pendingReviews: 0,
-    todayRevenue: 0
+    pendingReviews: 0
   });
   const [telehealthActive, setTelehealthActive] = useState(false);
   const [telehealthEncounterType, setTelehealthEncounterType] = useState<'outpatient' | 'er' | 'urgent-care'>('outpatient');
+
+  // Cognitive load reduction state
+  const [workflowMode, setWorkflowMode] = useState<WorkflowMode>('all');
+  const [recentCommands, setRecentCommands] = useState<string[]>([]);
+  const [pinnedCommands, setPinnedCommands] = useState<string[]>([]);
 
   const loadDashboardStats = useCallback(async () => {
     try {
@@ -60,8 +67,7 @@ const PhysicianPanel: React.FC = () => {
       setDashboardStats({
         totalPatients: patientCount || 0,
         ccmEligible: 0, // Will be calculated from SDOH assessments
-        pendingReviews: 0,
-        todayRevenue: 0
+        pendingReviews: 0
       });
     } catch (error) {
 
@@ -163,23 +169,10 @@ const PhysicianPanel: React.FC = () => {
         }
       }
 
-      // Calculate revenue opportunity (simplified - based on CCM eligibility and condition count)
       const conditionsList = conditionsData?.data || [];
       const chronicConditions = conditionsList.filter((c: any) =>
         c.clinical_status === 'active' && c.category?.[0]?.coding?.[0]?.code === 'problem-list-item'
       ).length || 0;
-
-      let revenueOpportunity = 0;
-      if (sdohAssessment?.ccmEligible) {
-        if (sdohAssessment.ccmTier === 'complex') {
-          revenueOpportunity += 140; // Complex CCM base
-        } else {
-          revenueOpportunity += 70; // Standard CCM base
-        }
-      }
-      if (sdohAssessment && sdohAssessment.overallComplexityScore > 5) {
-        revenueOpportunity += 50; // SDOH codes
-      }
 
       const summary: PatientSummary = {
         demographics: patient,
@@ -189,8 +182,7 @@ const PhysicianPanel: React.FC = () => {
         upcomingAppointments: 0,
         pendingLabs: 0,
         sdohComplexity: sdohAssessment?.overallComplexityScore || 0,
-        ccmEligible: sdohAssessment?.ccmEligible || false,
-        revenueOpportunity
+        ccmEligible: sdohAssessment?.ccmEligible || false
       };
 
       setPatientSummary(summary);
@@ -200,6 +192,99 @@ const PhysicianPanel: React.FC = () => {
       setLoading(false);
     }
   }, [supabase]);
+
+  // Command palette actions
+  const commandActions: CommandAction[] = [
+    {
+      id: 'select-patient',
+      label: 'Select Patient',
+      description: 'Choose a patient from the list',
+      icon: Users,
+      category: 'quick-access',
+      keywords: ['patient', 'select', 'choose', 'pick'],
+      action: () => {
+        const selector = document.querySelector('[data-patient-selector]');
+        if (selector) (selector as HTMLElement).focus();
+      },
+      gradient: 'from-blue-400 to-cyan-500',
+    },
+    {
+      id: 'start-scribe',
+      label: 'Start Smart Scribe',
+      description: 'Begin clinical documentation',
+      icon: FileText,
+      category: 'clinical',
+      keywords: ['scribe', 'note', 'documentation', 'record'],
+      action: () => {
+        document.getElementById('smart-scribe')?.scrollIntoView({ behavior: 'smooth' });
+      },
+      gradient: 'from-green-400 to-emerald-500',
+    },
+    {
+      id: 'telehealth-outpatient',
+      label: 'Start Telehealth (Outpatient)',
+      description: 'Launch video consultation',
+      icon: Video,
+      category: 'clinical',
+      keywords: ['telehealth', 'video', 'call', 'consultation', 'virtual'],
+      action: () => {
+        if (selectedPatient) {
+          setTelehealthEncounterType('outpatient');
+          setTelehealthActive(true);
+        }
+      },
+      gradient: 'from-purple-400 to-pink-500',
+      badge: selectedPatient ? undefined : 'Select patient first',
+    },
+    {
+      id: 'view-medications',
+      label: 'View Medications',
+      description: 'See patient medication list',
+      icon: Pill,
+      category: 'clinical',
+      keywords: ['medications', 'drugs', 'prescriptions', 'meds'],
+      action: () => {
+        document.getElementById('medications')?.scrollIntoView({ behavior: 'smooth' });
+      },
+      gradient: 'from-amber-400 to-orange-500',
+    },
+    {
+      id: 'risk-assessment',
+      label: 'Risk Assessment',
+      description: 'View patient risk scores',
+      icon: AlertTriangle,
+      category: 'clinical',
+      keywords: ['risk', 'assessment', 'score', 'alert'],
+      action: () => {
+        document.getElementById('risk-assessment')?.scrollIntoView({ behavior: 'smooth' });
+      },
+      gradient: 'from-red-400 to-rose-500',
+    },
+    {
+      id: 'wellness-hub',
+      label: 'Wellness Hub',
+      description: 'Community wellness programs',
+      icon: Heart,
+      category: 'wellness',
+      keywords: ['wellness', 'community', 'sdoh', 'social'],
+      action: () => {
+        document.getElementById('physician-wellness')?.scrollIntoView({ behavior: 'smooth' });
+      },
+      gradient: 'from-green-400 to-teal-500',
+    },
+    {
+      id: 'reports',
+      label: 'View Reports',
+      description: 'Quality metrics and analytics',
+      icon: Activity,
+      category: 'admin',
+      keywords: ['reports', 'analytics', 'metrics', 'quality'],
+      action: () => {
+        document.getElementById('reports')?.scrollIntoView({ behavior: 'smooth' });
+      },
+      gradient: 'from-indigo-400 to-blue-500',
+    },
+  ];
 
   const quickStats: QuickStat[] = [
     {
@@ -219,12 +304,6 @@ const PhysicianPanel: React.FC = () => {
       value: dashboardStats.pendingReviews,
       icon: <AlertTriangle className="w-6 h-6" />,
       color: 'bg-yellow-600'
-    },
-    {
-      label: "Today's Revenue",
-      value: `$${dashboardStats.todayRevenue.toLocaleString()}`,
-      icon: <DollarSign className="w-6 h-6" />,
-      color: 'bg-purple-600'
     }
   ];
 
@@ -237,6 +316,22 @@ const PhysicianPanel: React.FC = () => {
 
           {/* Personalized Greeting with Motivational Quote */}
           <PersonalizedGreeting />
+
+          {/* Workflow Mode Switcher - Reduces Cognitive Overload */}
+          <WorkflowModeSwitcher
+            currentMode={workflowMode}
+            onModeChange={setWorkflowMode}
+          />
+
+          {/* Command Palette - Always Available (Cmd+K) */}
+          <CommandPalette
+            actions={commandActions}
+            recentActions={recentCommands}
+            pinnedActions={pinnedCommands}
+            onActionExecute={(actionId) => {
+              setRecentCommands((prev) => [actionId, ...prev.filter((id) => id !== actionId).slice(0, 4)]);
+            }}
+          />
 
           {/* Hero Header - SILVER STATEMENT */}
           <div className="bg-gradient-to-r from-[#C0C5CB] to-[#A8ADB3] rounded-2xl shadow-2xl p-8 text-black border-2 border-black">
@@ -255,7 +350,7 @@ const PhysicianPanel: React.FC = () => {
           </div>
 
           {/* Quick Stats Dashboard */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {quickStats.map((stat, index) => (
               <div key={index} className="bg-white rounded-lg shadow-xl p-4 hover:shadow-2xl transition-all cursor-pointer border border-black hover:border-2 hover:border-[#1BA39C]">
                 <div className="flex items-center justify-between mb-2">
@@ -559,12 +654,12 @@ const PhysicianPanel: React.FC = () => {
                 }`}
               >
                 <div className="flex items-start justify-between mb-3">
-                  <div className="text-4xl">💰</div>
-                  <DollarSign className={`w-6 h-6 transition-transform ${selectedPatient ? 'text-amber-600 group-hover:scale-110' : 'text-gray-400'}`} />
+                  <div className="text-4xl">📋</div>
+                  <FileText className={`w-6 h-6 transition-transform ${selectedPatient ? 'text-blue-600 group-hover:scale-110' : 'text-gray-400'}`} />
                 </div>
                 <h3 className={`font-bold text-lg ${selectedPatient ? 'text-gray-900' : 'text-gray-500'}`}>Billing & Claims</h3>
                 <p className={`text-sm mt-1 ${selectedPatient ? 'text-gray-600' : 'text-gray-400'}`}>
-                  {selectedPatient ? 'X12 EDI claims, fee schedules & revenue analytics' : 'Select a patient first'}
+                  {selectedPatient ? 'X12 EDI claims processing and tracking' : 'Select a patient first'}
                 </p>
               </button>
 
@@ -710,16 +805,15 @@ const PhysicianPanel: React.FC = () => {
             title="Chronic Care Management (CCM) Timeline"
             icon="🏥"
             defaultOpen={false}
-            category="revenue"
-            badge="Revenue"
+            category="clinical"
           >
             <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
               <div className="flex items-start gap-3">
                 <Heart className="w-5 h-5 text-green-600 mt-0.5" />
                 <div>
-                  <h4 className="font-semibold text-green-900">CCM Billing Automation</h4>
+                  <h4 className="font-semibold text-green-900">CCM Care Coordination</h4>
                   <p className="text-sm text-green-800 mt-1">
-                    Automatic time tracking for CCM codes 99490 (standard) and 99487 (complex). Ensures compliance with CMS requirements for 20+ minutes of non-face-to-face care coordination.
+                    Track time spent on non-face-to-face care coordination for patients with chronic conditions. Ensures comprehensive care management.
                   </p>
                 </div>
               </div>
@@ -735,27 +829,6 @@ const PhysicianPanel: React.FC = () => {
             category="administrative"
           >
             <ReportsSection />
-          </CollapsibleSection>
-
-          {/* Revenue Dashboard */}
-          <CollapsibleSection
-            title="Practice Revenue Intelligence Dashboard"
-            icon="💵"
-            defaultOpen={false}
-            category="revenue"
-          >
-            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
-              <div className="flex items-start gap-3">
-                <LineChart className="w-5 h-5 text-purple-600 mt-0.5" />
-                <div>
-                  <h4 className="font-semibold text-purple-900">Revenue Cycle Analytics</h4>
-                  <p className="text-sm text-purple-800 mt-1">
-                    Real-time tracking of claim submissions, denials, revenue per encounter, and optimization opportunities. Integrates SmartScribe coding suggestions for maximum reimbursement.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <RevenueDashboard />
           </CollapsibleSection>
 
           {/* Clinical Resources Library */}
