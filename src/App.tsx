@@ -36,6 +36,9 @@ import { useSupabaseClient } from './contexts/AuthContext';
 // Offline indicator
 import OfflineIndicator from './components/OfflineIndicator';
 
+// AI Transparency - LearningMilestone (global component)
+import { LearningMilestone } from './components/ai-transparency';
+
 // Lazy-loaded pages/components
 const WelcomePage = React.lazy(() => import('./pages/WelcomePage'));
 const RegisterPage = React.lazy(() => import('./pages/RegisterPage'));
@@ -142,6 +145,9 @@ function Shell() {
       <BrandingContext.Provider value={{ branding, setBranding, loading: false, refreshBranding }}>
         {/* SessionTimeout applies to the whole app */}
         <SessionTimeoutProvider>
+          {/* Global Learning Milestone Celebration Display */}
+          <LearningMilestone />
+
           <AppHeader />
 
           <AuthGate>

@@ -24,6 +24,9 @@ import { PatientSelector } from './components/PatientSelector';
 import { PatientSummaryCard } from './components/PatientSummaryCard';
 import type { PatientListItem, PatientVitals, PatientSummary, QuickStat } from './components/types';
 
+// Import AI Transparency components
+import { PersonalizedGreeting, DashboardPersonalizationIndicator, VoiceProfileMaturity } from '../ai-transparency';
+
 // ============================================================================
 // MAIN PHYSICIAN PANEL COMPONENT - SAFE HARBOR
 // "First, do no harm"
@@ -232,6 +235,9 @@ const PhysicianPanel: React.FC = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-7xl mx-auto space-y-6">
 
+          {/* Personalized Greeting with Motivational Quote */}
+          <PersonalizedGreeting />
+
           {/* Hero Header - SILVER STATEMENT */}
           <div className="bg-gradient-to-r from-[#C0C5CB] to-[#A8ADB3] rounded-2xl shadow-2xl p-8 text-black border-2 border-black">
             <div className="flex items-center justify-between">
@@ -272,6 +278,9 @@ const PhysicianPanel: React.FC = () => {
           {/* CHW Field Alerts */}
           <CHWAlertsWidget userRole="physician" userId={localStorage.getItem('userId') || ''} maxAlerts={5} />
 
+          {/* Dashboard Personalization Indicator */}
+          <DashboardPersonalizationIndicator variant="compact" showAdaptationDetails={true} />
+
           {/* Patient Selection & Summary */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-1">
@@ -293,6 +302,11 @@ const PhysicianPanel: React.FC = () => {
             category="revenue"
             badge="Auto-Billing"
           >
+            {/* Riley Voice Profile Maturity */}
+            <div className="mb-4">
+              <VoiceProfileMaturity variant="compact" showDetails={false} />
+            </div>
+
             <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-lg p-4 mb-4">
               <div className="flex items-start gap-3">
                 <Brain className="w-6 h-6 text-amber-600 mt-1" />
