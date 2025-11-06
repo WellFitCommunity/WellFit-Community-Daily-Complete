@@ -60,6 +60,7 @@ export const WORKFLOW_MODES: Record<WorkflowMode, WorkflowModeConfig> = {
       'patient-summary',
       'smart-scribe',
       'telehealth',
+      'ems-ambulance-handoff',
       'medications',
       'vitals',
       'conditions',
