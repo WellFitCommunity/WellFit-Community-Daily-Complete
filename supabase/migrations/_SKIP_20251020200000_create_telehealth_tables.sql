@@ -180,16 +180,23 @@ GRANT SELECT, INSERT, UPDATE ON telehealth_sessions TO authenticated;
 GRANT SELECT, INSERT ON telehealth_session_events TO authenticated;
 GRANT EXECUTE ON FUNCTION log_telehealth_event TO authenticated;
 
--- Create audit triggers for HIPAA compliance
-CREATE TRIGGER audit_telehealth_sessions
-  AFTER INSERT OR UPDATE OR DELETE ON telehealth_sessions
-  FOR EACH ROW
-  EXECUTE FUNCTION audit_trigger();
+-- Create audit triggers for HIPAA compliance (skip if audit_trigger doesn't exist)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'audit_trigger') THEN
+    DROP TRIGGER IF EXISTS audit_telehealth_sessions ON telehealth_sessions;
+    CREATE TRIGGER audit_telehealth_sessions
+      AFTER INSERT OR UPDATE OR DELETE ON telehealth_sessions
+      FOR EACH ROW
+      EXECUTE FUNCTION audit_trigger();
 
-CREATE TRIGGER audit_telehealth_session_events
-  AFTER INSERT OR UPDATE OR DELETE ON telehealth_session_events
-  FOR EACH ROW
-  EXECUTE FUNCTION audit_trigger();
+    DROP TRIGGER IF EXISTS audit_telehealth_session_events ON telehealth_session_events;
+    CREATE TRIGGER audit_telehealth_session_events
+      AFTER INSERT OR UPDATE OR DELETE ON telehealth_session_events
+      FOR EACH ROW
+      EXECUTE FUNCTION audit_trigger();
+  END IF;
+END $$;
 
 -- Add comment for documentation
 COMMENT ON TABLE telehealth_sessions IS 'HIPAA-compliant telehealth session tracking with Daily.co integration';
