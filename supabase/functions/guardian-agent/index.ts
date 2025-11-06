@@ -136,7 +136,11 @@ async function runMonitoringChecks(supabase: any): Promise<SecurityAlert[]> {
       category: 'database',
       title: 'Database Errors Detected',
       message: `${dbErrors.length} database errors in the last hour`,
-      metadata: { errors: dbErrors }
+      metadata: {
+        error_count: dbErrors.length,
+        error_types: [...new Set(dbErrors.map((e: any) => e.error_type))],
+        // NO PHI: only counts and types
+      }
     })
   }
 
@@ -153,7 +157,11 @@ async function runMonitoringChecks(supabase: any): Promise<SecurityAlert[]> {
         category: 'compliance',
         title: 'Unusual PHI Access Pattern',
         message: 'Detected potentially unauthorized PHI access',
-        metadata: { access_patterns: unusualAccess }
+        metadata: {
+          user_count: unusualAccess.length,
+          max_records_accessed: Math.max(...unusualAccess.map((a: any) => a.records_accessed)),
+          // NO PHI: only aggregate counts
+        }
       })
     }
   }
@@ -165,7 +173,11 @@ async function runMonitoringChecks(supabase: any): Promise<SecurityAlert[]> {
       category: 'performance',
       title: 'Slow Database Queries',
       message: `${slowQueries.length} queries exceeding 1000ms`,
-      metadata: { queries: slowQueries }
+      metadata: {
+        query_count: slowQueries.length,
+        avg_duration_ms: slowQueries.reduce((sum: number, q: any) => sum + q.duration_ms, 0) / slowQueries.length,
+        // NO PHI: only performance metrics
+      }
     })
   }
 
@@ -201,7 +213,12 @@ async function recordSnapshot(supabase: any, snapshot: GuardianEyesSnapshot) {
         category: snapshot.type,
         title: `Critical Event: ${snapshot.action}`,
         message: `Guardian Eyes detected a critical event in ${snapshot.component}`,
-        metadata: snapshot.metadata,
+        metadata: {
+          component: snapshot.component,
+          action: snapshot.action,
+          timestamp: snapshot.timestamp,
+          // NO PHI: sanitized metadata only
+        },
         status: 'pending',
         created_at: new Date().toISOString()
       })
