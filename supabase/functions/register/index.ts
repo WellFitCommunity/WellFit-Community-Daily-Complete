@@ -205,35 +205,82 @@ resource_type: 'auth_event',
       // HIPAA AUDIT LOGGING: Log duplicate pending registration attempt
       try {
         await supabase.from('audit_logs').insert({
-          event_type: 'USER_REGISTER_FAILED',
+          event_type: 'USER_REGISTER_RESEND',
           event_category: 'AUTHENTICATION',
           actor_user_id: null,
           actor_ip_address: clientIp,
           actor_user_agent: req.headers.get('user-agent'),
           operation: 'REGISTER',
 resource_type: 'auth_event',
-          success: false,
-          error_code: 'REGISTRATION_PENDING',
-          error_message: 'Registration already pending for this phone number',
+          success: true,
+          error_code: 'REGISTRATION_PENDING_RESEND',
+          error_message: 'Registration already pending - redirecting to verification',
           metadata: { phone: phoneNumber }
         });
       } catch (logError) {
         console.error('[Audit Log Error]:', logError);
       }
 
-      return jsonResponse({ error: "Registration already pending for this phone number. Check your SMS for verification code." }, 409, origin);
+      // Resend SMS code
+      let smsSent = false;
+      try {
+        const functionsUrl = `${SB_URL}/functions/v1`;
+        console.log("[register] Resending SMS for pending registration:", {
+          phone: phoneNumber,
+          url: `${functionsUrl}/sms-send-code`,
+          hasAnonKey: !!SB_ANON_KEY
+        });
+
+        const smsResponse = await fetch(`${functionsUrl}/sms-send-code`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": SB_ANON_KEY,
+            "Authorization": `Bearer ${SB_ANON_KEY}`
+          },
+          body: JSON.stringify({ phone: phoneNumber })
+        });
+
+        const responseText = await smsResponse.text();
+        console.log("[register] SMS resend response:", {
+          status: smsResponse.status,
+          ok: smsResponse.ok,
+          body: responseText
+        });
+
+        if (smsResponse.ok) {
+          await supabase
+            .from("pending_registrations")
+            .update({ verification_code_sent: true })
+            .eq("phone", phoneNumber);
+          smsSent = true;
+        } else {
+          console.error("[register] SMS resend failed:", responseText);
+        }
+      } catch (smsError) {
+        console.error("[register] SMS resend error:", smsError);
+      }
+
+      // Return success with pending flag so frontend navigates to verify page
+      return jsonResponse({
+        success: true,
+        message: "Registration already pending. A new verification code has been sent.",
+        pending: true,
+        phone: phoneNumber,
+        sms_sent: smsSent
+      }, 200, origin);
     }
 
-    // Hash password before storing
-    // Using Web Crypto API (PBKDF2) - compatible with Deno Edge Functions
-    const hashedPassword = await hashPassword(payload.password);
+    // Store plaintext password temporarily (service-role only, expires 24h)
+    // This allows us to create the auth user with the correct password after SMS verification
+    const plaintextPassword = payload.password;
 
-    // Store registration data in pending table with hashed password
+    // Store registration data in pending table with plaintext password
     const { error: pendingError } = await supabase
       .from("pending_registrations")
       .insert({
         phone: phoneNumber,
-        password_hash: hashedPassword, // Store hashed password for security
+        password_plaintext: plaintextPassword, // Temporary storage for SMS verification flow
         first_name: payload.first_name,
         last_name: payload.last_name,
         email: payload.email ?? null,
@@ -273,6 +320,12 @@ resource_type: 'auth_event',
     try {
       // Correct Edge Functions URL format (not .functions.supabase.co subdomain)
       const functionsUrl = `${SB_URL}/functions/v1`;
+      console.log("[register] Sending SMS for new registration:", {
+        phone: phoneNumber,
+        url: `${functionsUrl}/sms-send-code`,
+        hasAnonKey: !!SB_ANON_KEY
+      });
+
       // IMPORTANT: sms-send-code expects anon key, NOT service role key
       // Service role key causes "Invalid JWT" error
       const smsResponse = await fetch(`${functionsUrl}/sms-send-code`, {
@@ -283,6 +336,13 @@ resource_type: 'auth_event',
           "Authorization": `Bearer ${SB_ANON_KEY}`
         },
         body: JSON.stringify({ phone: phoneNumber })
+      });
+
+      const responseText = await smsResponse.text();
+      console.log("[register] SMS send response:", {
+        status: smsResponse.status,
+        ok: smsResponse.ok,
+        body: responseText
       });
 
       if (smsResponse.ok) {
@@ -306,8 +366,7 @@ resource_type: 'auth_event',
           metadata: { phone: phoneNumber }
         });
       } else {
-        const errorText = await smsResponse.text();
-        console.error("[register] SMS send failed:", errorText);
+        console.error("[register] SMS send failed:", responseText);
 
         // AUDIT LOG: SMS send failed
         await supabase.from('audit_logs').insert({
@@ -320,7 +379,7 @@ resource_type: 'auth_event',
           resource_type: 'verification_code',
           success: false,
           error_code: 'SMS_SEND_FAILED',
-          error_message: errorText,
+          error_message: responseText,
           metadata: { phone: phoneNumber }
         });
       }

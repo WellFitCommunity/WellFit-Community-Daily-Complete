@@ -98,22 +98,21 @@ Deno.serve(async (req: Request): Promise<Response> => {
         });
       }
 
-      // CRITICAL FIX: Import crypto utilities to verify the stored password hash
-      const { verifyPassword } = await import("../_shared/crypto.ts");
+      // Use the user's actual password from registration (stored temporarily for verification)
+      // Note: For admin-created users, use temporary password instead
+      const userPassword = pending.password_plaintext;
 
-      // The user provided their desired password during registration
-      // It was hashed and stored in pending.password_hash
-      // We need to use the ORIGINAL unhashed password, but we only have the hash
-      // SOLUTION: Create user with phone-only auth, then let them sign in with password
+      if (!userPassword) {
+        console.error("Missing password_plaintext in pending registration");
+        return new Response(JSON.stringify({ error: "Invalid registration data. Please register again." }), {
+          status: 500, headers,
+        });
+      }
 
-      // For now, we'll generate a temporary password that meets requirements
-      // The user will need to reset it on first login (force_password_change = true)
-      const temporaryPassword = crypto.randomUUID() + "Aa1!";
-
-      // Create the actual user account
+      // Create the actual user account with their chosen password
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         phone: phone,
-        password: temporaryPassword,
+        password: userPassword,
         phone_confirm: true, // Phone is now verified
         email: pending.email || undefined,
         email_confirm: false,
@@ -124,8 +123,6 @@ Deno.serve(async (req: Request): Promise<Response> => {
           last_name: pending.last_name,
           registration_method: "self_register",
           registered_at: new Date().toISOString(),
-          // Store the password hash so we can validate it later
-          stored_password_hash: pending.password_hash,
         },
       });
 
@@ -134,7 +131,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         return new Response(JSON.stringify({ error: "Failed to complete registration" }), { status: 500, headers });
       }
 
-      // Create profile - store the password hash for verification
+      // Create profile
       const { error: profileError } = await supabase
         .from("profiles")
         .insert({
@@ -145,8 +142,6 @@ Deno.serve(async (req: Request): Promise<Response> => {
           phone: phone,
           role_code: pending.role_code,
           role_slug: pending.role_slug,
-          password_hash: pending.password_hash, // Store original password hash
-          force_password_change: false, // User can login with their original password
           created_by: null,
         });
 

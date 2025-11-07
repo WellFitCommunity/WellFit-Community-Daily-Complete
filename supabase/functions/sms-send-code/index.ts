@@ -40,11 +40,18 @@ Deno.serve(async (req: Request): Promise<Response> => {
       hasSid: Boolean(TWILIO_ACCOUNT_SID),
       hasToken: Boolean(TWILIO_AUTH_TOKEN),
       hasVerify: Boolean(VERIFY_SID),
+      sidPrefix: TWILIO_ACCOUNT_SID?.substring(0, 4),
+      verifyPrefix: VERIFY_SID?.substring(0, 4),
     });
     return new Response(
       JSON.stringify({
         error: "SERVER_NOT_CONFIGURED",
         message: "Twilio credentials are missing. Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_VERIFY_SERVICE_SID (or TWILIO_VERIFY_SID).",
+        debug: {
+          hasSid: Boolean(TWILIO_ACCOUNT_SID),
+          hasToken: Boolean(TWILIO_AUTH_TOKEN),
+          hasVerify: Boolean(VERIFY_SID),
+        }
       }),
       { status: 500, headers },
     );
@@ -90,10 +97,26 @@ Deno.serve(async (req: Request): Promise<Response> => {
       if (twilioResp.status === 401) { code = "TWILIO_AUTH_FAILED"; status = 502; }
       if (twilioResp.status === 403) { code = "TWILIO_FORBIDDEN"; status = 502; }
       if (twilioResp.status === 400) { code = "TWILIO_BAD_REQUEST"; status = 400; }
+      if (twilioResp.status === 404) { code = "TWILIO_SERVICE_NOT_FOUND"; status = 502; }
 
-      console.error("Twilio Verify error", { status: twilioResp.status, body: txt });
+      console.error("Twilio Verify error", {
+        status: twilioResp.status,
+        body: txt,
+        phone: phone,
+        channel: channel,
+        verifySidPrefix: VERIFY_SID.substring(0, 4),
+        accountSidPrefix: TWILIO_ACCOUNT_SID.substring(0, 4)
+      });
       return new Response(
-        JSON.stringify({ error: code, provider_status: twilioResp.status, details: txt }),
+        JSON.stringify({
+          error: code,
+          provider_status: twilioResp.status,
+          details: txt,
+          help: code === "TWILIO_AUTH_FAILED" ? "Check TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN" :
+                code === "TWILIO_SERVICE_NOT_FOUND" ? "Check TWILIO_VERIFY_SERVICE_SID (must start with VA)" :
+                code === "TWILIO_BAD_REQUEST" ? "Check phone number format (E.164 required)" :
+                "Check Twilio account status and credentials"
+        }),
         { status, headers },
       );
     }
