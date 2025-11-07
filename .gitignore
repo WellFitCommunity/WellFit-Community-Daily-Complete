@@ -66,3 +66,14 @@ SECRET_ROTATION_REQUIRED.md
 # Never commit secrets or local env
 SECRET_ROTATION_REQUIRED.md
 .env*
+
+# Testing scripts with credentials
+test-sms.sh
+deploy-migrations.py
+run-migration.js
+scripts/deploy-consent-management.sh
+scripts/run-both-migrations.sh
+scripts/fix-pg-net.sql
+
+# Temporary Supabase files
+supabase/.temp/
