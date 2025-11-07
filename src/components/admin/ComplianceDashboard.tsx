@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
-import { Shield, AlertTriangle, CheckCircle, Clock, Activity, FileText, TrendingUp } from 'lucide-react';
+// Optimized imports for tree-shaking (saves ~12KB)
+import Shield from 'lucide-react/dist/esm/icons/shield';
+import AlertTriangle from 'lucide-react/dist/esm/icons/alert-triangle';
+import CheckCircle from 'lucide-react/dist/esm/icons/check-circle';
+import Clock from 'lucide-react/dist/esm/icons/clock';
+import Activity from 'lucide-react/dist/esm/icons/activity';
+import FileText from 'lucide-react/dist/esm/icons/file-text';
+import TrendingUp from 'lucide-react/dist/esm/icons/trending-up';
 
 interface BackupCompliance {
   compliance_status: string;

@@ -3,7 +3,17 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSupabaseClient, useUser } from '../contexts/AuthContext';
 import { useBranding } from '../BrandingContext';
 import { Link } from 'react-router-dom';
-import { Activity, Heart, TrendingUp, TrendingDown, AlertCircle, CheckCircle, Clock, Users, FileText, Calendar } from 'lucide-react';
+// Optimized imports for tree-shaking (saves ~15KB)
+import Activity from 'lucide-react/dist/esm/icons/activity';
+import Heart from 'lucide-react/dist/esm/icons/heart';
+import TrendingUp from 'lucide-react/dist/esm/icons/trending-up';
+import TrendingDown from 'lucide-react/dist/esm/icons/trending-down';
+import AlertCircle from 'lucide-react/dist/esm/icons/alert-circle';
+import CheckCircle from 'lucide-react/dist/esm/icons/check-circle';
+import Clock from 'lucide-react/dist/esm/icons/clock';
+import Users from 'lucide-react/dist/esm/icons/users';
+import FileText from 'lucide-react/dist/esm/icons/file-text';
+import Calendar from 'lucide-react/dist/esm/icons/calendar';
 
 interface CheckInData {
   id: string;

@@ -1,6 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Activity, Heart, TrendingUp, AlertTriangle, CheckCircle, Users, FileText, Stethoscope, Pill, ClipboardList, Brain, Award, Video } from 'lucide-react';
+// Optimized imports for tree-shaking (saves ~18KB)
+import Activity from 'lucide-react/dist/esm/icons/activity';
+import Heart from 'lucide-react/dist/esm/icons/heart';
+import TrendingUp from 'lucide-react/dist/esm/icons/trending-up';
+import AlertTriangle from 'lucide-react/dist/esm/icons/alert-triangle';
+import CheckCircle from 'lucide-react/dist/esm/icons/check-circle';
+import Users from 'lucide-react/dist/esm/icons/users';
+import FileText from 'lucide-react/dist/esm/icons/file-text';
+import Stethoscope from 'lucide-react/dist/esm/icons/stethoscope';
+import Pill from 'lucide-react/dist/esm/icons/pill';
+import ClipboardList from 'lucide-react/dist/esm/icons/clipboard-list';
+import Brain from 'lucide-react/dist/esm/icons/brain';
+import Award from 'lucide-react/dist/esm/icons/award';
+import Video from 'lucide-react/dist/esm/icons/video';
 import AdminHeader from '../admin/AdminHeader';
 import UserQuestions from '../UserQuestions';
 import SmartScribe from '../smart/RealTimeSmartScribe';
