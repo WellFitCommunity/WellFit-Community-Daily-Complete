@@ -121,7 +121,7 @@
     "disaster-recovery:drill:monthly": "./scripts/disaster-recovery/execute-monthly-drill.sh",
     "pentest:daily": "./scripts/penetration-testing/daily-scan.sh",
     "pentest:weekly": "./scripts/penetration-testing/weekly-scan.sh",
-    "compliance:report": "node scripts/compliance/generate-report.js"
+    "compliance:report": "./scripts/compliance/generate-report.sh"
   },
   "browserslist": {
     "production": [

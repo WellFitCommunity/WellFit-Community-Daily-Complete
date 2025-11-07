@@ -25,12 +25,18 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-# Database configuration
+# Database configuration (credentials from environment variables for security)
 DB_HOST="${DB_HOST:-aws-0-us-west-1.pooler.supabase.com}"
 DB_PORT="${DB_PORT:-6543}"
 DB_USER="${DB_USER:-postgres.xkybsjnvuohpqpbkikyn}"
 DB_NAME="${DB_NAME:-postgres}"
-DB_PASSWORD="${DB_PASSWORD:-MyDaddyLovesMeToo1}"
+
+# DB_PASSWORD must be provided via environment variable
+if [ -z "$DB_PASSWORD" ]; then
+  echo -e "${RED}ERROR: DB_PASSWORD environment variable not set${NC}"
+  echo "Usage: DB_PASSWORD='your_password' ./execute-weekly-drill.sh"
+  exit 1
+fi
 
 echo "================================================="
 echo "Envision VirtualEdge Group LLC"
