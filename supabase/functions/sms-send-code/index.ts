@@ -75,18 +75,77 @@ Deno.serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    // Twilio Verify: start verification
+    // Twilio Verify: start verification with timeout and retry logic
     const url = `https://verify.twilio.com/v2/Services/${VERIFY_SID}/Verifications`;
     const form = new URLSearchParams({ To: phone, Channel: channel });
 
-    const twilioResp = await fetch(url, {
-      method: "POST",
-      headers: {
-        Authorization: "Basic " + btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`),
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: form.toString(),
-    });
+    // Helper function to fetch with proper abort on timeout
+    const fetchWithTimeout = (url: string, options: RequestInit, timeoutMs: number): Promise<Response> => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+      return fetch(url, { ...options, signal: controller.signal })
+        .finally(() => clearTimeout(timeoutId));
+    };
+
+    // Retry logic: 3 attempts with exponential backoff (2s, 4s)
+    let twilioResp: Response | null = null;
+    let lastError: Error | null = null;
+    const maxRetries = 3;
+    const baseDelay = 2000; // 2 seconds
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`[sms-send-code] Attempt ${attempt}/${maxRetries} for ${phone}`);
+
+        twilioResp = await fetchWithTimeout(url, {
+          method: "POST",
+          headers: {
+            Authorization: "Basic " + btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`),
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: form.toString(),
+        }, 30000); // 30 second timeout
+
+        // If successful or client error (4xx), don't retry
+        if (twilioResp.ok || (twilioResp.status >= 400 && twilioResp.status < 500)) {
+          break;
+        }
+
+        // For 5xx errors, retry
+        lastError = new Error(`Twilio returned ${twilioResp.status}`);
+        console.warn(`[sms-send-code] Attempt ${attempt} failed with status ${twilioResp.status}, will retry`);
+
+      } catch (err) {
+        lastError = err instanceof Error ? err : new Error(String(err));
+        const errName = err instanceof Error ? err.name : 'Unknown';
+        console.error(`[sms-send-code] Attempt ${attempt} failed:`, lastError.message, `(${errName})`);
+
+        // Don't wait after last attempt
+        if (attempt < maxRetries) {
+          const delay = baseDelay * Math.pow(2, attempt - 1);
+          console.log(`[sms-send-code] Waiting ${delay}ms before retry`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+    }
+
+    // If all retries failed
+    if (!twilioResp) {
+      console.error("[sms-send-code] All retry attempts failed", {
+        phone: phone,
+        lastError: lastError?.message,
+        attempts: maxRetries
+      });
+      return new Response(
+        JSON.stringify({
+          error: "SMS_SEND_FAILED",
+          message: "Failed to send SMS after multiple attempts. Please try again later.",
+          details: lastError?.message || "Unknown error"
+        }),
+        { status: 503, headers },
+      );
+    }
 
     const txt = await twilioResp.text();
 
