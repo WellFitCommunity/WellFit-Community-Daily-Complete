@@ -221,8 +221,9 @@ resource_type: 'auth_event',
         console.error('[Audit Log Error]:', logError);
       }
 
-      // Resend SMS code
+      // Resend SMS code with timeout
       let smsSent = false;
+      let resendErrorDetails = "";
       try {
         const functionsUrl = `${SB_URL}/functions/v1`;
         console.log("[register] Resending SMS for pending registration:", {
@@ -231,7 +232,17 @@ resource_type: 'auth_event',
           hasAnonKey: !!SB_ANON_KEY
         });
 
-        const smsResponse = await fetch(`${functionsUrl}/sms-send-code`, {
+        // Helper function to fetch with timeout
+        const fetchWithTimeout = (url: string, options: RequestInit, timeoutMs: number): Promise<Response> => {
+          return Promise.race([
+            fetch(url, options),
+            new Promise<Response>((_, reject) =>
+              setTimeout(() => reject(new Error(`SMS resend timeout after ${timeoutMs}ms`)), timeoutMs)
+            )
+          ]);
+        };
+
+        const smsResponse = await fetchWithTimeout(`${functionsUrl}/sms-send-code`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -239,7 +250,7 @@ resource_type: 'auth_event',
             "Authorization": `Bearer ${SB_ANON_KEY}`
           },
           body: JSON.stringify({ phone: phoneNumber })
-        });
+        }, 60000); // 60 second timeout
 
         const responseText = await smsResponse.text();
         console.log("[register] SMS resend response:", {
@@ -247,6 +258,7 @@ resource_type: 'auth_event',
           ok: smsResponse.ok,
           body: responseText
         });
+        resendErrorDetails = responseText;
 
         if (smsResponse.ok) {
           await supabase
@@ -255,19 +267,34 @@ resource_type: 'auth_event',
             .eq("phone", phoneNumber);
           smsSent = true;
         } else {
-          console.error("[register] SMS resend failed:", responseText);
+          console.error("[register] SMS resend failed:", {
+            status: smsResponse.status,
+            response: responseText,
+            phone: phoneNumber
+          });
         }
       } catch (smsError) {
-        console.error("[register] SMS resend error:", smsError);
+        const errorMessage = smsError instanceof Error ? smsError.message : String(smsError);
+        console.error("[register] SMS resend error:", {
+          error: errorMessage,
+          phone: phoneNumber,
+          errorType: smsError instanceof Error ? smsError.name : typeof smsError
+        });
+        resendErrorDetails = errorMessage;
       }
 
       // Return success with pending flag so frontend navigates to verify page
+      const resendMessage = smsSent
+        ? "Registration already pending. A new verification code has been sent."
+        : `Registration pending. ${resendErrorDetails ? `SMS send issue: ${resendErrorDetails}` : 'Please check your phone or contact support.'}`;
+
       return jsonResponse({
         success: true,
-        message: "Registration already pending. A new verification code has been sent.",
+        message: resendMessage,
         pending: true,
         phone: phoneNumber,
-        sms_sent: smsSent
+        sms_sent: smsSent,
+        ...(resendErrorDetails && !smsSent ? { sms_error: resendErrorDetails } : {})
       }, 200, origin);
     }
 
@@ -315,8 +342,9 @@ resource_type: 'auth_event',
       return jsonResponse({ error: "Failed to process registration" }, 500, origin);
     }
 
-    // Send SMS verification code via Twilio
+    // Send SMS verification code via Twilio with timeout
     let smsSent = false;
+    let smsErrorDetails = "";
     try {
       // Correct Edge Functions URL format (not .functions.supabase.co subdomain)
       const functionsUrl = `${SB_URL}/functions/v1`;
@@ -326,9 +354,20 @@ resource_type: 'auth_event',
         hasAnonKey: !!SB_ANON_KEY
       });
 
+      // Helper function to fetch with timeout
+      const fetchWithTimeout = (url: string, options: RequestInit, timeoutMs: number): Promise<Response> => {
+        return Promise.race([
+          fetch(url, options),
+          new Promise<Response>((_, reject) =>
+            setTimeout(() => reject(new Error(`SMS send timeout after ${timeoutMs}ms`)), timeoutMs)
+          )
+        ]);
+      };
+
       // IMPORTANT: sms-send-code expects anon key, NOT service role key
       // Service role key causes "Invalid JWT" error
-      const smsResponse = await fetch(`${functionsUrl}/sms-send-code`, {
+      // Using 60 second timeout (sms-send-code has 30s timeout + 3 retries with delays)
+      const smsResponse = await fetchWithTimeout(`${functionsUrl}/sms-send-code`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -336,7 +375,7 @@ resource_type: 'auth_event',
           "Authorization": `Bearer ${SB_ANON_KEY}`
         },
         body: JSON.stringify({ phone: phoneNumber })
-      });
+      }, 60000); // 60 second timeout to allow for retries
 
       const responseText = await smsResponse.text();
       console.log("[register] SMS send response:", {
@@ -344,6 +383,8 @@ resource_type: 'auth_event',
         ok: smsResponse.ok,
         body: responseText
       });
+
+      smsErrorDetails = responseText;
 
       if (smsResponse.ok) {
         // Mark SMS as sent
@@ -366,7 +407,12 @@ resource_type: 'auth_event',
           metadata: { phone: phoneNumber }
         });
       } else {
-        console.error("[register] SMS send failed:", responseText);
+        console.error("[register] SMS send failed:", {
+          status: smsResponse.status,
+          response: responseText,
+          phone: phoneNumber
+        });
+        smsErrorDetails = responseText;
 
         // AUDIT LOG: SMS send failed
         await supabase.from('audit_logs').insert({
@@ -380,11 +426,20 @@ resource_type: 'auth_event',
           success: false,
           error_code: 'SMS_SEND_FAILED',
           error_message: responseText,
-          metadata: { phone: phoneNumber }
+          metadata: {
+            phone: phoneNumber,
+            http_status: smsResponse.status
+          }
         });
       }
     } catch (smsError) {
-      console.error("[register] SMS send error:", smsError);
+      const errorMessage = smsError instanceof Error ? smsError.message : String(smsError);
+      console.error("[register] SMS send error:", {
+        error: errorMessage,
+        phone: phoneNumber,
+        errorType: smsError instanceof Error ? smsError.name : typeof smsError
+      });
+      smsErrorDetails = errorMessage;
 
       // AUDIT LOG: SMS send exception
       await supabase.from('audit_logs').insert({
@@ -397,8 +452,11 @@ resource_type: 'auth_event',
         resource_type: 'verification_code',
         success: false,
         error_code: 'SMS_EXCEPTION',
-        error_message: smsError instanceof Error ? smsError.message : String(smsError),
-        metadata: { phone: phoneNumber }
+        error_message: errorMessage,
+        metadata: {
+          phone: phoneNumber,
+          error_type: smsError instanceof Error ? smsError.name : 'Unknown'
+        }
       });
     }
 
@@ -428,14 +486,15 @@ resource_type: 'auth_event',
     // Return success with appropriate message based on SMS status
     const message = smsSent
       ? "Verification code sent! Check your phone and enter the code to complete registration."
-      : "Registration received! You can proceed to verify your account.";
+      : `Registration received. ${smsErrorDetails ? `SMS issue: ${smsErrorDetails}` : 'Please contact support for a verification code.'}`;
 
     return jsonResponse({
       success: true,
       message: message,
       pending: true,
       phone: phoneNumber,
-      sms_sent: smsSent
+      sms_sent: smsSent,
+      ...(smsErrorDetails && !smsSent ? { sms_error: smsErrorDetails } : {})
     }, 201);
 
   } catch (e) {
