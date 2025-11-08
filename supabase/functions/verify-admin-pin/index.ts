@@ -6,7 +6,7 @@ import { verifyPin, generateSecureToken } from "../_shared/crypto.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SB_SECRET_KEY = Deno.env.get("SB_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-const ADMIN_SESSION_TTL_MIN = 120;
+const ADMIN_SESSION_TTL_MIN = 30; // 30 minutes for enhanced security (B2B2C healthcare platform)
 
 const supabase = createClient(SUPABASE_URL, SB_SECRET_KEY);
 
