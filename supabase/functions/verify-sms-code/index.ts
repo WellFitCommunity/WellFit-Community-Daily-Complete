@@ -201,7 +201,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       // This creates a session so they don't have to manually login
       const { data: sessionData, error: sessionError } = await supabase.auth.signInWithPassword({
         phone: phone,
-        password: temporaryPassword,
+        password: userPassword,
       });
 
       if (sessionError) {
