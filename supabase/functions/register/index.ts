@@ -232,14 +232,13 @@ resource_type: 'auth_event',
           hasAnonKey: !!SB_ANON_KEY
         });
 
-        // Helper function to fetch with timeout
+        // Helper function to fetch with proper abort on timeout
         const fetchWithTimeout = (url: string, options: RequestInit, timeoutMs: number): Promise<Response> => {
-          return Promise.race([
-            fetch(url, options),
-            new Promise<Response>((_, reject) =>
-              setTimeout(() => reject(new Error(`SMS resend timeout after ${timeoutMs}ms`)), timeoutMs)
-            )
-          ]);
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+          return fetch(url, { ...options, signal: controller.signal })
+            .finally(() => clearTimeout(timeoutId));
         };
 
         const smsResponse = await fetchWithTimeout(`${functionsUrl}/sms-send-code`, {
@@ -354,14 +353,13 @@ resource_type: 'auth_event',
         hasAnonKey: !!SB_ANON_KEY
       });
 
-      // Helper function to fetch with timeout
+      // Helper function to fetch with proper abort on timeout
       const fetchWithTimeout = (url: string, options: RequestInit, timeoutMs: number): Promise<Response> => {
-        return Promise.race([
-          fetch(url, options),
-          new Promise<Response>((_, reject) =>
-            setTimeout(() => reject(new Error(`SMS send timeout after ${timeoutMs}ms`)), timeoutMs)
-          )
-        ]);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+        return fetch(url, { ...options, signal: controller.signal })
+          .finally(() => clearTimeout(timeoutId));
       };
 
       // IMPORTANT: sms-send-code expects anon key, NOT service role key

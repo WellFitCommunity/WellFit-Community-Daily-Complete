@@ -79,14 +79,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const url = `https://verify.twilio.com/v2/Services/${VERIFY_SID}/Verifications`;
     const form = new URLSearchParams({ To: phone, Channel: channel });
 
-    // Helper function to fetch with timeout
+    // Helper function to fetch with proper abort on timeout
     const fetchWithTimeout = (url: string, options: RequestInit, timeoutMs: number): Promise<Response> => {
-      return Promise.race([
-        fetch(url, options),
-        new Promise<Response>((_, reject) =>
-          setTimeout(() => reject(new Error('Request timeout')), timeoutMs)
-        )
-      ]);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+      return fetch(url, { ...options, signal: controller.signal })
+        .finally(() => clearTimeout(timeoutId));
     };
 
     // Retry logic: 3 attempts with exponential backoff (2s, 4s)
@@ -119,7 +118,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
       } catch (err) {
         lastError = err instanceof Error ? err : new Error(String(err));
-        console.error(`[sms-send-code] Attempt ${attempt} failed:`, lastError.message);
+        const errName = err instanceof Error ? err.name : 'Unknown';
+        console.error(`[sms-send-code] Attempt ${attempt} failed:`, lastError.message, `(${errName})`);
 
         // Don't wait after last attempt
         if (attempt < maxRetries) {
