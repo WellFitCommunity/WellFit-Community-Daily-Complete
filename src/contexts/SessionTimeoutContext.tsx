@@ -12,9 +12,9 @@ const toMs = (val: string | undefined, fallback: number) => {
 
 // SOC2-Compliant Session Timeouts
 // CC6.1: Reasonable session timeout periods to prevent unauthorized access
-// - Seniors: 8 hours (480 minutes) - balances usability with security
-// - Staff: 4 hours enforced at admin PIN level (see AdminAuthContext.tsx)
-const DEFAULT_TIMEOUT_MS = toMs(process.env.REACT_APP_INACTIVITY_TIMEOUT_MS, 8 * 60 * 60 * 1000); // 8 hours
+// - Standard Users: 20 minutes - enhanced security for healthcare B2B2C platform
+// - Staff/Admin: 30 minutes enforced at admin PIN level (see verify-admin-pin Edge Function)
+const DEFAULT_TIMEOUT_MS = toMs(process.env.REACT_APP_INACTIVITY_TIMEOUT_MS, 20 * 60 * 1000); // 20 minutes
 const DEFAULT_WARNING_MS = toMs(process.env.REACT_APP_TIMEOUT_WARNING_MS, 5 * 60 * 1000);         // 5 minutes
 const THROTTLE_MS = 500;
 

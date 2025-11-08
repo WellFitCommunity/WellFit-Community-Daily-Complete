@@ -12,14 +12,7 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-// CORS headers - public endpoint, allow all origins
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
-  'Content-Type': 'application/json',
-}
+import { cors } from '../_shared/cors.ts'
 
 interface HealthCheck {
   name: string;
@@ -38,16 +31,21 @@ interface SystemStatus {
 const startTime = Date.now();
 
 serve(async (req) => {
+  const origin = req.headers.get('origin');
+  const { headers, allowed } = cors(origin, {
+    methods: ['GET', 'OPTIONS']
+  });
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers, status: allowed ? 204 : 403 })
   }
 
   // Only allow GET requests
   if (req.method !== 'GET') {
     return new Response(
       JSON.stringify({ error: 'Method not allowed' }),
-      { status: 405, headers: corsHeaders }
+      { status: 405, headers }
     )
   }
 
@@ -93,7 +91,7 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify(status, null, 2),
-      { status: httpStatus, headers: corsHeaders }
+      { status: httpStatus, headers }
     );
 
   } catch (error) {
@@ -111,7 +109,7 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify(errorStatus, null, 2),
-      { status: 503, headers: corsHeaders }
+      { status: 503, headers }
     );
   }
 })

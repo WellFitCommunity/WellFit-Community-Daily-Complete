@@ -5,11 +5,7 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { cors } from '../_shared/cors.ts'
 
 interface ConfidenceScoreLog {
   patient_id?: string
@@ -24,9 +20,14 @@ interface ConfidenceScoreLog {
 }
 
 serve(async (req) => {
+  const origin = req.headers.get('origin');
+  const { headers, allowed } = cors(origin, {
+    methods: ['POST', 'OPTIONS']
+  });
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers, status: allowed ? 204 : 403 })
   }
 
   try {
@@ -50,7 +51,7 @@ serve(async (req) => {
     if (userError || !user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...headers, 'Content-Type': 'application/json' },
       })
     }
 
@@ -63,7 +64,7 @@ serve(async (req) => {
         JSON.stringify({ error: 'Missing required fields: suggestion_type, suggested_value, confidence_score, model_used' }),
         {
           status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: { ...headers, 'Content-Type': 'application/json' },
         }
       )
     }
@@ -74,7 +75,7 @@ serve(async (req) => {
         JSON.stringify({ error: 'Confidence score must be between 0 and 100' }),
         {
           status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: { ...headers, 'Content-Type': 'application/json' },
         }
       )
     }
@@ -134,7 +135,7 @@ serve(async (req) => {
         confidence_level: confidenceLevel,
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...headers, 'Content-Type': 'application/json' },
       }
     )
   } catch (error) {
@@ -143,7 +144,7 @@ serve(async (req) => {
       JSON.stringify({ error: error.message }),
       {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...headers, 'Content-Type': 'application/json' },
       }
     )
   }

@@ -488,7 +488,7 @@ resource_type: 'auth_event',
 
     return jsonResponse({
       success: true,
-      message: message,
+      message: "Verification code sent! Check your phone and enter the code to complete registration.",
       pending: true,
       phone: phoneNumber,
       sms_sent: smsSent,
