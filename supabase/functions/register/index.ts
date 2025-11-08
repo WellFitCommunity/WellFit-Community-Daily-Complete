@@ -425,17 +425,22 @@ resource_type: 'auth_event',
       console.error('[Audit Log Error]:', logError);
     }
 
-    // Return success with appropriate message based on SMS status
-    const message = smsSent
-      ? "Verification code sent! Check your phone and enter the code to complete registration."
-      : "Registration received! You can proceed to verify your account.";
+    // Return success only if SMS was actually sent
+    // If SMS failed, return error so user knows something is wrong
+    if (!smsSent) {
+      return jsonResponse({
+        error: "SMS_SEND_FAILED",
+        message: "Failed to send verification code. Please check that Twilio is properly configured or try again later.",
+        details: "The registration was saved but the SMS verification code could not be sent. Contact support if this persists."
+      }, 500, origin);
+    }
 
     return jsonResponse({
       success: true,
-      message: message,
+      message: "Verification code sent! Check your phone and enter the code to complete registration.",
       pending: true,
       phone: phoneNumber,
-      sms_sent: smsSent
+      sms_sent: true
     }, 201);
 
   } catch (e) {
