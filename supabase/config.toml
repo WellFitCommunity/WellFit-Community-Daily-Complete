@@ -6,3 +6,6 @@ project_id = "xkybsjnvuohpqpbkikyn"
 
 [functions.register]
 verify_jwt = false
+
+[functions.system-status]
+verify_jwt = false

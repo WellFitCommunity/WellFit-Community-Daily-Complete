@@ -190,9 +190,74 @@ async function runMonitoringChecks(supabase: any): Promise<SecurityAlert[]> {
     }));
 
     await supabase.from('security_alerts').insert(alertsToInsert);
+
+    // Send email notification for critical/high severity alerts
+    const criticalAlerts = alerts.filter(a => a.severity === 'critical' || a.severity === 'high');
+    if (criticalAlerts.length > 0) {
+      await sendAlertEmail(supabase, criticalAlerts);
+    }
   }
 
   return alerts
+}
+
+// Send email notification for critical alerts
+async function sendAlertEmail(supabase: any, alerts: SecurityAlert[]) {
+  try {
+    const adminEmail = Deno.env.get('ADMIN_EMAIL') || 'admin@wellfitcommunity.org';
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('[Guardian] Cannot send email: Missing Supabase credentials');
+      return;
+    }
+
+    // Build alert summary
+    const alertSummary = alerts.map(alert =>
+      `🚨 ${alert.severity.toUpperCase()}: ${alert.title}\n   ${alert.message}\n   Category: ${alert.category}`
+    ).join('\n\n');
+
+    const criticalCount = alerts.filter(a => a.severity === 'critical').length;
+    const highCount = alerts.filter(a => a.severity === 'high').length;
+
+    const emailBody = `
+Guardian Alert System - ${criticalCount} Critical, ${highCount} High Priority Alerts
+
+${alertSummary}
+
+---
+Detected at: ${new Date().toISOString()}
+View full details in your Guardian Security Panel
+
+This is an automated alert from Guardian monitoring system.
+`;
+
+    // Call send-email function
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        'apikey': SUPABASE_SERVICE_ROLE_KEY
+      },
+      body: JSON.stringify({
+        to: adminEmail,
+        subject: `🚨 Guardian Alert: ${criticalCount + highCount} Critical/High Issues Detected`,
+        text: emailBody,
+        html: emailBody.replace(/\n/g, '<br>')
+      })
+    });
+
+    if (!response.ok) {
+      console.error('[Guardian] Email send failed:', await response.text());
+    } else {
+      console.log(`[Guardian] Alert email sent to ${adminEmail}`);
+    }
+  } catch (error) {
+    console.error('[Guardian] Email notification error:', error);
+    // Don't throw - email failure shouldn't break monitoring
+  }
 }
 
 async function recordSnapshot(supabase: any, snapshot: GuardianEyesSnapshot) {
