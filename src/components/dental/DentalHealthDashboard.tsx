@@ -17,7 +17,7 @@ import type {
   DentalRiskAlert,
 } from '../../types/dentalHealth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { Alert, AlertDescription } from '../ui/alert';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
@@ -82,7 +82,7 @@ export const DentalHealthDashboard: React.FC = () => {
     return (
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Authentication Required</AlertTitle>
+        <h5 className="mb-1 font-medium leading-none tracking-tight">Authentication Required</h5>
         <AlertDescription>Please log in to view your dental health dashboard.</AlertDescription>
       </Alert>
     );
@@ -96,7 +96,7 @@ export const DentalHealthDashboard: React.FC = () => {
     return (
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Error</AlertTitle>
+        <h5 className="mb-1 font-medium leading-none tracking-tight">Error</h5>
         <AlertDescription>{error}</AlertDescription>
         <Button onClick={loadDashboard} className="mt-2" size="sm">
           Retry
@@ -343,9 +343,9 @@ const RiskAlerts: React.FC<{ alerts: DentalRiskAlert[] }> = ({ alerts }) => {
       {alerts.map((alert, index) => (
         <Alert key={index} variant={getSeverityVariant(alert.severity)}>
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle className="font-bold">
+          <h5 className="mb-1 font-bold leading-none tracking-tight">
             {alert.severity.toUpperCase()}: {alert.category.replace(/-/g, ' ').toUpperCase()}
-          </AlertTitle>
+          </h5>
           <AlertDescription className="space-y-2">
             <p>{alert.message}</p>
             <p className="font-semibold">Recommended Action: {alert.recommended_action}</p>
