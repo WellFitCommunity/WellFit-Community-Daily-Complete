@@ -498,10 +498,8 @@ describe('SDOHBillingService', () => {
       // @ts-ignore
       SDOHBillingService['analyzeCheckInsForSDOH'](checkIns);
 
-      // Check that warning doesn't contain patient data
-      expect(consoleSpy).toHaveBeenCalled();
-      const warningMessage = consoleSpy.mock.calls[0][0];
-      expect(warningMessage).not.toMatch(/patient|name|dob|ssn/i);
+      // Verify no console warnings are logged (HIPAA compliance - no PHI logging)
+      expect(consoleSpy).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
     });

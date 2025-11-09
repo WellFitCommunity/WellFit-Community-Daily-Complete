@@ -6,6 +6,7 @@
 
 import { MCPClient, MCPCallOptions } from './mcpClient';
 import { supabase } from '../../lib/supabaseClient';
+import { SB_URL } from '../../settings/settings';
 
 // =====================================================
 // CONFIGURATION
@@ -190,7 +191,7 @@ export class MCPCostOptimizer {
   private constructor(config: Partial<CostOptimizationConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
     this.mcpClient = new MCPClient({
-      edgeFunctionUrl: `${(import.meta as any).env?.VITE_SUPABASE_URL || ''}/functions/v1/mcp-claude-server`,
+      edgeFunctionUrl: `${SB_URL}/functions/v1/mcp-claude-server`,
     });
     this.cache = new PromptCache();
     this.costTracker = new CostTracker();

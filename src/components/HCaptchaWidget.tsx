@@ -8,11 +8,9 @@ import {
 } from 'react';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
 
-// Support CRA + Vite envs
-const SITE_KEY =
-  process.env.REACT_APP_HCAPTCHA_SITE_KEY ||
-  (import.meta as any)?.env?.VITE_HCAPTCHA_SITE_KEY ||
-  '';
+// hCaptcha site key from environment
+// Note: Using process.env for Create React App compatibility
+const SITE_KEY = process.env.REACT_APP_HCAPTCHA_SITE_KEY || '';
 
 export interface HCaptchaRef {
   execute: () => Promise<string>;

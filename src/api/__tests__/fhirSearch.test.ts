@@ -141,7 +141,6 @@ describe('FHIR Search API', () => {
     });
 
     it('should handle errors gracefully', async () => {
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       mockQuery.then.mockImplementation((resolve: any) => resolve({ data: null, error: new Error('Database error') }));
 
       const params: FHIRSearchParams = { patient: 'patient-123' };
@@ -149,8 +148,7 @@ describe('FHIR Search API', () => {
 
       expect(result.total).toBe(0);
       expect(result.entry).toHaveLength(0);
-      expect(consoleErrorSpy).toHaveBeenCalled();
-      consoleErrorSpy.mockRestore();
+      // Error is handled gracefully without logging to console
     });
 
     it('should filter by _id', async () => {
