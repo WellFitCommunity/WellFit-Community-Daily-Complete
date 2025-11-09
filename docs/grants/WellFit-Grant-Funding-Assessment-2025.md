@@ -349,9 +349,9 @@ Billing & Compliance → Claims
 
 ### 4.1 FHIR R4 Implementation Status
 
-**Current Compliance: 77% (10/13 US Core Resources)**
+**Current Compliance: 100% (13/13 US Core Resources)** ✅
 
-#### Implemented Resources:
+#### Fully Implemented Resources:
 1. ✅ **Patient** - Demographics, contact info, identifiers
 2. ✅ **Observation** - Vitals (BP, HR, O2, glucose)
 3. ✅ **MedicationRequest** - Prescriptions with safety checking
@@ -362,11 +362,11 @@ Billing & Compliance → Claims
 8. ✅ **Procedure** - Medical procedures with billing
 9. ✅ **Encounter** - Visits and appointments
 10. ✅ **Bundle** - Batch operations
+11. ✅ **Immunization** - Vaccination records (My Vaccines page)
+12. ✅ **CarePlan** - Care goals and interventions (My Care Plans page)
+13. ✅ **CareTeam** - Care team member coordination
 
-#### Planned Resources (3 remaining):
-- ⏳ **Immunization** - Vaccination records
-- ⏳ **CarePlan** - Care goals and interventions
-- ⏳ **CareTeam** - Care team member coordination
+**Note:** All 13 US Core FHIR R4 resources are fully implemented with user-facing interfaces and complete database schemas. See `docs/FHIR_STATUS_ACTUAL.md` for detailed implementation documentation.
 
 ### 4.2 EHR Interoperability
 
