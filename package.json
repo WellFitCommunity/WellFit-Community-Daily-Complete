@@ -142,11 +142,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "jest": {
-    "moduleNameMapper": {
-      "^@modelcontextprotocol/sdk/client/index\\.js$": "<rootDir>/node_modules/@modelcontextprotocol/sdk/dist/esm/client/index.js",
-      "^@modelcontextprotocol/sdk/client/stdio\\.js$": "<rootDir>/node_modules/@modelcontextprotocol/sdk/dist/esm/client/stdio.js"
-    }
   }
 }
