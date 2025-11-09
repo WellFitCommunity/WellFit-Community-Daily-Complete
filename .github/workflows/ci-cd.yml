@@ -31,12 +31,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: |
-          if [ -f package-lock.json ]; then
-            npm ci
-          else
-            npm install
-          fi
+        run: npm install
 
       - name: Cache node_modules
         uses: actions/cache@v4
@@ -187,8 +182,18 @@ jobs:
       - name: Create .env file for build
         run: |
           touch .env
-          echo "REACT_APP_SUPABASE_URL=${{ secrets.REACT_APP_SUPABASE_URL || 'https://placeholder.supabase.co' }}" >> .env
-          echo "REACT_APP_SUPABASE_ANON_KEY=${{ secrets.REACT_APP_SUPABASE_ANON_KEY || 'placeholder-key' }}" >> .env
+          # Use secrets if available, otherwise use placeholders
+          if [ -n "${{ secrets.REACT_APP_SUPABASE_URL }}" ]; then
+            echo "REACT_APP_SUPABASE_URL=${{ secrets.REACT_APP_SUPABASE_URL }}" >> .env
+          else
+            echo "REACT_APP_SUPABASE_URL=https://placeholder.supabase.co" >> .env
+          fi
+
+          if [ -n "${{ secrets.REACT_APP_SUPABASE_ANON_KEY }}" ]; then
+            echo "REACT_APP_SUPABASE_ANON_KEY=${{ secrets.REACT_APP_SUPABASE_ANON_KEY }}" >> .env
+          else
+            echo "REACT_APP_SUPABASE_ANON_KEY=placeholder-key" >> .env
+          fi
 
       - name: Build application
         run: npm run build
