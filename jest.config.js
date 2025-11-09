@@ -1,5 +1,6 @@
 // jest.config.js
 // Comprehensive Jest configuration for security and penetration testing
+// Compatible with react-scripts test runner
 
 module.exports = {
   // Use jsdom for DOM testing
@@ -96,10 +97,10 @@ module.exports = {
   verbose: true,
 
   // Detect open handles (memory leaks)
-  detectOpenHandles: true,
+  detectOpenHandles: false, // Disabled for react-scripts compatibility
 
   // Force exit after all tests complete
-  forceExit: true,
+  forceExit: false, // Disabled for react-scripts compatibility
 
   // Clear mocks between tests
   clearMocks: true,
@@ -110,30 +111,11 @@ module.exports = {
   // Restore mocks between tests
   restoreMocks: true,
 
-  // Projects for different test types
-  projects: [
-    {
-      displayName: 'unit',
-      testMatch: ['<rootDir>/src/**/*.test.{ts,tsx}'],
-      testPathIgnorePatterns: [
-        '/node_modules/',
-        '\\.integration\\.test\\.',
-        '\\.security\\.test\\.',
-      ],
-    },
-    {
-      displayName: 'integration',
-      testMatch: ['<rootDir>/src/**/*.integration.test.{ts,tsx}'],
-      testTimeout: 60000,
-    },
-    {
-      displayName: 'security',
-      testMatch: ['<rootDir>/src/**/*.security.test.{ts,tsx}'],
-      testTimeout: 60000,
-      setupFilesAfterEnv: [
-        '<rootDir>/src/setupTests.ts',
-        '<rootDir>/src/setupSecurityTests.ts',
-      ],
-    },
-  ],
+  // NOTE: Multi-project configuration removed for react-scripts compatibility
+  // react-scripts test does not support Jest's multi-project setup
+  // Use --testPathPattern and --testPathIgnorePatterns flags instead
+  //
+  // Unit tests: npm run test:unit (--testPathIgnorePatterns=integration)
+  // Integration tests: npm run test:integration (--testPathPattern=integration)
+  // Security tests: npm run test:security (--testPathPattern=security)
 };
