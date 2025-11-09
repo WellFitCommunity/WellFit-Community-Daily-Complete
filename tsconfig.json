@@ -18,8 +18,7 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
 
-    "baseUrl": "src",
-    "types": ["jest", "@testing-library/jest-dom"]
+    "baseUrl": "src"
   },
   "include": ["src"],
   "exclude": ["supabase/functions", "node_modules", "build", "dist"]
