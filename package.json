@@ -97,7 +97,7 @@
     "start": "react-scripts start",
     "start:cs": "PORT=3100 BROWSER=none WDS_SOCKET_HOST=0.0.0.0 WDS_SOCKET_PORT=3100 CHOKIDAR_USEPOLLING=true react-scripts start",
     "start:cs-debug": "CI=true DISABLE_ESLINT_PLUGIN=true CHOKIDAR_USEPOLLING=true PORT=3100 BROWSER=none WDS_SOCKET_HOST=0.0.0.0 WDS_SOCKET_PORT=3100 react-scripts start -- --progress",
-    "build": "GENERATE_SOURCEMAP=false react-scripts build",
+    "build": "DISABLE_ESLINT_PLUGIN=true GENERATE_SOURCEMAP=false react-scripts build",
     "test": "react-scripts test --testPathIgnorePatterns=integration",
     "test:unit": "react-scripts test --testPathIgnorePatterns=integration --watchAll=false",
     "test:integration": "react-scripts test --testPathPattern=integration --watchAll=false",
