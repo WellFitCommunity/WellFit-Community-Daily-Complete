@@ -1,7 +1,7 @@
 # React Scripts ESLint Plugin Fix
 
 **Date:** November 9, 2025
-**Issue:** Vercel build failing with ESLint 9 compatibility error
+**Issue:** CI/CD and Vercel builds/tests failing with ESLint 9 compatibility error
 **Status:** ✅ Fixed
 
 ---
@@ -25,18 +25,30 @@ When we upgraded to ESLint 9, react-scripts' internal ESLint configuration broke
 2. ESLint 9 removed the `resolvePluginsRelativeTo` option
 3. react-scripts v5 hasn't been updated yet to support ESLint 9
 
+### Affected Commands:
+- ❌ `npm run build` - Failed in CI/CD and Vercel
+- ❌ `npm run test:unit` - Failed in CI/CD
+- ❌ `npm run test:integration` - Failed in CI/CD
+- ❌ `npm start` - Would fail in development
+- ❌ All other react-scripts commands
+
 ---
 
 ## The Solution
 
-### Disable ESLint Plugin During Build:
+### Disable ESLint Plugin for ALL react-scripts Commands:
 
-**Modified `package.json` build script:**
+**Modified `package.json` scripts:**
 
 ```json
 {
   "scripts": {
-    "build": "DISABLE_ESLINT_PLUGIN=true GENERATE_SOURCEMAP=false react-scripts build"
+    "start": "DISABLE_ESLINT_PLUGIN=true react-scripts start",
+    "build": "DISABLE_ESLINT_PLUGIN=true GENERATE_SOURCEMAP=false react-scripts build",
+    "test": "DISABLE_ESLINT_PLUGIN=true react-scripts test --testPathIgnorePatterns=integration",
+    "test:unit": "DISABLE_ESLINT_PLUGIN=true react-scripts test --testPathIgnorePatterns=integration --watchAll=false",
+    "test:integration": "DISABLE_ESLINT_PLUGIN=true react-scripts test --testPathPattern=integration --watchAll=false",
+    "test:security": "DISABLE_ESLINT_PLUGIN=true react-scripts test --testPathPattern=security --watchAll=false"
   }
 }
 ```
@@ -44,8 +56,9 @@ When we upgraded to ESLint 9, react-scripts' internal ESLint configuration broke
 **What this does:**
 - Disables react-scripts' built-in ESLint integration
 - Still runs TypeScript compilation
+- Still runs Jest tests
 - Still bundles and optimizes the application
-- Allows build to complete successfully
+- Allows all commands to complete successfully
 
 ---
 
