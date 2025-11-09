@@ -64,6 +64,7 @@ jobs:
             grep -v "wellfit-community\.com" | grep -v "wellfit.*\.com" | \
             grep -v "www\.w3\.org" | grep -v "www\.ama-assn\.org" | \
             grep -v "www\.nlm\.nih\.gov" | grep -v "pillbox\.nlm\.nih\.gov" | \
+            grep -v "www\.ada\.org" | \
             grep -v "example\.com" | grep -v "xmlns=" | \
             grep -v "\.md:" | grep -v "\.html:" | grep -v "\.svg:" | \
             grep -v "\.json:" | grep -v "\.test\." || true)
