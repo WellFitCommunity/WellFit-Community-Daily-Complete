@@ -1235,7 +1235,7 @@ describe('CarePlanService', () => {
 
       const result = await FHIRService.CarePlan.getByPatient('patient-123');
 
-      expect(result).toEqual(mockData);
+      expect(result).toEqual({ success: true, data: mockData });
       expect(supabase.from).toHaveBeenCalledWith('fhir_care_plans');
       expect(mockQuery.eq).toHaveBeenCalledWith('patient_id', 'patient-123');
       expect(mockQuery.order).toHaveBeenCalledWith('created', { ascending: false });
@@ -1251,7 +1251,8 @@ describe('CarePlanService', () => {
 
       (supabase.from as any).mockReturnValue(mockQuery);
 
-      await expect(FHIRService.CarePlan.getByPatient('patient-123')).rejects.toThrow('Database error');
+      const result = await FHIRService.CarePlan.getByPatient('patient-123');
+      expect(result).toEqual({ success: false, error: 'Database error' });
     });
   });
 
@@ -1270,7 +1271,7 @@ describe('CarePlanService', () => {
 
       const result = await FHIRService.CarePlan.getActive('patient-123');
 
-      expect(result).toEqual(mockData);
+      expect(result).toEqual({ success: true, data: mockData });
       expect(supabase.rpc).toHaveBeenCalledWith('get_active_care_plans', {
         p_patient_id: 'patient-123',
       });
@@ -1280,7 +1281,8 @@ describe('CarePlanService', () => {
       const mockError = new Error('RPC failed');
       (supabase.rpc as any).mockResolvedValue({ data: null, error: mockError });
 
-      await expect(FHIRService.CarePlan.getActive('patient-123')).rejects.toThrow('RPC failed');
+      const result = await FHIRService.CarePlan.getActive('patient-123');
+      expect(result).toEqual({ success: false, error: 'RPC failed' });
     });
   });
 
@@ -1300,7 +1302,7 @@ describe('CarePlanService', () => {
 
       const result = await FHIRService.CarePlan.getCurrent('patient-123');
 
-      expect(result).toEqual(mockData[0]);
+      expect(result).toEqual({ success: true, data: mockData[0] });
       expect(supabase.rpc).toHaveBeenCalledWith('get_current_care_plan', {
         p_patient_id: 'patient-123',
       });
@@ -1311,7 +1313,7 @@ describe('CarePlanService', () => {
 
       const result = await FHIRService.CarePlan.getCurrent('patient-123');
 
-      expect(result).toBeNull();
+      expect(result).toEqual({ success: true, data: null });
     });
   });
 
@@ -1339,7 +1341,7 @@ describe('CarePlanService', () => {
 
       const result = await FHIRService.CarePlan.create(newCarePlan);
 
-      expect(result).toEqual(mockData);
+      expect(result).toEqual({ success: true, data: mockData });
       expect(mockQuery.insert).toHaveBeenCalledWith([newCarePlan]);
     });
 
@@ -1353,12 +1355,13 @@ describe('CarePlanService', () => {
 
       (supabase.from as any).mockReturnValue(mockQuery);
 
-      await expect(FHIRService.CarePlan.create({
+      const result = await FHIRService.CarePlan.create({
         patient_id: 'patient-123',
         status: 'active',
         intent: 'plan',
         category: ['assess-plan'],
-      })).rejects.toThrow('Insert failed');
+      });
+      expect(result).toEqual({ success: false, error: 'Insert failed' });
     });
   });
 
@@ -1382,7 +1385,7 @@ describe('CarePlanService', () => {
 
       const result = await FHIRService.CarePlan.update('cp-1', updates);
 
-      expect(result).toEqual(mockData);
+      expect(result).toEqual({ success: true, data: mockData });
       expect(mockQuery.update).toHaveBeenCalledWith(updates);
       expect(mockQuery.eq).toHaveBeenCalledWith('id', 'cp-1');
     });
@@ -1418,7 +1421,7 @@ describe('CarePlanService', () => {
         toDate: '2025-12-31',
       });
 
-      expect(result).toEqual(mockData);
+      expect(result).toEqual({ success: true, data: mockData });
       expect(mockQuery.eq).toHaveBeenCalledWith('patient_id', 'patient-123');
       expect(mockQuery.eq).toHaveBeenCalledWith('status', 'active');
       expect(mockQuery.contains).toHaveBeenCalledWith('category', ['assess-plan']);

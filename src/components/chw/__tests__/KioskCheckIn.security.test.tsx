@@ -40,15 +40,33 @@ describe('KioskCheckIn - Security Tests', () => {
 
   describe('Input Validation', () => {
     it('should reject SQL injection in name fields', async () => {
+      // Mock logSecurityEvent to resolve
+      (chwService.logSecurityEvent as jest.Mock).mockResolvedValue({});
+
       render(<KioskCheckIn {...mockProps} />);
 
       // Select language
       fireEvent.click(screen.getByText('English'));
 
-      // Try SQL injection in first name
+      // Fill in all required fields with SQL injection in first name
       const firstNameInput = screen.getByLabelText('First Name');
       fireEvent.change(firstNameInput, {
         target: { value: "Robert'); DROP TABLE profiles;--" }
+      });
+
+      const lastNameInput = screen.getByLabelText('Last Name');
+      fireEvent.change(lastNameInput, {
+        target: { value: 'Smith' }
+      });
+
+      const dobInput = screen.getByLabelText('Date of Birth');
+      fireEvent.change(dobInput, {
+        target: { value: '1990-01-01' }
+      });
+
+      const ssnInput = screen.getByLabelText('Last 4 of SSN');
+      fireEvent.change(ssnInput, {
+        target: { value: '1234' }
       });
 
       const findButton = screen.getByText('Find Me');
@@ -63,13 +81,28 @@ describe('KioskCheckIn - Security Tests', () => {
     });
 
     it('should reject XSS attempts', async () => {
+      (chwService.logSecurityEvent as jest.Mock).mockResolvedValue({});
+
       render(<KioskCheckIn {...mockProps} />);
 
       fireEvent.click(screen.getByText('English'));
 
+      // Fill in all required fields with XSS in last name
+      fireEvent.change(screen.getByLabelText('First Name'), {
+        target: { value: 'John' }
+      });
+
       const lastNameInput = screen.getByLabelText('Last Name');
       fireEvent.change(lastNameInput, {
         target: { value: '<script>alert("XSS")</script>' }
+      });
+
+      fireEvent.change(screen.getByLabelText('Date of Birth'), {
+        target: { value: '1990-01-01' }
+      });
+
+      fireEvent.change(screen.getByLabelText('Last 4 of SSN'), {
+        target: { value: '5678' }
       });
 
       fireEvent.click(screen.getByText('Find Me'));
@@ -80,12 +113,18 @@ describe('KioskCheckIn - Security Tests', () => {
     });
 
     it('should validate date of birth format', async () => {
+      (chwService.logSecurityEvent as jest.Mock).mockResolvedValue({});
+
       render(<KioskCheckIn {...mockProps} />);
 
       fireEvent.click(screen.getByText('English'));
 
+      // Fill all required fields
+      fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'John' } });
+      fireEvent.change(screen.getByLabelText('Last Name'), { target: { value: 'Doe' } });
       const dobInput = screen.getByLabelText('Date of Birth');
       fireEvent.change(dobInput, { target: { value: '01/15/1990' } }); // Wrong format
+      fireEvent.change(screen.getByLabelText('Last 4 of SSN'), { target: { value: '1234' } });
 
       fireEvent.click(screen.getByText('Find Me'));
 
@@ -95,6 +134,8 @@ describe('KioskCheckIn - Security Tests', () => {
     });
 
     it('should reject future dates of birth', async () => {
+      (chwService.logSecurityEvent as jest.Mock).mockResolvedValue({});
+
       render(<KioskCheckIn {...mockProps} />);
 
       fireEvent.click(screen.getByText('English'));
@@ -103,8 +144,12 @@ describe('KioskCheckIn - Security Tests', () => {
       futureDate.setFullYear(futureDate.getFullYear() + 1);
       const futureDateStr = futureDate.toISOString().split('T')[0];
 
+      // Fill all required fields
+      fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'John' } });
+      fireEvent.change(screen.getByLabelText('Last Name'), { target: { value: 'Doe' } });
       const dobInput = screen.getByLabelText('Date of Birth');
       fireEvent.change(dobInput, { target: { value: futureDateStr } });
+      fireEvent.change(screen.getByLabelText('Last 4 of SSN'), { target: { value: '1234' } });
 
       fireEvent.click(screen.getByText('Find Me'));
 
@@ -114,10 +159,16 @@ describe('KioskCheckIn - Security Tests', () => {
     });
 
     it('should validate SSN format', async () => {
+      (chwService.logSecurityEvent as jest.Mock).mockResolvedValue({});
+
       render(<KioskCheckIn {...mockProps} />);
 
       fireEvent.click(screen.getByText('English'));
 
+      // Fill all required fields
+      fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'John' } });
+      fireEvent.change(screen.getByLabelText('Last Name'), { target: { value: 'Doe' } });
+      fireEvent.change(screen.getByLabelText('Date of Birth'), { target: { value: '1990-01-15' } });
       const ssnInput = screen.getByLabelText('Last 4 of SSN');
       fireEvent.change(ssnInput, { target: { value: 'abcd' } }); // Non-numeric
 
@@ -129,10 +180,16 @@ describe('KioskCheckIn - Security Tests', () => {
     });
 
     it('should block obviously fake SSNs', async () => {
+      (chwService.logSecurityEvent as jest.Mock).mockResolvedValue({});
+
       render(<KioskCheckIn {...mockProps} />);
 
       fireEvent.click(screen.getByText('English'));
 
+      // Fill all required fields
+      fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'John' } });
+      fireEvent.change(screen.getByLabelText('Last Name'), { target: { value: 'Doe' } });
+      fireEvent.change(screen.getByLabelText('Date of Birth'), { target: { value: '1990-01-15' } });
       const ssnInput = screen.getByLabelText('Last 4 of SSN');
       fireEvent.change(ssnInput, { target: { value: '0000' } });
 
@@ -144,10 +201,17 @@ describe('KioskCheckIn - Security Tests', () => {
     });
 
     it('should block common weak PINs', async () => {
+      (chwService.logSecurityEvent as jest.Mock).mockResolvedValue({});
+
       render(<KioskCheckIn {...mockProps} />);
 
       fireEvent.click(screen.getByText('English'));
 
+      // Fill all required fields
+      fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'John' } });
+      fireEvent.change(screen.getByLabelText('Last Name'), { target: { value: 'Doe' } });
+      fireEvent.change(screen.getByLabelText('Date of Birth'), { target: { value: '1990-01-15' } });
+      fireEvent.change(screen.getByLabelText('Last 4 of SSN'), { target: { value: '5678' } });
       const pinInput = screen.getByLabelText(/PIN/i);
       fireEvent.change(pinInput, { target: { value: '1234' } }); // Common PIN
 
@@ -504,15 +568,22 @@ describe('KioskCheckIn - Security Tests', () => {
   });
 
   describe('Session Timeout', () => {
-    jest.useFakeTimers();
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
 
     it('should timeout after 2 minutes of inactivity', () => {
       render(<KioskCheckIn {...mockProps} />);
 
       fireEvent.click(screen.getByText('English'));
 
-      // Fast-forward time by 2 minutes
+      // Fast-forward time by 2 minutes and run all timers
       jest.advanceTimersByTime(120000);
+      jest.runAllTimers();
 
       // Should show timeout notification
       expect(screen.getByText(/Session timed out for security/i)).toBeInTheDocument();
