@@ -8,17 +8,17 @@ const SB_PUBLISHABLE_API_KEY =
   Deno.env.get("SB_PUBLISHABLE_API_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY");
 const SB_SECRET_KEY =
   Deno.env.get("SB_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-const ALLOWED_ORIGINS = (Deno.env.get("ALLOWED_ORIGINS") ?? "*")
+const ALLOWED_ORIGINS = (Deno.env.get("ALLOWED_ORIGINS") ?? "https://thewellfitcommunity.org,https://wellfitcommunity.live")
   .split(",")
   .map(s => s.trim())
   .filter(Boolean);
 
 // ---- Utilities --------------------------------------------------------------
 function corsHeaders(origin: string | null): Headers {
-  const allowOrigin =
-    ALLOWED_ORIGINS.includes("*") || (origin && ALLOWED_ORIGINS.includes(origin))
-      ? (origin ?? "*")
-      : ALLOWED_ORIGINS[0] ?? "*";
+  // ✅ SECURITY: Only allow explicitly listed origins - no wildcard fallback
+  const allowOrigin = (origin && ALLOWED_ORIGINS.includes(origin))
+    ? origin
+    : ALLOWED_ORIGINS[0] ?? "null";
   return new Headers({
     "Content-Type": "application/json",
     "Access-Control-Allow-Origin": allowOrigin,

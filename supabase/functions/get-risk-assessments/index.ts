@@ -3,7 +3,7 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js";
 
 // Parse allowed origins from env (comma-separated)
-const allowedOrigins = (Deno.env.get("CORS_ORIGINS") ?? "")
+const allowedOrigins = (Deno.env.get("CORS_ORIGINS") ?? "https://thewellfitcommunity.org,https://wellfitcommunity.live")
   .split(",")
   .map((o) => o.trim())
   .filter(Boolean);
@@ -11,8 +11,9 @@ const allowedOrigins = (Deno.env.get("CORS_ORIGINS") ?? "")
 // Build CORS headers for a given request
 function corsHeaders(req: Request) {
   const origin = req.headers.get("origin") ?? "";
+  // ✅ SECURITY: Only allow explicitly listed origins - no wildcard fallback
   const allow =
-    allowedOrigins.includes(origin) ? origin : allowedOrigins[0] ?? "*";
+    allowedOrigins.includes(origin) ? origin : allowedOrigins[0] ?? "null";
   return {
     "access-control-allow-origin": allow,
     "access-control-allow-methods": "GET,POST,OPTIONS",
