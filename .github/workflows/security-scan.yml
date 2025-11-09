@@ -38,7 +38,7 @@ jobs:
           npm install -g audit-ci
 
       - name: Install dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
 
       - name: Initialize summary
         run: |
