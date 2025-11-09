@@ -620,6 +620,7 @@ export interface CreatePatientTrackingRequest {
   dry_mouth?: boolean;
   brushed_today?: boolean;
   flossed_today?: boolean;
+  used_mouthwash?: boolean;
   additional_concerns?: string;
 }
 
