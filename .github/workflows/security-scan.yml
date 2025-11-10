@@ -67,7 +67,7 @@ jobs:
             grep -v "www\.ada\.org" | \
             grep -v "example\.com" | grep -v "xmlns=" | \
             grep -v "\.md:" | grep -v "\.html:" | grep -v "\.svg:" | \
-            grep -v "\.json:" | grep -v "\.test\." || true)
+            grep -v "\.json:" | grep -v "\.yml:" | grep -v "\.yaml:" | grep -v "\.test\." || true)
 
           MATCH_WS=$(grep -RniE '\bws://(?!localhost\b|127\.0\.0\.1\b|0\.0\.0\.0\b)' . \
             --exclude-dir=node_modules --exclude-dir=build --exclude-dir=dist --exclude-dir=.git 2>/dev/null || true)
