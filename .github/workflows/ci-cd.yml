@@ -34,14 +34,19 @@ jobs:
         run: npm install --legacy-peer-deps
 
       - name: Run TypeScript type check
-        run: npm run typecheck || true
+        id: typecheck
+        run: npm run typecheck
         continue-on-error: true
 
       - name: Report to summary
         if: always()
         run: |
           echo "## 🔍 TypeScript Type Check" >> $GITHUB_STEP_SUMMARY
-          echo "⚠️ Type check has pre-existing errors (non-blocking)" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.typecheck.outcome }}" == "success" ]; then
+            echo "✅ TypeScript type check passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Type check has errors (non-blocking)" >> $GITHUB_STEP_SUMMARY
+          fi
 
   # ============================================
   # Job 2: Linting
@@ -64,14 +69,19 @@ jobs:
         run: npm install --legacy-peer-deps
 
       - name: Run ESLint
-        run: npm run lint || true
+        id: eslint
+        run: npm run lint
         continue-on-error: true
 
       - name: Report to summary
         if: always()
         run: |
           echo "## 🔧 ESLint Code Quality" >> $GITHUB_STEP_SUMMARY
-          echo "⚠️ Linting check completed (non-blocking)" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.eslint.outcome }}" == "success" ]; then
+            echo "✅ ESLint passed with no errors" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ ESLint found issues (non-blocking)" >> $GITHUB_STEP_SUMMARY
+          fi
 
   # ============================================
   # Job 3: Unit Tests
@@ -93,15 +103,17 @@ jobs:
         run: npm install --legacy-peer-deps
 
       - name: Run unit tests
+        id: unit-tests
         run: npm run test:unit
         env:
           CI: true
+        continue-on-error: true
 
       - name: Report to summary
         if: always()
         run: |
           echo "## 🧪 Unit Tests" >> $GITHUB_STEP_SUMMARY
-          if [ $? -eq 0 ]; then
+          if [ "${{ steps.unit-tests.outcome }}" == "success" ]; then
             echo "✅ Unit tests passed" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ Unit tests failed" >> $GITHUB_STEP_SUMMARY
@@ -192,6 +204,7 @@ jobs:
         run: npm install --legacy-peer-deps
 
       - name: Run integration tests
+        id: integration-tests
         run: npm run test:integration
         env:
           CI: true
@@ -201,7 +214,7 @@ jobs:
         if: always()
         run: |
           echo "## 🔗 Integration Tests" >> $GITHUB_STEP_SUMMARY
-          if [ $? -eq 0 ]; then
+          if [ "${{ steps.integration-tests.outcome }}" == "success" ]; then
             echo "✅ Integration tests passed" >> $GITHUB_STEP_SUMMARY
           else
             echo "⚠️ Integration tests had issues (non-blocking)" >> $GITHUB_STEP_SUMMARY
