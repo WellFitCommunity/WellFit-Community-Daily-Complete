@@ -211,12 +211,11 @@ jobs:
       # ============================================
       - name: Run ESLint Security Scan
         run: |
-          npm install --save-dev eslint@8.57.1 eslint-plugin-security @typescript-eslint/parser@5.62.0 @typescript-eslint/eslint-plugin@5.62.0
-
-          # Use the existing .eslintrc.security.js configuration file with ESLint 8
-          ESLINT_USE_FLAT_CONFIG=false npx eslint --config .eslintrc.security.js --ext .js,.ts,.tsx src/ supabase/ --format json > eslint-security.json || true
-
           echo "## ESLint Security Scan" >> $GITHUB_STEP_SUMMARY
+
+          # Use the already-installed ESLint 9 with security plugin
+          # Security plugin is already in package.json devDependencies
+          npx eslint src/ --format json > eslint-security.json || true
 
           if [ -s eslint-security.json ]; then
             ISSUES=$(jq '[.[].messages] | flatten | length' eslint-security.json)
