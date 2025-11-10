@@ -101,7 +101,7 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
         document.removeEventListener(event, handleActivity);
       });
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);  
 
   const translations = {
     en: {

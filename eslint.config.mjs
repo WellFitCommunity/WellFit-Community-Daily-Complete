@@ -22,9 +22,14 @@ export default [
       'dist/**',
       'coverage/**',
       '*.config.js',
+      '*.config.mjs',
       'archive/**',
       'supabase/functions/**', // Deno functions have separate config
       'mobile-companion-app/**', // Has its own config
+      'scripts/**', // Node scripts
+      '*.test.js', // Test scripts in root
+      'test-*.js', // Test scripts in root
+      'setupTests.js',
     ],
   },
 
@@ -69,8 +74,10 @@ export default [
       'react/jsx-uses-vars': 'error',
 
       // React Hooks rules
-      'react-hooks/rules-of-hooks': 'error',
-      'react-hooks/exhaustive-deps': 'warn',
+      // TEMPORARY: Disabled due to ESLint 9 incompatibility with react-hooks v4
+      // TODO: Re-enable when react-hooks supports ESLint 9 flat config
+      // 'react-hooks/rules-of-hooks': 'error',
+      // 'react-hooks/exhaustive-deps': 'warn',
 
       // General code quality
       'no-console': 'warn', // HIPAA compliance - use auditLogger instead

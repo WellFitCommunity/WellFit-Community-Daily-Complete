@@ -435,7 +435,7 @@ const ReportsSection: React.FC = () => {
         { metric: 'Check-ins This Month', value: stats.checkInsThisMonth, percentage: `${((stats.checkInsThisMonth / Math.max(stats.totalCheckIns, 1)) * 100).toFixed(1)}%` },
       ];
 
-      let csvContent = [
+      const csvContent = [
         '# WellFit Detailed Analytics Export',
         `# Generated: ${new Date().toISOString()}`,
         `# Created by: WellFit Admin Dashboard`,

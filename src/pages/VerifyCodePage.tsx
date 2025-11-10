@@ -41,14 +41,14 @@ export default function VerifyCodePage() {
       mounted = false;
       sub?.subscription?.unsubscribe?.();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   // Start cooldown if we arrived with a phone from prior step
   useEffect(() => {
     if (!state?.phone) return;
     startCooldown();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [state?.phone]);
 
   // Clean up interval on unmount
@@ -139,7 +139,7 @@ export default function VerifyCodePage() {
       // Don’t auto-submit if an error is currently shown; let user correct first
       if (!error) handleVerify();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [code, phoneIsValid]);
 
   return (

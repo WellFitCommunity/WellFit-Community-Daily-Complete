@@ -34,7 +34,7 @@ const WeatherWidget: React.FC = () => {
         setError('Location access denied');
       }
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [useManual, city]);
 
   const fetchWeather = (q: string) => {

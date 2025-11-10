@@ -46,7 +46,7 @@ export function assertClientSupabaseEnv() {
 
     if (IS_PROD) {
       // In production, log instead of throwing to avoid a blank screen.
-      // eslint-disable-next-line no-console
+       
 
       return;
     }
@@ -83,11 +83,11 @@ export const APP_INFO = {
 // If you sometimes build without Firebase, this avoids a hard crash.
 let FIREBASE_SAFE: any = undefined;
 try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+   
   FIREBASE_SAFE = require("./firebase").firebaseWebConfig;
 } catch {
   if (!IS_PROD) {
-    // eslint-disable-next-line no-console
+     
 
   }
 }

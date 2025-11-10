@@ -563,7 +563,7 @@ export function useSystemRecording(autoStart = false) {
         setIsRecording(false);
       }
     };
-  }, [autoStart]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [autoStart]);  
 
   return {
     startRecording: async (userId?: string) => {

@@ -67,8 +67,8 @@ jobs:
             grep -v "www\.ada\.org" | \
             grep -v "example\.com" | grep -v "xmlns=" | \
             grep -v "\.md:" | grep -v "\.html:" | grep -v "\.svg:" | \
-            grep -v "\.json:" | grep -v "\.test\." || true)
-          
+            grep -v "\.json:" | grep -v "\.yml:" | grep -v "\.yaml:" | grep -v "\.test\." || true)
+
           MATCH_WS=$(grep -RniE '\bws://(?!localhost\b|127\.0\.0\.1\b|0\.0\.0\.0\b)' . \
             --exclude-dir=node_modules --exclude-dir=build --exclude-dir=dist --exclude-dir=.git 2>/dev/null || true)
 
@@ -80,6 +80,25 @@ jobs:
               [ -n "$MATCH_WS" ] && echo "$MATCH_WS"
               echo '```'
             } >> $GITHUB_STEP_SUMMARY
+
+            # Create annotations for insecure HTTP findings
+            if [ -n "$MATCH_HTTP" ]; then
+              echo "$MATCH_HTTP" | while IFS=: read -r file line content; do
+                if [ -n "$file" ] && [ -n "$line" ]; then
+                  echo "::error file=$file,line=$line,title=Insecure Protocol::Found insecure http:// protocol - use https:// instead"
+                fi
+              done
+            fi
+
+            # Create annotations for insecure WS findings
+            if [ -n "$MATCH_WS" ]; then
+              echo "$MATCH_WS" | while IFS=: read -r file line content; do
+                if [ -n "$file" ] && [ -n "$line" ]; then
+                  echo "::error file=$file,line=$line,title=Insecure Protocol::Found insecure ws:// protocol - use wss:// instead"
+                fi
+              done
+            fi
+
             echo "FAIL=1" >> $GITHUB_ENV
           else
             echo "✅ No insecure protocol references found." >> $GITHUB_STEP_SUMMARY
@@ -108,6 +127,14 @@ jobs:
                 | select(.value.severity != null)
                 | "- **\(.key)**: \(.value.severity) – \(.value.title)"
               ' audit-results.json >> $GITHUB_STEP_SUMMARY || echo "_Unable to parse details_" >> $GITHUB_STEP_SUMMARY
+
+              # Create annotations for high/critical vulnerabilities
+              jq -r '
+                .vulnerabilities
+                | to_entries[]
+                | select(.value.severity == "high" or .value.severity == "critical")
+                | "::error file=package.json,line=1,title=NPM Security - \(.value.severity | ascii_upcase)::\(.key) - \(.value.title // "Security vulnerability")"
+              ' audit-results.json || true
             fi
 
             if [ "$HIGH" -gt 0 ] || [ "$CRIT" -gt 0 ]; then
@@ -184,18 +211,27 @@ jobs:
       # ============================================
       - name: Run ESLint Security Scan
         run: |
-          npm install --save-dev eslint@8.57.1 eslint-plugin-security @typescript-eslint/parser@5.62.0 @typescript-eslint/eslint-plugin@5.62.0
-
-          # Use the existing .eslintrc.security.js configuration file with ESLint 8
-          ESLINT_USE_FLAT_CONFIG=false npx eslint --config .eslintrc.security.js --ext .js,.ts,.tsx src/ supabase/ --format json > eslint-security.json || true
-
           echo "## ESLint Security Scan" >> $GITHUB_STEP_SUMMARY
+
+          # Use the already-installed ESLint 9 with security plugin
+          # Security plugin is already in package.json devDependencies
+          npx eslint src/ --format json > eslint-security.json || true
 
           if [ -s eslint-security.json ]; then
             ISSUES=$(jq '[.[].messages] | flatten | length' eslint-security.json)
 
             if [ "$ISSUES" -gt 0 ]; then
               echo "### Findings: $ISSUES issue(s) (informational)" >> $GITHUB_STEP_SUMMARY
+
+              # Create GitHub Actions annotations for each finding
+              jq -r '
+                .[] | select(.messages | length > 0)
+                | .filePath as $file
+                | .messages[] |
+                  "::warning file=\($file),line=\(.line // 1),title=ESLint Security::\(.message)"
+              ' eslint-security.json || true
+
+              # Also add to summary
               jq -r '
                 .[] | select(.messages | length > 0)
                 | .filePath as $file
@@ -228,8 +264,18 @@ jobs:
 
           for f in $FILES; do
             for p in "${PATTERNS[@]}"; do
-              if grep -E -q "$p" "$f" 2>/dev/null; then
+              # Use grep with line numbers to create annotations
+              MATCHES=$(grep -E -n "$p" "$f" 2>/dev/null || true)
+              if [ -n "$MATCHES" ]; then
                 echo "- ⚠️ Potential secret in **$f**" >> $GITHUB_STEP_SUMMARY
+
+                # Create annotations for each match
+                echo "$MATCHES" | while IFS=: read -r line_num content; do
+                  if [ -n "$line_num" ]; then
+                    echo "::error file=$f,line=$line_num,title=Potential Hardcoded Secret::Potential hardcoded secret detected - review and move to environment variables"
+                  fi
+                done
+
                 FOUND=true
                 break
               fi

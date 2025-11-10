@@ -112,7 +112,7 @@ export class HandoffNotificationService {
     try {
       // Call Supabase Edge Function for email sending
       // This requires a Supabase Edge Function to be deployed
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+       
       const { data: _data, error } = await supabase.functions.invoke('send-email', {
         body: {
           to: recipients.map(r => ({ email: r.email, name: r.name })),
@@ -142,7 +142,7 @@ export class HandoffNotificationService {
   ): Promise<void> {
     try {
       // Call Supabase Edge Function for SMS sending
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+       
       const { data: _data, error } = await supabase.functions.invoke('send-sms', {
         body: {
           to: recipients.map(r => r.phone),

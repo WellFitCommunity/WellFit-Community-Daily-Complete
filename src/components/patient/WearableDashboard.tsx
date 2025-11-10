@@ -105,7 +105,7 @@ export const WearableDashboard: React.FC = () => {
   };
 
   const handleDisconnectDevice = async (connectionId: string) => {
-    // eslint-disable-next-line no-restricted-globals
+     
     if (!confirm('Are you sure you want to disconnect this device?')) return;
 
     try {
@@ -123,7 +123,7 @@ export const WearableDashboard: React.FC = () => {
   };
 
   const handleEmergencySOS = () => {
-    // eslint-disable-next-line no-restricted-globals
+     
     if (confirm('Are you sure you want to send an emergency alert?')) {
       alert('Emergency alert sent to your emergency contacts!');
       // TODO: Implement actual emergency alert

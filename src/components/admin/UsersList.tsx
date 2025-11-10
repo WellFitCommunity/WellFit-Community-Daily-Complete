@@ -400,7 +400,7 @@ const UsersList: React.FC = () => {
 
   // Filtered and sorted profiles
   const filteredAndSortedProfiles = useMemo(() => {
-    let filtered = profiles.filter(profile => {
+    const filtered = profiles.filter(profile => {
       const searchBlob = `${profile.first_name} ${profile.last_name} ${profile.phone ?? ''} ${profile.user_id}`
         .toLowerCase();
       const matchesSearch = searchBlob.includes(searchTerm.toLowerCase());

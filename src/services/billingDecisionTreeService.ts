@@ -601,7 +601,7 @@ export class BillingDecisionTreeService {
   ): Promise<EMEvaluationResult> {
     const missingElements: string[] = [];
     let emLevel = 3; // Default to level 3
-    let documentationScore = documentation.documentationCompletenesScore;
+    const documentationScore = documentation.documentationCompletenesScore;
 
     // Time-based coding (if > 50% time spent on counseling/coordination)
     const timeBasedCoding = !!input.timeSpent && input.timeSpent >= 20;

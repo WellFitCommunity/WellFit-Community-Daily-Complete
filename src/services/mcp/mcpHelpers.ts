@@ -88,7 +88,7 @@ export interface MCPUsageStats {
   model: string;
 }
 
-let lastStats: MCPUsageStats | null = null;
+const lastStats: MCPUsageStats | null = null;
 
 export function getLastMCPStats(): MCPUsageStats | null {
   return lastStats;

@@ -44,7 +44,7 @@ export class SDOHBillingService {
     if (checkInError) throw new Error(`Failed to get check-ins: ${checkInError.message}`);
 
     // Get existing SDOH assessment if available
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     const { data: _existingAssessment } = await supabase
       .from('sdoh_assessments')
       .select('*')

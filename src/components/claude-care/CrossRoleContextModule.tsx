@@ -22,7 +22,7 @@ const CrossRoleContextModule: React.FC<Props> = ({ userRole, patientId, userId }
 
   useEffect(() => {
     loadContextEntries();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [patientId]);
 
   const loadContextEntries = async () => {

@@ -43,7 +43,7 @@ const AdminTaskModule: React.FC<Props> = ({
     if (userId) {
       loadTaskHistory();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [userRole, userId]);
 
   // Handle voice input auto-population

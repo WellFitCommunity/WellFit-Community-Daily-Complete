@@ -137,7 +137,7 @@ export const SystemAdminDashboard: React.FC = () => {
     const interval = setInterval(loadSystemData, 60000);
 
     return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   const formatBytes = (bytes: number) => {

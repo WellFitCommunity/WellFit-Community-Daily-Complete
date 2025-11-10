@@ -441,7 +441,7 @@ const ApiKeyManager: React.FC = () => {
 
   // Filtering and sorting logic
   const filteredAndSortedKeys = React.useMemo(() => {
-    let filtered = apiKeys.filter(key => {
+    const filtered = apiKeys.filter(key => {
       const matchesSearch =
         key.org_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         key.id.toLowerCase().includes(searchTerm.toLowerCase());
@@ -455,8 +455,8 @@ const ApiKeyManager: React.FC = () => {
     });
 
     return filtered.sort((a, b) => {
-      let aValue = toComparable(a[sortField]);
-      let bValue = toComparable(b[sortField]);
+      const aValue = toComparable(a[sortField]);
+      const bValue = toComparable(b[sortField]);
 
       if (aValue === null && bValue === null) return 0;
       if (aValue === null) return sortDirection === 'asc' ? -1 : 1;

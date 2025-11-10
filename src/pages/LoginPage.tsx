@@ -77,7 +77,7 @@ const LoginPage: React.FC = () => {
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value;
+    const value = e.target.value;
 
     // Remove all non-digits to get clean number (ONLY numbers allowed)
     const digits = value.replace(/[^\d]/g, '');
@@ -208,7 +208,7 @@ const LoginPage: React.FC = () => {
       }
     })();
     return () => { cancel = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   const handleLogout = async () => {

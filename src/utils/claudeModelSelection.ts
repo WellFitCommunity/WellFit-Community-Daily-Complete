@@ -17,7 +17,7 @@ const MODEL_COSTS = {
 } as const;
 
 // Model capabilities and characteristics
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 const _MODEL_CHARACTERISTICS = {
   [ClaudeModel.HAIKU_3]: {
     speed: 'fastest',
