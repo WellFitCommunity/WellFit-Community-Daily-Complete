@@ -13,7 +13,7 @@
  * @see /src/services/fhir/SDOHService.ts
  */
 
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '../lib/supabaseClient';
 import { SDOHService } from './fhir/SDOHService';
 import type {
   SDOHProfile,
@@ -26,7 +26,7 @@ import type {
   SDOHScreening,
   calculateOverallSDOHRisk,
   calculateComplexityTier
-} from '@/types/sdohIndicators';
+} from '../types/sdohIndicators';
 
 /**
  * SDOH Indicator Service
@@ -62,7 +62,7 @@ export const SDOHIndicatorService = {
       }));
 
       // Calculate summary metrics using imported helper
-      const { calculateOverallSDOHRisk, calculateComplexityTier } = await import('@/types/sdohIndicators');
+      const { calculateOverallSDOHRisk, calculateComplexityTier } = await import('../types/sdohIndicators');
       const overallRiskScore = calculateOverallSDOHRisk(factors);
       const complexityTier = calculateComplexityTier(factors);
 

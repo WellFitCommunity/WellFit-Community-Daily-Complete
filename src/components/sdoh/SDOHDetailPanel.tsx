@@ -3,7 +3,7 @@ import {
   SDOHFactor,
   SDOH_INDICATOR_CONFIGS,
   getSDOHRiskColor
-} from '@/types/sdohIndicators';
+} from '../../types/sdohIndicators';
 
 interface SDOHDetailPanelProps {
   factor: SDOHFactor;

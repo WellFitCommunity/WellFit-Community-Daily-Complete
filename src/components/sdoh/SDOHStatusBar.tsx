@@ -4,7 +4,7 @@ import {
   SDOHFactor,
   SDOHCategoryGroup,
   SDOH_INDICATOR_CONFIGS
-} from '@/types/sdohIndicators';
+} from '../../types/sdohIndicators';
 import { SDOHIndicatorBadge } from './SDOHIndicatorBadge';
 import { SDOHDetailPanel } from './SDOHDetailPanel';
 

@@ -5,7 +5,7 @@ import {
   SDOHInterventionStatus,
   SDOH_INDICATOR_CONFIGS,
   getSDOHRiskColor
-} from '@/types/sdohIndicators';
+} from '../../types/sdohIndicators';
 
 interface SDOHIndicatorBadgeProps {
   category: SDOHCategory;
