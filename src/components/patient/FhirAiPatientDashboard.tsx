@@ -9,6 +9,9 @@ import { Button } from '../ui/button';
 import { useAuth } from '../../contexts/AuthContext';
 import EnhancedFhirService from '../admin/EnhancedFhirService';
 import { auditLogger } from '../../services/auditLogger';
+import { SDOHStatusBar } from '../sdoh/SDOHStatusBar';
+import { SDOHIndicatorService } from '../../services/sdohIndicatorService';
+import type { SDOHProfile } from '../../types/sdohIndicators';
 
 interface PatientDashboardProps {
   supabaseUrl: string;
@@ -265,6 +268,7 @@ const FhirAiPatientDashboard: React.FC<PatientDashboardProps> = ({ supabaseUrl, 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [sdohProfile, setSDOHProfile] = useState<SDOHProfile | null>(null);
 
   const [fhirService] = useState(() => new EnhancedFhirService());
 
@@ -328,6 +332,15 @@ const FhirAiPatientDashboard: React.FC<PatientDashboardProps> = ({ supabaseUrl, 
       setInsights(patientInsights);
       setHealthMetrics(metrics);
       setLastUpdated(new Date());
+
+      // Load SDOH profile
+      try {
+        const profile = await SDOHIndicatorService.getPatientProfile(user.id);
+        setSDOHProfile(profile);
+      } catch (sdohError) {
+        // SDOH data is optional - don't fail the whole dashboard if unavailable
+        auditLogger.debug('[PatientDashboard] SDOH data unavailable', { userId: user.id, error: sdohError });
+      }
 
     } catch (error) {
       // HIPAA Audit: Log patient dashboard load failure
@@ -513,6 +526,16 @@ const FhirAiPatientDashboard: React.FC<PatientDashboardProps> = ({ supabaseUrl, 
       {/* Emergency Alerts */}
       {insights.emergencyAlerts.length > 0 && (
         <EmergencyAlerts alerts={insights.emergencyAlerts} />
+      )}
+
+      {/* SDOH Indicators */}
+      {sdohProfile && sdohProfile.factors.length > 0 && (
+        <SDOHStatusBar
+          profile={sdohProfile}
+          groupByCategory={true}
+          showUnassessed={false}
+          className="mb-6"
+        />
       )}
 
       {/* Main Content Grid */}
