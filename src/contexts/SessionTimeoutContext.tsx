@@ -196,7 +196,7 @@ export const SessionTimeoutProvider: React.FC<SessionTimeoutProviderProps> = ({
   // Treat route changes as activity
   useEffect(() => {
     resetTimeout();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [location.pathname]);
 
   return (

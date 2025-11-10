@@ -372,7 +372,7 @@ const IntelligentAdminPanel: React.FC = () => {
   // Load personalized layout on mount
   useEffect(() => {
     loadPersonalizedDashboard();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [user?.id, adminRole]);
 
   // Auto-show What's New modal
@@ -428,7 +428,7 @@ const IntelligentAdminPanel: React.FC = () => {
 
   function organizeSections(layout: any): DashboardSection[] {
     // Filter sections by role
-    let visibleSections = allSections.filter(
+    const visibleSections = allSections.filter(
       (section) => !section.roles || section.roles.includes(adminRole || 'admin')
     );
 

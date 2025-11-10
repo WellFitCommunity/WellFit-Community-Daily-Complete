@@ -196,7 +196,7 @@ Please analyze this data and generate comprehensive FHIR mapping rules.`
       throw new Error('Invalid API response format');
     }
 
-    let jsonText = data.content[0].text
+    const jsonText = data.content[0].text
       .replace(/```json\n?/g, '')
       .replace(/```\n?/g, '')
       .trim();

@@ -125,7 +125,7 @@ const PasswordGenerator: React.FC<PasswordGeneratorProps> = ({
     if (autoGenerate && !generatedPassword) {
       handleGenerate();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   return (

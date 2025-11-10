@@ -128,7 +128,7 @@ RESPOND WITH ONLY JSON - NO OTHER TEXT:`
       throw new Error('No response from AI service');
     }
 
-    let jsonText = data.content[0].text
+    const jsonText = data.content[0].text
       .replace(/```json\n?/g, '')
       .replace(/```\n?/g, '')
       .trim();

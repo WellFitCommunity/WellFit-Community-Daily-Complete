@@ -78,7 +78,7 @@ export default function UserQuestions({
   // Load questions
   useEffect(() => {
     loadQuestions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [isAdmin]);
 
   const loadQuestions = async () => {

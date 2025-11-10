@@ -92,7 +92,7 @@ const WelcomePage: React.FC = () => {
     return () => {
       mounted = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   const handleContinue = () => {

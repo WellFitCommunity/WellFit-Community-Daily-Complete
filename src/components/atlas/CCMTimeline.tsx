@@ -24,7 +24,7 @@ export const CCMTimeline: React.FC = () => {
 
   useEffect(() => {
     loadCCMData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [selectedMonth]);
 
   const loadCCMData = async () => {

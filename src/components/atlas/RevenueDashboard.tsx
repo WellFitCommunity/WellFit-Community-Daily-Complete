@@ -36,7 +36,7 @@ export const RevenueDashboard: React.FC = () => {
 
   useEffect(() => {
     loadDashboard();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [dateRange]);
 
   const loadDashboard = async () => {

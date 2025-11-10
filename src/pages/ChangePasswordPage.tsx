@@ -85,7 +85,7 @@ if (q.type === 'recovery' && q.code) {
         setSessionReady(false);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   async function submit(e?: React.FormEvent) {

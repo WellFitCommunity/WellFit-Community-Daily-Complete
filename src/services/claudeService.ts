@@ -937,7 +937,7 @@ Most Common Conditions: ${Array.from(conditionCounts.entries())
     let suggestedRiskLevel = 'MODERATE';
     const riskFactors: string[] = [];
     const recommendations: string[] = [];
-    let clinicalNotes = analysis;
+    const clinicalNotes = analysis;
 
     // Extract risk level
     const riskMatch = analysis.match(/(LOW|MODERATE|HIGH|CRITICAL)/i);

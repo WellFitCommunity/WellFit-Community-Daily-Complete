@@ -36,7 +36,7 @@ const ProfilePage: React.FC = () => {
       loadProfile();
       loadStats();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [user?.id]);
 
   const loadProfile = async () => {

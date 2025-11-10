@@ -215,7 +215,7 @@ export function sanitizeURL(url: string | null | undefined): string {
   const trimmed = url.trim().toLowerCase();
 
   // Block dangerous protocols
-  // eslint-disable-next-line no-script-url
+   
   const dangerousProtocols = ['javascript:', 'data:', 'vbscript:', 'file:'];
   for (const protocol of dangerousProtocols) {
     if (trimmed.startsWith(protocol)) {

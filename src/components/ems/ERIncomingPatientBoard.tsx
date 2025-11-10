@@ -37,7 +37,7 @@ const ERIncomingPatientBoard: React.FC<ERIncomingPatientBoardProps> = ({ hospita
   // Load initial data
   useEffect(() => {
     loadPatients();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [hospitalName]);
 
   // Subscribe to real-time updates
@@ -53,7 +53,7 @@ const ERIncomingPatientBoard: React.FC<ERIncomingPatientBoardProps> = ({ hospita
     return () => {
       subscription.unsubscribe();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [hospitalName]);
 
   // Auto-refresh every 30 seconds
@@ -63,7 +63,7 @@ const ERIncomingPatientBoard: React.FC<ERIncomingPatientBoardProps> = ({ hospita
     }, 30000); // 30 seconds
 
     return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [hospitalName]);
 
   const loadPatients = async () => {

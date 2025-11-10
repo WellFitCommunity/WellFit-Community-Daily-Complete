@@ -132,7 +132,7 @@ export default function ErrorBoundary(props: Omit<Props, 'resetKeys'> & { resetK
   const routeKey = location.pathname + location.search;
   const combinedKeys = React.useMemo(
     () => [routeKey, ...(props.resetKeys ?? [])],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
     [routeKey, JSON.stringify(props.resetKeys ?? [])]
   );
 

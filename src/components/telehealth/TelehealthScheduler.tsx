@@ -268,7 +268,7 @@ const TelehealthScheduler: React.FC = () => {
 
   // Cancel appointment
   const handleCancelAppointment = async (appointmentId: string) => {
-    // eslint-disable-next-line no-restricted-globals
+     
     if (!confirm('Are you sure you want to cancel this appointment?')) return;
 
     try {

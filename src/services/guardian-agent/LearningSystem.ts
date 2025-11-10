@@ -132,7 +132,7 @@ export class LearningSystem {
   private findSimilarPatterns(features: string[]): Pattern[] {
     const similar: Pattern[] = [];
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     for (const [_key, pattern] of this.patterns) {
       const similarity = this.calculateSimilarity(features, pattern.features);
       if (similarity > 0.7) {
