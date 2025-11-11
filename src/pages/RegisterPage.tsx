@@ -23,6 +23,7 @@ const REGISTER_URL =
   `${(process.env.REACT_APP_SB_URL || process.env.REACT_APP_SUPABASE_URL || '').replace('.supabase.co', '.functions.supabase.co')}/functions/v1/register`;
 
 const PUBLIC_ROLES = [
+  'Patient',
   'Senior',
   'Volunteer',
   'Caregiver',
@@ -42,7 +43,7 @@ const RegisterPage: React.FC = () => {
     firstName: '',
     lastName: '',
     email: '',
-    roleLabel: 'Senior',
+    roleLabel: 'Patient',
   });
 
   const [loading, setLoading] = useState(false);

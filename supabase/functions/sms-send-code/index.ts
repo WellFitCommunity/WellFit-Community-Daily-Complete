@@ -181,15 +181,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
     }
 
     // Successful start (Twilio returns JSON)
-    let payload: any = {};
+    let payload: Record<string, unknown> = {};
     try { payload = JSON.parse(txt); } catch { /* keep empty if not JSON */ }
 
     return new Response(
       JSON.stringify({
         ok: true,
         provider: "verify",
-        status: payload?.status ?? "sent",
-        sid: payload?.sid ?? null,
+        verification_status: payload?.status ?? "sent",
+        verification_sid: payload?.sid ?? null,
       }),
       { status: 200, headers },
     );

@@ -16,7 +16,7 @@ import {
 } from '../services/loginSecurityService';
 import { auditLogger } from '../services/auditLogger';
 
-type Mode = 'senior' | 'admin';
+type Mode = 'senior' | 'patient' | 'admin';
 
 const isPhone = (val: string) => /^\d{10,15}$/.test(val.replace(/[^\d]/g, ''));
 
@@ -327,9 +327,9 @@ const LoginPage: React.FC = () => {
         return;
       }
 
-      auditLogger.auth('LOGIN', true, { method: 'phone_password', userType: 'senior' });
+      auditLogger.auth('LOGIN', true, { method: 'phone_password', userType: mode });
       const route = await nextRouteForUser();
-      auditLogger.info('SENIOR_LOGIN_NAVIGATION', { route });
+      auditLogger.info('CARE_RECIPIENT_LOGIN_NAVIGATION', { route, mode });
       navigate(route, { replace: true });
     } catch (err: any) {
       auditLogger.auth('LOGIN_FAILED', false, { method: 'phone_password', error: err?.message });
@@ -471,7 +471,15 @@ const LoginPage: React.FC = () => {
       </h1>
 
       {/* Mode Toggle */}
-      <div className="flex justify-center gap-2 mb-6">
+      <div className="flex justify-center gap-2 mb-6 flex-wrap">
+        <button
+          type="button"
+          onClick={() => { setMode('patient'); setError(''); }}
+          className={`px-3 py-1 rounded ${mode === 'patient' ? 'bg-gray-900 text-white' : 'bg-gray-200'}`}
+          aria-pressed={mode === 'patient'}
+        >
+          Patient Login (Phone)
+        </button>
         <button
           type="button"
           onClick={() => { setMode('senior'); setError(''); }}
@@ -491,7 +499,7 @@ const LoginPage: React.FC = () => {
       </div>
 
       {/* Forms */}
-      {mode === 'senior' ? (
+      {(mode === 'senior' || mode === 'patient') ? (
         <form onSubmit={handleSeniorLogin} className="space-y-4" noValidate>
           <div>
             <label htmlFor="phone-input" className="block text-sm font-medium text-gray-700 mb-1 text-left">

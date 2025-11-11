@@ -39,7 +39,8 @@ export type AdminRole = 'admin' | 'super_admin';
  */
 export type UserRole =
   | StaffRole
-  | 'senior'    // Patients/members
+  | 'patient'   // Care recipients (all ages) - FHIR-aligned
+  | 'senior'    // DEPRECATED: Use 'patient' + age demographics instead
   | 'volunteer' // Community volunteers
   | 'caregiver' // Family caregivers (separate from staff)
   | 'staff';    // General staff
@@ -70,7 +71,7 @@ export enum RoleCode {
   SUPER_ADMIN = 1,
   ADMIN = 2,
   NURSE = 3,
-  SENIOR = 4,
+  SENIOR = 4,  // DEPRECATED: Use PATIENT instead
   PHYSICIAN = 5,
   VOLUNTEER = 6,
   STAFF = 7,
@@ -82,6 +83,7 @@ export enum RoleCode {
   CAREGIVER = 13,  // Unique code for caregiver (family caregivers, not volunteers)
   CASE_MANAGER = 14,  // Care coordination and discharge planning
   SOCIAL_WORKER = 15,  // Psychosocial services and community resources
+  PATIENT = 16,  // Universal care recipient role (all ages) - FHIR-aligned
   COMMUNITY_HEALTH_WORKER = 17,  // Community Health Worker (CHW)
   CHW = 18,  // Synonym for COMMUNITY_HEALTH_WORKER
 }
@@ -93,7 +95,8 @@ export const ROLE_TO_CODE: Record<UserRole, RoleCode> = {
   super_admin: RoleCode.SUPER_ADMIN,
   admin: RoleCode.ADMIN,
   nurse: RoleCode.NURSE,
-  senior: RoleCode.SENIOR,
+  senior: RoleCode.SENIOR,  // DEPRECATED: Maps to SENIOR for backward compatibility
+  patient: RoleCode.PATIENT,  // Preferred role for all care recipients
   physician: RoleCode.PHYSICIAN,
   doctor: RoleCode.PHYSICIAN, // Synonym
   volunteer: RoleCode.VOLUNTEER,
@@ -117,7 +120,8 @@ export const CODE_TO_ROLE: Record<RoleCode, UserRole> = {
   [RoleCode.SUPER_ADMIN]: 'super_admin',
   [RoleCode.ADMIN]: 'admin',
   [RoleCode.NURSE]: 'nurse',
-  [RoleCode.SENIOR]: 'senior',
+  [RoleCode.SENIOR]: 'senior',  // DEPRECATED: Kept for backward compatibility
+  [RoleCode.PATIENT]: 'patient',  // Preferred role for all care recipients
   [RoleCode.PHYSICIAN]: 'physician',
   [RoleCode.VOLUNTEER]: 'volunteer',
   [RoleCode.STAFF]: 'staff',

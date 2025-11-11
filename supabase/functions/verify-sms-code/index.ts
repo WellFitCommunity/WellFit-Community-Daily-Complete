@@ -31,11 +31,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
   try {
     const { phone, code } = await req.json().catch(() => ({}));
 
-    const isE164 = (p: string) => /^\+\d{10,15}$/.test(p || "");
+    // E.164: +<country><nsn>, 7-15 digits total (excluding +), leading digit 1-9
+    const isE164 = (p: string) => /^\+[1-9]\d{6,14}$/.test(p || "");
     const isCode = (c: string) => /^\d{4,8}$/.test(c || "");
 
     if (!isE164(phone)) {
-      return new Response(JSON.stringify({ error: "Invalid E.164 phone format" }), { status: 400, headers });
+      return new Response(JSON.stringify({ error: "Invalid E.164 phone format. Required: +<country><number> (e.g., +15551234567)" }), { status: 400, headers });
     }
     if (!isCode(code)) {
       return new Response(JSON.stringify({ error: "Code must be 4–8 digits" }), { status: 400, headers });

@@ -165,6 +165,7 @@ serve(async (req: Request) => {
       role_code: enforced.role_code,
       role_slug: enforced.role_slug,
       delivery: input.delivery,
+      temporary_password: password, // Return password so admin can give it to patient
       info: input.delivery === "none" ? "No credentials sent." : "Send credentials via your chosen channel.",
     }, 201);
 
