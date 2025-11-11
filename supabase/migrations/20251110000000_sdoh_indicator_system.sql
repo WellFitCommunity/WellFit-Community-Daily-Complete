@@ -242,6 +242,11 @@ ALTER TABLE public.sdoh_screenings ENABLE ROW LEVEL SECURITY;
 -- ============================================================================
 -- RLS: SDOH OBSERVATIONS
 -- ============================================================================
+-- Drop existing policies if they exist (idempotent migration)
+DROP POLICY IF EXISTS "Patients can view own SDOH observations" ON public.sdoh_observations;
+DROP POLICY IF EXISTS "Providers can view patient SDOH observations" ON public.sdoh_observations;
+DROP POLICY IF EXISTS "Providers can insert SDOH observations" ON public.sdoh_observations;
+DROP POLICY IF EXISTS "Providers can update SDOH observations" ON public.sdoh_observations;
 
 -- Patients can view their own SDOH data
 CREATE POLICY "Patients can view own SDOH observations"
@@ -288,6 +293,11 @@ CREATE POLICY "Providers can update SDOH observations"
 -- ============================================================================
 -- RLS: SDOH REFERRALS
 -- ============================================================================
+-- Drop existing policies if they exist (idempotent migration)
+DROP POLICY IF EXISTS "Patients can view own SDOH referrals" ON public.sdoh_referrals;
+DROP POLICY IF EXISTS "Providers can view SDOH referrals" ON public.sdoh_referrals;
+DROP POLICY IF EXISTS "Providers can insert SDOH referrals" ON public.sdoh_referrals;
+DROP POLICY IF EXISTS "Providers can update SDOH referrals" ON public.sdoh_referrals;
 
 -- Patients can view their own referrals
 CREATE POLICY "Patients can view own SDOH referrals"
@@ -332,6 +342,10 @@ CREATE POLICY "Providers can update SDOH referrals"
 -- ============================================================================
 -- RLS: SDOH RESOURCES
 -- ============================================================================
+-- Drop existing policies if they exist (idempotent migration)
+DROP POLICY IF EXISTS "Patients can view own SDOH resources" ON public.sdoh_resources;
+DROP POLICY IF EXISTS "Providers can view SDOH resources" ON public.sdoh_resources;
+DROP POLICY IF EXISTS "Providers can insert SDOH resources" ON public.sdoh_resources;
 
 -- Patients can view their own resources
 CREATE POLICY "Patients can view own SDOH resources"
@@ -365,6 +379,10 @@ CREATE POLICY "Providers can insert SDOH resources"
 -- ============================================================================
 -- RLS: SDOH SCREENINGS
 -- ============================================================================
+-- Drop existing policies if they exist (idempotent migration)
+DROP POLICY IF EXISTS "Patients can view own SDOH screenings" ON public.sdoh_screenings;
+DROP POLICY IF EXISTS "Providers can view SDOH screenings" ON public.sdoh_screenings;
+DROP POLICY IF EXISTS "Providers can insert SDOH screenings" ON public.sdoh_screenings;
 
 -- Patients can view their own screening history
 CREATE POLICY "Patients can view own SDOH screenings"
@@ -466,7 +484,10 @@ BEGIN
 END;
 $$;
 
--- Triggers
+-- Triggers (drop existing triggers if they exist for idempotent migration)
+DROP TRIGGER IF EXISTS sdoh_observations_updated_at ON public.sdoh_observations;
+DROP TRIGGER IF EXISTS sdoh_referrals_updated_at ON public.sdoh_referrals;
+
 CREATE TRIGGER sdoh_observations_updated_at
   BEFORE UPDATE ON public.sdoh_observations
   FOR EACH ROW

@@ -808,7 +808,11 @@ INSERT INTO public.dental_cdt_codes (code, category, description, typical_fee_ra
 -- =====================================================
 -- 7. VIEWS FOR COMMON QUERIES
 -- =====================================================
+-- NOTE: Views commented out pending profiles table schema verification
+-- These views reference p.full_name and p.date_of_birth which may not exist in profiles table
+-- Uncomment and update after verifying correct column names
 
+/*
 -- View: Patient Dental Health Summary
 CREATE OR REPLACE VIEW public.patient_dental_health_summary AS
 SELECT
@@ -851,6 +855,7 @@ FROM public.dental_procedures dp
 LEFT JOIN public.dental_cdt_codes cdt ON dp.cdt_code = cdt.code
 LEFT JOIN public.profiles p ON dp.patient_id = p.id
 LEFT JOIN public.profiles prov ON dp.provider_id = prov.id;
+*/
 
 -- =====================================================
 -- 8. COMMENTS FOR DOCUMENTATION
