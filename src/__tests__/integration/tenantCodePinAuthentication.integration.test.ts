@@ -69,7 +69,7 @@ describe('Tenant Code PIN Authentication - Integration Tests', () => {
         data: {
           success: true,
           expires_at: new Date(Date.now() + 7200000).toISOString(),
-          admin_token: 'token-12345'
+          admin_token: 'mock-test-token-1' // Test fixture
         },
         error: null
       });
@@ -186,7 +186,7 @@ describe('Tenant Code PIN Authentication - Integration Tests', () => {
         data: {
           success: true,
           expires_at: new Date(Date.now() + 7200000).toISOString(),
-          admin_token: 'token-67890'
+          admin_token: 'mock-test-token-2' // Test fixture
         },
         error: null
       });
@@ -359,7 +359,7 @@ describe('Tenant Code PIN Authentication - Integration Tests', () => {
         data: {
           success: true,
           expires_at: expiresAt.toISOString(),
-          admin_token: 'token-abc123'
+          admin_token: 'mock-test-token-3' // Test fixture
         },
         error: null
       });
@@ -481,7 +481,7 @@ describe('Tenant Code PIN Authentication - Integration Tests', () => {
         data: {
           success: true,
           expires_at: new Date(Date.now() + 7200000).toISOString(),
-          admin_token: 'token-methodist-abc123'
+          admin_token: 'mock-test-token-4' // Test fixture
         },
         error: null
       });
