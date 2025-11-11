@@ -58,6 +58,7 @@ const SelfReportingPage = React.lazy(() => import('./pages/SelfReportingPage'));
 const DoctorsViewPage = React.lazy(() => import('./pages/DoctorsViewPage'));
 const AdminPanel = React.lazy(() => import('./components/admin/IntelligentAdminPanel'));
 const AdminProfileEditorPage = React.lazy(() => import('./pages/AdminProfileEditorPage'));
+const SuperAdminDashboard = React.lazy(() => import('./components/superAdmin/SuperAdminDashboard'));
 const NursePanel = React.lazy(() => import('./components/nurse/NursePanel'));
 const PhysicianPanel = React.lazy(() => import('./components/physician/PhysicianPanel'));
 const CaseManagerPanel = React.lazy(() => import('./components/case-manager/CaseManagerPanel'));
@@ -204,6 +205,16 @@ function Shell() {
 
               {/* Post-login gated */}
               <Route path="/demographics" element={<RequireAuth><DemographicsPage /></RequireAuth>} />
+
+              {/* Super Admin (Master Control Panel - Cross-tenant) */}
+              <Route
+                path="/super-admin"
+                element={
+                  <RequireAuth>
+                    <SuperAdminDashboard />
+                  </RequireAuth>
+                }
+              />
 
               {/* Admin (requires user + admin pin) */}
               <Route
