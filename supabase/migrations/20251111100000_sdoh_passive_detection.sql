@@ -3,6 +3,54 @@
 -- Complements structured SDOH assessments with passive monitoring
 
 -- ============================================================================
+-- ENSURE PROFILES TABLE HAS REQUIRED CONSTRAINTS
+-- ============================================================================
+
+-- Ensure profiles.id has a unique constraint (needed for foreign key references)
+DO $$
+BEGIN
+  -- Check if profiles.id already has a unique constraint or primary key
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint c
+    JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = ANY(c.conkey)
+    WHERE c.conrelid = 'profiles'::regclass
+    AND a.attname = 'id'
+    AND c.contype IN ('p', 'u')  -- primary key or unique
+  ) THEN
+    -- Add unique constraint if it doesn't exist
+    ALTER TABLE profiles ADD CONSTRAINT profiles_id_unique UNIQUE (id);
+    RAISE NOTICE 'Added UNIQUE constraint on profiles.id';
+  ELSE
+    RAISE NOTICE 'profiles.id already has a unique constraint';
+  END IF;
+END$$;
+
+-- ============================================================================
+-- ENSURE HELPER FUNCTIONS EXIST
+-- ============================================================================
+
+-- Create get_current_tenant_id if it doesn't exist
+CREATE OR REPLACE FUNCTION get_current_tenant_id()
+RETURNS UUID AS $$
+BEGIN
+  RETURN COALESCE(
+    current_setting('app.current_tenant_id', true)::uuid,
+    (SELECT tenant_id FROM profiles WHERE id = auth.uid() LIMIT 1)
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
+
+-- Create update_updated_at_column if it doesn't exist
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ============================================================================
 -- CREATE TABLE
 -- ============================================================================
 
@@ -13,8 +61,8 @@ CREATE TABLE IF NOT EXISTS sdoh_passive_detections (
   -- Multi-tenant isolation
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
 
-  -- Patient reference
-  patient_id UUID NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
+  -- Patient reference (profiles with role='patient')
+  patient_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
 
   -- Detection metadata
   category TEXT NOT NULL, -- SDOH category (housing, food-security, etc.)
@@ -38,7 +86,7 @@ CREATE TABLE IF NOT EXISTS sdoh_passive_detections (
   -- Review workflow
   reviewed BOOLEAN NOT NULL DEFAULT FALSE,
   reviewed_at TIMESTAMPTZ,
-  reviewed_by UUID REFERENCES users(id),
+  reviewed_by UUID, -- References users but nullable for flexibility
   review_notes TEXT,
 
   -- Timestamps
@@ -52,28 +100,28 @@ CREATE TABLE IF NOT EXISTS sdoh_passive_detections (
 -- ============================================================================
 
 -- Multi-tenant isolation
-CREATE INDEX idx_sdoh_passive_detections_tenant_id
+CREATE INDEX IF NOT EXISTS idx_sdoh_passive_detections_tenant_id
 ON sdoh_passive_detections(tenant_id);
 
 -- Patient lookup
-CREATE INDEX idx_sdoh_passive_detections_patient_id
+CREATE INDEX IF NOT EXISTS idx_sdoh_passive_detections_patient_id
 ON sdoh_passive_detections(patient_id);
 
 -- Unreviewed detections (for clinical workflow)
-CREATE INDEX idx_sdoh_passive_detections_unreviewed
+CREATE INDEX IF NOT EXISTS idx_sdoh_passive_detections_unreviewed
 ON sdoh_passive_detections(patient_id, reviewed)
 WHERE reviewed = FALSE;
 
 -- Category analysis
-CREATE INDEX idx_sdoh_passive_detections_category
+CREATE INDEX IF NOT EXISTS idx_sdoh_passive_detections_category
 ON sdoh_passive_detections(category, risk_level);
 
 -- Source tracking
-CREATE INDEX idx_sdoh_passive_detections_source
+CREATE INDEX IF NOT EXISTS idx_sdoh_passive_detections_source
 ON sdoh_passive_detections(source_type, source_id);
 
 -- Detection date range queries
-CREATE INDEX idx_sdoh_passive_detections_detected_at
+CREATE INDEX IF NOT EXISTS idx_sdoh_passive_detections_detected_at
 ON sdoh_passive_detections(detected_at DESC);
 
 -- ============================================================================
@@ -81,6 +129,12 @@ ON sdoh_passive_detections(detected_at DESC);
 -- ============================================================================
 
 ALTER TABLE sdoh_passive_detections ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS tenant_isolation_select ON sdoh_passive_detections;
+DROP POLICY IF EXISTS tenant_isolation_insert ON sdoh_passive_detections;
+DROP POLICY IF EXISTS tenant_isolation_update ON sdoh_passive_detections;
+DROP POLICY IF EXISTS tenant_isolation_delete ON sdoh_passive_detections;
 
 -- Policy: Users can only access detections from their tenant
 CREATE POLICY tenant_isolation_select ON sdoh_passive_detections
@@ -111,9 +165,9 @@ CREATE POLICY tenant_isolation_delete ON sdoh_passive_detections
 CREATE OR REPLACE FUNCTION set_sdoh_detection_tenant_id()
 RETURNS TRIGGER AS $$
 BEGIN
-  -- Get tenant_id from patient
+  -- Get tenant_id from profile (patient is a profile with role='patient')
   SELECT tenant_id INTO NEW.tenant_id
-  FROM patients
+  FROM profiles
   WHERE id = NEW.patient_id;
 
   -- Ensure tenant_id was found
@@ -125,12 +179,14 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS trg_set_sdoh_detection_tenant_id ON sdoh_passive_detections;
 CREATE TRIGGER trg_set_sdoh_detection_tenant_id
   BEFORE INSERT ON sdoh_passive_detections
   FOR EACH ROW
   EXECUTE FUNCTION set_sdoh_detection_tenant_id();
 
 -- Auto-update updated_at timestamp
+DROP TRIGGER IF EXISTS trg_sdoh_passive_detections_updated_at ON sdoh_passive_detections;
 CREATE TRIGGER trg_sdoh_passive_detections_updated_at
   BEFORE UPDATE ON sdoh_passive_detections
   FOR EACH ROW
@@ -187,7 +243,7 @@ BEGIN
   RETURN QUERY
   SELECT
     d.patient_id,
-    p.full_name as patient_name,
+    COALESCE(p.full_name, p.email) as patient_name,
     d.category,
     d.risk_level,
     d.confidence,
@@ -195,7 +251,7 @@ BEGIN
     d.detected_at,
     d.id as detection_id
   FROM sdoh_passive_detections d
-  INNER JOIN patients p ON d.patient_id = p.id
+  INNER JOIN profiles p ON d.patient_id = p.id AND p.role = 'patient'
   WHERE d.tenant_id = get_current_tenant_id()
     AND d.reviewed = FALSE
     AND d.risk_level IN ('high', 'critical')
