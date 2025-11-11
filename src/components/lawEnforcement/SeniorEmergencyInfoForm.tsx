@@ -31,6 +31,7 @@ export const SeniorEmergencyInfoForm: React.FC<SeniorEmergencyInfoFormProps> = (
     visionImpaired: false,
     cognitiveImpairment: false,
     nonVerbal: false,
+    elevatorRequired: false,
     doorOpensInward: true,
     securitySystem: false,
     fallRiskHigh: false,
@@ -72,6 +73,12 @@ export const SeniorEmergencyInfoForm: React.FC<SeniorEmergencyInfoFormProps> = (
         cognitiveImpairmentNotes: existing.cognitiveImpairmentNotes || '',
         nonVerbal: existing.nonVerbal,
         languageBarrier: existing.languageBarrier || '',
+        floorNumber: existing.floorNumber || '',
+        buildingQuadrant: existing.buildingQuadrant || '',
+        elevatorRequired: existing.elevatorRequired,
+        elevatorAccessCode: existing.elevatorAccessCode || '',
+        buildingType: existing.buildingType || '',
+        stairsToUnit: existing.stairsToUnit || 0,
         doorCode: existing.doorCode || '',
         keyLocation: existing.keyLocation || '',
         accessInstructions: existing.accessInstructions || '',
@@ -79,6 +86,11 @@ export const SeniorEmergencyInfoForm: React.FC<SeniorEmergencyInfoFormProps> = (
         securitySystem: existing.securitySystem,
         securitySystemCode: existing.securitySystemCode || '',
         petsInHome: existing.petsInHome || '',
+        parkingInstructions: existing.parkingInstructions || '',
+        gatedCommunityCode: existing.gatedCommunityCode || '',
+        lobbyAccessInstructions: existing.lobbyAccessInstructions || '',
+        bestEntrance: existing.bestEntrance || '',
+        intercomInstructions: existing.intercomInstructions || '',
         fallRiskHigh: existing.fallRiskHigh,
         fallHistory: existing.fallHistory || '',
         homeHazards: existing.homeHazards || '',
@@ -332,6 +344,118 @@ export const SeniorEmergencyInfoForm: React.FC<SeniorEmergencyInfoFormProps> = (
         </div>
       </div>
 
+      {/* Building Location Section */}
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <h4 className="text-md font-semibold text-gray-900 mb-4">Building Location</h4>
+        <div className="space-y-3">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Building type
+            </label>
+            <select
+              value={formData.buildingType || ''}
+              onChange={(e) => updateField('buildingType', e.target.value)}
+              disabled={readOnly}
+              className="w-full p-2 border border-gray-300 rounded"
+            >
+              <option value="">Select...</option>
+              <option value="Single Family Home">Single Family Home</option>
+              <option value="Apartment">Apartment</option>
+              <option value="Condo">Condo</option>
+              <option value="Assisted Living">Assisted Living</option>
+              <option value="Senior Housing">Senior Housing</option>
+              <option value="Mobile Home">Mobile Home</option>
+              <option value="Townhouse">Townhouse</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Floor number or level
+            </label>
+            <input
+              type="text"
+              value={formData.floorNumber || ''}
+              onChange={(e) => updateField('floorNumber', e.target.value)}
+              disabled={readOnly}
+              className="w-full p-2 border border-gray-300 rounded"
+              placeholder="e.g., Ground, 3, Top Floor, Basement"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Building quadrant/section/location
+            </label>
+            <input
+              type="text"
+              value={formData.buildingQuadrant || ''}
+              onChange={(e) => updateField('buildingQuadrant', e.target.value)}
+              disabled={readOnly}
+              className="w-full p-2 border border-gray-300 rounded"
+              placeholder="e.g., Northeast corner, Right side facing street, Back of building"
+            />
+          </div>
+
+          <label className="flex items-center">
+            <input
+              type="checkbox"
+              checked={formData.elevatorRequired}
+              onChange={(e) => updateField('elevatorRequired', e.target.checked)}
+              disabled={readOnly}
+              className="mr-2"
+            />
+            <span className="font-medium">Elevator required to reach unit</span>
+          </label>
+
+          {formData.elevatorRequired && (
+            <div className="ml-6">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Elevator access code/instructions
+              </label>
+              <input
+                type="text"
+                value={formData.elevatorAccessCode || ''}
+                onChange={(e) => updateField('elevatorAccessCode', e.target.value)}
+                disabled={readOnly}
+                className="w-full p-2 border border-gray-300 rounded"
+                placeholder="e.g., Code 4567, Key required, Ask front desk"
+              />
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Number of stairs to unit
+            </label>
+            <input
+              type="number"
+              min="0"
+              value={formData.stairsToUnit || ''}
+              onChange={(e) => updateField('stairsToUnit', parseInt(e.target.value) || 0)}
+              disabled={readOnly}
+              className="w-full p-2 border border-gray-300 rounded"
+              placeholder="0"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Parking instructions for emergency vehicles
+            </label>
+            <textarea
+              value={formData.parkingInstructions || ''}
+              onChange={(e) => updateField('parkingInstructions', e.target.value)}
+              disabled={readOnly}
+              className="w-full p-2 border border-gray-300 rounded"
+              rows={2}
+              placeholder="e.g., Visitor parking Lot B, Street parking only, Loading zone in front"
+            />
+          </div>
+        </div>
+      </div>
+
       {/* Emergency Access Section */}
       <div className="bg-white border border-gray-200 rounded-lg p-6">
         <h4 className="text-md font-semibold text-gray-900 mb-4">Emergency Access Information</h4>
@@ -386,6 +510,67 @@ export const SeniorEmergencyInfoForm: React.FC<SeniorEmergencyInfoFormProps> = (
               disabled={readOnly}
               className="w-full p-2 border border-gray-300 rounded"
               placeholder="e.g., 2 dogs - friendly, 1 cat - hides under bed"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Gated community access code
+            </label>
+            <input
+              type="text"
+              value={formData.gatedCommunityCode || ''}
+              onChange={(e) => updateField('gatedCommunityCode', e.target.value)}
+              disabled={readOnly}
+              className="w-full p-2 border border-gray-300 rounded"
+              placeholder="e.g., #5678, Call box code A123"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Building lobby access instructions
+            </label>
+            <textarea
+              value={formData.lobbyAccessInstructions || ''}
+              onChange={(e) => updateField('lobbyAccessInstructions', e.target.value)}
+              disabled={readOnly}
+              className="w-full p-2 border border-gray-300 rounded"
+              rows={2}
+              placeholder="e.g., Lobby open 6am-10pm, After hours use code 9876, Ring buzzer for manager"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Best entrance for emergency response
+            </label>
+            <select
+              value={formData.bestEntrance || ''}
+              onChange={(e) => updateField('bestEntrance', e.target.value)}
+              disabled={readOnly}
+              className="w-full p-2 border border-gray-300 rounded"
+            >
+              <option value="">Select...</option>
+              <option value="Front">Front entrance</option>
+              <option value="Side">Side entrance</option>
+              <option value="Rear">Rear entrance</option>
+              <option value="Garage">Garage</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Intercom/buzzer instructions
+            </label>
+            <input
+              type="text"
+              value={formData.intercomInstructions || ''}
+              onChange={(e) => updateField('intercomInstructions', e.target.value)}
+              disabled={readOnly}
+              className="w-full p-2 border border-gray-300 rounded"
+              placeholder="e.g., Buzzer #302, Ring 3 times, Press * for manager"
             />
           </div>
         </div>

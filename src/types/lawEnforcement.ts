@@ -43,6 +43,14 @@ export interface EmergencyResponseInfo {
   nonVerbal: boolean;
   languageBarrier?: string;
 
+  // Building Location
+  floorNumber?: string;
+  buildingQuadrant?: string;
+  elevatorRequired: boolean;
+  elevatorAccessCode?: string;
+  buildingType?: string;
+  stairsToUnit?: number;
+
   // Emergency Access
   doorCode?: string;
   keyLocation?: string;
@@ -51,6 +59,11 @@ export interface EmergencyResponseInfo {
   securitySystem: boolean;
   securitySystemCode?: string;
   petsInHome?: string;
+  parkingInstructions?: string;
+  gatedCommunityCode?: string;
+  lobbyAccessInstructions?: string;
+  bestEntrance?: string;
+  intercomInstructions?: string;
 
   // Fall Risk & Hazards
   fallRiskHigh: boolean;
@@ -99,6 +112,12 @@ export interface WelfareCheckInfo {
   patientAge: number;
   patientPhone: string;
   patientAddress: string;
+
+  // Building Location
+  buildingLocation?: string;
+  floorNumber?: string;
+  elevatorRequired: boolean;
+  parkingInstructions?: string;
 
   // Mobility & Equipment
   mobilityStatus: string;
@@ -239,6 +258,14 @@ export interface EmergencyResponseFormData {
   nonVerbal: boolean;
   languageBarrier: string;
 
+  // Building Location
+  floorNumber: string;
+  buildingQuadrant: string;
+  elevatorRequired: boolean;
+  elevatorAccessCode: string;
+  buildingType: string;
+  stairsToUnit: number;
+
   // Access
   doorCode: string;
   keyLocation: string;
@@ -247,6 +274,11 @@ export interface EmergencyResponseFormData {
   securitySystem: boolean;
   securitySystemCode: string;
   petsInHome: string;
+  parkingInstructions: string;
+  gatedCommunityCode: string;
+  lobbyAccessInstructions: string;
+  bestEntrance: string;
+  intercomInstructions: string;
 
   // Risk
   fallRiskHigh: boolean;

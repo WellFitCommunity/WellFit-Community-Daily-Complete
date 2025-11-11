@@ -186,6 +186,28 @@ export const ConstableDispatchDashboard: React.FC = () => {
               </h3>
 
               <div className="space-y-4">
+                {/* Building Location */}
+                {welfareCheckInfo.buildingLocation && (
+                  <div className="bg-indigo-50 border-2 border-indigo-300 rounded p-4">
+                    <span className="font-bold text-indigo-900 flex items-center">
+                      🏢 BUILDING LOCATION
+                    </span>
+                    <div className="mt-2 space-y-1 text-indigo-900">
+                      <p className="whitespace-pre-line font-medium">{welfareCheckInfo.buildingLocation}</p>
+                      {welfareCheckInfo.elevatorRequired && (
+                        <p className="mt-2 px-2 py-1 bg-indigo-200 rounded font-bold text-indigo-900 inline-block">
+                          🛗 ELEVATOR REQUIRED
+                        </p>
+                      )}
+                      {welfareCheckInfo.parkingInstructions && (
+                        <p className="mt-2">
+                          <span className="font-semibold">🅿️ Parking:</span> {welfareCheckInfo.parkingInstructions}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Mobility */}
                 <div>
                   <span className="font-medium text-gray-700">Mobility:</span>
