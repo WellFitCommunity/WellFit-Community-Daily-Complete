@@ -8,7 +8,7 @@
  * @see src/types/tenantModules.ts
  */
 
-import { supabase } from '../integrations/supabase/client';
+import { supabase } from '../lib/supabaseClient';
 import type {
   TenantModuleConfig,
   ModuleName,
