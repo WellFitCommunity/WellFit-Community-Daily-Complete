@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { SuperAdminService } from '../../services/superAdminService';
 import { TenantWithStatus, SuperAdminUser } from '../../types/superAdmin';
-import { Building2, Users, Activity, AlertCircle, CheckCircle, XCircle, Eye, Settings } from 'lucide-react';
+import { Building2, Users, Activity, AlertCircle, CheckCircle, XCircle, Eye, Settings, Edit2, Hash } from 'lucide-react';
 import { auditLogger } from '../../services/auditLogger';
 
 interface TenantManagementPanelProps {
@@ -17,6 +17,8 @@ const TenantManagementPanel: React.FC<TenantManagementPanelProps> = ({ onViewTen
   const [selectedTenant, setSelectedTenant] = useState<TenantWithStatus | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [confirmAction, setConfirmAction] = useState<'suspend' | 'activate' | null>(null);
+  const [showEditCodeDialog, setShowEditCodeDialog] = useState(false);
+  const [editTenantCode, setEditTenantCode] = useState('');
 
   useEffect(() => {
     loadData();
@@ -87,6 +89,47 @@ const TenantManagementPanel: React.FC<TenantManagementPanelProps> = ({ onViewTen
       setActionLoading(null);
       setSelectedTenant(null);
       setConfirmAction(null);
+    }
+  };
+
+  const handleEditTenantCode = (tenant: TenantWithStatus) => {
+    setSelectedTenant(tenant);
+    setEditTenantCode(tenant.tenantCode || '');
+    setShowEditCodeDialog(true);
+  };
+
+  const saveTenantCode = async () => {
+    if (!selectedTenant || !superAdmin) return;
+
+    // Validate format
+    const codePattern = /^[A-Z]{1,4}-[0-9]{4,6}$/;
+    if (editTenantCode && !codePattern.test(editTenantCode.toUpperCase())) {
+      setError('Invalid format. Use PREFIX-NUMBER (e.g., "MH-6702")');
+      return;
+    }
+
+    try {
+      setActionLoading(selectedTenant.tenantId);
+      setShowEditCodeDialog(false);
+
+      await SuperAdminService.updateTenantCode({
+        tenantId: selectedTenant.tenantId,
+        tenantCode: editTenantCode.toUpperCase(),
+        superAdminId: superAdmin.id
+      });
+
+      // Reload data
+      await loadData();
+    } catch (err) {
+      await auditLogger.error('SUPER_ADMIN_TENANT_CODE_UPDATE_FAILED', err as Error, {
+        category: 'ADMINISTRATIVE',
+        tenantId: selectedTenant.tenantId
+      });
+      setError((err as Error).message || 'Failed to update tenant code');
+    } finally {
+      setActionLoading(null);
+      setSelectedTenant(null);
+      setEditTenantCode('');
     }
   };
 
@@ -190,11 +233,29 @@ const TenantManagementPanel: React.FC<TenantManagementPanelProps> = ({ onViewTen
                     tenant.status === 'active' ? 'text-green-600' : 'text-red-600'
                   }`} />
                 </div>
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900">{tenant.tenantName}</h3>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-gray-900">{tenant.tenantName}</h3>
+                    <button
+                      onClick={() => handleEditTenantCode(tenant)}
+                      className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                      title="Edit tenant code"
+                      disabled={actionLoading === tenant.tenantId}
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                  </div>
                   <p className="text-sm text-gray-600">
                     {tenant.subdomain}.wellfit.com
                   </p>
+                  {tenant.tenantCode && (
+                    <div className="flex items-center gap-1 mt-1">
+                      <Hash className="w-3 h-3 text-blue-600" />
+                      <span className="text-sm font-mono font-semibold text-blue-600">
+                        {tenant.tenantCode}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex items-center gap-2 mt-2">
                     <span className={`
                       px-3 py-1 rounded-full text-xs font-medium
@@ -356,6 +417,59 @@ const TenantManagementPanel: React.FC<TenantManagementPanelProps> = ({ onViewTen
                 }`}
               >
                 Confirm {confirmAction === 'suspend' ? 'Suspension' : 'Activation'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Tenant Code Dialog */}
+      {showEditCodeDialog && selectedTenant && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">
+              Edit Tenant Code
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Assign a unique identifier for <strong>{selectedTenant.tenantName}</strong>
+            </p>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tenant Code
+              </label>
+              <input
+                type="text"
+                value={editTenantCode}
+                onChange={(e) => setEditTenantCode(e.target.value.toUpperCase())}
+                placeholder="MH-6702"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                maxLength={11}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Format: PREFIX-NUMBER (e.g., "MH-6702", "P3-1234")
+              </p>
+              <p className="text-xs text-gray-500">
+                Prefix: 1-4 uppercase letters | Number: 4-6 digits
+              </p>
+            </div>
+            <div className="flex items-center gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setShowEditCodeDialog(false);
+                  setSelectedTenant(null);
+                  setEditTenantCode('');
+                }}
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveTenantCode}
+                disabled={!editTenantCode.trim()}
+                className="px-4 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                <Hash className="w-4 h-4" />
+                Save Code
               </button>
             </div>
           </div>

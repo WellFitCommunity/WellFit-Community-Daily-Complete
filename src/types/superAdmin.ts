@@ -186,6 +186,7 @@ export interface TenantWithStatus {
   tenantId: string;
   tenantName: string;
   subdomain: string;
+  tenantCode?: string; // Unique tenant identifier (e.g., "MH-6702")
   isActive: boolean;
   isSuspended: boolean;
   status?: 'active' | 'suspended';
@@ -217,6 +218,12 @@ export interface SuspendTenantPayload {
 
 export interface ActivateTenantPayload {
   tenantId: string;
+  superAdminId: string;
+}
+
+export interface UpdateTenantCodePayload {
+  tenantId: string;
+  tenantCode: string; // Format: "PREFIX-NUMBER" (e.g., "MH-6702")
   superAdminId: string;
 }
 

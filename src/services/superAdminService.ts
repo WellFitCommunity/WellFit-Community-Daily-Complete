@@ -20,6 +20,7 @@ import type {
   EmergencyDisableFeaturePayload,
   SuspendTenantPayload,
   ActivateTenantPayload,
+  UpdateTenantCodePayload,
   UpdateFeatureFlagPayload,
   CreateSuperAdminPayload
 } from '../types/superAdmin';
@@ -159,6 +160,7 @@ export const SuperAdminService = {
         tenantId: row.tenant_id,
         tenantName: row.tenant_name,
         subdomain: row.subdomain,
+        tenantCode: row.tenant_code,
         isActive: row.is_active,
         isSuspended: row.is_suspended,
         suspensionReason: row.suspension_reason,
@@ -223,6 +225,54 @@ export const SuperAdminService = {
       });
     } catch (error) {
       throw new Error('Failed to activate tenant');
+    }
+  },
+
+  /**
+   * Update tenant code (identifier like "MH-6702")
+   */
+  async updateTenantCode(payload: UpdateTenantCodePayload): Promise<void> {
+    try {
+      const currentAdmin = await this.getCurrentSuperAdmin();
+      if (!currentAdmin) throw new Error('Unauthorized');
+
+      // Validate format: PREFIX-NUMBER
+      const codePattern = /^[A-Z]{1,4}-[0-9]{4,6}$/;
+      if (!codePattern.test(payload.tenantCode)) {
+        throw new Error('Invalid tenant code format. Use PREFIX-NUMBER (e.g., "MH-6702")');
+      }
+
+      // Update tenant code
+      const { error } = await supabase
+        .from('tenants')
+        .update({
+          tenant_code: payload.tenantCode.toUpperCase()
+        })
+        .eq('id', payload.tenantId);
+
+      if (error) {
+        // Check for unique constraint violation
+        if (error.code === '23505') {
+          throw new Error('This tenant code is already in use');
+        }
+        throw error;
+      }
+
+      // Log audit event
+      await this.logAuditEvent({
+        superAdminId: currentAdmin.id,
+        superAdminEmail: currentAdmin.email,
+        action: 'tenant.update',
+        targetType: 'tenant',
+        targetId: payload.tenantId,
+        newValue: { tenant_code: payload.tenantCode },
+        severity: 'info'
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Failed to update tenant code');
     }
   },
 
