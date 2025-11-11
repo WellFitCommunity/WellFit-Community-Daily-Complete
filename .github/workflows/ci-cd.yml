@@ -19,6 +19,7 @@ jobs:
   typecheck:
     name: TypeScript Type Check
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     continue-on-error: true  # Don't block pipeline on type errors
 
     steps:
@@ -54,6 +55,7 @@ jobs:
   lint:
     name: ESLint Code Quality
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     continue-on-error: true  # Don't block pipeline on lint errors
 
     steps:
@@ -89,6 +91,7 @@ jobs:
   test-unit:
     name: Unit Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 10  # Prevent hanging tests from blocking pipeline
 
     steps:
       - name: Checkout code
@@ -104,7 +107,7 @@ jobs:
 
       - name: Run unit tests
         id: unit-tests
-        run: npm run test:unit
+        run: npm run test:unit -- --maxWorkers=2 --forceExit --testTimeout=10000
         env:
           CI: true
         continue-on-error: true
@@ -126,6 +129,7 @@ jobs:
   build:
     name: Build Application
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: [typecheck, lint]
 
     steps:
@@ -188,6 +192,7 @@ jobs:
   test-integration:
     name: Integration Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: build
     # Run on all branches to prevent skipped job failures
     if: always()
