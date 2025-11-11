@@ -92,7 +92,7 @@ export default function VerifyCodePage() {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('sms-verify-code', {
+      const { data, error } = await supabase.functions.invoke('verify-sms-code', {
         body: { phone: cleanPhone, code: cleanCode },
       });
 
