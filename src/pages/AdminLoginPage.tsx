@@ -226,16 +226,24 @@ export default function AdminLoginPage() {
 
     // Validate format based on whether user has tenant
     if (userTenantId) {
-      // Tenant users must use TenantCode-PIN format
-      const codePattern = /^[A-Z]{1,4}-[0-9]{4,8}$/;
+      // Tenant users must use TenantCode-PIN format (e.g., MH-6702-1234)
+      // TenantCode format: PREFIX-NUMBER (e.g., MH-6702)
+      // Full format: PREFIX-NUMBER-PIN (e.g., MH-6702-1234)
+      const codePattern = /^[A-Z]{1,4}-[0-9]{4,6}-[0-9]{4,8}$/;
       if (!codePattern.test(pin)) {
-        setLocalErr('Invalid format. Use TENANTCODE-PIN (e.g., MH-1234)');
+        setLocalErr('Invalid format. Use TENANTCODE-PIN (e.g., MH-6702-1234)');
         return;
       }
-      // Optionally verify tenant code matches (if we have it)
+      // Verify tenant code matches (if we have it)
       if (userTenantCode) {
-        const [inputCode] = pin.split('-');
-        if (inputCode !== userTenantCode) {
+        // Extract tenant code part (everything before the last hyphen)
+        const parts = pin.split('-');
+        if (parts.length !== 3) {
+          setLocalErr(`Invalid format. Use ${userTenantCode}-XXXX`);
+          return;
+        }
+        const inputTenantCode = `${parts[0]}-${parts[1]}`; // e.g., "MH-6702"
+        if (inputTenantCode !== userTenantCode) {
           setLocalErr(`Incorrect tenant code. Use ${userTenantCode}-XXXX`);
           return;
         }

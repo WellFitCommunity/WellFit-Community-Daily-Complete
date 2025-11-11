@@ -434,10 +434,11 @@ const TenantManagementPanel: React.FC<TenantManagementPanelProps> = ({ onViewTen
               Assign a unique identifier for <strong>{selectedTenant.tenantName}</strong>
             </p>
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="tenant-code-input" className="block text-sm font-medium text-gray-700 mb-2">
                 Tenant Code
               </label>
               <input
+                id="tenant-code-input"
                 type="text"
                 value={editTenantCode}
                 onChange={(e) => setEditTenantCode(e.target.value.toUpperCase())}

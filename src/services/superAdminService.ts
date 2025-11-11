@@ -236,9 +236,12 @@ export const SuperAdminService = {
       const currentAdmin = await this.getCurrentSuperAdmin();
       if (!currentAdmin) throw new Error('Unauthorized');
 
+      // Auto-uppercase the tenant code
+      const tenantCode = payload.tenantCode.toUpperCase();
+
       // Validate format: PREFIX-NUMBER
       const codePattern = /^[A-Z]{1,4}-[0-9]{4,6}$/;
-      if (!codePattern.test(payload.tenantCode)) {
+      if (!codePattern.test(tenantCode)) {
         throw new Error('Invalid tenant code format. Use PREFIX-NUMBER (e.g., "MH-6702")');
       }
 
@@ -246,7 +249,7 @@ export const SuperAdminService = {
       const { error } = await supabase
         .from('tenants')
         .update({
-          tenant_code: payload.tenantCode.toUpperCase()
+          tenant_code: tenantCode
         })
         .eq('id', payload.tenantId);
 
