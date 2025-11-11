@@ -12,10 +12,12 @@ import { useNavigate } from 'react-router-dom';
 jest.mock('../../contexts/AuthContext', () => ({
   useSupabaseClient: jest.fn(),
   useUser: jest.fn(),
+  useAuth: jest.fn(),
 }));
 
 jest.mock('react-router-dom', () => ({
   useNavigate: jest.fn(),
+  useLocation: jest.fn(),
 }));
 
 jest.mock('../../components/TriviaGame', () => {
@@ -55,12 +57,28 @@ describe('MemoryLaneTriviaPage - Senior Facing Page', () => {
 
     mockNavigate = jest.fn();
 
+    // Mock useLocation
+    const mockLocation = {
+      pathname: '/memory-lane-trivia',
+      search: '',
+      hash: '',
+      state: null,
+      key: 'default',
+    };
+    (require('react-router-dom').useLocation as jest.Mock).mockReturnValue(mockLocation);
+
     mockSupabase = {
       from: jest.fn().mockReturnThis(),
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
+      order: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
       single: jest.fn().mockResolvedValue({
         data: null,
+        error: null
+      }),
+      rpc: jest.fn().mockResolvedValue({
+        data: [],
         error: null
       }),
     };
@@ -68,6 +86,12 @@ describe('MemoryLaneTriviaPage - Senior Facing Page', () => {
     (useUser as jest.Mock).mockReturnValue(mockUser);
     (useSupabaseClient as jest.Mock).mockReturnValue(mockSupabase);
     (useNavigate as jest.Mock).mockReturnValue(mockNavigate);
+
+    // Mock useAuth for SmartBackButton
+    (require('../../contexts/AuthContext').useAuth as jest.Mock).mockReturnValue({
+      user: mockUser,
+      supabase: mockSupabase,
+    });
   });
 
   describe('Page Rendering', () => {
