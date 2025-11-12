@@ -22,7 +22,7 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
   onCheckInComplete = () => {}
 }) => {
   const [step, setStep] = useState<'lookup' | 'privacy' | 'language'>('language');
-  const [language, setLanguage] = useState<'en' | 'es'>('en');
+  const [language, setLanguage] = useState<'en' | 'es' | 'vi'>('en');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [dob, setDob] = useState('');
@@ -145,12 +145,34 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
       checking: 'Buscándote...',
       error: 'Error',
       notFound: 'Paciente no encontrado. Por favor verifique su información o consulte al personal.'
+    },
+    vi: {
+      welcome: 'Chào Mừng Đến Quầy Sức Khỏe WellFit',
+      selectLanguage: 'Chọn Ngôn Ngữ Của Bạn',
+      english: 'Tiếng Anh',
+      spanish: 'Tiếng Tây Ban Nha',
+      vietnamese: 'Tiếng Việt',
+      patientLookup: 'Tra Cứu Bệnh Nhân',
+      firstName: 'Tên',
+      lastName: 'Họ',
+      dateOfBirth: 'Ngày Sinh',
+      lastFour: '4 Số Cuối Của SSN',
+      pin: 'Mã PIN (nếu bạn có)',
+      findMe: 'Tìm Tôi',
+      privacy: 'Đồng Ý Quyền Riêng Tư',
+      privacyText: 'Thông tin sức khỏe của bạn được bảo mật và an toàn. Quầy này sử dụng mã hóa và tuân theo hướng dẫn HIPAA. Bằng cách tiếp tục, bạn đồng ý sử dụng quầy này để đăng ký sức khỏe của mình.',
+      agree: 'Tôi Đồng Ý',
+      cancel: 'Hủy',
+      startVisit: 'Bắt Đầu Chuyến Thăm',
+      checking: 'Đang tìm kiếm bạn...',
+      error: 'Lỗi',
+      notFound: 'Không tìm thấy bệnh nhân. Vui lòng kiểm tra thông tin của bạn hoặc liên hệ nhân viên để được hỗ trợ.',
     }
   };
 
   const t = translations[language];
 
-  const handleLanguageSelect = (lang: 'en' | 'es') => {
+  const handleLanguageSelect = (lang: 'en' | 'es' | 'vi') => {
     setLanguage(lang);
     setStep('lookup');
   };
@@ -419,6 +441,13 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
               className="w-full bg-green-600 hover:bg-green-700 text-white text-3xl font-bold py-8 px-12 rounded-2xl shadow-lg transition-all transform hover:scale-105"
             >
               {t.spanish}
+            </button>
+
+            <button
+              onClick={() => handleLanguageSelect('vi')}
+              className="w-full bg-red-600 hover:bg-red-700 text-white text-3xl font-bold py-8 px-12 rounded-2xl shadow-lg transition-all transform hover:scale-105"
+            >
+              Tiếng Việt (Vietnamese)
             </button>
           </div>
 

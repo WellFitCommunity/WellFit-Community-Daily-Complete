@@ -1,7 +1,7 @@
 // Multi-language support for WellFit Community
-// Starting with English and Spanish for Houston's diverse population
+// Supporting English, Spanish, and Vietnamese for Houston's diverse population
 
-export type Language = 'en' | 'es';
+export type Language = 'en' | 'es' | 'vi';
 
 export interface Translations {
   // Navigation
@@ -458,6 +458,155 @@ export const translations: Record<Language, Translations> = {
       },
     },
   },
+  vi: {
+    nav: {
+      home: '🏠 Trang Chủ',
+      myHealth: '💊 Sức Khỏe Của Tôi',
+      askNurse: '👩‍⚕️ Hỏi Y Tá',
+      community: '👥 Cộng Đồng',
+      more: '⋯ Thêm',
+      selfReport: '📝 Báo Cáo Tự Nguyện',
+      doctorsView: '🩺 Xem Bác Sĩ',
+      memoryLane: '🧠 Hồi Ức',
+      wordFind: '🔤 Tìm Từ',
+      myInformation: '📋 Thông Tin Của Tôi',
+      settings: '⚙️ Cài Đặt',
+      visitWebsite: '🌐 Truy Cập Trang Web',
+      logout: '🚪 Đăng Xuất',
+    },
+    actions: {
+      submit: 'Gửi',
+      cancel: 'Hủy',
+      save: 'Lưu',
+      delete: 'Xóa',
+      edit: 'Chỉnh Sửa',
+      close: 'Đóng',
+      confirm: 'Xác Nhận',
+      back: 'Quay Lại',
+      loading: 'Đang Tải...',
+    },
+    health: {
+      bloodPressure: 'Huyết Áp',
+      heartRate: 'Nhịp Tim',
+      bloodSugar: 'Đường Huyết',
+      weight: 'Cân Nặng',
+      mood: 'Tâm Trạng',
+      symptoms: 'Triệu Chứng',
+      medications: 'Thuốc Men',
+    },
+    community: {
+      shareYourMoment: 'Chia Sẻ Khoảnh Khắc Của Bạn',
+      uploadPhoto: 'Tải Ảnh Lên',
+      caption: 'Chú Thích',
+      post: 'Đăng',
+    },
+    dashboard: {
+      welcome: 'Chào Mừng Đến Cộng Đồng Của Bạn',
+      welcomeSubtitle: 'Hãy kiểm tra sức khỏe hôm nay',
+      dailyCheckIn: 'Kiểm Tra Hàng Ngày',
+      checkInButtons: {
+        feelingGreat: 'Cảm Thấy Tuyệt Vời Hôm Nay',
+        doctorAppt: 'Tôi có cuộc hẹn với Bác sĩ hôm nay',
+        inHospital: 'Trong bệnh viện',
+        navigation: 'Cần Hỗ Trợ Điều Hướng Y Tế',
+        attendingEvent: 'Tham dự sự kiện hôm nay',
+        notBest: 'Tôi không cảm thấy tốt nhất hôm nay',
+        fallen: 'Bị ngã và bị thương',
+        lost: 'Tôi bị lạc',
+      },
+      checkInResponses: {
+        feelingGreat: 'Tuyệt vời! Chúc bạn một ngày tốt lành!',
+        doctorAppt: 'Đừng quên cho bác sĩ xem tiến trình của bạn và chúc bạn một chuyến khám tốt đẹp!',
+        inHospital: 'Chúng tôi sẽ theo dõi bạn trong vài ngày tới. Mau bình phục!',
+        navigation: 'Đã gửi tin nhắn cho y tá',
+        attendingEvent: 'Chúng tôi rất mong được gặp bạn ở đó!',
+        notBest: 'Bạn có cần nói chuyện với ai không?',
+        fallen: 'GỌI 911',
+        lost: 'Gọi cho người liên hệ khẩn cấp',
+      },
+      communityMoments: '🌟 Khoảnh Khắc Cộng Đồng',
+      sharePhoto: '📸 Chia Sẻ Ảnh',
+      viewAllMoments: '👥 Xem Tất Cả Khoảnh Khắc',
+      dashMeal: '🍽️ Bữa Ăn DASH Hôm Nay',
+      dashExplanation: 'DASH = Cách Tiếp Cận Chế Độ Ăn Để Ngăn Chặn Cao Huyết Áp',
+      learnMore: 'Tìm hiểu thêm về nghiên cứu DASH →',
+      viewRecipe: '🍳 Xem Công Thức Hôm Nay',
+      dailyWordFind: 'Tìm Từ Hàng Ngày',
+      playPuzzle: '🧩 Chơi Câu Đố Hôm Nay',
+      memoryLane: 'Hồi Ức',
+      visitMemoryLane: '🎭 Thăm Hồi Ức',
+    },
+    settings: {
+      title: '⚙️ Cài Đặt Của Bạn',
+      subtitle: 'Tùy chỉnh trải nghiệm WellFit Community của bạn',
+      backToDashboard: 'Quay Lại Trang Chủ',
+      saveAllSettings: 'Lưu Tất Cả Cài Đặt',
+      saving: 'Đang Lưu...',
+      saveSuccess: 'Cài đặt đã được lưu thành công! 🎉',
+      saveFailed: 'Không thể lưu cài đặt. Vui lòng thử lại.',
+      sections: {
+        language: {
+          title: '🌐 Ngôn Ngữ / Language',
+          description: 'Chọn ngôn ngữ ưa thích của bạn',
+          selectLanguage: '🌍 Chọn ngôn ngữ ưa thích / Select your preferred language / Seleccione su idioma preferido',
+          changesImmediate: 'Ứng dụng sẽ hiển thị bằng ngôn ngữ bạn chọn. Thay đổi có hiệu lực ngay lập tức.',
+        },
+        display: {
+          title: '👁️ Cài Đặt Hiển Thị',
+          description: 'Làm cho ứng dụng dễ nhìn và sử dụng hơn',
+          textSize: 'Kích Thước Chữ',
+          small: 'Nhỏ',
+          medium: 'Trung Bình',
+          large: 'Lớn',
+          extraLarge: 'Rất Lớn',
+        },
+        notifications: {
+          title: '🔔 Tùy Chọn Thông Báo',
+          description: 'Chọn thông báo bạn muốn nhận',
+          allNotifications: 'Tất Cả Thông Báo',
+          allNotificationsDesc: 'Bật hoặc tắt tất cả thông báo',
+          careTeam: 'Tin Nhắn Từ Đội Chăm Sóc',
+          careTeamDesc: 'Tin nhắn từ đội chăm sóc của bạn',
+          communityUpdates: 'Cập Nhật Cộng Đồng',
+          communityUpdatesDesc: 'Ảnh mới và sự kiện cộng đồng',
+          reminderTime: 'Thời Gian Nhắc Nhở Kiểm Tra Hàng Ngày',
+        },
+        emergency: {
+          title: '🚨 Liên Hệ Khẩn Cấp',
+          description: 'Cập nhật thông tin liên hệ khẩn cấp của bạn',
+          contactName: 'Tên Người Liên Hệ Khẩn Cấp',
+          contactNamePlaceholder: 'Họ tên đầy đủ của người liên hệ khẩn cấp',
+          contactPhone: 'Số Điện Thoại Khẩn Cấp',
+          contactPhonePlaceholder: '(555) 123-4567',
+        },
+        personal: {
+          title: '👤 Thông Tin Cá Nhân',
+          description: 'Tên và sở thích của bạn',
+          preferredName: 'Bạn muốn chúng tôi gọi bạn là gì?',
+          preferredNamePlaceholder: 'Tên bạn ưa thích',
+          timezone: 'Múi Giờ',
+        },
+        account: {
+          title: '🔐 Bảo Mật Tài Khoản',
+          description: 'Cài đặt mật khẩu và bảo mật',
+          passwordSecurity: 'Bảo Mật Mật Khẩu',
+          passwordSecurityDesc: 'Giữ tài khoản của bạn an toàn bằng cách sử dụng mật khẩu mạnh và thay đổi thường xuyên.',
+          changePassword: '🔒 Đổi Mật Khẩu',
+          accountInfo: 'Thông Tin Tài Khoản',
+          email: 'Email:',
+          accountCreated: 'Tài Khoản Được Tạo:',
+          needHelp: '⚠️ Cần Trợ Giúp?',
+          needHelpDesc: 'Nếu bạn gặp khó khăn với tài khoản của mình hoặc cần thực hiện thay đổi, đội ngũ hỗ trợ của chúng tôi sẵn sàng giúp đỡ.',
+          callSupport: '📞 Gọi Hỗ Trợ',
+          viewHelpCenter: '📚 Xem Trung Tâm Trợ Giúp',
+        },
+      },
+      footer: {
+        questionsAboutSettings: 'Có câu hỏi về cài đặt này? Gọi đội hỗ trợ của chúng tôi tại',
+        hoursOfOperation: 'Chúng tôi sẵn sàng giúp đỡ từ Thứ Hai đến Thứ Sáu, 8 giờ sáng đến 6 giờ chiều',
+      },
+    },
+  },
 };
 
 // Get browser language or default to English
@@ -465,6 +614,9 @@ export function getBrowserLanguage(): Language {
   const browserLang = navigator.language.toLowerCase();
   if (browserLang.startsWith('es')) {
     return 'es';
+  }
+  if (browserLang.startsWith('vi')) {
+    return 'vi';
   }
   return 'en';
 }

@@ -457,28 +457,31 @@ export default function CheckInTracker({ showBackButton = false }: CheckInTracke
             <h3 id="crisis-options-title" className="text-xl font-bold mb-4 text-[#003865] text-center">
               How can we help you?
             </h3>
-            <div className="space-y-3">
+            <div className="space-y-4">
               <button
                 onClick={() => handleCrisisOption('speak_someone')}
-                className="w-full py-3 px-4 bg-[#8cc63f] text-white font-semibold rounded-lg shadow-md hover:bg-[#77aa36] transition"
+                className="w-full py-6 px-6 text-2xl bg-[#8cc63f] text-white font-bold rounded-xl hover:bg-[#77aa36] hover:scale-105 transform transition shadow-2xl"
               >
-                💬 Would you like to speak to someone?
+                <span className="text-4xl mb-2 block">💬</span>
+                <span className="block leading-relaxed">Would you like to speak to someone?</span>
               </button>
               <button
                 onClick={() => handleCrisisOption('fallen_injured')}
-                className="w-full py-3 px-4 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700 transition"
+                className="w-full py-6 px-6 text-2xl bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 hover:scale-105 transform transition shadow-2xl"
               >
-                🚑 I have fallen and injured myself
+                <span className="text-4xl mb-2 block">🚑</span>
+                <span className="block leading-relaxed">I have fallen and injured myself</span>
               </button>
               <button
                 onClick={() => handleCrisisOption('lost')}
-                className="w-full py-3 px-4 bg-orange-500 text-white font-semibold rounded-lg shadow-md hover:bg-orange-600 transition"
+                className="w-full py-6 px-6 text-2xl bg-orange-500 text-white font-bold rounded-xl hover:bg-orange-600 hover:scale-105 transform transition shadow-2xl"
               >
-                🧭 I am lost
+                <span className="text-4xl mb-2 block">🧭</span>
+                <span className="block leading-relaxed">I am lost</span>
               </button>
               <button
                 onClick={() => setShowCrisisOptions(false)}
-                className="w-full py-2 px-4 bg-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-400 transition"
+                className="w-full py-4 px-6 text-xl bg-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-400 transition mt-6"
               >
                 Cancel
               </button>

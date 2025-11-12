@@ -33,6 +33,7 @@ const SeniorCommunityDashboard: React.FC = () => {
   const [todaysMeal, setTodaysMeal] = useState<any>(null);
   const [caregiverPhone, setCaregiverPhone] = useState<string | null>(null);
   const [showWhatsNew, setShowWhatsNew] = useState(false);
+  const [emergencyBannerTimeoutId, setEmergencyBannerTimeoutId] = useState<NodeJS.Timeout | null>(null);
 
   // Get today's meal
   useEffect(() => {
@@ -198,8 +199,9 @@ const SeniorCommunityDashboard: React.FC = () => {
       // Send alert to team
       await sendTeamAlert(button.id, button.text);
 
-      // Auto-hide banner after 15 seconds for safety
-      setTimeout(() => setShowEmergencyBanner(false), 15000);
+      // Auto-hide banner after 30 seconds for safety (increased from 15 for seniors)
+      const timeoutId = setTimeout(() => setShowEmergencyBanner(false), 30000);
+      setEmergencyBannerTimeoutId(timeoutId);
 
       // Log emergency check-in
       await logCheckIn(button.id, button.text, button.response);
@@ -419,13 +421,27 @@ const SeniorCommunityDashboard: React.FC = () => {
                 </button>
               </div>
             )}
-            <button
-              onClick={() => setShowEmergencyBanner(false)}
-              aria-label="Close emergency banner"
-              className="absolute top-2 right-2 text-white text-2xl"
-            >
-              ×
-            </button>
+            <div className="mt-4 flex gap-3 justify-center">
+              <button
+                onClick={() => {
+                  if (emergencyBannerTimeoutId) {
+                    clearTimeout(emergencyBannerTimeoutId);
+                    setEmergencyBannerTimeoutId(null);
+                  }
+                }}
+                aria-label="Keep emergency banner visible"
+                className="bg-white bg-opacity-90 text-gray-800 px-6 py-3 rounded-lg font-bold text-lg hover:bg-opacity-100 transition"
+              >
+                📌 Keep This Message Visible
+              </button>
+              <button
+                onClick={() => setShowEmergencyBanner(false)}
+                aria-label="Close emergency banner"
+                className="bg-white bg-opacity-90 text-gray-800 px-6 py-3 rounded-lg font-bold text-lg hover:bg-opacity-100 transition"
+              >
+                Close
+              </button>
+            </div>
           </div>
         )}
 

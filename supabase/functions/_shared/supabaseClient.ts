@@ -158,19 +158,38 @@ export function createUserClient(authHeader: string | null, schema?: string): Su
  * Performance monitoring decorator for database queries
  * Logs slow queries for optimization
  *
- * NOTE: This function uses console.warn/error which should be replaced
- * with proper audit logger at the call site for HIPAA compliance.
- * Kept for backward compatibility.
+ * NOTE: For HIPAA compliance, provide a logger function that writes to audit_logs table.
+ * Falls back to console logging if no logger provided (for backward compatibility).
+ *
+ * @param queryName - Name of the query for identification
+ * @param queryFn - The query function to execute
+ * @param logger - Optional logger object with warn/error methods for HIPAA audit logging
  *
  * @example
+ * // With audit logging (HIPAA compliant)
  * const data = await withQueryMetrics(
  *   'getPatientLabs',
- *   () => supabase.from('lab_results').select('*')
+ *   () => supabase.from('lab_results').select('*'),
+ *   {
+ *     warn: (msg, meta) => auditLogger.performance('SLOW_QUERY', meta),
+ *     error: (msg, err, meta) => auditLogger.error('QUERY_FAILED', err, meta)
+ *   }
+ * );
+ *
+ * @example
+ * // Without audit logging (backward compatible, but not HIPAA compliant for PHI)
+ * const data = await withQueryMetrics(
+ *   'getNonPHIData',
+ *   () => supabase.from('public_data').select('*')
  * );
  */
 export async function withQueryMetrics<T>(
   queryName: string,
-  queryFn: () => Promise<T>
+  queryFn: () => Promise<T>,
+  logger?: {
+    warn?: (message: string, metadata: Record<string, any>) => void | Promise<void>;
+    error?: (message: string, error: any, metadata: Record<string, any>) => void | Promise<void>;
+  }
 ): Promise<T> {
   const startTime = performance.now();
 
@@ -178,17 +197,39 @@ export async function withQueryMetrics<T>(
     const result = await queryFn();
     const duration = performance.now() - startTime;
 
-    // TODO: Replace with logger.warn() at call site
     // Log slow queries (> 500ms)
     if (duration > 500) {
-      console.warn(`[SLOW QUERY] ${queryName} took ${duration.toFixed(2)}ms`);
+      const metadata = {
+        queryName,
+        duration: Math.round(duration),
+        threshold: 500
+      };
+
+      if (logger?.warn) {
+        // HIPAA-compliant logging
+        await Promise.resolve(logger.warn('SLOW_QUERY_DETECTED', metadata));
+      } else {
+        // Backward compatible console logging (non-PHI only)
+        console.warn(`[SLOW QUERY] ${queryName} took ${duration.toFixed(2)}ms`);
+      }
     }
 
     return result;
   } catch (error) {
     const duration = performance.now() - startTime;
-    // TODO: Replace with logger.error() at call site
-    console.error(`[QUERY ERROR] ${queryName} failed after ${duration.toFixed(2)}ms:`, error);
+    const metadata = {
+      queryName,
+      duration: Math.round(duration),
+    };
+
+    if (logger?.error) {
+      // HIPAA-compliant error logging
+      await Promise.resolve(logger.error('DATABASE_QUERY_FAILED', error, metadata));
+    } else {
+      // Backward compatible console logging (non-PHI only)
+      console.error(`[QUERY ERROR] ${queryName} failed after ${duration.toFixed(2)}ms:`, error);
+    }
+
     throw error;
   }
 }
