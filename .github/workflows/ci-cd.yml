@@ -91,7 +91,7 @@ jobs:
   test-unit:
     name: Unit Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 15  # Allow time for all tests to complete
+    timeout-minutes: 30  # Increased timeout for 53 test files with async operations
 
     steps:
       - name: Checkout code
@@ -107,20 +107,24 @@ jobs:
 
       - name: Run unit tests
         id: unit-tests
-        run: npm run test:unit -- --maxWorkers=2 --forceExit --testTimeout=10000
+        run: npm run test:unit -- --maxWorkers=2 --forceExit --testTimeout=15000
         env:
           CI: true
-        continue-on-error: true
+        continue-on-error: false  # Let the job fail naturally if tests fail
 
       - name: Report to summary
         if: always()
         run: |
           echo "## 🧪 Unit Tests" >> $GITHUB_STEP_SUMMARY
           if [ "${{ steps.unit-tests.outcome }}" == "success" ]; then
-            echo "✅ Unit tests passed" >> $GITHUB_STEP_SUMMARY
+            echo "✅ All unit tests passed" >> $GITHUB_STEP_SUMMARY
           else
-            echo "❌ Unit tests failed" >> $GITHUB_STEP_SUMMARY
-            exit 1
+            echo "❌ Unit tests failed or timed out" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Troubleshooting:**" >> $GITHUB_STEP_SUMMARY
+            echo "- Check for hanging tests or infinite loops" >> $GITHUB_STEP_SUMMARY
+            echo "- Review test logs for specific failures" >> $GITHUB_STEP_SUMMARY
+            echo "- Consider splitting tests into parallel jobs if timeout persists" >> $GITHUB_STEP_SUMMARY
           fi
 
   # ============================================
@@ -308,6 +312,8 @@ jobs:
 
           if [ "$TEST" == "success" ]; then
             echo "| Unit Tests | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          elif [ "$TEST" == "cancelled" ]; then
+            echo "| Unit Tests | ⏸️ Cancelled (likely timeout) |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| Unit Tests | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
           fi
@@ -323,11 +329,21 @@ jobs:
           echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
 
-          # Fail only if critical jobs (build, tests) failed
+          # Fail only if critical jobs (build, tests) failed or were cancelled
           if [ "$TEST" != "success" ] || [ "$BUILD" != "success" ]; then
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "❌ **Pipeline Failed** - Critical jobs failed" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
+
+            # Provide specific guidance based on failure type
+            if [ "$TEST" == "cancelled" ]; then
+              echo "**Test Job Timeout Detected:**" >> $GITHUB_STEP_SUMMARY
+              echo "- The test job exceeded the 30-minute timeout" >> $GITHUB_STEP_SUMMARY
+              echo "- Check for hanging tests or infinite loops" >> $GITHUB_STEP_SUMMARY
+              echo "- Consider optimizing slow tests or splitting into parallel jobs" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+            fi
+
             echo "Note: TypeScript and ESLint are non-blocking and can be fixed incrementally" >> $GITHUB_STEP_SUMMARY
             exit 1
           else

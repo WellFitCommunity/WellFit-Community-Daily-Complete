@@ -65,8 +65,8 @@ module.exports = {
   // Coverage reporters
   coverageReporters: ['text', 'lcov', 'html', 'json-summary'],
 
-  // Test timeout
-  testTimeout: 30000,
+  // Test timeout (CI uses --testTimeout=15000 to override this)
+  testTimeout: 15000,
 
   // Ignore patterns
   testPathIgnorePatterns: [
