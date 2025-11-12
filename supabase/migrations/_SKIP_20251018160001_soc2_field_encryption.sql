@@ -13,6 +13,12 @@ BEGIN;
 -- PART 1: ENCRYPTION HELPER FUNCTIONS
 -- ============================================================================
 
+-- Drop ALL existing encryption function versions (handles parameter name conflicts)
+DROP FUNCTION IF EXISTS public.encrypt_data(TEXT, TEXT) CASCADE;
+DROP FUNCTION IF EXISTS public.encrypt_data(TEXT) CASCADE;
+DROP FUNCTION IF EXISTS public.decrypt_data(TEXT, TEXT) CASCADE;
+DROP FUNCTION IF EXISTS public.decrypt_data(TEXT) CASCADE;
+
 -- Function to encrypt text data
 CREATE OR REPLACE FUNCTION public.encrypt_data(
   p_plaintext TEXT,
