@@ -41,8 +41,7 @@ export async function setPHIEncryptionKey(key?: string): Promise<void> {
         error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString()
       }
-    }).catch(console.error); // Don't throw on logging failure
-
+    }).catch(() => {}); // Don't throw on logging failure
 
     throw new Error('PHI encryption setup failed');
   }
@@ -151,8 +150,8 @@ async function logSecurityEvent(event: {
       requires_investigation: event.severity === 'HIGH' || event.severity === 'CRITICAL'
     });
   } catch (error) {
-    console.error('Failed to log security event (non-blocking):', error);
     // Don't throw - audit logging failure should not break functionality
+    // Error is silently ignored to prevent blocking application functionality
   }
 }
 
@@ -163,9 +162,8 @@ async function logSecurityEvent(event: {
 export async function initializePHIEncryption(): Promise<void> {
   try {
     await setPHIEncryptionKey();
-
   } catch (error) {
-
     // In production, you might want to prevent app startup if encryption fails
+    // Error is caught to allow graceful degradation
   }
 }

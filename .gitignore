@@ -77,3 +77,4 @@ scripts/fix-pg-net.sql
 
 # Temporary Supabase files
 supabase/.temp/
+.encryption-key-SECURE.txt
