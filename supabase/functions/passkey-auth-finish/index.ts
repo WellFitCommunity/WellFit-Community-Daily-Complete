@@ -1,7 +1,7 @@
 // supabase/functions/passkey-auth-finish/index.ts
 import { serve } from "https://deno.land/std@0.183.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.28.0";
-import { verifyAuthenticationResponse } from "https://deno.land/x/simplewebauthn@v7.3.0/deno/server.ts";
+import { verifyAuthenticationResponse } from "https://deno.land/x/simplewebauthn@v10.0.1/deno/server.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_SECRET_KEY = Deno.env.get("SB_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
