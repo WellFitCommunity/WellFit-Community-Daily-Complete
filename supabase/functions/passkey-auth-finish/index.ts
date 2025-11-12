@@ -1,6 +1,7 @@
 // supabase/functions/passkey-auth-finish/index.ts
 import { serve } from "https://deno.land/std@0.183.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.28.0";
+import { verifyAuthenticationResponse } from "https://deno.land/x/simplewebauthn@v7.3.0/deno/server.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_SECRET_KEY = Deno.env.get("SB_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -141,16 +142,105 @@ resource_type: 'auth_event',
       );
     }
 
-    // TODO: In production, verify the signature using the public_key
-    // For now, we'll skip full cryptographic verification
-    // This would require importing WebAuthn verification libraries
+    // Verify the signature using WebAuthn cryptographic verification
+    const expectedOrigin = Deno.env.get("EXPECTED_ORIGIN") || "https://thewellfitcommunity.org";
+    const expectedRPID = Deno.env.get("EXPECTED_RP_ID") || "thewellfitcommunity.org";
 
-    // Update credential's last_used_at and counter
+    let verification;
+    try {
+      verification = await verifyAuthenticationResponse({
+        response: {
+          id,
+          rawId,
+          response: {
+            authenticatorData: response.authenticatorData,
+            clientDataJSON: response.clientDataJSON,
+            signature: response.signature,
+            userHandle: response.userHandle,
+          },
+          type: 'public-key',
+          clientExtensionResults: {},
+        },
+        expectedChallenge: clientDataJSON.challenge,
+        expectedOrigin: expectedOrigin,
+        expectedRPID: expectedRPID,
+        authenticator: {
+          credentialID: new Uint8Array(
+            atob(credential.credential_id.replace(/-/g, '+').replace(/_/g, '/'))
+              .split('')
+              .map((c) => c.charCodeAt(0))
+          ),
+          credentialPublicKey: new Uint8Array(
+            atob(credential.public_key.replace(/-/g, '+').replace(/_/g, '/'))
+              .split('')
+              .map((c) => c.charCodeAt(0))
+          ),
+          counter: credential.counter,
+        },
+        requireUserVerification: true,  // Enforce biometric/PIN
+      });
+    } catch (error: any) {
+      // HIPAA AUDIT LOGGING: Log signature verification failure
+      try {
+        await supabase.from('audit_logs').insert({
+          event_type: 'PASSKEY_SIGNATURE_VERIFICATION_FAILED',
+          event_category: 'AUTHENTICATION',
+          actor_user_id: credential.user_id,
+          actor_ip_address: clientIp,
+          actor_user_agent: req.headers.get('user-agent'),
+          operation: 'PASSKEY_AUTH',
+          resource_type: 'auth_event',
+          success: false,
+          error_code: 'SIGNATURE_VERIFICATION_FAILED',
+          error_message: error.message || 'Cryptographic signature verification failed',
+          metadata: {
+            credential_id: rawId,
+            error_type: error.name,
+          }
+        });
+      } catch (logError) {
+        console.error('[Audit Log Error]:', logError);
+      }
+
+      return new Response(
+        JSON.stringify({ error: 'Signature verification failed' }),
+        { status: 401, headers }
+      );
+    }
+
+    if (!verification.verified) {
+      // HIPAA AUDIT LOGGING: Log unverified signature
+      try {
+        await supabase.from('audit_logs').insert({
+          event_type: 'PASSKEY_SIGNATURE_NOT_VERIFIED',
+          event_category: 'AUTHENTICATION',
+          actor_user_id: credential.user_id,
+          actor_ip_address: clientIp,
+          actor_user_agent: req.headers.get('user-agent'),
+          operation: 'PASSKEY_AUTH',
+          resource_type: 'auth_event',
+          success: false,
+          error_code: 'SIGNATURE_NOT_VERIFIED',
+          error_message: 'Cryptographic signature verification failed',
+          metadata: { credential_id: rawId }
+        });
+      } catch (logError) {
+        console.error('[Audit Log Error]:', logError);
+      }
+
+      return new Response(
+        JSON.stringify({ error: 'Authentication failed - invalid signature' }),
+        { status: 401, headers }
+      );
+    }
+
+    // Update credential's last_used_at and counter with verified counter from WebAuthn
+    const newCounter = verification.authenticationInfo.newCounter;
     await supabase
       .from('passkey_credentials')
       .update({
         last_used_at: new Date().toISOString(),
-        counter: credential.counter + 1
+        counter: newCounter  // Use verified counter from WebAuthn
       })
       .eq('id', credential.id);
 
@@ -206,7 +296,7 @@ resource_type: 'auth_event',
       success: true
     });
 
-    // HIPAA AUDIT LOGGING: Log successful passkey authentication
+    // HIPAA AUDIT LOGGING: Log successful passkey authentication with verification details
     try {
       await supabase.from('audit_logs').insert({
         event_type: 'PASSKEY_AUTH_SUCCESS',
@@ -215,12 +305,14 @@ resource_type: 'auth_event',
         actor_ip_address: clientIp,
         actor_user_agent: req.headers.get('user-agent'),
         operation: 'PASSKEY_AUTH',
-resource_type: 'auth_event',
+        resource_type: 'auth_event',
         success: true,
         metadata: {
           credential_id: rawId,
           user_id: credential.user_id,
-          counter: credential.counter + 1
+          counter: newCounter,
+          userVerified: verification.authenticationInfo.userVerified,
+          signature_verified: true
         }
       });
     } catch (logError) {
