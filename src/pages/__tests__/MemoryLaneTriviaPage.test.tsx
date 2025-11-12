@@ -20,27 +20,18 @@ jest.mock('react-router-dom', () => ({
   useLocation: jest.fn(),
 }));
 
-jest.mock('../../components/TriviaGame', () => {
-  return function MockTriviaGame() {
-    return <div data-testid="trivia-game">Trivia Game Component</div>;
+// Mock react-use for useWindowSize hook
+jest.mock('react-use', () => ({
+  ...jest.requireActual('react-use'),
+  useWindowSize: () => ({ width: 1024, height: 768 }),
+}));
+
+// Mock react-confetti
+jest.mock('react-confetti', () => {
+  return function MockConfetti() {
+    return <div data-testid="confetti">Confetti</div>;
   };
 });
-
-jest.mock('../../services/engagementTracking', () => ({
-  saveTriviaGameResult: jest.fn(),
-}));
-
-jest.mock('../../data/triviaQuestions', () => ({
-  triviaQuestions: [
-    {
-      id: 'q1',
-      question: 'Test Question',
-      options: ['A', 'B', 'C', 'D'],
-      correctAnswer: 'A',
-      difficulty: 'Easy',
-    },
-  ],
-}));
 
 describe('MemoryLaneTriviaPage - Senior Facing Page', () => {
   let mockSupabase: any;
@@ -67,16 +58,28 @@ describe('MemoryLaneTriviaPage - Senior Facing Page', () => {
     };
     (require('react-router-dom').useLocation as jest.Mock).mockReturnValue(mockLocation);
 
-    mockSupabase = {
-      from: jest.fn().mockReturnThis(),
+    // Create chainable mock for Supabase
+    const mockChain = {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
       order: jest.fn().mockReturnThis(),
       limit: jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({
+      maybeSingle: jest.fn().mockResolvedValue({
         data: null,
         error: null
       }),
+      insert: jest.fn().mockResolvedValue({
+        data: null,
+        error: null
+      }),
+      upsert: jest.fn().mockResolvedValue({
+        data: null,
+        error: null
+      }),
+    };
+
+    mockSupabase = {
+      from: jest.fn().mockReturnValue(mockChain),
       rpc: jest.fn().mockResolvedValue({
         data: [],
         error: null
@@ -95,55 +98,80 @@ describe('MemoryLaneTriviaPage - Senior Facing Page', () => {
   });
 
   describe('Page Rendering', () => {
-    it('should render the Memory Lane trivia page', () => {
+    it('should render the Memory Lane trivia page', async () => {
       render(<MemoryLaneTriviaPage />);
 
-      expect(screen.getByTestId('trivia-game')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('Memory Lane Trivia')).toBeInTheDocument();
+      });
     });
 
-    it('should render TriviaGame component', () => {
+    it('should render page title and description', async () => {
       render(<MemoryLaneTriviaPage />);
 
-      expect(screen.getByText(/Trivia Game Component/i)).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('Memory Lane Trivia')).toBeInTheDocument();
+        expect(screen.getByText(/Travel back in time from the 1950s to 1990s/i)).toBeInTheDocument();
+      });
+    });
+
+    it('should render loading state initially', () => {
+      render(<MemoryLaneTriviaPage />);
+
+      expect(screen.getByText(/Loading your daily trivia/i)).toBeInTheDocument();
     });
   });
 
   describe('Page Purpose', () => {
-    it('should provide cognitive engagement for seniors', () => {
+    it('should provide cognitive engagement for seniors', async () => {
       render(<MemoryLaneTriviaPage />);
 
-      expect(screen.getByTestId('trivia-game')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('Memory Lane Trivia')).toBeInTheDocument();
+      });
     });
 
-    it('should be accessible to senior users', () => {
+    it('should be accessible to senior users with ARIA labels', async () => {
       render(<MemoryLaneTriviaPage />);
 
-      const triviaGame = screen.getByTestId('trivia-game');
-      expect(triviaGame).toBeInTheDocument();
+      await waitFor(() => {
+        const progressBar = screen.getByRole('progressbar', { name: /question progress/i });
+        expect(progressBar).toBeInTheDocument();
+      });
     });
   });
 
   describe('User Experience', () => {
-    it('should provide engaging brain exercise', () => {
+    it('should provide engaging brain exercise', async () => {
       render(<MemoryLaneTriviaPage />);
 
-      expect(screen.getByTestId('trivia-game')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('Memory Lane Trivia')).toBeInTheDocument();
+      });
     });
   });
 
   describe('Integration', () => {
-    it('should work with authenticated user', () => {
+    it('should work with authenticated user', async () => {
       render(<MemoryLaneTriviaPage />);
 
-      expect(screen.getByTestId('trivia-game')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('Memory Lane Trivia')).toBeInTheDocument();
+      });
+
+      // Verify Supabase queries were called
+      expect(mockSupabase.rpc).toHaveBeenCalledWith('get_daily_trivia_questions', {
+        p_user_id: 'senior-user-123'
+      });
     });
 
-    it('should work when user is not authenticated', () => {
+    it('should show loading state when user is not authenticated', () => {
       (useUser as jest.Mock).mockReturnValue(null);
 
       render(<MemoryLaneTriviaPage />);
 
-      expect(screen.getByTestId('trivia-game')).toBeInTheDocument();
+      // Should still render but remain in loading state since no user
+      expect(screen.getByText(/Loading your daily trivia/i)).toBeInTheDocument();
     });
   });
 });

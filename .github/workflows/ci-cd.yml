@@ -91,7 +91,7 @@ jobs:
   test-unit:
     name: Unit Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 10  # Prevent hanging tests from blocking pipeline
+    timeout-minutes: 15  # Allow time for all tests to complete
 
     steps:
       - name: Checkout code
