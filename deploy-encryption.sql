@@ -6,13 +6,16 @@
 -- Paste this entire file and click "Run"
 -- ========================================
 
--- Step 1: Drop existing functions (if any)
+-- Step 1: Enable pgcrypto extension (required for encryption)
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+-- Step 2: Drop existing functions (if any)
 DROP FUNCTION IF EXISTS public.encrypt_data(TEXT, TEXT) CASCADE;
 DROP FUNCTION IF EXISTS public.encrypt_data(TEXT) CASCADE;
 DROP FUNCTION IF EXISTS public.decrypt_data(TEXT, TEXT) CASCADE;
 DROP FUNCTION IF EXISTS public.decrypt_data(TEXT) CASCADE;
 
--- Step 2: Create encrypt_data function
+-- Step 3: Create encrypt_data function
 CREATE OR REPLACE FUNCTION public.encrypt_data(
   p_plaintext TEXT,
   p_key_name TEXT DEFAULT 'phi_master_key'
@@ -39,7 +42,7 @@ EXCEPTION
 END;
 $$;
 
--- Step 3: Create decrypt_data function
+-- Step 4: Create decrypt_data function
 CREATE OR REPLACE FUNCTION public.decrypt_data(
   p_encrypted TEXT,
   p_key_name TEXT DEFAULT 'phi_master_key'
@@ -70,11 +73,11 @@ EXCEPTION
 END;
 $$;
 
--- Step 4: Grant permissions
+-- Step 5: Grant permissions
 GRANT EXECUTE ON FUNCTION public.encrypt_data(TEXT, TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.decrypt_data(TEXT, TEXT) TO authenticated;
 
--- Step 5: Test encryption (THIS WILL SHOW IF IT WORKS!)
+-- Step 6: Test encryption (THIS WILL SHOW IF IT WORKS!)
 DO $$
 DECLARE
   encrypted_value TEXT;
