@@ -8,7 +8,7 @@ import type { WearableAdapterConfig } from '../UniversalWearableRegistry';
 // Mock fetch
 global.fetch = jest.fn();
 
-describe.skip('FitbitAdapter - TODO: Fix sleep duration calculation', () => {
+describe('FitbitAdapter', () => {
   let adapter: FitbitAdapter;
   let mockConfig: WearableAdapterConfig;
 
@@ -197,7 +197,7 @@ describe.skip('FitbitAdapter - TODO: Fix sleep duration calculation', () => {
           sleep: [
             {
               dateOfSleep: '2024-11-04',
-              duration: 480000, // 8 hours in milliseconds
+              duration: 28800000, // 8 hours in milliseconds (8 * 60 * 60 * 1000)
               levels: {
                 summary: {
                   deep: { minutes: 120 },

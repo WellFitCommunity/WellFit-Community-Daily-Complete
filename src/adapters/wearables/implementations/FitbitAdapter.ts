@@ -86,9 +86,7 @@ export class FitbitAdapter implements WearableAdapter {
       throw new Error('Fitbit OAuth2 requires clientId and clientSecret');
     }
 
-    console.log('🔗 Fitbit adapter: Initializing connection...');
     this.status = 'connected';
-    console.log('✅ Fitbit adapter: Connection initialized (OAuth2 ready)');
   }
 
   async disconnect(): Promise<void> {
@@ -107,10 +105,8 @@ export class FitbitAdapter implements WearableAdapter {
             token: this.accessToken,
           }),
         });
-
-        console.log('✅ Fitbit adapter: OAuth tokens revoked');
       } catch (error) {
-        console.error('⚠️ Fitbit adapter: Failed to revoke tokens:', error);
+        // Token revocation failed - connection will still be terminated
       }
     }
 
@@ -119,20 +115,16 @@ export class FitbitAdapter implements WearableAdapter {
     this.userId = '';
     this.config = null;
     this.status = 'disconnected';
-    console.log('🔌 Fitbit adapter: Disconnected');
   }
 
   async test(): Promise<{ success: boolean; message: string; details?: any }> {
     try {
-      console.log('🧪 Fitbit adapter: Testing connection...');
       // Test by fetching user profile
       const response = await this.makeRequest('/1/user/-/profile.json', 'GET');
 
       if (response.ok) {
         const data = await response.json();
         this.userId = data.user.encodedId;
-
-        console.log(`✅ Fitbit adapter: Connection test successful (User: ${data.user.displayName})`);
 
         return {
           success: true,
@@ -146,13 +138,11 @@ export class FitbitAdapter implements WearableAdapter {
         };
       }
 
-      console.error(`❌ Fitbit adapter: Connection test failed (${response.status})`);
       return {
         success: false,
         message: `Connection test failed: ${response.status} ${response.statusText}`,
       };
     } catch (error: any) {
-      console.error('❌ Fitbit adapter: Connection test error:', error);
       return {
         success: false,
         message: error.message || 'Connection test failed',
@@ -189,7 +179,6 @@ export class FitbitAdapter implements WearableAdapter {
       throw new Error('OAuth credentials not configured');
     }
 
-    console.log('🔐 Fitbit adapter: Handling OAuth callback...');
     const authHeader = 'Basic ' + btoa(`${this.config.clientId}:${this.config.clientSecret}`);
 
     const response = await fetch(`${this.FITBIT_AUTH_BASE}/token`, {
@@ -208,7 +197,6 @@ export class FitbitAdapter implements WearableAdapter {
 
     if (!response.ok) {
       const error = await response.text();
-      console.error(`❌ Fitbit adapter: OAuth token exchange failed:`, error);
       throw new Error(`OAuth token exchange failed: ${response.statusText} - ${error}`);
     }
 
@@ -219,8 +207,6 @@ export class FitbitAdapter implements WearableAdapter {
 
     // Fitbit tokens expire in seconds
     this.tokenExpiry = new Date(Date.now() + data.expires_in * 1000);
-
-    console.log(`✅ Fitbit adapter: OAuth successful (User ID: ${this.userId})`);
 
     return {
       accessToken: data.access_token,
@@ -275,22 +261,18 @@ export class FitbitAdapter implements WearableAdapter {
     const endDate = params.endDate || new Date();
 
     for (const type of types) {
-      try {
-        if (type === 'heart_rate') {
-          const data = await this.fetchHeartRate(startDate, endDate);
-          vitals.push(...data);
-        } else if (type === 'spo2') {
-          const data = await this.fetchSpO2(startDate, endDate);
-          vitals.push(...data);
-        } else if (type === 'temperature') {
-          const data = await this.fetchTemperature(startDate, endDate);
-          vitals.push(...data);
-        } else if (type === 'respiratory_rate') {
-          const data = await this.fetchRespiratoryRate(startDate, endDate);
-          vitals.push(...data);
-        }
-      } catch (error) {
-        
+      if (type === 'heart_rate') {
+        const data = await this.fetchHeartRate(startDate, endDate);
+        vitals.push(...data);
+      } else if (type === 'spo2') {
+        const data = await this.fetchSpO2(startDate, endDate);
+        vitals.push(...data);
+      } else if (type === 'temperature') {
+        const data = await this.fetchTemperature(startDate, endDate);
+        vitals.push(...data);
+      } else if (type === 'respiratory_rate') {
+        const data = await this.fetchRespiratoryRate(startDate, endDate);
+        vitals.push(...data);
       }
     }
 
@@ -410,30 +392,26 @@ export class FitbitAdapter implements WearableAdapter {
 
     const currentDate = new Date(params.startDate);
     while (currentDate <= params.endDate) {
-      try {
-        const dateString = this.formatDate(currentDate);
-        const response = await this.makeRequest(`/1/user/-/activities/date/${dateString}.json`, 'GET');
+      const dateString = this.formatDate(currentDate);
+      const response = await this.makeRequest(`/1/user/-/activities/date/${dateString}.json`, 'GET');
 
-        if (response.ok) {
-          const data = await response.json();
-          const summary = data.summary;
+      if (response.ok) {
+        const data = await response.json();
+        const summary = data.summary;
 
-          activities.push({
-            date: new Date(currentDate),
-            steps: summary.steps,
-            distanceMeters: summary.distances?.find((d: any) => d.activity === 'total')?.distance * 1000 || 0,
-            caloriesBurned: summary.caloriesOut,
-            activeMinutes: summary.fairlyActiveMinutes + summary.veryActiveMinutes,
-            metadata: {
-              goals: {
-                steps: summary.goals?.steps,
-                activeMinutes: summary.goals?.activeMinutes,
-              },
+        activities.push({
+          date: new Date(currentDate),
+          steps: summary.steps,
+          distanceMeters: summary.distances?.find((d: any) => d.activity === 'total')?.distance * 1000 || 0,
+          caloriesBurned: summary.caloriesOut,
+          activeMinutes: summary.fairlyActiveMinutes + summary.veryActiveMinutes,
+          metadata: {
+            goals: {
+              steps: summary.goals?.steps,
+              activeMinutes: summary.goals?.activeMinutes,
             },
-          });
-        }
-      } catch (error) {
-        
+          },
+        });
       }
 
       currentDate.setDate(currentDate.getDate() + 1);

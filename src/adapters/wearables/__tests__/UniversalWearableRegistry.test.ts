@@ -6,7 +6,7 @@ import { UniversalWearableRegistry, wearableRegistry } from '../UniversalWearabl
 import { FitbitAdapter } from '../implementations/FitbitAdapter';
 import { AppleHealthKitAdapter } from '../implementations/AppleHealthKitAdapter';
 
-describe.skip('UniversalWearableRegistry - TODO: Fix connection logic', () => {
+describe('UniversalWearableRegistry', () => {
   let registry: UniversalWearableRegistry;
 
   beforeEach(() => {
@@ -73,14 +73,17 @@ describe.skip('UniversalWearableRegistry - TODO: Fix connection logic', () => {
       const fitbitAdapter = new FitbitAdapter();
       registry.registerAdapter(fitbitAdapter.metadata, FitbitAdapter);
 
-      // Mock fetch for OAuth
+      // Mock fetch to return user profile for test() method
+      // Note: FitbitAdapter.test() calls /1/user/-/profile.json
       global.fetch = jest.fn().mockResolvedValue({
         ok: true,
         json: async () => ({
-          access_token: 'test-token',
-          refresh_token: 'test-refresh',
-          user_id: 'test-user',
-          expires_in: 3600,
+          user: {
+            encodedId: 'test-user',
+            displayName: 'Test User',
+            memberSince: '2020-01-01',
+            devices: []
+          }
         }),
       });
     });
