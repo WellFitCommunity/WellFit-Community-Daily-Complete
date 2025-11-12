@@ -15,6 +15,7 @@
 
 import { supabase } from '../lib/supabaseClient';
 import { SDOHService } from './fhir/SDOHService';
+import { auditLogger } from './auditLogger';
 import type {
   SDOHProfile,
   SDOHFactor,
@@ -89,7 +90,7 @@ export const SDOHIndicatorService = {
 
       return profile;
     } catch (error) {
-      console.error('Error fetching SDOH profile:', error);
+      auditLogger.error('SDOH_PROFILE_FETCH_ERROR', error as Error, { patientId });
       throw error;
     }
   },
@@ -160,7 +161,7 @@ export const SDOHIndicatorService = {
         priorityLevel: data.priority_level
       };
     } catch (error) {
-      console.error('Error updating SDOH factor:', error);
+      auditLogger.error('SDOH_FACTOR_UPDATE_ERROR', error as Error, { patientId, category });
       throw error;
     }
   },
@@ -207,7 +208,7 @@ export const SDOHIndicatorService = {
         notes: data.notes
       };
     } catch (error) {
-      console.error('Error adding SDOH referral:', error);
+      auditLogger.error('SDOH_REFERRAL_ADD_ERROR', error as Error, { patientId, category });
       throw error;
     }
   },
@@ -250,7 +251,7 @@ export const SDOHIndicatorService = {
         providedBy: data.provided_by
       };
     } catch (error) {
-      console.error('Error adding SDOH resource:', error);
+      auditLogger.error('SDOH_RESOURCE_ADD_ERROR', error as Error, { patientId, category });
       throw error;
     }
   },
@@ -294,7 +295,7 @@ export const SDOHIndicatorService = {
         notes: data.notes
       };
     } catch (error) {
-      console.error('Error recording SDOH screening:', error);
+      auditLogger.error('SDOH_SCREENING_RECORD_ERROR', error as Error, { patientId });
       throw error;
     }
   },
@@ -326,7 +327,7 @@ export const SDOHIndicatorService = {
         notes: ref.notes
       }));
     } catch (error) {
-      console.error('Error fetching SDOH referrals:', error);
+      auditLogger.error('SDOH_REFERRALS_FETCH_ERROR', error as Error, { patientId });
       return [];
     }
   },
@@ -356,7 +357,7 @@ export const SDOHIndicatorService = {
         providedBy: res.provided_by
       }));
     } catch (error) {
-      console.error('Error fetching SDOH resources:', error);
+      auditLogger.error('SDOH_RESOURCES_FETCH_ERROR', error as Error, { patientId });
       return [];
     }
   },
@@ -395,7 +396,7 @@ export const SDOHIndicatorService = {
         priorityLevel: obs.priority_level
       };
     } catch (error) {
-      console.error('Error fetching complete SDOH factor:', error);
+      auditLogger.error('SDOH_FACTOR_FETCH_ERROR', error as Error, { patientId, category });
       return null;
     }
   },
@@ -463,7 +464,7 @@ export const SDOHIndicatorService = {
         (factor.interventionStatus === 'identified' || factor.interventionStatus === 'not-assessed')
       );
     } catch (error) {
-      console.error('Error fetching high-priority SDOH alerts:', error);
+      auditLogger.error('SDOH_ALERTS_FETCH_ERROR', error as Error, { patientId });
       return [];
     }
   }

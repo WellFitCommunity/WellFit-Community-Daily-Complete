@@ -310,8 +310,7 @@ describe('SDOHIndicatorService - Multi-tenant Security', () => {
   const mockPatientId = '123e4567-e89b-12d3-a456-426614174000';
 
   it('should include patient_id in all queries for data isolation', async () => {
-    const mockObservations = [];
-    (SDOHService.getAll as jest.Mock).mockResolvedValue(mockObservations);
+    (SDOHService.getAll as jest.Mock).mockResolvedValue([]);
 
     await SDOHIndicatorService.getPatientProfile(mockPatientId);
 

@@ -80,10 +80,10 @@ describe('LawEnforcementService', () => {
       };
 
       const { supabase } = require('../../lib/supabaseClient');
-      supabase.from.mockReturnValue({
+      (supabase.from as jest.Mock).mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
+            single: jest.fn<any, any>().mockResolvedValue({
               data: mockData,
               error: null
             })
@@ -102,10 +102,10 @@ describe('LawEnforcementService', () => {
 
     it('should return null when no emergency info exists', async () => {
       const { supabase } = require('../../lib/supabaseClient');
-      supabase.from.mockReturnValue({
+      (supabase.from as jest.Mock).mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
+            single: jest.fn<any, any>().mockResolvedValue({
               data: null,
               error: { code: 'PGRST116' } // Not found
             })
@@ -154,10 +154,10 @@ describe('LawEnforcementService', () => {
       };
 
       const { supabase } = require('../../lib/supabaseClient');
-      supabase.from.mockReturnValue({
+      (supabase.from as jest.Mock).mockReturnValue({
         upsert: jest.fn().mockReturnValue({
           select: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
+            single: jest.fn<any, any>().mockResolvedValue({
               data: mockResponse,
               error: null
             })
@@ -178,10 +178,10 @@ describe('LawEnforcementService', () => {
 
     it('should throw error when save fails', async () => {
       const { supabase } = require('../../lib/supabaseClient');
-      supabase.from.mockReturnValue({
+      (supabase.from as jest.Mock).mockReturnValue({
         upsert: jest.fn().mockReturnValue({
           select: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
+            single: jest.fn<any, any>().mockResolvedValue({
               data: null,
               error: { message: 'Database error' }
             })
@@ -220,8 +220,8 @@ describe('LawEnforcementService', () => {
       };
 
       const { supabase } = require('../../lib/supabaseClient');
-      supabase.rpc.mockReturnValue({
-        single: jest.fn().mockResolvedValue({
+      (supabase.rpc as jest.Mock).mockReturnValue({
+        single: jest.fn<any, any>().mockResolvedValue({
           data: mockData,
           error: null
         })

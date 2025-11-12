@@ -3,9 +3,7 @@
  * Tests for emergency response information collection form
  */
 
-import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import '@testing-library/jest-dom';
 import { SeniorEmergencyInfoForm } from '../SeniorEmergencyInfoForm';
 import { LawEnforcementService } from '../../../services/lawEnforcementService';
 
