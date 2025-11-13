@@ -55,12 +55,7 @@ export function assertClientSupabaseEnv() {
 
   // One-time helpful log in dev so you know which envs were picked.
   if (!IS_PROD) {
-    // eslint-disable-next-line no-console
-    console.log(
-      "[SB CONFIG] Using:",
-      `URL=${SB_URL}`,
-      `KEY=${SB_PUBLISHABLE_API_KEY.slice(0, 6)}…`
-    );
+    // Supabase configuration loaded for development
   }
 }
 

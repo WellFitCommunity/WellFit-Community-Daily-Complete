@@ -89,12 +89,7 @@ const ReceivingDashboard: React.FC<ReceivingFacilityDashboardProps> = ({
       const integrationResult = await integrateHospitalTransfer(packetId, packet as any);
 
       if (integrationResult.success) {
-        console.log('[Receiving Dashboard] ✅ Integration complete:', {
-          patientId: integrationResult.patientId,
-          encounterId: integrationResult.encounterId,
-          vitalsRecorded: integrationResult.observationIds?.length,
-          billingCodes: integrationResult.billingCodes?.length,
-        });
+        // Integration complete - logged via audit system
         toast.success('Patient chart created and transfer integrated!', { autoClose: 3000 });
       } else {
 

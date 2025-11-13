@@ -228,7 +228,7 @@ export class UniversalWearableRegistry {
    */
   registerAdapter(metadata: WearableAdapterMetadata, AdapterClass: new () => WearableAdapter) {
     this.adapters.set(metadata.id, AdapterClass);
-    console.log(`📲 Registered wearable adapter: ${metadata.name} (${metadata.id})`);
+    // Wearable adapter registered successfully
   }
 
   /**
@@ -249,7 +249,7 @@ export class UniversalWearableRegistry {
   getAdapter(id: string): WearableAdapter | null {
     const AdapterClass = this.adapters.get(id);
     if (!AdapterClass) {
-      console.warn(`⚠️ Adapter not found: ${id}`);
+      // Adapter not found
       return null;
     }
     return new AdapterClass();
@@ -269,22 +269,22 @@ export class UniversalWearableRegistry {
         return { success: false, error: `Adapter not found: ${adapterId}` };
       }
 
-      console.log(`🔗 Connecting to ${adapterId} adapter...`);
+      // Connecting to adapter
       await adapter.connect(config);
 
       const testResult = await adapter.test();
       if (!testResult.success) {
-        console.error(`❌ Connection test failed for ${adapterId}:`, testResult.message);
+        // Connection test failed
         return { success: false, error: testResult.message };
       }
 
       const connId = connectionId || `${adapterId}-${Date.now()}`;
       this.activeConnections.set(connId, adapter);
 
-      console.log(`✅ Successfully connected to ${adapterId} (${connId})`);
+      // Successfully connected to adapter
       return { success: true, connection: adapter };
     } catch (error: any) {
-      console.error(`❌ Failed to connect to ${adapterId}:`, error);
+      // Failed to connect to adapter
       return { success: false, error: error.message };
     }
   }
@@ -304,7 +304,7 @@ export class UniversalWearableRegistry {
     if (adapter) {
       await adapter.disconnect();
       this.activeConnections.delete(connectionId);
-      console.log(`🔌 Disconnected from ${connectionId}`);
+      // Disconnected from adapter
     }
   }
 
@@ -312,7 +312,7 @@ export class UniversalWearableRegistry {
    * Disconnect all active connections
    */
   async disconnectAll(): Promise<void> {
-    console.log(`🔌 Disconnecting all ${this.activeConnections.size} active connections...`);
+    // Disconnecting all active connections
     const promises = Array.from(this.activeConnections.keys()).map((id) =>
       this.disconnect(id)
     );

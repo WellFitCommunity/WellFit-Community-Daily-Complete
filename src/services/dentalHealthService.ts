@@ -72,7 +72,6 @@ export class DentalHealthService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('Error creating dental assessment:', error);
       return { success: false, error: error.message };
     }
   }
@@ -107,7 +106,6 @@ export class DentalHealthService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('Error updating dental assessment:', error);
       return { success: false, error: error.message };
     }
   }
@@ -127,7 +125,6 @@ export class DentalHealthService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('Error fetching dental assessment:', error);
       return { success: false, error: error.message };
     }
   }
@@ -151,7 +148,6 @@ export class DentalHealthService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
-      console.error('Error fetching patient assessments:', error);
       return { success: false, error: error.message };
     }
   }
@@ -175,7 +171,6 @@ export class DentalHealthService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('Error fetching latest assessment:', error);
       return { success: false, error: error.message };
     }
   }
@@ -220,7 +215,6 @@ export class DentalHealthService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('Error creating tooth chart entry:', error);
       return { success: false, error: error.message };
     }
   }
@@ -242,7 +236,6 @@ export class DentalHealthService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
-      console.error('Error fetching tooth chart:', error);
       return { success: false, error: error.message };
     }
   }
@@ -315,7 +308,6 @@ export class DentalHealthService {
 
       return { success: true, data: summary };
     } catch (error: any) {
-      console.error('Error generating tooth chart summary:', error);
       return { success: false, error: error.message };
     }
   }
@@ -364,7 +356,6 @@ export class DentalHealthService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('Error creating dental procedure:', error);
       return { success: false, error: error.message };
     }
   }
@@ -388,7 +379,6 @@ export class DentalHealthService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
-      console.error('Error fetching procedures:', error);
       return { success: false, error: error.message };
     }
   }
@@ -444,7 +434,6 @@ export class DentalHealthService {
 
       return { success: true, data: summary };
     } catch (error: any) {
-      console.error('Error generating procedure history summary:', error);
       return { success: false, error: error.message };
     }
   }
@@ -486,7 +475,6 @@ export class DentalHealthService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('Error creating treatment plan:', error);
       return { success: false, error: error.message };
     }
   }
@@ -508,7 +496,6 @@ export class DentalHealthService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
-      console.error('Error fetching treatment plans:', error);
       return { success: false, error: error.message };
     }
   }
@@ -543,7 +530,6 @@ export class DentalHealthService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('Error creating patient tracking:', error);
       return { success: false, error: error.message };
     }
   }
@@ -570,7 +556,6 @@ export class DentalHealthService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
-      console.error('Error fetching patient tracking:', error);
       return { success: false, error: error.message };
     }
   }
@@ -685,7 +670,6 @@ export class DentalHealthService {
 
       return { success: true, data: summary };
     } catch (error: any) {
-      console.error('Error generating dashboard summary:', error);
       return { success: false, error: error.message };
     }
   }
@@ -789,7 +773,6 @@ export class DentalHealthService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
-      console.error('Error searching CDT codes:', error);
       return { success: false, error: error.message };
     }
   }
@@ -809,7 +792,6 @@ export class DentalHealthService {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error('Error fetching CDT code:', error);
       return { success: false, error: error.message };
     }
   }
@@ -830,7 +812,6 @@ export class DentalHealthService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
-      console.error('Error fetching preventive CDT codes:', error);
       return { success: false, error: error.message };
     }
   }

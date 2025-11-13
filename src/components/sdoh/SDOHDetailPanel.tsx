@@ -312,7 +312,7 @@ export const SDOHDetailPanel: React.FC<SDOHDetailPanelProps> = ({
               className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               onClick={() => {
                 // TODO: Open update form
-                console.log('Update factor:', factor);
+                // Update factor handler
               }}
             >
               Update Assessment
@@ -321,7 +321,7 @@ export const SDOHDetailPanel: React.FC<SDOHDetailPanelProps> = ({
               className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
               onClick={() => {
                 // TODO: Open referral form
-                console.log('Add referral for:', factor);
+                // Add referral handler
               }}
             >
               Add Referral

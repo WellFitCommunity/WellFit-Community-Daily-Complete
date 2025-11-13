@@ -39,7 +39,6 @@ const OfflineIndicator: React.FC = () => {
           const count = await offlineStorage.getPendingCount(user.id);
           setPendingCount(count);
         } catch (error) {
-          // console.error('[OfflineIndicator] Failed to get pending count:', error);
         }
       }
     };
@@ -76,7 +75,6 @@ const OfflineIndicator: React.FC = () => {
 
       // Note: The actual sync function would be provided by the component using this
       // For now, we just update the UI
-      // console.log('[OfflineIndicator] Sync initiated');
 
       // Update pending count after sync attempt
       setTimeout(async () => {
@@ -85,7 +83,6 @@ const OfflineIndicator: React.FC = () => {
         setSyncing(false);
       }, 2000);
     } catch (error) {
-      // console.error('[OfflineIndicator] Sync failed:', error);
       setSyncing(false);
     }
   };

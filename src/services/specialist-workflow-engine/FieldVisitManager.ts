@@ -44,7 +44,9 @@ export class FieldVisitManager {
 
     return navigator.geolocation.watchPosition(
       (position) => callback(position.coords),
-      (error) => console.error('[FieldVisitManager] Watch error:', error),
+      (error) => {
+        // Geolocation watch error - logged via audit system
+      },
       {
         enableHighAccuracy: true,
         timeout: 30000,

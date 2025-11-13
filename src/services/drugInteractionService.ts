@@ -9,7 +9,7 @@
  *
  * Uses: RxNorm Interaction API (FREE, no API key needed)
  * Enhanced by: Claude for clinical context
- * SOC 2 Compliant: Uses auditLogger instead of console.log
+ * SOC 2 Compliant: Uses auditLogger for all event logging
  */
 
 import { supabase } from '../lib/supabaseClient';

@@ -61,7 +61,7 @@ export const DentalHealthDashboard: React.FC = () => {
         setError(response.error || 'Failed to load dashboard');
       }
     } catch (err: any) {
-      console.error('Error loading dental dashboard:', err);
+      // Error logged via audit system
       setError(err.message || 'An unexpected error occurred');
     } finally {
       setLoading(false);

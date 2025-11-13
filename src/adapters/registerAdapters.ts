@@ -34,10 +34,7 @@ export function registerAllAdapters(): void {
   const meditechAdapter = new MeditechFHIRAdapter();
   adapterRegistry.registerAdapter(meditechAdapter.metadata, MeditechFHIRAdapter);
 
-
-  adapterRegistry.listAdapters().forEach(adapter => {
-    console.log(`  - ${adapter.name} (${adapter.id}) by ${adapter.vendor}`);
-  });
+  // All adapters registered successfully
 }
 
 /**

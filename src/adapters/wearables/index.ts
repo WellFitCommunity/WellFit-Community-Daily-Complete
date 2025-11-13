@@ -22,33 +22,27 @@ export { AmazfitAdapter } from './implementations/AmazfitAdapter';
  * Call this once during app initialization
  */
 export function registerAllWearableAdapters(): void {
-  console.log('📱 Registering all wearable adapters...');
+  // Registering all wearable adapters
 
   const appleAdapter = new AppleHealthKitAdapter();
   wearableRegistry.registerAdapter(appleAdapter.metadata, AppleHealthKitAdapter);
-  console.log('✅ Apple HealthKit adapter registered');
 
   const fitbitAdapter = new FitbitAdapter();
   wearableRegistry.registerAdapter(fitbitAdapter.metadata, FitbitAdapter);
-  console.log('✅ Fitbit adapter registered');
 
   const garminAdapter = new GarminAdapter();
   wearableRegistry.registerAdapter(garminAdapter.metadata, GarminAdapter);
-  console.log('✅ Garmin adapter registered');
 
   const withingsAdapter = new WithingsAdapter();
   wearableRegistry.registerAdapter(withingsAdapter.metadata, WithingsAdapter);
-  console.log('✅ Withings adapter registered');
 
   const samsungAdapter = new SamsungHealthAdapter();
   wearableRegistry.registerAdapter(samsungAdapter.metadata, SamsungHealthAdapter);
-  console.log('✅ Samsung Health adapter registered');
 
   const amazfitAdapter = new AmazfitAdapter();
   wearableRegistry.registerAdapter(amazfitAdapter.metadata, AmazfitAdapter);
-  console.log('✅ Amazfit adapter registered');
 
-  console.log('🎉 All 6 wearable adapters registered successfully');
+  // All 6 wearable adapters registered successfully
 }
 
 // Export singleton registry

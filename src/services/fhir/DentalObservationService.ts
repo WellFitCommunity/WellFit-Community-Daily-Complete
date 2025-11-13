@@ -311,7 +311,6 @@ export class DentalObservationService {
 
       return { success: true, data: observations };
     } catch (error: any) {
-      console.error('Error creating FHIR observations:', error);
       return { success: false, error: error.message };
     }
   }
@@ -400,7 +399,6 @@ export class DentalObservationService {
 
       return { success: true, data: fhirProcedure };
     } catch (error: any) {
-      console.error('Error creating FHIR procedure:', error);
       return { success: false, error: error.message };
     }
   }
@@ -482,7 +480,6 @@ export class DentalObservationService {
 
       return { success: true, data: conditions };
     } catch (error: any) {
-      console.error('Error creating FHIR conditions:', error);
       return { success: false, error: error.message };
     }
   }
@@ -543,7 +540,6 @@ export class DentalObservationService {
 
       return { success: true, data: report };
     } catch (error: any) {
-      console.error('Error creating diagnostic report:', error);
       return { success: false, error: error.message };
     }
   }
@@ -572,7 +568,6 @@ export class DentalObservationService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
-      console.error('Error fetching observations:', error);
       return { success: false, error: error.message };
     }
   }

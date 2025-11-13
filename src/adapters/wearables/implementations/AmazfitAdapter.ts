@@ -78,7 +78,6 @@ export class AmazfitAdapter implements WearableAdapter {
     }
 
     this.status = 'connected';
-    console.log('✅ Amazfit/Zepp adapter: Connection initialized (OAuth2)');
   }
 
   async disconnect(): Promise<void> {
@@ -86,17 +85,14 @@ export class AmazfitAdapter implements WearableAdapter {
     this.refreshToken = '';
     this.config = null;
     this.status = 'disconnected';
-    console.log('🔌 Amazfit/Zepp adapter: Disconnected');
   }
 
   async test(): Promise<{ success: boolean; message: string; details?: any }> {
     try {
-      console.log('🧪 Amazfit/Zepp adapter: Testing connection...');
       const response = await this.makeRequest('/user/profile', 'GET');
 
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Amazfit/Zepp adapter: Connection test successful');
         return {
           success: true,
           message: 'Connection successful',
@@ -107,7 +103,6 @@ export class AmazfitAdapter implements WearableAdapter {
         };
       }
 
-      console.error(`❌ Amazfit/Zepp adapter: Connection test failed (${response.status})`);
 
       return {
         success: false,

@@ -45,7 +45,6 @@ export class GuardianErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    // console.error('[Guardian Error Boundary] Caught error:', error, errorInfo);
 
     this.setState({
       errorInfo,

@@ -102,8 +102,7 @@ export function simulateTenant(subdomain: string): void {
     writable: true
   });
 
-
-  console.log('Current branding:', getCurrentBranding());
+  // Current branding applied for development testing
 
   // Restore original hostname after 10 seconds
   setTimeout(() => {

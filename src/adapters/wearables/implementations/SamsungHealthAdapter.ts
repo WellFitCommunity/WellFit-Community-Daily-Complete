@@ -76,7 +76,6 @@ export class SamsungHealthAdapter implements WearableAdapter {
     }
 
     this.status = 'connected';
-    console.log('✅ Samsung Health adapter: Connection initialized (OAuth2)');
   }
 
   async disconnect(): Promise<void> {
@@ -84,17 +83,14 @@ export class SamsungHealthAdapter implements WearableAdapter {
     this.refreshToken = '';
     this.config = null;
     this.status = 'disconnected';
-    console.log('🔌 Samsung Health adapter: Disconnected');
   }
 
   async test(): Promise<{ success: boolean; message: string; details?: any }> {
     try {
-      console.log('🧪 Samsung Health adapter: Testing connection...');
       const response = await this.makeRequest('/users/profile', 'GET');
 
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Samsung Health adapter: Connection test successful');
         return {
           success: true,
           message: 'Connection successful',
@@ -105,7 +101,6 @@ export class SamsungHealthAdapter implements WearableAdapter {
         };
       }
 
-      console.error(`❌ Samsung Health adapter: Connection test failed (${response.status})`);
 
       return {
         success: false,

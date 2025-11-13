@@ -99,7 +99,6 @@ export class AppleHealthKitAdapter implements WearableAdapter {
     }
 
     this.status = 'connected';
-    console.log('✅ Apple HealthKit adapter: Connection initialized');
   }
 
   async disconnect(): Promise<void> {
@@ -107,18 +106,15 @@ export class AppleHealthKitAdapter implements WearableAdapter {
     this.refreshToken = '';
     this.config = null;
     this.status = 'disconnected';
-    console.log('🔌 Apple HealthKit adapter: Disconnected');
   }
 
   async test(): Promise<{ success: boolean; message: string; details?: any }> {
     try {
-      console.log('🧪 Apple HealthKit adapter: Testing connection...');
       // Test by fetching user profile
       const response = await this.makeRequest('/user/profile', 'GET');
 
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Apple HealthKit adapter: Connection test successful');
         return {
           success: true,
           message: 'Connection successful',
@@ -129,7 +125,6 @@ export class AppleHealthKitAdapter implements WearableAdapter {
         };
       }
 
-      console.error(`❌ Apple HealthKit adapter: Connection test failed (${response.status})`);
 
       return {
         success: false,

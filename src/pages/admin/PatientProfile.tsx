@@ -20,7 +20,7 @@ export default function PatientProfile() {
         admin_id: adminId,
         user_id: viewedUserId,
         // viewed_at defaults to now()
-      }).match(console.error);
+      }).match(() => {}); // Ignore logging errors
 
       loggedOnce.current = true; // prevent duplicate logs on re-renders
     })();

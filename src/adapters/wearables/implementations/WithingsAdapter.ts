@@ -78,7 +78,6 @@ export class WithingsAdapter implements WearableAdapter {
     }
 
     this.status = 'connected';
-    console.log('✅ Withings adapter: Connection initialized (OAuth2)');
   }
 
   async disconnect(): Promise<void> {
@@ -87,12 +86,10 @@ export class WithingsAdapter implements WearableAdapter {
     this.userId = '';
     this.config = null;
     this.status = 'disconnected';
-    console.log('🔌 Withings adapter: Disconnected');
   }
 
   async test(): Promise<{ success: boolean; message: string; details?: any }> {
     try {
-      console.log('🧪 Withings adapter: Testing connection...');
       // Test by fetching user devices
       const response = await this.makeRequest('/v2/user', 'POST', {
         action: 'getdevice',
@@ -102,7 +99,6 @@ export class WithingsAdapter implements WearableAdapter {
         const data = await response.json();
 
         if (data.status === 0) {
-          console.log('✅ Withings adapter: Connection test successful');
           return {
             success: true,
             message: 'Connection successful',
