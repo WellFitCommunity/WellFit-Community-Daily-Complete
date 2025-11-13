@@ -44,7 +44,10 @@ CREATE INDEX IF NOT EXISTS idx_law_enforcement_elevator_required
   WHERE elevator_required = true;
 
 -- Update the get_welfare_check_info function to include building location information
-CREATE OR REPLACE FUNCTION get_welfare_check_info(p_patient_id UUID)
+-- Must drop first because we're changing the return type (cannot use CREATE OR REPLACE)
+DROP FUNCTION IF EXISTS get_welfare_check_info(UUID);
+
+CREATE FUNCTION get_welfare_check_info(p_patient_id UUID)
 RETURNS TABLE (
   patient_id UUID,
   patient_name TEXT,

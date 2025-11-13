@@ -86,7 +86,7 @@ CREATE INDEX IF NOT EXISTS idx_security_notifications_type ON security_notificat
 ALTER TABLE guardian_alerts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE security_notifications ENABLE ROW LEVEL SECURITY;
 
--- Security admins can see all alerts (role_code: 1=super_admin, 2=admin)
+-- Security admins can see all alerts (role_code: 1=admin, 2=super_admin)
 DO $$ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_policies WHERE tablename = 'guardian_alerts' AND policyname = 'Security admins can view all guardian alerts'
@@ -99,7 +99,7 @@ DO $$ BEGIN
       EXISTS (
         SELECT 1 FROM profiles
         WHERE profiles.id = auth.uid()
-        AND profiles.role_code IN (1, 2)  -- super_admin, admin
+        AND profiles.role_code IN (1, 2)  -- admin, super_admin
       )
     );
   END IF;

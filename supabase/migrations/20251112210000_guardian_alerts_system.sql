@@ -81,6 +81,14 @@ CREATE INDEX IF NOT EXISTS idx_security_notifications_type ON security_notificat
 ALTER TABLE guardian_alerts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE security_notifications ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist (to handle redeployment)
+DROP POLICY IF EXISTS "Security admins can view all guardian alerts" ON guardian_alerts;
+DROP POLICY IF EXISTS "Security admins can update guardian alerts" ON guardian_alerts;
+DROP POLICY IF EXISTS "System can insert guardian alerts" ON guardian_alerts;
+DROP POLICY IF EXISTS "Security team can view notifications" ON security_notifications;
+DROP POLICY IF EXISTS "Security team can update notifications" ON security_notifications;
+DROP POLICY IF EXISTS "System can insert notifications" ON security_notifications;
+
 -- Security admins can see all alerts (role_code: 1=admin, 2=super_admin)
 CREATE POLICY "Security admins can view all guardian alerts"
 ON guardian_alerts
@@ -227,6 +235,8 @@ BEGIN
   RETURN NEW;
 END;
 $$;
+
+DROP TRIGGER IF EXISTS trigger_notify_new_guardian_alert ON guardian_alerts;
 
 CREATE TRIGGER trigger_notify_new_guardian_alert
 AFTER INSERT ON guardian_alerts
