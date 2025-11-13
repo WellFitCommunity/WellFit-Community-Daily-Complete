@@ -10,6 +10,7 @@
 import React, { useState, useEffect } from 'react';
 import { useUser } from '../../contexts/AuthContext';
 import { DentalHealthService } from '../../services/dentalHealthService';
+import { auditLogger } from '../../services/auditLogger';
 import type {
   DentalHealthDashboardSummary,
   CreatePatientTrackingRequest,
@@ -61,7 +62,11 @@ export const DentalHealthDashboard: React.FC = () => {
         setError(response.error || 'Failed to load dashboard');
       }
     } catch (err: any) {
-      // Error logged via audit system
+      await auditLogger.error('DENTAL_DASHBOARD_LOAD_FAILED', err, {
+        userId: user?.id,
+        resource_type: 'dashboard',
+        operation: 'load'
+      });
       setError(err.message || 'An unexpected error occurred');
     } finally {
       setLoading(false);

@@ -8,6 +8,7 @@
  */
 
 import { supabase } from '../lib/supabaseClient';
+import { auditLogger } from './auditLogger';
 import { DentalObservationService } from './fhir/DentalObservationService';
 import type {
   DentalAssessment,
@@ -72,6 +73,11 @@ export class DentalHealthService {
 
       return { success: true, data };
     } catch (error: any) {
+      await auditLogger.error('DENTAL_ASSESSMENT_CREATE_FAILED', error, {
+        patientId: request.patient_id,
+        resource_type: 'dental_assessment',
+        operation: 'create'
+      });
       return { success: false, error: error.message };
     }
   }
@@ -106,6 +112,7 @@ export class DentalHealthService {
 
       return { success: true, data };
     } catch (error: any) {
+      await auditLogger.error('DENTAL_ASSESSMENT_UPDATE_FAILED', error, { operation: 'update' });
       return { success: false, error: error.message };
     }
   }
@@ -125,6 +132,11 @@ export class DentalHealthService {
 
       return { success: true, data };
     } catch (error: any) {
+      await auditLogger.error('DENTAL_ASSESSMENT_FETCH_FAILED', error, {
+        assessmentId: id,
+        resource_type: 'dental_assessment',
+        operation: 'read'
+      });
       return { success: false, error: error.message };
     }
   }
@@ -148,6 +160,7 @@ export class DentalHealthService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
+      await auditLogger.error('DENTAL_ASSESSMENTS_FETCH_FAILED', error, { patientId, operation: 'list' });
       return { success: false, error: error.message };
     }
   }
@@ -171,6 +184,7 @@ export class DentalHealthService {
 
       return { success: true, data };
     } catch (error: any) {
+      await auditLogger.error('DENTAL_ASSESSMENT_LATEST_FETCH_FAILED', error, { patientId, operation: 'read_latest' });
       return { success: false, error: error.message };
     }
   }
@@ -215,6 +229,12 @@ export class DentalHealthService {
 
       return { success: true, data };
     } catch (error: any) {
+      await auditLogger.error('TOOTH_CHART_CREATE_FAILED', error, {
+        patientId: request.patient_id,
+        toothNumber: request.tooth_number,
+        resource_type: 'tooth_chart',
+        operation: 'create'
+      });
       return { success: false, error: error.message };
     }
   }
@@ -236,6 +256,7 @@ export class DentalHealthService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
+      await auditLogger.error('SERVICE_ERROR', error, { service: 'dental', operation: 'unknown' });
       return { success: false, error: error.message };
     }
   }
@@ -308,6 +329,7 @@ export class DentalHealthService {
 
       return { success: true, data: summary };
     } catch (error: any) {
+      await auditLogger.error('SERVICE_ERROR', error, { service: 'dental', operation: 'unknown' });
       return { success: false, error: error.message };
     }
   }
@@ -356,6 +378,11 @@ export class DentalHealthService {
 
       return { success: true, data };
     } catch (error: any) {
+      await auditLogger.error('DENTAL_PROCEDURE_CREATE_FAILED', error, {
+        patientId: request.patient_id,
+        resource_type: 'dental_procedure',
+        operation: 'create'
+      });
       return { success: false, error: error.message };
     }
   }
@@ -379,6 +406,7 @@ export class DentalHealthService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
+      await auditLogger.error('SERVICE_ERROR', error, { service: 'dental', operation: 'unknown' });
       return { success: false, error: error.message };
     }
   }
@@ -434,6 +462,7 @@ export class DentalHealthService {
 
       return { success: true, data: summary };
     } catch (error: any) {
+      await auditLogger.error('SERVICE_ERROR', error, { service: 'dental', operation: 'unknown' });
       return { success: false, error: error.message };
     }
   }
@@ -475,6 +504,12 @@ export class DentalHealthService {
 
       return { success: true, data };
     } catch (error: any) {
+      await auditLogger.error('TREATMENT_PLAN_CREATE_FAILED', error, {
+        patientId: request.patient_id,
+        planName: request.plan_name,
+        resource_type: 'treatment_plan',
+        operation: 'create'
+      });
       return { success: false, error: error.message };
     }
   }
@@ -496,6 +531,7 @@ export class DentalHealthService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
+      await auditLogger.error('SERVICE_ERROR', error, { service: 'dental', operation: 'unknown' });
       return { success: false, error: error.message };
     }
   }
@@ -530,6 +566,10 @@ export class DentalHealthService {
 
       return { success: true, data };
     } catch (error: any) {
+      await auditLogger.error('PATIENT_TRACKING_CREATE_FAILED', error, {
+        resource_type: 'patient_tracking',
+        operation: 'create'
+      });
       return { success: false, error: error.message };
     }
   }
@@ -556,6 +596,7 @@ export class DentalHealthService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
+      await auditLogger.error('SERVICE_ERROR', error, { service: 'dental', operation: 'unknown' });
       return { success: false, error: error.message };
     }
   }
@@ -670,6 +711,7 @@ export class DentalHealthService {
 
       return { success: true, data: summary };
     } catch (error: any) {
+      await auditLogger.error('DENTAL_ASSESSMENT_LATEST_FETCH_FAILED', error, { patientId, operation: 'read_latest' });
       return { success: false, error: error.message };
     }
   }
@@ -773,6 +815,11 @@ export class DentalHealthService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
+      await auditLogger.error('CDT_CODE_SEARCH_FAILED', error, {
+        searchTerm,
+        resource_type: 'cdt_code',
+        operation: 'search'
+      });
       return { success: false, error: error.message };
     }
   }
@@ -792,6 +839,7 @@ export class DentalHealthService {
 
       return { success: true, data };
     } catch (error: any) {
+      await auditLogger.error('SERVICE_ERROR', error, { service: 'dental', operation: 'unknown' });
       return { success: false, error: error.message };
     }
   }
@@ -812,6 +860,10 @@ export class DentalHealthService {
 
       return { success: true, data: data || [] };
     } catch (error: any) {
+      await auditLogger.error('PREVENTIVE_CDT_FETCH_FAILED', error, {
+        resource_type: 'cdt_code',
+        operation: 'list_preventive'
+      });
       return { success: false, error: error.message };
     }
   }
