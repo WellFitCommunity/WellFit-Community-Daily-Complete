@@ -8,6 +8,7 @@ import FeatureFlagControlPanel from './FeatureFlagControlPanel';
 import SystemHealthPanel from './SystemHealthPanel';
 import AuditLogViewer from './AuditLogViewer';
 import TenantDataViewer from './TenantDataViewer';
+import VaultAnimation from './VaultAnimation';
 import { auditLogger } from '../../services/auditLogger';
 
 const ApiKeyManager = React.lazy(() => import('../admin/ApiKeyManager'));
@@ -96,9 +97,16 @@ const SuperAdminDashboard: React.FC = () => {
   const [overview, setOverview] = useState<SystemOverview | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'tenants' | 'features' | 'health' | 'audit' | 'api-keys'>('overview');
   const [selectedTenant, setSelectedTenant] = useState<TenantWithStatus | null>(null);
+  const [showVaultAnimation, setShowVaultAnimation] = useState(false);
 
   useEffect(() => {
     checkAccess();
+    // Show vault animation on first access in this session
+    const hasSeenVault = sessionStorage.getItem('envision_vault_seen');
+    if (!hasSeenVault) {
+      setShowVaultAnimation(true);
+      sessionStorage.setItem('envision_vault_seen', 'true');
+    }
   }, []);
 
   const checkAccess = async () => {
@@ -173,7 +181,16 @@ const SuperAdminDashboard: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
+      {/* Vault Animation Overlay */}
+      {showVaultAnimation && (
+        <VaultAnimation
+          onComplete={() => setShowVaultAnimation(false)}
+          skipEnabled={true}
+        />
+      )}
+
+      <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -282,14 +299,15 @@ const SuperAdminDashboard: React.FC = () => {
         {activeTab === 'audit' && <AuditLogViewer />}
       </div>
 
-      {/* Tenant Data Viewer Modal */}
-      {selectedTenant && (
-        <TenantDataViewer
-          tenant={selectedTenant}
-          onClose={() => setSelectedTenant(null)}
-        />
-      )}
-    </div>
+        {/* Tenant Data Viewer Modal */}
+        {selectedTenant && (
+          <TenantDataViewer
+            tenant={selectedTenant}
+            onClose={() => setSelectedTenant(null)}
+          />
+        )}
+      </div>
+    </>
   );
 };
 
