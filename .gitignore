@@ -53,6 +53,10 @@ supabase/.temp/
 *_URGENT*.md
 *_SUMMARY.md
 fix_*.sql
+fix-*.sql
+fix-*.sh
+check-*.sql
+check-*.sh
 
 # Secret docs (do not track)
 SECRET_ROTATION_REQUIRED.md
