@@ -224,9 +224,10 @@ export default function AdminLoginPage() {
     setLocalErr(null);
     setSuccessMsg(null);
 
-    // Validate format based on whether user has tenant
-    if (userTenantId) {
-      // Tenant users must use TenantCode-PIN format (e.g., MH-6702-1234)
+    // Validate format based on whether user has tenant CODE assigned
+    // Only require TenantCode-PIN if tenant has a code assigned
+    if (userTenantId && userTenantCode) {
+      // Tenant users WITH CODE must use TenantCode-PIN format (e.g., MH-6702-1234)
       // TenantCode format: PREFIX-NUMBER (e.g., MH-6702)
       // Full format: PREFIX-NUMBER-PIN (e.g., MH-6702-1234)
       const codePattern = /^[A-Z]{1,4}-[0-9]{4,6}-[0-9]{4,8}$/;
@@ -234,22 +235,19 @@ export default function AdminLoginPage() {
         setLocalErr('Invalid format. Use TENANTCODE-PIN (e.g., MH-6702-1234)');
         return;
       }
-      // Verify tenant code matches (if we have it)
-      if (userTenantCode) {
-        // Extract tenant code part (everything before the last hyphen)
-        const parts = pin.split('-');
-        if (parts.length !== 3) {
-          setLocalErr(`Invalid format. Use ${userTenantCode}-XXXX`);
-          return;
-        }
-        const inputTenantCode = `${parts[0]}-${parts[1]}`; // e.g., "MH-6702"
-        if (inputTenantCode !== userTenantCode) {
-          setLocalErr(`Incorrect tenant code. Use ${userTenantCode}-XXXX`);
-          return;
-        }
+      // Verify tenant code matches
+      const parts = pin.split('-');
+      if (parts.length !== 3) {
+        setLocalErr(`Invalid format. Use ${userTenantCode}-XXXX`);
+        return;
+      }
+      const inputTenantCode = `${parts[0]}-${parts[1]}`; // e.g., "MH-6702"
+      if (inputTenantCode !== userTenantCode) {
+        setLocalErr(`Incorrect tenant code. Use ${userTenantCode}-XXXX`);
+        return;
       }
     } else {
-      // Master super admins use PIN only
+      // PIN only for: master admins (no tenant) OR tenants without codes assigned
       const p = cleanPin(pin);
       if (!/^\d{4,8}$/.test(p)) {
         setLocalErr('Enter your 4–8 digit PIN.');
@@ -368,33 +366,28 @@ export default function AdminLoginPage() {
 
           <div>
             <label htmlFor="pin-input" className="block text-sm font-medium text-gray-700 mb-1">
-              {userTenantId ? 'Enter Tenant Code + PIN' : 'Enter Admin PIN'}
+              {(userTenantId && userTenantCode) ? 'Enter Tenant Code + PIN' : 'Enter Admin PIN'}
             </label>
             <input
               id="pin-input"
               className="border border-gray-300 p-3 rounded w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono"
-              type={userTenantId ? "text" : "password"}
-              inputMode={userTenantId ? "text" : "numeric"}
-              pattern={userTenantId ? undefined : "\\d{4,8}"}
-              placeholder={userTenantId
-                ? (userTenantCode ? `${userTenantCode}-XXXX` : "PREFIX-XXXX")
+              type={(userTenantId && userTenantCode) ? "text" : "password"}
+              inputMode={(userTenantId && userTenantCode) ? "text" : "numeric"}
+              pattern={(userTenantId && userTenantCode) ? undefined : "\\d{4,8}"}
+              placeholder={(userTenantId && userTenantCode)
+                ? `${userTenantCode}-XXXX`
                 : "Enter PIN (4–8 digits)"}
               value={pin}
-              onChange={(e) => setPin(userTenantId ? e.target.value.toUpperCase() : cleanPin(e.target.value))}
+              onChange={(e) => setPin((userTenantId && userTenantCode) ? e.target.value.toUpperCase() : cleanPin(e.target.value))}
               onKeyDown={handleKeyDown}
               autoComplete="one-time-code"
               required
-              maxLength={userTenantId ? 15 : 8}
+              maxLength={(userTenantId && userTenantCode) ? 15 : 8}
               autoFocus
             />
             {userTenantId && userTenantCode && (
               <p className="text-xs text-blue-600 mt-1">
                 Your tenant code is <strong>{userTenantCode}</strong>. Enter it with your PIN (e.g., {userTenantCode}-1234)
-              </p>
-            )}
-            {userTenantId && !userTenantCode && (
-              <p className="text-xs text-yellow-600 mt-1">
-                Contact your super admin to get your tenant code assigned.
               </p>
             )}
           </div>
