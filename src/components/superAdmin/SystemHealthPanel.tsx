@@ -110,7 +110,7 @@ const SystemHealthPanel: React.FC = () => {
           <button
             onClick={loadHealthData}
             disabled={loading}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+            className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2 transition-colors shadow-sm"
           >
             <Activity className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -183,7 +183,7 @@ const SystemHealthPanel: React.FC = () => {
             <p>No health check data available</p>
             <button
               onClick={loadHealthData}
-              className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              className="mt-4 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
             >
               Load Health Checks
             </button>
