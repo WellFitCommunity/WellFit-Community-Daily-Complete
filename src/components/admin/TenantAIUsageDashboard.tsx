@@ -38,17 +38,37 @@ const TenantAIUsageDashboard: React.FC = () => {
   const [metrics, setMetrics] = useState<TenantAIMetrics | null>(null);
   const [topUsers, setTopUsers] = useState<UserAIUsage[]>([]);
   const [timeRange, setTimeRange] = useState<'24h' | '7d' | '30d'>('30d');
+  const [tenantId, setTenantId] = useState<string | null>(null);
+
+  // Fetch user's profile to get tenant_id
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user?.id) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('user_id', user.id)
+        .single();
+
+      setTenantId(profile?.tenant_id || null);
+    };
+
+    fetchProfile();
+  }, [user]);
 
   useEffect(() => {
-    loadAIUsage();
-  }, [timeRange, user]);
+    if (tenantId) {
+      loadAIUsage();
+    }
+  }, [timeRange, tenantId]);
 
   const loadAIUsage = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      if (!user?.tenant_id) {
+      if (!tenantId) {
         setError('No tenant ID found');
         return;
       }
@@ -72,7 +92,7 @@ const TenantAIUsageDashboard: React.FC = () => {
       const { data: usageData, error: usageError } = await supabase
         .from('mcp_usage_logs')
         .select('user_id, cost, tokens_used, created_at')
-        .eq('tenant_id', user.tenant_id)
+        .eq('tenant_id', tenantId)
         .gte('created_at', cutoffDate.toISOString());
 
       if (usageError && usageError.code !== 'PGRST116') {
@@ -148,7 +168,7 @@ const TenantAIUsageDashboard: React.FC = () => {
     } catch (err) {
       await auditLogger.error('TENANT_AI_USAGE_DASHBOARD_LOAD_FAILED', err as Error, {
         category: 'ADMINISTRATIVE',
-        tenantId: user?.tenant_id
+        tenantId: tenantId || undefined
       });
       setError('Failed to load AI usage data');
     } finally {

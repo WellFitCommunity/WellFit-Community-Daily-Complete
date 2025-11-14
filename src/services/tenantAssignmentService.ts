@@ -76,14 +76,18 @@ export const TenantAssignmentService = {
         if (tenantsData && tenantsData.length > 0) {
           assignedTenants = tenantsData
             .filter(item => item.tenants)
-            .map(item => ({
-              tenantId: item.tenants.id,
-              tenantName: item.tenants.name,
-              tenantCode: item.tenants.tenant_code,
-              subdomain: item.tenants.subdomain,
-              isActive: true,
-              assignedAt: new Date().toISOString()
-            }));
+            .map(item => {
+              // Handle both array and object responses from Supabase join
+              const tenant = Array.isArray(item.tenants) ? item.tenants[0] : item.tenants;
+              return {
+                tenantId: tenant.id,
+                tenantName: tenant.name,
+                tenantCode: tenant.tenant_code,
+                subdomain: tenant.subdomain,
+                isActive: true,
+                assignedAt: new Date().toISOString()
+              };
+            });
         }
       }
 
@@ -142,7 +146,9 @@ export const TenantAssignmentService = {
         .eq('tenant_code', 'WF-001')
         .single();
 
-      if (error || !data) {
+      let tenantData = data;
+
+      if (error || !tenantData) {
         // Try by name as fallback
         const { data: fallbackData } = await supabase
           .from('tenants')
@@ -151,14 +157,14 @@ export const TenantAssignmentService = {
           .single();
 
         if (!fallbackData) return null;
-        data = fallbackData;
+        tenantData = fallbackData;
       }
 
       return {
-        tenantId: data.id,
-        tenantName: data.name,
-        tenantCode: data.tenant_code,
-        subdomain: data.subdomain,
+        tenantId: tenantData.id,
+        tenantName: tenantData.name,
+        tenantCode: tenantData.tenant_code,
+        subdomain: tenantData.subdomain,
         isActive: true,
         assignedAt: new Date().toISOString()
       };
