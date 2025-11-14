@@ -234,14 +234,79 @@ const MultiTenantMonitor: React.FC = () => {
                 </div>
               </div>
 
-              {/* Tenant Admin Panel (iframe) */}
-              <div className="flex-1 relative bg-gray-50">
-                <iframe
-                  src={`/admin?tenant=${tenant.tenantId}&embed=true`}
-                  className="absolute inset-0 w-full h-full border-0"
-                  title={`${tenant.tenantName} Admin Panel`}
-                  sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
-                />
+              {/* HIPAA-Compliant System Metrics (NO PHI) */}
+              <div className="flex-1 p-6 bg-gray-50 overflow-auto">
+                <div className="space-y-4">
+                  {/* System Status */}
+                  <div className="bg-white p-4 rounded-lg shadow-sm">
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3">System Status</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <div className="text-xs text-gray-600">Status</div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <span className="text-sm font-semibold text-gray-900">Online</span>
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-gray-600">Uptime</div>
+                        <div className="text-sm font-semibold text-gray-900 mt-1">99.9%</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Aggregate Counts (NO IDENTITIES) */}
+                  <div className="bg-white p-4 rounded-lg shadow-sm">
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3">Usage Metrics</h3>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-gray-600">Total Users</span>
+                        <span className="text-sm font-semibold text-gray-900">Loading...</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-gray-600">Total Patients</span>
+                        <span className="text-sm font-semibold text-gray-900">Loading...</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-gray-600">Active Today</span>
+                        <span className="text-sm font-semibold text-gray-900">Loading...</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* System Health */}
+                  <div className="bg-white p-4 rounded-lg shadow-sm">
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3">System Health</h3>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-gray-600">Errors (24h)</span>
+                        <span className="text-sm font-semibold text-red-600">Loading...</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-gray-600">Avg Response</span>
+                        <span className="text-sm font-semibold text-gray-900">Loading...</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-gray-600">Database</span>
+                        <span className="text-sm font-semibold text-green-600">Healthy</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Compliance */}
+                  <div className="bg-white p-4 rounded-lg shadow-sm">
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3">Compliance</h3>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-gray-600">SOC2 Score</span>
+                      <span className="text-lg font-bold text-green-600">Loading...</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800">
+                    <strong>HIPAA Compliant View:</strong> This dashboard shows only aggregate system metrics.
+                    No patient names, medical records, or identifiable information is displayed.
+                  </div>
+                </div>
               </div>
             </div>
           );

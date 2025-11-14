@@ -2,13 +2,15 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SuperAdminService } from '../../services/superAdminService';
 import { SystemOverview, TenantWithStatus } from '../../types/superAdmin';
-import { Activity, Users, Building2, AlertTriangle, Shield, Settings, Key } from 'lucide-react';
+import { Activity, Users, Building2, AlertTriangle, Shield, Settings, Key, DollarSign } from 'lucide-react';
 import TenantManagementPanel from './TenantManagementPanel';
 import FeatureFlagControlPanel from './FeatureFlagControlPanel';
 import SystemHealthPanel from './SystemHealthPanel';
 import AuditLogViewer from './AuditLogViewer';
 import TenantDataViewer from './TenantDataViewer';
 import PlatformSOC2Dashboard from './PlatformSOC2Dashboard';
+import PlatformAICostDashboard from './PlatformAICostDashboard';
+import GuardianMonitoringDashboard from './GuardianMonitoringDashboard';
 import { auditLogger } from '../../services/auditLogger';
 
 const ApiKeyManager = React.lazy(() => import('../admin/ApiKeyManager'));
@@ -95,7 +97,7 @@ const SuperAdminDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [overview, setOverview] = useState<SystemOverview | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'tenants' | 'features' | 'health' | 'audit' | 'api-keys' | 'compliance'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'tenants' | 'features' | 'health' | 'audit' | 'api-keys' | 'compliance' | 'ai-cost' | 'guardian'>('overview');
   const [selectedTenant, setSelectedTenant] = useState<TenantWithStatus | null>(null);
 
   useEffect(() => {
@@ -169,8 +171,10 @@ const SuperAdminDashboard: React.FC = () => {
     { id: 'tenants', label: 'Tenants', icon: Building2, color: 'blue' },
     { id: 'features', label: 'Feature Flags', icon: Settings, color: 'purple' },
     { id: 'api-keys', label: 'API Keys', icon: Key, color: 'orange' },
+    { id: 'ai-cost', label: 'AI Cost & Usage', icon: DollarSign, color: 'orange' },
     { id: 'compliance', label: 'Platform SOC2', icon: Shield, color: 'red' },
-    { id: 'health', label: 'System Health', icon: Shield, color: 'emerald' },
+    { id: 'guardian', label: 'Guardian Agent', icon: Shield, color: 'emerald' },
+    { id: 'health', label: 'System Health', icon: Activity, color: 'emerald' },
     { id: 'audit', label: 'Audit Logs', icon: AlertTriangle, color: 'red' }
   ];
 
@@ -288,7 +292,11 @@ const SuperAdminDashboard: React.FC = () => {
           </Suspense>
         )}
 
+        {activeTab === 'ai-cost' && <PlatformAICostDashboard />}
+
         {activeTab === 'compliance' && <PlatformSOC2Dashboard />}
+
+        {activeTab === 'guardian' && <GuardianMonitoringDashboard />}
 
         {activeTab === 'health' && <SystemHealthPanel />}
 
