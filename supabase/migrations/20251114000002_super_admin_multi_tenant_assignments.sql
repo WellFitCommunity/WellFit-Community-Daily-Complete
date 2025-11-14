@@ -43,8 +43,7 @@ CREATE TABLE IF NOT EXISTS super_admin_tenant_assignments (
 
 CREATE INDEX idx_super_admin_tenant_assignments_admin ON super_admin_tenant_assignments(super_admin_id);
 CREATE INDEX idx_super_admin_tenant_assignments_tenant ON super_admin_tenant_assignments(tenant_id);
-CREATE INDEX idx_super_admin_tenant_assignments_active ON super_admin_tenant_assignments(super_admin_id)
-  WHERE expires_at IS NULL OR expires_at > NOW();
+CREATE INDEX idx_super_admin_tenant_assignments_expires ON super_admin_tenant_assignments(super_admin_id, expires_at);
 
 COMMENT ON TABLE super_admin_tenant_assignments IS 'Multi-tenant access assignments for Envision staff';
 COMMENT ON COLUMN super_admin_tenant_assignments.access_level IS 'monitor: View only metrics, manage: Can change settings, full: Full control';
