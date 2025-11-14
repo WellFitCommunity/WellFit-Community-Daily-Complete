@@ -8,6 +8,7 @@ import FeatureFlagControlPanel from './FeatureFlagControlPanel';
 import SystemHealthPanel from './SystemHealthPanel';
 import AuditLogViewer from './AuditLogViewer';
 import TenantDataViewer from './TenantDataViewer';
+import PlatformSOC2Dashboard from './PlatformSOC2Dashboard';
 import { auditLogger } from '../../services/auditLogger';
 
 const ApiKeyManager = React.lazy(() => import('../admin/ApiKeyManager'));
@@ -94,7 +95,7 @@ const SuperAdminDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [overview, setOverview] = useState<SystemOverview | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'tenants' | 'features' | 'health' | 'audit' | 'api-keys'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'tenants' | 'features' | 'health' | 'audit' | 'api-keys' | 'compliance'>('overview');
   const [selectedTenant, setSelectedTenant] = useState<TenantWithStatus | null>(null);
 
   useEffect(() => {
@@ -168,6 +169,7 @@ const SuperAdminDashboard: React.FC = () => {
     { id: 'tenants', label: 'Tenants', icon: Building2, color: 'blue' },
     { id: 'features', label: 'Feature Flags', icon: Settings, color: 'purple' },
     { id: 'api-keys', label: 'API Keys', icon: Key, color: 'orange' },
+    { id: 'compliance', label: 'Platform SOC2', icon: Shield, color: 'red' },
     { id: 'health', label: 'System Health', icon: Shield, color: 'emerald' },
     { id: 'audit', label: 'Audit Logs', icon: AlertTriangle, color: 'red' }
   ];
@@ -285,6 +287,8 @@ const SuperAdminDashboard: React.FC = () => {
             <ApiKeyManager />
           </Suspense>
         )}
+
+        {activeTab === 'compliance' && <PlatformSOC2Dashboard />}
 
         {activeTab === 'health' && <SystemHealthPanel />}
 
