@@ -106,7 +106,7 @@ const AuditLogViewer: React.FC = () => {
           <button
             onClick={loadAuditLogs}
             disabled={loading}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2 transition-colors shadow-sm"
           >
             <Activity className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -132,9 +132,9 @@ const AuditLogViewer: React.FC = () => {
             <button
               key={severity}
               onClick={() => setFilterSeverity(severity as typeof filterSeverity)}
-              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors shadow-sm ${
                 filterSeverity === severity
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-red-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
@@ -208,7 +208,7 @@ const AuditLogViewer: React.FC = () => {
             {filterSeverity !== 'all' && (
               <button
                 onClick={() => setFilterSeverity('all')}
-                className="mt-4 text-blue-600 hover:underline"
+                className="mt-4 text-red-600 hover:underline font-medium"
               >
                 Clear filters
               </button>

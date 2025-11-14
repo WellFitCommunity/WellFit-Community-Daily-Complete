@@ -59,6 +59,8 @@ const DoctorsViewPage = React.lazy(() => import('./pages/DoctorsViewPage'));
 const AdminPanel = React.lazy(() => import('./components/admin/IntelligentAdminPanel'));
 const AdminProfileEditorPage = React.lazy(() => import('./pages/AdminProfileEditorPage'));
 const SuperAdminDashboard = React.lazy(() => import('./components/superAdmin/SuperAdminDashboard'));
+const MultiTenantSelector = React.lazy(() => import('./components/superAdmin/MultiTenantSelector'));
+const MultiTenantMonitor = React.lazy(() => import('./components/superAdmin/MultiTenantMonitor'));
 const NursePanel = React.lazy(() => import('./components/nurse/NursePanel'));
 const PhysicianPanel = React.lazy(() => import('./components/physician/PhysicianPanel'));
 const CaseManagerPanel = React.lazy(() => import('./components/case-manager/CaseManagerPanel'));
@@ -212,6 +214,26 @@ function Shell() {
                 element={
                   <RequireAuth>
                     <SuperAdminDashboard />
+                  </RequireAuth>
+                }
+              />
+
+              {/* Multi-Tenant Selector (Envision staff) */}
+              <Route
+                path="/tenant-selector"
+                element={
+                  <RequireAuth>
+                    <MultiTenantSelector />
+                  </RequireAuth>
+                }
+              />
+
+              {/* Multi-Tenant Monitor (Split-screen view) */}
+              <Route
+                path="/multi-tenant-monitor"
+                element={
+                  <RequireAuth>
+                    <MultiTenantMonitor />
                   </RequireAuth>
                 }
               />

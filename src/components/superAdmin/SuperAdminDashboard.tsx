@@ -2,12 +2,15 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SuperAdminService } from '../../services/superAdminService';
 import { SystemOverview, TenantWithStatus } from '../../types/superAdmin';
-import { Activity, Users, Building2, AlertTriangle, Shield, Settings, Key } from 'lucide-react';
+import { Activity, Users, Building2, AlertTriangle, Shield, Settings, Key, DollarSign } from 'lucide-react';
 import TenantManagementPanel from './TenantManagementPanel';
 import FeatureFlagControlPanel from './FeatureFlagControlPanel';
 import SystemHealthPanel from './SystemHealthPanel';
 import AuditLogViewer from './AuditLogViewer';
 import TenantDataViewer from './TenantDataViewer';
+import PlatformSOC2Dashboard from './PlatformSOC2Dashboard';
+import PlatformAICostDashboard from './PlatformAICostDashboard';
+import GuardianMonitoringDashboard from './GuardianMonitoringDashboard';
 import { auditLogger } from '../../services/auditLogger';
 
 const ApiKeyManager = React.lazy(() => import('../admin/ApiKeyManager'));
@@ -94,7 +97,7 @@ const SuperAdminDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [overview, setOverview] = useState<SystemOverview | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'tenants' | 'features' | 'health' | 'audit' | 'api-keys'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'tenants' | 'features' | 'health' | 'audit' | 'api-keys' | 'compliance' | 'ai-cost' | 'guardian'>('overview');
   const [selectedTenant, setSelectedTenant] = useState<TenantWithStatus | null>(null);
 
   useEffect(() => {
@@ -136,10 +139,10 @@ const SuperAdminDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-teal-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading Super Admin Dashboard...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
+          <p className="text-teal-900 font-medium">Loading Envision Atlas Master panel...</p>
         </div>
       </div>
     );
@@ -147,14 +150,14 @@ const SuperAdminDashboard: React.FC = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-lg shadow max-w-md">
+      <div className="min-h-screen bg-teal-50 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-lg shadow-xl max-w-md border-2 border-red-200">
           <AlertTriangle className="w-12 h-12 text-red-600 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-gray-900 mb-2 text-center">Error</h2>
           <p className="text-gray-600 text-center">{error}</p>
           <button
             onClick={() => navigate('/')}
-            className="mt-4 w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
+            className="mt-4 w-full bg-teal-600 text-white py-2 px-4 rounded hover:bg-teal-700 transition-colors"
           >
             Return Home
           </button>
@@ -164,28 +167,31 @@ const SuperAdminDashboard: React.FC = () => {
   }
 
   const tabs = [
-    { id: 'overview', label: 'Overview', icon: Activity },
-    { id: 'tenants', label: 'Tenants', icon: Building2 },
-    { id: 'features', label: 'Feature Flags', icon: Settings },
-    { id: 'api-keys', label: 'API Keys', icon: Key },
-    { id: 'health', label: 'System Health', icon: Shield },
-    { id: 'audit', label: 'Audit Logs', icon: AlertTriangle }
+    { id: 'overview', label: 'Overview', icon: Activity, color: 'teal' },
+    { id: 'tenants', label: 'Tenants', icon: Building2, color: 'blue' },
+    { id: 'features', label: 'Feature Flags', icon: Settings, color: 'purple' },
+    { id: 'api-keys', label: 'API Keys', icon: Key, color: 'orange' },
+    { id: 'ai-cost', label: 'AI Cost & Usage', icon: DollarSign, color: 'orange' },
+    { id: 'compliance', label: 'Platform SOC2', icon: Shield, color: 'red' },
+    { id: 'guardian', label: 'Guardian Agent', icon: Shield, color: 'emerald' },
+    { id: 'health', label: 'System Health', icon: Activity, color: 'emerald' },
+    { id: 'audit', label: 'Audit Logs', icon: AlertTriangle, color: 'red' }
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-teal-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div className="bg-gradient-to-r from-teal-600 to-teal-700 border-b border-teal-800 shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Master Admin Panel</h1>
-              <p className="text-sm text-gray-600 mt-1">System-wide tenant and feature management</p>
+              <h1 className="text-3xl font-bold text-white">Envision Atlas Master panel</h1>
+              <p className="text-sm text-teal-100 mt-1">System-wide tenant and feature management</p>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 bg-red-50 border border-red-200 px-4 py-2 rounded-lg">
-                <Shield className="w-5 h-5 text-red-600" />
-                <span className="text-sm font-medium text-red-900">Super Admin</span>
+              <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm border border-white/30 px-4 py-2 rounded-lg">
+                <Shield className="w-5 h-5 text-white" />
+                <span className="text-sm font-medium text-white">Super Admin</span>
               </div>
             </div>
           </div>
@@ -193,20 +199,29 @@ const SuperAdminDashboard: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex space-x-8" aria-label="Tabs">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
+              const colorMap: Record<string, { border: string; text: string; bg: string }> = {
+                teal: { border: 'border-teal-500', text: 'text-teal-600', bg: 'bg-teal-50' },
+                blue: { border: 'border-blue-700', text: 'text-blue-700', bg: 'bg-blue-50' },
+                purple: { border: 'border-purple-600', text: 'text-purple-600', bg: 'bg-purple-50' },
+                orange: { border: 'border-orange-500', text: 'text-orange-600', bg: 'bg-orange-50' },
+                emerald: { border: 'border-emerald-600', text: 'text-emerald-600', bg: 'bg-emerald-50' },
+                red: { border: 'border-red-600', text: 'text-red-600', bg: 'bg-red-50' }
+              };
+              const colors = colorMap[tab.color];
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as typeof activeTab)}
                   className={`
-                    flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm
+                    flex items-center gap-2 py-4 px-3 border-b-3 font-medium text-sm transition-all duration-200
                     ${isActive
-                      ? 'border-blue-500 text-blue-600'
+                      ? `${colors.border} ${colors.text} ${colors.bg} rounded-t-lg -mb-px`
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     }
                   `}
@@ -230,25 +245,25 @@ const SuperAdminDashboard: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <button
                   onClick={() => setActiveTab('tenants')}
-                  className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors text-left"
+                  className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-700 hover:bg-blue-50 transition-all duration-200 text-left shadow-sm hover:shadow-md"
                 >
-                  <Building2 className="w-8 h-8 text-blue-600 mb-2" />
+                  <Building2 className="w-8 h-8 text-blue-700 mb-2" />
                   <div className="font-medium text-gray-900">Manage Tenants</div>
                   <div className="text-sm text-gray-600">View and manage all tenants</div>
                 </button>
                 <button
                   onClick={() => setActiveTab('features')}
-                  className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors text-left"
+                  className="p-4 border-2 border-gray-200 rounded-lg hover:border-purple-600 hover:bg-purple-50 transition-all duration-200 text-left shadow-sm hover:shadow-md"
                 >
-                  <Settings className="w-8 h-8 text-blue-600 mb-2" />
+                  <Settings className="w-8 h-8 text-purple-600 mb-2" />
                   <div className="font-medium text-gray-900">Feature Flags</div>
                   <div className="text-sm text-gray-600">Control system features</div>
                 </button>
                 <button
                   onClick={() => setActiveTab('audit')}
-                  className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors text-left"
+                  className="p-4 border-2 border-gray-200 rounded-lg hover:border-red-600 hover:bg-red-50 transition-all duration-200 text-left shadow-sm hover:shadow-md"
                 >
-                  <AlertTriangle className="w-8 h-8 text-blue-600 mb-2" />
+                  <AlertTriangle className="w-8 h-8 text-red-600 mb-2" />
                   <div className="font-medium text-gray-900">Audit Logs</div>
                   <div className="text-sm text-gray-600">View security events</div>
                 </button>
@@ -276,6 +291,12 @@ const SuperAdminDashboard: React.FC = () => {
             <ApiKeyManager />
           </Suspense>
         )}
+
+        {activeTab === 'ai-cost' && <PlatformAICostDashboard />}
+
+        {activeTab === 'compliance' && <PlatformSOC2Dashboard />}
+
+        {activeTab === 'guardian' && <GuardianMonitoringDashboard />}
 
         {activeTab === 'health' && <SystemHealthPanel />}
 

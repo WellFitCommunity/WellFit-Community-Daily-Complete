@@ -151,7 +151,7 @@ const FeatureFlagControlPanel: React.FC = () => {
         </div>
         <button
           onClick={loadData}
-          className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          className="mt-4 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors shadow-sm"
         >
           Retry
         </button>
@@ -172,7 +172,7 @@ const FeatureFlagControlPanel: React.FC = () => {
           </div>
           <button
             onClick={loadData}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors shadow-sm"
           >
             Refresh
           </button>
@@ -185,9 +185,9 @@ const FeatureFlagControlPanel: React.FC = () => {
             <button
               key={cat}
               onClick={() => setFilterCategory(cat)}
-              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors shadow-sm ${
                 filterCategory === cat
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-purple-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
