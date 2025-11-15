@@ -104,11 +104,20 @@ async function getMasterEncryptionKey(): Promise<CryptoKey> {
   const keyMaterial = process.env.REACT_APP_PHI_ENCRYPTION_KEY;
 
   if (!keyMaterial) {
-    // CRITICAL: In production, this should FAIL
-    // For development, we'll generate a temporary key
+    // FAIL HARD in production - this is a HIPAA compliance requirement
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(
+        'CRITICAL SECURITY ERROR: PHI_ENCRYPTION_KEY is not set in production environment. ' +
+        'This is a HIPAA compliance violation. Application cannot start without encryption keys. ' +
+        'Set REACT_APP_PHI_ENCRYPTION_KEY in your environment variables.'
+      );
+    }
 
+    // In development, warn loudly but allow temporary key
+    console.error('⚠️ WARNING: PHI_ENCRYPTION_KEY not set! Using temporary key for DEVELOPMENT ONLY');
+    console.error('⚠️ THIS IS NOT SECURE - Set REACT_APP_PHI_ENCRYPTION_KEY before deploying to production');
 
-    // Generate temporary key (DO NOT USE IN PRODUCTION)
+    // Generate temporary key (DEVELOPMENT ONLY)
     return await crypto.subtle.generateKey(
       {
         name: 'AES-GCM',

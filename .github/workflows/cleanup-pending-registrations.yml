@@ -1,0 +1,33 @@
+name: Cleanup Pending Registrations
+
+on:
+  schedule:
+    # Run every 15 minutes
+    - cron: '*/15 * * * *'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cleanup expired pending registrations
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            'https://xkybsjnvuohpqpbkikyn.supabase.co/rest/v1/rpc/cleanup_expired_pending_registrations' \
+            -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+
+          echo "HTTP Status: $HTTP_CODE"
+          echo "Response: $BODY"
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "Error: Cleanup failed with status $HTTP_CODE"
+            exit 1
+          fi
+
+          echo "✅ Cleanup completed successfully"
+          echo "Records deleted: $BODY"

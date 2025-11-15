@@ -25,6 +25,10 @@
 
 BEGIN;
 
+-- Temporarily drop NOT NULL constraint to allow clearing old hashes
+ALTER TABLE public.staff_pins
+  ALTER COLUMN pin_hash DROP NOT NULL;
+
 -- Clear all existing PIN hashes (incompatible format)
 -- Users will need to re-set their PINs using the secure random salt method
 UPDATE public.staff_pins

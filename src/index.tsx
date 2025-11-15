@@ -17,11 +17,62 @@ import { AdminAuthProvider } from './contexts/AdminAuthContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { DemoModeProvider } from './contexts/DemoModeContext';
 
+// Environment validation - MUST run before anything else
+import { validateOrFail } from './utils/environmentValidator';
+
 // Claude init
 import { claudeService } from './services/claudeService';
 
 // Wearable adapters init
 import { initializeWearables } from './services/initializeWearables';
+
+// ============================================================================
+// STARTUP VALIDATION - Fail fast if critical env vars are missing
+// ============================================================================
+try {
+  validateOrFail();
+} catch (error) {
+  // In production, this will prevent the app from starting
+  // Display error to user instead of broken app
+  const rootElement = document.getElementById('root');
+  if (rootElement) {
+    rootElement.innerHTML = `
+      <div style="
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        background: #fee;
+        font-family: system-ui, sans-serif;
+        padding: 2rem;
+      ">
+        <div style="
+          max-width: 600px;
+          background: white;
+          padding: 2rem;
+          border-radius: 8px;
+          border: 2px solid #c33;
+        ">
+          <h1 style="color: #c33; margin-top: 0;">⚠️ Configuration Error</h1>
+          <p style="color: #333;">
+            The application cannot start due to missing security configuration.
+          </p>
+          <pre style="
+            background: #f5f5f5;
+            padding: 1rem;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 0.875rem;
+          ">${error instanceof Error ? error.message : 'Unknown error'}</pre>
+          <p style="color: #666; margin-bottom: 0;">
+            Contact your system administrator to resolve this issue.
+          </p>
+        </div>
+      </div>
+    `;
+  }
+  throw error; // Re-throw to prevent further execution
+}
 
 // Guardian Agent init
 // import { GuardianAgent } from './services/guardian-agent/GuardianAgent'; // Disabled - Node.js modules

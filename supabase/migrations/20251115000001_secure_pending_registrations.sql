@@ -26,11 +26,21 @@
 BEGIN;
 
 -- Enable pgcrypto for encryption (if not already enabled)
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
+DO $$
+BEGIN
+  CREATE EXTENSION IF NOT EXISTS pgcrypto;
+EXCEPTION
+  WHEN OTHERS THEN NULL; -- Ignore if already exists
+END $$;
 
 -- Enable pg_cron for scheduled cleanup (if available)
 -- Note: pg_cron requires superuser; if not available, use external cron
-CREATE EXTENSION IF NOT EXISTS pg_cron;
+DO $$
+BEGIN
+  CREATE EXTENSION IF NOT EXISTS pg_cron;
+EXCEPTION
+  WHEN OTHERS THEN NULL; -- Ignore if already exists or insufficient privileges
+END $$;
 
 -- Step 1: Reduce default expiration from 24h to 1h (more secure)
 ALTER TABLE public.pending_registrations
