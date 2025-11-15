@@ -51,6 +51,14 @@ import { SOC2IncidentResponseDashboard } from './SOC2IncidentResponseDashboard';
 import { SOC2ExecutiveDashboard } from './SOC2ExecutiveDashboard';
 import { SystemAdminDashboard } from './SystemAdminDashboard';
 import { PersonalizedGreeting } from '../ai-transparency';
+import {
+  getUserBehaviorProfile,
+  trackBehaviorEvent,
+  getSmartSuggestions,
+  getRecommendedSectionOrder,
+  shouldAutoExpand
+} from '../../services/behaviorTracking';
+import { useSupabaseClient } from '../../contexts/AuthContext';
 
 interface DashboardSection {
   id: string;
@@ -68,12 +76,14 @@ interface DashboardSection {
 const IntelligentAdminPanel: React.FC = () => {
   const { adminRole } = useAdminAuth();
   const user = useUser();
+  const supabase = useSupabaseClient();
   const navigate = useNavigate();
   const [showWhatsNew, setShowWhatsNew] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [sections, setSections] = useState<DashboardSection[]>([]);
   const [welcomeMessage, setWelcomeMessage] = useState('');
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
+  const [behaviorSuggestions, setBehaviorSuggestions] = useState<string[]>([]);
   const categoryOpenStates = {
     revenue: true,
     'patient-care': false,
@@ -400,6 +410,9 @@ const IntelligentAdminPanel: React.FC = () => {
     setIsLoading(true);
 
     try {
+      // Get user behavior profile
+      const behaviorProfile = await getUserBehaviorProfile(supabase, user.id);
+
       // Get AI-powered personalized layout
       const layout = await DashboardPersonalizationAI.generatePersonalizedLayout(
         user.id,
@@ -407,13 +420,39 @@ const IntelligentAdminPanel: React.FC = () => {
         new Date().getHours()
       );
 
+      // Get behavior-based suggestions
+      const behaviorBasedSuggestions = getSmartSuggestions(behaviorProfile);
+      setBehaviorSuggestions(behaviorBasedSuggestions);
+
+      // Merge AI suggestions with behavior suggestions
+      const combinedSuggestions = [
+        ...(layout.suggestions || []),
+        ...behaviorBasedSuggestions
+      ].slice(0, 5); // Limit to 5 total
+
       // Set welcome message and suggestions
       setWelcomeMessage(layout.welcomeMessage || '');
-      setAiSuggestions(layout.suggestions || []);
+      setAiSuggestions(combinedSuggestions);
 
-      // Organize sections based on AI recommendations
-      const organizedSections = organizeSections(layout);
+      // Organize sections based on both AI and behavior recommendations
+      const organizedSections = organizeSections(layout, behaviorProfile);
       setSections(organizedSections);
+
+      // Track dashboard view
+      if (user.id) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('tenant_id')
+          .eq('user_id', user.id)
+          .single();
+
+        await trackBehaviorEvent(supabase, {
+          userId: user.id,
+          tenantId: profile?.tenant_id || '',
+          eventType: 'navigation',
+          metadata: { page: 'admin_dashboard' }
+        });
+      }
     } catch (error) {
       // HIPAA Audit: Log dashboard personalization failure
       await auditLogger.error('ADMIN_DASHBOARD_PERSONALIZATION_FAILED', error instanceof Error ? error : new Error('Unknown error'), {
@@ -427,15 +466,22 @@ const IntelligentAdminPanel: React.FC = () => {
     }
   }
 
-  function organizeSections(layout: any): DashboardSection[] {
+  function organizeSections(layout: any, behaviorProfile: any = null): DashboardSection[] {
     // Filter sections by role
     const visibleSections = allSections.filter(
       (section) => !section.roles || section.roles.includes(adminRole || 'admin')
     );
 
+    // Get behavior-based recommended order
+    const allSectionIds = allSections.map(s => s.id);
+    const behaviorOrder = behaviorProfile
+      ? getRecommendedSectionOrder(behaviorProfile, allSectionIds)
+      : allSectionIds;
+
     // Sort within each category by:
-    // 1. User's top sections (from AI)
-    // 2. Priority (high > medium > low)
+    // 1. Behavior-based frequency (most used first)
+    // 2. User's top sections (from AI)
+    // 3. Priority (high > medium > low)
 
     const priorityOrder = { high: 1, medium: 2, low: 3 };
 
@@ -443,6 +489,13 @@ const IntelligentAdminPanel: React.FC = () => {
       // Keep same category together
       if (a.category !== b.category) {
         return 0; // Don't sort across categories
+      }
+
+      // Sort by behavior frequency
+      const aBehaviorIndex = behaviorOrder.indexOf(a.id);
+      const bBehaviorIndex = behaviorOrder.indexOf(b.id);
+      if (aBehaviorIndex !== bBehaviorIndex) {
+        return aBehaviorIndex - bBehaviorIndex;
       }
 
       // Check if in top sections

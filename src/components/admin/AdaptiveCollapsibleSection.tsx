@@ -7,7 +7,8 @@
 
 import React, { useState } from 'react';
 import { DashboardPersonalizationAI } from '../../services/dashboardPersonalizationAI';
-import { useUser } from '../../contexts/AuthContext';
+import { useUser, useSupabaseClient } from '../../contexts/AuthContext';
+import { trackBehaviorEvent } from '../../services/behaviorTracking';
 
 interface AdaptiveCollapsibleSectionProps {
   sectionId: string;
@@ -33,6 +34,7 @@ export const AdaptiveCollapsibleSection: React.FC<AdaptiveCollapsibleSectionProp
   priority = 'medium',
 }) => {
   const user = useUser();
+  const supabase = useSupabaseClient();
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [openStartTime, setOpenStartTime] = useState<Date | null>(null);
 
@@ -44,21 +46,51 @@ export const AdaptiveCollapsibleSection: React.FC<AdaptiveCollapsibleSectionProp
     if (!user?.id) return;
 
     try {
+      // Get tenant ID for tracking
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('user_id', user.id)
+        .single();
+
+      const tenantId = profile?.tenant_id || '';
+
       if (!wasOpen) {
         // Opening section - track start time
         setOpenStartTime(new Date());
+
+        // Track with AI personalization service
         await DashboardPersonalizationAI.trackSectionOpen(
           user.id,
           sectionId,
           title,
           userRole
         );
+
+        // Track with behavior tracking service
+        await trackBehaviorEvent(supabase, {
+          userId: user.id,
+          tenantId,
+          eventType: 'section_opened',
+          sectionId,
+          metadata: { title, priority }
+        });
       } else if (openStartTime) {
-        // Closing section - track close
+        // Closing section - track close and duration
+        const duration = Date.now() - openStartTime.getTime();
         setOpenStartTime(null);
+
+        // Track with behavior tracking service
+        await trackBehaviorEvent(supabase, {
+          userId: user.id,
+          tenantId,
+          eventType: 'section_closed',
+          sectionId,
+          metadata: { title, duration }
+        });
       }
     } catch (error) {
-
+      // Fail silently - tracking should never break functionality
     }
   };
 
