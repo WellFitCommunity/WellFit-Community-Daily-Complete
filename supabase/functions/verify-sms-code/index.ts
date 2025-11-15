@@ -99,12 +99,30 @@ Deno.serve(async (req: Request): Promise<Response> => {
         });
       }
 
-      // Use the user's actual password from registration (stored temporarily for verification)
-      // Note: For admin-created users, use temporary password instead
-      const userPassword = pending.password_plaintext;
+      // Decrypt the user's password from encrypted storage
+      // Try encrypted column first (new), fallback to plaintext (old) for backward compatibility
+      let userPassword: string | null = null;
+
+      if (pending.password_encrypted) {
+        // Decrypt password using database function
+        const { data: decryptedPassword, error: decryptError } = await supabase
+          .rpc('decrypt_pending_password', { encrypted_password: pending.password_encrypted });
+
+        if (decryptError) {
+          console.error("Password decryption failed:", decryptError);
+        } else {
+          userPassword = decryptedPassword;
+        }
+      }
+
+      // Fallback to plaintext for backward compatibility (will be removed in future)
+      if (!userPassword && pending.password_plaintext) {
+        console.warn("Using deprecated password_plaintext field. Update to password_encrypted.");
+        userPassword = pending.password_plaintext;
+      }
 
       if (!userPassword) {
-        console.error("Missing password_plaintext in pending registration");
+        console.error("Missing or invalid password in pending registration");
         return new Response(JSON.stringify({ error: "Invalid registration data. Please register again." }), {
           status: 500, headers,
         });
