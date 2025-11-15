@@ -56,9 +56,19 @@ import {
   trackBehaviorEvent,
   getSmartSuggestions,
   getRecommendedSectionOrder,
-  shouldAutoExpand
+  shouldAutoExpand,
+  UserBehaviorProfile
 } from '../../services/behaviorTracking';
 import { useSupabaseClient } from '../../contexts/AuthContext';
+import {
+  LearningIndicator,
+  LearningEvent,
+  SmartSuggestionCard,
+  MilestoneCelebration,
+  AnimatedSection,
+  LearningBadge
+} from './LearningIndicator';
+import { Clock, TrendingUp, Zap } from 'lucide-react';
 
 interface DashboardSection {
   id: string;
@@ -84,6 +94,10 @@ const IntelligentAdminPanel: React.FC = () => {
   const [welcomeMessage, setWelcomeMessage] = useState('');
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
   const [behaviorSuggestions, setBehaviorSuggestions] = useState<string[]>([]);
+  const [learningEvents, setLearningEvents] = useState<LearningEvent[]>([]);
+  const [behaviorProfile, setBehaviorProfile] = useState<UserBehaviorProfile | null>(null);
+  const [showMilestone, setShowMilestone] = useState(false);
+  const [milestone, setMilestone] = useState('');
   const categoryOpenStates = {
     revenue: true,
     'patient-care': false,
@@ -380,10 +394,49 @@ const IntelligentAdminPanel: React.FC = () => {
     );
   }
 
+  // Helper function to add learning events
+  const addLearningEvent = (event: Omit<LearningEvent, 'timestamp'> & { timestamp: Date }) => {
+    setLearningEvents(prev => [...prev, event].slice(-10)); // Keep last 10 events
+  };
+
+  // Check for learning milestones
+  const checkMilestones = (profile: UserBehaviorProfile) => {
+    const { totalSessions, sectionStats } = profile;
+
+    if (totalSessions === 10) {
+      setMilestone('🎯 10 Dashboard Visits - The system is learning your patterns!');
+      setShowMilestone(true);
+    } else if (totalSessions === 50) {
+      setMilestone('🚀 50 Dashboard Visits - Your dashboard is now highly personalized!');
+      setShowMilestone(true);
+    } else if (sectionStats.some(s => s.frequencyScore === 100)) {
+      setMilestone('⭐ Perfect Pattern - You have a favorite section!');
+      setShowMilestone(true);
+    }
+  };
+
+  // Handle suggestion click
+  const handleSuggestionClick = (suggestion: string) => {
+    // Extract section ID from suggestion if possible
+    const sectionMatch = suggestion.match(/work on ([\w-]+)/);
+    if (sectionMatch) {
+      const sectionId = sectionMatch[1].replace(/\s+/g, '-');
+      const element = document.getElementById(sectionId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+        addLearningEvent({
+          type: 'suggestion_generated',
+          message: `Jumped to ${sectionId}`,
+          timestamp: new Date()
+        });
+      }
+    }
+  };
+
   // Load personalized layout on mount
   useEffect(() => {
     loadPersonalizedDashboard();
-     
+
   }, [user?.id, adminRole]);
 
   // Auto-show What's New modal
@@ -411,7 +464,15 @@ const IntelligentAdminPanel: React.FC = () => {
 
     try {
       // Get user behavior profile
-      const behaviorProfile = await getUserBehaviorProfile(supabase, user.id);
+      const profile = await getUserBehaviorProfile(supabase, user.id);
+      setBehaviorProfile(profile);
+
+      // Add learning event
+      addLearningEvent({
+        type: 'pattern_detected',
+        message: profile ? 'Loaded your personalized dashboard' : 'Starting to learn your patterns',
+        timestamp: new Date()
+      });
 
       // Get AI-powered personalized layout
       const layout = await DashboardPersonalizationAI.generatePersonalizedLayout(
@@ -421,7 +482,7 @@ const IntelligentAdminPanel: React.FC = () => {
       );
 
       // Get behavior-based suggestions
-      const behaviorBasedSuggestions = getSmartSuggestions(behaviorProfile);
+      const behaviorBasedSuggestions = getSmartSuggestions(profile);
       setBehaviorSuggestions(behaviorBasedSuggestions);
 
       // Merge AI suggestions with behavior suggestions
@@ -435,12 +496,17 @@ const IntelligentAdminPanel: React.FC = () => {
       setAiSuggestions(combinedSuggestions);
 
       // Organize sections based on both AI and behavior recommendations
-      const organizedSections = organizeSections(layout, behaviorProfile);
+      const organizedSections = organizeSections(layout, profile);
       setSections(organizedSections);
+
+      // Check for milestones
+      if (profile) {
+        checkMilestones(profile);
+      }
 
       // Track dashboard view
       if (user.id) {
-        const { data: profile } = await supabase
+        const { data: userProfile } = await supabase
           .from('profiles')
           .select('tenant_id')
           .eq('user_id', user.id)
@@ -448,9 +514,15 @@ const IntelligentAdminPanel: React.FC = () => {
 
         await trackBehaviorEvent(supabase, {
           userId: user.id,
-          tenantId: profile?.tenant_id || '',
+          tenantId: userProfile?.tenant_id || '',
           eventType: 'navigation',
           metadata: { page: 'admin_dashboard' }
+        });
+
+        addLearningEvent({
+          type: 'section_opened',
+          message: 'Dashboard visit tracked',
+          timestamp: new Date()
         });
       }
     } catch (error) {
@@ -556,16 +628,23 @@ const IntelligentAdminPanel: React.FC = () => {
           {/* Personalized Greeting with Role-Specific Stats */}
           <PersonalizedGreeting />
 
-          {/* AI Insights from Learning System */}
+          {/* Smart Suggestions - Actionable and Responsive */}
           {aiSuggestions.length > 0 && (
-            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-lg p-6 text-white">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-2xl">🧠</span>
-                <h3 className="text-lg font-bold">Smart Suggestions</h3>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Zap className="w-5 h-5 text-indigo-600" />
+                <h3 className="text-lg font-bold text-gray-900">Smart Suggestions</h3>
+                <span className="text-xs text-gray-500">Based on your patterns</span>
               </div>
-              <div className="space-y-2">
-                {aiSuggestions.map((suggestion, i) => (
-                  <p key={i} className="text-sm opacity-90">• {suggestion}</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {aiSuggestions.slice(0, 4).map((suggestion, i) => (
+                  <SmartSuggestionCard
+                    key={i}
+                    suggestion={suggestion}
+                    actionLabel="Go there"
+                    onAction={() => handleSuggestionClick(suggestion)}
+                    icon={i === 0 ? <TrendingUp className="w-5 h-5" /> : <Clock className="w-5 h-5" />}
+                  />
                 ))}
               </div>
             </div>
@@ -815,6 +894,22 @@ const IntelligentAdminPanel: React.FC = () => {
             })()}
           </div>
         </div>
+
+        {/* Learning Indicator - Real-time feedback */}
+        {!isLoading && behaviorProfile && (
+          <LearningIndicator
+            events={learningEvents}
+            learningScore={Math.min(100, (behaviorProfile.totalSessions || 0) * 2)}
+            totalInteractions={behaviorProfile.totalSessions || 0}
+          />
+        )}
+
+        {/* Milestone Celebration */}
+        <MilestoneCelebration
+          milestone={milestone}
+          show={showMilestone}
+          onClose={() => setShowMilestone(false)}
+        />
       </div>
     </RequireAdminAuth>
   );
