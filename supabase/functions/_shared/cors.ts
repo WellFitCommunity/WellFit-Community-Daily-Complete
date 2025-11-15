@@ -44,6 +44,9 @@ const ALLOWED_ORIGINS: string[] = Array.from(allowedSet);
 /** GitHub Codespaces pattern for dynamic environment URLs */
 const CODESPACES_PATTERN = /^https:\/\/[a-z0-9-]+\.app\.github\.dev$/;
 
+/** Vercel deployment pattern for dynamic preview/production URLs */
+const VERCEL_PATTERN = /^https:\/\/[a-z0-9-]+\.vercel\.app$/;
+
 /** Options for CORS header generation */
 export interface CorsOptions {
   methods?: string[];        // e.g., ["GET","POST","OPTIONS"]
@@ -59,11 +62,11 @@ export interface CorsOptions {
 const CSP_VALUE =
   "default-src 'self'; " +
   "frame-ancestors 'self' https://wellfitcommunity.live https://www.wellfitcommunity.live https://thewellfitcommunity.org https://www.thewellfitcommunity.org; " +
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.hcaptcha.com https://hcaptcha.com https://www.gstatic.com https://www.google.com https://*.supabase.co https://*.supabase.io; " +
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.hcaptcha.com https://hcaptcha.com https://www.gstatic.com https://www.google.com https://*.supabase.co https://*.supabase.io https://vercel.live https://*.vercel.app; " +
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
   "font-src 'self' https://fonts.gstatic.com; " +
   "img-src 'self' data: blob: https://api.hcaptcha.com https://*.supabase.co https://*.supabase.io https://verify.twilio.com https://api.twilio.com https://api.mailersend.com https://images.unsplash.com https://source.unsplash.com; " +
-  "connect-src 'self' https://api.hcaptcha.com https://*.supabase.co https://*.supabase.io https://verify.twilio.com https://api.twilio.com https://api.mailersend.com https://images.unsplash.com https://source.unsplash.com https://wellfitcommunity.live https://www.wellfitcommunity.live https://thewellfitcommunity.org https://www.thewellfitcommunity.org https://api.weatherapi.com; " +
+  "connect-src 'self' https://api.hcaptcha.com https://*.supabase.co https://*.supabase.io https://verify.twilio.com https://api.twilio.com https://api.mailersend.com https://images.unsplash.com https://source.unsplash.com https://wellfitcommunity.live https://www.wellfitcommunity.live https://thewellfitcommunity.org https://www.thewellfitcommunity.org https://api.weatherapi.com https://vercel.live https://*.vercel.app; " +
   "frame-src 'self' https://hcaptcha.com https://*.hcaptcha.com; " +
   "worker-src 'self' blob:; " +
   "media-src 'self' blob:; " +
@@ -129,7 +132,10 @@ export function cors(
       // Check for GitHub Codespaces URLs (dynamic preview URLs)
       const isCodespaces = CODESPACES_PATTERN.test(normalized);
 
-      if (ALLOWED_ORIGINS.indexOf(normalized) !== -1 || (DEV_ALLOW_LOCAL && isLocal) || isCodespaces) {
+      // Check for Vercel deployment URLs (preview and production)
+      const isVercel = VERCEL_PATTERN.test(normalized);
+
+      if (ALLOWED_ORIGINS.indexOf(normalized) !== -1 || (DEV_ALLOW_LOCAL && isLocal) || isCodespaces || isVercel) {
         headers["Access-Control-Allow-Origin"] = normalized;
         headers["Access-Control-Allow-Credentials"] = "true";
         allowed = true;

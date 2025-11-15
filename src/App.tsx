@@ -78,6 +78,7 @@ const QuestionsPage = React.lazy(() => import('./pages/QuestionsPage'));
 const AdminQuestionsPage = React.lazy(() => import('./pages/AdminQuestionsPage'));
 const MemoryLaneTriviaPage = React.lazy(() => import('./pages/MemoryLaneTriviaPage'));
 const BillingDashboard = React.lazy(() => import('./components/admin/BillingDashboard'));
+const EnvisionLoginPage = React.lazy(() => import('./pages/EnvisionLoginPage'));
 const ApiKeyManager = React.lazy(() => import('./components/admin/ApiKeyManager'));
 const PhotoApprovalPage = React.lazy(() => import('./pages/PhotoApprovalPage'));
 const SmartCallbackPage = React.lazy(() => import('./pages/SmartCallbackPage'));
@@ -165,6 +166,7 @@ function Shell() {
               <Route path="/change-password" element={<ChangePasswordPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/admin-login" element={<AdminLoginPage />} />
+              <Route path="/envision" element={<EnvisionLoginPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/metrics" element={<MetricsPage />} />
               <Route path="/home" element={<Home />} />

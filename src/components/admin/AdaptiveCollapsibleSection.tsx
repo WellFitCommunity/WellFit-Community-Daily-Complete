@@ -5,9 +5,11 @@
  * based on usage patterns powered by Claude Haiku 4.5
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardPersonalizationAI } from '../../services/dashboardPersonalizationAI';
-import { useUser } from '../../contexts/AuthContext';
+import { useUser, useSupabaseClient } from '../../contexts/AuthContext';
+import { trackBehaviorEvent, getUserBehaviorProfile } from '../../services/behaviorTracking';
+import { LearningBadge } from './LearningIndicator';
 
 interface AdaptiveCollapsibleSectionProps {
   sectionId: string;
@@ -33,8 +35,29 @@ export const AdaptiveCollapsibleSection: React.FC<AdaptiveCollapsibleSectionProp
   priority = 'medium',
 }) => {
   const user = useUser();
+  const supabase = useSupabaseClient();
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [openStartTime, setOpenStartTime] = useState<Date | null>(null);
+  const [frequencyScore, setFrequencyScore] = useState(0);
+  const [isTopSection, setIsTopSection] = useState(false);
+
+  // Load behavior data for this section
+  useEffect(() => {
+    const loadSectionStats = async () => {
+      if (!user?.id) return;
+
+      const profile = await getUserBehaviorProfile(supabase, user.id);
+      if (profile) {
+        const sectionStat = profile.sectionStats.find(s => s.sectionId === sectionId);
+        if (sectionStat) {
+          setFrequencyScore(sectionStat.frequencyScore);
+        }
+        setIsTopSection(profile.mostUsedSections.slice(0, 3).includes(sectionId));
+      }
+    };
+
+    loadSectionStats();
+  }, [user?.id, sectionId, supabase]);
 
   // Track open/close interactions
   const handleToggle = async () => {
@@ -44,21 +67,51 @@ export const AdaptiveCollapsibleSection: React.FC<AdaptiveCollapsibleSectionProp
     if (!user?.id) return;
 
     try {
+      // Get tenant ID for tracking
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('user_id', user.id)
+        .single();
+
+      const tenantId = profile?.tenant_id || '';
+
       if (!wasOpen) {
         // Opening section - track start time
         setOpenStartTime(new Date());
+
+        // Track with AI personalization service
         await DashboardPersonalizationAI.trackSectionOpen(
           user.id,
           sectionId,
           title,
           userRole
         );
+
+        // Track with behavior tracking service
+        await trackBehaviorEvent(supabase, {
+          userId: user.id,
+          tenantId,
+          eventType: 'section_opened',
+          sectionId,
+          metadata: { title, priority }
+        });
       } else if (openStartTime) {
-        // Closing section - track close
+        // Closing section - track close and duration
+        const duration = Date.now() - openStartTime.getTime();
         setOpenStartTime(null);
+
+        // Track with behavior tracking service
+        await trackBehaviorEvent(supabase, {
+          userId: user.id,
+          tenantId,
+          eventType: 'section_closed',
+          sectionId,
+          metadata: { title, duration }
+        });
       }
     } catch (error) {
-
+      // Fail silently - tracking should never break functionality
     }
   };
 
@@ -84,11 +137,16 @@ export const AdaptiveCollapsibleSection: React.FC<AdaptiveCollapsibleSectionProp
         <div className="flex items-center flex-1">
           <span className="text-2xl mr-3" aria-hidden="true">{icon}</span>
           <div className="text-left">
-            <div className="flex items-center">
+            <div className="flex items-center gap-2">
               <h2 className={`text-xl font-semibold ${headerColor}`}>
                 {title}
               </h2>
               {renderPriorityBadge()}
+              <LearningBadge
+                sectionId={sectionId}
+                frequencyScore={frequencyScore}
+                isTopSection={isTopSection}
+              />
             </div>
             {subtitle && <p className="text-sm text-gray-600 mt-1">{subtitle}</p>}
           </div>

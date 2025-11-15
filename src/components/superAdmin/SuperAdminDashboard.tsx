@@ -188,7 +188,6 @@ const SuperAdminDashboard: React.FC = () => {
   ];
 
   return (
-<<<<<<< HEAD
     <>
       {/* Vault Animation Overlay */}
       {showVaultAnimation && (
@@ -199,9 +198,6 @@ const SuperAdminDashboard: React.FC = () => {
       )}
 
       <div className="min-h-screen bg-gray-50">
-=======
-    <div className="min-h-screen bg-teal-50">
->>>>>>> 059323c1cdcbd70c8b6b01407841daf6ea690b65
       {/* Header */}
       <div className="bg-gradient-to-r from-teal-600 to-teal-700 border-b border-teal-800 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -218,6 +214,11 @@ const SuperAdminDashboard: React.FC = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Personalized Greeting */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <PersonalizedGreeting />
       </div>
 
       {/* Tabs */}

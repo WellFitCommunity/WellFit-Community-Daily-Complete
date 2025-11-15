@@ -50,6 +50,25 @@ import { SOC2AuditDashboard } from './SOC2AuditDashboard';
 import { SOC2IncidentResponseDashboard } from './SOC2IncidentResponseDashboard';
 import { SOC2ExecutiveDashboard } from './SOC2ExecutiveDashboard';
 import { SystemAdminDashboard } from './SystemAdminDashboard';
+import { PersonalizedGreeting } from '../ai-transparency';
+import {
+  getUserBehaviorProfile,
+  trackBehaviorEvent,
+  getSmartSuggestions,
+  getRecommendedSectionOrder,
+  shouldAutoExpand,
+  UserBehaviorProfile
+} from '../../services/behaviorTracking';
+import { useSupabaseClient } from '../../contexts/AuthContext';
+import {
+  LearningIndicator,
+  LearningEvent,
+  SmartSuggestionCard,
+  MilestoneCelebration,
+  AnimatedSection,
+  LearningBadge
+} from './LearningIndicator';
+import { Clock, TrendingUp, Zap } from 'lucide-react';
 
 interface DashboardSection {
   id: string;
@@ -67,12 +86,18 @@ interface DashboardSection {
 const IntelligentAdminPanel: React.FC = () => {
   const { adminRole } = useAdminAuth();
   const user = useUser();
+  const supabase = useSupabaseClient();
   const navigate = useNavigate();
   const [showWhatsNew, setShowWhatsNew] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [sections, setSections] = useState<DashboardSection[]>([]);
   const [welcomeMessage, setWelcomeMessage] = useState('');
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
+  const [behaviorSuggestions, setBehaviorSuggestions] = useState<string[]>([]);
+  const [learningEvents, setLearningEvents] = useState<LearningEvent[]>([]);
+  const [behaviorProfile, setBehaviorProfile] = useState<UserBehaviorProfile | null>(null);
+  const [showMilestone, setShowMilestone] = useState(false);
+  const [milestone, setMilestone] = useState('');
   const categoryOpenStates = {
     revenue: true,
     'patient-care': false,
@@ -369,10 +394,49 @@ const IntelligentAdminPanel: React.FC = () => {
     );
   }
 
+  // Helper function to add learning events
+  const addLearningEvent = (event: Omit<LearningEvent, 'timestamp'> & { timestamp: Date }) => {
+    setLearningEvents(prev => [...prev, event].slice(-10)); // Keep last 10 events
+  };
+
+  // Check for learning milestones
+  const checkMilestones = (profile: UserBehaviorProfile) => {
+    const { totalSessions, sectionStats } = profile;
+
+    if (totalSessions === 10) {
+      setMilestone('🎯 10 Dashboard Visits - The system is learning your patterns!');
+      setShowMilestone(true);
+    } else if (totalSessions === 50) {
+      setMilestone('🚀 50 Dashboard Visits - Your dashboard is now highly personalized!');
+      setShowMilestone(true);
+    } else if (sectionStats.some(s => s.frequencyScore === 100)) {
+      setMilestone('⭐ Perfect Pattern - You have a favorite section!');
+      setShowMilestone(true);
+    }
+  };
+
+  // Handle suggestion click
+  const handleSuggestionClick = (suggestion: string) => {
+    // Extract section ID from suggestion if possible
+    const sectionMatch = suggestion.match(/work on ([\w-]+)/);
+    if (sectionMatch) {
+      const sectionId = sectionMatch[1].replace(/\s+/g, '-');
+      const element = document.getElementById(sectionId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+        addLearningEvent({
+          type: 'suggestion_generated',
+          message: `Jumped to ${sectionId}`,
+          timestamp: new Date()
+        });
+      }
+    }
+  };
+
   // Load personalized layout on mount
   useEffect(() => {
     loadPersonalizedDashboard();
-     
+
   }, [user?.id, adminRole]);
 
   // Auto-show What's New modal
@@ -399,6 +463,17 @@ const IntelligentAdminPanel: React.FC = () => {
     setIsLoading(true);
 
     try {
+      // Get user behavior profile
+      const profile = await getUserBehaviorProfile(supabase, user.id);
+      setBehaviorProfile(profile);
+
+      // Add learning event
+      addLearningEvent({
+        type: 'pattern_detected',
+        message: profile ? 'Loaded your personalized dashboard' : 'Starting to learn your patterns',
+        timestamp: new Date()
+      });
+
       // Get AI-powered personalized layout
       const layout = await DashboardPersonalizationAI.generatePersonalizedLayout(
         user.id,
@@ -406,13 +481,50 @@ const IntelligentAdminPanel: React.FC = () => {
         new Date().getHours()
       );
 
+      // Get behavior-based suggestions
+      const behaviorBasedSuggestions = getSmartSuggestions(profile);
+      setBehaviorSuggestions(behaviorBasedSuggestions);
+
+      // Merge AI suggestions with behavior suggestions
+      const combinedSuggestions = [
+        ...(layout.suggestions || []),
+        ...behaviorBasedSuggestions
+      ].slice(0, 5); // Limit to 5 total
+
       // Set welcome message and suggestions
       setWelcomeMessage(layout.welcomeMessage || '');
-      setAiSuggestions(layout.suggestions || []);
+      setAiSuggestions(combinedSuggestions);
 
-      // Organize sections based on AI recommendations
-      const organizedSections = organizeSections(layout);
+      // Organize sections based on both AI and behavior recommendations
+      const organizedSections = organizeSections(layout, profile);
       setSections(organizedSections);
+
+      // Check for milestones
+      if (profile) {
+        checkMilestones(profile);
+      }
+
+      // Track dashboard view
+      if (user.id) {
+        const { data: userProfile } = await supabase
+          .from('profiles')
+          .select('tenant_id')
+          .eq('user_id', user.id)
+          .single();
+
+        await trackBehaviorEvent(supabase, {
+          userId: user.id,
+          tenantId: userProfile?.tenant_id || '',
+          eventType: 'navigation',
+          metadata: { page: 'admin_dashboard' }
+        });
+
+        addLearningEvent({
+          type: 'section_opened',
+          message: 'Dashboard visit tracked',
+          timestamp: new Date()
+        });
+      }
     } catch (error) {
       // HIPAA Audit: Log dashboard personalization failure
       await auditLogger.error('ADMIN_DASHBOARD_PERSONALIZATION_FAILED', error instanceof Error ? error : new Error('Unknown error'), {
@@ -426,15 +538,22 @@ const IntelligentAdminPanel: React.FC = () => {
     }
   }
 
-  function organizeSections(layout: any): DashboardSection[] {
+  function organizeSections(layout: any, behaviorProfile: any = null): DashboardSection[] {
     // Filter sections by role
     const visibleSections = allSections.filter(
       (section) => !section.roles || section.roles.includes(adminRole || 'admin')
     );
 
+    // Get behavior-based recommended order
+    const allSectionIds = allSections.map(s => s.id);
+    const behaviorOrder = behaviorProfile
+      ? getRecommendedSectionOrder(behaviorProfile, allSectionIds)
+      : allSectionIds;
+
     // Sort within each category by:
-    // 1. User's top sections (from AI)
-    // 2. Priority (high > medium > low)
+    // 1. Behavior-based frequency (most used first)
+    // 2. User's top sections (from AI)
+    // 3. Priority (high > medium > low)
 
     const priorityOrder = { high: 1, medium: 2, low: 3 };
 
@@ -442,6 +561,13 @@ const IntelligentAdminPanel: React.FC = () => {
       // Keep same category together
       if (a.category !== b.category) {
         return 0; // Don't sort across categories
+      }
+
+      // Sort by behavior frequency
+      const aBehaviorIndex = behaviorOrder.indexOf(a.id);
+      const bBehaviorIndex = behaviorOrder.indexOf(b.id);
+      if (aBehaviorIndex !== bBehaviorIndex) {
+        return aBehaviorIndex - bBehaviorIndex;
       }
 
       // Check if in top sections
@@ -499,18 +625,30 @@ const IntelligentAdminPanel: React.FC = () => {
       <div className="min-h-screen bg-gray-50">
         <AdminHeader title="🎯 Mission Control" showRiskAssessment={true} />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-          {/* Personalized Greeting */}
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl shadow-lg p-6 text-white">
-            <h1 className="text-2xl font-bold mb-2">{welcomeMessage || 'Welcome to your dashboard!'}</h1>
-            {aiSuggestions.length > 0 && (
-              <div className="mt-4 space-y-2">
-                <p className="text-sm opacity-90 font-medium">🧠 AI Insights:</p>
-                {aiSuggestions.map((suggestion, i) => (
-                  <p key={i} className="text-sm opacity-90">• {suggestion}</p>
+          {/* Personalized Greeting with Role-Specific Stats */}
+          <PersonalizedGreeting />
+
+          {/* Smart Suggestions - Actionable and Responsive */}
+          {aiSuggestions.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Zap className="w-5 h-5 text-indigo-600" />
+                <h3 className="text-lg font-bold text-gray-900">Smart Suggestions</h3>
+                <span className="text-xs text-gray-500">Based on your patterns</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {aiSuggestions.slice(0, 4).map((suggestion, i) => (
+                  <SmartSuggestionCard
+                    key={i}
+                    suggestion={suggestion}
+                    actionLabel="Go there"
+                    onAction={() => handleSuggestionClick(suggestion)}
+                    icon={i === 0 ? <TrendingUp className="w-5 h-5" /> : <Clock className="w-5 h-5" />}
+                  />
                 ))}
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* What's New Modal */}
           <WhatsNewModal isOpen={showWhatsNew} onClose={() => setShowWhatsNew(false)} />
@@ -756,6 +894,22 @@ const IntelligentAdminPanel: React.FC = () => {
             })()}
           </div>
         </div>
+
+        {/* Learning Indicator - Real-time feedback */}
+        {!isLoading && behaviorProfile && (
+          <LearningIndicator
+            events={learningEvents}
+            learningScore={Math.min(100, (behaviorProfile.totalSessions || 0) * 2)}
+            totalInteractions={behaviorProfile.totalSessions || 0}
+          />
+        )}
+
+        {/* Milestone Celebration */}
+        <MilestoneCelebration
+          milestone={milestone}
+          show={showMilestone}
+          onClose={() => setShowMilestone(false)}
+        />
       </div>
     </RequireAdminAuth>
   );
