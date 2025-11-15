@@ -50,6 +50,7 @@ import { SOC2AuditDashboard } from './SOC2AuditDashboard';
 import { SOC2IncidentResponseDashboard } from './SOC2IncidentResponseDashboard';
 import { SOC2ExecutiveDashboard } from './SOC2ExecutiveDashboard';
 import { SystemAdminDashboard } from './SystemAdminDashboard';
+import { PersonalizedGreeting } from '../ai-transparency';
 
 interface DashboardSection {
   id: string;
@@ -499,18 +500,23 @@ const IntelligentAdminPanel: React.FC = () => {
       <div className="min-h-screen bg-gray-50">
         <AdminHeader title="🎯 Mission Control" showRiskAssessment={true} />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-          {/* Personalized Greeting */}
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl shadow-lg p-6 text-white">
-            <h1 className="text-2xl font-bold mb-2">{welcomeMessage || 'Welcome to your dashboard!'}</h1>
-            {aiSuggestions.length > 0 && (
-              <div className="mt-4 space-y-2">
-                <p className="text-sm opacity-90 font-medium">🧠 AI Insights:</p>
+          {/* Personalized Greeting with Role-Specific Stats */}
+          <PersonalizedGreeting />
+
+          {/* AI Insights from Learning System */}
+          {aiSuggestions.length > 0 && (
+            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-lg p-6 text-white">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-2xl">🧠</span>
+                <h3 className="text-lg font-bold">Smart Suggestions</h3>
+              </div>
+              <div className="space-y-2">
                 {aiSuggestions.map((suggestion, i) => (
                   <p key={i} className="text-sm opacity-90">• {suggestion}</p>
                 ))}
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* What's New Modal */}
           <WhatsNewModal isOpen={showWhatsNew} onClose={() => setShowWhatsNew(false)} />

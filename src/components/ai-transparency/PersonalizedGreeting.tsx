@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
+import { generateGreeting, getRoleSpecificStats } from '../../services/personalizedGreeting';
 
 interface GreetingData {
   show_greeting: boolean;
@@ -20,10 +21,45 @@ export const PersonalizedGreeting: React.FC = () => {
   const [greetingData, setGreetingData] = useState<GreetingData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showQuote, setShowQuote] = useState(false);
+  const [roleStats, setRoleStats] = useState<Record<string, any>>({});
+  const [localGreeting, setLocalGreeting] = useState<string>('');
 
   useEffect(() => {
     fetchGreeting();
+    fetchLocalGreeting();
   }, [user]);
+
+  const fetchLocalGreeting = async () => {
+    if (!user) return;
+
+    try {
+      // Fetch user profile and generate personalized greeting
+      const greetingContext = await generateGreeting(supabase, user.id);
+
+      if (greetingContext) {
+        setLocalGreeting(greetingContext.fullGreeting);
+
+        // Fetch role-specific stats
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role, tenant_id')
+          .eq('user_id', user.id)
+          .single();
+
+        if (profile) {
+          const stats = await getRoleSpecificStats(
+            supabase,
+            user.id,
+            profile.role,
+            profile.tenant_id
+          );
+          setRoleStats(stats);
+        }
+      }
+    } catch (error) {
+      // Fail gracefully
+    }
+  };
 
   useEffect(() => {
     // Animate quote appearance after greeting
@@ -105,9 +141,74 @@ export const PersonalizedGreeting: React.FC = () => {
             greetingData.time_of_day
           )} bg-clip-text text-transparent`}
         >
-          {greetingData.greeting}
+          {greetingData.greeting || localGreeting}
         </h1>
       </motion.div>
+
+      {/* Role-Specific Quick Stats */}
+      {Object.keys(roleStats).length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4"
+        >
+          {roleStats.patientCount !== undefined && (
+            <div className="bg-white rounded-lg shadow-sm p-4 border border-blue-100">
+              <div className="text-sm text-gray-600 font-medium">Patients</div>
+              <div className="text-2xl font-bold text-blue-600 mt-1">{roleStats.patientCount}</div>
+            </div>
+          )}
+          {roleStats.pendingAlerts !== undefined && (
+            <div className="bg-white rounded-lg shadow-sm p-4 border border-yellow-100">
+              <div className="text-sm text-gray-600 font-medium">Pending Alerts</div>
+              <div className="text-2xl font-bold text-yellow-600 mt-1">{roleStats.pendingAlerts}</div>
+            </div>
+          )}
+          {roleStats.activePatients !== undefined && (
+            <div className="bg-white rounded-lg shadow-sm p-4 border border-green-100">
+              <div className="text-sm text-gray-600 font-medium">Active Patients</div>
+              <div className="text-2xl font-bold text-green-600 mt-1">{roleStats.activePatients}</div>
+            </div>
+          )}
+          {roleStats.vitalsDueToday !== undefined && (
+            <div className="bg-white rounded-lg shadow-sm p-4 border border-purple-100">
+              <div className="text-sm text-gray-600 font-medium">Vitals Due Today</div>
+              <div className="text-2xl font-bold text-purple-600 mt-1">{roleStats.vitalsDueToday}</div>
+            </div>
+          )}
+          {roleStats.totalUsers !== undefined && (
+            <div className="bg-white rounded-lg shadow-sm p-4 border border-indigo-100">
+              <div className="text-sm text-gray-600 font-medium">Total Users</div>
+              <div className="text-2xl font-bold text-indigo-600 mt-1">{roleStats.totalUsers}</div>
+            </div>
+          )}
+          {roleStats.pendingApprovals !== undefined && (
+            <div className="bg-white rounded-lg shadow-sm p-4 border border-orange-100">
+              <div className="text-sm text-gray-600 font-medium">Pending Approvals</div>
+              <div className="text-2xl font-bold text-orange-600 mt-1">{roleStats.pendingApprovals}</div>
+            </div>
+          )}
+          {roleStats.totalTenants !== undefined && (
+            <div className="bg-white rounded-lg shadow-sm p-4 border border-slate-100">
+              <div className="text-sm text-gray-600 font-medium">Tenants</div>
+              <div className="text-2xl font-bold text-slate-600 mt-1">{roleStats.totalTenants}</div>
+            </div>
+          )}
+          {roleStats.criticalAlerts !== undefined && (
+            <div className="bg-white rounded-lg shadow-sm p-4 border border-red-100">
+              <div className="text-sm text-gray-600 font-medium">Critical Alerts</div>
+              <div className="text-2xl font-bold text-red-600 mt-1">{roleStats.criticalAlerts}</div>
+            </div>
+          )}
+          {roleStats.platformHealth !== undefined && (
+            <div className="bg-white rounded-lg shadow-sm p-4 border border-emerald-100">
+              <div className="text-sm text-gray-600 font-medium">Platform Health</div>
+              <div className="text-2xl font-bold text-emerald-600 mt-1">{roleStats.platformHealth}%</div>
+            </div>
+          )}
+        </motion.div>
+      )}
 
       {/* Motivational Quote */}
       <AnimatePresence>

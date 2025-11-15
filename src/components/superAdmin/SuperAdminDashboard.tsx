@@ -10,6 +10,7 @@ import AuditLogViewer from './AuditLogViewer';
 import TenantDataViewer from './TenantDataViewer';
 import VaultAnimation from './VaultAnimation';
 import { auditLogger } from '../../services/auditLogger';
+import { PersonalizedGreeting } from '../ai-transparency';
 
 const ApiKeyManager = React.lazy(() => import('../admin/ApiKeyManager'));
 
@@ -207,6 +208,11 @@ const SuperAdminDashboard: React.FC = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Personalized Greeting */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <PersonalizedGreeting />
       </div>
 
       {/* Tabs */}

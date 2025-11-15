@@ -15,6 +15,7 @@ import { auditLogger } from '../../services/auditLogger';
 import ClaudeCareAssistantPanel from '../claude-care/ClaudeCareAssistantPanel';
 import CHWAlertsWidget from '../chw/CHWAlertsWidget';
 import PasswordGenerator from '../shared/PasswordGenerator';
+import { PersonalizedGreeting } from '../ai-transparency';
 
 // Collapsible Section Component
 interface CollapsibleSectionProps {
@@ -277,6 +278,9 @@ const NursePanel: React.FC = () => {
         <AdminHeader title="🏮 Envision Atlus - Nurse Dashboard" showRiskAssessment={true} />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+
+          {/* Personalized Greeting with Stats */}
+          <PersonalizedGreeting />
 
           {/* CHW Field Alerts */}
           <CHWAlertsWidget userRole="nurse" userId={localStorage.getItem('userId') || ''} maxAlerts={5} />
