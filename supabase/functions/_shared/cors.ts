@@ -44,6 +44,9 @@ const ALLOWED_ORIGINS: string[] = Array.from(allowedSet);
 /** GitHub Codespaces pattern for dynamic environment URLs */
 const CODESPACES_PATTERN = /^https:\/\/[a-z0-9-]+\.app\.github\.dev$/;
 
+/** Vercel deployment pattern for dynamic preview/production URLs */
+const VERCEL_PATTERN = /^https:\/\/[a-z0-9-]+\.vercel\.app$/;
+
 /** Options for CORS header generation */
 export interface CorsOptions {
   methods?: string[];        // e.g., ["GET","POST","OPTIONS"]
@@ -129,7 +132,10 @@ export function cors(
       // Check for GitHub Codespaces URLs (dynamic preview URLs)
       const isCodespaces = CODESPACES_PATTERN.test(normalized);
 
-      if (ALLOWED_ORIGINS.indexOf(normalized) !== -1 || (DEV_ALLOW_LOCAL && isLocal) || isCodespaces) {
+      // Check for Vercel deployment URLs (preview and production)
+      const isVercel = VERCEL_PATTERN.test(normalized);
+
+      if (ALLOWED_ORIGINS.indexOf(normalized) !== -1 || (DEV_ALLOW_LOCAL && isLocal) || isCodespaces || isVercel) {
         headers["Access-Control-Allow-Origin"] = normalized;
         headers["Access-Control-Allow-Credentials"] = "true";
         allowed = true;
