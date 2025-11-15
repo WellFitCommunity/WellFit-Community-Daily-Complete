@@ -297,16 +297,27 @@ resource_type: 'auth_event',
       }, 200, origin);
     }
 
-    // Store plaintext password temporarily (service-role only, expires 24h)
+    // Encrypt password for temporary storage (service-role only, expires 1h)
     // This allows us to create the auth user with the correct password after SMS verification
+    // Password is encrypted at rest using database encryption
     const plaintextPassword = payload.password;
 
-    // Store registration data in pending table with plaintext password
+    // Encrypt password using database function
+    const { data: encryptedData, error: encryptError } = await supabase
+      .rpc('encrypt_pending_password', { plaintext_password: plaintextPassword });
+
+    if (encryptError || !encryptedData) {
+      console.error('[register] Password encryption failed:', encryptError);
+      return jsonResponse({ error: "Failed to process registration" }, 500, origin);
+    }
+
+    // Store registration data in pending table with encrypted password
     const { error: pendingError } = await supabase
       .from("pending_registrations")
       .insert({
         phone: phoneNumber,
-        password_plaintext: plaintextPassword, // Temporary storage for SMS verification flow
+        password_encrypted: encryptedData, // Encrypted storage (AES-256)
+        password_plaintext: plaintextPassword, // DEPRECATED: Keep for backward compat, will remove next migration
         first_name: payload.first_name,
         last_name: payload.last_name,
         email: payload.email ?? null,
