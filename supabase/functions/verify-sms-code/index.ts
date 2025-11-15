@@ -136,12 +136,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
       const { error: profileError } = await supabase
         .from("profiles")
         .insert({
-          id: authData.user.id,
+          user_id: authData.user.id,  // ✅ FIXED: Was 'id', now 'user_id' (matches schema)
           first_name: pending.first_name,
           last_name: pending.last_name,
           email: pending.email,
           phone: phone,
           role_code: pending.role_code,
+          role: pending.role_slug,  // Added role field
           role_slug: pending.role_slug,
           created_by: null,
         });

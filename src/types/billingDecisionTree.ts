@@ -56,6 +56,7 @@ export type MDMComplexity = 'straightforward' | 'low' | 'moderate' | 'high';
 export interface DecisionTreeResult {
   success: boolean;
   claimLine: BillableClaimLine | null;
+  additionalClaimLines?: BillableClaimLine[]; // For prolonged services (99417), multiple procedures, etc.
   decisions: DecisionNode[];
   validationErrors: ValidationIssue[];
   warnings: ValidationIssue[];
@@ -150,6 +151,11 @@ export interface ModifierDecision {
   modifiersApplied: string[];
   modifierRationale: Record<string, string>;
   specialCircumstances: string[];
+  prolongedServices?: {
+    applies: boolean;
+    units: number;
+    additionalCPT?: string;
+  };
 }
 
 // Node F: Fee Schedule Lookup

@@ -39,6 +39,30 @@ const EnrollSchema = z.object({
 
 // ─── Helper: get caller + roles ─────────────────────────────────────────────
 async function getCaller(req: Request) {
+  // Check for X-Admin-Token (admin/nurse PIN-based auth)
+  const adminToken = req.headers.get("X-Admin-Token");
+  if (adminToken) {
+    // Validate admin session token
+    const { data: session, error: sessionError } = await supabase
+      .from("admin_sessions")
+      .select("user_id, role, expires_at")
+      .eq("admin_token", adminToken)
+      .single();
+
+    if (sessionError || !session) {
+      return { id: null as string | null, roles: [] as string[] };
+    }
+
+    // Check if session is expired
+    if (new Date(session.expires_at) < new Date()) {
+      return { id: null as string | null, roles: [] as string[] };
+    }
+
+    // Return admin/nurse with their role
+    return { id: session.user_id, roles: [session.role] };
+  }
+
+  // Fallback to Bearer token (regular JWT auth)
   const hdr = req.headers.get("Authorization") || "";
   const token = hdr.startsWith("Bearer ") ? hdr.slice(7) : "";
   if (!token) return { id: null as string | null, roles: [] as string[] };
@@ -83,7 +107,7 @@ function getCorsHeaders(origin: string | null) {
     "Content-Type": "application/json",
     "Access-Control-Allow-Origin": allowedOrigin || "null",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, x-client-info, apikey",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, x-client-info, apikey, X-Admin-Token",
     "Access-Control-Allow-Credentials": "true",
   });
 }
@@ -103,9 +127,9 @@ serve(async (req: Request) => {
     if (!adminId)
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
 
-    const isAllowed = roles.includes("admin") || roles.includes("super_admin");
+    const isAllowed = roles.includes("admin") || roles.includes("super_admin") || roles.includes("nurse");
     if (!isAllowed)
-      return new Response(JSON.stringify({ error: "Insufficient privileges" }), { status: 403, headers });
+      return new Response(JSON.stringify({ error: "Insufficient privileges - admin, super_admin, or nurse role required" }), { status: 403, headers });
 
     // 2) Validate input
     const body = await req.json();

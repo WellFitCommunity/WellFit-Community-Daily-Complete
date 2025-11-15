@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabaseClient';
 import AdminHeader from '../components/admin/AdminHeader';
 import RequireAdminAuth from '../components/auth/RequireAdminAuth';
+import { useAdminAuth } from '../contexts/AdminAuthContext';
 
 const EnrollSeniorPage: React.FC = () => {
   const navigate = useNavigate();
+  const { invokeAdminFunction } = useAdminAuth();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [generatedPassword, setGeneratedPassword] = useState<string>('');
@@ -95,14 +96,12 @@ const EnrollSeniorPage: React.FC = () => {
 
       // If test patient, use test_users function
       if (isTestPatient) {
-        const { data, error } = await supabase.functions.invoke('test-users/create', {
-          body: {
-            phone,
-            password: tempPassword,
-            full_name: `${firstName} ${lastName}`,
-            email: email || undefined,
-            test_tag: testTag || undefined
-          }
+        const { data, error } = await invokeAdminFunction('test-users/create', {
+          phone,
+          password: tempPassword,
+          full_name: `${firstName} ${lastName}`,
+          email: email || undefined,
+          test_tag: testTag || undefined
         });
 
         // Check if user_id returned (success) even if error present
@@ -118,14 +117,8 @@ const EnrollSeniorPage: React.FC = () => {
           throw new Error(error?.message || 'No user ID returned - enrollment failed');
         }
       } else {
-        // Regular enrollment
-        const { data: sessionData } = await supabase.auth.getSession();
-        const accessToken = sessionData.session?.access_token;
-
-        const { data, error } = await supabase.functions.invoke('enrollClient', {
-          body: enrollmentBody,
-          headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined
-        });
+        // Regular enrollment using admin context (includes X-Admin-Token header automatically)
+        const { data, error } = await invokeAdminFunction('enrollClient', enrollmentBody);
 
         // Check if user_id returned (success) even if error present
         if (data?.user_id) {
