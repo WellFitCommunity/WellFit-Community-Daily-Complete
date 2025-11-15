@@ -141,10 +141,15 @@ export function useRealtimeSubscription<T = any>(
     } catch (err) {
       if (mountedRef.current) {
         setError(err as Error);
-        auditLogger.error('REALTIME_FETCH_ERROR', err as Error, {
-          component: componentName,
-          table,
-        });
+        // Silently skip audit logging to avoid 403 spam
+        try {
+          auditLogger.error('REALTIME_FETCH_ERROR', err as Error, {
+            component: componentName,
+            table,
+          });
+        } catch {
+          // Ignore audit logging errors
+        }
       }
     } finally {
       if (mountedRef.current) {
@@ -161,6 +166,7 @@ export function useRealtimeSubscription<T = any>(
       try {
         const { data } = await supabase.auth.getUser();
 
+        // NON-BLOCKING: Silently skip registry if RLS permissions fail
         const { data: registryData, error: registryError } = await supabase
           .from('realtime_subscription_registry')
           .insert({
@@ -181,16 +187,26 @@ export function useRealtimeSubscription<T = any>(
           .single();
 
         if (registryError) {
-          auditLogger.warn('REALTIME_REGISTRY_FAILED', {
-            error: registryError.message,
-            component: componentName,
-          });
+          // Silently skip audit logging to avoid 403 spam
+          try {
+            auditLogger.warn('REALTIME_REGISTRY_FAILED', {
+              error: registryError.message,
+              component: componentName,
+            });
+          } catch {
+            // Ignore audit logging errors
+          }
           return null;
         }
 
         return registryData?.id || null;
       } catch (err) {
-        auditLogger.warn('REALTIME_REGISTRY_ERROR', { error: String(err), component: componentName });
+        // Silently skip audit logging to avoid 403 spam
+        try {
+          auditLogger.warn('REALTIME_REGISTRY_ERROR', { error: String(err), component: componentName });
+        } catch {
+          // Ignore audit logging errors
+        }
         return null;
       }
     },
