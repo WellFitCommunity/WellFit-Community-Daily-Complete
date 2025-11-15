@@ -419,6 +419,39 @@ Always prioritize patient safety and HIPAA compliance.`;
   resetMetrics(): void {
     this.costTracker.reset();
   }
+
+  /**
+   * Calculate cost for Anthropic API calls
+   * Based on Claude pricing (as of 2025-01-15)
+   */
+  calculateCost(
+    inputTokens: number,
+    outputTokens: number,
+    model: string
+  ): number {
+    // Pricing per million tokens (MTok)
+    const pricing: Record<string, { input: number; output: number }> = {
+      'claude-haiku-4-5-20250929': {
+        input: 1.00,   // $1.00 per MTok
+        output: 5.00,  // $5.00 per MTok
+      },
+      'claude-sonnet-4-5-20250929': {
+        input: 3.00,   // $3.00 per MTok
+        output: 15.00, // $15.00 per MTok
+      },
+      'claude-opus-4-5-20250929': {
+        input: 15.00,  // $15.00 per MTok
+        output: 75.00, // $75.00 per MTok
+      },
+    };
+
+    const modelPricing = pricing[model] || pricing['claude-sonnet-4-5-20250929'];
+
+    const inputCost = (inputTokens / 1_000_000) * modelPricing.input;
+    const outputCost = (outputTokens / 1_000_000) * modelPricing.output;
+
+    return inputCost + outputCost;
+  }
 }
 
 // =====================================================
