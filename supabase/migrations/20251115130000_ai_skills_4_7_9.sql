@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS public.passive_sdoh_detections (
   review_notes text,
 
   -- Auto-created indicator
-  sdoh_indicator_id uuid REFERENCES public.sdoh_indicators(id),
+  sdoh_indicator_id uuid, -- TODO: Add FK constraint once sdoh_indicators table is re-created
   auto_created_indicator boolean DEFAULT false,
 
   -- Model metadata
@@ -116,8 +116,8 @@ FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 ALTER TABLE public.passive_sdoh_detections ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "passive_sdoh_tenant_isolation" ON public.passive_sdoh_detections;
 CREATE POLICY "passive_sdoh_tenant_isolation" ON public.passive_sdoh_detections
-  USING (public.user_has_tenant_access(tenant_id))
-  WITH CHECK (public.user_has_tenant_access(tenant_id));
+  USING (tenant_id = get_current_tenant_id())
+  WITH CHECK (tenant_id = get_current_tenant_id());
 
 COMMENT ON TABLE public.passive_sdoh_detections IS 'AI-detected social determinants of health from patient communications';
 
@@ -200,8 +200,8 @@ FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 ALTER TABLE public.ai_shift_handoff_summaries ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "ai_handoff_tenant_isolation" ON public.ai_shift_handoff_summaries;
 CREATE POLICY "ai_handoff_tenant_isolation" ON public.ai_shift_handoff_summaries
-  USING (public.user_has_tenant_access(tenant_id))
-  WITH CHECK (public.user_has_tenant_access(tenant_id));
+  USING (tenant_id = get_current_tenant_id())
+  WITH CHECK (tenant_id = get_current_tenant_id());
 
 COMMENT ON TABLE public.ai_shift_handoff_summaries IS 'AI-generated shift handoff summaries for nursing staff';
 
@@ -318,8 +318,8 @@ FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 ALTER TABLE public.ccm_eligibility_assessments ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "ccm_eligibility_tenant_isolation" ON public.ccm_eligibility_assessments;
 CREATE POLICY "ccm_eligibility_tenant_isolation" ON public.ccm_eligibility_assessments
-  USING (public.user_has_tenant_access(tenant_id))
-  WITH CHECK (public.user_has_tenant_access(tenant_id));
+  USING (tenant_id = get_current_tenant_id())
+  WITH CHECK (tenant_id = get_current_tenant_id());
 
 COMMENT ON TABLE public.ccm_eligibility_assessments IS 'AI-powered CCM eligibility assessments for billing optimization';
 

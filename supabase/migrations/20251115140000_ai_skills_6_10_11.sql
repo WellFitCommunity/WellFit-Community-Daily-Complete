@@ -69,8 +69,8 @@ FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 ALTER TABLE public.cultural_content_cache ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "cultural_cache_tenant_isolation" ON public.cultural_content_cache;
 CREATE POLICY "cultural_cache_tenant_isolation" ON public.cultural_content_cache
-  USING (public.user_has_tenant_access(tenant_id))
-  WITH CHECK (public.user_has_tenant_access(tenant_id));
+  USING (tenant_id = get_current_tenant_id())
+  WITH CHECK (tenant_id = get_current_tenant_id());
 
 COMMENT ON TABLE public.cultural_content_cache IS 'Cached culturally-adapted health content in multiple languages';
 
@@ -119,8 +119,8 @@ CREATE INDEX IF NOT EXISTS idx_personalized_content_language ON public.personali
 ALTER TABLE public.personalized_content_delivery ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "personalized_content_tenant_isolation" ON public.personalized_content_delivery;
 CREATE POLICY "personalized_content_tenant_isolation" ON public.personalized_content_delivery
-  USING (public.user_has_tenant_access(tenant_id))
-  WITH CHECK (public.user_has_tenant_access(tenant_id));
+  USING (tenant_id = get_current_tenant_id())
+  WITH CHECK (tenant_id = get_current_tenant_id());
 
 COMMENT ON TABLE public.personalized_content_delivery IS 'Log of culturally-personalized content delivered to patients';
 
@@ -214,8 +214,8 @@ FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 ALTER TABLE public.welfare_check_priority_queue ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "welfare_check_tenant_isolation" ON public.welfare_check_priority_queue;
 CREATE POLICY "welfare_check_tenant_isolation" ON public.welfare_check_priority_queue
-  USING (public.user_has_tenant_access(tenant_id))
-  WITH CHECK (public.user_has_tenant_access(tenant_id));
+  USING (tenant_id = get_current_tenant_id())
+  WITH CHECK (tenant_id = get_current_tenant_id());
 
 COMMENT ON TABLE public.welfare_check_priority_queue IS 'Daily priority queue for law enforcement welfare checks';
 
@@ -318,8 +318,8 @@ FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 ALTER TABLE public.emergency_response_briefings ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "emergency_briefing_tenant_isolation" ON public.emergency_response_briefings;
 CREATE POLICY "emergency_briefing_tenant_isolation" ON public.emergency_response_briefings
-  USING (public.user_has_tenant_access(tenant_id))
-  WITH CHECK (public.user_has_tenant_access(tenant_id));
+  USING (tenant_id = get_current_tenant_id())
+  WITH CHECK (tenant_id = get_current_tenant_id());
 
 COMMENT ON TABLE public.emergency_response_briefings IS 'Pre-generated emergency response intelligence for 911 dispatchers';
 
@@ -362,8 +362,8 @@ CREATE INDEX IF NOT EXISTS idx_briefing_access_time ON public.emergency_briefing
 ALTER TABLE public.emergency_briefing_access_log ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "briefing_access_tenant_isolation" ON public.emergency_briefing_access_log;
 CREATE POLICY "briefing_access_tenant_isolation" ON public.emergency_briefing_access_log
-  USING (public.user_has_tenant_access(tenant_id))
-  WITH CHECK (public.user_has_tenant_access(tenant_id));
+  USING (tenant_id = get_current_tenant_id())
+  WITH CHECK (tenant_id = get_current_tenant_id());
 
 COMMENT ON TABLE public.emergency_briefing_access_log IS 'Audit log for emergency briefing access by law enforcement';
 

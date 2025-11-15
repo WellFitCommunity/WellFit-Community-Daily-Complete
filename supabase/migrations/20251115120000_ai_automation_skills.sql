@@ -57,8 +57,8 @@ FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 ALTER TABLE public.billing_code_cache ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "billing_code_cache_tenant_isolation" ON public.billing_code_cache;
 CREATE POLICY "billing_code_cache_tenant_isolation" ON public.billing_code_cache
-  USING (public.user_has_tenant_access(tenant_id))
-  WITH CHECK (public.user_has_tenant_access(tenant_id));
+  USING (tenant_id = get_current_tenant_id())
+  WITH CHECK (tenant_id = get_current_tenant_id());
 
 COMMENT ON TABLE public.billing_code_cache IS 'Cached AI-generated billing code suggestions to reduce API costs by 75%';
 
@@ -121,8 +121,8 @@ FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 ALTER TABLE public.encounter_billing_suggestions ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "encounter_billing_tenant_isolation" ON public.encounter_billing_suggestions;
 CREATE POLICY "encounter_billing_tenant_isolation" ON public.encounter_billing_suggestions
-  USING (public.user_has_tenant_access(tenant_id))
-  WITH CHECK (public.user_has_tenant_access(tenant_id));
+  USING (tenant_id = get_current_tenant_id())
+  WITH CHECK (tenant_id = get_current_tenant_id());
 
 COMMENT ON TABLE public.encounter_billing_suggestions IS 'Real-time AI billing code suggestions during encounters';
 
@@ -193,7 +193,7 @@ CREATE TABLE IF NOT EXISTS public.readmission_risk_predictions (
   follow_up_scheduled boolean DEFAULT false,
   follow_up_appointment_date date,
   care_plan_created boolean DEFAULT false,
-  care_plan_id uuid REFERENCES public.care_coordination_plans(id),
+  care_plan_id uuid, -- TODO: Add FK constraint once care_coordination_plans exists in all environments
 
   -- Outcome tracking (for model improvement)
   actual_readmission_occurred boolean,
@@ -227,8 +227,8 @@ FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 ALTER TABLE public.readmission_risk_predictions ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "readmission_pred_tenant_isolation" ON public.readmission_risk_predictions;
 CREATE POLICY "readmission_pred_tenant_isolation" ON public.readmission_risk_predictions
-  USING (public.user_has_tenant_access(tenant_id))
-  WITH CHECK (public.user_has_tenant_access(tenant_id));
+  USING (tenant_id = get_current_tenant_id())
+  WITH CHECK (tenant_id = get_current_tenant_id());
 
 COMMENT ON TABLE public.readmission_risk_predictions IS 'AI-powered 30-day readmission risk predictions at discharge';
 
@@ -274,8 +274,8 @@ FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 ALTER TABLE public.ai_skill_config ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "ai_skill_config_tenant_isolation" ON public.ai_skill_config;
 CREATE POLICY "ai_skill_config_tenant_isolation" ON public.ai_skill_config
-  USING (public.user_has_tenant_access(tenant_id))
-  WITH CHECK (public.user_has_tenant_access(tenant_id) AND public.is_admin(auth.uid()));
+  USING (tenant_id = get_current_tenant_id())
+  WITH CHECK (tenant_id = get_current_tenant_id() AND public.is_admin(auth.uid()));
 
 COMMENT ON TABLE public.ai_skill_config IS 'Per-tenant feature flags and configuration for AI automation skills';
 
