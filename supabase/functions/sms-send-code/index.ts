@@ -1,6 +1,10 @@
 // supabase/functions/sms-send-code/index.ts
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { parsePhoneNumber, isValidPhoneNumber } from "https://esm.sh/libphonenumber-js@1.12.9";
 import { cors } from "../_shared/cors.ts";
+
+// Allowed country codes for phone numbers
+const ALLOWED_COUNTRIES = ['US', 'CA', 'GB', 'AU'] as const;
 
 /** Prefer robust, side-effect-free env reads */
 const getEnv = (...keys: string[]): string => {
@@ -11,8 +15,29 @@ const getEnv = (...keys: string[]): string => {
   return "";
 };
 
-/** E.164: +<country><nsn>, 7–15 digits total (excluding +), leading digit 1–9 */
-const isE164 = (s: string) => /^\+[1-9]\d{6,14}$/.test(s);
+/**
+ * Validate phone using libphonenumber-js
+ */
+function validatePhone(phone: string): { valid: boolean; error?: string } {
+  if (!phone) {
+    return { valid: false, error: "Phone number is required" };
+  }
+
+  try {
+    if (!isValidPhoneNumber(phone, 'US')) {
+      return { valid: false, error: "Invalid phone number format" };
+    }
+
+    const phoneNumber = parsePhoneNumber(phone, 'US');
+    if (!ALLOWED_COUNTRIES.includes(phoneNumber.country as any)) {
+      return { valid: false, error: `Phone numbers from ${phoneNumber.country} are not currently supported` };
+    }
+
+    return { valid: true };
+  } catch (error) {
+    return { valid: false, error: "Invalid phone number format" };
+  }
+}
 
 Deno.serve(async (req: Request): Promise<Response> => {
   const { headers, allowed } = cors(req.headers.get("origin"), {
@@ -62,9 +87,18 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const phone = body?.phone as string | undefined;
     const channel = (body?.channel as "sms" | "call" | undefined) ?? "sms";
 
-    if (!phone || !isE164(phone)) {
+    // Validate phone using libphonenumber-js
+    if (!phone) {
       return new Response(
-        JSON.stringify({ error: "INVALID_PHONE", message: "Provide E.164 format, e.g. +15551234567" }),
+        JSON.stringify({ error: "INVALID_PHONE", message: "Phone number is required" }),
+        { status: 400, headers },
+      );
+    }
+
+    const phoneValidation = validatePhone(phone);
+    if (!phoneValidation.valid) {
+      return new Response(
+        JSON.stringify({ error: "INVALID_PHONE", message: phoneValidation.error }),
         { status: 400, headers },
       );
     }

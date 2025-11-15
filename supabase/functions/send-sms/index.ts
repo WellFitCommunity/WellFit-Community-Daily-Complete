@@ -41,6 +41,25 @@ serve(async (req) => {
       );
     }
 
+    // Validate all phone numbers before sending
+    const invalidPhones: string[] = [];
+    for (const phone of to) {
+      const validation = validatePhone(phone);
+      if (!validation.valid) {
+        invalidPhones.push(`${phone}: ${validation.error}`);
+      }
+    }
+
+    if (invalidPhones.length > 0) {
+      return new Response(
+        JSON.stringify({
+          error: "Invalid phone numbers detected",
+          invalid_numbers: invalidPhones
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Validate message length (Twilio limit is 1600 chars for long SMS)
     if (message.length > 1600) {
       return new Response(
