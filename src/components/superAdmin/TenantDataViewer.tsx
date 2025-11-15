@@ -82,9 +82,9 @@ const TenantDataViewer: React.FC<TenantDataViewerProps> = ({ tenant, onClose }) 
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-white rounded-lg shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col border-2 border-teal-200">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6">
+        <div className="bg-gradient-to-r from-teal-600 to-teal-700 text-white p-6">
           <div className="flex items-start justify-between">
             <div>
               <div className="flex items-center gap-3 mb-2">
@@ -109,7 +109,7 @@ const TenantDataViewer: React.FC<TenantDataViewerProps> = ({ tenant, onClose }) 
             </div>
             <button
               onClick={onClose}
-              className="text-white hover:bg-blue-700 p-2 rounded-lg transition-colors"
+              className="text-white hover:bg-teal-800 p-2 rounded-lg transition-colors"
             >
               <X className="w-6 h-6" />
             </button>
@@ -133,7 +133,7 @@ const TenantDataViewer: React.FC<TenantDataViewerProps> = ({ tenant, onClose }) 
                   className={`
                     flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors
                     ${isActive
-                      ? 'border-blue-500 text-blue-600'
+                      ? 'border-teal-600 text-teal-700'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     }
                   `}
@@ -163,7 +163,7 @@ const TenantDataViewer: React.FC<TenantDataViewerProps> = ({ tenant, onClose }) 
                 <p className="text-gray-600 text-sm">{error}</p>
                 <button
                   onClick={loadTenantData}
-                  className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                  className="mt-4 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors shadow-sm"
                 >
                   Retry
                 </button>

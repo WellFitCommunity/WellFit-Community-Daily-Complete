@@ -157,7 +157,7 @@ const TenantManagementPanel: React.FC<TenantManagementPanelProps> = ({ onViewTen
         </div>
         <button
           onClick={loadData}
-          className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          className="mt-4 bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-800 transition-colors shadow-sm"
         >
           Retry
         </button>
@@ -178,7 +178,7 @@ const TenantManagementPanel: React.FC<TenantManagementPanelProps> = ({ onViewTen
           </div>
           <button
             onClick={loadData}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center gap-2"
+            className="bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-800 transition-colors flex items-center gap-2 shadow-sm"
           >
             <Activity className="w-4 h-4" />
             Refresh
@@ -467,7 +467,7 @@ const TenantManagementPanel: React.FC<TenantManagementPanelProps> = ({ onViewTen
               <button
                 onClick={saveTenantCode}
                 disabled={!editTenantCode.trim()}
-                className="px-4 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-4 py-2 rounded-lg text-white bg-blue-700 hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors shadow-sm"
               >
                 <Hash className="w-4 h-4" />
                 Save Code
