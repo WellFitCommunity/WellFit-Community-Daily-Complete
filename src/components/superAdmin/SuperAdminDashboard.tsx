@@ -2,7 +2,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SuperAdminService } from '../../services/superAdminService';
 import { SystemOverview, TenantWithStatus } from '../../types/superAdmin';
-import { Activity, Users, Building2, AlertTriangle, Shield, Settings, Key, DollarSign } from 'lucide-react';
+import { Activity, Users, Building2, AlertTriangle, Shield, Settings, Key, DollarSign, Brain } from 'lucide-react';
 import TenantManagementPanel from './TenantManagementPanel';
 import FeatureFlagControlPanel from './FeatureFlagControlPanel';
 import SystemHealthPanel from './SystemHealthPanel';
@@ -12,6 +12,7 @@ import VaultAnimation from './VaultAnimation';
 import PlatformSOC2Dashboard from './PlatformSOC2Dashboard';
 import PlatformAICostDashboard from './PlatformAICostDashboard';
 import GuardianMonitoringDashboard from './GuardianMonitoringDashboard';
+import AISkillsControlPanel from './AISkillsControlPanel';
 import { auditLogger } from '../../services/auditLogger';
 import { PersonalizedGreeting } from '../ai-transparency';
 
@@ -99,7 +100,7 @@ const SuperAdminDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [overview, setOverview] = useState<SystemOverview | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'tenants' | 'features' | 'health' | 'audit' | 'api-keys' | 'compliance' | 'ai-cost' | 'guardian'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'tenants' | 'features' | 'ai-skills' | 'health' | 'audit' | 'api-keys' | 'compliance' | 'ai-cost' | 'guardian'>('overview');
   const [selectedTenant, setSelectedTenant] = useState<TenantWithStatus | null>(null);
   const [showVaultAnimation, setShowVaultAnimation] = useState(false);
 
@@ -179,6 +180,7 @@ const SuperAdminDashboard: React.FC = () => {
     { id: 'overview', label: 'Overview', icon: Activity, color: 'teal' },
     { id: 'tenants', label: 'Tenants', icon: Building2, color: 'blue' },
     { id: 'features', label: 'Feature Flags', icon: Settings, color: 'purple' },
+    { id: 'ai-skills', label: 'AI Skills', icon: Brain, color: 'purple' },
     { id: 'api-keys', label: 'API Keys', icon: Key, color: 'orange' },
     { id: 'ai-cost', label: 'AI Cost & Usage', icon: DollarSign, color: 'orange' },
     { id: 'compliance', label: 'Platform SOC2', icon: Shield, color: 'red' },
@@ -265,7 +267,7 @@ const SuperAdminDashboard: React.FC = () => {
             <SystemMetrics overview={overview} />
             <div className="bg-white p-6 rounded-lg shadow">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <button
                   onClick={() => setActiveTab('tenants')}
                   className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-700 hover:bg-blue-50 transition-all duration-200 text-left shadow-sm hover:shadow-md"
@@ -281,6 +283,14 @@ const SuperAdminDashboard: React.FC = () => {
                   <Settings className="w-8 h-8 text-purple-600 mb-2" />
                   <div className="font-medium text-gray-900">Feature Flags</div>
                   <div className="text-sm text-gray-600">Control system features</div>
+                </button>
+                <button
+                  onClick={() => setActiveTab('ai-skills')}
+                  className="p-4 border-2 border-gray-200 rounded-lg hover:border-purple-600 hover:bg-purple-50 transition-all duration-200 text-left shadow-sm hover:shadow-md"
+                >
+                  <Brain className="w-8 h-8 text-purple-600 mb-2" />
+                  <div className="font-medium text-gray-900">AI Skills</div>
+                  <div className="text-sm text-gray-600">Manage AI automation</div>
                 </button>
                 <button
                   onClick={() => setActiveTab('audit')}
@@ -308,6 +318,8 @@ const SuperAdminDashboard: React.FC = () => {
         )}
 
         {activeTab === 'features' && <FeatureFlagControlPanel />}
+
+        {activeTab === 'ai-skills' && <AISkillsControlPanel />}
 
         {activeTab === 'api-keys' && (
           <Suspense fallback={<div className="flex justify-center items-center h-64">Loading API Keys...</div>}>
