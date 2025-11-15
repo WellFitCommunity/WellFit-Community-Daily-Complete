@@ -1,20 +1,26 @@
 // Shared crypto utilities for admin PIN hashing and password hashing
 // Uses Web Crypto API to avoid Node.js polyfill issues while maintaining security
+//
+// SECURITY: Uses cryptographically random salt per hash (16 bytes)
+// Returns format: base64(salt):base64(hash) or base64(salt):hex(hash)
 
-const SALT = "wellfit_admin_pin_salt_2025_secure";
-const PASSWORD_SALT = "wellfit_password_salt_2025_secure_v1";
-const ITERATIONS = 100000; // PBKDF2 iterations for security
+const ITERATIONS = 100000; // PBKDF2 iterations for security (OWASP recommended minimum)
+const SALT_LENGTH = 16; // 16 bytes = 128 bits
 
 /**
- * Hash a PIN using PBKDF2 with SHA-256
- * More secure than simple SHA-256, resistant to rainbow table attacks
+ * Hash a PIN using PBKDF2 with SHA-256 and random salt
+ * Returns format: base64(salt):base64(hash)
+ * SECURE: Generates unique random salt per PIN
  */
 export async function hashPin(pin: string): Promise<string> {
   const encoder = new TextEncoder();
 
-  // Convert PIN and salt to Uint8Array
+  // Generate cryptographically random 16-byte salt
+  const salt = new Uint8Array(SALT_LENGTH);
+  crypto.getRandomValues(salt);
+
+  // Convert PIN to Uint8Array
   const pinData = encoder.encode(pin);
-  const saltData = encoder.encode(SALT);
 
   // Import the PIN as a key for PBKDF2
   const key = await crypto.subtle.importKey(
@@ -29,7 +35,7 @@ export async function hashPin(pin: string): Promise<string> {
   const hashBuffer = await crypto.subtle.deriveBits(
     {
       name: "PBKDF2",
-      salt: saltData,
+      salt: salt,
       iterations: ITERATIONS,
       hash: "SHA-256"
     },
@@ -37,18 +43,61 @@ export async function hashPin(pin: string): Promise<string> {
     256 // 256 bits = 32 bytes
   );
 
-  // Convert to hex string
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  // Convert to base64 for storage
+  const hashArray = new Uint8Array(hashBuffer);
+  const saltBase64 = btoa(String.fromCharCode(...salt));
+  const hashBase64 = btoa(String.fromCharCode(...hashArray));
+
+  // Return format: salt:hash (both base64 encoded)
+  return `${saltBase64}:${hashBase64}`;
 }
 
 /**
  * Verify a PIN against a stored hash
+ * Expects storedHash format: base64(salt):base64(hash)
  */
 export async function verifyPin(pin: string, storedHash: string): Promise<boolean> {
   try {
-    const newHash = await hashPin(pin);
-    return newHash === storedHash;
+    // Split stored hash into salt and hash
+    const [saltBase64, expectedHashBase64] = storedHash.split(":");
+    if (!saltBase64 || !expectedHashBase64) {
+      console.error('Invalid hash format - missing salt or hash');
+      return false;
+    }
+
+    // Decode salt from base64
+    const saltBytes = Uint8Array.from(atob(saltBase64), c => c.charCodeAt(0));
+
+    // Convert PIN to bytes
+    const encoder = new TextEncoder();
+    const pinBytes = encoder.encode(pin);
+
+    // Import PIN as key material
+    const keyMaterial = await crypto.subtle.importKey(
+      "raw",
+      pinBytes,
+      { name: "PBKDF2" },
+      false,
+      ["deriveBits"]
+    );
+
+    // Derive hash with same salt
+    const hashBuffer = await crypto.subtle.deriveBits(
+      {
+        name: "PBKDF2",
+        salt: saltBytes,
+        iterations: ITERATIONS,
+        hash: "SHA-256"
+      },
+      keyMaterial,
+      256
+    );
+
+    // Compare hashes
+    const hashArray = new Uint8Array(hashBuffer);
+    const computedHashBase64 = btoa(String.fromCharCode(...hashArray));
+
+    return computedHashBase64 === expectedHashBase64;
   } catch (error) {
     console.error('PIN verification error:', error);
     return false;
@@ -56,15 +105,19 @@ export async function verifyPin(pin: string, storedHash: string): Promise<boolea
 }
 
 /**
- * Hash a password using PBKDF2 with SHA-256
- * More secure than bcrypt for Edge Functions (no Workers required)
+ * Hash a password using PBKDF2 with SHA-256 and random salt
+ * Returns format: base64(salt):base64(hash)
+ * SECURE: Generates unique random salt per password
  */
 export async function hashPassword(password: string): Promise<string> {
   const encoder = new TextEncoder();
 
-  // Convert password and salt to Uint8Array
+  // Generate cryptographically random 16-byte salt
+  const salt = new Uint8Array(SALT_LENGTH);
+  crypto.getRandomValues(salt);
+
+  // Convert password to Uint8Array
   const passwordData = encoder.encode(password);
-  const saltData = encoder.encode(PASSWORD_SALT);
 
   // Import the password as a key for PBKDF2
   const key = await crypto.subtle.importKey(
@@ -79,7 +132,7 @@ export async function hashPassword(password: string): Promise<string> {
   const hashBuffer = await crypto.subtle.deriveBits(
     {
       name: "PBKDF2",
-      salt: saltData,
+      salt: salt,
       iterations: ITERATIONS,
       hash: "SHA-256"
     },
@@ -87,18 +140,61 @@ export async function hashPassword(password: string): Promise<string> {
     256 // 256 bits = 32 bytes
   );
 
-  // Convert to hex string
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  // Convert to base64 for storage
+  const hashArray = new Uint8Array(hashBuffer);
+  const saltBase64 = btoa(String.fromCharCode(...salt));
+  const hashBase64 = btoa(String.fromCharCode(...hashArray));
+
+  // Return format: salt:hash (both base64 encoded)
+  return `${saltBase64}:${hashBase64}`;
 }
 
 /**
  * Verify a password against a stored hash
+ * Expects storedHash format: base64(salt):base64(hash)
  */
 export async function verifyPassword(password: string, storedHash: string): Promise<boolean> {
   try {
-    const newHash = await hashPassword(password);
-    return newHash === storedHash;
+    // Split stored hash into salt and hash
+    const [saltBase64, expectedHashBase64] = storedHash.split(":");
+    if (!saltBase64 || !expectedHashBase64) {
+      console.error('Invalid hash format - missing salt or hash');
+      return false;
+    }
+
+    // Decode salt from base64
+    const saltBytes = Uint8Array.from(atob(saltBase64), c => c.charCodeAt(0));
+
+    // Convert password to bytes
+    const encoder = new TextEncoder();
+    const passwordBytes = encoder.encode(password);
+
+    // Import password as key material
+    const keyMaterial = await crypto.subtle.importKey(
+      "raw",
+      passwordBytes,
+      { name: "PBKDF2" },
+      false,
+      ["deriveBits"]
+    );
+
+    // Derive hash with same salt
+    const hashBuffer = await crypto.subtle.deriveBits(
+      {
+        name: "PBKDF2",
+        salt: saltBytes,
+        iterations: ITERATIONS,
+        hash: "SHA-256"
+      },
+      keyMaterial,
+      256
+    );
+
+    // Compare hashes
+    const hashArray = new Uint8Array(hashBuffer);
+    const computedHashBase64 = btoa(String.fromCharCode(...hashArray));
+
+    return computedHashBase64 === expectedHashBase64;
   } catch (error) {
     console.error('Password verification error:', error);
     return false;
