@@ -7,7 +7,7 @@
 import { supabase } from '../lib/supabaseClient';
 import { offlineSync } from './specialist-workflow-engine/OfflineDataSync';
 import { FieldVisit, SpecialistAssessment, SpecialistAlert } from './specialist-workflow-engine/types';
-import { encryptPHI } from '../utils/phiEncryption';
+import { encryptPHI } from '../utils/phiEncryptionClient';
 
 // Kiosk-specific types
 export interface KioskSession {
