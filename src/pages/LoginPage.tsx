@@ -290,7 +290,12 @@ const LoginPage: React.FC = () => {
 
       const token = await ensureCaptcha().catch(() => '');
 
-      auditLogger.auth('LOGIN', true, { method: 'phone_password', hasToken: !!token, phoneLength: e164?.length });
+      // Silently skip audit logging to avoid hanging
+      try {
+        auditLogger.auth('LOGIN', true, { method: 'phone_password', hasToken: !!token, phoneLength: e164?.length });
+      } catch {
+        // Ignore audit logging errors
+      }
 
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         phone: e164,
@@ -362,7 +367,12 @@ const LoginPage: React.FC = () => {
 
       const token = await ensureCaptcha().catch(() => '');
 
-      auditLogger.auth('LOGIN', true, { method: 'email_password', userType: 'admin', hasToken: !!token, emailLength: emailTrimmed?.length });
+      // Silently skip audit logging to avoid hanging
+      try {
+        auditLogger.auth('LOGIN', true, { method: 'email_password', userType: 'admin', hasToken: !!token, emailLength: emailTrimmed?.length });
+      } catch {
+        // Ignore audit logging errors
+      }
 
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: emailTrimmed,
