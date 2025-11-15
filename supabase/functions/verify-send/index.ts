@@ -1,9 +1,13 @@
 // Deno Edge Function (Supabase) - Send verification code via Twilio Verify
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { parsePhoneNumber, isValidPhoneNumber } from "https://esm.sh/libphonenumber-js@1.12.9";
 
 const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
 const TWILIO_AUTH_TOKEN  = Deno.env.get("TWILIO_AUTH_TOKEN");
 const VERIFY_SID         = Deno.env.get("TWILIO_VERIFY_SERVICE_SID") || Deno.env.get("TWILIO_VERIFY_SID");
+
+// Allowed country codes for phone numbers
+const ALLOWED_COUNTRIES = ['US', 'CA', 'GB', 'AU'] as const;
 
 // CORS Configuration - Explicit allowlist for security
 const ALLOWED_ORIGINS = [
@@ -34,9 +38,33 @@ Deno.serve(async (req) => {
   try {
     const { phone } = await req.json();
 
-    // Basic phone validation (E.164 format, e.g. +12345678900)
-    if (!/^\+\d{10,15}$/.test(phone || "")) {
-      return new Response(JSON.stringify({ error: "Invalid E.164 phone." }), {
+    // Validate phone using libphonenumber-js
+    if (!phone) {
+      return new Response(JSON.stringify({ error: "Phone number is required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    try {
+      // Validate phone format
+      if (!isValidPhoneNumber(phone, 'US')) {
+        return new Response(JSON.stringify({ error: "Invalid phone number format" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Check allowed countries
+      const phoneNumber = parsePhoneNumber(phone, 'US');
+      if (!ALLOWED_COUNTRIES.includes(phoneNumber.country as any)) {
+        return new Response(JSON.stringify({ error: `Phone numbers from ${phoneNumber.country} are not currently supported` }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    } catch (error) {
+      return new Response(JSON.stringify({ error: "Invalid phone number format" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

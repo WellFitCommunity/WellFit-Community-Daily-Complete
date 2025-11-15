@@ -1,6 +1,10 @@
 // supabase/functions/sms-verify-code/index.ts
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { parsePhoneNumber, isValidPhoneNumber } from "https://esm.sh/libphonenumber-js@1.12.9";
 import { cors } from "../_shared/cors.ts";
+
+// Allowed country codes for phone numbers
+const ALLOWED_COUNTRIES = ['US', 'CA', 'GB', 'AU'] as const;
 
 Deno.serve(async (req: Request): Promise<Response> => {
   const { headers, allowed } = cors(req.headers.get("origin"), {
@@ -31,15 +35,30 @@ Deno.serve(async (req: Request): Promise<Response> => {
   try {
     const { phone, code } = await req.json().catch(() => ({}));
 
-    // E.164: +<country><nsn>, 7-15 digits total (excluding +), leading digit 1-9
-    const isE164 = (p: string) => /^\+[1-9]\d{6,14}$/.test(p || "");
+    // Validate code format
     const isCode = (c: string) => /^\d{4,8}$/.test(c || "");
-
-    if (!isE164(phone)) {
-      return new Response(JSON.stringify({ error: "Invalid E.164 phone format. Required: +<country><number> (e.g., +15551234567)" }), { status: 400, headers });
-    }
     if (!isCode(code)) {
       return new Response(JSON.stringify({ error: "Code must be 4–8 digits" }), { status: 400, headers });
+    }
+
+    // Validate phone using libphonenumber-js
+    if (!phone) {
+      return new Response(JSON.stringify({ error: "Phone number is required" }), { status: 400, headers });
+    }
+
+    try {
+      // Validate phone format
+      if (!isValidPhoneNumber(phone, 'US')) {
+        return new Response(JSON.stringify({ error: "Invalid phone number format" }), { status: 400, headers });
+      }
+
+      // Check allowed countries
+      const phoneNumber = parsePhoneNumber(phone, 'US');
+      if (!ALLOWED_COUNTRIES.includes(phoneNumber.country as any)) {
+        return new Response(JSON.stringify({ error: `Phone numbers from ${phoneNumber.country} are not currently supported` }), { status: 400, headers });
+      }
+    } catch (error) {
+      return new Response(JSON.stringify({ error: "Invalid phone number format" }), { status: 400, headers });
     }
 
     const resp = await fetch(

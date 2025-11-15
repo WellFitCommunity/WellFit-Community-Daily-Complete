@@ -3,8 +3,12 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4?dts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { parsePhoneNumber, isValidPhoneNumber } from "https://esm.sh/libphonenumber-js@1.12.9";
 import { cors } from "../_shared/cors.ts";
 import { hashPassword } from "../_shared/crypto.ts";
+
+// Allowed country codes for phone numbers
+const ALLOWED_COUNTRIES = ['US', 'CA', 'GB', 'AU'] as const;
 
 // ---------- ENV ----------
 const SB_URL = Deno.env.get("SUPABASE_URL") || Deno.env.get("SB_URL") || "";
@@ -21,7 +25,21 @@ function getCorsHeaders(origin: string | null) {
 
 // ---------- VALIDATION ----------
 const RegisterBase = z.object({
-  phone: z.string().min(10),
+  phone: z.string().refine(
+    (phone) => {
+      try {
+        // Validate phone format
+        if (!isValidPhoneNumber(phone, 'US')) return false;
+
+        // Check allowed countries
+        const phoneNumber = parsePhoneNumber(phone, 'US');
+        return ALLOWED_COUNTRIES.includes(phoneNumber.country as any);
+      } catch {
+        return false;
+      }
+    },
+    { message: "Invalid phone number format or unsupported country" }
+  ),
   password: z.string().min(8),
   confirm_password: z.string().min(8),
   first_name: z.string().min(1),
@@ -43,11 +61,21 @@ function jsonResponse(body: unknown, status: number, origin: string | null = nul
   return new Response(JSON.stringify(body), { status, headers: getCorsHeaders(origin) });
 }
 
+/**
+ * Normalize phone number to E.164 format using libphonenumber-js
+ * This validates AND normalizes in one step
+ */
 function normalizePhone(phone: string): string {
-  const digits = phone.replace(/\D/g, "");
-  if (digits.length === 10) return `+1${digits}`;
-  if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
-  return phone.startsWith("+") ? phone : `+${digits}`;
+  try {
+    const phoneNumber = parsePhoneNumber(phone, 'US');
+    return phoneNumber.number; // Returns E.164 format: +15551234567
+  } catch (error) {
+    // Fallback to old logic if parsing fails (shouldn't happen after validation)
+    const digits = phone.replace(/\D/g, "");
+    if (digits.length === 10) return `+1${digits}`;
+    if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
+    return phone.startsWith("+") ? phone : `+${digits}`;
+  }
 }
 
 async function verifyHcaptcha(token: string): Promise<boolean> {
