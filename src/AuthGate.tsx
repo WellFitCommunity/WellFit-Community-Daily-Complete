@@ -57,6 +57,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
         path === "/consent-privacy" ||
         path === "/login" ||
         path === "/admin-login" ||
+        path === "/envision" ||
         path === "/register" ||
         path === "/verify" ||
         path === "/";
