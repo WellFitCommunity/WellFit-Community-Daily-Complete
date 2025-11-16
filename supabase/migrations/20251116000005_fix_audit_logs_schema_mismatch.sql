@@ -109,8 +109,6 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_resource
   ON audit_logs(resource_type, resource_id)
   WHERE resource_type IS NOT NULL;
 
-RAISE NOTICE 'Updated index for resource columns';
-
 -- Step 5: Verify the final schema
 DO $$
 DECLARE
