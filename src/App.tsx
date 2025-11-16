@@ -94,6 +94,9 @@ const TelehealthAppointmentsPage = React.lazy(() => import('./pages/TelehealthAp
 // const GuardianTestPage = React.lazy(() => import('./pages/GuardianTestPage'));
 const EMSPage = React.lazy(() => import('./pages/EMSPage'));
 const ERDashboardPage = React.lazy(() => import('./pages/ERDashboardPage'));
+const ConstableDispatchDashboard = React.lazy(() => import('./components/lawEnforcement/ConstableDispatchDashboard'));
+const LawEnforcementLandingPage = React.lazy(() => import('./pages/LawEnforcementLandingPage'));
+const DentalHealthDashboard = React.lazy(() => import('./components/dental/DentalHealthDashboard'));
 const SystemAdministrationPage = React.lazy(() => import('./pages/SystemAdministrationPage'));
 const AdminSettingsPage = React.lazy(() => import('./pages/AdminSettingsPage'));
 const AuditLogsPage = React.lazy(() => import('./pages/AuditLogsPage'));
@@ -181,6 +184,7 @@ function Shell() {
               <Route path="/immunizations" element={<RequireAuth><ImmunizationsPage /></RequireAuth>} />
               <Route path="/care-plans" element={<RequireAuth><CarePlansPage /></RequireAuth>} />
               <Route path="/medicine-cabinet" element={<RequireAuth><MedicineCabinet /></RequireAuth>} />
+              <Route path="/dental-health" element={<RequireAuth><DentalHealthDashboard /></RequireAuth>} />
               <Route path="/questions" element={<RequireAuth><QuestionsPage /></RequireAuth>} />
               <Route path="/help" element={<RequireAuth><HelpPage /></RequireAuth>} />
               <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
@@ -206,6 +210,18 @@ function Shell() {
               {/* EMS Prehospital Handoff System */}
               <Route path="/ems" element={<RequireAuth><EMSPage /></RequireAuth>} />
               <Route path="/er-dashboard" element={<RequireAuth><ERDashboardPage /></RequireAuth>} />
+
+              {/* Law Enforcement "Are You OK?" Welfare Check Program */}
+              <Route
+                path="/constable-dispatch"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth>
+                      <ConstableDispatchDashboard />
+                    </RequireAdminAuth>
+                  </RequireAuth>
+                }
+              />
 
               {/* Post-login gated */}
               <Route path="/demographics" element={<RequireAuth><DemographicsPage /></RequireAuth>} />

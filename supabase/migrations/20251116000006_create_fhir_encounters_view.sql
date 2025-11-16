@@ -2,8 +2,16 @@
 -- Issue: Code references fhir_encounters but table is named encounters
 -- This view provides backwards compatibility
 
--- Drop view if it exists
-DROP VIEW IF EXISTS fhir_encounters;
+-- Drop table or view if exists (try table first, then view)
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'fhir_encounters') THEN
+    EXECUTE 'DROP TABLE public.fhir_encounters CASCADE';
+  ELSIF EXISTS (SELECT FROM pg_views WHERE schemaname = 'public' AND viewname = 'fhir_encounters') THEN
+    EXECUTE 'DROP VIEW public.fhir_encounters CASCADE';
+  END IF;
+END
+$$;
 
 -- Create view pointing to encounters table
 CREATE VIEW fhir_encounters AS

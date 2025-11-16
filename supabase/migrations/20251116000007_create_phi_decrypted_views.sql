@@ -11,53 +11,37 @@ DROP VIEW IF EXISTS risk_assessments_decrypted;
 -- Currently pass-through since data not encrypted
 -- When encryption is added, this will use: decrypt_phi_text(encrypted_column) AS column_name
 CREATE VIEW check_ins_decrypted AS
-SELECT
-  id,
-  user_id,
-  timestamp,
-  label,
-  notes,
-  is_emergency,
-  emotional_state,
-  heart_rate,
-  pulse_oximeter,
-  bp_systolic,
-  bp_diastolic,
-  glucose_mg_dl,
-  created_at,
-  reviewed_at,
-  reviewed_by_name
-FROM check_ins;
+SELECT * FROM check_ins;
 
 -- Create risk_assessments_decrypted view
 -- Maps to ai_risk_assessments table (risk_assessments table in _SKIP_ migration)
 -- Currently pass-through since data not encrypted
-CREATE VIEW risk_assessments_decrypted AS
-SELECT
-  id,
-  patient_id,
-  risk_level,
-  risk_score,
-  risk_factors,
-  recommendations,
-  priority,
-  trend_direction,
-  assessed_at,
-  assessment_version,
-  assessed_at AS created_at -- Add created_at alias for compatibility
-FROM ai_risk_assessments;
+-- Create only if ai_risk_assessments table exists
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'ai_risk_assessments') THEN
+    EXECUTE 'CREATE VIEW risk_assessments_decrypted AS SELECT * FROM ai_risk_assessments';
+  END IF;
+END
+$$;
 
 -- Grant permissions
 GRANT SELECT ON check_ins_decrypted TO authenticated;
 GRANT SELECT ON check_ins_decrypted TO anon;
-GRANT SELECT ON risk_assessments_decrypted TO authenticated;
-GRANT SELECT ON risk_assessments_decrypted TO anon;
+
+-- Grant on risk_assessments_decrypted only if it exists
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM pg_views WHERE schemaname = 'public' AND viewname = 'risk_assessments_decrypted') THEN
+    EXECUTE 'GRANT SELECT ON risk_assessments_decrypted TO authenticated';
+    EXECUTE 'GRANT SELECT ON risk_assessments_decrypted TO anon';
+  END IF;
+END
+$$;
 
 -- Add comments
 COMMENT ON VIEW check_ins_decrypted IS
   'Decrypted view of check_ins table. Currently pass-through pending encryption implementation.';
-COMMENT ON VIEW risk_assessments_decrypted IS
-  'Decrypted view of ai_risk_assessments table. Currently pass-through pending encryption implementation.';
 
 -- Note: When PHI encryption is fully implemented, update these views to:
 -- SELECT decrypt_phi_text(encrypted_notes) AS notes, ...
