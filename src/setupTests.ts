@@ -1,76 +1,9 @@
 // Jest setup for testing including security and penetration testing
 import '@testing-library/jest-dom';
+import { resetSupabaseHandler } from './lib/__mocks__/supabaseClient';
 
-// Mock Supabase at the module level to prevent real connections
-jest.mock('@supabase/supabase-js', () => {
-  // Mock channel for real-time to prevent WebSocket connections
-  const mockChannel = jest.fn(() => ({
-    on: jest.fn().mockReturnThis(),
-    subscribe: jest.fn().mockResolvedValue({ status: 'SUBSCRIBED' }),
-    unsubscribe: jest.fn().mockResolvedValue({ status: 'UNSUBSCRIBED' }),
-  }));
-
-  // Create a factory for chainable query mocks
-  const createChainableMock = () => ({
-    select: jest.fn().mockReturnThis(),
-    insert: jest.fn().mockReturnThis(),
-    update: jest.fn().mockReturnThis(),
-    delete: jest.fn().mockReturnThis(),
-    eq: jest.fn().mockReturnThis(),
-    neq: jest.fn().mockReturnThis(),
-    gt: jest.fn().mockReturnThis(),
-    gte: jest.fn().mockReturnThis(),
-    lt: jest.fn().mockReturnThis(),
-    lte: jest.fn().mockReturnThis(),
-    like: jest.fn().mockReturnThis(),
-    ilike: jest.fn().mockReturnThis(),
-    is: jest.fn().mockReturnThis(),
-    in: jest.fn().mockReturnThis(),
-    contains: jest.fn().mockReturnThis(),
-    containedBy: jest.fn().mockReturnThis(),
-    range: jest.fn().mockReturnThis(),
-    match: jest.fn().mockReturnThis(),
-    not: jest.fn().mockReturnThis(),
-    or: jest.fn().mockReturnThis(),
-    filter: jest.fn().mockReturnThis(),
-    order: jest.fn().mockReturnThis(),
-    limit: jest.fn().mockResolvedValue({ data: null, error: null }),
-    single: jest.fn().mockResolvedValue({ data: null, error: null }),
-    maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
-    then: jest.fn((resolve) => resolve({ data: [], error: null })),
-  });
-
-  return {
-    createClient: jest.fn(() => ({
-      from: jest.fn(() => createChainableMock()),
-      rpc: jest.fn().mockResolvedValue({ data: null, error: null }),
-      channel: mockChannel,
-      auth: {
-        getSession: jest.fn().mockResolvedValue({ data: { session: null }, error: null }),
-        getUser: jest.fn().mockResolvedValue({ data: { user: null }, error: null }),
-        signInWithPassword: jest.fn().mockResolvedValue({ data: { session: null, user: null }, error: null }),
-        signOut: jest.fn().mockResolvedValue({ error: null }),
-        onAuthStateChange: jest.fn().mockReturnValue({
-          data: { subscription: { unsubscribe: jest.fn() } },
-        }),
-        setSession: jest.fn().mockResolvedValue({ data: { session: null }, error: null }),
-      },
-      functions: {
-        invoke: jest.fn().mockResolvedValue({ data: null, error: null }),
-      },
-      storage: {
-        from: jest.fn().mockReturnValue({
-          upload: jest.fn().mockResolvedValue({ data: null, error: null }),
-          download: jest.fn().mockResolvedValue({ data: null, error: null }),
-          list: jest.fn().mockResolvedValue({ data: [], error: null }),
-          remove: jest.fn().mockResolvedValue({ data: null, error: null }),
-          createSignedUrl: jest.fn().mockResolvedValue({ data: { signedUrl: 'http://test.url' }, error: null }),
-          getPublicUrl: jest.fn().mockReturnValue({ data: { publicUrl: 'http://test.url' } }),
-        }),
-      },
-    })),
-  };
-});
+// Use manual mock for supabaseClient
+jest.mock('./lib/supabaseClient');
 
 // Polyfill fetch for Jest environment
 global.fetch = jest.fn(() =>
@@ -306,6 +239,12 @@ global.console = {
   warn: jest.fn(),
   error: jest.fn(),
 };
+
+// Global beforeEach to reset Supabase handler
+beforeEach(() => {
+  // Reset Supabase mock handler for each test
+  resetSupabaseHandler();
+});
 
 // Global afterEach cleanup to prevent timer leaks
 afterEach(() => {
