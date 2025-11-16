@@ -138,8 +138,8 @@ export async function fetchUserProfile(
   try {
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('first_name, last_name, full_name, role, email, tenant_id')
-      .eq('id', userId)
+      .select('first_name, last_name, role, email, tenant_id')
+      .eq('user_id', userId)
       .single();
 
     if (profileError || !profile) {
@@ -162,7 +162,7 @@ export async function fetchUserProfile(
       userId,
       firstName: profile.first_name || '',
       lastName: profile.last_name || '',
-      fullName: profile.full_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim(),
+      fullName: `${profile.first_name || ''} ${profile.last_name || ''}`.trim(),
       role: profile.role || 'user',
       email: profile.email || '',
       tenantId: profile.tenant_id,
