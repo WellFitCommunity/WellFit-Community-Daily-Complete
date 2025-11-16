@@ -21,14 +21,10 @@ export default [
       'build/**',
       'dist/**',
       'coverage/**',
-      '*.config.js',
-      '*.config.mjs',
       'archive/**',
       'supabase/functions/**', // Deno functions have separate config
       'mobile-companion-app/**', // Has its own config
       'scripts/**', // Node scripts
-      '*.test.js', // Test scripts in root
-      'test-*.js', // Test scripts in root
       'setupTests.js',
     ],
   },
@@ -157,10 +153,13 @@ export default [
   {
     files: [
       '*.config.js',
+      '*.config.mjs',
       '**/.eslintrc.js',
       '.eslintrc.*.js',
       'eslint-plugin-*.js',
       '__mocks__/**/*.js',
+      'mocks/**/*.js',
+      'functions/**/*.js',
     ],
 
     languageOptions: {
@@ -191,6 +190,23 @@ export default [
         __ITER: 'readonly',
         console: 'readonly',
         open: 'readonly',
+      },
+    },
+
+    rules: {
+      'no-console': 'off',
+      'no-unused-vars': 'warn',
+    },
+  },
+
+  // Root-level test files
+  {
+    files: ['test-*.js', '*.test.js'],
+
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        console: 'readonly',
       },
     },
 

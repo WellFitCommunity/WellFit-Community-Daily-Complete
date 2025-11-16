@@ -91,7 +91,8 @@
     "webpack-dev-server": "^5.2.2",
     "postcss": "^8.4.31",
     "resolve-url-loader": "^5.0.0",
-    "eslint": "^9.39.1"
+    "eslint": "^9.39.1",
+    "typescript": "^5.9.3"
   },
   "scripts": {
     "start": "DISABLE_ESLINT_PLUGIN=true react-scripts start",
