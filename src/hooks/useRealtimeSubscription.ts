@@ -39,6 +39,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabaseClient';
 import { auditLogger } from '../services/auditLogger';
+import { errorReporter } from '../services/errorReporter';
 
 // ============================================================================
 // TYPES
@@ -124,6 +125,7 @@ export function useRealtimeSubscription<T = any>(
   const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const registryIdRef = useRef<string | null>(null);
   const mountedRef = useRef<boolean>(true);
+  const consecutiveHeartbeatFailures = useRef<number>(0);
 
   /**
    * Fetch data function
@@ -141,14 +143,18 @@ export function useRealtimeSubscription<T = any>(
     } catch (err) {
       if (mountedRef.current) {
         setError(err as Error);
-        // Silently skip audit logging to avoid 403 spam
+        // Log fetch error - don't break if audit logging fails
         try {
           auditLogger.error('REALTIME_FETCH_ERROR', err as Error, {
             component: componentName,
             table,
           });
-        } catch {
-          // Ignore audit logging errors
+        } catch (auditError) {
+          // Don't break app if audit logging fails, but do report it
+          errorReporter.report('AUDIT_LOG_FAILURE', auditError as Error, {
+            context: 'realtime fetch error logging',
+            component: componentName,
+          });
         }
       }
     } finally {
@@ -187,25 +193,34 @@ export function useRealtimeSubscription<T = any>(
           .single();
 
         if (registryError) {
-          // Silently skip audit logging to avoid 403 spam
+          // Log registry failure - non-blocking
           try {
             auditLogger.warn('REALTIME_REGISTRY_FAILED', {
               error: registryError.message,
               component: componentName,
             });
-          } catch {
-            // Ignore audit logging errors
+          } catch (auditError) {
+            // Registry logging failed - report but don't break
+            errorReporter.report('REALTIME_SUBSCRIPTION_FAILURE', auditError as Error, {
+              context: 'registry failure logging',
+              component: componentName,
+            });
           }
           return null;
         }
 
         return registryData?.id || null;
       } catch (err) {
-        // Silently skip audit logging to avoid 403 spam
+        // Registry registration failed - non-blocking error
+        errorReporter.report('REALTIME_SUBSCRIPTION_FAILURE', err as Error, {
+          context: 'registry registration',
+          component: componentName,
+        });
+
         try {
           auditLogger.warn('REALTIME_REGISTRY_ERROR', { error: String(err), component: componentName });
-        } catch {
-          // Ignore audit logging errors
+        } catch (auditError) {
+          // Audit logging failed - already reported above via errorReporter
         }
         return null;
       }
@@ -224,10 +239,36 @@ export function useRealtimeSubscription<T = any>(
         .from('realtime_subscription_registry')
         .update({ last_heartbeat_at: new Date().toISOString() })
         .eq('id', registryIdRef.current);
+
+      // Reset failure counter on success
+      consecutiveHeartbeatFailures.current = 0;
     } catch (err) {
-      auditLogger.warn('REALTIME_HEARTBEAT_FAILED', { error: String(err), component: componentName });
+      // Track consecutive failures
+      consecutiveHeartbeatFailures.current++;
+
+      // Report heartbeat failure
+      errorReporter.report('REALTIME_HEARTBEAT_FAILURE', err as Error, {
+        component: componentName,
+        consecutiveFailures: consecutiveHeartbeatFailures.current,
+      });
+
+      auditLogger.warn('REALTIME_HEARTBEAT_FAILED', {
+        error: String(err),
+        component: componentName,
+        consecutiveFailures: consecutiveHeartbeatFailures.current,
+      });
+
+      // Alert if connection may be degraded (3+ consecutive failures)
+      if (consecutiveHeartbeatFailures.current >= 3) {
+        auditLogger.error('REALTIME_CONNECTION_DEGRADED', 'Connection may be stale', {
+          component: componentName,
+          table,
+          failures: consecutiveHeartbeatFailures.current,
+          message: 'Realtime connection may be stale - consider reconnecting',
+        });
+      }
     }
-  }, [componentName]);
+  }, [componentName, table]);
 
   /**
    * Unregister subscription from database

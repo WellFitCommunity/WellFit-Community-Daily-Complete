@@ -6,6 +6,7 @@
  */
 
 import { supabase } from '../lib/supabaseClient';
+import { errorReporter } from './errorReporter';
 
 export type PHIType =
   | 'patient_record'
@@ -95,11 +96,24 @@ export async function logPhiAccess({
     });
 
     if (error) {
-
+      // CRITICAL: PHI access logging failed - HIPAA compliance issue
+      errorReporter.reportCritical('PHI_ACCESS_LOG_FAILURE', error.message, {
+        phiType,
+        patientId,
+        accessType,
+        userId: user.id,
+        errorCode: error.code,
+      });
     }
   } catch (err) {
-    // Silently fail - don't break user experience if logging fails
-
+    // CRITICAL: PHI access logging failed - HIPAA compliance issue
+    // Don't break user experience, but DO report the error
+    errorReporter.reportCritical('PHI_ACCESS_LOG_FAILURE', err as Error, {
+      phiType,
+      patientId,
+      accessType,
+      context: 'Exception during PHI logging',
+    });
   }
 }
 
@@ -150,7 +164,13 @@ export async function logBulkPhiAccess(
         },
       });
     } catch (err) {
-
+      // CRITICAL: Bulk PHI access logging failed - HIPAA compliance issue
+      errorReporter.reportCritical('PHI_ACCESS_LOG_FAILURE', err as Error, {
+        phiType,
+        patientCount: patientIds.length,
+        accessMethod,
+        context: 'Bulk PHI access summary',
+      });
     }
   }
 }

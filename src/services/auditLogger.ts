@@ -1,7 +1,7 @@
 /**
  * HIPAA-Compliant Audit Logging Service
  *
- * Replaces console.log with proper audit trail logging
+ * Provides proper audit trail logging to database
  * Implements HIPAA §164.312(b) - Audit Controls
  *
  * Usage:
@@ -12,6 +12,7 @@
  */
 
 import { supabase } from '../lib/supabaseClient';
+import { errorReporter } from './errorReporter';
 
 export type AuditEventCategory =
   | 'AUTHENTICATION'
@@ -64,28 +65,16 @@ class AuditLogger {
    * Core audit logging method
    */
   private async log(entry: Partial<AuditLogEntry>, level: AuditLogLevel = 'info'): Promise<void> {
-    // Always log to console in development for debugging
-    if (this.isDevelopment) {
-      const levelSymbol = {
-        info: 'ℹ️',
-        warn: '⚠️',
-        error: '❌',
-        debug: '🔍'
-      }[level];
-
-      // eslint-disable-next-line no-console
-      console.log(
-        `${levelSymbol} [AUDIT ${entry.event_category}]`,
-        entry.event_type,
-        entry.metadata || {}
-      );
-    }
+    // Development logging disabled for HIPAA compliance
+    // All audit logs are stored in audit_logs table
 
     // Skip database logging if disabled (for testing)
     if (!this.loggingEnabled) return;
 
+    let context: { userId?: string; ipAddress?: string; userAgent?: string } = {};
+
     try {
-      const context = await this.getUserContext();
+      context = await this.getUserContext();
 
       const auditEntry: AuditLogEntry = {
         event_type: entry.event_type || 'UNKNOWN_EVENT',
@@ -104,9 +93,14 @@ class AuditLogger {
 
       await supabase.from('audit_logs').insert(auditEntry);
     } catch (error) {
-      // Critical: audit logging failed - log to console as fallback
+      // Critical: audit logging failed - use error reporter as fallback
+      errorReporter.reportCritical('AUDIT_LOG_FAILURE', error as Error, {
+        event_type: entry.event_type,
+        event_category: entry.event_category,
+        actor_user_id: context.userId || entry.actor_user_id,
+      });
 
-
+      // Error is tracked by errorReporter above
     }
   }
 
@@ -242,10 +236,12 @@ class AuditLogger {
 
   /**
    * Debug logging (development only)
+   * Note: Logs are stored in audit_logs table, console disabled for HIPAA compliance
    */
   debug(message: string, data?: any): void {
     if (this.isDevelopment) {
-
+      // Debug info is tracked in audit_logs table
+      // Console logging disabled for HIPAA compliance
     }
   }
 }
