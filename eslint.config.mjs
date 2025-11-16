@@ -152,4 +152,71 @@ export default [
       'no-eval': 'off', // Needed for testing eval vulnerabilities
     },
   },
+
+  // CommonJS config files
+  {
+    files: [
+      '*.config.js',
+      '**/.eslintrc.js',
+      '.eslintrc.*.js',
+      'eslint-plugin-*.js',
+      '__mocks__/**/*.js',
+    ],
+
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        module: 'readonly',
+        require: 'readonly',
+        exports: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+      },
+    },
+
+    rules: {
+      'no-console': 'off',
+    },
+  },
+
+  // K6 load test files
+  {
+    files: ['load-tests/**/*.js'],
+
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        __ENV: 'readonly',
+        __VU: 'readonly',
+        __ITER: 'readonly',
+        console: 'readonly',
+        open: 'readonly',
+      },
+    },
+
+    rules: {
+      'no-console': 'off',
+      'no-unused-vars': 'warn',
+    },
+  },
+
+  // Service worker files
+  {
+    files: ['public/**/*-sw.js', 'public/service-worker.js'],
+
+    languageOptions: {
+      globals: {
+        ...globals.serviceworker,
+        importScripts: 'readonly',
+        firebase: 'readonly',
+        messaging: 'readonly',
+      },
+    },
+
+    rules: {
+      'no-console': 'off',
+      'no-empty': 'warn',
+      'no-unused-vars': 'warn',
+    },
+  },
 ];
