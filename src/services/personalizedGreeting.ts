@@ -226,7 +226,7 @@ export async function getRoleSpecificStats(
 
       // Pending alerts count
       const { count: alertCount } = await supabase
-        .from('guardian_agent_alerts')
+        .from('guardian_alerts')
         .select('id', { count: 'exact', head: true })
         .eq('tenant_id', tenantId)
         .eq('status', 'pending');
@@ -264,12 +264,11 @@ export async function getRoleSpecificStats(
         .select('id', { count: 'exact', head: true })
         .eq('tenant_id', tenantId);
 
-      // Pending approvals (photo consent, etc.)
+      // Pending approvals (community moments photos)
       const { count: pendingApprovals } = await supabase
-        .from('consent_photos')
+        .from('community_moments')
         .select('id', { count: 'exact', head: true })
-        .eq('tenant_id', tenantId)
-        .eq('approved', false);
+        .eq('approval_status', 'pending');
 
       stats.totalUsers = userCount || 0;
       stats.pendingApprovals = pendingApprovals || 0;
@@ -284,7 +283,7 @@ export async function getRoleSpecificStats(
 
       // Platform-wide health score (derived from Guardian alerts)
       const { count: criticalAlerts } = await supabase
-        .from('guardian_agent_alerts')
+        .from('guardian_alerts')
         .select('id', { count: 'exact', head: true })
         .eq('severity', 'critical')
         .eq('status', 'pending');
