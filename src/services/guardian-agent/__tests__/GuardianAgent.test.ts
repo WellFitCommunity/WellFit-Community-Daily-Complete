@@ -11,6 +11,9 @@ describe('Guardian Agent', () => {
   let agent: GuardianAgent;
 
   beforeEach(() => {
+    // Use fake timers to control async operations
+    jest.useFakeTimers();
+
     // Reset singleton instance before each test to ensure clean state
     GuardianAgent.resetInstance();
 
@@ -24,6 +27,10 @@ describe('Guardian Agent', () => {
   afterEach(() => {
     // Clean up after each test
     agent.stop();
+
+    // Run all pending timers and restore real timers
+    jest.runOnlyPendingTimers();
+    jest.useRealTimers();
   });
 
   describe('Initialization', () => {
@@ -97,8 +104,9 @@ describe('Guardian Agent', () => {
         recentActions: []
       });
 
-      // Wait for healing
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Wait for healing using fake timers
+      jest.advanceTimersByTime(100);
+      await Promise.resolve();
 
       const state = agent.getState();
       expect(state.recentHealings.length).toBeGreaterThan(0);
@@ -113,7 +121,8 @@ describe('Guardian Agent', () => {
         recentActions: []
       });
 
-      await new Promise(resolve => setTimeout(resolve, 100));
+      jest.advanceTimersByTime(100);
+      await Promise.resolve();
 
       const state = agent.getState();
       const healing = state.recentHealings[0];
@@ -133,7 +142,8 @@ describe('Guardian Agent', () => {
         recentActions: []
       });
 
-      await new Promise(resolve => setTimeout(resolve, 100));
+      jest.advanceTimersByTime(100);
+      await Promise.resolve();
 
       const state = agent.getState();
       expect(state.knowledgeBase.length).toBeGreaterThanOrEqual(0);
@@ -150,7 +160,8 @@ describe('Guardian Agent', () => {
           environmentState: {},
           recentActions: []
         });
-        await new Promise(resolve => setTimeout(resolve, 50));
+        jest.advanceTimersByTime(50);
+        await Promise.resolve();
       }
 
       const finalStats = agent.getStatistics();
@@ -302,6 +313,15 @@ describe('Error Signature Library', () => {
 });
 
 describe('Integration Tests', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.runOnlyPendingTimers();
+    jest.useRealTimers();
+  });
+
   it('should handle complete error-to-healing cycle', async () => {
     // Reset instance for integration test
     GuardianAgent.resetInstance();
@@ -324,8 +344,9 @@ describe('Integration Tests', () => {
       recentActions: ['load_profile', 'fetch_data']
     });
 
-    // Wait for healing to complete
-    await new Promise(resolve => setTimeout(resolve, 200));
+    // Wait for healing to complete using fake timers
+    jest.advanceTimersByTime(200);
+    await Promise.resolve();
 
     const state = agent.getState();
 
@@ -367,7 +388,8 @@ describe('Integration Tests', () => {
         recentActions: []
       });
 
-      await new Promise(resolve => setTimeout(resolve, 100));
+      jest.advanceTimersByTime(100);
+      await Promise.resolve();
     }
 
     const stats = agent.getStatistics();
