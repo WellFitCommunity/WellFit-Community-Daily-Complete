@@ -1,0 +1,85 @@
+// Export Status Edge Function
+// Returns status of a bulk export job
+
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+interface StatusRequest {
+  jobId: string;
+}
+
+serve(async (req) => {
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+
+  try {
+    // Create Supabase client with service role
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
+
+    // Parse request body
+    const body: StatusRequest = await req.json();
+    const { jobId } = body;
+
+    // Validate required fields
+    if (!jobId) {
+      return new Response(
+        JSON.stringify({ error: 'Missing required field: jobId' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Get job status from database
+    const { data: job, error } = await supabaseAdmin
+      .from('export_jobs')
+      .select('*')
+      .eq('id', jobId)
+      .single();
+
+    if (error || !job) {
+      return new Response(
+        JSON.stringify({ error: 'Export job not found', jobId }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Return job status
+    return new Response(
+      JSON.stringify({
+        jobId: job.id,
+        status: job.status,
+        progress: job.progress,
+        totalRecords: job.total_records,
+        processedRecords: job.processed_records,
+        downloadUrl: job.download_url,
+        error: job.error_message,
+        startedAt: job.started_at,
+        completedAt: job.completed_at,
+        expiresAt: job.expires_at,
+      }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+
+  } catch (error) {
+    console.error('Error in export-status function:', error);
+    return new Response(
+      JSON.stringify({ error: 'Internal server error', details: error.message }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+});
