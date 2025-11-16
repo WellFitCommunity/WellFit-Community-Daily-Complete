@@ -10,8 +10,7 @@ export interface ModelSelectionStrategy {
 const MODEL_COSTS = {
   [ClaudeModel.HAIKU_3]: { input: 0.00025, output: 0.00125 }, // Legacy
   [ClaudeModel.HAIKU_4_5]: { input: 0.0001, output: 0.0005 }, // LATEST: Ultra-fast UI/personalization
-  [ClaudeModel.SONNET_3_5]: { input: 0.003, output: 0.015 }, // Legacy
-  [ClaudeModel.SONNET_4]: { input: 0.003, output: 0.015 }, // Legacy
+  [ClaudeModel.SONNET_3_5]: { input: 0.003, output: 0.015 }, // Legacy (SONNET_4 is alias)
   [ClaudeModel.SONNET_4_5]: { input: 0.003, output: 0.015 }, // LATEST: Revenue-critical billing
   [ClaudeModel.OPUS_4_1]: { input: 0.015, output: 0.075 } // Premium (reserved)
 } as const;
@@ -35,13 +34,7 @@ const _MODEL_CHARACTERISTICS = {
     speed: 'fast',
     cost: 'moderate',
     capability: 'advanced',
-    bestFor: ['health_analysis', 'complex_questions', 'care_recommendations', 'senior_interactions']
-  },
-  [ClaudeModel.SONNET_4]: {
-    speed: 'fast',
-    cost: 'moderate',
-    capability: 'expert',
-    bestFor: ['clinical_analysis', 'fhir_processing', 'risk_assessment', 'medical_research']
+    bestFor: ['health_analysis', 'complex_questions', 'care_recommendations', 'senior_interactions', 'clinical_analysis', 'fhir_processing', 'risk_assessment', 'medical_research']
   },
   [ClaudeModel.SONNET_4_5]: {
     speed: 'fast',
@@ -117,14 +110,13 @@ export class WellFitModelSelector implements ModelSelectionStrategy {
     switch (requestType) {
       case RequestType.RISK_ASSESSMENT:
       case RequestType.FHIR_ANALYSIS:
-        return usePremium && complexity === 'complex' ? ClaudeModel.SONNET_4 : ClaudeModel.SONNET_3_5;
+        return ClaudeModel.SONNET_3_5; // SONNET_4 is alias for SONNET_3_5
 
       case RequestType.CLINICAL_NOTES:
-        return complexity === 'simple' ? ClaudeModel.SONNET_3_5 :
-               (usePremium ? ClaudeModel.SONNET_4 : ClaudeModel.SONNET_3_5);
+        return ClaudeModel.SONNET_3_5; // Simplified since SONNET_4 == SONNET_3_5
 
       case RequestType.ANALYTICS:
-        return usePremium ? ClaudeModel.SONNET_4 : ClaudeModel.SONNET_3_5;
+        return ClaudeModel.SONNET_3_5; // Simplified since SONNET_4 == SONNET_3_5
 
       case RequestType.HEALTH_QUESTION:
       case RequestType.MEDICATION_GUIDANCE:
