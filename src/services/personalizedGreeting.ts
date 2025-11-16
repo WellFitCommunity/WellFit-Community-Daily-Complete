@@ -139,7 +139,7 @@ export async function fetchUserProfile(
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('first_name, last_name, full_name, role, email, tenant_id')
-      .eq('user_id', userId)
+      .eq('id', userId)
       .single();
 
     if (profileError || !profile) {
