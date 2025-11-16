@@ -16,6 +16,7 @@ import ClaudeCareAssistantPanel from '../claude-care/ClaudeCareAssistantPanel';
 import CHWAlertsWidget from '../chw/CHWAlertsWidget';
 import PasswordGenerator from '../shared/PasswordGenerator';
 import { PersonalizedGreeting } from '../ai-transparency';
+import { useAdminAuth } from '../../contexts/AdminAuthContext';
 
 // Collapsible Section Component
 interface CollapsibleSectionProps {
@@ -59,6 +60,7 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
 
 // Enrollment Section for Nurses
 const NurseEnrollPatientSection: React.FC = () => {
+  const { invokeAdminFunction } = useAdminAuth();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
@@ -83,48 +85,43 @@ const NurseEnrollPatientSection: React.FC = () => {
     setMessage(null);
 
     try {
-
-      // Get auth token for proper authorization
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData.session?.access_token;
-
-      const { data, error } = await supabase.functions.invoke('enrollClient', {
-        body: {
-          phone,
-          password: password, // ← Use the password from the generator
-          first_name: firstName,
-          last_name: lastName,
-          email: email || undefined
-        },
-        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined
+      // Use invokeAdminFunction to properly authenticate with X-Admin-Token header
+      const { data, error } = await invokeAdminFunction('enrollClient', {
+        phone,
+        password: password, // ← Use the password from the generator
+        first_name: firstName,
+        last_name: lastName,
+        email: email || undefined
       });
 
-      if (error) {
-        throw new Error(error.message || 'Enrollment failed');
+      // Check if user_id returned (success) even if error present
+      if (data?.user_id) {
+        // enrollClient returns {success: true, user_id: string}
+        const enrolledUserId = data.user_id;
+
+        // HIPAA Audit: Log successful enrollment
+        await auditLogger.auth('REGISTRATION', true, {
+          enrolledUserId,
+          enrolledBy: 'nurse',
+          patientName: `${firstName} ${lastName}`,
+          phone
+        });
+
+        setMessage({
+          type: 'success',
+          text: `✅ ${firstName} ${lastName} enrolled successfully! Patient can now log in with the generated password.`
+        });
+
+        // Reset form
+        setFirstName('');
+        setLastName('');
+        setPhone('');
+        setEmail('');
+        setPassword(''); // ← Clear password
+      } else {
+        // ACTUAL FAILURE
+        throw new Error(error?.message || 'No user ID returned - enrollment failed');
       }
-
-      // enrollClient returns {success: true, user_id: string}
-      const enrolledUserId = data?.user_id;
-
-      // HIPAA Audit: Log successful enrollment
-      await auditLogger.auth('REGISTRATION', true, {
-        enrolledUserId,
-        enrolledBy: 'nurse',
-        patientName: `${firstName} ${lastName}`,
-        phone
-      });
-
-      setMessage({
-        type: 'success',
-        text: `✅ ${firstName} ${lastName} enrolled successfully! Patient can now log in with the generated password.`
-      });
-
-      // Reset form
-      setFirstName('');
-      setLastName('');
-      setPhone('');
-      setEmail('');
-      setPassword(''); // ← Clear password
     } catch (error: any) {
       // HIPAA Audit: Log enrollment failure (CRITICAL - uses proper audit logging)
       await auditLogger.error('NURSE_ENROLLMENT_FAILED', error, {
