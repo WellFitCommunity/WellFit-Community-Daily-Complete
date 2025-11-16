@@ -7,28 +7,32 @@ import { ReadmissionRiskPredictor } from '../readmissionRiskPredictor';
 import { supabase } from '../../../lib/supabaseClient';
 import type { DischargeContext } from '../readmissionRiskPredictor';
 
-// Mock Supabase
-jest.mock('../../../lib/supabaseClient', () => ({
-  supabase: {
-    from: jest.fn(),
-    rpc: jest.fn()
-  }
-}));
-
 // Mock MCP Cost Optimizer
 const mockOptimizer = {
   call: jest.fn()
 };
 
+// Helper to create a chainable mock query
+function createMockQuery(resolveData: any = {}) {
+  const mockQuery: any = {
+    select: jest.fn().mockReturnThis(),
+    eq: jest.fn().mockReturnThis(),
+    gte: jest.fn().mockReturnThis(),
+    order: jest.fn().mockReturnThis(),
+    limit: jest.fn().mockReturnThis(),
+    single: jest.fn().mockResolvedValue(resolveData),
+  };
+  // Make limit resolve as well for terminal calls
+  mockQuery.limit.mockResolvedValue(resolveData);
+  mockQuery.order.mockResolvedValue(resolveData);
+  return mockQuery;
+}
+
 describe('ReadmissionRiskPredictor', () => {
   let predictor: ReadmissionRiskPredictor;
-  let mockSupabaseFrom: jest.Mock;
-  let mockSupabaseRpc: jest.Mock;
 
   beforeEach(() => {
     predictor = new ReadmissionRiskPredictor(mockOptimizer as any);
-    mockSupabaseFrom = supabase.from as jest.Mock;
-    mockSupabaseRpc = supabase.rpc as jest.Mock;
     jest.clearAllMocks();
   });
 
@@ -85,31 +89,14 @@ describe('ReadmissionRiskPredictor', () => {
       };
 
       // Mock config
-      mockSupabaseRpc.mockResolvedValue({
+      (supabase.rpc as any).mockResolvedValue({
         data: { readmission_predictor_enabled: true },
         error: null
       });
 
-      // Mock patient data queries
-      mockSupabaseFrom.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            gte: jest.fn().mockReturnValue({
-              order: jest.fn().mockReturnValue({
-                limit: jest.fn().mockResolvedValue({ data: [], error: null })
-              })
-            }),
-            eq: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                limit: jest.fn().mockResolvedValue({ data: [], error: null })
-              }),
-              limit: jest.fn().mockResolvedValue({ data: [], error: null })
-            }),
-            limit: jest.fn().mockResolvedValue({ data: [], error: null }),
-            single: jest.fn().mockResolvedValue({ data: null, error: null })
-          })
-        })
-      });
+      // Mock patient data queries with chainable mock
+      const mockQuery = createMockQuery({ data: [], error: null });
+      (supabase.from as any).mockReturnValue(mockQuery);
 
       // Mock AI response
       mockOptimizer.call.mockResolvedValue({
@@ -128,7 +115,7 @@ describe('ReadmissionRiskPredictor', () => {
       });
 
       // Mock insert
-      mockSupabaseFrom.mockReturnValueOnce({
+      (supabase.from as any).mockReturnValueOnce({
         insert: jest.fn().mockResolvedValue({ data: null, error: null })
       });
 
@@ -153,7 +140,7 @@ describe('ReadmissionRiskPredictor', () => {
         primaryDiagnosisDescription: 'Heart failure'
       };
 
-      mockSupabaseRpc.mockResolvedValue({
+      (supabase.rpc as any).mockResolvedValue({
         data: { readmission_predictor_enabled: true },
         error: null
       });
@@ -192,7 +179,7 @@ describe('ReadmissionRiskPredictor', () => {
         profile: { date_of_birth: '1950-01-01', chronic_conditions: ['I50.9', 'E11.9'] }
       });
 
-      mockSupabaseFrom.mockImplementation(mockQueries);
+      (supabase.from as any).mockImplementation(mockQueries);
 
       // Mock HIGH risk AI response
       mockOptimizer.call.mockResolvedValue({
@@ -229,7 +216,7 @@ describe('ReadmissionRiskPredictor', () => {
         fromCache: false
       });
 
-      mockSupabaseFrom.mockReturnValueOnce({
+      (supabase.from as any).mockReturnValueOnce({
         insert: jest.fn().mockResolvedValue({ data: null, error: null })
       });
 
@@ -250,7 +237,7 @@ describe('ReadmissionRiskPredictor', () => {
         dischargeDisposition: 'home'
       };
 
-      mockSupabaseRpc.mockResolvedValue({
+      (supabase.rpc as any).mockResolvedValue({
         data: { readmission_predictor_enabled: true },
         error: null
       });
@@ -265,7 +252,7 @@ describe('ReadmissionRiskPredictor', () => {
         profile: { date_of_birth: '1970-01-01', chronic_conditions: [] }
       });
 
-      mockSupabaseFrom.mockImplementation(mockQueries);
+      (supabase.from as any).mockImplementation(mockQueries);
 
       // Mock LOW risk AI response
       mockOptimizer.call.mockResolvedValue({
@@ -303,7 +290,7 @@ describe('ReadmissionRiskPredictor', () => {
         fromCache: false
       });
 
-      mockSupabaseFrom.mockReturnValueOnce({
+      (supabase.from as any).mockReturnValueOnce({
         insert: jest.fn().mockResolvedValue({ data: null, error: null })
       });
 
@@ -323,7 +310,7 @@ describe('ReadmissionRiskPredictor', () => {
         dischargeDisposition: 'home'
       };
 
-      mockSupabaseRpc.mockResolvedValue({
+      (supabase.rpc as any).mockResolvedValue({
         data: {
           readmission_predictor_enabled: true,
           readmission_predictor_model: 'claude-sonnet-4-5-20250929'
@@ -332,7 +319,7 @@ describe('ReadmissionRiskPredictor', () => {
       });
 
       const mockQueries = setupMockPatientData({});
-      mockSupabaseFrom.mockImplementation(mockQueries);
+      (supabase.from as any).mockImplementation(mockQueries);
 
       mockOptimizer.call.mockResolvedValue({
         response: JSON.stringify({
@@ -349,7 +336,7 @@ describe('ReadmissionRiskPredictor', () => {
         fromCache: false
       });
 
-      mockSupabaseFrom.mockReturnValueOnce({
+      (supabase.from as any).mockReturnValueOnce({
         insert: jest.fn().mockResolvedValue({ data: null, error: null })
       });
 
@@ -375,7 +362,7 @@ describe('ReadmissionRiskPredictor', () => {
         dischargeDisposition: 'home'
       };
 
-      mockSupabaseRpc.mockResolvedValue({
+      (supabase.rpc as any).mockResolvedValue({
         data: {
           readmission_predictor_enabled: true,
           readmission_predictor_auto_create_care_plan: true
@@ -387,7 +374,7 @@ describe('ReadmissionRiskPredictor', () => {
         readmissions: [{ is_readmission: true }]
       });
 
-      mockSupabaseFrom.mockImplementation(mockQueries);
+      (supabase.from as any).mockImplementation(mockQueries);
 
       mockOptimizer.call.mockResolvedValue({
         response: JSON.stringify({
@@ -423,7 +410,7 @@ describe('ReadmissionRiskPredictor', () => {
       // Mock alert insert (should be called for critical risk)
       const mockInsertAlert = jest.fn().mockResolvedValue({ data: null, error: null });
 
-      mockSupabaseFrom
+      (supabase.from as any)
         .mockReturnValueOnce({ insert: mockInsertPrediction })
         .mockReturnValueOnce({ insert: mockInsertCarePlan })
         .mockReturnValueOnce({ insert: mockInsertAlert });
@@ -444,7 +431,7 @@ describe('ReadmissionRiskPredictor', () => {
         dischargeDisposition: 'home'
       };
 
-      mockSupabaseRpc.mockResolvedValue({
+      (supabase.rpc as any).mockResolvedValue({
         data: {
           readmission_predictor_enabled: true,
           readmission_predictor_auto_create_care_plan: false // DISABLED
@@ -453,7 +440,7 @@ describe('ReadmissionRiskPredictor', () => {
       });
 
       const mockQueries = setupMockPatientData({});
-      mockSupabaseFrom.mockImplementation(mockQueries);
+      (supabase.from as any).mockImplementation(mockQueries);
 
       mockOptimizer.call.mockResolvedValue({
         response: JSON.stringify({
@@ -471,7 +458,7 @@ describe('ReadmissionRiskPredictor', () => {
       });
 
       const mockInsert = jest.fn().mockResolvedValue({ data: null, error: null });
-      mockSupabaseFrom.mockReturnValue({ insert: mockInsert });
+      (supabase.from as any).mockReturnValue({ insert: mockInsert });
 
       await predictor.predictReadmissionRisk(context);
 
@@ -499,7 +486,7 @@ describe('ReadmissionRiskPredictor', () => {
         eq: jest.fn().mockResolvedValue({ data: null, error: null })
       });
 
-      mockSupabaseFrom
+      (supabase.from as any)
         .mockReturnValueOnce({ select: mockSelect })
         .mockReturnValueOnce({ update: mockUpdate });
 
@@ -529,7 +516,7 @@ describe('ReadmissionRiskPredictor', () => {
         dischargeDisposition: 'home'
       };
 
-      mockSupabaseRpc.mockResolvedValue({
+      (supabase.rpc as any).mockResolvedValue({
         data: { readmission_predictor_enabled: false }, // DISABLED
         error: null
       });
@@ -548,13 +535,13 @@ describe('ReadmissionRiskPredictor', () => {
         dischargeDisposition: 'home'
       };
 
-      mockSupabaseRpc.mockResolvedValue({
+      (supabase.rpc as any).mockResolvedValue({
         data: { readmission_predictor_enabled: true },
         error: null
       });
 
       const mockQueries = setupMockPatientData({});
-      mockSupabaseFrom.mockImplementation(mockQueries);
+      (supabase.from as any).mockImplementation(mockQueries);
 
       // Invalid AI response
       mockOptimizer.call.mockResolvedValue({
