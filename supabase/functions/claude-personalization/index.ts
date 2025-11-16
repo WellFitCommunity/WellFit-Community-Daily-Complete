@@ -53,16 +53,12 @@ function deepDeidentify(obj: any): any {
 }
 
 serve(async (req) => {
-  // CORS headers
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response('ok', {
-      headers: {
-        // CORS handled by shared module,
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-      },
-    });
+    return handleOptions(req);
   }
+
+  const { headers: corsHeaders } = corsFromRequest(req);
 
   try {
     const body = await req.json();
@@ -78,8 +74,8 @@ serve(async (req) => {
         {
           status: 400,
           headers: {
+            ...corsHeaders,
             'Content-Type': 'application/json',
-            // CORS handled by shared module,
           },
         }
       );
@@ -166,8 +162,8 @@ serve(async (req) => {
       }),
       {
         headers: {
+          ...corsHeaders,
           'Content-Type': 'application/json',
-          // CORS handled by shared module,
         },
       }
     );
@@ -196,8 +192,8 @@ serve(async (req) => {
       {
         status: 500,
         headers: {
+          ...corsHeaders,
           'Content-Type': 'application/json',
-          // CORS handled by shared module,
         },
       }
     );
