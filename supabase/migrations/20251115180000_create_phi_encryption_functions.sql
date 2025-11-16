@@ -14,7 +14,6 @@ CREATE OR REPLACE FUNCTION public.encrypt_phi_text(
 RETURNS TEXT
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
 AS $$
 DECLARE
   key_to_use TEXT;
@@ -60,7 +59,6 @@ CREATE OR REPLACE FUNCTION public.decrypt_phi_text(
 RETURNS TEXT
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
 AS $$
 DECLARE
   key_to_use TEXT;

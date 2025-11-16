@@ -19,21 +19,23 @@ DROP FUNCTION IF EXISTS public.decrypt_data(TEXT) CASCADE;
 -- Returns: Base64-encoded encrypted data
 CREATE OR REPLACE FUNCTION public.encrypt_data(
   p_plaintext TEXT,
-  p_key_name TEXT DEFAULT 'phi_master_key'
+  p_key_name TEXT DEFAULT 'app_encryption_key'
 )
 RETURNS TEXT
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
 AS $$
 DECLARE
   v_encryption_key TEXT;
 BEGIN
-  -- Retrieve encryption key from database settings
-  v_encryption_key := current_setting('app.encryption_key', TRUE);
+  -- Retrieve encryption key from Vault
+  SELECT decrypted_secret INTO v_encryption_key
+  FROM vault.decrypted_secrets
+  WHERE name = p_key_name
+  LIMIT 1;
 
   IF v_encryption_key IS NULL OR v_encryption_key = '' THEN
-    RAISE EXCEPTION 'Encryption key not configured. Set app.encryption_key in database settings.';
+    RAISE EXCEPTION 'Encryption key "%" not found in Vault', p_key_name;
   END IF;
 
   -- AES-256 encryption using pgcrypto
@@ -55,12 +57,11 @@ $$;
 -- Returns: Decrypted plaintext or '[DECRYPTION ERROR]' on failure
 CREATE OR REPLACE FUNCTION public.decrypt_data(
   p_encrypted TEXT,
-  p_key_name TEXT DEFAULT 'phi_master_key'
+  p_key_name TEXT DEFAULT 'app_encryption_key'
 )
 RETURNS TEXT
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
 AS $$
 DECLARE
   v_encryption_key TEXT;
@@ -70,11 +71,14 @@ BEGIN
     RETURN NULL;
   END IF;
 
-  -- Retrieve encryption key from database settings
-  v_encryption_key := current_setting('app.encryption_key', TRUE);
+  -- Retrieve encryption key from Vault
+  SELECT decrypted_secret INTO v_encryption_key
+  FROM vault.decrypted_secrets
+  WHERE name = p_key_name
+  LIMIT 1;
 
   IF v_encryption_key IS NULL OR v_encryption_key = '' THEN
-    RAISE EXCEPTION 'Encryption key not configured. Set app.encryption_key in database settings.';
+    RAISE EXCEPTION 'Encryption key "%" not found in Vault', p_key_name;
   END IF;
 
   -- AES-256 decryption using pgcrypto
