@@ -278,9 +278,7 @@ describe('CheckInTracker - Senior Facing Component', () => {
     });
 
     it('should disable submit button while submitting', async () => {
-      mockSupabase.rpc.mockImplementation(() =>
-        new Promise(resolve => setTimeout(() => resolve({ data: null, error: null }), 100))
-      );
+      mockSupabase.rpc.mockResolvedValue({ data: null, error: null });
 
       render(<CheckInTracker />);
 

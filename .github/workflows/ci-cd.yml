@@ -91,7 +91,7 @@ jobs:
   test-unit:
     name: Unit Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 30  # Increased timeout for 53 test files with async operations
+    timeout-minutes: 15  # Sufficient timeout with proper timer cleanup
 
     steps:
       - name: Checkout code
@@ -107,9 +107,10 @@ jobs:
 
       - name: Run unit tests
         id: unit-tests
-        run: npm run test:unit -- --maxWorkers=2 --forceExit --testTimeout=15000
+        run: npm run test:unit
         env:
           CI: true
+          NODE_OPTIONS: "--max-old-space-size=4096"
         continue-on-error: false  # Let the job fail naturally if tests fail
 
       - name: Report to summary
@@ -198,8 +199,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: build
-    # Run on all branches to prevent skipped job failures
-    if: always()
+    # Only run if build succeeded
+    if: success()
 
     steps:
       - name: Checkout code
@@ -237,8 +238,8 @@ jobs:
     name: Bundle Size Analysis
     runs-on: ubuntu-latest
     needs: build
-    # Run on all branches to prevent skipped job failures
-    if: always()
+    # Only run if build succeeded
+    if: success()
 
     steps:
       - name: Checkout code

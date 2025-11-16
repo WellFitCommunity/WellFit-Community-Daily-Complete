@@ -298,7 +298,12 @@ jobs:
 
           # audit-ci: Only fail on HIGH and CRITICAL vulnerabilities
           # Moderate vulnerabilities in webpack-dev-server are dev-only and non-blocking
-          audit-ci --high || echo "audit-ci completed with moderate vulnerabilities allowed"
+          if ! audit-ci --high; then
+            echo "⚠️ audit-ci found vulnerabilities" >> $GITHUB_STEP_SUMMARY
+            echo "FAIL=1" >> $GITHUB_ENV
+          else
+            echo "✅ No high/critical vulnerabilities in dependencies" >> $GITHUB_STEP_SUMMARY
+          fi
 
           npm outdated --json > outdated.json || true
           

@@ -213,8 +213,8 @@ export async function testTimingAttackResistance(
 // Global Test Configuration
 // ============================================
 
-// Set longer timeout for integration tests
-jest.setTimeout(30000);
+// Set test timeout (10 seconds for most tests, can be overridden per-test)
+jest.setTimeout(10000);
 
 // Mock console methods to reduce noise in tests
 global.console = {
@@ -225,6 +225,14 @@ global.console = {
   warn: jest.fn(),
   error: jest.fn(),
 };
+
+// Global afterEach cleanup to prevent timer leaks
+afterEach(() => {
+  // Clear all timers to prevent hanging tests
+  jest.clearAllTimers();
+  // Clear all mocks to prevent memory leaks
+  jest.clearAllMocks();
+});
 
 // Mock environment variables
 process.env.REACT_APP_SUPABASE_URL = 'https://test.supabase.co';
