@@ -3,7 +3,7 @@
 // Compatible with react-scripts test runner
 
 module.exports = {
-  // Use jsdom for DOM testing
+  // Use jsdom for DOM testing (react-scripts provides this)
   testEnvironment: 'jsdom',
 
   // Setup files
@@ -18,10 +18,16 @@ module.exports = {
     '**/*.{spec,test}.{js,jsx,ts,tsx}',
   ],
 
-  // Transform files
+  // Transform files - use react-scripts preset for TypeScript
   transform: {
-    '^.+\\.(ts|tsx)$': 'babel-jest',
-    '^.+\\.(js|jsx)$': 'babel-jest',
+    '^.+\\.(ts|tsx|js|jsx)$': [
+      'babel-jest',
+      {
+        presets: [
+          ['react-app', { flow: false, typescript: true }],
+        ],
+      },
+    ],
   },
 
   // Module name mapper for imports
@@ -53,7 +59,7 @@ module.exports = {
   ],
 
   // Coverage thresholds (enforce minimum coverage)
-  coverageThresholds: {
+  coverageThreshold: {
     global: {
       branches: 60,
       functions: 60,
