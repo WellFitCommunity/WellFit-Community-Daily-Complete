@@ -1,6 +1,9 @@
 // Jest setup for testing including security and penetration testing
 import '@testing-library/jest-dom';
 
+// Mock Supabase client to prevent real network calls during tests
+jest.mock('./lib/supabaseClient');
+
 // ============================================
 // Security Testing Utilities
 // ============================================
