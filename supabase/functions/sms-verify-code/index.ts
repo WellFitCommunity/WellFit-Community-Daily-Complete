@@ -48,22 +48,27 @@ Deno.serve(async (req: Request): Promise<Response> => {
       return new Response(JSON.stringify({ error: "Code must be 4–8 digits" }), { status: 400, headers });
     }
 
-    // Validate phone using libphonenumber-js
+    // Validate and normalize phone using libphonenumber-js
     if (!phone) {
       return new Response(JSON.stringify({ error: "Phone number is required" }), { status: 400, headers });
     }
 
+    let normalizedPhone: string;
     try {
       // Validate phone format
       if (!isValidPhoneNumber(phone, 'US')) {
         return new Response(JSON.stringify({ error: "Invalid phone number format" }), { status: 400, headers });
       }
 
-      // Check allowed countries
+      // Parse and normalize to E.164 format for Twilio consistency
       const phoneNumber = parsePhoneNumber(phone, 'US');
       if (!ALLOWED_COUNTRIES.includes(phoneNumber.country as any)) {
         return new Response(JSON.stringify({ error: `Phone numbers from ${phoneNumber.country} are not currently supported` }), { status: 400, headers });
       }
+
+      // Normalize to E.164 format (+1234567890) to ensure consistency with Twilio
+      normalizedPhone = phoneNumber.number;
+      console.log(`Phone normalized: ${phone} -> ${normalizedPhone}`);
     } catch (error) {
       return new Response(JSON.stringify({ error: "Invalid phone number format" }), { status: 400, headers });
     }
@@ -76,7 +81,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
           Authorization: "Basic " + btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`),
           "Content-Type": "application/x-www-form-urlencoded",
         },
-        body: new URLSearchParams({ To: phone, Code: code }).toString(),
+        body: new URLSearchParams({ To: normalizedPhone, Code: code }).toString(),
       }
     );
 
@@ -118,11 +123,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
       const supabase = createClient(SB_URL, SB_SECRET_KEY);
 
-      // Get pending registration
+      // Get pending registration using normalized phone number
       const { data: pending, error: pendingError } = await supabase
         .from("pending_registrations")
         .select("*")
-        .eq("phone", phone)
+        .eq("phone", normalizedPhone)
         .maybeSingle();
 
       if (pendingError || !pending) {
@@ -172,7 +177,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
       // Create the actual user account with their chosen password
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        phone: phone,
+        phone: normalizedPhone,
         password: userPassword,
         phone_confirm: true, // Phone is now verified
         email: pending.email || undefined,
@@ -203,7 +208,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
           first_name: pending.first_name,
           last_name: pending.last_name,
           email: pending.email,
-          phone: phone,
+          phone: normalizedPhone,
           role_code: pending.role_code,
           role: pending.role_slug,  // Added role field
           role_slug: pending.role_slug,
@@ -276,12 +281,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
       }
 
       // Clean up pending registration
-      await supabase.from("pending_registrations").delete().eq("phone", phone);
+      await supabase.from("pending_registrations").delete().eq("phone", normalizedPhone);
 
       // Auto sign-in the user after successful registration
       // This creates a session so they don't have to manually login
       const { data: sessionData, error: sessionError } = await supabase.auth.signInWithPassword({
-        phone: phone,
+        phone: normalizedPhone,
         password: userPassword,
       });
 
@@ -308,7 +313,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         message: "Registration completed successfully! You are now logged in.",
         user: {
           user_id: authData.user.id,
-          phone: phone,
+          phone: normalizedPhone,
           first_name: pending.first_name,
           last_name: pending.last_name,
           role_code: pending.role_code,

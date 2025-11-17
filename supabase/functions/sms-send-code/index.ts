@@ -105,6 +105,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
         { status: 400, headers },
       );
     }
+
+    // Normalize phone to E.164 format for Twilio consistency
+    const phoneNumber = parsePhoneNumber(phone, 'US');
+    const normalizedPhone = phoneNumber.number;
+    console.log(`[sms-send-code] Phone normalized: ${phone} -> ${normalizedPhone}`);
+
     if (channel !== "sms" && channel !== "call") {
       return new Response(
         JSON.stringify({ error: "INVALID_CHANNEL", message: "channel must be 'sms' or 'call'" }),
@@ -114,7 +120,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     // Twilio Verify: start verification with timeout and retry logic
     const url = `https://verify.twilio.com/v2/Services/${VERIFY_SID}/Verifications`;
-    const form = new URLSearchParams({ To: phone, Channel: channel });
+    const form = new URLSearchParams({ To: normalizedPhone, Channel: channel });
 
     // Helper function to fetch with proper abort on timeout
     const fetchWithTimeout = (url: string, options: RequestInit, timeoutMs: number): Promise<Response> => {
