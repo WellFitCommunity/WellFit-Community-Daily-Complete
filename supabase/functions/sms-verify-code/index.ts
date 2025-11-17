@@ -41,22 +41,27 @@ Deno.serve(async (req: Request): Promise<Response> => {
       return new Response(JSON.stringify({ error: "Code must be 4–8 digits" }), { status: 400, headers });
     }
 
-    // Validate phone using libphonenumber-js
+    // Validate and normalize phone using libphonenumber-js
     if (!phone) {
       return new Response(JSON.stringify({ error: "Phone number is required" }), { status: 400, headers });
     }
 
+    let normalizedPhone: string;
     try {
       // Validate phone format
       if (!isValidPhoneNumber(phone, 'US')) {
         return new Response(JSON.stringify({ error: "Invalid phone number format" }), { status: 400, headers });
       }
 
-      // Check allowed countries
+      // Parse and normalize to E.164 format for Twilio consistency
       const phoneNumber = parsePhoneNumber(phone, 'US');
       if (!ALLOWED_COUNTRIES.includes(phoneNumber.country as any)) {
         return new Response(JSON.stringify({ error: `Phone numbers from ${phoneNumber.country} are not currently supported` }), { status: 400, headers });
       }
+
+      // Normalize to E.164 format (+1234567890) to ensure consistency with Twilio
+      normalizedPhone = phoneNumber.number;
+      console.log(`Phone normalized: ${phone} -> ${normalizedPhone}`);
     } catch (error) {
       return new Response(JSON.stringify({ error: "Invalid phone number format" }), { status: 400, headers });
     }
@@ -69,7 +74,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
           Authorization: "Basic " + btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`),
           "Content-Type": "application/x-www-form-urlencoded",
         },
-        body: new URLSearchParams({ To: phone, Code: code }).toString(),
+        body: new URLSearchParams({ To: normalizedPhone, Code: code }).toString(),
       }
     );
 
@@ -85,8 +90,17 @@ Deno.serve(async (req: Request): Promise<Response> => {
       (json as any).status === "approved";
 
     if (!approved) {
-      console.error("Twilio verify error", resp.status, txt);
-      return new Response(JSON.stringify({ error: "Invalid or expired verification code", details: json || txt }), {
+      console.error("Twilio verify error", resp.status, txt, {
+        phone: normalizedPhone,
+        verifySid: VERIFY_SID.substring(0, 6) + "...",
+      });
+      return new Response(JSON.stringify({
+        error: "Invalid or expired verification code",
+        details: json || txt,
+        help: resp.status === 404
+          ? "Verification not found. Please request a new code or ensure phone numbers match exactly."
+          : "Please check your code and try again."
+      }), {
         status: 401, headers,
       });
     }
@@ -104,15 +118,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
       const supabase = createClient(SB_URL, SB_SECRET_KEY);
 
-      // Get pending registration
+      // Get pending registration using normalized phone number
       const { data: pending, error: pendingError } = await supabase
         .from("pending_registrations")
         .select("*")
-        .eq("phone", phone)
+        .eq("phone", normalizedPhone)
         .maybeSingle();
 
       if (pendingError || !pending) {
-        console.error("No pending registration found");
+        console.error("No pending registration found for phone:", normalizedPhone, pendingError);
         return new Response(JSON.stringify({ error: "No pending registration found. Please register again." }), {
           status: 404, headers,
         });
@@ -149,7 +163,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
       // Create the actual user account with their chosen password
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        phone: phone,
+        phone: normalizedPhone,
         password: userPassword,
         phone_confirm: true, // Phone is now verified
         email: pending.email || undefined,
@@ -165,8 +179,19 @@ Deno.serve(async (req: Request): Promise<Response> => {
       });
 
       if (authError || !authData?.user) {
-        console.error("Failed to create user account:", authError?.message);
-        return new Response(JSON.stringify({ error: "Failed to complete registration" }), { status: 500, headers });
+        console.error("Failed to create user account:", {
+          message: authError?.message,
+          code: authError?.code,
+          status: authError?.status,
+          phone: normalizedPhone,
+          email: pending.email,
+          details: authError
+        });
+        return new Response(JSON.stringify({
+          error: "Failed to create user account",
+          message: authError?.message || "Database error creating new user",
+          code: authError?.code,
+        }), { status: 500, headers });
       }
 
       // Create profile
@@ -177,7 +202,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
           first_name: pending.first_name,
           last_name: pending.last_name,
           email: pending.email,
-          phone: phone,
+          phone: normalizedPhone,
           role_code: pending.role_code,
           role: pending.role_slug,  // Added role field
           role_slug: pending.role_slug,
@@ -185,7 +210,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
         });
 
       if (profileError) {
-        console.error("Failed to create profile:", profileError.message);
+        console.error("Failed to create profile:", {
+          message: profileError.message,
+          code: profileError.code,
+          details: profileError.details,
+          hint: profileError.hint,
+          user_id: authData.user.id,
+        });
         // Don't fail here - user is created, profile can be fixed later
       }
 
@@ -234,12 +265,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
       }
 
       // Clean up pending registration
-      await supabase.from("pending_registrations").delete().eq("phone", phone);
+      await supabase.from("pending_registrations").delete().eq("phone", normalizedPhone);
 
       // Auto sign-in the user after successful registration
       // This creates a session so they don't have to manually login
       const { data: sessionData, error: sessionError } = await supabase.auth.signInWithPassword({
-        phone: phone,
+        phone: normalizedPhone,
         password: userPassword,
       });
 
@@ -253,7 +284,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         message: "Registration completed successfully! You are now logged in.",
         user: {
           user_id: authData.user.id,
-          phone: phone,
+          phone: normalizedPhone,
           first_name: pending.first_name,
           last_name: pending.last_name,
           role_code: pending.role_code,
