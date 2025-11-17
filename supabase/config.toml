@@ -10,5 +10,8 @@ verify_jwt = false
 [functions.sms-send-code]
 verify_jwt = false
 
+[functions.verify-sms-code]
+verify_jwt = false
+
 [functions.system-status]
 verify_jwt = false
