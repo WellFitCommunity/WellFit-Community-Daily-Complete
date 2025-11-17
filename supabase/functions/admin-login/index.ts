@@ -1,8 +1,11 @@
 import { serve } from "https://deno.land/std@0.183.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { cors } from "../_shared/cors.ts";
+import { createLogger } from "../_shared/auditLogger.ts";
 
 serve(async (req: Request) => {
+  const logger = createLogger('admin-login', req);
+
   const origin = req.headers.get("Origin");
   const { headers } = cors(origin, { methods: ["POST", "OPTIONS"] });
 
@@ -30,7 +33,9 @@ serve(async (req: Request) => {
     const serverAdminSecret = Deno.env.get("ADMIN_SECRET");
 
     if (!serverAdminSecret) {
-      console.error("ADMIN_SECRET is not set in function environment variables.");
+      logger.error("ADMIN_SECRET not configured", {
+        message: "ADMIN_SECRET environment variable is missing"
+      });
       return new Response(
         JSON.stringify({ error: "Server configuration error." }),
         { status: 500, headers }
@@ -43,7 +48,10 @@ serve(async (req: Request) => {
       const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
       if (!supabaseUrl || !supabaseServiceKey) {
-        console.error("Missing Supabase configuration");
+        logger.error("Missing Supabase configuration", {
+          hasUrl: Boolean(supabaseUrl),
+          hasKey: Boolean(supabaseServiceKey)
+        });
         return new Response(
           JSON.stringify({ error: "Server configuration error." }),
           { status: 500, headers }
@@ -66,7 +74,10 @@ serve(async (req: Request) => {
       });
 
       if (sessionError) {
-        console.error("Failed to create admin session:", sessionError);
+        logger.error("Admin session creation failed", {
+          error: sessionError.message,
+          clientIp
+        });
         return new Response(
           JSON.stringify({ error: "Failed to create admin session." }),
           { status: 500, headers }
@@ -90,8 +101,14 @@ serve(async (req: Request) => {
           }
         });
       } catch (logError) {
+        // Keep console.error for audit log failures (can't log audit failure to audit log)
         console.error('[Audit Log Error]:', logError);
       }
+
+      logger.info("Admin login successful", {
+        clientIp,
+        expiresIn
+      });
 
       return new Response(
         JSON.stringify({
@@ -134,8 +151,15 @@ serve(async (req: Request) => {
             }
           });
         } catch (logError) {
+          // Keep console.error for audit log failures (can't log audit failure to audit log)
           console.error('[Audit Log Error]:', logError);
         }
+
+        logger.security("Admin login failed - invalid key", {
+          clientIp,
+          keyPrefix: adminKey.substring(0, 8),
+          userAgent: req.headers.get('user-agent')
+        });
 
         // SOC 2 SECURITY EVENT LOGGING: Detect failed admin login bursts
         try {
@@ -165,6 +189,7 @@ serve(async (req: Request) => {
             });
           }
         } catch (burstCheckError) {
+          // Keep console.error for security event detection failures
           console.error('[Failed Admin Login Burst Detection Error]:', burstCheckError);
         }
       }
@@ -176,9 +201,11 @@ serve(async (req: Request) => {
     }
 
   } catch (err) {
-    console.error("Admin login error:", err);
-    // Check if err is an instance of Error before accessing err.message
     const errorMessage = err instanceof Error ? err.message : String(err);
+    logger.error("Fatal error in admin-login", {
+      error: errorMessage,
+      stack: err instanceof Error ? err.stack : undefined
+    });
     return new Response(
       JSON.stringify({ error: "Internal Server Error", details: errorMessage }),
       { status: 500, headers }

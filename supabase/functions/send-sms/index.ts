@@ -4,6 +4,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { createLogger } from "../_shared/auditLogger.ts";
 
 const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
 const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
@@ -24,7 +25,27 @@ interface SMSRequest {
   priority?: 'normal' | 'high' | 'urgent';
 }
 
+/**
+ * Validate phone number in E.164 format
+ */
+function validatePhone(phone: string): { valid: boolean; error?: string } {
+  if (!phone) {
+    return { valid: false, error: "Phone number is required" };
+  }
+
+  // E.164 format: +[country code][number] (e.g., +14155552671)
+  const e164Regex = /^\+[1-9]\d{1,14}$/;
+
+  if (!e164Regex.test(phone)) {
+    return { valid: false, error: "Phone must be in E.164 format (e.g., +14155552671)" };
+  }
+
+  return { valid: true };
+}
+
 serve(async (req) => {
+  const logger = createLogger('send-sms', req);
+
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -102,7 +123,11 @@ serve(async (req) => {
         const responseText = await response.text();
 
         if (!response.ok) {
-          console.error(`[send-sms] Twilio error for ${phoneNumber}: ${response.status} ${responseText}`);
+          logger.error("Twilio SMS send failed", {
+            phone: phoneNumber,
+            status: response.status,
+            error: responseText
+          });
           errors.push({ phone: phoneNumber, error: responseText });
         } else {
           const data = JSON.parse(responseText);
@@ -111,10 +136,17 @@ serve(async (req) => {
             sid: data.sid,
             status: data.status
           });
-          console.log(`[send-sms] SMS sent to ${phoneNumber}, SID: ${data.sid}`);
+          logger.info("SMS sent successfully", {
+            phone: phoneNumber,
+            sid: data.sid,
+            status: data.status
+          });
         }
       } catch (error) {
-        console.error(`[send-sms] Failed to send to ${phoneNumber}:`, error);
+        logger.error("SMS send exception", {
+          phone: phoneNumber,
+          error: error instanceof Error ? error.message : String(error)
+        });
         errors.push({ phone: phoneNumber, error: error.message });
       }
     }
@@ -146,7 +178,10 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error("[send-sms] Error:", error);
+    logger.error("Fatal error in send-sms", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
