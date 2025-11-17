@@ -1,4 +1,4 @@
-// supabase/functions/register/index.ts
+// supabase/functions/verify-hcaptcha/index.ts
 // Deno Edge Function: strict CORS + hCaptcha + create user + insert profile (US-only, E.164 locked: +1XXXXXXXXXX)
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
@@ -6,6 +6,7 @@ import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supa
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { SB_URL, SB_SECRET_KEY, HCAPTCHA_SECRET } from "../_shared/env.ts";
 import { cors } from "../_shared/cors.ts";
+import { createLogger } from "../_shared/auditLogger.ts";
 
 const MAX_REQUESTS = 5;
 const TIME_WINDOW_MINUTES = 15;
@@ -54,6 +55,8 @@ function passwordMissingRules(pw: string): string[] {
 }
 
 export default async function handler(req: Request): Promise<Response> {
+  const logger = createLogger('verify-hcaptcha', req);
+
   const { headers, allowed } = cors(req.headers.get("origin"), {
     methods: ["POST", "OPTIONS"],
     allowHeaders: ["authorization", "x-client-info", "apikey", "content-type", "x-hcaptcha-token"]
@@ -66,11 +69,14 @@ export default async function handler(req: Request): Promise<Response> {
 
   try {
     if (!SB_URL || !SB_SECRET_KEY) {
-      console.error("Missing SUPABASE_URL or SB_SECRET_KEY");
+      logger.error("Missing Supabase configuration", {
+        hasUrl: Boolean(SB_URL),
+        hasKey: Boolean(SB_SECRET_KEY)
+      });
       return j({ error: "Server misconfiguration." }, 500, headers);
     }
     if (!HCAPTCHA_SECRET) {
-      console.error("Missing HCAPTCHA_SECRET");
+      logger.error("Missing hCaptcha secret configuration");
       return j({ error: "Captcha not configured." }, 500, headers);
     }
 
@@ -85,7 +91,10 @@ export default async function handler(req: Request): Promise<Response> {
 
     if (clientIp !== "unknown") {
       const { error: logErr } = await admin.from("rate_limit_registrations").insert({ ip_address: clientIp });
-      if (logErr) console.warn("rate_limit_registrations insert failed:", logErr);
+      if (logErr) logger.warn("Rate limit logging failed", {
+        error: logErr.message,
+        clientIp
+      });
 
       const since = new Date(Date.now() - TIME_WINDOW_MINUTES * 60 * 1000).toISOString();
       const { count, error: cntErr } = await admin
@@ -146,6 +155,12 @@ export default async function handler(req: Request): Promise<Response> {
     const cap = await fetch(HCAPTCHA_VERIFY_URL, { method: "POST", body: form });
     const capJson = await cap.json().catch(() => ({}));
     if (!cap.ok || !capJson?.success) {
+      logger.security("hCaptcha verification failed", {
+        phone: e164,
+        clientIp,
+        errorCodes: capJson?.["error-codes"] ?? [],
+        httpStatus: cap.status
+      });
       return j(
         { error: "hCaptcha verification failed. Please try again.", detail: capJson?.["error-codes"] ?? [] },
         401,
@@ -169,9 +184,19 @@ export default async function handler(req: Request): Promise<Response> {
     if (authErr || !created?.user) {
       const msg = authErr?.message ?? "Auth createUser failed";
       if (msg.toLowerCase().includes("exists")) {
+        logger.warn("Registration attempted with existing phone/email", {
+          phone: e164,
+          email: body.email,
+          clientIp
+        });
         return j({ error: "Phone or email already registered." }, 409, headers);
       }
-      console.error("Auth create error:", msg);
+      logger.error("User account creation failed", {
+        phone: e164,
+        email: body.email,
+        error: msg,
+        clientIp
+      });
       return j({ error: "Unable to create account." }, 500, headers);
     }
     const userId = created.user.id;
@@ -189,15 +214,33 @@ export default async function handler(req: Request): Promise<Response> {
       // created_at: new Date().toISOString() // include only if your schema has it
     });
     if (profErr) {
-      console.error("Profile insert failed:", profErr);
+      logger.error("Profile creation failed, rolling back user", {
+        userId,
+        phone: e164,
+        email: body.email,
+        error: profErr.message,
+        clientIp
+      });
       await admin.auth.admin.deleteUser(userId);
       return j({ error: "Unable to save profile. Please try again." }, 500, headers);
     }
 
+    logger.info("User registration completed successfully", {
+      userId,
+      phone: e164,
+      email: body.email,
+      firstName: body.first_name,
+      lastName: body.last_name,
+      clientIp
+    });
+
     return j({ success: true, user_id: userId, phone: e164 }, 201, headers);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error("register error:", msg);
+    logger.error("Fatal error in verify-hcaptcha", {
+      error: msg,
+      stack: err instanceof Error ? err.stack : undefined
+    });
     return j({ error: "Internal Server Error", details: msg }, 500, headers);
   }
 }
