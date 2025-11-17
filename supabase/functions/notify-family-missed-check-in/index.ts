@@ -5,6 +5,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
+import { createLogger } from '../_shared/auditLogger.ts'
 
 const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
 const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
@@ -26,6 +27,8 @@ interface FamilyNotificationRequest {
 }
 
 serve(async (req) => {
+  const logger = createLogger('notify-family-missed-check-in', req);
+
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return handleOptions(req);
@@ -33,6 +36,11 @@ serve(async (req) => {
 
   try {
     const { seniorName, contactName, contactPhone }: FamilyNotificationRequest = await req.json();
+
+    logger.security('Family missed check-in notification initiated', {
+      seniorName,
+      contactName
+    });
 
     // Validate inputs
     if (!seniorName || !contactName || !contactPhone) {
@@ -84,7 +92,12 @@ serve(async (req) => {
     const responseText = await response.text();
 
     if (!response.ok) {
-      console.error(`[notify-family-missed-check-in] Twilio error: ${response.status} ${responseText}`);
+      logger.error('Twilio SMS send failed', {
+        status: response.status,
+        details: responseText,
+        seniorName,
+        contactName
+      });
       const { headers } = corsFromRequest(req);
       return new Response(
         JSON.stringify({
@@ -96,7 +109,13 @@ serve(async (req) => {
     }
 
     const data = JSON.parse(responseText);
-    console.log(`[notify-family-missed-check-in] SMS sent to ${contactName} at ${contactPhone}, SID: ${data.sid}`);
+    logger.info('Family notification SMS sent successfully', {
+      contactName,
+      contactPhone,
+      seniorName,
+      sid: data.sid,
+      status: data.status
+    });
 
     const { headers } = corsFromRequest(req);
     return new Response(
@@ -113,7 +132,9 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error("[notify-family-missed-check-in] Error:", error);
+    logger.error('Family missed check-in notification error', {
+      error: error.message
+    });
     const { headers } = corsFromRequest(req);
     return new Response(
       JSON.stringify({ error: error.message }),

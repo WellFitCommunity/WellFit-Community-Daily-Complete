@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
+import { createLogger } from '../_shared/auditLogger.ts'
 
 const corsHeaders = {
   // CORS handled by shared module,
@@ -16,6 +16,8 @@ interface TeamAlertRequest {
 }
 
 serve(async (req) => {
+  const logger = createLogger('send-team-alert', req);
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -38,11 +40,14 @@ serve(async (req) => {
     const { alert_type, description, user_id, priority = 'medium' } = await req.json() as TeamAlertRequest
 
     if (!alert_type || !description || !user_id) {
+      logger.warn('Missing required fields in team alert request', { alert_type, description, user_id });
       return new Response(
         JSON.stringify({ error: 'Missing required fields: alert_type, description, user_id' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    logger.security('Team alert initiated', { alert_type, user_id, priority });
 
     // Get user profile
     const { data: profile, error: profileError } = await supabaseClient
@@ -52,7 +57,7 @@ serve(async (req) => {
       .single()
 
     if (profileError) {
-      console.error('Profile fetch error:', profileError)
+      logger.error('Profile fetch error', { user_id, error: profileError.message })
     }
 
     const userName = profile
@@ -70,7 +75,7 @@ serve(async (req) => {
       })
 
     if (alertError) {
-      console.error('Alert logging error:', alertError)
+      logger.error('Alert logging error', { user_id, alert_type, error: alertError.message })
     }
 
     // Send email notification to admin and caregiver
@@ -93,6 +98,7 @@ Please check on this user as soon as possible.
 `
 
     // Send emails to all recipients
+    logger.info('Sending team alert emails', { recipients, userName });
     for (const recipient of recipients) {
       try {
         await supabaseClient.functions.invoke('send_email', {
@@ -103,13 +109,20 @@ Please check on this user as soon as possible.
             html: emailBody.replace(/\n/g, '<br>')
           }
         })
+        logger.info('Team alert email sent successfully', { recipient });
       } catch (emailError) {
-        console.error('Failed to send team alert email:', emailError)
+        logger.error('Failed to send team alert email', {
+          recipient,
+          error: emailError.message
+        })
       }
     }
 
     // Send SMS to caregiver if high priority
     if (priority === 'high' && profile?.caregiver_phone) {
+      logger.info('Sending high priority SMS alert', {
+        caregiverPhone: profile.caregiver_phone
+      });
       try {
         await supabaseClient.functions.invoke('send-appointment-reminder', {
           body: {
@@ -117,8 +130,11 @@ Please check on this user as soon as possible.
             message: `WellFit ALERT: ${userName} - ${alert_type}. ${description}. Please check immediately.`
           }
         })
+        logger.info('High priority SMS sent successfully');
       } catch (smsError) {
-        console.error('SMS send error:', smsError)
+        logger.error('SMS send error', {
+          error: smsError.message
+        })
       }
     }
 
@@ -136,7 +152,7 @@ Please check on this user as soon as possible.
     )
 
   } catch (error) {
-    console.error('Send team alert error:', error)
+    logger.error('Send team alert error', { error: error.message })
     return new Response(
       JSON.stringify({ error: error.message }),
       {
