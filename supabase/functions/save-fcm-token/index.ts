@@ -1,8 +1,8 @@
 // supabase/functions/save-fcm-token/index.ts
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { createLogger } from "../_shared/auditLogger.ts";
 
 // Zod schema for save-fcm-token payload
 const saveTokenSchema = z.object({
@@ -36,6 +36,8 @@ async function getAuthenticatedUser(req: Request, supabaseClient: SupabaseClient
 }
 
 serve(async (req) => {
+  const logger = createLogger('save-fcm-token', req);
+
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
       status: 405,
@@ -44,7 +46,6 @@ serve(async (req) => {
   }
 
   try {
-
     const rawBody = await req.json();
     const validationResult = saveTokenSchema.safeParse(rawBody);
 
@@ -57,16 +58,6 @@ serve(async (req) => {
     }
 
     const { fcm_token, device_info } = validationResult.data;
-
-
-    const { fcm_token, device_info } = await req.json() as SaveTokenPayload;
-
-    if (!fcm_token) {
-      return new Response(JSON.stringify({ error: 'Missing fcm_token in request body' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
 
 
     // Use service role client for database operations
@@ -95,22 +86,32 @@ serve(async (req) => {
       .select(); // Optionally select the row after upsert
 
     if (error) {
-      console.error('Error saving FCM token:', error);
+      logger.error('Failed to save FCM token', {
+        userId: user_id,
+        error: error.message,
+        errorCode: error.code
+      });
       return new Response(JSON.stringify({ error: 'Failed to save FCM token', details: error.message }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    console.log('FCM token saved successfully');
+    logger.info('FCM token saved successfully', {
+      userId: user_id,
+      hasDeviceInfo: Boolean(device_info)
+    });
     return new Response(JSON.stringify({ success: true, message: 'FCM token saved.', data }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
 
   } catch (e) {
-    console.error('Error in save-fcm-token function:', e);
     const errorMessage = e instanceof Error ? e.message : 'Unknown error';
+    logger.error('Fatal error in save-fcm-token', {
+      error: errorMessage,
+      stack: e instanceof Error ? e.stack : undefined
+    });
     if (errorMessage.includes('User not authenticated') || errorMessage.includes('Missing Authorization header')) {
         return new Response(JSON.stringify({ error: 'Unauthorized: ' + errorMessage }), {
             status: 401, headers: { 'Content-Type': 'application/json' }
