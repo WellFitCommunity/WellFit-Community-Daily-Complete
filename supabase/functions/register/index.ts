@@ -272,9 +272,7 @@ resource_type: 'auth_event',
         const smsResponse = await fetchWithTimeout(`${functionsUrl}/sms-send-code`, {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
-            "apikey": SB_ANON_KEY,
-            "Authorization": `Bearer ${SB_ANON_KEY}`
+            "Content-Type": "application/json"
           },
           body: JSON.stringify({ phone: phoneNumber })
         }, 60000); // 60 second timeout
@@ -401,15 +399,13 @@ resource_type: 'auth_event',
           .finally(() => clearTimeout(timeoutId));
       };
 
-      // IMPORTANT: sms-send-code expects anon key, NOT service role key
-      // Service role key causes "Invalid JWT" error
+      // IMPORTANT: sms-send-code does NOT require authentication (only CORS)
+      // Do not send auth headers to avoid "Invalid JWT" errors
       // Using 60 second timeout (sms-send-code has 30s timeout + 3 retries with delays)
       const smsResponse = await fetchWithTimeout(`${functionsUrl}/sms-send-code`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          "apikey": SB_ANON_KEY,
-          "Authorization": `Bearer ${SB_ANON_KEY}`
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({ phone: phoneNumber })
       }, 60000); // 60 second timeout to allow for retries
@@ -532,7 +528,7 @@ resource_type: 'auth_event',
       phone: phoneNumber,
       sms_sent: smsSent,
       ...(smsErrorDetails && !smsSent ? { sms_error: smsErrorDetails } : {})
-    }, 201);
+    }, 201, origin);
 
   } catch (e) {
     console.error("[register] Unhandled error:", e instanceof Error ? e.name : "Unknown");
