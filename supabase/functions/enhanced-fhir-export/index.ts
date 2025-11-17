@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createUserClient, batchQueries } from '../_shared/supabaseClient.ts'
 import { cors } from "../_shared/cors.ts"
+import { createLogger } from '../_shared/auditLogger.ts'
 
 // Strict CORS policy matching other functions
 const ALLOWED_ORIGINS = [
@@ -34,6 +35,7 @@ interface FHIRExportRequest {
 }
 
 serve(async (req) => {
+  const logger = createLogger('enhanced-fhir-export', req);
   const origin = req.headers.get("origin");
   const corsHeaders = getCorsHeaders(origin);
 
@@ -41,9 +43,12 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  const startTime = Date.now();
+
   try {
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
+      logger.warn('Missing authorization header');
       return new Response(
         JSON.stringify({ error: 'No authorization header' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -54,6 +59,7 @@ serve(async (req) => {
 
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser()
     if (authError || !user) {
+      logger.security('Unauthorized FHIR export attempt', { error: authError?.message });
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -75,6 +81,11 @@ serve(async (req) => {
 
       // Users can only export their own data unless they're admin
       if (!isAdmin && patientId !== user.id) {
+        logger.security('Unauthorized FHIR export attempt', {
+          userId: user.id,
+          requestedPatientId: patientId,
+          isAdmin
+        });
         return new Response(
           JSON.stringify({ error: 'Insufficient permissions' }),
           { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -84,6 +95,16 @@ serve(async (req) => {
       const startDate = exportRequest.start_date || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
       const endDate = exportRequest.end_date || new Date().toISOString()
 
+      logger.phi('FHIR export initiated', {
+        userId: user.id,
+        patientId,
+        isAdmin,
+        startDate,
+        endDate,
+        includeMobileData: exportRequest.include_mobile_data !== false,
+        includeAIAssessments: exportRequest.include_ai_assessments !== false
+      });
+
       // Generate comprehensive FHIR bundle
       const fhirBundle = await generateEnhancedFHIRBundle(
         supabaseClient,
@@ -91,11 +112,12 @@ serve(async (req) => {
         startDate,
         endDate,
         exportRequest.include_mobile_data !== false,
-        exportRequest.include_ai_assessments !== false
+        exportRequest.include_ai_assessments !== false,
+        logger
       )
 
       // Cache the bundle
-      await supabaseClient
+      const { error: cacheError } = await supabaseClient
         .from('fhir_bundles')
         .insert({
           patient_id: patientId,
@@ -105,19 +127,36 @@ serve(async (req) => {
           expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
         })
 
+      if (cacheError) {
+        logger.warn('Failed to cache FHIR bundle', { error: cacheError.message });
+      }
+
+      const processingTime = Date.now() - startTime;
+      logger.info('FHIR export completed successfully', {
+        userId: user.id,
+        patientId,
+        resourceCount: fhirBundle.total,
+        processingTimeMs: processingTime
+      });
+
       return new Response(
         JSON.stringify(fhirBundle),
         { headers: { ...corsHeaders, 'Content-Type': 'application/fhir+json' } }
       )
     }
 
+    logger.warn('Method not allowed', { method: req.method });
     return new Response(
       JSON.stringify({ error: 'Method not allowed' }),
       { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
   } catch (error) {
-    console.error('FHIR export error:', error)
+    const processingTime = Date.now() - startTime;
+    logger.error('FHIR export error', {
+      error: error.message,
+      processingTimeMs: processingTime
+    });
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -131,7 +170,8 @@ async function generateEnhancedFHIRBundle(
   startDate: string,
   endDate: string,
   includeMobileData: boolean,
-  includeAIAssessments: boolean
+  includeAIAssessments: boolean,
+  logger: any
 ) {
   const bundleId = `bundle-${patientId}-${Date.now()}`
   const entries = []
@@ -174,6 +214,15 @@ async function generateEnhancedFHIRBundle(
     { data: movementPatterns },
     { data: riskAssessments }
   ] = await batchQueries(baseQueries);
+
+  logger.debug('FHIR data fetched', {
+    patientId,
+    checkInsCount: checkIns?.length || 0,
+    mobileVitalsCount: mobileVitals?.length || 0,
+    emergencyIncidentsCount: emergencyIncidents?.length || 0,
+    movementPatternsCount: movementPatterns?.length || 0,
+    riskAssessmentsCount: riskAssessments?.length || 0
+  });
 
   // 1. Patient Resource
   if (patientProfile) {
