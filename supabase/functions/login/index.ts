@@ -4,7 +4,6 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.4?dts";
 import { z, type ZodIssue } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { cors } from "../_shared/cors.ts";
-import { createLogger } from '../_shared/auditLogger.ts';
 
 const MAX_REQUESTS = 5;
 const TIME_WINDOW_MINUTES = 15;
@@ -23,8 +22,6 @@ function toE164(phone: string): string {
 }
 
 serve(async (req: Request) => {
-  const logger = createLogger('login', req);
-
   const { headers, allowed } = cors(req.headers.get("origin"), {
     methods: ["POST", "OPTIONS"],
     allowHeaders: ["authorization", "x-client-info", "apikey", "content-type"],
@@ -53,7 +50,7 @@ serve(async (req: Request) => {
       "";
 
     if (!supabaseUrl || !serviceRoleKey || !anonKey) {
-      logger.error("Missing Supabase environment variables", {
+      console.error("Missing Supabase environment variables", {
         hasUrl: !!supabaseUrl,
         hasServiceKey: !!serviceRoleKey,
         hasAnonKey: !!anonKey,
@@ -85,7 +82,7 @@ serve(async (req: Request) => {
         .gte("attempted_at", since);
 
       if (countError) {
-        logger.warn("Rate limit count failed (failing open)", { error: countError.message });
+        console.warn("Rate limit count failed (failing open)", { error: countError.message });
       } else if ((count ?? 0) >= MAX_REQUESTS) {
         // SOC 2 SECURITY EVENT LOGGING: Log rate limit trigger
         try {
@@ -104,10 +101,10 @@ serve(async (req: Request) => {
             }
           });
         } catch (logError) {
-          logger.error('Security event logging failed', { error: logError instanceof Error ? logError.message : String(logError) });
+          console.error('Security event logging failed', { error: logError instanceof Error ? logError.message : String(logError) });
         }
 
-        logger.security('Login rate limit exceeded', { clientIp, attemptCount: count, timeWindowMinutes: TIME_WINDOW_MINUTES });
+        console.log('Login rate limit exceeded', { clientIp, attemptCount: count, timeWindowMinutes: TIME_WINDOW_MINUTES });
         return new Response(JSON.stringify({ error: "Too many login attempts. Try again later." }), { status: 429, headers });
       }
     }
@@ -148,7 +145,7 @@ serve(async (req: Request) => {
         errorMessage = "Too many login attempts. Please wait before trying again.";
         status = 429;
       } else if (!msg.includes("invalid login credentials")) {
-        logger.error("Unexpected sign-in error", { error: signInError.message, code: signInError.code });
+        console.error("Unexpected sign-in error", { error: signInError.message, code: signInError.code });
         errorMessage = "Login service temporarily unavailable. Please try again.";
         status = 503;
       }
@@ -172,7 +169,7 @@ serve(async (req: Request) => {
           }
         });
       } catch (logError) {
-        logger.error('Audit log insertion failed', { error: logError instanceof Error ? logError.message : String(logError) });
+        console.error('Audit log insertion failed', { error: logError instanceof Error ? logError.message : String(logError) });
       }
 
       // SOC 2 SECURITY EVENT LOGGING: Detect failed login bursts
@@ -205,16 +202,16 @@ serve(async (req: Request) => {
             });
           }
         } catch (burstCheckError) {
-          logger.error('Failed login burst detection error', { error: burstCheckError instanceof Error ? burstCheckError.message : String(burstCheckError) });
+          console.error('Failed login burst detection error', { error: burstCheckError instanceof Error ? burstCheckError.message : String(burstCheckError) });
         }
       }
 
-      logger.security('Login failed', { clientIp, phone: e164, errorType: msg.includes("invalid login") ? "INVALID_CREDENTIALS" : "OTHER" });
+      console.log('Login failed', { clientIp, phone: e164, errorType: msg.includes("invalid login") ? "INVALID_CREDENTIALS" : "OTHER" });
       return new Response(JSON.stringify({ error: errorMessage, details: signInError.message }), { status, headers });
     }
 
     if (!sessionData?.session || !sessionData?.user) {
-      logger.error("signInWithPassword returned no session/user despite no error");
+      console.error("signInWithPassword returned no session/user despite no error");
       return new Response(JSON.stringify({ error: "Login failed. Please try again." }), { status: 500, headers });
     }
 
@@ -232,10 +229,10 @@ serve(async (req: Request) => {
         else if (!profile.consent) nextRoute = "/consent-photo";
         else if (!profile.onboarded) nextRoute = "/demographics";
       } else if (profileErr) {
-        logger.warn("Profile routing fetch error", { error: profileErr.message, userId: sessionData.user.id });
+        console.warn("Profile routing fetch error", { error: profileErr.message, userId: sessionData.user.id });
       }
     } catch (profileError) {
-      logger.warn("Profile routing unexpected error", { error: profileError instanceof Error ? profileError.message : String(profileError) });
+      console.warn("Profile routing unexpected error", { error: profileError instanceof Error ? profileError.message : String(profileError) });
     }
 
     // HIPAA AUDIT LOGGING: Log successful login to database
@@ -256,10 +253,10 @@ serve(async (req: Request) => {
         }
       });
     } catch (logError) {
-      logger.error('Audit log insertion failed', { error: logError instanceof Error ? logError.message : String(logError) });
+      console.error('Audit log insertion failed', { error: logError instanceof Error ? logError.message : String(logError) });
     }
 
-    logger.info('Login successful', { userId: sessionData.user.id, clientIp, nextRoute });
+    console.log('Login successful', { userId: sessionData.user.id, clientIp, nextRoute });
 
     // ---- Success ----
     return new Response(JSON.stringify({
@@ -277,7 +274,7 @@ serve(async (req: Request) => {
 
   } catch (err) {
     const detailMessage = err instanceof Error ? err.message : "Unknown error";
-    logger.error("Login function error", { error: detailMessage });
+    console.error("Login function error", { error: detailMessage });
     return new Response(JSON.stringify({ error: "Internal Server Error", details: detailMessage }), { status: 500, headers });
   }
 });

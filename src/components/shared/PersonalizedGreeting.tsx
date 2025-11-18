@@ -302,7 +302,7 @@ export const PersonalizedGreeting: React.FC<PersonalizedGreetingProps> = ({
           {fullGreeting}! 👋
         </h2>
         <p className="text-lg text-[#158A84] font-bold">
-          Welcome to Envision Atlus - Today's going to be an awesome day! ✨
+          Today's going to be an awesome day! ✨
         </p>
       </div>
 

@@ -4,7 +4,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
-import { createLogger } from "../_shared/auditLogger.ts";
 
 const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
 const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
@@ -44,8 +43,6 @@ function validatePhone(phone: string): { valid: boolean; error?: string } {
 }
 
 serve(async (req) => {
-  const logger = createLogger('send-sms', req);
-
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -123,7 +120,7 @@ serve(async (req) => {
         const responseText = await response.text();
 
         if (!response.ok) {
-          logger.error("Twilio SMS send failed", {
+          console.error("Twilio SMS send failed:", {
             phone: phoneNumber,
             status: response.status,
             error: responseText
@@ -136,18 +133,18 @@ serve(async (req) => {
             sid: data.sid,
             status: data.status
           });
-          logger.info("SMS sent successfully", {
+          console.log("SMS sent successfully:", {
             phone: phoneNumber,
             sid: data.sid,
             status: data.status
           });
         }
       } catch (error) {
-        logger.error("SMS send exception", {
+        console.error("SMS send exception:", {
           phone: phoneNumber,
           error: error instanceof Error ? error.message : String(error)
         });
-        errors.push({ phone: phoneNumber, error: error.message });
+        errors.push({ phone: phoneNumber, error: error instanceof Error ? error.message : String(error) });
       }
     }
 
@@ -178,12 +175,9 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    logger.error("Fatal error in send-sms", {
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
-    });
+    console.error("Fatal error in send-sms:", error instanceof Error ? error.message : String(error));
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

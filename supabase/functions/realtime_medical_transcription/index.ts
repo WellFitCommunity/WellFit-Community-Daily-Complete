@@ -15,7 +15,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createAdminClient } from '../_shared/supabaseClient.ts';
-import { createLogger } from '../_shared/auditLogger.ts';
 
 const DEEPGRAM_API_KEY = Deno.env.get("DEEPGRAM_API_KEY");
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
@@ -23,9 +22,8 @@ const SB_URL = Deno.env.get("SB_URL") ?? Deno.env.get("SUPABASE_URL");
 const SB_SECRET_KEY =
   Deno.env.get("SB_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-const initLogger = createLogger('realtime_medical_transcription');
 if (!DEEPGRAM_API_KEY || !ANTHROPIC_API_KEY || !SB_URL || !SB_SECRET_KEY) {
-  initLogger.error("Missing required env vars", {
+  console.error("Missing required env vars:", {
     hasDeepgram: !!DEEPGRAM_API_KEY,
     hasAnthropic: !!ANTHROPIC_API_KEY,
     hasSbUrl: !!SB_URL,
@@ -50,8 +48,6 @@ function safeSend(ws: WebSocket, payload: unknown) {
 }
 
 serve(async (req: Request) => {
-  const logger = createLogger('realtime_medical_transcription', req);
-
   // 1) Require WS upgrade
   if ((req.headers.get("upgrade") || "").toLowerCase() !== "websocket") {
     return new Response("Expected WebSocket", { status: 426 });
@@ -61,21 +57,21 @@ serve(async (req: Request) => {
   const url = new URL(req.url);
   const access_token = url.searchParams.get("access_token") ?? "";
   if (!access_token) {
-    logger.security('WebSocket connection attempted without access token');
+    console.log('WebSocket connection attempted without access token');
     return new Response("Unauthorized", { status: 401 });
   }
 
   const admin = createAdminClient();
   const { data: userData, error: userErr } = await admin.auth.getUser(access_token);
   if (userErr || !userData?.user) {
-    logger.security('WebSocket authentication failed', { error: userErr?.message });
+    console.log('WebSocket authentication failed', { error: userErr?.message });
     return new Response("Unauthorized", { status: 401 });
   }
 
   const { socket, response } = Deno.upgradeWebSocket(req);
 
   const userId = userData.user.id;
-  logger.info('WebSocket connection established', { userId });
+  console.log('WebSocket connection established', { userId });
 
   // 3) Relay: browser <-> Deepgram
   let deepgramWs: WebSocket | null = null;
@@ -129,18 +125,18 @@ serve(async (req: Request) => {
             if (now - lastAnalysisTime >= ANALYSIS_INTERVAL_MS && fullTranscript.length > 50) {
               lastAnalysisTime = now;
               analyzeCoding(fullTranscript, socket, userId, admin, logger).catch((e) =>
-                logger.error("Claude analysis error", { error: e instanceof Error ? e.message : String(e) })
+                console.error("Claude analysis error", { error: e instanceof Error ? e.message : String(e) })
               );
             }
           }
         }
       } catch (e) {
-        logger.error("Deepgram message parse error", { error: e instanceof Error ? e.message : String(e) });
+        console.error("Deepgram message parse error", { error: e instanceof Error ? e.message : String(e) });
       }
     };
 
     deepgramWs.onerror = (e: Event) => {
-      logger.error("Deepgram WebSocket error", { userId });
+      console.error("Deepgram WebSocket error", { userId });
       safeSend(socket, { type: "error", message: "Transcription error" });
     };
   };
@@ -167,7 +163,7 @@ serve(async (req: Request) => {
         deepgramWs.send(buf);
       }
     } catch (e) {
-      logger.warn("Unrecognized WS frame; dropping", { error: e instanceof Error ? e.message : String(e) });
+      console.warn("Unrecognized WS frame; dropping", { error: e instanceof Error ? e.message : String(e) });
     }
   };
 
@@ -293,7 +289,7 @@ Return ONLY strict JSON:
 
     if (!res.ok) {
       const errorText = await res.text();
-      logger.error("Claude HTTP error", { status: res.status, error: errorText, userId });
+      console.error("Claude HTTP error", { status: res.status, error: errorText, userId });
 
       // HIPAA AUDIT LOGGING: Log API error
       try {
@@ -313,7 +309,7 @@ Return ONLY strict JSON:
           metadata: { transcript_length: rawTranscript.length }
         });
       } catch (logError) {
-        logger.error('Audit log insertion failed', { error: logError instanceof Error ? logError.message : String(logError) });
+        console.error('Audit log insertion failed', { error: logError instanceof Error ? logError.message : String(logError) });
       }
 
       return;
@@ -335,7 +331,7 @@ Return ONLY strict JSON:
     let parsed: any;
     try { parsed = JSON.parse(cleaned); }
     catch (e) {
-      logger.error("Claude JSON parse failed", { error: e instanceof Error ? e.message : String(e), responsePreview: cleaned.slice(0, 400) });
+      console.error("Claude JSON parse failed", { error: e instanceof Error ? e.message : String(e), responsePreview: cleaned.slice(0, 400) });
 
       // HIPAA AUDIT LOGGING: Log parse error
       try {
@@ -355,7 +351,7 @@ Return ONLY strict JSON:
           metadata: { transcript_length: rawTranscript.length }
         });
       } catch (logError) {
-        logger.error('Audit log insertion failed', { error: logError instanceof Error ? logError.message : String(logError) });
+        console.error('Audit log insertion failed', { error: logError instanceof Error ? logError.message : String(logError) });
       }
 
       return;
@@ -382,10 +378,10 @@ Return ONLY strict JSON:
         }
       });
     } catch (logError) {
-      logger.error('Audit log insertion failed', { error: logError instanceof Error ? logError.message : String(logError) });
+      console.error('Audit log insertion failed', { error: logError instanceof Error ? logError.message : String(logError) });
     }
 
-    logger.phi('Medical transcription analysis completed', {
+    console.log('Medical transcription analysis completed', {
       requestId,
       userId,
       inputTokens,
@@ -434,7 +430,7 @@ Return ONLY strict JSON:
       }
     });
   } catch (e) {
-    logger.error("Claude analysis exception", { error: e instanceof Error ? e.message : String(e), userId });
+    console.error("Claude analysis exception", { error: e instanceof Error ? e.message : String(e), userId });
 
     // HIPAA AUDIT LOGGING: Log exception
     try {
@@ -454,7 +450,7 @@ Return ONLY strict JSON:
         metadata: { transcript_length: rawTranscript.length }
       });
     } catch (logError) {
-      logger.error('Audit log insertion failed', { error: logError instanceof Error ? logError.message : String(logError) });
+      console.error('Audit log insertion failed', { error: logError instanceof Error ? logError.message : String(logError) });
     }
   }
 }

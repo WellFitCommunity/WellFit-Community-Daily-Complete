@@ -278,7 +278,7 @@ const AdminPanel: React.FC = () => {
   return (
     <RequireAdminAuth allowedRoles={['admin', 'super_admin']}>
       <div className="min-h-screen bg-[#E8F8F7]">
-        <AdminHeader title="Envision Atlus - Admin Dashboard" showRiskAssessment={true} />
+        <AdminHeader showRiskAssessment={true} />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
           {/* Personalized Greeting */}

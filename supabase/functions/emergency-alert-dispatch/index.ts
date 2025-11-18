@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { createLogger } from '../_shared/auditLogger.ts'
 
 const ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL") || "admin@wellfitcommunity.org";
 const SEND_EMAIL_FUNCTION_NAME = "send_email";
@@ -71,23 +70,22 @@ async function sendEmailWithRetry(
   supabaseClient: any,
   emailPayload: any,
   recipient: string,
-  logger: any,
   maxRetries: number = 2
 ): Promise<EmailResult> {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      logger.info('Attempting to send emergency alert email', { attempt, recipient });
+      console.log('Attempting to send emergency alert email:', { attempt, recipient });
 
       const { error } = await supabaseClient.functions.invoke(SEND_EMAIL_FUNCTION_NAME, {
         body: { ...emailPayload, to: recipient }
       });
 
       if (!error) {
-        logger.info('Emergency alert email sent successfully', { recipient });
+        console.log('Emergency alert email sent successfully:', { recipient });
         return { success: true, recipient };
       }
 
-      logger.error('Email send attempt failed', { attempt, recipient, error: error.message });
+      console.error('Email send attempt failed:', { attempt, recipient, error: error.message });
 
       if (attempt === maxRetries) {
         return { success: false, recipient, error: error.message };
@@ -97,13 +95,13 @@ async function sendEmailWithRetry(
       await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
 
     } catch (e) {
-      logger.error('Exception during email send attempt', {
+      console.error('Exception during email send attempt:', {
         attempt,
         recipient,
-        error: e.message
+        error: e instanceof Error ? e.message : String(e)
       });
       if (attempt === maxRetries) {
-        return { success: false, recipient, error: e.message };
+        return { success: false, recipient, error: e instanceof Error ? e.message : String(e) };
       }
       await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
     }
@@ -113,7 +111,6 @@ async function sendEmailWithRetry(
 }
 
 serve(async (req) => {
-  const logger = createLogger('emergency-alert-dispatch', req);
 
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
@@ -123,16 +120,16 @@ serve(async (req) => {
   }
 
   const startTime = Date.now();
-  logger.security('Emergency alert dispatch started', { timestamp: new Date().toISOString() });
+  console.log('Emergency alert dispatch started:', { timestamp: new Date().toISOString() });
 
   try {
     const payload = await req.json();
-    logger.debug('Received payload', { payload });
+    console.log('Received payload:', payload);
 
     const newCheckin = (payload.record || payload.new_record) as CheckinRecord;
 
     if (!newCheckin) {
-      logger.error('No record found in payload');
+      console.error('No record found in payload');
       return new Response(JSON.stringify({ error: 'Bad Request: No record found in payload' }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
@@ -141,7 +138,7 @@ serve(async (req) => {
 
     // Validate emergency status
     if (!newCheckin.is_emergency) {
-      logger.info('Non-emergency check-in received, skipping alert', {
+      console.log('Non-emergency check-in received, skipping alert', {
         checkin_id: newCheckin.id
       });
       return new Response(JSON.stringify({ message: 'Not an emergency check-in, skipped.' }), {
@@ -159,7 +156,7 @@ serve(async (req) => {
     } = newCheckin;
 
     if (!user_id || !alert_type) {
-      logger.error('Missing required fields', { user_id, alert_type });
+      console.error('Missing required fields', { user_id, alert_type });
       return new Response(JSON.stringify({ error: 'Bad Request: Missing user_id or label' }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
@@ -171,7 +168,7 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ''
     );
 
-    logger.info('Fetching user profile for emergency alert', { user_id });
+    console.log('Fetching user profile for emergency alert', { user_id });
 
     // Fetch user profile
     const { data: profile, error: profileError } = await supabaseClient
@@ -181,7 +178,7 @@ serve(async (req) => {
       .single();
 
     if (profileError || !profile) {
-      logger.error('Profile fetch failed', {
+      console.error('Profile fetch failed', {
         user_id,
         error: profileError?.message || 'Unknown error'
       });
@@ -207,7 +204,7 @@ serve(async (req) => {
                     "Unknown User";
     const caregiverEmail = profile.caregiver_email;
 
-    logger.phi('Processing emergency alert for patient', {
+    console.log('Processing emergency alert for patient', {
       user_id,
       userName,
       has_caregiver: !!caregiverEmail
@@ -244,7 +241,7 @@ serve(async (req) => {
       );
     }
 
-    logger.info('Sending emergency alert emails', {
+    console.log('Sending emergency alert emails', {
       recipients: caregiverEmail ? [ADMIN_EMAIL, caregiverEmail] : [ADMIN_EMAIL]
     });
     const emailResults = await Promise.all(emailPromises);
@@ -277,7 +274,7 @@ serve(async (req) => {
     });
 
     if (insertAlertError) {
-      logger.error('Error logging alert to database', {
+      console.error('Error logging alert to database', {
         error: insertAlertError.message
       });
       return new Response(JSON.stringify({
@@ -292,7 +289,7 @@ serve(async (req) => {
     const processingTime = Date.now() - startTime;
     const successfulEmails = Object.values(emailResultsMap).filter(Boolean).length;
 
-    logger.info('Emergency alert processed successfully', {
+    console.log('Emergency alert processed successfully', {
       processingTimeMs: processingTime,
       successfulEmails,
       totalRecipients: Object.keys(emailResultsMap).length
@@ -315,7 +312,7 @@ serve(async (req) => {
 
   } catch (error) {
     const processingTime = Date.now() - startTime;
-    logger.error('Unhandled error in emergency-alert-dispatch', {
+    console.error('Unhandled error in emergency-alert-dispatch', {
       processingTimeMs: processingTime,
       error: error.message
     });

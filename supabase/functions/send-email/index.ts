@@ -4,7 +4,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
-import { createLogger } from "../_shared/auditLogger.ts";
 
 const MAILERSEND_API_KEY = Deno.env.get("MAILERSEND_API_KEY");
 const MAILERSEND_FROM_EMAIL = Deno.env.get("MAILERSEND_FROM_EMAIL");
@@ -22,8 +21,6 @@ interface EmailRequest {
 }
 
 serve(async (req) => {
-  const logger = createLogger('send-email', req);
-
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -68,7 +65,7 @@ serve(async (req) => {
     const responseText = await response.text();
 
     if (!response.ok) {
-      logger.error("MailerSend email send failed", {
+      console.error("MailerSend email send failed", {
         recipients: to.length,
         status: response.status,
         error: responseText,
@@ -86,7 +83,7 @@ serve(async (req) => {
       );
     }
 
-    logger.info("Email sent successfully via MailerSend", {
+    console.log("Email sent successfully via MailerSend", {
       recipients: to.length,
       subject,
       priority
@@ -105,7 +102,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    logger.error("Fatal error in send-email", {
+    console.error("Fatal error in send-email", {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined
     });

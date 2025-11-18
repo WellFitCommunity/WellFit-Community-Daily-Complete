@@ -5,7 +5,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
-import { createLogger } from '../_shared/auditLogger.ts'
 
 const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
 const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
@@ -27,8 +26,6 @@ interface FamilyNotificationRequest {
 }
 
 serve(async (req) => {
-  const logger = createLogger('notify-family-missed-check-in', req);
-
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return handleOptions(req);
@@ -37,7 +34,7 @@ serve(async (req) => {
   try {
     const { seniorName, contactName, contactPhone }: FamilyNotificationRequest = await req.json();
 
-    logger.security('Family missed check-in notification initiated', {
+    console.log('Family missed check-in notification initiated:', {
       seniorName,
       contactName
     });
@@ -92,7 +89,7 @@ serve(async (req) => {
     const responseText = await response.text();
 
     if (!response.ok) {
-      logger.error('Twilio SMS send failed', {
+      console.error('Twilio SMS send failed:', {
         status: response.status,
         details: responseText,
         seniorName,
@@ -109,7 +106,7 @@ serve(async (req) => {
     }
 
     const data = JSON.parse(responseText);
-    logger.info('Family notification SMS sent successfully', {
+    console.log('Family notification SMS sent successfully:', {
       contactName,
       contactPhone,
       seniorName,
@@ -132,12 +129,10 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    logger.error('Family missed check-in notification error', {
-      error: error.message
-    });
+    console.error('Family missed check-in notification error:', error instanceof Error ? error.message : String(error));
     const { headers } = corsFromRequest(req);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),
       { status: 500, headers }
     );
   }

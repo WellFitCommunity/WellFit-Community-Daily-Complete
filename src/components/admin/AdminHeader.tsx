@@ -9,7 +9,7 @@ interface AdminHeaderProps {
 }
 
 const AdminHeader: React.FC<AdminHeaderProps> = ({
-  title = "Admin Panel",
+  title = "Envision Atlus",
   showRiskAssessment = true
 }) => {
   const navigate = useNavigate();
@@ -72,80 +72,45 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
     navigate(path);
   };
 
-  // Dynamic branding colors
-  const primaryColor = branding?.primaryColor || '#158A84';
-  const secondaryColor = branding?.secondaryColor || '#C8E63D';
-  const appName = branding?.appName || 'WellFit Community';
-  const gradient = branding?.gradient || `linear-gradient(to right, ${primaryColor}, ${secondaryColor}, ${primaryColor})`;
+  // Envision Atlus branding - Deep Teal, Black, Silver
+  const headerBackground = '#006D75'; // Deep teal
 
   return (
     <div
-      className="text-white shadow-2xl border-b-4"
+      className="text-white shadow-2xl border-b-4 border-black"
       style={{
-        background: gradient,
-        borderBottomColor: secondaryColor
+        background: headerBackground
       }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Left section - Title and role */}
+          {/* Left section - Title */}
           <div className="flex items-center space-x-4">
             <div className="flex items-center">
-              {branding?.logoUrl ? (
-                <img
-                  src={branding.logoUrl}
-                  alt={appName}
-                  className="h-10 w-10 rounded-lg mr-3 border-2 border-white shadow-lg object-contain bg-white"
-                />
-              ) : (
-                <div
-                  className="h-10 w-10 rounded-lg flex items-center justify-center mr-3 border-2 border-white shadow-lg"
-                  style={{ backgroundColor: secondaryColor }}
-                >
-                  <span className="text-sm font-bold text-black">
-                    {appName.substring(0, 2).toUpperCase()}
-                  </span>
-                </div>
-              )}
               <div>
-                <h1 className="text-xl font-bold text-white drop-shadow-md">{title}</h1>
-                <div
-                  className="text-xs font-semibold"
-                  style={{ color: secondaryColor }}
-                >
-                  {appName}
-                </div>
+                <h1 className="text-2xl font-bold text-white drop-shadow-md">{title}</h1>
               </div>
             </div>
           </div>
 
           {/* Center section - Navigation buttons */}
           <div className="hidden lg:flex items-center space-x-2">
-            {/* Super Admin: View Senior Dashboard */}
-            {adminRole === 'super_admin' && (
-              <button
-                onClick={() => navigateTo('/dashboard')}
-                className="inline-flex items-center px-3 py-2 border border-white border-opacity-20 rounded-md text-sm font-medium bg-blue-500 bg-opacity-30 hover:bg-opacity-40 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-opacity-50 transition-all duration-200"
-                title="View the senior-facing dashboard"
-              >
-                <span className="mr-2">👤</span>
-                Senior View
-              </button>
-            )}
-
-            {/* Quick Enroll */}
+            {/* WellFit Community Button */}
             <button
-              onClick={() => navigateTo('/admin/enroll-senior')}
-              className="inline-flex items-center px-3 py-2 border border-white border-opacity-20 rounded-md text-sm font-medium bg-green-500 bg-opacity-20 hover:bg-opacity-30 focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-opacity-50 transition-all duration-200"
+              onClick={() => navigateTo('/dashboard')}
+              className="inline-flex items-center px-3 py-2 border border-black rounded-md text-sm font-medium bg-silver hover:bg-gray-300 text-black focus:outline-none focus:ring-2 focus:ring-gray-400 transition-all duration-200 shadow-md"
+              style={{ backgroundColor: '#C0C0C0' }}
+              title="View WellFit Community"
             >
-              <span className="mr-2">➕</span>
-              Enroll Senior
+              <span className="mr-2">🏠</span>
+              WellFit
             </button>
 
             {showRiskAssessment && (
               <button
                 onClick={() => navigateTo('/admin-questions')}
-                className="inline-flex items-center px-3 py-2 border border-white border-opacity-20 rounded-md text-sm font-medium bg-white bg-opacity-10 hover:bg-opacity-20 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 transition-all duration-200"
+                className="inline-flex items-center px-3 py-2 border border-black rounded-md text-sm font-medium bg-silver hover:bg-gray-300 text-black focus:outline-none focus:ring-2 focus:ring-gray-400 transition-all duration-200 shadow-md"
+                style={{ backgroundColor: '#C0C0C0' }}
               >
                 <span className="mr-2">📋</span>
                 Risk Assessment
@@ -156,7 +121,8 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
             {adminRole === 'super_admin' && (
               <button
                 onClick={() => navigateTo('/admin/api-keys')}
-                className="inline-flex items-center px-3 py-2 border border-white border-opacity-20 rounded-md text-sm font-medium bg-yellow-500 bg-opacity-20 hover:bg-opacity-30 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50 transition-all duration-200"
+                className="inline-flex items-center px-3 py-2 border border-black rounded-md text-sm font-medium bg-silver hover:bg-gray-300 text-black focus:outline-none focus:ring-2 focus:ring-gray-400 transition-all duration-200 shadow-md"
+                style={{ backgroundColor: '#C0C0C0' }}
               >
                 <span className="mr-2">🔑</span>
                 API Keys
@@ -166,28 +132,11 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
             {/* Billing */}
             <button
               onClick={() => navigateTo('/billing')}
-              className="inline-flex items-center px-3 py-2 border border-white border-opacity-20 rounded-md text-sm font-medium bg-white bg-opacity-10 hover:bg-opacity-20 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 transition-all duration-200"
+              className="inline-flex items-center px-3 py-2 border border-black rounded-md text-sm font-medium bg-silver hover:bg-gray-300 text-black focus:outline-none focus:ring-2 focus:ring-gray-400 transition-all duration-200 shadow-md"
+              style={{ backgroundColor: '#C0C0C0' }}
             >
               <span className="mr-2">💳</span>
               Billing
-            </button>
-
-            {/* Bulk Export */}
-            <button
-              onClick={() => navigateTo('/admin/bulk-export')}
-              className="inline-flex items-center px-3 py-2 border border-white border-opacity-20 rounded-md text-sm font-medium bg-orange-500 bg-opacity-20 hover:bg-opacity-30 focus:outline-none focus:ring-2 focus:ring-orange-300 focus:ring-opacity-50 transition-all duration-200"
-            >
-              <span className="mr-2">📤</span>
-              Bulk Export
-            </button>
-
-            {/* Reports - Scrolls to Reports Section in Admin Panel */}
-            <button
-              onClick={() => navigateTo('/admin')}
-              className="inline-flex items-center px-3 py-2 border border-white border-opacity-20 rounded-md text-sm font-medium bg-white bg-opacity-10 hover:bg-opacity-20 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 transition-all duration-200"
-            >
-              <span className="mr-2">📊</span>
-              Reports
             </button>
 
             {/* System Status Indicator */}
@@ -359,25 +308,18 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
         {/* Mobile menu for quick actions */}
         <div className="lg:hidden pb-3">
           <div className="flex space-x-2 overflow-x-auto">
-            {/* Super Admin: View Senior Dashboard (mobile) */}
-            {adminRole === 'super_admin' && (
-              <button
-                onClick={() => navigateTo('/dashboard')}
-                className="flex-shrink-0 inline-flex items-center px-2 py-1 border border-white border-opacity-20 rounded text-xs font-medium bg-blue-500 bg-opacity-30 hover:bg-opacity-40"
-              >
-                👤 Senior View
-              </button>
-            )}
             <button
-              onClick={() => navigateTo('/admin/enroll-senior')}
-              className="flex-shrink-0 inline-flex items-center px-2 py-1 border border-white border-opacity-20 rounded text-xs font-medium bg-green-500 bg-opacity-20 hover:bg-opacity-30"
+              onClick={() => navigateTo('/dashboard')}
+              className="flex-shrink-0 inline-flex items-center px-2 py-1 border border-black rounded text-xs font-medium bg-silver hover:bg-gray-300 text-black"
+              style={{ backgroundColor: '#C0C0C0' }}
             >
-              ➕ Enroll
+              🏠 WellFit
             </button>
             {showRiskAssessment && (
               <button
                 onClick={() => navigateTo('/admin-questions')}
-                className="flex-shrink-0 inline-flex items-center px-2 py-1 border border-white border-opacity-20 rounded text-xs font-medium bg-white bg-opacity-10 hover:bg-opacity-20"
+                className="flex-shrink-0 inline-flex items-center px-2 py-1 border border-black rounded text-xs font-medium bg-silver hover:bg-gray-300 text-black"
+                style={{ backgroundColor: '#C0C0C0' }}
               >
                 📋 Assessment
               </button>
@@ -385,28 +327,18 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
             {adminRole === 'super_admin' && (
               <button
                 onClick={() => navigateTo('/admin/api-keys')}
-                className="flex-shrink-0 inline-flex items-center px-2 py-1 border border-white border-opacity-20 rounded text-xs font-medium bg-yellow-500 bg-opacity-20 hover:bg-opacity-30"
+                className="flex-shrink-0 inline-flex items-center px-2 py-1 border border-black rounded text-xs font-medium bg-silver hover:bg-gray-300 text-black"
+                style={{ backgroundColor: '#C0C0C0' }}
               >
                 🔑 API
               </button>
             )}
             <button
               onClick={() => navigateTo('/billing')}
-              className="flex-shrink-0 inline-flex items-center px-2 py-1 border border-white border-opacity-20 rounded text-xs font-medium bg-white bg-opacity-10 hover:bg-opacity-20"
+              className="flex-shrink-0 inline-flex items-center px-2 py-1 border border-black rounded text-xs font-medium bg-silver hover:bg-gray-300 text-black"
+              style={{ backgroundColor: '#C0C0C0' }}
             >
               💳 Billing
-            </button>
-            <button
-              onClick={() => navigateTo('/admin/bulk-export')}
-              className="flex-shrink-0 inline-flex items-center px-2 py-1 border border-white border-opacity-20 rounded text-xs font-medium bg-orange-500 bg-opacity-20 hover:bg-opacity-30"
-            >
-              📤 Export
-            </button>
-            <button
-              onClick={() => navigateTo('/admin')}
-              className="flex-shrink-0 inline-flex items-center px-2 py-1 border border-white border-opacity-20 rounded text-xs font-medium bg-white bg-opacity-10 hover:bg-opacity-20"
-            >
-              📊 Reports
             </button>
           </div>
         </div>
