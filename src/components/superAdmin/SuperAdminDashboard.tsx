@@ -152,7 +152,7 @@ const SuperAdminDashboard: React.FC = () => {
       <div className="min-h-screen bg-teal-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
-          <p className="text-teal-900 font-medium">Loading Envision Atlas Master panel...</p>
+          <p className="text-teal-900 font-medium">Loading Envision Master Admin Panel...</p>
         </div>
       </div>
     );
@@ -205,13 +205,13 @@ const SuperAdminDashboard: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-white">Envision Atlas Master panel</h1>
+              <h1 className="text-3xl font-bold text-white">Envision Atlus Master Panel</h1>
               <p className="text-sm text-teal-100 mt-1">System-wide tenant and feature management</p>
             </div>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm border border-white/30 px-4 py-2 rounded-lg">
                 <Shield className="w-5 h-5 text-white" />
-                <span className="text-sm font-medium text-white">Super Admin</span>
+                <span className="text-sm font-medium text-white">Master Admin</span>
               </div>
             </div>
           </div>

@@ -20,7 +20,7 @@ interface UserWithRole {
 }
 
 const STAFF_ROLES = [
-  { value: 'super_admin', label: 'Super Admin', color: 'bg-red-600', description: 'Full system access' },
+  { value: 'super_admin', label: 'Master Admin', color: 'bg-red-600', description: 'Full system access' },
   { value: 'admin', label: 'Admin', color: 'bg-purple-600', description: 'Administrative access' },
   { value: 'doctor', label: 'Physician', color: 'bg-blue-600', description: 'Physician privileges' },
   { value: 'physician', label: 'Physician (Alt)', color: 'bg-blue-500', description: 'Alternative physician role' },

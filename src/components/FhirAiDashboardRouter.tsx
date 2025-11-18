@@ -203,7 +203,7 @@ const FhirAiDashboardRouter: React.FC<DashboardRouterProps> = ({
           <div>
             <h2 className="text-xl font-semibold">AI-Enhanced FHIR Admin Dashboard</h2>
             <p className="text-sm text-gray-600">
-              {adminRole === 'super_admin' ? 'Super Administrator' : 'Administrator'} View
+              {adminRole === 'super_admin' ? 'Master Administrator' : 'Administrator'} View
             </p>
           </div>
           {userRole?.isPatient && (

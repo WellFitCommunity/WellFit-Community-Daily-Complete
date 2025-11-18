@@ -435,7 +435,7 @@ Mary,Smith,+15551234568,mary.smith@email.com,1938-07-22,Bob Smith,+15559876544,D
           <span className="text-4xl mb-4 block">🔒</span>
           <h2 className="text-xl font-semibold text-red-800 mb-2">Access Denied</h2>
           <p className="text-red-600">You do not have permission to access bulk enrollment.</p>
-          <p className="text-sm text-red-500 mt-2">Required role: Admin or Super Admin</p>
+          <p className="text-sm text-red-500 mt-2">Required role: Admin or Master Admin</p>
         </div>
       </div>
     );

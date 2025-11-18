@@ -39,6 +39,9 @@ import OfflineIndicator from './components/OfflineIndicator';
 // AI Transparency - LearningMilestone (global component)
 import { LearningMilestone } from './components/ai-transparency';
 
+// Feature Flags
+import { featureFlags } from './config/featureFlags';
+
 // Lazy-loaded pages/components
 const WelcomePage = React.lazy(() => import('./pages/WelcomePage'));
 const RegisterPage = React.lazy(() => import('./pages/RegisterPage'));
@@ -100,6 +103,22 @@ const DentalHealthDashboard = React.lazy(() => import('./components/dental/Denta
 const SystemAdministrationPage = React.lazy(() => import('./pages/SystemAdministrationPage'));
 const AdminSettingsPage = React.lazy(() => import('./pages/AdminSettingsPage'));
 const AuditLogsPage = React.lazy(() => import('./pages/AuditLogsPage'));
+
+// Orphaned components - now wired with feature flags
+const ReportsPrintPage = React.lazy(() => import('./pages/ReportsPrintPage'));
+// NOTE: Some components below require props (patientId, handoffId, etc.)
+// They're imported but routes are commented until proper context is wired
+// const MemoryClinicDashboard = React.lazy(() => import('./components/neuro-suite/MemoryClinicDashboard'));
+const MentalHealthDashboard = React.lazy(() => import('./components/mental-health/MentalHealthDashboard'));
+const FrequentFlyerDashboard = React.lazy(() => import('./components/atlas/FrequentFlyerDashboard'));
+const RevenueDashboard = React.lazy(() => import('./components/atlas/RevenueDashboard'));
+const ShiftHandoffDashboard = React.lazy(() => import('./components/nurse/ShiftHandoffDashboard'));
+const DischargedPatientDashboard = React.lazy(() => import('./components/discharge/DischargedPatientDashboard'));
+const NeuroSuiteDashboard = React.lazy(() => import('./components/neuro/NeuroSuiteDashboard'));
+// const StrokeAssessmentDashboard = React.lazy(() => import('./components/neuro-suite/StrokeAssessmentDashboard'));
+// const SpecialistDashboard = React.lazy(() => import('./components/specialist/SpecialistDashboard'));
+const EMSMetricsDashboard = React.lazy(() => import('./components/ems/EMSMetricsDashboard'));
+// const CoordinatedResponseDashboard = React.lazy(() => import('./components/ems/CoordinatedResponseDashboard'));
 
 // CHW (Community Health Worker) Components
 const KioskCheckIn = React.lazy(() => import('./components/chw/KioskCheckIn'));
@@ -212,21 +231,26 @@ function Shell() {
               <Route path="/er-dashboard" element={<RequireAuth><ERDashboardPage /></RequireAuth>} />
 
               {/* Law Enforcement "Are You OK?" Welfare Check Program */}
-              <Route
-                path="/constable-dispatch"
-                element={
-                  <RequireAuth>
-                    <RequireAdminAuth>
-                      <ConstableDispatchDashboard />
-                    </RequireAdminAuth>
-                  </RequireAuth>
-                }
-              />
+              {featureFlags.lawEnforcement && (
+                <>
+                  <Route path="/law-enforcement" element={<LawEnforcementLandingPage />} />
+                  <Route
+                    path="/constable-dispatch"
+                    element={
+                      <RequireAuth>
+                        <RequireAdminAuth>
+                          <ConstableDispatchDashboard />
+                        </RequireAdminAuth>
+                      </RequireAuth>
+                    }
+                  />
+                </>
+              )}
 
               {/* Post-login gated */}
               <Route path="/demographics" element={<RequireAuth><DemographicsPage /></RequireAuth>} />
 
-              {/* Super Admin (Master Control Panel - Cross-tenant) */}
+              {/* Master Admin Panel (Envision - Cross-tenant Platform Management) */}
               <Route
                 path="/super-admin"
                 element={
@@ -510,6 +534,18 @@ function Shell() {
                   </RequireAuth>
                 }
               />
+              {featureFlags.adminReports && (
+                <Route
+                  path="/admin/reports"
+                  element={
+                    <RequireAuth>
+                      <RequireAdminAuth>
+                        <ReportsPrintPage />
+                      </RequireAdminAuth>
+                    </RequireAuth>
+                  }
+                />
+              )}
 
               {/* Guardian Agent Dashboard */}
               <Route
@@ -525,6 +561,117 @@ function Shell() {
                   </RequireAuth>
                 }
               />
+
+              {/* Clinical Dashboards - Feature Flagged */}
+              {/* NOTE: Memory Clinic requires patientId - needs context wrapper
+              {featureFlags.memoryClinic && (
+                <Route path="/memory-clinic/:patientId" element={...} />
+              )} */}
+
+              {featureFlags.mentalHealth && (
+                <Route
+                  path="/mental-health"
+                  element={
+                    <RequireAuth>
+                      <MentalHealthDashboard />
+                    </RequireAuth>
+                  }
+                />
+              )}
+              {featureFlags.neuroSuite && (
+                <Route
+                  path="/neuro-suite"
+                  element={
+                    <RequireAuth>
+                      <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'physician', 'doctor', 'nurse']}>
+                        <NeuroSuiteDashboard />
+                      </RequireAdminAuth>
+                    </RequireAuth>
+                  }
+                />
+              )}
+
+              {/* NOTE: Stroke Assessment requires patient context - needs wrapper
+              {featureFlags.strokeAssessment && (
+                <Route path="/stroke-assessment/:patientId" element={...} />
+              )} */}
+
+              {/* Population Health - Feature Flagged */}
+              {featureFlags.frequentFlyers && (
+                <Route
+                  path="/frequent-flyers"
+                  element={
+                    <RequireAuth>
+                      <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'case_manager', 'social_worker']}>
+                        <FrequentFlyerDashboard />
+                      </RequireAdminAuth>
+                    </RequireAuth>
+                  }
+                />
+              )}
+              {featureFlags.dischargeTracking && (
+                <Route
+                  path="/discharge-tracking"
+                  element={
+                    <RequireAuth>
+                      <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'case_manager', 'nurse']}>
+                        <DischargedPatientDashboard />
+                      </RequireAdminAuth>
+                    </RequireAuth>
+                  }
+                />
+              )}
+
+              {/* Financial/Billing - Feature Flagged */}
+              {featureFlags.revenueDashboard && (
+                <Route
+                  path="/revenue-dashboard"
+                  element={
+                    <RequireAuth>
+                      <RequireAdminAuth allowedRoles={['admin', 'super_admin']}>
+                        <RevenueDashboard />
+                      </RequireAdminAuth>
+                    </RequireAuth>
+                  }
+                />
+              )}
+
+              {/* Workflow Features - Feature Flagged */}
+              {featureFlags.shiftHandoff && (
+                <Route
+                  path="/shift-handoff"
+                  element={
+                    <RequireAuth>
+                      <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'nurse', 'nurse_practitioner']}>
+                        <ShiftHandoffDashboard />
+                      </RequireAdminAuth>
+                    </RequireAuth>
+                  }
+                />
+              )}
+
+              {/* Emergency Response - Feature Flagged */}
+              {featureFlags.emsMetrics && (
+                <Route
+                  path="/ems/metrics"
+                  element={
+                    <RequireAuth>
+                      <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'nurse', 'physician']}>
+                        <EMSMetricsDashboard />
+                      </RequireAdminAuth>
+                    </RequireAuth>
+                  }
+                />
+              )}
+
+              {/* NOTE: Coordinated Response requires handoff context - needs wrapper
+              {featureFlags.coordinatedResponse && (
+                <Route path="/ems/coordinated-response/:handoffId" element={...} />
+              )} */}
+
+              {/* NOTE: Specialist Dashboard needs proper roles configuration
+              <Route path="/specialist-dashboard" element={...} />
+              */}
 
               {/* Fallback */}
               <Route path="*" element={<NotFoundPage />} />

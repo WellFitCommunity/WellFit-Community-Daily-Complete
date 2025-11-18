@@ -711,6 +711,62 @@ const IntelligentAdminPanel: React.FC = () => {
             </div>
           </div>
 
+          {/* Envision Atlus Master Panel - Prominent Access */}
+          {adminRole === 'super_admin' && (
+            <div className="bg-gradient-to-br from-teal-700 via-cyan-600 to-blue-700 rounded-xl shadow-2xl p-8 mb-6 border-2 border-teal-400 relative overflow-hidden">
+              {/* Animated Background Pattern */}
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute top-0 left-0 w-full h-full" style={{
+                  backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)',
+                  backgroundSize: '30px 30px'
+                }}></div>
+              </div>
+
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-white text-2xl font-bold flex items-center mb-2">
+                      <span className="mr-3 text-3xl">🏛️</span>
+                      Envision Atlus Master Panel
+                    </h2>
+                    <p className="text-teal-100 text-sm">Platform-wide administration, multi-tenant management & system controls</p>
+                  </div>
+                  <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
+                    <span className="text-white text-xs font-semibold">ENVISION ACCESS</span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => navigate('/super-admin')}
+                  className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 px-8 py-5 rounded-lg font-bold text-lg hover:from-yellow-300 hover:to-orange-400 transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-1 flex items-center justify-center group"
+                >
+                  <span className="mr-3 text-2xl group-hover:scale-125 transition-transform">🔐</span>
+                  <span>Open Master Panel with Vault Animation</span>
+                  <span className="ml-3 text-2xl group-hover:translate-x-2 transition-transform">→</span>
+                </button>
+
+                <div className="grid grid-cols-4 gap-3 mt-4 text-center">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3">
+                    <div className="text-white text-xs font-semibold mb-1">All Tenants</div>
+                    <div className="text-teal-200 text-sm">✓</div>
+                  </div>
+                  <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3">
+                    <div className="text-white text-xs font-semibold mb-1">Feature Flags</div>
+                    <div className="text-teal-200 text-sm">✓</div>
+                  </div>
+                  <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3">
+                    <div className="text-white text-xs font-semibold mb-1">SOC2 Monitor</div>
+                    <div className="text-teal-200 text-sm">✓</div>
+                  </div>
+                  <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3">
+                    <div className="text-white text-xs font-semibold mb-1">Guardian Activity</div>
+                    <div className="text-teal-200 text-sm">✓</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Role Panel Navigation - Super Admin Only */}
           {adminRole === 'super_admin' && (
             <div className="bg-gradient-to-r from-teal-600 to-cyan-700 rounded-xl shadow-lg p-6">

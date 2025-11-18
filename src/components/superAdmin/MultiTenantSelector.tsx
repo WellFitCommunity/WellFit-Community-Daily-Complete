@@ -134,7 +134,7 @@ const MultiTenantSelector: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-white">Envision Atlas</h1>
+              <h1 className="text-3xl font-bold text-white">Envision Atlus</h1>
               <p className="text-sm text-teal-100 mt-1">Multi-Tenant Monitoring Dashboard</p>
             </div>
             <div className="flex items-center gap-3">
@@ -145,7 +145,7 @@ const MultiTenantSelector: React.FC = () => {
                 <div className="bg-white/20 backdrop-blur-sm border border-white/30 px-3 py-2 rounded-lg">
                   <div className="flex items-center gap-2">
                     <Shield className="w-4 h-4 text-white" />
-                    <span className="text-xs font-medium text-white">Super Admin</span>
+                    <span className="text-xs font-medium text-white">Master Admin</span>
                   </div>
                 </div>
               )}
@@ -161,7 +161,7 @@ const MultiTenantSelector: React.FC = () => {
           <h2 className="text-lg font-semibold text-gray-900 mb-2">Select Tenants to Monitor</h2>
           <p className="text-sm text-gray-600">
             Click on tenant cards to select them. You can monitor up to 4 tenants simultaneously in a grid layout.
-            {profile?.isSuperAdmin && ' As a Super Admin, you can also access the Master Panel to manage all tenants.'}
+            {profile?.isSuperAdmin && ' As a Master Admin, you can also access the Master Panel to manage all tenants.'}
           </p>
           {selectedTenants.length > 0 && (
             <div className="mt-4 flex items-center gap-2">
@@ -201,7 +201,7 @@ const MultiTenantSelector: React.FC = () => {
                   <Shield className="w-12 h-12" />
                 </div>
                 <div className="text-left">
-                  <div className="text-2xl font-bold mb-1">Envision Atlas Master Panel</div>
+                  <div className="text-2xl font-bold mb-1">Envision Atlus Master Panel</div>
                   <div className="text-sm text-red-100">System-wide tenant and feature management</div>
                 </div>
                 <Maximize2 className="w-6 h-6 ml-auto opacity-60 group-hover:opacity-100 transition-opacity" />

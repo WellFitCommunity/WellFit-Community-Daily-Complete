@@ -98,9 +98,9 @@ const AuditLogViewer: React.FC = () => {
       <div className="bg-white p-6 rounded-lg shadow">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Super Admin Audit Logs</h2>
+            <h2 className="text-xl font-bold text-gray-900">Master Admin Audit Logs</h2>
             <p className="text-sm text-gray-600 mt-1">
-              Security and compliance tracking for all super admin actions
+              Security and compliance tracking for all master admin actions
             </p>
           </div>
           <button

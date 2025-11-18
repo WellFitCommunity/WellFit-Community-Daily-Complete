@@ -352,7 +352,7 @@ export default function AdminLoginPage() {
               onChange={(e) => setRole(e.target.value as StaffRole)}
             >
               <option value="admin">Administrator</option>
-              <option value="super_admin">Super Administrator</option>
+              <option value="super_admin">Master Administrator</option>
               <option value="nurse">Nurse (RN/LPN)</option>
               <option value="nurse_practitioner">Nurse Practitioner</option>
               <option value="physician">Physician</option>
@@ -435,7 +435,7 @@ export default function AdminLoginPage() {
               onChange={(e) => setRole(e.target.value as StaffRole)}
             >
               <option value="admin">Administrator</option>
-              <option value="super_admin">Super Administrator</option>
+              <option value="super_admin">Master Administrator</option>
               <option value="nurse">Nurse (RN/LPN)</option>
               <option value="nurse_practitioner">Nurse Practitioner</option>
               <option value="physician">Physician</option>

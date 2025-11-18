@@ -122,7 +122,7 @@ const SystemAdministrationPage: React.FC = () => {
                 </p>
                 <div className="mt-3 flex items-center gap-2 text-sm">
                   <span className="px-3 py-1 bg-[#C8E63D] text-black font-bold rounded-full border border-black">
-                    Super Admin Access
+                    Master Admin Access
                   </span>
                   <span className="text-white/60">Logged in as: {user?.email}</span>
                 </div>
