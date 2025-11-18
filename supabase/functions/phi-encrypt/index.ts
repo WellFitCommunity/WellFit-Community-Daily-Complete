@@ -9,10 +9,23 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.0';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// CORS Configuration - Explicit allowlist for security
+const ALLOWED_ORIGINS = [
+  "https://thewellfitcommunity.org",
+  "https://wellfitcommunity.live",
+  "https://www.wellfitcommunity.live",
+  "http://localhost:3100",
+  "https://localhost:3100"
+];
+
+function getCorsHeaders(origin: string | null): Record<string, string> {
+  const allowOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    'Access-Control-Allow-Origin': allowOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Vary': 'Origin'
+  };
+}
 
 interface EncryptRequest {
   data: string;
@@ -27,6 +40,8 @@ interface EncryptResponse {
 }
 
 serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req.headers.get('origin'));
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
