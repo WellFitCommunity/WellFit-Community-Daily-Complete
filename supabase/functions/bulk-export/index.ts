@@ -4,11 +4,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 import { createLogger } from '../_shared/auditLogger.ts';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
 
 interface ExportRequest {
   jobId: string;
@@ -29,8 +25,10 @@ serve(async (req) => {
 
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return handleOptions(req);
   }
+
+  const { headers: corsHeaders } = corsFromRequest(req);
 
   const startTime = Date.now();
 
