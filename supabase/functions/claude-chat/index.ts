@@ -4,8 +4,10 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createUserClient } from '../_shared/supabaseClient.ts';
 import Anthropic from "npm:@anthropic-ai/sdk@0.20.9";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
+import { createLogger } from '../_shared/auditLogger.ts';
 
 serve(async (req) => {
+  const logger = createLogger('claude-chat', req);
 
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -95,11 +97,11 @@ serve(async (req) => {
       });
     } catch (logError) {
       // Don't fail request if logging fails, but log the error
-      console.error('Audit log insertion failed:', logError instanceof Error ? logError.message : String(logError));
+      logger.error('Audit log insertion failed', { error: logError instanceof Error ? logError.message : String(logError) });
     }
 
     // Also log to console for real-time monitoring (temporary)
-    console.log('Claude API request completed', {
+    logger.info('Claude API request completed', {
       requestId,
       userId: user.id,
       model: modelUsed,
@@ -135,10 +137,10 @@ serve(async (req) => {
         }
       });
     } catch (logError) {
-      console.error('Audit log insertion failed:', logError instanceof Error ? logError.message : String(logError));
+      logger.error('Audit log insertion failed', { error: logError instanceof Error ? logError.message : String(logError) });
     }
 
-    console.error('Claude API request failed:', error instanceof Error ? error.message : String(error));
+    logger.error('Claude API request failed', { error: error instanceof Error ? error.message : String(error) });
 
     return new Response(
       JSON.stringify({

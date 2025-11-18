@@ -21,6 +21,8 @@ interface ExportRequest {
 }
 
 serve(async (req) => {
+  const logger = createLogger('bulk-export', req);
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return handleOptions(req);
@@ -47,8 +49,20 @@ serve(async (req) => {
     const body: ExportRequest = await req.json();
     const { jobId, exportType, filters, requestedBy } = body;
 
+    logger.security('Bulk export requested', {
+      jobId,
+      exportType,
+      requestedBy,
+      dateRange: `${filters?.dateFrom} to ${filters?.dateTo}`
+    });
+
     // Validate required fields
     if (!jobId || !exportType || !requestedBy) {
+      logger.warn('Missing required fields in bulk export request', {
+        jobId,
+        exportType,
+        requestedBy
+      });
       return new Response(
         JSON.stringify({ error: 'Missing required fields: jobId, exportType, requestedBy' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -137,15 +151,33 @@ serve(async (req) => {
     });
 
     if (insertError) {
-      console.error('Error creating export job:', insertError.message);
+      logger.error('Error creating export job', {
+        jobId,
+        exportType,
+        error: insertError.message
+      });
       return new Response(
         JSON.stringify({ error: 'Failed to create export job', details: insertError.message }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    logger.info('Export job created successfully', {
+      jobId,
+      exportType,
+      estimatedRecords,
+      requestedBy
+    });
+
     // Start background export process (asynchronous)
-    processExportInBackground(jobId, exportType, filters, estimatedRecords, supabaseAdmin);
+    processExportInBackground(jobId, exportType, filters, estimatedRecords, supabaseAdmin, logger);
+
+    const processingTime = Date.now() - startTime;
+    logger.info('Bulk export initiated', {
+      jobId,
+      exportType,
+      processingTimeMs: processingTime
+    });
 
     // Return immediate response
     return new Response(
@@ -159,9 +191,13 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in bulk-export function:', error);
+    const processingTime = Date.now() - startTime;
+    logger.error('Error in bulk-export function', {
+      error: error.message,
+      processingTimeMs: processingTime
+    });
     return new Response(
-      JSON.stringify({ error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' }),
+      JSON.stringify({ error: 'Internal server error', details: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
@@ -173,9 +209,17 @@ async function processExportInBackground(
   exportType: string,
   filters: any,
   totalRecords: number,
-  supabaseAdmin: any
+  supabaseAdmin: any,
+  logger: any
 ) {
+  const processingStartTime = Date.now();
+
   try {
+    logger.info('Background export processing started', {
+      jobId,
+      exportType,
+      totalRecords
+    });
 
     const batchSize = 1000;
     let processedRecords = 0;
@@ -242,6 +286,13 @@ async function processExportInBackground(
         processed_records: processedRecords,
         progress: progress,
       }).eq('id', jobId);
+
+      logger.debug('Export batch processed', {
+        jobId,
+        processedRecords,
+        totalRecords,
+        progress
+      });
     }
 
     // Convert to requested format
@@ -260,6 +311,7 @@ async function processExportInBackground(
       // In production, use a proper XLSX library
       exportContent = JSON.stringify(exportedData, null, 2);
       contentType = 'application/json';
+      logger.warn('XLSX format not fully implemented, using JSON', { jobId });
     }
 
     // Upload to Supabase Storage
@@ -295,13 +347,28 @@ async function processExportInBackground(
       completed_at: new Date().toISOString(),
     }).eq('id', jobId);
 
+    const processingTime = Date.now() - processingStartTime;
+    logger.info('Export processing completed successfully', {
+      jobId,
+      exportType,
+      totalRecords,
+      format,
+      processingTimeMs: processingTime
+    });
+
   } catch (error) {
-    console.error('Error processing export:', error);
+    const processingTime = Date.now() - processingStartTime;
+    logger.error('Error processing export', {
+      jobId,
+      exportType,
+      error: error.message,
+      processingTimeMs: processingTime
+    });
 
     // Mark as failed
     await supabaseAdmin.from('export_jobs').update({
       status: 'failed',
-      error_message: error instanceof Error ? error.message : 'Unknown error occurred',
+      error_message: error.message || 'Unknown error occurred',
     }).eq('id', jobId);
   }
 }

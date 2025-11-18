@@ -2,11 +2,14 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { parsePhoneNumber, isValidPhoneNumber } from "https://esm.sh/libphonenumber-js@1.12.9";
 import { cors } from "../_shared/cors.ts";
+import { createLogger } from "../_shared/auditLogger.ts";
 
 // Allowed country codes for phone numbers
 const ALLOWED_COUNTRIES = ['US', 'CA', 'GB', 'AU'] as const;
 
 Deno.serve(async (req: Request): Promise<Response> => {
+  const logger = createLogger('sms-verify-code', req);
+
   const { headers, allowed } = cors(req.headers.get("origin"), {
     methods: ["POST", "OPTIONS"],
     allowHeaders: ["authorization", "x-client-info", "apikey", "content-type"],
@@ -26,7 +29,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const VERIFY_SID         = Deno.env.get("TWILIO_VERIFY_SERVICE_SID") ?? "";
 
   if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !VERIFY_SID) {
-    console.error("Missing Twilio environment variables", {
+    logger.error("Missing Twilio environment variables", {
       hasSid: Boolean(TWILIO_ACCOUNT_SID),
       hasToken: Boolean(TWILIO_AUTH_TOKEN),
       hasVerify: Boolean(VERIFY_SID)
@@ -94,7 +97,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       (json as any).status === "approved";
 
     if (!approved) {
-      console.log("Invalid or expired verification code attempt", {
+      logger.security("Invalid or expired verification code attempt", {
         phone,
         twilioStatus: resp.status,
         responseDetails: txt
@@ -111,7 +114,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       const SB_SECRET_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("SB_SECRET_KEY") || "";
 
       if (!SB_URL || !SB_SECRET_KEY) {
-        console.error("Missing Supabase configuration", {
+        logger.error("Missing Supabase configuration", {
           hasUrl: Boolean(SB_URL),
           hasKey: Boolean(SB_SECRET_KEY)
         });
@@ -128,7 +131,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         .maybeSingle();
 
       if (pendingError || !pending) {
-        console.warn("No pending registration found for phone", {
+        logger.warn("No pending registration found for phone", {
           phone,
           error: pendingError?.message
         });
@@ -147,7 +150,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
           .rpc('decrypt_pending_password', { encrypted_password: pending.password_encrypted });
 
         if (decryptError) {
-          console.error("Password decryption failed", {
+          logger.error("Password decryption failed", {
             error: decryptError.message,
             phone
           });
@@ -158,7 +161,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
       // Fallback to plaintext for backward compatibility (will be removed in future)
       if (!userPassword && pending.password_plaintext) {
-        console.warn("Using deprecated password_plaintext field", {
+        logger.warn("Using deprecated password_plaintext field", {
           phone,
           message: "Update to password_encrypted"
         });
@@ -166,7 +169,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       }
 
       if (!userPassword) {
-        console.error("Missing or invalid password in pending registration", { phone });
+        logger.error("Missing or invalid password in pending registration", { phone });
         return new Response(JSON.stringify({ error: "Invalid registration data. Please register again." }), {
           status: 500, headers,
         });
@@ -190,7 +193,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       });
 
       if (authError || !authData?.user) {
-        console.error("Failed to create user account", {
+        logger.error("Failed to create user account", {
           phone,
           error: authError?.message
         });
@@ -213,7 +216,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         });
 
       if (profileError) {
-        console.error("Failed to create profile", {
+        logger.error("Failed to create profile", {
           userId: authData.user.id,
           phone,
           error: profileError.message
@@ -230,14 +233,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
         );
 
         if (fhirPatientError) {
-          console.warn("FHIR patient creation failed during registration", {
+          logger.warn("FHIR patient creation failed during registration", {
             userId: authData.user.id,
             phone,
             error: fhirPatientError.message
           });
         }
       } catch (fhirError) {
-        console.warn("FHIR patient creation exception during registration", {
+        logger.warn("FHIR patient creation exception during registration", {
           userId: authData.user.id,
           phone,
           error: fhirError instanceof Error ? fhirError.message : String(fhirError)
@@ -262,14 +265,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
           });
 
           if (!welcomeEmailResponse.ok) {
-            console.warn("Welcome email failed to send", {
+            logger.warn("Welcome email failed to send", {
               userId: authData.user.id,
               email: pending.email,
               status: welcomeEmailResponse.status
             });
           }
         } catch (emailError) {
-          console.warn("Welcome email exception", {
+          logger.warn("Welcome email exception", {
             userId: authData.user.id,
             email: pending.email,
             error: emailError instanceof Error ? emailError.message : String(emailError)
@@ -288,7 +291,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       });
 
       if (sessionError) {
-        console.warn("Failed to auto sign-in user after registration", {
+        logger.warn("Failed to auto sign-in user after registration", {
           userId: authData.user.id,
           phone,
           error: sessionError.message
@@ -296,7 +299,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         // Don't fail - user can manually login
       }
 
-      console.log("User registration completed successfully", {
+      logger.info("User registration completed successfully", {
         userId: authData.user.id,
         phone,
         firstName: pending.first_name,
@@ -322,14 +325,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
       }), { status: 200, headers });
 
     } catch (dbError) {
-      console.error("Database error during registration completion", {
+      logger.error("Database error during registration completion", {
         error: dbError instanceof Error ? dbError.message : String(dbError)
       });
       return new Response(JSON.stringify({ error: "Failed to complete registration" }), { status: 500, headers });
     }
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
-    console.error("Fatal error in sms-verify-code", { error: msg });
+    logger.error("Fatal error in sms-verify-code", { error: msg });
     return new Response(JSON.stringify({ error: "Internal server error" }), { status: 500, headers });
   }
 });

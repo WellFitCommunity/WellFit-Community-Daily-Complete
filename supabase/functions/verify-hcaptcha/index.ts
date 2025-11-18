@@ -6,6 +6,7 @@ import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supa
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { SB_URL, SB_SECRET_KEY, HCAPTCHA_SECRET } from "../_shared/env.ts";
 import { cors } from "../_shared/cors.ts";
+import { createLogger } from "../_shared/auditLogger.ts";
 
 const MAX_REQUESTS = 5;
 const TIME_WINDOW_MINUTES = 15;
@@ -54,6 +55,8 @@ function passwordMissingRules(pw: string): string[] {
 }
 
 export default async function handler(req: Request): Promise<Response> {
+  const logger = createLogger('verify-hcaptcha', req);
+
   const { headers, allowed } = cors(req.headers.get("origin"), {
     methods: ["POST", "OPTIONS"],
     allowHeaders: ["authorization", "x-client-info", "apikey", "content-type", "x-hcaptcha-token"]
@@ -66,14 +69,14 @@ export default async function handler(req: Request): Promise<Response> {
 
   try {
     if (!SB_URL || !SB_SECRET_KEY) {
-      console.error("Missing Supabase configuration", {
+      logger.error("Missing Supabase configuration", {
         hasUrl: Boolean(SB_URL),
         hasKey: Boolean(SB_SECRET_KEY)
       });
       return j({ error: "Server misconfiguration." }, 500, headers);
     }
     if (!HCAPTCHA_SECRET) {
-      console.error("Missing hCaptcha secret configuration");
+      logger.error("Missing hCaptcha secret configuration");
       return j({ error: "Captcha not configured." }, 500, headers);
     }
 
@@ -152,7 +155,7 @@ export default async function handler(req: Request): Promise<Response> {
     const cap = await fetch(HCAPTCHA_VERIFY_URL, { method: "POST", body: form });
     const capJson = await cap.json().catch(() => ({}));
     if (!cap.ok || !capJson?.success) {
-      console.log("hCaptcha verification failed", {
+      logger.security("hCaptcha verification failed", {
         phone: e164,
         clientIp,
         errorCodes: capJson?.["error-codes"] ?? [],
@@ -181,14 +184,14 @@ export default async function handler(req: Request): Promise<Response> {
     if (authErr || !created?.user) {
       const msg = authErr?.message ?? "Auth createUser failed";
       if (msg.toLowerCase().includes("exists")) {
-        console.warn("Registration attempted with existing phone/email", {
+        logger.warn("Registration attempted with existing phone/email", {
           phone: e164,
           email: body.email,
           clientIp
         });
         return j({ error: "Phone or email already registered." }, 409, headers);
       }
-      console.error("User account creation failed", {
+      logger.error("User account creation failed", {
         phone: e164,
         email: body.email,
         error: msg,
@@ -211,7 +214,7 @@ export default async function handler(req: Request): Promise<Response> {
       // created_at: new Date().toISOString() // include only if your schema has it
     });
     if (profErr) {
-      console.error("Profile creation failed, rolling back user", {
+      logger.error("Profile creation failed, rolling back user", {
         userId,
         phone: e164,
         email: body.email,
@@ -222,7 +225,7 @@ export default async function handler(req: Request): Promise<Response> {
       return j({ error: "Unable to save profile. Please try again." }, 500, headers);
     }
 
-    console.log("User registration completed successfully", {
+    logger.info("User registration completed successfully", {
       userId,
       phone: e164,
       email: body.email,
@@ -234,7 +237,7 @@ export default async function handler(req: Request): Promise<Response> {
     return j({ success: true, user_id: userId, phone: e164 }, 201, headers);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error("Fatal error in verify-hcaptcha", {
+    logger.error("Fatal error in verify-hcaptcha", {
       error: msg,
       stack: err instanceof Error ? err.stack : undefined
     });

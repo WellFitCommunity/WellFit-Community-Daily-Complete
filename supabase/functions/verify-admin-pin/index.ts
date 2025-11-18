@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target
 import { z } from "https://esm.sh/zod@3.23.8?target=deno";
 import { cors } from "../_shared/cors.ts";
 import { verifyPin, generateSecureToken } from "../_shared/crypto.ts";
+import { createLogger } from "../_shared/auditLogger.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SB_SECRET_KEY = Deno.env.get("SB_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -28,6 +29,8 @@ const schema = z.object({
 
 
 serve(async (req: Request) => {
+  const logger = createLogger('verify-admin-pin', req);
+
   const origin = req.headers.get("origin");
   const { headers, allowed } = cors(origin, {
     methods: ["POST", "OPTIONS"],
@@ -89,7 +92,7 @@ serve(async (req: Request) => {
 
     const valid = await verifyPin(pin, pinRow?.pin_hash);
     if (!valid) {
-      console.log("Admin PIN verification failed", {
+      logger.security("Admin PIN verification failed", {
         userId: user_id,
         role,
         clientIp
@@ -132,7 +135,7 @@ resource_type: 'auth_event',
     });
     if (upErr) throw upErr;
 
-    console.log("Admin PIN verification successful", {
+    logger.info("Admin PIN verification successful", {
       userId: user_id,
       role,
       clientIp,
@@ -166,7 +169,7 @@ resource_type: 'auth_event',
       { status: 200, headers }
     );
   } catch (e: any) {
-    console.error("Fatal error in verify-admin-pin", {
+    logger.error("Fatal error in verify-admin-pin", {
       error: e?.message ?? String(e),
       stack: e?.stack
     });

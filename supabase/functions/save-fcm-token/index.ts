@@ -2,6 +2,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { createLogger } from "../_shared/auditLogger.ts";
 
 // Zod schema for save-fcm-token payload
 const saveTokenSchema = z.object({
@@ -35,6 +36,8 @@ async function getAuthenticatedUser(req: Request, supabaseClient: SupabaseClient
 }
 
 serve(async (req) => {
+  const logger = createLogger('save-fcm-token', req);
+
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
       status: 405,
@@ -83,7 +86,7 @@ serve(async (req) => {
       .select(); // Optionally select the row after upsert
 
     if (error) {
-      console.error('Failed to save FCM token:', {
+      logger.error('Failed to save FCM token', {
         userId: user_id,
         error: error.message,
         errorCode: error.code
@@ -94,7 +97,7 @@ serve(async (req) => {
       });
     }
 
-    console.log('FCM token saved successfully:', {
+    logger.info('FCM token saved successfully', {
       userId: user_id,
       hasDeviceInfo: Boolean(device_info)
     });
@@ -105,7 +108,10 @@ serve(async (req) => {
 
   } catch (e) {
     const errorMessage = e instanceof Error ? e.message : 'Unknown error';
-    console.error('Fatal error in save-fcm-token:', errorMessage);
+    logger.error('Fatal error in save-fcm-token', {
+      error: errorMessage,
+      stack: e instanceof Error ? e.stack : undefined
+    });
     if (errorMessage.includes('User not authenticated') || errorMessage.includes('Missing Authorization header')) {
         return new Response(JSON.stringify({ error: 'Unauthorized: ' + errorMessage }), {
             status: 401, headers: { 'Content-Type': 'application/json' }

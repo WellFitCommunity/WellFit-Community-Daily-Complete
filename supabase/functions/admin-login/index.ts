@@ -1,8 +1,11 @@
 import { serve } from "https://deno.land/std@0.183.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { cors } from "../_shared/cors.ts";
+import { createLogger } from "../_shared/auditLogger.ts";
 
 serve(async (req: Request) => {
+  const logger = createLogger('admin-login', req);
+
   const origin = req.headers.get("Origin");
   const { headers } = cors(origin, { methods: ["POST", "OPTIONS"] });
 
@@ -30,7 +33,7 @@ serve(async (req: Request) => {
     const serverAdminSecret = Deno.env.get("ADMIN_SECRET");
 
     if (!serverAdminSecret) {
-      console.error("ADMIN_SECRET not configured", {
+      logger.error("ADMIN_SECRET not configured", {
         message: "ADMIN_SECRET environment variable is missing"
       });
       return new Response(
@@ -45,7 +48,7 @@ serve(async (req: Request) => {
       const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
       if (!supabaseUrl || !supabaseServiceKey) {
-        console.error("Missing Supabase configuration", {
+        logger.error("Missing Supabase configuration", {
           hasUrl: Boolean(supabaseUrl),
           hasKey: Boolean(supabaseServiceKey)
         });
@@ -71,7 +74,7 @@ serve(async (req: Request) => {
       });
 
       if (sessionError) {
-        console.error("Admin session creation failed", {
+        logger.error("Admin session creation failed", {
           error: sessionError.message,
           clientIp
         });
@@ -102,7 +105,7 @@ serve(async (req: Request) => {
         console.error('[Audit Log Error]:', logError);
       }
 
-      console.log("Admin login successful", {
+      logger.info("Admin login successful", {
         clientIp,
         expiresIn
       });
@@ -152,7 +155,7 @@ serve(async (req: Request) => {
           console.error('[Audit Log Error]:', logError);
         }
 
-        console.log("Admin login failed - invalid key", {
+        logger.security("Admin login failed - invalid key", {
           clientIp,
           keyPrefix: adminKey.substring(0, 8),
           userAgent: req.headers.get('user-agent')
@@ -199,7 +202,7 @@ serve(async (req: Request) => {
 
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : String(err);
-    console.error("Fatal error in admin-login", {
+    logger.error("Fatal error in admin-login", {
       error: errorMessage,
       stack: err instanceof Error ? err.stack : undefined
     });

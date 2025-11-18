@@ -2,6 +2,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { parsePhoneNumber, isValidPhoneNumber } from "https://esm.sh/libphonenumber-js@1.12.9";
 import { cors } from "../_shared/cors.ts";
+import { createLogger } from "../_shared/auditLogger.ts";
 
 // Allowed country codes for phone numbers
 const ALLOWED_COUNTRIES = ['US', 'CA', 'GB', 'AU'] as const;
@@ -40,6 +41,8 @@ function validatePhone(phone: string): { valid: boolean; error?: string } {
 }
 
 Deno.serve(async (req: Request): Promise<Response> => {
+  const logger = createLogger('sms-send-code', req);
+
   const { headers, allowed } = cors(req.headers.get("origin"), {
     methods: ["POST", "OPTIONS"],
     allowHeaders: ["authorization", "x-client-info", "apikey", "content-type"],
@@ -61,7 +64,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const VERIFY_SID         = getEnv("TWILIO_VERIFY_SERVICE_SID", "TWILIO_VERIFY_SID");
 
   if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !VERIFY_SID) {
-    console.error("Missing Twilio environment variables:", {
+    logger.error("Missing Twilio environment variables", {
       hasSid: Boolean(TWILIO_ACCOUNT_SID),
       hasToken: Boolean(TWILIO_AUTH_TOKEN),
       hasVerify: Boolean(VERIFY_SID),
@@ -136,7 +139,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        console.log(`SMS send attempt ${attempt}/${maxRetries}:`, { phone, attempt, maxRetries });
+        logger.info(`SMS send attempt ${attempt}/${maxRetries}`, { phone, attempt, maxRetries });
 
         twilioResp = await fetchWithTimeout(url, {
           method: "POST",
@@ -154,7 +157,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
         // For 5xx errors, retry
         lastError = new Error(`Twilio returned ${twilioResp.status}`);
-        console.warn(`SMS send attempt failed, retrying:`, {
+        logger.warn(`SMS send attempt failed, retrying`, {
           attempt,
           status: twilioResp.status,
           phone,
@@ -164,7 +167,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       } catch (err) {
         lastError = err instanceof Error ? err : new Error(String(err));
         const errName = err instanceof Error ? err.name : 'Unknown';
-        console.error(`SMS send attempt failed with exception:`, {
+        logger.error(`SMS send attempt failed with exception`, {
           attempt,
           error: lastError.message,
           errorType: errName,
@@ -174,7 +177,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         // Don't wait after last attempt
         if (attempt < maxRetries) {
           const delay = baseDelay * Math.pow(2, attempt - 1);
-          console.log(`Waiting before retry:`, { delayMs: delay, nextAttempt: attempt + 1 });
+          logger.info(`Waiting before retry`, { delayMs: delay, nextAttempt: attempt + 1 });
           await new Promise(resolve => setTimeout(resolve, delay));
         }
       }
@@ -182,7 +185,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     // If all retries failed
     if (!twilioResp) {
-      console.error("All SMS send retry attempts exhausted:", {
+      logger.error("All SMS send retry attempts exhausted", {
         phone,
         lastError: lastError?.message,
         attempts: maxRetries
@@ -208,7 +211,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       if (twilioResp.status === 400) { code = "TWILIO_BAD_REQUEST"; status = 400; }
       if (twilioResp.status === 404) { code = "TWILIO_SERVICE_NOT_FOUND"; status = 502; }
 
-      console.error("Twilio Verify API error:", {
+      logger.error("Twilio Verify API error", {
         status: twilioResp.status,
         errorCode: code,
         responseBody: txt,
@@ -235,7 +238,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     let payload: Record<string, unknown> = {};
     try { payload = JSON.parse(txt); } catch { /* keep empty if not JSON */ }
 
-    console.log("SMS verification code sent successfully:", {
+    logger.info("SMS verification code sent successfully", {
       phone,
       channel,
       verificationStatus: payload?.status ?? "sent",
@@ -253,7 +256,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     );
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
-    console.error("Fatal error in sms-send-code:", msg);
+    logger.error("Fatal error in sms-send-code", { error: msg });
     return new Response(JSON.stringify({ error: "INTERNAL_ERROR" }), { status: 500, headers });
   }
 });

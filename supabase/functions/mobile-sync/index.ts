@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createUserClient, batchQueries } from '../_shared/supabaseClient.ts'
 import { cors } from "../_shared/cors.ts"
+import { createLogger } from '../_shared/auditLogger.ts'
 
 // ❌ REMOVED WILDCARD CORS - Using secure cors() function instead
 // const corsHeaders = {
@@ -67,6 +68,8 @@ interface SyncRequest {
 }
 
 serve(async (req: Request) => {
+  const logger = createLogger('mobile-sync', req);
+
   // Handle CORS with secure origin validation
   const origin = req.headers.get('origin');
   const { headers: corsHeaders, allowed } = cors(origin, {
@@ -339,7 +342,7 @@ serve(async (req: Request) => {
     )
 
   } catch (error) {
-    console.error('Mobile sync error', { error: error instanceof Error ? error.message : String(error) })
+    logger.error('Mobile sync error', { error: error instanceof Error ? error.message : String(error) })
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       {
@@ -388,10 +391,10 @@ async function triggerVitalsAnalysis(supabaseClient: any, patientId: string, vit
     // Batch insert all alerts
     if (alerts.length > 0) {
       await supabaseClient.from('emergency_alerts').insert(alerts);
-      console.log('Vitals anomaly detected', { patientId, alertCount: alerts.length });
+      logger.phi('Vitals anomaly detected', { patientId, alertCount: alerts.length });
     }
   } catch (error) {
-    console.error('Vitals analysis error', { error: error instanceof Error ? error.message : String(error), patientId })
+    logger.error('Vitals analysis error', { error: error instanceof Error ? error.message : String(error), patientId })
   }
 }
 
@@ -411,10 +414,10 @@ async function checkGeofenceAlerts(supabaseClient: any, patientId: string, event
           message: `Patient has left designated safe zone`,
           action_required: true
         })
-      console.log('Geofence breach detected', { patientId, breachCount: breachEvents.length });
+      logger.security('Geofence breach detected', { patientId, breachCount: breachEvents.length });
     }
   } catch (error) {
-    console.error('Geofence alert error', { error: error instanceof Error ? error.message : String(error), patientId })
+    logger.error('Geofence alert error', { error: error instanceof Error ? error.message : String(error), patientId })
   }
 }
 
@@ -434,9 +437,9 @@ async function triggerEmergencyResponse(supabaseClient: any, patientId: string, 
           message: `Emergency incident detected via mobile app`,
           action_required: true
         })
-      console.log('Critical emergency incident detected', { patientId, incidentCount: criticalIncidents.length });
+      logger.security('Critical emergency incident detected', { patientId, incidentCount: criticalIncidents.length });
     }
   } catch (error) {
-    console.error('Emergency response error', { error: error instanceof Error ? error.message : String(error), patientId })
+    logger.error('Emergency response error', { error: error instanceof Error ? error.message : String(error), patientId })
   }
 }
