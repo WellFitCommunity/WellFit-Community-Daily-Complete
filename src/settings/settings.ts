@@ -74,16 +74,15 @@ export const APP_INFO = {
   tagline: "Revolutionizing aging WELL!",
 };
 
-// ---- Firebase re-export (keeps old imports working) ----
-// If you sometimes build without Firebase, this avoids a hard crash.
-let FIREBASE_SAFE: any = undefined;
-try {
-   
-  FIREBASE_SAFE = require("./firebase").firebaseWebConfig;
-} catch {
-  if (!IS_PROD) {
-     
-
-  }
-}
-export const FIREBASE = FIREBASE_SAFE;
+// ---- Firebase Configuration (for push notifications only) ----
+// Direct environment variable mapping - no broken require() needed
+export const FIREBASE = {
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY || '',
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || '',
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID || '',
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET || '',
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID || '',
+  appId: process.env.REACT_APP_FIREBASE_APP_ID || '',
+  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID || '',
+  vapidKey: process.env.REACT_APP_FIREBASE_VAPID_KEY || '',
+};
