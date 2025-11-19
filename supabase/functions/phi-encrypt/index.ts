@@ -8,6 +8,7 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.0';
+import { createLogger } from '../_shared/auditLogger.ts';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
 
 interface EncryptRequest {
@@ -23,6 +24,8 @@ interface EncryptResponse {
 }
 
 serve(async (req) => {
+  const logger = createLogger('phi-encrypt', req);
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return handleOptions(req);
@@ -66,7 +69,7 @@ serve(async (req) => {
     const encryptionKey = Deno.env.get('PHI_ENCRYPTION_KEY');
 
     if (!encryptionKey) {
-      console.error('PHI_ENCRYPTION_KEY not found in Supabase Secrets');
+      logger.error('PHI_ENCRYPTION_KEY not found in Supabase Secrets');
       return new Response(
         JSON.stringify({ success: false, error: 'Encryption key not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -113,7 +116,7 @@ serve(async (req) => {
     });
 
   } catch (error: any) {
-    console.error('PHI encryption error:', error);
+    logger.error('PHI encryption error', { error: error.message });
 
     return new Response(
       JSON.stringify({

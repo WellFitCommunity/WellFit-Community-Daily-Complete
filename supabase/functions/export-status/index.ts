@@ -3,6 +3,7 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
+import { createLogger } from '../_shared/auditLogger.ts';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
 
 interface StatusRequest {
@@ -10,6 +11,8 @@ interface StatusRequest {
 }
 
 serve(async (req) => {
+  const logger = createLogger('export-status', req);
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return handleOptions(req);
@@ -74,7 +77,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in export-status function:', error);
+    logger.error('Error in export-status function', { error: error.message });
     return new Response(
       JSON.stringify({ error: 'Internal server error', details: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
