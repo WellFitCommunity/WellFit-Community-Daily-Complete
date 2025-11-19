@@ -251,8 +251,6 @@ This is an automated alert from Guardian monitoring system.
 
     if (!response.ok) {
       console.error('[Guardian] Email send failed:', await response.text());
-    } else {
-      console.log(`[Guardian] Alert email sent to ${adminEmail}`);
     }
   } catch (error) {
     console.error('[Guardian] Email notification error:', error);

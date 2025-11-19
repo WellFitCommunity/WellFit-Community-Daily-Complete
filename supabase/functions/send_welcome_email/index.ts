@@ -15,8 +15,6 @@ const MAILERSEND_FROM_EMAIL = Deno.env.get("MAILERSEND_FROM_EMAIL");
 const MAILERSEND_FROM_NAME = Deno.env.get("MAILERSEND_FROM_NAME") || "WellFit Community";
 const WELCOME_TEMPLATE_ID = "v69oxl5w0zzl785k";
 
-console.log("✅ send_welcome_email initialized with template:", WELCOME_TEMPLATE_ID);
-
 serve(async (req) => {
   const { headers, allowed } = cors(req.headers.get('origin'), {
     methods: ['POST','OPTIONS'],
@@ -80,8 +78,6 @@ serve(async (req) => {
       ]
     };
 
-    console.log(`📨 Sending welcome email template ${WELCOME_TEMPLATE_ID}`);
-
     const resp = await fetch('https://api.mailersend.com/v1/email', {
       method: 'POST',
       headers: {
@@ -100,7 +96,6 @@ serve(async (req) => {
       }), { status: resp.status, headers });
     }
 
-    console.log('✅ Welcome email template sent successfully');
     return new Response(
       JSON.stringify({
         success: true,

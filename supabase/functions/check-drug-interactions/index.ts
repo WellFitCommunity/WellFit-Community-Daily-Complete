@@ -77,8 +77,6 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Checking drug interactions for RxCUI: ${medication_rxcui}`);
-
     // Step 1: Get patient's active medications
     const { data: activeMeds, error: medsError } = await supabase
       .from("fhir_medication_requests")
@@ -116,8 +114,6 @@ serve(async (req) => {
         { status: 200, headers: { "Content-Type": "application/json" } }
       );
     }
-
-    console.log(`Checking ${medication_rxcui} against ${activeRxcuis.length} active medications`);
 
     // Step 2: Check cache first
     const interactions: Array<{
@@ -157,8 +153,6 @@ serve(async (req) => {
 
     // Step 3: Check RxNorm API for uncached medications
     if (uncachedRxcuis.length > 0) {
-      console.log(`Checking RxNorm API for ${uncachedRxcuis.length} uncached medications`);
-
       // RxNorm API can check multiple RxCUIs at once
       const rxcuiList = uncachedRxcuis.join("+");
       const rxnormUrl = `${RXNORM_API_BASE}/interaction/list.json?rxcuis=${medication_rxcui}+${rxcuiList}&sources=DrugBank`;

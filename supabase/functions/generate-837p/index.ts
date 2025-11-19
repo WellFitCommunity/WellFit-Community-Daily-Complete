@@ -479,8 +479,6 @@ resource_type: 'auth_event',
       console.error('[Audit Log Error]:', logError);
     }
 
-    console.log(`[Claims Generation] User: ${currentUser.id}, Encounter: ${enc.id}, Control: ${stCtrl}, Time: ${processingTime}ms`);
-
     // Success: return text (your UI treats it as a downloadable string)
     return new Response(x12, {
       status: 200,

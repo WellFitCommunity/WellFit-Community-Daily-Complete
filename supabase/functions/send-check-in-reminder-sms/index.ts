@@ -94,7 +94,6 @@ serve(async (req) => {
     }
 
     const data = JSON.parse(responseText);
-    console.log(`[send-check-in-reminder-sms] SMS sent to ${phone}, SID: ${data.sid}`);
 
     const { headers } = corsFromRequest(req);
     return new Response(

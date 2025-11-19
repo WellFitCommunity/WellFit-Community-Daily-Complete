@@ -97,7 +97,7 @@ export interface DatabaseTypes {
           admin_user_id: string;
           action_type: string;
           target_user_id?: string | null;
-          details: any;
+          details: Record<string, unknown>;
           created_at: string;
         };
         Insert: {
@@ -105,7 +105,7 @@ export interface DatabaseTypes {
           admin_user_id: string;
           action_type: string;
           target_user_id?: string | null;
-          details?: any;
+          details?: Record<string, unknown>;
           created_at?: string;
         };
         Update: Partial<DatabaseTypes['public']['Tables']['admin_actions']['Insert']>;
@@ -115,14 +115,14 @@ export interface DatabaseTypes {
           id: string;
           user_id: string;
           action: string;
-          details: any;
+          details: Record<string, unknown>;
           created_at: string;
         };
         Insert: {
           id?: string;
           user_id: string;
           action: string;
-          details?: any;
+          details?: Record<string, unknown>;
           created_at?: string;
         };
         Update: Partial<DatabaseTypes['public']['Tables']['interaction_log']['Insert']>;
@@ -133,13 +133,13 @@ export interface DatabaseTypes {
 
 // -------- Structured Logger --------
 export interface Logger {
-  info: (message: string, data?: any) => void;
-  warn: (message: string, data?: any) => void;
-  error: (message: string, data?: any) => void;
+  info: (message: string, data?: Record<string, unknown>) => void;
+  warn: (message: string, data?: Record<string, unknown>) => void;
+  error: (message: string, data?: Record<string, unknown>) => void;
 }
 
 export const createLogger = (functionName: string): Logger => ({
-  info: (message: string, data?: any) =>
+  info: (message: string, data?: Record<string, unknown>) =>
     console.log(JSON.stringify({
       level: 'info',
       function: functionName,
@@ -147,7 +147,7 @@ export const createLogger = (functionName: string): Logger => ({
       timestamp: new Date().toISOString(),
       ...(data && { data })
     })),
-  warn: (message: string, data?: any) =>
+  warn: (message: string, data?: Record<string, unknown>) =>
     console.warn(JSON.stringify({
       level: 'warn',
       function: functionName,
@@ -155,7 +155,7 @@ export const createLogger = (functionName: string): Logger => ({
       timestamp: new Date().toISOString(),
       ...(data && { data })
     })),
-  error: (message: string, data?: any) =>
+  error: (message: string, data?: Record<string, unknown>) =>
     console.error(JSON.stringify({
       level: 'error',
       function: functionName,

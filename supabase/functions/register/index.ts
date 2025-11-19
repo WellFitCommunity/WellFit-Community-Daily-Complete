@@ -254,11 +254,6 @@ resource_type: 'auth_event',
       let resendErrorDetails = "";
       try {
         const functionsUrl = `${SB_URL}/functions/v1`;
-        console.log("[register] Resending SMS for pending registration:", {
-          phone: phoneNumber,
-          url: `${functionsUrl}/sms-send-code`,
-          hasAnonKey: !!SB_ANON_KEY
-        });
 
         // Helper function to fetch with proper abort on timeout
         const fetchWithTimeout = (url: string, options: RequestInit, timeoutMs: number): Promise<Response> => {
@@ -278,11 +273,6 @@ resource_type: 'auth_event',
         }, 60000); // 60 second timeout
 
         const responseText = await smsResponse.text();
-        console.log("[register] SMS resend response:", {
-          status: smsResponse.status,
-          ok: smsResponse.ok,
-          body: responseText
-        });
         resendErrorDetails = responseText;
 
         if (smsResponse.ok) {
@@ -384,11 +374,6 @@ resource_type: 'auth_event',
     try {
       // Correct Edge Functions URL format (not .functions.supabase.co subdomain)
       const functionsUrl = `${SB_URL}/functions/v1`;
-      console.log("[register] Sending SMS for new registration:", {
-        phone: phoneNumber,
-        url: `${functionsUrl}/sms-send-code`,
-        hasAnonKey: !!SB_ANON_KEY
-      });
 
       // Helper function to fetch with proper abort on timeout
       const fetchWithTimeout = (url: string, options: RequestInit, timeoutMs: number): Promise<Response> => {
@@ -411,12 +396,6 @@ resource_type: 'auth_event',
       }, 60000); // 60 second timeout to allow for retries
 
       const responseText = await smsResponse.text();
-      console.log("[register] SMS send response:", {
-        status: smsResponse.status,
-        ok: smsResponse.ok,
-        body: responseText
-      });
-
       smsErrorDetails = responseText;
 
       if (smsResponse.ok) {

@@ -231,9 +231,6 @@ serve(async (req) => {
       console.error('[Audit Log Error]:', logError);
     }
 
-    // Also log to console for real-time monitoring
-    console.log(`[Medical Coding] RequestID: ${requestId}, User: ${userId}, Encounter: ${encounterId}, Input: ${inputTokens}, Output: ${outputTokens}, Cost: $${totalCost.toFixed(4)}, Time: ${responseTime}ms, Confidence: ${parsed.confidence}`);
-
     // Minimal audit (no PHI, no extra columns) - keep existing for backward compatibility
     const { error: auditErr } = await sb.from("coding_audits").insert({
       encounter_id: encounterId,

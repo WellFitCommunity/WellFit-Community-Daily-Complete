@@ -224,9 +224,6 @@ DO NOT include any text before or after the JSON. Return ONLY the JSON object.`,
       );
     }
 
-    // Log successful extraction (PHI-free)
-    console.log('Successfully extracted patient data - confidence:', extractedData.confidence);
-
     // Return extracted data
     return new Response(
       JSON.stringify({

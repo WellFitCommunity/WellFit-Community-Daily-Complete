@@ -44,8 +44,6 @@ serve(async (req) => {
       }
     });
 
-    console.log('[Daily Backup Verification] Starting automated verification...');
-
     // Call the verify_database_backup() function
     const { data: verificationResult, error: verificationError } = await supabase
       .rpc('verify_database_backup');
@@ -75,8 +73,6 @@ serve(async (req) => {
         }
       );
     }
-
-    console.log('[Daily Backup Verification] Verification completed successfully:', verificationResult);
 
     // Check if verification passed or has warnings
     const status = verificationResult?.status || 'unknown';

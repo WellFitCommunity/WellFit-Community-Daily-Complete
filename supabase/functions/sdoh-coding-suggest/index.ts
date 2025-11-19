@@ -310,8 +310,6 @@ Format as JSON with this structure:
         console.error('[Audit Log Error]:', logError);
       }
 
-      console.log(`[SDOH Coding] RequestID: ${requestId}, User: ${userId}, Encounter: ${encounterId}, Input: ${inputTokens}, Output: ${outputTokens}, Cost: $${totalCost.toFixed(4)}, Time: ${responseTime}ms`);
-
       // Validate and enhance the response
       return {
         ...analysis,
