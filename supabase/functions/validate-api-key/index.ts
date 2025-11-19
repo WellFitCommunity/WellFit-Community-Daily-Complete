@@ -1,22 +1,5 @@
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-// CORS Configuration - Explicit allowlist for security
-const ALLOWED_ORIGINS = [
-  "https://thewellfitcommunity.org",
-  "https://wellfitcommunity.live",
-  "http://localhost:3100",
-  "https://localhost:3100"
-];
-
-function getCorsHeaders(origin: string | null) {
-  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : null;
-  return {
-    'Access-Control-Allow-Origin': allowedOrigin || 'null',
-    'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-    'Access-Control-Allow-Credentials': 'true',
-  };
-}
+import { cors } from '../_shared/cors.ts';
 
 // Initialize Supabase client with service role
 let supabaseAdminClient: SupabaseClient;
@@ -35,19 +18,28 @@ try {
 
 
 Deno.serve(async (req: Request) => {
-  const origin = req.headers.get("Origin");
-  const corsHeaders = getCorsHeaders(origin);
+  const { headers: corsHeaders, allowed } = cors(req.headers.get('origin'), {
+    methods: ['GET', 'POST', 'OPTIONS'],
+  });
 
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response(null, { status: 204, headers: corsHeaders });
+  }
+
+  // Reject requests from unauthorized origins
+  if (!allowed) {
+    return new Response(JSON.stringify({ error: 'Origin not allowed' }), {
+      headers: corsHeaders,
+      status: 403,
+    });
   }
 
   // Ensure Supabase client is initialized
   if (!supabaseAdminClient) {
     console.error("Supabase client not initialized. Cannot process request.");
     return new Response(JSON.stringify({ error: "Internal server error: Supabase client not initialized." }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: corsHeaders,
       status: 500,
     });
   }
@@ -56,7 +48,7 @@ Deno.serve(async (req: Request) => {
   const authHeader = req.headers.get('Authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return new Response(JSON.stringify({ error: 'Missing or malformed Authorization header. Use "Bearer <API_KEY>".' }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: corsHeaders,
       status: 401,
     });
   }
@@ -64,7 +56,7 @@ Deno.serve(async (req: Request) => {
 
   if (!apiKey) {
     return new Response(JSON.stringify({ error: 'API key cannot be empty.' }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: corsHeaders,
       status: 401,
     });
   }
@@ -80,7 +72,7 @@ Deno.serve(async (req: Request) => {
     if (fetchError || !apiKeyData) {
       console.warn(`API key validation failed: ${fetchError ? fetchError.message : 'Key not found.'}`);
       return new Response(JSON.stringify({ error: 'Invalid API key.' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: corsHeaders,
         status: 401, // Unauthorized
       });
     }
@@ -88,7 +80,7 @@ Deno.serve(async (req: Request) => {
     if (!apiKeyData.active) {
       console.warn(`API key is inactive: ${apiKeyData.id}`);
       return new Response(JSON.stringify({ error: 'API key is inactive.' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: corsHeaders,
         status: 403, // Forbidden (more specific than 401 for inactive key)
       });
     }
@@ -113,14 +105,14 @@ Deno.serve(async (req: Request) => {
       org_name: apiKeyData.org_name, // Include org_name or other relevant data
       key_id: apiKeyData.id, // Could be useful for the calling service
     }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: corsHeaders,
       status: 200,
     });
 
   } catch (err) {
     console.error('Unexpected error during API key validation:', err);
     return new Response(JSON.stringify({ error: 'Internal server error during validation.' }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: corsHeaders,
       status: 500,
     });
   }
