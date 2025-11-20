@@ -12,7 +12,7 @@ const ADMIN_SESSION_TTL_MIN = 30; // 30 minutes for enhanced security (B2B2C hea
 const supabase = createClient(SUPABASE_URL, SB_SECRET_KEY);
 
 const schema = z.object({
-  pin: z.string().regex(/^\d{4,8}$/, "PIN must be 4–8 digits."),
+  pin: z.string().min(4, "PIN must be at least 4 characters"),
   role: z.enum([
     "admin",
     "super_admin",
@@ -74,7 +74,63 @@ serve(async (req: Request) => {
     const parsed = schema.safeParse(body);
     if (!parsed.success) return new Response(JSON.stringify({ error: "Invalid data" }), { status: 400, headers });
 
-    const { pin, role } = parsed.data;
+    let { pin, role } = parsed.data;
+
+    // Parse TenantCode-PIN format if present (e.g., "MH-6702-1234")
+    // Format: PREFIX-NUMBER-PIN where PREFIX is 1-4 letters, NUMBER is 4-6 digits, PIN is 4-8 digits
+    const tenantCodePinPattern = /^([A-Z]{1,4})-([0-9]{4,6})-([0-9]{4,8})$/;
+    const match = pin.match(tenantCodePinPattern);
+
+    if (match) {
+      // TenantCode-PIN format detected
+      const tenantCodePrefix = match[1];  // e.g., "MH"
+      const tenantCodeNumber = match[2];  // e.g., "6702"
+      const numericPin = match[3];        // e.g., "1234"
+      const inputTenantCode = `${tenantCodePrefix}-${tenantCodeNumber}`; // e.g., "MH-6702"
+
+      // Verify user has a tenant and the code matches
+      const { data: userProfile } = await supabase
+        .from("profiles")
+        .select("tenant_id")
+        .eq("user_id", user_id)
+        .single();
+
+      if (!userProfile?.tenant_id) {
+        return new Response(
+          JSON.stringify({ error: "No tenant assigned to your account" }),
+          { status: 400, headers }
+        );
+      }
+
+      const { data: tenant } = await supabase
+        .from("tenants")
+        .select("tenant_code")
+        .eq("id", userProfile.tenant_id)
+        .single();
+
+      if (tenant?.tenant_code !== inputTenantCode) {
+        logger.security("Tenant code mismatch in PIN verification", {
+          userId: user_id,
+          expectedCode: tenant?.tenant_code,
+          providedCode: inputTenantCode,
+          clientIp
+        });
+
+        return new Response(
+          JSON.stringify({ error: `Incorrect tenant code. Expected ${tenant?.tenant_code}` }),
+          { status: 401, headers }
+        );
+      }
+
+      // Use only the numeric PIN portion for verification
+      pin = numericPin;
+    } else if (!/^\d{4,8}$/.test(pin)) {
+      // Not TenantCode-PIN format and not a simple numeric PIN
+      return new Response(
+        JSON.stringify({ error: "PIN must be 4-8 digits or TENANTCODE-PIN format" }),
+        { status: 400, headers }
+      );
+    }
 
     const { data: pinRow, error: pinErr } = await supabase
       .from("staff_pins")
@@ -151,12 +207,13 @@ resource_type: 'auth_event',
         actor_ip_address: clientIp,
         actor_user_agent: req.headers.get('user-agent'),
         operation: 'VERIFY_ADMIN_PIN',
-resource_type: 'auth_event',
+        resource_type: 'auth_event',
         success: true,
         metadata: {
           role,
           session_expires: expires.toISOString(),
-          ttl_minutes: ADMIN_SESSION_TTL_MIN
+          ttl_minutes: ADMIN_SESSION_TTL_MIN,
+          used_tenant_code_format: match ? true : false
         }
       });
     } catch (logError) {

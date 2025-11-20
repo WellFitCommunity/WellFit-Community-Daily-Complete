@@ -62,8 +62,8 @@ export const EnvisionLoginPage: React.FC = () => {
       if (authError) {
         // Audit failed login attempt
         await auditLogger.error('ENVISION_LOGIN_FAILED', authError, {
-          category: 'AUTHENTICATION',
-          metadata: { email: email.trim(), reason: 'Invalid credentials' }
+          email: email.trim(),
+          reason: 'Invalid credentials'
         });
 
         setError('Invalid email or PIN');
@@ -91,8 +91,8 @@ export const EnvisionLoginPage: React.FC = () => {
         await supabase.auth.signOut();
 
         await auditLogger.error('ENVISION_UNAUTHORIZED_ACCESS_ATTEMPT', new Error('Not a super admin'), {
-          category: 'SECURITY_EVENT',
-          metadata: { email: email.trim(), userId }
+          email: email.trim(),
+          userId
         });
 
         setError('Unauthorized: Super admin access required');
@@ -102,12 +102,9 @@ export const EnvisionLoginPage: React.FC = () => {
 
       // Step 3: Audit successful login
       await auditLogger.info('ENVISION_LOGIN_SUCCESS', {
-        category: 'AUTHENTICATION',
-        metadata: {
-          superAdminId: superAdmin.id,
-          role: superAdmin.role,
-          permissions: superAdmin.permissions
-        }
+        superAdminId: superAdmin.id,
+        role: superAdmin.role,
+        permissions: superAdmin.permissions
       });
 
       // Step 4: Update last_login_at
@@ -121,7 +118,7 @@ export const EnvisionLoginPage: React.FC = () => {
 
     } catch (err: any) {
       await auditLogger.error('ENVISION_LOGIN_ERROR', err, {
-        category: 'AUTHENTICATION'
+        email: email.trim()
       });
       setError('Login failed. Please try again.');
     } finally {
