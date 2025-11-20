@@ -9,6 +9,14 @@
  */
 
 // Export types
+// Default export for backwards compatibility
+import * as MedicationCrud from './MedicationCrud';
+import * as MedicationExtraction from './MedicationExtraction';
+import * as MedicationReminders from './MedicationReminders';
+import * as MedicationAdherence from './MedicationAdherence';
+import * as PillIdentification from './PillIdentification';
+import * as PsychMedManagement from './PsychMedManagement';
+
 export type { ApiResponse, Medication, MedicationReminder, MedicationDoseTaken } from './types';
 
 // CRUD Operations
@@ -58,14 +66,6 @@ export {
   getPsychMedAlerts,
   acknowledgePsychMedAlert
 } from './PsychMedManagement';
-
-// Default export for backwards compatibility
-import * as MedicationCrud from './MedicationCrud';
-import * as MedicationExtraction from './MedicationExtraction';
-import * as MedicationReminders from './MedicationReminders';
-import * as MedicationAdherence from './MedicationAdherence';
-import * as PillIdentification from './PillIdentification';
-import * as PsychMedManagement from './PsychMedManagement';
 
 const MedicationsAPI = {
   // CRUD

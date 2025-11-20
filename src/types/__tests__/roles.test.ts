@@ -50,9 +50,9 @@ describe('Role Type System', () => {
 
     it('should have bidirectional mapping consistency', () => {
       Object.entries(ROLE_TO_CODE).forEach(([role, code]) => {
-        if (role !== 'doctor') { // Skip synonym
-          expect(CODE_TO_ROLE[code]).toBe(role);
-        }
+        // Skip synonym 'doctor' - it maps to the same code as 'physician'
+        if (role === 'doctor') return;
+        expect(CODE_TO_ROLE[code]).toBe(role);
       });
     });
   });
@@ -247,13 +247,11 @@ describe('Role Type System', () => {
     });
 
     it('should have display names for all departments', () => {
-      const departments: Department[] = ['nursing', 'medical', 'therapy', 'administration'];
+      const departments = ['nursing', 'medical', 'therapy', 'administration'] as const;
 
       departments.forEach((dept) => {
-        if (dept !== null) {
-          expect(DEPARTMENT_DISPLAY_NAMES[dept]).toBeDefined();
-          expect(typeof DEPARTMENT_DISPLAY_NAMES[dept]).toBe('string');
-        }
+        expect(DEPARTMENT_DISPLAY_NAMES[dept]).toBeDefined();
+        expect(typeof DEPARTMENT_DISPLAY_NAMES[dept]).toBe('string');
       });
     });
   });

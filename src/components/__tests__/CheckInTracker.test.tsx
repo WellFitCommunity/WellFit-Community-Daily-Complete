@@ -189,31 +189,25 @@ describe('CheckInTracker - Senior Facing Component', () => {
     it('should accept heart rate input', () => {
       render(<CheckInTracker />);
 
-      const heartRateInput = screen.queryByLabelText(/heart rate/i) as HTMLInputElement;
-      if (heartRateInput) {
-        fireEvent.change(heartRateInput, { target: { value: '72' } });
-        expect(heartRateInput.value).toBe('72');
-      }
+      const heartRateInput = screen.getByLabelText(/heart rate/i) as HTMLInputElement;
+      fireEvent.change(heartRateInput, { target: { value: '72' } });
+      expect(heartRateInput.value).toBe('72');
     });
 
     it('should accept blood pressure input', () => {
       render(<CheckInTracker />);
 
-      const bpSystolicInput = screen.queryByLabelText(/systolic|blood pressure/i) as HTMLInputElement;
-      if (bpSystolicInput) {
-        fireEvent.change(bpSystolicInput, { target: { value: '120' } });
-        expect(bpSystolicInput.value).toBe('120');
-      }
+      const bpSystolicInput = screen.getByLabelText(/systolic|blood pressure/i) as HTMLInputElement;
+      fireEvent.change(bpSystolicInput, { target: { value: '120' } });
+      expect(bpSystolicInput.value).toBe('120');
     });
 
     it('should accept pulse oximeter input', () => {
       render(<CheckInTracker />);
 
-      const spo2Input = screen.queryByLabelText(/oxygen|pulse ox|SpO2/i) as HTMLInputElement;
-      if (spo2Input) {
-        fireEvent.change(spo2Input, { target: { value: '98' } });
-        expect(spo2Input.value).toBe('98');
-      }
+      const spo2Input = screen.getByLabelText(/oxygen|pulse ox|SpO2/i) as HTMLInputElement;
+      fireEvent.change(spo2Input, { target: { value: '98' } });
+      expect(spo2Input.value).toBe('98');
     });
 
     it('should validate vitals are within safe ranges', async () => {
@@ -304,9 +298,9 @@ describe('CheckInTracker - Senior Facing Component', () => {
 
       await waitFor(() => {
         const rpcCall = mockSupabase.rpc.mock.calls[0];
-        if (rpcCall && rpcCall[1]) {
-          expect(rpcCall[1]).toHaveProperty('p_user_id', mockUser.id);
-        }
+        expect(rpcCall).toBeDefined();
+        expect(rpcCall[1]).toBeDefined();
+        expect(rpcCall[1]).toHaveProperty('p_user_id', mockUser.id);
       });
     });
   });

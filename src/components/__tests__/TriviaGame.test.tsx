@@ -150,13 +150,12 @@ describe('TriviaGame - Senior Facing Component', () => {
         !btn.textContent.includes('Next Question')
       );
 
-      if (answerButtons.length > 0) {
-        fireEvent.click(answerButtons[0]);
+      expect(answerButtons.length).toBeGreaterThan(0);
+      fireEvent.click(answerButtons[0]);
 
-        await waitFor(() => {
-          expect(screen.getByText(/Next Question|Game Complete/i)).toBeInTheDocument();
-        });
-      }
+      await waitFor(() => {
+        expect(screen.getByText(/Next Question|Game Complete/i)).toBeInTheDocument();
+      });
     });
 
     it('should show feedback when answer is selected', async () => {
@@ -173,16 +172,13 @@ describe('TriviaGame - Senior Facing Component', () => {
         !btn.textContent.includes('Play Again')
       );
 
-      if (answerButtons.length > 0) {
-        fireEvent.click(answerButtons[0]);
+      expect(answerButtons.length).toBeGreaterThan(0);
+      fireEvent.click(answerButtons[0]);
 
-        await waitFor(() => {
-          const hasFeedback =
-            screen.queryByText(/Correct|Wonderful|Great job|Not quite/i) !== null ||
-            screen.queryByText(/The correct answer/i) !== null;
-          expect(hasFeedback).toBe(true);
-        });
-      }
+      await waitFor(() => {
+        const feedbackElement = screen.getByText(/Correct|Wonderful|Great job|Not quite|The correct answer/i);
+        expect(feedbackElement).toBeInTheDocument();
+      });
     });
 
     it('should track score when correct answer is selected', async () => {

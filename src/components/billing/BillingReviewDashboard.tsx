@@ -6,9 +6,6 @@ import {
   XCircle,
   AlertTriangle,
   Clock,
-  Send,
-  Eye,
-  Edit,
   DollarSign,
   FileText,
   TrendingUp

@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Settings,
   Database,
   CheckCircle,
   XCircle,
   RefreshCw,
   Plus,
-  Trash2,
-  Edit,
   Play,
   Pause,
   Activity,

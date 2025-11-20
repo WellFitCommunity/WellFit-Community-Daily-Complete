@@ -173,10 +173,7 @@ describe('CommunityMoments - Senior Facing Component', () => {
       render(<CommunityMoments />);
 
       await waitFor(() => {
-        const affirmation = screen.queryByText(/You are doing great|doing great/i);
-        if (affirmation) {
-          expect(affirmation).toBeInTheDocument();
-        }
+        expect(screen.getByText(/You are doing great|doing great/i)).toBeInTheDocument();
       });
     });
 
@@ -203,11 +200,9 @@ describe('CommunityMoments - Senior Facing Component', () => {
       render(<CommunityMoments />);
 
       await waitFor(() => {
-        const titleInput = screen.queryByLabelText(/title/i) as HTMLInputElement;
-        if (titleInput) {
-          fireEvent.change(titleInput, { target: { value: 'My Birthday Party' } });
-          expect(titleInput.value).toBe('My Birthday Party');
-        }
+        const titleInput = screen.getByLabelText(/title/i) as HTMLInputElement;
+        fireEvent.change(titleInput, { target: { value: 'My Birthday Party' } });
+        expect(titleInput.value).toBe('My Birthday Party');
       });
     });
 
@@ -215,11 +210,9 @@ describe('CommunityMoments - Senior Facing Component', () => {
       render(<CommunityMoments />);
 
       await waitFor(() => {
-        const descInput = screen.queryByLabelText(/description|what.*happening/i) as HTMLTextAreaElement;
-        if (descInput) {
-          fireEvent.change(descInput, { target: { value: 'Great time with family' } });
-          expect(descInput.value).toBe('Great time with family');
-        }
+        const descInput = screen.getByLabelText(/description|what.*happening/i) as HTMLTextAreaElement;
+        fireEvent.change(descInput, { target: { value: 'Great time with family' } });
+        expect(descInput.value).toBe('Great time with family');
       });
     });
 
@@ -286,10 +279,7 @@ describe('CommunityMoments - Senior Facing Component', () => {
       });
 
       await waitFor(() => {
-        const errorMsg = screen.queryByText(/too large|file size|20.*MB/i);
-        if (errorMsg) {
-          expect(errorMsg).toBeInTheDocument();
-        }
+        expect(screen.getByText(/too large|file size|20.*MB/i)).toBeInTheDocument();
       });
     });
 
@@ -404,10 +394,7 @@ describe('CommunityMoments - Senior Facing Component', () => {
       render(<CommunityMoments />);
 
       await waitFor(() => {
-        const authorName = screen.queryByText(/John Doe|John/i);
-        if (authorName) {
-          expect(authorName).toBeInTheDocument();
-        }
+        expect(screen.getByText(/John Doe|John/i)).toBeInTheDocument();
       });
     });
 
@@ -458,10 +445,7 @@ describe('CommunityMoments - Senior Facing Component', () => {
       });
 
       await waitFor(() => {
-        const errorMsg = screen.queryByText(/error|failed|try again/i);
-        if (errorMsg) {
-          expect(errorMsg).toBeInTheDocument();
-        }
+        expect(screen.getByText(/error|failed|try again/i)).toBeInTheDocument();
       });
     });
 
@@ -487,10 +471,7 @@ describe('CommunityMoments - Senior Facing Component', () => {
       render(<CommunityMoments />);
 
       await waitFor(() => {
-        const titleInput = screen.queryByLabelText(/title/i);
-        if (titleInput) {
-          expect(titleInput).toBeInTheDocument();
-        }
+        expect(screen.getByLabelText(/title/i)).toBeInTheDocument();
       });
     });
 
@@ -520,11 +501,9 @@ describe('CommunityMoments - Senior Facing Component', () => {
       render(<CommunityMoments />);
 
       await waitFor(() => {
-        const tagsInput = screen.queryByLabelText(/tags/i) as HTMLInputElement;
-        if (tagsInput) {
-          fireEvent.change(tagsInput, { target: { value: 'tag1, tag2, tag3' } });
-          expect(tagsInput.value).toBe('tag1, tag2, tag3');
-        }
+        const tagsInput = screen.getByLabelText(/tags/i) as HTMLInputElement;
+        fireEvent.change(tagsInput, { target: { value: 'tag1, tag2, tag3' } });
+        expect(tagsInput.value).toBe('tag1, tag2, tag3');
       });
     });
 
@@ -546,10 +525,9 @@ describe('CommunityMoments - Senior Facing Component', () => {
       render(<CommunityMoments />);
 
       await waitFor(() => {
-        const greeting = screen.queryByText(/John|Hello|Welcome/i);
-        if (greeting && greeting.textContent?.includes('John')) {
-          expect(greeting).toBeInTheDocument();
-        }
+        const greeting = screen.getByText(/John|Hello|Welcome/i);
+        expect(greeting).toBeInTheDocument();
+        expect(greeting.textContent).toContain('John');
       });
     });
   });
