@@ -20,7 +20,7 @@ jobs:
     name: TypeScript Type Check
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    continue-on-error: true  # Don't block pipeline on type errors
+    # TypeScript errors MUST fail the build to maintain code quality
 
     steps:
       - name: Checkout code
@@ -37,7 +37,6 @@ jobs:
       - name: Run TypeScript type check
         id: typecheck
         run: npm run typecheck
-        continue-on-error: true
 
       - name: Report to summary
         if: always()
@@ -56,7 +55,7 @@ jobs:
     name: ESLint Code Quality
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    continue-on-error: true  # Don't block pipeline on lint errors
+    # ESLint errors MUST fail the build to maintain code quality and security
 
     steps:
       - name: Checkout code
@@ -73,7 +72,6 @@ jobs:
       - name: Run ESLint
         id: eslint
         run: npm run lint
-        continue-on-error: true
 
       - name: Report to summary
         if: always()

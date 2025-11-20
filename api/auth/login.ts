@@ -2,12 +2,17 @@ export const config = { runtime: 'edge' };
 
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../_lib/env';
 import { setCookie } from '../_lib/cookies';
+import { rateLimitEdge, RateLimitPresetsEdge } from '../_lib/rate-limiter-edge';
 
 const REFRESH_COOKIE = 'wf_rt';
 const REFRESH_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
 
 export default async function handler(req: Request): Promise<Response> {
   if (req.method !== 'POST') return new Response('Method Not Allowed', { status: 405 });
+
+  // Rate limiting: Prevent brute force authentication attacks
+  const limitResponse = await rateLimitEdge(req, RateLimitPresetsEdge.auth);
+  if (limitResponse) return limitResponse;
 
   const { phone, email, password } = await req.json().catch(() => ({}));
   if (!password || (!phone && !email)) {

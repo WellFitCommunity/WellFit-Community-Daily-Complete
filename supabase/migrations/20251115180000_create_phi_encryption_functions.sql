@@ -25,12 +25,17 @@ BEGIN
   END IF;
 
   -- Get encryption key from parameter or Supabase Vault secret
-  -- In production, this will use: SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'phi_encryption_key'
+  -- CRITICAL: No fallback key. If vault is not configured, fail gracefully per HIPAA requirements
   key_to_use := COALESCE(
     encryption_key,
-    current_setting('app.phi_encryption_key', true),
-    'PHI-ENCRYPT-2025-WELLFIT-SECURE-KEY-V1' -- Fallback for development
+    current_setting('app.phi_encryption_key', true)
   );
+
+  -- Fail gracefully if no encryption key is available
+  IF key_to_use IS NULL OR key_to_use = '' THEN
+    RAISE EXCEPTION 'PHI encryption key not configured. Configure app.phi_encryption_key in Supabase Vault.'
+      USING HINT = 'Set vault secret: INSERT INTO vault.secrets (name, secret) VALUES (''phi_encryption_key'', ''<your-key>'')';
+  END IF;
 
   -- Encrypt using AES-256
   encrypted_result := encrypt(
@@ -72,9 +77,14 @@ BEGIN
   -- Get encryption key from parameter or Supabase Vault secret
   key_to_use := COALESCE(
     encryption_key,
-    current_setting('app.phi_encryption_key', true),
-    'PHI-ENCRYPT-2025-WELLFIT-SECURE-KEY-V1' -- Fallback for development
+    current_setting('app.phi_encryption_key', true)
   );
+
+  -- Fail gracefully if no encryption key is available
+  IF key_to_use IS NULL OR key_to_use = '' THEN
+    RAISE EXCEPTION 'PHI decryption key not configured. Configure app.phi_encryption_key in Supabase Vault.'
+      USING HINT = 'Set vault secret: INSERT INTO vault.secrets (name, secret) VALUES (''phi_encryption_key'', ''<your-key>'')';
+  END IF;
 
   -- Decrypt from base64
   decrypted_result := decrypt(

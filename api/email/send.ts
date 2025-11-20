@@ -3,6 +3,8 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { sendEmail } from "../_lib/mailersend";
 import { getServerSession } from "../_lib/supabase-auth";
 import { INTERNAL_API_KEY } from "../_lib/env";
+import { rateLimit, RateLimitPresets } from "../_lib/rate-limiter";
+import { csrfProtection } from "../_lib/csrf";
 
 function validateInternalApiKey(req: VercelRequest): boolean {
   // Check X-Internal-API-Key header
@@ -24,6 +26,10 @@ function validateInternalApiKey(req: VercelRequest): boolean {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Rate limiting: Prevent email abuse
+  const limited = await rateLimit(req, res, RateLimitPresets.messaging);
+  if (limited) return;
+
   try {
     // Option 1: Require valid session (user must be logged in)
     // Convert VercelRequest to standard Request
@@ -40,6 +46,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         error: "Authentication required",
         message: "Provide valid user session or X-Internal-API-Key header"
       });
+    }
+
+    // CSRF protection for user sessions (internal API key bypass doesn't need CSRF)
+    if (session && !hasValidApiKey) {
+      const csrfValid = await csrfProtection(req, res);
+      if (!csrfValid) return;
     }
 
     const { to, subject, text, html } = req.body || {};
