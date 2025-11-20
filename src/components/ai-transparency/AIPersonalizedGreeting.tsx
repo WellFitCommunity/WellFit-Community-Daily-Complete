@@ -16,7 +16,7 @@ interface GreetingData {
   time_of_day: string;
 }
 
-export const PersonalizedGreeting: React.FC = () => {
+export const AIPersonalizedGreeting: React.FC = () => {
   const { user } = useAuth();
   const [greetingData, setGreetingData] = useState<GreetingData | null>(null);
   const [loading, setLoading] = useState(true);

@@ -218,7 +218,7 @@ const INSPIRATIONAL_QUOTES = [
   }
 ];
 
-export const PersonalizedGreeting: React.FC<PersonalizedGreetingProps> = ({
+export const StaticPersonalizedGreeting: React.FC<PersonalizedGreetingProps> = ({
   userName,
   userRole,
   hideForSeniors = false,
@@ -319,4 +319,4 @@ export const PersonalizedGreeting: React.FC<PersonalizedGreetingProps> = ({
   );
 };
 
-export default PersonalizedGreeting;
+export default StaticPersonalizedGreeting;

@@ -5,6 +5,8 @@
 
 export { ConfidenceScoreBadge } from './ConfidenceScoreBadge';
 export { VoiceProfileMaturity } from './VoiceProfileMaturity';
-export { PersonalizedGreeting } from './PersonalizedGreeting';
+export { AIPersonalizedGreeting } from './AIPersonalizedGreeting';
+// Backward compatibility alias (deprecated - use AIPersonalizedGreeting)
+export { AIPersonalizedGreeting as PersonalizedGreeting } from './AIPersonalizedGreeting';
 export { LearningMilestone } from './LearningMilestone';
 export { DashboardPersonalizationIndicator } from './DashboardPersonalizationIndicator';

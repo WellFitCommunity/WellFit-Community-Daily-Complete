@@ -1,5 +1,5 @@
 /**
- * Wearable Dashboard - Patient/Senior View
+ * Patient Wearable Dashboard - Patient/Senior View
  *
  * Features:
  * - Device connection management
@@ -23,7 +23,7 @@ import type {
   WearableDeviceType,
 } from '../../types/neuroSuite';
 
-export const WearableDashboard: React.FC = () => {
+export const PatientWearableDashboard: React.FC = () => {
   const { user } = useAuth();
   const [connectedDevices, setConnectedDevices] = useState<WearableConnection[]>([]);
   const [vitals, setVitals] = useState<WearableVitalSign[]>([]);
@@ -431,4 +431,4 @@ export const WearableDashboard: React.FC = () => {
   );
 };
 
-export default WearableDashboard;
+export default PatientWearableDashboard;

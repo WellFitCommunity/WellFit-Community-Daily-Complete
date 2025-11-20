@@ -1,5 +1,6 @@
 /**
- * Wearable Dashboard
+ * Neuro Wearable Monitor
+ * Neurology-focused wearable monitoring for healthcare providers
  * Senior citizen fall detection & health monitoring
  * Universal support: Apple Watch, Fitbit, Samsung, Garmin, all wearables
  */
@@ -15,11 +16,11 @@ import type {
   WearableDeviceType,
 } from '../../types/neuroSuite';
 
-interface WearableDashboardProps {
+interface NeuroWearableMonitorProps {
   userId: string;
 }
 
-const WearableDashboard: React.FC<WearableDashboardProps> = ({ userId }) => {
+const NeuroWearableMonitor: React.FC<NeuroWearableMonitorProps> = ({ userId }) => {
   const [connectedDevices, setConnectedDevices] = useState<WearableConnection[]>([]);
   const [fallHistory, setFallHistory] = useState<WearableFallDetection[]>([]);
   const [recentVitals, setRecentVitals] = useState<WearableVitalSign[]>([]);
@@ -307,4 +308,4 @@ const WearableDashboard: React.FC<WearableDashboardProps> = ({ userId }) => {
   );
 };
 
-export default WearableDashboard;
+export default NeuroWearableMonitor;
