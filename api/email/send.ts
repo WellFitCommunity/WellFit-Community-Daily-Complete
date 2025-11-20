@@ -4,7 +4,6 @@ import { sendEmail } from "../_lib/mailersend";
 import { getServerSession } from "../_lib/supabase-auth";
 import { INTERNAL_API_KEY } from "../_lib/env";
 import { rateLimit, RateLimitPresets } from "../_lib/rate-limiter";
-import { csrfProtection } from "../_lib/csrf";
 
 function validateInternalApiKey(req: VercelRequest): boolean {
   // Check X-Internal-API-Key header
@@ -48,11 +47,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // CSRF protection for user sessions (internal API key bypass doesn't need CSRF)
-    if (session && !hasValidApiKey) {
-      const csrfValid = await csrfProtection(req, res);
-      if (!csrfValid) return;
-    }
+    // TODO: Add CSRF protection when frontend is ready to send tokens
+    // if (session && !hasValidApiKey) {
+    //   const csrfValid = await csrfProtection(req, res);
+    //   if (!csrfValid) return;
+    // }
 
     const { to, subject, text, html } = req.body || {};
     if (!to || !subject) return res.status(400).json({ error: "to[] and subject required" });
