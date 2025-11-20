@@ -44,7 +44,6 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.1",
     "@tailwindcss/forms": "^0.5.7",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.8.0",
@@ -57,11 +56,11 @@
     "@types/react": "18.3.3",
     "@types/react-dom": "18.3.0",
     "@types/react-toastify": "^4.0.2",
-    "@typescript-eslint/eslint-plugin": "^8.18.1",
-    "@typescript-eslint/parser": "^8.18.1",
+    "@typescript-eslint/eslint-plugin": "^5.62.0",
+    "@typescript-eslint/parser": "^5.62.0",
     "@vercel/node": "^2.3.0",
     "autoprefixer": "^10.4.21",
-    "eslint": "^9.39.1",
+    "eslint": "^8.57.1",
     "eslint-config-react-app": "^7.0.1",
     "eslint-plugin-flowtype": "^8.0.3",
     "eslint-plugin-import": "^2.31.0",
@@ -70,7 +69,6 @@
     "eslint-plugin-react-hooks": "^4.6.2",
     "eslint-plugin-security": "^3.0.1",
     "file-saver": "^2.0.5",
-    "globals": "^15.14.0",
     "jest-environment-jsdom": "^30.2.0",
     "postcss": "^8.4.31",
     "react-scripts": "^5.0.1",
@@ -90,8 +88,7 @@
     "esbuild": "^0.25.10",
     "webpack-dev-server": "^5.2.2",
     "postcss": "^8.4.31",
-    "resolve-url-loader": "^5.0.0",
-    "eslint": "^9.39.1"
+    "resolve-url-loader": "^5.0.0"
   },
   "scripts": {
     "start": "DISABLE_ESLINT_PLUGIN=true react-scripts start",
@@ -114,7 +111,7 @@
     "eject": "react-scripts eject",
     "serve:register": "npx supabase functions serve --env-file ./supabase/.env.local --no-verify-jwt",
     "deploy:register": "npx supabase functions deploy register",
-    "lint": "eslint .",
+    "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\"",
     "lint:fix": "eslint . --fix",
     "lint:security": "eslint --config .eslintrc.security.js --ext .js,.ts,.tsx src/ supabase/",
     "security:check": "./scripts/security-check.sh",
