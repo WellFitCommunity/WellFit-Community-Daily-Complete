@@ -13,7 +13,7 @@ DB_HOST="aws-0-us-west-1.pooler.supabase.com"
 DB_PORT="6543"
 DB_USER="postgres.xkybsjnvuohpqpbkikyn"
 DB_NAME="postgres"
-export PGPASSWORD="MyDaddyLovesMeToo1"
+export PGPASSWORD="$DATABASE_PASSWORD"
 
 # Colors for output
 GREEN='\033[0;32m'

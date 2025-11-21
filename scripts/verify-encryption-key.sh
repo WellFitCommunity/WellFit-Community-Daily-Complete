@@ -14,7 +14,7 @@ echo "================================="
 echo ""
 echo "Checking database encryption key (app.encryption_key)..."
 
-RESULT=$(PGPASSWORD="MyDaddyLovesMeToo1" psql -h aws-0-us-west-1.pooler.supabase.com -p 6543 -U postgres.xkybsjnvuohpqpbkikyn -d postgres -t -c "SELECT current_setting('app.encryption_key', TRUE);" 2>&1)
+RESULT=$(PGPASSWORD="$DATABASE_PASSWORD" psql -h aws-0-us-west-1.pooler.supabase.com -p 6543 -U postgres.xkybsjnvuohpqpbkikyn -d postgres -t -c "SELECT current_setting('app.encryption_key', TRUE);" 2>&1)
 
 if [ -z "$RESULT" ] || [ "$RESULT" == " " ]; then
   echo "❌ FAIL: app.encryption_key is NOT set in Supabase database"
@@ -51,7 +51,7 @@ fi
 echo ""
 echo "Testing encryption functions..."
 
-TEST_RESULT=$(PGPASSWORD="MyDaddyLovesMeToo1" psql -h aws-0-us-west-1.pooler.supabase.com -p 6543 -U postgres.xkybsjnvuohpqpbkikyn -d postgres -t -c "SELECT public.encrypt_data('test123');" 2>&1)
+TEST_RESULT=$(PGPASSWORD="$DATABASE_PASSWORD" psql -h aws-0-us-west-1.pooler.supabase.com -p 6543 -U postgres.xkybsjnvuohpqpbkikyn -d postgres -t -c "SELECT public.encrypt_data('test123');" 2>&1)
 
 if [ $? -eq 0 ]; then
   echo "✅ PASS: Encryption function works"

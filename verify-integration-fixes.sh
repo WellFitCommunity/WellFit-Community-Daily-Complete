@@ -15,7 +15,7 @@ DB_HOST="aws-0-us-west-1.pooler.supabase.com"
 DB_PORT="6543"
 DB_USER="postgres.xkybsjnvuohpqpbkikyn"
 DB_NAME="postgres"
-export PGPASSWORD="MyDaddyLovesMeToo1"
+export PGPASSWORD="$DATABASE_PASSWORD"
 
 echo "1️⃣  Verifying Database Connectivity..."
 echo "   Checking connection to: $DB_HOST"

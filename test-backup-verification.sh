@@ -71,7 +71,7 @@ echo "🔎 Checking database logs..."
 echo ""
 
 # Query the backup_verification_logs table
-PGPASSWORD="MyDaddyLovesMeToo1" psql -h aws-0-us-west-1.pooler.supabase.com -p 6543 -U postgres.xkybsjnvuohpqpbkikyn -d postgres -c "
+PGPASSWORD="$DATABASE_PASSWORD" psql -h aws-0-us-west-1.pooler.supabase.com -p 6543 -U postgres.xkybsjnvuohpqpbkikyn -d postgres -c "
 SELECT
   id,
   verification_status,

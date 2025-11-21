@@ -15,7 +15,7 @@ DB_HOST="aws-0-us-west-1.pooler.supabase.com"
 DB_PORT="6543"
 DB_USER="postgres.xkybsjnvuohpqpbkikyn"
 DB_NAME="postgres"
-DB_PASSWORD="MyDaddyLovesMeToo1"
+DB_PASSWORD="$DATABASE_PASSWORD"
 
 # Supabase project details
 SUPABASE_URL="https://xkybsjnvuohpqpbkikyn.supabase.co"

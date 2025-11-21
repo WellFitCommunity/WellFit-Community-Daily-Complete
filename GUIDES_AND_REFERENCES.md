@@ -88,7 +88,7 @@ npx supabase migration new migration_name
 # Edit the .sql file in supabase/migrations/
 
 # Apply to remote database
-PGPASSWORD="MyDaddyLovesMeToo1" psql \
+PGPASSWORD="$DATABASE_PASSWORD" psql \
   -h aws-0-us-west-1.pooler.supabase.com \
   -p 6543 \
   -U postgres.xkybsjnvuohpqpbkikyn \
@@ -297,7 +297,7 @@ ORDER BY tablename, policyname;
 
 **Manual backup:**
 ```bash
-PGPASSWORD="MyDaddyLovesMeToo1" pg_dump \
+PGPASSWORD="$DATABASE_PASSWORD" pg_dump \
   -h aws-0-us-west-1.pooler.supabase.com \
   -p 6543 \
   -U postgres.xkybsjnvuohpqpbkikyn \
@@ -310,7 +310,7 @@ PGPASSWORD="MyDaddyLovesMeToo1" pg_dump \
 
 **Restore from backup:**
 ```bash
-PGPASSWORD="MyDaddyLovesMeToo1" pg_restore \
+PGPASSWORD="$DATABASE_PASSWORD" pg_restore \
   -h aws-0-us-west-1.pooler.supabase.com \
   -p 6543 \
   -U postgres.xkybsjnvuohpqpbkikyn \
@@ -555,7 +555,7 @@ netlify deploy --prod --dir=build
 cat .env | grep SUPABASE
 
 # 4. Test connection
-PGPASSWORD="MyDaddyLovesMeToo1" psql \
+PGPASSWORD="$DATABASE_PASSWORD" psql \
   -h aws-0-us-west-1.pooler.supabase.com \
   -p 6543 \
   -U postgres.xkybsjnvuohpqpbkikyn \
