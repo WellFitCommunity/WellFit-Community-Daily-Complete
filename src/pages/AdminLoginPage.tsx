@@ -210,8 +210,9 @@ export default function AdminLoginPage() {
       case 'physician':
       case 'doctor':
         return '/physician-dashboard';
-      case 'admin':
       case 'super_admin':
+        return '/super-admin'; // Master Panel for super admins
+      case 'admin':
       case 'department_head':
         return '/admin';
       default:
