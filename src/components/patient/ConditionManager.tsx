@@ -4,8 +4,17 @@
  * FHIR R4 / US Core compliant
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { ConditionService } from '../../services/fhirResourceService';
+import React, { useState, useMemo, useEffect } from 'react';
+import {
+  useConditions,
+  useActiveConditions,
+  useChronicConditions,
+  useProblemList,
+  useConditionsByEncounter,
+  useCreateCondition,
+  useUpdateCondition,
+  useResolveCondition,
+} from '../../hooks/useFhirData';
 import type { Condition, CreateCondition } from '../../types/fhir';
 
 // Category options based on FHIR ValueSet
@@ -47,9 +56,6 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
   encounterId,
   onConditionUpdate,
 }) => {
-  const [conditions, setConditions] = useState<Condition[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'active' | 'chronic' | 'problem-list'>('all');
@@ -65,77 +71,69 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
     recorded_date: new Date().toISOString().split('T')[0],
   });
 
-  useEffect(() => {
-    loadConditions();
-  }, [patientId, filter, encounterId]);
+  // React Query hooks for different filter types (automatically cached)
+  const allConditionsQuery = useConditions(patientId);
+  const activeConditionsQuery = useActiveConditions(patientId);
+  const chronicConditionsQuery = useChronicConditions(patientId);
+  const problemListQuery = useProblemList(patientId);
+  const encounterConditionsQuery = useConditionsByEncounter(encounterId || '');
 
-  const loadConditions = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      let result;
-
-      if (showEncounterDiagnoses && encounterId) {
-        result = await ConditionService.getByEncounter(encounterId);
-      } else if (filter === 'active') {
-        result = await ConditionService.getActive(patientId);
-      } else if (filter === 'chronic') {
-        result = await ConditionService.getChronic(patientId);
-      } else if (filter === 'problem-list') {
-        result = await ConditionService.getProblemList(patientId);
-      } else {
-        result = await ConditionService.getByPatient(patientId);
-      }
-
-      if (result.success && result.data) {
-        setConditions(result.data);
-        onConditionUpdate?.(result.data);
-      } else {
-        setError(result.error || 'Failed to load conditions');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
-    } finally {
-      setLoading(false);
+  // Select the appropriate query based on current filter
+  const currentQuery = useMemo(() => {
+    if (showEncounterDiagnoses && encounterId) {
+      return encounterConditionsQuery;
     }
-  };
+    switch (filter) {
+      case 'active':
+        return activeConditionsQuery;
+      case 'chronic':
+        return chronicConditionsQuery;
+      case 'problem-list':
+        return problemListQuery;
+      default:
+        return allConditionsQuery;
+    }
+  }, [filter, showEncounterDiagnoses, encounterId, allConditionsQuery, activeConditionsQuery, chronicConditionsQuery, problemListQuery, encounterConditionsQuery]);
+
+  const conditions = currentQuery.data || [];
+  const loading = currentQuery.isLoading;
+  const error = currentQuery.error?.message || null;
+
+  // Mutations for create, update, resolve
+  const createMutation = useCreateCondition();
+  const updateMutation = useUpdateCondition();
+  const resolveMutation = useResolveCondition();
+
+  // Notify parent component when conditions change
+  useEffect(() => {
+    if (conditions.length > 0) {
+      onConditionUpdate?.(conditions);
+    }
+  }, [conditions, onConditionUpdate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.code || !formData.code_display) {
-      setError('Please enter a condition code and description');
+      alert('Please enter a condition code and description');
       return;
     }
 
     try {
-      setLoading(true);
-      setError(null);
-
       if (editingId) {
         // Update existing condition
-        const result = await ConditionService.update(editingId, formData as Condition);
-        if (result.success) {
-          await loadConditions();
-          resetForm();
-        } else {
-          setError(result.error || 'Failed to update condition');
-        }
+        await updateMutation.mutateAsync({
+          id: editingId,
+          updates: formData as Partial<Condition>,
+        });
+        resetForm();
       } else {
         // Create new condition
-        const result = await ConditionService.create(formData as CreateCondition);
-        if (result.success) {
-          await loadConditions();
-          resetForm();
-        } else {
-          setError(result.error || 'Failed to create condition');
-        }
+        await createMutation.mutateAsync(formData as CreateCondition);
+        resetForm();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
-    } finally {
-      setLoading(false);
+      alert(err instanceof Error ? err.message : 'An unexpected error occurred');
     }
   };
 
@@ -160,17 +158,9 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
     if (!confirm('Mark this condition as resolved?')) return;
 
     try {
-      setLoading(true);
-      const result = await ConditionService.resolve(conditionId);
-      if (result.success) {
-        await loadConditions();
-      } else {
-        setError(result.error || 'Failed to resolve condition');
-      }
+      await resolveMutation.mutateAsync(conditionId);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
-    } finally {
-      setLoading(false);
+      alert(err instanceof Error ? err.message : 'An unexpected error occurred');
     }
   };
 
@@ -284,7 +274,7 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
             <div className="ml-3 flex-1">
               <p className="text-sm text-red-800">{error}</p>
             </div>
-            <button onClick={() => setError(null)} className="text-red-600 hover:text-red-800">
+            <button onClick={() => currentQuery.refetch()} className="text-red-600 hover:text-red-800" title="Retry">
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path
                   fillRule="evenodd"

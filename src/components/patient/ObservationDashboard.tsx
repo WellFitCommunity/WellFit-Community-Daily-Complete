@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import FHIRService from '../../services/fhirResourceService';
+import React, { useState, useMemo } from 'react';
+import { useObservations } from '../../hooks/useFhirData';
 import type { Observation } from '../../types/fhir';
 import ObservationTimeline from './ObservationTimeline';
 import ObservationEntry from './ObservationEntry';
@@ -12,52 +12,29 @@ interface ObservationDashboardProps {
 type TabType = 'all' | 'vitals' | 'labs' | 'social';
 
 const ObservationDashboard: React.FC<ObservationDashboardProps> = ({ userId, readOnly = false }) => {
-  const [observations, setObservations] = useState<Observation[]>([]);
-  const [filteredObservations, setFilteredObservations] = useState<Observation[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Use React Query for data fetching with automatic caching
+  const { data: observations = [], isLoading: loading, error } = useObservations(userId);
+
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedObservation, setSelectedObservation] = useState<Observation | null>(null);
 
-  const loadObservations = useCallback(async () => {
-    setLoading(true);
-    const response = await FHIRService.Observation.getByPatient(userId);
-    if (response.success && response.data) {
-      setObservations(response.data);
-    }
-    setLoading(false);
-  }, [userId]);
-
-  const filterObservations = useCallback(() => {
-    let filtered = observations;
-
+  // Filter observations based on active tab (memoized for performance)
+  const filteredObservations = useMemo(() => {
     switch (activeTab) {
       case 'vitals':
-        filtered = observations.filter(obs => obs.category.includes('vital-signs'));
-        break;
+        return observations.filter(obs => obs.category.includes('vital-signs'));
       case 'labs':
-        filtered = observations.filter(obs => obs.category.includes('laboratory'));
-        break;
+        return observations.filter(obs => obs.category.includes('laboratory'));
       case 'social':
-        filtered = observations.filter(obs => obs.category.includes('social-history'));
-        break;
+        return observations.filter(obs => obs.category.includes('social-history'));
       default:
-        filtered = observations;
+        return observations;
     }
-
-    setFilteredObservations(filtered);
   }, [activeTab, observations]);
 
-  useEffect(() => {
-    loadObservations();
-  }, [loadObservations]);
-
-  useEffect(() => {
-    filterObservations();
-  }, [filterObservations]);
-
   const handleObservationCreated = () => {
-    loadObservations();
+    // React Query will automatically refetch and update the cache
     setShowAddForm(false);
   };
 

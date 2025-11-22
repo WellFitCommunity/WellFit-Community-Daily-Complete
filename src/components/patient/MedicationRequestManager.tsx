@@ -4,8 +4,15 @@
  * FHIR R4 / US Core compliant with allergy checking
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { MedicationRequestService } from '../../services/fhirResourceService';
+import React, { useState, useMemo, useEffect } from 'react';
+import {
+  useMedicationRequests,
+  useActiveMedicationRequests,
+  useMedicationRequestHistory,
+  useCreateMedicationRequest,
+  useUpdateMedicationRequest,
+  useCancelMedicationRequest,
+} from '../../hooks/useFhirData';
 import type { MedicationRequest, CreateMedicationRequest } from '../../types/fhir';
 
 // Intent options
@@ -48,9 +55,6 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
   readOnly = false,
   onMedicationUpdate,
 }) => {
-  const [medications, setMedications] = useState<MedicationRequest[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [allergyWarning, setAllergyWarning] = useState<string | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -66,79 +70,73 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
     authored_on: new Date().toISOString(),
   });
 
-  useEffect(() => {
-    loadMedications();
-  }, [patientId, filter]);
+  // React Query hooks for different filter types (automatically cached)
+  const allMedicationsQuery = useMedicationRequests(patientId);
+  const activeMedicationsQuery = useActiveMedicationRequests(patientId);
+  const historyMedicationsQuery = useMedicationRequestHistory(patientId);
 
-  const loadMedications = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      let result;
-
-      if (filter === 'active') {
-        result = await MedicationRequestService.getActive(patientId);
-      } else if (filter === 'history') {
-        result = await MedicationRequestService.getHistory(patientId);
-      } else {
-        result = await MedicationRequestService.getByPatient(patientId);
-      }
-
-      if (result.success && result.data) {
-        setMedications(result.data);
-        onMedicationUpdate?.(result.data);
-      } else {
-        setError(result.error || 'Failed to load medications');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
-    } finally {
-      setLoading(false);
+  // Select the appropriate query based on current filter
+  const currentQuery = useMemo(() => {
+    switch (filter) {
+      case 'active':
+        return activeMedicationsQuery;
+      case 'history':
+        return historyMedicationsQuery;
+      default:
+        return allMedicationsQuery;
     }
-  };
+  }, [filter, allMedicationsQuery, activeMedicationsQuery, historyMedicationsQuery]);
+
+  const medications = currentQuery.data || [];
+  const loading = currentQuery.isLoading;
+  const error = currentQuery.error?.message || null;
+
+  // Mutations for create, update, cancel
+  const createMutation = useCreateMedicationRequest();
+  const updateMutation = useUpdateMedicationRequest();
+  const cancelMutation = useCancelMedicationRequest();
+
+  // Notify parent component when medications change
+  useEffect(() => {
+    if (medications.length > 0) {
+      onMedicationUpdate?.(medications);
+    }
+  }, [medications, onMedicationUpdate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setAllergyWarning(null);
 
     if (!formData.medication_code || !formData.medication_display) {
-      setError('Please enter medication code and name');
+      alert('Please enter medication code and name');
       return;
     }
 
     try {
-      setLoading(true);
-      setError(null);
-
       if (editingId) {
         // Update existing medication request
-        const result = await MedicationRequestService.update(editingId, formData as MedicationRequest);
-        if (result.success) {
-          await loadMedications();
-          resetForm();
-        } else {
-          setError(result.error || 'Failed to update medication request');
-        }
+        await updateMutation.mutateAsync({
+          id: editingId,
+          updates: formData as Partial<MedicationRequest>,
+        });
+        resetForm();
       } else {
         // Create new medication request (includes allergy check)
-        const result = await MedicationRequestService.create(formData as CreateMedicationRequest);
-        if (result.success) {
-          await loadMedications();
+        try {
+          await createMutation.mutateAsync(formData as CreateMedicationRequest);
           resetForm();
-        } else {
+        } catch (err) {
           // Check if it's an allergy warning
-          if (result.error?.includes('ALLERGY ALERT')) {
-            setAllergyWarning(result.error);
+          const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+          if (errorMessage.includes('ALLERGY ALERT')) {
+            setAllergyWarning(errorMessage);
           } else {
-            setError(result.error || 'Failed to create medication request');
+            throw err;
           }
         }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
-    } finally {
-      setLoading(false);
+      alert(err instanceof Error ? err.message : 'An unexpected error occurred');
     }
   };
 
@@ -170,17 +168,9 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
     if (!reason) return;
 
     try {
-      setLoading(true);
-      const result = await MedicationRequestService.cancel(medicationId, reason);
-      if (result.success) {
-        await loadMedications();
-      } else {
-        setError(result.error || 'Failed to cancel medication');
-      }
+      await cancelMutation.mutateAsync({ id: medicationId, reason });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
-    } finally {
-      setLoading(false);
+      alert(err instanceof Error ? err.message : 'An unexpected error occurred');
     }
   };
 
@@ -287,7 +277,7 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
             <div className="ml-3 flex-1">
               <p className="text-sm text-red-800">{error}</p>
             </div>
-            <button onClick={() => setError(null)} className="text-red-600 hover:text-red-800">
+            <button onClick={() => currentQuery.refetch()} className="text-red-600 hover:text-red-800" title="Retry">
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path
                   fillRule="evenodd"
