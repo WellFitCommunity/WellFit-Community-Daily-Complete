@@ -87,10 +87,40 @@ export const queryKeys = {
   // FHIR queries
   fhir: {
     all: ['fhir'] as const,
+
+    // Generic resource queries
     resources: (type: string) => [...queryKeys.fhir.all, type] as const,
     resource: (type: string, id: string) => [...queryKeys.fhir.resources(type), id] as const,
-    observations: (patientId: string) => [...queryKeys.fhir.all, 'observations', patientId] as const,
-    carePlans: (patientId: string) => [...queryKeys.fhir.all, 'carePlans', patientId] as const,
+
+    // MedicationRequest queries
+    medicationRequests: () => [...queryKeys.fhir.all, 'medicationRequests'] as const,
+
+    // Condition queries (diagnoses)
+    conditions: () => [...queryKeys.fhir.all, 'conditions'] as const,
+
+    // Observation queries (vitals, labs)
+    observations: () => [...queryKeys.fhir.all, 'observations'] as const,
+
+    // AllergyIntolerance queries
+    allergies: () => [...queryKeys.fhir.all, 'allergies'] as const,
+
+    // Procedure queries
+    procedures: () => [...queryKeys.fhir.all, 'procedures'] as const,
+
+    // DiagnosticReport queries
+    diagnosticReports: () => [...queryKeys.fhir.all, 'diagnosticReports'] as const,
+
+    // Encounter queries
+    encounters: () => [...queryKeys.fhir.all, 'encounters'] as const,
+
+    // Immunization queries
+    immunizations: () => [...queryKeys.fhir.all, 'immunizations'] as const,
+
+    // CarePlan queries
+    carePlans: () => [...queryKeys.fhir.all, 'carePlans'] as const,
+
+    // Goal queries
+    goals: () => [...queryKeys.fhir.all, 'goals'] as const,
   },
 
   // Wearable queries

@@ -42,15 +42,14 @@
 #### Files to Modify
 - [x] `package.json` - Add @tanstack/react-query dependency ✅
 - [x] `src/App.tsx` - Wrap with QueryClientProvider ✅
-- [x] `src/lib/queryClient.ts` - NEW: Query configuration ✅
+- [x] `src/lib/queryClient.ts` - NEW: Query configuration ✅  (expanded with FHIR query keys 2025-11-22)
 - [x] `src/hooks/useBillingData.ts` - NEW: Custom hook for billing queries ✅ (2025-11-22)
 - [x] `src/components/admin/BillingDashboard.tsx` - Converted to use React Query ✅ (2025-11-22)
-- [ ] `src/services/fhirResourceService.ts` - Convert to React Query hooks (NEXT)
+- [x] `src/hooks/useFhirData.ts` - NEW: Custom hook for FHIR queries ✅ (2025-11-22)
 - [ ] `src/services/wearableService.ts` - Convert to React Query hooks
 - [ ] `src/services/patientService.ts` - Convert to React Query hooks
 - [ ] `src/components/CommunityMoments.tsx` - Cache image URL fetches
 - [ ] `src/hooks/usePatientData.ts` - NEW: Custom hook for patient queries
-- [ ] `src/hooks/useFhirData.ts` - NEW: Custom hook for FHIR queries
 - [ ] `src/hooks/useWearableData.ts` - NEW: Custom hook for wearable queries
 
 #### Success Metrics
@@ -312,7 +311,17 @@
   - All queries now cached with appropriate TTLs (5min for frequent, 10min for stable, 1hr for static)
   - TypeScript type checking: ✅ PASS
   - ESLint: ✅ PASS
-  - **Next**: Convert fhirResourceService.ts to React Query
+  - **Committed**: feat: implement React Query caching for billing service (commit 90954b8)
+
+### 2025-11-22 Evening
+- ✅ **FHIR Service React Query Migration COMPLETE**
+  - Created `src/hooks/useFhirData.ts` with 35+ query and mutation hooks
+  - Covered core clinical resources: MedicationRequest, Condition, Observation, Procedure, DiagnosticReport
+  - All FHIR queries now cached with appropriate TTLs
+  - Updated `src/lib/queryClient.ts` with comprehensive FHIR query keys
+  - TypeScript type checking: ✅ PASS
+  - ESLint: ✅ PASS
+  - **Next**: Adopt hooks in components using FHIR services, then measure API call reduction
 
 ### [Future Dates]
 <!-- Add implementation progress here -->
