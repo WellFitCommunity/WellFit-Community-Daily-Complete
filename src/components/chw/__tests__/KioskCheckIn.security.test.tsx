@@ -3,7 +3,7 @@
  * Tests authentication, rate limiting, and security event logging
  */
 
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { KioskCheckIn } from '../KioskCheckIn';
 import { chwService } from '../../../services/chwService';
 import { supabase } from '../../../lib/supabaseClient';
@@ -27,7 +27,7 @@ jest.mock('bcryptjs', () => ({
   compare: jest.fn()
 }));
 
-describe.skip('KioskCheckIn - Security Tests - TODO: Fix validation messages', () => {
+describe('KioskCheckIn - Security Tests', () => {
   const mockProps = {
     kioskId: 'test-kiosk-001',
     locationName: 'Test Library',
@@ -584,8 +584,9 @@ describe.skip('KioskCheckIn - Security Tests - TODO: Fix validation messages', (
       fireEvent.click(screen.getByText('English'));
 
       // Fast-forward time by 2 minutes and run all timers
-      jest.advanceTimersByTime(120000);
-      jest.runAllTimers();
+      act(() => {
+        jest.advanceTimersByTime(120000);
+      });
 
       // Should show timeout notification
       expect(screen.getByText(/Session timed out for security/i)).toBeInTheDocument();
@@ -604,11 +605,15 @@ describe.skip('KioskCheckIn - Security Tests - TODO: Fix validation messages', (
         target: { value: '5678' }
       });
 
-      // Timeout
-      jest.advanceTimersByTime(120000);
+      // Timeout - advance past the initial timeout
+      act(() => {
+        jest.advanceTimersByTime(120000);
+      });
 
-      // Wait for reset
-      jest.advanceTimersByTime(5000);
+      // Wait for reset notification display time
+      act(() => {
+        jest.advanceTimersByTime(5000);
+      });
 
       // Should be back to language selection (all data cleared)
       expect(screen.getByText('Select Your Language')).toBeInTheDocument();

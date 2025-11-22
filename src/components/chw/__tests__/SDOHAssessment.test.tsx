@@ -10,7 +10,7 @@ import { chwService } from '../../../services/chwService';
 
 jest.mock('../../../services/chwService');
 
-describe.skip('SDOHAssessment - TODO: Fix question selection', () => {
+describe('SDOHAssessment - Question selection', () => {
   const mockProps = {
     visitId: 'visit-123',
     language: 'en' as const,
@@ -109,24 +109,27 @@ describe.skip('SDOHAssessment - TODO: Fix question selection', () => {
       render(<SDOHAssessment {...mockProps} />);
 
       // Answer food insecurity question
-      const foodYes = screen.getAllByRole('button', { name: /yes/i })[0];
+      const foodYes = screen.getAllByRole('button', { name: /^Yes$/i })[0];
       fireEvent.click(foodYes);
 
-      expect(foodYes.className).toContain('selected');
+      // Query again after state update
+      const updatedFoodYes = screen.getAllByRole('button', { name: /^Yes$/i })[0];
+      expect(updatedFoodYes.className).toContain('selected');
     });
 
     it('should track all responses', () => {
       render(<SDOHAssessment {...mockProps} />);
 
-      // Answer multiple questions
-      const allYesButtons = screen.getAllByRole('button', { name: /yes/i });
+      // Click each yes button one at a time, re-querying before each click to avoid stale references
+      const yesButtonCount = screen.getAllByRole('button', { name: /^Yes$/i }).length;
+      for (let i = 0; i < yesButtonCount; i++) {
+        const yesButtons = screen.getAllByRole('button', { name: /^Yes$/i });
+        fireEvent.click(yesButtons[i]);
+      }
 
-      allYesButtons.forEach(button => {
-        fireEvent.click(button);
-      });
-
-      // All should be tracked
-      allYesButtons.forEach(button => {
+      // Query again after state updates and check all are selected
+      const updatedYesButtons = screen.getAllByRole('button', { name: /^Yes$/i });
+      updatedYesButtons.forEach(button => {
         expect(button.className).toContain('selected');
       });
     });
@@ -134,15 +137,21 @@ describe.skip('SDOHAssessment - TODO: Fix question selection', () => {
     it('should allow changing answers', () => {
       render(<SDOHAssessment {...mockProps} />);
 
-      const yesButton = screen.getAllByRole('button', { name: /yes/i })[0];
-      const noButton = screen.getAllByRole('button', { name: /no/i })[0];
-
-      // Select yes
+      // Select yes on first question
+      let yesButton = screen.getAllByRole('button', { name: /yes/i })[0];
       fireEvent.click(yesButton);
+
+      // Query again after state update
+      yesButton = screen.getAllByRole('button', { name: /yes/i })[0];
       expect(yesButton.className).toContain('selected');
 
-      // Change to no
+      // Change to no (re-query to get fresh reference)
+      let noButton = screen.getAllByRole('button', { name: /no/i })[0];
       fireEvent.click(noButton);
+
+      // Query again after state update to verify change
+      noButton = screen.getAllByRole('button', { name: /no/i })[0];
+      yesButton = screen.getAllByRole('button', { name: /yes/i })[0];
       expect(noButton.className).toContain('selected');
       expect(yesButton.className).not.toContain('selected');
     });
@@ -159,9 +168,12 @@ describe.skip('SDOHAssessment - TODO: Fix question selection', () => {
     it('should enable submit when all questions answered', () => {
       render(<SDOHAssessment {...mockProps} />);
 
-      // Answer all yes/no questions
-      const allNoButtons = screen.getAllByRole('button', { name: /no/i });
-      allNoButtons.forEach(button => fireEvent.click(button));
+      // Answer all yes/no questions (click one at a time to avoid stale references)
+      const noButtonCount = screen.getAllByRole('button', { name: /^No$/i }).length;
+      for (let i = 0; i < noButtonCount; i++) {
+        const allNoButtons = screen.getAllByRole('button', { name: /^No$/i });
+        fireEvent.click(allNoButtons[i]);
+      }
 
       // Answer housing status
       const housingButton = screen.getByRole('button', { name: /I own my home/i });
@@ -180,9 +192,12 @@ describe.skip('SDOHAssessment - TODO: Fix question selection', () => {
 
       render(<SDOHAssessment {...mockProps} />);
 
-      // Answer all yes/no questions
-      const allNoButtons = screen.getAllByRole('button', { name: /no/i });
-      allNoButtons.forEach(button => fireEvent.click(button));
+      // Answer all yes/no questions (click one at a time to avoid stale references)
+      const noButtonCount = screen.getAllByRole('button', { name: /^No$/i }).length;
+      for (let i = 0; i < noButtonCount; i++) {
+        const allNoButtons = screen.getAllByRole('button', { name: /^No$/i });
+        fireEvent.click(allNoButtons[i]);
+      }
 
       // Answer housing status
       fireEvent.click(screen.getByRole('button', { name: /I own my home/i }));
@@ -199,7 +214,7 @@ describe.skip('SDOHAssessment - TODO: Fix question selection', () => {
             assessed_at: expect.any(String),
           })
         );
-      }, { timeout: 2000 });
+      });
     });
 
     it('should call onComplete after successful submission', async () => {
@@ -207,9 +222,12 @@ describe.skip('SDOHAssessment - TODO: Fix question selection', () => {
 
       render(<SDOHAssessment {...mockProps} />);
 
-      // Answer all yes/no questions
-      const allNoButtons = screen.getAllByRole('button', { name: /no/i });
-      allNoButtons.forEach(button => fireEvent.click(button));
+      // Answer all yes/no questions (click one at a time to avoid stale references)
+      const noButtonCount = screen.getAllByRole('button', { name: /^No$/i }).length;
+      for (let i = 0; i < noButtonCount; i++) {
+        const allNoButtons = screen.getAllByRole('button', { name: /^No$/i });
+        fireEvent.click(allNoButtons[i]);
+      }
 
       // Answer housing status
       fireEvent.click(screen.getByRole('button', { name: /I own my home/i }));
@@ -221,7 +239,7 @@ describe.skip('SDOHAssessment - TODO: Fix question selection', () => {
 
       await waitFor(() => {
         expect(mockProps.onComplete).toHaveBeenCalled();
-      }, { timeout: 2000 });
+      });
     });
   });
 
@@ -229,14 +247,15 @@ describe.skip('SDOHAssessment - TODO: Fix question selection', () => {
     it('should show risk indicator when high-risk factors present', () => {
       render(<SDOHAssessment {...mockProps} />);
 
-      // Select high-risk answers
-      const allYesButtons = screen.getAllByRole('button', { name: /yes/i });
-      // Answer yes to food worry, food insecurity, housing worry, transportation, utility
-      allYesButtons.slice(0, 5).forEach(button => fireEvent.click(button));
+      // Answer yes to food worry, food insecurity, housing worry, transportation, utility (5 questions)
+      for (let i = 0; i < 5; i++) {
+        const allYesButtons = screen.getAllByRole('button', { name: /^Yes$/i });
+        fireEvent.click(allYesButtons[i]);
+      }
 
       // Answer safety as no (not feeling safe = high risk)
-      const safetyNo = allYesButtons[5] ? screen.getAllByRole('button', { name: /no/i })[5] : null;
-      if (safetyNo) fireEvent.click(safetyNo);
+      const allNoButtons = screen.getAllByRole('button', { name: /^No$/i });
+      fireEvent.click(allNoButtons[5]); // 6th No button is for safety
 
       // Complete remaining required fields
       fireEvent.click(screen.getByRole('button', { name: /I own my home/i }));
@@ -248,13 +267,17 @@ describe.skip('SDOHAssessment - TODO: Fix question selection', () => {
     it('should calculate and display risk score', () => {
       render(<SDOHAssessment {...mockProps} />);
 
-      // Answer questions to create moderate risk
-      const someYesButtons = screen.getAllByRole('button', { name: /yes/i }).slice(0, 3);
-      someYesButtons.forEach(button => fireEvent.click(button));
+      // Answer first 3 questions as Yes (moderate risk)
+      for (let i = 0; i < 3; i++) {
+        const yesButtons = screen.getAllByRole('button', { name: /^Yes$/i });
+        fireEvent.click(yesButtons[i]);
+      }
 
-      // Complete remaining required answers
-      const remainingNo = screen.getAllByRole('button', { name: /no/i }).slice(3);
-      remainingNo.forEach(button => fireEvent.click(button));
+      // Answer remaining 3 yes/no questions as No
+      for (let i = 3; i < 6; i++) {
+        const noButtons = screen.getAllByRole('button', { name: /^No$/i });
+        fireEvent.click(noButtons[i]);
+      }
 
       fireEvent.click(screen.getByRole('button', { name: /I own my home/i }));
       fireEvent.click(screen.getByRole('button', { name: /^Never$/i }));
@@ -276,9 +299,12 @@ describe.skip('SDOHAssessment - TODO: Fix question selection', () => {
 
       render(<SDOHAssessment {...mockProps} />);
 
-      // Answer all yes/no questions
-      const allNoButtons = screen.getAllByRole('button', { name: /no/i });
-      allNoButtons.forEach(button => fireEvent.click(button));
+      // Answer all yes/no questions (click one at a time to avoid stale references)
+      const noButtonCount = screen.getAllByRole('button', { name: /^No$/i }).length;
+      for (let i = 0; i < noButtonCount; i++) {
+        const allNoButtons = screen.getAllByRole('button', { name: /^No$/i });
+        fireEvent.click(allNoButtons[i]);
+      }
 
       // Answer housing status
       fireEvent.click(screen.getByRole('button', { name: /I own my home/i }));
@@ -299,7 +325,7 @@ describe.skip('SDOHAssessment - TODO: Fix question selection', () => {
             notes: 'Patient mentioned job loss',
           })
         );
-      }, { timeout: 2000 });
+      });
     });
   });
 
@@ -315,10 +341,12 @@ describe.skip('SDOHAssessment - TODO: Fix question selection', () => {
       expect(screen.getByText(/Offline Mode/i)).toBeInTheDocument();
 
       // Should still allow answering questions
-      const yesButton = screen.getAllByRole('button', { name: /yes/i })[0];
+      const yesButton = screen.getAllByRole('button', { name: /^Yes$/i })[0];
       fireEvent.click(yesButton);
 
-      expect(yesButton.className).toContain('selected');
+      // Query again after state update
+      const updatedYesButton = screen.getAllByRole('button', { name: /^Yes$/i })[0];
+      expect(updatedYesButton.className).toContain('selected');
     });
   });
 
@@ -356,9 +384,12 @@ describe.skip('SDOHAssessment - TODO: Fix question selection', () => {
 
       render(<SDOHAssessment {...mockProps} />);
 
-      // Answer all yes/no questions
-      const allNoButtons = screen.getAllByRole('button', { name: /no/i });
-      allNoButtons.forEach(button => fireEvent.click(button));
+      // Answer all yes/no questions (click one at a time to avoid stale references)
+      const noButtonCount = screen.getAllByRole('button', { name: /^No$/i }).length;
+      for (let i = 0; i < noButtonCount; i++) {
+        const allNoButtons = screen.getAllByRole('button', { name: /^No$/i });
+        fireEvent.click(allNoButtons[i]);
+      }
 
       // Answer housing status
       fireEvent.click(screen.getByRole('button', { name: /I own my home/i }));
@@ -375,7 +406,7 @@ describe.skip('SDOHAssessment - TODO: Fix question selection', () => {
             assessed_at: expect.stringMatching(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/),
           })
         );
-      }, { timeout: 2000 });
+      });
     });
   });
 
@@ -405,9 +436,12 @@ describe.skip('SDOHAssessment - TODO: Fix question selection', () => {
 
       render(<SDOHAssessment {...mockProps} />);
 
-      // Answer all yes/no questions
-      const allNoButtons = screen.getAllByRole('button', { name: /no/i });
-      allNoButtons.forEach(button => fireEvent.click(button));
+      // Answer all yes/no questions (click one at a time to avoid stale references)
+      const noButtonCount = screen.getAllByRole('button', { name: /^No$/i }).length;
+      for (let i = 0; i < noButtonCount; i++) {
+        const allNoButtons = screen.getAllByRole('button', { name: /^No$/i });
+        fireEvent.click(allNoButtons[i]);
+      }
 
       // Answer housing status
       fireEvent.click(screen.getByRole('button', { name: /I own my home/i }));
@@ -418,8 +452,8 @@ describe.skip('SDOHAssessment - TODO: Fix question selection', () => {
       fireEvent.click(screen.getByText(/Complete Assessment/i));
 
       await waitFor(() => {
-        expect(screen.getByText(/Failed to save assessment/i)).toBeInTheDocument();
-      }, { timeout: 2000 });
+        expect(screen.getAllByText(/Failed to save assessment/i).length).toBeGreaterThan(0);
+      });
       expect(screen.getByText(/Please try again/i)).toBeInTheDocument();
     });
 
@@ -430,9 +464,12 @@ describe.skip('SDOHAssessment - TODO: Fix question selection', () => {
 
       render(<SDOHAssessment {...mockProps} />);
 
-      // Answer all yes/no questions
-      const allNoButtons = screen.getAllByRole('button', { name: /no/i });
-      allNoButtons.forEach(button => fireEvent.click(button));
+      // Answer all yes/no questions (click one at a time to avoid stale references)
+      const noButtonCount = screen.getAllByRole('button', { name: /^No$/i }).length;
+      for (let i = 0; i < noButtonCount; i++) {
+        const allNoButtons = screen.getAllByRole('button', { name: /^No$/i });
+        fireEvent.click(allNoButtons[i]);
+      }
 
       // Answer housing status
       fireEvent.click(screen.getByRole('button', { name: /I own my home/i }));
@@ -444,8 +481,8 @@ describe.skip('SDOHAssessment - TODO: Fix question selection', () => {
       fireEvent.click(screen.getByText(/Complete Assessment/i));
 
       await waitFor(() => {
-        expect(screen.getByText(/Failed to save assessment/i)).toBeInTheDocument();
-      }, { timeout: 2000 });
+        expect(screen.getAllByText(/Failed to save assessment/i).length).toBeGreaterThan(0);
+      });
       expect(screen.getByText(/Please try again/i)).toBeInTheDocument();
 
       // Retry succeeds
@@ -453,7 +490,7 @@ describe.skip('SDOHAssessment - TODO: Fix question selection', () => {
 
       await waitFor(() => {
         expect(mockProps.onComplete).toHaveBeenCalled();
-      }, { timeout: 2000 });
+      });
     });
   });
 });

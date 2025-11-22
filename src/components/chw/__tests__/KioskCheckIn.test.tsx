@@ -7,10 +7,16 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { KioskCheckIn } from '../KioskCheckIn';
 import { chwService } from '../../../services/chwService';
+import { supabase } from '../../../lib/supabaseClient';
 
 jest.mock('../../../services/chwService');
+jest.mock('../../../lib/supabaseClient', () => ({
+  supabase: {
+    from: jest.fn()
+  }
+}));
 
-describe.skip('KioskCheckIn - TODO: Fix privacy consent display', () => {
+describe('KioskCheckIn - Privacy consent display', () => {
   const mockProps = {
     kioskId: 'kiosk-001',
     locationName: 'Test Library',
@@ -19,6 +25,8 @@ describe.skip('KioskCheckIn - TODO: Fix privacy consent display', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    (chwService.logSecurityEvent as jest.Mock).mockResolvedValue(undefined);
+    (chwService.startFieldVisit as jest.Mock).mockResolvedValue({ id: 'visit-123' });
   });
 
   describe('Language Selection', () => {
@@ -87,6 +95,28 @@ describe.skip('KioskCheckIn - TODO: Fix privacy consent display', () => {
 
   describe('Privacy Consent - HIPAA Compliance', () => {
     it('should show privacy consent after successful patient lookup', async () => {
+      const mockFrom = jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          ilike: jest.fn().mockReturnValue({
+            ilike: jest.fn().mockReturnValue({
+              limit: jest.fn().mockResolvedValue({
+                data: [{
+                  id: 'patient-123',
+                  first_name: 'John',
+                  last_name: 'Doe',
+                  date_of_birth: '1980-01-01',
+                  ssn_last_four: '1234',
+                  caregiver_pin_hash: null
+                }],
+                error: null
+              })
+            })
+          })
+        })
+      });
+
+      (supabase.from as jest.Mock) = mockFrom;
+
       render(<KioskCheckIn {...mockProps} />);
 
       fireEvent.click(screen.getByText('English'));
@@ -105,6 +135,28 @@ describe.skip('KioskCheckIn - TODO: Fix privacy consent display', () => {
     });
 
     it('should display HIPAA compliance information in privacy text', async () => {
+      const mockFrom = jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          ilike: jest.fn().mockReturnValue({
+            ilike: jest.fn().mockReturnValue({
+              limit: jest.fn().mockResolvedValue({
+                data: [{
+                  id: 'patient-123',
+                  first_name: 'John',
+                  last_name: 'Doe',
+                  date_of_birth: '1980-01-01',
+                  ssn_last_four: '1234',
+                  caregiver_pin_hash: null
+                }],
+                error: null
+              })
+            })
+          })
+        })
+      });
+
+      (supabase.from as jest.Mock) = mockFrom;
+
       render(<KioskCheckIn {...mockProps} />);
 
       fireEvent.click(screen.getByText('English'));
@@ -123,6 +175,28 @@ describe.skip('KioskCheckIn - TODO: Fix privacy consent display', () => {
     });
 
     it('should call onCheckInComplete when privacy consent is accepted', async () => {
+      const mockFrom = jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          ilike: jest.fn().mockReturnValue({
+            ilike: jest.fn().mockReturnValue({
+              limit: jest.fn().mockResolvedValue({
+                data: [{
+                  id: 'patient-456',
+                  first_name: 'John',
+                  last_name: 'Doe',
+                  date_of_birth: '1980-01-01',
+                  ssn_last_four: '1234',
+                  caregiver_pin_hash: null
+                }],
+                error: null
+              })
+            })
+          })
+        })
+      });
+
+      (supabase.from as jest.Mock) = mockFrom;
+
       (chwService.startFieldVisit as jest.Mock).mockResolvedValue({
         id: 'visit-123',
         patient_id: 'patient-456',

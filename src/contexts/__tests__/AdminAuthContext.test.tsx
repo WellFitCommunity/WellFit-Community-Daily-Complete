@@ -15,6 +15,7 @@ import React from 'react';
 jest.mock('../../lib/supabaseClient', () => {
   const mockInvoke = jest.fn();
   const mockGetUser = jest.fn();
+  const mockGetSession = jest.fn();
   const mockRpc = jest.fn();
 
   return {
@@ -24,6 +25,7 @@ jest.mock('../../lib/supabaseClient', () => {
       },
       auth: {
         getUser: mockGetUser,
+        getSession: mockGetSession,
       },
       rpc: mockRpc,
     },
@@ -72,6 +74,12 @@ describe('AdminAuthContext', () => {
     };
 
     it('should successfully authenticate nurse_practitioner with valid PIN', async () => {
+      // Mock getSession to return active session
+      (mockSupabase.auth.getSession as jest.Mock).mockResolvedValueOnce({
+        data: { session: { user: mockUser, access_token: 'mock-token' } },
+        error: null,
+      });
+
       (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
         data: {
           success: true,
@@ -120,6 +128,12 @@ describe('AdminAuthContext', () => {
         roles: ['clinical_supervisor'],
       };
 
+      // Mock getSession to return active session
+      (mockSupabase.auth.getSession as jest.Mock).mockResolvedValueOnce({
+        data: { session: { user: mockUser, access_token: 'mock-token' } },
+        error: null,
+      });
+
       (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
         data: {
           success: true,
@@ -160,6 +174,12 @@ describe('AdminAuthContext', () => {
         department: 'nursing',
         roles: ['department_head'],
       };
+
+      // Mock getSession to return active session
+      (mockSupabase.auth.getSession as jest.Mock).mockResolvedValueOnce({
+        data: { session: { user: mockUser, access_token: 'mock-token' } },
+        error: null,
+      });
 
       (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
         data: {
@@ -214,6 +234,12 @@ describe('AdminAuthContext', () => {
     });
 
     it('should fail authentication when Edge Function returns error', async () => {
+      // Mock getSession to return active session
+      (mockSupabase.auth.getSession as jest.Mock).mockResolvedValueOnce({
+        data: { session: { user: mockUser, access_token: 'mock-token' } },
+        error: null,
+      });
+
       (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
         data: null,
         error: { message: 'PIN not set' },
@@ -245,6 +271,12 @@ describe('AdminAuthContext', () => {
 
       for (const role of roles) {
         jest.clearAllMocks();
+
+        // Mock getSession to return active session
+        (mockSupabase.auth.getSession as jest.Mock).mockResolvedValueOnce({
+          data: { session: { user: mockUser, access_token: 'mock-token' } },
+          error: null,
+        });
 
         (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
           data: {
@@ -278,6 +310,14 @@ describe('AdminAuthContext', () => {
 
   describe('logoutAdmin', () => {
     it('should clear all authentication state', async () => {
+      const testUser = { id: 'test-user-id', email: 'test@example.com' };
+
+      // Mock getSession to return active session
+      (mockSupabase.auth.getSession as jest.Mock).mockResolvedValueOnce({
+        data: { session: { user: testUser, access_token: 'mock-token' } },
+        error: null,
+      });
+
       (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
         data: {
           success: true,
@@ -333,6 +373,14 @@ describe('AdminAuthContext', () => {
 
   describe('hasAccess', () => {
     it('should correctly check role-based access for nurse_practitioner', async () => {
+      const testUser = { id: 'test-user-id', email: 'test@example.com' };
+
+      // Mock getSession to return active session
+      (mockSupabase.auth.getSession as jest.Mock).mockResolvedValueOnce({
+        data: { session: { user: testUser, access_token: 'mock-token' } },
+        error: null,
+      });
+
       (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
         data: {
           success: true,
@@ -343,7 +391,7 @@ describe('AdminAuthContext', () => {
       });
 
       (mockSupabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
-        data: { user: { id: 'test-user-id', email: 'test@example.com' } },
+        data: { user: testUser },
         error: null,
       } as any);
 
@@ -385,6 +433,14 @@ describe('AdminAuthContext', () => {
 
   describe('Session Persistence', () => {
     it('should persist session to sessionStorage', async () => {
+      const testUser = { id: 'test-user-id', email: 'test@example.com' };
+
+      // Mock getSession to return active session
+      (mockSupabase.auth.getSession as jest.Mock).mockResolvedValueOnce({
+        data: { session: { user: testUser, access_token: 'mock-token' } },
+        error: null,
+      });
+
       (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
         data: {
           success: true,
@@ -395,7 +451,7 @@ describe('AdminAuthContext', () => {
       });
 
       (mockSupabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
-        data: { user: { id: 'test-user-id', email: 'test@example.com' } },
+        data: { user: testUser },
         error: null,
       } as any);
 
@@ -431,6 +487,14 @@ describe('AdminAuthContext', () => {
     });
 
     it('should clear sessionStorage on logout', async () => {
+      const testUser = { id: 'test-user-id', email: 'test@example.com' };
+
+      // Mock getSession to return active session
+      (mockSupabase.auth.getSession as jest.Mock).mockResolvedValueOnce({
+        data: { session: { user: testUser, access_token: 'mock-token' } },
+        error: null,
+      });
+
       (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
         data: {
           success: true,
@@ -441,7 +505,7 @@ describe('AdminAuthContext', () => {
       });
 
       (mockSupabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
-        data: { user: { id: 'test-user-id', email: 'test@example.com' } },
+        data: { user: testUser },
         error: null,
       } as any);
 
@@ -479,6 +543,14 @@ describe('AdminAuthContext', () => {
 
   describe('Error Handling', () => {
     it('should handle missing admin_token in response', async () => {
+      const testUser = { id: 'test-user-id', email: 'test@example.com' };
+
+      // Mock getSession to return active session
+      (mockSupabase.auth.getSession as jest.Mock).mockResolvedValueOnce({
+        data: { session: { user: testUser, access_token: 'mock-token' } },
+        error: null,
+      });
+
       (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
         data: {
           success: true,
@@ -500,6 +572,14 @@ describe('AdminAuthContext', () => {
     });
 
     it('should handle network errors', async () => {
+      const testUser = { id: 'test-user-id', email: 'test@example.com' };
+
+      // Mock getSession to return active session
+      (mockSupabase.auth.getSession as jest.Mock).mockResolvedValueOnce({
+        data: { session: { user: testUser, access_token: 'mock-token' } },
+        error: null,
+      });
+
       (mockSupabase.functions.invoke as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
 
       const { result } = renderHook(() => useAdminAuth(), { wrapper });

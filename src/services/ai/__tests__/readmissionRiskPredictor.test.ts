@@ -3,6 +3,10 @@
  * Covers: Unit tests, integration tests, security, clinical accuracy
  */
 
+// Mock MCP modules before imports
+jest.mock('../../mcp/mcpClient');
+jest.mock('../../mcp/mcpCostOptimizer');
+
 import { ReadmissionRiskPredictor } from '../readmissionRiskPredictor';
 import { supabase } from '../../../lib/supabaseClient';
 import { setSupabaseHandler } from '../../../lib/__mocks__/supabaseClient';

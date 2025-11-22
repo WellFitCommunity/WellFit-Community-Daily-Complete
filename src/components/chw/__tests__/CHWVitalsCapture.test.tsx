@@ -10,7 +10,7 @@ import { chwService } from '../../../services/chwService';
 
 jest.mock('../../../services/chwService');
 
-describe.skip('CHWVitalsCapture - TODO: Fix error message handling', () => {
+describe('CHWVitalsCapture - Error message handling', () => {
   const mockProps = {
     visitId: 'visit-123',
     language: 'en' as const,
@@ -316,9 +316,11 @@ describe.skip('CHWVitalsCapture - TODO: Fix error message handling', () => {
 
       fireEvent.click(screen.getByText(/Save Vitals/i));
 
+      // Use getAllByText since "Failed to save vitals" appears in both heading and message
       await waitFor(() => {
-        expect(screen.getByText(/Failed to save vitals/i)).toBeInTheDocument();
-      }, { timeout: 2000 });
+        const errorMessages = screen.getAllByText(/Failed to save vitals/i);
+        expect(errorMessages.length).toBeGreaterThan(0);
+      });
       expect(screen.getByText(/Please try again/i)).toBeInTheDocument();
     });
 
@@ -335,9 +337,11 @@ describe.skip('CHWVitalsCapture - TODO: Fix error message handling', () => {
       // First attempt fails
       fireEvent.click(screen.getByText(/Save Vitals/i));
 
+      // Use getAllByText since "Failed to save vitals" appears in both heading and message
       await waitFor(() => {
-        expect(screen.getByText(/Failed to save vitals/i)).toBeInTheDocument();
-      }, { timeout: 2000 });
+        const errorMessages = screen.getAllByText(/Failed to save vitals/i);
+        expect(errorMessages.length).toBeGreaterThan(0);
+      });
       expect(screen.getByText(/Please try again/i)).toBeInTheDocument();
 
       // Retry succeeds
@@ -345,7 +349,7 @@ describe.skip('CHWVitalsCapture - TODO: Fix error message handling', () => {
 
       await waitFor(() => {
         expect(mockProps.onComplete).toHaveBeenCalled();
-      }, { timeout: 2000 });
+      });
     });
   });
 });

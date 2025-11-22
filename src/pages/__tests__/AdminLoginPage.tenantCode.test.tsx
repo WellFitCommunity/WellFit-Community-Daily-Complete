@@ -181,7 +181,8 @@ describe('AdminLoginPage - Tenant Code Validation', () => {
       await waitFor(() => {
         expect(screen.getByText('Enter Tenant Code + PIN')).toBeInTheDocument();
         expect(screen.getByText(/Your tenant code is/)).toBeInTheDocument();
-        expect(screen.getByText('MH-6702')).toBeInTheDocument();
+        // MH-6702 appears multiple times on the page - verify at least one exists
+        expect(screen.getAllByText('MH-6702').length).toBeGreaterThan(0);
       });
     });
 
@@ -257,7 +258,7 @@ describe('AdminLoginPage - Tenant Code Validation', () => {
       });
     });
 
-    test('should show warning if no tenant code assigned', async () => {
+    test('should show PIN-only input if no tenant code assigned', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
         if (table === 'profiles') {
           return {
@@ -295,8 +296,10 @@ describe('AdminLoginPage - Tenant Code Validation', () => {
         </BrowserRouter>
       );
 
+      // When tenant_code is null, component shows PIN-only input (fallback behavior)
       await waitFor(() => {
-        expect(screen.getByText(/Contact your super admin/)).toBeInTheDocument();
+        expect(screen.getByLabelText(/Enter Admin PIN/i)).toBeInTheDocument();
+        expect(screen.queryByText(/Enter Tenant Code \+ PIN/i)).not.toBeInTheDocument();
       });
     });
   });

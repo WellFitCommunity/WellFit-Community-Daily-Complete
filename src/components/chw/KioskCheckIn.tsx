@@ -4,11 +4,15 @@
  * HIPAA COMPLIANT: 2-minute inactivity timeout with auto-logout
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import bcrypt from 'bcryptjs';
 import { supabase } from '../../lib/supabaseClient';
 import { chwService } from '../../services/chwService';
 import { validateName, validateDOB, validateSSNLast4, validatePIN, RateLimiter } from '../../utils/kioskValidation';
+
+// CRITICAL FIX: Inactivity timeout (2 minutes)
+const INACTIVITY_TIMEOUT = 120000; // 2 minutes in milliseconds
+const NOTIFICATION_DISPLAY_TIME = 5000; // 5 seconds
 
 interface KioskCheckInProps {
   kioskId?: string;
@@ -33,15 +37,14 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
   const [patientId, setPatientId] = useState('');
   const [notification, setNotification] = useState<{type: 'info' | 'warning' | 'error', message: string} | null>(null);
 
-  // CRITICAL FIX: Inactivity timeout (2 minutes)
-  const INACTIVITY_TIMEOUT = 120000; // 2 minutes in milliseconds
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const resetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Rate limiting for failed lookups
   const rateLimiterRef = useRef<RateLimiter>(new RateLimiter(5, 300000)); // 5 attempts per 5 minutes
 
   // Reset all state and return to language selection
-  const resetSession = () => {
+  const resetSession = useCallback(() => {
     setStep('language');
     setFirstName('');
     setLastName('');
@@ -51,12 +54,15 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
     setPatientId('');
     setError('');
     setLoading(false);
-  };
+  }, []);
 
   // Reset inactivity timer
-  const resetInactivityTimer = () => {
+  const resetInactivityTimer = useCallback(() => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
+    }
+    if (resetTimeoutRef.current) {
+      clearTimeout(resetTimeoutRef.current);
     }
 
     timeoutRef.current = setTimeout(() => {
@@ -68,27 +74,15 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
           : 'La sesión expiró por seguridad. Por favor, comience de nuevo.'
       });
       // Wait for user to see notification, then reset
-      setTimeout(() => {
+      resetTimeoutRef.current = setTimeout(() => {
         resetSession();
         setNotification(null);
-      }, 5000);
+      }, NOTIFICATION_DISPLAY_TIME);
     }, INACTIVITY_TIMEOUT);
-  };
+  }, [language, resetSession]);
 
   // Set up inactivity detection
   useEffect(() => {
-    // Events that indicate user activity
-    const events = ['mousedown', 'keydown', 'touchstart', 'scroll'];
-
-    const handleActivity = () => {
-      resetInactivityTimer();
-    };
-
-    // Add event listeners
-    events.forEach(event => {
-      document.addEventListener(event, handleActivity);
-    });
-
     // Start initial timer
     resetInactivityTimer();
 
@@ -97,11 +91,11 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
-      events.forEach(event => {
-        document.removeEventListener(event, handleActivity);
-      });
+      if (resetTimeoutRef.current) {
+        clearTimeout(resetTimeoutRef.current);
+      }
     };
-  }, []);  
+  }, [step, resetInactivityTimer]);  
 
   const translations = {
     en: {
@@ -502,9 +496,10 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
               </label>
               <input
                 id="dob"
-                type="date"
+                type="text"
                 value={dob}
                 onChange={(e) => setDob(e.target.value)}
+                placeholder="YYYY-MM-DD"
                 className="w-full text-2xl px-6 py-4 border-4 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 outline-none"
               />
             </div>
@@ -517,7 +512,7 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
                 id="lastFourSSN"
                 type="text"
                 value={lastFourSSN}
-                onChange={(e) => setLastFourSSN(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                onChange={(e) => setLastFourSSN(e.target.value.slice(0, 4))}
                 maxLength={4}
                 className="w-full text-2xl px-6 py-4 border-4 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 outline-none"
                 placeholder="1234"
@@ -532,7 +527,7 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
                 id="pin"
                 type="password"
                 value={pin}
-                onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                onChange={(e) => setPin(e.target.value.slice(0, 6))}
                 maxLength={6}
                 className="w-full text-2xl px-6 py-4 border-4 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 outline-none"
                 placeholder="Optional"
@@ -555,7 +550,7 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
 
               <button
                 onClick={handleLookup}
-                disabled={loading || !firstName || !lastName || !dob || !lastFourSSN}
+                disabled={loading || !firstName.trim() || !lastName.trim() || !dob.trim() || !lastFourSSN.trim()}
                 className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-2xl font-bold py-6 px-8 rounded-xl transition-all"
               >
                 {loading ? t.checking : t.findMe}
