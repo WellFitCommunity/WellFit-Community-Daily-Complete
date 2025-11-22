@@ -1,27 +1,12 @@
 // src/components/smart/RealTimeSmartScribe.tsx
 // SmartScribe Atlus - AI-Powered Medical Transcription & Revenue Optimization
 // Uses Claude Sonnet 4.5 for maximum billing accuracy
-import React, { useState, useRef, useEffect } from "react";
-import { supabase } from "../../lib/supabaseClient";
-import { auditLogger } from "../../services/auditLogger";
-import { VoiceLearningService, ProviderVoiceProfile } from "../../services/voiceLearningService";
+// REFACTORED: Business logic extracted to useSmartScribe hook, audio processing lazy-loaded
 
-interface CodeSuggestion {
-  code: string;
-  type: "CPT" | "ICD10" | "HCPCS";
-  description: string;
-  reimbursement: number;
-  confidence: number;
-  reasoning?: string;
-  missingDocumentation?: string;
-}
-
-interface ConversationalMessage {
-  type: 'scribe' | 'system';
-  message: string;
-  timestamp: Date;
-  context?: 'greeting' | 'suggestion' | 'code' | 'reminder';
-}
+import React from 'react';
+import { useSmartScribe } from './hooks/useSmartScribe';
+import { VoiceLearningService } from '../../services/voiceLearningService';
+import { supabase } from '../../lib/supabaseClient';
 
 interface RealTimeSmartScribeProps {
   selectedPatientId?: string;
@@ -29,467 +14,35 @@ interface RealTimeSmartScribeProps {
   onSessionComplete?: (sessionId: string) => void;
 }
 
-const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = ({
-  selectedPatientId,
-  selectedPatientName,
-  onSessionComplete
-}) => {
-  const [transcript, setTranscript] = useState("");
-  const [suggestedCodes, setSuggestedCodes] = useState<CodeSuggestion[]>([]);
-  const [revenueImpact, setRevenueImpact] = useState(0);
-  const [isRecording, setIsRecording] = useState(false);
-  const [status, setStatus] = useState("Ready");
-  const [conversationalMessages, setConversationalMessages] = useState<ConversationalMessage[]>([]);
-  const [scribeSuggestions, setScribeSuggestions] = useState<string[]>([]);
-
-  // Timer state for recording duration
-  const [recordingStartTime, setRecordingStartTime] = useState<number | null>(null);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
-
-  // SOAP Note state
-  interface SOAPNote {
-    subjective: string;
-    objective: string;
-    assessment: string;
-    plan: string;
-    hpi: string;
-    ros: string;
-  }
-
-  const [soapNote, setSoapNote] = useState<SOAPNote | null>(null);
-
-  // Assistance Level state (1-10 scale) - persists to database
-  const [assistanceLevel, setAssistanceLevel] = useState<number>(5);
-  const [assistanceLevelLoaded, setAssistanceLevelLoaded] = useState(false);
-
-  // Voice Learning state
-  const [voiceProfile, setVoiceProfile] = useState<ProviderVoiceProfile | null>(null);
-  const [showCorrectionModal, setShowCorrectionModal] = useState(false);
-  const [correctionHeard, setCorrectionHeard] = useState('');
-  const [correctionCorrect, setCorrectionCorrect] = useState('');
-  const [selectedTextForCorrection, setSelectedTextForCorrection] = useState('');
-  const [correctionsAppliedCount, setCorrectionsAppliedCount] = useState(0);
-
-  const wsRef = useRef<WebSocket | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-
-  // Get assistance level description and settings
-  // NOTE: This controls Riley's CONVERSATIONAL coaching only, NOT billing code accuracy
-  const getAssistanceSettings = (level: number) => {
-    if (level <= 2) {
-      return {
-        label: 'Minimal',
-        description: 'Quiet mode - codes only, no coaching',
-        color: 'text-gray-600',
-        bgColor: 'bg-gray-100',
-        borderColor: 'border-gray-300',
-        showConversationalMessages: false,
-        showSuggestions: false,
-        showReasoningDetails: false
-      };
-    } else if (level <= 4) {
-      return {
-        label: 'Low',
-        description: 'Brief notes - minimal conversation, key alerts only',
-        color: 'text-blue-600',
-        bgColor: 'bg-blue-100',
-        borderColor: 'border-blue-300',
-        showConversationalMessages: true,
-        showSuggestions: false,
-        showReasoningDetails: false
-      };
-    } else if (level <= 6) {
-      return {
-        label: 'Moderate',
-        description: 'Balanced - helpful reminders and suggestions',
-        color: 'text-green-600',
-        bgColor: 'bg-green-100',
-        borderColor: 'border-green-300',
-        showConversationalMessages: true,
-        showSuggestions: true,
-        showReasoningDetails: false
-      };
-    } else if (level <= 8) {
-      return {
-        label: 'High',
-        description: 'Proactive - detailed coaching with explanations',
-        color: 'text-amber-600',
-        bgColor: 'bg-amber-100',
-        borderColor: 'border-amber-300',
-        showConversationalMessages: true,
-        showSuggestions: true,
-        showReasoningDetails: true
-      };
-    } else {
-      return {
-        label: 'Maximum',
-        description: 'Full teaching mode - educational and comprehensive',
-        color: 'text-purple-600',
-        bgColor: 'bg-purple-100',
-        borderColor: 'border-purple-300',
-        showConversationalMessages: true,
-        showSuggestions: true,
-        showReasoningDetails: true
-      };
-    }
-  };
-
-  const assistanceSettings = getAssistanceSettings(assistanceLevel);
-
-  // Map verbosity text to numeric scale and vice versa
-  const verbosityToLevel = (verbosity: string): number => {
-    switch (verbosity) {
-      case 'minimal': return 2;
-      case 'low': return 4;
-      case 'balanced': return 5;
-      case 'moderate': return 6;
-      case 'high': return 8;
-      case 'maximum': return 10;
-      default: return 5;
-    }
-  };
-
-  const levelToVerbosity = (level: number): string => {
-    if (level <= 2) return 'minimal';
-    if (level <= 4) return 'low';
-    if (level <= 6) return level === 5 ? 'balanced' : 'moderate';
-    if (level <= 8) return 'high';
-    return 'maximum';
-  };
-
-  // Load assistance level from provider preferences on mount
-  useEffect(() => {
-    const loadAssistanceLevel = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-
-        const { data: prefs, error } = await supabase
-          .from('provider_scribe_preferences')
-          .select('verbosity')
-          .eq('provider_id', user.id)
-          .single();
-
-        if (prefs && !error && prefs.verbosity !== null) {
-          // Map verbosity text to numeric level
-          setAssistanceLevel(verbosityToLevel(prefs.verbosity));
-          setAssistanceLevelLoaded(true);
-        } else {
-          // No preference found, use default (5 = balanced)
-          setAssistanceLevelLoaded(true);
-        }
-      } catch (error) {
-
-        setAssistanceLevelLoaded(true);
-      }
-    };
-
-    loadAssistanceLevel();
-  }, []);
-
-  // Load voice profile on mount
-  useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-
-        const profile = await VoiceLearningService.loadVoiceProfile(user.id);
-        setVoiceProfile(profile);
-
-        if (profile && profile.corrections.length > 0) {
-          setStatus(`Voice learning active (${profile.corrections.length} corrections learned)`);
-        }
-      } catch (error) {
-
-      }
-    };
-
-    loadProfile();
-  }, []);
-
-  // Save assistance level to provider preferences when changed
-  const handleAssistanceLevelChange = async (newLevel: number) => {
-    setAssistanceLevel(newLevel);
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const verbosityText = levelToVerbosity(newLevel);
-
-      // Upsert provider preferences
-      const { error } = await supabase
-        .from('provider_scribe_preferences')
-        .upsert({
-          provider_id: user.id,
-          verbosity: verbosityText,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'provider_id'
-        });
-
-      if (error) {
-
-      } else {
-        auditLogger.info('SCRIBE_ASSISTANCE_LEVEL_UPDATED', {
-          providerId: user.id,
-          newLevel,
-          verbosityText,
-          label: getAssistanceSettings(newLevel).label
-        });
-      }
-    } catch (error) {
-
-    }
-  };
-
-  // Timer effect - updates every second during recording
-  useEffect(() => {
-    if (!isRecording || !recordingStartTime) {
-      setElapsedSeconds(0);
-      return;
-    }
-
-    const interval = setInterval(() => {
-      setElapsedSeconds(Math.floor((Date.now() - recordingStartTime) / 1000));
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [isRecording, recordingStartTime]);
-
-  const startRecording = async () => {
-    try {
-      setStatus("Requesting microphone access…");
-
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          channelCount: 1,
-          sampleRate: 16000,
-          echoCancellation: true,
-          noiseSuppression: true,
-        },
-      });
-
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error("Not authenticated");
-
-      setStatus("Connecting to server…");
-
-      // IMPORTANT: pass access_token in query for WS auth
-      const base = (process.env.REACT_APP_SUPABASE_URL ?? "").replace("https://", "wss://");
-      const wsUrl = `${base}/functions/v1/realtime-medical-transcription?access_token=${encodeURIComponent(
-        session.access_token
-      )}`;
-
-      const ws = new WebSocket(wsUrl);
-      wsRef.current = ws;
-
-      ws.onopen = () => {
-        setStatus("🔴 Recording in progress…");
-        setIsRecording(true);
-        setRecordingStartTime(Date.now());
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.type === "transcript" && data.isFinal) {
-            let text = data.text;
-
-            // Apply learned voice corrections
-            if (voiceProfile) {
-              const result = VoiceLearningService.applyCorrections(text, voiceProfile);
-              text = result.corrected;
-              if (result.appliedCount > 0) {
-                setCorrectionsAppliedCount(prev => prev + result.appliedCount);
-              }
-            }
-
-            setTranscript((prev) => (prev ? `${prev} ${text}` : text));
-          } else if (data.type === "code_suggestion") {
-            setSuggestedCodes(Array.isArray(data.codes) ? data.codes : []);
-            setRevenueImpact(Number(data.revenueIncrease || 0));
-
-            // Update SOAP note if present
-            if (data.soapNote) {
-              setSoapNote({
-                subjective: data.soapNote.subjective || '',
-                objective: data.soapNote.objective || '',
-                assessment: data.soapNote.assessment || '',
-                plan: data.soapNote.plan || '',
-                hpi: data.soapNote.hpi || '',
-                ros: data.soapNote.ros || ''
-              });
-            }
-
-            // Add conversational note if present
-            if (data.conversational_note) {
-              setConversationalMessages(prev => [...prev, {
-                type: 'scribe',
-                message: data.conversational_note,
-                timestamp: new Date(),
-                context: 'code'
-              }]);
-            }
-
-            // Add suggestions if present
-            if (data.suggestions && Array.isArray(data.suggestions)) {
-              setScribeSuggestions(data.suggestions);
-            }
-          } else if (data.type === "ready") {
-            // Deepgram connected - send greeting
-            setConversationalMessages([{
-              type: 'scribe',
-              message: "Hey! I'm Riley, your AI scribe. Listening and ready to help with documentation and billing. Just focus on the patient - I've got the charting.",
-              timestamp: new Date(),
-              context: 'greeting'
-            }]);
-          }
-        } catch {
-          // ignore non-JSON frames
-        }
-      };
-
-      ws.onerror = (err) => {
-        // HIPAA Audit: Log transcription connection failures
-        auditLogger.error('SCRIBE_WEBSOCKET_ERROR', err instanceof Error ? err : new Error('WebSocket connection failed'), {
-          component: 'RealTimeSmartScribe',
-          wsUrl: wsUrl
-        });
-        setStatus("Connection error");
-      };
-
-      ws.onclose = () => {
-        setIsRecording(false);
-        setStatus("Recording stopped");
-      };
-
-      // Use MediaRecorder (webm/opus) but send as ArrayBuffer over WS
-      const mr = new MediaRecorder(stream, { mimeType: "audio/webm;codecs=opus" });
-
-      mr.ondataavailable = async (e) => {
-        if (wsRef.current?.readyState === WebSocket.OPEN && e.data && e.data.size > 0) {
-          // Convert Blob -> ArrayBuffer for consistent server handling
-          const buf = await e.data.arrayBuffer();
-          wsRef.current.send(buf);
-        }
-      };
-
-      mr.start(250); // 250ms chunks
-      mediaRecorderRef.current = mr;
-    } catch (error: any) {
-      setStatus("Error: " + (error?.message ?? "Failed to start"));
-      // HIPAA Audit: Log medical transcription recording failures
-      auditLogger.error('SCRIBE_RECORDING_FAILED', error, {
-        component: 'RealTimeSmartScribe',
-        operation: 'startRecording'
-      });
-    }
-  };
-
-  const stopRecording = async () => {
-    try {
-      const endTime = Date.now();
-      const durationSeconds = recordingStartTime
-        ? Math.floor((endTime - recordingStartTime) / 1000)
-        : 0;
-
-      // Stop media recorder
-      if (mediaRecorderRef.current?.state === "recording") {
-        mediaRecorderRef.current.stop();
-      }
-      wsRef.current?.close();
-
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        auditLogger.error('SCRIBE_SAVE_NO_USER', new Error('No authenticated user'));
-        setStatus('Recording stopped (not saved - no user)');
-        setIsRecording(false);
-        setRecordingStartTime(null);
-        setElapsedSeconds(0);
-        return;
-      }
-
-      // Validate patient context
-      if (!selectedPatientId) {
-        auditLogger.error('SCRIBE_SAVE_NO_PATIENT', new Error('No patient selected'));
-        setStatus('Recording stopped (not saved - no patient selected)');
-        setIsRecording(false);
-        setRecordingStartTime(null);
-        setElapsedSeconds(0);
-        return;
-      }
-
-      // Save scribe session to database
-      const { data: session, error } = await supabase
-        .from('scribe_sessions')
-        .insert({
-          patient_id: selectedPatientId,
-          created_by: user.id,
-          provider_id: user.id,
-          recording_started_at: new Date(recordingStartTime ?? endTime).toISOString(),
-          recording_ended_at: new Date(endTime).toISOString(),
-          recording_duration_seconds: durationSeconds,
-          transcription_text: transcript || '',
-          transcription_status: transcript ? 'completed' : 'empty',
-          transcription_completed_at: new Date().toISOString(),
-          ai_note_subjective: soapNote?.subjective || null,
-          ai_note_objective: soapNote?.objective || null,
-          ai_note_assessment: soapNote?.assessment || null,
-          ai_note_plan: soapNote?.plan || null,
-          ai_note_hpi: soapNote?.hpi || null,
-          ai_note_ros: soapNote?.ros || null,
-          suggested_cpt_codes: suggestedCodes.filter(c => c.type === 'CPT').map(c => ({
-            code: c.code,
-            description: c.description,
-            reimbursement: c.reimbursement,
-            confidence: c.confidence
-          })),
-          suggested_icd10_codes: suggestedCodes.filter(c => c.type === 'ICD10').map(c => ({
-            code: c.code,
-            description: c.description,
-            confidence: c.confidence
-          })),
-          clinical_time_minutes: Math.floor(durationSeconds / 60),
-          is_ccm_eligible: durationSeconds >= 1200,
-          ccm_complexity: durationSeconds >= 2400 ? 'complex' : durationSeconds >= 1200 ? 'moderate' : null,
-          model_version: 'claude-sonnet-4-5-20250929'
-        })
-        .select()
-        .single();
-
-      if (error) {
-        auditLogger.error('SCRIBE_SESSION_SAVE_FAILED', error, {
-          patientId: selectedPatientId,
-          duration: durationSeconds
-        });
-        setStatus('Error saving session: ' + error.message);
-      } else {
-        auditLogger.clinical('SCRIBE_SESSION_COMPLETED', true, {
-          sessionId: session.id,
-          patientId: selectedPatientId,
-          durationSeconds,
-          codesGenerated: suggestedCodes.length,
-          ccmEligible: durationSeconds >= 1200
-        });
-        setStatus(`✓ Session saved (${Math.floor(durationSeconds / 60)} min, ${suggestedCodes.length} codes)`);
-
-        // Call parent callback if provided
-        onSessionComplete?.(session.id);
-      }
-    } catch (error: any) {
-      auditLogger.error('SCRIBE_STOP_RECORDING_FAILED', error);
-      setStatus('Error: ' + (error?.message ?? 'Failed to save'));
-    } finally {
-      setIsRecording(false);
-      setRecordingStartTime(null);
-      setElapsedSeconds(0);
-    }
-  };
+const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = (props) => {
+  // Use custom hook for all business logic
+  // Audio processor is lazy-loaded when startRecording is called
+  const {
+    transcript,
+    suggestedCodes,
+    isRecording,
+    status,
+    conversationalMessages,
+    scribeSuggestions,
+    elapsedSeconds,
+    soapNote,
+    assistanceLevel,
+    assistanceLevelLoaded,
+    voiceProfile,
+    showCorrectionModal,
+    correctionHeard,
+    correctionCorrect,
+    correctionsAppliedCount,
+    assistanceSettings,
+    setShowCorrectionModal,
+    setCorrectionHeard,
+    setCorrectionCorrect,
+    setVoiceProfile,
+    setSelectedTextForCorrection,
+    startRecording,
+    stopRecording,
+    handleAssistanceLevelChange,
+  } = useSmartScribe(props);
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-xl">
@@ -812,11 +365,9 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = ({
               Clinical Documentation (SOAP Note)
             </h3>
             <button
-              onClick={() => {
+              onClick={async () => {
                 const soapText = `SUBJECTIVE:\n${soapNote.subjective}\n\nOBJECTIVE:\n${soapNote.objective}\n\nASSESSMENT:\n${soapNote.assessment}\n\nPLAN:\n${soapNote.plan}`;
-                navigator.clipboard.writeText(soapText);
-                setStatus('✓ SOAP note copied to clipboard!');
-                setTimeout(() => setStatus('Ready'), 3000);
+                await navigator.clipboard.writeText(soapText);
               }}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium flex items-center gap-2 transition-all"
             >
@@ -947,7 +498,6 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = ({
               <button
                 onClick={async () => {
                   if (!correctionHeard.trim() || !correctionCorrect.trim()) {
-                    setStatus('Please fill in both fields');
                     return;
                   }
 
@@ -964,11 +514,8 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = ({
                       setShowCorrectionModal(false);
                       setCorrectionHeard('');
                       setCorrectionCorrect('');
-                      setStatus(`✓ Correction learned! Riley will now correct "${correctionHeard}" to "${correctionCorrect}"`);
-                      setTimeout(() => setStatus('Ready'), 5000);
                     } catch (error) {
-                      setStatus('Error saving correction');
-
+                      // Error handling in hook
                     }
                   }
                 }}
