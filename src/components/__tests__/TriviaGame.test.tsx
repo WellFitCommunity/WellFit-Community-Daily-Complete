@@ -291,11 +291,9 @@ describe('TriviaGame - Senior Facing Component', () => {
     it('should display large, readable text for seniors', async () => {
       render(<TriviaGame />);
 
-      await waitFor(() => {
-        const heading = screen.getByText(/Memory Lane Trivia/i);
-        expect(heading).toBeInTheDocument();
-        expect(heading.tagName).toBe('H1');
-      });
+      const heading = await screen.findByText(/Memory Lane Trivia/i);
+      expect(heading).toBeInTheDocument();
+      expect(heading.tagName).toBe('H1');
     });
   });
 

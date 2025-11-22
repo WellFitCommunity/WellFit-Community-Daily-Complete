@@ -395,7 +395,7 @@ describe.skip('SDOHAssessment - TODO: Fix question selection', () => {
       const firstButton = screen.getAllByRole('button', { name: /yes|no/i })[0];
       firstButton.focus();
 
-      expect(document.activeElement).toBe(firstButton);
+      expect(firstButton).toHaveFocus();
     });
   });
 
@@ -418,9 +418,9 @@ describe.skip('SDOHAssessment - TODO: Fix question selection', () => {
       fireEvent.click(screen.getByText(/Complete Assessment/i));
 
       await waitFor(() => {
-        const errorContainer = screen.getByText(/Failed to save assessment/i).parentElement;
-        expect(errorContainer).toHaveTextContent(/Please try again/i);
+        expect(screen.getByText(/Failed to save assessment/i)).toBeInTheDocument();
       }, { timeout: 2000 });
+      expect(screen.getByText(/Please try again/i)).toBeInTheDocument();
     });
 
     it('should allow retry after error', async () => {
@@ -444,9 +444,9 @@ describe.skip('SDOHAssessment - TODO: Fix question selection', () => {
       fireEvent.click(screen.getByText(/Complete Assessment/i));
 
       await waitFor(() => {
-        const errorContainer = screen.getByText(/Failed to save assessment/i).parentElement;
-        expect(errorContainer).toHaveTextContent(/Please try again/i);
+        expect(screen.getByText(/Failed to save assessment/i)).toBeInTheDocument();
       }, { timeout: 2000 });
+      expect(screen.getByText(/Please try again/i)).toBeInTheDocument();
 
       // Retry succeeds
       fireEvent.click(screen.getByText(/Retry/i));

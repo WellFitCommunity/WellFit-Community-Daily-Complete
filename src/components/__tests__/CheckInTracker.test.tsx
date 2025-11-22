@@ -297,11 +297,12 @@ describe('CheckInTracker - Senior Facing Component', () => {
       fireEvent.click(okButton);
 
       await waitFor(() => {
-        const rpcCall = mockSupabase.rpc.mock.calls[0];
-        expect(rpcCall).toBeDefined();
-        expect(rpcCall[1]).toBeDefined();
-        expect(rpcCall[1]).toHaveProperty('p_user_id', mockUser.id);
+        expect(mockSupabase.rpc.mock.calls[0]).toBeDefined();
       });
+
+      const rpcCall = mockSupabase.rpc.mock.calls[0];
+      expect(rpcCall[1]).toBeDefined();
+      expect(rpcCall[1]).toHaveProperty('p_user_id', mockUser.id);
     });
   });
 

@@ -199,7 +199,7 @@ const HospitalAdapterManagementPanel: React.FC = () => {
   };
 
   const handleDisconnect = async (adapterId: string) => {
-    if (!confirm('Are you sure you want to disconnect this adapter?')) return;
+    if (!window.confirm('Are you sure you want to disconnect this adapter?')) return;
 
     try {
       registry.disconnect(adapterId);

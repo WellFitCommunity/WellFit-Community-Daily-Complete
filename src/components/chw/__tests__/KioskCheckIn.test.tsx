@@ -118,8 +118,8 @@ describe.skip('KioskCheckIn - TODO: Fix privacy consent display', () => {
 
       await waitFor(() => {
         expect(screen.getByText(/HIPAA/i)).toBeInTheDocument();
-        expect(screen.getByText(/encryption/i)).toBeInTheDocument();
       });
+      expect(screen.getByText(/encryption/i)).toBeInTheDocument();
     });
 
     it('should call onCheckInComplete when privacy consent is accepted', async () => {

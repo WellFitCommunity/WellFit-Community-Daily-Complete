@@ -440,13 +440,14 @@ describe.skip('KioskCheckIn - Security Tests - TODO: Fix validation messages', (
 
       await waitFor(() => {
         expect(screen.getByText(/Too many failed attempts/i)).toBeInTheDocument();
-        expect(chwService.logSecurityEvent).toHaveBeenCalledWith(
-          expect.objectContaining({
-            event_type: 'rate_limit_exceeded',
-            severity: 'high'
-          })
-        );
       });
+
+      expect(chwService.logSecurityEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event_type: 'rate_limit_exceeded',
+          severity: 'high'
+        })
+      );
     });
 
     it('should clear rate limit on successful authentication', async () => {
@@ -501,12 +502,13 @@ describe.skip('KioskCheckIn - Security Tests - TODO: Fix validation messages', (
           })
         );
 
-        // Should NOT log patient names or SSN
-        const logCall = (chwService.logSecurityEvent as jest.Mock).mock.calls[0][0];
-        expect(JSON.stringify(logCall)).not.toContain('John');
-        expect(JSON.stringify(logCall)).not.toContain('Doe');
-        expect(JSON.stringify(logCall)).not.toContain('5678');
       });
+
+      // Should NOT log patient names or SSN
+      const logCall = (chwService.logSecurityEvent as jest.Mock).mock.calls[0][0];
+      expect(JSON.stringify(logCall)).not.toContain('John');
+      expect(JSON.stringify(logCall)).not.toContain('Doe');
+      expect(JSON.stringify(logCall)).not.toContain('5678');
     });
 
     it('should log successful authentication', async () => {

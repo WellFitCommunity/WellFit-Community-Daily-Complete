@@ -317,10 +317,9 @@ describe.skip('CHWVitalsCapture - TODO: Fix error message handling', () => {
       fireEvent.click(screen.getByText(/Save Vitals/i));
 
       await waitFor(() => {
-        // Look for the error container which has both parts of the message
-        const errorContainer = screen.getByText(/Failed to save vitals/i).parentElement;
-        expect(errorContainer).toHaveTextContent(/Please try again/i);
+        expect(screen.getByText(/Failed to save vitals/i)).toBeInTheDocument();
       }, { timeout: 2000 });
+      expect(screen.getByText(/Please try again/i)).toBeInTheDocument();
     });
 
     it('should allow retry after error', async () => {
@@ -337,9 +336,9 @@ describe.skip('CHWVitalsCapture - TODO: Fix error message handling', () => {
       fireEvent.click(screen.getByText(/Save Vitals/i));
 
       await waitFor(() => {
-        const errorContainer = screen.getByText(/Failed to save vitals/i).parentElement;
-        expect(errorContainer).toHaveTextContent(/Please try again/i);
+        expect(screen.getByText(/Failed to save vitals/i)).toBeInTheDocument();
       }, { timeout: 2000 });
+      expect(screen.getByText(/Please try again/i)).toBeInTheDocument();
 
       // Retry succeeds
       fireEvent.click(screen.getByText(/Retry/i));

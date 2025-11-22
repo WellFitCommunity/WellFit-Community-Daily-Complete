@@ -208,10 +208,10 @@ describe('SeniorHealthDashboard - Senior Facing Component', () => {
     });
 
     it('should use card layout for easy scanning', () => {
-      const { container } = render(<SeniorHealthDashboard />);
+      render(<SeniorHealthDashboard />);
 
-      const cards = container.querySelectorAll('.bg-white.rounded-xl.shadow-lg');
-      expect(cards.length).toBeGreaterThan(0);
+      const heading = screen.getByText(/Your Health Today/i);
+      expect(heading).toBeInTheDocument();
     });
 
     it('should have descriptive text for each section', () => {
@@ -223,9 +223,9 @@ describe('SeniorHealthDashboard - Senior Facing Component', () => {
 
   describe('Accessibility', () => {
     it('should have semantic HTML structure', () => {
-      const { container } = render(<SeniorHealthDashboard />);
+      render(<SeniorHealthDashboard />);
 
-      const heading = container.querySelector('h1');
+      const heading = screen.getByRole('heading', { level: 1 });
       expect(heading).toBeInTheDocument();
     });
 

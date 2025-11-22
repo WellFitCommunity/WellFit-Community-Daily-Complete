@@ -36,7 +36,7 @@ jest.mock('framer-motion', () => ({
   motion: {
     div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
     button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
-    img: ({ ...props }: any) => <img {...props} />,
+    img: ({ ...props }: any) => <img {...props} alt="" />,
   },
   AnimatePresence: ({ children }: any) => <>{children}</>,
 }));
@@ -199,21 +199,17 @@ describe('CommunityMoments - Senior Facing Component', () => {
     it('should allow user to enter a title', async () => {
       render(<CommunityMoments />);
 
-      await waitFor(() => {
-        const titleInput = screen.getByLabelText(/title/i) as HTMLInputElement;
-        fireEvent.change(titleInput, { target: { value: 'My Birthday Party' } });
-        expect(titleInput.value).toBe('My Birthday Party');
-      });
+      const titleInput = await screen.findByLabelText(/title/i) as HTMLInputElement;
+      fireEvent.change(titleInput, { target: { value: 'My Birthday Party' } });
+      expect(titleInput.value).toBe('My Birthday Party');
     });
 
     it('should allow user to enter a description', async () => {
       render(<CommunityMoments />);
 
-      await waitFor(() => {
-        const descInput = screen.getByLabelText(/description|what.*happening/i) as HTMLTextAreaElement;
-        fireEvent.change(descInput, { target: { value: 'Great time with family' } });
-        expect(descInput.value).toBe('Great time with family');
-      });
+      const descInput = await screen.findByLabelText(/description|what.*happening/i) as HTMLTextAreaElement;
+      fireEvent.change(descInput, { target: { value: 'Great time with family' } });
+      expect(descInput.value).toBe('Great time with family');
     });
 
     it('should allow user to select an emoji', async () => {
@@ -500,11 +496,9 @@ describe('CommunityMoments - Senior Facing Component', () => {
     it('should sanitize tags input', async () => {
       render(<CommunityMoments />);
 
-      await waitFor(() => {
-        const tagsInput = screen.getByLabelText(/tags/i) as HTMLInputElement;
-        fireEvent.change(tagsInput, { target: { value: 'tag1, tag2, tag3' } });
-        expect(tagsInput.value).toBe('tag1, tag2, tag3');
-      });
+      const tagsInput = await screen.findByLabelText(/tags/i) as HTMLInputElement;
+      fireEvent.change(tagsInput, { target: { value: 'tag1, tag2, tag3' } });
+      expect(tagsInput.value).toBe('tag1, tag2, tag3');
     });
 
     it('should limit number of tags to 10', async () => {
@@ -524,11 +518,9 @@ describe('CommunityMoments - Senior Facing Component', () => {
     it('should display personalized greeting with user first name', async () => {
       render(<CommunityMoments />);
 
-      await waitFor(() => {
-        const greeting = screen.getByText(/John|Hello|Welcome/i);
-        expect(greeting).toBeInTheDocument();
-        expect(greeting.textContent).toContain('John');
-      });
+      const greeting = await screen.findByText(/John|Hello|Welcome/i);
+      expect(greeting).toBeInTheDocument();
+      expect(greeting.textContent).toContain('John');
     });
   });
 });
