@@ -3,9 +3,9 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useSupabaseClient, useSession, useUser } from '../contexts/AuthContext';
-import type { SupabaseClient } from '@supabase/supabase-js';
 import AdminFeatureToggle from './admin/AdminFeatureToggle';
 import { useBranding } from '../BrandingContext';
+import { useSignedImageUrl } from '../hooks/useCommunityMoments';
 
 // @ts-ignore
 import Confetti from 'react-confetti';
@@ -18,7 +18,6 @@ import { createPortal } from 'react-dom';
 const BUCKET = 'community-moments';
 const PAGE_SIZE = 12;
 const MAX_FILE_MB = 20;
-const SIGNED_URL_TTL_SEC = 3600;
 
 const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
 
@@ -73,13 +72,6 @@ function sanitizeTags(input: string): string {
 
 function safeFilename(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]/g, '_');
-}
-
-async function getSignedUrlIfPossible(client: SupabaseClient, path?: string): Promise<string | null> {
-  if (!path) return null;
-  const { data, error } = await client.storage.from(BUCKET).createSignedUrl(path, SIGNED_URL_TTL_SEC);
-  if (!error && data?.signedUrl) return data.signedUrl;
-  return null;
 }
 
 const CommunityMoments: React.FC = () => {
@@ -452,15 +444,9 @@ const CommunityMoments: React.FC = () => {
     isAdmin: boolean;
     onFeatureChange: (id: string, next: boolean) => void;
   }> = ({ m, featured, isAdmin, onFeatureChange }) => {
-    const [url, setUrl] = useState<string | null>(null);
-    useEffect(() => {
-      let cancelled = false;
-      (async () => {
-        const s = await getSignedUrlIfPossible(supabase, m.file_path);
-        if (!cancelled) setUrl(s || m.file_url || null);
-      })();
-      return () => { cancelled = true; };
-    }, [m.id, m.file_path, m.file_url]);
+    // Use cached signed URL hook - prevents redundant Supabase Storage API calls
+    const { data: signedUrl } = useSignedImageUrl(supabase, m.file_path);
+    const url = signedUrl || m.file_url || null;
 
     return (
       <motion.div

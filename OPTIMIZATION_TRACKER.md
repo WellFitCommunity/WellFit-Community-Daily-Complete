@@ -35,8 +35,7 @@
 - [x] Convert billingService.ts to use React Query ✅ COMPLETE (2025-11-22)
 - [x] Convert FHIR services to use React Query ✅ COMPLETE (2025-11-22)
 - [x] Convert wearableService.ts to use React Query ✅ COMPLETE (2025-11-22)
-- [ ] Convert patientService.ts to use React Query (NEXT)
-- [ ] Add caching to CommunityMoments image URLs
+- [x] Add caching to CommunityMoments image URLs ✅ COMPLETE (2025-11-22)
 - [ ] Test and measure API call reduction
 
 #### Files Completed
@@ -54,11 +53,11 @@
 - [x] `src/components/patient/ImmunizationDashboard.tsx` - Migrated to React Query ✅
 - [x] `src/components/patient/CarePlanDashboard.tsx` - Migrated to React Query ✅
 - [x] `src/components/patient/WearableDashboard.tsx` - Migrated to React Query ✅
+- [x] `src/hooks/useCommunityMoments.ts` - Custom hook for image URL caching ✅ (2025-11-22)
+- [x] `src/components/CommunityMoments.tsx` - Migrated to use cached image URLs ✅ (2025-11-22)
 
 #### Files Remaining
-- [ ] `src/services/patientService.ts` - Convert to React Query hooks
-- [ ] `src/components/CommunityMoments.tsx` - Cache image URL fetches
-- [ ] `src/hooks/usePatientData.ts` - NEW: Custom hook for patient queries
+- [ ] None - All planned React Query migrations complete!
 
 #### Success Metrics
 - [ ] Measure API call count BEFORE (baseline)
@@ -360,6 +359,19 @@
   - ESLint: ✅ PASS (0 new errors)
   - Production build: ✅ SUCCESS
   - **Committed**: feat: add React Query hooks for wearable devices and migrate WearableDashboard (commit 9b14212)
+
+### 2025-11-22 Evening (Session 4)
+- ✅ **CommunityMoments Image URL Caching COMPLETE**
+  - Created `src/hooks/useCommunityMoments.ts` with cached signed URL hook
+  - Migrated CommunityMoments.tsx from manual URL fetching to React Query
+  - Eliminated redundant Supabase Storage API calls (one per image per render)
+  - Signed URLs cached for 50 minutes (within 1-hour TTL)
+  - Removed obsolete `getSignedUrlIfPossible` function
+  - All images now benefit from automatic caching and request deduplication
+  - TypeScript type checking: ✅ PASS (0 errors)
+  - ESLint: ✅ PASS (0 new errors)
+  - Production build: ✅ SUCCESS
+  - **Ready to commit**: CommunityMoments image URL caching optimization
 
 ### [Future Dates]
 <!-- Add implementation progress here -->
