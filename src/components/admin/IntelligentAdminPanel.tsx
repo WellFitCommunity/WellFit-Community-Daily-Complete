@@ -19,8 +19,6 @@ import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import { useUser } from '../../contexts/AuthContext';
 import { DashboardPersonalizationAI } from '../../services/dashboardPersonalizationAI';
 import { auditLogger } from '../../services/auditLogger';
-import { AdaptiveCollapsibleSection } from './AdaptiveCollapsibleSection';
-import { CategoryCollapsibleGroup } from './CategoryCollapsibleGroup';
 import RequireAdminAuth from 'components/auth/RequireAdminAuth';
 import AdminHeader from './AdminHeader';
 import WhatsNewModal from './WhatsNewModal';
@@ -29,7 +27,6 @@ import {
   getUserBehaviorProfile,
   trackBehaviorEvent,
   getSmartSuggestions,
-  getRecommendedSectionOrder,
   UserBehaviorProfile
 } from '../../services/behaviorTracking';
 import { useSupabaseClient } from '../../contexts/AuthContext';
@@ -37,52 +34,24 @@ import {
   LearningIndicator,
   LearningEvent,
   SmartSuggestionCard,
-  MilestoneCelebration,
-  AnimatedSection
+  MilestoneCelebration
 } from './LearningIndicator';
 import { Clock, TrendingUp, Zap } from 'lucide-react';
+import { SectionLoadingFallback } from './sections/sectionDefinitions';
 
-// Lazy-load all dashboard components for code splitting
-// This reduces the initial bundle size by ~20-30%
-const UsersList = lazy(() => import('./UsersList'));
-const ReportsSection = lazy(() => import('./ReportsSection'));
-const ExportCheckIns = lazy(() => import('./ExportCheckIns'));
-const FhirAiDashboard = lazy(() => import('./FhirAiDashboard'));
-const FHIRFormBuilderEnhanced = lazy(() => import('./FHIRFormBuilderEnhanced'));
-const FHIRDataMapper = lazy(() => import('./FHIRDataMapper'));
-const BillingDashboard = lazy(() => import('./BillingDashboard'));
-const SmartScribe = lazy(() => import('../smart/RealTimeSmartScribe'));
-const SDOHCoderAssist = lazy(() => import('../billing/SDOHCoderAssist'));
-const CCMTimeline = lazy(() => import('../atlas/CCMTimeline'));
-const RevenueDashboard = lazy(() => import('../atlas/RevenueDashboard'));
-const ClaimsSubmissionPanel = lazy(() => import('../atlas/ClaimsSubmissionPanel'));
-const ClaimsAppealsPanel = lazy(() => import('../atlas/ClaimsAppealsPanel'));
-const AdminTransferLogs = lazy(() => import('../handoff/AdminTransferLogs'));
-const PatientEngagementDashboard = lazy(() => import('./PatientEngagementDashboard'));
-const HospitalPatientEnrollment = lazy(() => import('./HospitalPatientEnrollment'));
-const PaperFormScanner = lazy(() => import('./PaperFormScanner'));
-const TenantSecurityDashboard = lazy(() => import('./TenantSecurityDashboard'));
-const TenantAuditLogs = lazy(() => import('./TenantAuditLogs'));
-const TenantComplianceReport = lazy(() => import('./TenantComplianceReport'));
+// Lazy-load category components for code splitting
+// This reduces the initial bundle size by ~30-40%
+const RevenueBillingCategory = lazy(() => import('./sections/RevenueBillingCategory'));
+const PatientCareCategory = lazy(() => import('./sections/PatientCareCategory'));
+const ClinicalDataCategory = lazy(() => import('./sections/ClinicalDataCategory'));
+const SecurityComplianceCategory = lazy(() => import('./sections/SecurityComplianceCategory'));
+const SystemAdminCategory = lazy(() => import('./sections/SystemAdminCategory'));
 
-interface DashboardSection {
-  id: string;
-  title: string;
-  subtitle: string;
-  icon: string;
-  headerColor: string;
-  component: React.ReactNode;
-  category: 'revenue' | 'patient-care' | 'clinical' | 'security' | 'admin';
-  priority: 'high' | 'medium' | 'low';
-  defaultOpen?: boolean;
-  roles?: string[]; // Which roles can see this section
-}
-
-// Loading fallback for lazy-loaded sections
-const SectionLoadingFallback: React.FC = () => (
-  <div className="flex items-center justify-center p-8">
-    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-    <span className="ml-3 text-gray-600">Loading section...</span>
+// Category loading fallback
+const CategoryLoadingFallback: React.FC = () => (
+  <div className="flex items-center justify-center p-12">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    <span className="ml-3 text-gray-700 text-lg">Loading category...</span>
   </div>
 );
 
@@ -93,10 +62,7 @@ const IntelligentAdminPanel: React.FC = () => {
   const navigate = useNavigate();
   const [showWhatsNew, setShowWhatsNew] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [sections, setSections] = useState<DashboardSection[]>([]);
-  const [welcomeMessage, setWelcomeMessage] = useState('');
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
-  const [behaviorSuggestions, setBehaviorSuggestions] = useState<string[]>([]);
   const [learningEvents, setLearningEvents] = useState<LearningEvent[]>([]);
   const [behaviorProfile, setBehaviorProfile] = useState<UserBehaviorProfile | null>(null);
   const [showMilestone, setShowMilestone] = useState(false);
@@ -109,242 +75,8 @@ const IntelligentAdminPanel: React.FC = () => {
     admin: false,
   };
 
-  // Define all available sections
-  const allSections: DashboardSection[] = [
-    // REVENUE & BILLING (Category 1)
-    {
-      id: 'smartscribe-atlus',
-      title: 'SmartScribe Atlus 💰',
-      subtitle: 'AI transcription with Claude Sonnet 4.5 for maximum billing accuracy',
-      icon: '🎤',
-      headerColor: 'text-purple-800',
-      component: <Suspense fallback={<SectionLoadingFallback />}><SmartScribe /></Suspense>,
-      category: 'revenue',
-      priority: 'high',
-    },
-    {
-      id: 'revenue-dashboard',
-      title: 'Revenue Dashboard',
-      subtitle: 'Real-time revenue analytics and optimization opportunities',
-      icon: '💰',
-      headerColor: 'text-green-800',
-      component: <Suspense fallback={<SectionLoadingFallback />}><RevenueDashboard /></Suspense>,
-      category: 'revenue',
-      priority: 'high',
-    },
-    {
-      id: 'ccm-autopilot',
-      title: 'CCM Autopilot',
-      subtitle: 'Automatic tracking of 20+ minute patient interactions for CCM billing',
-      icon: '⏱️',
-      headerColor: 'text-purple-800',
-      component: <Suspense fallback={<SectionLoadingFallback />}><CCMTimeline /></Suspense>,
-      category: 'revenue',
-      priority: 'medium',
-    },
-    {
-      id: 'claims-submission',
-      title: 'Claims Submission Center',
-      subtitle: 'Generate and submit 837P claims to clearinghouses',
-      icon: '📋',
-      headerColor: 'text-blue-800',
-      component: <Suspense fallback={<SectionLoadingFallback />}><ClaimsSubmissionPanel /></Suspense>,
-      category: 'revenue',
-      priority: 'medium',
-    },
-    {
-      id: 'claims-appeals',
-      title: 'Claims Appeals & Resubmission',
-      subtitle: 'AI-assisted appeal letters for denied claims',
-      icon: '🔄',
-      headerColor: 'text-red-800',
-      component: <Suspense fallback={<SectionLoadingFallback />}><ClaimsAppealsPanel /></Suspense>,
-      category: 'revenue',
-      priority: 'medium',
-    },
-    {
-      id: 'sdoh-billing',
-      title: 'SDOH Billing Encoder',
-      subtitle: 'Social determinants of health-aware medical coding',
-      icon: '🏥',
-      headerColor: 'text-indigo-800',
-      component: (
-        <Suspense fallback={<SectionLoadingFallback />}>
-          <SDOHCoderAssist
-            encounterId="demo-encounter-id"
-            patientId="demo-patient-id"
-            onSaved={(data) => auditLogger.debug('SDOH coding saved', data)}
-          />
-        </Suspense>
-      ),
-      category: 'revenue',
-      priority: 'low',
-    },
-    {
-      id: 'billing-dashboard',
-      title: 'Billing & Claims Management',
-      subtitle: 'Monitor claims processing and revenue tracking',
-      icon: '💳',
-      headerColor: 'text-green-800',
-      component: <Suspense fallback={<SectionLoadingFallback />}><BillingDashboard /></Suspense>,
-      category: 'revenue',
-      priority: 'medium',
-    },
-
-    // PATIENT CARE (Category 2)
-    {
-      id: 'patient-engagement',
-      title: 'Patient Engagement & Risk Assessment',
-      subtitle: 'Monitor senior activity levels to identify at-risk patients',
-      icon: '📊',
-      headerColor: 'text-indigo-800',
-      component: <Suspense fallback={<SectionLoadingFallback />}><PatientEngagementDashboard /></Suspense>,
-      category: 'patient-care',
-      priority: 'high',
-    },
-    {
-      id: 'patient-handoff',
-      title: 'Patient Handoff System',
-      subtitle: 'Secure transfer of care between facilities - HIPAA compliant',
-      icon: '🏥',
-      headerColor: 'text-teal-800',
-      component: <Suspense fallback={<SectionLoadingFallback />}><AdminTransferLogs showExportButton={true} /></Suspense>,
-      category: 'patient-care',
-      priority: 'medium',
-    },
-    {
-      id: 'user-management',
-      title: 'User Management',
-      subtitle: 'Manage patient and staff accounts',
-      icon: '👥',
-      headerColor: 'text-gray-800',
-      component: <Suspense fallback={<SectionLoadingFallback />}><UsersList /></Suspense>,
-      category: 'patient-care',
-      priority: 'medium',
-    },
-    {
-      id: 'hospital-enrollment',
-      title: 'Hospital Patient Enrollment',
-      subtitle: 'Create test patients for backend testing (Physician/Nurse panels, handoffs, clinical workflows)',
-      icon: '🏥',
-      headerColor: 'text-blue-800',
-      component: <Suspense fallback={<SectionLoadingFallback />}><HospitalPatientEnrollment /></Suspense>,
-      category: 'admin',
-      priority: 'high',
-      defaultOpen: false,
-    },
-    {
-      id: 'paper-form-scanner',
-      title: 'Paper Form Scanner (AI-Powered OCR)',
-      subtitle: 'Upload photos of paper forms - AI extracts data automatically. Perfect for rural hospitals during outages. 50x faster than manual entry!',
-      icon: '📸',
-      headerColor: 'text-green-800',
-      component: <Suspense fallback={<SectionLoadingFallback />}><PaperFormScanner /></Suspense>,
-      category: 'admin',
-      priority: 'high',
-      defaultOpen: false,
-    },
-
-    // CLINICAL DATA (Category 3)
-    {
-      id: 'fhir-analytics',
-      title: 'AI-Enhanced FHIR Analytics',
-      subtitle: 'Real-time patient insights and clinical decision support',
-      icon: '🧠',
-      headerColor: 'text-purple-800',
-      component: (
-        <Suspense fallback={<SectionLoadingFallback />}>
-          <FhirAiDashboard
-            supabaseUrl={process.env.REACT_APP_SUPABASE_URL || ''}
-            supabaseKey={process.env.REACT_APP_SUPABASE_ANON_KEY || ''}
-          />
-        </Suspense>
-      ),
-      category: 'clinical',
-      priority: 'medium',
-    },
-    {
-      id: 'fhir-questionnaire',
-      title: 'FHIR Questionnaire Builder',
-      subtitle: 'Create standardized clinical questionnaires using AI',
-      icon: '📝',
-      headerColor: 'text-blue-800',
-      component: <Suspense fallback={<SectionLoadingFallback />}><FHIRFormBuilderEnhanced /></Suspense>,
-      category: 'clinical',
-      priority: 'low',
-    },
-    {
-      id: 'fhir-mapper',
-      title: 'FHIR Data Mapper',
-      subtitle: 'Transform legacy data into FHIR-compliant formats',
-      icon: '🔄',
-      headerColor: 'text-teal-800',
-      component: <Suspense fallback={<SectionLoadingFallback />}><FHIRDataMapper /></Suspense>,
-      category: 'clinical',
-      priority: 'low',
-    },
-    {
-      id: 'reports-analytics',
-      title: 'Reports & Analytics',
-      subtitle: 'System-wide analytics and insights',
-      icon: '📊',
-      headerColor: 'text-gray-800',
-      component: <Suspense fallback={<SectionLoadingFallback />}><ReportsSection /></Suspense>,
-      category: 'clinical',
-      priority: 'low',
-    },
-
-    // SECURITY & COMPLIANCE - TENANT SCOPED (Category 4)
-    {
-      id: 'tenant-security',
-      title: 'Facility Security Dashboard',
-      subtitle: 'Real-time security monitoring for your facility',
-      icon: '🛡️',
-      headerColor: 'text-red-900',
-      component: <Suspense fallback={<SectionLoadingFallback />}><TenantSecurityDashboard /></Suspense>,
-      category: 'security',
-      priority: 'medium',
-      roles: ['admin', 'super_admin'],
-    },
-    {
-      id: 'tenant-audit-logs',
-      title: 'Audit Logs',
-      subtitle: 'PHI access logs and administrative actions for your facility',
-      icon: '📋',
-      headerColor: 'text-indigo-900',
-      component: <Suspense fallback={<SectionLoadingFallback />}><TenantAuditLogs /></Suspense>,
-      category: 'security',
-      priority: 'medium',
-      roles: ['admin', 'super_admin'],
-    },
-    {
-      id: 'tenant-compliance',
-      title: 'Compliance Report',
-      subtitle: 'HIPAA and security compliance status for your facility',
-      icon: '✅',
-      headerColor: 'text-green-900',
-      component: <Suspense fallback={<SectionLoadingFallback />}><TenantComplianceReport /></Suspense>,
-      category: 'security',
-      priority: 'low',
-      roles: ['admin', 'super_admin'],
-    },
-
-    // ADMIN (Category 5)
-    {
-      id: 'data-export',
-      title: 'Data Export & Advanced Tools',
-      subtitle: 'Export data and access advanced administrative functions',
-      icon: '📤',
-      headerColor: 'text-gray-800',
-      component: <Suspense fallback={<SectionLoadingFallback />}><ExportCheckIns /></Suspense>,
-      category: 'admin',
-      priority: 'low',
-    },
-  ];
-
-  // NOTE: Master-only components (ApiKeyManager, SOC2 dashboards, SystemAdmin)
-  // are now ONLY in the Master Panel (/super-admin), not in tenant panels.
-  // All tenants (including WellFit) use this same tenant-scoped admin panel.
+  // NOTE: Section definitions moved to sections/sectionDefinitions.tsx for code splitting
+  // Categories are now lazy-loaded independently
 
   // Helper function to add learning events
   const addLearningEvent = (event: Omit<LearningEvent, 'timestamp'> & { timestamp: Date }) => {
@@ -435,7 +167,6 @@ const IntelligentAdminPanel: React.FC = () => {
 
       // Get behavior-based suggestions
       const behaviorBasedSuggestions = getSmartSuggestions(profile);
-      setBehaviorSuggestions(behaviorBasedSuggestions);
 
       // Merge AI suggestions with behavior suggestions
       const combinedSuggestions = [
@@ -443,13 +174,8 @@ const IntelligentAdminPanel: React.FC = () => {
         ...behaviorBasedSuggestions
       ].slice(0, 5); // Limit to 5 total
 
-      // Set welcome message and suggestions
-      setWelcomeMessage(layout.welcomeMessage || '');
+      // Set AI suggestions
       setAiSuggestions(combinedSuggestions);
-
-      // Organize sections based on both AI and behavior recommendations
-      const organizedSections = organizeSections(layout, profile);
-      setSections(organizedSections);
 
       // Check for milestones
       if (profile) {
@@ -483,80 +209,10 @@ const IntelligentAdminPanel: React.FC = () => {
         userId: user?.id,
         adminRole: adminRole || 'admin'
       });
-      // Fallback to default layout
-      setSections(getDefaultSections());
+      // Category components will still load with default settings
     } finally {
       setIsLoading(false);
     }
-  }
-
-  function organizeSections(layout: any, behaviorProfile: any = null): DashboardSection[] {
-    // Filter sections by role
-    const visibleSections = allSections.filter(
-      (section) => !section.roles || section.roles.includes(adminRole || 'admin')
-    );
-
-    // Get behavior-based recommended order
-    const allSectionIds = allSections.map(s => s.id);
-    const behaviorOrder = behaviorProfile
-      ? getRecommendedSectionOrder(behaviorProfile, allSectionIds)
-      : allSectionIds;
-
-    // Sort within each category by:
-    // 1. Behavior-based frequency (most used first)
-    // 2. User's top sections (from AI)
-    // 3. Priority (high > medium > low)
-
-    const priorityOrder = { high: 1, medium: 2, low: 3 };
-
-    return visibleSections.sort((a, b) => {
-      // Keep same category together
-      if (a.category !== b.category) {
-        return 0; // Don't sort across categories
-      }
-
-      // Sort by behavior frequency
-      const aBehaviorIndex = behaviorOrder.indexOf(a.id);
-      const bBehaviorIndex = behaviorOrder.indexOf(b.id);
-      if (aBehaviorIndex !== bBehaviorIndex) {
-        return aBehaviorIndex - bBehaviorIndex;
-      }
-
-      // Check if in top sections
-      const aInTop = layout.topSections?.includes(a.id);
-      const bInTop = layout.topSections?.includes(b.id);
-
-      if (aInTop && !bInTop) return -1;
-      if (!aInTop && bInTop) return 1;
-
-      // Then by priority
-      return priorityOrder[a.priority] - priorityOrder[b.priority];
-    });
-  }
-
-  // Group sections by category
-  function groupSectionsByCategory(sections: DashboardSection[]) {
-    const grouped: Record<string, DashboardSection[]> = {
-      revenue: [],
-      'patient-care': [],
-      clinical: [],
-      security: [],
-      admin: [],
-    };
-
-    sections.forEach(section => {
-      if (grouped[section.category]) {
-        grouped[section.category].push(section);
-      }
-    });
-
-    return grouped;
-  }
-
-  function getDefaultSections(): DashboardSection[] {
-    return allSections.filter(
-      (section) => !section.roles || section.roles.includes(adminRole || 'admin')
-    );
   }
 
   if (isLoading) {
@@ -751,157 +407,42 @@ const IntelligentAdminPanel: React.FC = () => {
             </div>
           )}
 
-          {/* AI-Organized Sections - Grouped by Category */}
+          {/* Lazy-Loaded Category Sections */}
           <div className="space-y-6">
-            {(() => {
-              const groupedSections = groupSectionsByCategory(sections);
+            <Suspense fallback={<CategoryLoadingFallback />}>
+              <RevenueBillingCategory
+                userRole={adminRole || 'admin'}
+                defaultOpen={categoryOpenStates.revenue}
+              />
+            </Suspense>
 
-              return (
-                <>
-                  {/* REVENUE & BILLING OPERATIONS */}
-                  {groupedSections.revenue.length > 0 && (
-                    <CategoryCollapsibleGroup
-                      categoryId="revenue"
-                      title="Revenue & Billing Operations"
-                      icon="💰"
-                      headerColor="text-green-800"
-                      defaultOpen={categoryOpenStates.revenue}
-                      userRole={adminRole || 'admin'}
-                    >
-                      {groupedSections.revenue.map((section, index) => (
-                        <AnimatedSection key={section.id} sectionId={section.id} index={index}>
-                          <AdaptiveCollapsibleSection
-                            sectionId={section.id}
-                            title={section.title}
-                            subtitle={section.subtitle}
-                            icon={section.icon}
-                            headerColor={section.headerColor}
-                            userRole={adminRole || 'admin'}
-                            priority={section.priority}
-                            defaultOpen={section.defaultOpen}
-                          >
-                            {section.component}
-                          </AdaptiveCollapsibleSection>
-                        </AnimatedSection>
-                      ))}
-                    </CategoryCollapsibleGroup>
-                  )}
+            <Suspense fallback={<CategoryLoadingFallback />}>
+              <PatientCareCategory
+                userRole={adminRole || 'admin'}
+                defaultOpen={categoryOpenStates['patient-care']}
+              />
+            </Suspense>
 
-                  {/* PATIENT CARE & ENGAGEMENT */}
-                  {groupedSections['patient-care'].length > 0 && (
-                    <CategoryCollapsibleGroup
-                      categoryId="patient-care"
-                      title="Patient Care & Engagement"
-                      icon="🏥"
-                      headerColor="text-blue-800"
-                      defaultOpen={categoryOpenStates['patient-care']}
-                      userRole={adminRole || 'admin'}
-                    >
-                      {groupedSections['patient-care'].map((section, index) => (
-                        <AnimatedSection key={section.id} sectionId={section.id} index={index}>
-                          <AdaptiveCollapsibleSection
-                            sectionId={section.id}
-                            title={section.title}
-                            subtitle={section.subtitle}
-                            icon={section.icon}
-                            headerColor={section.headerColor}
-                            userRole={adminRole || 'admin'}
-                            priority={section.priority}
-                            defaultOpen={section.defaultOpen}
-                          >
-                            {section.component}
-                          </AdaptiveCollapsibleSection>
-                        </AnimatedSection>
-                      ))}
-                    </CategoryCollapsibleGroup>
-                  )}
+            <Suspense fallback={<CategoryLoadingFallback />}>
+              <ClinicalDataCategory
+                userRole={adminRole || 'admin'}
+                defaultOpen={categoryOpenStates.clinical}
+              />
+            </Suspense>
 
-                  {/* CLINICAL DATA & FHIR */}
-                  {groupedSections.clinical.length > 0 && (
-                    <CategoryCollapsibleGroup
-                      categoryId="clinical"
-                      title="Clinical Data & FHIR"
-                      icon="🧬"
-                      headerColor="text-purple-800"
-                      defaultOpen={categoryOpenStates.clinical}
-                      userRole={adminRole || 'admin'}
-                    >
-                      {groupedSections.clinical.map((section) => (
-                        <AdaptiveCollapsibleSection
-                          key={section.id}
-                          sectionId={section.id}
-                          title={section.title}
-                          subtitle={section.subtitle}
-                          icon={section.icon}
-                          headerColor={section.headerColor}
-                          userRole={adminRole || 'admin'}
-                          priority={section.priority}
-                          defaultOpen={section.defaultOpen}
-                        >
-                          {section.component}
-                        </AdaptiveCollapsibleSection>
-                      ))}
-                    </CategoryCollapsibleGroup>
-                  )}
+            <Suspense fallback={<CategoryLoadingFallback />}>
+              <SecurityComplianceCategory
+                userRole={adminRole || 'admin'}
+                defaultOpen={categoryOpenStates.security}
+              />
+            </Suspense>
 
-                  {/* SECURITY & COMPLIANCE */}
-                  {groupedSections.security.length > 0 && (
-                    <CategoryCollapsibleGroup
-                      categoryId="security"
-                      title="Security & Compliance"
-                      icon="🛡️"
-                      headerColor="text-red-800"
-                      defaultOpen={categoryOpenStates.security}
-                      userRole={adminRole || 'admin'}
-                    >
-                      {groupedSections.security.map((section) => (
-                        <AdaptiveCollapsibleSection
-                          key={section.id}
-                          sectionId={section.id}
-                          title={section.title}
-                          subtitle={section.subtitle}
-                          icon={section.icon}
-                          headerColor={section.headerColor}
-                          userRole={adminRole || 'admin'}
-                          priority={section.priority}
-                          defaultOpen={section.defaultOpen}
-                        >
-                          {section.component}
-                        </AdaptiveCollapsibleSection>
-                      ))}
-                    </CategoryCollapsibleGroup>
-                  )}
-
-                  {/* SYSTEM ADMINISTRATION */}
-                  {groupedSections.admin.length > 0 && (
-                    <CategoryCollapsibleGroup
-                      categoryId="admin"
-                      title="System Administration"
-                      icon="⚙️"
-                      headerColor="text-gray-800"
-                      defaultOpen={categoryOpenStates.admin}
-                      userRole={adminRole || 'admin'}
-                    >
-                      {groupedSections.admin.map((section) => (
-                        <AdaptiveCollapsibleSection
-                          key={section.id}
-                          sectionId={section.id}
-                          title={section.title}
-                          subtitle={section.subtitle}
-                          icon={section.icon}
-                          headerColor={section.headerColor}
-                          userRole={adminRole || 'admin'}
-                          priority={section.priority}
-                          defaultOpen={section.defaultOpen}
-                        >
-                          {section.component}
-                        </AdaptiveCollapsibleSection>
-                      ))}
-                    </CategoryCollapsibleGroup>
-                  )}
-                </>
-              );
-            })()}
+            <Suspense fallback={<CategoryLoadingFallback />}>
+              <SystemAdminCategory
+                userRole={adminRole || 'admin'}
+                defaultOpen={categoryOpenStates.admin}
+              />
+            </Suspense>
           </div>
         </div>
 
