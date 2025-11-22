@@ -126,9 +126,18 @@ export const queryKeys = {
   // Wearable queries
   wearable: {
     all: ['wearables'] as const,
-    vitals: (patientId: string, dateRange: { start: string; end: string }) =>
-      [...queryKeys.wearable.all, 'vitals', patientId, dateRange] as const,
-    devices: (patientId: string) => [...queryKeys.wearable.all, 'devices', patientId] as const,
+
+    // Device connections
+    connections: () => [...queryKeys.wearable.all, 'connections'] as const,
+
+    // Vital signs
+    vitals: () => [...queryKeys.wearable.all, 'vitals'] as const,
+
+    // Activity data
+    activity: () => [...queryKeys.wearable.all, 'activity'] as const,
+
+    // Fall detection
+    falls: () => [...queryKeys.wearable.all, 'falls'] as const,
   },
 
   // Community queries

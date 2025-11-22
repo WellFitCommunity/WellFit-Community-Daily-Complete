@@ -12,113 +12,78 @@
  * Design: Senior-friendly with large UI elements, high contrast
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { WearableService } from '../../services/wearableService';
+import React, { useState, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import {
+  useConnectedDevices,
+  useConnectDevice,
+  useDisconnectDevice,
+  useVitalsTrend,
+  useActivitySummary,
+  useFallHistory,
+  useUpdateFallResponse,
+} from '../../hooks/useWearableData';
 import type {
-  WearableConnection,
-  WearableVitalSign,
-  WearableActivityData,
-  WearableFallDetection,
   WearableDeviceType,
 } from '../../types/neuroSuite';
 
 export const WearableDashboard: React.FC = () => {
   const { user } = useAuth();
-  const [connectedDevices, setConnectedDevices] = useState<WearableConnection[]>([]);
-  const [vitals, setVitals] = useState<WearableVitalSign[]>([]);
-  const [activities, setActivities] = useState<WearableActivityData[]>([]);
-  const [falls, setFalls] = useState<WearableFallDetection[]>([]);
-  const [loading, setLoading] = useState(true);
+  const userId = user?.id || '';
   const [activeTab, setActiveTab] = useState<'overview' | 'vitals' | 'activity' | 'falls' | 'devices'>('overview');
 
-  const loadDashboardData = useCallback(async () => {
-    if (!user) return;
+  // React Query hooks for automatic caching and data management
+  const { data: connectedDevices = [], isLoading: devicesLoading } = useConnectedDevices(userId);
+  const { data: vitals = [], isLoading: vitalsLoading } = useVitalsTrend(userId, 'heart_rate', 7);
 
-    setLoading(true);
-    try {
-      // Load connected devices
-      const devicesResponse = await WearableService.getConnectedDevices(user.id);
-      if (devicesResponse.success && devicesResponse.data) {
-        setConnectedDevices(devicesResponse.data);
-      }
+  // Calculate activity date range (last 7 days)
+  const { startDate, endDate } = useMemo(() => {
+    const today = new Date();
+    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    return {
+      startDate: weekAgo.toISOString().split('T')[0],
+      endDate: today.toISOString().split('T')[0],
+    };
+  }, []);
 
-      // Load recent vitals (last 7 days)
-      const vitalsResponse = await WearableService.getVitalsTrend(user.id, 'heart_rate', 7);
-      if (vitalsResponse.success && vitalsResponse.data) {
-        setVitals(vitalsResponse.data);
-      }
+  const { data: activities = [], isLoading: activitiesLoading } = useActivitySummary(userId, startDate, endDate);
+  const { data: falls = [], isLoading: fallsLoading } = useFallHistory(userId, 30);
 
-      // Load recent activities (last 7 days)
-      const today = new Date();
-      const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-      const activityResponse = await WearableService.getActivitySummary(
-        user.id,
-        weekAgo.toISOString().split('T')[0],
-        today.toISOString().split('T')[0]
-      );
-      if (activityResponse.success && activityResponse.data) {
-        setActivities(activityResponse.data);
-      }
+  // Mutations
+  const connectMutation = useConnectDevice();
+  const disconnectMutation = useDisconnectDevice();
+  const fallResponseMutation = useUpdateFallResponse();
 
-      // Load fall history (last 30 days)
-      const fallsResponse = await WearableService.getFallHistory(user.id, 30);
-      if (fallsResponse.success && fallsResponse.data) {
-        setFalls(fallsResponse.data);
-      }
-    } catch (error) {
-
-    } finally {
-      setLoading(false);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (user) {
-      loadDashboardData();
-    }
-  }, [user, loadDashboardData]);
+  // Combined loading state
+  const loading = devicesLoading || vitalsLoading || activitiesLoading || fallsLoading;
 
   const handleConnectDevice = async (deviceType: WearableDeviceType) => {
-    if (!user) return;
+    if (!userId) return;
 
     try {
       const authCode = prompt('Enter device authorization code:');
       if (!authCode) return;
 
-      const response = await WearableService.connectDevice({
-        user_id: user.id,
+      await connectMutation.mutateAsync({
+        user_id: userId,
         device_type: deviceType,
         auth_code: authCode,
       });
 
-      if (response.success) {
-        alert('Device connected successfully!');
-        loadDashboardData();
-      } else {
-        alert(`Error connecting device: ${response.error}`);
-      }
+      alert('Device connected successfully!');
     } catch (error) {
-
-      alert('Failed to connect device');
+      alert(error instanceof Error ? error.message : 'Failed to connect device');
     }
   };
 
   const handleDisconnectDevice = async (connectionId: string) => {
-     
     if (!confirm('Are you sure you want to disconnect this device?')) return;
 
     try {
-      const response = await WearableService.disconnectDevice(connectionId);
-      if (response.success) {
-        alert('Device disconnected successfully');
-        loadDashboardData();
-      } else {
-        alert(`Error disconnecting device: ${response.error}`);
-      }
+      await disconnectMutation.mutateAsync(connectionId);
+      alert('Device disconnected successfully');
     } catch (error) {
-
-      alert('Failed to disconnect device');
+      alert(error instanceof Error ? error.message : 'Failed to disconnect device');
     }
   };
 
@@ -132,13 +97,14 @@ export const WearableDashboard: React.FC = () => {
 
   const handleFallResponse = async (fallId: string) => {
     try {
-      const response = await WearableService.updateFallResponse(fallId, true, 10);
-      if (response.success) {
-        alert('Response recorded. Stay safe!');
-        loadDashboardData();
-      }
+      await fallResponseMutation.mutateAsync({
+        fallId,
+        responded: true,
+        responseTimeSeconds: 10,
+      });
+      alert('Response recorded. Stay safe!');
     } catch (error) {
-
+      alert(error instanceof Error ? error.message : 'Failed to record response');
     }
   };
 
