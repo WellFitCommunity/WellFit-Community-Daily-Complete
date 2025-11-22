@@ -33,24 +33,32 @@
 - [x] Wrap App with QueryClientProvider ✅ App.tsx wrapped
 - [x] Add React Query DevTools for debugging ✅ DevTools added (dev only)
 - [x] Convert billingService.ts to use React Query ✅ COMPLETE (2025-11-22)
-- [ ] Convert fhirResourceService.ts to use React Query (NEXT)
-- [ ] Convert wearableService.ts to use React Query
-- [ ] Convert patientService.ts to use React Query
+- [x] Convert FHIR services to use React Query ✅ COMPLETE (2025-11-22)
+- [x] Convert wearableService.ts to use React Query ✅ COMPLETE (2025-11-22)
+- [ ] Convert patientService.ts to use React Query (NEXT)
 - [ ] Add caching to CommunityMoments image URLs
 - [ ] Test and measure API call reduction
 
-#### Files to Modify
+#### Files Completed
 - [x] `package.json` - Add @tanstack/react-query dependency ✅
 - [x] `src/App.tsx` - Wrap with QueryClientProvider ✅
-- [x] `src/lib/queryClient.ts` - NEW: Query configuration ✅  (expanded with FHIR query keys 2025-11-22)
-- [x] `src/hooks/useBillingData.ts` - NEW: Custom hook for billing queries ✅ (2025-11-22)
+- [x] `src/lib/queryClient.ts` - Query configuration with FHIR & wearable keys ✅
+- [x] `src/hooks/useBillingData.ts` - Custom hook for billing queries ✅ (2025-11-22)
 - [x] `src/components/admin/BillingDashboard.tsx` - Converted to use React Query ✅ (2025-11-22)
-- [x] `src/hooks/useFhirData.ts` - NEW: Custom hook for FHIR queries ✅ (2025-11-22)
-- [ ] `src/services/wearableService.ts` - Convert to React Query hooks
+- [x] `src/hooks/useFhirData.ts` - Custom hook for FHIR queries ✅ (2025-11-22)
+- [x] `src/hooks/useWearableData.ts` - Custom hook for wearable queries ✅ (2025-11-22)
+- [x] `src/components/patient/MedicationRequestManager.tsx` - Migrated to React Query ✅
+- [x] `src/components/patient/ConditionManager.tsx` - Migrated to React Query ✅
+- [x] `src/components/patient/ObservationDashboard.tsx` - Migrated to React Query ✅
+- [x] `src/components/patient/AllergyManager.tsx` - Migrated to React Query ✅
+- [x] `src/components/patient/ImmunizationDashboard.tsx` - Migrated to React Query ✅
+- [x] `src/components/patient/CarePlanDashboard.tsx` - Migrated to React Query ✅
+- [x] `src/components/patient/WearableDashboard.tsx` - Migrated to React Query ✅
+
+#### Files Remaining
 - [ ] `src/services/patientService.ts` - Convert to React Query hooks
 - [ ] `src/components/CommunityMoments.tsx` - Cache image URL fetches
 - [ ] `src/hooks/usePatientData.ts` - NEW: Custom hook for patient queries
-- [ ] `src/hooks/useWearableData.ts` - NEW: Custom hook for wearable queries
 
 #### Success Metrics
 - [ ] Measure API call count BEFORE (baseline)
@@ -313,7 +321,7 @@
   - ESLint: ✅ PASS
   - **Committed**: feat: implement React Query caching for billing service (commit 90954b8)
 
-### 2025-11-22 Evening
+### 2025-11-22 Evening (Session 1)
 - ✅ **FHIR Service React Query Migration COMPLETE**
   - Created `src/hooks/useFhirData.ts` with 35+ query and mutation hooks
   - Covered core clinical resources: MedicationRequest, Condition, Observation, Procedure, DiagnosticReport
@@ -321,7 +329,37 @@
   - Updated `src/lib/queryClient.ts` with comprehensive FHIR query keys
   - TypeScript type checking: ✅ PASS
   - ESLint: ✅ PASS
-  - **Next**: Adopt hooks in components using FHIR services, then measure API call reduction
+  - **Committed**: feat: implement React Query caching for FHIR services (commit 8a2373c)
+
+### 2025-11-22 Evening (Session 2)
+- ✅ **Patient Component Migrations COMPLETE**
+  - Migrated 6 major patient management components to React Query hooks
+  - Added AllergyIntolerance, Immunization, and CarePlan hooks to useFhirData.ts (343 lines)
+  - Components migrated:
+    - AllergyManager.tsx
+    - ImmunizationDashboard.tsx
+    - CarePlanDashboard.tsx
+    - ConditionManager.tsx (previous session)
+    - ObservationDashboard.tsx (previous session)
+    - MedicationRequestManager.tsx (previous session)
+  - Reduced code complexity: removed useState, useEffect, manual error handling
+  - All mutations automatically invalidate queries
+  - TypeScript type checking: ✅ PASS
+  - ESLint: ✅ PASS
+  - **Committed**: feat: add React Query hooks for AllergyIntolerance, Immunization, and CarePlan (commit 86b00a7)
+
+### 2025-11-22 Evening (Session 3)
+- ✅ **Wearable Service React Query Migration COMPLETE**
+  - Created `src/hooks/useWearableData.ts` with comprehensive wearable device hooks
+  - Hooks for device connections, vital signs, activity data, and fall detection
+  - Migrated WearableDashboard.tsx from manual state management to React Query
+  - Updated queryClient.ts with wearable-specific query keys
+  - All wearable queries cached with appropriate TTLs (5min frequent, 10min stable)
+  - Reduced code by 83 lines net (290 insertions, 83 deletions)
+  - TypeScript type checking: ✅ PASS
+  - ESLint: ✅ PASS (0 new errors)
+  - Production build: ✅ SUCCESS
+  - **Committed**: feat: add React Query hooks for wearable devices and migrate WearableDashboard (commit 9b14212)
 
 ### [Future Dates]
 <!-- Add implementation progress here -->
