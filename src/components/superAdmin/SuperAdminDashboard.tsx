@@ -191,14 +191,7 @@ const SuperAdminDashboard: React.FC = () => {
 
   return (
     <>
-      {/* Vault Animation Overlay */}
-      {showVaultAnimation && (
-        <VaultAnimation
-          onComplete={() => setShowVaultAnimation(false)}
-          skipEnabled={true}
-        />
-      )}
-
+      {/* Panel renders immediately - animation plays as non-blocking overlay */}
       <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-gradient-to-r from-teal-600 to-teal-700 border-b border-teal-800 shadow-lg">
@@ -346,6 +339,14 @@ const SuperAdminDashboard: React.FC = () => {
           />
         )}
       </div>
+
+      {/* Vault Animation Overlay - Non-blocking, plays over the dashboard */}
+      {showVaultAnimation && (
+        <VaultAnimation
+          onComplete={() => setShowVaultAnimation(false)}
+          skipEnabled={true}
+        />
+      )}
     </>
   );
 };

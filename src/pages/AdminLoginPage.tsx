@@ -300,7 +300,25 @@ export default function AdminLoginPage() {
 
         {/* Card Content */}
         <div className="bg-white p-6 rounded-b-lg shadow-lg">
-          <p className="text-sm text-gray-600 mb-4">Logged in as: {userLabel}</p>
+          <p className="text-sm text-gray-600 mb-2">Logged in as: {userLabel}</p>
+
+          {/* Tenant Badge - Smart Recognition */}
+          {userTenantCode && (
+            <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-600 rounded">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                <div className="flex-1">
+                  <p className="text-xs text-blue-700 font-medium">Managing Facility:</p>
+                  <p className="text-sm font-semibold text-blue-900">{userTenantCode}</p>
+                </div>
+                <div className="px-2 py-1 bg-blue-600 text-white text-xs font-bold rounded">
+                  {userTenantCode}
+                </div>
+              </div>
+            </div>
+          )}
 
       {state.message && (
         <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-yellow-800 text-sm">

@@ -29,12 +29,10 @@ import WhatsNewModal from './WhatsNewModal';
 import UsersList from './UsersList';
 import ReportsSection from './ReportsSection';
 import ExportCheckIns from './ExportCheckIns';
-import ClaudeTestWidget from './ClaudeTestWidget';
 import FhirAiDashboard from './FhirAiDashboard';
 import FHIRFormBuilderEnhanced from './FHIRFormBuilderEnhanced';
 import FHIRDataMapper from './FHIRDataMapper';
 import BillingDashboard from './BillingDashboard';
-import ApiKeyManager from './ApiKeyManager';
 import SmartScribe from '../smart/RealTimeSmartScribe';
 import SDOHCoderAssist from '../billing/SDOHCoderAssist';
 import CCMTimeline from '../atlas/CCMTimeline';
@@ -45,18 +43,15 @@ import AdminTransferLogs from '../handoff/AdminTransferLogs';
 import PatientEngagementDashboard from './PatientEngagementDashboard';
 import HospitalPatientEnrollment from './HospitalPatientEnrollment';
 import PaperFormScanner from './PaperFormScanner';
-import { SOC2SecurityDashboard } from './SOC2SecurityDashboard';
-import { SOC2AuditDashboard } from './SOC2AuditDashboard';
-import { SOC2IncidentResponseDashboard } from './SOC2IncidentResponseDashboard';
-import { SOC2ExecutiveDashboard } from './SOC2ExecutiveDashboard';
-import { SystemAdminDashboard } from './SystemAdminDashboard';
+import TenantSecurityDashboard from './TenantSecurityDashboard';
+import TenantAuditLogs from './TenantAuditLogs';
+import TenantComplianceReport from './TenantComplianceReport';
 import { PersonalizedGreeting } from '../ai-transparency';
 import {
   getUserBehaviorProfile,
   trackBehaviorEvent,
   getSmartSuggestions,
   getRecommendedSectionOrder,
-  shouldAutoExpand,
   UserBehaviorProfile
 } from '../../services/behaviorTracking';
 import { useSupabaseClient } from '../../contexts/AuthContext';
@@ -287,60 +282,38 @@ const IntelligentAdminPanel: React.FC = () => {
       priority: 'low',
     },
 
-    // SECURITY & COMPLIANCE (Category 4)
+    // SECURITY & COMPLIANCE - TENANT SCOPED (Category 4)
     {
-      id: 'soc2-executive',
-      title: 'SOC 2 Executive Summary',
-      subtitle: 'High-level security posture and compliance overview',
-      icon: '📊',
-      headerColor: 'text-blue-900',
-      component: <SOC2ExecutiveDashboard />,
-      category: 'security',
-      priority: 'low',
-      roles: ['admin', 'super_admin'],
-    },
-    {
-      id: 'security-ops',
-      title: 'Security Operations Center',
-      subtitle: 'Real-time security monitoring and threat detection',
+      id: 'tenant-security',
+      title: 'Facility Security Dashboard',
+      subtitle: 'Real-time security monitoring for your facility',
       icon: '🛡️',
       headerColor: 'text-red-900',
-      component: <SOC2SecurityDashboard />,
-      category: 'security',
-      priority: 'low',
-      roles: ['admin', 'super_admin'],
-    },
-    {
-      id: 'audit-compliance',
-      title: 'Audit & Compliance Center',
-      subtitle: 'PHI access logs and SOC 2 compliance status',
-      icon: '📋',
-      headerColor: 'text-indigo-900',
-      component: <SOC2AuditDashboard />,
-      category: 'security',
-      priority: 'low',
-      roles: ['admin', 'super_admin'],
-    },
-    {
-      id: 'incident-response',
-      title: 'Incident Response Center',
-      subtitle: 'Security incident investigation queue with SLA tracking',
-      icon: '🚨',
-      headerColor: 'text-orange-900',
-      component: <SOC2IncidentResponseDashboard />,
-      category: 'security',
-      priority: 'low',
-      roles: ['admin', 'super_admin'],
-    },
-    {
-      id: 'system-administration',
-      title: 'System Administration',
-      subtitle: 'Infrastructure health, database monitoring, active sessions, and system metrics',
-      icon: '⚙️',
-      headerColor: 'text-gray-900',
-      component: <SystemAdminDashboard />,
+      component: <TenantSecurityDashboard />,
       category: 'security',
       priority: 'medium',
+      roles: ['admin', 'super_admin'],
+    },
+    {
+      id: 'tenant-audit-logs',
+      title: 'Audit Logs',
+      subtitle: 'PHI access logs and administrative actions for your facility',
+      icon: '📋',
+      headerColor: 'text-indigo-900',
+      component: <TenantAuditLogs />,
+      category: 'security',
+      priority: 'medium',
+      roles: ['admin', 'super_admin'],
+    },
+    {
+      id: 'tenant-compliance',
+      title: 'Compliance Report',
+      subtitle: 'HIPAA and security compliance status for your facility',
+      icon: '✅',
+      headerColor: 'text-green-900',
+      component: <TenantComplianceReport />,
+      category: 'security',
+      priority: 'low',
       roles: ['admin', 'super_admin'],
     },
 
@@ -357,42 +330,9 @@ const IntelligentAdminPanel: React.FC = () => {
     },
   ];
 
-  // Add super admin sections dynamically
-  if (adminRole === 'super_admin') {
-    allSections.push(
-      {
-        id: 'super-admin',
-        title: 'Super Admin Features',
-        subtitle: 'Advanced system administration and AI testing',
-        icon: '🔐',
-        headerColor: 'text-blue-800',
-        component: (
-          <div className="bg-green-50 rounded-lg p-6">
-            <h3 className="text-lg font-medium text-green-700 mb-4 flex items-center">
-              <span className="mr-2">🧠</span>
-              Claude AI Service Test
-            </h3>
-            <p className="text-green-600 text-sm mb-4">Test and validate AI service integration</p>
-            <ClaudeTestWidget />
-          </div>
-        ),
-        category: 'admin',
-        priority: 'low',
-        roles: ['super_admin'],
-      },
-      {
-        id: 'api-keys',
-        title: 'API Key Manager',
-        subtitle: 'Generate and manage API keys for system integrations',
-        icon: '🔑',
-        headerColor: 'text-yellow-800',
-        component: <ApiKeyManager />,
-        category: 'admin',
-        priority: 'low',
-        roles: ['super_admin'],
-      }
-    );
-  }
+  // NOTE: Master-only components (ApiKeyManager, SOC2 dashboards, SystemAdmin)
+  // are now ONLY in the Master Panel (/super-admin), not in tenant panels.
+  // All tenants (including WellFit) use this same tenant-scoped admin panel.
 
   // Helper function to add learning events
   const addLearningEvent = (event: Omit<LearningEvent, 'timestamp'> & { timestamp: Date }) => {
@@ -816,20 +756,21 @@ const IntelligentAdminPanel: React.FC = () => {
                       defaultOpen={categoryOpenStates.revenue}
                       userRole={adminRole || 'admin'}
                     >
-                      {groupedSections.revenue.map((section) => (
-                        <AdaptiveCollapsibleSection
-                          key={section.id}
-                          sectionId={section.id}
-                          title={section.title}
-                          subtitle={section.subtitle}
-                          icon={section.icon}
-                          headerColor={section.headerColor}
-                          userRole={adminRole || 'admin'}
-                          priority={section.priority}
-                          defaultOpen={section.defaultOpen}
-                        >
-                          {section.component}
-                        </AdaptiveCollapsibleSection>
+                      {groupedSections.revenue.map((section, index) => (
+                        <AnimatedSection key={section.id} sectionId={section.id} index={index}>
+                          <AdaptiveCollapsibleSection
+                            sectionId={section.id}
+                            title={section.title}
+                            subtitle={section.subtitle}
+                            icon={section.icon}
+                            headerColor={section.headerColor}
+                            userRole={adminRole || 'admin'}
+                            priority={section.priority}
+                            defaultOpen={section.defaultOpen}
+                          >
+                            {section.component}
+                          </AdaptiveCollapsibleSection>
+                        </AnimatedSection>
                       ))}
                     </CategoryCollapsibleGroup>
                   )}
@@ -844,20 +785,21 @@ const IntelligentAdminPanel: React.FC = () => {
                       defaultOpen={categoryOpenStates['patient-care']}
                       userRole={adminRole || 'admin'}
                     >
-                      {groupedSections['patient-care'].map((section) => (
-                        <AdaptiveCollapsibleSection
-                          key={section.id}
-                          sectionId={section.id}
-                          title={section.title}
-                          subtitle={section.subtitle}
-                          icon={section.icon}
-                          headerColor={section.headerColor}
-                          userRole={adminRole || 'admin'}
-                          priority={section.priority}
-                          defaultOpen={section.defaultOpen}
-                        >
-                          {section.component}
-                        </AdaptiveCollapsibleSection>
+                      {groupedSections['patient-care'].map((section, index) => (
+                        <AnimatedSection key={section.id} sectionId={section.id} index={index}>
+                          <AdaptiveCollapsibleSection
+                            sectionId={section.id}
+                            title={section.title}
+                            subtitle={section.subtitle}
+                            icon={section.icon}
+                            headerColor={section.headerColor}
+                            userRole={adminRole || 'admin'}
+                            priority={section.priority}
+                            defaultOpen={section.defaultOpen}
+                          >
+                            {section.component}
+                          </AdaptiveCollapsibleSection>
+                        </AnimatedSection>
                       ))}
                     </CategoryCollapsibleGroup>
                   )}

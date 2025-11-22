@@ -41,15 +41,15 @@ export const VaultAnimation: React.FC<VaultAnimationProps> = ({
     }
   }, [prefersReducedMotion, onComplete]);
 
-  // Animation sequence timing
+  // Animation sequence timing - Faster, non-blocking
   useEffect(() => {
     if (skipped || prefersReducedMotion) return;
 
     const timers = [
-      setTimeout(() => setStage('gears'), 1200),      // Locks click into place
-      setTimeout(() => setStage('opening'), 2400),    // Gears turn
-      setTimeout(() => setStage('complete'), 3600),   // Vault opens
-      setTimeout(() => onComplete(), 4000)            // Complete
+      setTimeout(() => setStage('gears'), 600),       // Locks click into place (faster)
+      setTimeout(() => setStage('opening'), 1200),    // Gears turn (faster)
+      setTimeout(() => setStage('complete'), 1800),   // Vault opens (faster)
+      setTimeout(() => onComplete(), 2200)            // Auto-complete after 2.2s
     ];
 
     return () => timers.forEach(clearTimeout);
