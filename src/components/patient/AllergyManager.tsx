@@ -1,5 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { getAllergies, addAllergy, updateAllergy, deleteAllergy, type AllergyIntolerance } from '../../api/allergies';
+import React, { useState } from 'react';
+import {
+  useAllergies,
+  useCreateAllergy,
+  useUpdateAllergy,
+  useDeleteAllergy,
+} from '../../hooks/useFhirData';
+import type { AllergyIntolerance } from '../../api/allergies';
 
 interface AllergyManagerProps {
   userId: string;
@@ -7,8 +13,12 @@ interface AllergyManagerProps {
 }
 
 const AllergyManager: React.FC<AllergyManagerProps> = ({ userId, readOnly = false }) => {
-  const [allergies, setAllergies] = useState<AllergyIntolerance[]>([]);
-  const [loading, setLoading] = useState(true);
+  // React Query hooks for automatic caching and data management
+  const { data: allergies = [], isLoading: loading, error } = useAllergies(userId);
+  const createMutation = useCreateAllergy();
+  const updateMutation = useUpdateAllergy();
+  const deleteMutation = useDeleteAllergy();
+
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -32,40 +42,25 @@ const AllergyManager: React.FC<AllergyManagerProps> = ({ userId, readOnly = fals
     notes: '',
   });
 
-  useEffect(() => {
-    loadAllergies();
-  }, [userId]);
-
-  const loadAllergies = async () => {
-    setLoading(true);
-    const response = await getAllergies(userId);
-    if (response.success && response.data) {
-      setAllergies(response.data);
-    }
-    setLoading(false);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const allergyData = {
       ...formData,
+      patient_id: userId,
       user_id: userId,
       recorded_date: new Date().toISOString().split('T')[0],
     };
 
-    if (editingId) {
-      const response = await updateAllergy(editingId, allergyData);
-      if (response.success) {
-        await loadAllergies();
-        resetForm();
+    try {
+      if (editingId) {
+        await updateMutation.mutateAsync({ id: editingId, updates: allergyData });
+      } else {
+        await createMutation.mutateAsync(allergyData);
       }
-    } else {
-      const response = await addAllergy(allergyData);
-      if (response.success) {
-        await loadAllergies();
-        resetForm();
-      }
+      resetForm();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'An unexpected error occurred');
     }
   };
 
@@ -86,8 +81,11 @@ const AllergyManager: React.FC<AllergyManagerProps> = ({ userId, readOnly = fals
 
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this allergy?')) {
-      await deleteAllergy(id);
-      await loadAllergies();
+      try {
+        await deleteMutation.mutateAsync(id);
+      } catch (err) {
+        alert(err instanceof Error ? err.message : 'Failed to delete allergy');
+      }
     }
   };
 

@@ -1,8 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import FHIRService from '../../services/fhirResourceService';
+import React, { useState, useMemo } from 'react';
+import {
+  useImmunizations,
+  useCompletedImmunizations,
+  useVaccineGaps,
+} from '../../hooks/useFhirData';
 import type { FHIRImmunization } from '../../types/fhir';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { VACCINE_NAMES, SENIOR_VACCINE_CODES } from '../../types/fhir';
+import { SENIOR_VACCINE_CODES } from '../../types/fhir';
 import ImmunizationTimeline from './ImmunizationTimeline';
 import ImmunizationEntry from './ImmunizationEntry';
 
@@ -22,75 +25,32 @@ interface VaccineGap {
 }
 
 const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, readOnly = false }) => {
-  const [immunizations, setImmunizations] = useState<FHIRImmunization[]>([]);
-  const [vaccineGaps, setVaccineGaps] = useState<VaccineGap[]>([]);
-  const [filteredImmunizations, setFilteredImmunizations] = useState<FHIRImmunization[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // React Query hooks for automatic caching
+  const { data: immunizations = [], isLoading: loading, error: queryError } = useImmunizations(userId);
+  const { data: completedImmunizations = [] } = useCompletedImmunizations(userId);
+  const { data: vaccineGaps = [] } = useVaccineGaps(userId);
+
+  const error = queryError?.message || null;
+
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [showAddForm, setShowAddForm] = useState(false);
   const [showTimeline, setShowTimeline] = useState(false);
   const [selectedImmunization, setSelectedImmunization] = useState<FHIRImmunization | null>(null);
 
-  const loadImmunizations = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await FHIRService.Immunization.getByPatient(userId);
-      if (result.success && result.data) {
-        setImmunizations(result.data);
-      } else if (!result.success) {
-        setError(result.error || 'Failed to load immunization records.');
-      }
-    } catch (error: any) {
-
-      setError(error?.message || 'Failed to load immunization records. Please try again later.');
-    }
-    setLoading(false);
-  }, [userId]);
-
-  const loadVaccineGaps = useCallback(async () => {
-    try {
-      const result = await FHIRService.Immunization.getVaccineGaps(userId);
-      if (result.success && result.data) {
-        setVaccineGaps(result.data);
-      }
-    } catch (error: any) {
-
-      // Don't set main error for vaccine gaps - it's not critical
-    }
-  }, [userId]);
-
-  const filterImmunizations = useCallback(() => {
-    let filtered = immunizations;
-
+  // Filter immunizations based on active tab (memoized)
+  const filteredImmunizations = useMemo(() => {
     switch (activeTab) {
       case 'completed':
-        filtered = immunizations.filter(imm => imm.status === 'completed');
-        break;
+        return completedImmunizations;
       case 'gaps':
-        // Show gaps in separate section
-        filtered = [];
-        break;
+        return []; // Show gaps in separate section
       default:
-        filtered = immunizations;
+        return immunizations;
     }
-
-    setFilteredImmunizations(filtered);
-  }, [activeTab, immunizations]);
-
-  useEffect(() => {
-    loadImmunizations();
-    loadVaccineGaps();
-  }, [loadImmunizations, loadVaccineGaps]);
-
-  useEffect(() => {
-    filterImmunizations();
-  }, [filterImmunizations]);
+  }, [activeTab, immunizations, completedImmunizations]);
 
   const handleImmunizationCreated = () => {
-    loadImmunizations();
-    loadVaccineGaps();
+    // React Query will automatically refetch
     setShowAddForm(false);
   };
 
@@ -180,13 +140,8 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
             <span className="text-3xl mr-4">⚠️</span>
             <div>
               <h3 className="text-lg font-semibold text-red-800 mb-2">Unable to Load Immunization Records</h3>
-              <p className="text-red-700 mb-4">{error}</p>
-              <button
-                onClick={loadImmunizations}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-              >
-                Try Again
-              </button>
+              <p className="text-red-700">{error}</p>
+              <p className="text-sm text-red-600 mt-2">Retrying automatically...</p>
             </div>
           </div>
         </div>

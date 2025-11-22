@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import FHIRService from '../../services/fhirResourceService';
+import React, { useState, useMemo } from 'react';
+import { useCarePlans, useActiveCarePlans, useCurrentCarePlan } from '../../hooks/useFhirData';
 import type { FHIRCarePlan, CarePlanActivity } from '../../types/fhir';
 import { CARE_PLAN_CATEGORY_NAMES } from '../../types/fhir';
 import CarePlanEntry from './CarePlanEntry';
@@ -12,80 +12,32 @@ interface CarePlanDashboardProps {
 type TabType = 'all' | 'active' | 'completed';
 
 const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly = false }) => {
-  const [carePlans, setCarePlans] = useState<FHIRCarePlan[]>([]);
-  const [currentPlan, setCurrentPlan] = useState<any | null>(null);
-  const [filteredPlans, setFilteredPlans] = useState<FHIRCarePlan[]>([]);
-  const [loading, setLoading] = useState(true);
+  // React Query hooks for automatic caching
+  const { data: carePlans = [], isLoading: loading } = useCarePlans(userId);
+  const { data: activePlans = [] } = useActiveCarePlans(userId);
+  const { data: currentPlan = null } = useCurrentCarePlan(userId);
+
   const [activeTab, setActiveTab] = useState<TabType>('active');
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<FHIRCarePlan | null>(null);
-  const [activitySummaries, setActivitySummaries] = useState<Record<string, any>>({});
 
-  const loadCarePlans = useCallback(async () => {
-    setLoading(true);
-    try {
-      const result = await FHIRService.CarePlan.getByPatient(userId);
-      if (result.success && result.data) {
-        setCarePlans(result.data);
+  // Activity summaries (future enhancement - currently not loaded)
+  const activitySummaries: Record<string, any> = {};
 
-        // Load activity summaries for each plan
-        const summaries: Record<string, any> = {};
-        for (const plan of result.data) {
-          try {
-            const summaryResult = await FHIRService.CarePlan.getActivitiesSummary(plan.id);
-            if (summaryResult.success && summaryResult.data) {
-              summaries[plan.id] = summaryResult.data;
-            }
-          } catch (error) {
-
-          }
-        }
-        setActivitySummaries(summaries);
-      }
-    } catch (error) {
-
-    }
-    setLoading(false);
-  }, [userId]);
-
-  const loadCurrentPlan = useCallback(async () => {
-    try {
-      const current = await FHIRService.CarePlan.getCurrent(userId);
-      setCurrentPlan(current);
-    } catch (error) {
-
-    }
-  }, [userId]);
-
-  const filterPlans = useCallback(() => {
-    let filtered = carePlans;
-
+  // Filter plans based on active tab (memoized)
+  const filteredPlans = useMemo(() => {
     switch (activeTab) {
       case 'active':
-        filtered = carePlans.filter(plan => plan.status === 'active');
-        break;
+        return activePlans;
       case 'completed':
-        filtered = carePlans.filter(plan => plan.status === 'completed');
-        break;
+        return carePlans.filter(plan => plan.status === 'completed');
       default:
-        filtered = carePlans;
+        return carePlans;
     }
-
-    setFilteredPlans(filtered);
-  }, [activeTab, carePlans]);
-
-  useEffect(() => {
-    loadCarePlans();
-    loadCurrentPlan();
-  }, [loadCarePlans, loadCurrentPlan]);
-
-  useEffect(() => {
-    filterPlans();
-  }, [filterPlans]);
+  }, [activeTab, carePlans, activePlans]);
 
   const handleCarePlanCreated = () => {
-    loadCarePlans();
-    loadCurrentPlan();
+    // React Query will automatically refetch
     setShowAddForm(false);
   };
 
@@ -166,7 +118,7 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
 
   // Stats
   const totalPlans = carePlans.length;
-  const activePlans = carePlans.filter(p => p.status === 'active').length;
+  const activePlansCount = activePlans.length;
   const completedPlans = carePlans.filter(p => p.status === 'completed').length;
   const onHoldPlans = carePlans.filter(p => p.status === 'on-hold').length;
 
@@ -196,7 +148,7 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
             <div className="text-sm text-blue-100">Total Plans</div>
           </div>
           <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-            <div className="text-2xl font-bold">{activePlans}</div>
+            <div className="text-2xl font-bold">{activePlansCount}</div>
             <div className="text-sm text-blue-100">Active</div>
           </div>
           <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
@@ -294,7 +246,7 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            Active ({activePlans})
+            Active ({activePlansCount})
           </button>
           <button
             onClick={() => setActiveTab('completed')}
@@ -352,7 +304,7 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
                       <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-300">
                         {plan.intent}
                       </span>
-                      {Array.isArray(plan.category) && plan.category.map((cat, idx) => (
+                      {Array.isArray(plan.category) && plan.category.map((cat: string, idx: number) => (
                         <span key={idx} className="px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-300">
                           {CARE_PLAN_CATEGORY_NAMES[cat] || cat}
                         </span>
