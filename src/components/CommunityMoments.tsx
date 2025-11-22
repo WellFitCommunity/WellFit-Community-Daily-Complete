@@ -1,19 +1,21 @@
 // src/components/CommunityMoments.tsx — SENIOR-FRIENDLY UX REDESIGN
 // Larger text, bigger buttons, easier emoji selection, warm and encouraging!
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { useSupabaseClient, useSession, useUser } from '../contexts/AuthContext';
 import AdminFeatureToggle from './admin/AdminFeatureToggle';
 import { useBranding } from '../BrandingContext';
 import { useSignedImageUrl } from '../hooks/useCommunityMoments';
 
 // @ts-ignore
-import Confetti from 'react-confetti';
-// @ts-ignore
 import { motion, AnimatePresence } from 'framer-motion';
-// @ts-ignore
-import EmojiPicker from 'emoji-picker-react';
 import { createPortal } from 'react-dom';
+
+// Lazy load heavy components that are only used conditionally
+// @ts-ignore
+const Confetti = lazy(() => import('react-confetti'));
+// @ts-ignore
+const EmojiPicker = lazy(() => import('emoji-picker-react'));
 
 const BUCKET = 'community-moments';
 const PAGE_SIZE = 12;
@@ -520,10 +522,12 @@ const CommunityMoments: React.FC = () => {
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 pb-12">
-      {/* Confetti */}
+      {/* Confetti - Lazy loaded */}
       <AnimatePresence>
         {showConfetti && isBrowser && width > 0 && height > 0 && (
-          <Confetti width={width} height={height} numberOfPieces={300} recycle={false} />
+          <Suspense fallback={null}>
+            <Confetti width={width} height={height} numberOfPieces={300} recycle={false} />
+          </Suspense>
         )}
       </AnimatePresence>
 
@@ -774,8 +778,11 @@ const CommunityMoments: React.FC = () => {
                 >
                   ✕
                 </button>
-                {/* @ts-ignore */}
-                <EmojiPicker onEmojiClick={handleEmojiClick} searchDisabled={false} height={450} width={400} />
+                {/* Lazy loaded EmojiPicker */}
+                <Suspense fallback={<div className="text-center p-8 text-gray-600">Loading emoji picker...</div>}>
+                  {/* @ts-ignore */}
+                  <EmojiPicker onEmojiClick={handleEmojiClick} searchDisabled={false} height={450} width={400} />
+                </Suspense>
               </div>,
               document.body
             )}
