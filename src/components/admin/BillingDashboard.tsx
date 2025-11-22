@@ -1,51 +1,36 @@
-import React, { useState, useEffect } from 'react';
-import { BillingService } from '../../services/billingService';
-import type { BillingProvider, Claim, ClaimStatus } from '../../types/billing';
-
-interface BillingMetrics {
-  totalClaims: number;
-  claimsByStatus: Record<ClaimStatus, number>;
-  totalAmount: number;
-  recentClaims: Claim[];
-}
+import React from 'react';
+import { useBillingProviders, useClaimMetrics, useSearchClaims } from '../../hooks/useBillingData';
+import type { ClaimStatus } from '../../types/billing';
 
 interface BillingDashboardProps {
   className?: string;
 }
 
 const BillingDashboard: React.FC<BillingDashboardProps> = ({ className = '' }) => {
-  const [metrics, setMetrics] = useState<BillingMetrics | null>(null);
-  const [providers, setProviders] = useState<BillingProvider[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // React Query hooks - automatic caching, deduplication, and background refetching
+  const { data: providers = [], isLoading: providersLoading, error: providersError, refetch: refetchProviders } = useBillingProviders();
+  const { data: metricsData, isLoading: metricsLoading, error: metricsError, refetch: refetchMetrics } = useClaimMetrics();
+  const { data: recentClaims = [], isLoading: claimsLoading, error: claimsError, refetch: refetchClaims } = useSearchClaims({ limit: 10 });
 
-  useEffect(() => {
-    loadBillingData();
-  }, []);
+  // Combine loading states
+  const loading = providersLoading || metricsLoading || claimsLoading;
 
-  const loadBillingData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  // Combine error states
+  const error = providersError?.message || metricsError?.message || claimsError?.message;
 
-      const [metricsData, providersData, recentClaimsData] = await Promise.all([
-        BillingService.getClaimMetrics(),
-        BillingService.getProviders(),
-        BillingService.searchClaims({ limit: 10 })
-      ]);
+  // Build metrics object from React Query data
+  const metrics = metricsData ? {
+    totalClaims: metricsData.total,
+    claimsByStatus: metricsData.byStatus,
+    totalAmount: metricsData.totalAmount,
+    recentClaims: recentClaims
+  } : null;
 
-      setMetrics({
-        totalClaims: metricsData.total,
-        claimsByStatus: metricsData.byStatus,
-        totalAmount: metricsData.totalAmount,
-        recentClaims: recentClaimsData
-      });
-      setProviders(providersData);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load billing data');
-    } finally {
-      setLoading(false);
-    }
+  // Refresh all billing data
+  const handleRefresh = () => {
+    refetchProviders();
+    refetchMetrics();
+    refetchClaims();
   };
 
   const formatCurrency = (amount: number) => {
@@ -90,12 +75,7 @@ const BillingDashboard: React.FC<BillingDashboardProps> = ({ className = '' }) =
           <div>
             <h3 className="text-red-800 font-medium">Billing Data Error</h3>
             <p className="text-red-600 text-sm mt-1">{error}</p>
-            <button
-              onClick={loadBillingData}
-              className="mt-2 text-red-700 underline text-sm hover:text-red-800"
-            >
-              Retry
-            </button>
+            <p className="text-red-500 text-xs mt-1">React Query will automatically retry failed requests</p>
           </div>
         </div>
       </div>
@@ -174,7 +154,7 @@ const BillingDashboard: React.FC<BillingDashboardProps> = ({ className = '' }) =
               Recent Claims
             </h3>
             <button
-              onClick={loadBillingData}
+              onClick={handleRefresh}
               className="inline-flex items-center px-4 py-2 text-sm font-bold text-black bg-[#C8E63D] hover:bg-[#D9F05C] rounded-md transition-all shadow-md hover:shadow-lg"
             >
               <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

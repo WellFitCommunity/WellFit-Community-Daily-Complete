@@ -1,6 +1,8 @@
 // src/App.tsx
 import React, { useEffect, useState, Suspense } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
 import { SessionTimeoutProvider } from './contexts/SessionTimeoutContext';
 import { BrandingConfig, getCurrentBranding } from './branding.config';
@@ -8,6 +10,7 @@ import { BrandingContext } from './BrandingContext';
 import { performanceMonitor } from './services/performanceMonitoring';
 import { GuardianErrorBoundary } from './components/GuardianErrorBoundary';
 import { GuardianAgent } from './services/guardian-agent/GuardianAgent';
+import { queryClient } from './lib/queryClient';
 
 // ❌ Do NOT import or use AuthProvider here — it lives in index.tsx
 // ❌ Do NOT import or use AdminAuthProvider here — it lives in index.tsx
@@ -690,7 +693,15 @@ function Shell() {
 }
 
 const App: React.FC = () => {
-  return <Shell />;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Shell />
+      {/* React Query DevTools - Only visible in development */}
+      {process.env.NODE_ENV === 'development' && (
+        <ReactQueryDevtools initialIsOpen={false} />
+      )}
+    </QueryClientProvider>
+  );
 };
 
 export default App;
