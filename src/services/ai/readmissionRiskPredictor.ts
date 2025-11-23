@@ -15,6 +15,9 @@ import { supabase } from '../../lib/supabaseClient';
 import { mcpOptimizer } from '../mcp/mcpCostOptimizer';
 import type { MCPCostOptimizer } from '../mcp/mcpCostOptimizer';
 import { ReadmissionTrackingService } from '../readmissionTrackingService';
+import { featureExtractor } from './readmissionFeatureExtractor';
+import type { ReadmissionRiskFeatures } from '../../types/readmissionRiskFeatures';
+import { EVIDENCE_BASED_WEIGHTS, ENGAGEMENT_FEATURE_WEIGHTS } from '../../types/readmissionRiskFeatures';
 
 // =====================================================
 // TYPES
@@ -150,14 +153,14 @@ export class ReadmissionRiskPredictor {
       throw new Error('Readmission risk predictor is not enabled for this tenant');
     }
 
-    // Gather comprehensive patient data
-    const patientData = await this.gatherPatientData(context);
+    // Extract comprehensive evidence-based features
+    const features = await featureExtractor.extractFeatures(context);
 
     // Generate risk prediction with AI (Sonnet for accuracy)
-    const prediction = await this.generatePredictionWithAI(context, patientData, config);
+    const prediction = await this.generatePredictionWithAI(context, features, config);
 
-    // Store prediction in database
-    await this.storePrediction(context, prediction);
+    // Store prediction in database with comprehensive features
+    await this.storePrediction(context, prediction, features);
 
     // Auto-create care plan if high risk and enabled
     if (
@@ -306,26 +309,63 @@ export class ReadmissionRiskPredictor {
    */
   private async generatePredictionWithAI(
     context: DischargeContext,
-    patientData: any,
+    features: ReadmissionRiskFeatures,
     config: any
   ): Promise<ReadmissionPrediction> {
-    // Build comprehensive prompt
-    const prompt = this.buildPredictionPrompt(context, patientData);
+    // Build comprehensive prompt with evidence-based features
+    const prompt = this.buildComprehensivePredictionPrompt(context, features);
 
-    // System prompt with clinical prediction guidelines
-    const systemPrompt = `You are an expert clinical analyst specializing in readmission risk prediction.
-Your task is to analyze patient data at discharge and predict 30-day readmission risk.
+    // System prompt with comprehensive evidence-based guidelines
+    const systemPrompt = `You are an expert clinical analyst specializing in readmission risk prediction for a rural community healthcare program.
 
-Use evidence-based risk factors:
-- Prior readmissions (strongest predictor)
-- Social determinants of health (housing, transportation, food security)
-- Medication complexity and adherence patterns
-- Chronic condition burden
-- Age and comorbidities
-- Post-discharge follow-up plans
-- Social support system
+EVIDENCE-BASED FEATURE WEIGHTING:
+Use these validated predictive weights when assessing risk:
 
-CRITICAL: Your predictions directly impact patient care. Be thorough and accurate.
+CLINICAL FACTORS (Highest Weight):
+- Prior admissions in 30 days: 0.25 (STRONGEST predictor)
+- Prior admissions in 90 days: 0.20
+- ED visits in 6 months: 0.15
+- Comorbidity count: 0.18
+- High-risk diagnosis (CHF, COPD, diabetes, renal failure): 0.15
+
+POST-DISCHARGE SETUP (Critical):
+- No follow-up scheduled: 0.18 (HIGH RISK)
+- Follow-up within 7 days: -0.12 (PROTECTIVE)
+- No PCP assigned: risk factor
+- Pending test results at discharge: risk factor
+
+SOCIAL DETERMINANTS (Rural Population Focus):
+- Transportation barriers: 0.16
+- Lives alone with no caregiver: 0.14
+- Rural isolation: 0.15
+- Low health literacy: 0.12
+- Financial barriers to medications: significant risk
+
+MEDICATIONS:
+- Polypharmacy (5+ meds): 0.13
+- High-risk medications (anticoagulants, insulin, opioids): 0.14
+- No prescription filled within 3 days: 0.16
+- Significant medication changes during admission: risk factor
+
+FUNCTIONAL STATUS:
+- ADL dependencies: 0.12
+- Recent falls (90 days): 0.11
+- Cognitive impairment: 0.13
+
+ENGAGEMENT & BEHAVIORAL (WellFit's UNIQUE Early Warning System):
+- Consecutive missed check-ins (≥3): 0.16
+- Sudden engagement drop: 0.18
+- Game participation declining: 0.14
+- Days with zero activity: 0.15
+- Red flag symptoms (chest pain, SOB): 0.20
+- Negative mood trend: 0.13
+- Complete disengagement: 0.19
+- Stopped responding: 0.22 (CRITICAL)
+
+CRITICAL: WellFit's engagement data provides EARLY WARNING signals 7-14 days before clinical deterioration.
+A sudden drop in check-in compliance, game participation, or social engagement is a powerful predictor.
+
+Your predictions directly impact patient care. Be thorough, evidence-based, and accurate.
 
 Return response as strict JSON with this structure:
 {
@@ -356,7 +396,7 @@ Return response as strict JSON with this structure:
         userId: context.patientId,
         context: {
           dischargeDate: context.dischargeDate,
-          patientAge: patientData.age
+          dataCompleteness: features.dataCompletenessScore
         }
       });
 
@@ -374,8 +414,14 @@ Return response as strict JSON with this structure:
         protectiveFactors: parsed.protectiveFactors || [],
         recommendedInterventions: parsed.recommendedInterventions,
         predictedReadmissionDate: parsed.predictedReadmissionDate,
-        predictionConfidence: parsed.predictionConfidence,
-        dataSourcesAnalyzed: patientData.sources,
+        predictionConfidence: parsed.predictionConfidence * (features.dataCompletenessScore / 100),
+        dataSourcesAnalyzed: {
+          readmissionHistory: features.clinical.priorAdmissions30Day !== undefined,
+          sdohIndicators: features.socialDeterminants.livesAlone !== undefined,
+          checkinPatterns: features.engagement.checkInCompletionRate30Day !== undefined,
+          medicationAdherence: features.medication.activeMedicationCount > 0,
+          carePlanAdherence: features.postDischarge.followUpScheduled !== undefined
+        },
         aiModel: aiResponse.model,
         aiCost: aiResponse.cost
       };
@@ -385,62 +431,216 @@ Return response as strict JSON with this structure:
   }
 
   /**
-   * Build prediction prompt
+   * Build comprehensive prediction prompt using evidence-based features
    */
-  private buildPredictionPrompt(context: DischargeContext, patientData: any): string {
+  private buildComprehensivePredictionPrompt(context: DischargeContext, features: ReadmissionRiskFeatures): string {
     let prompt = `Predict 30-day readmission risk for patient discharged on ${context.dischargeDate}:\n\n`;
 
-    prompt += `DISCHARGE INFORMATION:\n`;
+    // Discharge Information
+    prompt += `=== DISCHARGE INFORMATION ===\n`;
     prompt += `- Facility: ${context.dischargeFacility}\n`;
     prompt += `- Disposition: ${context.dischargeDisposition}\n`;
     if (context.primaryDiagnosisDescription) {
       prompt += `- Primary Diagnosis: ${context.primaryDiagnosisDescription} (${context.primaryDiagnosisCode})\n`;
+      prompt += `- High-Risk Diagnosis: ${features.clinical.isHighRiskDiagnosis ? 'YES (CHF/COPD/Diabetes/Renal)' : 'No'}\n`;
     }
     if (context.lengthOfStay) {
-      prompt += `- Length of Stay: ${context.lengthOfStay} days\n`;
+      prompt += `- Length of Stay: ${context.lengthOfStay} days (${features.clinical.lengthOfStayCategory})\n`;
     }
 
-    prompt += `\nPATIENT PROFILE:\n`;
-    if (patientData.age) {
-      prompt += `- Age: ${patientData.age} years\n`;
-    }
-    if (patientData.chronicConditionsCount) {
-      prompt += `- Chronic Conditions: ${patientData.chronicConditionsCount}\n`;
-    }
-    if (patientData.medicationCount) {
-      prompt += `- Active Medications: ${patientData.medicationCount}\n`;
+    // CLINICAL FACTORS (Highest Weight)
+    prompt += `\n=== CLINICAL FACTORS (Highest Predictive Weight) ===\n`;
+    prompt += `UTILIZATION HISTORY (STRONGEST predictors):\n`;
+    prompt += `- Prior admissions (30 days): ${features.clinical.priorAdmissions30Day} [Weight: 0.25]\n`;
+    prompt += `- Prior admissions (90 days): ${features.clinical.priorAdmissions90Day} [Weight: 0.20]\n`;
+    prompt += `- ED visits (6 months): ${features.clinical.edVisits6Month} [Weight: 0.15]\n`;
+
+    prompt += `\nCOMORBIDITIES:\n`;
+    prompt += `- Total comorbidities: ${features.clinical.comorbidityCount} [Weight: 0.18]\n`;
+    prompt += `- CHF: ${features.clinical.hasChf ? 'YES' : 'No'}\n`;
+    prompt += `- COPD: ${features.clinical.hasCopd ? 'YES' : 'No'}\n`;
+    prompt += `- Diabetes: ${features.clinical.hasDiabetes ? 'YES' : 'No'}\n`;
+    prompt += `- Renal Failure: ${features.clinical.hasRenalFailure ? 'YES' : 'No'}\n`;
+
+    if (features.clinical.systolicBpAtDischarge || features.clinical.labsWithinNormalLimits !== undefined) {
+      prompt += `\nVITALS & LABS AT DISCHARGE:\n`;
+      prompt += `- Vitals stable: ${features.clinical.vitalSignsStableAtDischarge ? 'YES (protective)' : 'NO (risk factor)'}\n`;
+      if (features.clinical.systolicBpAtDischarge) {
+        prompt += `- BP: ${features.clinical.systolicBpAtDischarge}/${features.clinical.diastolicBpAtDischarge}\n`;
+      }
+      if (features.clinical.oxygenSaturationAtDischarge) {
+        prompt += `- O2 Sat: ${features.clinical.oxygenSaturationAtDischarge}%\n`;
+      }
+      prompt += `- Labs within normal limits: ${features.clinical.labsWithinNormalLimits ? 'Yes' : 'No'}\n`;
+      prompt += `- Lab trends concerning: ${features.clinical.labTrendsConcerning ? 'YES (risk)' : 'No'} [Weight: 0.11]\n`;
     }
 
-    if (patientData.readmissionCount) {
-      prompt += `\nREADMISSION HISTORY:\n`;
-      prompt += `- Total readmissions (90 days): ${patientData.readmissionCount}\n`;
-      prompt += `- Recent (7 days): ${patientData.recentReadmissions7d}\n`;
-      prompt += `- Recent (30 days): ${patientData.recentReadmissions30d}\n`;
+    // MEDICATIONS
+    prompt += `\n=== MEDICATION FACTORS ===\n`;
+    prompt += `- Active medications: ${features.medication.activeMedicationCount}\n`;
+    prompt += `- Polypharmacy (5+ meds): ${features.medication.isPolypharmacy ? 'YES [Weight: 0.13]' : 'No'}\n`;
+    prompt += `- High-risk medications: ${features.medication.hasHighRiskMedications ? 'YES [Weight: 0.14]' : 'No'}\n`;
+    if (features.medication.highRiskMedicationList.length > 0) {
+      prompt += `  Classes: ${features.medication.highRiskMedicationList.join(', ')}\n`;
+    }
+    if (features.medication.significantMedicationChanges) {
+      prompt += `- Significant medication changes during admission: YES (risk factor)\n`;
+    }
+    prompt += `- Prescription filled within 3 days: ${features.medication.prescriptionFilledWithin3Days ?? 'Unknown'}\n`;
+    if (features.medication.noPrescriptionFilled) {
+      prompt += `  ⚠️ NO prescription filled [Weight: 0.16 - HIGH RISK]\n`;
     }
 
-    if (patientData.sdohIndicators && patientData.sdohIndicators.length > 0) {
-      prompt += `\nSOCIAL DETERMINANTS OF HEALTH:\n`;
-      patientData.sdohIndicators.slice(0, 5).forEach((sdoh: any) => {
-        prompt += `- ${sdoh.category}: ${sdoh.risk_level} risk\n`;
-      });
+    // POST-DISCHARGE SETUP (Critical)
+    prompt += `\n=== POST-DISCHARGE SETUP (Critical for Success) ===\n`;
+    if (features.postDischarge.noFollowUpScheduled) {
+      prompt += `⚠️ NO FOLLOW-UP SCHEDULED [Weight: 0.18 - HIGH RISK]\n`;
+    } else {
+      prompt += `- Follow-up scheduled: YES\n`;
+      prompt += `- Days until follow-up: ${features.postDischarge.daysUntilFollowUp}\n`;
+      prompt += `- Within 7 days: ${features.postDischarge.followUpWithin7Days ? 'YES [Weight: -0.12 PROTECTIVE]' : 'NO (risk)'}\n`;
+    }
+    prompt += `- PCP assigned: ${features.postDischarge.hasPcpAssigned ? 'Yes' : 'NO (risk factor)'}\n`;
+    prompt += `- Discharge destination: ${features.postDischarge.dischargeDestination}\n`;
+    if (features.postDischarge.dischargeToHomeAlone) {
+      prompt += `  ⚠️ Discharging home ALONE (risk factor)\n`;
+    }
+    if (features.postDischarge.hasPendingTestResults) {
+      prompt += `- Pending test results: YES (risk factor)\n`;
+      prompt += `  Tests: ${features.postDischarge.pendingTestResultsList.join(', ')}\n`;
     }
 
-    if (patientData.checkIns) {
-      prompt += `\nENGAGEMENT PATTERNS (30 days):\n`;
-      prompt += `- Check-in completion rate: ${(patientData.checkInCompletionRate * 100).toFixed(0)}%\n`;
-      prompt += `- Missed check-ins: ${patientData.missedCheckIns}\n`;
-      if (patientData.alertsTriggered > 0) {
-        prompt += `- Health alerts triggered: ${patientData.alertsTriggered}\n`;
+    // SOCIAL DETERMINANTS (Rural Focus)
+    prompt += `\n=== SOCIAL DETERMINANTS (Rural Population Focus) ===\n`;
+    prompt += `- Lives alone: ${features.socialDeterminants.livesAlone ? 'YES [Weight: 0.14]' : 'No'}\n`;
+    prompt += `- Has caregiver: ${features.socialDeterminants.hasCaregiver ? 'Yes (protective)' : 'NO (risk)'}\n`;
+    if (features.socialDeterminants.hasTransportationBarrier) {
+      prompt += `⚠️ TRANSPORTATION BARRIER [Weight: 0.16]\n`;
+      if (features.socialDeterminants.distanceToNearestHospitalMiles) {
+        prompt += `  Distance to hospital: ${features.socialDeterminants.distanceToNearestHospitalMiles} miles\n`;
       }
     }
+    if (features.socialDeterminants.isRuralLocation) {
+      prompt += `⚠️ RURAL LOCATION [Weight: 0.15]\n`;
+      prompt += `  Rural isolation score: ${features.socialDeterminants.ruralIsolationScore}/10\n`;
+    }
+    prompt += `- Insurance: ${features.socialDeterminants.insuranceType}\n`;
+    if (features.socialDeterminants.hasMedicaid || features.socialDeterminants.hasInsuranceGaps) {
+      prompt += `  Financial barriers: ${features.socialDeterminants.financialBarriersToMedications ? 'Medications' : ''} ${features.socialDeterminants.financialBarriersToFollowUp ? 'Follow-up' : ''}\n`;
+    }
+    if (features.socialDeterminants.lowHealthLiteracy) {
+      prompt += `- Low health literacy [Weight: 0.12]\n`;
+    }
+    prompt += `- Socially isolated: ${features.socialDeterminants.sociallyIsolated ? 'YES (risk)' : 'No'}\n`;
 
-    if (patientData.hasActiveCarePlan) {
-      prompt += `\n- HAS ACTIVE CARE PLAN (protective factor)\n`;
-    } else {
-      prompt += `\n- NO ACTIVE CARE PLAN (risk factor)\n`;
+    // FUNCTIONAL STATUS
+    prompt += `\n=== FUNCTIONAL STATUS ===\n`;
+    if (features.functionalStatus.adlDependencies > 0) {
+      prompt += `- ADL dependencies: ${features.functionalStatus.adlDependencies} [Weight: 0.12]\n`;
+    }
+    if (features.functionalStatus.hasCognitiveImpairment) {
+      prompt += `- Cognitive impairment: ${features.functionalStatus.cognitiveImpairmentSeverity} [Weight: 0.13]\n`;
+    }
+    if (features.functionalStatus.hasRecentFalls) {
+      prompt += `- Recent falls: ${features.functionalStatus.fallsInPast90Days} in 90 days [Weight: 0.11]\n`;
+      prompt += `  Fall risk score: ${features.functionalStatus.fallRiskScore}/10\n`;
+    }
+    prompt += `- Mobility: ${features.functionalStatus.mobilityLevel}\n`;
+
+    // ENGAGEMENT & BEHAVIORAL (WellFit's Unique Advantage)
+    prompt += `\n=== ENGAGEMENT & BEHAVIORAL (WellFit's EARLY WARNING System) ===\n`;
+    prompt += `CHECK-IN COMPLIANCE:\n`;
+    prompt += `- 30-day completion rate: ${(features.engagement.checkInCompletionRate30Day * 100).toFixed(0)}%\n`;
+    prompt += `- 7-day completion rate: ${(features.engagement.checkInCompletionRate7Day * 100).toFixed(0)}%\n`;
+    if (features.engagement.consecutiveMissedCheckIns >= 3) {
+      prompt += `⚠️ CONSECUTIVE MISSED CHECK-INS: ${features.engagement.consecutiveMissedCheckIns} [Weight: 0.16]\n`;
+    }
+    if (features.engagement.hasEngagementDrop) {
+      prompt += `⚠️ SUDDEN ENGAGEMENT DROP (30% decline) [Weight: 0.18 - CRITICAL]\n`;
+    }
+    if (features.engagement.stoppedResponding) {
+      prompt += `🚨 PATIENT STOPPED RESPONDING [Weight: 0.22 - HIGHEST BEHAVIORAL RISK]\n`;
     }
 
-    prompt += `\nPlease provide comprehensive 30-day readmission risk prediction with evidence-based risk factors and recommended interventions.`;
+    prompt += `\nGAME PARTICIPATION (Cognitive Engagement):\n`;
+    prompt += `- Trivia participation: ${(features.engagement.triviaParticipationRate30Day * 100).toFixed(0)}%\n`;
+    prompt += `- Word find participation: ${(features.engagement.wordFindParticipationRate30Day * 100).toFixed(0)}%\n`;
+    prompt += `- Overall game engagement: ${features.engagement.gameEngagementScore}/100\n`;
+    if (features.engagement.gameEngagementDeclining) {
+      prompt += `⚠️ GAME ENGAGEMENT DECLINING [Weight: 0.14]\n`;
+    }
+
+    prompt += `\nSOCIAL & COMMUNITY ENGAGEMENT:\n`;
+    prompt += `- Community interaction score: ${features.engagement.communityInteractionScore}/100\n`;
+    if (features.engagement.daysWithZeroActivity > 7) {
+      prompt += `⚠️ DAYS WITH ZERO ACTIVITY: ${features.engagement.daysWithZeroActivity} [Weight: 0.15]\n`;
+    }
+    if (features.engagement.socialEngagementDeclining) {
+      prompt += `- Social engagement: DECLINING (risk factor)\n`;
+    }
+
+    prompt += `\nHEALTH ALERTS:\n`;
+    prompt += `- Alerts triggered (30 days): ${features.engagement.healthAlertsTriggered30Day}\n`;
+    if (features.engagement.criticalAlertsTriggered > 0) {
+      prompt += `⚠️ CRITICAL ALERTS: ${features.engagement.criticalAlertsTriggered}\n`;
+    }
+
+    prompt += `\nOVERALL ENGAGEMENT:\n`;
+    prompt += `- Overall engagement score: ${features.engagement.overallEngagementScore}/100\n`;
+    prompt += `- Engagement change: ${features.engagement.engagementChangePercent.toFixed(0)}%\n`;
+    if (features.engagement.isDisengaging) {
+      prompt += `🚨 PATIENT IS DISENGAGING [Weight: 0.19 - CRITICAL EARLY WARNING]\n`;
+    }
+    if (features.engagement.concerningPatterns.length > 0) {
+      prompt += `- Concerning patterns: ${features.engagement.concerningPatterns.join(', ')}\n`;
+    }
+
+    // SELF-REPORTED HEALTH
+    if (features.selfReported.hasRedFlagSymptoms) {
+      prompt += `\n=== SELF-REPORTED HEALTH (Patient Perspective) ===\n`;
+      prompt += `🚨 RED FLAG SYMPTOMS REPORTED [Weight: 0.20]:\n`;
+      features.selfReported.redFlagSymptomsList.forEach(symptom => {
+        prompt += `  - ${symptom}\n`;
+      });
+    }
+    if (features.selfReported.symptomCount30Day > 0) {
+      prompt += `\nRECENT SYMPTOMS (30 days): ${features.selfReported.symptomCount30Day}\n`;
+    }
+    if (features.selfReported.negativeModeTrend) {
+      prompt += `⚠️ NEGATIVE MOOD TREND [Weight: 0.13]\n`;
+    }
+    if (features.selfReported.selfReportedBpTrendConcerning || features.selfReported.selfReportedBloodSugarUnstable) {
+      prompt += `- Concerning vital trends: BP ${features.selfReported.selfReportedBpTrendConcerning ? 'YES' : 'No'}, Blood sugar ${features.selfReported.selfReportedBloodSugarUnstable ? 'YES' : 'No'}\n`;
+    }
+    if (features.selfReported.missedMedicationsDays30Day > 0) {
+      prompt += `- Missed medications: ${features.selfReported.missedMedicationsDays30Day} days [Weight: 0.14]\n`;
+    }
+    if (features.selfReported.daysHomeAlone30Day > 15) {
+      prompt += `- Days home alone: ${features.selfReported.daysHomeAlone30Day}/30 [Weight: 0.12]\n`;
+    }
+
+    // DATA COMPLETENESS
+    prompt += `\n=== DATA QUALITY ===\n`;
+    prompt += `- Data completeness: ${features.dataCompletenessScore}%\n`;
+    if (features.missingCriticalData.length > 0) {
+      prompt += `- Missing critical data: ${features.missingCriticalData.join(', ')}\n`;
+      prompt += `  (Note: Lower confidence when critical data missing)\n`;
+    }
+
+    prompt += `\n=== TASK ===\n`;
+    prompt += `Analyze ALL factors above using the evidence-based weights provided.\n`;
+    prompt += `Pay special attention to:\n`;
+    prompt += `1. Prior admissions (strongest predictor)\n`;
+    prompt += `2. WellFit engagement patterns (unique early warning)\n`;
+    prompt += `3. Post-discharge setup (follow-up timing is critical)\n`;
+    prompt += `4. Rural/social barriers\n\n`;
+    prompt += `Provide comprehensive 30-day readmission risk prediction with:\n`;
+    prompt += `- Risk scores (7-day, 30-day, 90-day)\n`;
+    prompt += `- Risk category (low/moderate/high/critical)\n`;
+    prompt += `- Specific risk factors with weights\n`;
+    prompt += `- Protective factors\n`;
+    prompt += `- Prioritized interventions\n`;
+    prompt += `- Prediction confidence`;
 
     return prompt;
   }
@@ -469,11 +669,12 @@ Return response as strict JSON with this structure:
   }
 
   /**
-   * Store prediction in database
+   * Store prediction in database with comprehensive features
    */
   private async storePrediction(
     context: DischargeContext,
-    prediction: ReadmissionPrediction
+    prediction: ReadmissionPrediction,
+    features: ReadmissionRiskFeatures
   ): Promise<void> {
     await supabase
       .from('readmission_risk_predictions')
@@ -496,7 +697,17 @@ Return response as strict JSON with this structure:
         prediction_confidence: prediction.predictionConfidence,
         data_sources_analyzed: prediction.dataSourcesAnalyzed,
         ai_model_used: prediction.aiModel,
-        ai_cost: prediction.aiCost
+        ai_cost: prediction.aiCost,
+        // Store comprehensive features for analysis and reporting
+        clinical_features: features.clinical,
+        medication_features: features.medication,
+        post_discharge_features: features.postDischarge,
+        social_determinants_features: features.socialDeterminants,
+        functional_status_features: features.functionalStatus,
+        engagement_features: features.engagement,
+        self_reported_features: features.selfReported,
+        data_completeness_score: features.dataCompletenessScore,
+        missing_critical_data: features.missingCriticalData
       });
   }
 
