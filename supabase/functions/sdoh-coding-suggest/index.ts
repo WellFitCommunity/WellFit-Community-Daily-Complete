@@ -310,7 +310,7 @@ Format as JSON with this structure:
         console.error('[Audit Log Error]:', logError);
       }
 
-      console.log(`[SDOH Coding] RequestID: ${requestId}, User: ${userId}, Encounter: ${encounterId}, Input: ${inputTokens}, Output: ${outputTokens}, Cost: $${totalCost.toFixed(4)}, Time: ${responseTime}ms`);
+      // PHI: User/Encounter IDs not logged per HIPAA - data stored in claude_api_audit table
 
       // Validate and enhance the response
       return {

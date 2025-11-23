@@ -606,7 +606,7 @@ Return response as strict JSON with this structure:
     if (features.selfReported.symptomCount30Day > 0) {
       prompt += `\nRECENT SYMPTOMS (30 days): ${features.selfReported.symptomCount30Day}\n`;
     }
-    if (features.selfReported.negativeModeTrend) {
+    if (features.engagement.negativeModeTrend) {
       prompt += `⚠️ NEGATIVE MOOD TREND [Weight: 0.13]\n`;
     }
     if (features.selfReported.selfReportedBpTrendConcerning || features.selfReported.selfReportedBloodSugarUnstable) {
