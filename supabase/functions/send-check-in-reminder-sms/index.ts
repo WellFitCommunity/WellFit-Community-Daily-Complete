@@ -94,7 +94,7 @@ serve(async (req) => {
     }
 
     const data = JSON.parse(responseText);
-    console.log(`[send-check-in-reminder-sms] SMS sent to ${phone}, SID: ${data.sid}`);
+    // PHI: Phone number not logged per HIPAA compliance - SMS sent successfully
 
     const { headers } = corsFromRequest(req);
     return new Response(

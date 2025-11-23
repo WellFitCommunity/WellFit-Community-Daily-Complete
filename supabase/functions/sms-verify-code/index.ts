@@ -68,7 +68,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
       // Normalize to E.164 format (+1234567890) to ensure consistency with Twilio
       normalizedPhone = phoneNumber.number;
-      console.log(`Phone normalized: ${phone} -> ${normalizedPhone}`);
+      // PHI: Phone number not logged per HIPAA compliance
     } catch (error) {
       return new Response(JSON.stringify({ error: "Invalid phone number format" }), { status: 400, headers });
     }

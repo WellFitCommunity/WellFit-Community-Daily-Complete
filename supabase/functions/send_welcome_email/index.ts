@@ -93,7 +93,8 @@ serve(async (req) => {
 
     if (!resp.ok) {
       const errText = await resp.text();
-      console.error(`❌ MailerSend error:`, errText);
+      // PHI: Email addresses not logged per HIPAA - error logged without details
+      console.error(`❌ MailerSend error: Status ${resp.status}`);
       return new Response(JSON.stringify({
         error: 'Failed to send welcome email via MailerSend.',
         details: errText.substring(0, 500)
@@ -111,7 +112,8 @@ serve(async (req) => {
     );
   } catch (err: unknown) {
     const msg = (err as any)?.message ?? String(err);
-    console.error("❌ send_welcome_email internal error:", msg);
+    // PHI: Error message sanitized - may contain email addresses
+    console.error("❌ send_welcome_email internal error");
     return new Response(JSON.stringify({ error: "Internal server error", details: msg }), {
       status: 500,
       headers,

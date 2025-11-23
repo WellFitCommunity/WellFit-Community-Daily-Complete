@@ -109,7 +109,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // Normalize phone to E.164 format for Twilio consistency
     const phoneNumber = parsePhoneNumber(phone, 'US');
     const normalizedPhone = phoneNumber.number;
-    console.log(`[sms-send-code] Phone normalized: ${phone} -> ${normalizedPhone}`);
+    // PHI: Phone number not logged per HIPAA compliance
 
     if (channel !== "sms" && channel !== "call") {
       return new Response(
