@@ -21,7 +21,9 @@ export type PHIType =
   | 'care_plan'
   | 'handoff'
   | 'billing'
-  | 'insurance';
+  | 'insurance'
+  | 'communication_metrics'
+  | 'readmission_risk';
 
 export type AccessType =
   | 'view'
