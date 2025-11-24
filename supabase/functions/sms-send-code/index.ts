@@ -109,7 +109,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // Normalize phone to E.164 format for Twilio consistency
     const phoneNumber = parsePhoneNumber(phone, 'US');
     const normalizedPhone = phoneNumber.number;
-    // PHI: Phone number not logged per HIPAA compliance
+
+    // Log phone normalization for debugging (not PHI context)
+    logger.info("Phone normalization for SMS send", {
+      originalPhone: phone,
+      normalizedPhone: normalizedPhone,
+      phoneChanged: phone !== normalizedPhone,
+      channel: channel
+    });
 
     if (channel !== "sms" && channel !== "call") {
       return new Response(
@@ -121,6 +128,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // Twilio Verify: start verification with timeout and retry logic
     const url = `https://verify.twilio.com/v2/Services/${VERIFY_SID}/Verifications`;
     const form = new URLSearchParams({ To: normalizedPhone, Channel: channel });
+
+    // Log what we're sending to Twilio
+    logger.info("Creating Twilio verification", {
+      normalizedPhone: normalizedPhone,
+      channel: channel,
+      verifySidPrefix: VERIFY_SID.substring(0, 4),
+      accountSidPrefix: TWILIO_ACCOUNT_SID.substring(0, 4)
+    });
 
     // Helper function to fetch with proper abort on timeout
     const fetchWithTimeout = (url: string, options: RequestInit, timeoutMs: number): Promise<Response> => {
@@ -202,6 +217,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     const txt = await twilioResp.text();
 
+    // Log Twilio's response
+    logger.info("Twilio Verification creation response", {
+      status: twilioResp.status,
+      ok: twilioResp.ok,
+      normalizedPhone: normalizedPhone,
+      responseBody: txt
+    });
+
     if (!twilioResp.ok) {
       // Map common Twilio failures to clearer messages
       let code = "TWILIO_ERROR";
@@ -215,7 +238,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
         status: twilioResp.status,
         errorCode: code,
         responseBody: txt,
-        phone,
+        originalPhone: phone,
+        normalizedPhone: normalizedPhone,
         channel,
         verifySidPrefix: VERIFY_SID.substring(0, 4),
         accountSidPrefix: TWILIO_ACCOUNT_SID.substring(0, 4)
@@ -239,10 +263,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
     try { payload = JSON.parse(txt); } catch { /* keep empty if not JSON */ }
 
     logger.info("SMS verification code sent successfully", {
-      phone,
+      originalPhone: phone,
+      normalizedPhone: normalizedPhone,
       channel,
       verificationStatus: payload?.status ?? "sent",
-      verificationSid: payload?.sid ?? null
+      verificationSid: payload?.sid ?? null,
+      verificationTo: payload?.to ?? null // This shows what Twilio recorded as the phone
     });
 
     return new Response(
