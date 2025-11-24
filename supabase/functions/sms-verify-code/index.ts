@@ -295,23 +295,37 @@ Deno.serve(async (req: Request): Promise<Response> => {
       const { data: authData, error: authError } = await supabase.auth.admin.createUser(createUserPayload);
 
       if (authError || !authData?.user) {
-        logger.error("Failed to create user account", {
+        // Log FULL error details for debugging
+        logger.error("Failed to create user account - DETAILED ERROR", {
           phone,
           error: authError?.message,
           errorCode: authError?.code,
-          errorStatus: authError?.status
+          errorStatus: authError?.status,
+          errorName: authError?.name,
+          // Serialize all properties of the error object
+          fullError: JSON.stringify(authError, Object.getOwnPropertyNames(authError)),
+          // Log what we tried to create (without password)
+          attemptedPayload: {
+            email: createUserPayload.email,
+            phone: createUserPayload.phone,
+            emailConfirm: createUserPayload.email_confirm,
+            phoneConfirm: createUserPayload.phone_confirm,
+            hasPassword: !!createUserPayload.password
+          }
         });
 
         // Provide specific error message based on error type
         let errorMessage = "Failed to complete registration. Please try again.";
         if (authError?.message?.toLowerCase().includes("duplicate") ||
-            authError?.message?.toLowerCase().includes("already exists")) {
+            authError?.message?.toLowerCase().includes("already exists") ||
+            authError?.message?.toLowerCase().includes("unique")) {
           errorMessage = "This phone number is already registered. Please login instead.";
         }
 
         return new Response(JSON.stringify({
           error: errorMessage,
-          details: authError?.message
+          details: authError?.message,
+          code: authError?.code
         }), { status: 500, headers });
       }
 
