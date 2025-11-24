@@ -89,6 +89,21 @@ Deno.serve(async (req: Request): Promise<Response> => {
     let json: unknown = {};
     try { json = JSON.parse(txt); } catch { /* text fallback */ }
 
+    // Check for Twilio configuration errors (404 = Service SID not found)
+    if (resp.status === 404 && typeof json === "object" && json !== null && (json as any).code === 20404) {
+      logger.error("Twilio Verify Service not found - check TWILIO_VERIFY_SERVICE_SID", {
+        twilioServiceSid: VERIFY_SID,
+        twilioError: json,
+        message: (json as any).message
+      });
+      return new Response(JSON.stringify({
+        error: "SMS verification service not configured. Please contact support.",
+        errorCode: "TWILIO_SERVICE_NOT_FOUND"
+      }), {
+        status: 500, headers,
+      });
+    }
+
     const approved =
       resp.ok &&
       typeof json === "object" &&
@@ -97,12 +112,23 @@ Deno.serve(async (req: Request): Promise<Response> => {
       (json as any).status === "approved";
 
     if (!approved) {
+      // Provide specific error messages based on Twilio response
+      let errorMessage = "Invalid or expired verification code";
+      if (resp.status === 404) {
+        errorMessage = "Verification code not found. Please request a new code.";
+      } else if (resp.status === 429) {
+        errorMessage = "Too many attempts. Please wait and try again.";
+      }
+
       logger.security("Invalid or expired verification code attempt", {
         phone,
         twilioStatus: resp.status,
         responseDetails: txt
       });
-      return new Response(JSON.stringify({ error: "Invalid or expired verification code", details: json || txt }), {
+      return new Response(JSON.stringify({
+        error: errorMessage,
+        details: json || txt
+      }), {
         status: 401, headers,
       });
     }
@@ -175,6 +201,29 @@ Deno.serve(async (req: Request): Promise<Response> => {
         });
       }
 
+      // Check if user already exists with this phone number
+      const { data: existingUsers, error: listError } = await supabase.auth.admin.listUsers();
+
+      if (listError) {
+        logger.error("Failed to check for existing users", {
+          error: listError.message
+        });
+      } else if (existingUsers?.users) {
+        const phoneExists = existingUsers.users.some(u => u.phone === normalizedPhone);
+        if (phoneExists) {
+          logger.warn("Phone number already registered", {
+            phone: normalizedPhone
+          });
+          // Clean up pending registration
+          await supabase.from("pending_registrations").delete().eq("phone", normalizedPhone);
+
+          return new Response(JSON.stringify({
+            error: "This phone number is already registered. Please login instead.",
+            errorCode: "PHONE_ALREADY_REGISTERED"
+          }), { status: 409, headers });
+        }
+      }
+
       // Create the actual user account with their chosen password
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         phone: normalizedPhone,
@@ -195,9 +244,22 @@ Deno.serve(async (req: Request): Promise<Response> => {
       if (authError || !authData?.user) {
         logger.error("Failed to create user account", {
           phone,
-          error: authError?.message
+          error: authError?.message,
+          errorCode: authError?.code,
+          errorStatus: authError?.status
         });
-        return new Response(JSON.stringify({ error: "Failed to complete registration" }), { status: 500, headers });
+
+        // Provide specific error message based on error type
+        let errorMessage = "Failed to complete registration. Please try again.";
+        if (authError?.message?.toLowerCase().includes("duplicate") ||
+            authError?.message?.toLowerCase().includes("already exists")) {
+          errorMessage = "This phone number is already registered. Please login instead.";
+        }
+
+        return new Response(JSON.stringify({
+          error: errorMessage,
+          details: authError?.message
+        }), { status: 500, headers });
       }
 
       // Create profile
