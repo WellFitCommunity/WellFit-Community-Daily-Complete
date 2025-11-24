@@ -214,9 +214,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
       let authPhone: string | undefined = normalizedPhone;
       let isSharedPhone = false;
 
-      // Check if this phone is already registered in auth.users
-      const { data: existingUsers } = await supabase.auth.admin.listUsers();
-      const phoneAlreadyUsed = existingUsers?.users?.some(u => u.phone === normalizedPhone);
+      // Check if this phone is already registered by querying profiles table
+      // This is much more efficient than listUsers() which fetches ALL users
+      const { data: existingProfiles } = await supabase
+        .from('profiles')
+        .select('user_id')
+        .eq('phone', normalizedPhone)
+        .limit(1);
+
+      const phoneAlreadyUsed = existingProfiles && existingProfiles.length > 0;
 
       if (phoneAlreadyUsed && !pending.email) {
         // Shared phone scenario: Phone is used, no email provided
