@@ -201,36 +201,52 @@ Deno.serve(async (req: Request): Promise<Response> => {
         });
       }
 
-      // Check if user already exists with this phone number
-      const { data: existingUsers, error: listError } = await supabase.auth.admin.listUsers();
+      // IMPORTANT: We allow multiple users to share the same phone number
+      // This is critical for low-income communities where spouses share phones
+      //
+      // SOLUTION FOR SHARED PHONES:
+      // - If user provides email: Use email + phone for auth (traditional)
+      // - If NO email: Generate unique internal email for auth uniqueness
+      // - Store actual phone in user_metadata and profiles (not auth.users.phone for shared phones)
+      // - Users without email login via phone + password (app handles lookup)
 
-      if (listError) {
-        logger.error("Failed to check for existing users", {
-          error: listError.message
+      let authEmail = pending.email;
+      let authPhone: string | undefined = normalizedPhone;
+      let isSharedPhone = false;
+
+      // Check if this phone is already registered in auth.users
+      const { data: existingUsers } = await supabase.auth.admin.listUsers();
+      const phoneAlreadyUsed = existingUsers?.users?.some(u => u.phone === normalizedPhone);
+
+      if (phoneAlreadyUsed && !pending.email) {
+        // Shared phone scenario: Phone is used, no email provided
+        // Generate internal email for unique auth identifier
+        const uniqueId = crypto.randomUUID().split('-')[0];
+        authEmail = `${normalizedPhone.replace(/\D/g, '')}_${uniqueId}@wellfit.internal`;
+        authPhone = undefined; // Don't set phone in auth (already used by someone else)
+        isSharedPhone = true;
+
+        logger.info("Shared phone registration - generated internal email", {
+          actualPhone: normalizedPhone,
+          generatedEmail: authEmail,
+          isSharedPhone: true
         });
-      } else if (existingUsers?.users) {
-        const phoneExists = existingUsers.users.some(u => u.phone === normalizedPhone);
-        if (phoneExists) {
-          logger.warn("Phone number already registered", {
-            phone: normalizedPhone
-          });
-          // Clean up pending registration
-          await supabase.from("pending_registrations").delete().eq("phone", normalizedPhone);
+      } else if (!authEmail) {
+        // First time using this phone, but no email - still generate internal email
+        const uniqueId = crypto.randomUUID().split('-')[0];
+        authEmail = `${normalizedPhone.replace(/\D/g, '')}_${uniqueId}@wellfit.internal`;
 
-          return new Response(JSON.stringify({
-            error: "This phone number is already registered. Please login instead.",
-            errorCode: "PHONE_ALREADY_REGISTERED"
-          }), { status: 409, headers });
-        }
+        logger.info("Phone-only registration - generated internal email", {
+          phone: normalizedPhone,
+          generatedEmail: authEmail
+        });
       }
 
-      // Create the actual user account with their chosen password
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        phone: normalizedPhone,
+      // Create the actual user account
+      const createUserPayload: any = {
+        email: authEmail,
+        email_confirm: !!pending.email, // Only confirm if user provided real email
         password: userPassword,
-        phone_confirm: true, // Phone is now verified
-        email: pending.email || undefined,
-        email_confirm: false,
         user_metadata: {
           role_code: pending.role_code,
           role_slug: pending.role_slug,
@@ -238,8 +254,19 @@ Deno.serve(async (req: Request): Promise<Response> => {
           last_name: pending.last_name,
           registration_method: "self_register",
           registered_at: new Date().toISOString(),
+          actual_phone: normalizedPhone, // Always store the real phone here
+          is_shared_phone: isSharedPhone,
+          generated_email: !pending.email, // Flag for generated emails
         },
-      });
+      };
+
+      // Only set phone in auth if it's not a shared phone scenario
+      if (authPhone) {
+        createUserPayload.phone = authPhone;
+        createUserPayload.phone_confirm = true;
+      }
+
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser(createUserPayload);
 
       if (authError || !authData?.user) {
         logger.error("Failed to create user account", {
@@ -347,10 +374,18 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
       // Auto sign-in the user after successful registration
       // This creates a session so they don't have to manually login
-      const { data: sessionData, error: sessionError } = await supabase.auth.signInWithPassword({
-        phone: normalizedPhone,
-        password: userPassword,
-      });
+      // For shared phones, use email (generated or real) instead of phone
+      const signInPayload: any = { password: userPassword };
+
+      if (authPhone) {
+        // Not a shared phone - can login with phone
+        signInPayload.phone = normalizedPhone;
+      } else {
+        // Shared phone - must login with generated email
+        signInPayload.email = authEmail;
+      }
+
+      const { data: sessionData, error: sessionError } = await supabase.auth.signInWithPassword(signInPayload);
 
       if (sessionError) {
         logger.warn("Failed to auto sign-in user after registration", {
@@ -375,11 +410,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
         message: "Registration completed successfully! You are now logged in.",
         user: {
           user_id: authData.user.id,
-          phone: normalizedPhone,
+          phone: normalizedPhone, // Always return the actual phone
+          email: pending.email || null, // Null if generated internal email
           first_name: pending.first_name,
           last_name: pending.last_name,
           role_code: pending.role_code,
           role_slug: pending.role_slug,
+          is_shared_phone: isSharedPhone,
+          // For shared phone users, provide login hint
+          login_identifier: authEmail, // Use this email for login if shared phone
         },
         session: sessionData?.session || null,
         access_token: sessionData?.session?.access_token || null,
