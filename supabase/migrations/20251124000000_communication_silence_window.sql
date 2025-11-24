@@ -79,10 +79,9 @@ CREATE INDEX IF NOT EXISTS idx_silence_window_critical
   ON public.communication_silence_window(tenant_id, silence_score DESC)
   WHERE risk_level IN ('elevated', 'critical');
 
--- Trend analysis: recent scores
+-- Trend analysis: recent scores (no partial index filter since CURRENT_DATE is not immutable)
 CREATE INDEX IF NOT EXISTS idx_silence_window_recent
-  ON public.communication_silence_window(patient_id, assessment_date DESC)
-  WHERE assessment_date >= (CURRENT_DATE - INTERVAL '30 days');
+  ON public.communication_silence_window(patient_id, assessment_date DESC);
 
 -- =====================================================
 -- 3. ROW LEVEL SECURITY
