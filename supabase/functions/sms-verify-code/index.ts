@@ -26,7 +26,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   // Twilio envs (no throw)
   const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID") ?? "";
   const TWILIO_AUTH_TOKEN  = Deno.env.get("TWILIO_AUTH_TOKEN") ?? "";
-  const VERIFY_SID         = Deno.env.get("TWILIO_VERIFY_SERVICE_SID") ?? "";
+  const VERIFY_SID         = Deno.env.get("TWILIO_VERIFICATION_SID") ?? "";
 
   if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !VERIFY_SID) {
     logger.error("Missing Twilio environment variables", {
@@ -91,7 +91,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     // Check for Twilio configuration errors (404 = Service SID not found)
     if (resp.status === 404 && typeof json === "object" && json !== null && (json as any).code === 20404) {
-      logger.error("Twilio Verify Service not found - check TWILIO_VERIFY_SERVICE_SID", {
+      logger.error("Twilio Verify Service not found - check TWILIO_VERIFICATION_SID", {
         twilioServiceSid: VERIFY_SID,
         twilioError: json,
         message: (json as any).message
