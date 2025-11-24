@@ -24,12 +24,12 @@ BEGIN
   END IF;
 END $$;
 
--- Set WellFit tenant code on existing row
+-- Set WellFit tenant code on the www tenant only
 UPDATE public.tenants
 SET
-  tenant_code = COALESCE(tenant_code, 'WF-001'),
+  tenant_code = 'WF-001',
   display_name = COALESCE(display_name, 'WellFit Community')
-WHERE subdomain = 'www' OR tenant_code IS NULL;
+WHERE subdomain = 'www' AND (tenant_code IS NULL OR tenant_code = '');
 
 -- Create function to get tenant by email domain or lookup
 CREATE OR REPLACE FUNCTION get_tenant_by_identifier(
