@@ -10,23 +10,12 @@
  * HIPAA Compliance:
  * - All data uses patient IDs/tokens, never PHI in browser
  * - All operations logged via audit system
+ *
+ * Design: Envision Atlus Clinical Design System
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useSupabaseClient, useUser } from '../../contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { Slider } from '../ui/slider';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../ui/select';
-import { Alert, AlertDescription } from '../ui/alert';
 import {
   Radio,
   Activity,
@@ -42,9 +31,7 @@ import {
   Home,
 } from 'lucide-react';
 import { auditLogger } from '../../services/auditLogger';
-import {
-  calculateSilenceWindowScore,
-} from '../../services/communicationSilenceWindowService';
+import { calculateSilenceWindowScore } from '../../services/communicationSilenceWindowService';
 import {
   calculateReadmissionRisk,
   type PatientRiskFactors,
@@ -53,6 +40,26 @@ import type {
   SilenceWindowInput,
   SilenceWindowResult,
 } from '../../types/communicationSilenceWindow';
+
+// Envision Atlus Design System
+import {
+  EACard,
+  EACardHeader,
+  EACardContent,
+  EAButton,
+  EABadge,
+  EAMetricCard,
+  EAAlert,
+  EASlider,
+  EASelect,
+  EASelectTrigger,
+  EASelectContent,
+  EASelectItem,
+  EASelectValue,
+  EAPageLayout,
+  EARiskIndicator,
+  getRiskStyles,
+} from '../envision-atlus';
 
 // =====================================================
 // TYPES
@@ -74,14 +81,10 @@ type TabValue = 'silence' | 'readmission' | 'code';
 
 export const HealthcareAlgorithmsDashboard: React.FC<HealthcareAlgorithmsDashboardProps> = ({
   patientId,
-  tenantId,
   mode = 'demo',
   showBackButton = false,
   onBack,
 }) => {
-  const supabase = useSupabaseClient();
-  const user = useUser();
-
   // Active tab
   const [activeTab, setActiveTab] = useState<TabValue>('silence');
 
@@ -107,10 +110,6 @@ export const HealthcareAlgorithmsDashboard: React.FC<HealthcareAlgorithmsDashboa
   const [silenceResult, setSilenceResult] = useState<SilenceWindowResult | null>(null);
   const [readmissionResult, setReadmissionResult] = useState<ReturnType<typeof calculateReadmissionRisk> | null>(null);
 
-  // Loading/Error State
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
   // Log dashboard access
   useEffect(() => {
     auditLogger.info('HEALTHCARE_ALGORITHMS_DASHBOARD_VIEWED', {
@@ -120,13 +119,8 @@ export const HealthcareAlgorithmsDashboard: React.FC<HealthcareAlgorithmsDashboa
   }, [mode, patientId]);
 
   // Calculate scores whenever inputs change
-  useEffect(() => {
-    calculateScores();
-  }, [silenceDemo, patientDemo]);
-
   const calculateScores = useCallback(() => {
     try {
-      // Calculate Silence Window Score
       const silenceInput: SilenceWindowInput = {
         patientId: patientId || 'demo-patient',
         daysSinceLastContact: silenceDemo.lastContact,
@@ -138,7 +132,6 @@ export const HealthcareAlgorithmsDashboard: React.FC<HealthcareAlgorithmsDashboa
       const silence = calculateSilenceWindowScore(silenceInput);
       setSilenceResult(silence);
 
-      // Calculate Readmission Risk with Silence Window
       const patientFactors: PatientRiskFactors = {
         patientId: patientId || 'demo-patient',
         age: patientDemo.age,
@@ -156,451 +149,299 @@ export const HealthcareAlgorithmsDashboard: React.FC<HealthcareAlgorithmsDashboa
     }
   }, [silenceDemo, patientDemo, patientId]);
 
-  // Risk color helper
-  const getRiskColor = (level: string) => {
-    const levelLower = level.toLowerCase();
-    if (levelLower === 'critical' || levelLower === 'high') {
-      return 'bg-red-500';
-    }
-    if (levelLower === 'elevated' || levelLower === 'moderate') {
-      return 'bg-yellow-500';
-    }
-    return 'bg-green-500';
-  };
-
-  const getRiskBorderColor = (level: string) => {
-    const levelLower = level.toLowerCase();
-    if (levelLower === 'critical' || levelLower === 'high') {
-      return 'border-red-500/50';
-    }
-    if (levelLower === 'elevated' || levelLower === 'moderate') {
-      return 'border-yellow-500/50';
-    }
-    return 'border-green-500/50';
-  };
-
-  const getRiskBgColor = (level: string) => {
-    const levelLower = level.toLowerCase();
-    if (levelLower === 'critical' || levelLower === 'high') {
-      return 'bg-red-500/20';
-    }
-    if (levelLower === 'elevated' || levelLower === 'moderate') {
-      return 'bg-yellow-500/20';
-    }
-    return 'bg-green-500/20';
-  };
+  useEffect(() => {
+    calculateScores();
+  }, [calculateScores]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 text-white p-6">
-      <div className="max-w-5xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          {showBackButton && onBack && (
-            <Button
-              variant="ghost"
-              onClick={onBack}
-              className="absolute left-6 top-6 text-slate-400 hover:text-white"
-            >
-              Back
-            </Button>
-          )}
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-            WellFit Community AI Algorithms
-          </h1>
-          <p className="text-slate-400 mt-2">Predictive Healthcare Intelligence</p>
-          {mode === 'demo' && (
-            <Badge variant="outline" className="mt-2 border-cyan-500/50 text-cyan-400">
-              Demo Mode
-            </Badge>
-          )}
-        </div>
+    <EAPageLayout
+      title="Healthcare AI Algorithms"
+      subtitle="Predictive Intelligence for Clinical Decision Support"
+      badge={
+        mode === 'demo' ? (
+          <EABadge variant="info" size="sm">Demo Mode</EABadge>
+        ) : undefined
+      }
+      backButton={showBackButton && onBack ? { onClick: onBack } : undefined}
+    >
+      {/* Tab Navigation */}
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)} className="w-full">
+        <TabsList className="grid w-full grid-cols-3 bg-slate-800/50 border border-slate-700 rounded-lg p-1 mb-6">
+          <TabsTrigger
+            value="silence"
+            className="flex items-center gap-2 rounded-md data-[state=active]:bg-[#00857a] data-[state=active]:text-white text-slate-400"
+          >
+            <Radio className="h-4 w-4" />
+            <span className="hidden sm:inline">Communication</span> Silence Window
+          </TabsTrigger>
+          <TabsTrigger
+            value="readmission"
+            className="flex items-center gap-2 rounded-md data-[state=active]:bg-[#00857a] data-[state=active]:text-white text-slate-400"
+          >
+            <Building2 className="h-4 w-4" />
+            Readmissions Prediction
+          </TabsTrigger>
+          <TabsTrigger
+            value="code"
+            className="flex items-center gap-2 rounded-md data-[state=active]:bg-[#00857a] data-[state=active]:text-white text-slate-400"
+          >
+            <Code className="h-4 w-4" />
+            Algorithm Code
+          </TabsTrigger>
+        </TabsList>
 
-        {/* Tab Navigation */}
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-slate-700/50 mb-6">
-            <TabsTrigger
-              value="silence"
-              className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white flex items-center gap-2"
-            >
-              <Radio className="h-4 w-4" />
-              Communication Silence Window
-            </TabsTrigger>
-            <TabsTrigger
-              value="readmission"
-              className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white flex items-center gap-2"
-            >
-              <Building2 className="h-4 w-4" />
-              Readmissions Prediction
-            </TabsTrigger>
-            <TabsTrigger
-              value="code"
-              className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white flex items-center gap-2"
-            >
-              <Code className="h-4 w-4" />
-              Algorithm Code
-            </TabsTrigger>
-          </TabsList>
+        {/* ===== COMMUNICATION SILENCE WINDOW TAB ===== */}
+        <TabsContent value="silence" className="space-y-6">
+          <EACard variant="highlight">
+            <EACardHeader icon={<Radio className="h-5 w-5" />}>
+              <h2 className="text-xl font-semibold text-white">Communication Silence Window Algorithm</h2>
+              <p className="text-sm text-slate-400 mt-1">
+                A novel predictive factor that detects engagement gaps indicating elevated readmission risk.
+              </p>
+            </EACardHeader>
+            <EACardContent className="space-y-6">
+              {/* Input Controls */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <EASlider
+                  label="Days Since Last Contact"
+                  value={[silenceDemo.lastContact]}
+                  onValueChange={([v]) => setSilenceDemo({ ...silenceDemo, lastContact: v })}
+                  min={0}
+                  max={30}
+                  step={1}
+                />
+                <EASlider
+                  label="Missed Outreach Calls"
+                  value={[silenceDemo.missedCalls]}
+                  onValueChange={([v]) => setSilenceDemo({ ...silenceDemo, missedCalls: v })}
+                  min={0}
+                  max={5}
+                  step={1}
+                />
+                <EASlider
+                  label="Missed Appointments"
+                  value={[silenceDemo.missedAppts]}
+                  onValueChange={([v]) => setSilenceDemo({ ...silenceDemo, missedAppts: v })}
+                  min={0}
+                  max={3}
+                  step={1}
+                />
+                <EASlider
+                  label="Unread Messages"
+                  value={[silenceDemo.unreadMessages]}
+                  onValueChange={([v]) => setSilenceDemo({ ...silenceDemo, unreadMessages: v })}
+                  min={0}
+                  max={10}
+                  step={1}
+                />
+              </div>
 
-          {/* Communication Silence Window Tab */}
-          <TabsContent value="silence" className="space-y-6">
-            <Card className="bg-slate-800 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-xl text-cyan-400 flex items-center gap-2">
-                  <Radio className="h-5 w-5" />
+              {/* Results Display */}
+              {silenceResult && (
+                <div className="bg-slate-900 rounded-lg p-6 mt-6 border border-slate-700">
+                  <div className="flex items-center justify-between mb-6">
+                    <span className="text-lg font-medium text-white">Silence Window Score</span>
+                    <div className="flex items-center gap-4">
+                      <span className="text-4xl font-bold text-[#00857a]">{silenceResult.score}</span>
+                      <EARiskIndicator level={silenceResult.riskLevel} size="lg" />
+                    </div>
+                  </div>
+
+                  {/* Score Breakdown */}
+                  <div className="space-y-4">
+                    <EARiskIndicator
+                      level={silenceResult.components.dayScore > 60 ? 'high' : silenceResult.components.dayScore > 30 ? 'elevated' : 'normal'}
+                      variant="bar"
+                      label="Days Since Contact (35%)"
+                      score={Math.round(silenceResult.components.dayScore)}
+                    />
+                    <EARiskIndicator
+                      level={silenceResult.components.callScore > 60 ? 'high' : silenceResult.components.callScore > 30 ? 'elevated' : 'normal'}
+                      variant="bar"
+                      label="Missed Calls (25%)"
+                      score={Math.round(silenceResult.components.callScore)}
+                    />
+                    <EARiskIndicator
+                      level={silenceResult.components.apptScore > 60 ? 'high' : silenceResult.components.apptScore > 30 ? 'elevated' : 'normal'}
+                      variant="bar"
+                      label="Missed Appointments (25%)"
+                      score={Math.round(silenceResult.components.apptScore)}
+                    />
+                    <EARiskIndicator
+                      level={silenceResult.components.msgScore > 60 ? 'high' : silenceResult.components.msgScore > 30 ? 'elevated' : 'normal'}
+                      variant="bar"
+                      label="Unread Messages (15%)"
+                      score={Math.round(silenceResult.components.msgScore)}
+                    />
+                  </div>
+
+                  {/* Alert */}
+                  {silenceResult.alertTriggered && (
+                    <EAAlert variant="warning" title="Alert Triggered" className="mt-6">
+                      Recommend immediate care team outreach. Patient showing signs of disengagement.
+                    </EAAlert>
+                  )}
+                </div>
+              )}
+            </EACardContent>
+          </EACard>
+        </TabsContent>
+
+        {/* ===== READMISSIONS PREDICTION TAB ===== */}
+        <TabsContent value="readmission" className="space-y-6">
+          <EACard variant="highlight">
+            <EACardHeader icon={<Building2 className="h-5 w-5" />}>
+              <h2 className="text-xl font-semibold text-white">AI Readmissions Risk Prediction</h2>
+              <p className="text-sm text-slate-400 mt-1">
+                Multi-factor model integrating clinical, behavioral, and social determinants.
+              </p>
+            </EACardHeader>
+            <EACardContent className="space-y-6">
+              {/* Patient Inputs */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <EASlider
+                  label="Age"
+                  value={[patientDemo.age]}
+                  onValueChange={([v]) => setPatientDemo({ ...patientDemo, age: v })}
+                  min={18}
+                  max={95}
+                  step={1}
+                />
+                <EASlider
+                  label="Prior Admissions (12mo)"
+                  value={[patientDemo.priorAdmissions]}
+                  onValueChange={([v]) => setPatientDemo({ ...patientDemo, priorAdmissions: v })}
+                  min={0}
+                  max={5}
+                  step={1}
+                />
+                <EASlider
+                  label="Chronic Conditions"
+                  value={[patientDemo.chronicConditions]}
+                  onValueChange={([v]) => setPatientDemo({ ...patientDemo, chronicConditions: v })}
+                  min={0}
+                  max={6}
+                  step={1}
+                />
+                <EASlider
+                  label="Medication Compliance %"
+                  value={[patientDemo.medicationCompliance]}
+                  onValueChange={([v]) => setPatientDemo({ ...patientDemo, medicationCompliance: v })}
+                  min={0}
+                  max={100}
+                  step={5}
+                />
+                <div className="space-y-2">
+                  <label className="text-sm text-slate-400">Social Support</label>
+                  <EASelect
+                    value={patientDemo.socialSupport}
+                    onValueChange={(v) => setPatientDemo({ ...patientDemo, socialSupport: v as 'high' | 'medium' | 'low' })}
+                  >
+                    <EASelectTrigger>
+                      <EASelectValue />
+                    </EASelectTrigger>
+                    <EASelectContent>
+                      <EASelectItem value="high">High</EASelectItem>
+                      <EASelectItem value="medium">Medium</EASelectItem>
+                      <EASelectItem value="low">Low</EASelectItem>
+                    </EASelectContent>
+                  </EASelect>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm text-slate-400">Discharge Destination</label>
+                  <EASelect
+                    value={patientDemo.dischargeType}
+                    onValueChange={(v) => setPatientDemo({ ...patientDemo, dischargeType: v as 'home' | 'snf' | 'ltac' | 'rehab' | 'home_health' })}
+                  >
+                    <EASelectTrigger>
+                      <EASelectValue />
+                    </EASelectTrigger>
+                    <EASelectContent>
+                      <EASelectItem value="home">Home</EASelectItem>
+                      <EASelectItem value="home_health">Home Health</EASelectItem>
+                      <EASelectItem value="snf">Skilled Nursing</EASelectItem>
+                      <EASelectItem value="rehab">Rehab</EASelectItem>
+                      <EASelectItem value="ltac">LTAC</EASelectItem>
+                    </EASelectContent>
+                  </EASelect>
+                </div>
+              </div>
+
+              {/* Risk Results */}
+              {readmissionResult && silenceResult && (
+                <div className="bg-slate-900 rounded-lg p-6 mt-6 border border-slate-700">
+                  <div className="flex items-center justify-between mb-6">
+                    <span className="text-lg font-medium text-white">30-Day Readmission Risk</span>
+                    <div className="flex items-center gap-4">
+                      <span className="text-4xl font-bold text-[#00857a]">{readmissionResult.totalRiskScore}%</span>
+                      <EARiskIndicator level={readmissionResult.riskCategory} size="lg" />
+                    </div>
+                  </div>
+
+                  {/* Factor Categories */}
+                  <div className="grid grid-cols-3 gap-4 mb-6">
+                    <EAMetricCard
+                      label="Clinical Score"
+                      value={readmissionResult.clinicalScore}
+                      sublabel="Age, History, Conditions"
+                    />
+                    <EAMetricCard
+                      label="Behavioral Score"
+                      value={readmissionResult.behavioralScore}
+                      sublabel="Includes Silence Window"
+                      riskLevel={silenceResult.riskLevel === 'critical' ? 'high' : silenceResult.riskLevel}
+                    />
+                    <EAMetricCard
+                      label="Social Score"
+                      value={readmissionResult.socialScore}
+                      sublabel="Support, Destination"
+                    />
+                  </div>
+
+                  {/* Silence Window Impact */}
+                  <EAAlert variant="info" className="mb-6">
+                    <strong>Communication Silence Window Impact:</strong> Current score of{' '}
+                    <span className="font-bold text-[#33bfb7]">{silenceResult.score}</span> contributes{' '}
+                    <span className="font-bold text-[#33bfb7]">{Math.round(silenceResult.score * 0.35)}</span> points
+                    to overall risk (35% weight in behavioral factors)
+                  </EAAlert>
+
+                  {/* Interventions */}
+                  {readmissionResult.interventionRecommended && (
+                    <EAAlert variant="warning" title="Intervention Recommended">
+                      <ul className="mt-2 ml-4 list-disc space-y-1">
+                        {readmissionResult.recommendedInterventions.map((intervention, idx) => (
+                          <li key={idx} className={intervention.priority === 'critical' ? 'text-red-300' : ''}>
+                            {intervention.intervention}
+                            {intervention.targetFactors.includes('communication_silence') && (
+                              <EABadge variant="info" size="sm" className="ml-2">Silence Window</EABadge>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </EAAlert>
+                  )}
+                </div>
+              )}
+            </EACardContent>
+          </EACard>
+        </TabsContent>
+
+        {/* ===== CODE TAB ===== */}
+        <TabsContent value="code" className="space-y-6">
+          <EACard>
+            <EACardHeader icon={<Code className="h-5 w-5" />}>
+              <h2 className="text-xl font-semibold text-white">Algorithm Implementation (TypeScript)</h2>
+            </EACardHeader>
+            <EACardContent className="space-y-6">
+              {/* Silence Window Algorithm */}
+              <div>
+                <h3 className="text-lg font-medium text-white mb-3 flex items-center gap-2">
+                  <Radio className="h-4 w-4 text-[#00857a]" />
                   Communication Silence Window Algorithm
-                </CardTitle>
-                <p className="text-slate-400 text-sm mt-2">
-                  A novel predictive factor that detects engagement gaps indicating elevated readmission risk.
-                  This proprietary algorithm monitors patient communication patterns to trigger proactive interventions.
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Input Controls */}
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 text-sm text-slate-400">
-                      <Calendar className="h-4 w-4" />
-                      Days Since Last Contact: <span className="text-white font-medium">{silenceDemo.lastContact}</span>
-                    </label>
-                    <Slider
-                      value={[silenceDemo.lastContact]}
-                      onValueChange={([v]) => setSilenceDemo({ ...silenceDemo, lastContact: v })}
-                      min={0}
-                      max={30}
-                      step={1}
-                      className="accent-cyan-500"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 text-sm text-slate-400">
-                      <Phone className="h-4 w-4" />
-                      Missed Outreach Calls: <span className="text-white font-medium">{silenceDemo.missedCalls}</span>
-                    </label>
-                    <Slider
-                      value={[silenceDemo.missedCalls]}
-                      onValueChange={([v]) => setSilenceDemo({ ...silenceDemo, missedCalls: v })}
-                      min={0}
-                      max={5}
-                      step={1}
-                      className="accent-cyan-500"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 text-sm text-slate-400">
-                      <Calendar className="h-4 w-4" />
-                      Missed Appointments: <span className="text-white font-medium">{silenceDemo.missedAppts}</span>
-                    </label>
-                    <Slider
-                      value={[silenceDemo.missedAppts]}
-                      onValueChange={([v]) => setSilenceDemo({ ...silenceDemo, missedAppts: v })}
-                      min={0}
-                      max={3}
-                      step={1}
-                      className="accent-cyan-500"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 text-sm text-slate-400">
-                      <Mail className="h-4 w-4" />
-                      Unread Messages: <span className="text-white font-medium">{silenceDemo.unreadMessages}</span>
-                    </label>
-                    <Slider
-                      value={[silenceDemo.unreadMessages]}
-                      onValueChange={([v]) => setSilenceDemo({ ...silenceDemo, unreadMessages: v })}
-                      min={0}
-                      max={10}
-                      step={1}
-                      className="accent-cyan-500"
-                    />
-                  </div>
-                </div>
-
-                {/* Results Display */}
-                {silenceResult && (
-                  <div className="bg-slate-900 rounded-lg p-6 mt-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-lg font-medium">Silence Window Score</span>
-                      <div className="flex items-center gap-3">
-                        <span className="text-3xl font-bold text-cyan-400">{silenceResult.score}</span>
-                        <Badge className={`${getRiskColor(silenceResult.riskLevel)} text-white px-3 py-1`}>
-                          {silenceResult.riskLevel.toUpperCase()}
-                        </Badge>
-                      </div>
-                    </div>
-
-                    {/* Score Breakdown */}
-                    <div className="space-y-4">
-                      {/* Days Since Contact */}
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span className="text-slate-400">Days Since Contact (35%)</span>
-                          <span>{Math.round(silenceResult.components.dayScore)}/100</span>
-                        </div>
-                        <div className="w-full bg-slate-700 rounded-full h-2">
-                          <div
-                            className="bg-cyan-500 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${silenceResult.components.dayScore}%` }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Missed Calls */}
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span className="text-slate-400">Missed Calls (25%)</span>
-                          <span>{Math.round(silenceResult.components.callScore)}/100</span>
-                        </div>
-                        <div className="w-full bg-slate-700 rounded-full h-2">
-                          <div
-                            className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${silenceResult.components.callScore}%` }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Missed Appointments */}
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span className="text-slate-400">Missed Appointments (25%)</span>
-                          <span>{Math.round(silenceResult.components.apptScore)}/100</span>
-                        </div>
-                        <div className="w-full bg-slate-700 rounded-full h-2">
-                          <div
-                            className="bg-purple-500 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${silenceResult.components.apptScore}%` }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Unread Messages */}
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span className="text-slate-400">Unread Messages (15%)</span>
-                          <span>{Math.round(silenceResult.components.msgScore)}/100</span>
-                        </div>
-                        <div className="w-full bg-slate-700 rounded-full h-2">
-                          <div
-                            className="bg-pink-500 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${silenceResult.components.msgScore}%` }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Alert Triggered */}
-                    {silenceResult.alertTriggered && (
-                      <Alert className={`mt-4 ${getRiskBgColor(silenceResult.riskLevel)} ${getRiskBorderColor(silenceResult.riskLevel)}`}>
-                        <AlertTriangle className="h-4 w-4" />
-                        <AlertDescription className="text-white">
-                          <span className="font-medium text-yellow-400">Alert Triggered:</span>
-                          <span className="ml-2">Recommend immediate care team outreach</span>
-                        </AlertDescription>
-                      </Alert>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Readmissions Prediction Tab */}
-          <TabsContent value="readmission" className="space-y-6">
-            <Card className="bg-slate-800 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-xl text-cyan-400 flex items-center gap-2">
-                  <Building2 className="h-5 w-5" />
-                  AI Readmissions Risk Prediction Model
-                </CardTitle>
-                <p className="text-slate-400 text-sm mt-2">
-                  Multi-factor predictive model integrating clinical, behavioral, and social determinants.
-                  Features the novel Communication Silence Window as a key behavioral predictor.
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Patient Inputs */}
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 text-sm text-slate-400">
-                      <Heart className="h-4 w-4" />
-                      Age: <span className="text-white font-medium">{patientDemo.age}</span>
-                    </label>
-                    <Slider
-                      value={[patientDemo.age]}
-                      onValueChange={([v]) => setPatientDemo({ ...patientDemo, age: v })}
-                      min={18}
-                      max={95}
-                      step={1}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 text-sm text-slate-400">
-                      <Building2 className="h-4 w-4" />
-                      Prior Admissions (12mo): <span className="text-white font-medium">{patientDemo.priorAdmissions}</span>
-                    </label>
-                    <Slider
-                      value={[patientDemo.priorAdmissions]}
-                      onValueChange={([v]) => setPatientDemo({ ...patientDemo, priorAdmissions: v })}
-                      min={0}
-                      max={5}
-                      step={1}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 text-sm text-slate-400">
-                      <Activity className="h-4 w-4" />
-                      Chronic Conditions: <span className="text-white font-medium">{patientDemo.chronicConditions}</span>
-                    </label>
-                    <Slider
-                      value={[patientDemo.chronicConditions]}
-                      onValueChange={([v]) => setPatientDemo({ ...patientDemo, chronicConditions: v })}
-                      min={0}
-                      max={6}
-                      step={1}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 text-sm text-slate-400">
-                      <Pill className="h-4 w-4" />
-                      Medication Compliance: <span className="text-white font-medium">{patientDemo.medicationCompliance}%</span>
-                    </label>
-                    <Slider
-                      value={[patientDemo.medicationCompliance]}
-                      onValueChange={([v]) => setPatientDemo({ ...patientDemo, medicationCompliance: v })}
-                      min={0}
-                      max={100}
-                      step={5}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 text-sm text-slate-400">
-                      <Users className="h-4 w-4" />
-                      Social Support
-                    </label>
-                    <Select
-                      value={patientDemo.socialSupport}
-                      onValueChange={(v) => setPatientDemo({ ...patientDemo, socialSupport: v as 'high' | 'medium' | 'low' })}
-                    >
-                      <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-slate-700 border-slate-600">
-                        <SelectItem value="high">High</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="low">Low</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 text-sm text-slate-400">
-                      <Home className="h-4 w-4" />
-                      Discharge Destination
-                    </label>
-                    <Select
-                      value={patientDemo.dischargeType}
-                      onValueChange={(v) => setPatientDemo({ ...patientDemo, dischargeType: v as 'home' | 'snf' | 'ltac' | 'rehab' | 'home_health' })}
-                    >
-                      <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-slate-700 border-slate-600">
-                        <SelectItem value="home">Home</SelectItem>
-                        <SelectItem value="home_health">Home Health</SelectItem>
-                        <SelectItem value="snf">Skilled Nursing</SelectItem>
-                        <SelectItem value="rehab">Rehab</SelectItem>
-                        <SelectItem value="ltac">LTAC</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {/* Risk Results */}
-                {readmissionResult && silenceResult && (
-                  <div className="bg-slate-900 rounded-lg p-6 mt-6">
-                    <div className="flex items-center justify-between mb-6">
-                      <span className="text-lg font-medium">30-Day Readmission Risk</span>
-                      <div className="flex items-center gap-3">
-                        <span className="text-4xl font-bold text-cyan-400">{readmissionResult.totalRiskScore}%</span>
-                        <Badge className={`${getRiskColor(readmissionResult.riskCategory)} text-white px-3 py-1`}>
-                          {readmissionResult.riskCategory} Risk
-                        </Badge>
-                      </div>
-                    </div>
-
-                    {/* Factor Categories */}
-                    <div className="grid grid-cols-3 gap-4 mb-6">
-                      <div className="bg-slate-800 rounded-lg p-4 text-center">
-                        <div className="text-2xl font-bold text-blue-400">{readmissionResult.clinicalScore}</div>
-                        <div className="text-sm text-slate-400">Clinical Score</div>
-                        <div className="text-xs text-slate-500 mt-1">Age, History, Conditions</div>
-                      </div>
-                      <div className="bg-slate-800 rounded-lg p-4 text-center border-2 border-cyan-500/50">
-                        <div className="text-2xl font-bold text-cyan-400">{readmissionResult.behavioralScore}</div>
-                        <div className="text-sm text-slate-400">Behavioral Score</div>
-                        <div className="text-xs text-cyan-400 mt-1 flex items-center justify-center gap-1">
-                          <Radio className="h-3 w-3" />
-                          Includes Silence Window
-                        </div>
-                      </div>
-                      <div className="bg-slate-800 rounded-lg p-4 text-center">
-                        <div className="text-2xl font-bold text-purple-400">{readmissionResult.socialScore}</div>
-                        <div className="text-sm text-slate-400">Social Score</div>
-                        <div className="text-xs text-slate-500 mt-1">Support, Destination</div>
-                      </div>
-                    </div>
-
-                    {/* Silence Window Integration Highlight */}
-                    <Alert className="bg-cyan-500/10 border-cyan-500/30">
-                      <Radio className="h-4 w-4 text-cyan-400" />
-                      <AlertDescription>
-                        <span className="text-cyan-400 font-semibold">Communication Silence Window Impact:</span>
-                        <span className="text-slate-300 ml-2">
-                          Current silence score of <span className="text-cyan-400 font-bold">{silenceResult.score}</span> contributes
-                          <span className="text-cyan-400 font-bold"> {Math.round(silenceResult.score * 0.35)}</span> points
-                          to overall risk (35% weight in behavioral factors)
-                        </span>
-                      </AlertDescription>
-                    </Alert>
-
-                    {/* Intervention Recommendations */}
-                    {readmissionResult.interventionRecommended && (
-                      <Alert className={`mt-4 ${getRiskBgColor(readmissionResult.riskCategory)} ${getRiskBorderColor(readmissionResult.riskCategory)}`}>
-                        <AlertTriangle className="h-4 w-4" />
-                        <AlertDescription>
-                          <span className="text-red-400 font-medium">Intervention Recommended:</span>
-                          <ul className="text-slate-300 mt-2 ml-4 list-disc space-y-1">
-                            {readmissionResult.recommendedInterventions.map((intervention, idx) => (
-                              <li key={idx} className={intervention.priority === 'critical' || intervention.priority === 'high' ? 'text-red-300' : silenceResult.alertTriggered && intervention.targetFactors.includes('communication_silence') ? 'text-cyan-400' : ''}>
-                                {intervention.intervention}
-                                {intervention.targetFactors.includes('communication_silence') && (
-                                  <span className="text-cyan-400 text-xs ml-2">(Silence Window)</span>
-                                )}
-                              </li>
-                            ))}
-                          </ul>
-                        </AlertDescription>
-                      </Alert>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Code Tab */}
-          <TabsContent value="code" className="space-y-6">
-            <Card className="bg-slate-800 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-xl text-cyan-400 flex items-center gap-2">
-                  <Code className="h-5 w-5" />
-                  Algorithm Implementation (TypeScript)
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Silence Window Algorithm */}
-                <div>
-                  <h3 className="text-lg font-medium text-white mb-3">Communication Silence Window Algorithm</h3>
-                  <pre className="bg-slate-900 rounded-lg p-4 overflow-x-auto text-sm">
-                    <code className="text-green-400">{`// Communication Silence Window Algorithm
+                </h3>
+                <pre className="bg-slate-900 border border-slate-700 rounded-lg p-4 overflow-x-auto text-sm">
+                  <code className="text-[#33bfb7]">{`// Communication Silence Window Algorithm
 // Patent Pending - WellFit Community / Envision VirtualEdge Group LLC
 
 interface SilenceWindowInput {
@@ -610,25 +451,14 @@ interface SilenceWindowInput {
   unreadMessages: number;
 }
 
-interface SilenceWindowResult {
-  score: number;           // 0-100
-  riskLevel: 'normal' | 'elevated' | 'critical';
-  alertTriggered: boolean;
-  components: Record<string, number>;
-}
+const WEIGHTS = {
+  daysSinceContact: 0.35,   // Primary indicator
+  missedCalls: 0.25,        // Active avoidance signal
+  missedAppointments: 0.25, // Strong predictor
+  unreadMessages: 0.15      // Passive disengagement
+};
 
-function calculateSilenceWindowScore(
-  input: SilenceWindowInput
-): SilenceWindowResult {
-  // Configurable weights based on clinical validation
-  const WEIGHTS = {
-    daysSinceContact: 0.35,  // Primary indicator
-    missedCalls: 0.25,       // Active avoidance signal
-    missedAppointments: 0.25, // Strong predictor
-    unreadMessages: 0.15     // Passive disengagement
-  };
-
-  // Normalize to 0-100 scale with clinical thresholds
+function calculateSilenceWindowScore(input: SilenceWindowInput) {
   const normalize = (value: number, max: number): number =>
     Math.min((value / max) * 100, 100);
 
@@ -654,76 +484,43 @@ function calculateSilenceWindowScore(
     components
   };
 }`}</code>
-                  </pre>
-                </div>
+                </pre>
+              </div>
 
-                {/* Readmissions Risk Model */}
-                <div>
-                  <h3 className="text-lg font-medium text-white mb-3">Readmissions Risk Prediction Model</h3>
-                  <pre className="bg-slate-900 rounded-lg p-4 overflow-x-auto text-sm">
-                    <code className="text-blue-400">{`// AI Readmissions Risk Prediction Model
+              {/* Readmission Risk Model */}
+              <div>
+                <h3 className="text-lg font-medium text-white mb-3 flex items-center gap-2">
+                  <Building2 className="h-4 w-4 text-[#00857a]" />
+                  Readmissions Risk Prediction Model
+                </h3>
+                <pre className="bg-slate-900 border border-slate-700 rounded-lg p-4 overflow-x-auto text-sm">
+                  <code className="text-[#66cfc9]">{`// AI Readmissions Risk Prediction Model
 // Integrates Communication Silence Window as novel predictor
 
-interface PatientRiskFactors {
-  // Clinical Factors
-  age: number;
-  priorAdmissions12Months: number;
-  chronicConditionCount: number;
-
-  // Behavioral Factors
-  medicationCompliancePercent: number;
-  communicationSilenceScore: number; // From Silence Window algo
-
-  // Social Determinants
-  socialSupportLevel: 'high' | 'medium' | 'low';
-  dischargeDestination: 'home' | 'snf' | 'ltac';
-}
-
-interface RiskPredictionResult {
-  riskScore: number;        // 0-100
-  riskCategory: 'Low' | 'Moderate' | 'High' | 'Critical';
-  clinicalContribution: number;
-  behavioralContribution: number;
-  socialContribution: number;
-  interventionRecommended: boolean;
-  recommendedActions: string[];
-}
-
-function predictReadmissionRisk(
-  patient: PatientRiskFactors
-): RiskPredictionResult {
+function predictReadmissionRisk(patient, silenceWindow) {
   // Clinical Factors (40% total weight)
   const clinicalScore =
     (patient.age >= 75 ? 15 : patient.age >= 65 ? 10 : 5) +
-    Math.min(patient.priorAdmissions12Months * 8, 25) +
-    Math.min(patient.chronicConditionCount * 5, 20);
+    Math.min(patient.priorAdmissions * 8, 25) +
+    Math.min(patient.chronicConditions * 5, 20);
 
   // Behavioral Factors (35% total weight)
   // Communication Silence Window is KEY differentiator
   const behavioralScore =
-    ((100 - patient.medicationCompliancePercent) * 0.25) +
-    (patient.communicationSilenceScore * 0.35);
+    ((100 - patient.medicationCompliance) * 0.25) +
+    (silenceWindow.score * 0.35);
 
   // Social Determinants (25% total weight)
   const socialMap = { low: 15, medium: 8, high: 2 };
   const destMap = { home: 5, snf: 10, ltac: 15 };
   const socialScore =
-    socialMap[patient.socialSupportLevel] +
-    destMap[patient.dischargeDestination];
+    socialMap[patient.socialSupport] +
+    destMap[patient.discharge];
 
   const totalRisk = Math.min(
     clinicalScore + behavioralScore + socialScore,
     100
   );
-
-  const actions: string[] = [];
-  if (totalRisk >= 40) {
-    actions.push('Schedule care coordinator follow-up');
-    actions.push('Activate TCM protocol');
-  }
-  if (patient.communicationSilenceScore >= 40) {
-    actions.push('PRIORITY: Address communication gap');
-  }
 
   return {
     riskScore: Math.round(totalRisk),
@@ -731,27 +528,22 @@ function predictReadmissionRisk(
                 : totalRisk >= 40 ? 'High'
                 : totalRisk >= 20 ? 'Moderate'
                 : 'Low',
-    clinicalContribution: Math.round(clinicalScore),
-    behavioralContribution: Math.round(behavioralScore),
-    socialContribution: Math.round(socialScore),
-    interventionRecommended: totalRisk >= 40,
-    recommendedActions: actions
+    interventionRecommended: totalRisk >= 40
   };
 }`}</code>
-                  </pre>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                </pre>
+              </div>
+            </EACardContent>
+          </EACard>
+        </TabsContent>
+      </Tabs>
 
-        {/* Footer */}
-        <div className="mt-8 text-center text-slate-500 text-sm">
-          <p>&copy; 2024 Envision VirtualEdge Group LLC — WellFit Community Platform</p>
-          <p className="mt-1">Communication Silence Window&trade; — Patent Pending</p>
-        </div>
+      {/* Footer */}
+      <div className="mt-8 text-center text-slate-500 text-sm">
+        <p>&copy; 2024 Envision VirtualEdge Group LLC — WellFit Community Platform</p>
+        <p className="mt-1">Communication Silence Window&trade; — Patent Pending</p>
       </div>
-    </div>
+    </EAPageLayout>
   );
 };
 
