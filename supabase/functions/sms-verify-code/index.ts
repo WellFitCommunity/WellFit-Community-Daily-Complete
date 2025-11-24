@@ -248,6 +248,16 @@ Deno.serve(async (req: Request): Promise<Response> => {
         });
       }
 
+      // Validate authEmail is set (safety check)
+      if (!authEmail) {
+        logger.error("Critical error: authEmail is undefined", {
+          pendingEmail: pending.email,
+          phoneAlreadyUsed,
+          isSharedPhone
+        });
+        return new Response(JSON.stringify({ error: "Invalid registration data - email missing" }), { status: 500, headers });
+      }
+
       // Create the actual user account
       const createUserPayload: any = {
         email: authEmail,
@@ -271,6 +281,16 @@ Deno.serve(async (req: Request): Promise<Response> => {
         createUserPayload.phone = authPhone;
         createUserPayload.phone_confirm = true;
       }
+
+      // Log payload before sending (without password for security)
+      logger.info("Creating user with payload", {
+        email: createUserPayload.email,
+        hasPhone: !!createUserPayload.phone,
+        phone: createUserPayload.phone,
+        emailConfirm: createUserPayload.email_confirm,
+        phoneConfirm: createUserPayload.phone_confirm,
+        metadata: createUserPayload.user_metadata
+      });
 
       const { data: authData, error: authError } = await supabase.auth.admin.createUser(createUserPayload);
 
@@ -433,9 +453,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     } catch (dbError) {
       logger.error("Database error during registration completion", {
-        error: dbError instanceof Error ? dbError.message : String(dbError)
+        error: dbError instanceof Error ? dbError.message : String(dbError),
+        stack: dbError instanceof Error ? dbError.stack : undefined,
+        errorType: dbError instanceof Error ? dbError.constructor.name : typeof dbError,
+        fullError: JSON.stringify(dbError, Object.getOwnPropertyNames(dbError))
       });
-      return new Response(JSON.stringify({ error: "Failed to complete registration" }), { status: 500, headers });
+      return new Response(JSON.stringify({
+        error: "Failed to complete registration",
+        details: dbError instanceof Error ? dbError.message : String(dbError)
+      }), { status: 500, headers });
     }
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
