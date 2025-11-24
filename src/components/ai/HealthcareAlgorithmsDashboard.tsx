@@ -13,7 +13,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useSupabaseClient, useUser } from '@supabase/auth-helpers-react';
+import { useSupabaseClient, useUser } from '../../contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -33,21 +33,17 @@ import {
   Building2,
   Code,
   AlertTriangle,
-  TrendingUp,
   Phone,
   Calendar,
   Mail,
-  Shield,
   Heart,
   Users,
   Pill,
   Home,
 } from 'lucide-react';
 import { auditLogger } from '../../services/auditLogger';
-import { logPhiAccess } from '../../services/phiAccessLogger';
 import {
   calculateSilenceWindowScore,
-  calculateReadmissionRiskContribution,
 } from '../../services/communicationSilenceWindowService';
 import {
   calculateReadmissionRisk,
@@ -56,8 +52,6 @@ import {
 import type {
   SilenceWindowInput,
   SilenceWindowResult,
-  SilenceWindowWeights,
-  DEFAULT_SILENCE_WINDOW_WEIGHTS,
 } from '../../types/communicationSilenceWindow';
 
 // =====================================================
