@@ -141,7 +141,7 @@ SELECT
   pr.first_name,
   pr.last_name,
   rp.discharge_date,
-  rp.readmission_risk_30_day,
+  rp.readmission_risk_score AS readmission_risk_30_day,
   rp.risk_category,
   rp.data_completeness_score,
 
@@ -174,7 +174,7 @@ JOIN auth.users p ON rp.patient_id = p.id
 LEFT JOIN public.profiles pr ON p.id = pr.id
 WHERE rp.risk_category IN ('high', 'critical')
   AND rp.discharge_date >= CURRENT_DATE - INTERVAL '30 days'
-ORDER BY rp.readmission_risk_30_day DESC, rp.discharge_date DESC;
+ORDER BY rp.readmission_risk_score DESC, rp.discharge_date DESC;
 
 -- Grant access to view
 GRANT SELECT ON public.v_high_risk_readmission_patients TO authenticated;
