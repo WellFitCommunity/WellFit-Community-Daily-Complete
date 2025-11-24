@@ -196,32 +196,10 @@ resource_type: 'auth_event',
     // Enforce safe public role (defaults to senior)
     const enforced = effectiveRole(payload.role_code);
 
-    // Check if phone already exists in auth.users or pending_registrations
-    const { data: existingAuth } = await supabase.auth.admin.listUsers();
-    const phoneExists = existingAuth?.users?.some(u => u.phone === phoneNumber);
-
-    if (phoneExists) {
-      // HIPAA AUDIT LOGGING: Log duplicate phone registration attempt
-      try {
-        await supabase.from('audit_logs').insert({
-          event_type: 'USER_REGISTER_FAILED',
-          event_category: 'AUTHENTICATION',
-          actor_user_id: null,
-          actor_ip_address: clientIp,
-          actor_user_agent: req.headers.get('user-agent'),
-          operation: 'REGISTER',
-resource_type: 'auth_event',
-          success: false,
-          error_code: 'PHONE_ALREADY_REGISTERED',
-          error_message: 'Phone number already registered',
-          metadata: { phone: phoneNumber }
-        });
-      } catch (logError) {
-        console.error('[Audit Log Error]:', logError);
-      }
-
-      return jsonResponse({ error: "Phone number already registered" }, 409, origin);
-    }
+    // SHARED PHONE SUPPORT: Allow multiple users to share the same phone number
+    // This is critical for low-income communities where spouses share phones
+    // The sms-verify-code function handles creating unique auth identifiers
+    // (generates internal emails like: 15551234567_uuid@wellfit.internal)
 
     const { data: existingPending } = await supabase
       .from("pending_registrations")
