@@ -68,10 +68,29 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
       // Normalize to E.164 format (+1234567890) to ensure consistency with Twilio
       normalizedPhone = phoneNumber.number;
-      // PHI: Phone number not logged per HIPAA compliance
+
+      // Log normalization details (phone number logging for debugging only, not PHI context)
+      logger.info("Phone normalization for verification check", {
+        originalPhone: phone,
+        normalizedPhone: normalizedPhone,
+        phoneChanged: phone !== normalizedPhone,
+        codeLength: code.length
+      });
     } catch (error) {
+      logger.error("Phone parsing failed", {
+        phone: phone,
+        error: error instanceof Error ? error.message : String(error)
+      });
       return new Response(JSON.stringify({ error: "Invalid phone number format" }), { status: 400, headers });
     }
+
+    // Log what we're about to send to Twilio
+    logger.info("Sending verification check to Twilio", {
+      normalizedPhone: normalizedPhone,
+      verifySidPrefix: VERIFY_SID.substring(0, 4),
+      accountSidPrefix: TWILIO_ACCOUNT_SID.substring(0, 4),
+      codeLength: code.length
+    });
 
     const resp = await fetch(
       `https://verify.twilio.com/v2/Services/${VERIFY_SID}/VerificationCheck`,
@@ -89,12 +108,22 @@ Deno.serve(async (req: Request): Promise<Response> => {
     let json: unknown = {};
     try { json = JSON.parse(txt); } catch { /* text fallback */ }
 
+    // Log Twilio's response for debugging
+    logger.info("Twilio VerificationCheck response", {
+      status: resp.status,
+      ok: resp.ok,
+      normalizedPhone: normalizedPhone,
+      responseBody: txt,
+      verificationStatus: typeof json === "object" && json !== null ? (json as any).status : null
+    });
+
     // Check for Twilio configuration errors (404 = Service SID not found)
     if (resp.status === 404 && typeof json === "object" && json !== null && (json as any).code === 20404) {
       logger.error("Twilio Verify Service not found - check TWILIO_VERIFY_SERVICE_SID", {
         twilioServiceSid: VERIFY_SID,
         twilioError: json,
-        message: (json as any).message
+        message: (json as any).message,
+        normalizedPhone: normalizedPhone
       });
       return new Response(JSON.stringify({
         error: "SMS verification service not configured. Please contact support.",
@@ -121,9 +150,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
       }
 
       logger.security("Invalid or expired verification code attempt", {
-        phone,
+        originalPhone: phone,
+        normalizedPhone: normalizedPhone,
         twilioStatus: resp.status,
-        responseDetails: txt
+        responseDetails: txt,
+        twilioErrorCode: typeof json === "object" && json !== null ? (json as any).code : null,
+        twilioMessage: typeof json === "object" && json !== null ? (json as any).message : null
       });
       return new Response(JSON.stringify({
         error: errorMessage,
@@ -150,6 +182,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
       const supabase = createClient(SB_URL, SB_SECRET_KEY);
 
       // Get pending registration using normalized phone number
+      logger.info("Looking up pending registration", {
+        normalizedPhone: normalizedPhone,
+        originalPhone: phone
+      });
+
       const { data: pending, error: pendingError } = await supabase
         .from("pending_registrations")
         .select("*")
@@ -158,13 +195,23 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
       if (pendingError || !pending) {
         logger.warn("No pending registration found for phone", {
-          phone,
-          error: pendingError?.message
+          originalPhone: phone,
+          normalizedPhone: normalizedPhone,
+          error: pendingError?.message,
+          pendingError: pendingError
         });
         return new Response(JSON.stringify({ error: "No pending registration found. Please register again." }), {
           status: 404, headers,
         });
       }
+
+      logger.info("Found pending registration", {
+        normalizedPhone: normalizedPhone,
+        pendingPhone: pending.phone,
+        phoneMatch: pending.phone === normalizedPhone,
+        firstName: pending.first_name,
+        lastName: pending.last_name
+      });
 
       // Decrypt the user's password from encrypted storage
       // Try encrypted column first (new), fallback to plaintext (old) for backward compatibility
