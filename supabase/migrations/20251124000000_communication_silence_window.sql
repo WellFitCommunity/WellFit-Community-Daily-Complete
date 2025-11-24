@@ -50,11 +50,12 @@ CREATE TABLE IF NOT EXISTS public.communication_silence_window (
 
   -- Timestamps
   created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now(),
-
-  -- Unique constraint: one assessment per patient per day
-  UNIQUE(patient_id, assessment_date::date)
+  updated_at timestamptz NOT NULL DEFAULT now()
 );
+
+-- Unique constraint: one assessment per patient per day (using unique index on cast)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_silence_window_unique_patient_day
+  ON public.communication_silence_window(patient_id, (assessment_date::date));
 
 -- =====================================================
 -- 2. INDEXES FOR PERFORMANCE
