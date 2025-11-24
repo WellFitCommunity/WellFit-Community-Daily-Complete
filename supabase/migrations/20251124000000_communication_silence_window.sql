@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS public.communication_silence_window (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   patient_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   tenant_id uuid NOT NULL,
-  assessment_date timestamptz NOT NULL DEFAULT now(),
+  assessment_date date NOT NULL DEFAULT CURRENT_DATE,
 
   -- Input metrics (communication patterns)
   days_since_last_contact integer NOT NULL DEFAULT 0,
@@ -53,9 +53,9 @@ CREATE TABLE IF NOT EXISTS public.communication_silence_window (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
--- Unique constraint: one assessment per patient per day (using unique index on cast)
+-- Unique constraint: one assessment per patient per day
 CREATE UNIQUE INDEX IF NOT EXISTS idx_silence_window_unique_patient_day
-  ON public.communication_silence_window(patient_id, (assessment_date::date));
+  ON public.communication_silence_window(patient_id, assessment_date);
 
 -- =====================================================
 -- 2. INDEXES FOR PERFORMANCE
