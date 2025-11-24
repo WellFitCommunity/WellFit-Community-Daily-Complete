@@ -166,8 +166,8 @@ SELECT
   (rp.social_determinants_features->>'isRuralLocation')::boolean AS rural_location,
 
   rp.recommended_interventions,
-  rp.prediction_confidence,
-  rp.created_at AS prediction_date
+  rp.prediction_accuracy_score AS prediction_confidence,
+  rp.prediction_generated_at AS prediction_date
 
 FROM public.readmission_risk_predictions rp
 JOIN auth.users p ON rp.patient_id = p.id
