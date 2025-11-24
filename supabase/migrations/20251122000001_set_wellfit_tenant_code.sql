@@ -6,28 +6,30 @@ DO $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'tenants' AND column_name = 'tenant_code'
+    WHERE table_schema = 'public' AND table_name = 'tenants' AND column_name = 'tenant_code'
   ) THEN
-    ALTER TABLE tenants ADD COLUMN tenant_code TEXT UNIQUE;
-    CREATE INDEX IF NOT EXISTS idx_tenants_tenant_code ON tenants(tenant_code);
+    ALTER TABLE public.tenants ADD COLUMN tenant_code TEXT UNIQUE;
+    CREATE INDEX IF NOT EXISTS idx_tenants_tenant_code ON public.tenants(tenant_code);
   END IF;
 END $$;
 
--- Ensure WellFit tenant exists with code WF-001
-INSERT INTO tenants (id, subdomain, display_name, tenant_code, is_active, created_at)
-VALUES (
-  gen_random_uuid(),
-  'www',
-  'WellFit Community',
-  'WF-001',
-  true,
-  NOW()
-)
-ON CONFLICT (subdomain)
-DO UPDATE SET
-  tenant_code = 'WF-001',
-  display_name = 'WellFit Community'
-WHERE tenants.subdomain = 'www';
+-- Add display_name column if it doesn't exist
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'tenants' AND column_name = 'display_name'
+  ) THEN
+    ALTER TABLE public.tenants ADD COLUMN display_name TEXT;
+  END IF;
+END $$;
+
+-- Set WellFit tenant code on existing row
+UPDATE public.tenants
+SET
+  tenant_code = COALESCE(tenant_code, 'WF-001'),
+  display_name = COALESCE(display_name, 'WellFit Community')
+WHERE subdomain = 'www' OR tenant_code IS NULL;
 
 -- Create function to get tenant by email domain or lookup
 CREATE OR REPLACE FUNCTION get_tenant_by_identifier(
