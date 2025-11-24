@@ -25,9 +25,10 @@ BEGIN
 END $$;
 
 -- Set WellFit tenant code on the www tenant only
+-- Format must match: ^[A-Z]{1,4}-[0-9]{4,6}$
 UPDATE public.tenants
 SET
-  tenant_code = 'WF-001',
+  tenant_code = 'WF-0001',
   display_name = COALESCE(display_name, 'WellFit Community')
 WHERE subdomain = 'www' AND (tenant_code IS NULL OR tenant_code = '');
 
@@ -65,7 +66,7 @@ BEGIN
       t.display_name,
       t.subdomain
     FROM tenants t
-    WHERE t.subdomain = 'www' OR t.tenant_code = 'WF-001'
+    WHERE t.subdomain = 'www' OR t.tenant_code = 'WF-0001'
     LIMIT 1;
   END IF;
 END;
@@ -74,4 +75,4 @@ $$;
 -- Grant execute permission
 GRANT EXECUTE ON FUNCTION get_tenant_by_identifier(TEXT) TO authenticated, anon;
 
-COMMENT ON FUNCTION get_tenant_by_identifier IS 'Smart tenant detection: finds tenant by user email/phone, defaults to WellFit (WF-001)';
+COMMENT ON FUNCTION get_tenant_by_identifier IS 'Smart tenant detection: finds tenant by user email/phone, defaults to WellFit (WF-0001)';
