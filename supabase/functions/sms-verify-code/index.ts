@@ -261,7 +261,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       // Create the actual user account
       const createUserPayload: any = {
         email: authEmail,
-        email_confirm: !!pending.email, // Only confirm if user provided real email
+        email_confirm: true, // Always true - skip email verification (real emails verified via SMS, generated emails are internal)
         password: userPassword,
         user_metadata: {
           role_code: pending.role_code,
