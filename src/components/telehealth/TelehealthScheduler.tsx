@@ -268,8 +268,7 @@ const TelehealthScheduler: React.FC = () => {
 
   // Cancel appointment
   const handleCancelAppointment = async (appointmentId: string) => {
-     
-    if (!confirm('Are you sure you want to cancel this appointment?')) return;
+    if (!window.confirm('Are you sure you want to cancel this appointment?')) return;
 
     try {
       const { error } = await supabase

@@ -399,8 +399,7 @@ export function MedicineCabinet() {
   );
 
   async function handleDeleteMedication(id: string) {
-     
-    if (confirm('Are you sure you want to remove this medication?')) {
+    if (window.confirm('Are you sure you want to remove this medication?')) {
       const success = await deleteMedication(id);
       if (success) {
         toast.success('Medication removed');

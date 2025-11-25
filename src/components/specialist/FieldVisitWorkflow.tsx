@@ -78,7 +78,7 @@ export const FieldVisitWorkflow: React.FC<FieldVisitWorkflowProps> = ({ visitId 
   const handleCheckOut = async () => {
     if (!visit || !engine) return;
 
-    if (!confirm('Are you sure you want to complete this visit?')) {
+    if (!window.confirm('Are you sure you want to complete this visit?')) {
       return;
     }
 
@@ -294,7 +294,7 @@ export const FieldVisitWorkflow: React.FC<FieldVisitWorkflowProps> = ({ visitId 
               <div className="flex justify-between pt-4">
                 <button
                   onClick={() => {
-                    if (confirm('Skip this step?')) {
+                    if (window.confirm('Skip this step?')) {
                       setCurrentStep(engine.getCurrentStep(currentStep.step + 1) || null);
                     }
                   }}

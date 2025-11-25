@@ -106,6 +106,7 @@ const DentalHealthDashboard = React.lazy(() => import('./components/dental/Denta
 const SystemAdministrationPage = React.lazy(() => import('./pages/SystemAdministrationPage'));
 const AdminSettingsPage = React.lazy(() => import('./pages/AdminSettingsPage'));
 const AuditLogsPage = React.lazy(() => import('./pages/AuditLogsPage'));
+const HealthcareAlgorithmsDashboard = React.lazy(() => import('./components/ai/HealthcareAlgorithmsDashboard'));
 
 // Orphaned components - now wired with feature flags
 const ReportsPrintPage = React.lazy(() => import('./pages/ReportsPrintPage'));
@@ -559,6 +560,20 @@ function Shell() {
                       <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading Guardian...</div>}>
                         {/* <GuardianAgentDashboard /> */}
                         <div>Guardian Agent moved to Edge Functions</div>
+                      </Suspense>
+                    </RequireAdminAuth>
+                  </RequireAuth>
+                }
+              />
+
+              {/* Healthcare Algorithms Dashboard - AI-powered risk prediction */}
+              <Route
+                path="/admin/healthcare-algorithms"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth allowedRoles={['super_admin', 'admin', 'physician', 'nurse', 'case_manager']}>
+                      <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading Healthcare Algorithms...</div>}>
+                        <HealthcareAlgorithmsDashboard />
                       </Suspense>
                     </RequireAdminAuth>
                   </RequireAuth>

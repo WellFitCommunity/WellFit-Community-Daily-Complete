@@ -80,7 +80,7 @@ const AllergyManager: React.FC<AllergyManagerProps> = ({ userId, readOnly = fals
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this allergy?')) {
+    if (window.confirm('Are you sure you want to delete this allergy?')) {
       try {
         await deleteMutation.mutateAsync(id);
       } catch (err) {

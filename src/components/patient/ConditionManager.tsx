@@ -155,7 +155,7 @@ export const ConditionManager: React.FC<ConditionManagerProps> = ({
   };
 
   const handleResolve = async (conditionId: string) => {
-    if (!confirm('Mark this condition as resolved?')) return;
+    if (!window.confirm('Mark this condition as resolved?')) return;
 
     try {
       await resolveMutation.mutateAsync(conditionId);

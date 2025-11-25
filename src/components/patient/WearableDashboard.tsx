@@ -77,7 +77,7 @@ export const WearableDashboard: React.FC = () => {
   };
 
   const handleDisconnectDevice = async (connectionId: string) => {
-    if (!confirm('Are you sure you want to disconnect this device?')) return;
+    if (!window.confirm('Are you sure you want to disconnect this device?')) return;
 
     try {
       await disconnectMutation.mutateAsync(connectionId);
@@ -88,8 +88,7 @@ export const WearableDashboard: React.FC = () => {
   };
 
   const handleEmergencySOS = () => {
-     
-    if (confirm('Are you sure you want to send an emergency alert?')) {
+    if (window.confirm('Are you sure you want to send an emergency alert?')) {
       alert('Emergency alert sent to your emergency contacts!');
       // TODO: Implement actual emergency alert
     }
