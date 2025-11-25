@@ -208,7 +208,7 @@ export class VoiceLearningService {
     }
   }
 
-  // Apply corrections to transcript
+  // Apply corrections to transcript with smart matching
   static applyCorrections(transcript: string, profile: ProviderVoiceProfile | null): {
     corrected: string;
     appliedCount: number;
@@ -225,17 +225,30 @@ export class VoiceLearningService {
     let corrected = transcript;
     const appliedCorrections: string[] = [];
 
-    // Sort by confidence and frequency (apply most confident first)
-    const sorted = [...profile.corrections].sort((a, b) =>
-      (b.confidence * b.frequency) - (a.confidence * a.frequency)
-    );
+    // Sort by: 1) longer phrases first (more specific), 2) confidence * frequency
+    const sorted = [...profile.corrections].sort((a, b) => {
+      // Longer phrases are more specific, apply first
+      const lengthDiff = b.heard.split(' ').length - a.heard.split(' ').length;
+      if (lengthDiff !== 0) return lengthDiff;
+      // Then by confidence * frequency score
+      return (b.confidence * b.frequency) - (a.confidence * a.frequency);
+    });
 
     sorted.forEach(correction => {
+      // Only apply if confidence is above threshold (learning requires some certainty)
+      if (correction.confidence < 0.5) return;
+
       // Case-insensitive regex with word boundaries
-      const regex = new RegExp(`\\b${this.escapeRegex(correction.heard)}\\b`, 'gi');
-      if (regex.test(corrected)) {
-        corrected = corrected.replace(regex, correction.correct);
-        appliedCorrections.push(correction.correct);
+      // Also handle common phonetic variations
+      const heardVariants = this.generatePhoneticVariants(correction.heard);
+
+      for (const variant of heardVariants) {
+        const regex = new RegExp(`\\b${this.escapeRegex(variant)}\\b`, 'gi');
+        if (regex.test(corrected)) {
+          corrected = corrected.replace(regex, correction.correct);
+          appliedCorrections.push(correction.correct);
+          break; // Only apply once per correction
+        }
       }
     });
 
@@ -251,6 +264,84 @@ export class VoiceLearningService {
       appliedCount: appliedCorrections.length,
       appliedCorrections
     };
+  }
+
+  // Generate phonetic variants for fuzzy matching
+  private static generatePhoneticVariants(phrase: string): string[] {
+    const variants = [phrase];
+    const lowerPhrase = phrase.toLowerCase();
+
+    // Common speech-to-text spacing errors
+    // "hyperglycemia" might be heard as "hyper glycemia"
+    if (!lowerPhrase.includes(' ')) {
+      // Try splitting on common medical prefixes
+      const prefixes = ['hyper', 'hypo', 'cardio', 'neuro', 'gastro', 'hemo', 'brady', 'tachy'];
+      for (const prefix of prefixes) {
+        if (lowerPhrase.startsWith(prefix) && lowerPhrase.length > prefix.length + 3) {
+          variants.push(prefix + ' ' + lowerPhrase.slice(prefix.length));
+        }
+      }
+    }
+
+    return variants;
+  }
+
+  // Decay old corrections that haven't been used (keeps profile fresh)
+  static async decayOldCorrections(providerId: string, daysThreshold: number = 60): Promise<number> {
+    try {
+      const profile = await this.loadVoiceProfile(providerId);
+      if (!profile) return 0;
+
+      const now = new Date();
+      const threshold = now.getTime() - (daysThreshold * 24 * 60 * 60 * 1000);
+      let decayedCount = 0;
+
+      profile.corrections = profile.corrections.filter(c => {
+        const lastUsed = new Date(c.lastUsed).getTime();
+        if (lastUsed < threshold && c.frequency < 3) {
+          decayedCount++;
+          return false; // Remove rarely-used old corrections
+        }
+        // Reduce confidence of old but frequently used corrections
+        if (lastUsed < threshold) {
+          c.confidence = Math.max(0.5, c.confidence * 0.9);
+        }
+        return true;
+      });
+
+      if (decayedCount > 0) {
+        profile.updatedAt = new Date().toISOString();
+        await this.saveVoiceProfile(profile);
+        auditLogger.info('VOICE_CORRECTIONS_DECAYED', { providerId, decayedCount });
+      }
+
+      return decayedCount;
+    } catch (error) {
+      auditLogger.error('VOICE_DECAY_FAILED', error instanceof Error ? error : new Error('Decay failed'));
+      return 0;
+    }
+  }
+
+  // Reinforce a correction when it's used successfully
+  static async reinforceCorrection(providerId: string, correctedText: string): Promise<void> {
+    try {
+      const profile = await this.loadVoiceProfile(providerId);
+      if (!profile) return;
+
+      const correction = profile.corrections.find(c =>
+        c.correct.toLowerCase() === correctedText.toLowerCase()
+      );
+
+      if (correction) {
+        correction.frequency++;
+        correction.lastUsed = new Date().toISOString();
+        correction.confidence = Math.min(1.0, correction.confidence + 0.05);
+        profile.updatedAt = new Date().toISOString();
+        await this.saveVoiceProfile(profile);
+      }
+    } catch (error) {
+      // Silent fail - reinforcement is enhancement, not critical
+    }
   }
 
   // Helper: Escape special regex characters
