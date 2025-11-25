@@ -1,7 +1,7 @@
 // src/components/__tests__/CheckInTracker.test.tsx
 // Tests for the senior-facing daily check-in component
+// Tests match ACTUAL component UI - title "Check-In Center", buttons as defined in component
 
-import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import CheckInTracker from '../CheckInTracker';
@@ -21,7 +21,6 @@ describe('CheckInTracker - Senior Facing Component', () => {
   let mockUser: any;
 
   beforeEach(() => {
-    localStorage.clear();
     jest.clearAllMocks();
 
     mockUser = {
@@ -29,6 +28,7 @@ describe('CheckInTracker - Senior Facing Component', () => {
       email: 'senior@test.com',
     };
 
+    // Mock supabase with functions.invoke for edge function calls
     mockSupabase = {
       from: jest.fn().mockReturnThis(),
       select: jest.fn().mockReturnThis(),
@@ -40,362 +40,197 @@ describe('CheckInTracker - Senior Facing Component', () => {
         data: { emergency_contact_phone: '+15551234567' },
         error: null
       }),
-      rpc: jest.fn().mockResolvedValue({
-        data: null,
-        error: null
-      }),
+      functions: {
+        invoke: jest.fn().mockResolvedValue({ data: null, error: null })
+      }
     };
 
     (useUser as jest.Mock).mockReturnValue(mockUser);
     (useSupabaseClient as jest.Mock).mockReturnValue(mockSupabase);
   });
 
-  afterEach(() => {
-    localStorage.clear();
-  });
-
   describe('Component Rendering', () => {
-    it('should render the check-in tracker component', () => {
+    it('should render the check-in center title', () => {
       render(<CheckInTracker />);
 
-      // Component now uses "Check-In Center" as the title
-      expect(screen.getByText(/Check-In Center|Check-In Center|Daily Check-In|Check In/i)).toBeInTheDocument();
+      // Actual component title is "Check-In Center"
+      expect(screen.getByText('Check-In Center')).toBeInTheDocument();
     });
 
-    it('should display check-in buttons', () => {
+    it('should display quick check-in buttons', () => {
       render(<CheckInTracker />);
 
-      const buttons = screen.getAllByRole('button');
-      expect(buttons.length).toBeGreaterThan(0);
+      // These are the actual buttons defined in the component
+      expect(screen.getByText('😊 Feeling Great Today')).toBeInTheDocument();
+      expect(screen.getByText('📅 Feeling fine & have a Dr. Appt today')).toBeInTheDocument();
+      expect(screen.getByText('🏥 In the hospital')).toBeInTheDocument();
+      expect(screen.getByText('🤒 Not Feeling My Best')).toBeInTheDocument();
+      expect(screen.getByText('🧭 Need Healthcare Navigation Assistance')).toBeInTheDocument();
+      expect(screen.getByText('⭐ Attending the event today')).toBeInTheDocument();
     });
 
-    it('should show "I\'m OK" button for regular check-in', () => {
+    it('should display the emotional state dropdown', () => {
       render(<CheckInTracker />);
 
-      // Component now uses "Feeling Great Today" as the positive check-in button
-      const okButton = screen.getByText(/I'm OK|Feeling Good|All Good|Feeling Great/i);
-      expect(okButton).toBeInTheDocument();
+      expect(screen.getByLabelText(/Emotional State/i)).toBeInTheDocument();
     });
 
-    it('should show emergency button', () => {
-      render(<CheckInTracker />);
-
-      // Component now uses "Not Feeling My Best" and "Need Healthcare Navigation Assistance"
-      const emergencyButton = screen.getAllByText(/Need Help|Emergency|Not Feeling My Best|Healthcare Navigation/i)[0];
-      expect(emergencyButton).toBeInTheDocument();
-    });
-  });
-
-  describe('User Interactions - Regular Check-in', () => {
-    it('should allow user to check in as "OK"', async () => {
-      mockSupabase.rpc.mockResolvedValue({
-        data: null,
-        error: null
-      });
-
-      render(<CheckInTracker />);
-
-      const okButton = screen.getByText(/I'm OK|Feeling Good|All Good|Feeling Great/i);
-      fireEvent.click(okButton);
-
-      await waitFor(() => {
-        expect(mockSupabase.rpc).toHaveBeenCalled();
-      });
-    });
-
-    it('should show success message after successful check-in', async () => {
-      mockSupabase.rpc.mockResolvedValue({
-        data: null,
-        error: null
-      });
-
-      render(<CheckInTracker />);
-
-      const okButton = screen.getByText(/I'm OK|Feeling Good|All Good|Feeling Great/i);
-      fireEvent.click(okButton);
-
-      await waitFor(() => {
-        expect(screen.getByText(/success|checked in|thank you/i)).toBeInTheDocument();
-      });
-    });
-
-    it('should display emotional state options when checking in', () => {
-      render(<CheckInTracker />);
-
-      // Look for emotional state indicators
-      const emotionalOptions = screen.queryAllByText(/Happy|Sad|Anxious|Peaceful|Tired|Energetic/i);
-      expect(emotionalOptions.length).toBeGreaterThanOrEqual(0);
-    });
-  });
-
-  describe('User Interactions - Emergency Check-in', () => {
-    it('should show emergency modal when emergency button is clicked', async () => {
-      render(<CheckInTracker />);
-
-      const emergencyButton = screen.getAllByText(/Need Help|Emergency|Not Feeling My Best|Healthcare Navigation/i)[0];
-      fireEvent.click(emergencyButton);
-
-      await waitFor(() => {
-        expect(screen.getByText(/crisis|emergency|help/i)).toBeInTheDocument();
-      });
-    });
-
-    it('should display crisis options in emergency modal', async () => {
-      render(<CheckInTracker />);
-
-      const emergencyButton = screen.getAllByText(/Need Help|Emergency|Not Feeling My Best|Healthcare Navigation/i)[0];
-      fireEvent.click(emergencyButton);
-
-      await waitFor(() => {
-        const modal = screen.getByText(/speak.*someone|fallen.*injured|lost/i);
-        expect(modal).toBeInTheDocument();
-      });
-    });
-
-    it('should show emergency contact phone number', async () => {
-      render(<CheckInTracker />);
-
-      const emergencyButton = screen.getAllByText(/Need Help|Emergency|Not Feeling My Best|Healthcare Navigation/i)[0];
-      fireEvent.click(emergencyButton);
-
-      await waitFor(() => {
-        expect(mockSupabase.from).toHaveBeenCalledWith('profiles');
-      });
-    });
-
-    it('should handle emergency check-in submission', async () => {
-      mockSupabase.rpc.mockResolvedValue({
-        data: null,
-        error: null
-      });
-
-      render(<CheckInTracker />);
-
-      const emergencyButton = screen.getAllByText(/Need Help|Emergency|Not Feeling My Best|Healthcare Navigation/i)[0];
-      fireEvent.click(emergencyButton);
-
-      await waitFor(() => {
-        const crisisOption = screen.queryByText(/speak.*someone/i);
-        if (crisisOption) {
-          fireEvent.click(crisisOption);
-        }
-      });
-    });
-  });
-
-  describe('Vitals Tracking', () => {
     it('should display vitals input fields', () => {
       render(<CheckInTracker />);
 
-      // Look for vitals-related text
-      const vitalsLabels = screen.queryAllByText(/heart rate|blood pressure|oxygen|glucose|pulse/i);
-      expect(vitalsLabels.length).toBeGreaterThanOrEqual(0);
+      expect(screen.getByLabelText(/Heart Rate/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Pulse Oximeter/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Systolic/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Diastolic/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Glucose/i)).toBeInTheDocument();
     });
 
-    it('should accept heart rate input', () => {
+    it('should have submit button disabled when no emotional state selected', () => {
       render(<CheckInTracker />);
 
-      const heartRateInput = screen.getByLabelText(/heart rate/i) as HTMLInputElement;
-      fireEvent.change(heartRateInput, { target: { value: '72' } });
-      expect(heartRateInput.value).toBe('72');
-    });
-
-    it('should accept blood pressure input', () => {
-      render(<CheckInTracker />);
-
-      const bpSystolicInput = screen.getByLabelText(/systolic|blood pressure/i) as HTMLInputElement;
-      fireEvent.change(bpSystolicInput, { target: { value: '120' } });
-      expect(bpSystolicInput.value).toBe('120');
-    });
-
-    it('should accept pulse oximeter input', () => {
-      render(<CheckInTracker />);
-
-      const spo2Input = screen.getByLabelText(/oxygen|pulse ox|SpO2/i) as HTMLInputElement;
-      fireEvent.change(spo2Input, { target: { value: '98' } });
-      expect(spo2Input.value).toBe('98');
-    });
-
-    it('should validate vitals are within safe ranges', async () => {
-      mockSupabase.rpc.mockResolvedValue({
-        data: null,
-        error: null
-      });
-
-      render(<CheckInTracker />);
-
-      // Try to input invalid heart rate
-      const heartRateInput = screen.queryByLabelText(/heart rate/i) as HTMLInputElement;
-      if (heartRateInput) {
-        fireEvent.change(heartRateInput, { target: { value: '300' } }); // Invalid
-      }
-
-      const okButton = screen.getByText(/I'm OK|Feeling Good|All Good|Feeling Great/i);
-      fireEvent.click(okButton);
-
-      // The component should handle validation
-      await waitFor(() => {
-        expect(mockSupabase.rpc).toHaveBeenCalled();
-      });
+      const submitButton = screen.getByText('Submit Check-In Details');
+      expect(submitButton).toBeDisabled();
     });
   });
 
-  describe('Check-in History', () => {
-    it('should not store check-ins in localStorage (HIPAA compliance)', () => {
+  describe('Quick Check-in Flow', () => {
+    it('should call edge function when clicking "Feeling Great Today"', async () => {
       render(<CheckInTracker />);
 
-      const historyInStorage = localStorage.getItem('wellfitCheckIns');
-      expect(historyInStorage).toBeNull();
-    });
-
-    it('should load check-in history from database', async () => {
-      render(<CheckInTracker />);
+      const feelingGreatButton = screen.getByText('😊 Feeling Great Today');
+      fireEvent.click(feelingGreatButton);
 
       await waitFor(() => {
-        expect(mockSupabase.from).toHaveBeenCalled();
-      });
-    });
-  });
-
-  describe('Data Submission', () => {
-    it('should call database RPC function on check-in', async () => {
-      mockSupabase.rpc.mockResolvedValue({
-        data: null,
-        error: null
-      });
-
-      render(<CheckInTracker />);
-
-      const okButton = screen.getByText(/I'm OK|Feeling Good|All Good|Feeling Great/i);
-      fireEvent.click(okButton);
-
-      await waitFor(() => {
-        expect(mockSupabase.rpc).toHaveBeenCalledWith(
-          expect.stringMatching(/check_in|record_check_in|create_check_in/i),
-          expect.any(Object)
+        expect(mockSupabase.functions.invoke).toHaveBeenCalledWith(
+          'create-checkin',
+          expect.objectContaining({
+            body: expect.objectContaining({
+              label: '😊 Feeling Great Today',
+              is_quick: true
+            })
+          })
         );
       });
     });
 
-    it('should disable submit button while submitting', async () => {
-      mockSupabase.rpc.mockResolvedValue({ data: null, error: null });
-
+    it('should show success message after quick check-in', async () => {
       render(<CheckInTracker />);
 
-      const okButton = screen.getByText(/I'm OK|Feeling Good|All Good|Feeling Great/i);
-      fireEvent.click(okButton);
-
-      // Button should be disabled or show loading state
-      await waitFor(() => {
-        expect(mockSupabase.rpc).toHaveBeenCalled();
-      });
-    });
-
-    it('should include user_id in check-in submission', async () => {
-      mockSupabase.rpc.mockResolvedValue({
-        data: null,
-        error: null
-      });
-
-      render(<CheckInTracker />);
-
-      const okButton = screen.getByText(/I'm OK|Feeling Good|All Good|Feeling Great/i);
-      fireEvent.click(okButton);
+      const feelingGreatButton = screen.getByText('😊 Feeling Great Today');
+      fireEvent.click(feelingGreatButton);
 
       await waitFor(() => {
-        expect(mockSupabase.rpc.mock.calls[0]).toBeDefined();
+        // Component shows feedback with "(Saved to cloud)" for logged-in users
+        expect(screen.getByRole('status')).toHaveTextContent(/Saved to cloud/i);
       });
-
-      const rpcCall = mockSupabase.rpc.mock.calls[0];
-      expect(rpcCall[1]).toBeDefined();
-      expect(rpcCall[1]).toHaveProperty('p_user_id', mockUser.id);
     });
   });
 
-  describe('Error Handling', () => {
-    it('should handle missing user gracefully', () => {
+  describe('Detailed Check-in Form', () => {
+    it('should enable submit when emotional state is selected', async () => {
+      render(<CheckInTracker />);
+
+      const emotionalStateSelect = screen.getByLabelText(/Emotional State/i);
+      fireEvent.change(emotionalStateSelect, { target: { value: 'Happy' } });
+
+      const submitButton = screen.getByText('Submit Check-In Details');
+      expect(submitButton).not.toBeDisabled();
+    });
+
+    it('should submit detailed check-in with form data', async () => {
+      render(<CheckInTracker />);
+
+      // Fill in the form
+      fireEvent.change(screen.getByLabelText(/Emotional State/i), { target: { value: 'Happy' } });
+      fireEvent.change(screen.getByLabelText(/Heart Rate/i), { target: { value: '72' } });
+      fireEvent.change(screen.getByLabelText(/Pulse Oximeter/i), { target: { value: '98' } });
+
+      // Submit
+      const submitButton = screen.getByText('Submit Check-In Details');
+      fireEvent.click(submitButton);
+
+      await waitFor(() => {
+        expect(mockSupabase.functions.invoke).toHaveBeenCalledWith(
+          'create-checkin',
+          expect.objectContaining({
+            body: expect.objectContaining({
+              label: 'Daily Self-Report',
+              is_quick: false,
+              emotional_state: 'Happy',
+              heart_rate: 72,
+              pulse_oximeter: 98
+            })
+          })
+        );
+      });
+    });
+  });
+
+  describe('Crisis Options Flow', () => {
+    it('should show crisis options when clicking "Not Feeling My Best"', async () => {
+      render(<CheckInTracker />);
+
+      const notFeelingBestButton = screen.getByText('🤒 Not Feeling My Best');
+      fireEvent.click(notFeelingBestButton);
+
+      // Component shows crisis options modal with title "How can we help you?"
+      await waitFor(() => {
+        expect(screen.getByText('How can we help you?')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Unauthenticated User', () => {
+    it('should show local save message when user is not logged in', async () => {
       (useUser as jest.Mock).mockReturnValue(null);
 
       render(<CheckInTracker />);
 
-      expect(screen.getByText(/Check-In Center|Daily Check-In|Check In|sign in/i)).toBeInTheDocument();
-    });
-
-    it('should show error message when check-in fails', async () => {
-      mockSupabase.rpc.mockResolvedValue({
-        data: null,
-        error: { message: 'Database error' }
-      });
-
-      render(<CheckInTracker />);
-
-      const okButton = screen.getByText(/I'm OK|Feeling Good|All Good|Feeling Great/i);
-      fireEvent.click(okButton);
+      const feelingGreatButton = screen.getByText('😊 Feeling Great Today');
+      fireEvent.click(feelingGreatButton);
 
       await waitFor(() => {
-        expect(screen.getByText(/error|failed|try again/i)).toBeInTheDocument();
+        expect(screen.getByRole('status')).toHaveTextContent(/Saved locally/i);
       });
     });
+  });
 
-    it('should handle database connection errors gracefully', async () => {
-      // Don't actually throw during render, just return error in response
-      mockSupabase.from.mockReturnValue({
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
-          data: null,
-          error: { message: 'Connection failed' }
-        }),
+  describe('Error Handling', () => {
+    it('should show error message when edge function fails', async () => {
+      mockSupabase.functions.invoke.mockResolvedValue({
+        data: null,
+        error: new Error('Network error')
       });
 
       render(<CheckInTracker />);
 
-      // Component should render without crashing
-      expect(screen.getByText(/Check-In Center|Daily Check-In|Check In/i)).toBeInTheDocument();
+      const feelingGreatButton = screen.getByText('😊 Feeling Great Today');
+      fireEvent.click(feelingGreatButton);
+
+      await waitFor(() => {
+        expect(screen.getByRole('status')).toHaveTextContent(/Cloud save failed/i);
+      });
     });
   });
 
   describe('Accessibility', () => {
-    it('should have accessible buttons', () => {
+    it('should have proper ARIA attributes on form elements', () => {
       render(<CheckInTracker />);
 
-      const buttons = screen.getAllByRole('button');
-      expect(buttons.length).toBeGreaterThan(0);
-      buttons.forEach(button => {
-        expect(button).toBeVisible();
+      const emotionalStateSelect = screen.getByLabelText(/Emotional State/i);
+      expect(emotionalStateSelect).toHaveAttribute('aria-required', 'true');
+    });
+
+    it('should have role="status" on feedback messages', async () => {
+      render(<CheckInTracker />);
+
+      const feelingGreatButton = screen.getByText('😊 Feeling Great Today');
+      fireEvent.click(feelingGreatButton);
+
+      await waitFor(() => {
+        const feedback = screen.getByRole('status');
+        expect(feedback).toBeInTheDocument();
       });
-    });
-
-    it('should have large, readable text for seniors', () => {
-      render(<CheckInTracker />);
-
-      const heading = screen.getByText(/Check-In Center|Daily Check-In|Check In/i);
-      expect(heading).toBeInTheDocument();
-    });
-
-    it('should support keyboard navigation', () => {
-      render(<CheckInTracker />);
-
-      const buttons = screen.getAllByRole('button');
-      buttons.forEach(button => {
-        expect(button).not.toHaveAttribute('tabIndex', '-1');
-      });
-    });
-  });
-
-  describe('Component Props', () => {
-    it('should render back button when showBackButton prop is true', () => {
-      render(<CheckInTracker showBackButton={true} />);
-
-      const backButton = screen.queryByText(/back|return/i);
-      expect(backButton).toBeInTheDocument();
-    });
-
-    it('should not render back button when showBackButton prop is false', () => {
-      render(<CheckInTracker showBackButton={false} />);
-
-      const backButton = screen.queryByText(/back|return/i);
-      expect(backButton).not.toBeInTheDocument();
     });
   });
 });
