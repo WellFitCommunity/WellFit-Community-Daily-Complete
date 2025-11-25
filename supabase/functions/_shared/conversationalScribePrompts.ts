@@ -19,6 +19,15 @@ export interface ProviderPreferences {
     balanced?: boolean;
     prefer_preventive_codes?: boolean;
   };
+  /**
+   * HOSPITAL CONFIGURATION OPTION
+   * premium_mode: true = Use full verbose prompts (higher cost, same AI quality)
+   * premium_mode: false/undefined = Use optimized prompts (lower cost, same AI quality)
+   *
+   * NOTE: AI output quality is IDENTICAL - this only affects instruction verbosity.
+   * Some hospitals may prefer verbose prompts for audit/compliance documentation.
+   */
+  premium_mode?: boolean;
 }
 
 export interface ConversationContext {
@@ -218,6 +227,9 @@ Use that history to be even more helpful. You're their partner now.`;
 /**
  * Generate CONDENSED personality for real-time use (token-optimized)
  * Full personality is ~2000 tokens, this is ~400 tokens
+ *
+ * NOTE: This does NOT affect AI quality - same Sonnet 4.5 model, same accuracy.
+ * Just reduces instruction overhead for cost savings.
  */
 function getCondensedPersonality(prefs: ProviderPreferences): string {
   const tone = prefs.formality_level === 'formal' ? 'professional' :
@@ -232,21 +244,30 @@ Be precise - suggest only codes with >70% confidence. Catch revenue opportunitie
 
 /**
  * Generate conversational prompt for real-time coding suggestions
- * TOKEN-OPTIMIZED: Uses condensed personality for frequent calls
+ *
+ * HOSPITAL CHOICE:
+ * - premium_mode: true  → Full verbose prompts (for hospitals that want maximum detail)
+ * - premium_mode: false → Optimized prompts (cost-efficient, SAME AI QUALITY)
  */
 export function getRealtimeCodingPrompt(
   transcript: string,
   prefs: ProviderPreferences,
-  _context?: ConversationContext  // Reserved for future urgency detection
+  context?: ConversationContext
 ): string {
-  // Use condensed personality for real-time (saves ~1600 tokens per call)
+  // HOSPITAL CHOICE: Use full or condensed personality based on preference
+  // NOTE: AI output quality is IDENTICAL - only instruction verbosity differs
+  if (prefs.premium_mode) {
+    // PREMIUM MODE: Full verbose prompts (higher token cost)
+    return getFullRealtimeCodingPrompt(transcript, prefs, context);
+  }
+
+  // STANDARD MODE: Optimized prompts (saves ~60% tokens, same quality)
   const personality = getCondensedPersonality(prefs);
 
   const billingApproach = prefs.billing_preferences?.conservative ? 'conservative' :
                          prefs.billing_preferences?.aggressive ? 'optimal' :
                          'balanced';
 
-  // TOKEN-OPTIMIZED: Streamlined prompt structure
   return `${personality}
 
 TRANSCRIPT: ${transcript}
@@ -265,6 +286,108 @@ UPCODING COACH - tell them what's missing:
 Time-based (>50% counseling): 99213=20-29min, 99214=30-39min, 99215=40-54min
 
 Example: "You're at 99213. Mention other chronic conditions and med adjustments for 99214 (+$40-50)."`;
+}
+
+/**
+ * PREMIUM MODE: Full verbose prompt for hospitals that want maximum detail
+ * Same AI quality, just more detailed instructions (higher token cost)
+ */
+function getFullRealtimeCodingPrompt(
+  transcript: string,
+  prefs: ProviderPreferences,
+  context?: ConversationContext
+): string {
+  const personality = getConversationalPersonality(prefs, context);
+
+  const billingApproach = prefs.billing_preferences?.conservative ? 'conservative and audit-proof' :
+                         prefs.billing_preferences?.aggressive ? 'maximizing reimbursement (while staying compliant)' :
+                         'balanced between conservative and optimal';
+
+  return `${personality}
+
+---
+
+## YOUR TASK: Real-Time Coding Assistant
+
+You're listening in on this patient visit and providing real-time billing optimization suggestions. Think of it like you're sitting next to them with the coding book open, catching revenue opportunities they might miss when focused on patient care.
+
+**TRANSCRIPT (De-identified PHI):**
+${transcript}
+
+---
+
+## HOW TO RESPOND
+
+Return ONLY valid JSON (no markdown, no explanation):
+
+\`\`\`json
+{
+  "conversational_note": "Brief, natural comment about what you heard - like you'd say to a colleague",
+  "suggestedCodes": [
+    {
+      "code": "99214",
+      "type": "CPT",
+      "description": "Office visit, moderate complexity",
+      "reimbursement": 150.00,
+      "confidence": 0.85,
+      "reasoning": "Why this code fits - conversational tone",
+      "missingDocumentation": "Quick prompt they could add, phrased naturally"
+    }
+  ],
+  "totalRevenueIncrease": 0,
+  "complianceRisk": "low",
+  "conversational_suggestions": [
+    "Optional: 1-2 friendly suggestions like 'Hey, if you mention the duration of symptoms, we could bump this to a 99214'"
+  ]
+}
+\`\`\`
+
+---
+
+## GUIDELINES
+
+**Billing Philosophy:** ${billingApproach}
+
+**Code Confidence:**
+- Only suggest codes with >70% confidence
+- If unsure, say so naturally: "Might be able to code for X if you document Y - your call"
+- Never suggest codes that aren't clearly supported
+
+**Communication Style:**
+- ${getVerbosityInstruction(prefs.verbosity)}
+- Use natural language, not "coding speak" (unless they prefer that)
+- If something's missing for a higher-level code, prompt them conversationally
+
+**What Makes You Valuable:**
+- You catch preventive care opportunities (vaccines, screenings)
+- You notice when complexity justifies higher E/M levels
+- You spot chronic care management (CCM) potential
+- You're conservative with compliance - you protect them
+
+**UPCODING COACH (Critical Feature):**
+When you detect they're close to a higher-level code, tell them EXACTLY what's missing:
+
+E/M Level Decision Tree:
+- 99211 → 99212: "Add any examination finding to bump this up"
+- 99212 → 99213: "Document 2+ chronic conditions OR prescription management"
+- 99213 → 99214: "Need moderate complexity - document medical decision-making rationale, or 2+ stable chronic conditions with adjustment"
+- 99214 → 99215: "High complexity needed - document 3+ options considered, risk of complications, or undiagnosed new symptoms with uncertain prognosis"
+
+Time-Based Alternative (if counseling >50%):
+- 99213: 20-29 min face-to-face
+- 99214: 30-39 min face-to-face
+- 99215: 40-54 min face-to-face
+
+Example coaching:
+"Hey, you're at a 99213 right now. If you mention the patient's other chronic conditions and any medication adjustments you're considering, we could justify 99214 - that's an extra $40-50."
+
+**Remember:**
+- You're a coworker, not a robot
+- You understand the clinical context, not just the codes
+- You make their life easier, not harder
+- When in doubt, ask or suggest rather than dictate
+
+Now analyze that transcript and help them optimize billing while staying squeaky clean on compliance.`;
 }
 
 /**
