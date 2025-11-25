@@ -81,7 +81,7 @@ describe('CheckInTracker - Senior Facing Component', () => {
       render(<CheckInTracker />);
 
       // Component now uses "Not Feeling My Best" and "Need Healthcare Navigation Assistance"
-      const emergencyButton = screen.getByText(/Need Help|Emergency|Not Feeling My Best|Healthcare Navigation/i);
+      const emergencyButton = screen.getAllByText(/Need Help|Emergency|Not Feeling My Best|Healthcare Navigation/i)[0];
       expect(emergencyButton).toBeInTheDocument();
     });
   });
@@ -132,7 +132,7 @@ describe('CheckInTracker - Senior Facing Component', () => {
     it('should show emergency modal when emergency button is clicked', async () => {
       render(<CheckInTracker />);
 
-      const emergencyButton = screen.getByText(/Need Help|Emergency|Not Feeling My Best|Healthcare Navigation/i);
+      const emergencyButton = screen.getAllByText(/Need Help|Emergency|Not Feeling My Best|Healthcare Navigation/i)[0];
       fireEvent.click(emergencyButton);
 
       await waitFor(() => {
@@ -143,7 +143,7 @@ describe('CheckInTracker - Senior Facing Component', () => {
     it('should display crisis options in emergency modal', async () => {
       render(<CheckInTracker />);
 
-      const emergencyButton = screen.getByText(/Need Help|Emergency|Not Feeling My Best|Healthcare Navigation/i);
+      const emergencyButton = screen.getAllByText(/Need Help|Emergency|Not Feeling My Best|Healthcare Navigation/i)[0];
       fireEvent.click(emergencyButton);
 
       await waitFor(() => {
@@ -155,7 +155,7 @@ describe('CheckInTracker - Senior Facing Component', () => {
     it('should show emergency contact phone number', async () => {
       render(<CheckInTracker />);
 
-      const emergencyButton = screen.getByText(/Need Help|Emergency|Not Feeling My Best|Healthcare Navigation/i);
+      const emergencyButton = screen.getAllByText(/Need Help|Emergency|Not Feeling My Best|Healthcare Navigation/i)[0];
       fireEvent.click(emergencyButton);
 
       await waitFor(() => {
@@ -171,7 +171,7 @@ describe('CheckInTracker - Senior Facing Component', () => {
 
       render(<CheckInTracker />);
 
-      const emergencyButton = screen.getByText(/Need Help|Emergency|Not Feeling My Best|Healthcare Navigation/i);
+      const emergencyButton = screen.getAllByText(/Need Help|Emergency|Not Feeling My Best|Healthcare Navigation/i)[0];
       fireEvent.click(emergencyButton);
 
       await waitFor(() => {
