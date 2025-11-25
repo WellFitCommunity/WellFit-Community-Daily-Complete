@@ -75,9 +75,9 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = (props) => {
         )}
       </div>
 
-      {/* Assistance Level Control */}
+      {/* Assistance Level Control - Simplified 3-Level Design */}
       <div className={`mb-6 p-5 rounded-xl border-2 ${assistanceSettings.borderColor} ${assistanceSettings.bgColor}`}>
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="font-bold text-gray-900 flex items-center gap-2">
               <span>🎚️</span>
@@ -87,59 +87,62 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = (props) => {
               {assistanceSettings.label}: {assistanceSettings.description}
             </p>
           </div>
-          <div className={`px-4 py-2 rounded-lg font-bold text-2xl ${assistanceSettings.bgColor} ${assistanceSettings.color} border-2 ${assistanceSettings.borderColor}`}>
-            {assistanceLevel}
-          </div>
+          {assistanceLevelLoaded && (
+            <span className="text-green-600 font-semibold flex items-center gap-1 text-sm">
+              <span>✓</span>
+              <span>Saved</span>
+            </span>
+          )}
         </div>
 
-        <div className="flex items-center gap-4">
-          <span className="text-xs text-gray-500 font-medium">Minimal (1)</span>
-          <input
-            type="range"
-            min="1"
-            max="10"
-            value={assistanceLevel}
-            onChange={(e) => handleAssistanceLevelChange(Number(e.target.value))}
+        {/* Three-Button Selection */}
+        <div className="grid grid-cols-3 gap-3">
+          <button
+            onClick={() => handleAssistanceLevelChange(3)}
             disabled={isRecording || !assistanceLevelLoaded}
-            className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{
-              background: isRecording ? '#e5e7eb' : `linear-gradient(to right, #9ca3af 0%, #3b82f6 25%, #10b981 50%, #f59e0b 75%, #9333ea 100%)`
-            }}
-          />
-          <span className="text-xs text-gray-500 font-medium">Maximum (10)</span>
+            className={`p-4 rounded-xl border-2 transition-all ${
+              assistanceLevel <= 4
+                ? 'bg-gray-100 border-gray-400 ring-2 ring-gray-400 ring-offset-2'
+                : 'bg-white border-gray-200 hover:border-gray-300'
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
+          >
+            <div className="text-2xl mb-2">🤫</div>
+            <div className="font-bold text-gray-900">Concise</div>
+            <div className="text-xs text-gray-600 mt-1">Codes only, minimal chat</div>
+          </button>
+
+          <button
+            onClick={() => handleAssistanceLevelChange(5)}
+            disabled={isRecording || !assistanceLevelLoaded}
+            className={`p-4 rounded-xl border-2 transition-all ${
+              assistanceLevel >= 5 && assistanceLevel <= 7
+                ? 'bg-green-100 border-green-400 ring-2 ring-green-400 ring-offset-2'
+                : 'bg-white border-gray-200 hover:border-green-300'
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
+          >
+            <div className="text-2xl mb-2">⚖️</div>
+            <div className="font-bold text-gray-900">Balanced</div>
+            <div className="text-xs text-gray-600 mt-1">Helpful suggestions & tips</div>
+          </button>
+
+          <button
+            onClick={() => handleAssistanceLevelChange(8)}
+            disabled={isRecording || !assistanceLevelLoaded}
+            className={`p-4 rounded-xl border-2 transition-all ${
+              assistanceLevel >= 8
+                ? 'bg-blue-100 border-blue-400 ring-2 ring-blue-400 ring-offset-2'
+                : 'bg-white border-gray-200 hover:border-blue-300'
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
+          >
+            <div className="text-2xl mb-2">📚</div>
+            <div className="font-bold text-gray-900">Detailed</div>
+            <div className="text-xs text-gray-600 mt-1">Full explanations & coaching</div>
+          </button>
         </div>
 
-        <div className="mt-3 grid grid-cols-5 gap-2 text-xs">
-          <div className={`text-center p-2 rounded ${assistanceLevel <= 2 ? 'bg-gray-200 font-bold' : 'text-gray-400'}`}>
-            1-2: Quiet
-          </div>
-          <div className={`text-center p-2 rounded ${assistanceLevel >= 3 && assistanceLevel <= 4 ? 'bg-blue-200 font-bold' : 'text-gray-400'}`}>
-            3-4: Low
-          </div>
-          <div className={`text-center p-2 rounded ${assistanceLevel >= 5 && assistanceLevel <= 6 ? 'bg-green-200 font-bold' : 'text-gray-400'}`}>
-            5-6: Moderate
-          </div>
-          <div className={`text-center p-2 rounded ${assistanceLevel >= 7 && assistanceLevel <= 8 ? 'bg-amber-200 font-bold' : 'text-gray-400'}`}>
-            7-8: High
-          </div>
-          <div className={`text-center p-2 rounded ${assistanceLevel >= 9 ? 'bg-purple-200 font-bold' : 'text-gray-400'}`}>
-            9-10: Max
-          </div>
-        </div>
-
-        <div className="mt-3 text-xs text-gray-600 bg-white p-3 rounded border border-gray-300">
-          <div className="flex items-center justify-between">
-            <div>
-              <strong>Note:</strong> Assistance level controls Riley's conversational coaching only.
-              <strong className="text-blue-700"> All billing codes remain accurate regardless of this setting.</strong>
-            </div>
-            {assistanceLevelLoaded && (
-              <span className="text-green-600 font-semibold flex items-center gap-1 ml-3">
-                <span>✓</span>
-                <span>Auto-saved</span>
-              </span>
-            )}
-          </div>
+        <div className="mt-4 text-xs text-gray-600 bg-white p-3 rounded border border-gray-200">
+          <strong>Note:</strong> Assistance level controls Riley's conversational coaching only.
+          <strong className="text-blue-700"> All billing codes remain accurate regardless of this setting.</strong>
         </div>
       </div>
 

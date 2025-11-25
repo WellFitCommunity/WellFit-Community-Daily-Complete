@@ -6,12 +6,20 @@
 // Design: Show user's name, role, time of day, and rotating daily quote
 // ============================================================================
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabaseClient';
 
 interface PersonalizedGreetingProps {
   userName?: string;
   userRole?: string;
   hideForSeniors?: boolean; // Seniors already have their own greeting
+}
+
+interface ProfileData {
+  first_name: string | null;
+  last_name: string | null;
+  role: string | null;
 }
 
 // Inspirational quotes from notable leaders and thought leaders
@@ -223,6 +231,38 @@ export const PersonalizedGreeting: React.FC<PersonalizedGreetingProps> = ({
   userRole,
   hideForSeniors = false,
 }) => {
+  const { user } = useAuth();
+  const [profileData, setProfileData] = useState<ProfileData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch user profile from database to get actual name
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user?.id) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('first_name, last_name, role')
+          .eq('user_id', user.id)
+          .single();
+
+        if (!error && data) {
+          setProfileData(data);
+        }
+      } catch {
+        // Fail gracefully - will use fallback
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [user?.id]);
+
   // Get time of day greeting
   const timeOfDayGreeting = useMemo(() => {
     const hour = new Date().getHours();
@@ -240,37 +280,58 @@ export const PersonalizedGreeting: React.FC<PersonalizedGreetingProps> = ({
     return INSPIRATIONAL_QUOTES[dayOfYear % INSPIRATIONAL_QUOTES.length];
   }, []);
 
-  // Format user name for display
-  const displayName = useMemo(() => {
-    if (!userName) return 'there';
+  // Get role from profile or prop
+  const effectiveRole = profileData?.role || userRole || '';
 
-    // If email, extract name before @
-    if (userName.includes('@')) {
-      const namePart = userName.split('@')[0];
-      // Capitalize first letter
-      return namePart.charAt(0).toUpperCase() + namePart.slice(1);
+  // Format user name for display - prioritize profile data from database
+  const displayName = useMemo(() => {
+    // Priority 1: First name from database profile
+    if (profileData?.first_name) {
+      return profileData.first_name;
     }
 
-    return userName;
-  }, [userName]);
+    // Priority 2: Passed userName prop
+    if (userName) {
+      // If email, extract name before @
+      if (userName.includes('@')) {
+        const namePart = userName.split('@')[0];
+        // Capitalize first letter
+        return namePart.charAt(0).toUpperCase() + namePart.slice(1);
+      }
+      return userName;
+    }
+
+    // Priority 3: User metadata from auth
+    if (user?.user_metadata?.full_name) {
+      const fullName = user.user_metadata.full_name as string;
+      return fullName.split(' ')[0]; // First name only
+    }
+
+    return 'there';
+  }, [profileData?.first_name, userName, user?.user_metadata?.full_name]);
 
   // Format role for display
   const displayRole = useMemo(() => {
-    if (!userRole) return '';
+    const role = effectiveRole;
+    if (!role) return '';
 
     // Map role codes to display names with titles
     const roleMap: { [key: string]: string } = {
       'admin': 'Administrator',
       'doctor': 'Dr.',
+      'physician': 'Dr.',
       'nurse': 'Nurse',
       'nurse_practitioner': 'NP',
+      'np': 'NP',
       'physician_assistant': 'PA',
+      'pa': 'PA',
       'volunteer': '',
       'staff': '',
+      'super_admin': '',
     };
 
-    return roleMap[userRole.toLowerCase()] || '';
-  }, [userRole]);
+    return roleMap[role.toLowerCase()] || '';
+  }, [effectiveRole]);
 
   // Build full greeting
   const fullGreeting = useMemo(() => {
@@ -279,9 +340,9 @@ export const PersonalizedGreeting: React.FC<PersonalizedGreetingProps> = ({
     if (displayRole && displayRole.length <= 3) {
       // Short titles like Dr., NP, PA go before name
       greeting += ` ${displayRole} ${displayName}`;
-    } else if (displayRole) {
-      // Longer titles like Administrator, Nurse go after
-      greeting += ` ${displayName}`;
+    } else if (displayRole === 'Nurse') {
+      // Nurse goes before name
+      greeting += ` Nurse ${displayName}`;
     } else {
       greeting += ` ${displayName}`;
     }
@@ -292,6 +353,16 @@ export const PersonalizedGreeting: React.FC<PersonalizedGreetingProps> = ({
   // Don't show for seniors (they have their own greeting)
   if (hideForSeniors) {
     return null;
+  }
+
+  // Show loading skeleton while fetching profile
+  if (loading) {
+    return (
+      <div className="bg-gradient-to-r from-[#E0F7F6] via-[#F4FADC] to-[#E0F7F6] border-2 border-[#1BA39C] rounded-xl p-6 mb-6 shadow-xl animate-pulse">
+        <div className="h-8 bg-[#1BA39C]/20 rounded w-64 mb-4"></div>
+        <div className="h-4 bg-[#1BA39C]/20 rounded w-48"></div>
+      </div>
+    );
   }
 
   return (

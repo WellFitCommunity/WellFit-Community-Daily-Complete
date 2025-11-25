@@ -16,9 +16,12 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createAdminClient } from '../_shared/supabaseClient.ts';
 import { createLogger } from '../_shared/auditLogger.ts';
+import { strictDeidentify, validateDeidentification } from '../_shared/phiDeidentifier.ts';
 
 const DEEPGRAM_API_KEY = Deno.env.get("DEEPGRAM_API_KEY");
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+// Fallback API keys for resilience
+const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 const SB_URL = Deno.env.get("SB_URL") ?? Deno.env.get("SUPABASE_URL");
 const SB_SECRET_KEY =
   Deno.env.get("SB_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -28,6 +31,7 @@ if (!DEEPGRAM_API_KEY || !ANTHROPIC_API_KEY || !SB_URL || !SB_SECRET_KEY) {
   initLogger.error("Missing required env vars", {
     hasDeepgram: !!DEEPGRAM_API_KEY,
     hasAnthropic: !!ANTHROPIC_API_KEY,
+    hasOpenAI: !!OPENAI_API_KEY,
     hasSbUrl: !!SB_URL,
     hasSbSecret: !!SB_SECRET_KEY
   });
@@ -35,14 +39,32 @@ if (!DEEPGRAM_API_KEY || !ANTHROPIC_API_KEY || !SB_URL || !SB_SECRET_KEY) {
 
 const ANALYSIS_INTERVAL_MS = 10_000;
 
-// Minimal PHI redaction before Claude (upgrade later to shared util)
-function deidentify(text: string): string {
-  return text
-    .replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, "[REDACTED]") // emails
-    .replace(/\b\d{3}-\d{2}-\d{4}\b/g, "[REDACTED]") // SSN
-    .replace(/\b(?:\(\d{3}\)\s?\d{3}-\d{4}|\d{3}-\d{3}-\d{4})\b/g, "[REDACTED]") // phones
-    .replace(/\b(MRN|Patient|Member|Address|Name|DOB)[:#\s]+[^\n]+/gi, "[REDACTED]") // common PHI lines
-    .trim();
+/**
+ * De-identify PHI using the robust NLP-based service
+ * Validates output and logs any concerns
+ */
+function deidentify(text: string, logger: any): string {
+  const result = strictDeidentify(text);
+
+  // Validate the de-identification
+  const validation = validateDeidentification(result.text);
+
+  if (!validation.isValid) {
+    logger.warn('PHI de-identification validation warning', {
+      riskScore: validation.riskScore,
+      issues: validation.issues,
+      redactedCount: result.redactedCount
+    });
+  }
+
+  if (result.warnings.length > 0) {
+    logger.info('PHI de-identification warnings', {
+      warnings: result.warnings,
+      confidence: result.confidence
+    });
+  }
+
+  return result.text;
 }
 
 function safeSend(ws: WebSocket, payload: unknown) {
@@ -183,7 +205,7 @@ async function analyzeCoding(rawTranscript: string, socket: WebSocket, userId: s
   const startTime = Date.now();
 
   try {
-    const transcript = deidentify(rawTranscript);
+    const transcript = deidentify(rawTranscript, logger);
 
     // Fetch provider preferences for personalized interaction
     const { data: prefs } = await supabaseClient

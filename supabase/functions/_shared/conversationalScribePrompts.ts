@@ -4,7 +4,9 @@
 export interface ProviderPreferences {
   formality_level: 'formal' | 'professional' | 'relaxed' | 'casual';
   interaction_style: 'directive' | 'collaborative' | 'supportive' | 'autonomous';
-  verbosity: 'concise' | 'balanced' | 'detailed';
+  // Database stores: 'concise' | 'balanced' | 'detailed'
+  // Extended values for prompts: 'minimal' | 'low' | 'balanced' | 'moderate' | 'high' | 'maximum'
+  verbosity: 'concise' | 'balanced' | 'detailed' | 'minimal' | 'low' | 'moderate' | 'high' | 'maximum';
   humor_level: 'none' | 'light' | 'moderate';
   documentation_style: 'SOAP' | 'narrative' | 'bullet_points' | 'hybrid';
   provider_type: 'physician' | 'nurse_practitioner' | 'physician_assistant';
@@ -25,6 +27,31 @@ export interface ConversationContext {
   time_of_day?: 'morning' | 'afternoon' | 'evening' | 'night';
   provider_workload?: 'light' | 'moderate' | 'heavy' | 'overwhelmed';
   mentioned_topics?: string[];
+}
+
+/**
+ * Map verbosity level to communication instruction
+ * Handles both database values (concise/balanced/detailed) and extended UI values
+ */
+function getVerbosityInstruction(verbosity: string): string {
+  switch (verbosity) {
+    case 'minimal':
+      return 'Absolute minimum - codes only, almost no commentary';
+    case 'concise':
+    case 'low':
+      return 'Keep it brief - just the key points, no extra explanation';
+    case 'balanced':
+      return 'Balance brevity with helpful detail - explain when it adds value';
+    case 'moderate':
+      return 'Give good context - explain reasoning for code suggestions';
+    case 'detailed':
+    case 'high':
+      return 'Be thorough - explain your reasoning and provide educational context';
+    case 'maximum':
+      return 'Full teaching mode - comprehensive explanations, educational insights, and detailed rationale';
+    default:
+      return 'Balance brevity with helpful detail';
+  }
 }
 
 /**
@@ -253,9 +280,7 @@ Return ONLY valid JSON (no markdown, no explanation):
 - Never suggest codes that aren't clearly supported
 
 **Communication Style:**
-- ${prefs.verbosity === 'concise' ? 'Keep it brief - just the key points' :
-    prefs.verbosity === 'detailed' ? 'Give them context - explain your reasoning' :
-    'Balance brevity with helpful detail'}
+- ${getVerbosityInstruction(prefs.verbosity)}
 - Use natural language, not "coding speak" (unless they prefer that)
 - If something's missing for a higher-level code, prompt them conversationally
 
@@ -354,9 +379,7 @@ Make it flow naturally but cover all the bases.
 Mix it up based on what fits this visit. SOAP for complex stuff, bullets for quick visits.
 `}
 
-**Verbosity:** ${prefs.verbosity === 'concise' ? 'Concise - say it once, say it right' :
-                 prefs.verbosity === 'detailed' ? 'Detailed - include context and reasoning' :
-                 'Balanced - enough detail to be useful, not so much it\'s overwhelming'}
+**Verbosity:** ${getVerbosityInstruction(prefs.verbosity)}
 
 **Code Selection:**
 - Only codes with >70% confidence
@@ -404,6 +427,9 @@ export function getGreeting(
     case 'professional':
       if (isStressed || isHeavyWorkload) {
         return 'Hey! Looks like a busy one. Riley\'s got your back on the charting.';
+      }
+      if (isNew) {
+        return 'Hey! Riley here. Still learning your style, but ready to help with this visit.';
       }
       return timeOfDay === 'morning' ?
         'Morning, Doc! Riley here - let\'s tackle today\'s charts together.' :

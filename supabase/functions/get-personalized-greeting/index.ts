@@ -1,13 +1,16 @@
 // =====================================================
 // GET PERSONALIZED GREETING - Edge Function
 // Purpose: Generate personalized greeting with motivational quote
+// HIPAA Compliance: §164.312(b) - Audit Controls
 // =====================================================
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { cors } from '../_shared/cors.ts'
+import { createLogger } from '../_shared/auditLogger.ts'
 
 serve(async (req) => {
+  const logger = createLogger('get-personalized-greeting', req);
   const origin = req.headers.get('origin');
   const { headers, allowed } = cors(origin, {
     methods: ['GET', 'OPTIONS']
@@ -47,11 +50,11 @@ serve(async (req) => {
     const { data: profile, error: profileError } = await supabaseClient
       .from('profiles')
       .select('first_name, last_name, role, specialty')
-      .eq('id', user.id)
+      .eq('user_id', user.id)
       .single()
 
     if (profileError) {
-      console.error('Profile fetch error:', profileError)
+      logger.warn('Profile fetch failed', { userId: user.id, error: profileError.message })
     }
 
     // Get or create greeting preferences
@@ -148,7 +151,7 @@ serve(async (req) => {
       const { data: quotes, error: quoteError } = await quoteQuery.limit(10)
 
       if (quoteError) {
-        console.error('Quote fetch error:', quoteError)
+        logger.warn('Quote fetch failed', { userId: user.id, error: quoteError.message })
       } else if (quotes && quotes.length > 0) {
         // Pick random quote from results
         quote = quotes[Math.floor(Math.random() * quotes.length)]
@@ -185,9 +188,11 @@ serve(async (req) => {
       }
     )
   } catch (error) {
-    console.error('Error generating personalized greeting:', error)
+    logger.error('Greeting generation failed', {
+      error: error instanceof Error ? error.message : String(error)
+    })
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Internal server error' }),
       {
         status: 500,
         headers: { ...headers, 'Content-Type': 'application/json' },

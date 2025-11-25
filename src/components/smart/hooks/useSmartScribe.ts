@@ -101,13 +101,15 @@ export function useSmartScribe(props: UseSmartScribeProps) {
   // ============================================================================
 
   /**
-   * Get assistance level settings based on level (1-10)
+   * Get assistance level settings based on level
+   * Simplified to 3 levels matching database schema: concise, balanced, detailed
    */
   const getAssistanceSettings = (level: number): AssistanceSettings => {
-    if (level <= 2) {
+    // Concise (levels 1-4) - Maps to 'concise' in database
+    if (level <= 4) {
       return {
-        label: 'Minimal',
-        description: 'Quiet mode - codes only, no coaching',
+        label: 'Concise',
+        description: 'Codes only, minimal conversation',
         color: 'text-gray-600',
         bgColor: 'bg-gray-100',
         borderColor: 'border-gray-300',
@@ -115,21 +117,12 @@ export function useSmartScribe(props: UseSmartScribeProps) {
         showSuggestions: false,
         showReasoningDetails: false,
       };
-    } else if (level <= 4) {
+    }
+    // Balanced (levels 5-7) - Maps to 'balanced' in database
+    if (level <= 7) {
       return {
-        label: 'Low',
-        description: 'Brief notes - minimal conversation, key alerts only',
-        color: 'text-blue-600',
-        bgColor: 'bg-blue-100',
-        borderColor: 'border-blue-300',
-        showConversationalMessages: true,
-        showSuggestions: false,
-        showReasoningDetails: false,
-      };
-    } else if (level <= 6) {
-      return {
-        label: 'Moderate',
-        description: 'Balanced - helpful reminders and suggestions',
+        label: 'Balanced',
+        description: 'Helpful suggestions and reminders',
         color: 'text-green-600',
         bgColor: 'bg-green-100',
         borderColor: 'border-green-300',
@@ -137,62 +130,46 @@ export function useSmartScribe(props: UseSmartScribeProps) {
         showSuggestions: true,
         showReasoningDetails: false,
       };
-    } else if (level <= 8) {
-      return {
-        label: 'High',
-        description: 'Proactive - detailed coaching with explanations',
-        color: 'text-amber-600',
-        bgColor: 'bg-amber-100',
-        borderColor: 'border-amber-300',
-        showConversationalMessages: true,
-        showSuggestions: true,
-        showReasoningDetails: true,
-      };
-    } else {
-      return {
-        label: 'Maximum',
-        description: 'Full teaching mode - educational and comprehensive',
-        color: 'text-purple-600',
-        bgColor: 'bg-purple-100',
-        borderColor: 'border-purple-300',
-        showConversationalMessages: true,
-        showSuggestions: true,
-        showReasoningDetails: true,
-      };
     }
+    // Detailed (levels 8-10) - Maps to 'detailed' in database
+    return {
+      label: 'Detailed',
+      description: 'Full coaching with explanations',
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-100',
+      borderColor: 'border-blue-300',
+      showConversationalMessages: true,
+      showSuggestions: true,
+      showReasoningDetails: true,
+    };
   };
 
   /**
-   * Map verbosity text to numeric level
+   * Map verbosity text from database to numeric level
+   * Database stores: 'concise' | 'balanced' | 'detailed'
+   * UI displays: 1-10 scale
    */
   const verbosityToLevel = (verbosity: string): number => {
     switch (verbosity) {
-      case 'minimal':
-        return 2;
-      case 'low':
-        return 4;
+      case 'concise':
+        return 3; // Maps to "Low" on UI (levels 3-4)
       case 'balanced':
-        return 5;
-      case 'moderate':
-        return 6;
-      case 'high':
-        return 8;
-      case 'maximum':
-        return 10;
+        return 5; // Maps to "Moderate" on UI (levels 5-6)
+      case 'detailed':
+        return 8; // Maps to "High" on UI (levels 7-8)
       default:
-        return 5;
+        return 5; // Default to balanced
     }
   };
 
   /**
-   * Map numeric level to verbosity text
+   * Map numeric level to verbosity text for database storage
+   * UI levels 1-10 map to database values: 'concise' | 'balanced' | 'detailed'
    */
   const levelToVerbosity = (level: number): string => {
-    if (level <= 2) return 'minimal';
-    if (level <= 4) return 'low';
-    if (level <= 6) return level === 5 ? 'balanced' : 'moderate';
-    if (level <= 8) return 'high';
-    return 'maximum';
+    if (level <= 4) return 'concise';    // Levels 1-4: Minimal/Low -> concise
+    if (level <= 7) return 'balanced';   // Levels 5-7: Moderate -> balanced
+    return 'detailed';                    // Levels 8-10: High/Maximum -> detailed
   };
 
   const assistanceSettings = getAssistanceSettings(assistanceLevel);
