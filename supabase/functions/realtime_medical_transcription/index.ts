@@ -37,7 +37,8 @@ if (!DEEPGRAM_API_KEY || !ANTHROPIC_API_KEY || !SB_URL || !SB_SECRET_KEY) {
   });
 }
 
-const ANALYSIS_INTERVAL_MS = 10_000;
+// Token optimization: Increased interval from 10s to 15s - still responsive but 33% fewer API calls
+const ANALYSIS_INTERVAL_MS = 15_000;
 
 /**
  * De-identify PHI using the robust NLP-based service
