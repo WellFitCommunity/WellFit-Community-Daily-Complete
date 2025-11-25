@@ -111,8 +111,11 @@ describe('SystemAdminDashboard', () => {
       setupMocks();
       render(<SystemAdminDashboard />);
 
-      // Check for loading state - the component should render without throwing
-      expect(screen.getByText(/System Administration|Loading/i)).toBeInTheDocument();
+      // Check for loading state - the component renders a skeleton with animate-pulse class
+      // The loading skeleton doesn't have text, so we check for the skeleton container
+      const skeletonOrContent = screen.queryByText(/System Administration/i) ||
+                                document.querySelector('.animate-pulse');
+      expect(skeletonOrContent).toBeTruthy();
     });
   });
 

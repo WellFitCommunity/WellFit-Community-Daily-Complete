@@ -7,6 +7,9 @@ import '@testing-library/jest-dom';
 import CheckInTracker from '../CheckInTracker';
 import { useSupabaseClient, useUser } from '../../contexts/AuthContext';
 
+// Mock scrollIntoView which is not available in jsdom
+Element.prototype.scrollIntoView = jest.fn();
+
 // Mock dependencies
 jest.mock('../../contexts/AuthContext', () => ({
   useSupabaseClient: jest.fn(),
@@ -55,7 +58,8 @@ describe('CheckInTracker - Senior Facing Component', () => {
     it('should render the check-in tracker component', () => {
       render(<CheckInTracker />);
 
-      expect(screen.getByText(/Daily Check-In|Check In/i)).toBeInTheDocument();
+      // Component now uses "Check-In Center" as the title
+      expect(screen.getByText(/Check-In Center|Check-In Center|Daily Check-In|Check In/i)).toBeInTheDocument();
     });
 
     it('should display check-in buttons', () => {
@@ -68,14 +72,16 @@ describe('CheckInTracker - Senior Facing Component', () => {
     it('should show "I\'m OK" button for regular check-in', () => {
       render(<CheckInTracker />);
 
-      const okButton = screen.getByText(/I'm OK|Feeling Good|All Good/i);
+      // Component now uses "Feeling Great Today" as the positive check-in button
+      const okButton = screen.getByText(/I'm OK|Feeling Good|All Good|Feeling Great/i);
       expect(okButton).toBeInTheDocument();
     });
 
     it('should show emergency button', () => {
       render(<CheckInTracker />);
 
-      const emergencyButton = screen.getByText(/Need Help|Emergency/i);
+      // Component now uses "Not Feeling My Best" and "Need Healthcare Navigation Assistance"
+      const emergencyButton = screen.getByText(/Need Help|Emergency|Not Feeling My Best|Healthcare Navigation/i);
       expect(emergencyButton).toBeInTheDocument();
     });
   });
@@ -89,7 +95,7 @@ describe('CheckInTracker - Senior Facing Component', () => {
 
       render(<CheckInTracker />);
 
-      const okButton = screen.getByText(/I'm OK|Feeling Good|All Good/i);
+      const okButton = screen.getByText(/I'm OK|Feeling Good|All Good|Feeling Great/i);
       fireEvent.click(okButton);
 
       await waitFor(() => {
@@ -105,7 +111,7 @@ describe('CheckInTracker - Senior Facing Component', () => {
 
       render(<CheckInTracker />);
 
-      const okButton = screen.getByText(/I'm OK|Feeling Good|All Good/i);
+      const okButton = screen.getByText(/I'm OK|Feeling Good|All Good|Feeling Great/i);
       fireEvent.click(okButton);
 
       await waitFor(() => {
@@ -126,7 +132,7 @@ describe('CheckInTracker - Senior Facing Component', () => {
     it('should show emergency modal when emergency button is clicked', async () => {
       render(<CheckInTracker />);
 
-      const emergencyButton = screen.getByText(/Need Help|Emergency/i);
+      const emergencyButton = screen.getByText(/Need Help|Emergency|Not Feeling My Best|Healthcare Navigation/i);
       fireEvent.click(emergencyButton);
 
       await waitFor(() => {
@@ -137,7 +143,7 @@ describe('CheckInTracker - Senior Facing Component', () => {
     it('should display crisis options in emergency modal', async () => {
       render(<CheckInTracker />);
 
-      const emergencyButton = screen.getByText(/Need Help|Emergency/i);
+      const emergencyButton = screen.getByText(/Need Help|Emergency|Not Feeling My Best|Healthcare Navigation/i);
       fireEvent.click(emergencyButton);
 
       await waitFor(() => {
@@ -149,7 +155,7 @@ describe('CheckInTracker - Senior Facing Component', () => {
     it('should show emergency contact phone number', async () => {
       render(<CheckInTracker />);
 
-      const emergencyButton = screen.getByText(/Need Help|Emergency/i);
+      const emergencyButton = screen.getByText(/Need Help|Emergency|Not Feeling My Best|Healthcare Navigation/i);
       fireEvent.click(emergencyButton);
 
       await waitFor(() => {
@@ -165,7 +171,7 @@ describe('CheckInTracker - Senior Facing Component', () => {
 
       render(<CheckInTracker />);
 
-      const emergencyButton = screen.getByText(/Need Help|Emergency/i);
+      const emergencyButton = screen.getByText(/Need Help|Emergency|Not Feeling My Best|Healthcare Navigation/i);
       fireEvent.click(emergencyButton);
 
       await waitFor(() => {
@@ -224,7 +230,7 @@ describe('CheckInTracker - Senior Facing Component', () => {
         fireEvent.change(heartRateInput, { target: { value: '300' } }); // Invalid
       }
 
-      const okButton = screen.getByText(/I'm OK|Feeling Good|All Good/i);
+      const okButton = screen.getByText(/I'm OK|Feeling Good|All Good|Feeling Great/i);
       fireEvent.click(okButton);
 
       // The component should handle validation
@@ -260,7 +266,7 @@ describe('CheckInTracker - Senior Facing Component', () => {
 
       render(<CheckInTracker />);
 
-      const okButton = screen.getByText(/I'm OK|Feeling Good|All Good/i);
+      const okButton = screen.getByText(/I'm OK|Feeling Good|All Good|Feeling Great/i);
       fireEvent.click(okButton);
 
       await waitFor(() => {
@@ -276,7 +282,7 @@ describe('CheckInTracker - Senior Facing Component', () => {
 
       render(<CheckInTracker />);
 
-      const okButton = screen.getByText(/I'm OK|Feeling Good|All Good/i);
+      const okButton = screen.getByText(/I'm OK|Feeling Good|All Good|Feeling Great/i);
       fireEvent.click(okButton);
 
       // Button should be disabled or show loading state
@@ -293,7 +299,7 @@ describe('CheckInTracker - Senior Facing Component', () => {
 
       render(<CheckInTracker />);
 
-      const okButton = screen.getByText(/I'm OK|Feeling Good|All Good/i);
+      const okButton = screen.getByText(/I'm OK|Feeling Good|All Good|Feeling Great/i);
       fireEvent.click(okButton);
 
       await waitFor(() => {
@@ -312,7 +318,7 @@ describe('CheckInTracker - Senior Facing Component', () => {
 
       render(<CheckInTracker />);
 
-      expect(screen.getByText(/Daily Check-In|Check In|sign in/i)).toBeInTheDocument();
+      expect(screen.getByText(/Check-In Center|Daily Check-In|Check In|sign in/i)).toBeInTheDocument();
     });
 
     it('should show error message when check-in fails', async () => {
@@ -323,7 +329,7 @@ describe('CheckInTracker - Senior Facing Component', () => {
 
       render(<CheckInTracker />);
 
-      const okButton = screen.getByText(/I'm OK|Feeling Good|All Good/i);
+      const okButton = screen.getByText(/I'm OK|Feeling Good|All Good|Feeling Great/i);
       fireEvent.click(okButton);
 
       await waitFor(() => {
@@ -345,7 +351,7 @@ describe('CheckInTracker - Senior Facing Component', () => {
       render(<CheckInTracker />);
 
       // Component should render without crashing
-      expect(screen.getByText(/Daily Check-In|Check In/i)).toBeInTheDocument();
+      expect(screen.getByText(/Check-In Center|Daily Check-In|Check In/i)).toBeInTheDocument();
     });
   });
 
@@ -363,7 +369,7 @@ describe('CheckInTracker - Senior Facing Component', () => {
     it('should have large, readable text for seniors', () => {
       render(<CheckInTracker />);
 
-      const heading = screen.getByText(/Daily Check-In|Check In/i);
+      const heading = screen.getByText(/Check-In Center|Daily Check-In|Check In/i);
       expect(heading).toBeInTheDocument();
     });
 
