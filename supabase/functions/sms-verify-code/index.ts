@@ -261,15 +261,32 @@ Deno.serve(async (req: Request): Promise<Response> => {
       let authPhone: string | undefined = normalizedPhone;
       let isSharedPhone = false;
 
-      // Check if this phone is already registered by querying profiles table
-      // This is much more efficient than listUsers() which fetches ALL users
+      // Check if this phone is already registered in auth.users table
+      // We use a SECURITY DEFINER function to safely query auth.users
+      // This handles cases where auth.users has the phone but profiles doesn't
+      // (e.g., previous registration failed after creating auth user)
+      const { data: phoneExistsResult } = await supabase
+        .rpc('check_phone_exists_in_auth', { phone_to_check: normalizedPhone });
+
+      const phoneExistsInAuth = phoneExistsResult === true;
+
+      // Also check profiles table for completeness
       const { data: existingProfiles } = await supabase
         .from('profiles')
         .select('user_id')
         .eq('phone', normalizedPhone)
         .limit(1);
 
-      const phoneAlreadyUsed = existingProfiles && existingProfiles.length > 0;
+      // Phone is already used if it exists in either auth.users OR profiles
+      const phoneAlreadyUsedInProfiles = existingProfiles && existingProfiles.length > 0;
+      const phoneAlreadyUsed = phoneExistsInAuth || phoneAlreadyUsedInProfiles;
+
+      logger.info("Phone existence check results", {
+        normalizedPhone,
+        phoneExistsInAuth,
+        phoneAlreadyUsedInProfiles,
+        phoneAlreadyUsed
+      });
 
       if (phoneAlreadyUsed && !pending.email) {
         // Shared phone scenario: Phone is used, no email provided
@@ -339,7 +356,56 @@ Deno.serve(async (req: Request): Promise<Response> => {
         metadata: createUserPayload.user_metadata
       });
 
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser(createUserPayload);
+      let authData: any = null;
+      let authError: any = null;
+
+      // First attempt to create user
+      const firstAttempt = await supabase.auth.admin.createUser(createUserPayload);
+      authData = firstAttempt.data;
+      authError = firstAttempt.error;
+
+      // If first attempt fails due to phone conflict, retry without phone (shared phone fallback)
+      // This handles cases where the phone check function doesn't exist yet or returned incorrect result
+      if (authError && createUserPayload.phone) {
+        const errorMsg = authError?.message?.toLowerCase() || '';
+        const isPhoneConflict = errorMsg.includes("database error") ||
+                                errorMsg.includes("duplicate") ||
+                                errorMsg.includes("already exists") ||
+                                errorMsg.includes("unique") ||
+                                authError?.code === "unexpected_failure";
+
+        if (isPhoneConflict) {
+          logger.warn("Phone conflict detected, retrying as shared phone scenario", {
+            originalError: authError?.message,
+            phone: normalizedPhone
+          });
+
+          // Convert to shared phone scenario
+          isSharedPhone = true;
+          delete createUserPayload.phone;
+          delete createUserPayload.phone_confirm;
+
+          // Generate new internal email if needed (to avoid email collision too)
+          if (!pending.email) {
+            const uniqueId = crypto.randomUUID().split('-')[0];
+            createUserPayload.email = `${normalizedPhone.replace(/\D/g, '')}_${uniqueId}@wellfit.internal`;
+            createUserPayload.user_metadata.generated_email = true;
+            authEmail = createUserPayload.email;
+          }
+
+          createUserPayload.user_metadata.is_shared_phone = true;
+
+          logger.info("Retrying user creation without phone", {
+            email: createUserPayload.email,
+            isSharedPhone: true
+          });
+
+          // Retry without phone
+          const retryAttempt = await supabase.auth.admin.createUser(createUserPayload);
+          authData = retryAttempt.data;
+          authError = retryAttempt.error;
+        }
+      }
 
       if (authError || !authData?.user) {
         // Log FULL error details for debugging
@@ -366,7 +432,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         if (authError?.message?.toLowerCase().includes("duplicate") ||
             authError?.message?.toLowerCase().includes("already exists") ||
             authError?.message?.toLowerCase().includes("unique")) {
-          errorMessage = "This phone number is already registered. Please login instead.";
+          errorMessage = "This phone number or email is already registered. Please login instead.";
         }
 
         return new Response(JSON.stringify({
@@ -376,23 +442,28 @@ Deno.serve(async (req: Request): Promise<Response> => {
         }), { status: 500, headers });
       }
 
-      // Create profile
+      // Create or update profile
+      // Note: The handle_new_user() trigger on auth.users may have already created a basic profile
+      // We use upsert to ensure we set the complete data from pending_registrations
       const { error: profileError } = await supabase
         .from("profiles")
-        .insert({
-          user_id: authData.user.id,  // ✅ FIXED: Was 'id', now 'user_id' (matches schema)
+        .upsert({
+          user_id: authData.user.id,  // ✅ Primary key for upsert
           first_name: pending.first_name,
           last_name: pending.last_name,
           email: pending.email,
           phone: normalizedPhone,
           role_code: pending.role_code,
-          role: pending.role_slug,  // Added role field
+          role: pending.role_slug,
           role_slug: pending.role_slug,
           created_by: null,
+        }, {
+          onConflict: 'user_id',  // Upsert on user_id conflict
+          ignoreDuplicates: false // Update if exists
         });
 
       if (profileError) {
-        logger.error("Failed to create profile", {
+        logger.error("Failed to create/update profile", {
           userId: authData.user.id,
           phone,
           error: profileError.message
@@ -464,11 +535,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
       // For shared phones, use email (generated or real) instead of phone
       const signInPayload: any = { password: userPassword };
 
-      if (authPhone) {
+      if (!isSharedPhone && authPhone) {
         // Not a shared phone - can login with phone
         signInPayload.phone = normalizedPhone;
       } else {
-        // Shared phone - must login with generated email
+        // Shared phone or retry scenario - must login with email
         signInPayload.email = authEmail;
       }
 
