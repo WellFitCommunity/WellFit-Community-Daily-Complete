@@ -11,9 +11,12 @@
  * - Database administration
  * - Security operations
  * - Audit log investigation
+ * - AI usage monitoring
+ * - Performance & cache monitoring
+ * - Compliance dashboards
  */
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../contexts/AuthContext';
 import RequireAdminAuth from '../components/auth/RequireAdminAuth';
@@ -26,10 +29,21 @@ import DatabaseAdminPanel from '../components/system/DatabaseAdminPanel';
 import SystemConfigurationPanel from '../components/system/SystemConfigurationPanel';
 import {
   Database, Users, Shield, Settings, Activity,
-  Server, HardDrive, Zap, ChevronDown
+  Server, HardDrive, Zap, ChevronDown, Brain,
+  BarChart3, ShieldCheck, Gauge
 } from 'lucide-react';
 
-type SystemTabKey = 'overview' | 'users' | 'sessions' | 'database' | 'config' | 'security';
+// Lazy load monitoring dashboards to reduce initial bundle size
+const TenantAIUsageDashboard = React.lazy(() => import('../components/admin/TenantAIUsageDashboard'));
+const PerformanceMonitoringDashboard = React.lazy(() => import('../components/admin/PerformanceMonitoringDashboard'));
+const CacheMonitoringDashboard = React.lazy(() => import('../components/admin/CacheMonitoringDashboard'));
+const ComplianceDashboard = React.lazy(() => import('../components/admin/ComplianceDashboard'));
+const SOC2SecurityDashboard = React.lazy(() =>
+  import('../components/admin/SOC2SecurityDashboard').then(m => ({ default: m.SOC2SecurityDashboard }))
+);
+const ClaudeBillingMonitoringDashboard = React.lazy(() => import('../components/admin/ClaudeBillingMonitoringDashboard'));
+
+type SystemTabKey = 'overview' | 'users' | 'sessions' | 'database' | 'config' | 'security' | 'ai-usage' | 'performance' | 'compliance';
 
 interface CollapsibleSectionProps {
   title: string;
@@ -95,7 +109,10 @@ const SystemAdministrationPage: React.FC = () => {
     { key: 'sessions' as SystemTabKey, label: 'Active Sessions', icon: <Zap className="w-5 h-5" /> },
     { key: 'database' as SystemTabKey, label: 'Database', icon: <Database className="w-5 h-5" /> },
     { key: 'config' as SystemTabKey, label: 'Configuration', icon: <Settings className="w-5 h-5" /> },
-    { key: 'security' as SystemTabKey, label: 'Security', icon: <Shield className="w-5 h-5" /> }
+    { key: 'security' as SystemTabKey, label: 'Security', icon: <Shield className="w-5 h-5" /> },
+    { key: 'ai-usage' as SystemTabKey, label: 'AI Usage', icon: <Brain className="w-5 h-5" /> },
+    { key: 'performance' as SystemTabKey, label: 'Performance', icon: <Gauge className="w-5 h-5" /> },
+    { key: 'compliance' as SystemTabKey, label: 'Compliance', icon: <ShieldCheck className="w-5 h-5" /> }
   ];
 
   return (
@@ -287,23 +304,80 @@ const SystemAdministrationPage: React.FC = () => {
             <div className="space-y-6">
               <CollapsibleSection
                 title="Security Operations"
-                subtitle="Encryption, access control, and security event monitoring"
+                subtitle="Real-time security monitoring, threat detection, and SOC2 compliance"
                 icon={<Shield className="w-6 h-6 text-red-600" />}
                 defaultOpen={true}
               >
-                <div className="bg-[#E8F8F7] rounded-lg p-6 border border-black">
-                  <p className="text-gray-600 text-center">
-                    Security operations are available through the Security & Compliance tab in the main Admin Panel.
-                  </p>
-                  <div className="mt-4 text-center">
-                    <button
-                      onClick={() => navigate('/admin')}
-                      className="px-6 py-3 bg-[#1BA39C] hover:bg-[#158A84] text-white font-bold rounded-lg transition-all shadow-md hover:shadow-lg border-2 border-black"
-                    >
-                      Go to Security & Compliance Dashboard
-                    </button>
-                  </div>
-                </div>
+                <Suspense fallback={<LoadingFallback />}>
+                  <SOC2SecurityDashboard />
+                </Suspense>
+              </CollapsibleSection>
+            </div>
+          )}
+
+          {activeTab === 'ai-usage' && (
+            <div className="space-y-6">
+              <CollapsibleSection
+                title="AI Usage & Cost Tracking"
+                subtitle="Claude AI usage, token consumption, and cost analysis"
+                icon={<Brain className="w-6 h-6 text-purple-600" />}
+                defaultOpen={true}
+              >
+                <Suspense fallback={<LoadingFallback />}>
+                  <TenantAIUsageDashboard />
+                </Suspense>
+              </CollapsibleSection>
+
+              <CollapsibleSection
+                title="Claude & Billing Monitoring"
+                subtitle="Detailed AI billing workflows, cost optimization, and performance metrics"
+                icon={<BarChart3 className="w-6 h-6 text-blue-600" />}
+                defaultOpen={false}
+              >
+                <Suspense fallback={<LoadingFallback />}>
+                  <ClaudeBillingMonitoringDashboard />
+                </Suspense>
+              </CollapsibleSection>
+            </div>
+          )}
+
+          {activeTab === 'performance' && (
+            <div className="space-y-6">
+              <CollapsibleSection
+                title="Performance Monitoring"
+                subtitle="Application errors, latency metrics, and system performance"
+                icon={<Gauge className="w-6 h-6 text-orange-600" />}
+                defaultOpen={true}
+              >
+                <Suspense fallback={<LoadingFallback />}>
+                  <PerformanceMonitoringDashboard />
+                </Suspense>
+              </CollapsibleSection>
+
+              <CollapsibleSection
+                title="Cache & Connection Monitoring"
+                subtitle="Cache hit rates, connection pool health, and real-time subscription status"
+                icon={<Activity className="w-6 h-6 text-green-600" />}
+                defaultOpen={false}
+              >
+                <Suspense fallback={<LoadingFallback />}>
+                  <CacheMonitoringDashboard />
+                </Suspense>
+              </CollapsibleSection>
+            </div>
+          )}
+
+          {activeTab === 'compliance' && (
+            <div className="space-y-6">
+              <CollapsibleSection
+                title="Compliance Dashboard"
+                subtitle="HIPAA, SOC2, backup status, disaster recovery drills, and vulnerability tracking"
+                icon={<ShieldCheck className="w-6 h-6 text-green-600" />}
+                defaultOpen={true}
+              >
+                <Suspense fallback={<LoadingFallback />}>
+                  <ComplianceDashboard />
+                </Suspense>
               </CollapsibleSection>
             </div>
           )}
@@ -312,5 +386,12 @@ const SystemAdministrationPage: React.FC = () => {
     </RequireAdminAuth>
   );
 };
+
+// Loading fallback for lazy-loaded components
+const LoadingFallback: React.FC = () => (
+  <div className="flex items-center justify-center py-12">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1BA39C]"></div>
+  </div>
+);
 
 export default SystemAdministrationPage;

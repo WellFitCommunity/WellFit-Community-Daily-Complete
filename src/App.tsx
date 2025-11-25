@@ -1,6 +1,6 @@
 // src/App.tsx
 import React, { useEffect, useState, Suspense } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, useParams } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
@@ -98,9 +98,7 @@ const AllergiesPage = React.lazy(() => import('./pages/AllergiesPage'));
 const ConditionsPage = React.lazy(() => import('./pages/ConditionsPage'));
 const MyHealthHubPage = React.lazy(() => import('./pages/MyHealthHubPage'));
 const TelehealthAppointmentsPage = React.lazy(() => import('./pages/TelehealthAppointmentsPage'));
-// Guardian moved to Edge Functions
-// const GuardianAgentDashboard = React.lazy(() => import('./components/admin/GuardianAgentDashboard'));
-// const GuardianTestPage = React.lazy(() => import('./pages/GuardianTestPage'));
+// Guardian moved to Edge Functions - components removed
 const EMSPage = React.lazy(() => import('./pages/EMSPage'));
 const ERDashboardPage = React.lazy(() => import('./pages/ERDashboardPage'));
 const ConstableDispatchDashboard = React.lazy(() => import('./components/lawEnforcement/ConstableDispatchDashboard'));
@@ -110,22 +108,29 @@ const SystemAdministrationPage = React.lazy(() => import('./pages/SystemAdminist
 const AdminSettingsPage = React.lazy(() => import('./pages/AdminSettingsPage'));
 const AuditLogsPage = React.lazy(() => import('./pages/AuditLogsPage'));
 const HealthcareAlgorithmsDashboard = React.lazy(() => import('./components/ai/HealthcareAlgorithmsDashboard'));
+const AIRevenueDashboard = React.lazy(() => import('./components/ai/AIRevenueDashboard'));
 
-// Orphaned components - now wired with feature flags
+// Previously orphaned components - now wired with feature flags
 const ReportsPrintPage = React.lazy(() => import('./pages/ReportsPrintPage'));
-// NOTE: Some components below require props (patientId, handoffId, etc.)
-// They're imported but routes are commented until proper context is wired
-// const MemoryClinicDashboard = React.lazy(() => import('./components/neuro-suite/MemoryClinicDashboard'));
+// MemoryClinicDashboard requires patientId prop - route would need wrapper component
 const MentalHealthDashboard = React.lazy(() => import('./components/mental-health/MentalHealthDashboard'));
 const FrequentFlyerDashboard = React.lazy(() => import('./components/atlas/FrequentFlyerDashboard'));
 const RevenueDashboard = React.lazy(() => import('./components/atlas/RevenueDashboard'));
 const ShiftHandoffDashboard = React.lazy(() => import('./components/nurse/ShiftHandoffDashboard'));
 const DischargedPatientDashboard = React.lazy(() => import('./components/discharge/DischargedPatientDashboard'));
 const NeuroSuiteDashboard = React.lazy(() => import('./components/neuro/NeuroSuiteDashboard'));
-// const StrokeAssessmentDashboard = React.lazy(() => import('./components/neuro-suite/StrokeAssessmentDashboard'));
-// const SpecialistDashboard = React.lazy(() => import('./components/specialist/SpecialistDashboard'));
+// StrokeAssessmentDashboard requires patientId - route would need wrapper component
+const SpecialistDashboard = React.lazy(() =>
+  import('./components/specialist/SpecialistDashboard').then(m => ({ default: m.SpecialistDashboard }))
+);
+const FieldVisitWorkflow = React.lazy(() =>
+  import('./components/specialist/FieldVisitWorkflow').then(m => ({ default: m.FieldVisitWorkflow }))
+);
+const FHIRConflictResolution = React.lazy(() =>
+  import('./components/admin/FHIRConflictResolution').then(m => ({ default: m.FHIRConflictResolution }))
+);
 const EMSMetricsDashboard = React.lazy(() => import('./components/ems/EMSMetricsDashboard'));
-// const CoordinatedResponseDashboard = React.lazy(() => import('./components/ems/CoordinatedResponseDashboard'));
+// CoordinatedResponseDashboard requires context - not wired yet
 
 // CHW (Community Health Worker) Components
 const KioskCheckIn = React.lazy(() => import('./components/chw/KioskCheckIn'));
@@ -586,6 +591,58 @@ function Shell() {
                 }
               />
 
+              {/* AI Revenue Dashboard - CCM Eligibility, Billing Codes, Readmission Risk */}
+              <Route
+                path="/admin/ai-revenue"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth allowedRoles={['super_admin', 'admin', 'department_head']}>
+                      <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading AI Revenue Dashboard...</div>}>
+                        <AIRevenueDashboard />
+                      </Suspense>
+                    </RequireAdminAuth>
+                  </RequireAuth>
+                }
+              />
+
+              {/* FHIR Conflict Resolution - Admin tool for managing FHIR data sync conflicts */}
+              <Route
+                path="/admin/fhir-conflicts"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth allowedRoles={['super_admin', 'admin']}>
+                      <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading FHIR Conflict Resolution...</div>}>
+                        <FHIRConflictResolution />
+                      </Suspense>
+                    </RequireAdminAuth>
+                  </RequireAuth>
+                }
+              />
+
+              {/* Specialist Dashboard - Universal dashboard for all specialist types */}
+              <Route
+                path="/specialist/dashboard/:specialistType"
+                element={
+                  <RequireAuth>
+                    <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading Specialist Dashboard...</div>}>
+                      <SpecialistDashboardWrapper />
+                    </Suspense>
+                  </RequireAuth>
+                }
+              />
+
+              {/* Field Visit Workflow - Step-by-step workflow execution for specialist visits */}
+              <Route
+                path="/specialist/visit/:visitId"
+                element={
+                  <RequireAuth>
+                    <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading Visit Workflow...</div>}>
+                      <FieldVisitWorkflowWrapper />
+                    </Suspense>
+                  </RequireAuth>
+                }
+              />
+
               {/* Clinical Dashboards - Feature Flagged */}
               {/* NOTE: Memory Clinic requires patientId - needs context wrapper
               {featureFlags.memoryClinic && (
@@ -712,6 +769,46 @@ function Shell() {
     </GuardianErrorBoundary>
   );
 }
+
+/**
+ * Wrapper component for SpecialistDashboard to extract route params
+ */
+const SpecialistDashboardWrapper: React.FC = () => {
+  const { specialistType } = useParams<{ specialistType: string }>();
+  const { user } = useSupabaseClient() as any;
+
+  if (!specialistType || !user?.id) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p className="text-gray-500">Invalid specialist configuration</p>
+      </div>
+    );
+  }
+
+  return (
+    <SpecialistDashboard
+      specialistId={user.id}
+      specialistType={specialistType}
+    />
+  );
+};
+
+/**
+ * Wrapper component for FieldVisitWorkflow to extract route params
+ */
+const FieldVisitWorkflowWrapper: React.FC = () => {
+  const { visitId } = useParams<{ visitId: string }>();
+
+  if (!visitId) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p className="text-gray-500">No visit ID provided</p>
+      </div>
+    );
+  }
+
+  return <FieldVisitWorkflow visitId={visitId} />;
+};
 
 const App: React.FC = () => {
   return (
