@@ -11,7 +11,7 @@ interface RequireAdminAuthProps {
 
 export default function RequireAdminAuth({
   children,
-  allowedRoles = ['admin', 'super_admin'],
+  allowedRoles = ['admin', 'super_admin', 'it_admin'],
 }: RequireAdminAuthProps) {
   const { isAdminAuthenticated, adminRole, isLoading } = useAdminAuth();
   const location = useLocation();

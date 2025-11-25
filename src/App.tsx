@@ -105,6 +105,7 @@ const ConstableDispatchDashboard = React.lazy(() => import('./components/lawEnfo
 const LawEnforcementLandingPage = React.lazy(() => import('./pages/LawEnforcementLandingPage'));
 const DentalHealthDashboard = React.lazy(() => import('./components/dental/DentalHealthDashboard'));
 const SystemAdministrationPage = React.lazy(() => import('./pages/SystemAdministrationPage'));
+const TenantITDashboard = React.lazy(() => import('./pages/TenantITDashboard'));
 const AdminSettingsPage = React.lazy(() => import('./pages/AdminSettingsPage'));
 const AuditLogsPage = React.lazy(() => import('./pages/AuditLogsPage'));
 const HealthcareAlgorithmsDashboard = React.lazy(() => import('./components/ai/HealthcareAlgorithmsDashboard'));
@@ -545,6 +546,16 @@ function Shell() {
                   <RequireAuth>
                     <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
                       <SystemAdministrationPage />
+                    </Suspense>
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/it-admin"
+                element={
+                  <RequireAuth>
+                    <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
+                      <TenantITDashboard />
                     </Suspense>
                   </RequireAuth>
                 }

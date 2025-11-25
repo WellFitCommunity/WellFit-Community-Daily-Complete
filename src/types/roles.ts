@@ -14,7 +14,8 @@
  * Ordered by hierarchy level (highest to lowest)
  */
 export type StaffRole =
-  | 'super_admin'         // Level 1: System administrators
+  | 'super_admin'         // Level 1: Platform administrators (Envision employees only)
+  | 'it_admin'            // Level 2: Tenant IT administrators (technical ops for their org)
   | 'department_head'     // Level 2: Executive leadership (CNO, CMO)
   | 'clinical_supervisor' // Level 3: Operational managers (Nurse Managers)
   | 'nurse_practitioner'  // Level 4: Advanced practice (independent)
@@ -86,6 +87,7 @@ export enum RoleCode {
   PATIENT = 16,  // Universal care recipient role (all ages) - FHIR-aligned
   COMMUNITY_HEALTH_WORKER = 17,  // Community Health Worker (CHW)
   CHW = 18,  // Synonym for COMMUNITY_HEALTH_WORKER
+  IT_ADMIN = 19,  // Tenant IT Administrator (technical ops for their organization)
 }
 
 /**
@@ -93,6 +95,7 @@ export enum RoleCode {
  */
 export const ROLE_TO_CODE: Record<UserRole, RoleCode> = {
   super_admin: RoleCode.SUPER_ADMIN,
+  it_admin: RoleCode.IT_ADMIN,
   admin: RoleCode.ADMIN,
   nurse: RoleCode.NURSE,
   senior: RoleCode.SENIOR,  // DEPRECATED: Maps to SENIOR for backward compatibility
@@ -118,6 +121,7 @@ export const ROLE_TO_CODE: Record<UserRole, RoleCode> = {
  */
 export const CODE_TO_ROLE: Record<RoleCode, UserRole> = {
   [RoleCode.SUPER_ADMIN]: 'super_admin',
+  [RoleCode.IT_ADMIN]: 'it_admin',
   [RoleCode.ADMIN]: 'admin',
   [RoleCode.NURSE]: 'nurse',
   [RoleCode.SENIOR]: 'senior',  // DEPRECATED: Kept for backward compatibility
@@ -176,6 +180,7 @@ export interface UserRoleAssignment {
 export const ROLE_HIERARCHY: Record<StaffRole, StaffRole[]> = {
   super_admin: [
     'super_admin',
+    'it_admin',
     'department_head',
     'clinical_supervisor',
     'nurse_practitioner',
@@ -190,6 +195,10 @@ export const ROLE_HIERARCHY: Record<StaffRole, StaffRole[]> = {
     'physical_therapist',
     'admin',
   ],
+  it_admin: [
+    'it_admin',
+    'admin',
+  ], // IT Admin manages technical/admin staff within their tenant only
   department_head: [
     'department_head',
     'clinical_supervisor',
@@ -246,7 +255,8 @@ export function roleHasAnyAccess(userRole: StaffRole, requiredRoles: StaffRole[]
  * Get display name for a role
  */
 export const ROLE_DISPLAY_NAMES: Record<StaffRole, string> = {
-  super_admin: 'Super Administrator',
+  super_admin: 'Platform Administrator',
+  it_admin: 'IT Administrator',
   department_head: 'Department Head',
   clinical_supervisor: 'Clinical Supervisor',
   nurse_practitioner: 'Nurse Practitioner',
@@ -291,7 +301,7 @@ export function isClinicalRole(role: StaffRole): boolean {
  * Check if role is an administrative role
  */
 export function isAdministrativeRole(role: StaffRole): boolean {
-  return ['admin', 'super_admin', 'department_head'].includes(role);
+  return ['admin', 'super_admin', 'it_admin', 'department_head'].includes(role);
 }
 
 /**
@@ -306,4 +316,18 @@ export function isAdvancedPracticeProvider(role: StaffRole): boolean {
  */
 export function hasSupervisoryCapabilities(role: StaffRole): boolean {
   return ['super_admin', 'department_head', 'clinical_supervisor'].includes(role);
+}
+
+/**
+ * Check if role is a tenant IT role (technical administration within a tenant)
+ */
+export function isTenantITRole(role: StaffRole): boolean {
+  return role === 'it_admin';
+}
+
+/**
+ * Check if role is a platform administrator (Envision employees only)
+ */
+export function isPlatformAdmin(role: StaffRole): boolean {
+  return role === 'super_admin';
 }

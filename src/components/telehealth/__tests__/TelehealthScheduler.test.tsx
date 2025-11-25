@@ -1,5 +1,6 @@
 // src/components/telehealth/__tests__/TelehealthScheduler.test.tsx
 // Tests for the provider telehealth scheduling component
+/* eslint-disable testing-library/no-container, testing-library/no-node-access */
 
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';

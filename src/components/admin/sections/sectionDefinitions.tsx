@@ -235,7 +235,7 @@ export const getAllSections = (): DashboardSection[] => [
     component: <Suspense fallback={<SectionLoadingFallback />}><TenantSecurityDashboard /></Suspense>,
     category: 'security',
     priority: 'medium',
-    roles: ['admin', 'super_admin'],
+    roles: ['admin', 'super_admin', 'it_admin'],
   },
   {
     id: 'tenant-audit-logs',
@@ -246,7 +246,7 @@ export const getAllSections = (): DashboardSection[] => [
     component: <Suspense fallback={<SectionLoadingFallback />}><TenantAuditLogs /></Suspense>,
     category: 'security',
     priority: 'medium',
-    roles: ['admin', 'super_admin'],
+    roles: ['admin', 'super_admin', 'it_admin'],
   },
   {
     id: 'tenant-compliance',
@@ -257,7 +257,7 @@ export const getAllSections = (): DashboardSection[] => [
     component: <Suspense fallback={<SectionLoadingFallback />}><TenantComplianceReport /></Suspense>,
     category: 'security',
     priority: 'low',
-    roles: ['admin', 'super_admin'],
+    roles: ['admin', 'super_admin', 'it_admin'],
   },
 
   // ==================== SYSTEM ADMINISTRATION ====================

@@ -118,7 +118,8 @@ export default function AdminLoginPage() {
       isAdmin ||
       appMetaIsAdmin === true ||
       appMetaRole === 'admin' ||
-      appMetaRole === 'super_admin'
+      appMetaRole === 'super_admin' ||
+      appMetaRole === 'it_admin'
     );
   }, [user, isAdmin, dbIsAdmin]);
 
@@ -211,7 +212,9 @@ export default function AdminLoginPage() {
       case 'doctor':
         return '/physician-dashboard';
       case 'super_admin':
-        return '/super-admin'; // Master Panel for super admins
+        return '/admin/system'; // Platform System Administration for Envision employees
+      case 'it_admin':
+        return '/it-admin'; // Tenant IT Administration Dashboard
       case 'admin':
       case 'department_head':
         return '/admin';
@@ -371,7 +374,8 @@ export default function AdminLoginPage() {
               onChange={(e) => setRole(e.target.value as StaffRole)}
             >
               <option value="admin">Administrator</option>
-              <option value="super_admin">Master Administrator</option>
+              <option value="it_admin">IT Administrator</option>
+              <option value="super_admin">Platform Administrator (Envision)</option>
               <option value="nurse">Nurse (RN/LPN)</option>
               <option value="nurse_practitioner">Nurse Practitioner</option>
               <option value="physician">Physician</option>
@@ -454,7 +458,8 @@ export default function AdminLoginPage() {
               onChange={(e) => setRole(e.target.value as StaffRole)}
             >
               <option value="admin">Administrator</option>
-              <option value="super_admin">Master Administrator</option>
+              <option value="it_admin">IT Administrator</option>
+              <option value="super_admin">Platform Administrator (Envision)</option>
               <option value="nurse">Nurse (RN/LPN)</option>
               <option value="nurse_practitioner">Nurse Practitioner</option>
               <option value="physician">Physician</option>
