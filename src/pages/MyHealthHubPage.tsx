@@ -62,6 +62,30 @@ const MyHealthHubPage: React.FC = () => {
       route: '/care-plans',
       color: '', // Will use branding color
     },
+    {
+      id: 'allergies',
+      icon: '⚠️',
+      title: 'My Allergies',
+      description: 'Track your allergies and intolerances for safer care',
+      route: '/allergies',
+      color: '', // Will use branding color
+    },
+    {
+      id: 'conditions',
+      icon: '🩺',
+      title: 'My Conditions',
+      description: 'View and manage your medical conditions and diagnoses',
+      route: '/conditions',
+      color: '', // Will use branding color
+    },
+    {
+      id: 'wearables',
+      icon: '⌚',
+      title: 'My Wearables',
+      description: 'Connect your smartwatch for fall detection and vitals',
+      route: '/wearables',
+      color: '', // Will use branding color
+    },
   ];
 
   return (
