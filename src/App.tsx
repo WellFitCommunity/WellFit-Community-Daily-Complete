@@ -93,6 +93,7 @@ const HealthObservationsPage = React.lazy(() => import('./pages/HealthObservatio
 const ImmunizationsPage = React.lazy(() => import('./pages/ImmunizationsPage'));
 const CarePlansPage = React.lazy(() => import('./pages/CarePlansPage'));
 const MedicineCabinet = React.lazy(() => import('./components/patient/MedicineCabinet'));
+const WearableDashboard = React.lazy(() => import('./components/patient/WearableDashboard'));
 const MyHealthHubPage = React.lazy(() => import('./pages/MyHealthHubPage'));
 const TelehealthAppointmentsPage = React.lazy(() => import('./pages/TelehealthAppointmentsPage'));
 // Guardian moved to Edge Functions
@@ -207,6 +208,7 @@ function Shell() {
               <Route path="/immunizations" element={<RequireAuth><ImmunizationsPage /></RequireAuth>} />
               <Route path="/care-plans" element={<RequireAuth><CarePlansPage /></RequireAuth>} />
               <Route path="/medicine-cabinet" element={<RequireAuth><MedicineCabinet /></RequireAuth>} />
+              <Route path="/wearables" element={<RequireAuth><WearableDashboard /></RequireAuth>} />
               <Route path="/dental-health" element={<RequireAuth><DentalHealthDashboard /></RequireAuth>} />
               <Route path="/questions" element={<RequireAuth><QuestionsPage /></RequireAuth>} />
               <Route path="/help" element={<RequireAuth><HelpPage /></RequireAuth>} />
