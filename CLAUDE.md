@@ -92,8 +92,37 @@ Always run the following before considering work complete:
 - XSS prevention via proper output encoding
 - CSRF protection on state-changing operations
 
+## Architecture Patterns
+
+### Module Access (Feature Flags)
+- Use `useModuleAccess(moduleName)` hook - the ONE way to check module access
+- Two-tier system: entitlements (paid for) + enabled (turned on)
+- See `src/hooks/useModuleAccess.ts` for implementation
+- See `src/types/tenantModules.ts` for module definitions
+
+### Service Layer Standards
+- All services should use `ServiceResult<T>` return type from `src/services/_base/`
+- Never throw exceptions - return errors in the result
+- Always log errors via `auditLogger`
+- Use `success()` and `failure()` helpers for consistent responses
+
+Example:
+```typescript
+import { ServiceResult, success, failure } from './_base';
+
+async function getData(id: string): Promise<ServiceResult<Data>> {
+  try {
+    const { data, error } = await supabase.from('table').select().eq('id', id).single();
+    if (error) return failure('DATABASE_ERROR', error.message, error);
+    return success(data);
+  } catch (err) {
+    return failure('UNKNOWN_ERROR', 'Failed to get data', err);
+  }
+}
+```
+
 ## Current Status
-- Latest commit: Testing-library linting errors fixed
-- Focus: Maintaining CI/CD pipeline health
+- Latest commit: Platform unification Phase 1-2
+- Focus: Consolidating architecture, removing technical debt
 - Database: PostgreSQL 17 via Supabase
-- Recent work includes: Test file improvements and security compliance
+- Recent work: Unified feature flags, service layer standards
