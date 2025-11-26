@@ -27,6 +27,10 @@ export interface TenantModuleConfig {
   sdoh_enabled: boolean;
   pharmacy_enabled: boolean;
   medications_enabled: boolean;
+  memory_clinic_enabled: boolean;
+  mental_health_enabled: boolean;
+  stroke_assessment_enabled: boolean;
+  wearable_integration_enabled: boolean;
 
   // Communication Modules - Active State
   telehealth_enabled: boolean;
@@ -45,6 +49,20 @@ export interface TenantModuleConfig {
   nurseos_clarity_enabled: boolean;
   nurseos_shield_enabled: boolean;
   resilience_hub_enabled: boolean;
+
+  // Population Health Modules - Active State
+  frequent_flyers_enabled: boolean;
+  discharge_tracking_enabled: boolean;
+
+  // Workflow Modules - Active State
+  shift_handoff_enabled: boolean;
+  field_visits_enabled: boolean;
+  caregiver_portal_enabled: boolean;
+
+  // Emergency Modules - Active State
+  ems_metrics_enabled: boolean;
+  coordinated_response_enabled: boolean;
+  law_enforcement_enabled: boolean;
 
   // Billing & Revenue Modules - Active State
   billing_integration_enabled: boolean;
@@ -68,6 +86,10 @@ export interface TenantModuleConfig {
   sdoh_entitled: boolean;
   pharmacy_entitled: boolean;
   medications_entitled: boolean;
+  memory_clinic_entitled: boolean;
+  mental_health_entitled: boolean;
+  stroke_assessment_entitled: boolean;
+  wearable_integration_entitled: boolean;
 
   // Communication Modules - Entitlements
   telehealth_entitled: boolean;
@@ -86,6 +108,20 @@ export interface TenantModuleConfig {
   nurseos_clarity_entitled: boolean;
   nurseos_shield_entitled: boolean;
   resilience_hub_entitled: boolean;
+
+  // Population Health Modules - Entitlements
+  frequent_flyers_entitled: boolean;
+  discharge_tracking_entitled: boolean;
+
+  // Workflow Modules - Entitlements
+  shift_handoff_entitled: boolean;
+  field_visits_entitled: boolean;
+  caregiver_portal_entitled: boolean;
+
+  // Emergency Modules - Entitlements
+  ems_metrics_entitled: boolean;
+  coordinated_response_entitled: boolean;
+  law_enforcement_entitled: boolean;
 
   // Billing & Revenue Modules - Entitlements
   billing_integration_entitled: boolean;
@@ -118,25 +154,48 @@ export interface TenantModuleConfig {
  * These are the ACTIVE state columns (Tenant Admin controls)
  */
 export type ModuleName =
+  // Core
   | 'community_enabled'
   | 'dashboard_enabled'
   | 'check_ins_enabled'
+  // Clinical
   | 'dental_enabled'
   | 'sdoh_enabled'
   | 'pharmacy_enabled'
   | 'medications_enabled'
+  | 'memory_clinic_enabled'
+  | 'mental_health_enabled'
+  | 'stroke_assessment_enabled'
+  | 'wearable_integration_enabled'
+  // Communication
   | 'telehealth_enabled'
   | 'messaging_enabled'
+  // Integration
   | 'ehr_integration_enabled'
   | 'fhir_enabled'
+  // Advanced
   | 'ai_scribe_enabled'
   | 'claude_care_enabled'
   | 'guardian_monitoring_enabled'
+  // NurseOS
   | 'nurseos_clarity_enabled'
   | 'nurseos_shield_enabled'
   | 'resilience_hub_enabled'
+  // Population Health
+  | 'frequent_flyers_enabled'
+  | 'discharge_tracking_enabled'
+  // Workflow
+  | 'shift_handoff_enabled'
+  | 'field_visits_enabled'
+  | 'caregiver_portal_enabled'
+  // Emergency
+  | 'ems_metrics_enabled'
+  | 'coordinated_response_enabled'
+  | 'law_enforcement_enabled'
+  // Billing
   | 'billing_integration_enabled'
   | 'rpm_ccm_enabled'
+  // Security
   | 'hipaa_audit_logging'
   | 'mfa_enforcement';
 
@@ -145,25 +204,48 @@ export type ModuleName =
  * These represent what the tenant has PAID FOR
  */
 export type EntitlementName =
+  // Core
   | 'community_entitled'
   | 'dashboard_entitled'
   | 'check_ins_entitled'
+  // Clinical
   | 'dental_entitled'
   | 'sdoh_entitled'
   | 'pharmacy_entitled'
   | 'medications_entitled'
+  | 'memory_clinic_entitled'
+  | 'mental_health_entitled'
+  | 'stroke_assessment_entitled'
+  | 'wearable_integration_entitled'
+  // Communication
   | 'telehealth_entitled'
   | 'messaging_entitled'
+  // Integration
   | 'ehr_integration_entitled'
   | 'fhir_entitled'
+  // Advanced
   | 'ai_scribe_entitled'
   | 'claude_care_entitled'
   | 'guardian_monitoring_entitled'
+  // NurseOS
   | 'nurseos_clarity_entitled'
   | 'nurseos_shield_entitled'
   | 'resilience_hub_entitled'
+  // Population Health
+  | 'frequent_flyers_entitled'
+  | 'discharge_tracking_entitled'
+  // Workflow
+  | 'shift_handoff_entitled'
+  | 'field_visits_entitled'
+  | 'caregiver_portal_entitled'
+  // Emergency
+  | 'ems_metrics_entitled'
+  | 'coordinated_response_entitled'
+  | 'law_enforcement_entitled'
+  // Billing
   | 'billing_integration_entitled'
   | 'rpm_ccm_entitled'
+  // Security
   | 'hipaa_audit_logging_entitled'
   | 'mfa_enforcement_entitled';
 
@@ -211,11 +293,24 @@ export type TenantModuleConfigUpdate = Partial<
 /**
  * Module metadata for display purposes
  */
+export type ModuleCategory =
+  | 'core'
+  | 'clinical'
+  | 'communication'
+  | 'integration'
+  | 'advanced'
+  | 'nurseos'
+  | 'population_health'
+  | 'workflow'
+  | 'emergency'
+  | 'billing'
+  | 'security';
+
 export interface ModuleMetadata {
   key: ModuleName;
   name: string;
   description: string;
-  category: 'core' | 'clinical' | 'communication' | 'integration' | 'advanced' | 'nurseos' | 'billing' | 'security';
+  category: ModuleCategory;
   requiredTier: LicenseTier;
   icon?: string;
 }
@@ -275,6 +370,34 @@ export const MODULE_METADATA: Record<ModuleName, Omit<ModuleMetadata, 'key'>> = 
     category: 'clinical',
     requiredTier: 'basic',
     icon: 'Pill',
+  },
+  memory_clinic_enabled: {
+    name: 'Memory Clinic',
+    description: 'Cognitive assessments, dementia screening, memory care',
+    category: 'clinical',
+    requiredTier: 'premium',
+    icon: 'Brain',
+  },
+  mental_health_enabled: {
+    name: 'Mental Health',
+    description: 'Behavioral health assessments, PHQ-9, GAD-7 screening',
+    category: 'clinical',
+    requiredTier: 'standard',
+    icon: 'HeartPulse',
+  },
+  stroke_assessment_enabled: {
+    name: 'Stroke Assessment',
+    description: 'FAST screening, stroke risk evaluation, rehab tracking',
+    category: 'clinical',
+    requiredTier: 'premium',
+    icon: 'Activity',
+  },
+  wearable_integration_enabled: {
+    name: 'Wearable Integration',
+    description: 'Fitbit, Apple Watch, Garmin data synchronization',
+    category: 'clinical',
+    requiredTier: 'standard',
+    icon: 'Watch',
   },
 
   // Communication Modules
@@ -353,6 +476,68 @@ export const MODULE_METADATA: Record<ModuleName, Omit<ModuleMetadata, 'key'>> = 
     category: 'nurseos',
     requiredTier: 'standard',
     icon: 'Heart',
+  },
+
+  // Population Health Modules
+  frequent_flyers_enabled: {
+    name: 'Frequent Flyers',
+    description: 'High utilizer tracking, care management, intervention alerts',
+    category: 'population_health',
+    requiredTier: 'standard',
+    icon: 'TrendingUp',
+  },
+  discharge_tracking_enabled: {
+    name: 'Discharge Tracking',
+    description: 'Hospital discharge follow-up, readmission prevention',
+    category: 'population_health',
+    requiredTier: 'standard',
+    icon: 'ClipboardCheck',
+  },
+
+  // Workflow Modules
+  shift_handoff_enabled: {
+    name: 'Shift Handoff',
+    description: 'Nurse shift change documentation, critical info transfer',
+    category: 'workflow',
+    requiredTier: 'standard',
+    icon: 'ArrowRightLeft',
+  },
+  field_visits_enabled: {
+    name: 'Field Visits',
+    description: 'CHW home visit scheduling, documentation, GPS tracking',
+    category: 'workflow',
+    requiredTier: 'standard',
+    icon: 'MapPin',
+  },
+  caregiver_portal_enabled: {
+    name: 'Caregiver Portal',
+    description: 'Family caregiver access, care coordination, updates',
+    category: 'workflow',
+    requiredTier: 'basic',
+    icon: 'Users',
+  },
+
+  // Emergency Modules
+  ems_metrics_enabled: {
+    name: 'EMS Metrics',
+    description: 'Emergency medical services integration, response tracking',
+    category: 'emergency',
+    requiredTier: 'premium',
+    icon: 'Siren',
+  },
+  coordinated_response_enabled: {
+    name: 'Coordinated Response',
+    description: 'Multi-agency emergency coordination, incident management',
+    category: 'emergency',
+    requiredTier: 'enterprise',
+    icon: 'Radio',
+  },
+  law_enforcement_enabled: {
+    name: 'Law Enforcement',
+    description: 'Welfare check coordination, Precinct 3 integration',
+    category: 'emergency',
+    requiredTier: 'premium',
+    icon: 'Shield',
   },
 
   // Billing & Revenue Modules
