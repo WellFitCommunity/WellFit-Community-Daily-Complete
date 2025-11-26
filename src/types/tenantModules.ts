@@ -72,6 +72,36 @@ export interface TenantModuleConfig {
   hipaa_audit_logging: boolean;
   mfa_enforcement: boolean;
 
+  // Physical Therapy Module - Active State
+  physical_therapy_enabled: boolean;
+
+  // Advanced Authentication - Active State
+  passkey_authentication_enabled: boolean;
+
+  // Voice Features - Active State
+  voice_command_enabled: boolean;
+
+  // Atlas Revenue System - Active State
+  atlas_revenue_enabled: boolean;
+
+  // Vitals Capture - Active State
+  vitals_capture_enabled: boolean;
+
+  // SMART on FHIR Questionnaires - Active State
+  smart_questionnaires_enabled: boolean;
+
+  // Medication Identifier (Pill ID, Photo Capture) - Active State
+  medication_identifier_enabled: boolean;
+
+  // Clinical Documentation (SOAP Notes) - Active State
+  clinical_documentation_enabled: boolean;
+
+  // Behavioral Analytics - Active State
+  behavioral_analytics_enabled: boolean;
+
+  // Allergies & Immunizations - Active State
+  allergies_immunizations_enabled: boolean;
+
   // ============================================================================
   // ENTITLEMENT FLAGS (SuperAdmin controls ceiling based on payment/license)
   // ============================================================================
@@ -130,6 +160,36 @@ export interface TenantModuleConfig {
   // Security & Compliance - Entitlements
   hipaa_audit_logging_entitled: boolean;
   mfa_enforcement_entitled: boolean;
+
+  // Physical Therapy Module - Entitlements
+  physical_therapy_entitled: boolean;
+
+  // Advanced Authentication - Entitlements
+  passkey_authentication_entitled: boolean;
+
+  // Voice Features - Entitlements
+  voice_command_entitled: boolean;
+
+  // Atlas Revenue System - Entitlements
+  atlas_revenue_entitled: boolean;
+
+  // Vitals Capture - Entitlements
+  vitals_capture_entitled: boolean;
+
+  // SMART on FHIR Questionnaires - Entitlements
+  smart_questionnaires_entitled: boolean;
+
+  // Medication Identifier - Entitlements
+  medication_identifier_entitled: boolean;
+
+  // Clinical Documentation - Entitlements
+  clinical_documentation_entitled: boolean;
+
+  // Behavioral Analytics - Entitlements
+  behavioral_analytics_entitled: boolean;
+
+  // Allergies & Immunizations - Entitlements
+  allergies_immunizations_entitled: boolean;
 
   // ============================================================================
   // METADATA
@@ -197,7 +257,18 @@ export type ModuleName =
   | 'rpm_ccm_enabled'
   // Security
   | 'hipaa_audit_logging'
-  | 'mfa_enforcement';
+  | 'mfa_enforcement'
+  // Additional Modules
+  | 'physical_therapy_enabled'
+  | 'passkey_authentication_enabled'
+  | 'voice_command_enabled'
+  | 'atlas_revenue_enabled'
+  | 'vitals_capture_enabled'
+  | 'smart_questionnaires_enabled'
+  | 'medication_identifier_enabled'
+  | 'clinical_documentation_enabled'
+  | 'behavioral_analytics_enabled'
+  | 'allergies_immunizations_enabled';
 
 /**
  * Entitlement names (SuperAdmin controls)
@@ -247,7 +318,18 @@ export type EntitlementName =
   | 'rpm_ccm_entitled'
   // Security
   | 'hipaa_audit_logging_entitled'
-  | 'mfa_enforcement_entitled';
+  | 'mfa_enforcement_entitled'
+  // Additional Modules
+  | 'physical_therapy_entitled'
+  | 'passkey_authentication_entitled'
+  | 'voice_command_entitled'
+  | 'atlas_revenue_entitled'
+  | 'vitals_capture_entitled'
+  | 'smart_questionnaires_entitled'
+  | 'medication_identifier_entitled'
+  | 'clinical_documentation_entitled'
+  | 'behavioral_analytics_entitled'
+  | 'allergies_immunizations_entitled';
 
 /**
  * Result from get_enabled_modules() RPC function
@@ -570,5 +652,77 @@ export const MODULE_METADATA: Record<ModuleName, Omit<ModuleMetadata, 'key'>> = 
     category: 'security',
     requiredTier: 'standard',
     icon: 'Lock',
+  },
+
+  // Additional Modules
+  physical_therapy_enabled: {
+    name: 'Physical Therapy',
+    description: 'PT treatment plans, assessments, sessions, exercise library',
+    category: 'clinical',
+    requiredTier: 'premium',
+    icon: 'Dumbbell',
+  },
+  passkey_authentication_enabled: {
+    name: 'Passkey Authentication',
+    description: 'WebAuthn passwordless authentication for enhanced security',
+    category: 'security',
+    requiredTier: 'standard',
+    icon: 'Fingerprint',
+  },
+  voice_command_enabled: {
+    name: 'Voice Commands',
+    description: 'Voice-activated controls, voice profiles, speech recognition',
+    category: 'advanced',
+    requiredTier: 'premium',
+    icon: 'Mic',
+  },
+  atlas_revenue_enabled: {
+    name: 'Atlas Revenue',
+    description: 'Claims submission, appeals, coding suggestions, revenue optimization',
+    category: 'billing',
+    requiredTier: 'enterprise',
+    icon: 'TrendingUp',
+  },
+  vitals_capture_enabled: {
+    name: 'Vitals Capture',
+    description: 'Mobile vitals recording, CHW field data collection',
+    category: 'clinical',
+    requiredTier: 'standard',
+    icon: 'HeartPulse',
+  },
+  smart_questionnaires_enabled: {
+    name: 'SMART Questionnaires',
+    description: 'SMART on FHIR questionnaire integration, clinical forms',
+    category: 'integration',
+    requiredTier: 'premium',
+    icon: 'ClipboardList',
+  },
+  medication_identifier_enabled: {
+    name: 'Medication Identifier',
+    description: 'Pill identification, medication photo capture, label reading',
+    category: 'clinical',
+    requiredTier: 'premium',
+    icon: 'Camera',
+  },
+  clinical_documentation_enabled: {
+    name: 'Clinical Documentation',
+    description: 'SOAP notes, clinical note templates, encounter documentation',
+    category: 'clinical',
+    requiredTier: 'standard',
+    icon: 'FileText',
+  },
+  behavioral_analytics_enabled: {
+    name: 'Behavioral Analytics',
+    description: 'User behavior tracking, psychometric analysis, engagement metrics',
+    category: 'advanced',
+    requiredTier: 'premium',
+    icon: 'BarChart',
+  },
+  allergies_immunizations_enabled: {
+    name: 'Allergies & Immunizations',
+    description: 'Allergy management, immunization records, health history',
+    category: 'clinical',
+    requiredTier: 'basic',
+    icon: 'Syringe',
   },
 };
