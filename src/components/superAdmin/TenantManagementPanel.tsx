@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { SuperAdminService } from '../../services/superAdminService';
 import { TenantWithStatus, SuperAdminUser } from '../../types/superAdmin';
-import { Building2, Users, Activity, AlertCircle, CheckCircle, XCircle, Eye, Settings, Edit2, Hash } from 'lucide-react';
+import { Building2, Users, Activity, AlertCircle, CheckCircle, XCircle, Eye, Settings, Edit2, Hash, Sliders } from 'lucide-react';
 import { auditLogger } from '../../services/auditLogger';
+import { SuperAdminTenantModuleConfig } from './SuperAdminTenantModuleConfig';
 
 interface TenantManagementPanelProps {
   onViewTenant?: (tenantId: string) => void;
@@ -19,6 +20,8 @@ const TenantManagementPanel: React.FC<TenantManagementPanelProps> = ({ onViewTen
   const [confirmAction, setConfirmAction] = useState<'suspend' | 'activate' | null>(null);
   const [showEditCodeDialog, setShowEditCodeDialog] = useState(false);
   const [editTenantCode, setEditTenantCode] = useState('');
+  const [showModuleConfig, setShowModuleConfig] = useState(false);
+  const [moduleConfigTenant, setModuleConfigTenant] = useState<TenantWithStatus | null>(null);
 
   useEffect(() => {
     loadData();
@@ -287,6 +290,17 @@ const TenantManagementPanel: React.FC<TenantManagementPanelProps> = ({ onViewTen
 
               {/* Actions */}
               <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setModuleConfigTenant(tenant);
+                    setShowModuleConfig(true);
+                  }}
+                  className="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg hover:bg-teal-200 flex items-center gap-2 transition-colors"
+                  title="Configure modules for this tenant"
+                >
+                  <Sliders className="w-4 h-4" />
+                  Modules
+                </button>
                 {onViewTenant && (
                   <button
                     onClick={() => onViewTenant(tenant.tenantId)}
@@ -475,6 +489,20 @@ const TenantManagementPanel: React.FC<TenantManagementPanelProps> = ({ onViewTen
             </div>
           </div>
         </div>
+      )}
+
+      {/* Module Configuration Modal */}
+      {showModuleConfig && moduleConfigTenant && (
+        <SuperAdminTenantModuleConfig
+          tenant={moduleConfigTenant}
+          onClose={() => {
+            setShowModuleConfig(false);
+            setModuleConfigTenant(null);
+          }}
+          onSaved={() => {
+            loadData(); // Refresh tenant list to show updated modules
+          }}
+        />
       )}
     </div>
   );
