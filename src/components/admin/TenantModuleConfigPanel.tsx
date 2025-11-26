@@ -195,7 +195,7 @@ export function TenantModuleConfigPanel() {
   const isModuleEntitled = (moduleName: ModuleName): boolean => {
     if (!config) return false;
     const entitlementName = getEntitlementName(moduleName);
-    return (config as Record<string, boolean>)[entitlementName] ?? false;
+    return (config as unknown as Record<string, boolean>)[entitlementName] ?? false;
   };
 
   // Get current value (pending or saved)

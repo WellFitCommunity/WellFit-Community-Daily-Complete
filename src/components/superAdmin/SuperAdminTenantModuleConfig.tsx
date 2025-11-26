@@ -334,7 +334,7 @@ export const SuperAdminTenantModuleConfig: React.FC<SuperAdminTenantModuleConfig
         targetType: 'tenant',
         targetId: tenant.tenantId,
         targetName: tenant.tenantName,
-        oldValue: config,
+        oldValue: config ?? undefined,
         newValue: { ...config, ...pendingChanges },
         severity: 'warning' // Entitlement changes are important
       });

@@ -1,53 +1,18 @@
 /**
  * Law Enforcement Service Tests
  * Comprehensive test suite for Precinct 3 welfare check system
+ * Jest globals are available without import per project config
  */
-
-import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { LawEnforcementService } from '../lawEnforcementService';
 import type { EmergencyResponseFormData, ResponsePriority } from '../../types/lawEnforcement';
 
 // Mock Supabase client
 jest.mock('../../lib/supabaseClient', () => ({
   supabase: {
-    from: jest.fn(() => ({
-      select: jest.fn(() => ({
-        eq: jest.fn(() => ({
-          single: jest.fn(() => ({
-            data: null,
-            error: null
-          })),
-          order: jest.fn(() => ({
-            data: [],
-            error: null
-          }))
-        }))
-      })),
-      insert: jest.fn(() => ({
-        select: jest.fn(() => ({
-          single: jest.fn(() => ({
-            data: null,
-            error: null
-          }))
-        }))
-      })),
-      upsert: jest.fn(() => ({
-        select: jest.fn(() => ({
-          single: jest.fn(() => ({
-            data: null,
-            error: null
-          }))
-        }))
-      }))
-    })),
-    rpc: jest.fn(() => ({
-      single: jest.fn(() => ({
-        data: null,
-        error: null
-      }))
-    })),
+    from: jest.fn(),
+    rpc: jest.fn(),
     functions: {
-      invoke: jest.fn(() => Promise.resolve({ data: null, error: null }))
+      invoke: jest.fn()
     }
   }
 }));
