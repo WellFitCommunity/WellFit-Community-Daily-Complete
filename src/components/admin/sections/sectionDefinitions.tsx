@@ -28,6 +28,7 @@ const PaperFormScanner = lazy(() => import('../PaperFormScanner'));
 const TenantSecurityDashboard = lazy(() => import('../TenantSecurityDashboard'));
 const TenantAuditLogs = lazy(() => import('../TenantAuditLogs'));
 const TenantComplianceReport = lazy(() => import('../TenantComplianceReport'));
+const TenantModuleConfigPanel = lazy(() => import('../TenantModuleConfigPanel').then(m => ({ default: m.TenantModuleConfigPanel })));
 
 // Loading fallback for lazy-loaded sections
 export const SectionLoadingFallback: React.FC = () => (
@@ -261,6 +262,17 @@ export const getAllSections = (): DashboardSection[] => [
   },
 
   // ==================== SYSTEM ADMINISTRATION ====================
+  {
+    id: 'module-configuration',
+    title: 'Module Configuration',
+    subtitle: 'Enable or disable platform modules for your organization',
+    icon: '⚙️',
+    headerColor: 'text-teal-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><TenantModuleConfigPanel /></Suspense>,
+    category: 'admin',
+    priority: 'high',
+    roles: ['admin', 'super_admin', 'system_admin'],
+  },
   {
     id: 'data-export',
     title: 'Data Export & Advanced Tools',

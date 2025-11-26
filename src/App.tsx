@@ -113,7 +113,7 @@ const AIRevenueDashboard = React.lazy(() => import('./components/ai/AIRevenueDas
 
 // Previously orphaned components - now wired with feature flags
 const ReportsPrintPage = React.lazy(() => import('./pages/ReportsPrintPage'));
-// MemoryClinicDashboard requires patientId prop - route would need wrapper component
+const MemoryClinicDashboard = React.lazy(() => import('./components/neuro-suite/MemoryClinicDashboard'));
 const MentalHealthDashboard = React.lazy(() => import('./components/mental-health/MentalHealthDashboard'));
 const FrequentFlyerDashboard = React.lazy(() => import('./components/atlas/FrequentFlyerDashboard'));
 const RevenueDashboard = React.lazy(() => import('./components/atlas/RevenueDashboard'));
@@ -131,7 +131,7 @@ const FHIRConflictResolution = React.lazy(() =>
   import('./components/admin/FHIRConflictResolution').then(m => ({ default: m.FHIRConflictResolution }))
 );
 const EMSMetricsDashboard = React.lazy(() => import('./components/ems/EMSMetricsDashboard'));
-// CoordinatedResponseDashboard requires context - not wired yet
+const CoordinatedResponseDashboard = React.lazy(() => import('./components/ems/CoordinatedResponseDashboard'));
 
 // CHW (Community Health Worker) Components
 const KioskCheckIn = React.lazy(() => import('./components/chw/KioskCheckIn'));
@@ -655,10 +655,18 @@ function Shell() {
               />
 
               {/* Clinical Dashboards - Feature Flagged */}
-              {/* NOTE: Memory Clinic requires patientId - needs context wrapper
               {featureFlags.memoryClinic && (
-                <Route path="/memory-clinic/:patientId" element={...} />
-              )} */}
+                <Route
+                  path="/memory-clinic/:patientId"
+                  element={
+                    <RequireAuth>
+                      <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'physician', 'doctor', 'nurse', 'nurse_practitioner']}>
+                        <MemoryClinicDashboardWrapper />
+                      </RequireAdminAuth>
+                    </RequireAuth>
+                  }
+                />
+              )}
 
               {featureFlags.mentalHealth && (
                 <Route
@@ -756,10 +764,18 @@ function Shell() {
                 />
               )}
 
-              {/* NOTE: Coordinated Response requires handoff context - needs wrapper
               {featureFlags.coordinatedResponse && (
-                <Route path="/ems/coordinated-response/:handoffId" element={...} />
-              )} */}
+                <Route
+                  path="/ems/coordinated-response/:handoffId"
+                  element={
+                    <RequireAuth>
+                      <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'nurse', 'physician', 'doctor']}>
+                        <CoordinatedResponseDashboardWrapper />
+                      </RequireAdminAuth>
+                    </RequireAuth>
+                  }
+                />
+              )}
 
               {/* NOTE: Specialist Dashboard needs proper roles configuration
               <Route path="/specialist-dashboard" element={...} />
@@ -819,6 +835,58 @@ const FieldVisitWorkflowWrapper: React.FC = () => {
   }
 
   return <FieldVisitWorkflow visitId={visitId} />;
+};
+
+/**
+ * Wrapper component for MemoryClinicDashboard to extract patient ID from route
+ */
+const MemoryClinicDashboardWrapper: React.FC = () => {
+  const { patientId } = useParams<{ patientId: string }>();
+
+  if (!patientId) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p className="text-gray-500">No patient ID provided</p>
+      </div>
+    );
+  }
+
+  return (
+    <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading Memory Clinic...</div>}>
+      <MemoryClinicDashboard patientId={patientId} />
+    </Suspense>
+  );
+};
+
+/**
+ * Wrapper component for CoordinatedResponseDashboard to extract handoff context from route/state
+ */
+const CoordinatedResponseDashboardWrapper: React.FC = () => {
+  const { handoffId } = useParams<{ handoffId: string }>();
+  const location = useLocation();
+
+  // Extract additional context from location state (passed from EMS workflow)
+  const state = location.state as { chiefComplaint?: string; etaMinutes?: number } | null;
+  const chiefComplaint = state?.chiefComplaint || 'Unknown';
+  const etaMinutes = state?.etaMinutes || 0;
+
+  if (!handoffId) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p className="text-gray-500">No handoff ID provided</p>
+      </div>
+    );
+  }
+
+  return (
+    <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading Coordinated Response...</div>}>
+      <CoordinatedResponseDashboard
+        handoffId={handoffId}
+        chiefComplaint={chiefComplaint}
+        etaMinutes={etaMinutes}
+      />
+    </Suspense>
+  );
 };
 
 const App: React.FC = () => {

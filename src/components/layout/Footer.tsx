@@ -44,7 +44,15 @@ const Footer: React.FC = () => {
         <div>{footerText}</div>
 
         <div className="mt-1">
-          Powered by WellFit Community, Inc., Vital Edge Healthcare Consulting, Envision Virtual Edge Group
+          Powered by WellFit Community, Inc., Vital Edge Healthcare Consulting,{' '}
+          <Link
+            to="/envision"
+            className="hover:underline cursor-pointer transition-opacity hover:opacity-80"
+            style={{ color: 'inherit' }}
+            aria-label="Envision Portal"
+          >
+            Envision Virtual Edge Group
+          </Link>
         </div>
 
         <div className="mt-1 text-sm opacity-90">
