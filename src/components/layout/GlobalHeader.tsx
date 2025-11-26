@@ -17,7 +17,7 @@ const ROUTES = {
   selfReport: '/self-reporting',
   wordFind: '/word-find',
   doctors: '/doctors-view',
-  trivia: '/trivia-game',
+  trivia: '/memory-lane-trivia',
   community: '/community',
   adminPanel: '/admin',  // Fixed: was /admin/panel, should be /admin
   adminLogin: '/admin',

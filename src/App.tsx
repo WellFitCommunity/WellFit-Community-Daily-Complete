@@ -76,7 +76,7 @@ const BulkExportPanel = React.lazy(() => import('./components/admin/BulkExportPa
 const EnrollSeniorPage = React.lazy(() => import('./pages/EnrollSeniorPage'));
 const CommunityMoments = React.lazy(() => import('./components/CommunityMoments'));
 const DemographicsPage = React.lazy(() => import('./pages/DemographicsPage'));
-const TriviaGame = React.lazy(() => import('./components/TriviaGame'));
+// TriviaGame removed - use Memory Lane Trivia at /memory-lane-trivia instead
 const CaregiverDashboardPage = React.lazy(() => import('./pages/CaregiverDashboardPage'));
 const SetCaregiverPinPage = React.lazy(() => import('./pages/SetCaregiverPinPage'));
 const HealthInsightsPage = React.lazy(() => import('./pages/HealthInsightsPage'));
@@ -234,7 +234,7 @@ function Shell() {
               <Route path="/self-reporting" element={<RequireAuth><SelfReportingPage /></RequireAuth>} />
               <Route path="/doctors-view" element={<RequireAuth><DoctorsViewPage /></RequireAuth>} />
               <Route path="/community" element={<RequireAuth><CommunityMoments /></RequireAuth>} />
-              <Route path="/trivia-game" element={<RequireAuth><TriviaGame /></RequireAuth>} />
+              {/* /trivia-game removed - use /memory-lane-trivia instead */}
               {/* Add this route in your Routes section (in the Protected section) */}
               <Route path="/smart-callback" element={<RequireAuth><SmartCallbackPage /></RequireAuth>} />
 

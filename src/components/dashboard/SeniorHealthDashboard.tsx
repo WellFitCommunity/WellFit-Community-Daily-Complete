@@ -119,7 +119,7 @@ const SeniorHealthDashboard: React.FC = () => {
               Take a trip down memory lane with questions from your era
             </p>
             <button
-              onClick={() => navigate('/trivia-game')}
+              onClick={() => navigate('/memory-lane-trivia')}
               className="bg-purple-600 text-white text-lg sm:text-xl px-4 sm:px-8 py-3 sm:py-4 rounded-xl hover:bg-purple-700 transition-colors w-full"
             >
               🎭 Visit Memory Lane
