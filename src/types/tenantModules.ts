@@ -378,6 +378,8 @@ export type TenantModuleConfigUpdate = Partial<
 export type ModuleCategory =
   | 'core'
   | 'clinical'
+  | 'dental'           // Dental-specific suite (separate vertical)
+  | 'public_safety'    // Law enforcement, welfare checks (separate vertical)
   | 'communication'
   | 'integration'
   | 'advanced'
@@ -428,7 +430,7 @@ export const MODULE_METADATA: Record<ModuleName, Omit<ModuleMetadata, 'key'>> = 
   dental_enabled: {
     name: 'Dental Health',
     description: 'Dental assessments, procedures, CDT codes, FHIR integration',
-    category: 'clinical',
+    category: 'dental',
     requiredTier: 'standard',
     icon: 'Smile',
   },
@@ -617,7 +619,7 @@ export const MODULE_METADATA: Record<ModuleName, Omit<ModuleMetadata, 'key'>> = 
   law_enforcement_enabled: {
     name: 'Law Enforcement',
     description: 'Welfare check coordination, Precinct 3 integration',
-    category: 'emergency',
+    category: 'public_safety',
     requiredTier: 'premium',
     icon: 'Shield',
   },
