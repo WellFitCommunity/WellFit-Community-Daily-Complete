@@ -3,25 +3,49 @@
  *
  * Real-time dashboard for constables monitoring senior welfare checks
  * Shows missed check-ins prioritized by urgency
+ *
+ * Design: Envision Atlus Clinical Design System
  */
 
 import React, { useState, useEffect } from 'react';
 import { LawEnforcementService } from '../../services/lawEnforcementService';
 import type { MissedCheckInAlert, WelfareCheckInfo } from '../../types/lawEnforcement';
+import {
+  EACard,
+  EACardHeader,
+  EACardContent,
+  EAButton,
+  EABadge,
+  EARiskIndicator,
+} from '../envision-atlus';
+import {
+  Shield,
+  Phone,
+  MapPin,
+  AlertTriangle,
+  CheckCircle,
+  Clock,
+  User,
+  Home,
+  Heart,
+  RefreshCw,
+  Navigation,
+  Users,
+  Key,
+  Activity,
+} from 'lucide-react';
 
 export const ConstableDispatchDashboard: React.FC = () => {
   const [alerts, setAlerts] = useState<MissedCheckInAlert[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<string | null>(null);
   const [welfareCheckInfo, setWelfareCheckInfo] = useState<WelfareCheckInfo | null>(null);
   const [loading, setLoading] = useState(true);
-  const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     loadAlerts();
 
     // Auto-refresh every 2 minutes
     const interval = setInterval(loadAlerts, 2 * 60 * 1000);
-    setRefreshInterval(interval);
 
     return () => {
       if (interval) clearInterval(interval);
@@ -46,93 +70,106 @@ export const ConstableDispatchDashboard: React.FC = () => {
     setWelfareCheckInfo(info);
   };
 
-  const getUrgencyColor = (urgency: number) => {
-    if (urgency >= 100) return 'bg-red-600 text-white';
-    if (urgency >= 50) return 'bg-orange-500 text-white';
-    return 'bg-yellow-500 text-white';
+  const getRiskLevel = (urgency: number): 'critical' | 'high' | 'elevated' | 'normal' => {
+    if (urgency >= 100) return 'critical';
+    if (urgency >= 75) return 'high';
+    if (urgency >= 50) return 'elevated';
+    return 'normal';
   };
 
-  const getPriorityBadge = (priority: string) => {
-    const colors = {
-      critical: 'bg-red-600 text-white',
-      high: 'bg-orange-500 text-white',
-      standard: 'bg-blue-500 text-white'
-    };
-    return colors[priority as keyof typeof colors] || colors.standard;
+  const getPriorityRisk = (priority: string): 'critical' | 'high' | 'elevated' | 'normal' => {
+    if (priority === 'critical') return 'critical';
+    if (priority === 'high') return 'high';
+    return 'elevated';
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-gradient-to-br from-slate-900 to-slate-800">
       {/* Left Panel - Alerts List */}
-      <div className="w-1/3 bg-white border-r border-gray-200 overflow-y-auto">
+      <div className="w-[380px] bg-slate-900/50 border-r border-slate-700 overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-blue-600 text-white p-4 z-10">
-          <h2 className="text-xl font-bold">Welfare Check Queue</h2>
-          <p className="text-sm text-blue-100 mt-1">
-            {alerts.length} seniors requiring welfare checks
-          </p>
-          <button
+        <div className="sticky top-0 bg-slate-900/90 backdrop-blur-sm border-b border-slate-700 p-4 z-10">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-2 bg-[#00857a]/20 rounded-lg">
+              <Shield className="h-6 w-6 text-[#00857a]" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-white">Welfare Check Queue</h2>
+              <p className="text-sm text-slate-400">
+                {alerts.length} seniors requiring attention
+              </p>
+            </div>
+          </div>
+          <EAButton
+            variant="secondary"
+            size="sm"
             onClick={loadAlerts}
             disabled={loading}
-            className="mt-2 px-3 py-1 bg-blue-700 hover:bg-blue-800 rounded text-sm"
+            icon={<RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />}
+            className="w-full"
           >
             {loading ? 'Refreshing...' : 'Refresh Now'}
-          </button>
+          </EAButton>
         </div>
 
         {/* Alerts List */}
-        <div className="divide-y divide-gray-200">
+        <div className="p-2 space-y-2">
           {alerts.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
-              <svg className="mx-auto h-12 w-12 text-green-500 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p className="font-medium">All Clear!</p>
-              <p className="text-sm mt-1">No welfare checks needed at this time</p>
+            <div className="p-8 text-center">
+              <div className="w-16 h-16 mx-auto bg-emerald-500/20 rounded-full flex items-center justify-center mb-4">
+                <CheckCircle className="h-8 w-8 text-emerald-400" />
+              </div>
+              <p className="text-lg font-medium text-white">All Clear!</p>
+              <p className="text-sm text-slate-400 mt-1">No welfare checks needed at this time</p>
             </div>
           ) : (
             alerts.map((alert) => (
               <div
                 key={alert.patientId}
                 onClick={() => setSelectedPatient(alert.patientId)}
-                className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors ${
-                  selectedPatient === alert.patientId ? 'bg-blue-50 border-l-4 border-blue-600' : ''
+                className={`p-4 rounded-lg cursor-pointer transition-all duration-200 ${
+                  selectedPatient === alert.patientId
+                    ? 'bg-[#00857a]/20 border-2 border-[#00857a]'
+                    : 'bg-slate-800/50 border border-slate-700 hover:bg-slate-800 hover:border-slate-600'
                 }`}
               >
-                {/* Urgency Score */}
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900">{alert.patientName}</h3>
-                    <p className="text-sm text-gray-600">{alert.patientAddress}</p>
+                {/* Header with name and urgency */}
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-white truncate">{alert.patientName}</h3>
+                    <p className="text-sm text-slate-400 truncate">{alert.patientAddress}</p>
                   </div>
-                  <span className={`px-2 py-1 rounded text-xs font-bold ${getUrgencyColor(alert.urgencyScore)}`}>
-                    {alert.urgencyScore}
-                  </span>
+                  <EARiskIndicator
+                    level={getRiskLevel(alert.urgencyScore)}
+                    variant="badge"
+                    showIcon={false}
+                    label={alert.urgencyScore.toString()}
+                  />
                 </div>
 
-                {/* Status Info */}
-                <div className="flex items-center gap-2 mb-2">
-                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${getPriorityBadge(alert.responsePriority)}`}>
+                {/* Status badges */}
+                <div className="flex items-center gap-2 mb-3">
+                  <EABadge variant={getPriorityRisk(alert.responsePriority)}>
                     {alert.responsePriority.toUpperCase()}
-                  </span>
-                  <span className="text-xs text-gray-600">
-                    {alert.hoursSinceCheckIn.toFixed(1)} hours ago
+                  </EABadge>
+                  <span className="flex items-center text-xs text-slate-400">
+                    <Clock className="h-3 w-3 mr-1" />
+                    {alert.hoursSinceCheckIn.toFixed(1)}h ago
                   </span>
                 </div>
 
                 {/* Special Needs */}
                 {alert.specialNeeds && (
-                  <div className="flex items-center text-xs text-orange-600 mb-2">
-                    <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                    {alert.specialNeeds}
+                  <div className="flex items-center text-xs text-amber-400 mb-2 bg-amber-500/10 rounded px-2 py-1">
+                    <AlertTriangle className="h-3 w-3 mr-1.5 flex-shrink-0" />
+                    <span className="truncate">{alert.specialNeeds}</span>
                   </div>
                 )}
 
                 {/* Emergency Contact */}
-                <div className="text-xs text-gray-600">
-                  Emergency: {alert.emergencyContactName} • {alert.emergencyContactPhone}
+                <div className="flex items-center text-xs text-slate-500">
+                  <Phone className="h-3 w-3 mr-1.5" />
+                  {alert.emergencyContactName} • {alert.emergencyContactPhone}
                 </div>
               </div>
             ))
@@ -143,84 +180,107 @@ export const ConstableDispatchDashboard: React.FC = () => {
       {/* Right Panel - Welfare Check Details */}
       <div className="flex-1 overflow-y-auto">
         {selectedPatient && welfareCheckInfo ? (
-          <div className="p-6">
+          <div className="p-6 space-y-6">
             {/* Senior Info Header */}
-            <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">{welfareCheckInfo.patientName}</h2>
-                  <p className="text-gray-600">Age {welfareCheckInfo.patientAge}</p>
+            <EACard variant="elevated">
+              <EACardContent className="p-6">
+                <div className="flex justify-between items-start mb-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#00857a] to-[#33bfb7] flex items-center justify-center">
+                      <User className="h-8 w-8 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-white">{welfareCheckInfo.patientName}</h2>
+                      <p className="text-slate-400">Age {welfareCheckInfo.patientAge}</p>
+                    </div>
+                  </div>
+                  <EARiskIndicator
+                    level={getPriorityRisk(welfareCheckInfo.responsePriority)}
+                    variant="badge"
+                    label={`${welfareCheckInfo.responsePriority.toUpperCase()} PRIORITY`}
+                  />
                 </div>
-                <span className={`px-3 py-1 rounded-full text-sm font-bold ${getPriorityBadge(welfareCheckInfo.responsePriority)}`}>
-                  {welfareCheckInfo.responsePriority.toUpperCase()} PRIORITY
-                </span>
-              </div>
 
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="font-medium text-gray-700">Address:</span>
-                  <p className="text-gray-900">{welfareCheckInfo.patientAddress}</p>
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="flex items-start gap-3">
+                    <MapPin className="h-5 w-5 text-[#00857a] mt-0.5" />
+                    <div>
+                      <p className="text-xs text-slate-500 uppercase tracking-wider">Address</p>
+                      <p className="text-white">{welfareCheckInfo.patientAddress}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Phone className="h-5 w-5 text-[#00857a] mt-0.5" />
+                    <div>
+                      <p className="text-xs text-slate-500 uppercase tracking-wider">Phone</p>
+                      <p className="text-white font-mono">{welfareCheckInfo.patientPhone}</p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <span className="font-medium text-gray-700">Phone:</span>
-                  <p className="text-gray-900">{welfareCheckInfo.patientPhone}</p>
-                </div>
-              </div>
 
-              {welfareCheckInfo.hoursSinceCheckIn && (
-                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded">
-                  <p className="text-red-800 font-medium">
-                    ⚠️ Last check-in: {welfareCheckInfo.hoursSinceCheckIn.toFixed(1)} hours ago
-                  </p>
-                </div>
-              )}
-            </div>
+                {welfareCheckInfo.hoursSinceCheckIn && (
+                  <div className="mt-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+                    <div className="flex items-center text-red-400">
+                      <AlertTriangle className="h-5 w-5 mr-2" />
+                      <span className="font-semibold">
+                        Last check-in: {welfareCheckInfo.hoursSinceCheckIn.toFixed(1)} hours ago
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </EACardContent>
+            </EACard>
 
             {/* Emergency Response Info */}
-            <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-                <svg className="h-5 w-5 mr-2 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                EMERGENCY RESPONSE INFO
-              </h3>
-
-              <div className="space-y-4">
+            <EACard>
+              <EACardHeader icon={<AlertTriangle className="h-5 w-5" />}>
+                <h3 className="text-lg font-semibold text-white">Emergency Response Info</h3>
+              </EACardHeader>
+              <EACardContent className="space-y-4">
                 {/* Building Location */}
                 {welfareCheckInfo.buildingLocation && (
-                  <div className="bg-indigo-50 border-2 border-indigo-300 rounded p-4">
-                    <span className="font-bold text-indigo-900 flex items-center">
-                      🏢 BUILDING LOCATION
-                    </span>
-                    <div className="mt-2 space-y-1 text-indigo-900">
-                      <p className="whitespace-pre-line font-medium">{welfareCheckInfo.buildingLocation}</p>
-                      {welfareCheckInfo.elevatorRequired && (
-                        <p className="mt-2 px-2 py-1 bg-indigo-200 rounded font-bold text-indigo-900 inline-block">
-                          🛗 ELEVATOR REQUIRED
-                        </p>
-                      )}
-                      {welfareCheckInfo.parkingInstructions && (
-                        <p className="mt-2">
-                          <span className="font-semibold">🅿️ Parking:</span> {welfareCheckInfo.parkingInstructions}
-                        </p>
-                      )}
+                  <div className="p-4 bg-indigo-500/10 border border-indigo-500/30 rounded-lg">
+                    <div className="flex items-center gap-2 text-indigo-300 font-semibold mb-2">
+                      <Home className="h-4 w-4" />
+                      BUILDING LOCATION
                     </div>
+                    <p className="text-white whitespace-pre-line">{welfareCheckInfo.buildingLocation}</p>
+                    {welfareCheckInfo.floorNumber && (
+                      <p className="text-slate-300 mt-2">Floor: {welfareCheckInfo.floorNumber}</p>
+                    )}
+                    {welfareCheckInfo.elevatorRequired && (
+                      <EABadge variant="info" className="mt-2">🛗 ELEVATOR REQUIRED</EABadge>
+                    )}
+                    {welfareCheckInfo.parkingInstructions && (
+                      <p className="text-slate-300 mt-2">
+                        <span className="text-slate-500">Parking:</span> {welfareCheckInfo.parkingInstructions}
+                      </p>
+                    )}
                   </div>
                 )}
 
                 {/* Mobility */}
-                <div>
-                  <span className="font-medium text-gray-700">Mobility:</span>
-                  <p className="text-gray-900 text-lg font-semibold">{welfareCheckInfo.mobilityStatus}</p>
+                <div className="flex items-start gap-3">
+                  <Activity className="h-5 w-5 text-[#00857a] mt-0.5" />
+                  <div>
+                    <p className="text-xs text-slate-500 uppercase tracking-wider">Mobility Status</p>
+                    <p className="text-lg font-semibold text-white">{welfareCheckInfo.mobilityStatus}</p>
+                  </div>
                 </div>
 
                 {/* Medical Equipment */}
                 {welfareCheckInfo.medicalEquipment?.length > 0 && (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
-                    <span className="font-medium text-yellow-900">Medical Equipment:</span>
-                    <ul className="list-disc list-inside text-yellow-900 mt-1">
+                  <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                    <div className="flex items-center gap-2 text-amber-300 font-semibold mb-2">
+                      <Heart className="h-4 w-4" />
+                      MEDICAL EQUIPMENT
+                    </div>
+                    <ul className="space-y-1">
                       {welfareCheckInfo.medicalEquipment.map((eq, i) => (
-                        <li key={i}>{eq}</li>
+                        <li key={i} className="text-white flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 bg-amber-400 rounded-full" />
+                          {eq}
+                        </li>
                       ))}
                     </ul>
                   </div>
@@ -228,101 +288,133 @@ export const ConstableDispatchDashboard: React.FC = () => {
 
                 {/* Communication Needs */}
                 {welfareCheckInfo.communicationNeeds && (
-                  <div className="bg-blue-50 border border-blue-200 rounded p-3">
-                    <span className="font-medium text-blue-900">Communication:</span>
-                    <p className="text-blue-900 mt-1">{welfareCheckInfo.communicationNeeds}</p>
+                  <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                    <div className="flex items-center gap-2 text-blue-300 font-semibold mb-2">
+                      <Users className="h-4 w-4" />
+                      COMMUNICATION NEEDS
+                    </div>
+                    <p className="text-white">{welfareCheckInfo.communicationNeeds}</p>
                   </div>
                 )}
 
                 {/* Access Instructions */}
                 {welfareCheckInfo.accessInstructions && (
-                  <div className="bg-green-50 border border-green-200 rounded p-3">
-                    <span className="font-medium text-green-900">🔑 Access Instructions:</span>
-                    <p className="text-green-900 mt-1 whitespace-pre-line">{welfareCheckInfo.accessInstructions}</p>
+                  <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+                    <div className="flex items-center gap-2 text-emerald-300 font-semibold mb-2">
+                      <Key className="h-4 w-4" />
+                      ACCESS INSTRUCTIONS
+                    </div>
+                    <p className="text-white whitespace-pre-line">{welfareCheckInfo.accessInstructions}</p>
                   </div>
                 )}
 
                 {/* Pets */}
                 {welfareCheckInfo.pets && (
-                  <div>
-                    <span className="font-medium text-gray-700">Pets:</span>
-                    <p className="text-gray-900">{welfareCheckInfo.pets}</p>
+                  <div className="flex items-start gap-3">
+                    <span className="text-xl">🐾</span>
+                    <div>
+                      <p className="text-xs text-slate-500 uppercase tracking-wider">Pets in Home</p>
+                      <p className="text-white">{welfareCheckInfo.pets}</p>
+                    </div>
                   </div>
                 )}
 
                 {/* Special Instructions */}
                 {welfareCheckInfo.specialInstructions && (
-                  <div className="bg-purple-50 border border-purple-200 rounded p-3">
-                    <span className="font-medium text-purple-900">📝 Special Instructions:</span>
-                    <p className="text-purple-900 mt-1 whitespace-pre-line">{welfareCheckInfo.specialInstructions}</p>
+                  <div className="p-4 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+                    <div className="flex items-center gap-2 text-purple-300 font-semibold mb-2">
+                      📝 SPECIAL INSTRUCTIONS
+                    </div>
+                    <p className="text-white whitespace-pre-line">{welfareCheckInfo.specialInstructions}</p>
                   </div>
                 )}
 
                 {/* Risk Flags */}
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex gap-2 flex-wrap pt-2">
                   {welfareCheckInfo.fallRisk && (
-                    <span className="px-2 py-1 bg-orange-100 text-orange-800 rounded text-sm font-medium">
-                      ⚠️ Fall Risk
-                    </span>
+                    <EABadge variant="elevated">⚠️ Fall Risk</EABadge>
                   )}
                   {welfareCheckInfo.cognitiveImpairment && (
-                    <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-sm font-medium">
-                      🧠 Cognitive Impairment
-                    </span>
+                    <EABadge variant="high">🧠 Cognitive Impairment</EABadge>
                   )}
                   {welfareCheckInfo.oxygenDependent && (
-                    <span className="px-2 py-1 bg-red-100 text-red-800 rounded text-sm font-medium">
-                      🫁 Oxygen Dependent
-                    </span>
+                    <EABadge variant="critical">🫁 Oxygen Dependent</EABadge>
                   )}
                 </div>
-              </div>
-            </div>
+              </EACardContent>
+            </EACard>
 
             {/* Emergency Contacts */}
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Emergency Contacts</h3>
-              <div className="space-y-3">
+            <EACard>
+              <EACardHeader icon={<Users className="h-5 w-5" />}>
+                <h3 className="text-lg font-semibold text-white">Emergency Contacts</h3>
+              </EACardHeader>
+              <EACardContent className="space-y-4">
                 {welfareCheckInfo.emergencyContacts?.map((contact: any, i: number) => (
-                  <div key={i} className="border-l-4 border-blue-500 pl-3">
-                    <p className="font-medium text-gray-900">{contact.name}</p>
-                    <p className="text-sm text-gray-600">{contact.relationship}</p>
-                    <p className="text-sm font-mono text-blue-600">{contact.phone}</p>
+                  <div key={i} className="flex items-center gap-4 p-3 bg-slate-800/50 rounded-lg border-l-4 border-[#00857a]">
+                    <div className="w-10 h-10 rounded-full bg-[#00857a]/20 flex items-center justify-center">
+                      <User className="h-5 w-5 text-[#00857a]" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-white">{contact.name}</p>
+                      <p className="text-sm text-slate-400">{contact.relationship}</p>
+                    </div>
+                    <p className="font-mono text-[#33bfb7]">{contact.phone}</p>
                   </div>
                 ))}
 
                 {welfareCheckInfo.neighborInfo && (
-                  <div className="border-l-4 border-green-500 pl-3 mt-4">
-                    <p className="text-sm font-medium text-gray-700">Neighbor:</p>
-                    <p className="font-medium text-gray-900">{welfareCheckInfo.neighborInfo.name}</p>
-                    <p className="text-sm text-gray-600">{welfareCheckInfo.neighborInfo.address}</p>
-                    <p className="text-sm font-mono text-green-600">{welfareCheckInfo.neighborInfo.phone}</p>
+                  <div className="flex items-center gap-4 p-3 bg-slate-800/50 rounded-lg border-l-4 border-emerald-500">
+                    <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                      <Home className="h-5 w-5 text-emerald-400" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs text-slate-500 uppercase">Neighbor</p>
+                      <p className="font-medium text-white">{welfareCheckInfo.neighborInfo.name}</p>
+                      <p className="text-sm text-slate-400">{welfareCheckInfo.neighborInfo.address}</p>
+                    </div>
+                    <p className="font-mono text-emerald-400">{welfareCheckInfo.neighborInfo.phone}</p>
                   </div>
                 )}
-              </div>
-            </div>
+              </EACardContent>
+            </EACard>
 
             {/* Action Buttons */}
-            <div className="mt-6 flex gap-3">
-              <button className="flex-1 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 font-medium">
-                📞 Call Emergency Contact
-              </button>
-              <button className="flex-1 bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 font-medium">
-                🚔 Dispatch to Location
-              </button>
-              <button className="flex-1 bg-gray-600 text-white px-4 py-3 rounded-lg hover:bg-gray-700 font-medium">
-                ✅ Complete Welfare Check
-              </button>
+            <div className="grid grid-cols-3 gap-4">
+              <EAButton
+                variant="secondary"
+                size="lg"
+                icon={<Phone className="h-5 w-5" />}
+                className="py-4"
+              >
+                Call Contact
+              </EAButton>
+              <EAButton
+                variant="primary"
+                size="lg"
+                icon={<Navigation className="h-5 w-5" />}
+                className="py-4"
+              >
+                Dispatch Now
+              </EAButton>
+              <EAButton
+                variant="ghost"
+                size="lg"
+                icon={<CheckCircle className="h-5 w-5" />}
+                className="py-4"
+              >
+                Complete Check
+              </EAButton>
             </div>
           </div>
         ) : (
-          <div className="flex items-center justify-center h-full text-gray-500">
+          <div className="flex items-center justify-center h-full">
             <div className="text-center">
-              <svg className="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-              <p className="text-lg font-medium">Select a senior from the list</p>
-              <p className="text-sm mt-1">View complete welfare check information</p>
+              <div className="w-20 h-20 mx-auto bg-slate-800 rounded-full flex items-center justify-center mb-4">
+                <Shield className="h-10 w-10 text-slate-600" />
+              </div>
+              <p className="text-lg font-medium text-white">Select a senior from the list</p>
+              <p className="text-sm text-slate-500 mt-1">View complete welfare check information</p>
             </div>
           </div>
         )}

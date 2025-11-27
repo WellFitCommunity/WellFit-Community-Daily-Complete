@@ -28,7 +28,8 @@ describe('SeniorEmergencyInfoForm', () => {
     it('should render all major form sections', () => {
       render(<SeniorEmergencyInfoForm patientId={mockPatientId} />);
 
-      expect(screen.getByText(/Emergency Response Information/i)).toBeInTheDocument();
+      // Use getAllByText for text that appears multiple times (header + consent text)
+      expect(screen.getAllByText(/Emergency Response Information/i)[0]).toBeInTheDocument();
       expect(screen.getByText(/Mobility Status/i)).toBeInTheDocument();
       expect(screen.getByText(/Medical Equipment/i)).toBeInTheDocument();
       expect(screen.getByText(/Communication Needs/i)).toBeInTheDocument();
@@ -151,7 +152,9 @@ describe('SeniorEmergencyInfoForm', () => {
 
       render(<SeniorEmergencyInfoForm patientId={mockPatientId} onSave={mockOnSave} />);
 
-      const consentCheckbox = screen.getByText(/I consent/i).previousElementSibling as HTMLInputElement;
+      // Find the consent checkbox by finding the label containing "I consent" and then its input
+      const consentLabel = screen.getByText(/I consent/i).closest('label');
+      const consentCheckbox = consentLabel?.querySelector('input[type="checkbox"]') as HTMLInputElement;
       fireEvent.click(consentCheckbox);
 
       const saveButton = screen.getByText(/Save Emergency Information/i);
@@ -246,7 +249,8 @@ describe('SeniorEmergencyInfoForm', () => {
 
       // Fill out form
       const bedBoundCheckbox = screen.getByLabelText(/Bed-bound/i);
-      const consentCheckbox = screen.getByText(/I consent/i).previousElementSibling as HTMLInputElement;
+      const consentLabel = screen.getByText(/I consent/i).closest('label');
+      const consentCheckbox = consentLabel?.querySelector('input[type="checkbox"]') as HTMLInputElement;
 
       fireEvent.click(bedBoundCheckbox);
       fireEvent.click(consentCheckbox);
@@ -273,7 +277,8 @@ describe('SeniorEmergencyInfoForm', () => {
 
       render(<SeniorEmergencyInfoForm patientId={mockPatientId} />);
 
-      const consentCheckbox = screen.getByText(/I consent/i).previousElementSibling as HTMLInputElement;
+      const consentLabel = screen.getByText(/I consent/i).closest('label');
+      const consentCheckbox = consentLabel?.querySelector('input[type="checkbox"]') as HTMLInputElement;
       fireEvent.click(consentCheckbox);
 
       const saveButton = screen.getByText(/Save Emergency Information/i);
@@ -292,7 +297,8 @@ describe('SeniorEmergencyInfoForm', () => {
 
       render(<SeniorEmergencyInfoForm patientId={mockPatientId} onSave={mockOnSave} />);
 
-      const consentCheckbox = screen.getByText(/I consent/i).previousElementSibling as HTMLInputElement;
+      const consentLabel = screen.getByText(/I consent/i).closest('label');
+      const consentCheckbox = consentLabel?.querySelector('input[type="checkbox"]') as HTMLInputElement;
       fireEvent.click(consentCheckbox);
 
       const saveButton = screen.getByText(/Save Emergency Information/i);

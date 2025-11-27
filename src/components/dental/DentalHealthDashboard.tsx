@@ -4,6 +4,7 @@
  * =====================================================
  * Purpose: Patient-facing dental health tracking and management
  * Features: Health summary, self-tracking, educational content
+ * Design: Envision Atlus Clinical Design System
  * =====================================================
  */
 
@@ -17,12 +18,18 @@ import type {
   PatientDentalHealthTracking,
   DentalRiskAlert,
 } from '../../types/dentalHealth';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Alert, AlertDescription } from '../ui/alert';
-import { Badge } from '../ui/badge';
-import { Button } from '../ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { Skeleton } from '../ui/skeleton';
+import {
+  EACard,
+  EACardHeader,
+  EACardContent,
+  EAButton,
+  EABadge,
+  EAAlert,
+  EAMetricCard,
+  EARiskIndicator,
+  EAPageLayout,
+} from '../envision-atlus';
 import {
   AlertCircle,
   CheckCircle,
@@ -34,6 +41,10 @@ import {
   Activity,
   FileText,
   Smile,
+  RefreshCw,
+  Sparkles,
+  Clock,
+  BookOpen,
 } from 'lucide-react';
 
 /**
@@ -85,11 +96,15 @@ export const DentalHealthDashboard: React.FC = () => {
 
   if (!user) {
     return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <h5 className="mb-1 font-medium leading-none tracking-tight">Authentication Required</h5>
-        <AlertDescription>Please log in to view your dental health dashboard.</AlertDescription>
-      </Alert>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center p-6">
+        <EAAlert variant="critical">
+          <AlertCircle className="h-5 w-5" />
+          <div>
+            <p className="font-semibold">Authentication Required</p>
+            <p className="text-sm mt-1">Please log in to view your dental health dashboard.</p>
+          </div>
+        </EAAlert>
+      </div>
     );
   }
 
@@ -99,47 +114,77 @@ export const DentalHealthDashboard: React.FC = () => {
 
   if (error) {
     return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <h5 className="mb-1 font-medium leading-none tracking-tight">Error</h5>
-        <AlertDescription>{error}</AlertDescription>
-        <Button onClick={loadDashboard} className="mt-2" size="sm">
-          Retry
-        </Button>
-      </Alert>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center p-6">
+        <EACard className="max-w-md">
+          <EACardContent className="p-6 text-center">
+            <div className="w-16 h-16 mx-auto bg-red-500/20 rounded-full flex items-center justify-center mb-4">
+              <AlertCircle className="h-8 w-8 text-red-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-white mb-2">Error Loading Dashboard</h3>
+            <p className="text-slate-400 mb-4">{error}</p>
+            <EAButton variant="primary" onClick={loadDashboard}>
+              Try Again
+            </EAButton>
+          </EACardContent>
+        </EACard>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <Smile className="h-8 w-8 text-blue-600" />
-            Smile Health
-          </h1>
-          <p className="text-muted-foreground">
-            Your dental health is connected to your overall wellness
-          </p>
-        </div>
-        <Button onClick={loadDashboard} variant="outline" size="sm">
+    <EAPageLayout
+      title="Smile Health"
+      subtitle="Your dental health is connected to your overall wellness"
+      badge={<EABadge variant="info">Dental</EABadge>}
+      actions={
+        <EAButton
+          variant="secondary"
+          size="sm"
+          onClick={loadDashboard}
+          icon={<RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />}
+        >
           Refresh
-        </Button>
-      </div>
-
+        </EAButton>
+      }
+    >
       {/* Risk Alerts */}
       {summary && summary.risk_alerts && summary.risk_alerts.length > 0 && (
-        <RiskAlerts alerts={summary.risk_alerts} />
+        <div className="mb-6">
+          <RiskAlerts alerts={summary.risk_alerts} />
+        </div>
       )}
 
       {/* Main Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="tracking">Daily Tracking</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
-          <TabsTrigger value="education">Learn</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="bg-slate-800/50 border border-slate-700 p-1 rounded-lg">
+          <TabsTrigger
+            value="overview"
+            className="data-[state=active]:bg-[#00857a] data-[state=active]:text-white text-slate-400 rounded-md px-4 py-2"
+          >
+            <Activity className="h-4 w-4 mr-2" />
+            Overview
+          </TabsTrigger>
+          <TabsTrigger
+            value="tracking"
+            className="data-[state=active]:bg-[#00857a] data-[state=active]:text-white text-slate-400 rounded-md px-4 py-2"
+          >
+            <CheckCircle className="h-4 w-4 mr-2" />
+            Daily Tracking
+          </TabsTrigger>
+          <TabsTrigger
+            value="history"
+            className="data-[state=active]:bg-[#00857a] data-[state=active]:text-white text-slate-400 rounded-md px-4 py-2"
+          >
+            <Clock className="h-4 w-4 mr-2" />
+            History
+          </TabsTrigger>
+          <TabsTrigger
+            value="education"
+            className="data-[state=active]:bg-[#00857a] data-[state=active]:text-white text-slate-400 rounded-md px-4 py-2"
+          >
+            <BookOpen className="h-4 w-4 mr-2" />
+            Learn
+          </TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -170,7 +215,7 @@ export const DentalHealthDashboard: React.FC = () => {
           <EducationalContent />
         </TabsContent>
       </Tabs>
-    </div>
+    </EAPageLayout>
   );
 };
 
@@ -178,88 +223,91 @@ export const DentalHealthDashboard: React.FC = () => {
  * Health Overview Section
  */
 const HealthOverview: React.FC<{ summary: DentalHealthDashboardSummary }> = ({ summary }) => {
-  const getHealthRatingColor = (rating?: number) => {
-    if (!rating) return 'gray';
-    if (rating >= 4) return 'green';
-    if (rating >= 3) return 'yellow';
-    return 'red';
+  const getRiskLevel = (rating?: number): 'critical' | 'high' | 'elevated' | 'normal' => {
+    if (!rating) return 'elevated';
+    if (rating >= 4) return 'normal';
+    if (rating >= 3) return 'elevated';
+    if (rating >= 2) return 'high';
+    return 'critical';
   };
 
-  const getPeriodontalStatusBadge = (status?: string) => {
-    if (!status) return null;
-
-    const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-      healthy: 'default',
-      gingivitis: 'secondary',
-      mild_periodontitis: 'secondary',
-      moderate_periodontitis: 'destructive',
-      severe_periodontitis: 'destructive',
-      advanced_periodontitis: 'destructive',
-    };
-
-    return (
-      <Badge variant={variants[status] || 'outline'}>
-        {status.replace(/_/g, ' ').toUpperCase()}
-      </Badge>
-    );
+  const getPeriodontalRisk = (status?: string): 'critical' | 'high' | 'elevated' | 'normal' => {
+    if (!status) return 'normal';
+    if (status.includes('severe') || status.includes('advanced')) return 'critical';
+    if (status.includes('moderate')) return 'high';
+    if (status.includes('mild') || status.includes('gingivitis')) return 'elevated';
+    return 'normal';
   };
 
   return (
     <div className="grid gap-6 md:grid-cols-3">
       {/* Overall Health Rating */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Overall Oral Health</CardTitle>
-          <Activity className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">
+      <EACard variant="highlight">
+        <EACardContent className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-2 bg-[#00857a]/20 rounded-lg">
+              <Smile className="h-6 w-6 text-[#00857a]" />
+            </div>
+            <EARiskIndicator
+              level={getRiskLevel(summary.overall_oral_health_rating)}
+              variant="badge"
+              showIcon={false}
+            />
+          </div>
+          <div className="text-3xl font-bold text-white mb-1">
             {summary.overall_oral_health_rating ? `${summary.overall_oral_health_rating}/5` : 'N/A'}
           </div>
-          <p className="text-xs text-muted-foreground">
-            Based on latest assessment
-          </p>
+          <p className="text-sm text-slate-400">Overall Oral Health</p>
           {summary.periodontal_status && (
-            <div className="mt-2">
-              {getPeriodontalStatusBadge(summary.periodontal_status)}
+            <div className="mt-3">
+              <EABadge variant={getPeriodontalRisk(summary.periodontal_status)}>
+                {summary.periodontal_status.replace(/_/g, ' ').toUpperCase()}
+              </EABadge>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </EACardContent>
+      </EACard>
 
       {/* Last Visit */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Last Dental Visit</CardTitle>
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">
+      <EACard>
+        <EACardContent className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-2 bg-blue-500/20 rounded-lg">
+              <Calendar className="h-6 w-6 text-blue-400" />
+            </div>
+          </div>
+          <div className="text-2xl font-bold text-white mb-1">
             {summary.last_visit_date
               ? new Date(summary.last_visit_date).toLocaleDateString()
               : 'No visits yet'}
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-sm text-slate-400">Last Dental Visit</p>
+          <p className="text-xs text-[#33bfb7] mt-2">
             {summary.next_recommended_visit
               ? `Next: ${new Date(summary.next_recommended_visit).toLocaleDateString()}`
               : 'Schedule your first visit'}
           </p>
-        </CardContent>
-      </Card>
+        </EACardContent>
+      </EACard>
 
       {/* Active Issues */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Active Conditions</CardTitle>
-          <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{summary.active_conditions_count}</div>
-          <p className="text-xs text-muted-foreground">
+      <EACard>
+        <EACardContent className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-2 bg-amber-500/20 rounded-lg">
+              <AlertTriangle className="h-6 w-6 text-amber-400" />
+            </div>
+            {summary.active_conditions_count > 0 && (
+              <EARiskIndicator level="medium" variant="badge" showIcon={false} />
+            )}
+          </div>
+          <div className="text-3xl font-bold text-white mb-1">{summary.active_conditions_count}</div>
+          <p className="text-sm text-slate-400">Active Conditions</p>
+          <p className="text-xs text-slate-500 mt-2">
             {summary.pending_procedures_count} pending procedures
           </p>
-        </CardContent>
-      </Card>
+        </EACardContent>
+      </EACard>
     </div>
   );
 };
@@ -269,35 +317,34 @@ const HealthOverview: React.FC<{ summary: DentalHealthDashboardSummary }> = ({ s
  */
 const TreatmentSummary: React.FC<{ summary: DentalHealthDashboardSummary }> = ({ summary }) => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <FileText className="h-5 w-5" />
-          Treatment Summary
-        </CardTitle>
-        <CardDescription>Your current treatment status</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex justify-between items-center">
-          <span className="text-sm font-medium">Active Treatment Plans</span>
-          <Badge variant="secondary">{summary.active_treatment_plans_count}</Badge>
+    <EACard>
+      <EACardHeader icon={<FileText className="h-5 w-5" />}>
+        <div>
+          <h3 className="text-lg font-semibold text-white">Treatment Summary</h3>
+          <p className="text-sm text-slate-400">Your current treatment status</p>
         </div>
-        <div className="flex justify-between items-center">
-          <span className="text-sm font-medium">Pending Procedures</span>
-          <Badge variant="outline">{summary.pending_procedures_count}</Badge>
+      </EACardHeader>
+      <EACardContent className="space-y-4">
+        <div className="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg">
+          <span className="text-sm text-slate-300">Active Treatment Plans</span>
+          <EABadge variant="info">{summary.active_treatment_plans_count}</EABadge>
         </div>
-        <div className="flex justify-between items-center">
-          <span className="text-sm font-medium">Completed This Year</span>
-          <Badge variant="default">{summary.completed_procedures_this_year}</Badge>
+        <div className="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg">
+          <span className="text-sm text-slate-300">Pending Procedures</span>
+          <EABadge variant="elevated">{summary.pending_procedures_count}</EABadge>
         </div>
-        <div className="flex justify-between items-center">
-          <span className="text-sm font-medium">Pending Referrals</span>
-          <Badge variant={summary.pending_referrals_count > 0 ? 'destructive' : 'secondary'}>
+        <div className="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg">
+          <span className="text-sm text-slate-300">Completed This Year</span>
+          <EABadge variant="normal">{summary.completed_procedures_this_year}</EABadge>
+        </div>
+        <div className="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg">
+          <span className="text-sm text-slate-300">Pending Referrals</span>
+          <EABadge variant={summary.pending_referrals_count > 0 ? 'critical' : 'normal'}>
             {summary.pending_referrals_count}
-          </Badge>
+          </EABadge>
         </div>
-      </CardContent>
-    </Card>
+      </EACardContent>
+    </EACard>
   );
 };
 
@@ -306,32 +353,31 @@ const TreatmentSummary: React.FC<{ summary: DentalHealthDashboardSummary }> = ({
  */
 const CurrentSymptoms: React.FC<{ symptoms: string[] }> = ({ symptoms }) => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Heart className="h-5 w-5 text-red-500" />
-          Current Symptoms
-        </CardTitle>
-        <CardDescription>Based on your recent reports</CardDescription>
-      </CardHeader>
-      <CardContent>
+    <EACard>
+      <EACardHeader icon={<Heart className="h-5 w-5 text-red-400" />}>
+        <div>
+          <h3 className="text-lg font-semibold text-white">Current Symptoms</h3>
+          <p className="text-sm text-slate-400">Based on your recent reports</p>
+        </div>
+      </EACardHeader>
+      <EACardContent>
         {symptoms.length === 0 ? (
-          <div className="flex items-center gap-2 text-green-600">
-            <CheckCircle className="h-5 w-5" />
-            <span>No symptoms reported</span>
+          <div className="flex items-center gap-3 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+            <CheckCircle className="h-6 w-6 text-emerald-400" />
+            <span className="text-emerald-300 font-medium">No symptoms reported</span>
           </div>
         ) : (
           <div className="space-y-2">
             {symptoms.map((symptom, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 text-yellow-600" />
-                <span className="text-sm">{symptom}</span>
+              <div key={index} className="flex items-center gap-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                <AlertCircle className="h-4 w-4 text-amber-400" />
+                <span className="text-white text-sm">{symptom}</span>
               </div>
             ))}
           </div>
         )}
-      </CardContent>
-    </Card>
+      </EACardContent>
+    </EACard>
   );
 };
 
@@ -339,26 +385,32 @@ const CurrentSymptoms: React.FC<{ symptoms: string[] }> = ({ symptoms }) => {
  * Risk Alerts Component
  */
 const RiskAlerts: React.FC<{ alerts: DentalRiskAlert[] }> = ({ alerts }) => {
-  const getSeverityVariant = (severity: string): 'default' | 'destructive' => {
-    return severity === 'critical' || severity === 'high' ? 'destructive' : 'default';
+  const getAlertVariant = (severity: string): 'critical' | 'warning' | 'info' | 'success' => {
+    if (severity === 'critical') return 'critical';
+    if (severity === 'high') return 'warning';
+    return 'info';
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {alerts.map((alert, index) => (
-        <Alert key={index} variant={getSeverityVariant(alert.severity)}>
-          <AlertTriangle className="h-4 w-4" />
-          <h5 className="mb-1 font-bold leading-none tracking-tight">
-            {alert.severity.toUpperCase()}: {alert.category.replace(/-/g, ' ').toUpperCase()}
-          </h5>
-          <AlertDescription className="space-y-2">
-            <p>{alert.message}</p>
-            <p className="font-semibold">Recommended Action: {alert.recommended_action}</p>
+        <EAAlert key={index} variant={getAlertVariant(alert.severity)}>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <EABadge variant={alert.severity === 'critical' ? 'critical' : alert.severity === 'high' ? 'high' : 'elevated'}>
+                {alert.severity.toUpperCase()}
+              </EABadge>
+              <span className="text-white font-medium">{alert.category.replace(/-/g, ' ').toUpperCase()}</span>
+            </div>
+            <p className="text-slate-300 text-sm">{alert.message}</p>
+            <p className="text-[#33bfb7] text-sm mt-2 font-medium">
+              Recommended: {alert.recommended_action}
+            </p>
             {alert.related_condition && (
-              <p className="text-sm italic">Related to: {alert.related_condition}</p>
+              <p className="text-slate-500 text-xs mt-1 italic">Related to: {alert.related_condition}</p>
             )}
-          </AlertDescription>
-        </Alert>
+          </div>
+        </EAAlert>
       ))}
     </div>
   );
@@ -406,122 +458,129 @@ const DailyTrackingForm: React.FC<{ onSave: () => void }> = ({ onSave }) => {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Daily Dental Health Check-In</CardTitle>
-        <CardDescription>Track your daily oral health habits and symptoms</CardDescription>
-      </CardHeader>
-      <CardContent>
+    <EACard>
+      <EACardHeader icon={<Sparkles className="h-5 w-5" />}>
+        <div>
+          <h3 className="text-lg font-semibold text-white">Daily Dental Health Check-In</h3>
+          <p className="text-sm text-slate-400">Track your daily oral health habits and symptoms</p>
+        </div>
+      </EACardHeader>
+      <EACardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Symptoms Section */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold">Symptoms Today</h3>
-            <div className="grid gap-3 md:grid-cols-2">
-              <label className="flex items-center gap-2">
+          <div className="space-y-4">
+            <h4 className="text-sm font-semibold text-[#00857a] uppercase tracking-wider">Symptoms Today</h4>
+            <div className="grid gap-3 md:grid-cols-3">
+              <label className="flex items-center gap-3 p-3 bg-slate-800/50 rounded-lg cursor-pointer hover:bg-slate-800 transition-colors border border-slate-700">
                 <input
                   type="checkbox"
                   checked={formData.tooth_pain || false}
                   onChange={e => handleCheckboxChange('tooth_pain', e.target.checked)}
-                  className="rounded"
+                  className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-[#00857a] focus:ring-[#00857a]"
                 />
-                <span className="text-sm">Tooth pain</span>
+                <span className="text-sm text-white">Tooth pain</span>
               </label>
-              <label className="flex items-center gap-2">
+              <label className="flex items-center gap-3 p-3 bg-slate-800/50 rounded-lg cursor-pointer hover:bg-slate-800 transition-colors border border-slate-700">
                 <input
                   type="checkbox"
                   checked={formData.gum_bleeding || false}
                   onChange={e => handleCheckboxChange('gum_bleeding', e.target.checked)}
-                  className="rounded"
+                  className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-[#00857a] focus:ring-[#00857a]"
                 />
-                <span className="text-sm">Bleeding gums</span>
+                <span className="text-sm text-white">Bleeding gums</span>
               </label>
-              <label className="flex items-center gap-2">
+              <label className="flex items-center gap-3 p-3 bg-slate-800/50 rounded-lg cursor-pointer hover:bg-slate-800 transition-colors border border-slate-700">
                 <input
                   type="checkbox"
                   checked={formData.dry_mouth || false}
                   onChange={e => handleCheckboxChange('dry_mouth', e.target.checked)}
-                  className="rounded"
+                  className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-[#00857a] focus:ring-[#00857a]"
                 />
-                <span className="text-sm">Dry mouth</span>
+                <span className="text-sm text-white">Dry mouth</span>
               </label>
             </div>
 
             {formData.tooth_pain && (
-              <div className="mt-2">
-                <label className="text-sm font-medium">Pain Severity (0-10)</label>
+              <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+                <label className="text-sm font-medium text-red-300">Pain Severity (0-10)</label>
                 <input
-                  type="number"
+                  type="range"
                   min="0"
                   max="10"
                   value={formData.tooth_pain_severity || 0}
                   onChange={e => handleNumberChange('tooth_pain_severity', parseInt(e.target.value))}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                  className="mt-2 w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-red-500"
                 />
+                <div className="flex justify-between text-xs text-slate-500 mt-1">
+                  <span>None</span>
+                  <span className="text-red-400 font-bold">{formData.tooth_pain_severity || 0}</span>
+                  <span>Severe</span>
+                </div>
               </div>
             )}
           </div>
 
           {/* Hygiene Habits Section */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold">Hygiene Habits Today</h3>
-            <div className="grid gap-3 md:grid-cols-2">
-              <label className="flex items-center gap-2">
+          <div className="space-y-4">
+            <h4 className="text-sm font-semibold text-[#00857a] uppercase tracking-wider">Hygiene Habits Today</h4>
+            <div className="grid gap-3 md:grid-cols-3">
+              <label className="flex items-center gap-3 p-3 bg-slate-800/50 rounded-lg cursor-pointer hover:bg-slate-800 transition-colors border border-slate-700">
                 <input
                   type="checkbox"
                   checked={formData.brushed_today || false}
                   onChange={e => handleCheckboxChange('brushed_today', e.target.checked)}
-                  className="rounded"
+                  className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-[#00857a] focus:ring-[#00857a]"
                 />
-                <span className="text-sm">Brushed teeth</span>
+                <span className="text-sm text-white">Brushed teeth</span>
               </label>
-              <label className="flex items-center gap-2">
+              <label className="flex items-center gap-3 p-3 bg-slate-800/50 rounded-lg cursor-pointer hover:bg-slate-800 transition-colors border border-slate-700">
                 <input
                   type="checkbox"
                   checked={formData.flossed_today || false}
                   onChange={e => handleCheckboxChange('flossed_today', e.target.checked)}
-                  className="rounded"
+                  className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-[#00857a] focus:ring-[#00857a]"
                 />
-                <span className="text-sm">Flossed</span>
+                <span className="text-sm text-white">Flossed</span>
               </label>
-              <label className="flex items-center gap-2">
+              <label className="flex items-center gap-3 p-3 bg-slate-800/50 rounded-lg cursor-pointer hover:bg-slate-800 transition-colors border border-slate-700">
                 <input
                   type="checkbox"
                   checked={formData.used_mouthwash || false}
                   onChange={e => handleCheckboxChange('used_mouthwash', e.target.checked)}
-                  className="rounded"
+                  className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-[#00857a] focus:ring-[#00857a]"
                 />
-                <span className="text-sm">Used mouthwash</span>
+                <span className="text-sm text-white">Used mouthwash</span>
               </label>
             </div>
           </div>
 
           {/* Additional Concerns */}
           <div>
-            <label className="text-sm font-medium">Additional Concerns (Optional)</label>
+            <label className="text-sm font-medium text-slate-300">Additional Concerns (Optional)</label>
             <textarea
               value={formData.additional_concerns || ''}
               onChange={e => setFormData(prev => ({ ...prev, additional_concerns: e.target.value }))}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+              className="mt-2 block w-full rounded-lg border border-slate-700 bg-slate-800/50 px-4 py-3 text-white placeholder-slate-500 focus:border-[#00857a] focus:ring-[#00857a]"
               rows={3}
               placeholder="Any other dental health concerns or observations..."
             />
           </div>
 
           {/* Submit Button */}
-          <div className="flex items-center gap-2">
-            <Button type="submit" disabled={saving}>
-              {saving ? 'Saving...' : 'Save Today\'s Entry'}
-            </Button>
+          <div className="flex items-center gap-4">
+            <EAButton type="submit" variant="primary" disabled={saving}>
+              {saving ? 'Saving...' : "Save Today's Entry"}
+            </EAButton>
             {success && (
-              <span className="text-sm text-green-600 flex items-center gap-1">
+              <span className="text-sm text-emerald-400 flex items-center gap-2">
                 <CheckCircle className="h-4 w-4" />
                 Saved successfully!
               </span>
             )}
           </div>
         </form>
-      </CardContent>
-    </Card>
+      </EACardContent>
+    </EACard>
   );
 };
 
@@ -531,51 +590,65 @@ const DailyTrackingForm: React.FC<{ onSave: () => void }> = ({ onSave }) => {
 const TrackingHistory: React.FC<{ reports: PatientDentalHealthTracking[] }> = ({ reports }) => {
   if (reports.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-8 text-center text-muted-foreground">
-          No tracking history yet. Start tracking your dental health today!
-        </CardContent>
-      </Card>
+      <EACard>
+        <EACardContent className="py-12 text-center">
+          <div className="w-16 h-16 mx-auto bg-slate-800 rounded-full flex items-center justify-center mb-4">
+            <Clock className="h-8 w-8 text-slate-600" />
+          </div>
+          <p className="text-white font-medium">No tracking history yet</p>
+          <p className="text-slate-500 text-sm mt-1">Start tracking your dental health today!</p>
+        </EACardContent>
+      </EACard>
     );
   }
 
   return (
     <div className="space-y-4">
       {reports.map(report => (
-        <Card key={report.id}>
-          <CardHeader>
-            <CardTitle className="text-base">
-              {new Date(report.report_date).toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {report.tooth_pain && (
-              <div className="flex items-center gap-2 text-sm">
-                <AlertCircle className="h-4 w-4 text-red-500" />
-                <span>Tooth pain (severity: {report.tooth_pain_severity}/10)</span>
-              </div>
-            )}
-            {report.gum_bleeding && (
-              <div className="flex items-center gap-2 text-sm">
-                <AlertCircle className="h-4 w-4 text-yellow-500" />
-                <span>Bleeding gums</span>
-              </div>
-            )}
-            <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
-              <span>{report.brushed_today ? '✓' : '✗'} Brushed</span>
-              <span>{report.flossed_today ? '✓' : '✗'} Flossed</span>
-              <span>{report.used_mouthwash ? '✓' : '✗'} Mouthwash</span>
+        <EACard key={report.id}>
+          <EACardContent className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-white font-medium">
+                {new Date(report.report_date).toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </h4>
             </div>
-            {report.additional_concerns && (
-              <p className="text-sm italic mt-2 text-gray-600">"{report.additional_concerns}"</p>
-            )}
-          </CardContent>
-        </Card>
+            <div className="space-y-2">
+              {report.tooth_pain && (
+                <div className="flex items-center gap-2 text-sm p-2 bg-red-500/10 rounded">
+                  <AlertCircle className="h-4 w-4 text-red-400" />
+                  <span className="text-red-300">Tooth pain (severity: {report.tooth_pain_severity}/10)</span>
+                </div>
+              )}
+              {report.gum_bleeding && (
+                <div className="flex items-center gap-2 text-sm p-2 bg-amber-500/10 rounded">
+                  <AlertCircle className="h-4 w-4 text-amber-400" />
+                  <span className="text-amber-300">Bleeding gums</span>
+                </div>
+              )}
+              <div className="flex gap-3 mt-3 pt-3 border-t border-slate-700">
+                <span className={`text-xs px-2 py-1 rounded ${report.brushed_today ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-500'}`}>
+                  {report.brushed_today ? '✓' : '✗'} Brushed
+                </span>
+                <span className={`text-xs px-2 py-1 rounded ${report.flossed_today ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-500'}`}>
+                  {report.flossed_today ? '✓' : '✗'} Flossed
+                </span>
+                <span className={`text-xs px-2 py-1 rounded ${report.used_mouthwash ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-500'}`}>
+                  {report.used_mouthwash ? '✓' : '✗'} Mouthwash
+                </span>
+              </div>
+              {report.additional_concerns && (
+                <p className="text-sm italic text-slate-400 mt-2 p-2 bg-slate-800/50 rounded">
+                  "{report.additional_concerns}"
+                </p>
+              )}
+            </div>
+          </EACardContent>
+        </EACard>
       ))}
     </div>
   );
@@ -586,77 +659,96 @@ const TrackingHistory: React.FC<{ reports: PatientDentalHealthTracking[] }> = ({
  */
 const EducationalContent: React.FC = () => {
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Heart className="h-5 w-5 text-red-500" />
-            Oral Health & Your Heart
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm">
-          <p>
-            <strong>Did you know?</strong> Gum disease (periodontitis) is linked to an increased risk of heart disease,
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <EACard variant="highlight">
+        <EACardHeader icon={<Heart className="h-5 w-5 text-red-400" />}>
+          <h3 className="text-lg font-semibold text-white">Oral Health & Your Heart</h3>
+        </EACardHeader>
+        <EACardContent className="space-y-3 text-sm">
+          <p className="text-slate-300">
+            <strong className="text-white">Did you know?</strong> Gum disease (periodontitis) is linked to an increased risk of heart disease,
             stroke, and heart attack.
           </p>
-          <p>
+          <p className="text-slate-400">
             The bacteria from infected gums can enter your bloodstream, potentially affecting your heart valves and
             contributing to arterial inflammation.
           </p>
-          <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-            <li>Brush twice daily for 2 minutes</li>
-            <li>Floss at least once per day</li>
-            <li>Visit your dentist every 6 months</li>
-            <li>Report bleeding gums immediately</li>
+          <ul className="space-y-2 text-slate-400">
+            <li className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-[#00857a]" />
+              Brush twice daily for 2 minutes
+            </li>
+            <li className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-[#00857a]" />
+              Floss at least once per day
+            </li>
+            <li className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-[#00857a]" />
+              Visit your dentist every 6 months
+            </li>
+            <li className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-[#00857a]" />
+              Report bleeding gums immediately
+            </li>
           </ul>
-        </CardContent>
-      </Card>
+        </EACardContent>
+      </EACard>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Pill className="h-5 w-5 text-blue-500" />
-            Diabetes & Dental Health
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm">
-          <p>
-            <strong>Bidirectional relationship:</strong> Diabetes affects your gum health, and gum disease can make
+      <EACard>
+        <EACardHeader icon={<Pill className="h-5 w-5 text-blue-400" />}>
+          <h3 className="text-lg font-semibold text-white">Diabetes & Dental Health</h3>
+        </EACardHeader>
+        <EACardContent className="space-y-3 text-sm">
+          <p className="text-slate-300">
+            <strong className="text-white">Bidirectional relationship:</strong> Diabetes affects your gum health, and gum disease can make
             blood sugar harder to control.
           </p>
-          <p className="font-semibold text-yellow-700">
-            If you have diabetes, you're 2-3 times more likely to develop gum disease.
-          </p>
-          <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-            <li>Keep blood sugar levels in target range</li>
-            <li>Get dental cleanings at least twice per year</li>
-            <li>Report dry mouth to your doctor (common diabetes side effect)</li>
-            <li>Treat gum infections promptly</li>
+          <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+            <p className="text-amber-300 font-semibold">
+              If you have diabetes, you're 2-3 times more likely to develop gum disease.
+            </p>
+          </div>
+          <ul className="space-y-2 text-slate-400">
+            <li className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-[#00857a]" />
+              Keep blood sugar levels in target range
+            </li>
+            <li className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-[#00857a]" />
+              Get dental cleanings at least twice per year
+            </li>
+            <li className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-[#00857a]" />
+              Report dry mouth to your doctor
+            </li>
+            <li className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-[#00857a]" />
+              Treat gum infections promptly
+            </li>
           </ul>
-        </CardContent>
-      </Card>
+        </EACardContent>
+      </EACard>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-green-500" />
-            Nutrition Starts in Your Mouth
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm">
-          <p>
+      <EACard>
+        <EACardHeader icon={<TrendingUp className="h-5 w-5 text-emerald-400" />}>
+          <h3 className="text-lg font-semibold text-white">Nutrition Starts in Your Mouth</h3>
+        </EACardHeader>
+        <EACardContent className="space-y-3 text-sm">
+          <p className="text-slate-300">
             Poor dental health can affect your ability to eat nutritious foods, leading to malnutrition and worsening
             chronic conditions.
           </p>
-          <p>
-            <strong>Warning signs:</strong> Difficulty chewing, avoiding certain foods (especially fruits/vegetables),
+          <p className="text-slate-400">
+            <strong className="text-white">Warning signs:</strong> Difficulty chewing, avoiding certain foods (especially fruits/vegetables),
             unintended weight loss.
           </p>
-          <p className="font-semibold text-blue-700">
-            Don't let tooth problems impact your nutrition—seek treatment early!
-          </p>
-        </CardContent>
-      </Card>
+          <div className="p-3 bg-[#00857a]/10 border border-[#00857a]/30 rounded-lg">
+            <p className="text-[#33bfb7] font-semibold">
+              Don't let tooth problems impact your nutrition—seek treatment early!
+            </p>
+          </div>
+        </EACardContent>
+      </EACard>
     </div>
   );
 };
@@ -666,14 +758,16 @@ const EducationalContent: React.FC = () => {
  */
 const DashboardSkeleton: React.FC = () => {
   return (
-    <div className="space-y-6">
-      <Skeleton className="h-12 w-64" />
-      <div className="grid gap-6 md:grid-cols-3">
-        <Skeleton className="h-32" />
-        <Skeleton className="h-32" />
-        <Skeleton className="h-32" />
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-8">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div className="h-12 w-64 bg-slate-800 rounded-lg animate-pulse" />
+        <div className="grid gap-6 md:grid-cols-3">
+          <div className="h-32 bg-slate-800 rounded-lg animate-pulse" />
+          <div className="h-32 bg-slate-800 rounded-lg animate-pulse" />
+          <div className="h-32 bg-slate-800 rounded-lg animate-pulse" />
+        </div>
+        <div className="h-64 bg-slate-800 rounded-lg animate-pulse" />
       </div>
-      <Skeleton className="h-64" />
     </div>
   );
 };
