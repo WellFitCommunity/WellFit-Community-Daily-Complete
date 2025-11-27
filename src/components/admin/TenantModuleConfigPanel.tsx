@@ -23,11 +23,15 @@ import {
   type LicenseTier,
   getEntitlementName
 } from '../../types/tenantModules';
-import { Alert, AlertDescription } from '../ui/alert';
-import { Button } from '../ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Switch } from '../ui/switch';
-import { Badge } from '../ui/badge';
+import {
+  EACard,
+  EACardHeader,
+  EACardContent,
+  EAButton,
+  EABadge,
+  EAAlert,
+  EASwitch,
+} from '../envision-atlus';
 import {
   Loader2,
   Save,
@@ -66,39 +70,38 @@ function ModuleToggle({ moduleName, isEnabled, isEntitled, currentTier, onChange
   const isDisabled = disabled || !isEntitled;
 
   return (
-    <div className={`flex items-center justify-between p-4 border rounded-lg transition-colors ${
-      !isEntitled ? 'bg-gray-50 opacity-75' : 'hover:bg-gray-50'
+    <div className={`flex items-center justify-between p-4 border border-slate-700 rounded-lg transition-colors ${
+      !isEntitled ? 'bg-slate-800/30 opacity-75' : 'bg-slate-800/50 hover:bg-slate-800'
     }`}>
       <div className="flex-1">
         <div className="flex items-center gap-2 flex-wrap">
-          <h4 className="font-medium text-gray-900">{metadata.name}</h4>
-          <Badge
-            variant={hasRequiredTier ? 'secondary' : 'destructive'}
-            className="text-xs"
+          <h4 className="font-medium text-white">{metadata.name}</h4>
+          <EABadge
+            variant={hasRequiredTier ? 'info' : 'critical'}
           >
             {metadata.requiredTier}
-          </Badge>
+          </EABadge>
           {!isEntitled && (
-            <Badge variant="outline" className="text-xs bg-gray-100 text-gray-600 flex items-center gap-1">
+            <EABadge variant="elevated" className="flex items-center gap-1">
               <Lock className="w-3 h-3" />
               Not in plan
-            </Badge>
+            </EABadge>
           )}
           {isEntitled && isEnabled && (
-            <Badge className="text-xs bg-green-100 text-green-700">
+            <EABadge variant="normal">
               Active
-            </Badge>
+            </EABadge>
           )}
         </div>
-        <p className="text-sm text-gray-600 mt-1">{metadata.description}</p>
+        <p className="text-sm text-slate-400 mt-1">{metadata.description}</p>
         {!isEntitled && (
-          <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+          <p className="text-xs text-slate-500 mt-2 flex items-center gap-1">
             <Info className="w-3 h-3" />
             Contact Envision Atlus to add this to your plan
           </p>
         )}
         {!hasRequiredTier && isEntitled && (
-          <p className="text-xs text-amber-600 mt-1">
+          <p className="text-xs text-amber-400 mt-1">
             Requires {metadata.requiredTier} tier or higher
           </p>
         )}
@@ -106,17 +109,17 @@ function ModuleToggle({ moduleName, isEnabled, isEntitled, currentTier, onChange
       <div className="flex flex-col items-end gap-1 ml-4">
         {isEntitled ? (
           <>
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-slate-500">
               {isEnabled ? 'Enabled' : 'Disabled'}
             </span>
-            <Switch
+            <EASwitch
               checked={isEnabled}
               onCheckedChange={(checked) => onChange(moduleName, checked)}
               disabled={isDisabled || !hasRequiredTier}
             />
           </>
         ) : (
-          <Lock className="w-5 h-5 text-gray-400" />
+          <Lock className="w-5 h-5 text-slate-500" />
         )}
       </div>
     </div>
@@ -208,26 +211,24 @@ export function TenantModuleConfigPanel() {
 
   if (loading) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-        </CardContent>
-      </Card>
+      <EACard>
+        <EACardContent className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+        </EACardContent>
+      </EACard>
     );
   }
 
   if (error || !config) {
     return (
-      <Card>
-        <CardContent className="py-8">
-          <Alert variant="destructive">
+      <EACard>
+        <EACardContent className="py-8">
+          <EAAlert variant="critical">
             <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              {error?.message || 'Failed to load module configuration'}
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
+            <span>{error?.message || 'Failed to load module configuration'}</span>
+          </EAAlert>
+        </EACardContent>
+      </EACard>
     );
   }
 
@@ -262,67 +263,62 @@ export function TenantModuleConfigPanel() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
+      <EACard>
+        <EACardHeader icon={<Settings className="w-5 h-5 text-[#00857a]" />}>
+          <div className="flex items-center justify-between w-full">
             <div>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="w-5 h-5 text-teal-600" />
-                Module Configuration
-              </CardTitle>
-              <CardDescription>
+              <h2 className="text-lg font-semibold text-white">Module Configuration</h2>
+              <p className="text-sm text-slate-400">
                 Enable or disable platform modules for your organization
-              </CardDescription>
+              </p>
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-sm">
+              <EABadge variant="info">
                 License: {currentTier}
-              </Badge>
-              <Badge variant="outline" className="text-sm bg-teal-50 text-teal-700">
+              </EABadge>
+              <EABadge variant="info">
                 {entitledCount} entitled
-              </Badge>
-              <Badge variant="outline" className="text-sm bg-green-50 text-green-700">
+              </EABadge>
+              <EABadge variant="normal">
                 {enabledCount} active
-              </Badge>
-              <Button
-                variant="outline"
+              </EABadge>
+              <EAButton
+                variant="secondary"
                 size="sm"
                 onClick={refresh}
                 disabled={loading}
+                icon={<RefreshCw className="h-4 w-4" />}
               >
-                <RefreshCw className="h-4 w-4 mr-2" />
                 Refresh
-              </Button>
+              </EAButton>
             </div>
           </div>
-        </CardHeader>
-      </Card>
+        </EACardHeader>
+      </EACard>
 
       {/* Info Banner */}
-      <Alert className="bg-blue-50 border-blue-200">
-        <Info className="h-4 w-4 text-blue-600" />
-        <AlertDescription className="text-blue-800">
+      <EAAlert variant="info">
+        <Info className="h-4 w-4" />
+        <span>
           <span className="font-medium">Your Plan</span>: You can enable or disable modules within your current plan.
           Modules marked with <Lock className="w-3 h-3 inline mx-1" /> are not included in your plan.
           Contact Envision Atlus to upgrade your plan for additional modules.
-        </AlertDescription>
-      </Alert>
+        </span>
+      </EAAlert>
 
       {/* Status Messages */}
       {saveSuccess && (
-        <Alert className="bg-green-50 border-green-200">
-          <CheckCircle2 className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-800">
-            Configuration saved successfully!
-          </AlertDescription>
-        </Alert>
+        <EAAlert variant="success">
+          <CheckCircle2 className="h-4 w-4" />
+          <span>Configuration saved successfully!</span>
+        </EAAlert>
       )}
 
       {saveError && (
-        <Alert variant="destructive">
+        <EAAlert variant="critical">
           <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>{saveError}</AlertDescription>
-        </Alert>
+          <span>{saveError}</span>
+        </EAAlert>
       )}
 
       {/* Modules by Category */}
@@ -335,31 +331,31 @@ export function TenantModuleConfigPanel() {
         const categoryEnabledCount = modules.filter(m => getModuleValue(m) && isModuleEntitled(m)).length;
 
         return (
-          <Card key={category} className="overflow-hidden">
+          <EACard key={category} className="overflow-hidden">
             <button
               onClick={() => toggleCategory(category)}
-              className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+              className="w-full flex items-center justify-between p-4 bg-slate-800/50 hover:bg-slate-800 transition-colors text-left border-b border-slate-700"
             >
               <div className="flex items-center gap-3">
-                <Settings className="w-5 h-5 text-teal-600" />
-                <CardTitle className="text-lg">{label}</CardTitle>
+                <Settings className="w-5 h-5 text-[#00857a]" />
+                <h3 className="text-lg font-semibold text-white">{label}</h3>
                 <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 bg-teal-100 text-teal-700 text-xs rounded-full font-medium">
+                  <span className="px-2 py-0.5 bg-[#00857a]/20 text-[#33bfb7] text-xs rounded-full font-medium">
                     {categoryEntitledCount}/{modules.length} in plan
                   </span>
-                  <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full font-medium">
+                  <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-xs rounded-full font-medium">
                     {categoryEnabledCount} active
                   </span>
                 </div>
               </div>
               {isExpanded ? (
-                <ChevronUp className="w-5 h-5 text-gray-400" />
+                <ChevronUp className="w-5 h-5 text-slate-400" />
               ) : (
-                <ChevronDown className="w-5 h-5 text-gray-400" />
+                <ChevronDown className="w-5 h-5 text-slate-400" />
               )}
             </button>
             {isExpanded && (
-              <CardContent className="space-y-3 pt-4">
+              <EACardContent className="space-y-3 pt-4">
                 {modules.map((moduleName) => {
                   const currentValue = getModuleValue(moduleName);
                   const entitled = isModuleEntitled(moduleName);
@@ -376,50 +372,42 @@ export function TenantModuleConfigPanel() {
                     />
                   );
                 })}
-              </CardContent>
+              </EACardContent>
             )}
-          </Card>
+          </EACard>
         );
       })}
 
       {/* Save Actions */}
       {hasPendingChanges && (
-        <Card className="sticky bottom-4 border-blue-200 bg-blue-50">
-          <CardContent className="py-4">
+        <EACard className="sticky bottom-4 border-[#00857a]/50 bg-[#00857a]/10">
+          <EACardContent className="py-4">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-blue-900">
+              <p className="text-sm text-[#33bfb7]">
                 You have unsaved changes to {Object.keys(pendingChanges).length} module
                 {Object.keys(pendingChanges).length === 1 ? '' : 's'}
               </p>
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
+                <EAButton
+                  variant="secondary"
                   onClick={handleReset}
                   disabled={saving}
                 >
                   Cancel
-                </Button>
-                <Button
+                </EAButton>
+                <EAButton
+                  variant="primary"
                   onClick={handleSave}
                   disabled={saving}
-                  className="bg-teal-600 hover:bg-teal-700"
+                  loading={saving}
+                  icon={saving ? undefined : <Save className="h-4 w-4" />}
                 >
-                  {saving ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4 mr-2" />
-                      Save Changes
-                    </>
-                  )}
-                </Button>
+                  {saving ? 'Saving...' : 'Save Changes'}
+                </EAButton>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </EACardContent>
+        </EACard>
       )}
     </div>
   );

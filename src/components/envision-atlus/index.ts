@@ -14,6 +14,7 @@ export { EASlider } from './EASlider';
 export { EASelect, EASelectTrigger, EASelectContent, EASelectItem, EASelectValue } from './EASelect';
 export { EAPageLayout } from './EAPageLayout';
 export { EARiskIndicator } from './EARiskIndicator';
+export { EASwitch } from './EASwitch';
 
 // Re-export theme utilities
 export { envisionAtlus, getRiskStyles } from '../../styles/envision-atlus-theme';
