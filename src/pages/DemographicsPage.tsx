@@ -96,14 +96,14 @@ const DemographicsPage: React.FC = () => {
 
       try {
         // Query profile without FK join to roles - use the role column directly
-        // The roles(name) join fails with 406 if role_id is NULL or invalid
+        // Use maybeSingle() to avoid 406 when profile doesn't exist yet
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
-        if (error && error.code !== 'PGRST116') {
+        if (error) {
           throw error;
         }
 
