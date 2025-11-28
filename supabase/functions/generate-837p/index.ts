@@ -370,9 +370,10 @@ serve(async (req: Request) => {
     const currentUser: User = userData.user;
 
     // Extract client IP for audit logging
+    // NOTE: actor_ip_address column is inet type - use null instead of 'unknown' if no IP available
     const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
                      req.headers.get('cf-connecting-ip') ||
-                     req.headers.get('x-real-ip') || 'unknown';
+                     req.headers.get('x-real-ip') || null;
 
     const startTime = Date.now();
 

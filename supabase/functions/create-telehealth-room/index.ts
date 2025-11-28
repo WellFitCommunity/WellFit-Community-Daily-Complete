@@ -186,7 +186,7 @@ serve(async (req: Request) => {
       access_type: "telehealth_session",
       resource: `encounter:${encounter_id}`,
       access_reason: `Telehealth ${encounter_type} visit`,
-      ip_address: req.headers.get("x-forwarded-for") || "unknown",
+      ip_address: req.headers.get("x-forwarded-for") || null, // inet type - use null if no IP available
     });
 
     return new Response(

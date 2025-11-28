@@ -158,9 +158,10 @@ serve(async (req: Request) => {
     const phoneNumber = normalizePhone(payload.phone);
 
     // Extract client IP once for use throughout the function
+    // NOTE: actor_ip_address column is inet type - use null instead of 'unknown' if no IP available
     const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
                      req.headers.get('cf-connecting-ip') ||
-                     req.headers.get('x-real-ip') || 'unknown';
+                     req.headers.get('x-real-ip') || null;
 
     // Verify hCaptcha
     const captchaValid = await verifyHcaptcha(payload.hcaptcha_token);
