@@ -52,6 +52,39 @@ Tenant codes follow the format: `{ORG}-{LICENSE}{SEQUENCE}`
 - **Shared backend**: All tenants share Supabase database with RLS for isolation
 - **Shared tenant ID**: Same tenant_id used across both products when licensed together
 
+### External Referral & Reporting System
+
+Hospitals with Atlus-only licenses can refer patients to WellFit Community and receive reports:
+
+```
+Hospital (HH-8001, Atlus-only)
+         │
+         │ Refers patient
+         ▼
+WellFit Community (patient joins, does check-ins)
+         │
+         │ Generates reports & alerts
+         ▼
+Hospital receives insights about THEIR patients only
+```
+
+**Tables:**
+- `external_referral_sources` - Organizations that can refer patients
+- `patient_referrals` - Individual patient referrals with status tracking
+- `referral_reports` - Generated engagement/health reports
+- `referral_alerts` - Real-time alerts (missed check-ins, mood decline, SDOH flags)
+
+**Subscription Tiers:**
+- `basic` - Monthly summary reports
+- `standard` - Weekly reports + alerts
+- `premium` - Real-time alerts + dashboard access
+- `enterprise` - FHIR integration + SLA
+
+**Key Functions:**
+- `link_user_to_referral(user_id, phone)` - Auto-links new user to pending referral
+- `get_patient_engagement_summary(user_id, start, end)` - Generates engagement data
+- `check_referral_alerts(user_id)` - Creates alerts based on patient activity
+
 ## Critical Development Principles
 
 ### Zero Technical Debt

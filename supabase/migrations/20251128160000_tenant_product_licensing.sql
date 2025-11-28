@@ -266,6 +266,9 @@ SET
 WHERE tenant_code = 'WF-0001' OR subdomain = 'www';
 
 -- Update RPC to include product info
+-- Must drop first because return type is changing
+DROP FUNCTION IF EXISTS get_all_tenants_with_status();
+
 CREATE OR REPLACE FUNCTION get_all_tenants_with_status()
 RETURNS TABLE (
   tenant_id UUID,

@@ -380,10 +380,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
       // The handle_new_user trigger may have already created a basic profile
       // Note: created_by is only set when clinical staff enrolls a patient,
       // NOT for self-registration (this flow)
+      // Default tenant_id for WellFit Community self-registration (WF-0001)
+      const DEFAULT_TENANT_ID = '2b902657-6a20-4435-a78a-576f397517ca';
+
       const { error: profileError } = await supabase
         .from("profiles")
         .upsert({
           user_id: authData.user.id,
+          tenant_id: DEFAULT_TENANT_ID,
           first_name: pending.first_name,
           last_name: pending.last_name,
           email: pending.email,

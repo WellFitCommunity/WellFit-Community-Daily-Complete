@@ -268,12 +268,12 @@ const SettingsPage: React.FC = () => {
                     <div className="space-y-4">
                       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
                         <p className="text-[#003865] font-semibold mb-2">
-                          🌍 Select your preferred language / Seleccione su idioma preferido
+                          🌍 Select your preferred language
                         </p>
-                        <p className="text-gray-600 text-sm">
-                          The app will display in your chosen language. Changes take effect immediately.
-                          <br />
-                          <em>La aplicación se mostrará en el idioma que elija. Los cambios se aplican inmediatamente.</em>
+                        <p className="text-gray-600 text-sm space-y-1">
+                          <span className="block">The app will display in your chosen language. Changes take effect immediately.</span>
+                          <span className="block"><em>La aplicacion se mostrara en el idioma que elija. Los cambios se aplican inmediatamente.</em></span>
+                          <span className="block"><em>Ung dung se hien thi bang ngon ngu ban chon. Thay doi co hieu luc ngay lap tuc.</em></span>
                         </p>
                       </div>
                       <LanguageSelector showLabel={true} className="justify-center" />
