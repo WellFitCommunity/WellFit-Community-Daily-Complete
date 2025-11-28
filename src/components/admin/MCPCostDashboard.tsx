@@ -120,22 +120,22 @@ export const MCPCostDashboard: React.FC = () => {
         <div className="grid grid-cols-2 gap-6">
           <div>
             <p className="text-green-100 text-sm mb-1">Total Saved</p>
-            <p className="text-5xl font-bold">${metrics.total_saved.toFixed(2)}</p>
+            <p className="text-5xl font-bold">${(metrics.total_saved ?? 0).toFixed(2)}</p>
           </div>
           <div>
             <p className="text-green-100 text-sm mb-1">Savings Rate</p>
-            <p className="text-5xl font-bold">{savingsPercentage.toFixed(0)}%</p>
+            <p className="text-5xl font-bold">{(savingsPercentage ?? 0).toFixed(0)}%</p>
           </div>
         </div>
 
         <div className="mt-6 bg-white/20 backdrop-blur-sm rounded-xl p-4">
           <div className="flex justify-between items-center">
             <span className="text-sm">Without MCP:</span>
-            <span className="font-bold">${totalPotentialCost.toFixed(2)}</span>
+            <span className="font-bold">${(totalPotentialCost ?? 0).toFixed(2)}</span>
           </div>
           <div className="flex justify-between items-center mt-2">
             <span className="text-sm">With MCP:</span>
-            <span className="font-bold text-green-200">${metrics.total_spent.toFixed(2)}</span>
+            <span className="font-bold text-green-200">${(metrics.total_spent ?? 0).toFixed(2)}</span>
           </div>
         </div>
       </motion.div>
@@ -152,7 +152,7 @@ export const MCPCostDashboard: React.FC = () => {
           <div className="flex items-center justify-between mb-3">
             <Target className="w-8 h-8 text-blue-600" />
             <span className="text-3xl font-bold text-blue-600">
-              {metrics.avg_cache_hit_rate.toFixed(0)}%
+              {(metrics.avg_cache_hit_rate ?? 0).toFixed(0)}%
             </span>
           </div>
           <h3 className="font-semibold text-gray-800">Cache Hit Rate</h3>
@@ -179,7 +179,7 @@ export const MCPCostDashboard: React.FC = () => {
           </div>
           <h3 className="font-semibold text-gray-800">Model Usage</h3>
           <p className="text-sm text-gray-600 mt-1">
-            {((metrics.total_haiku_calls / metrics.total_calls) * 100).toFixed(0)}% using cheaper
+            {(((metrics.total_haiku_calls ?? 0) / (metrics.total_calls || 1)) * 100).toFixed(0)}% using cheaper
             Haiku
           </p>
         </motion.div>
@@ -251,9 +251,9 @@ export const MCPCostDashboard: React.FC = () => {
 
                 <div className="text-right">
                   <div className="text-sm font-bold text-green-600">
-                    ${day.saved_cost.toFixed(2)}
+                    ${(day.saved_cost ?? 0).toFixed(2)}
                   </div>
-                  <div className="text-xs text-gray-500">${day.total_cost.toFixed(2)} spent</div>
+                  <div className="text-xs text-gray-500">${(day.total_cost ?? 0).toFixed(2)} spent</div>
                 </div>
               </div>
             ))}
@@ -273,13 +273,13 @@ export const MCPCostDashboard: React.FC = () => {
           Optimization Tips
         </h3>
         <ul className="space-y-2 text-sm text-gray-700">
-          {metrics.avg_cache_hit_rate < 50 && (
+          {(metrics.avg_cache_hit_rate ?? 0) < 50 && (
             <li>
               • <span className="font-semibold">Low cache hit rate:</span> Try using similar
               workflows to benefit from caching
             </li>
           )}
-          {((metrics.total_sonnet_calls / metrics.total_calls) * 100) > 70 && (
+          {(((metrics.total_sonnet_calls ?? 0) / (metrics.total_calls || 1)) * 100) > 70 && (
             <li>
               • <span className="font-semibold">High Sonnet usage:</span> Consider using Haiku for
               simpler tasks (60% cheaper)
