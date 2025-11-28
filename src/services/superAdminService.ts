@@ -161,12 +161,19 @@ export const SuperAdminService = {
         tenantName: row.tenant_name,
         subdomain: row.subdomain,
         tenantCode: row.tenant_code,
-        isActive: row.is_active,
-        isSuspended: row.is_suspended,
+        licensedProducts: row.licensed_products || ['wellfit', 'atlus'],
+        isActive: row.is_active ?? true,
+        isSuspended: row.is_suspended ?? false,
+        status: row.is_suspended ? 'suspended' : 'active',
         suspensionReason: row.suspension_reason,
         userCount: parseInt(row.user_count) || 0,
         patientCount: parseInt(row.patient_count) || 0,
+        maxUsers: row.max_users,
+        maxPatients: row.max_patients,
         lastActivity: row.last_activity,
+        lastActivityAt: row.last_activity,
+        licenseTier: row.license_tier,
+        licenseEndDate: row.license_end_date,
         createdAt: row.created_at
       }));
     } catch (error) {

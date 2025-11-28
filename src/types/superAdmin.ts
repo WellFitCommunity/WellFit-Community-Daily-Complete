@@ -182,20 +182,27 @@ export interface SystemOverview {
 // TENANT MANAGEMENT
 // ============================================================================
 
+export type LicensedProduct = 'wellfit' | 'atlus';
+export type ProductFilter = 'all' | 'wellfit' | 'atlus' | 'both';
+
 export interface TenantWithStatus {
   tenantId: string;
   tenantName: string;
   subdomain: string;
   tenantCode?: string; // Unique tenant identifier (e.g., "MH-6702")
+  licensedProducts?: LicensedProduct[]; // Products licensed for this tenant
   isActive: boolean;
   isSuspended: boolean;
   status?: 'active' | 'suspended';
   suspensionReason?: string;
   userCount: number;
   patientCount: number;
+  maxUsers?: number;
+  maxPatients?: number;
   lastActivity?: string;
   lastActivityAt?: string;
   licenseTier?: string;
+  licenseEndDate?: string;
   modules?: Record<string, any>;
   createdAt: string;
 }
