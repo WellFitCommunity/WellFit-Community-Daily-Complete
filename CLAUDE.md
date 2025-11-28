@@ -148,7 +148,7 @@ The codebase is being migrated to the **Envision Atlus** design system - a clini
 | `EAPageLayout` | Page layout wrapper |
 | `EARiskIndicator` | Risk level indicators |
 | `EASwitch` | Toggle switches for settings |
-| `EATabs` | Tab navigation (in progress) |
+| `EATabs` | Tab navigation with accessibility |
 
 ### Theme Colors
 - **Primary (Teal)**: `#00857a` (main), `#33bfb7` (light)

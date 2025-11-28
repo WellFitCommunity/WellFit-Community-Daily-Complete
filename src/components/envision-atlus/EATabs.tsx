@@ -99,6 +99,7 @@ export const EATabsTrigger: React.FC<EATabsTriggerProps> = ({
     <button
       role="tab"
       type="button"
+      id={`tab-${value}`}
       aria-selected={isActive}
       aria-controls={`tabpanel-${value}`}
       disabled={disabled}
