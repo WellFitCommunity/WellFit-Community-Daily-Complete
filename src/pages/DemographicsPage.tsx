@@ -273,12 +273,9 @@ const DemographicsPage: React.FC = () => {
     setSubmitting(true);
     setError(null);
 
-    // Validate required fields
-    if (!formData.first_name || !formData.last_name || !formData.phone) {
-      setError('Please complete your basic information.');
-      setSubmitting(false);
-      return;
-    }
+    // Note: first_name, last_name, and phone are collected during registration
+    // and should already be in the profile. We don't block here since those
+    // fields aren't editable on this page - if missing, they can be added later.
 
     try {
       // Update profile with all demographics data
