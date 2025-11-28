@@ -95,9 +95,11 @@ const DemographicsPage: React.FC = () => {
       }
 
       try {
+        // Query profile without FK join to roles - use the role column directly
+        // The roles(name) join fails with 406 if role_id is NULL or invalid
         const { data, error } = await supabase
           .from('profiles')
-          .select('*, roles(name)')
+          .select('*')
           .eq('user_id', user.id)
           .single();
 
@@ -106,7 +108,8 @@ const DemographicsPage: React.FC = () => {
         }
 
         if (data) {
-          const roleName = data.roles?.name || 'senior';
+          // Use role column (stores role name directly) instead of FK join
+          const roleName = data.role || data.role_slug || 'senior';
 
           // Skip demographics for admin/staff roles
           if (['admin', 'super_admin', 'staff', 'moderator'].includes(roleName)) {
