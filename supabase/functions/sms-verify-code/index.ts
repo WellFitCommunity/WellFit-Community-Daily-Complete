@@ -378,6 +378,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
       // Create or update profile (UPSERT to handle trigger race condition)
       // The handle_new_user trigger may have already created a basic profile
+      // Note: created_by is only set when clinical staff enrolls a patient,
+      // NOT for self-registration (this flow)
       const { error: profileError } = await supabase
         .from("profiles")
         .upsert({
@@ -389,7 +391,6 @@ Deno.serve(async (req: Request): Promise<Response> => {
           role_code: pending.role_code,
           role: pending.role_slug,
           role_slug: pending.role_slug,
-          created_by: null,
         }, {
           onConflict: 'user_id',  // Update if profile exists from trigger
           ignoreDuplicates: false  // We want to update with our richer data
