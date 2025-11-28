@@ -189,13 +189,21 @@ export function withCors(
 
 /**
  * Legacy backwards-compatible export for edge functions that import `corsHeaders` directly.
- * This provides a sensible default for preflight and response headers.
- * Note: For production origins, set ALLOWED_ORIGINS env variable with your domains.
+ *
+ * IMPORTANT: This static export cannot validate the request origin dynamically.
+ * For proper CORS handling with credentials, use corsFromRequest() instead.
+ *
+ * This export uses the first configured ALLOWED_ORIGIN or falls back to production domain.
+ * Do NOT use wildcard "*" as it breaks credentials and is insecure.
  */
+const defaultOrigin: string = ALLOWED_ORIGINS[0] || "https://wellfitcommunity.live";
+
 export const corsHeaders: HeadersRecord = {
   "Content-Type": "application/json",
-  "Access-Control-Allow-Origin": "*", // Will be overridden by cors() for specific origins
+  "Access-Control-Allow-Origin": defaultOrigin,
+  "Access-Control-Allow-Credentials": "true",
   "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-hcaptcha-token, x-admin-token, x-supabase-api-version",
   "Access-Control-Max-Age": "86400",
+  "Vary": "Origin",
 };

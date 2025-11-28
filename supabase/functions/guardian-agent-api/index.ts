@@ -8,7 +8,7 @@
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
-import { corsHeaders } from '../_shared/cors.ts';
+import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
 
 interface GuardianRequest {
   action: 'security_scan' | 'audit_log' | 'monitor_health';
@@ -22,10 +22,13 @@ interface GuardianResponse {
 }
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight
+  // Handle CORS preflight with dynamic origin validation
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return handleOptions(req);
   }
+
+  // Get CORS headers for this request's origin
+  const { headers: corsHeaders } = corsFromRequest(req);
 
   try {
     // Get Supabase client with user context
@@ -77,12 +80,14 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
+    // Get CORS headers again for error response
+    const { headers: errorCorsHeaders } = corsFromRequest(req);
     return new Response(
       JSON.stringify({
         success: false,
         error: error instanceof Error ? error.message : 'Internal server error'
       }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...errorCorsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

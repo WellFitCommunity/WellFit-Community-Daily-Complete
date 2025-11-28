@@ -3,7 +3,7 @@
 // Deno runtime
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { corsHeaders } from "../_shared/cors.ts";
+import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 
 const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
@@ -46,10 +46,13 @@ function validatePhone(phone: string): { valid: boolean; error?: string } {
 serve(async (req) => {
   const logger = createLogger('send-sms', req);
 
-  // Handle CORS preflight
+  // Handle CORS preflight with dynamic origin validation
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return handleOptions(req);
   }
+
+  // Get CORS headers for this request's origin
+  const { headers: corsHeaders } = corsFromRequest(req);
 
   try {
     const { to, message, priority = 'normal' }: SMSRequest = await req.json();

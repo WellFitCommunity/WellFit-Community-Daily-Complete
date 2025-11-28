@@ -3,7 +3,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { corsHeaders } from "../_shared/cors.ts";
+import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 
 interface DataRequest {
   action: 'export' | 'delete' | 'status';
@@ -17,10 +17,13 @@ const supabase = createClient(
 );
 
 serve(async (req) => {
-  // Handle CORS
+  // Handle CORS preflight with dynamic origin validation
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return handleOptions(req);
   }
+
+  // Get CORS headers for this request's origin
+  const { headers: corsHeaders } = corsFromRequest(req);
 
   try {
     const { action, userId, confirmDeletion }: DataRequest = await req.json();
