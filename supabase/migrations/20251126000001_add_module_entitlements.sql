@@ -293,8 +293,8 @@ CREATE POLICY "tenant_module_config_superadmin_read"
   USING (
     EXISTS (
       SELECT 1 FROM public.super_admin_users
-      WHERE super_admin_users.id = auth.uid()
-        AND super_admin_users.status = 'active'
+      WHERE super_admin_users.user_id = auth.uid()
+        AND super_admin_users.is_active = true
     )
   );
 
@@ -306,15 +306,15 @@ CREATE POLICY "tenant_module_config_superadmin_write"
   USING (
     EXISTS (
       SELECT 1 FROM public.super_admin_users
-      WHERE super_admin_users.id = auth.uid()
-        AND super_admin_users.status = 'active'
+      WHERE super_admin_users.user_id = auth.uid()
+        AND super_admin_users.is_active = true
     )
   )
   WITH CHECK (
     EXISTS (
       SELECT 1 FROM public.super_admin_users
-      WHERE super_admin_users.id = auth.uid()
-        AND super_admin_users.status = 'active'
+      WHERE super_admin_users.user_id = auth.uid()
+        AND super_admin_users.is_active = true
     )
   );
 
@@ -326,8 +326,8 @@ CREATE POLICY "tenant_module_config_superadmin_insert"
   WITH CHECK (
     EXISTS (
       SELECT 1 FROM public.super_admin_users
-      WHERE super_admin_users.id = auth.uid()
-        AND super_admin_users.status = 'active'
+      WHERE super_admin_users.user_id = auth.uid()
+        AND super_admin_users.is_active = true
     )
   );
 
