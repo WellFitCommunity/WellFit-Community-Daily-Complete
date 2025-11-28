@@ -1,7 +1,13 @@
 # Claude Instructions for WellFit-Community-Daily-Complete
 
 ## Project Overview
-This is a WellFit community application with daily features. The project uses TypeScript/React and includes user registration with hCaptcha integration.
+This is a **white-label multi-tenant SaaS** healthcare platform. Each tenant can have their own domain and branding. The project uses TypeScript/React and includes user registration with hCaptcha integration.
+
+### White-Label Architecture
+- **Multi-tenant**: Multiple organizations use the same codebase with their own domains
+- **Dynamic origins**: CORS must accept any tenant's HTTPS domain (no hardcoded allowlists)
+- **Tenant branding**: Each tenant can customize appearance via `useBranding()` hook
+- **Shared backend**: All tenants share Supabase database with RLS for isolation
 
 ## Critical Development Principles
 
@@ -122,10 +128,11 @@ async function getData(id: string): Promise<ServiceResult<Data>> {
 ```
 
 ## Current Status
-- Latest commit: Envision Atlus design system migration
-- Focus: UI/UX modernization with clinical-grade components
-- Database: PostgreSQL 17 via Supabase
-- Recent work: Admin dashboard migration, CORS fixes, null-safety improvements
+- **Architecture**: White-label multi-tenant SaaS
+- **CORS**: Fully white-label ready (any HTTPS origin allowed)
+- **Database**: PostgreSQL 17 via Supabase with RLS
+- **UI**: Envision Atlus design system migration in progress
+- **Edge Functions**: All using shared `_shared/cors.ts` module
 
 ## Envision Atlus Design System
 
@@ -181,15 +188,55 @@ When displaying database values with `.toFixed()`, always use null coalescing:
 {(((numerator ?? 0) / (denominator || 1)) * 100).toFixed(0)}%
 ```
 
-### CORS for Edge Functions
-Edge functions in `supabase/functions/` should import CORS utilities from:
+### CORS for Edge Functions (White-Label Ready)
+
+**CRITICAL: This is a white-label multi-tenant SaaS. CORS must work for ANY tenant domain.**
+
+All edge functions MUST use the shared CORS module - NEVER create local CORS implementations:
+
 ```typescript
-import { corsHeaders, cors, handleOptions, withCors } from '../_shared/cors.ts';
+import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
+
+serve(async (req) => {
+  // Handle preflight
+  if (req.method === 'OPTIONS') {
+    return handleOptions(req);
+  }
+
+  // Get dynamic CORS headers for this request's origin
+  const { headers: corsHeaders } = corsFromRequest(req);
+
+  // Use corsHeaders in all responses
+  return new Response(JSON.stringify(data), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+  });
+});
 ```
-- `corsHeaders` - Legacy static headers export (backwards compatible)
-- `cors(origin)` - Generate headers for specific origin
-- `handleOptions(request)` - Preflight handler
-- `withCors(request, response)` - Merge CORS headers into response
+
+**How it works:**
+- `WHITE_LABEL_MODE=true` (default) - allows any HTTPS origin
+- Each request's origin is echoed back (NOT wildcard `*`)
+- Credentials supported (`Access-Control-Allow-Credentials: true`)
+- NEVER use hardcoded origin allowlists in individual functions
+
+**Available exports from `_shared/cors.ts`:**
+| Export | Usage |
+|--------|-------|
+| `corsFromRequest(req)` | Returns `{ headers, allowed }` for the request's origin |
+| `handleOptions(req)` | Returns preflight response (use for OPTIONS) |
+| `cors(origin, options)` | Generate headers for specific origin string |
+| `withCors(req, response)` | Merge CORS headers into existing response |
+| `corsHeaders` | Legacy static export (avoid - use `corsFromRequest`) |
+
+**Auth helper with CORS:**
+```typescript
+import { withCORS } from '../_shared/auth.ts';
+
+serve(withCORS(async (req) => {
+  // Your handler - CORS is handled automatically
+  return new Response(JSON.stringify({ ok: true }));
+}));
+```
 
 ## Important Directories
 
