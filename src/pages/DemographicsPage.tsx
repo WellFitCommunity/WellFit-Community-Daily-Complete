@@ -204,9 +204,11 @@ const DemographicsPage: React.FC = () => {
     setError(null);
 
     try {
+      // Use upsert in case profile doesn't exist yet (trigger may have failed)
       const { error: profileError} = await supabase
         .from('profiles')
-        .update({
+        .upsert({
+          user_id: user?.id,
           gender: formData.gender,
           ethnicity: formData.ethnicity,
           marital_status: formData.marital_status,
@@ -230,8 +232,7 @@ const DemographicsPage: React.FC = () => {
           social_support: formData.social_support,
           demographics_step: currentStep, // Save current step
           demographics_complete: false // Not finished yet
-        })
-        .eq('user_id', user?.id);
+        }, { onConflict: 'user_id' });
 
       if (profileError) throw profileError;
 
@@ -252,13 +253,14 @@ const DemographicsPage: React.FC = () => {
 
     try {
       // Mark that they skipped demographics for now
+      // Use upsert in case profile doesn't exist yet
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({
-          demographics_step: 0, // Mark as skipped
+        .upsert({
+          user_id: user?.id,
+          demographics_step: null,
           demographics_complete: false
-        })
-        .eq('user_id', user?.id);
+        }, { onConflict: 'user_id' });
 
       if (profileError) throw profileError;
 
@@ -281,10 +283,11 @@ const DemographicsPage: React.FC = () => {
     // fields aren't editable on this page - if missing, they can be added later.
 
     try {
-      // Update profile with all demographics data
+      // Upsert profile with all demographics data (handles missing profile)
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({
+        .upsert({
+          user_id: user?.id,
           gender: formData.gender,
           ethnicity: formData.ethnicity,
           marital_status: formData.marital_status,
@@ -308,8 +311,7 @@ const DemographicsPage: React.FC = () => {
           social_support: formData.social_support,
           demographics_complete: true,
           demographics_step: null // Clear step since completed
-        })
-        .eq('user_id', user?.id);
+        }, { onConflict: 'user_id' });
 
       if (profileError) throw profileError;
 
