@@ -12,9 +12,10 @@
 -- 19 = patient
 
 -- Ensure senior role exists (id=4) - default for self-registration
-INSERT INTO public.roles (id, name)
-VALUES (4, 'senior')
-ON CONFLICT (id) DO NOTHING;
+-- Note: senior already exists in production, this is just a safety check
+INSERT INTO public.roles (id, name, tenant_id)
+SELECT 4, 'senior', '2b902657-6a20-4435-a78a-576f397517ca'
+WHERE NOT EXISTS (SELECT 1 FROM public.roles WHERE id = 4);
 
 -- Update the handle_new_user trigger to be SAFE and CONDITIONAL
 -- This prevents errors when:
