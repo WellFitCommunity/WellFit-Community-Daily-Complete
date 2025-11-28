@@ -17,13 +17,29 @@ This codebase contains **two separate white-label products** that can be used in
 
 ### Tenant ID Convention
 
-Tenant codes follow a prefix convention indicating licensed products:
+Tenant codes follow the format: `{ORG}-{LICENSE}{SEQUENCE}`
 
-| Prefix | License Type | Example | Description |
-|--------|--------------|---------|-------------|
-| `WF-0xxx` | **Both Products** | `WF-0001` | WellFit + Envision Atlus (full platform) |
-| `WF-8xxx` | **Envision Atlus Only** | `WF-8001` | Clinical engine only |
-| `WF-9xxx` | **WellFit Only** | `WF-9001` | Community platform only |
+**Format Breakdown:**
+- `{ORG}` = 2-4 letter organization prefix (e.g., `WF`, `HH`, `VG`)
+- `{LICENSE}` = Single digit indicating licensed products
+- `{SEQUENCE}` = 3-digit sequence number
+
+**License Digit Convention:**
+
+| Digit | License Type | Example | Description |
+|-------|--------------|---------|-------------|
+| `0` | **Both Products** | `VG-0002` | Vegas Clinic - WellFit + Envision Atlus |
+| `8` | **Envision Atlus Only** | `HH-8001` | Houston Hospital - Clinical engine only |
+| `9` | **WellFit Only** | `MC-9001` | Miami Care - Community platform only |
+
+**Example Tenant Codes:**
+
+| Code | Organization | Products |
+|------|--------------|----------|
+| `WF-0001` | WellFit Community (default/testing) | Both |
+| `HH-8001` | Houston Hospital | Envision Atlus Only |
+| `VG-0002` | Vegas Clinic | Both |
+| `MC-9003` | Miami Care Center | WellFit Only |
 
 **Default Tenant for Testing:**
 - `WF-0001` = WellFit Community (UUID: `2b902657-6a20-4435-a78a-576f397517ca`)
