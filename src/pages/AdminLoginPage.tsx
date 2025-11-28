@@ -13,6 +13,7 @@ import { useAuth, useSupabaseClient } from '../contexts/AuthContext';
 import { useAdminAuth } from '../contexts/AdminAuthContext';
 import { StaffRole, ROLE_DISPLAY_NAMES } from '../types/roles';
 import { useBranding } from '../BrandingContext';
+import { hashPinForTransmission } from '../services/pinHashingService';
 
 type LocationState = {
   message?: string;
@@ -182,8 +183,12 @@ export default function AdminLoginPage() {
 
     setBusy(true);
     try {
+      // SECURITY: Hash PIN client-side before transmission (defense-in-depth)
+      // This prevents plaintext PINs from appearing in logs, dev tools, or memory dumps
+      const hashedPin = await hashPinForTransmission(p1);
+
       const { error: fnErr } = await supabase.functions.invoke('admin_set_pin', {
-        body: { pin: p1, role }
+        body: { pin: hashedPin, role }
       });
 
       if (fnErr) {

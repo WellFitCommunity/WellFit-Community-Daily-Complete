@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.183.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=deno";
 import { z } from "https://esm.sh/zod@3.23.8?target=deno";
 import { cors } from "../_shared/cors.ts";
-import { hashPin } from "../_shared/crypto.ts";
+import { hashPin, isClientHashedPin } from "../_shared/crypto.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SB_SECRET_KEY = Deno.env.get("SB_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -10,7 +10,10 @@ const SB_SECRET_KEY = Deno.env.get("SB_SECRET_KEY") ?? Deno.env.get("SUPABASE_SE
 const supabase = createClient(SUPABASE_URL, SB_SECRET_KEY);
 
 const schema = z.object({
-  pin: z.string().regex(/^\d{4,8}$/, "PIN must be 4–8 digits"),
+  // PIN can be:
+  // 1. Client-hashed (sha256:...) - preferred, new format from updated clients
+  // 2. Plain numeric (1234-12345678) - legacy format, will be deprecated
+  pin: z.string().min(4, "PIN must be at least 4 characters"),
   role: z.enum([
     "admin",
     "super_admin",
@@ -59,7 +62,24 @@ serve(async (req) => {
     }
 
     const { pin, role } = parsed.data;
-    const pin_hash = await hashPin(pin);
+
+    // SECURITY: Handle client-hashed PINs (new format, preferred)
+    // Client sends PINs pre-hashed with SHA-256 to prevent plaintext exposure in logs/transit
+    // We apply PBKDF2 to the client hash for storage security
+    let pinToHash = pin;
+    if (!isClientHashedPin(pin)) {
+      // LEGACY: Plain numeric PIN - validate format
+      // This path will be deprecated once all clients are updated
+      if (!/^\d{4,8}$/.test(pin)) {
+        return new Response(
+          JSON.stringify({ error: "PIN must be 4-8 digits or pre-hashed format" }),
+          { status: 400, headers }
+        );
+      }
+    }
+
+    // Hash the PIN (or client-hash) with PBKDF2 for storage
+    const pin_hash = await hashPin(pinToHash);
 
     const { error } = await supabase.from("staff_pins").upsert({
       user_id,

@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.183.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=deno";
 import { z } from "https://esm.sh/zod@3.23.8?target=deno";
 import { cors } from "../_shared/cors.ts";
-import { verifyPin, generateSecureToken } from "../_shared/crypto.ts";
+import { verifyPin, generateSecureToken, isClientHashedPin } from "../_shared/crypto.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
@@ -12,6 +12,10 @@ const ADMIN_SESSION_TTL_MIN = 30; // 30 minutes for enhanced security (B2B2C hea
 const supabase = createClient(SUPABASE_URL, SB_SECRET_KEY);
 
 const schema = z.object({
+  // PIN can be:
+  // 1. Client-hashed (sha256:...) - preferred, new format
+  // 2. TenantCode-PIN format (MH-6702-1234) - legacy, parsed below
+  // 3. Plain numeric (1234) - legacy, will be deprecated
   pin: z.string().min(4, "PIN must be at least 4 characters"),
   role: z.enum([
     "admin",
@@ -25,6 +29,10 @@ const schema = z.object({
     "department_head",
     "physical_therapist"
   ]),
+  // Optional: client may provide tenant code separately when using new format
+  tenantCode: z.string().optional(),
+  // Optional: indicates the format being used
+  pinFormat: z.enum(["pin_only", "tenant_code_pin"]).optional(),
 });
 
 
@@ -74,20 +82,14 @@ serve(async (req: Request) => {
     const parsed = schema.safeParse(body);
     if (!parsed.success) return new Response(JSON.stringify({ error: "Invalid data" }), { status: 400, headers });
 
-    let { pin, role } = parsed.data;
+    let { pin, role, tenantCode, pinFormat } = parsed.data;
 
-    // Parse TenantCode-PIN format if present (e.g., "MH-6702-1234")
-    // Format: PREFIX-NUMBER-PIN where PREFIX is 1-4 letters, NUMBER is 4-6 digits, PIN is 4-8 digits
-    const tenantCodePinPattern = /^([A-Z]{1,4})-([0-9]{4,6})-([0-9]{4,8})$/;
-    const match = pin.match(tenantCodePinPattern);
+    // SECURITY: Handle client-hashed PINs (new format, preferred)
+    // Client sends PINs pre-hashed with SHA-256 to prevent plaintext exposure in logs/transit
+    const clientHashed = isClientHashedPin(pin);
 
-    if (match) {
-      // TenantCode-PIN format detected
-      const tenantCodePrefix = match[1];  // e.g., "MH"
-      const tenantCodeNumber = match[2];  // e.g., "6702"
-      const numericPin = match[3];        // e.g., "1234"
-      const inputTenantCode = `${tenantCodePrefix}-${tenantCodeNumber}`; // e.g., "MH-6702"
-
+    // If client provided tenantCode separately (new format), validate it
+    if (tenantCode && pinFormat === 'tenant_code_pin') {
       // Verify user has a tenant and the code matches
       const { data: userProfile } = await supabase
         .from("profiles")
@@ -108,12 +110,13 @@ serve(async (req: Request) => {
         .eq("id", userProfile.tenant_id)
         .single();
 
-      if (tenant?.tenant_code !== inputTenantCode) {
+      if (tenant?.tenant_code !== tenantCode) {
         logger.security("Tenant code mismatch in PIN verification", {
           userId: user_id,
           expectedCode: tenant?.tenant_code,
-          providedCode: inputTenantCode,
-          clientIp
+          providedCode: tenantCode,
+          clientIp,
+          clientHashed
         });
 
         return new Response(
@@ -121,15 +124,64 @@ serve(async (req: Request) => {
           { status: 401, headers }
         );
       }
+      // PIN is already separated, no further parsing needed
+    }
+    // LEGACY: Parse TenantCode-PIN format if present (e.g., "MH-6702-1234")
+    // This handles old clients that haven't updated yet
+    else if (!clientHashed) {
+      const tenantCodePinPattern = /^([A-Z]{1,4})-([0-9]{4,6})-([0-9]{4,8})$/;
+      const match = pin.match(tenantCodePinPattern);
 
-      // Use only the numeric PIN portion for verification
-      pin = numericPin;
-    } else if (!/^\d{4,8}$/.test(pin)) {
-      // Not TenantCode-PIN format and not a simple numeric PIN
-      return new Response(
-        JSON.stringify({ error: "PIN must be 4-8 digits or TENANTCODE-PIN format" }),
-        { status: 400, headers }
-      );
+      if (match) {
+        // TenantCode-PIN format detected
+        const tenantCodePrefix = match[1];  // e.g., "MH"
+        const tenantCodeNumber = match[2];  // e.g., "6702"
+        const numericPin = match[3];        // e.g., "1234"
+        const inputTenantCode = `${tenantCodePrefix}-${tenantCodeNumber}`; // e.g., "MH-6702"
+
+        // Verify user has a tenant and the code matches
+        const { data: userProfile } = await supabase
+          .from("profiles")
+          .select("tenant_id")
+          .eq("user_id", user_id)
+          .single();
+
+        if (!userProfile?.tenant_id) {
+          return new Response(
+            JSON.stringify({ error: "No tenant assigned to your account" }),
+            { status: 400, headers }
+          );
+        }
+
+        const { data: tenant } = await supabase
+          .from("tenants")
+          .select("tenant_code")
+          .eq("id", userProfile.tenant_id)
+          .single();
+
+        if (tenant?.tenant_code !== inputTenantCode) {
+          logger.security("Tenant code mismatch in PIN verification", {
+            userId: user_id,
+            expectedCode: tenant?.tenant_code,
+            providedCode: inputTenantCode,
+            clientIp
+          });
+
+          return new Response(
+            JSON.stringify({ error: `Incorrect tenant code. Expected ${tenant?.tenant_code}` }),
+            { status: 401, headers }
+          );
+        }
+
+        // Use only the numeric PIN portion for verification
+        pin = numericPin;
+      } else if (!/^\d{4,8}$/.test(pin)) {
+        // Not TenantCode-PIN format and not a simple numeric PIN
+        return new Response(
+          JSON.stringify({ error: "PIN must be 4-8 digits or TENANTCODE-PIN format" }),
+          { status: 400, headers }
+        );
+      }
     }
 
     const { data: pinRow, error: pinErr } = await supabase

@@ -8,6 +8,7 @@ import React, {
 } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { StaffRole, RoleAccessScopes, roleHasAccess, ROLE_DISPLAY_NAMES } from '../types/roles';
+import { prepareAdminPinForVerification } from '../services/pinHashingService';
 
 // Backwards compatibility: AdminRole is now StaffRole
 export type AdminRole = StaffRole;
@@ -148,8 +149,17 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         return false;
       }
 
+      // SECURITY: Hash PIN client-side before transmission (defense-in-depth)
+      // This prevents plaintext PINs from appearing in logs, dev tools, or memory dumps
+      const { hashedPin, tenantCode, format } = await prepareAdminPinForVerification(pin);
+
       const { data, error: fnErr } = await supabase.functions.invoke('verify-admin-pin', {
-        body: { pin, role }
+        body: {
+          pin: hashedPin,
+          role,
+          tenantCode,
+          pinFormat: format
+        }
       });
 
       if (fnErr) {

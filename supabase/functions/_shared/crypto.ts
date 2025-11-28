@@ -3,9 +3,32 @@
 //
 // SECURITY: Uses cryptographically random salt per hash (16 bytes)
 // Returns format: base64(salt):base64(hash) or base64(salt):hex(hash)
+//
+// CLIENT-SIDE HASHING:
+// The client sends PINs pre-hashed with SHA-256 (prefixed with 'sha256:')
+// This prevents plaintext PINs from appearing in logs, dev tools, or memory dumps
+// The server applies PBKDF2 to the client hash for storage security
 
 const ITERATIONS = 100000; // PBKDF2 iterations for security (OWASP recommended minimum)
 const SALT_LENGTH = 16; // 16 bytes = 128 bits
+
+/**
+ * Check if a PIN value is already client-hashed
+ * Client sends PINs prefixed with 'sha256:' followed by 64 hex characters
+ */
+export function isClientHashedPin(value: string): boolean {
+  return value.startsWith('sha256:') && value.length === 71; // 'sha256:' + 64 hex chars
+}
+
+/**
+ * Extract the hash value from a client-hashed PIN
+ */
+export function extractClientHash(value: string): string {
+  if (!isClientHashedPin(value)) {
+    throw new Error('Invalid client-hashed PIN format');
+  }
+  return value.slice(7); // Remove 'sha256:' prefix
+}
 
 /**
  * Hash a PIN using PBKDF2 with SHA-256 and random salt
