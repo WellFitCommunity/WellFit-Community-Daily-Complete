@@ -17,15 +17,14 @@ if (!DAILY_API_KEY) {
 
 const sb = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
-const corsHeaders = {
-  // CORS handled by shared module,
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
 serve(async (req: Request) => {
+  // Handle CORS preflight with dynamic origin validation
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return handleOptions(req);
   }
+
+  // Get CORS headers for this request's origin
+  const { headers: corsHeaders } = corsFromRequest(req);
 
   try {
     // Authenticate request

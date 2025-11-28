@@ -3,11 +3,6 @@ import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { createLogger } from '../_shared/auditLogger.ts'
 
-const corsHeaders = {
-  // CORS handled by shared module,
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
 interface TeamAlertRequest {
   alert_type: string;
   description: string;
@@ -18,10 +13,13 @@ interface TeamAlertRequest {
 serve(async (req) => {
   const logger = createLogger('send-team-alert', req);
 
-  // Handle CORS preflight
+  // Handle CORS preflight with dynamic origin validation
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return handleOptions(req);
   }
+
+  // Get CORS headers for this request's origin
+  const { headers: corsHeaders } = corsFromRequest(req);
 
   try {
     // Get the authorization header from the request

@@ -2,11 +2,6 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createAdminClient } from '../_shared/supabaseClient.ts'
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 
-const corsHeaders = {
-  // CORS handled by shared module,
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
 interface MedicalCode {
   code: string;
   type: 'ICD10' | 'CPT' | 'HCPCS';
@@ -23,9 +18,13 @@ interface ProcessingResult {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight with dynamic origin validation
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return handleOptions(req);
   }
+
+  // Get CORS headers for this request's origin
+  const { headers: corsHeaders } = corsFromRequest(req);
 
   try {
     const { transcript, sessionType, patientId, audioUrl, duration } = await req.json()

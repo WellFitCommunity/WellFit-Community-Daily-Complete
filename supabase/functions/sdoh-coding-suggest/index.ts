@@ -15,16 +15,14 @@ interface SDOHCodingRequest {
   }
 }
 
-const corsHeaders = {
-  // CORS handled by shared module,
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
 serve(async (req) => {
-  // Handle CORS preflight requests
+  // Handle CORS preflight with dynamic origin validation
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return handleOptions(req);
   }
+
+  // Get CORS headers for this request's origin
+  const { headers: corsHeaders } = corsFromRequest(req);
 
   try {
     // Initialize Supabase client
