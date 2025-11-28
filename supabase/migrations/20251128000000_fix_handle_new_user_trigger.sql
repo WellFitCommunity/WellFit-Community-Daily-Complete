@@ -1,19 +1,15 @@
 -- ============================================================================
 -- Fix handle_new_user trigger causing "Database error creating new user"
--- Issue: Trigger hardcodes role_id=1 which may not exist, OR conflicts with
---        explicit profile creation in registration flows
--- Solution: Make trigger conditional and use a safe default role
+-- Issue: Trigger was hardcoded to role_id=1 (admin) instead of role_id=4 (senior)
+-- Solution: Make trigger conditional and use correct default role
 -- ============================================================================
 
 -- Role IDs in this system:
+-- 1 = admin
+-- 2 = super_admin
 -- 4 = senior (default for self-registration)
 -- 16 = case_manager
--- 19 = patient (new universal care recipient role)
-
--- Ensure patient role exists (id=19)
-INSERT INTO public.roles (id, name)
-VALUES (19, 'patient')
-ON CONFLICT (id) DO NOTHING;
+-- 19 = patient
 
 -- Ensure senior role exists (id=4) - default for self-registration
 INSERT INTO public.roles (id, name)
