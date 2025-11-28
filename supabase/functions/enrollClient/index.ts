@@ -175,6 +175,7 @@ serve(async (req: Request) => {
     // migration 20250916000000_new_init_roles_and_security.sql:5-16
     // Added all fields from EnrollSeniorPage to avoid data loss
     // FIXED 2025-10-26: Added role_id: 4 (senior) - was defaulting to 1 (admin) causing security issue
+    // FIXED 2025-11-28: Added created_by to track which staff member enrolled this patient
     const { error: perr } = await supabase.from("profiles").insert({
       user_id: newUserId,  // ✅ FIXED: Was 'id', now 'user_id' (matches schema)
       role_id: 4,  // ✅ FIXED 2025-10-26: Explicitly set role_id to 4 (senior) - was missing, defaulting to 1 (admin)
@@ -196,6 +197,7 @@ serve(async (req: Request) => {
       onboarded: false,  // Will be set to true after full onboarding
       is_test_user: is_test_user ?? false,  // Mark as test user for easy deletion
       test_tag: test_tag ?? null,  // Tag for bulk operations
+      created_by: adminId,  // ✅ FIXED 2025-11-28: Track which staff member enrolled this patient
       created_at: new Date().toISOString(),
     });
     if (perr) {
