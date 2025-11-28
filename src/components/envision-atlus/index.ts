@@ -15,6 +15,7 @@ export { EASelect, EASelectTrigger, EASelectContent, EASelectItem, EASelectValue
 export { EAPageLayout } from './EAPageLayout';
 export { EARiskIndicator } from './EARiskIndicator';
 export { EASwitch } from './EASwitch';
+export { EATabs, EATabsList, EATabsTrigger, EATabsContent } from './EATabs';
 
 // Re-export theme utilities
 export { envisionAtlus, getRiskStyles } from '../../styles/envision-atlus-theme';

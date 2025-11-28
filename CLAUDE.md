@@ -122,7 +122,90 @@ async function getData(id: string): Promise<ServiceResult<Data>> {
 ```
 
 ## Current Status
-- Latest commit: Platform unification Phase 1-2
-- Focus: Consolidating architecture, removing technical debt
+- Latest commit: Envision Atlus design system migration
+- Focus: UI/UX modernization with clinical-grade components
 - Database: PostgreSQL 17 via Supabase
-- Recent work: Unified feature flags, service layer standards
+- Recent work: Admin dashboard migration, CORS fixes, null-safety improvements
+
+## Envision Atlus Design System
+
+The codebase is being migrated to the **Envision Atlus** design system - a clinical-grade UI component library.
+
+### Component Location
+- `src/components/envision-atlus/` - All EA components
+- `src/styles/envision-atlus-theme.ts` - Theme utilities and color palette
+
+### Available Components
+| Component | Purpose |
+|-----------|---------|
+| `EACard` | Card containers with header/content/footer |
+| `EAButton` | Clinical-grade buttons |
+| `EABadge` | Status badges |
+| `EAMetricCard` | Dashboard metric displays |
+| `EAAlert` | Alert/notification displays |
+| `EASlider` | Input sliders |
+| `EASelect` | Dropdown selections |
+| `EAPageLayout` | Page layout wrapper |
+| `EARiskIndicator` | Risk level indicators |
+| `EASwitch` | Toggle switches for settings |
+| `EATabs` | Tab navigation (in progress) |
+
+### Theme Colors
+- **Primary (Teal)**: `#00857a` (main), `#33bfb7` (light)
+- **Background**: Slate-based dark theme (`slate-900`, `slate-800`)
+- **Text**: High contrast for accessibility
+
+### Usage Pattern
+```typescript
+import { EACard, EAButton, EASwitch } from '../envision-atlus';
+
+// Use components with consistent styling
+<EACard>
+  <EACardHeader>Title</EACardHeader>
+  <EACardContent>...</EACardContent>
+</EACard>
+```
+
+## Common Issues & Solutions
+
+### Null-Safe Number Formatting
+When displaying database values with `.toFixed()`, always use null coalescing:
+```typescript
+// ❌ Unsafe - will throw if value is null
+{metrics.total_saved.toFixed(2)}
+
+// ✅ Safe - handles null values
+{(metrics.total_saved ?? 0).toFixed(2)}
+
+// ✅ Safe division - prevents divide by zero
+{(((numerator ?? 0) / (denominator || 1)) * 100).toFixed(0)}%
+```
+
+### CORS for Edge Functions
+Edge functions in `supabase/functions/` should import CORS utilities from:
+```typescript
+import { corsHeaders, cors, handleOptions, withCors } from '../_shared/cors.ts';
+```
+- `corsHeaders` - Legacy static headers export (backwards compatible)
+- `cors(origin)` - Generate headers for specific origin
+- `handleOptions(request)` - Preflight handler
+- `withCors(request, response)` - Merge CORS headers into response
+
+## Important Directories
+
+| Directory | Purpose |
+|-----------|---------|
+| `src/components/admin/` | Admin dashboards and management panels |
+| `src/components/superAdmin/` | Super admin features (tenant management) |
+| `src/components/envision-atlus/` | Shared UI component library |
+| `src/services/_base/` | ServiceResult pattern utilities |
+| `src/hooks/` | Custom React hooks (useModuleAccess, etc.) |
+| `supabase/functions/` | Edge functions (Deno runtime) |
+| `supabase/functions/_shared/` | Shared utilities for edge functions |
+
+## Branch Naming Convention
+Claude Code branches follow this pattern:
+```
+claude/{feature-description}-{unique-id}
+```
+Example: `claude/fix-service-worker-api-01SydJ7ZTrj4W9T3DDpW3sUJ`
