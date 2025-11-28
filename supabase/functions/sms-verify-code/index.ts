@@ -376,23 +376,27 @@ Deno.serve(async (req: Request): Promise<Response> => {
         }), { status: 500, headers });
       }
 
-      // Create profile
+      // Create or update profile (UPSERT to handle trigger race condition)
+      // The handle_new_user trigger may have already created a basic profile
       const { error: profileError } = await supabase
         .from("profiles")
-        .insert({
-          user_id: authData.user.id,  // ✅ FIXED: Was 'id', now 'user_id' (matches schema)
+        .upsert({
+          user_id: authData.user.id,
           first_name: pending.first_name,
           last_name: pending.last_name,
           email: pending.email,
           phone: normalizedPhone,
           role_code: pending.role_code,
-          role: pending.role_slug,  // Added role field
+          role: pending.role_slug,
           role_slug: pending.role_slug,
           created_by: null,
+        }, {
+          onConflict: 'user_id',  // Update if profile exists from trigger
+          ignoreDuplicates: false  // We want to update with our richer data
         });
 
       if (profileError) {
-        logger.error("Failed to create profile", {
+        logger.error("Failed to create/update profile", {
           userId: authData.user.id,
           phone,
           error: profileError.message
