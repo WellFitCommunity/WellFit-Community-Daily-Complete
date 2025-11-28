@@ -205,10 +205,14 @@ const DemographicsPage: React.FC = () => {
 
     try {
       // Use upsert in case profile doesn't exist yet (trigger may have failed)
+      // Default tenant_id for WellFit Community self-registration
+      const DEFAULT_TENANT_ID = '2b902657-6a20-4435-a78a-576f397517ca';
+
       const { error: profileError} = await supabase
         .from('profiles')
         .upsert({
           user_id: user?.id,
+          tenant_id: DEFAULT_TENANT_ID,
           gender: formData.gender,
           ethnicity: formData.ethnicity,
           marital_status: formData.marital_status,
@@ -254,10 +258,14 @@ const DemographicsPage: React.FC = () => {
     try {
       // Mark that they skipped demographics for now
       // Use upsert in case profile doesn't exist yet
+      // Default tenant_id for WellFit Community self-registration
+      const DEFAULT_TENANT_ID = '2b902657-6a20-4435-a78a-576f397517ca';
+
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert({
           user_id: user?.id,
+          tenant_id: DEFAULT_TENANT_ID,
           demographics_step: null,
           demographics_complete: false
         }, { onConflict: 'user_id' });
@@ -284,10 +292,14 @@ const DemographicsPage: React.FC = () => {
 
     try {
       // Upsert profile with all demographics data (handles missing profile)
+      // Default tenant_id for WellFit Community self-registration
+      const DEFAULT_TENANT_ID = '2b902657-6a20-4435-a78a-576f397517ca';
+
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert({
           user_id: user?.id,
+          tenant_id: DEFAULT_TENANT_ID,
           gender: formData.gender,
           ethnicity: formData.ethnicity,
           marital_status: formData.marital_status,
