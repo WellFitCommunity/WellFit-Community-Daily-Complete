@@ -5,15 +5,19 @@
 -- Solution: Make trigger conditional and use a safe default role
 -- ============================================================================
 
--- First, ensure we have a default role (patient = 16) for new users
+-- Role IDs in this system:
+-- 4 = senior (default for self-registration)
+-- 16 = case_manager
+-- 19 = patient (new universal care recipient role)
+
+-- Ensure patient role exists (id=19)
 INSERT INTO public.roles (id, name)
-VALUES (16, 'patient')
+VALUES (19, 'patient')
 ON CONFLICT (id) DO NOTHING;
 
--- Also ensure role_id=1 exists (legacy default) to prevent FK violations
--- Use 'senior' as the legacy default (matches original system design)
+-- Ensure senior role exists (id=4) - default for self-registration
 INSERT INTO public.roles (id, name)
-VALUES (1, 'senior')
+VALUES (4, 'senior')
 ON CONFLICT (id) DO NOTHING;
 
 -- Update the handle_new_user trigger to be SAFE and CONDITIONAL
@@ -28,7 +32,7 @@ SECURITY DEFINER
 SET search_path = public
 AS $function$
 DECLARE
-  default_role_id INTEGER := 16;  -- 'patient' role as safe default
+  default_role_id INTEGER := 4;  -- 'senior' role as default for self-registration
   existing_profile UUID;
 BEGIN
   -- Check if profile already exists (registration code may have created it)
@@ -51,9 +55,9 @@ BEGIN
        OR name = NEW.raw_user_meta_data->>'role_code'
     LIMIT 1;
 
-    -- If not found, use patient role
+    -- If not found, use senior role (default for self-registration)
     IF default_role_id IS NULL THEN
-      default_role_id := 16;
+      default_role_id := 4;
     END IF;
   END IF;
 
