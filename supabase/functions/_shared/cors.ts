@@ -178,11 +178,24 @@ export function withCors(
   response: Response,
   options: CorsOptions = {}
 ): Response {
-  const { headers: corsHeaders } = corsFromRequest(request, options);
+  const { headers: corsHdrs } = corsFromRequest(request, options);
   const merged = new Headers(response.headers);
-  for (const [k, v] of Object.entries(corsHeaders)) merged.set(k, v);
+  for (const [k, v] of Object.entries(corsHdrs)) merged.set(k, v);
   return new Response(response.body, {
     status: response.status,
     headers: merged
   });
 }
+
+/**
+ * Legacy backwards-compatible export for edge functions that import `corsHeaders` directly.
+ * This provides a sensible default for preflight and response headers.
+ * Note: For production origins, set ALLOWED_ORIGINS env variable with your domains.
+ */
+export const corsHeaders: HeadersRecord = {
+  "Content-Type": "application/json",
+  "Access-Control-Allow-Origin": "*", // Will be overridden by cors() for specific origins
+  "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-hcaptcha-token, x-admin-token, x-supabase-api-version",
+  "Access-Control-Max-Age": "86400",
+};

@@ -184,7 +184,7 @@ const ComplianceDashboard: React.FC = () => {
             <p className="text-2xl font-bold mb-2">{drillCompliance.compliance_status}</p>
             <div className="text-sm space-y-1">
               <p>Pass Rate: {drillCompliance.pass_rate}%</p>
-              <p>Avg Score: {drillCompliance.avg_score.toFixed(1)}</p>
+              <p>Avg Score: {(drillCompliance.avg_score ?? 0).toFixed(1)}</p>
               <p>Drills (30d): {drillCompliance.drills_30d}</p>
             </div>
           </div>

@@ -310,7 +310,7 @@ const GuardianMonitoringDashboard: React.FC = () => {
                 <span className="font-semibold text-purple-900">Cron Success</span>
               </div>
               <div className="text-3xl font-bold text-purple-900">
-                {metrics.cronSuccessRate.toFixed(0)}%
+                {(metrics.cronSuccessRate ?? 0).toFixed(0)}%
               </div>
               <div className="text-sm text-purple-700 mt-1">
                 Monitoring reliability
