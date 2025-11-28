@@ -1,13 +1,40 @@
 # Claude Instructions for WellFit-Community-Daily-Complete
 
 ## Project Overview
-This is a **white-label multi-tenant SaaS** healthcare platform. Each tenant can have their own domain and branding. The project uses TypeScript/React and includes user registration with hCaptcha integration.
+This codebase contains **two separate white-label products** that can be used independently or together:
+
+### Two White-Label Products
+
+| Product | Purpose | Target Users |
+|---------|---------|--------------|
+| **WellFit** | Community engagement platform | Seniors, caregivers, community orgs |
+| **Envision Atlus** | Clinical care management engine | Healthcare providers, clinicians |
+
+**Deployment Options:**
+- **WellFit Only** - Community org uses just the member-facing wellness platform
+- **Envision Atlus Only** - Healthcare org uses just the clinical care engine
+- **Both Together** - Full integration with WellFit as community-facing + Envision Atlus as clinical backend
+
+### Tenant ID Convention
+
+Tenant codes follow a prefix convention indicating licensed products:
+
+| Prefix | License Type | Example | Description |
+|--------|--------------|---------|-------------|
+| `WF-0xxx` | **Both Products** | `WF-0001` | WellFit + Envision Atlus (full platform) |
+| `WF-8xxx` | **Envision Atlus Only** | `WF-8001` | Clinical engine only |
+| `WF-9xxx` | **WellFit Only** | `WF-9001` | Community platform only |
+
+**Default Tenant for Testing:**
+- `WF-0001` = WellFit Community (UUID: `2b902657-6a20-4435-a78a-576f397517ca`)
+- Licensed for BOTH products to enable full integration testing
 
 ### White-Label Architecture
 - **Multi-tenant**: Multiple organizations use the same codebase with their own domains
 - **Dynamic origins**: CORS must accept any tenant's HTTPS domain (no hardcoded allowlists)
 - **Tenant branding**: Each tenant can customize appearance via `useBranding()` hook
 - **Shared backend**: All tenants share Supabase database with RLS for isolation
+- **Shared tenant ID**: Same tenant_id used across both products when licensed together
 
 ## Critical Development Principles
 
