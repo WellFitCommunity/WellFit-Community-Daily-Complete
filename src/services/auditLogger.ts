@@ -30,7 +30,7 @@ export interface AuditLogEntry {
   event_type: string;
   event_category: AuditEventCategory;
   actor_user_id?: string | null;
-  actor_ip_address?: string;
+  actor_ip_address?: string | null;
   actor_user_agent?: string;
   operation?: string;
   resource_type?: string;
@@ -48,12 +48,12 @@ class AuditLogger {
   /**
    * Get current user context for audit logs
    */
-  private async getUserContext(): Promise<{ userId?: string; ipAddress?: string; userAgent?: string }> {
+  private async getUserContext(): Promise<{ userId?: string; ipAddress?: string | null; userAgent?: string }> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       return {
         userId: user?.id,
-        ipAddress: 'browser', // Browser doesn't have access to IP
+        ipAddress: null, // Browser doesn't have access to IP - column is inet type, can't use 'browser'
         userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined
       };
     } catch {
@@ -71,7 +71,7 @@ class AuditLogger {
     // Skip database logging if disabled (for testing)
     if (!this.loggingEnabled) return;
 
-    let context: { userId?: string; ipAddress?: string; userAgent?: string } = {};
+    let context: { userId?: string; ipAddress?: string | null; userAgent?: string } = {};
 
     try {
       context = await this.getUserContext();
