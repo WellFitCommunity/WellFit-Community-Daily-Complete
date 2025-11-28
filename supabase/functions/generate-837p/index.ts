@@ -3,45 +3,16 @@
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, type User } from "https://esm.sh/@supabase/supabase-js@2";
+import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 
-/* ------------------------- Tight CORS allow-list ------------------------- */
-
-const ORIGIN_ALLOWLIST = new Set(
-  (Deno.env.get("ALLOWED_ORIGINS") ?? "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean)
-);
-
-const ALLOWED_HEADERS = ["authorization", "content-type", "x-client-info", "apikey"].join(", ");
-const ALLOWED_METHODS = "POST, OPTIONS";
-
-function pickAllowedOrigin(req: Request): string | null {
-  const origin = req.headers.get("origin");
-  if (!origin) return null; // non-browser callers (ok)
-  return ORIGIN_ALLOWLIST.has(origin) ? origin : null;
-}
-
+/* ------------------------- CORS helpers (using shared module) ------------------------- */
 function corsHeaders(req: Request, extra: HeadersInit = {}): HeadersInit {
-  const allowed = pickAllowedOrigin(req) ?? "null";
-  return {
-    "Access-Control-Allow-Origin": allowed,
-    "Access-Control-Allow-Methods": ALLOWED_METHODS,
-    "Access-Control-Allow-Headers": ALLOWED_HEADERS,
-    "Vary": "Origin",
-    ...extra,
-  };
+  const { headers } = corsFromRequest(req);
+  return { ...headers, ...extra };
 }
 
 function preflight(req: Request): Response {
-  const allowed = pickAllowedOrigin(req);
-  if (!allowed) {
-    return new Response("CORS origin denied", { status: 403, headers: { Vary: "Origin" } });
-  }
-  return new Response(null, {
-    status: 204,
-    headers: corsHeaders(req, { "Access-Control-Max-Age": "600" }),
-  });
+  return handleOptions(req);
 }
 
 /* ------------------------- Supabase clients ------------------------- */
@@ -329,11 +300,6 @@ function build837P(enc: any, prov: any, payer: any, stControl: number) {
 
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") return preflight(req);
-
-  // Block disallowed origins early (actual requests)
-  if (!pickAllowedOrigin(req)) {
-    return new Response("CORS origin denied", { status: 403, headers: { Vary: "Origin" } });
-  }
 
   try {
     if (req.method !== "POST") {

@@ -1,6 +1,7 @@
 // File: supabase/functions/generate-api-key/index.ts
 import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 
 // ---- Env (supports Postgres 17 names w/ fallbacks) -------------------------
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
@@ -8,24 +9,6 @@ const SB_PUBLISHABLE_API_KEY =
   Deno.env.get("SB_PUBLISHABLE_API_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY");
 const SB_SECRET_KEY =
   Deno.env.get("SB_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-const ALLOWED_ORIGINS = (Deno.env.get("ALLOWED_ORIGINS") ?? "https://thewellfitcommunity.org,https://wellfitcommunity.live")
-  .split(",")
-  .map(s => s.trim())
-  .filter(Boolean);
-
-// ---- Utilities --------------------------------------------------------------
-function corsHeaders(origin: string | null): Headers {
-  // ✅ SECURITY: Only allow explicitly listed origins - no wildcard fallback
-  const allowOrigin = (origin && ALLOWED_ORIGINS.includes(origin))
-    ? origin
-    : ALLOWED_ORIGINS[0] ?? "null";
-  return new Headers({
-    "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": allowOrigin,
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  });
-}
 
 async function checkUserRole(supabaseClient: SupabaseClient, requiredRoles: string[]): Promise<boolean> {
   const { data: { user }, error: userErr } = await supabaseClient.auth.getUser();
@@ -59,11 +42,11 @@ function slugifyOrg(input: string): string {
 
 // ---- Handler ----------------------------------------------------------------
 serve(async (req) => {
-  const headers = corsHeaders(req.headers.get("Origin"));
-
   // CORS preflight
-  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers });
-  if (req.method !== "POST")    return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers });
+  if (req.method === "OPTIONS") return handleOptions(req);
+
+  const { headers } = corsFromRequest(req);
+  if (req.method !== "POST") return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers });
 
   try {
     // Client bound to caller’s JWT (so RLS/RPC see current_user)

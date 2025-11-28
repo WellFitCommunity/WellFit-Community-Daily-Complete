@@ -4,27 +4,11 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4?dts";
 import { z, type ZodIssue } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 
 // ---------- ENVIRONMENT VARIABLES ----------
-const getEnv = (key: string, fallbacks: string[] = []): string => {
-  const all = [key, ...fallbacks];
-  for (const k of all) {
-    const val = Deno.env.get(k);
-    if (val?.trim()) return val.trim();
-  }
-  return "";
-};
-
-const SB_URL = getEnv("SB_URL", ["SUPABASE_URL"]);
-const SB_SECRET_KEY = getEnv("SB_SECRET_KEY", ["SUPABASE_SERVICE_ROLE_KEY"]);
-
-// CORS Configuration - Explicit allowlist for security
-const ALLOWED_ORIGINS = [
-  "https://thewellfitcommunity.org",
-  "https://wellfitcommunity.live",
-  "http://localhost:3100",
-  "https://localhost:3100"
-];
+const SB_URL = Deno.env.get("SB_URL") || Deno.env.get("SUPABASE_URL") || "";
+const SB_SECRET_KEY = Deno.env.get("SB_SECRET_KEY") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 
 // ---------- VALIDATION SCHEMAS ----------
 const SubmitQuestionSchema = z.object({
@@ -36,32 +20,6 @@ const AdminResponseSchema = z.object({
   question_id: z.string().uuid("Invalid question ID"),
   response_text: z.string().min(1, "Response text is required").max(2000, "Response too long"),
 });
-
-// ---------- CORS HELPER ----------
-function corsHeaders(origin: string | null): { headers: Record<string, string>; allowed: boolean } {
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS",
-    "Access-Control-Allow-Headers":
-      "authorization, x-client-info, apikey, content-type, x-admin-token",
-    "Access-Control-Max-Age": "86400",
-    Vary: "Origin",
-  };
-
-  if (ALLOWED_ORIGINS.length === 0) {
-    // Security: Never allow wildcard origin in production
-    return { headers, allowed: false };
-  }
-
-  const normalizedOrigin = origin ? new URL(origin).origin : null;
-  const allowed = !!(normalizedOrigin && ALLOWED_ORIGINS.includes(normalizedOrigin));
-
-  if (allowed && normalizedOrigin) {
-    headers["Access-Control-Allow-Origin"] = normalizedOrigin;
-  }
-
-  return { headers, allowed };
-}
 
 // ---------- AUTH HELPERS ----------
 async function requireUser(req: Request, admin: any) {
@@ -105,18 +63,12 @@ function jsonResponse(body: unknown, status: number, headers: Record<string, str
 
 // ---------- MAIN HANDLER ----------
 serve(async (req: Request) => {
-  const origin = req.headers.get("origin");
-  const { headers, allowed } = corsHeaders(origin);
-
   // Handle preflight
   if (req.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers });
+    return handleOptions(req);
   }
 
-  // Check CORS
-  if (!allowed) {
-    return jsonResponse({ error: "Origin not allowed" }, 403, headers);
-  }
+  const { headers } = corsFromRequest(req);
 
   try {
     // Environment check

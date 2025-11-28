@@ -1,26 +1,7 @@
 // supabase/functions/get-risk-assessments/index.ts
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js";
-
-// Parse allowed origins from env (comma-separated)
-const allowedOrigins = (Deno.env.get("CORS_ORIGINS") ?? "https://thewellfitcommunity.org,https://wellfitcommunity.live")
-  .split(",")
-  .map((o) => o.trim())
-  .filter(Boolean);
-
-// Build CORS headers for a given request
-function corsHeaders(req: Request) {
-  const origin = req.headers.get("origin") ?? "";
-  // ✅ SECURITY: Only allow explicitly listed origins - no wildcard fallback
-  const allow =
-    allowedOrigins.includes(origin) ? origin : allowedOrigins[0] ?? "null";
-  return {
-    "access-control-allow-origin": allow,
-    "access-control-allow-methods": "GET,POST,OPTIONS",
-    "access-control-allow-headers":
-      "authorization, x-client-info, apikey, content-type",
-  };
-}
+import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 
 // Safely extract patient_id from GET ?patient_id=… or POST { patient_id: "…" }
 async function getPatientId(req: Request): Promise<string | null> {
@@ -43,12 +24,12 @@ async function getPatientId(req: Request): Promise<string | null> {
 }
 
 serve(async (req: Request) => {
-  const headers = corsHeaders(req);
-
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers });
+    return handleOptions(req);
   }
+
+  const { headers } = corsFromRequest(req);
 
   try {
     // Required env vars

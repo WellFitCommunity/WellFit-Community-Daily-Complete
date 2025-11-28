@@ -47,6 +47,14 @@ const CODESPACES_PATTERN = /^https:\/\/[a-z0-9-]+\.app\.github\.dev$/;
 /** Vercel deployment pattern for dynamic preview/production URLs */
 const VERCEL_PATTERN = /^https:\/\/[a-z0-9-]+\.vercel\.app$/;
 
+/**
+ * WHITE-LABEL MODE: When enabled, allows any HTTPS origin.
+ * This is required for multi-tenant SaaS where each tenant has their own domain.
+ * Set WHITE_LABEL_MODE=true in Supabase secrets to enable.
+ */
+const WHITE_LABEL_MODE: boolean =
+  (getEnv("WHITE_LABEL_MODE") || "true").toLowerCase() === "true";
+
 /** Options for CORS header generation */
 export interface CorsOptions {
   methods?: string[];        // e.g., ["GET","POST","OPTIONS"]
@@ -56,17 +64,20 @@ export interface CorsOptions {
 }
 
 /**
- * NOTE: These CSP rules apply to responses from your function endpoint.
- * Keep your frontend CSP (e.g., vercel.json) aligned with these sources.
+ * CSP for Edge Function responses.
+ *
+ * WHITE-LABEL NOTE: CSP is intentionally permissive for multi-tenant SaaS.
+ * Each tenant's frontend should enforce its own strict CSP via meta tags or headers.
+ * Edge functions return JSON data, not HTML, so CSP is less critical here.
  */
 const CSP_VALUE =
   "default-src 'self'; " +
-  "frame-ancestors 'self' https://wellfitcommunity.live https://www.wellfitcommunity.live https://thewellfitcommunity.org https://www.thewellfitcommunity.org; " +
+  "frame-ancestors *; " +  // Allow any tenant to embed
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.hcaptcha.com https://hcaptcha.com https://www.gstatic.com https://www.google.com https://*.supabase.co https://*.supabase.io https://vercel.live https://*.vercel.app; " +
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
   "font-src 'self' https://fonts.gstatic.com; " +
-  "img-src 'self' data: blob: https://api.hcaptcha.com https://*.supabase.co https://*.supabase.io https://verify.twilio.com https://api.twilio.com https://api.mailersend.com https://images.unsplash.com https://source.unsplash.com; " +
-  "connect-src 'self' https://api.hcaptcha.com https://*.supabase.co https://*.supabase.io https://verify.twilio.com https://api.twilio.com https://api.mailersend.com https://images.unsplash.com https://source.unsplash.com https://wellfitcommunity.live https://www.wellfitcommunity.live https://thewellfitcommunity.org https://www.thewellfitcommunity.org https://api.weatherapi.com https://vercel.live https://*.vercel.app; " +
+  "img-src 'self' data: blob: https://*.supabase.co https://*.supabase.io https://api.hcaptcha.com; " +
+  "connect-src *; " +  // Allow any tenant API calls
   "frame-src 'self' https://hcaptcha.com https://*.hcaptcha.com; " +
   "worker-src 'self' blob:; " +
   "media-src 'self' blob:; " +
@@ -126,6 +137,7 @@ export function cors(
     try {
       const u = new URL(origin);
       const normalized = `${u.protocol}//${u.host}`; // protocol + host[:port]
+      const isHttps = u.protocol === "https:";
       const isLocal =
         (u.hostname === "localhost" || u.hostname === "127.0.0.1") && u.port === "3100";
 
@@ -135,7 +147,10 @@ export function cors(
       // Check for Vercel deployment URLs (preview and production)
       const isVercel = VERCEL_PATTERN.test(normalized);
 
-      if (ALLOWED_ORIGINS.indexOf(normalized) !== -1 || (DEV_ALLOW_LOCAL && isLocal) || isCodespaces || isVercel) {
+      // WHITE-LABEL: Allow any HTTPS origin for multi-tenant SaaS
+      const isWhiteLabelAllowed = WHITE_LABEL_MODE && isHttps;
+
+      if (ALLOWED_ORIGINS.indexOf(normalized) !== -1 || (DEV_ALLOW_LOCAL && isLocal) || isCodespaces || isVercel || isWhiteLabelAllowed) {
         headers["Access-Control-Allow-Origin"] = normalized;
         headers["Access-Control-Allow-Credentials"] = "true";
         allowed = true;

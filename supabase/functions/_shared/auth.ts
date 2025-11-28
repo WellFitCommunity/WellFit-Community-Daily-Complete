@@ -1,43 +1,28 @@
 // supabase/functions/_shared/auth.ts  (drop-in replacement for the helper you pasted)
-// Deno Edge auth helpers: strict CORS, JWT -> user, role check via profiles.role_id -> roles.id
+// Deno Edge auth helpers: CORS (via shared module), JWT -> user, role check via profiles.role_id -> roles.id
 
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { corsFromRequest, handleOptions } from "./cors.ts";
 
 // ---- ENV ----
 const SUPABASE_URL  = Deno.env.get("SUPABASE_URL")  ?? "";
 const SB_SECRET_KEY = Deno.env.get("SB_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const INTERNAL_SECRET = Deno.env.get("INTERNAL_SECRET") ?? ""; // for internal-only handlers
-const ALLOWED_ORIGINS = (Deno.env.get("ALLOWED_ORIGINS") ?? "")
-  .split(",").map(s => s.trim().replace(/\/+$/, "")).filter(Boolean);
 
 // Admin client (bypasses RLS)
 export const supabaseAdmin: SupabaseClient = createClient(SUPABASE_URL, SB_SECRET_KEY);
 
-// ---- CORS (strict allow-list) ----
-function normalizeOrigin(o: string | null): string | null {
-  if (!o) return null;
-  try { const u = new URL(o); return `${u.protocol}//${u.host}`; } catch { return null; }
-}
+// ---- CORS (using shared white-label-ready module) ----
 // Wrap a handler with CORS & preflight
-export function withCORS(handler: (req: Request) => Promise<Response> | Response, methods = ["GET","POST","PUT","PATCH","DELETE","OPTIONS"]) {
+export function withCORS(handler: (req: Request) => Promise<Response> | Response, _methods = ["GET","POST","PUT","PATCH","DELETE","OPTIONS"]) {
   return async (req: Request) => {
-    const origin = normalizeOrigin(req.headers.get("origin"));
-    const allowed = !!(origin && ALLOWED_ORIGINS.includes(origin));
-    const base: Record<string,string> = {
-      Vary: "Origin",
-      "Access-Control-Allow-Methods": methods.join(", "),
-      "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-internal-secret",
-      "Access-Control-Max-Age": "86400",
-      "Content-Type": "application/json",
-    };
-    if (allowed && origin) base["Access-Control-Allow-Origin"] = origin;
+    if (req.method === "OPTIONS") return handleOptions(req);
 
-    if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: base });
-    if (!allowed) return new Response(JSON.stringify({ error: "Origin not allowed" }), { status: 403, headers: base });
+    const { headers: corsHeaders } = corsFromRequest(req);
 
     const res = await handler(req);
     const h = new Headers(res.headers);
-    Object.entries(base).forEach(([k,v]) => { if (!h.has(k)) h.set(k, v); });
+    Object.entries(corsHeaders).forEach(([k,v]) => { if (!h.has(k)) h.set(k, v); });
     return new Response(res.body, { status: res.status, headers: h });
   };
 }
