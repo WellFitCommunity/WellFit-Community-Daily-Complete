@@ -14,8 +14,8 @@ jobs:
         run: |
           RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
             'https://xkybsjnvuohpqpbkikyn.supabase.co/rest/v1/rpc/cleanup_expired_pending_registrations' \
-            -H "apikey: ${{ secrets.SB_SERVICE_ROLE_KEY }}" \
-            -H "Authorization: Bearer ${{ secrets.SB_SERVICE_ROLE_KEY }}" \
+            -H "apikey: ${{ secrets.SB_SECRET_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SB_SECRET_KEY }}" \
             -H "Content-Type: application/json")
 
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
