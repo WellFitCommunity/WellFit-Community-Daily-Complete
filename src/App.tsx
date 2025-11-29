@@ -20,6 +20,7 @@ import Footer from './components/layout/Footer';
 
 import RequireAuth from './components/auth/RequireAuth';
 import RequireAdminAuth from './components/auth/RequireAdminAuth';
+import RequireSuperAdmin from './components/auth/RequireSuperAdmin';
 
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
@@ -267,32 +268,35 @@ function Shell() {
               <Route path="/demographics" element={<RequireAuth><DemographicsPage /></RequireAuth>} />
 
               {/* Master Admin Panel (Envision - Cross-tenant Platform Management) */}
+              {/* SECURITY: RequireSuperAdmin verifies user is in super_admin_users table */}
               <Route
                 path="/super-admin"
                 element={
-                  <RequireAuth>
+                  <RequireSuperAdmin>
                     <SuperAdminDashboard />
-                  </RequireAuth>
+                  </RequireSuperAdmin>
                 }
               />
 
               {/* Multi-Tenant Selector (Envision staff) */}
+              {/* SECURITY: Only platform super-admins can access tenant selector */}
               <Route
                 path="/tenant-selector"
                 element={
-                  <RequireAuth>
+                  <RequireSuperAdmin>
                     <MultiTenantSelector />
-                  </RequireAuth>
+                  </RequireSuperAdmin>
                 }
               />
 
               {/* Multi-Tenant Monitor (Split-screen view) */}
+              {/* SECURITY: Only platform super-admins can monitor all tenants */}
               <Route
                 path="/multi-tenant-monitor"
                 element={
-                  <RequireAuth>
+                  <RequireSuperAdmin>
                     <MultiTenantMonitor />
-                  </RequireAuth>
+                  </RequireSuperAdmin>
                 }
               />
 

@@ -1,5 +1,6 @@
 // Bulk Export Edge Function
 // Handles bulk data exports for admin users
+// SECURITY: All exports are tenant-scoped to prevent cross-tenant data leakage
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
@@ -18,6 +19,7 @@ interface ExportRequest {
     compression: boolean;
   };
   requestedBy: string;
+  tenantId?: string; // Optional override for super-admins
 }
 
 serve(async (req) => {
@@ -45,14 +47,96 @@ serve(async (req) => {
       }
     );
 
+    // =========================================================================
+    // AUTHENTICATION & AUTHORIZATION
+    // =========================================================================
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      logger.warn('Bulk export attempted without authentication');
+      return new Response(
+        JSON.stringify({ error: 'Authorization required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const token = authHeader.slice(7);
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+
+    if (authError || !user) {
+      logger.warn('Bulk export attempted with invalid token');
+      return new Response(
+        JSON.stringify({ error: 'Invalid authentication token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Get user's profile to determine tenant and admin status
+    const { data: profile, error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .select('tenant_id, is_admin, role_id, roles:role_id(name)')
+      .eq('user_id', user.id)
+      .single();
+
+    if (profileError || !profile) {
+      logger.warn('Bulk export attempted by user without profile', { userId: user.id });
+      return new Response(
+        JSON.stringify({ error: 'User profile not found' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check if user is admin
+    const roleName = (profile.roles as any)?.name;
+    const isAdmin = profile.is_admin || ['admin', 'super_admin'].includes(roleName);
+
+    if (!isAdmin) {
+      logger.security('Bulk export denied - non-admin user', { userId: user.id });
+      return new Response(
+        JSON.stringify({ error: 'Admin access required for bulk exports' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check if super admin (can export from any tenant)
+    const { data: superAdminData } = await supabaseAdmin
+      .from('super_admin_users')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    const isSuperAdmin = !!superAdminData;
+
     // Parse request body
     const body: ExportRequest = await req.json();
-    const { jobId, exportType, filters, requestedBy } = body;
+    const { jobId, exportType, filters, requestedBy, tenantId: requestedTenantId } = body;
+
+    // Determine effective tenant ID
+    // Super admins can specify a tenant, regular admins use their own tenant
+    let effectiveTenantId: string;
+    if (isSuperAdmin && requestedTenantId) {
+      effectiveTenantId = requestedTenantId;
+      logger.info('Super admin exporting for specific tenant', {
+        superAdminId: user.id,
+        targetTenantId: requestedTenantId
+      });
+    } else if (profile.tenant_id) {
+      effectiveTenantId = profile.tenant_id;
+    } else {
+      logger.warn('Bulk export attempted by user without tenant assignment', { userId: user.id });
+      return new Response(
+        JSON.stringify({ error: 'No tenant assigned to user' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     logger.security('Bulk export requested', {
       jobId,
       exportType,
       requestedBy,
+      userId: user.id,
+      tenantId: effectiveTenantId,
+      isSuperAdmin,
       dateRange: `${filters?.dateFrom} to ${filters?.dateTo}`
     });
 
@@ -70,12 +154,17 @@ serve(async (req) => {
     }
 
     // Get estimated record count based on export type
+    // SECURITY: All queries are filtered by tenant_id
     let estimatedRecords = 0;
     let query;
 
     switch (exportType) {
       case 'check_ins':
-        query = supabaseAdmin.from('check_ins').select('*', { count: 'exact', head: true });
+        // Join with profiles to filter by tenant
+        query = supabaseAdmin
+          .from('check_ins')
+          .select('*, profiles!inner(tenant_id)', { count: 'exact', head: true })
+          .eq('profiles.tenant_id', effectiveTenantId);
         if (filters.dateFrom) {
           query = query.gte('created_at', filters.dateFrom);
         }
@@ -85,7 +174,11 @@ serve(async (req) => {
         break;
 
       case 'risk_assessments':
-        query = supabaseAdmin.from('ai_risk_assessments').select('*', { count: 'exact', head: true });
+        // Join with profiles to filter by tenant
+        query = supabaseAdmin
+          .from('ai_risk_assessments')
+          .select('*, profiles!inner(tenant_id)', { count: 'exact', head: true })
+          .eq('profiles.tenant_id', effectiveTenantId);
         if (filters.dateFrom) {
           query = query.gte('assessed_at', filters.dateFrom);
         }
@@ -95,11 +188,17 @@ serve(async (req) => {
         break;
 
       case 'users_profiles':
-        query = supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true });
+        query = supabaseAdmin
+          .from('profiles')
+          .select('*', { count: 'exact', head: true })
+          .eq('tenant_id', effectiveTenantId);
         break;
 
       case 'billing_claims':
-        query = supabaseAdmin.from('claims').select('*', { count: 'exact', head: true });
+        query = supabaseAdmin
+          .from('claims')
+          .select('*', { count: 'exact', head: true })
+          .eq('tenant_id', effectiveTenantId);
         if (filters.dateFrom) {
           query = query.gte('created_at', filters.dateFrom);
         }
@@ -109,12 +208,18 @@ serve(async (req) => {
         break;
 
       case 'fhir_resources':
-        // Estimate based on encounters
-        query = supabaseAdmin.from('encounters').select('*', { count: 'exact', head: true });
+        // Estimate based on encounters, filtered by tenant
+        query = supabaseAdmin
+          .from('encounters')
+          .select('*', { count: 'exact', head: true })
+          .eq('tenant_id', effectiveTenantId);
         break;
 
       case 'audit_logs':
-        query = supabaseAdmin.from('admin_audit_log').select('*', { count: 'exact', head: true });
+        query = supabaseAdmin
+          .from('admin_audit_log')
+          .select('*', { count: 'exact', head: true })
+          .eq('tenant_id', effectiveTenantId);
         if (filters.dateFrom) {
           query = query.gte('created_at', filters.dateFrom);
         }
@@ -136,7 +241,7 @@ serve(async (req) => {
       estimatedRecords = count || 0;
     }
 
-    // Create export job record
+    // Create export job record with tenant_id for isolation
     const { error: insertError } = await supabaseAdmin.from('export_jobs').insert({
       id: jobId,
       export_type: exportType,
@@ -146,6 +251,7 @@ serve(async (req) => {
       processed_records: 0,
       filters: filters,
       requested_by: requestedBy,
+      tenant_id: effectiveTenantId, // SECURITY: Track which tenant this export belongs to
       started_at: new Date().toISOString(),
       expires_at: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(), // 48 hours from now
     });
@@ -170,7 +276,8 @@ serve(async (req) => {
     });
 
     // Start background export process (asynchronous)
-    processExportInBackground(jobId, exportType, filters, estimatedRecords, supabaseAdmin, logger);
+    // SECURITY: Pass tenant_id to ensure background process also filters by tenant
+    processExportInBackground(jobId, exportType, filters, estimatedRecords, effectiveTenantId, supabaseAdmin, logger);
 
     const processingTime = Date.now() - startTime;
     logger.info('Bulk export initiated', {
@@ -204,11 +311,13 @@ serve(async (req) => {
 });
 
 // Background processing function (runs asynchronously)
+// SECURITY: All queries are tenant-scoped
 async function processExportInBackground(
   jobId: string,
   exportType: string,
   filters: any,
   totalRecords: number,
+  tenantId: string, // REQUIRED: tenant_id for filtering
   supabaseAdmin: any,
   logger: any
 ) {
@@ -218,7 +327,8 @@ async function processExportInBackground(
     logger.info('Background export processing started', {
       jobId,
       exportType,
-      totalRecords
+      totalRecords,
+      tenantId
     });
 
     const batchSize = 1000;
@@ -226,40 +336,67 @@ async function processExportInBackground(
     const exportedData: any[] = [];
 
     // Process data in batches
+    // SECURITY: All queries filtered by tenant_id
     for (let offset = 0; offset < totalRecords; offset += batchSize) {
       const limit = Math.min(batchSize, totalRecords - offset);
 
-      // Query data based on export type
+      // Query data based on export type - ALL QUERIES ARE TENANT-SCOPED
       let query;
       switch (exportType) {
         case 'check_ins':
-          query = supabaseAdmin.from('check_ins').select('*').range(offset, offset + limit - 1);
+          // Join with profiles to filter by tenant
+          query = supabaseAdmin
+            .from('check_ins')
+            .select('*, profiles!inner(tenant_id)')
+            .eq('profiles.tenant_id', tenantId)
+            .range(offset, offset + limit - 1);
           if (filters.dateFrom) query = query.gte('created_at', filters.dateFrom);
           if (filters.dateTo) query = query.lte('created_at', filters.dateTo);
           break;
 
         case 'risk_assessments':
-          query = supabaseAdmin.from('ai_risk_assessments').select('*').range(offset, offset + limit - 1);
+          // Join with profiles to filter by tenant
+          query = supabaseAdmin
+            .from('ai_risk_assessments')
+            .select('*, profiles!inner(tenant_id)')
+            .eq('profiles.tenant_id', tenantId)
+            .range(offset, offset + limit - 1);
           if (filters.dateFrom) query = query.gte('assessed_at', filters.dateFrom);
           if (filters.dateTo) query = query.lte('assessed_at', filters.dateTo);
           break;
 
         case 'users_profiles':
-          query = supabaseAdmin.from('profiles').select('*').range(offset, offset + limit - 1);
+          query = supabaseAdmin
+            .from('profiles')
+            .select('*')
+            .eq('tenant_id', tenantId)
+            .range(offset, offset + limit - 1);
           break;
 
         case 'billing_claims':
-          query = supabaseAdmin.from('claims').select('*').range(offset, offset + limit - 1);
+          query = supabaseAdmin
+            .from('claims')
+            .select('*')
+            .eq('tenant_id', tenantId)
+            .range(offset, offset + limit - 1);
           if (filters.dateFrom) query = query.gte('created_at', filters.dateFrom);
           if (filters.dateTo) query = query.lte('created_at', filters.dateTo);
           break;
 
         case 'fhir_resources':
-          query = supabaseAdmin.from('encounters').select('*').range(offset, offset + limit - 1);
+          query = supabaseAdmin
+            .from('encounters')
+            .select('*')
+            .eq('tenant_id', tenantId)
+            .range(offset, offset + limit - 1);
           break;
 
         case 'audit_logs':
-          query = supabaseAdmin.from('admin_audit_log').select('*').range(offset, offset + limit - 1);
+          query = supabaseAdmin
+            .from('admin_audit_log')
+            .select('*')
+            .eq('tenant_id', tenantId)
+            .range(offset, offset + limit - 1);
           if (filters.dateFrom) query = query.gte('created_at', filters.dateFrom);
           if (filters.dateTo) query = query.lte('created_at', filters.dateTo);
           break;

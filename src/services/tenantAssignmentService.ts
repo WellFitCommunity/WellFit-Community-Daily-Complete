@@ -109,15 +109,49 @@ export const TenantAssignmentService = {
 
   /**
    * Get all tenants available for assignment
+   * SECURITY: Only super-admins can view all tenants
    */
   async getAllTenants(): Promise<TenantAssignment[]> {
     try {
+      // SECURITY: Verify caller is a super-admin before returning all tenants
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        await auditLogger.warn('TENANT_ASSIGNMENT_GET_ALL_UNAUTHORIZED', {
+          category: 'SECURITY',
+          reason: 'No authenticated user'
+        });
+        return [];
+      }
+
+      // Check if user is a super admin
+      const { data: superAdminData } = await supabase
+        .from('super_admin_users')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (!superAdminData) {
+        await auditLogger.warn('TENANT_ASSIGNMENT_GET_ALL_FORBIDDEN', {
+          category: 'SECURITY',
+          userId: user.id,
+          reason: 'User is not a super admin'
+        });
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('tenants')
         .select('id, name, tenant_code, subdomain')
         .order('name');
 
       if (error) throw error;
+
+      await auditLogger.info('TENANT_ASSIGNMENT_GET_ALL_SUCCESS', {
+        category: 'ADMINISTRATIVE',
+        userId: user.id,
+        tenantCount: data?.length || 0
+      });
 
       return (data || []).map(tenant => ({
         tenantId: tenant.id,

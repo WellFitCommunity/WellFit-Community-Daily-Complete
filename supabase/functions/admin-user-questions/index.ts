@@ -38,11 +38,17 @@ async function requireUser(req: Request, admin: any) {
   return data.user;
 }
 
-async function requireAdmin(_req: Request, admin: any, userId: string) {
-  // Check if user has admin role
+interface AdminInfo {
+  role: "admin" | "super_admin";
+  tenantId: string | null;
+  isSuperAdmin: boolean;
+}
+
+async function requireAdmin(_req: Request, admin: any, userId: string): Promise<AdminInfo> {
+  // Check if user has admin role and get tenant context
   const { data, error } = await admin
     .from("profiles")
-    .select("role_id, roles:role_id ( name )")
+    .select("role_id, tenant_id, roles:role_id ( name )")
     .eq("user_id", userId)
     .single();
 
@@ -50,7 +56,19 @@ async function requireAdmin(_req: Request, admin: any, userId: string) {
     throw new Response(JSON.stringify({ error: "Admin access required" }), { status: 403 });
   }
 
-  return data.roles.name as "admin" | "super_admin";
+  // Check if super admin (can see all tenants)
+  const { data: superAdminData } = await admin
+    .from("super_admin_users")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  return {
+    role: data.roles.name as "admin" | "super_admin",
+    tenantId: data.tenant_id,
+    isSuperAdmin: !!superAdminData
+  };
 }
 
 // ---------- HELPER FUNCTIONS ----------
@@ -130,15 +148,17 @@ serve(async (req: Request) => {
     }
 
     // ---------- GET QUESTIONS FOR ADMIN (GET) ----------
+    // SECURITY: Questions are filtered by tenant_id (non-super-admins see only their tenant)
     if (req.method === "GET" && url.pathname.endsWith("/admin/questions")) {
       const user = await requireUser(req, admin);
-      await requireAdmin(req, admin, user.id);
+      const adminInfo = await requireAdmin(req, admin, user.id);
 
       const status = url.searchParams.get("status") || "pending";
       const limit = Math.min(parseInt(url.searchParams.get("limit") || "50"), 100);
       const offset = parseInt(url.searchParams.get("offset") || "0");
 
-      const { data: questions, error } = await admin
+      // Build query with tenant filtering
+      let query = admin
         .from("user_questions")
         .select(
           `
@@ -152,12 +172,19 @@ serve(async (req: Request) => {
           responded_by,
           responded_at,
           created_at,
-          profiles:user_id ( first_name, last_name, phone )
+          tenant_id,
+          profiles:user_id ( first_name, last_name, phone, tenant_id )
           `,
         )
         .eq("status", status)
-        .order("created_at", { ascending: false })
-        .range(offset, offset + limit - 1);
+        .order("created_at", { ascending: false });
+
+      // SECURITY: Non-super-admins only see questions from their tenant
+      if (!adminInfo.isSuperAdmin && adminInfo.tenantId) {
+        query = query.eq("tenant_id", adminInfo.tenantId);
+      }
+
+      const { data: questions, error } = await query.range(offset, offset + limit - 1);
 
       if (error) {
         console.error("[questions] fetch failed:", error);
@@ -173,6 +200,7 @@ serve(async (req: Request) => {
             offset,
             total: questions.length,
           },
+          tenantScoped: !adminInfo.isSuperAdmin,
         },
         200,
         headers,
@@ -180,13 +208,27 @@ serve(async (req: Request) => {
     }
 
     // ---------- RESPOND TO QUESTION (PATCH) ----------
+    // SECURITY: Verify admin can only respond to questions in their tenant
     if (req.method === "PATCH" && url.pathname.includes("/admin/questions/")) {
       const user = await requireUser(req, admin);
-      await requireAdmin(req, admin, user.id);
+      const adminInfo = await requireAdmin(req, admin, user.id);
 
       const questionId = url.pathname.split("/").pop();
       if (!questionId) {
         return jsonResponse({ error: "Question ID required" }, 400, headers);
+      }
+
+      // SECURITY: Verify question belongs to admin's tenant (unless super-admin)
+      if (!adminInfo.isSuperAdmin && adminInfo.tenantId) {
+        const { data: question } = await admin
+          .from("user_questions")
+          .select("tenant_id")
+          .eq("id", questionId)
+          .single();
+
+        if (question && question.tenant_id !== adminInfo.tenantId) {
+          return jsonResponse({ error: "Question not in your organization" }, 403, headers);
+        }
       }
 
       const rawBody = await req.json().catch(() => null);

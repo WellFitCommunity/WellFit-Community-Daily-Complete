@@ -16,7 +16,9 @@ import AISkillsControlPanel from './AISkillsControlPanel';
 import { auditLogger } from '../../services/auditLogger';
 import { PersonalizedGreeting } from '../ai-transparency';
 
-const ApiKeyManager = React.lazy(() => import('../admin/ApiKeyManager'));
+// SECURITY: Use dedicated super-admin component instead of importing from tenant-admin
+// This ensures proper separation between atlus-admin and tenant-admin layers
+const SuperAdminApiKeyManager = React.lazy(() => import('./SuperAdminApiKeyManager'));
 
 interface SystemMetricsProps {
   overview: SystemOverview | null;
@@ -316,7 +318,7 @@ const SuperAdminDashboard: React.FC = () => {
 
         {activeTab === 'api-keys' && (
           <Suspense fallback={<div className="flex justify-center items-center h-64">Loading API Keys...</div>}>
-            <ApiKeyManager />
+            <SuperAdminApiKeyManager />
           </Suspense>
         )}
 
