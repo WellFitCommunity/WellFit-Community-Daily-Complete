@@ -321,9 +321,7 @@ export class WithingsAdapter implements WearableAdapter {
     startDate: Date;
     endDate: Date;
   }): Promise<WearableActivityData[]> {
-    const startdate = Math.floor(params.startDate.getTime() / 1000);
-    const enddate = Math.floor(params.endDate.getTime() / 1000);
-
+    // Withings API uses YYYY-MM-DD format for activity endpoints
     const response = await this.makeRequest('/v2/measure', 'POST', {
       action: 'getactivity',
       startdateymd: this.formatDate(params.startDate),
@@ -366,9 +364,7 @@ export class WithingsAdapter implements WearableAdapter {
       awake: number;
     };
   }[]> {
-    const startdate = Math.floor(params.startDate.getTime() / 1000);
-    const enddate = Math.floor(params.endDate.getTime() / 1000);
-
+    // Withings API uses YYYY-MM-DD format for sleep endpoints
     const response = await this.makeRequest('/v2/sleep', 'POST', {
       action: 'getsummary',
       startdateymd: this.formatDate(params.startDate),

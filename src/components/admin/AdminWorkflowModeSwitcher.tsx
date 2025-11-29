@@ -8,7 +8,6 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Server,
-  Database,
   Users,
   Settings,
   DollarSign,

@@ -29,7 +29,7 @@ const HealthInsightsWidget: React.FC<HealthInsightsProps> = ({ healthData, onClo
         setInsights('Unable to generate insights at this time. Please try again later.');
       });
     }
-     
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [healthData]);
 
   const hasHealthData = (data: any): boolean => {

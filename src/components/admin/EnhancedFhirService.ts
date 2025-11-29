@@ -950,7 +950,6 @@ export class EnhancedFhirService {
       };
 
     } catch (error) {
-
       throw new Error(`Failed to sync SMART data: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }

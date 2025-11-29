@@ -77,18 +77,11 @@ export class GarminAdapter implements WearableAdapter {
   }
 
   async test(): Promise<{ success: boolean; message: string; details?: any }> {
-    try {
-      // Test with a simple ping
-      return {
-        success: true,
-        message: 'Connection ready - OAuth tokens required for data access',
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        message: error.message || 'Connection test failed',
-      };
-    }
+    // Test with a simple ping - no actual network call needed for OAuth-based services
+    return {
+      success: true,
+      message: 'Connection ready - OAuth tokens required for data access',
+    };
   }
 
   getConnectionStatus(): 'connected' | 'disconnected' | 'error' {

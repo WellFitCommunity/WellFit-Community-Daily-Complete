@@ -129,7 +129,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-     
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, session?.access_token, location.pathname, navigate, supabase]);
 
   return <>{children}</>;

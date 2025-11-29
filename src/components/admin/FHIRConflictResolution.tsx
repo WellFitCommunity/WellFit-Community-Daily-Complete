@@ -48,6 +48,7 @@ export const FHIRConflictResolution: React.FC = () => {
 
   useEffect(() => {
     fetchConflicts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
   const fetchConflicts = async () => {

@@ -130,10 +130,11 @@ export default function ErrorBoundary(props: Omit<Props, 'resetKeys'> & { resetK
   const navigate = useNavigate();
 
   const routeKey = location.pathname + location.search;
+  const resetKeysStr = JSON.stringify(props.resetKeys ?? []);
   const combinedKeys = React.useMemo(
     () => [routeKey, ...(props.resetKeys ?? [])],
-     
-    [routeKey, JSON.stringify(props.resetKeys ?? [])]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [routeKey, resetKeysStr]
   );
 
   return <InnerErrorBoundary {...props} resetKeys={combinedKeys} />;

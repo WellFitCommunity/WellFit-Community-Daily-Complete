@@ -43,6 +43,7 @@ const HospitalAdapterManagementPanel: React.FC = () => {
   useEffect(() => {
     loadAdapters();
     loadConnectionStatuses();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadAdapters = () => {

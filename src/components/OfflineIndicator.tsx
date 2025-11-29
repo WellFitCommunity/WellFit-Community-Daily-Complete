@@ -61,7 +61,7 @@ const OfflineIndicator: React.FC = () => {
 
       return () => clearTimeout(timeout);
     }
-     
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [online, pendingCount]);
 
   const handleSync = async () => {

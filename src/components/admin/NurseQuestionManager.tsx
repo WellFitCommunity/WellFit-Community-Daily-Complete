@@ -92,7 +92,7 @@ const NurseQuestionManager: React.FC = () => {
 
   useEffect(() => {
     loadQuestions();
-     
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Autosave effect
@@ -117,7 +117,7 @@ const NurseQuestionManager: React.FC = () => {
         clearTimeout(autosaveTimerRef.current);
       }
     };
-     
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [responseText, nurseNotes, selectedQuestion]);
 
   const performAutosave = async () => {
