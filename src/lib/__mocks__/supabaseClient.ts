@@ -107,8 +107,8 @@ export const supabase = {
       download: jest.fn().mockResolvedValue({ data: null, error: null }),
       list: jest.fn().mockResolvedValue({ data: [], error: null }),
       remove: jest.fn().mockResolvedValue({ data: null, error: null }),
-      createSignedUrl: jest.fn().mockResolvedValue({ data: { signedUrl: 'http://test.url' }, error: null }),
-      getPublicUrl: jest.fn().mockReturnValue({ data: { publicUrl: 'http://test.url' } }),
+      createSignedUrl: jest.fn().mockResolvedValue({ data: { signedUrl: 'https://test.url' }, error: null }),
+      getPublicUrl: jest.fn().mockReturnValue({ data: { publicUrl: 'https://test.url' } }),
     }),
   },
 };
