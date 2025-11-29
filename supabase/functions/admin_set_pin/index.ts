@@ -17,6 +17,7 @@ const schema = z.object({
   role: z.enum([
     "admin",
     "super_admin",
+    "it_admin",
     "nurse",
     "physician",
     "doctor",

@@ -14,12 +14,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
-import { useSupabaseClient } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import { auditLogger } from '../services/auditLogger';
 
 export const EnvisionLoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const { supabase, user } = useSupabaseClient() as any;
+  const { supabase, user } = useAuth();
 
   const [email, setEmail] = useState('');
   const [pin, setPin] = useState('');
