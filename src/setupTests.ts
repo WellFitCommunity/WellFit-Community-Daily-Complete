@@ -1,6 +1,17 @@
 // Jest setup for testing including security and penetration testing
 import '@testing-library/jest-dom';
+import { TextEncoder, TextDecoder } from 'util';
+import { webcrypto } from 'crypto';
 import { resetSupabaseHandler } from './lib/__mocks__/supabaseClient';
+
+// Polyfill TextEncoder/TextDecoder for Node.js test environment
+// Required for Web Crypto API usage in pinHashingService
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder as typeof global.TextDecoder;
+
+// Polyfill Web Crypto API for Node.js test environment
+// Required for pinHashingService SHA-256 hashing
+global.crypto = webcrypto as unknown as Crypto;
 
 // Use manual mock for supabaseClient
 jest.mock('./lib/supabaseClient');

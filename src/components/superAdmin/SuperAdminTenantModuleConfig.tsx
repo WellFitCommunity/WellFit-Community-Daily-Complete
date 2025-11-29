@@ -369,12 +369,12 @@ export const SuperAdminTenantModuleConfig: React.FC<SuperAdminTenantModuleConfig
     if (entitlementName in pendingChanges) {
       return pendingChanges[entitlementName] as boolean;
     }
-    return (config as Record<string, boolean>)?.[entitlementName] ?? false;
+    return (config as unknown as Record<string, boolean>)?.[entitlementName] ?? false;
   };
 
   // Get active state (what Tenant Admin has enabled)
   const getActiveValue = (moduleName: ModuleName): boolean => {
-    return (config as Record<string, boolean>)?.[moduleName] ?? false;
+    return (config as unknown as Record<string, boolean>)?.[moduleName] ?? false;
   };
 
   const getCurrentTier = (): LicenseTier => {
