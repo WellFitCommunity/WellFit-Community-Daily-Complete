@@ -17,7 +17,7 @@ interface CelebrationMomentsProps {
 
 interface Milestone {
   id: string;
-  type: 'streak' | 'soap_notes' | 'billing' | 'training' | 'time_saved';
+  type: 'streak' | 'soap_notes' | 'billing' | 'training' | 'time_saved' | 'recording_hours';
   title: string;
   description: string;
   emoji: string;
@@ -54,6 +54,11 @@ const MILESTONE_DEFINITIONS = {
     { threshold: 300, title: '5 Hours Back!', emoji: '🕐', description: '5 hours saved - that\'s a half day!' },
     { threshold: 600, title: '10 Hours Freedom!', emoji: '🗓️', description: '10 hours - more than a full workday!' },
     { threshold: 1500, title: '25 Hours Reclaimed!', emoji: '🎉', description: '25 hours back in your life!' },
+  ],
+  recording_hours: [
+    { threshold: 3600, title: 'First Hour Recorded!', emoji: '🎙️', description: '1 hour of sessions recorded!' },
+    { threshold: 18000, title: '5 Hours Captured!', emoji: '🎤', description: '5 hours of patient sessions!' },
+    { threshold: 36000, title: '10 Hour Milestone!', emoji: '📹', description: '10 hours of recorded care!' },
   ],
   training: [
     { threshold: 1, title: 'First Module Done!', emoji: '🎓', description: 'You completed your first resilience module!' },
@@ -124,7 +129,7 @@ export const CelebrationMoments: React.FC<CelebrationMomentsProps> = ({
 
       // Count SOAP notes and time saved
       const soapNotes = sessions?.filter(s => s.ai_note_subjective)?.length || 0;
-      const _totalSeconds = sessions?.reduce((sum, s) => sum + (s.recording_duration_seconds || 0), 0) || 0;
+      const totalSeconds = sessions?.reduce((sum, s) => sum + (s.recording_duration_seconds || 0), 0) || 0;
       const timeSavedMinutes = Math.round(soapNotes * 12); // ~12 min saved per note
 
       // Count training completions
@@ -190,6 +195,22 @@ export const CelebrationMoments: React.FC<CelebrationMomentsProps> = ({
             emoji: m.emoji,
             value: trainingCompleted,
             achieved: true,
+          });
+        }
+      }
+
+      // Check recording hours milestones (totalSeconds in seconds)
+      for (const m of MILESTONE_DEFINITIONS.recording_hours) {
+        if (totalSeconds >= m.threshold) {
+          achievedMilestones.push({
+            id: `recording-${m.threshold}`,
+            type: 'recording_hours',
+            title: m.title,
+            description: m.description,
+            emoji: m.emoji,
+            value: Math.round(totalSeconds / 3600), // Convert to hours for display
+            achieved: true,
+            impact: `${Math.round(totalSeconds / 60)} minutes of patient care documented`,
           });
         }
       }
