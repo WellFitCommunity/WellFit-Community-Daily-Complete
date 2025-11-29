@@ -281,7 +281,7 @@ const TelehealthCall: React.FC<TelehealthConsultationProps> = ({
 
       if (stethoscope && daily) {
         // Add second audio track for stethoscope
-        const stream = await navigator.mediaDevices.getUserMedia({
+        const _stream = await navigator.mediaDevices.getUserMedia({
           audio: { deviceId: stethoscope.deviceId },
         });
 

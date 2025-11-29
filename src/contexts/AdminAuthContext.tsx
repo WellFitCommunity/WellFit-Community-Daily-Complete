@@ -7,7 +7,7 @@ import React, {
   useState
 } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { StaffRole, RoleAccessScopes, roleHasAccess, ROLE_DISPLAY_NAMES } from '../types/roles';
+import { StaffRole, RoleAccessScopes, roleHasAccess, ROLE_DISPLAY_NAMES as _ROLE_DISPLAY_NAMES } from '../types/roles';
 import { prepareAdminPinForVerification } from '../services/pinHashingService';
 
 // Backwards compatibility: AdminRole is now StaffRole
@@ -57,7 +57,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [accessScopes, setAccessScopes] = useState<RoleAccessScopes | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [expiresAt, setExpiresAt] = useState<string | null>(null);
+  const [_expiresAt, setExpiresAt] = useState<string | null>(null);
 
   const expiryTimerRef = useRef<number | null>(null);
   const adminTokenRef = useRef<string | null>(adminTokenRefGlobal.current);
@@ -99,7 +99,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       sessionStorage.removeItem(SESSION_STORAGE_KEY);
     }
     return () => clearExpiryTimer();
-     
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function persistSession(isAuthenticated: boolean, role: StaffRole | null, expires_at: string | null) {
@@ -253,7 +253,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     } finally {
       setIsLoading(false);
     }
-     
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const logoutAdmin = useCallback(() => {

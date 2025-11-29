@@ -72,7 +72,7 @@ export default function DataManagementPanel() {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('user-data-management', {
+      const { data: _data, error } = await supabase.functions.invoke('user-data-management', {
         body: {
           action: 'delete',
           confirmDeletion: true

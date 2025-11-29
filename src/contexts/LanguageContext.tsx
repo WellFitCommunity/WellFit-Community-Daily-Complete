@@ -1,5 +1,5 @@
 // Language Context for WellFit Community
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { Language, translations, getBrowserLanguage } from '../i18n/translations';
 
 interface LanguageContextType {

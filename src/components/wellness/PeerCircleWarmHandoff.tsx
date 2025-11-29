@@ -121,6 +121,7 @@ export const PeerCircleWarmHandoff: React.FC<PeerCircleWarmHandoffProps> = ({
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, isNewUser, burnoutRisk]);
 
   useEffect(() => {

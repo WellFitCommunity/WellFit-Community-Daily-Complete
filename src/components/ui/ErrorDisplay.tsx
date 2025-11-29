@@ -2,7 +2,7 @@
 // Reusable component for displaying comprehensive error messages
 
 import React, { useState } from 'react';
-import { getErrorDetails, ErrorDetails } from '../../utils/errorMessages';
+import { getErrorDetails, ErrorDetails as _ErrorDetails } from '../../utils/errorMessages';
 
 interface ErrorDisplayProps {
   error: unknown;

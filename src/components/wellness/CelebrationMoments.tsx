@@ -124,7 +124,7 @@ export const CelebrationMoments: React.FC<CelebrationMomentsProps> = ({
 
       // Count SOAP notes and time saved
       const soapNotes = sessions?.filter(s => s.ai_note_subjective)?.length || 0;
-      const totalSeconds = sessions?.reduce((sum, s) => sum + (s.recording_duration_seconds || 0), 0) || 0;
+      const _totalSeconds = sessions?.reduce((sum, s) => sum + (s.recording_duration_seconds || 0), 0) || 0;
       const timeSavedMinutes = Math.round(soapNotes * 12); // ~12 min saved per note
 
       // Count training completions

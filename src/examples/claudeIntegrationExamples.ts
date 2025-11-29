@@ -26,7 +26,7 @@ export async function seniorPatientExample() {
 
 
 
-    console.log(`💰 Cost: $${response.cost.toFixed(4)} | Model: ${response.model} | Time: ${response.responseTime}ms`);
+    // Cost tracking: $${response.cost.toFixed(4)} | Model: ${response.model} | Time: ${response.responseTime}ms
 
     return response;
   } catch (error) {
@@ -97,7 +97,7 @@ export async function adminAnalyticsExample() {
 
 
 
-    console.log(`💰 Cost: $${response.cost.toFixed(4)} | Model: ${response.model} | Time: ${response.responseTime}ms`);
+    // Cost tracking: $${response.cost.toFixed(4)} | Model: ${response.model} | Time: ${response.responseTime}ms
 
     return response;
   } catch (error) {
@@ -148,7 +148,7 @@ export async function healthDataInterpretationExample() {
 
 
 
-    console.log(`💰 Cost: $${response.cost.toFixed(4)} | Model: ${response.model} | Time: ${response.responseTime}ms`);
+    // Cost tracking: $${response.cost.toFixed(4)} | Model: ${response.model} | Time: ${response.responseTime}ms
 
     return response;
   } catch (error) {
@@ -186,8 +186,8 @@ export async function riskAssessmentExample() {
 
 
 
-    console.log(`Risk Factors: ${riskAnalysis.riskFactors.join(', ')}`);
-    console.log(`Recommendations: ${riskAnalysis.recommendations.join(', ')}`);
+    // Risk Factors: ${riskAnalysis.riskFactors.join(', ')}
+    // Recommendations: ${riskAnalysis.recommendations.join(', ')}
 
 
     return riskAnalysis;
@@ -211,38 +211,19 @@ export async function serviceMonitoringExample() {
 
     // Get service status
     const status = claudeService.getServiceStatus();
-    console.log('Service Status:', {
-      initialized: status.isInitialized,
-      healthy: status.isHealthy,
-      lastHealthCheck: status.lastHealthCheck,
-      circuitBreaker: status.circuitBreakerState,
-      apiKeyValid: status.apiKeyValid,
-      modelsAvailable: status.modelsAvailable.length
-    });
+    // Service Status: initialized, healthy, lastHealthCheck, circuitBreaker, apiKeyValid, modelsAvailable
 
     // Get cost information
     const costInfo = claudeService.getCostInfo('example-user');
-    console.log('Cost Info:', {
-      dailySpend: `$${costInfo.dailySpend.toFixed(2)}`,
-      monthlySpend: `$${costInfo.monthlySpend.toFixed(2)}`,
-      remainingBudget: `$${costInfo.remainingBudget.toFixed(2)}`
-    });
+    // Cost Info: dailySpend, monthlySpend, remainingBudget
 
     // Get rate limit info
     const rateLimitInfo = claudeService.getRateLimitInfo('example-user');
-    console.log('Rate Limit Info:', {
-      remaining: rateLimitInfo.remaining,
-      limit: rateLimitInfo.limit,
-      resetTime: rateLimitInfo.resetTime
-    });
+    // Rate Limit Info: remaining, limit, resetTime
 
     // Get spending summary
     const spendingSummary = claudeService.getSpendingSummary();
-    console.log('Spending Summary:', {
-      totalDaily: `$${spendingSummary.totalDaily.toFixed(2)}`,
-      totalMonthly: `$${spendingSummary.totalMonthly.toFixed(2)}`,
-      activeUsers: spendingSummary.userCount
-    });
+    // Spending Summary: totalDaily, totalMonthly, activeUsers
 
     return { connectionTest, status, costInfo, rateLimitInfo, spendingSummary };
   } catch (error) {
@@ -257,7 +238,7 @@ export async function serviceMonitoringExample() {
  */
 export async function runCompleteIntegrationTest() {
 
-  console.log('='.repeat(60));
+  // Integration Test Start
 
   try {
     // Initialize the service
@@ -276,7 +257,7 @@ export async function runCompleteIntegrationTest() {
       serviceMonitoring: await serviceMonitoringExample()
     };
 
-    console.log('\n' + '='.repeat(60));
+    // Integration Test Complete
 
 
 
@@ -291,8 +272,8 @@ export async function runCompleteIntegrationTest() {
       results.healthDataInterpretation.cost
     ].reduce((sum, cost) => sum + cost, 0);
 
-    console.log(`\n💰 Total Test Cost: $${totalCost.toFixed(4)}`);
-    console.log('='.repeat(60));
+    // Total Test Cost: $${totalCost.toFixed(4)}
+    // Integration Test End
 
     return results;
   } catch (error) {
