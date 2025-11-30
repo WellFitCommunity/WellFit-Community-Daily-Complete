@@ -22,8 +22,8 @@ import { auditLogger } from '../services/auditLogger';
 import { createClient } from '@supabase/supabase-js';
 
 // Create anonymous Supabase client for public access
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY || '';
+const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || '';
 const anonSupabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Session duration in minutes
