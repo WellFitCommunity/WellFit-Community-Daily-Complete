@@ -46,6 +46,8 @@ export default function AdminLoginPage() {
   // Tenant info for TenantCode-PIN authentication
   const [userTenantId, setUserTenantId] = useState<string | null>(null);
   const [userTenantCode, setUserTenantCode] = useState<string | null>(null);
+  // Super admin detection (for dual-role users like Maria)
+  const [isSuperAdmin, setIsSuperAdmin] = useState<boolean>(false);
 
   const userLabel = useMemo(() => {
     return user?.email || (user as any)?.phone || user?.user_metadata?.email || 'Unknown user';
@@ -97,6 +99,18 @@ export default function AdminLoginPage() {
               setUserTenantCode(tenantData.tenant_code);
             }
           }
+        }
+
+        // Check if user is also a super admin (dual-role detection)
+        const { data: superAdminData } = await supabase
+          .from('super_admin_users')
+          .select('id, is_active')
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+          .maybeSingle();
+
+        if (!cancelled && superAdminData) {
+          setIsSuperAdmin(true);
         }
       }
     })();
@@ -285,13 +299,40 @@ export default function AdminLoginPage() {
           className="text-white text-center py-6 px-6 rounded-t-lg shadow-lg"
           style={{ background: branding.gradient }}
         >
-          <h1 className="text-2xl font-bold">Envision Atlus - Admin Login</h1>
-          <p className="text-sm text-blue-100 mt-1">Envision VirtualEdge Group LLC</p>
+          <h1 className="text-2xl font-bold">Facility Admin Login</h1>
+          <p className="text-sm text-blue-100 mt-1">{branding.appName} - Staff PIN Verification</p>
         </div>
 
         {/* Card Content */}
         <div className="bg-white p-6 rounded-b-lg shadow-lg">
           <p className="text-sm text-gray-600 mb-2">Logged in as: {userLabel}</p>
+
+          {/* Super Admin Portal Link - For dual-role users */}
+          {isSuperAdmin && (
+            <div className="mb-4 p-3 bg-gradient-to-r from-blue-900 to-slate-800 rounded-lg border border-blue-700">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                  <div>
+                    <p className="text-xs text-blue-300 font-medium">Envision Super Admin Detected</p>
+                    <p className="text-sm text-white">Access the Master Panel?</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => navigate('/envision')}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-1"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                  Envision Portal
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Tenant Badge - Smart Recognition */}
           {userTenantCode && (
