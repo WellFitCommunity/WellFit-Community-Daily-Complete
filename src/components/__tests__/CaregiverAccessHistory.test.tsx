@@ -45,8 +45,8 @@ describe('CaregiverAccessHistory', () => {
     it('should show loading state initially', () => {
       render(<CaregiverAccessHistory userId="user-123" />);
 
-      // Component shows loading animation briefly
-      expect(screen.getByText(/Who Viewed My Data/i)).toBeInTheDocument();
+      // Component shows loading skeleton with animation
+      expect(document.querySelector('.animate-pulse')).toBeInTheDocument();
     });
 
     it('should show empty state when no access logs', async () => {
@@ -133,15 +133,21 @@ describe('CaregiverAccessHistory', () => {
 
       render(<CaregiverAccessHistory userId="user-123" />);
 
+      // First wait for component to load, then click to expand
       await waitFor(() => {
-        const expandButton = screen.getByText(/Who Viewed My Data/i).closest('div');
-        if (expandButton) {
-          fireEvent.click(expandButton);
-        }
+        expect(screen.getByText(/Who Viewed My Data/i)).toBeInTheDocument();
       });
 
+      // Click to expand and see details
+      const expandButton = screen.getByText(/Who Viewed My Data/i).closest('div')?.parentElement;
+      if (expandButton) {
+        fireEvent.click(expandButton);
+      }
+
       await waitFor(() => {
-        expect(screen.getByText(/senior dashboard/i)).toBeInTheDocument();
+        // pages_viewed is ['senior_dashboard', 'senior_reports'] - component replaces _ with space
+        // There may be multiple matches (one per log entry), so use getAllByText
+        expect(screen.getAllByText(/senior dashboard/i).length).toBeGreaterThan(0);
       });
     });
 
@@ -223,8 +229,11 @@ describe('CaregiverAccessHistory', () => {
       render(<CaregiverAccessHistory userId="user-123" />);
 
       await waitFor(() => {
-        const expandButton = screen.getByText(/Who Viewed My Data/i).closest('div');
-        expect(expandButton).toHaveStyle('cursor: pointer');
+        // The clickable element has cursor-pointer class
+        // Structure: div.cursor-pointer > div.flex.items-center > ... > div (contains "Who Viewed My Data")
+        const titleElement = screen.getByText(/Who Viewed My Data/i);
+        const clickableArea = titleElement.closest('.cursor-pointer');
+        expect(clickableArea).toBeInTheDocument();
       });
     });
 

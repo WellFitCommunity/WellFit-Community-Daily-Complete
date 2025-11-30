@@ -27,6 +27,17 @@ jest.mock('react-router-dom', () => ({
 }));
 
 describe('AdminLoginPage - Tenant Code Validation', () => {
+  // Helper to create chainable mock for super_admin_users query
+  const createSuperAdminMock = (returnData: any = null) => ({
+    select: jest.fn().mockReturnValue({
+      eq: jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          maybeSingle: jest.fn().mockResolvedValue({ data: returnData, error: null })
+        })
+      })
+    })
+  });
+
   const mockSupabase = {
     from: jest.fn(),
     auth: {
@@ -64,24 +75,22 @@ describe('AdminLoginPage - Tenant Code Validation', () => {
 
   describe('Tenant Detection', () => {
     test('should fetch tenant info for tenant user', async () => {
-      const mockFrom = jest.fn().mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            maybeSingle: jest.fn().mockResolvedValue({
-              data: {
-                is_admin: true,
-                role: 'admin',
-                tenant_id: 'tenant-123'
-              },
-              error: null
-            })
-          })
-        })
-      });
-
       mockSupabase.from.mockImplementation((table: string) => {
         if (table === 'profiles') {
-          return mockFrom();
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                maybeSingle: jest.fn().mockResolvedValue({
+                  data: {
+                    is_admin: true,
+                    role: 'admin',
+                    tenant_id: 'tenant-123'
+                  },
+                  error: null
+                })
+              })
+            })
+          };
         }
         if (table === 'tenants') {
           return {
@@ -95,6 +104,10 @@ describe('AdminLoginPage - Tenant Code Validation', () => {
             })
           };
         }
+        if (table === 'super_admin_users') {
+          return createSuperAdminMock(null);
+        }
+        return createSuperAdminMock(null);
       });
 
       render(
@@ -109,19 +122,27 @@ describe('AdminLoginPage - Tenant Code Validation', () => {
     });
 
     test('should not fetch tenant info for master super admin', async () => {
-      mockSupabase.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            maybeSingle: jest.fn().mockResolvedValue({
-              data: {
-                is_admin: true,
-                role: 'super_admin',
-                tenant_id: null
-              },
-              error: null
+      mockSupabase.from.mockImplementation((table: string) => {
+        if (table === 'profiles') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                maybeSingle: jest.fn().mockResolvedValue({
+                  data: {
+                    is_admin: true,
+                    role: 'super_admin',
+                    tenant_id: null
+                  },
+                  error: null
+                })
+              })
             })
-          })
-        })
+          };
+        }
+        if (table === 'super_admin_users') {
+          return createSuperAdminMock(null);
+        }
+        return createSuperAdminMock(null);
       });
 
       render(
@@ -170,6 +191,10 @@ describe('AdminLoginPage - Tenant Code Validation', () => {
             })
           };
         }
+        if (table === 'super_admin_users') {
+          return createSuperAdminMock(null);
+        }
+        return createSuperAdminMock(null);
       });
 
       render(
@@ -178,28 +203,36 @@ describe('AdminLoginPage - Tenant Code Validation', () => {
         </BrowserRouter>
       );
 
+      // The updated AdminLoginPage shows "Enter Admin PIN" label but with tenant badge
       await waitFor(() => {
-        expect(screen.getByText('Enter Tenant Code + PIN')).toBeInTheDocument();
-        expect(screen.getByText(/Your tenant code is/)).toBeInTheDocument();
-        // MH-6702 appears multiple times on the page - verify at least one exists
+        expect(screen.getByText('Enter Admin PIN')).toBeInTheDocument();
+        // MH-6702 appears in the tenant badge
         expect(screen.getAllByText('MH-6702').length).toBeGreaterThan(0);
       });
     });
 
     test('should show PIN-only input for master super admin', async () => {
-      mockSupabase.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            maybeSingle: jest.fn().mockResolvedValue({
-              data: {
-                is_admin: true,
-                role: 'super_admin',
-                tenant_id: null
-              },
-              error: null
+      mockSupabase.from.mockImplementation((table: string) => {
+        if (table === 'profiles') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                maybeSingle: jest.fn().mockResolvedValue({
+                  data: {
+                    is_admin: true,
+                    role: 'super_admin',
+                    tenant_id: null
+                  },
+                  error: null
+                })
+              })
             })
-          })
-        })
+          };
+        }
+        if (table === 'super_admin_users') {
+          return createSuperAdminMock(null);
+        }
+        return createSuperAdminMock(null);
       });
 
       render(
@@ -210,11 +243,11 @@ describe('AdminLoginPage - Tenant Code Validation', () => {
 
       await waitFor(() => {
         expect(screen.getByText('Enter Admin PIN')).toBeInTheDocument();
-        expect(screen.queryByText(/Your tenant code is/)).not.toBeInTheDocument();
+        expect(screen.queryByText(/Managing Facility/)).not.toBeInTheDocument();
       });
     });
 
-    test('should show placeholder with tenant code', async () => {
+    test('should show placeholder with PIN hint', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
         if (table === 'profiles') {
           return {
@@ -244,6 +277,10 @@ describe('AdminLoginPage - Tenant Code Validation', () => {
             })
           };
         }
+        if (table === 'super_admin_users') {
+          return createSuperAdminMock(null);
+        }
+        return createSuperAdminMock(null);
       });
 
       render(
@@ -253,7 +290,8 @@ describe('AdminLoginPage - Tenant Code Validation', () => {
       );
 
       await waitFor(() => {
-        const input = screen.getByPlaceholderText('MH-6702-XXXX');
+        // Updated UI uses standard PIN placeholder
+        const input = screen.getByPlaceholderText(/Enter PIN/);
         expect(input).toBeInTheDocument();
       });
     });
@@ -288,6 +326,10 @@ describe('AdminLoginPage - Tenant Code Validation', () => {
             })
           };
         }
+        if (table === 'super_admin_users') {
+          return createSuperAdminMock(null);
+        }
+        return createSuperAdminMock(null);
       });
 
       render(
@@ -299,7 +341,8 @@ describe('AdminLoginPage - Tenant Code Validation', () => {
       // When tenant_code is null, component shows PIN-only input (fallback behavior)
       await waitFor(() => {
         expect(screen.getByLabelText(/Enter Admin PIN/i)).toBeInTheDocument();
-        expect(screen.queryByText(/Enter Tenant Code \+ PIN/i)).not.toBeInTheDocument();
+        // No tenant badge when no tenant code
+        expect(screen.queryByText(/Managing Facility/)).not.toBeInTheDocument();
       });
     });
   });
@@ -335,10 +378,14 @@ describe('AdminLoginPage - Tenant Code Validation', () => {
             })
           };
         }
+        if (table === 'super_admin_users') {
+          return createSuperAdminMock(null);
+        }
+        return createSuperAdminMock(null);
       });
     });
 
-    test('should accept valid TenantCode-PIN format', async () => {
+    test('should accept valid PIN format', async () => {
       const mockVerifyPin = jest.fn().mockResolvedValue(true);
       (useAdminAuth as jest.Mock).mockReturnValue({
         verifyPinAndLogin: mockVerifyPin,
@@ -353,16 +400,17 @@ describe('AdminLoginPage - Tenant Code Validation', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText('Enter Tenant Code + PIN')).toBeInTheDocument();
+        expect(screen.getByText('Enter Admin PIN')).toBeInTheDocument();
       });
 
-      const input = screen.getByPlaceholderText('MH-6702-XXXX');
-      fireEvent.change(input, { target: { value: 'MH-6702-1234' } });
+      const input = screen.getByPlaceholderText(/Enter PIN/);
+      fireEvent.change(input, { target: { value: '1234' } });
 
       const [,submitBtn] = screen.getAllByText('Unlock Admin Panel');
       fireEvent.click(submitBtn);
 
       await waitFor(() => {
+        // PIN is combined with tenant code automatically
         expect(mockVerifyPin).toHaveBeenCalledWith('MH-6702-1234', expect.any(String));
       });
     });
@@ -375,21 +423,23 @@ describe('AdminLoginPage - Tenant Code Validation', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText('Enter Tenant Code + PIN')).toBeInTheDocument();
+        expect(screen.getByText('Enter Admin PIN')).toBeInTheDocument();
       });
 
-      const input = screen.getByPlaceholderText('MH-6702-XXXX');
-      fireEvent.change(input, { target: { value: 'INVALID' } });
+      // Enter a short PIN (less than 4 digits)
+      const input = screen.getByPlaceholderText(/Enter PIN/);
+      fireEvent.change(input, { target: { value: '12' } });
 
       const [,submitBtn] = screen.getAllByText('Unlock Admin Panel');
       fireEvent.click(submitBtn);
 
       await waitFor(() => {
-        expect(screen.getByText(/Invalid format/)).toBeInTheDocument();
+        // Component uses en-dash (–) in error message, using regex with . wildcard
+        expect(screen.getByText(/Enter your 4.8 digit PIN/)).toBeInTheDocument();
       });
     });
 
-    test('should reject wrong tenant code', async () => {
+    test('should show tenant badge for tenant user', async () => {
       render(
         <BrowserRouter>
           <AdminLoginPage />
@@ -397,22 +447,13 @@ describe('AdminLoginPage - Tenant Code Validation', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText('Enter Tenant Code + PIN')).toBeInTheDocument();
-      });
-
-      const input = screen.getByPlaceholderText('MH-6702-XXXX');
-      fireEvent.change(input, { target: { value: 'PH-1234-5678' } }); // Wrong tenant code, valid format
-
-      const [,submitBtn] = screen.getAllByText('Unlock Admin Panel');
-      fireEvent.click(submitBtn);
-
-      await waitFor(() => {
-        expect(screen.getByText(/Incorrect tenant code/)).toBeInTheDocument();
-        expect(screen.getByText(/Use MH-6702/)).toBeInTheDocument();
+        // Tenant badge shows the facility
+        expect(screen.getByText(/Managing Facility/)).toBeInTheDocument();
+        expect(screen.getAllByText('MH-6702').length).toBeGreaterThan(0);
       });
     });
 
-    test('should auto-uppercase input', async () => {
+    test('should only allow numeric input', async () => {
       render(
         <BrowserRouter>
           <AdminLoginPage />
@@ -420,33 +461,42 @@ describe('AdminLoginPage - Tenant Code Validation', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText('Enter Tenant Code + PIN')).toBeInTheDocument();
+        expect(screen.getByText('Enter Admin PIN')).toBeInTheDocument();
       });
 
-      const input = screen.getByPlaceholderText('MH-6702-XXXX') as HTMLInputElement;
-      fireEvent.change(input, { target: { value: 'mh-6702-1234' } });
+      const input = screen.getByPlaceholderText(/Enter PIN/) as HTMLInputElement;
+      // Non-numeric chars are stripped by cleanPin
+      fireEvent.change(input, { target: { value: 'abc1234def' } });
 
       await waitFor(() => {
-        expect(input.value).toBe('MH-6702-1234');
+        expect(input.value).toBe('1234');
       });
     });
   });
 
   describe('Input Validation - Master Super Admin', () => {
     beforeEach(() => {
-      mockSupabase.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            maybeSingle: jest.fn().mockResolvedValue({
-              data: {
-                is_admin: true,
-                role: 'super_admin',
-                tenant_id: null
-              },
-              error: null
+      mockSupabase.from.mockImplementation((table: string) => {
+        if (table === 'profiles') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                maybeSingle: jest.fn().mockResolvedValue({
+                  data: {
+                    is_admin: true,
+                    role: 'super_admin',
+                    tenant_id: null
+                  },
+                  error: null
+                })
+              })
             })
-          })
-        })
+          };
+        }
+        if (table === 'super_admin_users') {
+          return createSuperAdminMock(null);
+        }
+        return createSuperAdminMock(null);
       });
     });
 
@@ -497,7 +547,8 @@ describe('AdminLoginPage - Tenant Code Validation', () => {
       fireEvent.click(submitBtn);
 
       await waitFor(() => {
-        expect(screen.getByText(/Enter your 4–8 digit PIN/)).toBeInTheDocument();
+        // Component uses en-dash (–) in error message
+        expect(screen.getByText(/Enter your 4.8 digit PIN/)).toBeInTheDocument();
       });
     });
   });
@@ -533,6 +584,10 @@ describe('AdminLoginPage - Tenant Code Validation', () => {
             })
           };
         }
+        if (table === 'super_admin_users') {
+          return createSuperAdminMock(null);
+        }
+        return createSuperAdminMock(null);
       });
 
       render(
@@ -542,18 +597,20 @@ describe('AdminLoginPage - Tenant Code Validation', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText('Enter Tenant Code + PIN')).toBeInTheDocument();
+        expect(screen.getByText('Enter Admin PIN')).toBeInTheDocument();
       });
 
-      const input = screen.getByPlaceholderText('MH-6702-XXXX');
+      const input = screen.getByPlaceholderText(/Enter PIN/) as HTMLInputElement;
+      // SQL injection chars are stripped by cleanPin (only digits allowed)
+      // Input "'; DROP TABLE tenants; --" becomes empty string after stripping non-digits
       fireEvent.change(input, { target: { value: "'; DROP TABLE tenants; --" } });
 
-      const [,submitBtn] = screen.getAllByText('Unlock Admin Panel');
-      fireEvent.click(submitBtn);
+      // Verify the malicious input was sanitized to empty
+      expect(input.value).toBe('');
 
-      await waitFor(() => {
-        expect(screen.getByText(/Invalid format/)).toBeInTheDocument();
-      });
+      // Submit button should be disabled with empty input
+      const [,submitBtn] = screen.getAllByText('Unlock Admin Panel');
+      expect(submitBtn).toBeDisabled();
     });
 
     test('should handle XSS attempts', async () => {
@@ -586,6 +643,10 @@ describe('AdminLoginPage - Tenant Code Validation', () => {
             })
           };
         }
+        if (table === 'super_admin_users') {
+          return createSuperAdminMock(null);
+        }
+        return createSuperAdminMock(null);
       });
 
       render(
@@ -595,18 +656,20 @@ describe('AdminLoginPage - Tenant Code Validation', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText('Enter Tenant Code + PIN')).toBeInTheDocument();
+        expect(screen.getByText('Enter Admin PIN')).toBeInTheDocument();
       });
 
-      const input = screen.getByPlaceholderText('MH-6702-XXXX');
+      const input = screen.getByPlaceholderText(/Enter PIN/) as HTMLInputElement;
+      // XSS chars are stripped by cleanPin (only digits allowed)
+      // Input "<script>alert("xss")</script>" becomes empty after stripping non-digits
       fireEvent.change(input, { target: { value: '<script>alert("xss")</script>' } });
 
-      const [,submitBtn] = screen.getAllByText('Unlock Admin Panel');
-      fireEvent.click(submitBtn);
+      // Verify the malicious input was sanitized to empty
+      expect(input.value).toBe('');
 
-      await waitFor(() => {
-        expect(screen.getByText(/Invalid format/)).toBeInTheDocument();
-      });
+      // Submit button should be disabled with empty input
+      const [,submitBtn] = screen.getAllByText('Unlock Admin Panel');
+      expect(submitBtn).toBeDisabled();
     });
   });
 });
