@@ -203,6 +203,7 @@ function Shell() {
               <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/admin-login" element={<AdminLoginPage />} />
               <Route path="/envision" element={<EnvisionLoginPage />} />
+              <Route path="/envision/login" element={<EnvisionLoginPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/metrics" element={<MetricsPage />} />
               <Route path="/home" element={<Home />} />
