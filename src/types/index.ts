@@ -18,3 +18,6 @@ export * from './handoff';
 
 // AI/Claude types
 export * from './claude';
+
+// Organization/Facility types
+export * from './facility';
