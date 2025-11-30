@@ -307,33 +307,6 @@ export default function AdminLoginPage() {
         <div className="bg-white p-6 rounded-b-lg shadow-lg">
           <p className="text-sm text-gray-600 mb-2">Logged in as: {userLabel}</p>
 
-          {/* Super Admin Portal Link - For dual-role users */}
-          {isSuperAdmin && (
-            <div className="mb-4 p-3 bg-gradient-to-r from-blue-900 to-slate-800 rounded-lg border border-blue-700">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                  </svg>
-                  <div>
-                    <p className="text-xs text-blue-300 font-medium">Envision Super Admin Detected</p>
-                    <p className="text-sm text-white">Access the Master Panel?</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => navigate('/envision')}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-1"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                  Envision Portal
-                </button>
-              </div>
-            </div>
-          )}
-
           {/* Tenant Badge - Smart Recognition */}
           {userTenantCode && (
             <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-600 rounded">
@@ -392,48 +365,11 @@ export default function AdminLoginPage() {
 
       {mode === 'unlock' ? (
         <form className="grid gap-3" onSubmit={handleUnlock} noValidate>
-          <div>
-            <label htmlFor="role-select" className="block text-sm font-medium text-gray-700 mb-1">
-              Your Role {detectedRole && <span className="text-xs text-gray-500">(detected: {ROLE_DISPLAY_NAMES[detectedRole]})</span>}
-            </label>
-            <select
-              id="role-select"
-              className="border border-gray-300 p-2 rounded w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              value={role}
-              onChange={(e) => setRole(e.target.value as StaffRole)}
-            >
-              <option value="admin">Administrator</option>
-              <option value="it_admin">IT Administrator</option>
-              <option value="super_admin">Platform Administrator (Envision)</option>
-              <option value="nurse">Nurse (RN/LPN)</option>
-              <option value="nurse_practitioner">Nurse Practitioner</option>
-              <option value="physician">Physician</option>
-              <option value="doctor">Doctor</option>
-              <option value="physician_assistant">Physician Assistant</option>
-              <option value="clinical_supervisor">Clinical Supervisor</option>
-              <option value="department_head">Department Head</option>
-              <option value="physical_therapist">Physical Therapist</option>
-            </select>
-          </div>
-
-          {/* Tenant Identifier - Read-only static field when user has a tenant */}
-          {userTenantId && userTenantCode && (
-            <div>
-              <label htmlFor="tenant-code-display" className="block text-sm font-medium text-gray-700 mb-1">
-                Tenant Identifier
-              </label>
-              <input
-                id="tenant-code-display"
-                className="border border-gray-300 p-3 rounded w-full bg-gray-100 text-gray-700 font-mono cursor-not-allowed"
-                type="text"
-                value={userTenantCode}
-                readOnly
-                disabled
-                aria-describedby="tenant-code-help"
-              />
-              <p id="tenant-code-help" className="text-xs text-gray-500 mt-1">
-                Your facility identifier (auto-detected from your account)
-              </p>
+          {/* Role Display - Auto-detected from profile */}
+          {detectedRole && (
+            <div className="p-3 bg-gray-50 border border-gray-200 rounded">
+              <p className="text-xs text-gray-500 mb-1">Your Role</p>
+              <p className="text-sm font-medium text-gray-900">{ROLE_DISPLAY_NAMES[detectedRole] || detectedRole}</p>
             </div>
           )}
 
@@ -458,9 +394,7 @@ export default function AdminLoginPage() {
               autoFocus
             />
             <p className="text-xs text-gray-500 mt-1">
-              {userTenantId && userTenantCode
-                ? 'Enter your 4-8 digit PIN (your tenant identifier is already set above)'
-                : 'Enter your 4-8 digit admin PIN'}
+              Enter your 4-8 digit admin PIN
             </p>
           </div>
 
@@ -496,29 +430,13 @@ export default function AdminLoginPage() {
         </form>
       ) : (
         <form className="grid gap-3" onSubmit={handleSetPin} noValidate>
-          <div>
-            <label htmlFor="role-select-set" className="block text-sm font-medium text-gray-700 mb-1">
-              Set PIN for Role {detectedRole && <span className="text-xs text-gray-500">(detected: {ROLE_DISPLAY_NAMES[detectedRole]})</span>}
-            </label>
-            <select
-              id="role-select-set"
-              className="border border-gray-300 p-2 rounded w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              value={role}
-              onChange={(e) => setRole(e.target.value as StaffRole)}
-            >
-              <option value="admin">Administrator</option>
-              <option value="it_admin">IT Administrator</option>
-              <option value="super_admin">Platform Administrator (Envision)</option>
-              <option value="nurse">Nurse (RN/LPN)</option>
-              <option value="nurse_practitioner">Nurse Practitioner</option>
-              <option value="physician">Physician</option>
-              <option value="doctor">Doctor</option>
-              <option value="physician_assistant">Physician Assistant</option>
-              <option value="clinical_supervisor">Clinical Supervisor</option>
-              <option value="department_head">Department Head</option>
-              <option value="physical_therapist">Physical Therapist</option>
-            </select>
-          </div>
+          {/* Role Display - Auto-detected from profile */}
+          {detectedRole && (
+            <div className="p-3 bg-gray-50 border border-gray-200 rounded">
+              <p className="text-xs text-gray-500 mb-1">Setting PIN for Role</p>
+              <p className="text-sm font-medium text-gray-900">{ROLE_DISPLAY_NAMES[detectedRole] || detectedRole}</p>
+            </div>
+          )}
 
           <div>
             <label htmlFor="new-pin-input" className="block text-sm font-medium text-gray-700 mb-1">
@@ -597,6 +515,19 @@ export default function AdminLoginPage() {
           It expires after 2 hours of inactivity.
         </p>
       </div>
+
+      {/* Subtle Envision link - "if you know, you know" */}
+      {isSuperAdmin && (
+        <div className="mt-4 text-center">
+          <button
+            type="button"
+            onClick={() => navigate('/envision')}
+            className="text-xs text-gray-400 hover:text-blue-600 transition-colors"
+          >
+            Envision
+          </button>
+        </div>
+      )}
         </div>
       </div>
     </div>
