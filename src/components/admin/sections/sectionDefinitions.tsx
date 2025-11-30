@@ -29,6 +29,7 @@ const TenantSecurityDashboard = lazy(() => import('../TenantSecurityDashboard'))
 const TenantAuditLogs = lazy(() => import('../TenantAuditLogs'));
 const TenantComplianceReport = lazy(() => import('../TenantComplianceReport'));
 const TenantModuleConfigPanel = lazy(() => import('../TenantModuleConfigPanel').then(m => ({ default: m.TenantModuleConfigPanel })));
+const FacilityManagementPanel = lazy(() => import('../FacilityManagementPanel'));
 
 // Loading fallback for lazy-loaded sections
 export const SectionLoadingFallback: React.FC = () => (
@@ -262,6 +263,17 @@ export const getAllSections = (): DashboardSection[] => [
   },
 
   // ==================== SYSTEM ADMINISTRATION ====================
+  {
+    id: 'facility-management',
+    title: 'Facility Management',
+    subtitle: 'Manage hospitals, clinics, and other facilities in your organization',
+    icon: '🏥',
+    headerColor: 'text-blue-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><FacilityManagementPanel /></Suspense>,
+    category: 'admin',
+    priority: 'high',
+    roles: ['admin', 'super_admin', 'system_admin'],
+  },
   {
     id: 'module-configuration',
     title: 'Module Configuration',
