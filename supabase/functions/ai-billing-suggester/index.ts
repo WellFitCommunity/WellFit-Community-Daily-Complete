@@ -3,6 +3,8 @@
  * Can be called:
  * 1. Real-time during encounter (HTTP request)
  * 2. Batch processing for pending encounters (cron)
+ *
+ * SECURITY: Requires authentication and tenant authorization
  */
 
 import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
@@ -21,22 +23,96 @@ serve(async (req) => {
     return handleOptions(req);
   }
 
+  const { headers: corsHeaders } = corsFromRequest(req);
+
   try {
+    // =========================================================================
+    // AUTHENTICATION - Required for all requests
+    // =========================================================================
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: 'Authorization required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const token = authHeader.slice(7);
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid or expired token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // =========================================================================
+    // Get user's profile and tenant context
+    // =========================================================================
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('tenant_id, is_admin, role_id, roles:role_id(name)')
+      .eq('user_id', user.id)
+      .single();
+
+    if (!profile?.tenant_id) {
+      return new Response(
+        JSON.stringify({ error: 'User has no tenant assigned' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check if user has clinical/admin role (billing suggester requires elevated access)
+    const roleName = (profile.roles as any)?.name;
+    const allowedRoles = ['admin', 'super_admin', 'physician', 'nurse', 'billing_specialist', 'case_manager'];
+    const hasAccess = profile.is_admin || allowedRoles.includes(roleName);
+
+    if (!hasAccess) {
+      return new Response(
+        JSON.stringify({ error: 'Insufficient permissions for billing suggestions' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check if super admin (can access any tenant)
+    const { data: superAdminData } = await supabase
+      .from('super_admin_users')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    const isSuperAdmin = !!superAdminData;
+
     const { encounterId, patientId, tenantId, mode = 'single' } = await req.json();
+
+    // =========================================================================
+    // AUTHORIZATION - Verify tenant access
+    // =========================================================================
+    const effectiveTenantId = tenantId || profile.tenant_id;
+
+    // Non-super-admins can only access their own tenant
+    if (!isSuperAdmin && effectiveTenantId !== profile.tenant_id) {
+      return new Response(
+        JSON.stringify({ error: 'Cannot access data from another tenant' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     if (mode === 'batch') {
       // Batch mode: Process multiple pending encounters
-      return await processBatchEncounters(tenantId);
+      return await processBatchEncounters(effectiveTenantId, corsHeaders);
     } else {
       // Single mode: Process one encounter
-      return await processSingleEncounter(encounterId, patientId, tenantId);
+      return await processSingleEncounter(encounterId, patientId, effectiveTenantId, corsHeaders);
     }
   } catch (error: any) {
     return new Response(
       JSON.stringify({ error: error.message }),
       {
         status: 500,
-        headers: { ...corsFromRequest(req), 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   }
@@ -45,7 +121,8 @@ serve(async (req) => {
 async function processSingleEncounter(
   encounterId: string,
   patientId: string,
-  tenantId: string
+  tenantId: string,
+  corsHeaders: Record<string, string>
 ): Promise<Response> {
   // Import the billing service logic here
   // Note: In production, you'd import from a shared package
@@ -59,35 +136,38 @@ async function processSingleEncounter(
   if (!config || !config.billing_suggester_enabled) {
     return new Response(
       JSON.stringify({ error: 'Billing suggester not enabled for this tenant' }),
-      { status: 403, headers: { 'Content-Type': 'application/json' } }
+      { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 
-  // 2. Fetch encounter data from FHIR tables
+  // 2. Fetch encounter data from FHIR tables - SECURITY: Filter by tenant_id
   const { data: encounter } = await supabase
     .from('fhir_encounters')
     .select('*')
     .eq('id', encounterId)
+    .eq('tenant_id', tenantId)
     .single();
 
   if (!encounter) {
     return new Response(
       JSON.stringify({ error: 'Encounter not found' }),
-      { status: 404, headers: { 'Content-Type': 'application/json' } }
+      { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 
-  // 3. Fetch related observations, conditions, procedures
+  // 3. Fetch related observations, conditions, procedures - SECURITY: Filter by tenant_id
   const { data: observations } = await supabase
     .from('fhir_observations')
     .select('code, value, unit')
     .eq('encounter_id', encounterId)
+    .eq('tenant_id', tenantId)
     .limit(20);
 
   const { data: conditions } = await supabase
     .from('fhir_conditions')
     .select('code, display')
     .eq('patient_id', patientId)
+    .eq('tenant_id', tenantId)
     .eq('clinical_status', 'active')
     .limit(10);
 
@@ -115,12 +195,12 @@ async function processSingleEncounter(
     }),
     {
       status: 200,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     }
   );
 }
 
-async function processBatchEncounters(tenantId: string): Promise<Response> {
+async function processBatchEncounters(tenantId: string, corsHeaders: Record<string, string>): Promise<Response> {
   // Batch processing: Find all encounters from last 24h without billing suggestions
 
   const { data: pendingEncounters } = await supabase
@@ -134,7 +214,7 @@ async function processBatchEncounters(tenantId: string): Promise<Response> {
   if (!pendingEncounters || pendingEncounters.length === 0) {
     return new Response(
       JSON.stringify({ message: 'No pending encounters to process', count: 0 }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 
@@ -166,7 +246,8 @@ async function processBatchEncounters(tenantId: string): Promise<Response> {
       await processSingleEncounter(
         encounter.id,
         encounter.patient_id,
-        tenantId
+        tenantId,
+        corsHeaders
       );
       results.processed++;
     } catch (error) {
@@ -180,6 +261,6 @@ async function processBatchEncounters(tenantId: string): Promise<Response> {
       results,
       timestamp: new Date().toISOString()
     }),
-    { status: 200, headers: { 'Content-Type': 'application/json' } }
+    { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   );
 }
