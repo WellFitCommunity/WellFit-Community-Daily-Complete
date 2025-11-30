@@ -46,8 +46,6 @@ export default function AdminLoginPage() {
   // Tenant info for TenantCode-PIN authentication
   const [userTenantId, setUserTenantId] = useState<string | null>(null);
   const [userTenantCode, setUserTenantCode] = useState<string | null>(null);
-  // Super admin detection (for dual-role users like Maria)
-  const [isSuperAdmin, setIsSuperAdmin] = useState<boolean>(false);
 
   const userLabel = useMemo(() => {
     return user?.email || (user as any)?.phone || user?.user_metadata?.email || 'Unknown user';
@@ -101,17 +99,6 @@ export default function AdminLoginPage() {
           }
         }
 
-        // Check if user is also a super admin (dual-role detection)
-        const { data: superAdminData } = await supabase
-          .from('super_admin_users')
-          .select('id, is_active')
-          .eq('user_id', user.id)
-          .eq('is_active', true)
-          .maybeSingle();
-
-        if (!cancelled && superAdminData) {
-          setIsSuperAdmin(true);
-        }
       }
     })();
     return () => { cancelled = true; };
@@ -516,18 +503,16 @@ export default function AdminLoginPage() {
         </p>
       </div>
 
-      {/* Subtle Envision link - "if you know, you know" */}
-      {isSuperAdmin && (
-        <div className="mt-4 text-center">
-          <button
-            type="button"
-            onClick={() => navigate('/envision')}
-            className="text-xs text-gray-400 hover:text-blue-600 transition-colors"
-          >
-            Envision
-          </button>
-        </div>
-      )}
+      {/* Subtle Envision link at bottom - visible to all, understood by Envision staff */}
+      <div className="mt-6 pt-4 border-t border-gray-100 text-center">
+        <button
+          type="button"
+          onClick={() => navigate('/envision')}
+          className="text-xs text-gray-400 hover:text-teal-600 transition-colors"
+        >
+          Envision
+        </button>
+      </div>
         </div>
       </div>
     </div>
