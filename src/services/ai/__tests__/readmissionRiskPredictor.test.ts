@@ -9,7 +9,7 @@ jest.mock('../../mcp/mcpCostOptimizer');
 
 import { ReadmissionRiskPredictor } from '../readmissionRiskPredictor';
 import { supabase } from '../../../lib/supabaseClient';
-import { setSupabaseHandler } from '../../../lib/__mocks__/supabaseClient';
+import { setSupabaseHandler, resetSupabaseHandler } from '../../../lib/__mocks__/supabaseClient';
 import type { DischargeContext } from '../readmissionRiskPredictor';
 
 // Mock MCP Cost Optimizer
@@ -38,7 +38,11 @@ describe('ReadmissionRiskPredictor', () => {
 
   beforeEach(() => {
     predictor = new ReadmissionRiskPredictor(mockOptimizer as any);
-    jest.clearAllMocks();
+    // Clear only call history, not implementations
+    mockOptimizer.call.mockClear();
+    (supabase.rpc as jest.Mock).mockClear();
+    // Reset supabase handler to default behavior
+    resetSupabaseHandler();
   });
 
   describe('Input Validation (Security)', () => {
@@ -94,20 +98,32 @@ describe('ReadmissionRiskPredictor', () => {
       };
 
       // Mock tenant config via rpc
-      (supabase.rpc as any).mockResolvedValue({
+      (supabase.rpc as jest.Mock).mockResolvedValue({
         data: { readmission_predictor_enabled: true },
         error: null
       });
 
-      // Mock patient data queries using handler
-      setSupabaseHandler(async (table, method, calls) => {
-        // Return empty arrays for all patient data tables
-        if (table === 'readmission_risk_predictions' && calls.some(c => c.method === 'insert')) {
-          return { data: null, error: null };
-        }
-        // Default: return empty data for select queries
-        return { data: [], error: null };
-      });
+      // Mock patient data queries - create a self-referential chainable mock
+      const createChainableMock = () => {
+        const mock: any = {};
+        // All chainable Supabase query methods
+        const chainMethods = [
+          'select', 'eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'like', 'ilike',
+          'is', 'in', 'contains', 'containedBy', 'range', 'match', 'not', 'or',
+          'filter', 'order', 'limit', 'insert', 'update', 'delete', 'upsert'
+        ];
+        chainMethods.forEach(method => {
+          mock[method] = jest.fn().mockReturnValue(mock);
+        });
+        // Terminal methods that return data
+        mock.single = jest.fn().mockResolvedValue({ data: null, error: null });
+        mock.maybeSingle = jest.fn().mockResolvedValue({ data: null, error: null });
+        // Make it thenable (awaitable)
+        mock.then = (resolve: any) => resolve({ data: [], error: null });
+        return mock;
+      };
+
+      (supabase.from as jest.Mock).mockImplementation(() => createChainableMock());
 
       // Mock AI response
       mockOptimizer.call.mockResolvedValue({

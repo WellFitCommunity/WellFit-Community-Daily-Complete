@@ -743,7 +743,9 @@ export function calculateComplexityTier(factors: SDOHFactor[]): 'minimal' | 'low
 
   if (totalFactors === 0) return 'minimal';
   if (totalFactors === 1 && highRiskCount === 0) return 'low';
+  // 2+ high-risk factors should be "high" complexity regardless of total count
+  if (highRiskCount >= 2) return 'high';
   if (totalFactors <= 2) return 'moderate';
-  if (totalFactors <= 4 || highRiskCount >= 2) return 'high';
+  if (totalFactors <= 4) return 'high';
   return 'complex';
 }

@@ -3,7 +3,7 @@
  * Tests for helper functions and type calculations
  */
 
-import { describe, it, expect } from '@jest/globals';
+// Note: describe, it, expect are jest globals - don't import from @jest/globals
 import {
   calculateOverallSDOHRisk,
   calculateComplexityTier,

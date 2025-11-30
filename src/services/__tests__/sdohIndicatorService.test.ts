@@ -3,7 +3,7 @@
  * Enterprise-grade test suite for SDOH indicator service
  */
 
-import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+// Note: jest, describe, it, expect, beforeEach are globals - don't import from @jest/globals
 import { SDOHIndicatorService } from '../sdohIndicatorService';
 import { SDOHService } from '../fhir/SDOHService';
 import type { SDOHCategory, SDOHRiskLevel } from '../../types/sdohIndicators';

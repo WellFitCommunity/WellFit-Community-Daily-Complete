@@ -2,16 +2,17 @@
 // Tests for the senior-facing main dashboard page
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import DashboardPage from '../DashboardPage';
-import { useSupabaseClient, useUser } from '../../contexts/AuthContext';
+import { useSupabaseClient, useUser, useAuth } from '../../contexts/AuthContext';
 import { useBranding } from '../../BrandingContext';
 
 // Mock dependencies
 jest.mock('../../contexts/AuthContext', () => ({
   useSupabaseClient: jest.fn(),
   useUser: jest.fn(),
+  useAuth: jest.fn(),
 }));
 
 jest.mock('../../BrandingContext', () => ({
@@ -19,7 +20,12 @@ jest.mock('../../BrandingContext', () => ({
 }));
 
 jest.mock('react-router-dom', () => ({
-  useNavigate: jest.fn(),
+  useNavigate: jest.fn(() => jest.fn()),
+}));
+
+// Mock fetchMyProfile
+jest.mock('../../data/profile', () => ({
+  fetchMyProfile: jest.fn().mockResolvedValue({ role: 'senior', role_code: 4 }),
 }));
 
 // Mock the SeniorCommunityDashboard component
@@ -53,6 +59,7 @@ describe('DashboardPage - Senior Facing Page', () => {
 
     (useUser as jest.Mock).mockReturnValue(mockUser);
     (useSupabaseClient as jest.Mock).mockReturnValue(mockSupabase);
+    (useAuth as jest.Mock).mockReturnValue({ user: mockUser });
     (useBranding as jest.Mock).mockReturnValue({
       branding: {
         gradient: 'linear-gradient(to bottom, #E0F2FE, #FFFFFF)',
@@ -63,56 +70,71 @@ describe('DashboardPage - Senior Facing Page', () => {
   });
 
   describe('Page Rendering', () => {
-    it('should render the dashboard page', () => {
+    it('should render the dashboard page', async () => {
       render(<DashboardPage />);
 
-      expect(screen.getByTestId('senior-community-dashboard')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByTestId('senior-community-dashboard')).toBeInTheDocument();
+      });
     });
 
-    it('should render SeniorCommunityDashboard component', () => {
+    it('should render SeniorCommunityDashboard component', async () => {
       render(<DashboardPage />);
 
-      expect(screen.getByText(/Senior Community Dashboard/i)).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText(/Senior Community Dashboard/i)).toBeInTheDocument();
+      });
     });
   });
 
   describe('User Experience', () => {
-    it('should provide central hub for senior users', () => {
+    it('should provide central hub for senior users', async () => {
       render(<DashboardPage />);
 
-      expect(screen.getByTestId('senior-community-dashboard')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByTestId('senior-community-dashboard')).toBeInTheDocument();
+      });
     });
 
-    it('should be the main landing page for seniors', () => {
+    it('should be the main landing page for seniors', async () => {
       render(<DashboardPage />);
 
-      const dashboard = screen.getByTestId('senior-community-dashboard');
-      expect(dashboard).toBeInTheDocument();
+      await waitFor(() => {
+        const dashboard = screen.getByTestId('senior-community-dashboard');
+        expect(dashboard).toBeInTheDocument();
+      });
     });
   });
 
   describe('Integration', () => {
-    it('should work with authenticated user', () => {
+    it('should work with authenticated user', async () => {
       render(<DashboardPage />);
 
-      expect(screen.getByTestId('senior-community-dashboard')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByTestId('senior-community-dashboard')).toBeInTheDocument();
+      });
     });
 
-    it('should handle missing user', () => {
+    it('should handle missing user', async () => {
       (useUser as jest.Mock).mockReturnValue(null);
+      (useAuth as jest.Mock).mockReturnValue({ user: null });
 
       render(<DashboardPage />);
 
-      expect(screen.getByTestId('senior-community-dashboard')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByTestId('senior-community-dashboard')).toBeInTheDocument();
+      });
     });
   });
 
   describe('Accessibility', () => {
-    it('should render accessible dashboard for seniors', () => {
+    it('should render accessible dashboard for seniors', async () => {
       render(<DashboardPage />);
 
-      const dashboard = screen.getByTestId('senior-community-dashboard');
-      expect(dashboard).toBeVisible();
+      await waitFor(() => {
+        const dashboard = screen.getByTestId('senior-community-dashboard');
+        expect(dashboard).toBeVisible();
+      });
     });
   });
 });

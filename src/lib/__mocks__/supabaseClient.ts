@@ -20,10 +20,6 @@ export function setSupabaseHandler(fn: QueryHandler) {
   handler = fn;
 }
 
-export function resetSupabaseHandler() {
-  handler = null;
-}
-
 // Build a mock query builder that supports chaining
 function createQueryBuilder(table: string, method: string, prevCalls: QueryCall[] = []) {
   const builder: any = {};
@@ -75,8 +71,11 @@ function createQueryBuilder(table: string, method: string, prevCalls: QueryCall[
   return builder;
 }
 
+// Create from as a jest.fn() so tests can use mockImplementation
+const defaultFrom = (table: string) => createQueryBuilder(table, 'from');
+
 export const supabase = {
-  from: (table: string) => createQueryBuilder(table, 'from'),
+  from: jest.fn(defaultFrom),
 
   rpc: jest.fn().mockResolvedValue({ data: null, error: null }),
 
@@ -112,3 +111,9 @@ export const supabase = {
     }),
   },
 };
+
+// Reset handler and restore default from behavior
+export function resetSupabaseHandler() {
+  handler = null;
+  supabase.from.mockImplementation(defaultFrom);
+}

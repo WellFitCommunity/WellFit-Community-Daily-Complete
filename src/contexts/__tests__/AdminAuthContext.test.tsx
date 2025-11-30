@@ -4,6 +4,9 @@
  * Tests authentication, authorization, and permission management
  */
 
+// Unmock AdminAuthContext so we can test the real implementation
+jest.unmock('../AdminAuthContext');
+
 import { renderHook, act } from '@testing-library/react';
 import { waitFor } from '@testing-library/react';
 import { AdminAuthProvider, useAdminAuth } from '../AdminAuthContext';

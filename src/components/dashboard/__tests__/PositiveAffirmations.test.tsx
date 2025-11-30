@@ -2,9 +2,12 @@
 // Tests for the senior-facing positive affirmations widget
 
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import PositiveAffirmations from '../PositiveAffirmations';
+
+// Regex pattern to match any affirmation text
+const affirmationPattern = /You are|Every day|Your wisdom|strength|difference|possibilities|kindness|worthy|grateful|meaning|capable|deserve|heart|fresh start|exactly where/i;
 
 describe('PositiveAffirmations - Senior Facing Component', () => {
   beforeEach(() => {
@@ -24,20 +27,23 @@ describe('PositiveAffirmations - Senior Facing Component', () => {
       expect(screen.getByText(/✨/)).toBeInTheDocument();
     });
 
-    it('should display an affirmation message', () => {
+    it('should display an affirmation message', async () => {
       render(<PositiveAffirmations />);
 
-      // Check if any affirmation text is displayed
-      const affirmationText = screen.getByText(/You are|Every day|Your wisdom|strength|difference|possibilities|kindness|worthy|grateful|meaning|capable|deserve|heart/i);
-      expect(affirmationText).toBeInTheDocument();
+      // Wait for useEffect to set the affirmation
+      await waitFor(() => {
+        expect(screen.getByText(affirmationPattern)).toBeInTheDocument();
+      });
     });
 
-    it('should display affirmation in quotes', () => {
+    it('should display affirmation in quotes', async () => {
       render(<PositiveAffirmations />);
 
-      const affirmationText = screen.getByText(/You are|Every day|Your wisdom|strength|difference|possibilities/i);
-      expect(affirmationText).toBeInTheDocument();
-      expect(affirmationText.textContent).toContain('"');
+      await waitFor(() => {
+        const affirmationText = screen.getByText(affirmationPattern);
+        expect(affirmationText).toBeInTheDocument();
+        expect(affirmationText.textContent).toContain('"');
+      });
     });
 
     it('should display "New Affirmation" button', () => {
@@ -55,18 +61,27 @@ describe('PositiveAffirmations - Senior Facing Component', () => {
   });
 
   describe('Daily Affirmation Logic', () => {
-    it('should display consistent affirmation for the same day', () => {
+    it('should display consistent affirmation for the same day', async () => {
       const { unmount } = render(<PositiveAffirmations />);
-      const firstAffirmation = screen.getByText(/You are|Every day|Your wisdom|strength/i).textContent;
+
+      // Wait for first render to complete
+      let firstAffirmation: string | null = null;
+      await waitFor(() => {
+        firstAffirmation = screen.getByText(affirmationPattern).textContent;
+        expect(firstAffirmation).toBeTruthy();
+      });
       unmount();
 
       render(<PositiveAffirmations />);
-      const secondAffirmation = screen.getByText(/You are|Every day|Your wisdom|strength/i).textContent;
 
-      expect(firstAffirmation).toBe(secondAffirmation);
+      // Wait for second render
+      await waitFor(() => {
+        const secondAffirmation = screen.getByText(affirmationPattern).textContent;
+        expect(firstAffirmation).toBe(secondAffirmation);
+      });
     });
 
-    it('should show a valid affirmation from the list', () => {
+    it('should show a valid affirmation from the list', async () => {
       render(<PositiveAffirmations />);
 
       const validAffirmations = [
@@ -87,31 +102,37 @@ describe('PositiveAffirmations - Senior Facing Component', () => {
         "Your heart is full of love to share."
       ];
 
-      const displayedText = screen.getByText(/You are|Every day|Your wisdom|strength/i).textContent;
-      const isValidAffirmation = validAffirmations.some(affirmation =>
-        displayedText?.includes(affirmation)
-      );
-
-      expect(isValidAffirmation).toBe(true);
+      await waitFor(() => {
+        const displayedText = screen.getByText(affirmationPattern).textContent;
+        const isValidAffirmation = validAffirmations.some(affirmation =>
+          displayedText?.includes(affirmation)
+        );
+        expect(isValidAffirmation).toBe(true);
+      });
     });
   });
 
   describe('User Interactions', () => {
-    it('should change affirmation when "New Affirmation" button is clicked', () => {
+    it('should change affirmation when "New Affirmation" button is clicked', async () => {
       render(<PositiveAffirmations />);
 
-      const initialAffirmation = screen.getByText(/You are|Every day|Your wisdom|strength/i).textContent;
+      // Wait for initial affirmation
+      let initialAffirmation: string | null = null;
+      await waitFor(() => {
+        initialAffirmation = screen.getByText(affirmationPattern).textContent;
+        expect(initialAffirmation).toBeTruthy();
+      });
 
       const button = screen.getByText(/New Affirmation/i);
 
       // Click multiple times to ensure we get a different one (with small probability of same)
-      let newAffirmation = initialAffirmation;
+      let newAffirmation: string | null = initialAffirmation;
       let attempts = 0;
       const maxAttempts = 10;
 
       while (newAffirmation === initialAffirmation && attempts < maxAttempts) {
         fireEvent.click(button);
-        newAffirmation = screen.getByText(/You are|Every day|Your wisdom|strength/i).textContent;
+        newAffirmation = screen.getByText(affirmationPattern).textContent;
         attempts++;
       }
 
@@ -119,13 +140,18 @@ describe('PositiveAffirmations - Senior Facing Component', () => {
       expect(attempts).toBeLessThanOrEqual(maxAttempts);
     });
 
-    it('should display random affirmation on button click', () => {
+    it('should display random affirmation on button click', async () => {
       render(<PositiveAffirmations />);
+
+      // Wait for initial render
+      await waitFor(() => {
+        expect(screen.getByText(affirmationPattern)).toBeInTheDocument();
+      });
 
       const button = screen.getByText(/New Affirmation/i);
       fireEvent.click(button);
 
-      const affirmationAfterClick = screen.getByText(/You are|Every day|Your wisdom|strength/i);
+      const affirmationAfterClick = screen.getByText(affirmationPattern);
       expect(affirmationAfterClick).toBeInTheDocument();
     });
 
@@ -196,25 +222,29 @@ describe('PositiveAffirmations - Senior Facing Component', () => {
   });
 
   describe('Content Validation', () => {
-    it('should only display positive and encouraging messages', () => {
+    it('should only display positive and encouraging messages', async () => {
       render(<PositiveAffirmations />);
 
-      const affirmation = screen.getByText(/You are|Every day|Your wisdom|strength/i).textContent;
+      await waitFor(() => {
+        const affirmation = screen.getByText(affirmationPattern).textContent;
 
-      // Ensure no negative words
-      const negativeWords = ['not', 'never', 'can\'t', 'won\'t', 'bad', 'sad', 'angry'];
-      const hasNegativeWords = negativeWords.some(word =>
-        affirmation?.toLowerCase().includes(word)
-      );
+        // Ensure no negative words
+        const negativeWords = ['not', 'never', 'can\'t', 'won\'t', 'bad', 'sad', 'angry'];
+        const hasNegativeWords = negativeWords.some(word =>
+          affirmation?.toLowerCase().includes(word)
+        );
 
-      expect(hasNegativeWords).toBe(false);
+        expect(hasNegativeWords).toBe(false);
+      });
     });
 
-    it('should display age-appropriate content for seniors', () => {
+    it('should display age-appropriate content for seniors', async () => {
       render(<PositiveAffirmations />);
 
-      const affirmation = screen.getByText(/You are|Every day|Your wisdom|strength/i);
-      expect(affirmation).toBeInTheDocument();
+      await waitFor(() => {
+        const affirmation = screen.getByText(affirmationPattern);
+        expect(affirmation).toBeInTheDocument();
+      });
 
       // Component structure should be present
       const heading = screen.getByText(/Daily Affirmation/i);

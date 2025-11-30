@@ -1,8 +1,12 @@
-// Jest setup for testing including security and penetration testing
+/**
+ * Jest Test Setup
+ *
+ * Safe configuration for smoke and unit tests.
+ * Provides necessary polyfills and mocks without breaking production code.
+ */
 import '@testing-library/jest-dom';
 import { TextEncoder, TextDecoder } from 'util';
 import { webcrypto } from 'crypto';
-import { resetSupabaseHandler } from './lib/__mocks__/supabaseClient';
 
 // Polyfill TextEncoder/TextDecoder for Node.js test environment
 // Required for Web Crypto API usage in pinHashingService
@@ -13,8 +17,14 @@ global.TextDecoder = TextDecoder as typeof global.TextDecoder;
 // Required for pinHashingService SHA-256 hashing
 global.crypto = webcrypto as unknown as Crypto;
 
-// Use manual mock for supabaseClient
+// Mock supabaseClient
 jest.mock('./lib/supabaseClient');
+
+// Mock AuthContext - provides useAuth, useUser, useSession, etc.
+jest.mock('./contexts/AuthContext');
+
+// Mock AdminAuthContext - provides useAdminAuth
+jest.mock('./contexts/AdminAuthContext');
 
 // Polyfill fetch for Jest environment
 global.fetch = jest.fn(() =>
@@ -25,6 +35,59 @@ global.fetch = jest.fn(() =>
     text: async () => '',
   })
 ) as jest.Mock;
+
+// Mock window.matchMedia (required for many UI components)
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: jest.fn().mockImplementation((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    dispatchEvent: jest.fn(),
+  })),
+});
+
+// Mock IntersectionObserver (required for lazy loading components)
+class MockIntersectionObserver {
+  readonly root: Element | null = null;
+  readonly rootMargin: string = '';
+  readonly thresholds: ReadonlyArray<number> = [];
+  constructor() {}
+  disconnect() {}
+  observe() {}
+  takeRecords(): IntersectionObserverEntry[] {
+    return [];
+  }
+  unobserve() {}
+}
+
+Object.defineProperty(window, 'IntersectionObserver', {
+  writable: true,
+  value: MockIntersectionObserver,
+});
+
+// Mock ResizeObserver (required for responsive components)
+class MockResizeObserver {
+  constructor() {}
+  disconnect() {}
+  observe() {}
+  unobserve() {}
+}
+
+Object.defineProperty(window, 'ResizeObserver', {
+  writable: true,
+  value: MockResizeObserver,
+});
+
+// Mock scrollTo
+Object.defineProperty(window, 'scrollTo', {
+  writable: true,
+  value: jest.fn(),
+});
 
 // ============================================
 // Security Testing Utilities
@@ -251,10 +314,12 @@ global.console = {
   error: jest.fn(),
 };
 
-// Global beforeEach to reset Supabase handler
+// Global beforeEach to reset mocks
 beforeEach(() => {
-  // Reset Supabase mock handler for each test
-  resetSupabaseHandler();
+  // Reset fetch mock if it's a jest mock
+  if (global.fetch && typeof (global.fetch as jest.Mock).mockClear === 'function') {
+    (global.fetch as jest.Mock).mockClear();
+  }
 });
 
 // Global afterEach cleanup to prevent timer leaks
