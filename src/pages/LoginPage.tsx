@@ -506,6 +506,13 @@ const LoginPage: React.FC = () => {
         >
           Admin Login (Email)
         </button>
+        <button
+          type="button"
+          onClick={() => navigate('/caregiver-access')}
+          className="px-3 py-1 rounded bg-green-600 text-white hover:bg-green-700 transition-colors"
+        >
+          Caregiver Access
+        </button>
       </div>
 
       {/* Forms */}

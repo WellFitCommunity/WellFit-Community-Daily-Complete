@@ -8,6 +8,7 @@ import LanguageSelector from '../components/LanguageSelector';
 import { useLanguage } from '../contexts/LanguageContext';
 import SmartBackButton from '../components/ui/SmartBackButton';
 import PasskeySetup from '../components/PasskeySetup';
+import CaregiverAccessHistory from '../components/CaregiverAccessHistory';
 
 interface UserSettings {
   font_size: 'small' | 'medium' | 'large' | 'extra-large';
@@ -348,6 +349,9 @@ const SettingsPage: React.FC = () => {
                         userName={user.email || user.phone || 'user'}
                         displayName={settings.preferred_name || 'User'}
                       />
+
+                      {/* Who Viewed My Data */}
+                      <CaregiverAccessHistory userId={user.id} />
                     </div>
                   )}
 

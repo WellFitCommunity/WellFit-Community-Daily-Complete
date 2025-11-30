@@ -80,6 +80,9 @@ const DemographicsPage = React.lazy(() => import('./pages/DemographicsPage'));
 // TriviaGame removed - use Memory Lane Trivia at /memory-lane-trivia instead
 const CaregiverDashboardPage = React.lazy(() => import('./pages/CaregiverDashboardPage'));
 const SetCaregiverPinPage = React.lazy(() => import('./pages/SetCaregiverPinPage'));
+const CaregiverAccessPage = React.lazy(() => import('./pages/CaregiverAccessPage'));
+const SeniorViewPage = React.lazy(() => import('./pages/SeniorViewPage'));
+const SeniorReportsPage = React.lazy(() => import('./pages/SeniorReportsPage'));
 const HealthInsightsPage = React.lazy(() => import('./pages/HealthInsightsPage'));
 const QuestionsPage = React.lazy(() => import('./pages/QuestionsPage'));
 const AdminQuestionsPage = React.lazy(() => import('./pages/AdminQuestionsPage'));
@@ -240,7 +243,12 @@ function Shell() {
               {/* Add this route in your Routes section (in the Protected section) */}
               <Route path="/smart-callback" element={<RequireAuth><SmartCallbackPage /></RequireAuth>} />
 
-              {/* Caregiver Dashboard */}
+              {/* Caregiver Suite */}
+              {/* Public caregiver access (no auth - PIN-based access) */}
+              <Route path="/caregiver-access" element={<CaregiverAccessPage />} />
+              <Route path="/senior-view/:seniorId" element={<SeniorViewPage />} />
+              <Route path="/senior-reports/:seniorId" element={<SeniorReportsPage />} />
+              {/* Legacy: Authenticated caregiver dashboard (role_code 6) */}
               <Route path="/caregiver-dashboard" element={<RequireAuth><CaregiverDashboardPage /></RequireAuth>} />
               <Route path="/set-caregiver-pin" element={<RequireAuth><SetCaregiverPinPage /></RequireAuth>} />
 
