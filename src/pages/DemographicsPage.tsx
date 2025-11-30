@@ -1,9 +1,12 @@
 // src/pages/DemographicsPage.tsx - Senior-Friendly Demographics with Save Feature
+// Saves to dedicated senior tables: senior_demographics, senior_health, senior_sdoh, senior_emergency_contacts
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSupabaseClient, useUser } from '../contexts/AuthContext';
 import { useBranding } from '../BrandingContext';
 import { WELLFIT_COLORS } from '../settings/settings';
+import { SeniorDataService, mapFormDataToSeniorProfile } from '../services/seniorDataService';
+import { auditLogger } from '../services/auditLogger';
 
 interface DemographicsData {
   // Basic Info (already collected during registration)
@@ -44,6 +47,9 @@ interface DemographicsData {
   social_support: string;
 }
 
+// Role types that use this demographics form
+type UserRole = 'senior' | 'patient' | 'other';
+
 const DemographicsPage: React.FC = () => {
   const navigate = useNavigate();
   const supabase = useSupabaseClient();
@@ -55,6 +61,8 @@ const DemographicsPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<UserRole>('senior'); // Default to senior for backward compatibility
+  const [roleCode, setRoleCode] = useState<number | null>(null);
 
   const [formData, setFormData] = useState<DemographicsData>({
     first_name: '',
@@ -86,7 +94,7 @@ const DemographicsPage: React.FC = () => {
     social_support: ''
   });
 
-  // Load existing profile data
+  // Load existing profile data from both profiles and senior tables
   useEffect(() => {
     const loadProfile = async () => {
       if (!user?.id) {
@@ -110,6 +118,18 @@ const DemographicsPage: React.FC = () => {
         if (data) {
           // Use role column (stores role name directly) instead of FK join
           const roleName = data.role || data.role_slug || 'senior';
+          const userRoleCode = data.role_code || 4; // Default to senior (4)
+          setRoleCode(userRoleCode);
+
+          // Determine user role category for form customization
+          // role_code 4 = senior (geriatric), role_code 19 = patient (non-geriatric)
+          if (userRoleCode === 4 || roleName === 'senior') {
+            setUserRole('senior');
+          } else if (userRoleCode === 19 || roleName === 'patient') {
+            setUserRole('patient');
+          } else {
+            setUserRole('other');
+          }
 
           // Skip demographics for admin/staff roles
           if (['admin', 'super_admin', 'staff', 'moderator'].includes(roleName)) {
@@ -117,13 +137,97 @@ const DemographicsPage: React.FC = () => {
             return;
           }
 
-          // Check if already completed demographics (only for seniors)
+          // Check if already completed demographics
           if (data.demographics_complete) {
             navigate('/dashboard');
             return;
           }
 
+          // Load data from dedicated senior tables
+          const seniorProfileResult = await SeniorDataService.getCompleteSeniorProfile(supabase, user.id);
+
+          // Map senior table data back to form fields
+          let seniorData = {
+            marital_status: '',
+            living_situation: '',
+            education_level: '',
+            health_conditions: [] as string[],
+            medications: '',
+            mobility_level: '',
+            hearing_status: '',
+            vision_status: '',
+            transportation_access: '',
+            food_security: '',
+            social_support: '',
+            has_smartphone: false,
+            has_internet: false,
+            tech_comfort_level: '',
+            emergency_contact_name: '',
+            emergency_contact_phone: '',
+            emergency_contact_relationship: '',
+          };
+
+          if (seniorProfileResult.success) {
+            const { demographics, health, sdoh, emergency_contacts } = seniorProfileResult.data;
+
+            // Map demographics
+            seniorData.marital_status = demographics.marital_status || '';
+            seniorData.living_situation = demographics.living_situation || '';
+            seniorData.education_level = demographics.education_level || '';
+
+            // Map health
+            seniorData.health_conditions = health.chronic_conditions || [];
+            seniorData.medications = (health.current_medications || []).join(', ');
+            // Reverse map mobility level
+            const mobilityReverseMap: Record<string, string> = {
+              'independent': 'excellent',
+              'cane': 'fair',
+              'walker': 'fair',
+              'wheelchair': 'poor',
+              'bedbound': 'poor',
+            };
+            seniorData.mobility_level = health.mobility_level ? mobilityReverseMap[health.mobility_level] || '' : '';
+            seniorData.hearing_status = health.hearing_status || '';
+            seniorData.vision_status = health.vision_status || '';
+
+            // Map SDOH
+            seniorData.transportation_access = sdoh.transportation_access || '';
+            // Reverse map food security
+            const foodSecurityReverseMap: Record<string, string> = {
+              'secure': 'never',
+              'low-security': 'sometimes',
+              'very-low-security': 'often',
+            };
+            seniorData.food_security = sdoh.food_security ? foodSecurityReverseMap[sdoh.food_security] || '' : '';
+            // Reverse map social isolation
+            const socialReverseMap: Record<string, string> = {
+              'low': 'rarely',
+              'moderate': 'sometimes',
+              'high': 'often',
+            };
+            seniorData.social_support = sdoh.social_isolation_risk ? socialReverseMap[sdoh.social_isolation_risk] || '' : '';
+            seniorData.has_smartphone = sdoh.has_smartphone || false;
+            seniorData.has_internet = sdoh.has_internet || false;
+            // Reverse map tech comfort
+            const techReverseMap: Record<string, string> = {
+              'comfortable': 'very-comfortable',
+              'some-help': 'somewhat-comfortable',
+              'needs-assistance': 'not-very-comfortable',
+              'unable': 'not-comfortable',
+            };
+            seniorData.tech_comfort_level = sdoh.tech_comfort_level ? techReverseMap[sdoh.tech_comfort_level] || '' : '';
+
+            // Map primary emergency contact
+            if (emergency_contacts.length > 0) {
+              const primary = emergency_contacts[0];
+              seniorData.emergency_contact_name = primary.contact_name || '';
+              seniorData.emergency_contact_phone = primary.contact_phone || '';
+              seniorData.emergency_contact_relationship = primary.contact_relationship || '';
+            }
+          }
+
           // Pre-fill all available data including partial progress
+          // Prefer senior table data, fall back to profiles table for backward compatibility
           setFormData(prev => ({
             ...prev,
             first_name: data.first_name || '',
@@ -131,27 +235,27 @@ const DemographicsPage: React.FC = () => {
             phone: data.phone || '',
             dob: data.dob || '',
             address: data.address || '',
-            emergency_contact_name: data.emergency_contact_name || '',
-            emergency_contact_phone: data.emergency_contact_phone || '',
-            emergency_contact_relationship: data.emergency_contact_relationship || '',
+            emergency_contact_name: seniorData.emergency_contact_name || data.emergency_contact_name || '',
+            emergency_contact_phone: seniorData.emergency_contact_phone || data.emergency_contact_phone || '',
+            emergency_contact_relationship: seniorData.emergency_contact_relationship || data.emergency_contact_relationship || '',
             gender: data.gender || '',
             ethnicity: data.ethnicity || '',
-            marital_status: data.marital_status || '',
-            living_situation: data.living_situation || '',
-            education_level: data.education_level || '',
+            marital_status: seniorData.marital_status || data.marital_status || '',
+            living_situation: seniorData.living_situation || data.living_situation || '',
+            education_level: seniorData.education_level || data.education_level || '',
             income_range: data.income_range || '',
             insurance_type: data.insurance_type || '',
-            health_conditions: data.health_conditions || [],
-            medications: data.medications || '',
-            mobility_level: data.mobility_level || '',
-            hearing_status: data.hearing_status || '',
-            vision_status: data.vision_status || '',
-            has_smartphone: data.has_smartphone || false,
-            has_internet: data.has_internet || false,
-            tech_comfort_level: data.tech_comfort_level || '',
-            transportation_access: data.transportation_access || '',
-            food_security: data.food_security || '',
-            social_support: data.social_support || ''
+            health_conditions: seniorData.health_conditions.length > 0 ? seniorData.health_conditions : (data.health_conditions || []),
+            medications: seniorData.medications || data.medications || '',
+            mobility_level: seniorData.mobility_level || data.mobility_level || '',
+            hearing_status: seniorData.hearing_status || data.hearing_status || '',
+            vision_status: seniorData.vision_status || data.vision_status || '',
+            has_smartphone: seniorData.has_smartphone || data.has_smartphone || false,
+            has_internet: seniorData.has_internet || data.has_internet || false,
+            tech_comfort_level: seniorData.tech_comfort_level || data.tech_comfort_level || '',
+            transportation_access: seniorData.transportation_access || data.transportation_access || '',
+            food_security: seniorData.food_security || data.food_security || '',
+            social_support: seniorData.social_support || data.social_support || ''
           }));
 
           // Resume from saved step if available
@@ -160,7 +264,7 @@ const DemographicsPage: React.FC = () => {
           }
         }
       } catch (err) {
-
+        auditLogger.error('Failed to load profile', String(err));
         setError('Unable to load your information. Please try again.');
       } finally {
         setLoading(false);
@@ -186,8 +290,14 @@ const DemographicsPage: React.FC = () => {
     }));
   };
 
+  // Number of steps depends on user role
+  // Seniors: 5 steps (basic, living situation, health, emergency, social/SDOH)
+  // Patients: 4 steps (basic, health, emergency, social/SDOH)
+  // SDOH is important for ALL users - mental health, disability, low income all need SDOH screening
+  const totalSteps = userRole === 'senior' ? 5 : 4;
+
   const nextStep = () => {
-    if (currentStep < 5) { // 5 steps total (removed PIN step - handled separately)
+    if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -204,10 +314,19 @@ const DemographicsPage: React.FC = () => {
     setError(null);
 
     try {
-      // Use upsert in case profile doesn't exist yet (trigger may have failed)
       // Default tenant_id for WellFit Community self-registration
       const DEFAULT_TENANT_ID = '2b902657-6a20-4435-a78a-576f397517ca';
 
+      // Save partial progress to dedicated senior tables
+      const seniorProfile = mapFormDataToSeniorProfile(user?.id || '', DEFAULT_TENANT_ID, formData);
+      const seniorResult = await SeniorDataService.saveCompleteSeniorProfile(supabase, seniorProfile);
+
+      if (!seniorResult.success) {
+        auditLogger.warn('Partial save to senior tables failed', { error: seniorResult.error.message });
+        // Continue anyway - we'll still save to profiles for backward compatibility
+      }
+
+      // Save to profiles table for step tracking and backward compatibility
       const { error: profileError} = await supabase
         .from('profiles')
         .upsert({
@@ -215,35 +334,18 @@ const DemographicsPage: React.FC = () => {
           tenant_id: DEFAULT_TENANT_ID,
           gender: formData.gender,
           ethnicity: formData.ethnicity,
-          marital_status: formData.marital_status,
-          living_situation: formData.living_situation,
-          education_level: formData.education_level,
-          income_range: formData.income_range,
-          insurance_type: formData.insurance_type,
-          emergency_contact_name: formData.emergency_contact_name,
-          emergency_contact_phone: formData.emergency_contact_phone,
-          emergency_contact_relationship: formData.emergency_contact_relationship,
-          health_conditions: formData.health_conditions,
-          medications: formData.medications,
-          mobility_level: formData.mobility_level,
-          hearing_status: formData.hearing_status,
-          vision_status: formData.vision_status,
-          has_smartphone: formData.has_smartphone,
-          has_internet: formData.has_internet,
-          tech_comfort_level: formData.tech_comfort_level,
-          transportation_access: formData.transportation_access,
-          food_security: formData.food_security,
-          social_support: formData.social_support,
           demographics_step: currentStep, // Save current step
           demographics_complete: false // Not finished yet
         }, { onConflict: 'user_id' });
 
       if (profileError) throw profileError;
 
+      auditLogger.info('Senior demographics progress saved', { userId: user?.id, step: currentStep });
+
       // Navigate to dashboard with saved progress
       navigate('/dashboard');
     } catch (err) {
-
+      auditLogger.error('Failed to save demographics progress', String(err));
       setError('Unable to save your progress. Please try again.');
     } finally {
       setSaving(false);
@@ -291,10 +393,20 @@ const DemographicsPage: React.FC = () => {
     // fields aren't editable on this page - if missing, they can be added later.
 
     try {
-      // Upsert profile with all demographics data (handles missing profile)
       // Default tenant_id for WellFit Community self-registration
       const DEFAULT_TENANT_ID = '2b902657-6a20-4435-a78a-576f397517ca';
 
+      // Save to dedicated senior tables (demographics, health, SDOH, emergency contacts)
+      const seniorProfile = mapFormDataToSeniorProfile(user?.id || '', DEFAULT_TENANT_ID, formData);
+      const seniorResult = await SeniorDataService.saveCompleteSeniorProfile(supabase, seniorProfile);
+
+      if (!seniorResult.success) {
+        auditLogger.error('Failed to save senior profile', seniorResult.error.message);
+        throw new Error(seniorResult.error.message);
+      }
+
+      // Also update the profiles table to mark demographics as complete
+      // and store basic info for backward compatibility
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert({
@@ -302,35 +414,18 @@ const DemographicsPage: React.FC = () => {
           tenant_id: DEFAULT_TENANT_ID,
           gender: formData.gender,
           ethnicity: formData.ethnicity,
-          marital_status: formData.marital_status,
-          living_situation: formData.living_situation,
-          education_level: formData.education_level,
-          income_range: formData.income_range,
-          insurance_type: formData.insurance_type,
-          emergency_contact_name: formData.emergency_contact_name,
-          emergency_contact_phone: formData.emergency_contact_phone,
-          emergency_contact_relationship: formData.emergency_contact_relationship,
-          health_conditions: formData.health_conditions,
-          medications: formData.medications,
-          mobility_level: formData.mobility_level,
-          hearing_status: formData.hearing_status,
-          vision_status: formData.vision_status,
-          has_smartphone: formData.has_smartphone,
-          has_internet: formData.has_internet,
-          tech_comfort_level: formData.tech_comfort_level,
-          transportation_access: formData.transportation_access,
-          food_security: formData.food_security,
-          social_support: formData.social_support,
           demographics_complete: true,
           demographics_step: null // Clear step since completed
         }, { onConflict: 'user_id' });
 
       if (profileError) throw profileError;
 
+      auditLogger.info('Senior demographics completed', { userId: user?.id });
+
       // Navigate to consent forms after demographics completion
       navigate('/consent-photo');
     } catch (err) {
-
+      auditLogger.error('Failed to save demographics', String(err));
       setError('Unable to save your information. Please try again.');
     } finally {
       setSubmitting(false);
@@ -370,7 +465,7 @@ const DemographicsPage: React.FC = () => {
           </p>
           <div className="mt-4">
             <div className="flex justify-center space-x-2">
-              {[1, 2, 3, 4, 5].map((step) => (
+              {Array.from({ length: totalSteps }, (_, i) => i + 1).map((step) => (
                 <div
                   key={step}
                   className={`w-3 h-3 rounded-full ${
@@ -381,7 +476,7 @@ const DemographicsPage: React.FC = () => {
                 />
               ))}
             </div>
-            <p className="text-sm text-gray-500 mt-2">Step {currentStep} of 5</p>
+            <p className="text-sm text-gray-500 mt-2">Step {currentStep} of {totalSteps}</p>
           </div>
         </div>
 
@@ -458,8 +553,8 @@ const DemographicsPage: React.FC = () => {
             </div>
           )}
 
-          {/* Step 2: Living Situation */}
-          {currentStep === 2 && (
+          {/* Step 2: Living Situation (SENIORS ONLY) */}
+          {currentStep === 2 && userRole === 'senior' && (
             <div className="space-y-6">
               <h2 className="text-xl font-semibold mb-4">Your Living Situation</h2>
 
@@ -522,8 +617,8 @@ const DemographicsPage: React.FC = () => {
             </div>
           )}
 
-          {/* Step 3: Health Information */}
-          {currentStep === 3 && (
+          {/* Health Information: PATIENTS - step 2, SENIORS - step 3 */}
+          {((currentStep === 2 && userRole === 'patient') || (currentStep === 3 && userRole === 'senior')) && (
             <div className="space-y-6">
               <h2 className="text-xl font-semibold mb-4">Health Information</h2>
 
@@ -589,8 +684,8 @@ const DemographicsPage: React.FC = () => {
             </div>
           )}
 
-          {/* Step 4: Emergency Contact */}
-          {currentStep === 4 && (
+          {/* Emergency Contact: PATIENTS - step 3 (final), SENIORS - step 4 */}
+          {((currentStep === 3 && userRole === 'patient') || (currentStep === 4 && userRole === 'senior')) && (
             <div className="space-y-6">
               <h2 className="text-xl font-semibold mb-4">Emergency Contact</h2>
 
@@ -643,8 +738,9 @@ const DemographicsPage: React.FC = () => {
             </div>
           )}
 
-          {/* Step 5: Social Support */}
-          {currentStep === 5 && (
+          {/* Social Support/SDOH: ALL USERS - Patients step 4, Seniors step 5 */}
+          {/* SDOH is critical for mental health, disability, low income - not just seniors */}
+          {((currentStep === 4 && userRole === 'patient') || (currentStep === 5 && userRole === 'senior')) && (
             <div className="space-y-6">
               <h2 className="text-xl font-semibold mb-4">Social Support & Resources</h2>
 
@@ -755,8 +851,8 @@ const DemographicsPage: React.FC = () => {
                 {saving ? 'Saving...' : 'Save for Later'}
               </button>
 
-              {/* Next/Complete Button */}
-              {currentStep < 5 ? (
+              {/* Next/Complete Button - uses totalSteps which is role-aware */}
+              {currentStep < totalSteps ? (
                 <button
                   onClick={nextStep}
                   className="px-6 py-3 text-lg font-medium text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"

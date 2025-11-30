@@ -251,6 +251,28 @@ CREATE VIEW app_patients AS SELECT ... WHERE enrollment_type = 'app';
 - Use proper migrations for any schema changes
 - Leverage Postgres 17 features (JSONB, CTEs, window functions, etc.)
 
+### Database Cleanup Policy - CRITICAL
+**DO NOT aggressively delete database tables, functions, or data.**
+
+When asked to "clean up" or reduce "tech debt":
+1. **Tables that exist are FEATURES** - Even if not currently referenced in code, they represent planned functionality
+2. **Only delete obvious debug/backup tables** - Tables starting with `_` prefix (e.g., `_policy_backup`, `_trigger_log`)
+3. **NEVER delete without explicit confirmation** - List candidates and get approval before dropping anything
+4. **Seniors vs Patients are DIFFERENT** - Geriatric care (role_code 4) requires separate tracking tables (senior_demographics, senior_health, senior_sdoh) from regular patients
+5. **When in doubt, DON'T delete** - It's easier to clean up later than to restore lost schema/data
+
+**Feature modules to PRESERVE (even if not yet wired up in UI):**
+- Referral system (external_referral_sources, patient_referrals, referral_*)
+- Parkinson's tracking (parkinsons_*)
+- Physical therapy (pt_*)
+- Mental health (mental_health_*)
+- Mobile app support (mobile_*)
+- Questionnaires (question_*, questionnaire_*)
+- Care coordination (care_team_*, care_coordination_*)
+- Hospital/shift handoff (hospital_*, handoff_*, shift_handoff_*)
+- Billing/claims (claim_*, clearinghouse_*, remittances)
+- Medical codes reference (code_cpt, code_icd10, code_hcpcs, code_modifiers)
+
 ### Code Quality Standards
 - **Be a surgeon, never a butcher** - make precise, targeted changes
 - Respect the existing codebase architecture and patterns
