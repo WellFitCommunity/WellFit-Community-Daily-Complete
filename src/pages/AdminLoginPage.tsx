@@ -46,6 +46,8 @@ export default function AdminLoginPage() {
   // Tenant info for TenantCode-PIN authentication
   const [userTenantId, setUserTenantId] = useState<string | null>(null);
   const [userTenantCode, setUserTenantCode] = useState<string | null>(null);
+  // Super admin detection (for dual-role users like Maria)
+  const [isSuperAdmin, setIsSuperAdmin] = useState<boolean>(false);
 
   const userLabel = useMemo(() => {
     return user?.email || (user as any)?.phone || user?.user_metadata?.email || 'Unknown user';
@@ -97,6 +99,18 @@ export default function AdminLoginPage() {
               setUserTenantCode(tenantData.tenant_code);
             }
           }
+        }
+
+        // Check if user is also a super admin (dual-role detection)
+        const { data: superAdminData } = await supabase
+          .from('super_admin_users')
+          .select('id, is_active')
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+          .maybeSingle();
+
+        if (!cancelled && superAdminData) {
+          setIsSuperAdmin(true);
         }
       }
     })();
@@ -285,8 +299,8 @@ export default function AdminLoginPage() {
           className="text-white text-center py-6 px-6 rounded-t-lg shadow-lg"
           style={{ background: branding.gradient }}
         >
-          <h1 className="text-2xl font-bold">Envision Atlus - Admin Login</h1>
-          <p className="text-sm text-blue-100 mt-1">Envision VirtualEdge Group LLC</p>
+          <h1 className="text-2xl font-bold">Facility Admin Login</h1>
+          <p className="text-sm text-blue-100 mt-1">{branding.appName} - Staff PIN Verification</p>
         </div>
 
         {/* Card Content */}
@@ -351,48 +365,11 @@ export default function AdminLoginPage() {
 
       {mode === 'unlock' ? (
         <form className="grid gap-3" onSubmit={handleUnlock} noValidate>
-          <div>
-            <label htmlFor="role-select" className="block text-sm font-medium text-gray-700 mb-1">
-              Your Role {detectedRole && <span className="text-xs text-gray-500">(detected: {ROLE_DISPLAY_NAMES[detectedRole]})</span>}
-            </label>
-            <select
-              id="role-select"
-              className="border border-gray-300 p-2 rounded w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              value={role}
-              onChange={(e) => setRole(e.target.value as StaffRole)}
-            >
-              <option value="admin">Administrator</option>
-              <option value="it_admin">IT Administrator</option>
-              <option value="super_admin">Platform Administrator (Envision)</option>
-              <option value="nurse">Nurse (RN/LPN)</option>
-              <option value="nurse_practitioner">Nurse Practitioner</option>
-              <option value="physician">Physician</option>
-              <option value="doctor">Doctor</option>
-              <option value="physician_assistant">Physician Assistant</option>
-              <option value="clinical_supervisor">Clinical Supervisor</option>
-              <option value="department_head">Department Head</option>
-              <option value="physical_therapist">Physical Therapist</option>
-            </select>
-          </div>
-
-          {/* Tenant Identifier - Read-only static field when user has a tenant */}
-          {userTenantId && userTenantCode && (
-            <div>
-              <label htmlFor="tenant-code-display" className="block text-sm font-medium text-gray-700 mb-1">
-                Tenant Identifier
-              </label>
-              <input
-                id="tenant-code-display"
-                className="border border-gray-300 p-3 rounded w-full bg-gray-100 text-gray-700 font-mono cursor-not-allowed"
-                type="text"
-                value={userTenantCode}
-                readOnly
-                disabled
-                aria-describedby="tenant-code-help"
-              />
-              <p id="tenant-code-help" className="text-xs text-gray-500 mt-1">
-                Your facility identifier (auto-detected from your account)
-              </p>
+          {/* Role Display - Auto-detected from profile */}
+          {detectedRole && (
+            <div className="p-3 bg-gray-50 border border-gray-200 rounded">
+              <p className="text-xs text-gray-500 mb-1">Your Role</p>
+              <p className="text-sm font-medium text-gray-900">{ROLE_DISPLAY_NAMES[detectedRole] || detectedRole}</p>
             </div>
           )}
 
@@ -417,9 +394,7 @@ export default function AdminLoginPage() {
               autoFocus
             />
             <p className="text-xs text-gray-500 mt-1">
-              {userTenantId && userTenantCode
-                ? 'Enter your 4-8 digit PIN (your tenant identifier is already set above)'
-                : 'Enter your 4-8 digit admin PIN'}
+              Enter your 4-8 digit admin PIN
             </p>
           </div>
 
@@ -455,29 +430,13 @@ export default function AdminLoginPage() {
         </form>
       ) : (
         <form className="grid gap-3" onSubmit={handleSetPin} noValidate>
-          <div>
-            <label htmlFor="role-select-set" className="block text-sm font-medium text-gray-700 mb-1">
-              Set PIN for Role {detectedRole && <span className="text-xs text-gray-500">(detected: {ROLE_DISPLAY_NAMES[detectedRole]})</span>}
-            </label>
-            <select
-              id="role-select-set"
-              className="border border-gray-300 p-2 rounded w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              value={role}
-              onChange={(e) => setRole(e.target.value as StaffRole)}
-            >
-              <option value="admin">Administrator</option>
-              <option value="it_admin">IT Administrator</option>
-              <option value="super_admin">Platform Administrator (Envision)</option>
-              <option value="nurse">Nurse (RN/LPN)</option>
-              <option value="nurse_practitioner">Nurse Practitioner</option>
-              <option value="physician">Physician</option>
-              <option value="doctor">Doctor</option>
-              <option value="physician_assistant">Physician Assistant</option>
-              <option value="clinical_supervisor">Clinical Supervisor</option>
-              <option value="department_head">Department Head</option>
-              <option value="physical_therapist">Physical Therapist</option>
-            </select>
-          </div>
+          {/* Role Display - Auto-detected from profile */}
+          {detectedRole && (
+            <div className="p-3 bg-gray-50 border border-gray-200 rounded">
+              <p className="text-xs text-gray-500 mb-1">Setting PIN for Role</p>
+              <p className="text-sm font-medium text-gray-900">{ROLE_DISPLAY_NAMES[detectedRole] || detectedRole}</p>
+            </div>
+          )}
 
           <div>
             <label htmlFor="new-pin-input" className="block text-sm font-medium text-gray-700 mb-1">
@@ -556,6 +515,19 @@ export default function AdminLoginPage() {
           It expires after 2 hours of inactivity.
         </p>
       </div>
+
+      {/* Subtle Envision link - "if you know, you know" */}
+      {isSuperAdmin && (
+        <div className="mt-4 text-center">
+          <button
+            type="button"
+            onClick={() => navigate('/envision')}
+            className="text-xs text-gray-400 hover:text-blue-600 transition-colors"
+          >
+            Envision
+          </button>
+        </div>
+      )}
         </div>
       </div>
     </div>
