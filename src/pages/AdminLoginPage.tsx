@@ -233,40 +233,23 @@ export default function AdminLoginPage() {
     setLocalErr(null);
     setSuccessMsg(null);
 
-    // Validate format based on whether user has tenant CODE assigned
-    // Only require TenantCode-PIN if tenant has a code assigned
-    if (userTenantId && userTenantCode) {
-      // Tenant users WITH CODE must use TenantCode-PIN format (e.g., MH-6702-1234)
-      // TenantCode format: PREFIX-NUMBER (e.g., MH-6702)
-      // Full format: PREFIX-NUMBER-PIN (e.g., MH-6702-1234)
-      const codePattern = /^[A-Z]{1,4}-[0-9]{4,6}-[0-9]{4,8}$/;
-      if (!codePattern.test(pin)) {
-        setLocalErr('Invalid format. Use TENANTCODE-PIN (e.g., MH-6702-1234)');
-        return;
-      }
-      // Verify tenant code matches
-      const parts = pin.split('-');
-      if (parts.length !== 3) {
-        setLocalErr(`Invalid format. Use ${userTenantCode}-XXXX`);
-        return;
-      }
-      const inputTenantCode = `${parts[0]}-${parts[1]}`; // e.g., "MH-6702"
-      if (inputTenantCode !== userTenantCode) {
-        setLocalErr(`Incorrect tenant code. Use ${userTenantCode}-XXXX`);
-        return;
-      }
-    } else {
-      // PIN only for: master admins (no tenant) OR tenants without codes assigned
-      const p = cleanPin(pin);
-      if (!/^\d{4,8}$/.test(p)) {
-        setLocalErr('Enter your 4–8 digit PIN.');
-        return;
-      }
+    // Validate PIN format (always 4-8 digits, regardless of tenant)
+    const cleanedPin = cleanPin(pin);
+    if (!/^\d{4,8}$/.test(cleanedPin)) {
+      setLocalErr('Enter your 4–8 digit PIN.');
+      return;
     }
 
+    // Construct the full credential to send to the server
+    // If user has a tenant code, combine it with the PIN (e.g., "MH-6702-1234")
+    // Otherwise, just send the PIN
+    const credential = (userTenantId && userTenantCode)
+      ? `${userTenantCode}-${cleanedPin}`
+      : cleanedPin;
+
     try {
-      // Send the full input (PIN or TenantCode-PIN) - server will parse it
-      const success = await verifyPinAndLogin(pin, role);
+      // Send the full credential (PIN or TenantCode-PIN) - server will parse it
+      const success = await verifyPinAndLogin(credential, role);
       if (!success) {
         setLocalErr('Incorrect PIN or verification failed.');
         return;
@@ -392,32 +375,52 @@ export default function AdminLoginPage() {
             </select>
           </div>
 
+          {/* Tenant Identifier - Read-only static field when user has a tenant */}
+          {userTenantId && userTenantCode && (
+            <div>
+              <label htmlFor="tenant-code-display" className="block text-sm font-medium text-gray-700 mb-1">
+                Tenant Identifier
+              </label>
+              <input
+                id="tenant-code-display"
+                className="border border-gray-300 p-3 rounded w-full bg-gray-100 text-gray-700 font-mono cursor-not-allowed"
+                type="text"
+                value={userTenantCode}
+                readOnly
+                disabled
+                aria-describedby="tenant-code-help"
+              />
+              <p id="tenant-code-help" className="text-xs text-gray-500 mt-1">
+                Your facility identifier (auto-detected from your account)
+              </p>
+            </div>
+          )}
+
+          {/* PIN Input - Always masked for security */}
           <div>
             <label htmlFor="pin-input" className="block text-sm font-medium text-gray-700 mb-1">
-              {(userTenantId && userTenantCode) ? 'Enter Tenant Code + PIN' : 'Enter Admin PIN'}
+              Enter Admin PIN
             </label>
             <input
               id="pin-input"
-              className="border border-gray-300 p-3 rounded w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono"
-              type={(userTenantId && userTenantCode) ? "text" : "password"}
-              inputMode={(userTenantId && userTenantCode) ? "text" : "numeric"}
-              pattern={(userTenantId && userTenantCode) ? undefined : "\\d{4,8}"}
-              placeholder={(userTenantId && userTenantCode)
-                ? `${userTenantCode}-XXXX`
-                : "Enter PIN (4–8 digits)"}
+              className="border border-gray-300 p-3 rounded w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono tracking-widest"
+              type="password"
+              inputMode="numeric"
+              pattern="\d{4,8}"
+              placeholder="Enter PIN (4–8 digits)"
               value={pin}
-              onChange={(e) => setPin((userTenantId && userTenantCode) ? e.target.value.toUpperCase() : cleanPin(e.target.value))}
+              onChange={(e) => setPin(cleanPin(e.target.value))}
               onKeyDown={handleKeyDown}
               autoComplete="one-time-code"
               required
-              maxLength={(userTenantId && userTenantCode) ? 15 : 8}
+              maxLength={8}
               autoFocus
             />
-            {userTenantId && userTenantCode && (
-              <p className="text-xs text-blue-600 mt-1">
-                Your tenant code is <strong>{userTenantCode}</strong>. Enter it with your PIN (e.g., {userTenantCode}-1234)
-              </p>
-            )}
+            <p className="text-xs text-gray-500 mt-1">
+              {userTenantId && userTenantCode
+                ? 'Enter your 4-8 digit PIN (your tenant identifier is already set above)'
+                : 'Enter your 4-8 digit admin PIN'}
+            </p>
           </div>
 
           {(localErr || error) && (
