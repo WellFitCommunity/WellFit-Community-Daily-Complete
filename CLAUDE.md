@@ -185,6 +185,31 @@ Before starting ANY work, ALWAYS:
 4. Review the affected schema/database tables
 5. Understand the full scope of the change before implementing
 
+## Build System
+
+**IMPORTANT: This is a Create React App (CRA) project, NOT Vite.**
+
+- Environment variables must use `REACT_APP_` prefix
+- NEVER use `import.meta.env` (that's Vite syntax)
+- Always use `process.env.REACT_APP_*`
+
+## Environment Variables
+
+**Frontend (CRA):**
+| Variable | Purpose |
+|----------|---------|
+| `REACT_APP_SUPABASE_URL` | Supabase project URL |
+| `REACT_APP_SUPABASE_ANON_KEY` | Supabase publishable/anon key |
+
+**Supabase Key Naming Migration:**
+Supabase has migrated to new naming conventions:
+| Old Name | New Name | Usage |
+|----------|----------|-------|
+| `anon` key | `SB_PUBLISHABLE_KEY` | Client-side, safe to expose |
+| `service_role` key | `SB_SECRET_KEY` | Server-side only, NEVER expose |
+
+For edge functions, use the Deno.env.get() pattern with the new names when available.
+
 ## Development Commands
 - `npm run dev` - Start development server
 - `npm run build` - Build the project
