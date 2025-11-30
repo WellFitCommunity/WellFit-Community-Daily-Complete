@@ -36,21 +36,9 @@ export async function fetchMyProfile(): Promise<Profile | null> {
   return (data as Profile) ?? null;
 }
 
-export async function upsertMyProfile(patch: Partial<Profile>): Promise<Profile | null> {
-  const uid = await getCurrentUserId();
-  if (!uid) return null;
-  const payload = { ...patch, user_id: uid };
-  const { data, error } = await supabase
-    .from('profiles')
-    .upsert(payload, { onConflict: 'user_id' })
-    .select()
-    .single();
-  if (error) {
-
-    return null;
-  }
-  return data as Profile;
-}
+// Note: Profile creation happens server-side during registration (via handle_new_user trigger
+// or verify-hcaptcha edge function). Client-side code should only UPDATE existing profiles.
+// Using upsert from client fails due to RLS INSERT policy requiring tenant_id.
 
 export async function updateMyProfile(patch: Partial<Profile>): Promise<Profile | null> {
   const uid = await getCurrentUserId();
