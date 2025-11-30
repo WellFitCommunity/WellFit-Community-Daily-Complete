@@ -159,10 +159,15 @@ COMMENT ON COLUMN public.profiles.primary_facility_id IS 'Primary facility where
 -- 7. ADD FACILITY_ID TO FHIR_ENCOUNTERS
 -- ============================================================================
 
--- Check if fhir_encounters exists before altering
+-- Check if fhir_encounters exists AS A TABLE (not a view) before altering
 DO $$
 BEGIN
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'fhir_encounters') THEN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_name = 'fhir_encounters'
+    AND table_type = 'BASE TABLE'
+    AND table_schema = 'public'
+  ) THEN
     ALTER TABLE public.fhir_encounters
       ADD COLUMN IF NOT EXISTS facility_id UUID REFERENCES public.facilities(id) ON DELETE SET NULL;
 
@@ -174,10 +179,15 @@ END $$;
 -- 8. ADD FACILITY_ID TO PREHOSPITAL_HANDOFFS
 -- ============================================================================
 
--- Check if prehospital_handoffs exists before altering
+-- Check if prehospital_handoffs exists AS A TABLE (not a view) before altering
 DO $$
 BEGIN
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'prehospital_handoffs') THEN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_name = 'prehospital_handoffs'
+    AND table_type = 'BASE TABLE'
+    AND table_schema = 'public'
+  ) THEN
     -- Destination facility
     ALTER TABLE public.prehospital_handoffs
       ADD COLUMN IF NOT EXISTS destination_facility_id UUID REFERENCES public.facilities(id) ON DELETE SET NULL;
