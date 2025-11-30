@@ -288,7 +288,20 @@ const LoginPage: React.FC = () => {
         return;
       }
 
-      const token = await ensureCaptcha().catch(() => '');
+      // SOC2 CC6.1: Require valid captcha before allowing login attempt
+      let token = '';
+      try {
+        token = await ensureCaptcha();
+      } catch {
+        // Captcha failed - do not allow login
+      }
+
+      if (!token) {
+        setError('Please complete the captcha verification.');
+        refreshCaptcha();
+        setLoading(false);
+        return;
+      }
 
       // Silently skip audit logging to avoid hanging
       try {
@@ -300,7 +313,7 @@ const LoginPage: React.FC = () => {
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         phone: e164,
         password: seniorPassword,
-        options: token ? { captchaToken: token } : {},
+        options: { captchaToken: token },
       });
 
       // SOC2 CC6.1: Record login attempt for audit trail
@@ -365,7 +378,20 @@ const LoginPage: React.FC = () => {
         return;
       }
 
-      const token = await ensureCaptcha().catch(() => '');
+      // SOC2 CC6.1: Require valid captcha before allowing login attempt
+      let token = '';
+      try {
+        token = await ensureCaptcha();
+      } catch {
+        // Captcha failed - do not allow login
+      }
+
+      if (!token) {
+        setError('Please complete the captcha verification.');
+        refreshCaptcha();
+        setLoading(false);
+        return;
+      }
 
       // Silently skip audit logging to avoid hanging
       try {
@@ -377,7 +403,7 @@ const LoginPage: React.FC = () => {
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: emailTrimmed,
         password: adminPassword,
-        options: token ? { captchaToken: token } : {},
+        options: { captchaToken: token },
       });
 
       // SOC2 CC6.1: Record login attempt for audit trail
