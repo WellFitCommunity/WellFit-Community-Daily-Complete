@@ -58,6 +58,7 @@ export interface TenantModuleConfig {
   shift_handoff_enabled: boolean;
   field_visits_enabled: boolean;
   caregiver_portal_enabled: boolean;
+  time_clock_enabled: boolean;
 
   // Emergency Modules - Active State
   ems_metrics_enabled: boolean;
@@ -147,6 +148,7 @@ export interface TenantModuleConfig {
   shift_handoff_entitled: boolean;
   field_visits_entitled: boolean;
   caregiver_portal_entitled: boolean;
+  time_clock_entitled: boolean;
 
   // Emergency Modules - Entitlements
   ems_metrics_entitled: boolean;
@@ -248,6 +250,7 @@ export type ModuleName =
   | 'shift_handoff_enabled'
   | 'field_visits_enabled'
   | 'caregiver_portal_enabled'
+  | 'time_clock_enabled'
   // Emergency
   | 'ems_metrics_enabled'
   | 'coordinated_response_enabled'
@@ -309,6 +312,7 @@ export type EntitlementName =
   | 'shift_handoff_entitled'
   | 'field_visits_entitled'
   | 'caregiver_portal_entitled'
+  | 'time_clock_entitled'
   // Emergency
   | 'ems_metrics_entitled'
   | 'coordinated_response_entitled'
@@ -599,6 +603,13 @@ export const MODULE_METADATA: Record<ModuleName, Omit<ModuleMetadata, 'key'>> = 
     category: 'workflow',
     requiredTier: 'basic',
     icon: 'Users',
+  },
+  time_clock_enabled: {
+    name: 'Time Clock',
+    description: 'Employee time tracking, clock in/out, payroll hours, streak gamification',
+    category: 'workflow',
+    requiredTier: 'standard',
+    icon: 'Clock',
   },
 
   // Emergency Modules

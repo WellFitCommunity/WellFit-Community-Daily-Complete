@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Clock, Download, Users, Calendar, Filter, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
+import { Clock, Download, Users, Calendar, Filter, RefreshCw, CheckCircle, AlertCircle, Lock } from 'lucide-react';
 import { useSupabaseClient, useUser } from '../../contexts/AuthContext';
 import {
   EAPageLayout,
@@ -19,6 +19,7 @@ import {
 } from '../envision-atlus';
 import { TimeClockService } from '../../services/timeClockService';
 import { auditLogger } from '../../services/auditLogger';
+import { useModuleAccess } from '../../hooks/useModuleAccess';
 import type { TimeClockEntry } from '../../types/timeClock';
 
 type AdminEntry = TimeClockEntry & { first_name: string; last_name: string };
@@ -31,6 +32,9 @@ export const TimeClockAdmin: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [entries, setEntries] = useState<AdminEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  // Check module access (tenant must have purchased AND enabled time clock)
+  const { canAccess, loading: moduleLoading, denialReason } = useModuleAccess('time_clock_enabled');
 
   // Filters
   const [dateFilter, setDateFilter] = useState<'today' | 'week' | 'month'>('week');
@@ -187,11 +191,34 @@ export const TimeClockAdmin: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  if (loading) {
+  if (loading || moduleLoading) {
     return (
       <EAPageLayout title="Time Clock Management">
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500" />
+        </div>
+      </EAPageLayout>
+    );
+  }
+
+  // Module access denied
+  if (!canAccess) {
+    return (
+      <EAPageLayout title="Time Clock Management">
+        <div className="max-w-md mx-auto">
+          <EACard>
+            <EACardContent className="text-center py-12">
+              <Lock className="h-12 w-12 mx-auto mb-4 text-slate-500" />
+              <h3 className="text-lg font-semibold text-white mb-2">Time Clock Not Available</h3>
+              <p className="text-slate-400">
+                {denialReason === 'not_entitled'
+                  ? 'Your organization has not purchased the Time Clock module. Contact your administrator to upgrade.'
+                  : denialReason === 'not_enabled'
+                  ? 'The Time Clock module is not enabled for your organization. Contact your administrator.'
+                  : 'Unable to access the Time Clock module.'}
+              </p>
+            </EACardContent>
+          </EACard>
         </div>
       </EAPageLayout>
     );

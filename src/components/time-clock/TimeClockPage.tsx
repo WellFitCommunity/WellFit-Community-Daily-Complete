@@ -6,12 +6,13 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Clock, History, Settings } from 'lucide-react';
+import { Clock, History, Lock } from 'lucide-react';
 import { useSupabaseClient, useUser } from '../../contexts/AuthContext';
-import { EAPageLayout, EATabs, EATabsList, EATabsTrigger, EATabsContent, EABadge } from '../envision-atlus';
+import { EAPageLayout, EATabs, EATabsList, EATabsTrigger, EATabsContent, EABadge, EACard, EACardContent } from '../envision-atlus';
 import { ClockInOutWidget } from './ClockInOutWidget';
 import { TimeHistory } from './TimeHistory';
 import { auditLogger } from '../../services/auditLogger';
+import { useModuleAccess } from '../../hooks/useModuleAccess';
 
 export const TimeClockPage: React.FC = () => {
   const supabase = useSupabaseClient();
@@ -19,6 +20,9 @@ export const TimeClockPage: React.FC = () => {
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('clock');
+
+  // Check module access (tenant must have purchased AND enabled time clock)
+  const { canAccess, loading: moduleLoading, denialReason } = useModuleAccess('time_clock_enabled');
 
   useEffect(() => {
     const loadUserProfile = async () => {
@@ -46,11 +50,34 @@ export const TimeClockPage: React.FC = () => {
     loadUserProfile();
   }, [user, supabase]);
 
-  if (loading) {
+  if (loading || moduleLoading) {
     return (
       <EAPageLayout title="Time Clock">
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500" />
+        </div>
+      </EAPageLayout>
+    );
+  }
+
+  // Module access denied
+  if (!canAccess) {
+    return (
+      <EAPageLayout title="Time Clock">
+        <div className="max-w-md mx-auto">
+          <EACard>
+            <EACardContent className="text-center py-12">
+              <Lock className="h-12 w-12 mx-auto mb-4 text-slate-500" />
+              <h3 className="text-lg font-semibold text-white mb-2">Time Clock Not Available</h3>
+              <p className="text-slate-400">
+                {denialReason === 'not_entitled'
+                  ? 'Your organization has not purchased the Time Clock module. Contact your administrator to upgrade.'
+                  : denialReason === 'not_enabled'
+                  ? 'The Time Clock module is not enabled for your organization. Contact your administrator.'
+                  : 'Unable to access the Time Clock module.'}
+              </p>
+            </EACardContent>
+          </EACard>
         </div>
       </EAPageLayout>
     );
