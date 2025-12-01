@@ -21,3 +21,6 @@ export * from './claude';
 
 // Organization/Facility types
 export * from './facility';
+
+// Employee types
+export * from './employee';
