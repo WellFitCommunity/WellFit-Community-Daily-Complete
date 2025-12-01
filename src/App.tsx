@@ -5,6 +5,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
 import { SessionTimeoutProvider } from './contexts/SessionTimeoutContext';
+import { TimeClockProvider } from './contexts/TimeClockContext';
 import { BrandingConfig, getCurrentBranding } from './branding.config';
 import { BrandingContext } from './BrandingContext';
 import { performanceMonitor } from './services/performanceMonitoring';
@@ -192,10 +193,12 @@ function Shell() {
       <BrandingContext.Provider value={{ branding, setBranding, loading: false, refreshBranding }}>
         {/* SessionTimeout applies to the whole app */}
         <SessionTimeoutProvider>
-          {/* Global Learning Milestone Celebration Display */}
-          <LearningMilestone />
+          {/* Time Clock - Auto clock-in on login, prompt on logout */}
+          <TimeClockProvider>
+            {/* Global Learning Milestone Celebration Display */}
+            <LearningMilestone />
 
-          <AppHeader />
+            <AppHeader />
 
           <AuthGate>
             <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
@@ -824,10 +827,11 @@ function Shell() {
 
           <Footer />
 
-          {/* Offline indicator for all users */}
-          <OfflineIndicator />
-        </AuthGate>
-      </SessionTimeoutProvider>
+            {/* Offline indicator for all users */}
+            <OfflineIndicator />
+          </AuthGate>
+          </TimeClockProvider>
+        </SessionTimeoutProvider>
     </BrandingContext.Provider>
     </GuardianErrorBoundary>
   );
