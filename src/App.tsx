@@ -145,6 +145,10 @@ const SDOHAssessment = React.lazy(() => import('./components/chw/SDOHAssessment'
 const TelehealthLobby = React.lazy(() => import('./components/chw/TelehealthLobby'));
 const KioskDashboard = React.lazy(() => import('./components/chw/KioskDashboard'));
 
+// Time Clock
+const TimeClockPage = React.lazy(() => import('./components/time-clock/TimeClockPage'));
+const TimeClockAdmin = React.lazy(() => import('./components/admin/TimeClockAdmin'));
+
 function Shell() {
   const [branding, setBranding] = useState<BrandingConfig>(getCurrentBranding());
   const location = useLocation();
@@ -242,6 +246,9 @@ function Shell() {
               {/* /trivia-game removed - use /memory-lane-trivia instead */}
               {/* Add this route in your Routes section (in the Protected section) */}
               <Route path="/smart-callback" element={<RequireAuth><SmartCallbackPage /></RequireAuth>} />
+
+              {/* Time Clock - Employee Portal */}
+              <Route path="/time-clock" element={<RequireAuth><TimeClockPage /></RequireAuth>} />
 
               {/* Caregiver Suite */}
               {/* Public caregiver access (no auth - PIN-based access) */}
@@ -529,6 +536,18 @@ function Shell() {
                       <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
                         <PhotoApprovalPage />
                       </Suspense>
+                    </RequireAdminAuth>
+                  </RequireAuth>
+                }
+              />
+
+              {/* Time Clock Admin - Manager/HR View */}
+              <Route
+                path="/admin/time-clock"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'department_head', 'clinical_supervisor']}>
+                      <TimeClockAdmin />
                     </RequireAdminAuth>
                   </RequireAuth>
                 }
