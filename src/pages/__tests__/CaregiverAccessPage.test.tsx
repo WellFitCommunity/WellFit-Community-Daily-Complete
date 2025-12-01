@@ -1,5 +1,6 @@
 // src/pages/__tests__/CaregiverAccessPage.test.tsx
 // Tests for the public caregiver access page (no auth required)
+/* eslint-disable testing-library/no-wait-for-multiple-assertions, testing-library/no-node-access */
 
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';

@@ -1,5 +1,6 @@
 // src/pages/__tests__/CheckInPage.test.tsx
 // Tests for the senior-facing check-in page
+/* eslint-disable testing-library/no-wait-for-multiple-assertions, testing-library/no-node-access */
 
 import React from 'react';
 import { render, screen } from '@testing-library/react';

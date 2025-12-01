@@ -450,8 +450,53 @@ const LoginPage: React.FC = () => {
   // If already logged in, show message with options
   if (alreadyLoggedIn) {
     return (
+      <div className="min-h-screen py-16 px-4" style={{ background: branding.gradient }}>
+        <div
+          className="max-w-md mx-auto p-6 bg-white rounded-xl shadow-md"
+          style={{ borderColor: accent, borderWidth: '2px' }}
+        >
+          <img
+            src={branding.logoUrl}
+            alt={`${branding.appName} Logo`}
+            className="h-16 w-auto mx-auto mb-4"
+          />
+
+          <h1 className="text-2xl font-bold text-center mb-4" style={{ color: primary }}>
+            Already Logged In
+          </h1>
+
+          <p className="text-center text-gray-700 mb-6">
+            You are currently logged in as <strong>{existingUserEmail}</strong>
+          </p>
+
+          <div className="space-y-3">
+            <button
+              type="button"
+              onClick={handleContinueAsLoggedIn}
+              className="w-full py-3 font-semibold rounded hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-offset-2 text-white"
+              style={{ backgroundColor: primary }}
+            >
+              Continue to Dashboard
+            </button>
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="w-full py-3 font-semibold rounded border-2 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+              style={{ borderColor: accent, color: primary }}
+            >
+              Logout and Login as Different User
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen py-16 px-4" style={{ background: branding.gradient }}>
       <div
-        className="max-w-md mx-auto mt-16 p-6 bg-white rounded-xl shadow-md"
+        className="max-w-md mx-auto p-6 bg-white rounded-xl shadow-md"
         style={{ borderColor: accent, borderWidth: '2px' }}
       >
         <img
@@ -460,51 +505,9 @@ const LoginPage: React.FC = () => {
           className="h-16 w-auto mx-auto mb-4"
         />
 
-        <h1 className="text-2xl font-bold text-center mb-4" style={{ color: primary }}>
-          Already Logged In
+        <h1 className="text-2xl font-bold text-center mb-2" style={{ color: primary }}>
+          {branding.appName}
         </h1>
-
-        <p className="text-center text-gray-700 mb-6">
-          You are currently logged in as <strong>{existingUserEmail}</strong>
-        </p>
-
-        <div className="space-y-3">
-          <button
-            type="button"
-            onClick={handleContinueAsLoggedIn}
-            className="w-full py-3 font-semibold rounded hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-offset-2 text-white"
-            style={{ backgroundColor: primary }}
-          >
-            Continue to Dashboard
-          </button>
-
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="w-full py-3 font-semibold rounded border-2 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
-            style={{ borderColor: accent, color: primary }}
-          >
-            Logout and Login as Different User
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className="max-w-md mx-auto mt-16 p-6 bg-white rounded-xl shadow-md"
-      style={{ borderColor: accent, borderWidth: '2px' }}
-    >
-      <img
-        src={branding.logoUrl}
-        alt={`${branding.appName} Logo`}
-        className="h-16 w-auto mx-auto mb-4"
-      />
-
-      <h1 className="text-2xl font-bold text-center mb-2" style={{ color: primary }}>
-        {branding.appName}
-      </h1>
 
       {/* Mode Toggle */}
       <div className="flex justify-center gap-2 mb-6 flex-wrap">
@@ -785,6 +788,7 @@ const LoginPage: React.FC = () => {
           />
         </form>
       )}
+      </div>
     </div>
   );
 };

@@ -249,10 +249,11 @@ const RegisterPage: React.FC = () => {
 
   // ---------- RENDER ----------
   return (
-    <div className="max-w-md mx-auto mt-8 p-6 bg-white rounded-xl shadow-md">
-      <h1 className="text-2xl font-bold text-center mb-6" style={{ color: branding.primaryColor }}>
-        Create Account - {branding.appName}
-      </h1>
+    <div className="min-h-screen py-8 px-4" style={{ background: branding.gradient }}>
+      <div className="max-w-md mx-auto p-6 bg-white rounded-xl shadow-md">
+        <h1 className="text-2xl font-bold text-center mb-6" style={{ color: branding.primaryColor }}>
+          Create Account - {branding.appName}
+        </h1>
 
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         <div className="grid grid-cols-2 gap-4">
@@ -453,6 +454,7 @@ const RegisterPage: React.FC = () => {
           {loading ? 'Creating Account...' : 'Create Account'}
         </button>
       </form>
+      </div>
     </div>
   );
 };

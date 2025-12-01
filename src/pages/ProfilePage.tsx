@@ -1,6 +1,7 @@
 // ProfilePage - Senior-friendly profile management with photo upload
 import React, { useState, useEffect, useRef } from 'react';
 import { useSupabaseClient, useUser } from '../contexts/AuthContext';
+import { useBranding } from '../BrandingContext';
 import { useNavigate } from 'react-router-dom';
 import { Camera, Trophy, Calendar, Heart, Settings, User } from 'lucide-react';
 import SmartBackButton from '../components/ui/SmartBackButton';
@@ -21,6 +22,7 @@ interface UserProfile {
 const ProfilePage: React.FC = () => {
   const supabase = useSupabaseClient();
   const user = useUser();
+  const { branding } = useBranding();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -167,10 +169,10 @@ const ProfilePage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #e8f4f8 0%, #f0f8e8 100%)' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: branding.gradient }}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 mx-auto mb-4" style={{ borderColor: '#003865' }}></div>
-          <p className="text-xl text-gray-700">Loading your profile...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 mx-auto mb-4" style={{ borderColor: branding.primaryColor }}></div>
+          <p className="text-xl text-white">Loading your profile...</p>
         </div>
       </div>
     );
@@ -178,16 +180,16 @@ const ProfilePage: React.FC = () => {
 
   if (!profile) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #e8f4f8 0%, #f0f8e8 100%)' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: branding.gradient }}>
         <div className="text-center">
-          <p className="text-xl text-gray-700">Profile not found</p>
+          <p className="text-xl text-white">Profile not found</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen py-8 px-4" style={{ background: 'linear-gradient(135deg, #e8f4f8 0%, #f0f8e8 100%)' }}>
+    <div className="min-h-screen py-8 px-4" style={{ background: branding.gradient }}>
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-6">
@@ -214,12 +216,12 @@ const ProfilePage: React.FC = () => {
                     src={profile.avatar_url}
                     alt="Profile"
                     className="w-40 h-40 rounded-full object-cover border-4"
-                    style={{ borderColor: '#8cc63f' }}
+                    style={{ borderColor: branding.secondaryColor }}
                   />
                 ) : (
                   <div
                     className="w-40 h-40 rounded-full flex items-center justify-center text-white text-5xl font-bold border-4"
-                    style={{ backgroundColor: '#003865', borderColor: '#8cc63f' }}
+                    style={{ backgroundColor: branding.primaryColor, borderColor: branding.secondaryColor }}
                   >
                     {getInitials()}
                   </div>
@@ -230,7 +232,7 @@ const ProfilePage: React.FC = () => {
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploading}
                   className="absolute bottom-0 right-0 w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg transition hover:scale-110 disabled:opacity-50"
-                  style={{ backgroundColor: '#8cc63f' }}
+                  style={{ backgroundColor: branding.secondaryColor }}
                 >
                   <Camera size={24} />
                 </button>
@@ -245,7 +247,7 @@ const ProfilePage: React.FC = () => {
               </div>
 
               {uploading && (
-                <p className="text-center mt-3 text-sm font-semibold" style={{ color: '#003865' }}>
+                <p className="text-center mt-3 text-sm font-semibold" style={{ color: branding.primaryColor }}>
                   Uploading...
                 </p>
               )}
@@ -253,7 +255,7 @@ const ProfilePage: React.FC = () => {
 
             {/* Profile Info */}
             <div className="flex-1 text-center md:text-left">
-              <h1 className="text-4xl font-bold mb-2" style={{ color: '#003865' }}>
+              <h1 className="text-4xl font-bold mb-2" style={{ color: branding.primaryColor }}>
                 {profile.first_name} {profile.last_name}
               </h1>
 
@@ -269,7 +271,7 @@ const ProfilePage: React.FC = () => {
                   </p>
                 )}
                 <p className="flex items-center justify-center md:justify-start gap-2">
-                  <Calendar size={20} style={{ color: '#8cc63f' }} />
+                  <Calendar size={20} style={{ color: branding.secondaryColor }} />
                   <span className="font-semibold">Member since:</span> {formatDate(profile.created_at)}
                 </p>
               </div>
@@ -279,7 +281,7 @@ const ProfilePage: React.FC = () => {
                 <button
                   onClick={() => navigate('/settings')}
                   className="flex items-center justify-center gap-2 px-6 py-3 text-white font-bold rounded-xl transition shadow-lg hover:scale-105"
-                  style={{ background: 'linear-gradient(90deg, #003865 0%, #8cc63f 100%)' }}
+                  style={{ background: `linear-gradient(90deg, ${branding.primaryColor} 0%, ${branding.secondaryColor} 100%)` }}
                 >
                   <Settings size={20} />
                   Edit Settings
@@ -288,7 +290,7 @@ const ProfilePage: React.FC = () => {
                 <button
                   onClick={() => navigate('/change-password')}
                   className="flex items-center justify-center gap-2 px-6 py-3 font-bold rounded-xl transition shadow-lg hover:scale-105"
-                  style={{ backgroundColor: '#e8f4f8', color: '#003865', border: '2px solid #003865' }}
+                  style={{ backgroundColor: `${branding.primaryColor}10`, color: branding.primaryColor, border: `2px solid ${branding.primaryColor}` }}
                 >
                   Change Password
                 </button>
@@ -300,39 +302,39 @@ const ProfilePage: React.FC = () => {
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           {/* Achievements */}
-          <div className="bg-white rounded-2xl shadow-xl p-6 border-2" style={{ borderColor: '#8cc63f' }}>
+          <div className="bg-white rounded-2xl shadow-xl p-6 border-2" style={{ borderColor: branding.secondaryColor }}>
             <div className="flex items-center gap-3 mb-4">
-              <Trophy size={32} style={{ color: '#8cc63f' }} />
-              <h2 className="text-2xl font-bold" style={{ color: '#003865' }}>Achievements</h2>
+              <Trophy size={32} style={{ color: branding.secondaryColor }} />
+              <h2 className="text-2xl font-bold" style={{ color: branding.primaryColor }}>Achievements</h2>
             </div>
             <div className="space-y-3">
-              <div className="flex justify-between items-center p-4 rounded-xl" style={{ backgroundColor: '#f0f8e8' }}>
+              <div className="flex justify-between items-center p-4 rounded-xl" style={{ backgroundColor: `${branding.secondaryColor}15` }}>
                 <span className="text-lg font-semibold text-gray-800">Trivia Trophies</span>
-                <span className="text-2xl font-bold" style={{ color: '#8cc63f' }}>{trophyCount}</span>
+                <span className="text-2xl font-bold" style={{ color: branding.secondaryColor }}>{trophyCount}</span>
               </div>
-              <div className="flex justify-between items-center p-4 rounded-xl" style={{ backgroundColor: '#e8f4f8' }}>
+              <div className="flex justify-between items-center p-4 rounded-xl" style={{ backgroundColor: `${branding.primaryColor}10` }}>
                 <span className="text-lg font-semibold text-gray-800">Check-ins Completed</span>
-                <span className="text-2xl font-bold" style={{ color: '#003865' }}>{checkInCount}</span>
+                <span className="text-2xl font-bold" style={{ color: branding.primaryColor }}>{checkInCount}</span>
               </div>
             </div>
           </div>
 
           {/* Emergency Contacts */}
-          <div className="bg-white rounded-2xl shadow-xl p-6 border-2" style={{ borderColor: '#003865' }}>
+          <div className="bg-white rounded-2xl shadow-xl p-6 border-2" style={{ borderColor: branding.primaryColor }}>
             <div className="flex items-center gap-3 mb-4">
-              <Heart size={32} style={{ color: '#003865' }} />
-              <h2 className="text-2xl font-bold" style={{ color: '#003865' }}>Emergency Contact</h2>
+              <Heart size={32} style={{ color: branding.primaryColor }} />
+              <h2 className="text-2xl font-bold" style={{ color: branding.primaryColor }}>Emergency Contact</h2>
             </div>
             {profile.emergency_contact_name || profile.emergency_contact_phone ? (
               <div className="space-y-3">
                 {profile.emergency_contact_name && (
-                  <div className="p-4 rounded-xl" style={{ backgroundColor: '#e8f4f8' }}>
+                  <div className="p-4 rounded-xl" style={{ backgroundColor: `${branding.primaryColor}10` }}>
                     <p className="text-sm font-semibold text-gray-600 mb-1">Name</p>
                     <p className="text-lg font-bold text-gray-900">{profile.emergency_contact_name}</p>
                   </div>
                 )}
                 {profile.emergency_contact_phone && (
-                  <div className="p-4 rounded-xl" style={{ backgroundColor: '#e8f4f8' }}>
+                  <div className="p-4 rounded-xl" style={{ backgroundColor: `${branding.primaryColor}10` }}>
                     <p className="text-sm font-semibold text-gray-600 mb-1">Phone</p>
                     <p className="text-lg font-bold text-gray-900">{profile.emergency_contact_phone}</p>
                   </div>
@@ -344,7 +346,7 @@ const ProfilePage: React.FC = () => {
                 <button
                   onClick={() => navigate('/settings')}
                   className="px-6 py-3 font-bold rounded-xl transition"
-                  style={{ backgroundColor: '#8cc63f', color: 'white' }}
+                  style={{ backgroundColor: branding.secondaryColor, color: 'white' }}
                 >
                   Add Emergency Contact
                 </button>
@@ -356,25 +358,25 @@ const ProfilePage: React.FC = () => {
         {/* Account Info */}
         <div className="bg-white rounded-2xl shadow-xl p-6">
           <div className="flex items-center gap-3 mb-6">
-            <User size={32} style={{ color: '#003865' }} />
-            <h2 className="text-2xl font-bold" style={{ color: '#003865' }}>Account Information</h2>
+            <User size={32} style={{ color: branding.primaryColor }} />
+            <h2 className="text-2xl font-bold" style={{ color: branding.primaryColor }}>Account Information</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 rounded-xl" style={{ backgroundColor: '#f0f8e8' }}>
+            <div className="p-4 rounded-xl" style={{ backgroundColor: `${branding.secondaryColor}15` }}>
               <p className="text-sm font-semibold text-gray-600 mb-1">Timezone</p>
               <p className="text-lg font-bold text-gray-900">{profile.timezone || 'Not set'}</p>
             </div>
 
-            <div className="p-4 rounded-xl" style={{ backgroundColor: '#e8f4f8' }}>
+            <div className="p-4 rounded-xl" style={{ backgroundColor: `${branding.primaryColor}10` }}>
               <p className="text-sm font-semibold text-gray-600 mb-1">Account Status</p>
-              <p className="text-lg font-bold" style={{ color: '#8cc63f' }}>Active</p>
+              <p className="text-lg font-bold" style={{ color: branding.secondaryColor }}>Active</p>
             </div>
           </div>
 
           {/* Help Section */}
-          <div className="mt-6 p-6 rounded-xl border-2" style={{ backgroundColor: '#e8f4f8', borderColor: '#003865' }}>
-            <h3 className="text-xl font-bold mb-3" style={{ color: '#003865' }}>Need Help?</h3>
+          <div className="mt-6 p-6 rounded-xl border-2" style={{ backgroundColor: `${branding.primaryColor}10`, borderColor: branding.primaryColor }}>
+            <h3 className="text-xl font-bold mb-3" style={{ color: branding.primaryColor }}>Need Help?</h3>
             <p className="text-gray-700 mb-4">
               Our support team is here to help you with any questions or concerns.
             </p>
@@ -382,14 +384,14 @@ const ProfilePage: React.FC = () => {
               <a
                 href="tel:1-800-WELLFIT"
                 className="flex items-center justify-center gap-2 px-6 py-3 font-bold rounded-xl transition text-center"
-                style={{ backgroundColor: '#003865', color: 'white' }}
+                style={{ backgroundColor: branding.primaryColor, color: 'white' }}
               >
                 📞 Call Support
               </a>
               <button
                 onClick={() => navigate('/help')}
                 className="px-6 py-3 font-bold rounded-xl transition"
-                style={{ backgroundColor: '#8cc63f', color: 'white' }}
+                style={{ backgroundColor: branding.secondaryColor, color: 'white' }}
               >
                 📚 Help Center
               </button>

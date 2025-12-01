@@ -3,6 +3,7 @@
  *
  * Tests authentication, authorization, and permission management
  */
+/* eslint-disable testing-library/no-wait-for-multiple-assertions, testing-library/no-node-access */
 
 // Unmock AdminAuthContext so we can test the real implementation
 jest.unmock('../AdminAuthContext');

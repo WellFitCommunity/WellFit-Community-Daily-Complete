@@ -2,6 +2,7 @@
  * FHIR Resource Service Tests
  * Comprehensive unit tests for MedicationRequest, Condition, DiagnosticReport, and Procedure services
  */
+/* eslint-disable testing-library/no-await-sync-query */
 
 // Jest test imports are global
 import {

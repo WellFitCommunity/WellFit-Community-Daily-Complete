@@ -1,5 +1,6 @@
 // src/components/dashboard/__tests__/PositiveAffirmations.test.tsx
 // Tests for the senior-facing positive affirmations widget
+/* eslint-disable testing-library/no-wait-for-multiple-assertions, testing-library/no-node-access */
 
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';

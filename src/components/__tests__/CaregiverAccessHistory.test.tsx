@@ -43,10 +43,11 @@ describe('CaregiverAccessHistory', () => {
     });
 
     it('should show loading state initially', () => {
-      render(<CaregiverAccessHistory userId="user-123" />);
+      const { container } = render(<CaregiverAccessHistory userId="user-123" />);
 
       // Component shows loading skeleton with animation
-      expect(document.querySelector('.animate-pulse')).toBeInTheDocument();
+      // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
+      expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
     });
 
     it('should show empty state when no access logs', async () => {
@@ -98,16 +99,19 @@ describe('CaregiverAccessHistory', () => {
       render(<CaregiverAccessHistory userId="user-123" />);
 
       await waitFor(() => {
-        const expandButton = screen.getByText(/Who Viewed My Data/i).closest('div');
-        if (expandButton) {
-          fireEvent.click(expandButton);
-        }
+        expect(screen.getByText(/Who Viewed My Data/i)).toBeInTheDocument();
       });
+
+      // eslint-disable-next-line testing-library/no-node-access
+      const expandButton = screen.getByText(/Who Viewed My Data/i).closest('div');
+      if (expandButton) {
+        fireEvent.click(expandButton);
+      }
 
       await waitFor(() => {
         expect(screen.getByText('Jane Doe')).toBeInTheDocument();
-        expect(screen.getByText('John Smith')).toBeInTheDocument();
       });
+      expect(screen.getByText('John Smith')).toBeInTheDocument();
     });
 
     it('should mask phone numbers for privacy', async () => {
@@ -116,11 +120,14 @@ describe('CaregiverAccessHistory', () => {
       render(<CaregiverAccessHistory userId="user-123" />);
 
       await waitFor(() => {
-        const expandButton = screen.getByText(/Who Viewed My Data/i).closest('div');
-        if (expandButton) {
-          fireEvent.click(expandButton);
-        }
+        expect(screen.getByText(/Who Viewed My Data/i)).toBeInTheDocument();
       });
+
+      // eslint-disable-next-line testing-library/no-node-access
+      const expandButton = screen.getByText(/Who Viewed My Data/i).closest('div');
+      if (expandButton) {
+        fireEvent.click(expandButton);
+      }
 
       await waitFor(() => {
         // Should show masked phone: ***-***-6543
@@ -139,6 +146,7 @@ describe('CaregiverAccessHistory', () => {
       });
 
       // Click to expand and see details
+      // eslint-disable-next-line testing-library/no-node-access
       const expandButton = screen.getByText(/Who Viewed My Data/i).closest('div')?.parentElement;
       if (expandButton) {
         fireEvent.click(expandButton);
@@ -157,16 +165,19 @@ describe('CaregiverAccessHistory', () => {
       render(<CaregiverAccessHistory userId="user-123" />);
 
       await waitFor(() => {
-        const expandButton = screen.getByText(/Who Viewed My Data/i).closest('div');
-        if (expandButton) {
-          fireEvent.click(expandButton);
-        }
+        expect(screen.getByText(/Who Viewed My Data/i)).toBeInTheDocument();
       });
+
+      // eslint-disable-next-line testing-library/no-node-access
+      const expandButton = screen.getByText(/Who Viewed My Data/i).closest('div');
+      if (expandButton) {
+        fireEvent.click(expandButton);
+      }
 
       await waitFor(() => {
         expect(screen.getByText(/Security Tip/i)).toBeInTheDocument();
-        expect(screen.getByText(/change your caregiver PIN/i)).toBeInTheDocument();
       });
+      expect(screen.getByText(/change your caregiver PIN/i)).toBeInTheDocument();
     });
   });
 
@@ -177,11 +188,14 @@ describe('CaregiverAccessHistory', () => {
       render(<CaregiverAccessHistory userId="user-123" />);
 
       await waitFor(() => {
-        const expandButton = screen.getByText(/Who Viewed My Data/i).closest('div');
-        if (expandButton) {
-          fireEvent.click(expandButton);
-        }
+        expect(screen.getByText(/Who Viewed My Data/i)).toBeInTheDocument();
       });
+
+      // eslint-disable-next-line testing-library/no-node-access
+      const expandButton = screen.getByText(/Who Viewed My Data/i).closest('div');
+      if (expandButton) {
+        fireEvent.click(expandButton);
+      }
 
       await waitFor(() => {
         expect(screen.getByText(/No caregivers have accessed your data yet/i)).toBeInTheDocument();
@@ -229,12 +243,15 @@ describe('CaregiverAccessHistory', () => {
       render(<CaregiverAccessHistory userId="user-123" />);
 
       await waitFor(() => {
-        // The clickable element has cursor-pointer class
-        // Structure: div.cursor-pointer > div.flex.items-center > ... > div (contains "Who Viewed My Data")
-        const titleElement = screen.getByText(/Who Viewed My Data/i);
-        const clickableArea = titleElement.closest('.cursor-pointer');
-        expect(clickableArea).toBeInTheDocument();
+        expect(screen.getByText(/Who Viewed My Data/i)).toBeInTheDocument();
       });
+
+      // The clickable element has cursor-pointer class
+      // Structure: div.cursor-pointer > div.flex.items-center > ... > div (contains "Who Viewed My Data")
+      const titleElement = screen.getByText(/Who Viewed My Data/i);
+      // eslint-disable-next-line testing-library/no-node-access
+      const clickableArea = titleElement.closest('.cursor-pointer');
+      expect(clickableArea).toBeInTheDocument();
     });
 
     it('should show expand/collapse indicator', async () => {
