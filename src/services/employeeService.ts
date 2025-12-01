@@ -310,7 +310,7 @@ export const EmployeeService = {
         managerId = managerProfile.id;
       }
 
-      return this.updateEmployeeProfile(employeeUserId, { manager_id: managerId });
+      return this.updateEmployeeProfile(employeeUserId, { manager_id: managerId ?? undefined });
     } catch (err) {
       return failure('UNKNOWN_ERROR', 'Failed to set manager', err);
     }
