@@ -70,10 +70,12 @@ CREATE TABLE IF NOT EXISTS envision_totp_setup (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Only one active setup per user
+-- Only one active (non-verified) setup per user
+-- Note: We use just verified = false since cleanup handles expired records
+-- The cleanup_envision_auth_data() function removes expired setup tokens
 CREATE UNIQUE INDEX IF NOT EXISTS idx_envision_totp_setup_user_active
   ON envision_totp_setup(super_admin_id)
-  WHERE verified = false AND expires_at > NOW();
+  WHERE verified = false;
 
 -- Cleanup index
 CREATE INDEX IF NOT EXISTS idx_envision_totp_setup_expires
