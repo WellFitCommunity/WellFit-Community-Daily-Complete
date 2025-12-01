@@ -118,3 +118,36 @@ export async function hashPinForStorage(pin: string): Promise<string> {
 export function isClientHashedPin(value: string): boolean {
   return value.startsWith('sha256:') && value.length === 71; // 'sha256:' + 64 hex chars
 }
+
+/**
+ * Hash a password locally using Web Crypto API SHA-256
+ * This is a "pre-hash" before transmission - NOT for storage
+ *
+ * Unlike hashPinForTransmission, this function accepts any string of 8+ characters
+ * since passwords can contain letters, numbers, and symbols.
+ *
+ * IMPORTANT: Uses the same domain separator as hashPinForTransmission for backward
+ * compatibility with existing stored password hashes.
+ *
+ * The server will apply additional PBKDF2 hashing with salt for storage security.
+ *
+ * @param password - The plaintext password (8+ characters)
+ * @returns A SHA-256 hash hex string prefixed with 'sha256:' to indicate format
+ */
+export async function hashPasswordForTransmission(password: string): Promise<string> {
+  // Validate password format (8+ characters)
+  if (!password || password.length < 8) {
+    throw new Error('Password must be at least 8 characters');
+  }
+
+  const encoder = new TextEncoder();
+  // Use same domain separator as PIN for backward compatibility with stored hashes
+  const data = encoder.encode(`wellfit-admin-pin-v1:${password}`);
+
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+  // Prefix to indicate this is a client-hashed value
+  return `sha256:${hashHex}`;
+}

@@ -17,7 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import { Shield, Lock, Eye, EyeOff, AlertCircle, CheckCircle, ArrowLeft, KeyRound, Phone } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { auditLogger } from '../services/auditLogger';
-import { hashPinForTransmission } from '../services/pinHashingService';
+import { hashPinForTransmission, hashPasswordForTransmission } from '../services/pinHashingService';
 
 type AuthStep = 'credentials' | 'pin' | 'forgot' | 'verify' | 'reset';
 
@@ -109,7 +109,7 @@ export const EnvisionLoginPage: React.FC = () => {
 
     try {
       // Hash password client-side before transmission
-      const hashedPassword = await hashPinForTransmission(password);
+      const hashedPassword = await hashPasswordForTransmission(password);
 
       const { data, error: fnError } = await supabase.functions.invoke('envision-login', {
         body: { email: email.trim(), password: hashedPassword }
@@ -264,8 +264,10 @@ export const EnvisionLoginPage: React.FC = () => {
     setLoading(true);
 
     try {
-      // Hash the new credential
-      const hashedCredential = await hashPinForTransmission(newCredential);
+      // Hash the new credential based on type (password uses different hash domain)
+      const hashedCredential = resetType === 'password'
+        ? await hashPasswordForTransmission(newCredential)
+        : await hashPinForTransmission(newCredential);
 
       const { data, error: fnError } = await supabase.functions.invoke('envision-complete-reset', {
         body: {
