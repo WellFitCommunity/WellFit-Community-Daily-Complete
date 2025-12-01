@@ -9,6 +9,10 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SB_SECRET_KEY = Deno.env.get("SB_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 const ADMIN_SESSION_TTL_MIN = 30; // 30 minutes for enhanced security (B2B2C healthcare platform)
 
+// Rate limiting constants
+const MAX_FAILED_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MINUTES = 15;
+
 const supabase = createClient(SUPABASE_URL, SB_SECRET_KEY);
 
 const schema = z.object({
@@ -79,6 +83,62 @@ serve(async (req: Request) => {
     if (!profile?.is_admin) {
       return new Response(JSON.stringify({ error: "Admin required" }), { status: 403, headers });
     }
+
+    // Rate limiting: Check if user is locked out
+    const { data: lockoutData, error: lockoutError } = await supabase
+      .rpc('check_pin_lockout', { p_user_id: user_id });
+
+    if (lockoutError) {
+      logger.error("Failed to check PIN lockout status", {
+        userId: user_id,
+        error: lockoutError.message
+      });
+      // Continue with verification - don't block on rate limit check failure
+    } else if (lockoutData && lockoutData.length > 0 && lockoutData[0].is_locked) {
+      const unlockAt = new Date(lockoutData[0].unlock_at);
+      const remainingMinutes = Math.ceil((unlockAt.getTime() - Date.now()) / 60000);
+
+      logger.security("Admin PIN verification blocked - user locked out", {
+        userId: user_id,
+        clientIp,
+        unlockAt: unlockAt.toISOString(),
+        remainingMinutes
+      });
+
+      // HIPAA AUDIT LOGGING: Log lockout block
+      try {
+        await supabase.from('audit_logs').insert({
+          event_type: 'ADMIN_PIN_LOCKOUT_BLOCK',
+          event_category: 'AUTHENTICATION',
+          actor_user_id: user_id,
+          actor_ip_address: clientIp,
+          actor_user_agent: req.headers.get('user-agent'),
+          operation: 'VERIFY_ADMIN_PIN',
+          resource_type: 'auth_event',
+          success: false,
+          error_code: 'ACCOUNT_LOCKED',
+          error_message: `Account locked for ${remainingMinutes} more minutes`,
+          metadata: {
+            unlock_at: unlockAt.toISOString(),
+            remaining_minutes: remainingMinutes
+          }
+        });
+      } catch (logError) {
+        console.error('[Audit Log Error]:', logError);
+      }
+
+      return new Response(
+        JSON.stringify({
+          error: `Account temporarily locked. Try again in ${remainingMinutes} minute${remainingMinutes !== 1 ? 's' : ''}.`,
+          locked_until: unlockAt.toISOString(),
+          remaining_minutes: remainingMinutes
+        }),
+        { status: 429, headers }
+      );
+    }
+
+    // Get failed attempt count for informational purposes
+    const failedCount = lockoutData?.[0]?.failed_count ?? 0;
 
     const body = await req.json();
     const parsed = schema.safeParse(body);
@@ -202,10 +262,32 @@ serve(async (req: Request) => {
 
     const valid = await verifyPin(pin, pinRow?.pin_hash);
     if (!valid) {
+      // Record failed attempt for rate limiting
+      const { error: recordError } = await supabase
+        .rpc('record_pin_attempt', {
+          p_user_id: user_id,
+          p_success: false,
+          p_client_ip: clientIp,
+          p_user_agent: req.headers.get('user-agent')
+        });
+
+      if (recordError) {
+        logger.error("Failed to record PIN attempt", {
+          userId: user_id,
+          error: recordError.message
+        });
+      }
+
+      // Calculate remaining attempts before lockout
+      const newFailedCount = failedCount + 1;
+      const remainingAttempts = Math.max(0, MAX_FAILED_ATTEMPTS - newFailedCount);
+
       logger.security("Admin PIN verification failed", {
         userId: user_id,
         role,
-        clientIp
+        clientIp,
+        failedAttempts: newFailedCount,
+        remainingAttempts
       });
 
       // HIPAA AUDIT LOGGING: Log failed PIN verification
@@ -217,21 +299,51 @@ serve(async (req: Request) => {
           actor_ip_address: clientIp,
           actor_user_agent: req.headers.get('user-agent'),
           operation: 'VERIFY_ADMIN_PIN',
-resource_type: 'auth_event',
+          resource_type: 'auth_event',
           success: false,
           error_code: 'INCORRECT_PIN',
           error_message: 'Incorrect PIN provided',
-          metadata: { role }
+          metadata: {
+            role,
+            failed_attempts: newFailedCount,
+            remaining_attempts: remainingAttempts
+          }
         });
       } catch (logError) {
         // Keep console.error for audit log failures (can't log audit failure to audit log)
         console.error('[Audit Log Error]:', logError);
       }
 
-      // TODO: Add to security_events table if multiple failed attempts from same IP
-      // Check for burst of failed PIN attempts (potential brute force)
+      // Build error response with remaining attempts info
+      const errorResponse: Record<string, unknown> = {
+        error: "Incorrect PIN"
+      };
 
-      return new Response(JSON.stringify({ error: "Incorrect PIN" }), { status: 401, headers });
+      if (remainingAttempts <= 2 && remainingAttempts > 0) {
+        errorResponse.warning = `${remainingAttempts} attempt${remainingAttempts !== 1 ? 's' : ''} remaining before temporary lockout`;
+        errorResponse.remaining_attempts = remainingAttempts;
+      } else if (remainingAttempts === 0) {
+        errorResponse.error = `Account locked for ${LOCKOUT_DURATION_MINUTES} minutes due to too many failed attempts`;
+        errorResponse.locked_until = new Date(Date.now() + LOCKOUT_DURATION_MINUTES * 60 * 1000).toISOString();
+      }
+
+      return new Response(JSON.stringify(errorResponse), { status: 401, headers });
+    }
+
+    // Record successful attempt (clears any existing lockout)
+    const { error: recordError } = await supabase
+      .rpc('record_pin_attempt', {
+        p_user_id: user_id,
+        p_success: true,
+        p_client_ip: clientIp,
+        p_user_agent: req.headers.get('user-agent')
+      });
+
+    if (recordError) {
+      logger.error("Failed to record successful PIN attempt", {
+        userId: user_id,
+        error: recordError.message
+      });
     }
 
     const expires = new Date(Date.now() + ADMIN_SESSION_TTL_MIN * 60 * 1000);
@@ -267,7 +379,7 @@ resource_type: 'auth_event',
           role,
           session_expires: expires.toISOString(),
           ttl_minutes: ADMIN_SESSION_TTL_MIN,
-          used_tenant_code_format: match ? true : false
+          used_tenant_code_format: pinFormat === 'tenant_code_pin'
         }
       });
     } catch (logError) {
