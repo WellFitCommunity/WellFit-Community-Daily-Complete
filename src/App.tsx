@@ -247,8 +247,10 @@ function Shell() {
               {/* Add this route in your Routes section (in the Protected section) */}
               <Route path="/smart-callback" element={<RequireAuth><SmartCallbackPage /></RequireAuth>} />
 
-              {/* Time Clock - Employee Portal */}
-              <Route path="/time-clock" element={<RequireAuth><TimeClockPage /></RequireAuth>} />
+              {/* Time Clock - Employee Portal (feature-flagged) */}
+              {featureFlags.timeClock && (
+                <Route path="/time-clock" element={<RequireAuth><TimeClockPage /></RequireAuth>} />
+              )}
 
               {/* Caregiver Suite */}
               {/* Public caregiver access (no auth - PIN-based access) */}
@@ -541,17 +543,19 @@ function Shell() {
                 }
               />
 
-              {/* Time Clock Admin - Manager/HR View */}
-              <Route
-                path="/admin/time-clock"
-                element={
-                  <RequireAuth>
-                    <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'department_head', 'clinical_supervisor']}>
-                      <TimeClockAdmin />
-                    </RequireAdminAuth>
-                  </RequireAuth>
-                }
-              />
+              {/* Time Clock Admin - Manager/HR View (feature-flagged) */}
+              {featureFlags.timeClock && (
+                <Route
+                  path="/admin/time-clock"
+                  element={
+                    <RequireAuth>
+                      <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'department_head', 'clinical_supervisor']}>
+                        <TimeClockAdmin />
+                      </RequireAdminAuth>
+                    </RequireAuth>
+                  }
+                />
+              )}
               <Route
                 path="/admin/settings"
                 element={
