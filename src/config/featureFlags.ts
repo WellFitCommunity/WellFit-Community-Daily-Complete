@@ -22,6 +22,7 @@ export interface FeatureFlags {
   shiftHandoff: boolean;
   fieldVisits: boolean;
   caregiverPortal: boolean;
+  timeClock: boolean;
 
   // Emergency Response
   emsMetrics: boolean;
@@ -64,6 +65,7 @@ const getFeatureFlags = (): FeatureFlags => {
     shiftHandoff: env.REACT_APP_FEATURE_SHIFT_HANDOFF === 'true',
     fieldVisits: env.REACT_APP_FEATURE_FIELD_VISITS === 'true',
     caregiverPortal: env.REACT_APP_FEATURE_CAREGIVER_PORTAL === 'true',
+    timeClock: env.REACT_APP_FEATURE_TIME_CLOCK === 'true',
 
     // Emergency Response (default: disabled)
     emsMetrics: env.REACT_APP_FEATURE_EMS_METRICS === 'true',

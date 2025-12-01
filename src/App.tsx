@@ -5,6 +5,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
 import { SessionTimeoutProvider } from './contexts/SessionTimeoutContext';
+import { TimeClockProvider } from './contexts/TimeClockContext';
 import { BrandingConfig, getCurrentBranding } from './branding.config';
 import { BrandingContext } from './BrandingContext';
 import { performanceMonitor } from './services/performanceMonitoring';
@@ -145,6 +146,10 @@ const SDOHAssessment = React.lazy(() => import('./components/chw/SDOHAssessment'
 const TelehealthLobby = React.lazy(() => import('./components/chw/TelehealthLobby'));
 const KioskDashboard = React.lazy(() => import('./components/chw/KioskDashboard'));
 
+// Time Clock
+const TimeClockPage = React.lazy(() => import('./components/time-clock/TimeClockPage'));
+const TimeClockAdmin = React.lazy(() => import('./components/admin/TimeClockAdmin'));
+
 function Shell() {
   const [branding, setBranding] = useState<BrandingConfig>(getCurrentBranding());
   const location = useLocation();
@@ -188,10 +193,12 @@ function Shell() {
       <BrandingContext.Provider value={{ branding, setBranding, loading: false, refreshBranding }}>
         {/* SessionTimeout applies to the whole app */}
         <SessionTimeoutProvider>
-          {/* Global Learning Milestone Celebration Display */}
-          <LearningMilestone />
+          {/* Time Clock - Auto clock-in on login, prompt on logout */}
+          <TimeClockProvider>
+            {/* Global Learning Milestone Celebration Display */}
+            <LearningMilestone />
 
-          <AppHeader />
+            <AppHeader />
 
           <AuthGate>
             <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
@@ -242,6 +249,11 @@ function Shell() {
               {/* /trivia-game removed - use /memory-lane-trivia instead */}
               {/* Add this route in your Routes section (in the Protected section) */}
               <Route path="/smart-callback" element={<RequireAuth><SmartCallbackPage /></RequireAuth>} />
+
+              {/* Time Clock - Employee Portal (feature-flagged) */}
+              {featureFlags.timeClock && (
+                <Route path="/time-clock" element={<RequireAuth><TimeClockPage /></RequireAuth>} />
+              )}
 
               {/* Caregiver Suite */}
               {/* Public caregiver access (no auth - PIN-based access) */}
@@ -533,6 +545,20 @@ function Shell() {
                   </RequireAuth>
                 }
               />
+
+              {/* Time Clock Admin - Manager/HR View (feature-flagged) */}
+              {featureFlags.timeClock && (
+                <Route
+                  path="/admin/time-clock"
+                  element={
+                    <RequireAuth>
+                      <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'department_head', 'clinical_supervisor']}>
+                        <TimeClockAdmin />
+                      </RequireAdminAuth>
+                    </RequireAuth>
+                  }
+                />
+              )}
               <Route
                 path="/admin/settings"
                 element={
@@ -801,10 +827,11 @@ function Shell() {
 
           <Footer />
 
-          {/* Offline indicator for all users */}
-          <OfflineIndicator />
-        </AuthGate>
-      </SessionTimeoutProvider>
+            {/* Offline indicator for all users */}
+            <OfflineIndicator />
+          </AuthGate>
+          </TimeClockProvider>
+        </SessionTimeoutProvider>
     </BrandingContext.Provider>
     </GuardianErrorBoundary>
   );
