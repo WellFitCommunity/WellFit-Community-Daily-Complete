@@ -312,6 +312,7 @@ export const TimeClockService = {
 
   /**
    * Get all time entries for a tenant (admin view)
+   * Uses secured RPC that validates admin permissions server-side
    */
   async getAllTenantEntries(
     tenantId: string,
@@ -322,47 +323,30 @@ export const TimeClockService = {
     }
   ): Promise<ServiceResult<Array<TimeClockEntry & { first_name: string; last_name: string }>>> {
     try {
-      let query = supabase
-        .from('time_clock_entries')
-        .select(`
-          *,
-          profiles!inner(first_name, last_name)
-        `)
-        .eq('tenant_id', tenantId)
-        .order('clock_in_time', { ascending: false });
-
-      if (options?.startDate) {
-        query = query.gte('clock_in_time', options.startDate.toISOString());
-      }
-      if (options?.endDate) {
-        query = query.lte('clock_in_time', options.endDate.toISOString());
-      }
-      if (options?.limit) {
-        query = query.limit(options.limit);
-      }
-
-      const { data, error } = await query;
+      const { data, error } = await supabase.rpc('get_tenant_time_entries', {
+        p_tenant_id: tenantId,
+        p_start_date: options?.startDate?.toISOString().split('T')[0] || null,
+        p_end_date: options?.endDate?.toISOString().split('T')[0] || null,
+        p_limit: options?.limit || 100,
+      });
 
       if (error) {
+        await auditLogger.error('TIME_CLOCK_ADMIN_QUERY_FAILED', error, {
+          category: 'ADMINISTRATIVE',
+          tenantId,
+        });
         return failure('DATABASE_ERROR', error.message, error);
       }
 
-      // Flatten the profiles data
-      const entries = (data || []).map((entry) => ({
-        ...entry,
-        first_name: (entry.profiles as { first_name: string })?.first_name || '',
-        last_name: (entry.profiles as { last_name: string })?.last_name || '',
-        profiles: undefined,
-      }));
-
-      return success(entries);
+      return success(data || []);
     } catch (err) {
       return failure('UNKNOWN_ERROR', 'Failed to get tenant entries', err);
     }
   },
 
   /**
-   * Get team entries for a manager
+   * Get team entries for a manager (direct reports only)
+   * Uses secured RPC that validates manager identity server-side
    */
   async getTeamEntries(
     managerUserId: string,
@@ -373,60 +357,26 @@ export const TimeClockService = {
     }
   ): Promise<ServiceResult<Array<TimeClockEntry & { first_name: string; last_name: string }>>> {
     try {
-      // Get manager's employee profile ID
-      const { data: managerProfile } = await supabase
-        .from('employee_profiles')
-        .select('id')
-        .eq('user_id', managerUserId)
-        .single();
-
-      if (!managerProfile) {
-        return success([]); // Manager has no profile, no direct reports
-      }
-
-      // Get direct reports
-      const { data: reports } = await supabase
-        .from('employee_profiles')
-        .select('user_id')
-        .eq('manager_id', managerProfile.id);
-
-      if (!reports || reports.length === 0) {
-        return success([]);
-      }
-
-      const reportUserIds = reports.map((r) => r.user_id);
-
-      let query = supabase
-        .from('time_clock_entries')
-        .select(`
-          *,
-          profiles!inner(first_name, last_name)
-        `)
-        .eq('tenant_id', tenantId)
-        .in('user_id', reportUserIds)
-        .order('clock_in_time', { ascending: false });
-
-      if (options?.startDate) {
-        query = query.gte('clock_in_time', options.startDate.toISOString());
-      }
-      if (options?.endDate) {
-        query = query.lte('clock_in_time', options.endDate.toISOString());
-      }
-
-      const { data, error } = await query;
+      const { data, error } = await supabase.rpc('get_team_time_entries', {
+        p_manager_user_id: managerUserId,
+        p_tenant_id: tenantId,
+        p_start_date: options?.startDate?.toISOString().split('T')[0] || null,
+        p_end_date: options?.endDate?.toISOString().split('T')[0] || null,
+      });
 
       if (error) {
+        // If manager has no employee profile or no reports, return empty array
+        if (error.message.includes('Manager employee profile not found')) {
+          return success([]);
+        }
+        await auditLogger.error('TIME_CLOCK_TEAM_QUERY_FAILED', error, {
+          category: 'ADMINISTRATIVE',
+          tenantId,
+        });
         return failure('DATABASE_ERROR', error.message, error);
       }
 
-      const entries = (data || []).map((entry) => ({
-        ...entry,
-        first_name: (entry.profiles as { first_name: string })?.first_name || '',
-        last_name: (entry.profiles as { last_name: string })?.last_name || '',
-        profiles: undefined,
-      }));
-
-      return success(entries);
+      return success(data || []);
     } catch (err) {
       return failure('UNKNOWN_ERROR', 'Failed to get team entries', err);
     }
