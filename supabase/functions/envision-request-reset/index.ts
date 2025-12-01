@@ -66,6 +66,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const TWILIO_AUTH_TOKEN = getEnv("TWILIO_AUTH_TOKEN");
   const VERIFY_SID = getEnv("TWILIO_VERIFY_SERVICE_SID");
 
+  // Debug mode - include failure reason in response (for diagnosing issues)
+  const url = new URL(req.url);
+  const debugMode = url.searchParams.get('debug') === 'true';
+
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     logger.error("Missing Supabase environment variables");
     return new Response(
@@ -116,13 +120,26 @@ Deno.serve(async (req: Request): Promise<Response> => {
     });
 
     // Generic success response to prevent email enumeration
-    const genericSuccessResponse = new Response(
-      JSON.stringify({
+    // In debug mode, include the failure reason to help diagnose issues
+    const createResponse = (debugReason?: string) => {
+      const responseBody: Record<string, unknown> = {
         success: true,
         message: "If this email is registered, a verification code has been sent to the associated phone number."
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+      };
+
+      // Only include debug info when debug mode is enabled
+      if (debugMode && debugReason) {
+        responseBody._debug = {
+          reason: debugReason,
+          hint: "This info only appears with ?debug=true query param"
+        };
+      }
+
+      return new Response(
+        JSON.stringify(responseBody),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    };
 
     // Look up super admin by email
     const { data: superAdmin, error: lookupError } = await supabase
@@ -133,7 +150,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     if (lookupError || !superAdmin) {
       logger.info("Reset requested for non-existent Envision email", { email });
-      return genericSuccessResponse;
+      return createResponse("EMAIL_NOT_FOUND: No super_admin_users record found for this email");
     }
 
     // Check if account is active
@@ -142,7 +159,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         superAdminId: superAdmin.id,
         email
       });
-      return genericSuccessResponse;
+      return createResponse("ACCOUNT_INACTIVE: is_active = false in super_admin_users");
     }
 
     // Check if standalone auth (must have password_hash for password reset, or phone for any reset)
@@ -151,7 +168,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         superAdminId: superAdmin.id,
         email
       });
-      return genericSuccessResponse;
+      return createResponse("NO_STANDALONE_PASSWORD: password_hash is NULL (user may use Supabase auth instead)");
     }
 
     // Check if phone is configured
@@ -160,7 +177,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         superAdminId: superAdmin.id,
         email
       });
-      return genericSuccessResponse;
+      return createResponse("NO_PHONE: phone column is NULL in super_admin_users - must set phone number for SMS reset");
     }
 
     // Check rate limit: count reset requests in last hour
@@ -179,7 +196,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         resetType,
         requestsInLastHour: count
       });
-      return genericSuccessResponse;
+      return createResponse(`RATE_LIMITED: ${count} requests in last hour (max ${MAX_RESET_REQUESTS_PER_HOUR})`);
     }
 
     // Send SMS verification code via Twilio Verify
@@ -211,7 +228,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         status: twilioResp.status,
         error: twilioText
       });
-      return genericSuccessResponse;
+      return createResponse(`TWILIO_ERROR: HTTP ${twilioResp.status} - ${twilioText}`);
     }
 
     // Create a reset token record for tracking
@@ -234,7 +251,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         superAdminId: superAdmin.id,
         error: insertError.message
       });
-      return genericSuccessResponse;
+      return createResponse(`DB_INSERT_ERROR: Failed to create reset token - ${insertError.message}`);
     }
 
     // Log successful SMS send
@@ -259,7 +276,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
       }
     }).catch(() => {});
 
-    return genericSuccessResponse;
+    // Success! SMS was actually sent
+    return createResponse();
 
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);

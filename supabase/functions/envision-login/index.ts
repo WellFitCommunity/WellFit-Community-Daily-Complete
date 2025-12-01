@@ -103,10 +103,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
       auth: { autoRefreshToken: false, persistSession: false }
     });
 
-    // Look up super admin by email
+    // Look up super admin by email (include TOTP and PIN status)
     const { data: superAdmin, error: lookupError } = await supabase
       .from('super_admin_users')
-      .select('id, email, full_name, role, password_hash, is_active')
+      .select('id, email, full_name, role, password_hash, pin_hash, is_active, totp_enabled, totp_secret')
       .eq('email', email)
       .single();
 
@@ -305,14 +305,28 @@ Deno.serve(async (req: Request): Promise<Response> => {
       }
     }).catch(() => {});
 
-    // Return session token for PIN verification step
+    // Determine 2FA method
+    const totpEnabled = Boolean(superAdmin.totp_enabled && superAdmin.totp_secret);
+    const pinConfigured = Boolean(superAdmin.pin_hash);
+    const needs2FASetup = !totpEnabled && !pinConfigured;
+
+    // Return session token for 2FA verification step
     return new Response(
       JSON.stringify({
         success: true,
         session_token: sessionToken,
         expires_at: expiresAt,
-        requires_pin: true,
-        message: "Password verified. Please enter your PIN to complete login."
+        // 2FA method indicators
+        totp_enabled: totpEnabled,
+        pin_configured: pinConfigured,
+        requires_2fa_setup: needs2FASetup,
+        // Legacy field for backwards compatibility
+        requires_pin: !totpEnabled && pinConfigured,
+        message: totpEnabled
+          ? "Password verified. Please enter your authenticator code."
+          : pinConfigured
+            ? "Password verified. Please enter your PIN to complete login."
+            : "Password verified. Please set up two-factor authentication."
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
