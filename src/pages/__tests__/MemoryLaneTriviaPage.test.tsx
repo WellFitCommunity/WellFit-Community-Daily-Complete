@@ -1,5 +1,6 @@
 // src/pages/__tests__/MemoryLaneTriviaPage.test.tsx
 // Tests for the senior-facing Memory Lane trivia page
+/* eslint-disable testing-library/no-wait-for-multiple-assertions, testing-library/no-node-access */
 
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';

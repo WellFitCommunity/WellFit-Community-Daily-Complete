@@ -1,5 +1,6 @@
 // src/pages/__tests__/TelehealthAppointmentsPage.test.tsx
 // Tests for patient-facing telehealth appointments page
+/* eslint-disable testing-library/no-wait-for-multiple-assertions, testing-library/no-node-access */
 
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';

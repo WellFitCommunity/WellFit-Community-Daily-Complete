@@ -3,6 +3,10 @@
  * Covers: Unit tests, integration tests, security, edge cases
  */
 
+import { BillingCodeSuggester } from '../billingCodeSuggester';
+import { supabase } from '../../../lib/supabaseClient';
+import type { EncounterContext } from '../billingCodeSuggester';
+
 // Mock MCP modules before imports
 jest.mock('../../mcp/mcpClient');
 jest.mock('../../mcp/mcpCostOptimizer');
@@ -14,10 +18,6 @@ jest.mock('../../../lib/supabaseClient', () => ({
     rpc: jest.fn()
   }
 }));
-
-import { BillingCodeSuggester } from '../billingCodeSuggester';
-import { supabase } from '../../../lib/supabaseClient';
-import type { EncounterContext } from '../billingCodeSuggester';
 
 // Mock MCP Cost Optimizer
 const mockOptimizer = {

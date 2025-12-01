@@ -5,7 +5,7 @@
  *
  * Copyright © 2025 Envision VirtualEdge Group LLC. All rights reserved.
  */
-/* eslint-disable testing-library/no-container, testing-library/no-node-access */
+/* eslint-disable testing-library/no-container, testing-library/no-node-access, testing-library/no-wait-for-multiple-assertions */
 
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
