@@ -246,7 +246,7 @@ export const TimeClockAdmin: React.FC = () => {
             label="On-Time Rate"
             value={`${stats.onTimePercentage}%`}
             icon={<CheckCircle className="h-5 w-5" />}
-            riskLevel={stats.onTimePercentage >= 80 ? 'low' : stats.onTimePercentage >= 60 ? 'medium' : 'high'}
+            riskLevel={stats.onTimePercentage >= 80 ? 'low' : stats.onTimePercentage >= 60 ? 'elevated' : 'high'}
           />
         </div>
 
