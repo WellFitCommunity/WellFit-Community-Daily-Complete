@@ -102,7 +102,7 @@ export const TimeClockPage: React.FC = () => {
       badge={<EABadge variant="info">Employee Portal</EABadge>}
     >
       <div className="max-w-2xl mx-auto">
-        <EATabs value={activeTab} onValueChange={setActiveTab}>
+        <EATabs defaultValue="clock" value={activeTab} onValueChange={setActiveTab}>
           <EATabsList className="mb-6">
             <EATabsTrigger value="clock">
               <Clock className="h-4 w-4 mr-2" />
