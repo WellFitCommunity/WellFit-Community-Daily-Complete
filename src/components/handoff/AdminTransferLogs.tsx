@@ -1,9 +1,25 @@
 // Admin Transfer Logs - Complete audit trail for all patient handoffs
 // Export to CSV/Excel for compliance reporting
+// Envision Atlus Dark Theme
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import * as XLSX from 'exceljs';
+import {
+  FileSpreadsheet,
+  Search,
+  Filter,
+  X,
+  Clock,
+  CheckCircle,
+  AlertTriangle,
+  Package,
+  RefreshCw,
+  Bed,
+  ArrowRight,
+  Eye,
+} from 'lucide-react';
 import HandoffService from '../../services/handoffService';
 import type {
   HandoffPacket,
@@ -14,11 +30,13 @@ import type {
   UrgencyLevel,
 } from '../../types/handoff';
 import { URGENCY_LABELS, STATUS_LABELS } from '../../types/handoff';
+import { EACard, EACardHeader, EACardContent, EAButton } from '../envision-atlus';
 
 const AdminTransferLogs: React.FC<AdminTransferLogsProps> = ({
   showExportButton = true,
   defaultFilters,
 }) => {
+  const navigate = useNavigate();
   const [packets, setPackets] = useState<HandoffPacket[]>([]);
   const [stats, setStats] = useState<HandoffPacketStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -84,7 +102,7 @@ const AdminTransferLogs: React.FC<AdminTransferLogsProps> = ({
       worksheet.getRow(1).fill = {
         type: 'pattern',
         pattern: 'solid',
-        fgColor: { argb: 'FF4472C4' },
+        fgColor: { argb: 'FF00857A' }, // EA Teal
       };
       worksheet.getRow(1).font = { color: { argb: 'FFFFFFFF' }, bold: true };
 
@@ -132,7 +150,7 @@ const AdminTransferLogs: React.FC<AdminTransferLogsProps> = ({
       statsSheet.getRow(1).fill = {
         type: 'pattern',
         pattern: 'solid',
-        fgColor: { argb: 'FF70AD47' },
+        fgColor: { argb: 'FF00857A' },
       };
       statsSheet.getRow(1).font = { color: { argb: 'FFFFFFFF' }, bold: true };
 
@@ -189,7 +207,6 @@ const AdminTransferLogs: React.FC<AdminTransferLogsProps> = ({
 
       toast.success('Export completed successfully!');
     } catch (error: any) {
-
       toast.error(`Failed to export: ${error.message}`);
     } finally {
       setExporting(false);
@@ -198,310 +215,417 @@ const AdminTransferLogs: React.FC<AdminTransferLogsProps> = ({
 
   const getStatusColor = (status: HandoffStatus): string => {
     const colors = {
-      draft: 'bg-gray-100 text-gray-800',
-      sent: 'bg-blue-100 text-blue-800',
-      acknowledged: 'bg-green-100 text-green-800',
-      cancelled: 'bg-red-100 text-red-800',
+      draft: 'bg-slate-500/20 text-slate-400 border-slate-500/30',
+      sent: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+      acknowledged: 'bg-green-500/20 text-green-400 border-green-500/30',
+      cancelled: 'bg-red-500/20 text-red-400 border-red-500/30',
     };
     return colors[status];
   };
 
   const getUrgencyColor = (level: UrgencyLevel): string => {
     const colors = {
-      routine: 'bg-blue-100 text-blue-800',
-      urgent: 'bg-yellow-100 text-yellow-800',
-      emergent: 'bg-orange-100 text-orange-800',
-      critical: 'bg-red-100 text-red-800',
+      routine: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+      urgent: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+      emergent: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+      critical: 'bg-red-500/20 text-red-400 border-red-500/30',
     };
     return colors[level];
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-12">
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-12">
         <div className="text-center">
-          <div className="text-4xl mb-4">⏳</div>
-          <p className="text-gray-600">Loading transfer logs...</p>
+          <RefreshCw className="w-12 h-12 text-[#00857a] animate-spin mx-auto mb-4" />
+          <p className="text-slate-400">Loading transfer logs...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Statistics Cards */}
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <StatCard
-            title="Total Transfers"
-            value={stats.total_packets}
-            icon="📦"
-            color="bg-blue-50 text-blue-700"
-          />
-          <StatCard
-            title="Pending Ack"
-            value={stats.pending_acknowledgement}
-            icon="⏳"
-            color="bg-yellow-50 text-yellow-700"
-          />
-          <StatCard
-            title="Acknowledged"
-            value={stats.acknowledged_packets}
-            icon="✅"
-            color="bg-green-50 text-green-700"
-          />
-          <StatCard
-            title="Avg. Ack Time"
-            value={
-              stats.average_acknowledgement_time_minutes
-                ? `${stats.average_acknowledgement_time_minutes.toFixed(0)} min`
-                : 'N/A'
-            }
-            icon="⏱️"
-            color="bg-purple-50 text-purple-700"
-          />
-        </div>
-      )}
-
-      {/* Filters */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
-        <h3 className="font-semibold text-gray-800 mb-3">🔍 Filters</h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+    <div className="min-h-screen bg-slate-900 p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Status
-            </label>
-            <select
-              value={filters.status || ''}
-              onChange={(e) =>
-                setFilters({
-                  ...filters,
-                  status: e.target.value as HandoffStatus | undefined,
-                })
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            <h1 className="text-2xl font-bold text-white flex items-center gap-3">
+              <Package className="w-7 h-7 text-[#00857a]" />
+              Transfer Logs
+            </h1>
+            <p className="text-sm text-slate-400 mt-1">
+              Complete audit trail for patient handoffs and transfers
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <EAButton
+              variant="secondary"
+              icon={<Bed className="w-4 h-4" />}
+              onClick={() => navigate('/bed-management')}
             >
-              <option value="">All Statuses</option>
-              <option value="draft">Draft</option>
-              <option value="sent">Sent</option>
-              <option value="acknowledged">Acknowledged</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Urgency
-            </label>
-            <select
-              value={filters.urgency_level || ''}
-              onChange={(e) =>
-                setFilters({
-                  ...filters,
-                  urgency_level: e.target.value as UrgencyLevel | undefined,
-                })
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              Bed Management
+            </EAButton>
+            <EAButton
+              icon={<RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />}
+              onClick={loadData}
             >
-              <option value="">All Urgencies</option>
-              <option value="routine">Routine</option>
-              <option value="urgent">Urgent</option>
-              <option value="emergent">Emergent</option>
-              <option value="critical">Critical</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Date From
-            </label>
-            <input
-              type="date"
-              value={filters.date_from || ''}
-              onChange={(e) => setFilters({ ...filters, date_from: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Search
-            </label>
-            <input
-              type="text"
-              value={filters.search || ''}
-              onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-              placeholder="Packet # or MRN"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-            />
+              Refresh
+            </EAButton>
           </div>
         </div>
 
-        <div className="mt-3 flex justify-between">
-          <button
-            onClick={() => setFilters({})}
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm"
-          >
-            Clear Filters
-          </button>
+        {/* Statistics Cards */}
+        {stats && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <EACard>
+              <EACardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-400">Total Transfers</p>
+                    <p className="text-2xl font-bold text-white">{stats.total_packets}</p>
+                  </div>
+                  <Package className="w-8 h-8 text-blue-400 opacity-50" />
+                </div>
+              </EACardContent>
+            </EACard>
 
-          {showExportButton && (
-            <button
-              onClick={exportToExcel}
-              disabled={exporting || packets.length === 0}
-              className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                exporting || packets.length === 0
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-green-600 text-white hover:bg-green-700'
-              }`}
-            >
-              {exporting ? '⏳ Exporting...' : '📤 Export to Excel'}
-            </button>
-          )}
-        </div>
-      </div>
+            <EACard>
+              <EACardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-400">Pending Ack</p>
+                    <p className="text-2xl font-bold text-yellow-400">{stats.pending_acknowledgement}</p>
+                  </div>
+                  <Clock className="w-8 h-8 text-yellow-400 opacity-50" />
+                </div>
+              </EACardContent>
+            </EACard>
 
-      {/* Transfer Logs Table */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Packet #
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+            <EACard>
+              <EACardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-400">Acknowledged</p>
+                    <p className="text-2xl font-bold text-green-400">{stats.acknowledged_packets}</p>
+                  </div>
+                  <CheckCircle className="w-8 h-8 text-green-400 opacity-50" />
+                </div>
+              </EACardContent>
+            </EACard>
+
+            <EACard>
+              <EACardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-400">Avg. Ack Time</p>
+                    <p className="text-2xl font-bold text-purple-400">
+                      {stats.average_acknowledgement_time_minutes
+                        ? `${stats.average_acknowledgement_time_minutes.toFixed(0)} min`
+                        : 'N/A'}
+                    </p>
+                  </div>
+                  <AlertTriangle className="w-8 h-8 text-purple-400 opacity-50" />
+                </div>
+              </EACardContent>
+            </EACard>
+          </div>
+        )}
+
+        {/* Filters */}
+        <EACard>
+          <EACardHeader icon={<Filter className="w-5 h-5" />}>
+            Filters
+          </EACardHeader>
+          <EACardContent className="p-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-400 mb-1">
                   Status
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Urgency
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  From → To
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Provider
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Created
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {packets.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
-                    No transfer packets found
-                  </td>
-                </tr>
-              ) : (
-                packets.map((packet) => (
-                  <tr key={packet.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm font-mono font-medium text-gray-900">
-                      {packet.packet_number}
-                    </td>
-                    <td className="px-4 py-3 text-sm">
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                          packet.status
-                        )}`}
-                      >
-                        {STATUS_LABELS[packet.status]}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm">
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${getUrgencyColor(
-                          packet.urgency_level
-                        )}`}
-                      >
-                        {URGENCY_LABELS[packet.urgency_level]}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">
-                      <div className="flex items-center">
-                        <span className="truncate max-w-[150px]" title={packet.sending_facility}>
-                          {packet.sending_facility}
-                        </span>
-                        <span className="mx-2">→</span>
-                        <span className="truncate max-w-[150px]" title={packet.receiving_facility}>
-                          {packet.receiving_facility}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">
-                      {packet.sender_provider_name}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-500">
-                      {new Date(packet.created_at).toLocaleDateString()}
-                    </td>
-                    <td className="px-4 py-3 text-sm">
-                      <button
-                        onClick={() => setSelectedPacket(packet)}
-                        className="text-blue-600 hover:text-blue-800 font-medium"
-                      >
-                        View
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Pagination info */}
-      <div className="text-center text-sm text-gray-600">
-        Showing {packets.length} transfer packet(s)
-      </div>
-
-      {/* Selected Packet Modal would go here */}
-      {selectedPacket && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <h2 className="text-2xl font-bold text-gray-800">
-                  Transfer Details: {selectedPacket.packet_number}
-                </h2>
-                <button
-                  onClick={() => setSelectedPacket(null)}
-                  className="text-gray-400 hover:text-gray-600 text-2xl"
+                </label>
+                <select
+                  value={filters.status || ''}
+                  onChange={(e) =>
+                    setFilters({
+                      ...filters,
+                      status: e.target.value as HandoffStatus | undefined,
+                    })
+                  }
+                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:ring-2 focus:ring-[#00857a] focus:border-transparent"
                 >
-                  ×
-                </button>
+                  <option value="">All Statuses</option>
+                  <option value="draft">Draft</option>
+                  <option value="sent">Sent</option>
+                  <option value="acknowledged">Acknowledged</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
               </div>
-              <pre className="bg-gray-50 p-4 rounded-lg overflow-x-auto text-xs">
-                {JSON.stringify(selectedPacket, null, 2)}
-              </pre>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-400 mb-1">
+                  Urgency
+                </label>
+                <select
+                  value={filters.urgency_level || ''}
+                  onChange={(e) =>
+                    setFilters({
+                      ...filters,
+                      urgency_level: e.target.value as UrgencyLevel | undefined,
+                    })
+                  }
+                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:ring-2 focus:ring-[#00857a] focus:border-transparent"
+                >
+                  <option value="">All Urgencies</option>
+                  <option value="routine">Routine</option>
+                  <option value="urgent">Urgent</option>
+                  <option value="emergent">Emergent</option>
+                  <option value="critical">Critical</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-400 mb-1">
+                  Date From
+                </label>
+                <input
+                  type="date"
+                  value={filters.date_from || ''}
+                  onChange={(e) => setFilters({ ...filters, date_from: e.target.value })}
+                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:ring-2 focus:ring-[#00857a] focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-400 mb-1">
+                  Search
+                </label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="text"
+                    value={filters.search || ''}
+                    onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                    placeholder="Packet # or MRN"
+                    className="w-full pl-10 pr-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-[#00857a] focus:border-transparent"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 flex justify-between">
+              <EAButton
+                variant="secondary"
+                onClick={() => setFilters({})}
+              >
+                Clear Filters
+              </EAButton>
+
+              {showExportButton && (
+                <EAButton
+                  onClick={exportToExcel}
+                  disabled={exporting || packets.length === 0}
+                  icon={<FileSpreadsheet className="w-4 h-4" />}
+                >
+                  {exporting ? 'Exporting...' : 'Export to Excel'}
+                </EAButton>
+              )}
+            </div>
+          </EACardContent>
+        </EACard>
+
+        {/* Transfer Logs Table */}
+        <EACard>
+          <EACardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-700">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                      Packet #
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                      Urgency
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                      From → To
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                      Provider
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                      Created
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800">
+                  {packets.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
+                        <Package className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                        <p>No transfer packets found</p>
+                      </td>
+                    </tr>
+                  ) : (
+                    packets.map((packet) => (
+                      <tr key={packet.id} className="hover:bg-slate-800/50 transition-colors">
+                        <td className="px-4 py-3 text-sm font-mono font-medium text-white">
+                          {packet.packet_number}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(
+                              packet.status
+                            )}`}
+                          >
+                            {STATUS_LABELS[packet.status]}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium border ${getUrgencyColor(
+                              packet.urgency_level
+                            )}`}
+                          >
+                            {URGENCY_LABELS[packet.urgency_level]}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-slate-300">
+                          <div className="flex items-center gap-2">
+                            <span className="truncate max-w-[120px]" title={packet.sending_facility}>
+                              {packet.sending_facility}
+                            </span>
+                            <ArrowRight className="w-3 h-3 text-slate-500 flex-shrink-0" />
+                            <span className="truncate max-w-[120px]" title={packet.receiving_facility}>
+                              {packet.receiving_facility}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-slate-300">
+                          {packet.sender_provider_name}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-slate-400">
+                          {new Date(packet.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <button
+                            onClick={() => setSelectedPacket(packet)}
+                            className="flex items-center gap-1 text-[#00857a] hover:text-[#33bfb7] font-medium transition-colors"
+                          >
+                            <Eye className="w-4 h-4" />
+                            View
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </EACardContent>
+        </EACard>
+
+        {/* Pagination info */}
+        <div className="text-center text-sm text-slate-500">
+          Showing {packets.length} transfer packet(s)
+        </div>
+
+        {/* Selected Packet Modal */}
+        {selectedPacket && (
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+            <div className="bg-slate-800 rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto border border-slate-700">
+              <div className="p-6 border-b border-slate-700">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h2 className="text-xl font-bold text-white">
+                      Transfer Details
+                    </h2>
+                    <p className="text-sm text-slate-400 mt-1 font-mono">
+                      {selectedPacket.packet_number}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setSelectedPacket(null)}
+                    className="text-slate-400 hover:text-white transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+              </div>
+              <div className="p-6">
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <p className="text-sm text-slate-400">Status</p>
+                    <span className={`inline-block px-2 py-1 mt-1 rounded-full text-xs font-medium border ${getStatusColor(selectedPacket.status)}`}>
+                      {STATUS_LABELS[selectedPacket.status]}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-400">Urgency</p>
+                    <span className={`inline-block px-2 py-1 mt-1 rounded-full text-xs font-medium border ${getUrgencyColor(selectedPacket.urgency_level)}`}>
+                      {URGENCY_LABELS[selectedPacket.urgency_level]}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-400">Sending Facility</p>
+                    <p className="text-white font-medium">{selectedPacket.sending_facility}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-400">Receiving Facility</p>
+                    <p className="text-white font-medium">{selectedPacket.receiving_facility}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-400">Provider</p>
+                    <p className="text-white">{selectedPacket.sender_provider_name}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-400">Callback Number</p>
+                    <p className="text-white">{selectedPacket.sender_callback_number}</p>
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <p className="text-sm text-slate-400 mb-1">Reason for Transfer</p>
+                  <p className="text-white bg-slate-700/50 p-3 rounded-lg">
+                    {selectedPacket.reason_for_transfer}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div>
+                    <p className="text-slate-400">Created</p>
+                    <p className="text-white">{new Date(selectedPacket.created_at).toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-400">Sent</p>
+                    <p className="text-white">
+                      {selectedPacket.sent_at ? new Date(selectedPacket.sent_at).toLocaleString() : 'Not sent'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-slate-400">Acknowledged</p>
+                    <p className="text-white">
+                      {selectedPacket.acknowledged_at ? new Date(selectedPacket.acknowledged_at).toLocaleString() : 'Pending'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="p-6 border-t border-slate-700 flex justify-end">
+                <EAButton variant="secondary" onClick={() => setSelectedPacket(null)}>
+                  Close
+                </EAButton>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
-
-// Stats Card Component
-const StatCard: React.FC<{
-  title: string;
-  value: string | number;
-  icon: string;
-  color: string;
-}> = ({ title, value, icon, color }) => (
-  <div className={`${color} rounded-lg p-4`}>
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm font-medium opacity-80">{title}</p>
-        <p className="text-2xl font-bold mt-1">{value}</p>
-      </div>
-      <div className="text-4xl opacity-60">{icon}</div>
-    </div>
-  </div>
-);
 
 export default AdminTransferLogs;

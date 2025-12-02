@@ -125,6 +125,8 @@ const FrequentFlyerDashboard = React.lazy(() => import('./components/atlas/Frequ
 const RevenueDashboard = React.lazy(() => import('./components/atlas/RevenueDashboard'));
 const ShiftHandoffDashboard = React.lazy(() => import('./components/nurse/ShiftHandoffDashboard'));
 const DischargedPatientDashboard = React.lazy(() => import('./components/discharge/DischargedPatientDashboard'));
+const BedManagementPanel = React.lazy(() => import('./components/admin/BedManagementPanel'));
+const AdminTransferLogs = React.lazy(() => import('./components/handoff/AdminTransferLogs'));
 const NeuroSuiteDashboard = React.lazy(() => import('./components/neuro/NeuroSuiteDashboard'));
 // StrokeAssessmentDashboard requires patientId - route would need wrapper component
 const SpecialistDashboard = React.lazy(() =>
@@ -852,6 +854,28 @@ function Shell() {
                   }
                 />
               )}
+
+              {/* Hospital Bed Management & Transfers */}
+              <Route
+                path="/bed-management"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'nurse', 'nurse_practitioner', 'physician', 'case_manager']}>
+                      <BedManagementPanel />
+                    </RequireAdminAuth>
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/transfer-logs"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'nurse', 'physician', 'case_manager']}>
+                      <AdminTransferLogs />
+                    </RequireAdminAuth>
+                  </RequireAuth>
+                }
+              />
 
               {/* Emergency Response - Feature Flagged */}
               {featureFlags.emsMetrics && (

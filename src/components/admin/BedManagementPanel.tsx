@@ -12,11 +12,13 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Bed as BedIcon,
   Building2,
   AlertTriangle,
   RefreshCw,
+  Package,
   Search,
   TrendingUp,
   Brain,
@@ -77,6 +79,8 @@ const UNIT_TYPE_CATEGORIES: { id: UnitTypeCategory; label: string; types: UnitTy
 ];
 
 const BedManagementPanel: React.FC = () => {
+  const navigate = useNavigate();
+
   // Core state
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -302,13 +306,22 @@ const BedManagementPanel: React.FC = () => {
             Real-time bed tracking with predictive analytics
           </p>
         </div>
-        <EAButton
-          onClick={loadData}
-          icon={<RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />}
-          variant="secondary"
-        >
-          Refresh
-        </EAButton>
+        <div className="flex items-center gap-3">
+          <EAButton
+            onClick={() => navigate('/transfer-logs')}
+            icon={<Package className="w-4 h-4" />}
+            variant="secondary"
+          >
+            Transfer Logs
+          </EAButton>
+          <EAButton
+            onClick={loadData}
+            icon={<RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />}
+            variant="secondary"
+          >
+            Refresh
+          </EAButton>
+        </div>
       </div>
 
       {/* Error Banner */}
