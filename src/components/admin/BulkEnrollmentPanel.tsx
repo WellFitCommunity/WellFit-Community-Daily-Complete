@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 
@@ -32,6 +33,7 @@ interface BulkEnrollmentJob {
 }
 
 const BulkEnrollmentPanel: React.FC = () => {
+  const navigate = useNavigate();
   const { adminRole } = useAdminAuth();
   const [enrollmentJob, setEnrollmentJob] = useState<BulkEnrollmentJob | null>(null);
   const [, setCsvData] = useState<string>('');
@@ -445,7 +447,7 @@ Mary,Smith,+15551234568,mary.smith@email.com,1938-07-22,Bob Smith,+15559876544,D
     <div className="max-w-6xl mx-auto p-6 space-y-6">
       {/* Back Button */}
       <button
-        onClick={() => window.history.length > 2 ? window.history.back() : window.location.href = '/admin'}
+        onClick={() => navigate('/admin')}
         className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
       >
         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

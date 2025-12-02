@@ -1,5 +1,6 @@
 // src/components/CheckInTracker.tsx
 import { useEffect, useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useSupabaseClient, useUser } from '../contexts/AuthContext';
 
 const ENABLE_LOCAL_HISTORY = false; // HIPAA: keep PHI out of localStorage
@@ -53,6 +54,7 @@ interface CheckInTrackerProps {
 }
 
 export default function CheckInTracker({ showBackButton = false }: CheckInTrackerProps = {}) {
+  const navigate = useNavigate();
   const supabase = useSupabaseClient();
   const user = useUser();
   const userId = user?.id ?? null;
@@ -267,7 +269,7 @@ export default function CheckInTracker({ showBackButton = false }: CheckInTracke
     <div className="relative max-w-xl mx-auto p-6 bg-white rounded-xl shadow-md border-2 border-wellfitGreen">
       {showBackButton && (
         <button
-          onClick={() => window.history.back()}
+          onClick={() => navigate('/dashboard')}
           className="text-sm text-[#8cc63f] hover:underline mb-4"
           aria-label="Go back"
         >

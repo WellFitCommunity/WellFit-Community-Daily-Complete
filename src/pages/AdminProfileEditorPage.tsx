@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useSupabaseClient, useSession, useUser } from '../contexts/AuthContext';
 
 interface Profile {
@@ -24,6 +24,7 @@ interface AdminNote {
 
 const AdminProfileEditor: React.FC = () => {
   // ✅ get the client + user/session from hooks
+  const navigate = useNavigate();
   const supabase = useSupabaseClient();
   const session = useSession();
   const user = useUser();
@@ -170,7 +171,7 @@ const AdminProfileEditor: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto p-4">
       <button
-        onClick={() => window.history.length > 2 ? window.history.back() : window.location.href = '/admin'}
+        onClick={() => navigate('/admin')}
         className="inline-flex items-center px-4 py-2 mb-4 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
       >
         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
