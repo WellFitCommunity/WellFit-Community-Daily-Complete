@@ -2,6 +2,7 @@
 import { serve } from "https://deno.land/std@0.183.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.28.0";
 import { z } from "https://esm.sh/zod@3.21.4";
+import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 
 // ─── ENV (new names with legacy fallbacks) ───────────────────────────────────
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
@@ -85,51 +86,27 @@ async function getCaller(req: Request) {
   return { id, roles };
 }
 
-// CORS Configuration - Explicit allowlist for security
-// UPDATED 2025-10-03: Added white-label tenant subdomains
-const ALLOWED_ORIGINS = [
-  "https://thewellfitcommunity.org",
-  "https://www.thewellfitcommunity.org",
-  "https://wellfitcommunity.live",
-  "https://www.wellfitcommunity.live",
-  "http://localhost:3100",
-  "https://localhost:3100",
-  // White-label tenant subdomains
-  "https://houston.thewellfitcommunity.org",
-  "https://miami.thewellfitcommunity.org",
-  "https://phoenix.thewellfitcommunity.org",
-  "https://seattle.thewellfitcommunity.org",
-];
-
-function getCorsHeaders(origin: string | null) {
-  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : null;
-  return new Headers({
-    "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": allowedOrigin || "null",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, x-client-info, apikey, X-Admin-Token",
-    "Access-Control-Allow-Credentials": "true",
-  });
-}
-
 // ─── Function ────────────────────────────────────────────────────────────────
+// CORS handled via shared _shared/cors.ts module (white-label multi-tenant ready)
 serve(async (req: Request) => {
-  const origin = req.headers.get("Origin");
-  const headers = getCorsHeaders(origin);
+  // Handle preflight requests
+  if (req.method === "OPTIONS") return handleOptions(req);
 
-  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers });
+  // Get dynamic CORS headers for this request's origin
+  const { headers: corsHeaders } = corsFromRequest(req);
+
   if (req.method !== "POST")
-    return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers });
+    return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: corsHeaders });
 
   try {
     // 1) AuthZ: must be admin or super_admin
     const { id: adminId, roles } = await getCaller(req);
     if (!adminId)
-      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
 
     const isAllowed = roles.includes("admin") || roles.includes("super_admin") || roles.includes("nurse");
     if (!isAllowed)
-      return new Response(JSON.stringify({ error: "Insufficient privileges - admin, super_admin, or nurse role required" }), { status: 403, headers });
+      return new Response(JSON.stringify({ error: "Insufficient privileges - admin, super_admin, or nurse role required" }), { status: 403, headers: corsHeaders });
 
     // 2) Validate input
     const body = await req.json();
@@ -137,7 +114,7 @@ serve(async (req: Request) => {
     if (!parsed.success) {
       return new Response(JSON.stringify({ error: parsed.error.errors[0].message }), {
         status: 400,
-        headers,
+        headers: corsHeaders,
       });
     }
     const {
@@ -166,7 +143,7 @@ serve(async (req: Request) => {
     });
     if (uerr || !ures?.user) {
       const msg = uerr?.message ?? "User creation failed";
-      return new Response(JSON.stringify({ error: msg }), { status: 400, headers });
+      return new Response(JSON.stringify({ error: msg }), { status: 400, headers: corsHeaders });
     }
     const newUserId = ures.user.id;
 
@@ -205,7 +182,7 @@ serve(async (req: Request) => {
       await supabase.auth.admin.deleteUser(newUserId).catch(() => {});
       return new Response(
         JSON.stringify({ error: perr.message ?? "Profile insertion failed" }),
-        { status: 500, headers }
+        { status: 500, headers: corsHeaders }
       );
     }
 
@@ -226,13 +203,14 @@ serve(async (req: Request) => {
 
     return new Response(JSON.stringify({ success: true, user_id: newUserId }), {
       status: 200,
-      headers,
+      headers: corsHeaders,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("EnrollClient Error:", err);
+    const errorMessage = err instanceof Error ? err.message : "Internal server error";
     return new Response(
-      JSON.stringify({ error: err?.message ?? "Internal server error" }),
-      { status: 500, headers }
+      JSON.stringify({ error: errorMessage }),
+      { status: 500, headers: corsHeaders }
     );
   }
 });
