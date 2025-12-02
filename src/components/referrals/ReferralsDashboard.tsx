@@ -249,7 +249,7 @@ export const ReferralsDashboard: React.FC = () => {
 
   if (loading && !metrics) {
     return (
-      <EAPageLayout>
+      <EAPageLayout title="Referrals Dashboard">
         <div className="flex items-center justify-center h-96">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
         </div>
@@ -259,7 +259,7 @@ export const ReferralsDashboard: React.FC = () => {
 
   if (error) {
     return (
-      <EAPageLayout>
+      <EAPageLayout title="Referrals Dashboard">
         <EAAlert variant="critical" dismissible={false}>
           <div className="flex flex-col items-center">
             <AlertTriangle className="h-8 w-8 mb-2" />
@@ -276,7 +276,7 @@ export const ReferralsDashboard: React.FC = () => {
   }
 
   return (
-    <EAPageLayout>
+    <EAPageLayout title="Referrals Dashboard" subtitle="External Referral Management & Engagement Tracking">
       <div className="space-y-6 p-6">
         {/* Header */}
         <div className="flex justify-between items-center">
@@ -300,37 +300,37 @@ export const ReferralsDashboard: React.FC = () => {
         {metrics && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
             <EAMetricCard
-              title="Referral Sources"
+              label="Referral Sources"
               value={metrics.totalReferralSources}
               icon={<Building2 className="h-5 w-5" />}
             />
             <EAMetricCard
-              title="Active Sources"
+              label="Active Sources"
               value={metrics.activeSources}
               icon={<CheckCircle className="h-5 w-5" />}
             />
             <EAMetricCard
-              title="Pending Referrals"
+              label="Pending Referrals"
               value={metrics.pendingReferrals}
               icon={<Clock className="h-5 w-5" />}
               riskLevel={metrics.pendingReferrals > 10 ? 'elevated' : 'normal'}
             />
             <EAMetricCard
-              title="Active Patients"
+              label="Active Patients"
               value={metrics.activePatients}
               icon={<Users className="h-5 w-5" />}
             />
             <EAMetricCard
-              title="Alerts Today"
+              label="Alerts Today"
               value={metrics.alertsToday}
               icon={<Bell className="h-5 w-5" />}
               riskLevel={metrics.alertsToday > 5 ? 'high' : 'normal'}
             />
             <EAMetricCard
-              title="Engagement Rate"
+              label="Engagement Rate"
               value={`${metrics.engagementRate}%`}
               icon={<TrendingUp className="h-5 w-5" />}
-              trend="up"
+              trend={{ value: 5, direction: 'up' }}
             />
           </div>
         )}

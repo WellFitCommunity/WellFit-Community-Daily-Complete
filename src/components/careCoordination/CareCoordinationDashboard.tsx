@@ -126,7 +126,7 @@ export const CareCoordinationDashboard: React.FC = () => {
 
   if (loading && !metrics) {
     return (
-      <EAPageLayout>
+      <EAPageLayout title="Care Coordination Dashboard">
         <div className="flex items-center justify-center h-96">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
         </div>
@@ -136,7 +136,7 @@ export const CareCoordinationDashboard: React.FC = () => {
 
   if (error) {
     return (
-      <EAPageLayout>
+      <EAPageLayout title="Care Coordination Dashboard">
         <EAAlert variant="critical" dismissible={false}>
           <div className="flex flex-col items-center">
             <AlertTriangle className="h-8 w-8 mb-2" />
@@ -153,7 +153,7 @@ export const CareCoordinationDashboard: React.FC = () => {
   }
 
   return (
-    <EAPageLayout>
+    <EAPageLayout title="Care Coordination Dashboard" subtitle="Interdisciplinary Care Team Management">
       <div className="space-y-6 p-6">
         {/* Header */}
         <div className="flex justify-between items-center">
@@ -177,36 +177,36 @@ export const CareCoordinationDashboard: React.FC = () => {
         {metrics && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
             <EAMetricCard
-              title="Active Plans"
+              label="Active Plans"
               value={metrics.totalActivePlans}
               icon={<ClipboardList className="h-5 w-5" />}
             />
             <EAMetricCard
-              title="Needs Review"
+              label="Needs Review"
               value={metrics.plansNeedingReview}
               icon={<Calendar className="h-5 w-5" />}
               riskLevel={metrics.plansNeedingReview > 5 ? 'elevated' : 'normal'}
             />
             <EAMetricCard
-              title="Active Alerts"
+              label="Active Alerts"
               value={metrics.activeAlerts}
               icon={<Bell className="h-5 w-5" />}
               riskLevel={metrics.activeAlerts > 10 ? 'high' : 'normal'}
             />
             <EAMetricCard
-              title="Critical Alerts"
+              label="Critical Alerts"
               value={metrics.criticalAlerts}
               icon={<AlertTriangle className="h-5 w-5" />}
               riskLevel={metrics.criticalAlerts > 0 ? 'critical' : 'normal'}
             />
             <EAMetricCard
-              title="Completed (Month)"
+              label="Completed (Month)"
               value={metrics.completedThisMonth}
               icon={<CheckCircle className="h-5 w-5" />}
-              trend="up"
+              trend={{ value: 5, direction: 'up' }}
             />
             <EAMetricCard
-              title="Avg Duration (days)"
+              label="Avg Duration (days)"
               value={metrics.avgPlanDuration}
               icon={<Clock className="h-5 w-5" />}
             />

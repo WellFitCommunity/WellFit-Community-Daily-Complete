@@ -23,7 +23,8 @@ export type PHIType =
   | 'billing'
   | 'insurance'
   | 'communication_metrics'
-  | 'readmission_risk';
+  | 'readmission_risk'
+  | 'enrollment';
 
 export type AccessType =
   | 'view'

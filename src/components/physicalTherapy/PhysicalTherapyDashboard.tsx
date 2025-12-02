@@ -108,7 +108,7 @@ export const PhysicalTherapyDashboard: React.FC = () => {
       // Load treatment plan
       const planResult = await PhysicalTherapyService.getActiveTreatmentPlan(patient.patient_id);
       if (planResult.success) {
-        setPatientPlan(planResult.data);
+        setPatientPlan(planResult.data ?? null);
       }
 
       // Load outcome measures
@@ -141,7 +141,7 @@ export const PhysicalTherapyDashboard: React.FC = () => {
 
   if (loading && !metrics) {
     return (
-      <EAPageLayout>
+      <EAPageLayout title="Physical Therapy Dashboard">
         <div className="flex items-center justify-center h-96">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
         </div>
@@ -151,7 +151,7 @@ export const PhysicalTherapyDashboard: React.FC = () => {
 
   if (error) {
     return (
-      <EAPageLayout>
+      <EAPageLayout title="Physical Therapy Dashboard">
         <EAAlert variant="critical" dismissible={false}>
           <div className="flex flex-col items-center">
             <AlertTriangle className="h-8 w-8 mb-2" />
@@ -168,7 +168,7 @@ export const PhysicalTherapyDashboard: React.FC = () => {
   }
 
   return (
-    <EAPageLayout>
+    <EAPageLayout title="Physical Therapy Dashboard" subtitle="ICF-Based Clinical Workflow Management">
       <div className="space-y-6 p-6">
         {/* Header */}
         <div className="flex justify-between items-center">
@@ -186,35 +186,35 @@ export const PhysicalTherapyDashboard: React.FC = () => {
         {metrics && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
             <EAMetricCard
-              title="Active Caseload"
+              label="Active Caseload"
               value={metrics.activeCaseload}
               icon={<Users className="h-5 w-5" />}
             />
             <EAMetricCard
-              title="At-Risk Patients"
+              label="At-Risk Patients"
               value={metrics.pendingAssessments}
               icon={<AlertTriangle className="h-5 w-5" />}
               riskLevel={metrics.pendingAssessments > 3 ? 'high' : 'normal'}
             />
             <EAMetricCard
-              title="Active Plans"
+              label="Active Plans"
               value={metrics.treatmentPlansActive}
               icon={<ClipboardList className="h-5 w-5" />}
             />
             <EAMetricCard
-              title="Discharge Ready"
+              label="Discharge Ready"
               value={metrics.dischargeReady}
               icon={<Award className="h-5 w-5" />}
-              trend={metrics.dischargeReady > 0 ? 'up' : undefined}
+              trend={metrics.dischargeReady > 0 ? { value: 1, direction: 'up' } : undefined}
             />
             <EAMetricCard
-              title="MCID Rate"
+              label="MCID Rate"
               value={`${metrics.mcidAchievementRate}%`}
               icon={<TrendingUp className="h-5 w-5" />}
               riskLevel={metrics.mcidAchievementRate >= 70 ? 'normal' : 'elevated'}
             />
             <EAMetricCard
-              title="Avg Visits Used"
+              label="Avg Visits Used"
               value={metrics.averageVisitsUsed}
               icon={<Calendar className="h-5 w-5" />}
             />

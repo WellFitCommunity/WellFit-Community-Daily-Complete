@@ -217,7 +217,7 @@ export const QuestionnaireAnalyticsDashboard: React.FC = () => {
 
   if (loading && !metrics) {
     return (
-      <EAPageLayout>
+      <EAPageLayout title="Questionnaire Analytics">
         <div className="flex items-center justify-center h-96">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
         </div>
@@ -227,7 +227,7 @@ export const QuestionnaireAnalyticsDashboard: React.FC = () => {
 
   if (error) {
     return (
-      <EAPageLayout>
+      <EAPageLayout title="Questionnaire Analytics">
         <EAAlert variant="critical" dismissible={false}>
           <div className="flex flex-col items-center">
             <AlertTriangle className="h-8 w-8 mb-2" />
@@ -244,7 +244,7 @@ export const QuestionnaireAnalyticsDashboard: React.FC = () => {
   }
 
   return (
-    <EAPageLayout>
+    <EAPageLayout title="Questionnaire Analytics" subtitle="SMART Questionnaire Deployment & Response Tracking">
       <div className="space-y-6 p-6">
         {/* Header */}
         <div className="flex justify-between items-center">
@@ -268,33 +268,33 @@ export const QuestionnaireAnalyticsDashboard: React.FC = () => {
         {metrics && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
             <EAMetricCard
-              title="Total Deployments"
+              label="Total Deployments"
               value={metrics.totalDeployments}
               icon={<ClipboardList className="h-5 w-5" />}
             />
             <EAMetricCard
-              title="Active Deployments"
+              label="Active Deployments"
               value={metrics.activeDeployments}
               icon={<Send className="h-5 w-5" />}
             />
             <EAMetricCard
-              title="Total Responses"
+              label="Total Responses"
               value={metrics.totalResponses}
               icon={<Users className="h-5 w-5" />}
             />
             <EAMetricCard
-              title="Avg Response Rate"
+              label="Avg Response Rate"
               value={`${metrics.avgResponseRate.toFixed(0)}%`}
               icon={<TrendingUp className="h-5 w-5" />}
               riskLevel={metrics.avgResponseRate < 50 ? 'elevated' : 'normal'}
             />
             <EAMetricCard
-              title="Avg Time (min)"
+              label="Avg Time (min)"
               value={metrics.avgCompletionTime}
               icon={<Clock className="h-5 w-5" />}
             />
             <EAMetricCard
-              title="Risk Flags"
+              label="Risk Flags"
               value={metrics.riskFlagsToday}
               icon={<AlertTriangle className="h-5 w-5" />}
               riskLevel={metrics.riskFlagsToday > 5 ? 'high' : 'normal'}
@@ -303,7 +303,7 @@ export const QuestionnaireAnalyticsDashboard: React.FC = () => {
         )}
 
         {/* Tabs */}
-        <EATabs value={activeTab} onValueChange={setActiveTab}>
+        <EATabs defaultValue="deployments" value={activeTab} onValueChange={setActiveTab}>
           <EATabsList>
             <EATabsTrigger value="deployments">
               <Send className="h-4 w-4 mr-2" />

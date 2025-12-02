@@ -28,6 +28,8 @@ export type StaffRole =
   | 'community_health_worker'  // Level 5: CHW field workers
   | 'chw'                      // Level 5: Synonym for community_health_worker
   | 'physical_therapist'       // Level 6: Allied health (future)
+  | 'pt'                       // Level 6: Synonym for physical_therapist
+  | 'quality_manager'          // Level 6: Quality assurance and compliance
   | 'admin';                   // Level 7: Administrative staff
 
 /**
@@ -88,6 +90,8 @@ export enum RoleCode {
   COMMUNITY_HEALTH_WORKER = 17,  // Community Health Worker (CHW)
   CHW = 18,  // Synonym for COMMUNITY_HEALTH_WORKER
   IT_ADMIN = 19,  // Tenant IT Administrator (technical ops for their organization)
+  PT = 20,  // Synonym for PHYSICAL_THERAPIST
+  QUALITY_MANAGER = 21,  // Quality assurance and compliance
 }
 
 /**
@@ -110,6 +114,8 @@ export const ROLE_TO_CODE: Record<UserRole, RoleCode> = {
   clinical_supervisor: RoleCode.CLINICAL_SUPERVISOR,
   department_head: RoleCode.DEPARTMENT_HEAD,
   physical_therapist: RoleCode.PHYSICAL_THERAPIST,
+  pt: RoleCode.PT,  // Synonym for physical_therapist
+  quality_manager: RoleCode.QUALITY_MANAGER,
   case_manager: RoleCode.CASE_MANAGER,
   social_worker: RoleCode.SOCIAL_WORKER,
   community_health_worker: RoleCode.COMMUNITY_HEALTH_WORKER,
@@ -134,6 +140,8 @@ export const CODE_TO_ROLE: Record<RoleCode, UserRole> = {
   [RoleCode.CLINICAL_SUPERVISOR]: 'clinical_supervisor',
   [RoleCode.DEPARTMENT_HEAD]: 'department_head',
   [RoleCode.PHYSICAL_THERAPIST]: 'physical_therapist',
+  [RoleCode.PT]: 'pt',  // Synonym for physical_therapist
+  [RoleCode.QUALITY_MANAGER]: 'quality_manager',
   [RoleCode.CAREGIVER]: 'caregiver',
   [RoleCode.CASE_MANAGER]: 'case_manager',
   [RoleCode.SOCIAL_WORKER]: 'social_worker',
@@ -193,6 +201,8 @@ export const ROLE_HIERARCHY: Record<StaffRole, StaffRole[]> = {
     'community_health_worker',
     'chw',
     'physical_therapist',
+    'pt',
+    'quality_manager',
     'admin',
   ],
   it_admin: [
@@ -229,7 +239,9 @@ export const ROLE_HIERARCHY: Record<StaffRole, StaffRole[]> = {
   social_worker: ['social_worker'], // Psychosocial services role
   community_health_worker: ['community_health_worker', 'chw'], // CHW field workers
   chw: ['community_health_worker', 'chw'], // Synonym for community_health_worker
-  physical_therapist: ['physical_therapist'],
+  physical_therapist: ['physical_therapist', 'pt'],
+  pt: ['physical_therapist', 'pt'],  // Synonym for physical_therapist
+  quality_manager: ['quality_manager'],  // Quality assurance role
   admin: ['admin'],
 };
 
@@ -269,6 +281,8 @@ export const ROLE_DISPLAY_NAMES: Record<StaffRole, string> = {
   community_health_worker: 'Community Health Worker',
   chw: 'CHW',
   physical_therapist: 'Physical Therapist',
+  pt: 'Physical Therapist',  // Synonym display
+  quality_manager: 'Quality Manager',
   admin: 'Administrator',
 };
 
