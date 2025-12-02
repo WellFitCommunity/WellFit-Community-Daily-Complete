@@ -9,10 +9,18 @@ export interface FeatureFlags {
   strokeAssessment: boolean;
   neuroSuite: boolean;
   wearableIntegration: boolean;
+  physicalTherapy: boolean;
 
   // Population Health
   frequentFlyers: boolean;
   dischargeTracking: boolean;
+  careCoordination: boolean;
+
+  // External Referrals & Reporting
+  referralManagement: boolean;
+
+  // Questionnaires & Surveys
+  questionnaireAnalytics: boolean;
 
   // Financial/Billing
   revenueDashboard: boolean;
@@ -52,10 +60,18 @@ const getFeatureFlags = (): FeatureFlags => {
     strokeAssessment: env.REACT_APP_FEATURE_STROKE_ASSESSMENT === 'true',
     neuroSuite: env.REACT_APP_FEATURE_NEURO_SUITE === 'true',
     wearableIntegration: env.REACT_APP_FEATURE_WEARABLES === 'true',
+    physicalTherapy: env.REACT_APP_FEATURE_PHYSICAL_THERAPY === 'true',
 
     // Population Health (default: disabled)
     frequentFlyers: env.REACT_APP_FEATURE_FREQUENT_FLYERS === 'true',
     dischargeTracking: env.REACT_APP_FEATURE_DISCHARGE_TRACKING === 'true',
+    careCoordination: env.REACT_APP_FEATURE_CARE_COORDINATION === 'true',
+
+    // External Referrals & Reporting (default: disabled)
+    referralManagement: env.REACT_APP_FEATURE_REFERRAL_MANAGEMENT === 'true',
+
+    // Questionnaires & Surveys (default: disabled)
+    questionnaireAnalytics: env.REACT_APP_FEATURE_QUESTIONNAIRE_ANALYTICS === 'true',
 
     // Financial/Billing (default: disabled)
     revenueDashboard: env.REACT_APP_FEATURE_REVENUE_DASHBOARD === 'true',

@@ -139,6 +139,12 @@ const FHIRConflictResolution = React.lazy(() =>
 const EMSMetricsDashboard = React.lazy(() => import('./components/ems/EMSMetricsDashboard'));
 const CoordinatedResponseDashboard = React.lazy(() => import('./components/ems/CoordinatedResponseDashboard'));
 
+// Physical Therapy, Care Coordination, Referrals, Questionnaires - newly wired dashboards
+const PhysicalTherapyDashboard = React.lazy(() => import('./components/physicalTherapy/PhysicalTherapyDashboard'));
+const CareCoordinationDashboard = React.lazy(() => import('./components/careCoordination/CareCoordinationDashboard'));
+const ReferralsDashboard = React.lazy(() => import('./components/referrals/ReferralsDashboard'));
+const QuestionnaireAnalyticsDashboard = React.lazy(() => import('./components/questionnaires/QuestionnaireAnalyticsDashboard'));
+
 // CHW (Community Health Worker) Components
 const KioskCheckIn = React.lazy(() => import('./components/chw/KioskCheckIn'));
 const CHWVitalsCapture = React.lazy(() => import('./components/chw/CHWVitalsCapture'));
@@ -726,6 +732,62 @@ function Shell() {
                     <RequireAuth>
                       <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'physician', 'doctor', 'nurse']}>
                         <NeuroSuiteDashboard />
+                      </RequireAdminAuth>
+                    </RequireAuth>
+                  }
+                />
+              )}
+
+              {/* Physical Therapy Dashboard - ICF-based PT workflow management */}
+              {featureFlags.physicalTherapy && (
+                <Route
+                  path="/physical-therapy"
+                  element={
+                    <RequireAuth>
+                      <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'physical_therapist', 'pt', 'physician', 'nurse']}>
+                        <PhysicalTherapyDashboard />
+                      </RequireAdminAuth>
+                    </RequireAuth>
+                  }
+                />
+              )}
+
+              {/* Care Coordination Dashboard - Interdisciplinary care team management */}
+              {featureFlags.careCoordination && (
+                <Route
+                  path="/care-coordination"
+                  element={
+                    <RequireAuth>
+                      <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'case_manager', 'social_worker', 'nurse', 'physician']}>
+                        <CareCoordinationDashboard />
+                      </RequireAdminAuth>
+                    </RequireAuth>
+                  }
+                />
+              )}
+
+              {/* Referrals Dashboard - External referral management for hospital partnerships */}
+              {featureFlags.referralManagement && (
+                <Route
+                  path="/referrals"
+                  element={
+                    <RequireAuth>
+                      <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'case_manager', 'nurse']}>
+                        <ReferralsDashboard />
+                      </RequireAdminAuth>
+                    </RequireAuth>
+                  }
+                />
+              )}
+
+              {/* Questionnaire Analytics Dashboard - SMART questionnaire deployment & tracking */}
+              {featureFlags.questionnaireAnalytics && (
+                <Route
+                  path="/questionnaire-analytics"
+                  element={
+                    <RequireAuth>
+                      <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'nurse', 'case_manager', 'quality_manager']}>
+                        <QuestionnaireAnalyticsDashboard />
                       </RequireAdminAuth>
                     </RequireAuth>
                   }

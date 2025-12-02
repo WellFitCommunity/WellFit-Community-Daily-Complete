@@ -262,16 +262,18 @@ When asked to "clean up" or reduce "tech debt":
 5. **When in doubt, DON'T delete** - It's easier to clean up later than to restore lost schema/data
 
 **Feature modules to PRESERVE (even if not yet wired up in UI):**
-- Referral system (external_referral_sources, patient_referrals, referral_*)
-- Parkinson's tracking (parkinsons_*)
-- Physical therapy (pt_*)
-- Mental health (mental_health_*)
+- Parkinson's tracking (parkinsons_*) - Database only, needs UI
 - Mobile app support (mobile_*)
-- Questionnaires (question_*, questionnaire_*)
-- Care coordination (care_team_*, care_coordination_*)
-- Hospital/shift handoff (hospital_*, handoff_*, shift_handoff_*)
-- Billing/claims (claim_*, clearinghouse_*, remittances)
+- Hospital/shift handoff (hospital_*, handoff_*, shift_handoff_*) - ShiftHandoffDashboard exists
+- Billing/claims (claim_*, clearinghouse_*, remittances) - BillingDashboard exists
 - Medical codes reference (code_cpt, code_icd10, code_hcpcs, code_modifiers)
+
+**Feature modules NOW WIRED UP (as of 2025-12-02):**
+- Referral system - `/referrals` route, `ReferralsDashboard` component
+- Physical therapy - `/physical-therapy` route, `PhysicalTherapyDashboard` component
+- Mental health - `/mental-health` route, `MentalHealthDashboard` component
+- Questionnaires - `/questionnaire-analytics` route, `QuestionnaireAnalyticsDashboard` component
+- Care coordination - `/care-coordination` route, `CareCoordinationDashboard` component
 
 ### Code Quality Standards
 - **Be a surgeon, never a butcher** - make precise, targeted changes
@@ -566,7 +568,11 @@ serve(withCORS(async (req) => {
 |-----------|---------|
 | `src/components/admin/` | Admin dashboards and management panels |
 | `src/components/superAdmin/` | Super admin features (tenant management) |
-| `src/components/envision-atlus/` | Shared UI component library |
+| `src/components/envision-atlus/` | Shared UI component library (EA design system) |
+| `src/components/physicalTherapy/` | PT workflow dashboard (ICF-based) |
+| `src/components/careCoordination/` | Interdisciplinary care team management |
+| `src/components/referrals/` | External referral management (hospital partnerships) |
+| `src/components/questionnaires/` | SMART questionnaire deployment & analytics |
 | `src/services/_base/` | ServiceResult pattern utilities |
 | `src/hooks/` | Custom React hooks (useModuleAccess, etc.) |
 | `supabase/functions/` | Edge functions (Deno runtime) |
@@ -578,6 +584,62 @@ Claude Code branches follow this pattern:
 claude/{feature-description}-{unique-id}
 ```
 Example: `claude/fix-service-worker-api-01SydJ7ZTrj4W9T3DDpW3sUJ`
+
+---
+
+## Newly Wired Feature Dashboards (2025-12-02)
+
+The following dashboards were wired up to connect existing backend infrastructure to the UI:
+
+### Physical Therapy Dashboard
+| Aspect | Details |
+|--------|---------|
+| **Route** | `/physical-therapy` |
+| **Component** | `src/components/physicalTherapy/PhysicalTherapyDashboard.tsx` |
+| **Service** | `src/services/physicalTherapyService.ts` |
+| **Types** | `src/types/physicalTherapy.ts` (1,023 lines - comprehensive) |
+| **Feature Flag** | `REACT_APP_FEATURE_PHYSICAL_THERAPY=true` |
+| **Allowed Roles** | admin, super_admin, physical_therapist, pt, physician, nurse |
+| **Features** | ICF-based assessments, treatment plans, SMART goals, HEP management, outcome measures (LEFS, ODI, etc.) |
+
+### Care Coordination Dashboard
+| Aspect | Details |
+|--------|---------|
+| **Route** | `/care-coordination` |
+| **Component** | `src/components/careCoordination/CareCoordinationDashboard.tsx` |
+| **Service** | `src/services/careCoordinationService.ts` |
+| **Feature Flag** | `REACT_APP_FEATURE_CARE_COORDINATION=true` |
+| **Allowed Roles** | admin, super_admin, case_manager, social_worker, nurse, physician |
+| **Features** | Care plan management, team alerts, interdisciplinary coordination, AI recommendations |
+
+### Referrals Dashboard
+| Aspect | Details |
+|--------|---------|
+| **Route** | `/referrals` |
+| **Component** | `src/components/referrals/ReferralsDashboard.tsx` |
+| **Database Tables** | `external_referral_sources`, `patient_referrals`, `referral_alerts`, `referral_reports` |
+| **Feature Flag** | `REACT_APP_FEATURE_REFERRAL_MANAGEMENT=true` |
+| **Allowed Roles** | admin, super_admin, case_manager, nurse |
+| **Features** | Hospital referral tracking, patient linking, engagement reports, subscription tiers |
+
+### Questionnaire Analytics Dashboard
+| Aspect | Details |
+|--------|---------|
+| **Route** | `/questionnaire-analytics` |
+| **Component** | `src/components/questionnaires/QuestionnaireAnalyticsDashboard.tsx` |
+| **Database Tables** | `questionnaire_deployments`, `questionnaire_responses`, `question_templates` |
+| **Feature Flag** | `REACT_APP_FEATURE_QUESTIONNAIRE_ANALYTICS=true` |
+| **Allowed Roles** | admin, super_admin, nurse, case_manager, quality_manager |
+| **Features** | SMART questionnaire deployment, response tracking, completion analytics, risk flag detection |
+
+### Enabling These Dashboards
+Add the following to your `.env` file to enable these dashboards:
+```env
+REACT_APP_FEATURE_PHYSICAL_THERAPY=true
+REACT_APP_FEATURE_CARE_COORDINATION=true
+REACT_APP_FEATURE_REFERRAL_MANAGEMENT=true
+REACT_APP_FEATURE_QUESTIONNAIRE_ANALYTICS=true
+```
 
 ---
 
