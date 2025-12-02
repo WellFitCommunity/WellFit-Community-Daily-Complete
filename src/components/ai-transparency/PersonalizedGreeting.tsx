@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
-import { generateGreeting, getRoleSpecificStats } from '../../services/personalizedGreeting';
+import { generateGreeting, getRoleSpecificStats, getTimeBasedGreeting, GreetingContext } from '../../services/personalizedGreeting';
 
 interface GreetingData {
   show_greeting: boolean;
@@ -22,7 +22,7 @@ export const PersonalizedGreeting: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showQuote, setShowQuote] = useState(false);
   const [roleStats, setRoleStats] = useState<Record<string, any>>({});
-  const [localGreeting, setLocalGreeting] = useState<string>('');
+  const [localGreetingContext, setLocalGreetingContext] = useState<GreetingContext | null>(null);
 
   useEffect(() => {
     fetchGreeting();
@@ -37,7 +37,7 @@ export const PersonalizedGreeting: React.FC = () => {
       const greetingContext = await generateGreeting(supabase, user.id);
 
       if (greetingContext) {
-        setLocalGreeting(greetingContext.fullGreeting);
+        setLocalGreetingContext(greetingContext);
 
         // Fetch role-specific stats
         const { data: profile } = await supabase
@@ -97,9 +97,15 @@ export const PersonalizedGreeting: React.FC = () => {
     );
   }
 
-  if (!greetingData?.show_greeting) {
+  // Show greeting if we have either edge function data or local greeting
+  const hasGreeting = greetingData?.show_greeting || localGreetingContext?.fullGreeting;
+  if (!hasGreeting) {
     return null;
   }
+
+  // Determine the greeting text and time of day - prefer edge function, fallback to local
+  const displayGreeting = greetingData?.greeting || localGreetingContext?.fullGreeting || '';
+  const displayTimeOfDay = greetingData?.time_of_day || localGreetingContext?.timeOfDay || getTimeBasedGreeting().timeOfDay;
 
   const getGradientByTimeOfDay = (timeOfDay: string) => {
     switch (timeOfDay) {
@@ -138,10 +144,10 @@ export const PersonalizedGreeting: React.FC = () => {
       >
         <h1
           className={`text-3xl font-bold bg-gradient-to-r ${getGradientByTimeOfDay(
-            greetingData.time_of_day
+            displayTimeOfDay
           )} bg-clip-text text-transparent`}
         >
-          {greetingData.greeting || localGreeting}
+          {displayGreeting}
         </h1>
       </motion.div>
 
@@ -212,7 +218,7 @@ export const PersonalizedGreeting: React.FC = () => {
 
       {/* Motivational Quote */}
       <AnimatePresence>
-        {greetingData.quote && showQuote && (
+        {greetingData?.quote && showQuote && (
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -223,7 +229,7 @@ export const PersonalizedGreeting: React.FC = () => {
             <div
               className={`
                 relative overflow-hidden rounded-2xl p-6
-                bg-gradient-to-br ${getGradientByTimeOfDay(greetingData.time_of_day)}
+                bg-gradient-to-br ${getGradientByTimeOfDay(displayTimeOfDay)}
                 shadow-lg hover:shadow-2xl transition-all duration-300
                 border border-white/20 backdrop-blur-sm
               `}
@@ -236,7 +242,7 @@ export const PersonalizedGreeting: React.FC = () => {
               <div
                 className={`
                   absolute inset-0 opacity-10
-                  bg-gradient-to-br ${getGradientByTimeOfDay(greetingData.time_of_day)}
+                  bg-gradient-to-br ${getGradientByTimeOfDay(displayTimeOfDay)}
                 `}
               ></div>
 

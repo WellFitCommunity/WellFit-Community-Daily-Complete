@@ -34,6 +34,7 @@ export const FrequentFlyerDashboard: React.FC = () => {
   const [utilizerMetrics, setUtilizerMetrics] = useState<HighUtilizerMetrics[]>([]);
   const [alerts, setAlerts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState<30 | 60 | 90>(30);
   const [selectedPatient, setSelectedPatient] = useState<HighRiskPatient | null>(null);
 
@@ -46,6 +47,7 @@ export const FrequentFlyerDashboard: React.FC = () => {
 
   const loadDashboard = async () => {
     setLoading(true);
+    setError(null);
     try {
       // Load high utilizer metrics
       const utilizers = await ReadmissionTrackingService.identifyHighUtilizers(selectedPeriod);
@@ -85,8 +87,8 @@ export const FrequentFlyerDashboard: React.FC = () => {
 
       setMetrics(dashboardMetrics);
 
-    } catch (error) {
-
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
     } finally {
       setLoading(false);
     }
@@ -110,6 +112,22 @@ export const FrequentFlyerDashboard: React.FC = () => {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+        <div className="text-4xl mb-3">⚠️</div>
+        <h3 className="text-lg font-bold text-red-900 mb-2">Failed to Load Dashboard</h3>
+        <p className="text-red-700 mb-4">{error}</p>
+        <button
+          onClick={loadDashboard}
+          className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors"
+        >
+          Retry
+        </button>
       </div>
     );
   }

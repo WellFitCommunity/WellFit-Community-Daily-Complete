@@ -29,6 +29,7 @@ export const RevenueDashboard: React.FC = () => {
   const [metrics, setMetrics] = useState<RevenueMetrics | null>(null);
   const [opportunities, setOpportunities] = useState<CodeOpportunity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState({
     from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
     to: new Date().toISOString().split('T')[0],
@@ -41,6 +42,7 @@ export const RevenueDashboard: React.FC = () => {
 
   const loadDashboard = async () => {
     setLoading(true);
+    setError(null);
     try {
       const [metricsData, opportunitiesData] = await Promise.all([
         AtlusRevenueService.getRevenueMetrics(dateRange.from, dateRange.to),
@@ -49,8 +51,8 @@ export const RevenueDashboard: React.FC = () => {
 
       setMetrics(metricsData);
       setOpportunities(opportunitiesData);
-    } catch (error) {
-
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load revenue data');
     } finally {
       setLoading(false);
     }
@@ -106,7 +108,21 @@ export const RevenueDashboard: React.FC = () => {
         </div>
       )}
 
-      {!loading && metrics && (
+      {!loading && error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+          <div className="text-4xl mb-3">⚠️</div>
+          <h3 className="text-lg font-bold text-red-900 mb-2">Failed to Load Revenue Data</h3>
+          <p className="text-red-700 mb-4">{error}</p>
+          <button
+            onClick={loadDashboard}
+            className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {!loading && !error && metrics && (
         <>
           {/* Key Metrics Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

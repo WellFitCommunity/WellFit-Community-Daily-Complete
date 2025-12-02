@@ -20,6 +20,7 @@ interface RejectedClaim {
 export const ClaimsAppealsPanel: React.FC = () => {
   const [rejectedClaims, setRejectedClaims] = useState<RejectedClaim[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedClaim, setSelectedClaim] = useState<RejectedClaim | null>(null);
   const [appealLetter, setAppealLetter] = useState('');
   const [generatingLetter, setGeneratingLetter] = useState(false);
@@ -30,11 +31,12 @@ export const ClaimsAppealsPanel: React.FC = () => {
 
   const loadRejectedClaims = async () => {
     setLoading(true);
+    setError(null);
     try {
       const claims = await AtlusRevenueService.getRejectedClaims(20);
       setRejectedClaims(claims as RejectedClaim[]);
-    } catch (error) {
-
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load rejected claims');
     } finally {
       setLoading(false);
     }
@@ -159,7 +161,21 @@ Generated: ${new Date().toISOString()}
         </div>
       )}
 
-      {!loading && rejectedClaims.length === 0 && (
+      {!loading && error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+          <div className="text-4xl mb-3">⚠️</div>
+          <h3 className="text-lg font-bold text-red-900 mb-2">Failed to Load Claims</h3>
+          <p className="text-red-700 mb-4">{error}</p>
+          <button
+            onClick={loadRejectedClaims}
+            className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {!loading && !error && rejectedClaims.length === 0 && (
         <div className="text-center py-12 bg-green-50 rounded-xl border-2 border-green-200">
           <span className="text-6xl">✅</span>
           <h3 className="text-xl font-bold text-green-900 mt-4">No Rejected Claims!</h3>

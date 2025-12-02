@@ -20,6 +20,7 @@ export const CCMTimeline: React.FC = () => {
   const [patients, setPatients] = useState<CCMPatient[]>([]);
   const [revenue, setRevenue] = useState({ total: 0, breakdown: [] as any[] });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
 
   useEffect(() => {
@@ -29,14 +30,15 @@ export const CCMTimeline: React.FC = () => {
 
   const loadCCMData = async () => {
     setLoading(true);
+    setError(null);
     try {
       const eligiblePatients = await CCMAutopilotService.getEligiblePatients(selectedMonth);
       setPatients(eligiblePatients);
 
       const revenueData = CCMAutopilotService.calculateCCMRevenue(eligiblePatients);
       setRevenue(revenueData);
-    } catch (error) {
-
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load CCM data');
     } finally {
       setLoading(false);
     }
@@ -112,8 +114,23 @@ export const CCMTimeline: React.FC = () => {
         </div>
       )}
 
+      {/* Error State */}
+      {!loading && error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+          <div className="text-4xl mb-3">⚠️</div>
+          <h3 className="text-lg font-bold text-red-900 mb-2">Failed to Load CCM Data</h3>
+          <p className="text-red-700 mb-4">{error}</p>
+          <button
+            onClick={loadCCMData}
+            className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
       {/* Empty State */}
-      {!loading && patients.length === 0 && (
+      {!loading && !error && patients.length === 0 && (
         <div className="text-center py-12 bg-gray-50 rounded-xl">
           <p className="text-gray-600 text-lg">No CCM-eligible patients this month.</p>
           <p className="text-gray-500 text-sm mt-2">
@@ -123,7 +140,7 @@ export const CCMTimeline: React.FC = () => {
       )}
 
       {/* Patient List */}
-      {!loading && patients.length > 0 && (
+      {!loading && !error && patients.length > 0 && (
         <div className="space-y-4">
           {patients.map((patient) => (
             <div

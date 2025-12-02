@@ -32,6 +32,7 @@ export const ClaimsSubmissionPanel: React.FC = () => {
   const [providers, setProviders] = useState<any[]>([]);
   const [payers, setPayers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{ success: boolean; message: string; claimId?: string; workflowResult?: BillingWorkflowResult } | null>(null);
   const [x12Content, setX12Content] = useState<string | null>(null);
@@ -43,6 +44,7 @@ export const ClaimsSubmissionPanel: React.FC = () => {
 
   const loadLookupData = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const [providersData, payersData] = await Promise.all([
         BillingService.getProviders(),
@@ -51,7 +53,7 @@ export const ClaimsSubmissionPanel: React.FC = () => {
       setProviders(providersData);
       setPayers(payersData);
     } catch (error) {
-
+      setLoadError(error instanceof Error ? error.message : 'Failed to load billing data');
     } finally {
       setLoading(false);
     }
@@ -218,7 +220,21 @@ export const ClaimsSubmissionPanel: React.FC = () => {
         </div>
       )}
 
-      {!loading && (
+      {!loading && loadError && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+          <div className="text-4xl mb-3">⚠️</div>
+          <h3 className="text-lg font-bold text-red-900 mb-2">Failed to Load Billing Data</h3>
+          <p className="text-red-700 mb-4">{loadError}</p>
+          <button
+            onClick={loadLookupData}
+            className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {!loading && !loadError && (
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Encounter ID */}
           <div>
