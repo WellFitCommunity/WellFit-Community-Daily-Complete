@@ -1,5 +1,5 @@
 // src/components/ui/BackButton.tsx
-// Back button with explicit fallback navigation (avoids history loops)
+// Simple back button - uses browser history first, then fallback
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -18,14 +18,19 @@ const BackButton: React.FC<BackButtonProps> = ({
   const location = useLocation();
 
   const handleBack = () => {
-    // Check if we have a referrer in location state (passed explicitly)
+    // Check if we have explicit "from" state passed during navigation
     if (location.state && (location.state as any).from) {
       navigate((location.state as any).from);
       return;
     }
 
-    // Always use explicit fallback navigation to avoid loops
-    // Do NOT use navigate(-1) or window.history.back() as it can cause infinite loops
+    // Try browser history if we have meaningful history
+    if (window.history.length > 2) {
+      navigate(-1);
+      return;
+    }
+
+    // Fallback to specified path
     navigate(fallbackPath);
   };
 
