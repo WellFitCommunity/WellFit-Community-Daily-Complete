@@ -137,18 +137,22 @@ Deno.serve(async (req: Request): Promise<Response> => {
       totpEnabled
     });
 
-    // Audit log
-    await supabase.from('audit_logs').insert({
-      user_id: user.id,
-      action: 'ENVISION_LOGIN_CHECK',
-      resource_type: 'envision_auth',
-      resource_id: superAdmin.id,
-      metadata: {
-        email: superAdmin.email,
-        role: superAdmin.role,
-        totp_enabled: totpEnabled
-      }
-    }).catch(() => {});
+    // Audit log (fire and forget, don't block login)
+    try {
+      await supabase.from('audit_logs').insert({
+        user_id: user.id,
+        action: 'ENVISION_LOGIN_CHECK',
+        resource_type: 'envision_auth',
+        resource_id: superAdmin.id,
+        metadata: {
+          email: superAdmin.email,
+          role: superAdmin.role,
+          totp_enabled: totpEnabled
+        }
+      });
+    } catch {
+      // Ignore audit log errors
+    }
 
     return new Response(
       JSON.stringify({
