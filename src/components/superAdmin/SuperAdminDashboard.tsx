@@ -139,13 +139,28 @@ const SuperAdminDashboard: React.FC = () => {
 
   const loadSystemData = async () => {
     try {
+      setError(null);
       const systemOverview = await SuperAdminService.getSystemOverview();
       setOverview(systemOverview);
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       await auditLogger.error('SUPER_ADMIN_OVERVIEW_LOAD_FAILED', err as Error, {
-        category: 'ADMINISTRATIVE'
+        category: 'ADMINISTRATIVE',
+        errorMessage
       });
-      setError('Failed to load system overview');
+      // Show more specific error message for debugging
+      setError(`Failed to load system overview: ${errorMessage}`);
+      // Still set overview to defaults so UI renders
+      setOverview({
+        totalTenants: 0,
+        activeTenants: 0,
+        suspendedTenants: 0,
+        totalUsers: 0,
+        totalPatients: 0,
+        featuresForceDisabled: 0,
+        criticalHealthIssues: 0,
+        criticalAuditEvents24h: 0
+      });
     }
   };
 
@@ -160,23 +175,23 @@ const SuperAdminDashboard: React.FC = () => {
     );
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-teal-50 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-lg shadow-xl max-w-md border-2 border-red-200">
-          <AlertTriangle className="w-12 h-12 text-red-600 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-900 mb-2 text-center">Error</h2>
-          <p className="text-gray-600 text-center">{error}</p>
-          <button
-            onClick={() => navigate('/')}
-            className="mt-4 w-full bg-teal-600 text-white py-2 px-4 rounded hover:bg-teal-700 transition-colors"
-          >
-            Return Home
-          </button>
+  // Don't block entire UI on error - show warning banner instead
+  const ErrorBanner = () => error ? (
+    <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <AlertTriangle className="w-5 h-5 text-red-600" />
+          <span className="text-red-800">{error}</span>
         </div>
+        <button
+          onClick={loadSystemData}
+          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm"
+        >
+          Retry
+        </button>
       </div>
-    );
-  }
+    </div>
+  ) : null;
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: Activity, color: 'teal' },
@@ -257,6 +272,9 @@ const SuperAdminDashboard: React.FC = () => {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Error Banner with Retry */}
+        <ErrorBanner />
+
         {activeTab === 'overview' && (
           <div>
             <SystemMetrics overview={overview} />

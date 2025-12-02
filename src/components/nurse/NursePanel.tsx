@@ -17,6 +17,7 @@ import CHWAlertsWidget from '../chw/CHWAlertsWidget';
 import PasswordGenerator from '../shared/PasswordGenerator';
 import { PersonalizedGreeting } from '../ai-transparency';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
+import NurseQuestionManager from '../admin/NurseQuestionManager';
 
 // Collapsible Section Component
 interface CollapsibleSectionProps {
@@ -465,8 +466,19 @@ const NursePanel: React.FC = () => {
 
             <div className="space-y-6">
 
-          {/* Patient Questions - Default Open for Quick Access */}
-          <CollapsibleSection title="Patient Questions & Responses" icon="💬" defaultOpen={false}>
+          {/* AI-Powered Patient Questions - Advanced Nurse Response System */}
+          <CollapsibleSection title="AI Patient Questions Manager" icon="🤖" defaultOpen={false}>
+            <div className="mb-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+              <p className="text-purple-800 text-sm">
+                <strong>AI-Powered Response System:</strong> Get AI-suggested responses based on patient context,
+                medical history, and clinical guidelines. Responses are autosaved and can be customized before sending.
+              </p>
+            </div>
+            <NurseQuestionManager />
+          </CollapsibleSection>
+
+          {/* Basic Patient Questions (Legacy) */}
+          <CollapsibleSection title="Patient Questions & Responses (Basic)" icon="💬" defaultOpen={false}>
             <UserQuestions
               isAdmin={true}
               onSubmitQuestion={async (data) => {

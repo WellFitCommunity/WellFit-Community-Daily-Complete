@@ -86,6 +86,7 @@ const SeniorViewPage = React.lazy(() => import('./pages/SeniorViewPage'));
 const SeniorReportsPage = React.lazy(() => import('./pages/SeniorReportsPage'));
 const HealthInsightsPage = React.lazy(() => import('./pages/HealthInsightsPage'));
 const QuestionsPage = React.lazy(() => import('./pages/QuestionsPage'));
+const EnhancedQuestionsPage = React.lazy(() => import('./pages/EnhancedQuestionsPage'));
 const AdminQuestionsPage = React.lazy(() => import('./pages/AdminQuestionsPage'));
 const MemoryLaneTriviaPage = React.lazy(() => import('./pages/MemoryLaneTriviaPage'));
 const BillingDashboard = React.lazy(() => import('./components/admin/BillingDashboard'));
@@ -233,6 +234,7 @@ function Shell() {
               <Route path="/conditions" element={<RequireAuth><ConditionsPage /></RequireAuth>} />
               <Route path="/dental-health" element={<RequireAuth><DentalHealthDashboard /></RequireAuth>} />
               <Route path="/questions" element={<RequireAuth><QuestionsPage /></RequireAuth>} />
+              <Route path="/ask-nurse" element={<RequireAuth><EnhancedQuestionsPage /></RequireAuth>} />
               <Route path="/help" element={<RequireAuth><HelpPage /></RequireAuth>} />
               <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
               <Route path="/profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />

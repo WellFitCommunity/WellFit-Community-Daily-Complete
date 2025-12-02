@@ -8,6 +8,7 @@
  */
 
 import { supabase } from '../lib/supabaseClient';
+import { auditLogger } from './auditLogger';
 import type {
   SuperAdminUser,
   SystemFeatureFlag,
@@ -124,9 +125,37 @@ export const SuperAdminService = {
     try {
       const { data, error } = await supabase.rpc('get_system_overview');
 
-      if (error) throw error;
+      if (error) {
+        auditLogger.error('SUPER_ADMIN_RPC_ERROR', new Error(error.message), { rpc: 'get_system_overview', error });
+        throw error;
+      }
 
-      const result = data as any;
+      // RPC returns JSON - handle both string and object responses
+      let result: any = data;
+      if (typeof data === 'string') {
+        try {
+          result = JSON.parse(data);
+        } catch {
+          auditLogger.error('SUPER_ADMIN_JSON_PARSE_ERROR', new Error('Failed to parse JSON'), { rpc: 'get_system_overview' });
+          throw new Error('Invalid JSON response from get_system_overview');
+        }
+      }
+
+      // Validate we got data
+      if (!result || typeof result !== 'object') {
+        auditLogger.warn('SUPER_ADMIN_INVALID_RESPONSE', { rpc: 'get_system_overview', responseType: typeof result });
+        // Return defaults instead of failing completely
+        return {
+          totalTenants: 0,
+          activeTenants: 0,
+          suspendedTenants: 0,
+          totalUsers: 0,
+          totalPatients: 0,
+          featuresForceDisabled: 0,
+          criticalHealthIssues: 0,
+          criticalAuditEvents24h: 0
+        };
+      }
 
       return {
         totalTenants: result.total_tenants || 0,
@@ -139,7 +168,8 @@ export const SuperAdminService = {
         criticalAuditEvents24h: result.critical_audit_events_24h || 0
       };
     } catch (error) {
-      throw new Error('Failed to load system overview');
+      auditLogger.error('SUPER_ADMIN_OVERVIEW_FAILED', error instanceof Error ? error : new Error('Unknown error'), { category: 'ADMINISTRATIVE' });
+      throw new Error(`Failed to load system overview: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   },
 
@@ -154,11 +184,36 @@ export const SuperAdminService = {
     try {
       const { data, error } = await supabase.rpc('get_all_tenants_with_status');
 
-      if (error) throw error;
+      if (error) {
+        auditLogger.error('SUPER_ADMIN_RPC_ERROR', new Error(error.message), { rpc: 'get_all_tenants_with_status', error });
+        throw error;
+      }
 
-      return (data || []).map((row: any) => ({
-        tenantId: row.tenant_id,
-        tenantName: row.tenant_name,
+      // RPC returns JSON - handle both string and array responses
+      let tenantsArray: any[] = [];
+      if (typeof data === 'string') {
+        try {
+          tenantsArray = JSON.parse(data);
+        } catch {
+          auditLogger.error('SUPER_ADMIN_JSON_PARSE_ERROR', new Error('Failed to parse JSON'), { rpc: 'get_all_tenants_with_status' });
+          return [];
+        }
+      } else if (Array.isArray(data)) {
+        tenantsArray = data;
+      } else if (data && typeof data === 'object') {
+        // Might be a single object or wrapped response
+        tenantsArray = Array.isArray(data) ? data : [data];
+      }
+
+      // Validate we have an array
+      if (!Array.isArray(tenantsArray)) {
+        auditLogger.warn('SUPER_ADMIN_INVALID_RESPONSE', { rpc: 'get_all_tenants_with_status', responseType: typeof tenantsArray });
+        return [];
+      }
+
+      return tenantsArray.map((row: any) => ({
+        tenantId: row.tenant_id || row.id,
+        tenantName: row.tenant_name || row.name,
         subdomain: row.subdomain,
         tenantCode: row.tenant_code,
         licensedProducts: row.licensed_products || ['wellfit', 'atlus'],
@@ -177,7 +232,8 @@ export const SuperAdminService = {
         createdAt: row.created_at
       }));
     } catch (error) {
-      throw new Error('Failed to load tenants');
+      auditLogger.error('SUPER_ADMIN_TENANTS_FAILED', error instanceof Error ? error : new Error('Unknown error'), { category: 'ADMINISTRATIVE' });
+      throw new Error(`Failed to load tenants: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   },
 
