@@ -99,7 +99,7 @@
     "start:cs": "DISABLE_ESLINT_PLUGIN=true PORT=3100 BROWSER=none WDS_SOCKET_HOST=0.0.0.0 WDS_SOCKET_PORT=3100 CHOKIDAR_USEPOLLING=true react-app-rewired start",
     "start:cs-debug": "DISABLE_ESLINT_PLUGIN=true CI=true CHOKIDAR_USEPOLLING=true PORT=3100 BROWSER=none WDS_SOCKET_HOST=0.0.0.0 WDS_SOCKET_PORT=3100 react-app-rewired start -- --progress",
     "build": "DISABLE_ESLINT_PLUGIN=true GENERATE_SOURCEMAP=false react-app-rewired build",
-    "test": "echo \"Jest tests temporarily disabled - use npm run test:smoke for safe tests\"",
+    "test": "DISABLE_ESLINT_PLUGIN=true CI=true react-scripts test --watchAll=false --passWithNoTests",
     "test:smoke": "DISABLE_ESLINT_PLUGIN=true CI=true react-scripts test --testPathPattern=smoke --watchAll=false --passWithNoTests",
     "test:unit": "DISABLE_ESLINT_PLUGIN=true CI=true react-scripts test --testPathIgnorePatterns=\"integration|smoke\" --watchAll=false --passWithNoTests",
     "test:integration": "DISABLE_ESLINT_PLUGIN=true CI=true react-scripts test --testPathPattern=integration --watchAll=false --passWithNoTests",
