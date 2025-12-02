@@ -148,12 +148,25 @@ const LoginPage: React.FC = () => {
     // 2. Check if user has any staff role (admin, nurse, physician, etc.)
     // All staff bypass demographics and consent - go straight to PIN verification
     const staffRoles = [
-      'admin', 'super_admin', 'nurse', 'physician', 'doctor',
-      'nurse_practitioner', 'physician_assistant', 'clinical_supervisor',
-      'department_head', 'physical_therapist'
+      'super_admin',           // 1: Platform administrators
+      'admin',                 // 2: Facility administrators
+      'nurse',                 // 3: RN, LPN
+      'physician',             // 5: Attending physicians
+      'doctor',                // 5: Synonym for physician
+      'nurse_practitioner',    // 8: Advanced practice provider
+      'physician_assistant',   // 9: Advanced practice provider
+      'clinical_supervisor',   // 10: Operational managers
+      'department_head',       // 11: Executive leadership (CNO, CMO)
+      'physical_therapist',    // 12: Allied health
+      'case_manager',          // 14: Care coordination
+      'social_worker',         // 15: Psychosocial services
+      'community_health_worker', // 17: CHW field workers
+      'chw',                   // 18: Synonym for CHW
+      'it_admin',              // 19: Tenant IT administrators
     ];
 
-    const staffRoleCodes = [1, 2, 3, 5, 8, 9, 10, 11, 12]; // All staff role codes
+    // All staff role codes (matches roles above)
+    const staffRoleCodes = [1, 2, 3, 5, 8, 9, 10, 11, 12, 14, 15, 17, 18, 19];
 
     if (staffRoles.includes(role) || staffRoleCodes.includes(roleCode)) {
       auditLogger.auth('LOGIN', true, { userType: 'staff', role, roleCode, redirectTo: '/admin-login' });

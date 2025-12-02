@@ -38,40 +38,56 @@ const Dashboard: React.FC = () => {
         const physicianRoles = ['physician', 'doctor', 'physician_assistant'];
         const physicianRoleCodes = [5, 9]; // Physician(5), PA(9)
 
-        // Caregiver: Only check by role name (no role_code check - it conflicts with volunteer=6)
+        // Care coordination roles - route to nurse dashboard (similar workflows)
+        const careCoordinationRoles = ['case_manager', 'social_worker', 'community_health_worker', 'chw'];
+        const careCoordinationRoleCodes = [14, 15, 17, 18]; // Case_manager(14), Social_worker(15), CHW(17, 18)
+
+        // IT Admin routes to admin dashboard
+        const itAdminRoles = ['it_admin'];
+        const itAdminRoleCodes = [19];
+
+        // Caregiver: Only check by role name (role_code 13 is unique to caregiver)
         const caregiverRoles = ['caregiver'];
+        const caregiverRoleCodes = [13];
 
         // Super admins have access to BOTH dashboards - they should never be auto-redirected
         const isSuperAdmin = role === 'super_admin' || roleCode === 1;
 
         if (isSuperAdmin) {
-
           setLoading(false);
           return;
         }
 
         // Redirect OTHER staff to their appropriate dashboards
         if (adminRoles.includes(role) || adminRoleCodes.includes(roleCode)) {
+          navigate('/admin', { replace: true });
+          return;
+        }
 
+        // IT Admins go to admin dashboard
+        if (itAdminRoles.includes(role) || itAdminRoleCodes.includes(roleCode)) {
           navigate('/admin', { replace: true });
           return;
         }
 
         // IMPORTANT: Check caregiver BEFORE nurse (in case of any role overlap)
-        if (caregiverRoles.includes(role)) {
-
+        if (caregiverRoles.includes(role) || caregiverRoleCodes.includes(roleCode)) {
           navigate('/caregiver-dashboard', { replace: true });
           return;
         }
 
         if (nurseRoles.includes(role) || nurseRoleCodes.includes(roleCode)) {
+          navigate('/nurse-dashboard', { replace: true });
+          return;
+        }
 
+        // Care coordination roles (Case Manager, Social Worker, CHW) use nurse dashboard
+        if (careCoordinationRoles.includes(role) || careCoordinationRoleCodes.includes(roleCode)) {
           navigate('/nurse-dashboard', { replace: true });
           return;
         }
 
         if (physicianRoles.includes(role) || physicianRoleCodes.includes(roleCode)) {
-
           navigate('/physician-dashboard', { replace: true });
           return;
         }

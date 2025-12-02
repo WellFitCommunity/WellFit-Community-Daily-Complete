@@ -1,12 +1,19 @@
 // src/hooks/useIsAdmin.ts
 import { useEffect, useState } from 'react';
 import { useSupabaseClient, useSession } from '../contexts/AuthContext';
+import { RoleCode } from '../types/roles';
 
 /**
  * useIsAdmin - HIPAA-compliant admin check
- * - Only medical roles (admin, super_admin, contractor_nurse) have admin access
- * - Based on minimum necessary principle
- * - Returns: true, false, or null (while loading / no session)
+ *
+ * Administrative roles with admin panel access:
+ * - super_admin (1): Platform administrators
+ * - admin (2): Facility administrators
+ * - department_head (11): Executive leadership (CNO, CMO)
+ * - it_admin (19): Tenant IT administrators
+ *
+ * Based on minimum necessary principle per HIPAA requirements.
+ * Returns: true, false, or null (while loading / no session)
  */
 export function useIsAdmin() {
   const supabase = useSupabaseClient();
@@ -34,20 +41,33 @@ export function useIsAdmin() {
         if (cancelled) return;
 
         if (error) {
-
           setIsAdmin(false);
           return;
         }
 
-        // HIPAA-compliant: Only medical roles get admin access
+        // Administrative role codes that grant admin panel access
+        const adminRoleCodes = [
+          RoleCode.SUPER_ADMIN,      // 1
+          RoleCode.ADMIN,            // 2
+          RoleCode.DEPARTMENT_HEAD,  // 11
+          RoleCode.IT_ADMIN,         // 19
+        ];
+
+        // Administrative role names (fallback if role_code not set)
+        const adminRoleNames = [
+          'super_admin',
+          'admin',
+          'department_head',
+          'it_admin',
+        ];
+
         const roleCode = profile?.role_code;
         const roleName = profile?.role;
-        const hasMedicalAccess = [1, 2, 12].includes(roleCode) ||
-          ['admin', 'super_admin', 'contractor_nurse'].includes(roleName);
+        const hasAdminAccess = adminRoleCodes.includes(roleCode) ||
+          adminRoleNames.includes(roleName);
 
-        setIsAdmin(hasMedicalAccess);
-      } catch (error) {
-
+        setIsAdmin(hasAdminAccess);
+      } catch {
         setIsAdmin(false);
       }
     })();
