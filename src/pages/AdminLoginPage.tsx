@@ -351,6 +351,9 @@ export default function AdminLoginPage() {
   }
 
   // Helper function to get dashboard route for a role
+  // NOTE: This is the WellFit Facility Admin login, NOT the Envision portal.
+  // Super admins accessing via this route should go to the WellFit admin panel,
+  // not the Envision platform system. Envision portal is accessed via /envision login.
   const getDashboardForRole = (staffRole: StaffRole): string => {
     switch (staffRole) {
       case 'nurse':
@@ -360,12 +363,13 @@ export default function AdminLoginPage() {
       case 'physician':
       case 'doctor':
         return '/physician-dashboard';
-      case 'super_admin':
-        return '/admin/system'; // Platform System Administration for Envision employees
       case 'it_admin':
         return '/it-admin'; // Tenant IT Administration Dashboard
+      case 'super_admin':
       case 'admin':
       case 'department_head':
+        // All admin roles go to the WellFit admin panel when using facility login
+        // Envision platform access requires /envision login route
         return '/admin';
       default:
         return '/admin'; // Fallback to admin panel
