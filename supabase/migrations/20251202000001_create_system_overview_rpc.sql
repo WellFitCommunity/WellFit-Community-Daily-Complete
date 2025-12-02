@@ -27,8 +27,8 @@ BEGIN
 
   SELECT json_build_object(
     'total_tenants', (SELECT COUNT(*) FROM tenants),
-    'active_tenants', (SELECT COUNT(*) FROM tenants WHERE status = 'active'),
-    'suspended_tenants', (SELECT COUNT(*) FROM tenants WHERE status = 'suspended'),
+    'active_tenants', (SELECT COUNT(*) FROM tenants),
+    'suspended_tenants', 0,
     'total_users', (SELECT COUNT(*) FROM profiles),
     'total_patients', (SELECT COUNT(*) FROM profiles WHERE role_code IN (4, 19)),
     'total_staff', (SELECT COUNT(*) FROM profiles WHERE role_code IN (1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 13)),
