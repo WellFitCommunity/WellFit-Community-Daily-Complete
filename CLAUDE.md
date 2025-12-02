@@ -262,7 +262,6 @@ When asked to "clean up" or reduce "tech debt":
 5. **When in doubt, DON'T delete** - It's easier to clean up later than to restore lost schema/data
 
 **Feature modules to PRESERVE (even if not yet wired up in UI):**
-- Parkinson's tracking (parkinsons_*) - Database only, needs UI
 - Mobile app support (mobile_*)
 - Hospital/shift handoff (hospital_*, handoff_*, shift_handoff_*) - ShiftHandoffDashboard exists
 - Billing/claims (claim_*, clearinghouse_*, remittances) - BillingDashboard exists
@@ -274,6 +273,8 @@ When asked to "clean up" or reduce "tech debt":
 - Mental health - `/mental-health` route, `MentalHealthDashboard` component
 - Questionnaires - `/questionnaire-analytics` route, `QuestionnaireAnalyticsDashboard` component
 - Care coordination - `/care-coordination` route, `CareCoordinationDashboard` component
+- **Parkinson's tracking** - `/neuro-suite` route (Parkinson's tab), integrated into `NeuroSuiteDashboard`
+- **NeuroSuite** - `/neuro-suite` route, `NeuroSuiteDashboard` (Stroke, Dementia, Parkinson's, Alerts, Wearables)
 
 ### Code Quality Standards
 - **Be a surgeon, never a butcher** - make precise, targeted changes
@@ -569,11 +570,14 @@ serve(withCORS(async (req) => {
 | `src/components/admin/` | Admin dashboards and management panels |
 | `src/components/superAdmin/` | Super admin features (tenant management) |
 | `src/components/envision-atlus/` | Shared UI component library (EA design system) |
+| `src/components/neuro/` | NeuroSuite: Stroke, Dementia, Parkinson's tracking |
 | `src/components/physicalTherapy/` | PT workflow dashboard (ICF-based) |
 | `src/components/careCoordination/` | Interdisciplinary care team management |
 | `src/components/referrals/` | External referral management (hospital partnerships) |
 | `src/components/questionnaires/` | SMART questionnaire deployment & analytics |
 | `src/services/_base/` | ServiceResult pattern utilities |
+| `src/services/parkinsonsService.ts` | Parkinson's disease management service |
+| `src/types/parkinsons.ts` | Parkinson's TypeScript types (UPDRS, ROBERT/FORBES) |
 | `src/hooks/` | Custom React hooks (useModuleAccess, etc.) |
 | `supabase/functions/` | Edge functions (Deno runtime) |
 | `supabase/functions/_shared/` | Shared utilities for edge functions |
@@ -632,6 +636,19 @@ The following dashboards were wired up to connect existing backend infrastructur
 | **Allowed Roles** | admin, super_admin, nurse, case_manager, quality_manager |
 | **Features** | SMART questionnaire deployment, response tracking, completion analytics, risk flag detection |
 
+### NeuroSuite Dashboard (with Parkinson's Tab)
+| Aspect | Details |
+|--------|---------|
+| **Route** | `/neuro-suite` |
+| **Component** | `src/components/neuro/NeuroSuiteDashboard.tsx` |
+| **Service** | `src/services/neuroSuiteService.ts`, `src/services/parkinsonsService.ts` |
+| **Types** | `src/types/neuroSuite.ts`, `src/types/parkinsons.ts` |
+| **Database Tables** | `parkinsons_patient_registry`, `parkinsons_medications`, `parkinsons_medication_log`, `parkinsons_symptom_diary`, `parkinsons_updrs`, `parkinsons_dbs_sessions`, `parkinsons_robert_tracking`, `parkinsons_forbes_tracking` |
+| **Feature Flag** | `REACT_APP_FEATURE_NEURO_SUITE=true` |
+| **Allowed Roles** | admin, super_admin, physician, doctor, nurse |
+| **Tabs** | Stroke, Dementia, **Parkinson's**, Alerts, Wearables |
+| **Parkinson's Features** | Patient registry, medication tracking, UPDRS assessments, DBS session logging, symptom diary, ROBERT & FORBES framework guides, risk stratification |
+
 ### Enabling These Dashboards
 Add the following to your `.env` file to enable these dashboards:
 ```env
@@ -639,6 +656,7 @@ REACT_APP_FEATURE_PHYSICAL_THERAPY=true
 REACT_APP_FEATURE_CARE_COORDINATION=true
 REACT_APP_FEATURE_REFERRAL_MANAGEMENT=true
 REACT_APP_FEATURE_QUESTIONNAIRE_ANALYTICS=true
+REACT_APP_FEATURE_NEURO_SUITE=true
 ```
 
 ---
