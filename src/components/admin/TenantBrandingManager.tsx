@@ -153,25 +153,25 @@ const TenantBrandingManager: React.FC = () => {
   const gradientPreview = generateGradient(primaryColor, secondaryColor);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+    <div className="bg-slate-800 rounded-lg shadow-lg p-6 border border-slate-700">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-          🎨 Tenant Branding Manager
+        <h2 className="text-2xl font-bold text-white mb-2">
+          Tenant Branding Manager
         </h2>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Customize colors, logos, and themes for each tenant (Houston, Miami, Phoenix)
+        <p className="text-sm text-slate-400">
+          Customize colors, logos, and themes for each tenant
         </p>
       </div>
 
       {/* Tenant Selector */}
       <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label className="block text-sm font-medium text-slate-300 mb-2">
           Select Tenant
         </label>
         <select
           value={selectedTenantId || ''}
           onChange={(e) => setSelectedTenantId(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          className="w-full px-4 py-2 border border-slate-600 rounded-lg bg-slate-700 text-white focus:ring-2 focus:ring-[#00857a] focus:border-transparent"
           disabled={loading}
         >
           {tenants.map((tenant) => (
@@ -184,8 +184,8 @@ const TenantBrandingManager: React.FC = () => {
 
       {loading && (
         <div className="text-center py-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading branding...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00857a] mx-auto"></div>
+          <p className="mt-4 text-slate-400">Loading branding...</p>
         </div>
       )}
 
@@ -196,8 +196,8 @@ const TenantBrandingManager: React.FC = () => {
             <div
               className={`p-4 rounded-lg ${
                 message.type === 'success'
-                  ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
-                  : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
+                  ? 'bg-green-500/20 border border-green-500/30 text-green-300'
+                  : 'bg-red-500/20 border border-red-500/30 text-red-300'
               }`}
             >
               {message.text}
@@ -205,8 +205,8 @@ const TenantBrandingManager: React.FC = () => {
           )}
 
           {/* Live Preview */}
-          <div className="border-2 border-gray-300 dark:border-gray-600 rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          <div className="border-2 border-slate-600 rounded-lg p-6 bg-slate-700/30">
+            <h3 className="text-lg font-semibold text-white mb-4">
               Live Preview
             </h3>
             <div
@@ -223,7 +223,7 @@ const TenantBrandingManager: React.FC = () => {
 
           {/* App Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-slate-300 mb-2">
               Application Name
             </label>
             <input
@@ -231,22 +231,22 @@ const TenantBrandingManager: React.FC = () => {
               value={appName}
               onChange={(e) => setAppName(e.target.value)}
               placeholder="WellFit Houston"
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="w-full px-4 py-2 border border-slate-600 rounded-lg bg-slate-700 text-white focus:ring-2 focus:ring-[#00857a] focus:border-transparent"
             />
           </div>
 
           {/* Logo Upload */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-slate-300 mb-2">
               Logo Upload
             </label>
             <input
               type="file"
               accept="image/png,image/jpeg,image/svg+xml"
               onChange={handleLogoChange}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="w-full px-4 py-2 border border-slate-600 rounded-lg bg-slate-700 text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-[#00857a] file:text-white file:cursor-pointer"
             />
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-xs text-slate-500 mt-1">
               PNG, JPG, or SVG. Max 5MB.
             </p>
           </div>
@@ -254,7 +254,7 @@ const TenantBrandingManager: React.FC = () => {
           {/* Colors */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-slate-300 mb-2">
                 Primary Color
               </label>
               <div className="flex gap-2">
@@ -262,20 +262,20 @@ const TenantBrandingManager: React.FC = () => {
                   type="color"
                   value={primaryColor}
                   onChange={(e) => setPrimaryColor(e.target.value)}
-                  className="h-10 w-20 border border-gray-300 dark:border-gray-600 rounded"
+                  className="h-10 w-20 border border-slate-600 rounded cursor-pointer"
                 />
                 <input
                   type="text"
                   value={primaryColor}
                   onChange={(e) => setPrimaryColor(e.target.value)}
                   placeholder="#003865"
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="flex-1 px-4 py-2 border border-slate-600 rounded-lg bg-slate-700 text-white"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-slate-300 mb-2">
                 Secondary Color
               </label>
               <div className="flex gap-2">
@@ -283,20 +283,20 @@ const TenantBrandingManager: React.FC = () => {
                   type="color"
                   value={secondaryColor}
                   onChange={(e) => setSecondaryColor(e.target.value)}
-                  className="h-10 w-20 border border-gray-300 dark:border-gray-600 rounded"
+                  className="h-10 w-20 border border-slate-600 rounded cursor-pointer"
                 />
                 <input
                   type="text"
                   value={secondaryColor}
                   onChange={(e) => setSecondaryColor(e.target.value)}
                   placeholder="#8cc63f"
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="flex-1 px-4 py-2 border border-slate-600 rounded-lg bg-slate-700 text-white"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-slate-300 mb-2">
                 Accent Color (Optional)
               </label>
               <div className="flex gap-2">
@@ -304,20 +304,20 @@ const TenantBrandingManager: React.FC = () => {
                   type="color"
                   value={accentColor || '#FF6B35'}
                   onChange={(e) => setAccentColor(e.target.value)}
-                  className="h-10 w-20 border border-gray-300 dark:border-gray-600 rounded"
+                  className="h-10 w-20 border border-slate-600 rounded cursor-pointer"
                 />
                 <input
                   type="text"
                   value={accentColor}
                   onChange={(e) => setAccentColor(e.target.value)}
                   placeholder="#FF6B35"
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="flex-1 px-4 py-2 border border-slate-600 rounded-lg bg-slate-700 text-white"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-slate-300 mb-2">
                 Text Color
               </label>
               <div className="flex gap-2">
@@ -325,14 +325,14 @@ const TenantBrandingManager: React.FC = () => {
                   type="color"
                   value={textColor}
                   onChange={(e) => setTextColor(e.target.value)}
-                  className="h-10 w-20 border border-gray-300 dark:border-gray-600 rounded"
+                  className="h-10 w-20 border border-slate-600 rounded cursor-pointer"
                 />
                 <input
                   type="text"
                   value={textColor}
                   onChange={(e) => setTextColor(e.target.value)}
                   placeholder="#ffffff"
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="flex-1 px-4 py-2 border border-slate-600 rounded-lg bg-slate-700 text-white"
                 />
               </div>
             </div>
@@ -340,7 +340,7 @@ const TenantBrandingManager: React.FC = () => {
 
           {/* Contact Info */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-slate-300 mb-2">
               Contact Information
             </label>
             <input
@@ -348,13 +348,13 @@ const TenantBrandingManager: React.FC = () => {
               value={contactInfo}
               onChange={(e) => setContactInfo(e.target.value)}
               placeholder="Houston Senior Services"
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="w-full px-4 py-2 border border-slate-600 rounded-lg bg-slate-700 text-white"
             />
           </div>
 
           {/* Custom Footer */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-slate-300 mb-2">
               Custom Footer Text (Optional)
             </label>
             <textarea
@@ -362,7 +362,7 @@ const TenantBrandingManager: React.FC = () => {
               onChange={(e) => setCustomFooter(e.target.value)}
               placeholder="© 2025 WellFit Houston. Powered by Houston Senior Services."
               rows={2}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="w-full px-4 py-2 border border-slate-600 rounded-lg bg-slate-700 text-white"
             />
           </div>
 
@@ -370,7 +370,7 @@ const TenantBrandingManager: React.FC = () => {
           <div className="flex justify-end gap-4">
             <button
               onClick={() => selectedTenantId && loadTenantBranding(selectedTenantId)}
-              className="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+              className="px-6 py-2 border border-slate-600 rounded-lg text-slate-300 hover:bg-slate-700 transition-colors"
               disabled={saving}
             >
               Reset
@@ -378,7 +378,7 @@ const TenantBrandingManager: React.FC = () => {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-2 bg-[#00857a] text-white rounded-lg hover:bg-[#006d64] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {saving ? 'Saving...' : 'Save Branding'}
             </button>

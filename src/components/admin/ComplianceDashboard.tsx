@@ -87,36 +87,36 @@ const ComplianceDashboard: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status.toUpperCase()) {
       case 'COMPLIANT':
-        return 'text-green-600 bg-green-50 border-green-200';
+        return 'text-green-400 bg-green-500/20 border-green-500/30';
       case 'WARNING':
-        return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+        return 'text-yellow-400 bg-yellow-500/20 border-yellow-500/30';
       case 'NON_COMPLIANT':
       case 'CRITICAL':
-        return 'text-red-600 bg-red-50 border-red-200';
+        return 'text-red-400 bg-red-500/20 border-red-500/30';
       case 'HIGH':
-        return 'text-orange-600 bg-orange-50 border-orange-200';
+        return 'text-orange-400 bg-orange-500/20 border-orange-500/30';
       default:
-        return 'text-gray-600 bg-gray-50 border-gray-200';
+        return 'text-slate-400 bg-slate-700/50 border-slate-600';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status.toUpperCase()) {
       case 'COMPLIANT':
-        return <CheckCircle className="w-6 h-6 text-green-600" />;
+        return <CheckCircle className="w-6 h-6 text-green-400" />;
       case 'WARNING':
-        return <AlertTriangle className="w-6 h-6 text-yellow-600" />;
+        return <AlertTriangle className="w-6 h-6 text-yellow-400" />;
       default:
-        return <AlertTriangle className="w-6 h-6 text-red-600" />;
+        return <AlertTriangle className="w-6 h-6 text-red-400" />;
     }
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-slate-900">
         <div className="text-center">
-          <Activity className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Loading compliance data...</p>
+          <Activity className="w-12 h-12 text-[#00857a] animate-spin mx-auto mb-4" />
+          <p className="text-slate-400">Loading compliance data...</p>
         </div>
       </div>
     );
@@ -124,13 +124,13 @@ const ComplianceDashboard: React.FC = () => {
 
   if (error) {
     return (
-      <div className="p-6">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+      <div className="p-6 min-h-screen bg-slate-900">
+        <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
           <div className="flex items-center">
-            <AlertTriangle className="w-6 h-6 text-red-600 mr-3" />
+            <AlertTriangle className="w-6 h-6 text-red-400 mr-3" />
             <div>
-              <h3 className="text-red-900 font-semibold">Error Loading Compliance Data</h3>
-              <p className="text-red-700 text-sm">{error}</p>
+              <h3 className="text-red-300 font-semibold">Error Loading Compliance Data</h3>
+              <p className="text-red-400 text-sm">{error}</p>
             </div>
           </div>
         </div>
@@ -139,13 +139,13 @@ const ComplianceDashboard: React.FC = () => {
   }
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-6 bg-slate-900 min-h-screen">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <h1 className="text-3xl font-bold text-white mb-2">
           Compliance & Security Dashboard
         </h1>
-        <p className="text-gray-600">
+        <p className="text-slate-400">
           SOC2, HIPAA, and Security Compliance Monitoring
         </p>
       </div>
@@ -214,41 +214,41 @@ const ComplianceDashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Backup Details */}
         {backupCompliance && (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-xl font-semibold mb-4 flex items-center">
-              <Shield className="w-5 h-5 mr-2 text-blue-600" />
+          <div className="bg-slate-800 rounded-lg border border-slate-700 p-6">
+            <h3 className="text-xl font-semibold mb-4 flex items-center text-white">
+              <Shield className="w-5 h-5 mr-2 text-[#00857a]" />
               Backup & Recovery Details
             </h3>
 
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-50 p-3 rounded">
-                  <p className="text-sm text-gray-600">Total Backups (30d)</p>
-                  <p className="text-2xl font-bold text-gray-900">{backupCompliance.total_backups_30d}</p>
+                <div className="bg-slate-700/50 p-3 rounded border border-slate-600">
+                  <p className="text-sm text-slate-400">Total Backups (30d)</p>
+                  <p className="text-2xl font-bold text-white">{backupCompliance.total_backups_30d}</p>
                 </div>
-                <div className="bg-gray-50 p-3 rounded">
-                  <p className="text-sm text-gray-600">Failed Backups</p>
-                  <p className="text-2xl font-bold text-gray-900">{backupCompliance.failed_backups_30d}</p>
+                <div className="bg-slate-700/50 p-3 rounded border border-slate-600">
+                  <p className="text-sm text-slate-400">Failed Backups</p>
+                  <p className="text-2xl font-bold text-white">{backupCompliance.failed_backups_30d}</p>
                 </div>
               </div>
 
               {backupCompliance.issues && backupCompliance.issues.length > 0 && (
-                <div className="border-t pt-4">
-                  <h4 className="font-semibold text-gray-900 mb-2">Issues Requiring Attention:</h4>
+                <div className="border-t border-slate-700 pt-4">
+                  <h4 className="font-semibold text-white mb-2">Issues Requiring Attention:</h4>
                   <ul className="space-y-2">
                     {backupCompliance.issues.map((issue, index) => (
                       <li key={index} className="flex items-start">
-                        <AlertTriangle className="w-4 h-4 text-yellow-600 mr-2 mt-0.5 flex-shrink-0" />
-                        <span className="text-sm text-gray-700">{issue}</span>
+                        <AlertTriangle className="w-4 h-4 text-yellow-400 mr-2 mt-0.5 flex-shrink-0" />
+                        <span className="text-sm text-slate-300">{issue}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
               )}
 
-              <div className="border-t pt-4">
-                <h4 className="font-semibold text-gray-900 mb-2">Compliance Targets:</h4>
-                <ul className="text-sm text-gray-600 space-y-1">
+              <div className="border-t border-slate-700 pt-4">
+                <h4 className="font-semibold text-white mb-2">Compliance Targets:</h4>
+                <ul className="text-sm text-slate-400 space-y-1">
                   <li>• Backup Frequency: Daily</li>
                   <li>• Restore Test Frequency: Weekly</li>
                   <li>• Success Rate Target: 95%</li>
@@ -262,42 +262,42 @@ const ComplianceDashboard: React.FC = () => {
 
         {/* Drill Details */}
         {drillCompliance && (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-xl font-semibold mb-4 flex items-center">
-              <Activity className="w-5 h-5 mr-2 text-blue-600" />
+          <div className="bg-slate-800 rounded-lg border border-slate-700 p-6">
+            <h3 className="text-xl font-semibold mb-4 flex items-center text-white">
+              <Activity className="w-5 h-5 mr-2 text-[#00857a]" />
               Disaster Recovery Drills
             </h3>
 
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-50 p-3 rounded">
-                  <p className="text-sm text-gray-600">Drills Completed (30d)</p>
-                  <p className="text-2xl font-bold text-gray-900">{drillCompliance.drills_30d}</p>
+                <div className="bg-slate-700/50 p-3 rounded border border-slate-600">
+                  <p className="text-sm text-slate-400">Drills Completed (30d)</p>
+                  <p className="text-2xl font-bold text-white">{drillCompliance.drills_30d}</p>
                 </div>
-                <div className="bg-gray-50 p-3 rounded">
-                  <p className="text-sm text-gray-600">Drills Passed</p>
-                  <p className="text-2xl font-bold text-gray-900">{drillCompliance.drills_passed_30d}</p>
+                <div className="bg-slate-700/50 p-3 rounded border border-slate-600">
+                  <p className="text-sm text-slate-400">Drills Passed</p>
+                  <p className="text-2xl font-bold text-white">{drillCompliance.drills_passed_30d}</p>
                 </div>
               </div>
 
-              <div className="border-t pt-4">
-                <h4 className="font-semibold text-gray-900 mb-2">Recent Drill Dates:</h4>
-                <div className="space-y-2 text-sm text-gray-600">
+              <div className="border-t border-slate-700 pt-4">
+                <h4 className="font-semibold text-white mb-2">Recent Drill Dates:</h4>
+                <div className="space-y-2 text-sm text-slate-400">
                   {drillCompliance.last_weekly_drill && (
                     <div className="flex items-center">
-                      <Clock className="w-4 h-4 mr-2" />
+                      <Clock className="w-4 h-4 mr-2 text-slate-500" />
                       <span>Last Weekly: {new Date(drillCompliance.last_weekly_drill).toLocaleDateString()}</span>
                     </div>
                   )}
                   {drillCompliance.last_monthly_drill && (
                     <div className="flex items-center">
-                      <Clock className="w-4 h-4 mr-2" />
+                      <Clock className="w-4 h-4 mr-2 text-slate-500" />
                       <span>Last Monthly: {new Date(drillCompliance.last_monthly_drill).toLocaleDateString()}</span>
                     </div>
                   )}
                   {drillCompliance.last_quarterly_drill && (
                     <div className="flex items-center">
-                      <Clock className="w-4 h-4 mr-2" />
+                      <Clock className="w-4 h-4 mr-2 text-slate-500" />
                       <span>Last Quarterly: {new Date(drillCompliance.last_quarterly_drill).toLocaleDateString()}</span>
                     </div>
                   )}
@@ -305,22 +305,22 @@ const ComplianceDashboard: React.FC = () => {
               </div>
 
               {drillCompliance.issues && drillCompliance.issues.length > 0 && (
-                <div className="border-t pt-4">
-                  <h4 className="font-semibold text-gray-900 mb-2">Issues Requiring Attention:</h4>
+                <div className="border-t border-slate-700 pt-4">
+                  <h4 className="font-semibold text-white mb-2">Issues Requiring Attention:</h4>
                   <ul className="space-y-2">
                     {drillCompliance.issues.map((issue, index) => (
                       <li key={index} className="flex items-start">
-                        <AlertTriangle className="w-4 h-4 text-yellow-600 mr-2 mt-0.5 flex-shrink-0" />
-                        <span className="text-sm text-gray-700">{issue}</span>
+                        <AlertTriangle className="w-4 h-4 text-yellow-400 mr-2 mt-0.5 flex-shrink-0" />
+                        <span className="text-sm text-slate-300">{issue}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
               )}
 
-              <div className="border-t pt-4">
-                <h4 className="font-semibold text-gray-900 mb-2">Compliance Targets:</h4>
-                <ul className="text-sm text-gray-600 space-y-1">
+              <div className="border-t border-slate-700 pt-4">
+                <h4 className="font-semibold text-white mb-2">Compliance Targets:</h4>
+                <ul className="text-sm text-slate-400 space-y-1">
                   <li>• Weekly Frequency: Every 7 days</li>
                   <li>• Monthly Frequency: Every 30 days</li>
                   <li>• Quarterly Frequency: Every 90 days</li>
@@ -334,37 +334,37 @@ const ComplianceDashboard: React.FC = () => {
 
         {/* Vulnerability Details */}
         {vulnerabilities && (
-          <div className="bg-white rounded-lg shadow p-6 lg:col-span-2">
-            <h3 className="text-xl font-semibold mb-4 flex items-center">
-              <AlertTriangle className="w-5 h-5 mr-2 text-blue-600" />
+          <div className="bg-slate-800 rounded-lg border border-slate-700 p-6 lg:col-span-2">
+            <h3 className="text-xl font-semibold mb-4 flex items-center text-white">
+              <AlertTriangle className="w-5 h-5 mr-2 text-[#00857a]" />
               Security Vulnerability Summary
             </h3>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className={`p-4 rounded border-2 ${vulnerabilities.open_critical > 0 ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50'}`}>
-                <p className="text-sm text-gray-600 mb-1">Critical Open</p>
-                <p className="text-3xl font-bold text-gray-900">{vulnerabilities.open_critical}</p>
+              <div className={`p-4 rounded border-2 ${vulnerabilities.open_critical > 0 ? 'border-red-500/50 bg-red-500/10' : 'border-slate-600 bg-slate-700/50'}`}>
+                <p className="text-sm text-slate-400 mb-1">Critical Open</p>
+                <p className={`text-3xl font-bold ${vulnerabilities.open_critical > 0 ? 'text-red-400' : 'text-white'}`}>{vulnerabilities.open_critical}</p>
               </div>
-              <div className={`p-4 rounded border-2 ${vulnerabilities.open_high > 0 ? 'border-orange-500 bg-orange-50' : 'border-gray-200 bg-gray-50'}`}>
-                <p className="text-sm text-gray-600 mb-1">High Open</p>
-                <p className="text-3xl font-bold text-gray-900">{vulnerabilities.open_high}</p>
+              <div className={`p-4 rounded border-2 ${vulnerabilities.open_high > 0 ? 'border-orange-500/50 bg-orange-500/10' : 'border-slate-600 bg-slate-700/50'}`}>
+                <p className="text-sm text-slate-400 mb-1">High Open</p>
+                <p className={`text-3xl font-bold ${vulnerabilities.open_high > 0 ? 'text-orange-400' : 'text-white'}`}>{vulnerabilities.open_high}</p>
               </div>
-              <div className={`p-4 rounded border-2 ${vulnerabilities.total_overdue > 0 ? 'border-yellow-500 bg-yellow-50' : 'border-gray-200 bg-gray-50'}`}>
-                <p className="text-sm text-gray-600 mb-1">Overdue</p>
-                <p className="text-3xl font-bold text-gray-900">{vulnerabilities.total_overdue}</p>
+              <div className={`p-4 rounded border-2 ${vulnerabilities.total_overdue > 0 ? 'border-yellow-500/50 bg-yellow-500/10' : 'border-slate-600 bg-slate-700/50'}`}>
+                <p className="text-sm text-slate-400 mb-1">Overdue</p>
+                <p className={`text-3xl font-bold ${vulnerabilities.total_overdue > 0 ? 'text-yellow-400' : 'text-white'}`}>{vulnerabilities.total_overdue}</p>
               </div>
-              <div className="p-4 rounded border-2 border-gray-200 bg-gray-50">
-                <p className="text-sm text-gray-600 mb-1">Avg Remediation</p>
-                <p className="text-3xl font-bold text-gray-900">{vulnerabilities.avg_remediation_days || 0}<span className="text-sm ml-1">days</span></p>
+              <div className="p-4 rounded border-2 border-slate-600 bg-slate-700/50">
+                <p className="text-sm text-slate-400 mb-1">Avg Remediation</p>
+                <p className="text-3xl font-bold text-white">{vulnerabilities.avg_remediation_days || 0}<span className="text-sm ml-1">days</span></p>
               </div>
             </div>
 
-            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded">
+            <div className="mt-6 p-4 bg-[#00857a]/10 border border-[#00857a]/30 rounded">
               <div className="flex items-start">
-                <FileText className="w-5 h-5 text-blue-600 mr-3 mt-0.5 flex-shrink-0" />
+                <FileText className="w-5 h-5 text-[#00857a] mr-3 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-blue-900 mb-1">Penetration Testing Schedule</h4>
-                  <ul className="text-sm text-blue-800 space-y-1">
+                  <h4 className="font-semibold text-[#33bfb7] mb-1">Penetration Testing Schedule</h4>
+                  <ul className="text-sm text-slate-300 space-y-1">
                     <li>• Daily: Automated security scans</li>
                     <li>• Weekly: Comprehensive DAST scans</li>
                     <li>• Quarterly: Manual penetration testing</li>
@@ -381,37 +381,37 @@ const ComplianceDashboard: React.FC = () => {
       <div className="mt-8 flex flex-wrap gap-4">
         <button
           onClick={fetchComplianceData}
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center"
+          className="px-6 py-3 bg-[#00857a] text-white rounded-lg hover:bg-[#006d64] transition flex items-center"
         >
           <TrendingUp className="w-5 h-5 mr-2" />
           Refresh Data
         </button>
         <button
           onClick={() => window.location.href = '/admin/backup-logs'}
-          className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+          className="px-6 py-3 bg-slate-800 border border-slate-600 text-slate-300 rounded-lg hover:bg-slate-700 transition"
         >
           View Backup Logs
         </button>
         <button
           onClick={() => window.location.href = '/admin/drill-reports'}
-          className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+          className="px-6 py-3 bg-slate-800 border border-slate-600 text-slate-300 rounded-lg hover:bg-slate-700 transition"
         >
           View Drill Reports
         </button>
         <button
           onClick={() => window.location.href = '/admin/vulnerabilities'}
-          className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+          className="px-6 py-3 bg-slate-800 border border-slate-600 text-slate-300 rounded-lg hover:bg-slate-700 transition"
         >
           Manage Vulnerabilities
         </button>
       </div>
 
       {/* Compliance Footer */}
-      <div className="mt-8 p-4 bg-gray-100 border border-gray-300 rounded-lg">
+      <div className="mt-8 p-4 bg-slate-800 border border-slate-700 rounded-lg">
         <div className="flex items-start">
-          <Shield className="w-5 h-5 text-gray-600 mr-3 mt-0.5 flex-shrink-0" />
-          <div className="text-sm text-gray-700">
-            <p className="font-semibold mb-1">Compliance Standards</p>
+          <Shield className="w-5 h-5 text-[#00857a] mr-3 mt-0.5 flex-shrink-0" />
+          <div className="text-sm text-slate-400">
+            <p className="font-semibold mb-1 text-slate-300">Compliance Standards</p>
             <p>This dashboard monitors compliance with HIPAA Security Rule (§164.308), SOC2 Trust Service Criteria (CC7.1), and industry best practices for healthcare data protection.</p>
           </div>
         </div>
