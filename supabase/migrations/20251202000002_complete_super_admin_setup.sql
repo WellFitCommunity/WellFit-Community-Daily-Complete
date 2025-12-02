@@ -9,11 +9,12 @@
 -- 1. RLS POLICIES FOR super_admin_users
 -- ============================================================================
 
--- Drop existing policies
+-- Drop existing policies (use IF EXISTS to be safe)
 DROP POLICY IF EXISTS super_admin_full_access_super_admin_users ON super_admin_users;
 DROP POLICY IF EXISTS super_admin_users_read_own ON super_admin_users;
 DROP POLICY IF EXISTS super_admin_users_read_all ON super_admin_users;
 DROP POLICY IF EXISTS super_admin_users_write ON super_admin_users;
+DROP POLICY IF EXISTS super_admin_users_select ON super_admin_users;
 
 -- Users can read their OWN record (for login check)
 CREATE POLICY super_admin_users_read_own
@@ -41,10 +42,8 @@ CREATE POLICY super_admin_users_write
   );
 
 -- ============================================================================
--- 2. is_super_admin RPC
+-- 2. is_super_admin RPC (CREATE OR REPLACE only, don't drop due to dependencies)
 -- ============================================================================
-
-DROP FUNCTION IF EXISTS is_super_admin();
 
 CREATE OR REPLACE FUNCTION is_super_admin()
 RETURNS BOOLEAN

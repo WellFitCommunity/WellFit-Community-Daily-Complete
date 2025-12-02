@@ -523,3 +523,55 @@ Claude Code branches follow this pattern:
 claude/{feature-description}-{unique-id}
 ```
 Example: `claude/fix-service-worker-api-01SydJ7ZTrj4W9T3DDpW3sUJ`
+
+---
+
+## 🚨 MORNING TODO (2025-12-02) - FIX THESE FIRST
+
+### Priority 1: Verify Envision Super Admin Dashboard
+**Status:** Migration applied, edge function deployed - needs verification
+
+**What was done:**
+- Applied migration `20251202000002_complete_super_admin_setup.sql`
+- Deployed `envision-check-super-admin` edge function
+- Created RPC functions: `is_super_admin()`, `get_system_overview()`, `get_all_tenants_with_status()`
+- Created tables: `system_feature_flags`, `system_health_checks`, `super_admin_audit_log`, `system_metrics`, `ai_skill_config`
+- Added RLS policies for all super admin tables
+
+**To verify:**
+1. Login to Envision portal at `/envision/login`
+2. Use Maria or Akima credentials
+3. Dashboard should load without 403/404/500 errors
+4. Check that tenant list, system overview, and feature flags display correctly
+
+**If errors persist, check:**
+- Browser console for specific RPC function errors
+- Supabase logs for edge function errors
+- RLS policies may need adjustments
+
+### Priority 2: Fix WellFit Admin PIN Issue
+**Status:** Not started - user reported PIN stopped working
+
+**Problem:** Maria's PIN no longer works for WellFit admin login
+
+**Investigation steps:**
+1. Check `staff_pins` table for Maria's record:
+   ```sql
+   SELECT * FROM staff_pins WHERE user_id = 'ba4f20ad-2707-467b-a87f-d46fe9255d2f';
+   ```
+2. Verify PIN hash is valid (should be PBKDF2 hashed)
+3. Check if PIN verification edge function is working
+4. Review recent changes that might have affected PIN auth flow
+
+**Key files:**
+- `src/pages/AdminLoginPage.tsx` - Admin PIN login UI
+- `supabase/functions/verify-admin-pin/` - PIN verification logic
+- `staff_pins` table - stores hashed PINs
+
+### Super Admin Credentials Reference
+| User | Email | UUID | Role |
+|------|-------|------|------|
+| Maria | maria@wellfitcommunity.com | `ba4f20ad-2707-467b-a87f-d46fe9255d2f` | super_admin |
+| Akima | akima@wellfitcommunity.com | `06ce7189-1da3-4e22-a6b2-ede88aa1445a` | super_admin |
+
+---
