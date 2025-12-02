@@ -2,7 +2,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SuperAdminService } from '../../services/superAdminService';
 import { SystemOverview, TenantWithStatus } from '../../types/superAdmin';
-import { Activity, Users, Building2, AlertTriangle, Shield, Settings, Key, DollarSign, Brain, Home } from 'lucide-react';
+import { Activity, Users, Building2, AlertTriangle, Shield, Settings, Key, DollarSign, Brain, Home, LayoutDashboard } from 'lucide-react';
 import TenantManagementPanel from './TenantManagementPanel';
 import FeatureFlagControlPanel from './FeatureFlagControlPanel';
 import SystemHealthPanel from './SystemHealthPanel';
@@ -16,6 +16,7 @@ import AISkillsControlPanel from './AISkillsControlPanel';
 import { auditLogger } from '../../services/auditLogger';
 import { PersonalizedGreeting } from '../ai-transparency';
 import { EACard, EACardContent, EAButton } from '../envision-atlus';
+import { useAdminAuth } from '../../contexts/AdminAuthContext';
 
 // SECURITY: Use dedicated super-admin component instead of importing from tenant-admin
 const SuperAdminApiKeyManager = React.lazy(() => import('./SuperAdminApiKeyManager'));
@@ -102,12 +103,23 @@ const SystemMetrics: React.FC<SystemMetricsProps> = ({ overview }) => {
 
 const SuperAdminDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { autoAuthenticateAsSuperAdmin, isLoading: adminAuthLoading } = useAdminAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [overview, setOverview] = useState<SystemOverview | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'tenants' | 'features' | 'ai-skills' | 'health' | 'audit' | 'api-keys' | 'compliance' | 'ai-cost' | 'guardian'>('overview');
   const [selectedTenant, setSelectedTenant] = useState<TenantWithStatus | null>(null);
   const [showVaultAnimation, setShowVaultAnimation] = useState(false);
+
+  // Handler to navigate to WellFit Admin panel
+  const handleGoToWellFitAdmin = async () => {
+    const success = await autoAuthenticateAsSuperAdmin();
+    if (success) {
+      navigate('/admin');
+    } else {
+      setError('Failed to authenticate for WellFit Admin access.');
+    }
+  };
 
   useEffect(() => {
     checkAccess();
@@ -221,6 +233,19 @@ const SuperAdminDashboard: React.FC = () => {
                 >
                   <Home className="w-4 h-4" />
                   <span>WellFit Community</span>
+                </button>
+                {/* WellFit Admin Button */}
+                <button
+                  onClick={handleGoToWellFitAdmin}
+                  disabled={adminAuthLoading}
+                  className="flex items-center gap-2 bg-[#4a90d9] hover:bg-[#3a7bc8] text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {adminAuthLoading ? (
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <LayoutDashboard className="w-4 h-4" />
+                  )}
+                  <span>WellFit Admin</span>
                 </button>
                 <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm border border-white/30 px-4 py-2 rounded-lg">
                   <Shield className="w-5 h-5 text-white" />
