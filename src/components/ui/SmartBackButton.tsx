@@ -10,10 +10,40 @@ interface SmartBackButtonProps {
 }
 
 /**
+ * Helper to check if user has admin privileges
+ * Checks both app_metadata.role (string) and app_metadata.roles (array) for compatibility
+ */
+const checkIsAdmin = (user: any): boolean => {
+  if (!user) return false;
+
+  // Check single role (app_metadata.role)
+  const role = user?.app_metadata?.role;
+  if (role === 'admin' || role === 'super_admin' || role === 'it_admin') {
+    return true;
+  }
+
+  // Check roles array for backwards compatibility
+  const roles = user?.app_metadata?.roles || [];
+  if (Array.isArray(roles) && (roles.includes('admin') || roles.includes('super_admin'))) {
+    return true;
+  }
+
+  // Check is_admin flag
+  if (user?.app_metadata?.is_admin === true) {
+    return true;
+  }
+
+  return false;
+};
+
+/**
  * Smart back button that routes users to contextually appropriate pages
  * - Admins/Super Admins → /admin
  * - Seniors/Regular Users → /dashboard
  * - Falls back to browser history or specified fallback path
+ *
+ * IMPORTANT: Does NOT use window.history.back() to avoid navigation loops.
+ * Always uses explicit route navigation based on context.
  */
 const SmartBackButton: React.FC<SmartBackButtonProps> = ({
   className = '',
@@ -25,54 +55,77 @@ const SmartBackButton: React.FC<SmartBackButtonProps> = ({
   const { user } = useAuth();
 
   const handleBack = () => {
-    // Determine smart fallback based on user role
+    // Determine smart fallback based on user role and current location
     const getSmartFallback = (): string => {
       if (fallbackPath) return fallbackPath;
 
-      // Check if user has admin role
-      const roles = user?.app_metadata?.roles || [];
-      const isAdmin = roles.includes('admin') || roles.includes('super_admin');
+      const isAdmin = checkIsAdmin(user);
+      const path = location.pathname;
 
-      // Determine fallback based on current location and role
-      if (location.pathname.startsWith('/admin')) {
-        return isAdmin ? '/admin' : '/dashboard';
+      // Envision/Super Admin pages → back to Envision dashboard
+      if (path.startsWith('/super-admin') || path.startsWith('/envision')) {
+        return '/super-admin';
       }
 
-      if (location.pathname.startsWith('/billing')) {
+      // Admin sub-pages → back to admin panel
+      if (path.startsWith('/admin/') || path === '/admin-settings' || path === '/admin-questions') {
         return '/admin';
       }
 
+      // Billing pages → back to admin
+      if (path.startsWith('/billing')) {
+        return '/admin';
+      }
+
+      // IT Admin pages → back to admin
+      if (path.startsWith('/it-admin')) {
+        return '/admin';
+      }
+
+      // Nurse/Physician dashboards → back to their respective dashboards
+      if (path.startsWith('/nurse-')) {
+        return '/nurse-dashboard';
+      }
+      if (path.startsWith('/physician-')) {
+        return '/physician-dashboard';
+      }
+
       // Senior-facing pages should go back to dashboard
-      if (['/health-insights', '/questions', '/check-in', '/self-reporting'].some(
-        path => location.pathname.startsWith(path)
+      if (['/health-insights', '/questions', '/check-in', '/self-reporting', '/profile', '/settings', '/memory-lane'].some(
+        p => path.startsWith(p)
       )) {
         return '/dashboard';
       }
 
-      // Default fallback
+      // Default: admins go to admin, others go to dashboard
       return isAdmin ? '/admin' : '/dashboard';
     };
 
-    // Try browser history first, fallback to smart navigation
-    if (window.history.length > 2) {
-      window.history.back();
-    } else {
-      navigate(getSmartFallback());
-    }
+    // Always use explicit navigation to avoid loops
+    // Do NOT use window.history.back() as it can cause infinite loops
+    navigate(getSmartFallback());
   };
 
   const getDefaultLabel = (): string => {
     if (label) return label;
 
-    const roles = user?.app_metadata?.roles || [];
-    const isAdmin = roles.includes('admin') || roles.includes('super_admin');
+    const isAdmin = checkIsAdmin(user);
+    const path = location.pathname;
 
-    if (location.pathname.startsWith('/admin')) {
+    if (path.startsWith('/super-admin') || path.startsWith('/envision')) {
+      return 'Back to Envision';
+    }
+
+    if (path.startsWith('/admin') || path.startsWith('/billing') || path.startsWith('/it-admin')) {
       return 'Back to Admin';
     }
 
-    if (location.pathname.startsWith('/billing')) {
-      return 'Back to Admin';
+    if (path.startsWith('/nurse-')) {
+      return 'Back to Nurse Dashboard';
+    }
+
+    if (path.startsWith('/physician-')) {
+      return 'Back to Physician Dashboard';
     }
 
     return isAdmin ? 'Back to Admin' : 'Back to Dashboard';

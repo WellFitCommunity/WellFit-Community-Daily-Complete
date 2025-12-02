@@ -1,5 +1,5 @@
 // src/components/ui/BackButton.tsx
-// Smart back button that remembers where you came from
+// Back button with explicit fallback navigation (avoids history loops)
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -9,8 +9,8 @@ interface BackButtonProps {
   className?: string;
 }
 
-const BackButton: React.FC<BackButtonProps> = ({ 
-  fallbackPath = '/', 
+const BackButton: React.FC<BackButtonProps> = ({
+  fallbackPath = '/dashboard',
   label = 'Back',
   className = ''
 }) => {
@@ -18,18 +18,15 @@ const BackButton: React.FC<BackButtonProps> = ({
   const location = useLocation();
 
   const handleBack = () => {
-    // Check if we have a referrer in location state
+    // Check if we have a referrer in location state (passed explicitly)
     if (location.state && (location.state as any).from) {
       navigate((location.state as any).from);
-    } 
-    // Try browser history
-    else if (window.history.length > 2) {
-      navigate(-1);
-    } 
-    // Fallback to specified path
-    else {
-      navigate(fallbackPath);
+      return;
     }
+
+    // Always use explicit fallback navigation to avoid loops
+    // Do NOT use navigate(-1) or window.history.back() as it can cause infinite loops
+    navigate(fallbackPath);
   };
 
   return (
