@@ -12,11 +12,12 @@
  * Copyright © 2025 Envision VirtualEdge Group LLC. All rights reserved.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield, Lock, Eye, EyeOff, AlertCircle, CheckCircle, ArrowLeft, Smartphone, Key, Mail } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { auditLogger } from '../services/auditLogger';
+import HCaptchaWidget, { HCaptchaRef } from '../components/HCaptchaWidget';
 
 type AuthStep = 'credentials' | 'totp' | 'backup-code' | 'totp-setup' | 'forgot' | 'reset-sent';
 
@@ -56,6 +57,10 @@ export const EnvisionLoginPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
+
+  // hCaptcha state
+  const captchaRef = useRef<HCaptchaRef>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   // Check if already logged in as super admin
   useEffect(() => {
@@ -98,10 +103,18 @@ export const EnvisionLoginPage: React.FC = () => {
     setLoading(true);
 
     try {
-      // Use Supabase's built-in signInWithPassword
+      // Check captcha token
+      if (!captchaToken) {
+        setError('Please complete the captcha verification.');
+        setLoading(false);
+        return;
+      }
+
+      // Use Supabase's built-in signInWithPassword with captcha
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: email.trim(),
-        password: password
+        password: password,
+        options: { captchaToken }
       });
 
       if (authError) {
@@ -164,6 +177,8 @@ export const EnvisionLoginPage: React.FC = () => {
       const errMsg = err instanceof Error ? err.message : 'Login failed';
       await auditLogger.error('ENVISION_LOGIN_ERROR', err as Error, { email: email.trim() });
       setError(errMsg);
+      captchaRef.current?.reset();
+      setCaptchaToken(null);
     } finally {
       setLoading(false);
     }
@@ -512,7 +527,7 @@ export const EnvisionLoginPage: React.FC = () => {
 
               <button
                 type="submit"
-                disabled={loading || !email || !password}
+                disabled={loading || !email || !password || !captchaToken}
                 className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {loading ? (
@@ -527,6 +542,18 @@ export const EnvisionLoginPage: React.FC = () => {
                   </>
                 )}
               </button>
+
+              {/* hCaptcha Widget - visible for free tier */}
+              <div className="flex justify-center">
+                <HCaptchaWidget
+                  ref={captchaRef}
+                  size="normal"
+                  theme="dark"
+                  onVerify={(token) => setCaptchaToken(token)}
+                  onExpire={() => setCaptchaToken(null)}
+                  onError={(msg) => setError(msg)}
+                />
+              </div>
 
               <div className="text-center">
                 <button

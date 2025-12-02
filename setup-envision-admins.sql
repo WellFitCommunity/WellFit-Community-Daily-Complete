@@ -53,16 +53,10 @@ WHERE u.email IN ('Maria@thewellfitcommunity.org', 'Akima@thewellfitcommunity.or
 -- STEP 2: Add to super_admin_users (if auth accounts already exist)
 -- ============================================================================
 
--- IMPORTANT: Only run these INSERT statements if:
--- 1. The users exist in auth.users (from STEP 1 queries above)
--- 2. They do NOT already exist in super_admin_users
---
--- Replace 'MARIA_USER_ID_HERE' and 'AKIMA_USER_ID_HERE' with actual UUIDs
--- from the auth.users query results above
-
 -- Insert Maria as super admin
 INSERT INTO super_admin_users (
   user_id,
+  email,
   role,
   is_active,
   permissions,
@@ -70,22 +64,25 @@ INSERT INTO super_admin_users (
   updated_at
 )
 VALUES (
-  'MARIA_USER_ID_HERE'::uuid,  -- Replace with Maria's actual user_id
+  'ba4f20ad-2707-467b-a87f-d46fe9255d2f',
+  'Maria@thewellfitcommunity.org',
   'super_admin',
   true,
-  ARRAY['full_access', 'manage_tenants', 'view_analytics', 'manage_users'],
+  '["full_access", "manage_tenants", "view_analytics", "manage_users"]'::jsonb,
   NOW(),
   NOW()
 )
 ON CONFLICT (user_id) DO UPDATE
 SET
   is_active = true,
+  email = EXCLUDED.email,
   permissions = EXCLUDED.permissions,
   updated_at = NOW();
 
 -- Insert Akima as super admin
 INSERT INTO super_admin_users (
   user_id,
+  email,
   role,
   is_active,
   permissions,
@@ -93,16 +90,18 @@ INSERT INTO super_admin_users (
   updated_at
 )
 VALUES (
-  'AKIMA_USER_ID_HERE'::uuid,  -- Replace with Akima's actual user_id
+  '06ce7189-1da3-4e22-a6b2-ede88aa1445a',
+  'Akima@thewellfitcommunity.org',
   'super_admin',
   true,
-  ARRAY['full_access', 'manage_tenants', 'view_analytics', 'manage_users'],
+  '["full_access", "manage_tenants", "view_analytics", "manage_users"]'::jsonb,
   NOW(),
   NOW()
 )
 ON CONFLICT (user_id) DO UPDATE
 SET
   is_active = true,
+  email = EXCLUDED.email,
   permissions = EXCLUDED.permissions,
   updated_at = NOW();
 
