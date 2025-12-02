@@ -1,7 +1,35 @@
+/**
+ * AdminHeader - Envision Atlus Clinical Header
+ *
+ * Features:
+ * - Envision Atlus dark theme design system
+ * - Dynamic branding (white-label ready)
+ * - WellFit Community access button
+ * - Role-based navigation
+ * - Dark mode toggle
+ */
+
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import { useBranding } from '../../BrandingContext';
+import {
+  Home,
+  FileText,
+  Key,
+  CreditCard,
+  Settings,
+  LogOut,
+  Moon,
+  Sun,
+  ChevronDown,
+  Activity,
+  Users,
+  Shield,
+  ClipboardList,
+  Menu,
+  X,
+} from 'lucide-react';
 
 interface AdminHeaderProps {
   title?: string;
@@ -9,23 +37,25 @@ interface AdminHeaderProps {
 }
 
 const AdminHeader: React.FC<AdminHeaderProps> = ({
-  title = "Envision Atlus",
-  showRiskAssessment = true
+  title,
+  showRiskAssessment = true,
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { adminRole, logoutAdmin } = useAdminAuth();
-  const { branding } = useBranding(); // Get dynamic branding from database
+  const { branding } = useBranding();
   const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
-    // Initialize from localStorage
     const savedTheme = localStorage.getItem('admin_theme');
     if (savedTheme === 'dark') return true;
     if (savedTheme === 'light') return false;
-    // Auto mode - check system preference
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
-  // Apply theme on mount and when darkMode changes
+  // Dynamic title - use prop, branding, or default
+  const headerTitle = title || branding?.appName || 'Envision Atlus';
+
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
@@ -34,7 +64,6 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
     }
   }, [darkMode]);
 
-  // Listen for theme changes from localStorage (e.g., from AdminSettingsPanel)
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'admin_theme') {
@@ -56,302 +85,291 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
   const toggleDarkMode = () => {
     const newMode = !darkMode;
     setDarkMode(newMode);
-
-    // Save to localStorage to persist across sessions
     localStorage.setItem('admin_theme', newMode ? 'dark' : 'light');
-
-    // Apply theme to document
-    if (newMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
   };
 
   const navigateTo = (path: string) => {
     navigate(path);
+    setShowSettingsDropdown(false);
+    setShowMobileMenu(false);
   };
 
-  // Envision Atlus branding - Deep Teal, Black, Silver
-  const headerBackground = '#006D75'; // Deep teal
+  const isActive = (path: string) =>
+    location.pathname === path || location.pathname.startsWith(`${path}/`);
+
+  // Navigation items
+  const navItems = [
+    {
+      label: 'WellFit Community',
+      path: '/dashboard',
+      icon: Home,
+      show: true,
+      accent: true, // Special styling for WellFit button
+    },
+    {
+      label: 'Risk Assessment',
+      path: '/admin-questions',
+      icon: ClipboardList,
+      show: showRiskAssessment,
+    },
+    {
+      label: 'Billing',
+      path: '/billing',
+      icon: CreditCard,
+      show: true,
+    },
+    {
+      label: 'API Keys',
+      path: '/admin/api-keys',
+      icon: Key,
+      show: adminRole === 'super_admin',
+    },
+  ];
+
+  // Settings dropdown items
+  const settingsItems = [
+    { label: 'Senior Dashboard', path: '/dashboard', icon: Home, show: adminRole === 'super_admin' },
+    { label: 'Caregiver Portal', path: '/caregiver-dashboard', icon: Users, show: adminRole === 'super_admin' },
+    { label: 'Nurse Dashboard', path: '/nurse-dashboard', icon: Activity, show: adminRole === 'super_admin' },
+    { label: 'Physician Dashboard', path: '/physician-dashboard', icon: Shield, show: adminRole === 'super_admin' },
+    { divider: true, show: adminRole === 'super_admin' },
+    { label: 'Admin Settings', path: '/admin/settings', icon: Settings, show: true },
+    { label: 'Audit Logs', path: '/admin/audit-logs', icon: FileText, show: true },
+    { label: 'System Admin', path: '/admin/system', icon: Shield, show: adminRole === 'super_admin' },
+  ];
 
   return (
-    <div
-      className="text-white shadow-2xl border-b-4 border-black"
-      style={{
-        background: headerBackground
-      }}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Left section - Title */}
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center">
-              <div>
-                <h1 className="text-2xl font-bold text-white drop-shadow-md">{title}</h1>
-              </div>
-            </div>
-          </div>
-
-          {/* Center section - Navigation buttons */}
-          <div className="hidden lg:flex items-center space-x-2">
-            {/* WellFit Community Button */}
-            <button
-              onClick={() => navigateTo('/dashboard')}
-              className="inline-flex items-center px-3 py-2 border border-black rounded-md text-sm font-medium bg-silver hover:bg-gray-300 text-black focus:outline-none focus:ring-2 focus:ring-gray-400 transition-all duration-200 shadow-md"
-              style={{ backgroundColor: '#C0C0C0' }}
-              title="View WellFit Community"
-            >
-              <span className="mr-2">🏠</span>
-              WellFit
-            </button>
-
-            {showRiskAssessment && (
-              <button
-                onClick={() => navigateTo('/admin-questions')}
-                className="inline-flex items-center px-3 py-2 border border-black rounded-md text-sm font-medium bg-silver hover:bg-gray-300 text-black focus:outline-none focus:ring-2 focus:ring-gray-400 transition-all duration-200 shadow-md"
-                style={{ backgroundColor: '#C0C0C0' }}
-              >
-                <span className="mr-2">📋</span>
-                Risk Assessment
-              </button>
-            )}
-
-            {/* Super Admin API Keys */}
-            {adminRole === 'super_admin' && (
-              <button
-                onClick={() => navigateTo('/admin/api-keys')}
-                className="inline-flex items-center px-3 py-2 border border-black rounded-md text-sm font-medium bg-silver hover:bg-gray-300 text-black focus:outline-none focus:ring-2 focus:ring-gray-400 transition-all duration-200 shadow-md"
-                style={{ backgroundColor: '#C0C0C0' }}
-              >
-                <span className="mr-2">🔑</span>
-                API Keys
-              </button>
-            )}
-
-            {/* Billing */}
-            <button
-              onClick={() => navigateTo('/billing')}
-              className="inline-flex items-center px-3 py-2 border border-black rounded-md text-sm font-medium bg-silver hover:bg-gray-300 text-black focus:outline-none focus:ring-2 focus:ring-gray-400 transition-all duration-200 shadow-md"
-              style={{ backgroundColor: '#C0C0C0' }}
-            >
-              <span className="mr-2">💳</span>
-              Billing
-            </button>
-
-            {/* System Status Indicator */}
-            <div className="inline-flex items-center px-3 py-2 text-sm font-medium">
-              <span className="mr-2 text-green-300 animate-pulse">●</span>
-              <span className="text-xs">Online</span>
-            </div>
-          </div>
-
-          {/* Right section - Settings dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setShowSettingsDropdown(!showSettingsDropdown)}
-              className="inline-flex items-center px-3 py-2 border border-white border-opacity-20 rounded-md text-sm font-medium bg-white bg-opacity-10 hover:bg-opacity-20 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 transition-all duration-200"
-            >
-              <span className="mr-2">⚙️</span>
-              <span className="hidden sm:inline">Settings</span>
-              <span className="ml-2">⋯</span>
-            </button>
-
-            {/* Settings Dropdown */}
-            {showSettingsDropdown && (
-              <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
-                <div className="py-2">
-                  {/* User Info */}
-                  <div className="px-4 py-3 border-b border-gray-100">
-                    <div className="text-sm font-medium text-gray-900">
-                      {adminRole === 'super_admin' ? 'Super Administrator' : 'Administrator'}
-                    </div>
-                    <div className="text-xs text-gray-500">Session Active</div>
-                  </div>
-
-                  {/* Theme Toggle */}
-                  <div className="px-4 py-3 border-b border-gray-100">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <span className="mr-3">{darkMode ? '🌙' : '☀️'}</span>
-                        <span className="text-sm text-gray-700">Dark Mode</span>
-                      </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleDarkMode();
-                        }}
-                        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                          darkMode ? 'bg-blue-600' : 'bg-gray-200'
-                        }`}
-                      >
-                        <span
-                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                            darkMode ? 'translate-x-5' : 'translate-x-0'
-                          }`}
-                        />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Navigation Links */}
-                  <div className="py-2">
-                    {/* Super Admin Only: Cross-Panel Navigation */}
-                    {adminRole === 'super_admin' && (
-                      <>
-                        <button
-                          onClick={() => {
-                            navigateTo('/dashboard');
-                            setShowSettingsDropdown(false);
-                          }}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
-                        >
-                          <span className="mr-3">🏠</span>
-                          Senior Dashboard
-                        </button>
-
-                        <button
-                          onClick={() => {
-                            navigateTo('/caregiver-dashboard');
-                            setShowSettingsDropdown(false);
-                          }}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
-                          title="View caregiver dashboard"
-                        >
-                          <span className="mr-3">👨‍👩‍👧</span>
-                          Caregiver Portal
-                        </button>
-
-                        <button
-                          onClick={() => {
-                            navigateTo('/nurse-dashboard');
-                            setShowSettingsDropdown(false);
-                          }}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
-                          title="View nurse dashboard"
-                        >
-                          <span className="mr-3">👩‍⚕️</span>
-                          Nurse Dashboard
-                        </button>
-
-                        <button
-                          onClick={() => {
-                            navigateTo('/physician-dashboard');
-                            setShowSettingsDropdown(false);
-                          }}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
-                          title="View physician dashboard"
-                        >
-                          <span className="mr-3">🩺</span>
-                          Physician Dashboard
-                        </button>
-
-                        <div className="border-t border-gray-100 my-2" />
-                      </>
-                    )}
-
-                    <button
-                      onClick={() => {
-                        navigateTo('/admin/settings');
-                        setShowSettingsDropdown(false);
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
-                    >
-                      <span className="mr-3">⚙️</span>
-                      Admin Settings
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        navigateTo('/admin/audit-logs');
-                        setShowSettingsDropdown(false);
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
-                    >
-                      <span className="mr-3">📜</span>
-                      Audit Logs
-                    </button>
-
-                    {adminRole === 'super_admin' && (
-                      <button
-                        onClick={() => {
-                          navigateTo('/admin/system');
-                          setShowSettingsDropdown(false);
-                        }}
-                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
-                      >
-                        <span className="mr-3">🔧</span>
-                        System Admin
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Logout */}
-                  <div className="border-t border-gray-100 pt-2">
-                    <button
-                      onClick={() => {
-                        setShowSettingsDropdown(false);
-                        logoutAdmin();
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center"
-                    >
-                      <span className="mr-3">🚪</span>
-                      Logout
-                    </button>
-                  </div>
+    <>
+      <header className="bg-gradient-to-r from-[#00857a] to-[#006d64] text-white shadow-xl border-b border-[#00554e]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            {/* Left: Logo/Title */}
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center">
+                {branding?.logoUrl && (
+                  <img
+                    src={branding.logoUrl}
+                    alt="Logo"
+                    className="h-8 w-auto mr-3 rounded"
+                  />
+                )}
+                <div>
+                  <h1 className="text-xl font-bold tracking-tight">{headerTitle}</h1>
+                  <p className="text-xs text-teal-200 opacity-80">Clinical Platform</p>
                 </div>
               </div>
-            )}
+            </div>
+
+            {/* Center: Desktop Navigation */}
+            <nav className="hidden lg:flex items-center space-x-2">
+              {navItems
+                .filter((item) => item.show)
+                .map((item) => (
+                  <button
+                    key={item.path}
+                    onClick={() => navigateTo(item.path)}
+                    className={`
+                      inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium
+                      transition-all duration-200
+                      ${
+                        item.accent
+                          ? 'bg-[#8cc63f] hover:bg-[#7ab835] text-white shadow-md'
+                          : isActive(item.path)
+                          ? 'bg-white/20 text-white'
+                          : 'bg-white/10 hover:bg-white/20 text-white/90 hover:text-white'
+                      }
+                    `}
+                  >
+                    <item.icon className="h-4 w-4 mr-2" />
+                    {item.label}
+                  </button>
+                ))}
+
+              {/* System Status */}
+              <div className="flex items-center px-3 py-2 text-sm">
+                <span className="h-2 w-2 rounded-full bg-green-400 animate-pulse mr-2" />
+                <span className="text-xs text-teal-100">Online</span>
+              </div>
+            </nav>
+
+            {/* Right: Settings & Mobile Menu */}
+            <div className="flex items-center space-x-2">
+              {/* Dark Mode Toggle (Desktop) */}
+              <button
+                onClick={toggleDarkMode}
+                className="hidden sm:flex items-center justify-center h-9 w-9 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+                title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+              >
+                {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </button>
+
+              {/* Settings Dropdown (Desktop) */}
+              <div className="relative hidden sm:block">
+                <button
+                  onClick={() => setShowSettingsDropdown(!showSettingsDropdown)}
+                  className="inline-flex items-center px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-medium transition-colors"
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  <span className="hidden md:inline">Settings</span>
+                  <ChevronDown className={`h-4 w-4 ml-1 transition-transform ${showSettingsDropdown ? 'rotate-180' : ''}`} />
+                </button>
+
+                {showSettingsDropdown && (
+                  <div className="absolute right-0 mt-2 w-64 bg-slate-800 rounded-lg shadow-xl border border-slate-700 z-50 overflow-hidden">
+                    {/* User Info */}
+                    <div className="px-4 py-3 border-b border-slate-700 bg-slate-900/50">
+                      <div className="text-sm font-medium text-white">
+                        {adminRole === 'super_admin' ? 'Super Administrator' : 'Administrator'}
+                      </div>
+                      <div className="text-xs text-slate-400">Session Active</div>
+                    </div>
+
+                    {/* Dark Mode Toggle (in dropdown) */}
+                    <div className="px-4 py-3 border-b border-slate-700">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center text-slate-300">
+                          {darkMode ? <Moon className="h-4 w-4 mr-2" /> : <Sun className="h-4 w-4 mr-2" />}
+                          <span className="text-sm">Dark Mode</span>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleDarkMode();
+                          }}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                            darkMode ? 'bg-[#00857a]' : 'bg-slate-600'
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              darkMode ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Navigation Items */}
+                    <div className="py-2">
+                      {settingsItems
+                        .filter((item) => item.show)
+                        .map((item, idx) =>
+                          'divider' in item ? (
+                            <div key={`divider-${idx}`} className="border-t border-slate-700 my-2" />
+                          ) : (
+                            <button
+                              key={item.path}
+                              onClick={() => navigateTo(item.path!)}
+                              className="w-full text-left px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-700/50 hover:text-white flex items-center transition-colors"
+                            >
+                              {item.icon && <item.icon className="h-4 w-4 mr-3 text-slate-400" />}
+                              {item.label}
+                            </button>
+                          )
+                        )}
+                    </div>
+
+                    {/* Logout */}
+                    <div className="border-t border-slate-700">
+                      <button
+                        onClick={() => {
+                          setShowSettingsDropdown(false);
+                          logoutAdmin();
+                        }}
+                        className="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 flex items-center transition-colors"
+                      >
+                        <LogOut className="h-4 w-4 mr-3" />
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setShowMobileMenu(!showMobileMenu)}
+                className="lg:hidden inline-flex items-center justify-center h-10 w-10 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+              >
+                {showMobileMenu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Mobile menu for quick actions */}
-        <div className="lg:hidden pb-3">
-          <div className="flex space-x-2 overflow-x-auto">
-            <button
-              onClick={() => navigateTo('/dashboard')}
-              className="flex-shrink-0 inline-flex items-center px-2 py-1 border border-black rounded text-xs font-medium bg-silver hover:bg-gray-300 text-black"
-              style={{ backgroundColor: '#C0C0C0' }}
-            >
-              🏠 WellFit
-            </button>
-            {showRiskAssessment && (
-              <button
-                onClick={() => navigateTo('/admin-questions')}
-                className="flex-shrink-0 inline-flex items-center px-2 py-1 border border-black rounded text-xs font-medium bg-silver hover:bg-gray-300 text-black"
-                style={{ backgroundColor: '#C0C0C0' }}
-              >
-                📋 Assessment
-              </button>
-            )}
-            {adminRole === 'super_admin' && (
-              <button
-                onClick={() => navigateTo('/admin/api-keys')}
-                className="flex-shrink-0 inline-flex items-center px-2 py-1 border border-black rounded text-xs font-medium bg-silver hover:bg-gray-300 text-black"
-                style={{ backgroundColor: '#C0C0C0' }}
-              >
-                🔑 API
-              </button>
-            )}
-            <button
-              onClick={() => navigateTo('/billing')}
-              className="flex-shrink-0 inline-flex items-center px-2 py-1 border border-black rounded text-xs font-medium bg-silver hover:bg-gray-300 text-black"
-              style={{ backgroundColor: '#C0C0C0' }}
-            >
-              💳 Billing
-            </button>
-          </div>
-        </div>
-      </div>
+        {/* Mobile Navigation */}
+        {showMobileMenu && (
+          <div className="lg:hidden border-t border-[#00554e] bg-[#006d64]/50 backdrop-blur">
+            <div className="px-4 py-3 space-y-2">
+              {navItems
+                .filter((item) => item.show)
+                .map((item) => (
+                  <button
+                    key={item.path}
+                    onClick={() => navigateTo(item.path)}
+                    className={`
+                      w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium
+                      ${
+                        item.accent
+                          ? 'bg-[#8cc63f] text-white'
+                          : 'bg-white/10 text-white/90 hover:bg-white/20'
+                      }
+                    `}
+                  >
+                    <item.icon className="h-4 w-4 mr-3" />
+                    {item.label}
+                  </button>
+                ))}
 
-      {/* Click outside handler */}
+              <div className="border-t border-white/20 pt-2 mt-2">
+                <button
+                  onClick={() => navigateTo('/admin/settings')}
+                  className="w-full flex items-center px-3 py-2.5 rounded-lg text-sm text-white/90 bg-white/10 hover:bg-white/20"
+                >
+                  <Settings className="h-4 w-4 mr-3" />
+                  Admin Settings
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between px-3 py-2">
+                <span className="text-sm text-white/80">Dark Mode</span>
+                <button
+                  onClick={toggleDarkMode}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    darkMode ? 'bg-white/30' : 'bg-white/10'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      darkMode ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              <button
+                onClick={() => {
+                  setShowMobileMenu(false);
+                  logoutAdmin();
+                }}
+                className="w-full flex items-center px-3 py-2.5 rounded-lg text-sm text-red-300 bg-red-500/10 hover:bg-red-500/20"
+              >
+                <LogOut className="h-4 w-4 mr-3" />
+                Logout
+              </button>
+            </div>
+          </div>
+        )}
+      </header>
+
+      {/* Click outside handler for dropdown */}
       {showSettingsDropdown && (
         <div
           className="fixed inset-0 z-40"
           onClick={() => setShowSettingsDropdown(false)}
         />
       )}
-    </div>
+    </>
   );
 };
 

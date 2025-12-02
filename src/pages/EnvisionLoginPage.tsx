@@ -426,13 +426,13 @@ export const EnvisionLoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
       {/* Background pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0" style={{
           backgroundImage: `
-            linear-gradient(rgba(59, 130, 246, 0.2) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(59, 130, 246, 0.2) 1px, transparent 1px)
+            linear-gradient(rgba(0, 133, 122, 0.2) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 133, 122, 0.2) 1px, transparent 1px)
           `,
           backgroundSize: '50px 50px'
         }} />
@@ -441,11 +441,11 @@ export const EnvisionLoginPage: React.FC = () => {
       <div className="relative z-10 w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-500/10 rounded-full mb-4 border-2 border-blue-500/30">
-            <Shield className="w-10 h-10 text-blue-400" />
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-[#00857a]/10 rounded-full mb-4 border-2 border-[#00857a]/30">
+            <Shield className="w-10 h-10 text-[#33bfb7]" />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">Envision Portal</h1>
-          <p className="text-blue-300 text-sm">
+          <h1 className="text-3xl font-bold text-white mb-2">Envision Atlus Portal</h1>
+          <p className="text-teal-300 text-sm">
             {step === 'credentials' && 'Authorized Personnel Only'}
             {step === 'totp' && 'Step 2: Authenticator Code'}
             {step === 'backup-code' && 'Step 2: Backup Code'}
@@ -456,7 +456,7 @@ export const EnvisionLoginPage: React.FC = () => {
         </div>
 
         {/* Login Card */}
-        <div className="bg-white/10 backdrop-blur-md rounded-2xl shadow-2xl border border-white/20 p-8">
+        <div className="bg-slate-800/50 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-700 p-8">
 
           {/* Step 1: Email + Password */}
           {step === 'credentials' && (
@@ -528,7 +528,7 @@ export const EnvisionLoginPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading || !email || !password || !captchaToken}
-                className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-3 px-4 bg-[#00857a] hover:bg-[#006d64] text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#00857a] focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>

@@ -2,7 +2,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SuperAdminService } from '../../services/superAdminService';
 import { SystemOverview, TenantWithStatus } from '../../types/superAdmin';
-import { Activity, Users, Building2, AlertTriangle, Shield, Settings, Key, DollarSign, Brain } from 'lucide-react';
+import { Activity, Users, Building2, AlertTriangle, Shield, Settings, Key, DollarSign, Brain, Home } from 'lucide-react';
 import TenantManagementPanel from './TenantManagementPanel';
 import FeatureFlagControlPanel from './FeatureFlagControlPanel';
 import SystemHealthPanel from './SystemHealthPanel';
@@ -15,9 +15,9 @@ import GuardianMonitoringDashboard from './GuardianMonitoringDashboard';
 import AISkillsControlPanel from './AISkillsControlPanel';
 import { auditLogger } from '../../services/auditLogger';
 import { PersonalizedGreeting } from '../ai-transparency';
+import { EACard, EACardContent, EAButton } from '../envision-atlus';
 
 // SECURITY: Use dedicated super-admin component instead of importing from tenant-admin
-// This ensures proper separation between atlus-admin and tenant-admin layers
 const SuperAdminApiKeyManager = React.lazy(() => import('./SuperAdminApiKeyManager'));
 
 interface SystemMetricsProps {
@@ -29,15 +29,14 @@ const SystemMetrics: React.FC<SystemMetricsProps> = ({ overview }) => {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="bg-white p-6 rounded-lg shadow animate-pulse">
-            <div className="h-12 bg-gray-200 rounded"></div>
+          <div key={i} className="bg-slate-800 p-6 rounded-lg border border-slate-700 animate-pulse">
+            <div className="h-12 bg-slate-700 rounded"></div>
           </div>
         ))}
       </div>
     );
   }
 
-  // Derive system health from overview data
   const criticalIssues = (overview as any).criticalHealthIssues || 0;
   const systemHealth = criticalIssues > 0 ? 'critical' :
     overview.suspendedTenants > 0 ? 'degraded' : 'healthy';
@@ -48,49 +47,53 @@ const SystemMetrics: React.FC<SystemMetricsProps> = ({ overview }) => {
       label: 'Total Tenants',
       value: overview.totalTenants,
       subtext: `${overview.activeTenants} active`,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50'
+      color: 'text-blue-400',
+      bgColor: 'bg-blue-500/20',
+      borderColor: 'border-blue-500/30'
     },
     {
       icon: Users,
       label: 'Total Users',
       value: overview.totalUsers,
       subtext: 'Across all tenants',
-      color: 'text-green-600',
-      bgColor: 'bg-green-50'
+      color: 'text-green-400',
+      bgColor: 'bg-green-500/20',
+      borderColor: 'border-green-500/30'
     },
     {
       icon: Activity,
       label: 'Total Patients',
       value: overview.totalPatients,
       subtext: 'Active patients',
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50'
+      color: 'text-purple-400',
+      bgColor: 'bg-purple-500/20',
+      borderColor: 'border-purple-500/30'
     },
     {
       icon: Shield,
       label: 'System Health',
       value: systemHealth.charAt(0).toUpperCase() + systemHealth.slice(1),
       subtext: overview.suspendedTenants > 0 ? `${overview.suspendedTenants} suspended` : 'All systems operational',
-      color: systemHealth === 'healthy' ? 'text-green-600' : systemHealth === 'degraded' ? 'text-yellow-600' : 'text-red-600',
-      bgColor: systemHealth === 'healthy' ? 'bg-green-50' : systemHealth === 'degraded' ? 'bg-yellow-50' : 'bg-red-50'
+      color: systemHealth === 'healthy' ? 'text-green-400' : systemHealth === 'degraded' ? 'text-yellow-400' : 'text-red-400',
+      bgColor: systemHealth === 'healthy' ? 'bg-green-500/20' : systemHealth === 'degraded' ? 'bg-yellow-500/20' : 'bg-red-500/20',
+      borderColor: systemHealth === 'healthy' ? 'border-green-500/30' : systemHealth === 'degraded' ? 'border-yellow-500/30' : 'border-red-500/30'
     }
   ];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       {metrics.map((metric, index) => (
-        <div key={index} className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
+        <div key={index} className={`bg-slate-800 p-6 rounded-lg border ${metric.borderColor} hover:border-opacity-60 transition-all`}>
           <div className="flex items-center justify-between mb-4">
             <div className={`p-3 rounded-lg ${metric.bgColor}`}>
               <metric.icon className={`w-6 h-6 ${metric.color}`} />
             </div>
           </div>
-          <div className="text-3xl font-bold text-gray-900 mb-1">
+          <div className="text-3xl font-bold text-white mb-1">
             {typeof metric.value === 'number' ? metric.value.toLocaleString() : metric.value}
           </div>
-          <div className="text-sm text-gray-600 mb-1">{metric.label}</div>
-          <div className="text-xs text-gray-500">{metric.subtext}</div>
+          <div className="text-sm text-slate-300 mb-1">{metric.label}</div>
+          <div className="text-xs text-slate-500">{metric.subtext}</div>
         </div>
       ))}
     </div>
@@ -108,7 +111,6 @@ const SuperAdminDashboard: React.FC = () => {
 
   useEffect(() => {
     checkAccess();
-    // Show vault animation on first access in this session
     const hasSeenVault = sessionStorage.getItem('envision_vault_seen');
     if (!hasSeenVault) {
       setShowVaultAnimation(true);
@@ -148,9 +150,7 @@ const SuperAdminDashboard: React.FC = () => {
         category: 'ADMINISTRATIVE',
         errorMessage
       });
-      // Show more specific error message for debugging
       setError(`Failed to load system overview: ${errorMessage}`);
-      // Still set overview to defaults so UI renders
       setOverview({
         totalTenants: 0,
         activeTenants: 0,
@@ -166,190 +166,184 @@ const SuperAdminDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-teal-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
-          <p className="text-teal-900 font-medium">Loading Envision Master Admin Panel...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00857a] mx-auto mb-4"></div>
+          <p className="text-slate-300 font-medium">Loading Envision Master Admin Panel...</p>
         </div>
       </div>
     );
   }
 
-  // Don't block entire UI on error - show warning banner instead
   const ErrorBanner = () => error ? (
-    <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+    <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <AlertTriangle className="w-5 h-5 text-red-600" />
-          <span className="text-red-800">{error}</span>
+          <AlertTriangle className="w-5 h-5 text-red-400" />
+          <span className="text-red-300">{error}</span>
         </div>
-        <button
-          onClick={loadSystemData}
-          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm"
-        >
+        <EAButton variant="danger" size="sm" onClick={loadSystemData}>
           Retry
-        </button>
+        </EAButton>
       </div>
     </div>
   ) : null;
 
   const tabs = [
-    { id: 'overview', label: 'Overview', icon: Activity, color: 'teal' },
-    { id: 'tenants', label: 'Tenants', icon: Building2, color: 'blue' },
-    { id: 'features', label: 'Feature Flags', icon: Settings, color: 'purple' },
-    { id: 'ai-skills', label: 'AI Skills', icon: Brain, color: 'purple' },
-    { id: 'api-keys', label: 'API Keys', icon: Key, color: 'orange' },
-    { id: 'ai-cost', label: 'AI Cost & Usage', icon: DollarSign, color: 'orange' },
-    { id: 'compliance', label: 'Platform SOC2', icon: Shield, color: 'red' },
-    { id: 'guardian', label: 'Guardian Agent', icon: Shield, color: 'emerald' },
-    { id: 'health', label: 'System Health', icon: Activity, color: 'emerald' },
-    { id: 'audit', label: 'Audit Logs', icon: AlertTriangle, color: 'red' }
+    { id: 'overview', label: 'Overview', icon: Activity },
+    { id: 'tenants', label: 'Tenants', icon: Building2 },
+    { id: 'features', label: 'Feature Flags', icon: Settings },
+    { id: 'ai-skills', label: 'AI Skills', icon: Brain },
+    { id: 'api-keys', label: 'API Keys', icon: Key },
+    { id: 'ai-cost', label: 'AI Cost & Usage', icon: DollarSign },
+    { id: 'compliance', label: 'Platform SOC2', icon: Shield },
+    { id: 'guardian', label: 'Guardian Agent', icon: Shield },
+    { id: 'health', label: 'System Health', icon: Activity },
+    { id: 'audit', label: 'Audit Logs', icon: AlertTriangle }
   ];
 
   return (
     <>
-      {/* Panel renders immediately - animation plays as non-blocking overlay */}
-      <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-teal-600 to-teal-700 border-b border-teal-800 shadow-lg">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
+        {/* Header */}
+        <header className="bg-gradient-to-r from-[#00857a] to-[#006d64] border-b border-[#00554e] shadow-xl">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-white">Envision Atlus Master Panel</h1>
+                <p className="text-sm text-teal-200 mt-1">System-wide tenant and feature management</p>
+              </div>
+              <div className="flex items-center gap-3">
+                {/* WellFit Community Button */}
+                <button
+                  onClick={() => navigate('/dashboard')}
+                  className="flex items-center gap-2 bg-[#8cc63f] hover:bg-[#7ab835] text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-md"
+                >
+                  <Home className="w-4 h-4" />
+                  <span>WellFit Community</span>
+                </button>
+                <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm border border-white/30 px-4 py-2 rounded-lg">
+                  <Shield className="w-5 h-5 text-white" />
+                  <span className="text-sm font-medium text-white">Master Admin</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Personalized Greeting */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
+          <PersonalizedGreeting />
+        </div>
+
+        {/* Tabs */}
+        <div className="bg-slate-800/50 border-b border-slate-700">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <nav className="flex space-x-1 overflow-x-auto py-1" aria-label="Tabs">
+              {tabs.map((tab) => {
+                const Icon = tab.icon;
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as typeof activeTab)}
+                    className={`
+                      flex items-center gap-2 py-3 px-4 rounded-lg font-medium text-sm transition-all duration-200 whitespace-nowrap
+                      ${isActive
+                        ? 'bg-[#00857a] text-white shadow-md'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                      }
+                    `}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <ErrorBanner />
+
+          {activeTab === 'overview' && (
             <div>
-              <h1 className="text-3xl font-bold text-white">Envision Atlus Master Panel</h1>
-              <p className="text-sm text-teal-100 mt-1">System-wide tenant and feature management</p>
+              <SystemMetrics overview={overview} />
+              <EACard>
+                <EACardContent>
+                  <h2 className="text-lg font-semibold text-white mb-4">Quick Actions</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <button
+                      onClick={() => setActiveTab('tenants')}
+                      className="p-4 bg-slate-700/30 border border-slate-600 rounded-lg hover:border-blue-500/50 hover:bg-blue-500/10 transition-all duration-200 text-left"
+                    >
+                      <Building2 className="w-8 h-8 text-blue-400 mb-2" />
+                      <div className="font-medium text-white">Manage Tenants</div>
+                      <div className="text-sm text-slate-400">View and manage all tenants</div>
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('features')}
+                      className="p-4 bg-slate-700/30 border border-slate-600 rounded-lg hover:border-purple-500/50 hover:bg-purple-500/10 transition-all duration-200 text-left"
+                    >
+                      <Settings className="w-8 h-8 text-purple-400 mb-2" />
+                      <div className="font-medium text-white">Feature Flags</div>
+                      <div className="text-sm text-slate-400">Control system features</div>
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('ai-skills')}
+                      className="p-4 bg-slate-700/30 border border-slate-600 rounded-lg hover:border-purple-500/50 hover:bg-purple-500/10 transition-all duration-200 text-left"
+                    >
+                      <Brain className="w-8 h-8 text-purple-400 mb-2" />
+                      <div className="font-medium text-white">AI Skills</div>
+                      <div className="text-sm text-slate-400">Manage AI automation</div>
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('audit')}
+                      className="p-4 bg-slate-700/30 border border-slate-600 rounded-lg hover:border-red-500/50 hover:bg-red-500/10 transition-all duration-200 text-left"
+                    >
+                      <AlertTriangle className="w-8 h-8 text-red-400 mb-2" />
+                      <div className="font-medium text-white">Audit Logs</div>
+                      <div className="text-sm text-slate-400">View security events</div>
+                    </button>
+                  </div>
+                </EACardContent>
+              </EACard>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm border border-white/30 px-4 py-2 rounded-lg">
-                <Shield className="w-5 h-5 text-white" />
-                <span className="text-sm font-medium text-white">Master Admin</span>
-              </div>
-            </div>
-          </div>
+          )}
+
+          {activeTab === 'tenants' && (
+            <TenantManagementPanel
+              onViewTenant={(tenantId) => {
+                SuperAdminService.getAllTenants().then(tenants => {
+                  const tenant = tenants.find(t => t.tenantId === tenantId);
+                  if (tenant) setSelectedTenant(tenant);
+                });
+              }}
+            />
+          )}
+
+          {activeTab === 'features' && <FeatureFlagControlPanel />}
+
+          {activeTab === 'ai-skills' && <AISkillsControlPanel />}
+
+          {activeTab === 'api-keys' && (
+            <Suspense fallback={<div className="flex justify-center items-center h-64 text-slate-400">Loading API Keys...</div>}>
+              <SuperAdminApiKeyManager />
+            </Suspense>
+          )}
+
+          {activeTab === 'ai-cost' && <PlatformAICostDashboard />}
+
+          {activeTab === 'compliance' && <PlatformSOC2Dashboard />}
+
+          {activeTab === 'guardian' && <GuardianMonitoringDashboard />}
+
+          {activeTab === 'health' && <SystemHealthPanel />}
+
+          {activeTab === 'audit' && <AuditLogViewer />}
         </div>
-      </div>
-
-      {/* Personalized Greeting */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <PersonalizedGreeting />
-      </div>
-
-      {/* Tabs */}
-      <div className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex space-x-8" aria-label="Tabs">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              const colorMap: Record<string, { border: string; text: string; bg: string }> = {
-                teal: { border: 'border-teal-500', text: 'text-teal-600', bg: 'bg-teal-50' },
-                blue: { border: 'border-blue-700', text: 'text-blue-700', bg: 'bg-blue-50' },
-                purple: { border: 'border-purple-600', text: 'text-purple-600', bg: 'bg-purple-50' },
-                orange: { border: 'border-orange-500', text: 'text-orange-600', bg: 'bg-orange-50' },
-                emerald: { border: 'border-emerald-600', text: 'text-emerald-600', bg: 'bg-emerald-50' },
-                red: { border: 'border-red-600', text: 'text-red-600', bg: 'bg-red-50' }
-              };
-              const colors = colorMap[tab.color];
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                  className={`
-                    flex items-center gap-2 py-4 px-3 border-b-3 font-medium text-sm transition-all duration-200
-                    ${isActive
-                      ? `${colors.border} ${colors.text} ${colors.bg} rounded-t-lg -mb-px`
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }
-                  `}
-                >
-                  <Icon className="w-5 h-5" />
-                  {tab.label}
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Error Banner with Retry */}
-        <ErrorBanner />
-
-        {activeTab === 'overview' && (
-          <div>
-            <SystemMetrics overview={overview} />
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <button
-                  onClick={() => setActiveTab('tenants')}
-                  className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-700 hover:bg-blue-50 transition-all duration-200 text-left shadow-sm hover:shadow-md"
-                >
-                  <Building2 className="w-8 h-8 text-blue-700 mb-2" />
-                  <div className="font-medium text-gray-900">Manage Tenants</div>
-                  <div className="text-sm text-gray-600">View and manage all tenants</div>
-                </button>
-                <button
-                  onClick={() => setActiveTab('features')}
-                  className="p-4 border-2 border-gray-200 rounded-lg hover:border-purple-600 hover:bg-purple-50 transition-all duration-200 text-left shadow-sm hover:shadow-md"
-                >
-                  <Settings className="w-8 h-8 text-purple-600 mb-2" />
-                  <div className="font-medium text-gray-900">Feature Flags</div>
-                  <div className="text-sm text-gray-600">Control system features</div>
-                </button>
-                <button
-                  onClick={() => setActiveTab('ai-skills')}
-                  className="p-4 border-2 border-gray-200 rounded-lg hover:border-purple-600 hover:bg-purple-50 transition-all duration-200 text-left shadow-sm hover:shadow-md"
-                >
-                  <Brain className="w-8 h-8 text-purple-600 mb-2" />
-                  <div className="font-medium text-gray-900">AI Skills</div>
-                  <div className="text-sm text-gray-600">Manage AI automation</div>
-                </button>
-                <button
-                  onClick={() => setActiveTab('audit')}
-                  className="p-4 border-2 border-gray-200 rounded-lg hover:border-red-600 hover:bg-red-50 transition-all duration-200 text-left shadow-sm hover:shadow-md"
-                >
-                  <AlertTriangle className="w-8 h-8 text-red-600 mb-2" />
-                  <div className="font-medium text-gray-900">Audit Logs</div>
-                  <div className="text-sm text-gray-600">View security events</div>
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'tenants' && (
-          <TenantManagementPanel
-            onViewTenant={(tenantId) => {
-              // Find tenant and show viewer
-              SuperAdminService.getAllTenants().then(tenants => {
-                const tenant = tenants.find(t => t.tenantId === tenantId);
-                if (tenant) setSelectedTenant(tenant);
-              });
-            }}
-          />
-        )}
-
-        {activeTab === 'features' && <FeatureFlagControlPanel />}
-
-        {activeTab === 'ai-skills' && <AISkillsControlPanel />}
-
-        {activeTab === 'api-keys' && (
-          <Suspense fallback={<div className="flex justify-center items-center h-64">Loading API Keys...</div>}>
-            <SuperAdminApiKeyManager />
-          </Suspense>
-        )}
-
-        {activeTab === 'ai-cost' && <PlatformAICostDashboard />}
-
-        {activeTab === 'compliance' && <PlatformSOC2Dashboard />}
-
-        {activeTab === 'guardian' && <GuardianMonitoringDashboard />}
-
-        {activeTab === 'health' && <SystemHealthPanel />}
-
-        {activeTab === 'audit' && <AuditLogViewer />}
-      </div>
 
         {/* Tenant Data Viewer Modal */}
         {selectedTenant && (
@@ -358,9 +352,18 @@ const SuperAdminDashboard: React.FC = () => {
             onClose={() => setSelectedTenant(null)}
           />
         )}
+
+        {/* Footer */}
+        <footer className="border-t border-slate-800 py-4 mt-auto">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <p className="text-xs text-slate-600 text-center">
+              Envision Atlus Master Panel &bull; Powered by Envision VirtualEdge Group
+            </p>
+          </div>
+        </footer>
       </div>
 
-      {/* Vault Animation Overlay - Non-blocking, plays over the dashboard */}
+      {/* Vault Animation Overlay */}
       {showVaultAnimation && (
         <VaultAnimation
           onComplete={() => setShowVaultAnimation(false)}

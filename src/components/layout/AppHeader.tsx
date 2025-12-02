@@ -3,21 +3,49 @@ import { useLocation } from 'react-router-dom';
 import GlobalHeader from './GlobalHeader';
 import WelcomeHeader from './WelcomeHeader';
 
-// Optional: a slimmer admin header (currently unused, kept for future)
-// function AdminHeader() {
-//   return (
-//     <header className="w-full bg-gray-900 text-white shadow-md">
-//       <div className="max-w-7xl mx-auto h-12 px-4 flex items-center justify-between">
-//         <div className="font-semibold tracking-tight">Admin Console</div>
-//         <div className="text-xs opacity-80">WellFit • Secure Area</div>
-//       </div>
-//     </header>
-//   );
-// }
+const WELCOME_ROUTES = ['/', '/welcome'];
+const AUTH_ROUTES = ['/login', '/register', '/verify', '/admin-login', '/reset-password', '/change-password'];
 
-const WELCOME_ROUTES = ['/', '/welcome']; // add others if needed
-const AUTH_ROUTES = ['/login', '/register', '/verify', '/admin-login', '/reset-password', '/change-password']; // auth pages with no header
-const ADMIN_PREFIX = '/admin';
+// Routes that have their own AdminHeader (Envision Atlus clinical panels)
+// These routes should NOT show the GlobalHeader to avoid double-header
+const ENVISION_ATLUS_ROUTES = [
+  '/admin',
+  '/super-admin',
+  '/tenant-selector',
+  '/multi-tenant-monitor',
+  '/nurse-dashboard',
+  '/physician-dashboard',
+  '/case-manager',
+  '/social-worker',
+  '/enroll-senior',
+  '/admin-questions',
+  '/billing',
+  '/photo-approval',
+  '/neuro-suite',
+  '/physical-therapy',
+  '/care-coordination',
+  '/referrals',
+  '/questionnaire-analytics',
+  '/memory-clinic',
+  '/mental-health',
+  '/frequent-flyer',
+  '/revenue-dashboard',
+  '/shift-handoff',
+  '/discharged-patients',
+  '/specialist-dashboard',
+  '/field-visit',
+  '/fhir-conflicts',
+  '/ems-metrics',
+  '/coordinated-response',
+  '/envision',
+  '/time-clock-admin',
+  '/tenant-it',
+  '/admin-settings',
+  '/audit-logs',
+  '/system-admin',
+  '/healthcare-algorithms',
+  '/ai-revenue',
+];
 
 export default function AppHeader() {
   const { pathname } = useLocation();
@@ -30,13 +58,14 @@ export default function AppHeader() {
     (p) => pathname === p || pathname.startsWith(`${p}/`)
   );
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const isAdmin = pathname === ADMIN_PREFIX || pathname.startsWith(`${ADMIN_PREFIX}/`);
+  // Check if this is an Envision Atlus clinical route (has its own AdminHeader)
+  const isEnvisionAtlus = ENVISION_ATLUS_ROUTES.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`)
+  );
 
   if (isWelcome) return <WelcomeHeader />;
-  if (isAuthPage) return null; // No header on auth pages
+  if (isAuthPage) return null;
+  if (isEnvisionAtlus) return null; // Envision Atlus routes have their own header
 
-  // Choose one of these two lines:
-  // return isAdmin ? <AdminHeader /> : <GlobalHeader />;   // distinct admin header
-  return <GlobalHeader />;                                  // reuse global header everywhere else
+  return <GlobalHeader />;
 }
