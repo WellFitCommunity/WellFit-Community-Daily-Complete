@@ -280,6 +280,61 @@ When asked to "clean up" or reduce "tech debt":
 - Only modify what is necessary to complete the task
 - Preserve existing functionality unless explicitly asked to change it
 
+### Component Testing Requirements - MANDATORY
+**When creating a new React component, you MUST create a corresponding test file.**
+
+**Test File Location:**
+- For component at `src/components/admin/MyComponent.tsx`
+- Create test at `src/components/admin/__tests__/MyComponent.test.tsx`
+
+**Minimum Test Coverage Required:**
+1. **Rendering tests** - Component renders without crashing
+2. **Loading state tests** - Loading skeleton/spinner displays correctly
+3. **Data display tests** - Data from API renders in UI
+4. **Error handling tests** - Errors are caught and displayed gracefully
+5. **User interaction tests** - Buttons, forms, filters work correctly
+
+**Test File Template:**
+```typescript
+import React from 'react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { MyComponent } from '../MyComponent';
+
+// Mock the AuthContext
+const mockSupabaseClient = {
+  from: jest.fn(),
+  rpc: jest.fn(),
+};
+
+jest.mock('../../../contexts/AuthContext', () => ({
+  useSupabaseClient: () => mockSupabaseClient,
+}));
+
+describe('MyComponent', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should render without crashing', () => {
+    render(<MyComponent />);
+    expect(screen.getByText(/expected text/i)).toBeInTheDocument();
+  });
+
+  // Add more tests...
+});
+```
+
+**DO NOT skip tests when:**
+- Creating any component in `src/components/`
+- Creating any page in `src/pages/`
+- Adding significant new functionality
+
+**Exceptions (tests optional):**
+- Pure utility functions without React (still encouraged)
+- Simple wrapper components with no logic
+- Temporary/debug components
+
 ### UI/UX Requirements
 - **Always ensure UI/UX remains in working order** after any changes
 - Test visual components after modifications

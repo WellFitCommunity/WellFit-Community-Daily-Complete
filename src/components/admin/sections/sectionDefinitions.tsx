@@ -30,6 +30,7 @@ const TenantAuditLogs = lazy(() => import('../TenantAuditLogs'));
 const TenantComplianceReport = lazy(() => import('../TenantComplianceReport'));
 const TenantModuleConfigPanel = lazy(() => import('../TenantModuleConfigPanel').then(m => ({ default: m.TenantModuleConfigPanel })));
 const FacilityManagementPanel = lazy(() => import('../FacilityManagementPanel'));
+const StaffFinancialSavingsTracker = lazy(() => import('../StaffFinancialSavingsTracker'));
 
 // Loading fallback for lazy-loaded sections
 export const SectionLoadingFallback: React.FC = () => (
@@ -122,6 +123,17 @@ export const getAllSections = (): DashboardSection[] => [
     component: <Suspense fallback={<SectionLoadingFallback />}><BillingDashboard /></Suspense>,
     category: 'revenue',
     priority: 'medium',
+  },
+  {
+    id: 'staff-financial-savings',
+    title: 'Staff Financial Savings Tracker',
+    subtitle: 'Track cost savings by nurse, position, and department for budgetary analysis',
+    icon: '💵',
+    headerColor: 'text-emerald-800',
+    component: <Suspense fallback={<SectionLoadingFallback />}><StaffFinancialSavingsTracker /></Suspense>,
+    category: 'revenue',
+    priority: 'high',
+    roles: ['admin', 'super_admin', 'finance', 'billing_specialist'],
   },
 
   // ==================== PATIENT CARE ====================

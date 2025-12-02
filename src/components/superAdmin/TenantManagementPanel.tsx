@@ -33,7 +33,8 @@ import {
   Filter,
   Search,
   Calendar,
-  Shield
+  Shield,
+  DollarSign
 } from 'lucide-react';
 import { auditLogger } from '../../services/auditLogger';
 import { SuperAdminTenantModuleConfig } from './SuperAdminTenantModuleConfig';
@@ -134,6 +135,7 @@ const TenantManagementPanel: React.FC<TenantManagementPanelProps> = ({ onViewTen
     const active = tenants.filter(t => !t.isSuspended).length;
     const suspended = tenants.filter(t => t.isSuspended).length;
     const totalUsers = tenants.reduce((sum, t) => sum + (t.userCount || 0), 0);
+    const totalSavings = tenants.reduce((sum, t) => sum + (t.totalSavings || 0), 0);
     const wellfitOnly = tenants.filter(t => {
       const p = t.licensedProducts || [];
       return p.includes('wellfit') && !p.includes('atlus');
@@ -147,7 +149,7 @@ const TenantManagementPanel: React.FC<TenantManagementPanelProps> = ({ onViewTen
       return p.includes('wellfit') && p.includes('atlus');
     }).length;
 
-    return { active, suspended, totalUsers, wellfitOnly, atlusOnly, both };
+    return { active, suspended, totalUsers, totalSavings, wellfitOnly, atlusOnly, both };
   }, [tenants]);
 
   const getProductBadges = (products: LicensedProduct[]) => {
@@ -310,7 +312,7 @@ const TenantManagementPanel: React.FC<TenantManagementPanelProps> = ({ onViewTen
 
           <EACardContent>
             {/* Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-6">
               <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-700">
                 <div className="flex items-center gap-2 mb-2">
                   <CheckCircle className="w-4 h-4 text-green-500" />
@@ -331,6 +333,13 @@ const TenantManagementPanel: React.FC<TenantManagementPanelProps> = ({ onViewTen
                   <span className="text-xs text-slate-400">Total Users</span>
                 </div>
                 <div className="text-2xl font-bold text-white">{stats.totalUsers.toLocaleString()}</div>
+              </div>
+              <div className="bg-slate-900/50 p-4 rounded-lg border border-emerald-500/30">
+                <div className="flex items-center gap-2 mb-2">
+                  <DollarSign className="w-4 h-4 text-emerald-400" />
+                  <span className="text-xs text-slate-400">Total Saved</span>
+                </div>
+                <div className="text-2xl font-bold text-emerald-400">${stats.totalSavings.toLocaleString()}</div>
               </div>
               <div className="bg-slate-900/50 p-4 rounded-lg border border-green-500/30">
                 <div className="flex items-center gap-2 mb-2">
@@ -534,7 +543,7 @@ const TenantManagementPanel: React.FC<TenantManagementPanelProps> = ({ onViewTen
                 </div>
 
                 {/* Stats Row */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t border-slate-700">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-4 pt-4 border-t border-slate-700">
                   <div>
                     <div className="text-xs text-slate-500 mb-1">Users</div>
                     <div className="text-lg font-semibold text-white">
@@ -551,6 +560,15 @@ const TenantManagementPanel: React.FC<TenantManagementPanelProps> = ({ onViewTen
                       {tenant.maxPatients && (
                         <span className="text-xs text-slate-500 font-normal"> / {tenant.maxPatients.toLocaleString()}</span>
                       )}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500 mb-1 flex items-center gap-1">
+                      <DollarSign className="w-3 h-3" />
+                      Total Saved
+                    </div>
+                    <div className="text-lg font-semibold text-emerald-400">
+                      ${(tenant.totalSavings ?? 0).toLocaleString()}
                     </div>
                   </div>
                   <div>

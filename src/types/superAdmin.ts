@@ -205,6 +205,7 @@ export interface TenantWithStatus {
   licenseEndDate?: string;
   modules?: Record<string, any>;
   createdAt: string;
+  totalSavings?: number; // Total cost savings for this tenant
 }
 
 // ============================================================================
