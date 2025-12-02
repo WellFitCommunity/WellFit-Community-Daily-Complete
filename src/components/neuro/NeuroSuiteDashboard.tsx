@@ -4,17 +4,20 @@
  * Features:
  * - Active stroke patients monitoring
  * - Dementia care patient list
+ * - Parkinson's disease tracking (UPDRS, medications, DBS)
  * - Fall detection alerts from wearables
  * - NIHSS tracking timeline
  * - Cognitive decline monitoring
  * - Caregiver burden alerts
  *
- * For: Neurologists, Stroke Coordinators, Memory Clinic Staff
+ * For: Neurologists, Stroke Coordinators, Memory Clinic Staff, Movement Disorder Specialists
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { NeuroSuiteService } from '../../services/neuroSuiteService';
+import { ParkinsonsService } from '../../services/parkinsonsService';
 import { useAuth } from '../../contexts/AuthContext';
+import type { ParkinsonsDashboardMetrics, ParkinsonsPatientSummary } from '../../types/parkinsons';
 
 interface PatientAlert {
   patientId: string;
@@ -31,7 +34,11 @@ export const NeuroSuiteDashboard: React.FC = () => {
   const [dementiaPatients, setDementiaPatients] = useState<any[]>([]);
   const [recentAlerts, setRecentAlerts] = useState<PatientAlert[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'stroke' | 'dementia' | 'alerts' | 'wearables'>('stroke');
+  const [activeTab, setActiveTab] = useState<'stroke' | 'dementia' | 'parkinsons' | 'alerts' | 'wearables'>('stroke');
+
+  // Parkinson's state
+  const [parkinsonsMetrics, setParkinsonsMetrics] = useState<ParkinsonsDashboardMetrics | null>(null);
+  const [parkinsonsPatients, setParkinsonsPatients] = useState<ParkinsonsPatientSummary[]>([]);
 
   const loadDashboardData = useCallback(async () => {
     if (!user) return;
@@ -63,6 +70,17 @@ export const NeuroSuiteDashboard: React.FC = () => {
           timestamp: new Date().toISOString(),
         }));
         setRecentAlerts((prev) => [...prev, ...caregiverAlerts]);
+      }
+
+      // Load Parkinson's data
+      const parkinsonsMetricsResponse = await ParkinsonsService.getDashboardMetrics(user.id);
+      if (parkinsonsMetricsResponse.success && parkinsonsMetricsResponse.data) {
+        setParkinsonsMetrics(parkinsonsMetricsResponse.data);
+      }
+
+      const parkinsonsPatientsResponse = await ParkinsonsService.getPatientSummaries(user.id);
+      if (parkinsonsPatientsResponse.success && parkinsonsPatientsResponse.data) {
+        setParkinsonsPatients(parkinsonsPatientsResponse.data);
       }
     } catch (error) {
 
@@ -148,8 +166,8 @@ export const NeuroSuiteDashboard: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex space-x-4 border-b-2 border-gray-200">
-        {['stroke', 'dementia', 'alerts', 'wearables'].map((tab) => (
+      <div className="flex space-x-4 border-b-2 border-gray-200 overflow-x-auto">
+        {['stroke', 'dementia', 'parkinsons', 'alerts', 'wearables'].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab as typeof activeTab)}
@@ -264,6 +282,161 @@ export const NeuroSuiteDashboard: React.FC = () => {
         </div>
       )}
 
+      {activeTab === 'parkinsons' && (
+        <div className="space-y-6">
+          {/* Parkinson's Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-indigo-600">
+              <div className="text-gray-600 text-sm mb-1">PD Patients</div>
+              <div className="text-3xl font-bold">{parkinsonsMetrics?.totalPatients || 0}</div>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-green-600">
+              <div className="text-gray-600 text-sm mb-1">On DBS</div>
+              <div className="text-3xl font-bold">{parkinsonsMetrics?.patientsOnDBS || 0}</div>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-yellow-600">
+              <div className="text-gray-600 text-sm mb-1">Avg UPDRS Score</div>
+              <div className="text-3xl font-bold">{parkinsonsMetrics?.averageUPDRSScore || '--'}</div>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-red-600">
+              <div className="text-gray-600 text-sm mb-1">High Risk (H&Y 3+)</div>
+              <div className="text-3xl font-bold">{parkinsonsMetrics?.highRiskPatients || 0}</div>
+            </div>
+          </div>
+
+          {/* Parkinson's Patient List */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold">Parkinson's Patients</h2>
+              <button className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
+                + Enroll Patient
+              </button>
+            </div>
+            {parkinsonsPatients.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="min-w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Patient
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        H&Y Stage
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Last UPDRS
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Medications
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        DBS
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Risk
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {parkinsonsPatients.map((patient) => (
+                      <tr key={patient.patient_id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="font-medium text-gray-900">{patient.patient_name}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-800">
+                            Stage {patient.hoehn_yahr_stage || '--'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="font-bold text-lg">{patient.last_updrs_score ?? '--'}</span>
+                          {patient.last_updrs_date && (
+                            <div className="text-xs text-gray-500">
+                              {new Date(patient.last_updrs_date).toLocaleDateString()}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {patient.medication_count} active
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {patient.has_dbs ? (
+                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                              Yes
+                            </span>
+                          ) : (
+                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                              No
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                              patient.risk_level === 'high'
+                                ? 'bg-red-100 text-red-800'
+                                : patient.risk_level === 'moderate'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-green-100 text-green-800'
+                            }`}
+                          >
+                            {patient.risk_level}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <button className="text-blue-600 hover:text-blue-900 font-medium mr-3">
+                            View
+                          </button>
+                          <button className="text-indigo-600 hover:text-indigo-900 font-medium">
+                            UPDRS
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-500">No Parkinson's patients enrolled</p>
+                <p className="text-gray-400 text-sm mt-2">
+                  Click &quot;Enroll Patient&quot; to add patients to the PD tracking program
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* ROBERT & FORBES Framework Info */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg shadow-md p-6">
+              <h3 className="text-lg font-bold text-indigo-800 mb-3">ROBERT Framework</h3>
+              <ul className="text-sm space-y-2 text-gray-700">
+                <li><span className="font-bold text-indigo-600">R</span>hythm & Movement Monitoring</li>
+                <li><span className="font-bold text-indigo-600">O</span>ptimization of Medication</li>
+                <li><span className="font-bold text-indigo-600">B</span>radykinesia & Rigidity Tracking</li>
+                <li><span className="font-bold text-indigo-600">E</span>xercise & Physical Therapy</li>
+                <li><span className="font-bold text-indigo-600">R</span>eal-time Wearable Monitoring</li>
+                <li><span className="font-bold text-indigo-600">T</span>herapeutic Interventions</li>
+              </ul>
+            </div>
+            <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg shadow-md p-6">
+              <h3 className="text-lg font-bold text-blue-800 mb-3">FORBES Framework</h3>
+              <ul className="text-sm space-y-2 text-gray-700">
+                <li><span className="font-bold text-blue-600">F</span>unctional Assessment (Freezing, Falls)</li>
+                <li><span className="font-bold text-blue-600">O</span>ngoing Clinical Monitoring</li>
+                <li><span className="font-bold text-blue-600">R</span>ehabilitation (LSVT BIG/LOUD)</li>
+                <li><span className="font-bold text-blue-600">B</span>ehavioral & Cognitive Screening</li>
+                <li><span className="font-bold text-blue-600">E</span>ducation & Caregiver Support</li>
+                <li><span className="font-bold text-blue-600">S</span>peech & Swallowing Evaluation</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
       {activeTab === 'alerts' && (
         <div className="space-y-6">
           <div className="bg-white rounded-lg shadow-md p-6">
@@ -332,7 +505,7 @@ export const NeuroSuiteDashboard: React.FC = () => {
       {/* Quick Actions */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg shadow-lg p-6 text-white">
         <h2 className="text-xl font-bold mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <button className="bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg p-4 text-center transition">
             <div className="text-2xl mb-2">📝</div>
             <div className="font-semibold">New Stroke Assessment</div>
@@ -341,9 +514,16 @@ export const NeuroSuiteDashboard: React.FC = () => {
             <div className="text-2xl mb-2">🧠</div>
             <div className="font-semibold">Cognitive Screening</div>
           </button>
-          <button className="bg-white bg-opacity-30 hover:bg-opacity-30 rounded-lg p-4 text-center transition">
+          <button className="bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg p-4 text-center transition">
             <div className="text-2xl mb-2">👨‍👩‍👧</div>
             <div className="font-semibold">Caregiver Assessment</div>
+          </button>
+          <button
+            onClick={() => setActiveTab('parkinsons')}
+            className="bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg p-4 text-center transition"
+          >
+            <div className="text-2xl mb-2">🤲</div>
+            <div className="font-semibold">Parkinson&apos;s UPDRS</div>
           </button>
           <button className="bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg p-4 text-center transition">
             <div className="text-2xl mb-2">📊</div>
