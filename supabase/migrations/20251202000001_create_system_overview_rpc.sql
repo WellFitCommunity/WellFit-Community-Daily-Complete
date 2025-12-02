@@ -30,8 +30,8 @@ BEGIN
     'active_tenants', (SELECT COUNT(*) FROM tenants WHERE status = 'active'),
     'suspended_tenants', (SELECT COUNT(*) FROM tenants WHERE status = 'suspended'),
     'total_users', (SELECT COUNT(*) FROM profiles),
-    'total_patients', (SELECT COUNT(*) FROM profiles WHERE role_code IN (1, 4, 19)),
-    'total_staff', (SELECT COUNT(*) FROM profiles WHERE role_code IN (2, 3, 7, 8, 9, 10)),
+    'total_patients', (SELECT COUNT(*) FROM profiles WHERE role_code IN (4, 19)),
+    'total_staff', (SELECT COUNT(*) FROM profiles WHERE role_code IN (1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 13)),
     'total_check_ins_today', (
       SELECT COUNT(*) FROM check_ins
       WHERE created_at >= CURRENT_DATE
