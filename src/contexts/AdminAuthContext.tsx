@@ -24,6 +24,9 @@ interface AdminAuthContextType {
   verifyPinAndLogin: (pin: string, role: StaffRole) => Promise<boolean>;
   logoutAdmin: () => void;
 
+  // Super admin bypass (for Envision portal users)
+  autoAuthenticateAsSuperAdmin: () => Promise<boolean>;
+
   // Permission checks
   hasAccess: (requiredRole: StaffRole) => boolean;
   canViewNurse: boolean;
@@ -256,6 +259,79 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Auto-authenticate super admins coming from Envision portal (no PIN required)
+  const autoAuthenticateAsSuperAdmin = useCallback(async (): Promise<boolean> => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      // Check if user has an active Supabase session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setError('No active session. Please log in first.');
+        return false;
+      }
+
+      // Verify this user is actually a super_admin in the database
+      const { data: superAdminRecord, error: saError } = await supabase
+        .from('super_admin_users')
+        .select('id, user_id, is_active, role')
+        .eq('user_id', session.user.id)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (saError || !superAdminRecord) {
+        await import('../services/auditLogger').then(({ auditLogger }) =>
+          auditLogger.warn('SUPER_ADMIN_AUTO_AUTH_DENIED', {
+            userId: session.user.id,
+            userEmail: session.user.email,
+            reason: saError?.message || 'Not a super admin'
+          })
+        );
+        setError('You are not authorized as a super admin.');
+        return false;
+      }
+
+      // Set 8-hour session (standard work day)
+      const expiresAt = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString();
+
+      setIsAdminAuthenticated(true);
+      setAdminRole('super_admin');
+      setExpiresAt(expiresAt);
+      persistSession(true, 'super_admin', expiresAt);
+      scheduleExpiryTimer(expiresAt);
+
+      // Note: No admin_token for this flow - super admins use their Supabase session directly
+      // This means invokeAdminFunction won't work, but super admins have direct DB access anyway
+      adminTokenRef.current = null;
+      adminTokenRefGlobal.current = null;
+
+      // Fetch access scopes
+      const scopes = await fetchAccessScopes(session.user.id);
+      setAccessScopes(scopes);
+
+      await import('../services/auditLogger').then(({ auditLogger }) =>
+        auditLogger.info('SUPER_ADMIN_AUTO_AUTH_SUCCESS', {
+          userId: session.user.id,
+          userEmail: session.user.email,
+          expiresAt,
+          method: 'envision_portal_bypass'
+        })
+      );
+
+      return true;
+    } catch (e: any) {
+      await import('../services/auditLogger').then(({ auditLogger }) =>
+        auditLogger.error('SUPER_ADMIN_AUTO_AUTH_ERROR', e, {
+          errorMessage: e?.message
+        })
+      );
+      setError(e?.message || 'Auto-authentication failed.');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [fetchAccessScopes]);
+
   const logoutAdmin = useCallback(() => {
     setIsAdminAuthenticated(false);
     setAdminRole(null);
@@ -315,6 +391,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         error,
         verifyPinAndLogin,
         logoutAdmin,
+        autoAuthenticateAsSuperAdmin,
         hasAccess,
         canViewNurse,
         canViewPhysician,
