@@ -11,6 +11,9 @@ export interface FeatureFlags {
   wearableIntegration: boolean;
   physicalTherapy: boolean;
 
+  // Healthcare Integrations
+  healthcareIntegrations: boolean;
+
   // Population Health
   frequentFlyers: boolean;
   dischargeTracking: boolean;
@@ -61,6 +64,9 @@ const getFeatureFlags = (): FeatureFlags => {
     neuroSuite: env.REACT_APP_FEATURE_NEURO_SUITE === 'true',
     wearableIntegration: env.REACT_APP_FEATURE_WEARABLES === 'true',
     physicalTherapy: env.REACT_APP_FEATURE_PHYSICAL_THERAPY === 'true',
+
+    // Healthcare Integrations (default: disabled)
+    healthcareIntegrations: env.REACT_APP_FEATURE_HEALTHCARE_INTEGRATIONS === 'true',
 
     // Population Health (default: disabled)
     frequentFlyers: env.REACT_APP_FEATURE_FREQUENT_FLYERS === 'true',
