@@ -92,12 +92,21 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
 
   if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !VERIFY_SID) {
-    logger.error("Missing Twilio environment variables");
+    logger.error("Missing Twilio environment variables", {
+      hasAccountSid: !!TWILIO_ACCOUNT_SID,
+      hasAuthToken: !!TWILIO_AUTH_TOKEN,
+      hasVerifySid: !!VERIFY_SID
+    });
     return new Response(
       JSON.stringify({ error: "SMS service not configured" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
+
+  logger.info("Twilio config loaded", {
+    verifySidPrefix: VERIFY_SID.substring(0, 4),
+    accountSidPrefix: TWILIO_ACCOUNT_SID.substring(0, 4)
+  });
 
   try {
     const body = await req.json().catch(() => ({}));
@@ -132,12 +141,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const phoneDigits = normalizedPhone.replace(/\D/g, ''); // e.g., "15551234567"
     const phoneWithoutCountry = phoneDigits.startsWith('1') ? phoneDigits.slice(1) : phoneDigits; // e.g., "5551234567"
 
-    const { data: profile, error: profileError } = await supabase
+    const { data: profiles, error: profileError } = await supabase
       .from('profiles')
       .select('id, user_id, phone, is_admin, tenant_id')
       .eq('is_admin', true)
       .or(`phone.eq.${normalizedPhone},phone.eq.${phoneDigits},phone.eq.${phoneWithoutCountry},phone.eq.+1${phoneWithoutCountry}`)
-      .single();
+      .limit(1);
+
+    const profile = profiles?.[0] || null;
 
     // IMPORTANT: Always return generic success to prevent phone enumeration
     const genericSuccessResponse = new Response(
@@ -150,12 +161,19 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     if (profileError || !profile) {
       // Log for debugging but return generic success
-      logger.info("PIN reset requested for non-admin phone", {
+      logger.info("PIN reset requested - profile not found", {
         phoneLastFour: normalizedPhone.slice(-4),
+        searchedFormats: [normalizedPhone, phoneDigits, phoneWithoutCountry],
         error: profileError?.message
       });
       return genericSuccessResponse;
     }
+
+    logger.info("Profile found for PIN reset", {
+      userId: profile.user_id,
+      phoneInDb: profile.phone?.slice(-4),
+      isAdmin: profile.is_admin
+    });
 
     // Check rate limit: count reset requests in last hour
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
