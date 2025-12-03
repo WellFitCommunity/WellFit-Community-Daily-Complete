@@ -16,6 +16,7 @@
 
 import {
   HL7Message,
+  HL7MessageBase,
   ADTMessage,
   ORUMessage,
   ORMMessage,
@@ -332,7 +333,7 @@ export class HL7ToFHIRTranslator {
    * Translate any HL7 message to FHIR resources
    * @returns ServiceResult with FHIR bundle and resources or error
    */
-  translate(message: HL7Message): ServiceResult<FHIRTranslationSuccess> {
+  translate(message: HL7MessageBase): ServiceResult<FHIRTranslationSuccess> {
     const resources: FHIRResource[] = [];
     const warnings: string[] = [];
     const sourceMessageId = message.header.messageControlId;
@@ -378,15 +379,11 @@ export class HL7ToFHIRTranslator {
       };
 
       // Log successful translation
-      auditLogger.log({
-        action: 'HL7_TO_FHIR_TRANSLATION',
-        resourceType: 'HL7Message',
-        details: {
-          messageType,
-          messageControlId: message.header.messageControlId,
-          resourceCount: resources.length,
-          warningCount: warnings.length,
-        },
+      auditLogger.clinical('HL7_TO_FHIR_TRANSLATION', true, {
+        messageType,
+        messageControlId: message.header.messageControlId,
+        resourceCount: resources.length,
+        warningCount: warnings.length,
       });
 
       return success({
@@ -399,10 +396,8 @@ export class HL7ToFHIRTranslator {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown translation error';
 
-      auditLogger.logSecurityEvent({
-        eventType: 'HL7_TRANSLATION_ERROR',
-        severity: 'MEDIUM',
-        details: { error: errorMessage },
+      auditLogger.security('HL7_TRANSLATION_ERROR', 'medium', {
+        error: errorMessage,
       });
 
       return failure(

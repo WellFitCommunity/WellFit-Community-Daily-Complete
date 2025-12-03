@@ -6,5 +6,6 @@
  */
 
 export { HL7Parser, hl7Parser } from './HL7Parser';
-export { HL7ToFHIRTranslator, createHL7ToFHIRTranslator, TranslationResult } from './HL7ToFHIRTranslator';
+export { HL7ToFHIRTranslator, createHL7ToFHIRTranslator } from './HL7ToFHIRTranslator';
+export type { TranslationResult } from './HL7ToFHIRTranslator';
 export * from '../../types/hl7v2';

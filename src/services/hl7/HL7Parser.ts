@@ -18,6 +18,7 @@
 
 import {
   HL7Message,
+  HL7MessageBase,
   HL7Segment,
   HL7Delimiters,
   HL7ParseError,
@@ -39,7 +40,7 @@ import {
   ADTEventType,
   ORUEventType,
 } from '../../types/hl7v2';
-import { ServiceResult, success, failure, ServiceErrorCode } from '../_base';
+import { ServiceResult, success, failure } from '../_base';
 import { auditLogger } from '../auditLogger';
 import { SegmentParsers } from './parsers/segmentParsers';
 
@@ -50,7 +51,7 @@ const MLLP_END = '\x1C\x0D'; // File Separator + Carriage Return
 /**
  * Extended success data that includes parse warnings
  */
-export interface HL7ParseSuccess<T extends HL7Message = HL7Message> {
+export interface HL7ParseSuccess<T extends HL7MessageBase = HL7Message> {
   message: T;
   warnings: HL7ParseError[];
   rawMessage: string;
@@ -153,10 +154,8 @@ export class HL7Parser {
         rawMessage,
       });
     } catch (error) {
-      auditLogger.logSecurityEvent({
-        eventType: 'HL7_PARSE_ERROR',
-        severity: 'HIGH',
-        details: { error: error instanceof Error ? error.message : 'Unknown error' },
+      auditLogger.security('HL7_PARSE_ERROR', 'high', {
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
 
       return failure(

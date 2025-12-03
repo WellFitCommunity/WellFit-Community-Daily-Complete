@@ -779,9 +779,9 @@ export interface DateRange {
 // ============================================================================
 
 /**
- * Parsed HL7 v2.x Message
+ * Base HL7 v2.x Message (without orders - allows ORM to override)
  */
-export interface HL7Message {
+export interface HL7MessageBase {
   raw: string;
   delimiters: HL7Delimiters;
   header: MSHSegment;
@@ -794,11 +794,17 @@ export interface HL7Message {
   patientVisitAdditional?: PV2Segment;
   observations?: OBXSegment[];
   observationRequests?: OBRSegment[];
-  orders?: ORCSegment[];
   diagnoses?: DG1Segment[];
   allergies?: AL1Segment[];
   insurance?: IN1Segment[];
   notes?: NTESegment[];
+}
+
+/**
+ * Parsed HL7 v2.x Message
+ */
+export interface HL7Message extends HL7MessageBase {
+  orders?: ORCSegment[];
 }
 
 export type HL7Segment =
@@ -813,6 +819,8 @@ export type HL7Segment =
   | AL1Segment
   | IN1Segment
   | NTESegment
+  | MSASegment
+  | ERRSegment
   | GenericSegment;
 
 export interface GenericSegment {
@@ -853,8 +861,9 @@ export interface ORUMessage extends HL7Message {
 
 /**
  * ORM Message Structure (Orders)
+ * Extends HL7MessageBase to allow different orders structure
  */
-export interface ORMMessage extends HL7Message {
+export interface ORMMessage extends HL7MessageBase {
   messageType: 'ORM';
   eventType: ORMEventType;
   patientIdentification?: PIDSegment;
