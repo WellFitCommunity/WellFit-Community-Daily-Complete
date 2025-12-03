@@ -185,10 +185,28 @@ GRANT EXECUTE ON FUNCTION is_super_admin() TO authenticated;
 -- 6. VERIFICATION
 -- ============================================================================
 
+-- ============================================================================
+-- 7. FIX TABLE GRANTS - authenticated role needs SELECT/INSERT/UPDATE/DELETE
+-- ============================================================================
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON super_admin_users TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON system_feature_flags TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON system_health_checks TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON super_admin_audit_log TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON system_metrics TO authenticated;
+
+-- Drop old conflicting policies
+DROP POLICY IF EXISTS super_admin_full_access_feature_flags ON system_feature_flags;
+
+-- ============================================================================
+-- 8. VERIFICATION
+-- ============================================================================
+
 DO $$
 BEGIN
   RAISE NOTICE 'RLS Infinite Recursion Fix Complete!';
   RAISE NOTICE '- Created is_super_admin_bypass(UUID) function';
   RAISE NOTICE '- Fixed super_admin_users policies to avoid recursion';
   RAISE NOTICE '- Updated all dependent table policies';
+  RAISE NOTICE '- Fixed grants for authenticated role';
 END $$;

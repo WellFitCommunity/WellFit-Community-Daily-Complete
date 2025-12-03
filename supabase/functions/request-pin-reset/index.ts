@@ -141,14 +141,22 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const phoneDigits = normalizedPhone.replace(/\D/g, ''); // e.g., "15551234567"
     const phoneWithoutCountry = phoneDigits.startsWith('1') ? phoneDigits.slice(1) : phoneDigits; // e.g., "5551234567"
 
+    // Search with LIKE to handle any format that contains these digits
     const { data: profiles, error: profileError } = await supabase
       .from('profiles')
       .select('id, user_id, phone, is_admin, tenant_id')
       .eq('is_admin', true)
-      .or(`phone.eq.${normalizedPhone},phone.eq.${phoneDigits},phone.eq.${phoneWithoutCountry},phone.eq.+1${phoneWithoutCountry}`)
+      .like('phone', `%${phoneWithoutCountry}%`)
       .limit(1);
 
     const profile = profiles?.[0] || null;
+
+    logger.info("Profile search result", {
+      phoneSearched: phoneWithoutCountry,
+      found: !!profile,
+      profileCount: profiles?.length || 0,
+      error: profileError?.message
+    });
 
     // IMPORTANT: Always return generic success to prevent phone enumeration
     const genericSuccessResponse = new Response(
