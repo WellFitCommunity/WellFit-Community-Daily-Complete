@@ -84,10 +84,13 @@ const ConsentPhotoPage: React.FC = () => {
       const { error: dbError } = await supabase.from('privacy_consent').insert([
         {
           user_id: userId,
+          consent_type: 'photo',
           first_name: fn,
           last_name: ln,
           file_path: filePath,
           signed_at: new Date().toISOString(),
+          consented: true,
+          consent_method: 'electronic_signature',
         },
       ]);
       if (dbError) {

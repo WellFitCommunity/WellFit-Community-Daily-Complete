@@ -107,7 +107,7 @@ export const nextRouteForUserResult = withServiceWrapper(
 
     // Check standard profile completion first
     if (data.force_password_change) return '/change-password';
-    if (!data.consent) return '/consent';
+    if (!data.consent) return '/consent-photo';
     if (!data.demographics_complete) return '/demographics';
 
     // Role-based routing after profile completion

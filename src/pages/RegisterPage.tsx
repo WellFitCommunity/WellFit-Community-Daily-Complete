@@ -383,7 +383,27 @@ const RegisterPage: React.FC = () => {
           <p className="text-xs text-gray-500 mt-1">Admins/moderators are created internally only.</p>
         </div>
 
-        {/* Terms and Privacy Agreement */}
+        {/* Terms and Privacy - View Buttons */}
+        <div className="flex gap-2">
+          <a
+            href="/terms"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 py-2 px-4 text-center text-sm font-medium border-2 border-blue-600 text-blue-600 rounded hover:bg-blue-50 transition-colors"
+          >
+            View Terms of Service
+          </a>
+          <a
+            href="/privacy-policy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 py-2 px-4 text-center text-sm font-medium border-2 border-blue-600 text-blue-600 rounded hover:bg-blue-50 transition-colors"
+          >
+            View Privacy Policy
+          </a>
+        </div>
+
+        {/* Terms and Privacy Agreement Checkbox */}
         <div className="flex items-start gap-2 p-3 border border-gray-300 rounded bg-gray-50">
           <input
             type="checkbox"
@@ -394,24 +414,7 @@ const RegisterPage: React.FC = () => {
             aria-describedby="terms-text"
           />
           <label htmlFor="agreedToTerms" id="terms-text" className="text-sm text-gray-700">
-            I have read and agree to the{' '}
-            <a
-              href="/terms"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 underline hover:text-blue-800"
-            >
-              Terms of Service
-            </a>
-            {' '}and{' '}
-            <a
-              href="/privacy-policy"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 underline hover:text-blue-800"
-            >
-              Privacy Policy
-            </a>
+            I have read and agree to the Terms of Service and Privacy Policy
           </label>
         </div>
 
