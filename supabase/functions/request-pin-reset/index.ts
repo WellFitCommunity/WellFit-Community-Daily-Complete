@@ -128,11 +128,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     // Look up admin user by phone
     // Check profiles table for is_admin = true and matching phone
+    // Try multiple phone formats since DB may store differently
+    const phoneDigits = normalizedPhone.replace(/\D/g, ''); // e.g., "15551234567"
+    const phoneWithoutCountry = phoneDigits.startsWith('1') ? phoneDigits.slice(1) : phoneDigits; // e.g., "5551234567"
+
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('id, user_id, phone, is_admin, tenant_id')
-      .eq('phone', normalizedPhone)
       .eq('is_admin', true)
+      .or(`phone.eq.${normalizedPhone},phone.eq.${phoneDigits},phone.eq.${phoneWithoutCountry},phone.eq.+1${phoneWithoutCountry}`)
       .single();
 
     // IMPORTANT: Always return generic success to prevent phone enumeration
