@@ -83,7 +83,7 @@ const PlatformSOC2Dashboard: React.FC = () => {
             .eq('tenant_id', tenant.id)
             .order('created_at', { ascending: false })
             .limit(1)
-            .single();
+            .maybeSingle();
 
           const moduleConfig = tenant.tenant_module_config?.[0] || {};
           const hipaaCompliant = moduleConfig.hipaa_audit_logging || false;
