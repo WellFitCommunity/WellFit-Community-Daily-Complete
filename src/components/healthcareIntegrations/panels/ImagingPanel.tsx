@@ -50,7 +50,7 @@ export const ImagingPanel: React.FC<ImagingPanelProps> = ({
                     Accession: {finding.accessionNumber} | {new Date(finding.signedAt || finding.createdAt).toLocaleDateString()}
                   </p>
                 </div>
-                <EAButton variant="outline" size="sm">
+                <EAButton variant="secondary" size="sm">
                   Mark Communicated
                 </EAButton>
               </div>
@@ -65,7 +65,7 @@ export const ImagingPanel: React.FC<ImagingPanelProps> = ({
       <EACardHeader>
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">PACS Connections</h3>
-          <EAButton variant="outline" size="sm" onClick={onRefresh}>
+          <EAButton variant="ghost" size="sm" onClick={onRefresh}>
             Refresh
           </EAButton>
         </div>
@@ -94,7 +94,7 @@ export const ImagingPanel: React.FC<ImagingPanelProps> = ({
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="text-sm text-slate-400">
-                    {conn.dicomwebUrl && <EABadge variant="secondary">DICOMweb</EABadge>}
+                    {conn.dicomwebUrl && <EABadge variant="info">DICOMweb</EABadge>}
                   </div>
                   <StatusBadge status={conn.connectionStatus} />
                 </div>

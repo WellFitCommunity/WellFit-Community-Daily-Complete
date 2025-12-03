@@ -30,6 +30,10 @@ export type StaffRole =
   | 'physical_therapist'       // Level 6: Allied health (future)
   | 'pt'                       // Level 6: Synonym for physical_therapist
   | 'quality_manager'          // Level 6: Quality assurance and compliance
+  | 'lab_tech'                 // Level 6: Laboratory technician (hospital lab operations)
+  | 'pharmacist'               // Level 6: Clinical pharmacist (medication management)
+  | 'radiologist'              // Level 5: Radiologist (imaging interpretation)
+  | 'billing_specialist'       // Level 7: Revenue cycle / billing staff
   | 'admin';                   // Level 7: Administrative staff
 
 /**
@@ -92,6 +96,10 @@ export enum RoleCode {
   IT_ADMIN = 19,  // Tenant IT Administrator (technical ops for their organization)
   PT = 20,  // Synonym for PHYSICAL_THERAPIST
   QUALITY_MANAGER = 21,  // Quality assurance and compliance
+  LAB_TECH = 22,  // Laboratory technician
+  PHARMACIST = 23,  // Clinical pharmacist
+  RADIOLOGIST = 24,  // Radiologist
+  BILLING_SPECIALIST = 25,  // Revenue cycle / billing staff
 }
 
 /**
@@ -120,6 +128,10 @@ export const ROLE_TO_CODE: Record<UserRole, RoleCode> = {
   social_worker: RoleCode.SOCIAL_WORKER,
   community_health_worker: RoleCode.COMMUNITY_HEALTH_WORKER,
   chw: RoleCode.CHW,
+  lab_tech: RoleCode.LAB_TECH,
+  pharmacist: RoleCode.PHARMACIST,
+  radiologist: RoleCode.RADIOLOGIST,
+  billing_specialist: RoleCode.BILLING_SPECIALIST,
 };
 
 /**
@@ -147,6 +159,10 @@ export const CODE_TO_ROLE: Record<RoleCode, UserRole> = {
   [RoleCode.SOCIAL_WORKER]: 'social_worker',
   [RoleCode.COMMUNITY_HEALTH_WORKER]: 'community_health_worker',
   [RoleCode.CHW]: 'chw',
+  [RoleCode.LAB_TECH]: 'lab_tech',
+  [RoleCode.PHARMACIST]: 'pharmacist',
+  [RoleCode.RADIOLOGIST]: 'radiologist',
+  [RoleCode.BILLING_SPECIALIST]: 'billing_specialist',
 };
 
 // ============================================================================
@@ -203,11 +219,16 @@ export const ROLE_HIERARCHY: Record<StaffRole, StaffRole[]> = {
     'physical_therapist',
     'pt',
     'quality_manager',
+    'lab_tech',
+    'pharmacist',
+    'radiologist',
+    'billing_specialist',
     'admin',
   ],
   it_admin: [
     'it_admin',
     'admin',
+    'billing_specialist',
   ], // IT Admin manages technical/admin staff within their tenant only
   department_head: [
     'department_head',
@@ -219,6 +240,9 @@ export const ROLE_HIERARCHY: Record<StaffRole, StaffRole[]> = {
     'nurse',
     'case_manager',
     'social_worker',
+    'lab_tech',
+    'pharmacist',
+    'radiologist',
   ],
   clinical_supervisor: [
     'clinical_supervisor',
@@ -229,11 +253,12 @@ export const ROLE_HIERARCHY: Record<StaffRole, StaffRole[]> = {
     'nurse',
     'case_manager',
     'social_worker',
+    'lab_tech',
   ],
   nurse_practitioner: ['nurse_practitioner', 'nurse', 'physician', 'doctor'],
   physician_assistant: ['physician_assistant', 'physician', 'doctor', 'nurse'],
-  physician: ['physician', 'doctor'],
-  doctor: ['physician', 'doctor'],
+  physician: ['physician', 'doctor', 'radiologist'],
+  doctor: ['physician', 'doctor', 'radiologist'],
   nurse: ['nurse'],
   case_manager: ['case_manager'], // Care coordination role
   social_worker: ['social_worker'], // Psychosocial services role
@@ -242,6 +267,10 @@ export const ROLE_HIERARCHY: Record<StaffRole, StaffRole[]> = {
   physical_therapist: ['physical_therapist', 'pt'],
   pt: ['physical_therapist', 'pt'],  // Synonym for physical_therapist
   quality_manager: ['quality_manager'],  // Quality assurance role
+  lab_tech: ['lab_tech'],  // Laboratory technician
+  pharmacist: ['pharmacist'],  // Clinical pharmacist
+  radiologist: ['radiologist'],  // Radiologist (imaging)
+  billing_specialist: ['billing_specialist'],  // Revenue cycle staff
   admin: ['admin'],
 };
 
@@ -283,6 +312,10 @@ export const ROLE_DISPLAY_NAMES: Record<StaffRole, string> = {
   physical_therapist: 'Physical Therapist',
   pt: 'Physical Therapist',  // Synonym display
   quality_manager: 'Quality Manager',
+  lab_tech: 'Laboratory Technician',
+  pharmacist: 'Pharmacist',
+  radiologist: 'Radiologist',
+  billing_specialist: 'Billing Specialist',
   admin: 'Administrator',
 };
 

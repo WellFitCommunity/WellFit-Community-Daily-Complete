@@ -28,14 +28,14 @@ export const ConnectionStatusRow: React.FC<ConnectionStatusRowProps> = ({
       </div>
       <div className="flex items-center gap-2">
         {totalCount === 0 ? (
-          <EABadge variant="secondary">No connections</EABadge>
+          <EABadge variant="neutral">No connections</EABadge>
         ) : (
           <>
-            <EABadge variant={activeCount > 0 ? 'success' : 'secondary'}>
+            <EABadge variant={activeCount > 0 ? 'normal' : 'neutral'}>
               {activeCount}/{totalCount} active
             </EABadge>
             {errorCount > 0 && (
-              <EABadge variant="error">{errorCount} errors</EABadge>
+              <EABadge variant="critical">{errorCount} errors</EABadge>
             )}
           </>
         )}

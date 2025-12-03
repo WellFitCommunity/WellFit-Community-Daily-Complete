@@ -49,7 +49,7 @@ export const LabSystemsPanel: React.FC<LabSystemsPanelProps> = ({
                     Accession: {result.accessionNumber} | {new Date(result.reportedAt).toLocaleDateString()}
                   </p>
                 </div>
-                <EAButton variant="outline" size="sm">
+                <EAButton variant="secondary" size="sm">
                   Acknowledge
                 </EAButton>
               </div>
@@ -64,7 +64,7 @@ export const LabSystemsPanel: React.FC<LabSystemsPanelProps> = ({
       <EACardHeader>
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">Lab Provider Connections</h3>
-          <EAButton variant="outline" size="sm" onClick={onRefresh}>
+          <EAButton variant="ghost" size="sm" onClick={onRefresh}>
             Refresh
           </EAButton>
         </div>

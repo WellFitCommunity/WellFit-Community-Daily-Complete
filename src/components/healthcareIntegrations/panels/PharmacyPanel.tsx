@@ -51,7 +51,7 @@ export const PharmacyPanel: React.FC<PharmacyPanelProps> = ({
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  <EAButton variant="outline" size="sm">
+                  <EAButton variant="ghost" size="sm">
                     Deny
                   </EAButton>
                   <EAButton variant="primary" size="sm">
@@ -70,7 +70,7 @@ export const PharmacyPanel: React.FC<PharmacyPanelProps> = ({
       <EACardHeader>
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">Pharmacy Connections</h3>
-          <EAButton variant="outline" size="sm" onClick={onRefresh}>
+          <EAButton variant="ghost" size="sm" onClick={onRefresh}>
             Refresh
           </EAButton>
         </div>
@@ -95,7 +95,7 @@ export const PharmacyPanel: React.FC<PharmacyPanelProps> = ({
                   <div className="flex items-center gap-2">
                     <p className="font-medium">{conn.pharmacyName}</p>
                     {conn.isPreferred && (
-                      <EABadge variant="success">Preferred</EABadge>
+                      <EABadge variant="normal">Preferred</EABadge>
                     )}
                   </div>
                   <p className="text-sm text-slate-400">
@@ -106,8 +106,8 @@ export const PharmacyPanel: React.FC<PharmacyPanelProps> = ({
                 <div className="flex items-center gap-4">
                   <div className="text-right text-sm">
                     <div className="flex gap-2">
-                      {conn.supportsErx && <EABadge variant="secondary">eRx</EABadge>}
-                      {conn.supportsControlledSubstances && <EABadge variant="secondary">EPCS</EABadge>}
+                      {conn.supportsErx && <EABadge variant="info">eRx</EABadge>}
+                      {conn.supportsControlledSubstances && <EABadge variant="info">EPCS</EABadge>}
                     </div>
                   </div>
                   <StatusBadge status={conn.connectionStatus} />

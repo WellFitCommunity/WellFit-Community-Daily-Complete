@@ -58,13 +58,13 @@ export class LabIntegrationService {
         .order('provider_name');
 
       if (error) {
-        await auditLogger.error('LAB_GET_CONNECTIONS_FAILED', { error: error.message });
+        await auditLogger.error('LAB_GET_CONNECTIONS_FAILED', error.message);
         return failure('DATABASE_ERROR', error.message, error);
       }
 
       return success(data.map(mapLabConnectionFromDB));
     } catch (err) {
-      await auditLogger.error('LAB_GET_CONNECTIONS_ERROR', { error: err });
+      await auditLogger.error('LAB_GET_CONNECTIONS_ERROR', err instanceof Error ? err.message : 'Unknown error');
       return failure('UNKNOWN_ERROR', 'Failed to get lab connections', err);
     }
   }
@@ -95,7 +95,7 @@ export class LabIntegrationService {
         .single();
 
       if (orderError) {
-        await auditLogger.error('LAB_CREATE_ORDER_FAILED', { error: orderError.message });
+        await auditLogger.error('LAB_CREATE_ORDER_FAILED', orderError.message);
         return failure('DATABASE_ERROR', orderError.message, orderError);
       }
 
@@ -121,7 +121,7 @@ export class LabIntegrationService {
       await auditLogger.info('LAB_ORDER_CREATED', { orderId: order.id, patientId: request.patientId });
       return success(mapLabOrderFromDB(order));
     } catch (err) {
-      await auditLogger.error('LAB_CREATE_ORDER_ERROR', { error: err });
+      await auditLogger.error('LAB_CREATE_ORDER_ERROR', err instanceof Error ? err.message : 'Unknown error');
       return failure('UNKNOWN_ERROR', 'Failed to create lab order', err);
     }
   }
@@ -281,7 +281,7 @@ export class PharmacyIntegrationService {
         .single();
 
       if (error) {
-        await auditLogger.error('PHARMACY_CREATE_RX_FAILED', { error: error.message });
+        await auditLogger.error('PHARMACY_CREATE_RX_FAILED', error.message);
         return failure('DATABASE_ERROR', error.message, error);
       }
 
@@ -447,7 +447,7 @@ export class ImagingIntegrationService {
         .single();
 
       if (error) {
-        await auditLogger.error('IMAGING_CREATE_ORDER_FAILED', { error: error.message });
+        await auditLogger.error('IMAGING_CREATE_ORDER_FAILED', error.message);
         return failure('DATABASE_ERROR', error.message, error);
       }
 
@@ -603,7 +603,7 @@ export class InsuranceVerificationService {
         .single();
 
       if (error) {
-        await auditLogger.error('ELIGIBILITY_CHECK_FAILED', { error: error.message });
+        await auditLogger.error('ELIGIBILITY_CHECK_FAILED', error.message);
         return failure('DATABASE_ERROR', error.message, error);
       }
 

@@ -102,7 +102,7 @@ export const HealthcareIntegrationsDashboard: React.FC = () => {
       if (refills.success) setPendingRefillRequests(refills.data);
 
     } catch (err) {
-      await auditLogger.error('HEALTHCARE_DASHBOARD_LOAD_ERROR', { error: err });
+      await auditLogger.error('HEALTHCARE_DASHBOARD_LOAD_ERROR', err instanceof Error ? err.message : 'Unknown error');
       setError('Failed to load healthcare integrations data');
     } finally {
       setLoading(false);
@@ -136,7 +136,7 @@ export const HealthcareIntegrationsDashboard: React.FC = () => {
       subtitle="Lab, Pharmacy, Imaging & Insurance systems"
     >
       {error && (
-        <EAAlert variant="error" className="mb-4">
+        <EAAlert variant="critical" className="mb-4">
           {error}
         </EAAlert>
       )}
@@ -159,61 +159,59 @@ export const HealthcareIntegrationsDashboard: React.FC = () => {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <EAMetricCard
-          title="Lab Results"
+          label="Lab Results"
           value={stats?.labResultsReceived ?? 0}
-          subtitle={`${stats?.labOrdersTotal ?? 0} orders placed`}
+          sublabel={`${stats?.labOrdersTotal ?? 0} orders placed`}
           icon={<LabIcon />}
           trend={stats?.labCriticalValues ? {
             value: stats.labCriticalValues,
-            label: 'critical values',
-            direction: 'neutral',
+            direction: 'stable',
           } : undefined}
         />
         <EAMetricCard
-          title="Prescriptions"
+          label="Prescriptions"
           value={stats?.prescriptionsSent ?? 0}
-          subtitle="sent this month"
+          sublabel="sent this month"
           icon={<PharmacyIcon />}
           trend={stats?.refillRequestsPending ? {
             value: stats.refillRequestsPending,
-            label: 'pending refills',
-            direction: 'neutral',
+            direction: 'stable',
           } : undefined}
         />
         <EAMetricCard
-          title="Imaging Studies"
+          label="Imaging Studies"
           value={stats?.imagingStudiesTotal ?? 0}
-          subtitle={`${stats?.imagingReportsFinal ?? 0} reports finalized`}
+          sublabel={`${stats?.imagingReportsFinal ?? 0} reports finalized`}
           icon={<ImagingIcon />}
         />
         <EAMetricCard
-          title="Eligibility Checks"
+          label="Eligibility Checks"
           value={stats?.eligibilityChecks ?? 0}
-          subtitle={`${stats?.eligibilityVerified ?? 0} verified active`}
+          sublabel={`${stats?.eligibilityVerified ?? 0} verified active`}
           icon={<InsuranceIcon />}
         />
       </div>
 
       {/* Main Content Tabs */}
-      <EATabs value={activeTab} onValueChange={setActiveTab}>
+      <EATabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
         <EATabsList>
           <EATabsTrigger value="overview">Overview</EATabsTrigger>
           <EATabsTrigger value="lab">
             Lab Systems
             {labConnections.length > 0 && (
-              <EABadge variant="secondary" className="ml-2">{labConnections.length}</EABadge>
+              <EABadge variant="info" className="ml-2">{labConnections.length}</EABadge>
             )}
           </EATabsTrigger>
           <EATabsTrigger value="pharmacy">
             Pharmacy
             {pendingRefillRequests.length > 0 && (
-              <EABadge variant="warning" className="ml-2">{pendingRefillRequests.length}</EABadge>
+              <EABadge variant="elevated" className="ml-2">{pendingRefillRequests.length}</EABadge>
             )}
           </EATabsTrigger>
           <EATabsTrigger value="imaging">
             Imaging/PACS
             {criticalImagingFindings.length > 0 && (
-              <EABadge variant="error" className="ml-2">{criticalImagingFindings.length}</EABadge>
+              <EABadge variant="critical" className="ml-2">{criticalImagingFindings.length}</EABadge>
             )}
           </EATabsTrigger>
           <EATabsTrigger value="insurance">Insurance</EATabsTrigger>

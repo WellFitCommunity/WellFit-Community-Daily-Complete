@@ -10,11 +10,12 @@ interface StatusBadgeProps {
 }
 
 export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
+  // Map status to EABadge variants: critical, high, elevated, normal, info, neutral
   const variant =
-    status === 'connected' ? 'success' :
-    status === 'error' ? 'error' :
-    status === 'testing' ? 'warning' :
-    'secondary';
+    status === 'connected' ? 'normal' :
+    status === 'error' ? 'critical' :
+    status === 'testing' ? 'elevated' :
+    'neutral';
 
   const label =
     status === 'connected' ? 'Connected' :

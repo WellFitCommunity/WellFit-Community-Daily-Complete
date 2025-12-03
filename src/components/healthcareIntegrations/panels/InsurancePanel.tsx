@@ -29,7 +29,7 @@ export const InsurancePanel: React.FC<InsurancePanelProps> = ({
       <EACardHeader>
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">Insurance Payer Connections</h3>
-          <EAButton variant="outline" size="sm" onClick={onRefresh}>
+          <EAButton variant="ghost" size="sm" onClick={onRefresh}>
             Refresh
           </EAButton>
         </div>
@@ -59,10 +59,10 @@ export const InsurancePanel: React.FC<InsurancePanelProps> = ({
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="flex gap-1">
-                    {conn.supports270_271 && <EABadge variant="secondary">270/271</EABadge>}
-                    {conn.supports276_277 && <EABadge variant="secondary">276/277</EABadge>}
-                    {conn.supports278 && <EABadge variant="secondary">278</EABadge>}
-                    {conn.supportsRealTime && <EABadge variant="success">Real-time</EABadge>}
+                    {conn.supports270_271 && <EABadge variant="info">270/271</EABadge>}
+                    {conn.supports276_277 && <EABadge variant="info">276/277</EABadge>}
+                    {conn.supports278 && <EABadge variant="info">278</EABadge>}
+                    {conn.supportsRealTime && <EABadge variant="normal">Real-time</EABadge>}
                   </div>
                   <StatusBadge status={conn.connectionStatus} />
                 </div>
