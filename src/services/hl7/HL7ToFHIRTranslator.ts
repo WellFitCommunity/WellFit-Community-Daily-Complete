@@ -21,6 +21,7 @@ import {
   ORMMessage,
   PIDSegment,
   PV1Segment,
+  PV2Segment,
   OBRSegment,
   OBXSegment,
   ORCSegment,
@@ -34,6 +35,7 @@ import {
   HumanName as HL7HumanName,
   PatientLocation,
 } from '../../types/hl7v2';
+import { ServiceResult, success, failure } from '../_base';
 import { auditLogger } from '../auditLogger';
 
 // ============================================================================
@@ -289,6 +291,20 @@ interface FHIRBundle {
 // TRANSLATION RESULT
 // ============================================================================
 
+/**
+ * Successful translation result data
+ */
+export interface FHIRTranslationSuccess {
+  bundle: FHIRBundle;
+  resources: FHIRResource[];
+  warnings: string[];
+  sourceMessageId: string;
+  sourceMessageType: string;
+}
+
+/**
+ * @deprecated Use ServiceResult<FHIRTranslationSuccess> instead
+ */
 export interface TranslationResult {
   success: boolean;
   bundle?: FHIRBundle;
@@ -314,48 +330,52 @@ export class HL7ToFHIRTranslator {
 
   /**
    * Translate any HL7 message to FHIR resources
+   * @returns ServiceResult with FHIR bundle and resources or error
    */
-  translate(message: HL7Message): TranslationResult {
-    const result: TranslationResult = {
-      success: false,
-      resources: [],
-      errors: [],
-      warnings: [],
-      sourceMessageId: message.header.messageControlId,
-      sourceMessageType: `${message.header.messageType.messageCode}^${message.header.messageType.triggerEvent}`,
-    };
+  translate(message: HL7Message): ServiceResult<FHIRTranslationSuccess> {
+    const resources: FHIRResource[] = [];
+    const warnings: string[] = [];
+    const sourceMessageId = message.header.messageControlId;
+    const sourceMessageType = `${message.header.messageType.messageCode}^${message.header.messageType.triggerEvent}`;
 
     try {
       const messageType = message.header.messageType.messageCode;
 
       switch (messageType) {
         case 'ADT':
-          this.translateADT(message as ADTMessage, result);
+          this.translateADTResources(message as ADTMessage, resources, warnings);
           break;
         case 'ORU':
-          this.translateORU(message as ORUMessage, result);
+          this.translateORUResources(message as ORUMessage, resources, warnings);
           break;
         case 'ORM':
-          this.translateORM(message as ORMMessage, result);
+          this.translateORMResources(message as ORMMessage, resources, warnings);
           break;
         default:
           // Try to extract what we can from generic message
-          this.translateGeneric(message, result);
+          this.translateGenericResources(message, resources, warnings);
+      }
+
+      // Check if we got any resources
+      if (resources.length === 0) {
+        return failure(
+          'VALIDATION_ERROR',
+          'No resources could be translated from the HL7 message',
+          undefined,
+          { sourceMessageId, sourceMessageType, warnings }
+        );
       }
 
       // Build bundle
-      if (result.resources.length > 0) {
-        result.bundle = {
-          resourceType: 'Bundle',
-          type: 'collection',
-          timestamp: new Date().toISOString(),
-          entry: result.resources.map((resource, index) => ({
-            fullUrl: `urn:uuid:${this.generateUUID(index)}`,
-            resource,
-          })),
-        };
-        result.success = true;
-      }
+      const bundle: FHIRBundle = {
+        resourceType: 'Bundle',
+        type: 'collection',
+        timestamp: new Date().toISOString(),
+        entry: resources.map((resource, index) => ({
+          fullUrl: `urn:uuid:${this.generateUUID(index)}`,
+          resource,
+        })),
+      };
 
       // Log successful translation
       auditLogger.log({
@@ -364,33 +384,78 @@ export class HL7ToFHIRTranslator {
         details: {
           messageType,
           messageControlId: message.header.messageControlId,
-          resourceCount: result.resources.length,
-          warningCount: result.warnings.length,
+          resourceCount: resources.length,
+          warningCount: warnings.length,
         },
+      });
+
+      return success({
+        bundle,
+        resources,
+        warnings,
+        sourceMessageId,
+        sourceMessageType,
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown translation error';
-      result.errors.push(errorMessage);
 
       auditLogger.logSecurityEvent({
         eventType: 'HL7_TRANSLATION_ERROR',
         severity: 'MEDIUM',
         details: { error: errorMessage },
       });
-    }
 
-    return result;
+      return failure(
+        'OPERATION_FAILED',
+        `Translation error: ${errorMessage}`,
+        error,
+        { sourceMessageId, sourceMessageType, warnings }
+      );
+    }
+  }
+
+  /**
+   * @deprecated Use translate() which returns ServiceResult<FHIRTranslationSuccess>
+   */
+  translateLegacy(message: HL7Message): TranslationResult {
+    const result = this.translate(message);
+
+    if (result.success) {
+      return {
+        success: true,
+        bundle: result.data.bundle,
+        resources: result.data.resources,
+        errors: [],
+        warnings: result.data.warnings,
+        sourceMessageId: result.data.sourceMessageId,
+        sourceMessageType: result.data.sourceMessageType,
+      };
+    } else {
+      const details = result.error.details as Record<string, unknown> || {};
+      return {
+        success: false,
+        resources: [],
+        errors: [result.error.message],
+        warnings: (details.warnings as string[]) || [],
+        sourceMessageId: details.sourceMessageId as string,
+        sourceMessageType: details.sourceMessageType as string,
+      };
+    }
   }
 
   // ============================================================================
   // ADT MESSAGE TRANSLATION
   // ============================================================================
 
-  private translateADT(message: ADTMessage, result: TranslationResult): void {
+  private translateADTResources(
+    message: ADTMessage,
+    resources: FHIRResource[],
+    warnings: string[]
+  ): void {
     // Create Patient resource
     if (message.patientIdentification) {
       const patient = this.pidToPatient(message.patientIdentification);
-      result.resources.push(patient);
+      resources.push(patient);
     }
 
     // Create Encounter resource
@@ -400,14 +465,14 @@ export class HL7ToFHIRTranslator {
         message.patientVisitAdditional,
         message.header.messageType.triggerEvent
       );
-      result.resources.push(encounter);
+      resources.push(encounter);
     }
 
     // Create AllergyIntolerance resources
     if (message.allergies) {
       for (const allergy of message.allergies) {
         const allergyResource = this.al1ToAllergyIntolerance(allergy);
-        result.resources.push(allergyResource);
+        resources.push(allergyResource);
       }
     }
 
@@ -415,7 +480,7 @@ export class HL7ToFHIRTranslator {
     if (message.diagnoses) {
       for (const diagnosis of message.diagnoses) {
         const condition = this.dg1ToCondition(diagnosis);
-        result.resources.push(condition);
+        resources.push(condition);
       }
     }
 
@@ -423,7 +488,7 @@ export class HL7ToFHIRTranslator {
     if (message.insurance) {
       for (const insurance of message.insurance) {
         const coverage = this.in1ToCoverage(insurance);
-        result.resources.push(coverage);
+        resources.push(coverage);
       }
     }
   }
@@ -432,11 +497,15 @@ export class HL7ToFHIRTranslator {
   // ORU MESSAGE TRANSLATION (Lab Results)
   // ============================================================================
 
-  private translateORU(message: ORUMessage, result: TranslationResult): void {
+  private translateORUResources(
+    message: ORUMessage,
+    resources: FHIRResource[],
+    warnings: string[]
+  ): void {
     // Create Patient resource
     if (message.patientIdentification) {
       const patient = this.pidToPatient(message.patientIdentification);
-      result.resources.push(patient);
+      resources.push(patient);
     }
 
     // Create DiagnosticReport and Observation resources
@@ -447,7 +516,7 @@ export class HL7ToFHIRTranslator {
       for (const obx of obsResult.observations) {
         const observation = this.obxToObservation(obx);
         observations.push(observation);
-        result.resources.push(observation);
+        resources.push(observation);
       }
 
       // Link observations to diagnostic report
@@ -456,7 +525,7 @@ export class HL7ToFHIRTranslator {
         display: obs.code?.text,
       }));
 
-      result.resources.push(diagnosticReport);
+      resources.push(diagnosticReport);
     }
   }
 
@@ -464,17 +533,21 @@ export class HL7ToFHIRTranslator {
   // ORM MESSAGE TRANSLATION (Orders)
   // ============================================================================
 
-  private translateORM(message: ORMMessage, result: TranslationResult): void {
+  private translateORMResources(
+    message: ORMMessage,
+    resources: FHIRResource[],
+    warnings: string[]
+  ): void {
     // Create Patient resource if available
     if (message.patientIdentification) {
       const patient = this.pidToPatient(message.patientIdentification);
-      result.resources.push(patient);
+      resources.push(patient);
     }
 
     // Create ServiceRequest resources
     for (const order of message.orders) {
       const serviceRequest = this.orcToServiceRequest(order.commonOrder, order.orderDetail);
-      result.resources.push(serviceRequest);
+      resources.push(serviceRequest);
     }
   }
 
@@ -482,29 +555,33 @@ export class HL7ToFHIRTranslator {
   // GENERIC MESSAGE TRANSLATION
   // ============================================================================
 
-  private translateGeneric(message: HL7Message, result: TranslationResult): void {
-    result.warnings.push(
+  private translateGenericResources(
+    message: HL7Message,
+    resources: FHIRResource[],
+    warnings: string[]
+  ): void {
+    warnings.push(
       `Unsupported message type: ${message.header.messageType.messageCode}. Extracting available segments.`
     );
 
     // Extract what we can
     if (message.patientIdentification) {
-      result.resources.push(this.pidToPatient(message.patientIdentification));
+      resources.push(this.pidToPatient(message.patientIdentification));
     }
 
     if (message.patientVisit) {
-      result.resources.push(this.pv1ToEncounter(message.patientVisit, message.patientVisitAdditional));
+      resources.push(this.pv1ToEncounter(message.patientVisit, message.patientVisitAdditional));
     }
 
     if (message.allergies) {
       for (const allergy of message.allergies) {
-        result.resources.push(this.al1ToAllergyIntolerance(allergy));
+        resources.push(this.al1ToAllergyIntolerance(allergy));
       }
     }
 
     if (message.diagnoses) {
       for (const diagnosis of message.diagnoses) {
-        result.resources.push(this.dg1ToCondition(diagnosis));
+        resources.push(this.dg1ToCondition(diagnosis));
       }
     }
   }
