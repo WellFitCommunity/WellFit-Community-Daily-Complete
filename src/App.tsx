@@ -147,6 +147,9 @@ const CareCoordinationDashboard = React.lazy(() => import('./components/careCoor
 const ReferralsDashboard = React.lazy(() => import('./components/referrals/ReferralsDashboard'));
 const QuestionnaireAnalyticsDashboard = React.lazy(() => import('./components/questionnaires/QuestionnaireAnalyticsDashboard'));
 
+// SOC Dashboard - Security Operations Center for super_admins
+const SOCDashboard = React.lazy(() => import('./components/soc/SOCDashboard'));
+
 // Healthcare Integrations (Lab, Pharmacy, Imaging, Insurance)
 const HealthcareIntegrationsDashboard = React.lazy(() => import('./components/healthcareIntegrations/HealthcareIntegrationsDashboard'));
 
@@ -330,6 +333,17 @@ function Shell() {
                 element={
                   <RequireSuperAdmin>
                     <MultiTenantMonitor />
+                  </RequireSuperAdmin>
+                }
+              />
+
+              {/* SOC Dashboard - Security Operations Center */}
+              {/* SECURITY: Only platform super-admins can access security monitoring */}
+              <Route
+                path="/soc-dashboard"
+                element={
+                  <RequireSuperAdmin>
+                    <SOCDashboard />
                   </RequireSuperAdmin>
                 }
               />
