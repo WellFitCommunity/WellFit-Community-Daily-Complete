@@ -901,7 +901,7 @@ export default function AdminLoginPage() {
       <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded text-sm">
         <p className="text-blue-800">
           <strong>Security Note:</strong> Your admin PIN provides an additional layer of security for administrative functions.
-          Session expires after 6.5 hours of inactivity (full shift support).
+          Session expires after 30 minutes of inactivity.
         </p>
       </div>
 
