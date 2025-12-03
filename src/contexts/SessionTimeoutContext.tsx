@@ -12,10 +12,11 @@ const toMs = (val: string | undefined, fallback: number) => {
 
 // SOC2-Compliant Session Timeouts
 // CC6.1: Reasonable session timeout periods to prevent unauthorized access
-// - All Users: 30 minutes of inactivity before auto-logout
+// - Healthcare default: 390 minutes (6.5 hours) - supports full shift length
 // - Staff/Admin: Additional PIN verification at admin panel level
-const DEFAULT_TIMEOUT_MS = toMs(process.env.REACT_APP_INACTIVITY_TIMEOUT_MS, 30 * 60 * 1000); // 30 minutes
-const DEFAULT_WARNING_MS = toMs(process.env.REACT_APP_TIMEOUT_WARNING_MS, 5 * 60 * 1000);         // 5 minutes
+// - Override via REACT_APP_INACTIVITY_TIMEOUT_MS env var if needed
+const DEFAULT_TIMEOUT_MS = toMs(process.env.REACT_APP_INACTIVITY_TIMEOUT_MS, 390 * 60 * 1000); // 390 minutes (6.5 hours)
+const DEFAULT_WARNING_MS = toMs(process.env.REACT_APP_TIMEOUT_WARNING_MS, 15 * 60 * 1000);        // 15 minutes warning
 const THROTTLE_MS = 500;
 
 // ---------- types ----------
