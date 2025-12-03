@@ -194,6 +194,9 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON system_feature_flags TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON system_health_checks TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON super_admin_audit_log TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON system_metrics TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON tenant_module_config TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON guardian_alerts TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ai_skill_config TO authenticated;
 
 -- Drop old conflicting policies
 DROP POLICY IF EXISTS super_admin_full_access_feature_flags ON system_feature_flags;
