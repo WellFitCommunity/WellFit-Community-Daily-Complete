@@ -147,6 +147,9 @@ const CareCoordinationDashboard = React.lazy(() => import('./components/careCoor
 const ReferralsDashboard = React.lazy(() => import('./components/referrals/ReferralsDashboard'));
 const QuestionnaireAnalyticsDashboard = React.lazy(() => import('./components/questionnaires/QuestionnaireAnalyticsDashboard'));
 
+// Healthcare Integrations (Lab, Pharmacy, Imaging, Insurance)
+const HealthcareIntegrationsDashboard = React.lazy(() => import('./components/healthcareIntegrations/HealthcareIntegrationsDashboard'));
+
 // CHW (Community Health Worker) Components
 const KioskCheckIn = React.lazy(() => import('./components/chw/KioskCheckIn'));
 const CHWVitalsCapture = React.lazy(() => import('./components/chw/CHWVitalsCapture'));
@@ -790,6 +793,20 @@ function Shell() {
                     <RequireAuth>
                       <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'nurse', 'case_manager', 'quality_manager']}>
                         <QuestionnaireAnalyticsDashboard />
+                      </RequireAdminAuth>
+                    </RequireAuth>
+                  }
+                />
+              )}
+
+              {/* Healthcare Integrations Dashboard - Lab, Pharmacy, Imaging, Insurance */}
+              {featureFlags.healthcareIntegrations && (
+                <Route
+                  path="/healthcare-integrations"
+                  element={
+                    <RequireAuth>
+                      <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'physician', 'nurse', 'lab_tech', 'pharmacist', 'radiologist', 'billing_specialist']}>
+                        <HealthcareIntegrationsDashboard />
                       </RequireAdminAuth>
                     </RequireAuth>
                   }
