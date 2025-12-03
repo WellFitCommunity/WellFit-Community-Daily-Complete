@@ -190,8 +190,11 @@ CREATE TABLE IF NOT EXISTS hl7_message_queue (
 );
 
 -- Indexes for message queue
+-- Note: Can't use now() in partial index predicate (not IMMUTABLE)
+-- Use simpler partial index and check staleness at query time
 CREATE INDEX idx_hl7_queue_pending ON hl7_message_queue(scheduled_at, priority DESC)
-    WHERE status = 'pending' AND (locked_at IS NULL OR locked_at < now() - INTERVAL '5 minutes');
+    WHERE status = 'pending';
+CREATE INDEX idx_hl7_queue_locked ON hl7_message_queue(locked_at) WHERE locked_at IS NOT NULL;
 CREATE INDEX idx_hl7_queue_tenant ON hl7_message_queue(tenant_id);
 CREATE INDEX idx_hl7_queue_status ON hl7_message_queue(status);
 
