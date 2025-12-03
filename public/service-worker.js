@@ -199,4 +199,142 @@ self.addEventListener('message', (event) => {
   }
 });
 
-console.log('[SW] Redirect-safe, MIME-aware service worker loaded:', VERSION);
+// ---------- Background Sync (for offline data) ----------
+// Syncs pending health reports, check-ins, and vitals when connection returns
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-pending-data') {
+    event.waitUntil(syncPendingData());
+  }
+  if (event.tag === 'sync-pending-reports') {
+    event.waitUntil(syncPendingData());
+  }
+});
+
+async function syncPendingData() {
+  // Open IndexedDB to get pending items
+  const db = await openOfflineDB();
+  if (!db) return;
+
+  try {
+    const pendingReports = await getAllPending(db, 'pendingReports');
+    const pendingMeasurements = await getAllPending(db, 'measurements');
+
+    // Notify clients that sync is starting
+    const clients = await self.clients.matchAll();
+    clients.forEach(client => {
+      client.postMessage({ type: 'SYNC_STARTED', count: pendingReports.length + pendingMeasurements.length });
+    });
+
+    let synced = 0;
+    let failed = 0;
+
+    // Sync reports
+    for (const report of pendingReports) {
+      try {
+        const response = await fetch('/api/health-reports', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(report.data),
+          credentials: 'include'
+        });
+        if (response.ok) {
+          await markSynced(db, 'pendingReports', report.id);
+          synced++;
+        } else {
+          failed++;
+        }
+      } catch {
+        failed++;
+      }
+    }
+
+    // Sync measurements
+    for (const measurement of pendingMeasurements) {
+      try {
+        const response = await fetch('/api/vitals', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(measurement.data),
+          credentials: 'include'
+        });
+        if (response.ok) {
+          await markSynced(db, 'measurements', measurement.id);
+          synced++;
+        } else {
+          failed++;
+        }
+      } catch {
+        failed++;
+      }
+    }
+
+    // Notify clients of completion
+    clients.forEach(client => {
+      client.postMessage({ type: 'SYNC_COMPLETE', synced, failed });
+    });
+
+    db.close();
+  } catch (err) {
+    db.close();
+    throw err; // Re-throw to trigger retry
+  }
+}
+
+// IndexedDB helpers for background sync
+function openOfflineDB() {
+  return new Promise((resolve) => {
+    const request = indexedDB.open('wellfit-offline', 1);
+    request.onerror = () => resolve(null);
+    request.onsuccess = () => resolve(request.result);
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains('pendingReports')) {
+        const store = db.createObjectStore('pendingReports', { keyPath: 'id', autoIncrement: true });
+        store.createIndex('synced', 'synced', { unique: false });
+      }
+      if (!db.objectStoreNames.contains('measurements')) {
+        const store = db.createObjectStore('measurements', { keyPath: 'id', autoIncrement: true });
+        store.createIndex('synced', 'synced', { unique: false });
+      }
+    };
+  });
+}
+
+function getAllPending(db, storeName) {
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(storeName, 'readonly');
+      const store = tx.objectStore(storeName);
+      const index = store.index('synced');
+      const request = index.getAll(IDBKeyRange.only(false));
+      request.onsuccess = () => resolve(request.result || []);
+      request.onerror = () => resolve([]);
+    } catch {
+      resolve([]);
+    }
+  });
+}
+
+function markSynced(db, storeName, id) {
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(storeName, 'readwrite');
+      const store = tx.objectStore(storeName);
+      const getReq = store.get(id);
+      getReq.onsuccess = () => {
+        const record = getReq.result;
+        if (record) {
+          record.synced = true;
+          record.syncedAt = new Date().toISOString();
+          store.put(record);
+        }
+        resolve();
+      };
+      getReq.onerror = () => resolve();
+    } catch {
+      resolve();
+    }
+  });
+}
+
+// Service worker loaded - logging disabled for HIPAA compliance
