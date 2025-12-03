@@ -15,6 +15,8 @@ const PUBLIC_URL = process.env.PUBLIC_URL || '';
 const ALLOWED_HOSTS = new Set<string>([
   'wellfitcommunity.live',
   'www.wellfitcommunity.live',
+  'thewellfitcommunity.org',
+  'www.thewellfitcommunity.org',
   'localhost',
   '127.0.0.1',
 ]);
