@@ -13,7 +13,7 @@
  * - Smart suggestions powered by AI
  */
 
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useEffect, Suspense, lazy, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import { useUser } from '../../contexts/AuthContext';
@@ -38,6 +38,8 @@ import {
 } from './LearningIndicator';
 import { Clock, TrendingUp, Zap } from 'lucide-react';
 import { SectionLoadingFallback } from './sections/sectionDefinitions';
+import { VoiceCommandBar } from './VoiceCommandBar';
+import { useWorkflowPreferences } from '../../hooks/useWorkflowPreferences';
 
 // Lazy-load category components for code splitting
 // This reduces the initial bundle size by ~30-40%
@@ -67,12 +69,164 @@ const IntelligentAdminPanel: React.FC = () => {
   const [behaviorProfile, setBehaviorProfile] = useState<UserBehaviorProfile | null>(null);
   const [showMilestone, setShowMilestone] = useState(false);
   const [milestone, setMilestone] = useState('');
-  const categoryOpenStates = {
-    revenue: true,
-    'patient-care': false,
-    clinical: false,
-    security: false,
-    admin: false,
+
+  // Use workflow preferences for role-based ordering
+  const {
+    categoryOrder,
+    getCategoryOpenState,
+    isLoading: prefsLoading,
+  } = useWorkflowPreferences();
+
+  // Category refs for voice command scrolling
+  const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  // Voice command handlers
+  const handleScrollToSection = useCallback((sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Flash the element to indicate it was found
+      element.classList.add('ring-2', 'ring-teal-500');
+      setTimeout(() => {
+        element.classList.remove('ring-2', 'ring-teal-500');
+      }, 2000);
+    }
+  }, []);
+
+  const handleOpenCategory = useCallback((categoryId: string) => {
+    const categoryElement = categoryRefs.current[categoryId];
+    if (categoryElement) {
+      categoryElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Try to expand the category
+      const button = categoryElement.querySelector('button');
+      if (button) {
+        button.click();
+      }
+    }
+  }, []);
+
+  // Get category open states based on role-based preferences
+  const getCategoryOpenStateForRole = useCallback((categoryId: string): boolean => {
+    // If preferences are loaded, use them
+    if (!prefsLoading && categoryOrder.length > 0) {
+      return getCategoryOpenState(categoryId);
+    }
+    // Default fallback based on role
+    if (adminRole === 'nurse' || adminRole === 'physician' || adminRole === 'doctor') {
+      return categoryId === 'patient-care';
+    }
+    if (adminRole === 'billing_specialist' || adminRole === 'finance') {
+      return categoryId === 'revenue';
+    }
+    if (adminRole === 'it_admin') {
+      return categoryId === 'security';
+    }
+    // Default: revenue first for admin/super_admin
+    return categoryId === 'revenue';
+  }, [prefsLoading, categoryOrder, getCategoryOpenState, adminRole]);
+
+  // Get ordered categories based on role
+  const getOrderedCategories = useCallback(() => {
+    const defaultOrder = ['revenue', 'patient-care', 'clinical', 'security', 'admin'];
+
+    if (!prefsLoading && categoryOrder.length > 0) {
+      // Use saved preferences
+      return categoryOrder.map(c => c.categoryId);
+    }
+
+    // Role-based defaults
+    switch (adminRole) {
+      case 'nurse':
+      case 'physician':
+      case 'doctor':
+      case 'case_manager':
+      case 'social_worker':
+        return ['patient-care', 'clinical', 'revenue', 'security', 'admin'];
+
+      case 'billing_specialist':
+      case 'finance':
+        return ['revenue', 'patient-care', 'clinical', 'admin', 'security'];
+
+      case 'it_admin':
+        return ['security', 'admin', 'patient-care', 'clinical', 'revenue'];
+
+      default:
+        return defaultOrder;
+    }
+  }, [prefsLoading, categoryOrder, adminRole]);
+
+  // Category components map
+  const categoryComponents: Record<string, React.ReactNode> = {
+    revenue: (
+      <div
+        key="revenue"
+        ref={(el) => { categoryRefs.current['revenue'] = el; }}
+        data-category-id="revenue"
+      >
+        <Suspense fallback={<CategoryLoadingFallback />}>
+          <RevenueBillingCategory
+            userRole={adminRole || 'admin'}
+            defaultOpen={getCategoryOpenStateForRole('revenue')}
+          />
+        </Suspense>
+      </div>
+    ),
+    'patient-care': (
+      <div
+        key="patient-care"
+        ref={(el) => { categoryRefs.current['patient-care'] = el; }}
+        data-category-id="patient-care"
+      >
+        <Suspense fallback={<CategoryLoadingFallback />}>
+          <PatientCareCategory
+            userRole={adminRole || 'admin'}
+            defaultOpen={getCategoryOpenStateForRole('patient-care')}
+          />
+        </Suspense>
+      </div>
+    ),
+    clinical: (
+      <div
+        key="clinical"
+        ref={(el) => { categoryRefs.current['clinical'] = el; }}
+        data-category-id="clinical"
+      >
+        <Suspense fallback={<CategoryLoadingFallback />}>
+          <ClinicalDataCategory
+            userRole={adminRole || 'admin'}
+            defaultOpen={getCategoryOpenStateForRole('clinical')}
+          />
+        </Suspense>
+      </div>
+    ),
+    security: (
+      <div
+        key="security"
+        ref={(el) => { categoryRefs.current['security'] = el; }}
+        data-category-id="security"
+      >
+        <Suspense fallback={<CategoryLoadingFallback />}>
+          <SecurityComplianceCategory
+            userRole={adminRole || 'admin'}
+            defaultOpen={getCategoryOpenStateForRole('security')}
+          />
+        </Suspense>
+      </div>
+    ),
+    admin: (
+      <div
+        key="admin"
+        ref={(el) => { categoryRefs.current['admin'] = el; }}
+        data-category-id="admin"
+      >
+        <Suspense fallback={<CategoryLoadingFallback />}>
+          <SystemAdminCategory
+            userRole={adminRole || 'admin'}
+            defaultOpen={getCategoryOpenStateForRole('admin')}
+          />
+        </Suspense>
+      </div>
+    ),
   };
 
   // NOTE: Section definitions moved to sections/sectionDefinitions.tsx for code splitting
@@ -353,44 +507,18 @@ const IntelligentAdminPanel: React.FC = () => {
             </div>
           )}
 
-          {/* Lazy-Loaded Category Sections */}
+          {/* Lazy-Loaded Category Sections - Ordered by Role Preferences */}
           <div className="space-y-6">
-            <Suspense fallback={<CategoryLoadingFallback />}>
-              <RevenueBillingCategory
-                userRole={adminRole || 'admin'}
-                defaultOpen={categoryOpenStates.revenue}
-              />
-            </Suspense>
-
-            <Suspense fallback={<CategoryLoadingFallback />}>
-              <PatientCareCategory
-                userRole={adminRole || 'admin'}
-                defaultOpen={categoryOpenStates['patient-care']}
-              />
-            </Suspense>
-
-            <Suspense fallback={<CategoryLoadingFallback />}>
-              <ClinicalDataCategory
-                userRole={adminRole || 'admin'}
-                defaultOpen={categoryOpenStates.clinical}
-              />
-            </Suspense>
-
-            <Suspense fallback={<CategoryLoadingFallback />}>
-              <SecurityComplianceCategory
-                userRole={adminRole || 'admin'}
-                defaultOpen={categoryOpenStates.security}
-              />
-            </Suspense>
-
-            <Suspense fallback={<CategoryLoadingFallback />}>
-              <SystemAdminCategory
-                userRole={adminRole || 'admin'}
-                defaultOpen={categoryOpenStates.admin}
-              />
-            </Suspense>
+            {getOrderedCategories().map(categoryId => categoryComponents[categoryId])}
           </div>
         </div>
+
+        {/* Voice Command Bar - Floating at bottom right */}
+        <VoiceCommandBar
+          onScrollToSection={handleScrollToSection}
+          onOpenCategory={handleOpenCategory}
+          onNavigate={navigate}
+        />
 
         {/* Learning Indicator - Real-time feedback */}
         {!isLoading && behaviorProfile && (
