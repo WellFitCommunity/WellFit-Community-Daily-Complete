@@ -168,12 +168,25 @@ export const ClinicalAlertsDashboard: React.FC = () => {
       if (error) throw error;
 
       // Record effectiveness (in production, this would go to alert_effectiveness table)
+      // Map guardian alert severity to alert_effectiveness CHECK constraint values
+      const guardianSeverity = alerts.find(a => a.id === alertId)?.severity || 'info';
+      const severityMap: Record<string, string> = {
+        emergency: 'critical',
+        critical: 'critical',
+        warning: 'medium',
+        high: 'high',
+        medium: 'medium',
+        low: 'low',
+        info: 'low',
+      };
+      const mappedSeverity = severityMap[guardianSeverity] || 'low';
+
       try {
         await supabase.from('alert_effectiveness').insert({
           alert_id: alertId,
           user_id: user?.id,
           alert_type: 'clinical',
-          severity: alerts.find(a => a.id === alertId)?.severity || 'info',
+          severity: mappedSeverity,
           was_actionable: wasActionable,
           false_positive: !wasActionable,
           time_to_acknowledge_seconds: 45, // Mock - would be calculated
