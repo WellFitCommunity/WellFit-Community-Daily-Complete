@@ -1,10 +1,16 @@
 /**
  * Audit Logger - HIPAA/SOC2 Compliant Telemetry
  * Every auto-fix creates a complete audit trail
+ *
+ * Now integrated with Guardian Review Tickets (Pool Reports) for
+ * actions requiring human approval before auto-applying.
  */
 
-import { DetectedIssue, HealingAction, HealingResult } from './types';
+import { DetectedIssue, HealingAction, HealingResult, HealingStep } from './types';
 import { DatabaseAuditLogger } from './DatabaseAuditLogger';
+import { supabase } from '../../lib/supabaseClient';
+import { auditLogger as systemAuditLogger } from '../auditLogger';
+import { HealingStepData } from '../../types/guardianApproval';
 
 export interface AuditLogEntry {
   id: string;
@@ -298,14 +304,27 @@ export class AuditLogger {
   }
 
   /**
-   * Notify admins of pending review
+   * Notify admins of pending review via SOC Dashboard
+   *
+   * Creates a security_alert with type 'guardian_approval_required' which
+   * automatically appears in the SOC Dashboard and triggers browser notifications.
    */
   private async notifyAdmins(ticket: ReviewTicket): Promise<void> {
-    // TODO: Implement actual notifications:
-    // - Email to admins
-    // - Slack/Teams message
-    // - PagerDuty for critical
-    // - Dashboard notification
+    try {
+      // The security alert is already created by the create_guardian_review_ticket
+      // RPC function. Here we just log the notification for audit purposes.
+      systemAuditLogger.info('GUARDIAN_ADMIN_NOTIFICATION', 'SOC notification created for review ticket', {
+        ticket_id: ticket.id,
+        priority: ticket.priority,
+        issue_category: ticket.issue.signature.category,
+        healing_strategy: ticket.action.strategy,
+      });
+    } catch (error) {
+      systemAuditLogger.error('GUARDIAN_NOTIFICATION_ERROR', 'Failed to notify admins', {
+        ticket_id: ticket.id,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
   }
 
   // Helper methods
@@ -427,28 +446,158 @@ export class AuditLogger {
 
 /**
  * Audit Log Storage - Persists to database
+ *
+ * Uses the guardian_review_tickets table for pool reports that
+ * require human approval before auto-applying fixes.
  */
 class AuditLogStorage {
   /**
    * Persist audit log entry
    */
   async persist(entry: AuditLogEntry): Promise<void> {
-    // TODO: Store in Supabase audit_logs table
+    try {
+      await supabase.from('audit_logs').insert({
+        event_type: 'SYSTEM',
+        event_category: 'GUARDIAN',
+        operation: entry.action,
+        resource_type: 'guardian_audit_log',
+        resource_id: entry.id,
+        success: entry.validationResult === 'success',
+        error_code: entry.validationResult !== 'success' ? entry.errorCode : null,
+        error_message: entry.validationResult !== 'success' ? entry.reason : null,
+        metadata: {
+          ...entry.metadata,
+          module: entry.module,
+          severity: entry.severity,
+          affected_resources: entry.affectedResources,
+          issue_id: entry.issueId,
+          action_id: entry.actionId,
+          environment: entry.environment,
+        },
+        timestamp: entry.timestamp.toISOString(),
+      });
+    } catch (error) {
+      systemAuditLogger.error('AUDIT_LOG_PERSIST_ERROR', 'Failed to persist audit log entry', {
+        entry_id: entry.id,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
   }
 
   /**
-   * Persist review ticket
+   * Convert HealingStep to HealingStepData for database storage
+   */
+  private convertStepsToData(steps: HealingStep[]): HealingStepData[] {
+    return steps.map((step) => ({
+      id: step.id,
+      order: step.order,
+      action: step.action,
+      target: step.target,
+      parameters: step.parameters,
+      validation: step.validation ? {
+        type: step.validation.type,
+        condition: step.validation.condition,
+        expectedValue: step.validation.expectedValue,
+        threshold: step.validation.threshold,
+      } : undefined,
+      timeout: step.timeout,
+    }));
+  }
+
+  /**
+   * Persist review ticket to guardian_review_tickets table
    */
   async persistTicket(ticket: ReviewTicket): Promise<void> {
-    // TODO: Store in Supabase review_tickets table
+    try {
+      const { data, error } = await supabase.rpc('create_guardian_review_ticket', {
+        p_issue_id: ticket.issue.id,
+        p_issue_category: ticket.issue.signature.category,
+        p_issue_severity: ticket.issue.severity,
+        p_issue_description: ticket.issue.signature.description,
+        p_affected_component: ticket.issue.context.component || null,
+        p_affected_resources: ticket.issue.affectedResources,
+        p_stack_trace: ticket.issue.stackTrace || null,
+        p_detection_context: {
+          filePath: ticket.issue.context.filePath,
+          lineNumber: ticket.issue.context.lineNumber,
+          userId: ticket.issue.context.userId,
+          sessionId: ticket.issue.context.sessionId,
+          apiEndpoint: ticket.issue.context.apiEndpoint,
+          databaseQuery: ticket.issue.context.databaseQuery,
+          environmentState: ticket.issue.context.environmentState,
+          recentActions: ticket.issue.context.recentActions,
+        },
+        p_action_id: ticket.action.id,
+        p_healing_strategy: ticket.action.strategy,
+        p_healing_description: ticket.action.description,
+        p_healing_steps: this.convertStepsToData(ticket.action.steps),
+        p_rollback_plan: ticket.action.rollbackPlan
+          ? this.convertStepsToData(ticket.action.rollbackPlan)
+          : [],
+        p_expected_outcome: ticket.action.expectedOutcome,
+        p_sandbox_tested: !!ticket.sandboxTestResults,
+        p_sandbox_results: ticket.sandboxTestResults || {},
+        p_sandbox_passed: ticket.sandboxTestResults?.success ?? null,
+      });
 
+      if (error) {
+        systemAuditLogger.error('GUARDIAN_TICKET_PERSIST_ERROR', 'Failed to persist review ticket', {
+          ticket_id: ticket.id,
+          error: error.message,
+        });
+        return;
+      }
+
+      // Update the ticket ID to match the database ID
+      if (data) {
+        ticket.id = data as string;
+        systemAuditLogger.info('GUARDIAN_TICKET_PERSISTED', 'Review ticket persisted to database', {
+          ticket_id: data,
+          issue_category: ticket.issue.signature.category,
+          healing_strategy: ticket.action.strategy,
+        });
+      }
+    } catch (error) {
+      systemAuditLogger.error('GUARDIAN_TICKET_PERSIST_EXCEPTION', 'Exception persisting review ticket', {
+        ticket_id: ticket.id,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
   }
 
   /**
-   * Update review ticket
+   * Update review ticket in database
    */
   async updateTicket(ticket: ReviewTicket): Promise<void> {
-    // TODO: Update in database
+    try {
+      // Map legacy status to new status
+      const statusMap: Record<string, string> = {
+        pending: 'pending',
+        approved: 'approved',
+        rejected: 'rejected',
+        escalated: 'in_review',
+      };
 
+      const { error } = await supabase
+        .from('guardian_review_tickets')
+        .update({
+          status: statusMap[ticket.status] || ticket.status,
+          review_notes: ticket.reviewNotes,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', ticket.id);
+
+      if (error) {
+        systemAuditLogger.error('GUARDIAN_TICKET_UPDATE_ERROR', 'Failed to update review ticket', {
+          ticket_id: ticket.id,
+          error: error.message,
+        });
+      }
+    } catch (error) {
+      systemAuditLogger.error('GUARDIAN_TICKET_UPDATE_EXCEPTION', 'Exception updating review ticket', {
+        ticket_id: ticket.id,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
   }
 }

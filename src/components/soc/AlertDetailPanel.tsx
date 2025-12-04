@@ -9,6 +9,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useSupabaseClient } from '../../contexts/AuthContext';
 import { getSOCDashboardService } from '../../services/socDashboardService';
 import {
@@ -40,8 +41,13 @@ export const AlertDetailPanel: React.FC<AlertDetailPanelProps> = ({
   onFalsePositive,
   onClose,
 }) => {
+  const navigate = useNavigate();
   const supabase = useSupabaseClient();
   const service = getSOCDashboardService(supabase);
+
+  // Check if this is a Guardian approval alert
+  const isGuardianApproval = alert.alert_type === 'guardian_approval_required';
+  const guardianTicketId = alert.metadata?.ticket_id as string | undefined;
 
   const [messages, setMessages] = useState<AlertMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -180,7 +186,18 @@ export const AlertDetailPanel: React.FC<AlertDetailPanelProps> = ({
       </div>
 
       {/* Action Buttons */}
-      <div className="p-4 border-b border-slate-700 flex gap-2">
+      <div className="p-4 border-b border-slate-700 flex flex-wrap gap-2">
+        {/* Guardian Approval Button - show prominently if this is a Guardian approval alert */}
+        {isGuardianApproval && guardianTicketId && (
+          <EAButton
+            variant="primary"
+            size="sm"
+            onClick={() => navigate(`/guardian/approval/${guardianTicketId}`)}
+            className="!bg-teal-600 hover:!bg-teal-500"
+          >
+            🛡️ Review in Guardian
+          </EAButton>
+        )}
         {alert.status === 'new' && (
           <EAButton variant="primary" size="sm" onClick={onAcknowledge}>
             ✋ Acknowledge
@@ -212,6 +229,31 @@ export const AlertDetailPanel: React.FC<AlertDetailPanelProps> = ({
           </>
         )}
       </div>
+
+      {/* Guardian Approval Notice */}
+      {isGuardianApproval && (
+        <div className="p-4 bg-teal-500/10 border-b border-teal-500/30">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">🛡️</span>
+            <div>
+              <p className="text-teal-300 font-semibold">Guardian Approval Required</p>
+              <p className="text-sm text-teal-400/80">
+                This alert requires review and approval before the Guardian Agent can apply the fix.
+                {guardianTicketId ? (
+                  <button
+                    onClick={() => navigate(`/guardian/approval/${guardianTicketId}`)}
+                    className="ml-1 text-teal-300 underline hover:text-teal-200"
+                  >
+                    Open Guardian Review Form →
+                  </button>
+                ) : (
+                  <span className="ml-1 text-slate-400">(Ticket ID not found)</span>
+                )}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Messages Section */}
       <div className="flex-1 flex flex-col overflow-hidden">

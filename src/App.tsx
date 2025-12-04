@@ -160,6 +160,14 @@ const HospitalTransferPortal = React.lazy(() => import('./pages/HospitalTransfer
 // SOC Dashboard - Security Operations Center for super_admins
 const SOCDashboard = React.lazy(() => import('./components/soc/SOCDashboard'));
 
+// Guardian Approvals - Pool Report System for healing actions requiring approval
+const GuardianApprovalsList = React.lazy(() =>
+  import('./components/guardian/GuardianApprovalsList').then(m => ({ default: m.GuardianApprovalsList }))
+);
+const GuardianApprovalForm = React.lazy(() =>
+  import('./components/guardian/GuardianApprovalForm').then(m => ({ default: m.GuardianApprovalForm }))
+);
+
 // Healthcare Integrations (Lab, Pharmacy, Imaging, Insurance)
 const HealthcareIntegrationsDashboard = React.lazy(() => import('./components/healthcareIntegrations/HealthcareIntegrationsDashboard'));
 
@@ -371,6 +379,25 @@ function Shell() {
                 element={
                   <RequireSuperAdmin>
                     <SOCDashboard />
+                  </RequireSuperAdmin>
+                }
+              />
+
+              {/* Guardian Approvals - Pool Reports for healing actions requiring human approval */}
+              {/* SECURITY: Only platform super-admins can approve Guardian actions */}
+              <Route
+                path="/guardian/approvals"
+                element={
+                  <RequireSuperAdmin>
+                    <GuardianApprovalsList />
+                  </RequireSuperAdmin>
+                }
+              />
+              <Route
+                path="/guardian/approval/:ticketId"
+                element={
+                  <RequireSuperAdmin>
+                    <GuardianApprovalForm />
                   </RequireSuperAdmin>
                 }
               />
