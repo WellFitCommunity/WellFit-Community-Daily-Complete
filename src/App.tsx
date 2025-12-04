@@ -154,6 +154,9 @@ const QuestionnaireAnalyticsDashboard = React.lazy(() => import('./components/qu
 // SOC Dashboard - Security Operations Center for super_admins
 const SOCDashboard = React.lazy(() => import('./components/soc/SOCDashboard'));
 
+// Clinical Alerts Dashboard - AI-filtered alerts with effectiveness tracking
+const ClinicalAlertsDashboard = React.lazy(() => import('./components/alerts/ClinicalAlertsDashboard'));
+
 // Healthcare Integrations (Lab, Pharmacy, Imaging, Insurance)
 const HealthcareIntegrationsDashboard = React.lazy(() => import('./components/healthcareIntegrations/HealthcareIntegrationsDashboard'));
 
