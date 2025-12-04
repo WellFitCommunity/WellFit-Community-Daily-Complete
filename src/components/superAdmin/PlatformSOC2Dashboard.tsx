@@ -23,6 +23,7 @@ interface TenantComplianceMetrics {
   hipaaCompliant: boolean;
   mfaEnforced: boolean;
   auditLogsEnabled: boolean;
+  hasModuleConfig: boolean; // Track if module config was found
 }
 
 interface PlatformMetrics {
@@ -50,21 +51,23 @@ const PlatformSOC2Dashboard: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      // Get all tenants with their module configurations
+      // Get all tenants
       const { data: tenants, error: tenantsError } = await supabase
         .from('tenants')
-        .select(`
-          id,
-          name,
-          tenant_code,
-          tenant_module_config (
-            hipaa_audit_logging,
-            mfa_enforcement
-          )
-        `)
+        .select('id, name, tenant_code')
         .order('name');
 
       if (tenantsError) throw tenantsError;
+
+      // Get module configs separately (more reliable than embedded query with RLS)
+      const { data: moduleConfigs } = await supabase
+        .from('tenant_module_config')
+        .select('tenant_id, hipaa_audit_logging, mfa_enforcement');
+
+      // Create lookup map for module configs
+      const moduleConfigMap = new Map(
+        (moduleConfigs || []).map((mc: { tenant_id: string; hipaa_audit_logging: boolean; mfa_enforcement: boolean }) => [mc.tenant_id, mc])
+      );
 
       // Calculate compliance metrics for each tenant
       const tenantComplianceData: TenantComplianceMetrics[] = await Promise.all(
@@ -83,11 +86,13 @@ const PlatformSOC2Dashboard: React.FC = () => {
             .eq('tenant_id', tenant.id)
             .order('created_at', { ascending: false })
             .limit(1)
-            .single();
+            .maybeSingle();
 
-          const moduleConfig = tenant.tenant_module_config?.[0] || {};
-          const hipaaCompliant = moduleConfig.hipaa_audit_logging || false;
-          const mfaEnforced = moduleConfig.mfa_enforcement || false;
+          // Get module config from the lookup map
+          const moduleConfig = moduleConfigMap.get(tenant.id);
+          const hasModuleConfig = Boolean(moduleConfig);
+          const hipaaCompliant = Boolean(moduleConfig?.hipaa_audit_logging);
+          const mfaEnforced = Boolean(moduleConfig?.mfa_enforcement);
           const auditLogsEnabled = (auditCount || 0) > 0;
 
           // Calculate compliance score (0-100)
@@ -114,7 +119,8 @@ const PlatformSOC2Dashboard: React.FC = () => {
             lastAuditDate: latestAudit?.created_at || 'Never',
             hipaaCompliant,
             mfaEnforced,
-            auditLogsEnabled
+            auditLogsEnabled,
+            hasModuleConfig
           };
         })
       );
@@ -325,29 +331,53 @@ const PlatformSOC2Dashboard: React.FC = () => {
                         )}
                       </div>
 
-                      {/* Compliance Indicators */}
+                      {/* Compliance Indicators with hover details */}
                       <div className="flex flex-wrap gap-2 mb-3">
-                        <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
-                          tenant.hipaaCompliant
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}>
+                        <div
+                          className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium cursor-help ${
+                            tenant.hipaaCompliant
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}
+                          title={
+                            !tenant.hasModuleConfig
+                              ? 'CRITICAL: No module configuration found for this tenant. Go to Tenant Settings to configure.'
+                              : tenant.hipaaCompliant
+                              ? 'HIPAA audit logging is enabled'
+                              : 'CRITICAL: HIPAA audit logging is DISABLED. Enable it in Tenant Module Config → hipaa_audit_logging'
+                          }
+                        >
                           {tenant.hipaaCompliant ? <CheckCircle className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
                           HIPAA Logging
+                          {!tenant.hasModuleConfig && <span className="ml-1 text-red-600">(No Config)</span>}
                         </div>
-                        <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
-                          tenant.mfaEnforced
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-yellow-100 text-yellow-800'
-                        }`}>
+                        <div
+                          className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium cursor-help ${
+                            tenant.mfaEnforced
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-yellow-100 text-yellow-800'
+                          }`}
+                          title={
+                            tenant.mfaEnforced
+                              ? 'MFA is enforced for all users'
+                              : 'WARNING: MFA is not enforced. Enable it in Tenant Module Config → mfa_enforcement'
+                          }
+                        >
                           {tenant.mfaEnforced ? <CheckCircle className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
                           MFA Enforced
                         </div>
-                        <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
-                          tenant.auditLogsEnabled
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-yellow-100 text-yellow-800'
-                        }`}>
+                        <div
+                          className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium cursor-help ${
+                            tenant.auditLogsEnabled
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-yellow-100 text-yellow-800'
+                          }`}
+                          title={
+                            tenant.auditLogsEnabled
+                              ? 'Audit logs are being recorded'
+                              : 'WARNING: No audit logs found in the last 30 days. Ensure admin actions are being logged.'
+                          }
+                        >
                           {tenant.auditLogsEnabled ? <CheckCircle className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
                           Audit Logs
                         </div>

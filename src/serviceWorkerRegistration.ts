@@ -13,8 +13,17 @@ const ENV_ENABLE =
 const PUBLIC_URL = process.env.PUBLIC_URL || '';
 
 const ALLOWED_HOSTS = new Set<string>([
+  // Primary domains
   'wellfitcommunity.live',
   'www.wellfitcommunity.live',
+  'thewellfitcommunity.org',
+  'www.thewellfitcommunity.org',
+  // Additional domains
+  'wellfitcommunity.com',
+  'www.wellfitcommunity.com',
+  'app.thewellfitcommunity.org',
+  'app.wellfitcommunity.live',
+  // Development
   'localhost',
   '127.0.0.1',
 ]);

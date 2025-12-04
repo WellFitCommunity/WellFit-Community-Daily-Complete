@@ -73,22 +73,22 @@ const PlatformAICostDashboard: React.FC = () => {
       const tenantCostData: TenantAICost[] = await Promise.all(
         (tenants || []).map(async (tenant: any) => {
           // Query MCP cost tracking table (if exists) or audit logs for AI usage
-          const { data: usageData, error: usageError } = await supabase
+          const { data: usageData } = await supabase
             .from('mcp_usage_logs')
-            .select('cost, tokens_used')
+            .select('cost_usd, total_tokens')
             .eq('tenant_id', tenant.id)
             .gte('created_at', cutoffDate.toISOString());
 
           // Fallback to checking admin_audit_logs for AI operations
+          // Note: admin_audit_logs uses action_type and action_description columns
           const { count: aiRequests } = await supabase
             .from('admin_audit_logs')
             .select('*', { count: 'exact', head: true })
-            .eq('tenant_id', tenant.id)
-            .or('action.ilike.%AI%,action.ilike.%claude%,action.ilike.%mcp%')
+            .or('action_type.ilike.%AI%,action_description.ilike.%AI%,action_description.ilike.%claude%,resource_type.ilike.%mcp%')
             .gte('created_at', cutoffDate.toISOString());
 
-          const totalCost = usageData?.reduce((sum, log) => sum + (log.cost || 0), 0) || 0;
-          const totalTokens = usageData?.reduce((sum, log) => sum + (log.tokens_used || 0), 0) || 0;
+          const totalCost = usageData?.reduce((sum, log) => sum + (Number(log.cost_usd) || 0), 0) || 0;
+          const totalTokens = usageData?.reduce((sum, log) => sum + (log.total_tokens || 0), 0) || 0;
           const totalRequests = aiRequests || 0;
 
           return {

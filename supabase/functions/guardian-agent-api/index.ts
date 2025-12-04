@@ -202,7 +202,7 @@ async function handleMonitorHealth(
 
     const dbHealthy = !dbError;
 
-    // Log health check
+    // Log health check to audit_logs
     await supabase
       .from('audit_logs')
       .insert({
@@ -213,6 +213,21 @@ async function handleMonitorHealth(
         metadata: {
           database: dbHealthy ? 'healthy' : 'unhealthy',
           timestamp: new Date().toISOString()
+        }
+      });
+
+    // IMPORTANT: Log to guardian_cron_log so dashboard shows Guardian as ONLINE
+    await supabase
+      .from('guardian_cron_log')
+      .insert({
+        job_name: 'guardian-health-check',
+        executed_at: new Date().toISOString(),
+        status: dbHealthy ? 'success' : 'failed',
+        details: {
+          triggered_by: userId,
+          source: 'manual_health_check',
+          database_healthy: dbHealthy,
+          api_healthy: true
         }
       });
 

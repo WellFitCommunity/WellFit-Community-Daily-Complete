@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import RequireAdminAuth from '../auth/RequireAdminAuth';
 import AdminHeader from '../admin/AdminHeader';
-import UserQuestions from '../UserQuestions';
 import SmartScribe from '../smart/RealTimeSmartScribe';
 import RiskAssessmentManager from '../admin/RiskAssessmentManager';
 import ReportsSection from '../admin/ReportsSection';
@@ -9,15 +9,16 @@ import CCMTimeline from '../atlas/CCMTimeline';
 import ResilienceHubDashboard from '../nurseos/ResilienceHubDashboard';
 import ShiftHandoffDashboard from './ShiftHandoffDashboard';
 import TelehealthScheduler from '../telehealth/TelehealthScheduler';
-import ERIncomingPatientBoard from '../ems/ERIncomingPatientBoard';
 import { supabase } from '../../lib/supabaseClient';
 import { auditLogger } from '../../services/auditLogger';
 import ClaudeCareAssistantPanel from '../claude-care/ClaudeCareAssistantPanel';
-import CHWAlertsWidget from '../chw/CHWAlertsWidget';
 import PasswordGenerator from '../shared/PasswordGenerator';
 import { PersonalizedGreeting } from '../ai-transparency';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import NurseQuestionManager from '../admin/NurseQuestionManager';
+
+// Tab type for navigation
+type NurseTab = 'clinical' | 'telehealth' | 'documentation' | 'wellness';
 
 // Collapsible Section Component
 interface CollapsibleSectionProps {
@@ -219,8 +220,16 @@ const NurseEnrollPatientSection: React.FC = () => {
  * Lighthouse - Nurse Panel
  * "Vigilant care around the clock"
  * 24/7 patient monitoring and care coordination hub
+ *
+ * Consolidated interface with tabbed navigation to reduce clicks.
+ * Quick actions at top for frequent tasks.
  */
 const NursePanel: React.FC = () => {
+  const navigate = useNavigate();
+
+  // Active tab for main content
+  const [activeTab, setActiveTab] = useState<NurseTab>('clinical');
+
   // Patient selection for documentation (similar to PhysicianPanel)
   const [selectedPatient, setSelectedPatient] = useState<{
     user_id: string;
@@ -269,313 +278,257 @@ const NursePanel: React.FC = () => {
     loadMyPatients();
   }, []);
 
+  // Tab definitions
+  const tabs: { id: NurseTab; label: string; icon: string }[] = [
+    { id: 'clinical', label: 'Clinical Tools', icon: '🏥' },
+    { id: 'telehealth', label: 'Telehealth', icon: '📹' },
+    { id: 'documentation', label: 'Documentation', icon: '📝' },
+    { id: 'wellness', label: 'Wellness', icon: '🧘' },
+  ];
+
   return (
     <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'nurse']}>
-      <div className="min-h-screen bg-[#E8F8F7]">
-        {/* Header without API Key Manager */}
-        <AdminHeader title="🏮 Envision Atlus - Nurse Dashboard" showRiskAssessment={true} />
+      <div className="min-h-screen bg-slate-900">
+        {/* Header */}
+        <AdminHeader title="Nurse Dashboard" showRiskAssessment={true} />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
-          {/* Personalized Greeting with Stats */}
+          {/* Personalized Greeting */}
           <PersonalizedGreeting />
 
-          {/* CHW Field Alerts */}
-          <CHWAlertsWidget userRole="nurse" userId={localStorage.getItem('userId') || ''} maxAlerts={5} />
+          {/* Quick Actions Bar */}
+          <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-white font-semibold flex items-center gap-2">
+                <span>⚡</span> Quick Actions
+              </h3>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+              <button
+                onClick={() => navigate('/er-dashboard')}
+                className="p-3 bg-red-600 hover:bg-red-500 text-white rounded-lg transition-all text-center"
+              >
+                <div className="text-xl mb-1">🚑</div>
+                <div className="text-xs font-medium">ER Dashboard</div>
+              </button>
+              <button
+                onClick={() => navigate('/bed-management')}
+                className="p-3 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-all text-center"
+              >
+                <div className="text-xl mb-1">🛏️</div>
+                <div className="text-xs font-medium">Bed Board</div>
+              </button>
+              <button
+                onClick={() => setActiveTab('telehealth')}
+                className="p-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-all text-center"
+              >
+                <div className="text-xl mb-1">📹</div>
+                <div className="text-xs font-medium">Telehealth</div>
+              </button>
+              <button
+                onClick={() => setActiveTab('documentation')}
+                className="p-3 bg-green-600 hover:bg-green-500 text-white rounded-lg transition-all text-center"
+              >
+                <div className="text-xl mb-1">📝</div>
+                <div className="text-xs font-medium">Documentation</div>
+              </button>
+              <button
+                onClick={() => navigate('/chw/dashboard')}
+                className="p-3 bg-teal-600 hover:bg-teal-500 text-white rounded-lg transition-all text-center"
+              >
+                <div className="text-xl mb-1">🏘️</div>
+                <div className="text-xs font-medium">CHW Dashboard</div>
+              </button>
+              <button
+                onClick={() => setActiveTab('wellness')}
+                className="p-3 bg-pink-600 hover:bg-pink-500 text-white rounded-lg transition-all text-center"
+              >
+                <div className="text-xl mb-1">🧘</div>
+                <div className="text-xs font-medium">Wellness</div>
+              </button>
+            </div>
+          </div>
 
-          {/* Patient Selection for Documentation */}
-          <div className="bg-white rounded-xl shadow-xl border border-black p-6">
-            <h3 className="text-lg font-bold text-black mb-4 flex items-center gap-2">
-              <span className="text-[#1BA39C]">👤</span>
-              Select Patient for Documentation
-            </h3>
+          {/* Tab Navigation */}
+          <div className="flex gap-2 bg-slate-800 p-2 rounded-xl border border-slate-700">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${
+                  activeTab === tab.id
+                    ? 'bg-teal-600 text-white'
+                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                }`}
+              >
+                <span>{tab.icon}</span>
+                <span className="hidden sm:inline">{tab.label}</span>
+              </button>
+            ))}
+          </div>
 
-            {loadingPatients ? (
-              <div className="text-center py-4 text-gray-600">Loading your assigned patients...</div>
-            ) : myPatients.length === 0 ? (
-              <div className="text-center py-4 text-gray-500">
-                No patients currently assigned. Patients will appear here when assigned via care team.
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {myPatients.map((patient: any) => (
-                  <button
-                    key={patient.user_id}
-                    onClick={() => setSelectedPatient(patient)}
-                    className={`p-4 rounded-lg border-2 text-left transition-all ${
-                      selectedPatient?.user_id === patient.user_id
-                        ? 'border-[#1BA39C] bg-[#E8F8F7] shadow-lg'
-                        : 'border-black hover:border-[#1BA39C] hover:bg-[#E8F8F7]'
-                    }`}
-                  >
-                    <div className="font-bold text-gray-900">
-                      {patient.first_name} {patient.last_name}
-                    </div>
-                    {patient.room_number && (
-                      <div className="text-sm text-gray-600 mt-1">Room: {patient.room_number}</div>
-                    )}
-                    {patient.date_of_birth && (
-                      <div className="text-xs text-gray-500 mt-1">
-                        DOB: {new Date(patient.date_of_birth).toLocaleDateString()}
+          {/* Patient Selection (shown when relevant) */}
+          {(activeTab === 'documentation' || activeTab === 'clinical') && (
+            <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
+              <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+                <span>👤</span> Select Patient
+              </h3>
+              {loadingPatients ? (
+                <div className="text-center py-4 text-slate-400">Loading patients...</div>
+              ) : myPatients.length === 0 ? (
+                <div className="text-center py-4 text-slate-500">
+                  No patients assigned. Use care team to assign patients.
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                  {myPatients.map((patient: any) => (
+                    <button
+                      key={patient.user_id}
+                      onClick={() => setSelectedPatient(patient)}
+                      className={`p-3 rounded-lg border text-left transition-all ${
+                        selectedPatient?.user_id === patient.user_id
+                          ? 'border-teal-500 bg-teal-500/20'
+                          : 'border-slate-600 bg-slate-700 hover:border-teal-400'
+                      }`}
+                    >
+                      <div className="font-medium text-white text-sm">
+                        {patient.first_name} {patient.last_name}
                       </div>
-                    )}
+                      {patient.room_number && (
+                        <div className="text-xs text-slate-400">Room {patient.room_number}</div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {selectedPatient && (
+                <div className="mt-3 p-3 bg-teal-500/20 border border-teal-500 rounded-lg flex items-center justify-between">
+                  <span className="text-teal-300">
+                    Selected: <strong className="text-white">{selectedPatient.first_name} {selectedPatient.last_name}</strong>
+                  </span>
+                  <button
+                    onClick={() => setSelectedPatient(null)}
+                    className="text-xs text-slate-400 hover:text-white"
+                  >
+                    Clear
                   </button>
-                ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Tab Content */}
+          <div className="bg-slate-800 rounded-xl border border-slate-700 p-6">
+            {/* Clinical Tools Tab */}
+            {activeTab === 'clinical' && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                    <span>🔄</span> Shift Handoff & Patient Prioritization
+                  </h2>
+                  <ShiftHandoffDashboard />
+                </div>
+
+                <div>
+                  <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                    <span>🤖</span> Claude Care Assistant
+                  </h2>
+                  <p className="text-slate-400 text-sm mb-4">
+                    AI-powered automation for incident reports, supply justifications, handoff notes, and patient education.
+                  </p>
+                  <ClaudeCareAssistantPanel
+                    userRole="nurse"
+                    patientId={selectedPatient?.user_id}
+                    userId={selectedPatient?.user_id}
+                  />
+                </div>
+
+                <div>
+                  <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                    <span>⏱️</span> CCM Autopilot - Chronic Care Management
+                  </h2>
+                  <CCMTimeline />
+                </div>
               </div>
             )}
 
-            {selectedPatient && (
-              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm text-blue-700 font-medium">Currently Selected:</div>
-                    <div className="text-lg font-bold text-blue-900">
-                      {selectedPatient.first_name} {selectedPatient.last_name}
+            {/* Telehealth Tab */}
+            {activeTab === 'telehealth' && (
+              <div>
+                <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                  <span>📹</span> Telehealth Video Appointments
+                </h2>
+                <p className="text-slate-400 text-sm mb-4">
+                  Schedule video appointments, chronic care check-ins, and follow-up visits. Patients get SMS notifications.
+                </p>
+                <TelehealthScheduler />
+              </div>
+            )}
+
+            {/* Documentation Tab */}
+            {activeTab === 'documentation' && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                    <span>🎤</span> Smart Medical Scribe
+                  </h2>
+                  {selectedPatient ? (
+                    <SmartScribe
+                      selectedPatientId={selectedPatient.user_id}
+                      selectedPatientName={`${selectedPatient.first_name} ${selectedPatient.last_name}`}
+                      onSessionComplete={(sessionId) => {
+                        auditLogger.clinical('NURSE_SCRIBE_SESSION_COMPLETED', true, {
+                          sessionId,
+                          patientId: selectedPatient.user_id,
+                        });
+                      }}
+                    />
+                  ) : (
+                    <div className="text-center py-8 bg-slate-700 rounded-xl">
+                      <div className="text-4xl mb-3">👆</div>
+                      <p className="text-slate-300">Select a patient above to start documentation</p>
                     </div>
-                  </div>
-                  <button
-                    onClick={() => setSelectedPatient(null)}
-                    className="px-3 py-1 bg-white border border-blue-300 rounded-lg text-blue-700 hover:bg-blue-100 text-sm"
-                  >
-                    Clear Selection
-                  </button>
+                  )}
                 </div>
+
+                <div>
+                  <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                    <span>🤖</span> AI Patient Questions Manager
+                  </h2>
+                  <NurseQuestionManager />
+                </div>
+
+                <div>
+                  <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                    <span>📋</span> Risk Assessment
+                  </h2>
+                  <RiskAssessmentManager />
+                </div>
+
+                <CollapsibleSection title="Enroll Patient" icon="➕" defaultOpen={false}>
+                  <NurseEnrollPatientSection />
+                </CollapsibleSection>
+
+                <CollapsibleSection title="Reports & Analytics" icon="📊" defaultOpen={false}>
+                  <ReportsSection />
+                </CollapsibleSection>
+              </div>
+            )}
+
+            {/* Wellness Tab */}
+            {activeTab === 'wellness' && (
+              <div>
+                <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                  <span>🧘</span> Emotional Resilience Hub
+                </h2>
+                <p className="text-slate-400 text-sm mb-4">
+                  Track stress, manage burnout, and access support resources for nurses.
+                </p>
+                <ResilienceHubDashboard />
               </div>
             )}
           </div>
-
-          {/* ============================================================ */}
-          {/* HOSPITAL NURSING TOOLS */}
-          {/* ============================================================ */}
-          <section>
-            <div className="mb-4 pb-2 border-b-2 border-blue-500">
-              <h2 className="text-2xl font-bold text-blue-800 flex items-center gap-2">
-                🏥 Hospital Nursing Tools
-              </h2>
-              <p className="text-sm text-gray-600 mt-1">
-                For acute care, ICU, ER, and med/surg nurses
-              </p>
-            </div>
-
-            <div className="space-y-6">
-              {/* EMS Incoming Patients - Ambulance Handoffs */}
-              <CollapsibleSection title="EMS Incoming Patients - Ambulance Handoffs" icon="🚑" defaultOpen={true}>
-                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-red-800 text-sm">
-                    <strong>ER/Ambulance Communication:</strong> View incoming patients from ambulances in real-time.
-                    Paramedics send alerts with chief complaint, vitals, ETA, and critical alerts (STEMI, Stroke, Trauma).
-                    Prepare your team and complete handoff when patient arrives.
-                  </p>
-                </div>
-                <ERIncomingPatientBoard hospitalName="Your Hospital Name" />
-              </CollapsibleSection>
-
-              {/* Smart Shift Handoff - AI-Assisted Patient Prioritization */}
-              <CollapsibleSection title="Smart Shift Handoff - Patient Prioritization" icon="🔄" defaultOpen={false}>
-                <ShiftHandoffDashboard />
-              </CollapsibleSection>
-
-              {/* Emotional Resilience Hub - Hospital Nurses */}
-              <CollapsibleSection title="Emotional Resilience Hub - Prevent Burnout" icon="🧘" defaultOpen={false}>
-                <div className="mb-4 p-4 bg-teal-50 border border-teal-200 rounded-lg">
-                  <p className="text-teal-800 text-sm">
-                    <strong>For Hospital Nurses:</strong> Track shift-related stress, manage emotional exhaustion
-                    from high-acuity patients, and access support resources tailored for acute care settings.
-                  </p>
-                </div>
-                <ResilienceHubDashboard />
-              </CollapsibleSection>
-
-              {/* Claude Care Assistant - AI Administrative Automation for Nurses */}
-              <CollapsibleSection title="Claude Care Assistant - AI Admin Automation" icon="🤖" defaultOpen={false}>
-                <div className="mb-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
-                  <p className="text-purple-800 text-sm">
-                    <strong>Reduce Administrative Burden:</strong> Automate incident reports, supply justifications,
-                    handoff notes, and patient education materials with AI. Translate in 50+ languages.
-                    Use voice input for hands-free documentation. Save time for patient care.
-                  </p>
-                  <div className="mt-2 flex gap-2 flex-wrap">
-                    <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">Incident Reports</span>
-                    <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">Supply Justification</span>
-                    <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">Handoff Notes</span>
-                    <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">Translation (50+ Languages)</span>
-                    <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">Voice Input</span>
-                  </div>
-                </div>
-                <ClaudeCareAssistantPanel
-                  userRole="nurse"
-                  patientId={selectedPatient?.user_id}
-                  userId={selectedPatient?.user_id}
-                />
-              </CollapsibleSection>
-            </div>
-          </section>
-
-          {/* ============================================================ */}
-          {/* COMMUNITY CARE MANAGEMENT (CCM) TOOLS */}
-          {/* ============================================================ */}
-          <section>
-            <div className="mb-4 pb-2 border-b-2 border-green-500">
-              <h2 className="text-2xl font-bold text-green-800 flex items-center gap-2">
-                🏡 Community Care Management (CCM) Tools
-              </h2>
-              <p className="text-sm text-gray-600 mt-1">
-                For telehealth, home health, and chronic care nurses
-              </p>
-            </div>
-
-            <div className="space-y-6">
-              {/* Telehealth Appointment Scheduler */}
-              <CollapsibleSection title="Telehealth Video Appointments" icon="📹" defaultOpen={false}>
-                <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-blue-800 text-sm">
-                    <strong>Virtual Care Platform:</strong> Schedule video appointments with patients for remote consultations,
-                    chronic care check-ins, and follow-up visits. Patients receive SMS notifications and can join directly from their app.
-                  </p>
-                </div>
-                <TelehealthScheduler />
-              </CollapsibleSection>
-
-              {/* Emotional Resilience Hub - CCM Nurses */}
-              <CollapsibleSection title="Emotional Resilience Hub - Prevent Burnout" icon="🧘" defaultOpen={false}>
-                <div className="mb-4 p-4 bg-teal-50 border border-teal-200 rounded-lg">
-                  <p className="text-teal-800 text-sm">
-                    <strong>For CCM Nurses:</strong> Track compassion fatigue, manage call volume stress,
-                    and access resources for remote care providers dealing with isolation and boundary challenges.
-                  </p>
-                </div>
-                <ResilienceHubDashboard />
-              </CollapsibleSection>
-
-              {/* Project Atlus: CCM Autopilot */}
-              <CollapsibleSection title="CCM Autopilot - Chronic Care Management" icon="⏱️">
-                <CCMTimeline />
-              </CollapsibleSection>
-            </div>
-          </section>
-
-          {/* ============================================================ */}
-          {/* SHARED TOOLS (All Nurses) */}
-          {/* ============================================================ */}
-          <section>
-            <div className="mb-4 pb-2 border-b-2 border-purple-500">
-              <h2 className="text-2xl font-bold text-purple-800 flex items-center gap-2">
-                🛠️ Shared Tools - All Nurses
-              </h2>
-            </div>
-
-            <div className="space-y-6">
-
-          {/* AI-Powered Patient Questions - Advanced Nurse Response System */}
-          <CollapsibleSection title="AI Patient Questions Manager" icon="🤖" defaultOpen={false}>
-            <div className="mb-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
-              <p className="text-purple-800 text-sm">
-                <strong>AI-Powered Response System:</strong> Get AI-suggested responses based on patient context,
-                medical history, and clinical guidelines. Responses are autosaved and can be customized before sending.
-              </p>
-            </div>
-            <NurseQuestionManager />
-          </CollapsibleSection>
-
-          {/* Basic Patient Questions (Legacy) */}
-          <CollapsibleSection title="Patient Questions & Responses (Basic)" icon="💬" defaultOpen={false}>
-            <UserQuestions
-              isAdmin={true}
-              onSubmitQuestion={async (data) => {
-                const { error } = await supabase
-                  .from('user_questions')
-                  .insert({
-                    question_text: data.question_text,
-                    category: data.category,
-                    status: 'pending'
-                  });
-
-                if (error) {
-                  throw new Error(`Failed to submit question: ${error.message}`);
-                }
-              }}
-              onSubmitResponse={async (questionId, responseText) => {
-                const { error } = await supabase
-                  .from('user_questions')
-                  .update({
-                    response_text: responseText,
-                    status: 'answered',
-                    answered_at: new Date().toISOString()
-                  })
-                  .eq('id', questionId);
-
-                if (error) {
-                  throw new Error(`Failed to submit response: ${error.message}`);
-                }
-              }}
-              onLoadQuestions={async () => {
-                const { data, error } = await supabase
-                  .from('user_questions')
-                  .select('*')
-                  .order('created_at', { ascending: false })
-                  .limit(50);
-
-                if (error) {
-                  // Return empty array on error - component will handle error state
-                  return [];
-                }
-
-                return data || [];
-              }}
-            />
-          </CollapsibleSection>
-
-          {/* Smart Medical Scribe */}
-          <CollapsibleSection title="Smart Medical Scribe - Nursing Documentation" icon="🎤">
-            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-blue-800 text-sm">
-                <strong>Nursing Documentation AI:</strong> Record nursing assessments, patient observations,
-                care interventions, and shift notes. AI captures clinical details for accurate documentation
-                and helps identify billable nursing activities (wound care, patient education, medication administration, etc.).
-              </p>
-            </div>
-            {selectedPatient ? (
-              <SmartScribe
-                selectedPatientId={selectedPatient.user_id}
-                selectedPatientName={`${selectedPatient.first_name} ${selectedPatient.last_name}`}
-                onSessionComplete={(sessionId) => {
-
-                  auditLogger.clinical('NURSE_SCRIBE_SESSION_COMPLETED', true, {
-                    sessionId,
-                    patientId: selectedPatient.user_id,
-                    nurseId: selectedPatient.user_id
-                  });
-                }}
-              />
-            ) : (
-              <div className="text-center py-12 bg-yellow-50 rounded-xl border-2 border-yellow-200">
-                <div className="text-6xl mb-4">👆</div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Patient Selection Required</h3>
-                <p className="text-gray-600 max-w-md mx-auto">
-                  Please select a patient from the list above before starting a nursing documentation session.
-                  This ensures your notes are properly linked to the correct patient chart.
-                </p>
-              </div>
-            )}
-          </CollapsibleSection>
-
-          {/* Risk Assessment */}
-          <CollapsibleSection title="Risk Assessment" icon="📋">
-            <RiskAssessmentManager />
-          </CollapsibleSection>
-
-          {/* Enroll Patient */}
-          <CollapsibleSection title="Enroll Patient" icon="➕">
-            <NurseEnrollPatientSection />
-          </CollapsibleSection>
-
-          {/* Reports */}
-          <CollapsibleSection title="Reports & Analytics" icon="📊">
-            <ReportsSection />
-          </CollapsibleSection>
-            </div>
-          </section>
-
         </div>
       </div>
     </RequireAdminAuth>

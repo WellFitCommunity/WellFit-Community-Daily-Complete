@@ -44,6 +44,9 @@ import OfflineIndicator from './components/OfflineIndicator';
 // AI Transparency - LearningMilestone (global component)
 import { LearningMilestone } from './components/ai-transparency';
 
+// Theme initialization
+import { useThemeInit } from './hooks/useTheme';
+
 // Feature Flags
 import { featureFlags } from './config/featureFlags';
 
@@ -147,13 +150,14 @@ const CareCoordinationDashboard = React.lazy(() => import('./components/careCoor
 const ReferralsDashboard = React.lazy(() => import('./components/referrals/ReferralsDashboard'));
 const QuestionnaireAnalyticsDashboard = React.lazy(() => import('./components/questionnaires/QuestionnaireAnalyticsDashboard'));
 
-// Clinical Alerts Dashboard - AI-filtered alerts with effectiveness tracking
-const ClinicalAlertsDashboard = React.lazy(() => import('./components/alerts/ClinicalAlertsDashboard'));
+// SOC Dashboard - Security Operations Center for super_admins
+const SOCDashboard = React.lazy(() => import('./components/soc/SOCDashboard'));
 
 // Healthcare Integrations (Lab, Pharmacy, Imaging, Insurance)
 const HealthcareIntegrationsDashboard = React.lazy(() => import('./components/healthcareIntegrations/HealthcareIntegrationsDashboard'));
 
 // CHW (Community Health Worker) Components
+const CHWDashboardPage = React.lazy(() => import('./pages/CHWDashboardPage'));
 const KioskCheckIn = React.lazy(() => import('./components/chw/KioskCheckIn'));
 const CHWVitalsCapture = React.lazy(() => import('./components/chw/CHWVitalsCapture'));
 const MedicationPhotoCapture = React.lazy(() => import('./components/chw/MedicationPhotoCapture'));
@@ -169,6 +173,9 @@ function Shell() {
   const [branding, setBranding] = useState<BrandingConfig>(getCurrentBranding());
   const location = useLocation();
   const { supabase, user } = useSupabaseClient() as any;
+
+  // Initialize theme from database/localStorage
+  useThemeInit();
 
   // Initialize performance monitoring
   useEffect(() => {
@@ -282,7 +289,17 @@ function Shell() {
 
               {/* EMS Prehospital Handoff System */}
               <Route path="/ems" element={<RequireAuth><EMSPage /></RequireAuth>} />
-              <Route path="/er-dashboard" element={<RequireAuth><ERDashboardPage /></RequireAuth>} />
+              {/* ER Dashboard - Requires physician/provider role for sign-off authority */}
+              <Route
+                path="/er-dashboard"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'physician', 'doctor', 'nurse_practitioner', 'physician_assistant', 'nurse']}>
+                      <ERDashboardPage />
+                    </RequireAdminAuth>
+                  </RequireAuth>
+                }
+              />
 
               {/* Law Enforcement "Are You OK?" Welfare Check Program */}
               {featureFlags.lawEnforcement && (
@@ -333,6 +350,17 @@ function Shell() {
                 element={
                   <RequireSuperAdmin>
                     <MultiTenantMonitor />
+                  </RequireSuperAdmin>
+                }
+              />
+
+              {/* SOC Dashboard - Security Operations Center */}
+              {/* SECURITY: Only platform super-admins can access security monitoring */}
+              <Route
+                path="/soc-dashboard"
+                element={
+                  <RequireSuperAdmin>
+                    <SOCDashboard />
                   </RequireSuperAdmin>
                 }
               />
@@ -456,8 +484,22 @@ function Shell() {
                   </RequireAuth>
                 }
               />
+              {/* CHW Command Center - Unified dashboard */}
               <Route
                 path="/chw/dashboard"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'nurse', 'case_manager', 'community_health_worker', 'chw']}>
+                      <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
+                        <CHWDashboardPage />
+                      </Suspense>
+                    </RequireAdminAuth>
+                  </RequireAuth>
+                }
+              />
+              {/* Kiosk Status Monitor */}
+              <Route
+                path="/chw/kiosk-dashboard"
                 element={
                   <RequireAuth>
                     <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'nurse', 'community_health_worker', 'chw']}>

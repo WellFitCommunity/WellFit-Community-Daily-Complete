@@ -2,20 +2,22 @@
  * Security Alert Notifier
  *
  * Sends notifications for critical security events via multiple channels:
- * - Email (via Supabase Edge Function)
- * - SMS (via Twilio integration)
- * - Slack (via Webhook)
- * - PagerDuty (for critical incidents)
+ * - Email (via Supabase Edge Function send-email using MailerSend)
+ * - SMS (via Supabase Edge Function send-sms using Twilio)
+ * - In-house SOC Dashboard at /soc-dashboard (replaces Slack/PagerDuty)
  *
  * This ensures that security teams are immediately notified of threats.
+ *
+ * SOC2 Compliance: CC6.1, CC7.2 - Security event notification
  */
 
 import { supabase } from '../../lib/supabaseClient';
+import { auditLogger } from '../auditLogger';
 
 export interface NotificationChannel {
-  type: 'email' | 'sms' | 'slack' | 'pagerduty';
+  type: 'email' | 'sms' | 'soc_dashboard';
   enabled: boolean;
-  config?: Record<string, any>;
+  config?: Record<string, unknown>;
 }
 
 export interface AlertNotification {
@@ -26,10 +28,20 @@ export interface AlertNotification {
   affectedResource?: string;
   timestamp: string;
   channels: string[];
+  metadata?: Record<string, unknown>;
+}
+
+export interface NotificationResult {
+  success: boolean;
+  error?: string;
+  messageId?: string;
 }
 
 /**
  * SecurityAlertNotifier - Multi-channel alert notifications
+ *
+ * This class is responsible for delivering security alerts via multiple channels.
+ * All notifications are logged for audit purposes.
  */
 export class SecurityAlertNotifier {
   private channels: Map<string, NotificationChannel> = new Map();
@@ -42,51 +54,39 @@ export class SecurityAlertNotifier {
    * Initialize notification channels based on environment configuration
    */
   private initializeChannels(): void {
-    // Email channel (via Supabase Edge Function)
+    // Email channel (via Supabase Edge Function send-email)
     this.channels.set('email', {
       type: 'email',
       enabled: true,
       config: {
-        recipientEmails: process.env.SECURITY_ALERT_EMAILS?.split(',') || [
+        recipientEmails: process.env.REACT_APP_SECURITY_ALERT_EMAILS?.split(',') || [
           'info@thewellfitcommunity.org',
         ],
-        fromEmail: 'security@thewellfitcommunity.org',
       },
     });
 
-    // SMS channel (via Twilio)
+    // SMS channel (via Supabase Edge Function send-sms)
     this.channels.set('sms', {
       type: 'sms',
-      enabled: !!process.env.TWILIO_ACCOUNT_SID,
+      enabled: !!process.env.REACT_APP_SECURITY_ALERT_PHONES,
       config: {
-        recipientPhones: process.env.SECURITY_ALERT_PHONES?.split(',') || [],
-        twilioAccountSid: process.env.TWILIO_ACCOUNT_SID,
-        twilioAuthToken: process.env.TWILIO_AUTH_TOKEN,
-        twilioPhoneNumber: process.env.TWILIO_PHONE_NUMBER,
+        recipientPhones: process.env.REACT_APP_SECURITY_ALERT_PHONES?.split(',') || [],
       },
     });
 
-    // Slack channel (via Webhook)
-    this.channels.set('slack', {
-      type: 'slack',
-      enabled: !!process.env.SLACK_SECURITY_WEBHOOK_URL,
+    // SOC Dashboard (in-house - replaces Slack/PagerDuty)
+    // Alerts automatically appear in /soc-dashboard with real-time updates
+    this.channels.set('soc_dashboard', {
+      type: 'soc_dashboard',
+      enabled: true, // Always enabled - it's our in-house system
       config: {
-        webhookUrl: process.env.SLACK_SECURITY_WEBHOOK_URL,
-        channel: '#security-alerts',
+        dashboardUrl: '/soc-dashboard',
       },
     });
 
-    // PagerDuty (for critical incidents)
-    this.channels.set('pagerduty', {
-      type: 'pagerduty',
-      enabled: !!process.env.PAGERDUTY_INTEGRATION_KEY,
-      config: {
-        integrationKey: process.env.PAGERDUTY_INTEGRATION_KEY,
-        serviceId: process.env.PAGERDUTY_SERVICE_ID,
-      },
+    auditLogger.info('SecurityAlertNotifier initialized', {
+      enabledChannels: this.getEnabledChannels(),
     });
-
-    // Channels initialized - logged to audit system
   }
 
   /**
@@ -126,11 +126,10 @@ export class SecurityAlertNotifier {
           case 'sms':
             results[channelName] = await this.sendSMS(notification, channel);
             break;
-          case 'slack':
-            results[channelName] = await this.sendSlack(notification, channel);
-            break;
-          case 'pagerduty':
-            results[channelName] = await this.sendPagerDuty(notification, channel);
+          case 'soc_dashboard':
+            // SOC Dashboard gets alerts automatically via database insert
+            // No additional action needed - realtime subscriptions handle it
+            results[channelName] = { success: true };
             break;
         }
       } catch (error) {
@@ -149,183 +148,170 @@ export class SecurityAlertNotifier {
   }
 
   /**
-   * Send email notification
+   * Send email notification via send-email edge function
    */
   private async sendEmail(
     notification: AlertNotification,
     channel: NotificationChannel
-  ): Promise<{ success: boolean; error?: string }> {
+  ): Promise<NotificationResult> {
     try {
-      const { recipientEmails, fromEmail } = channel.config || {};
+      const { recipientEmails } = channel.config || {};
 
-      // In production, call Supabase Edge Function to send email
-      // For now, we'll log and simulate success
-      // Email notification prepared - logged to audit system
+      if (!recipientEmails || (recipientEmails as string[]).length === 0) {
+        return { success: false, error: 'No recipient emails configured' };
+      }
 
-      // TODO: Call actual email service
-      // const { data, error } = await supabase.functions.invoke('send-security-alert-email', {
-      //   body: { notification, recipientEmails, fromEmail }
-      // });
+      // Build HTML email content
+      const htmlContent = this.buildEmailHtml(notification);
 
-      return { success: true };
+      // Call send-email edge function
+      const { data, error } = await supabase.functions.invoke('send-email', {
+        body: {
+          to: (recipientEmails as string[]).map((email) => ({
+            email,
+            name: 'Security Team',
+          })),
+          subject: `[${notification.severity.toUpperCase()}] Security Alert: ${notification.title}`,
+          html: htmlContent,
+          priority: notification.severity === 'critical' ? 'urgent' : 'high',
+        },
+      });
+
+      if (error) {
+        auditLogger.error('Email notification failed', error.message, {
+          alertId: notification.alertId,
+        });
+        return { success: false, error: error.message };
+      }
+
+      auditLogger.info('Email notification sent', {
+        alertId: notification.alertId,
+        recipients: (recipientEmails as string[]).length,
+      });
+
+      return { success: true, messageId: data?.messageId };
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Email send failed';
+      auditLogger.error('Email notification exception', errorMsg, {
+        alertId: notification.alertId,
+      });
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Email send failed',
+        error: errorMsg,
       };
     }
   }
 
   /**
-   * Send SMS notification
+   * Build HTML email content for security alert
+   */
+  private buildEmailHtml(notification: AlertNotification): string {
+    const severityColors: Record<string, string> = {
+      low: '#36a64f',
+      medium: '#ff9900',
+      high: '#ff0000',
+      critical: '#8b0000',
+    };
+
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .header { background: ${severityColors[notification.severity]}; color: white; padding: 20px; text-align: center; }
+          .content { padding: 20px; }
+          .field { margin-bottom: 15px; }
+          .label { font-weight: bold; color: #666; }
+          .footer { background: #f5f5f5; padding: 15px; text-align: center; font-size: 12px; color: #666; }
+          .badge { display: inline-block; padding: 5px 15px; border-radius: 3px; background: ${severityColors[notification.severity]}; color: white; font-weight: bold; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Security Alert</h1>
+          <span class="badge">${notification.severity.toUpperCase()}</span>
+        </div>
+        <div class="content">
+          <div class="field">
+            <div class="label">Alert Title</div>
+            <div>${notification.title}</div>
+          </div>
+          <div class="field">
+            <div class="label">Description</div>
+            <div>${notification.description}</div>
+          </div>
+          ${notification.affectedResource ? `
+          <div class="field">
+            <div class="label">Affected Resource</div>
+            <div>${notification.affectedResource}</div>
+          </div>
+          ` : ''}
+          <div class="field">
+            <div class="label">Timestamp</div>
+            <div>${new Date(notification.timestamp).toLocaleString()}</div>
+          </div>
+          <div class="field">
+            <div class="label">Alert ID</div>
+            <div>${notification.alertId}</div>
+          </div>
+        </div>
+        <div class="footer">
+          <p>This is an automated security alert from WellFit Guardian Agent.</p>
+          <p>Please investigate this alert in the SOC2 Security Dashboard.</p>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  /**
+   * Send SMS notification via send-sms edge function
    */
   private async sendSMS(
     notification: AlertNotification,
     channel: NotificationChannel
-  ): Promise<{ success: boolean; error?: string }> {
+  ): Promise<NotificationResult> {
     try {
       const { recipientPhones } = channel.config || {};
 
-      if (!recipientPhones || recipientPhones.length === 0) {
+      if (!recipientPhones || (recipientPhones as string[]).length === 0) {
         return { success: false, error: 'No recipient phones configured' };
       }
 
-      // SMS message (limited to 160 characters)
-      const message = `[${notification.severity.toUpperCase()}] ${notification.title.substring(0, 100)}`;
+      // SMS message (limited to 160 characters for single segment)
+      const smsMessage = `[${notification.severity.toUpperCase()}] ${notification.title.substring(0, 100)}. Alert ID: ${notification.alertId.substring(0, 8)}`;
 
-      // SMS notification prepared - logged to audit system
-
-      // TODO: Integrate with Twilio
-      // const twilioClient = twilio(twilioAccountSid, twilioAuthToken);
-      // await twilioClient.messages.create({
-      //   body: message,
-      //   from: twilioPhoneNumber,
-      //   to: recipientPhone
-      // });
-
-      return { success: true };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'SMS send failed',
-      };
-    }
-  }
-
-  /**
-   * Send Slack notification
-   */
-  private async sendSlack(
-    notification: AlertNotification,
-    channel: NotificationChannel
-  ): Promise<{ success: boolean; error?: string }> {
-    try {
-      const { webhookUrl, channel: slackChannel } = channel.config || {};
-
-      if (!webhookUrl) {
-        return { success: false, error: 'Slack webhook URL not configured' };
-      }
-
-      // Format Slack message
-      const slackMessage = {
-        channel: slackChannel,
-        username: 'Guardian Security Agent',
-        icon_emoji: ':shield:',
-        attachments: [
-          {
-            color: this.getSeverityColor(notification.severity),
-            title: notification.title,
-            text: notification.description,
-            fields: [
-              {
-                title: 'Severity',
-                value: notification.severity.toUpperCase(),
-                short: true,
-              },
-              {
-                title: 'Affected Resource',
-                value: notification.affectedResource || 'N/A',
-                short: true,
-              },
-              {
-                title: 'Time',
-                value: new Date(notification.timestamp).toLocaleString(),
-                short: false,
-              },
-            ],
-            footer: 'WellFit Guardian Agent',
-            ts: Math.floor(new Date(notification.timestamp).getTime() / 1000),
-          },
-        ],
-      };
-
-
-
-      // TODO: Send to Slack webhook
-      // const response = await fetch(webhookUrl, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(slackMessage)
-      // });
-
-      return { success: true };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Slack send failed',
-      };
-    }
-  }
-
-  /**
-   * Send PagerDuty notification
-   */
-  private async sendPagerDuty(
-    notification: AlertNotification,
-    channel: NotificationChannel
-  ): Promise<{ success: boolean; error?: string }> {
-    try {
-      const { integrationKey } = channel.config || {};
-
-      if (!integrationKey) {
-        return { success: false, error: 'PagerDuty integration key not configured' };
-      }
-
-      // Only trigger PagerDuty for critical alerts
-      if (notification.severity !== 'critical') {
-        return { success: false, error: 'PagerDuty only for critical alerts' };
-      }
-
-      const pagerDutyEvent = {
-        routing_key: integrationKey,
-        event_action: 'trigger',
-        dedup_key: notification.alertId,
-        payload: {
-          summary: notification.title,
-          severity: notification.severity,
-          source: 'guardian-agent',
-          timestamp: notification.timestamp,
-          custom_details: {
-            description: notification.description,
-            affected_resource: notification.affectedResource,
-          },
+      // Call send-sms edge function
+      const { data, error } = await supabase.functions.invoke('send-sms', {
+        body: {
+          to: recipientPhones,
+          message: smsMessage,
+          priority: notification.severity === 'critical' ? 'urgent' : 'high',
         },
-      };
+      });
 
+      if (error) {
+        auditLogger.error('SMS notification failed', error.message, {
+          alertId: notification.alertId,
+        });
+        return { success: false, error: error.message };
+      }
 
+      auditLogger.info('SMS notification sent', {
+        alertId: notification.alertId,
+        recipients: (recipientPhones as string[]).length,
+      });
 
-      // TODO: Send to PagerDuty Events API
-      // const response = await fetch('https://events.pagerduty.com/v2/enqueue', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(pagerDutyEvent)
-      // });
-
-      return { success: true };
+      return { success: true, messageId: data?.results?.[0]?.sid };
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'SMS send failed';
+      auditLogger.error('SMS notification exception', errorMsg, {
+        alertId: notification.alertId,
+      });
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'PagerDuty send failed',
+        error: errorMsg,
       };
     }
   }
@@ -351,19 +337,6 @@ export class SecurityAlertNotifier {
     } catch (error) {
 
     }
-  }
-
-  /**
-   * Get Slack color for severity
-   */
-  private getSeverityColor(severity: string): string {
-    const colors: Record<string, string> = {
-      low: '#36a64f',
-      medium: '#ff9900',
-      high: '#ff0000',
-      critical: '#8b0000',
-    };
-    return colors[severity] || '#808080';
   }
 
   /**

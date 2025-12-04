@@ -195,22 +195,10 @@ export const PersonalizedGreeting: React.FC = () => {
               <div className="text-2xl font-bold text-orange-600 mt-1">{roleStats.pendingApprovals}</div>
             </div>
           )}
-          {roleStats.totalTenants !== undefined && (
-            <div className="bg-white rounded-lg shadow-sm p-4 border border-slate-100">
-              <div className="text-sm text-gray-600 font-medium">Tenants</div>
-              <div className="text-2xl font-bold text-slate-600 mt-1">{roleStats.totalTenants}</div>
-            </div>
-          )}
-          {roleStats.criticalAlerts !== undefined && (
+          {roleStats.criticalAlerts !== undefined && roleStats.criticalAlerts > 0 && (
             <div className="bg-white rounded-lg shadow-sm p-4 border border-red-100">
               <div className="text-sm text-gray-600 font-medium">Critical Alerts</div>
               <div className="text-2xl font-bold text-red-600 mt-1">{roleStats.criticalAlerts}</div>
-            </div>
-          )}
-          {roleStats.platformHealth !== undefined && (
-            <div className="bg-white rounded-lg shadow-sm p-4 border border-emerald-100">
-              <div className="text-sm text-gray-600 font-medium">Platform Health</div>
-              <div className="text-2xl font-bold text-emerald-600 mt-1">{roleStats.platformHealth}%</div>
             </div>
           )}
         </motion.div>
@@ -265,10 +253,10 @@ export const PersonalizedGreeting: React.FC = () => {
 
                 {/* Quote Text */}
                 <div className="flex-1">
-                  <p className="text-gray-800 dark:text-gray-100 text-lg font-medium italic leading-relaxed">
+                  <p className="text-slate-900 text-lg font-medium italic leading-relaxed">
                     "{greetingData.quote.text}"
                   </p>
-                  <p className="text-gray-600 dark:text-gray-300 text-sm font-semibold mt-2">
+                  <p className="text-slate-700 text-sm font-semibold mt-2">
                     — {greetingData.quote.author}
                   </p>
                 </div>

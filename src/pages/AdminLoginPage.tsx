@@ -1,12 +1,5 @@
-// src/pages/AdminLoginPage.tsx — PRODUCTION-READY with full role-based routing
+// src/pages/AdminLoginPage.tsx — Clean, Professional Admin PIN Page
 // Purpose: Second-factor staff gate (PIN) after staff email/phone login.
-// Notes:
-// - Confirms staff/admin via multiple sources, including a DB check on profiles.is_admin.
-// - Modes: "unlock" (enter PIN), "setpin" (create/update PIN), "forgot" (request reset),
-//          "verify" (enter SMS code), "reset" (set new PIN with OTP token).
-// - Uses useAdminAuth().verifyPinAndLogin(pin, role) to unlock session.
-// - Expects Edge Functions: 'admin_set_pin', 'request-pin-reset', 'verify-pin-reset'
-// - Routes users to appropriate dashboard based on their role after PIN verification
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -23,6 +16,51 @@ type LocationState = {
 
 type PageMode = 'unlock' | 'setpin' | 'forgot' | 'verify' | 'reset';
 
+/**
+ * Normalize phone number to E.164 format with +1 for US numbers
+ */
+function normalizePhoneForTwilio(phone: string): string {
+  // Remove all non-digit characters except +
+  let cleaned = phone.replace(/[^\d+]/g, '');
+
+  // If it starts with +, keep it as-is (already international format)
+  if (cleaned.startsWith('+')) {
+    return cleaned;
+  }
+
+  // Remove leading 1 if present (US country code without +)
+  if (cleaned.startsWith('1') && cleaned.length === 11) {
+    cleaned = cleaned.substring(1);
+  }
+
+  // If 10 digits, assume US and add +1
+  if (cleaned.length === 10) {
+    return `+1${cleaned}`;
+  }
+
+  // If 11 digits starting with 1, add +
+  if (cleaned.length === 11 && cleaned.startsWith('1')) {
+    return `+${cleaned}`;
+  }
+
+  // Return as-is with + prefix if not already there
+  return cleaned.startsWith('+') ? cleaned : `+${cleaned}`;
+}
+
+/**
+ * Format phone for display
+ */
+function formatPhoneDisplay(phone: string): string {
+  const cleaned = phone.replace(/[^\d]/g, '');
+  if (cleaned.length === 10) {
+    return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+  }
+  if (cleaned.length === 11 && cleaned.startsWith('1')) {
+    return `+1 (${cleaned.slice(1, 4)}) ${cleaned.slice(4, 7)}-${cleaned.slice(7)}`;
+  }
+  return phone;
+}
+
 export default function AdminLoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -30,11 +68,9 @@ export default function AdminLoginPage() {
   const supabase = useSupabaseClient();
   const { branding } = useBranding();
 
-  // App auth contexts
   const { user, isAdmin } = useAuth();
   const { verifyPinAndLogin, isLoading, error } = useAdminAuth();
 
-  // UI state
   const [mode, setMode] = useState<PageMode>('unlock');
   const [role, setRole] = useState<StaffRole>('admin');
   const [detectedRole, setDetectedRole] = useState<StaffRole | null>(null);
@@ -44,15 +80,11 @@ export default function AdminLoginPage() {
   const [busy, setBusy] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  // PIN Reset flow state
   const [resetPhone, setResetPhone] = useState('');
   const [smsCode, setSmsCode] = useState('');
   const [otpToken, setOtpToken] = useState<string | null>(null);
-  const [resetCodeSent, setResetCodeSent] = useState(false);
 
-  // DB-backed admin flag
   const [dbIsAdmin, setDbIsAdmin] = useState<boolean | null>(null);
-  // Tenant info for TenantCode-PIN authentication
   const [userTenantId, setUserTenantId] = useState<string | null>(null);
   const [userTenantCode, setUserTenantCode] = useState<string | null>(null);
 
@@ -60,7 +92,7 @@ export default function AdminLoginPage() {
     return user?.email || (user as any)?.phone || user?.user_metadata?.email || 'Unknown user';
   }, [user]);
 
-  // Fetch admin flag AND role from DB (authoritative within app schema)
+  // Fetch admin status and role from DB
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -78,8 +110,7 @@ export default function AdminLoginPage() {
 
       if (!cancelled) {
         if (selErr) {
-
-          setDbIsAdmin(null); // fall back to other checks
+          setDbIsAdmin(null);
           setDetectedRole(null);
           setUserTenantId(null);
           setUserTenantCode(null);
@@ -88,41 +119,28 @@ export default function AdminLoginPage() {
           const userRole = (data?.role || null) as StaffRole | null;
           setDetectedRole(userRole);
           setUserTenantId(data?.tenant_id || null);
+          if (userRole) setRole(userRole);
 
-          // Auto-select detected role
-          if (userRole) {
-            setRole(userRole);
-          }
-
-          // Fetch tenant code if user has a tenant
           if (data?.tenant_id) {
             const { data: tenantData } = await supabase
               .from('tenants')
               .select('tenant_code')
               .eq('id', data.tenant_id)
               .single();
-
             if (tenantData?.tenant_code && !cancelled) {
               setUserTenantCode(tenantData.tenant_code);
             }
           }
         }
-
       }
     })();
     return () => { cancelled = true; };
   }, [supabase, user?.id]);
 
-  // ✅ Consolidated admin decision:
   const isUserAdmin = useMemo(() => {
     if (!user) return false;
-    // DB is preferred when known
     if (dbIsAdmin === true) return true;
-    if (dbIsAdmin === false) {
-      // explicit false from DB dominates
-      return false;
-    }
-    // Fallbacks: app context + app_metadata
+    if (dbIsAdmin === false) return false;
     const appMetaRole = (user as any)?.app_metadata?.role;
     const appMetaIsAdmin = (user as any)?.app_metadata?.is_admin;
     return Boolean(
@@ -134,39 +152,49 @@ export default function AdminLoginPage() {
     );
   }, [user, isAdmin, dbIsAdmin]);
 
-  // Not signed in → redirect to login
+  // Not signed in
   if (!user) {
     return (
-      <div className="p-6 max-w-md mx-auto bg-white rounded shadow text-center">
-        <h1 className="text-xl font-semibold mb-4 text-red-600">Authentication Required</h1>
-        <p className="mb-4">You must be logged in to access the admin panel.</p>
-        <button
-          onClick={() => navigate('/login')}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          type="button"
-        >
-          Go to Login
-        </button>
+      <div className="min-h-screen flex items-center justify-center bg-slate-100">
+        <div className="bg-white p-8 rounded-lg shadow-lg max-w-sm w-full text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 0v2m0-2h2m-2 0H10m2-6V4" />
+            </svg>
+          </div>
+          <h1 className="text-xl font-semibold text-gray-900 mb-2">Authentication Required</h1>
+          <p className="text-gray-600 mb-6">Please log in to access the admin panel.</p>
+          <button
+            onClick={() => navigate('/login')}
+            className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+          >
+            Go to Login
+          </button>
+        </div>
       </div>
     );
   }
 
-  // Signed in but not admin
+  // Not admin
   if (!isUserAdmin) {
     return (
-      <div className="p-6 max-w-md mx-auto bg-white rounded shadow text-center">
-        <h1 className="text-xl font-semibold mb-4 text-red-600">Access Denied</h1>
-        <p className="mb-4">You must have administrator privileges to access this page.</p>
-        <p className="text-sm text-gray-600 mb-4">
-          Logged in as: {userLabel}
-        </p>
-        <button
-          onClick={() => navigate('/dashboard')}
-          className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
-          type="button"
-        >
-          Return to Dashboard
-        </button>
+      <div className="min-h-screen flex items-center justify-center bg-slate-100">
+        <div className="bg-white p-8 rounded-lg shadow-lg max-w-sm w-full text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+            </svg>
+          </div>
+          <h1 className="text-xl font-semibold text-gray-900 mb-2">Access Denied</h1>
+          <p className="text-gray-600 mb-2">Administrator privileges required.</p>
+          <p className="text-sm text-gray-500 mb-6">{userLabel}</p>
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="w-full py-3 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition-colors"
+          >
+            Return to Dashboard
+          </button>
+        </div>
       </div>
     );
   }
@@ -175,185 +203,12 @@ export default function AdminLoginPage() {
     return raw.replace(/[^\d]/g, '').slice(0, 8);
   }
 
-  async function handleSetPin(e?: React.FormEvent) {
-    e?.preventDefault();
+  const clearMessages = () => {
     setLocalErr(null);
     setSuccessMsg(null);
-    const p1 = cleanPin(pin);
-    const p2 = cleanPin(pin2);
+  };
 
-    if (!/^\d{4,8}$/.test(p1)) {
-      setLocalErr('PIN must be 4–8 digits.');
-      return;
-    }
-    if (p1 !== p2) {
-      setLocalErr('PINs do not match.');
-      return;
-    }
-
-    setBusy(true);
-    try {
-      // SECURITY: Hash PIN client-side before transmission (defense-in-depth)
-      // This prevents plaintext PINs from appearing in logs, dev tools, or memory dumps
-      const hashedPin = await hashPinForTransmission(p1);
-
-      const { error: fnErr } = await supabase.functions.invoke('admin_set_pin', {
-        body: { pin: hashedPin, role }
-      });
-
-      if (fnErr) {
-        setLocalErr(fnErr.message || 'Could not set PIN.');
-        return;
-      }
-      setSuccessMsg('PIN saved successfully. You can now unlock the Admin Panel.');
-      setMode('unlock');
-      setPin('');
-      setPin2('');
-    } catch (e: any) {
-      setLocalErr(e?.message || 'Could not set PIN.');
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  // Request PIN reset - sends SMS code
-  async function handleRequestReset(e?: React.FormEvent) {
-    e?.preventDefault();
-    setLocalErr(null);
-    setSuccessMsg(null);
-
-    // Simple phone validation
-    const cleanedPhone = resetPhone.replace(/[^\d+]/g, '');
-    if (cleanedPhone.length < 10) {
-      setLocalErr('Please enter a valid phone number.');
-      return;
-    }
-
-    setBusy(true);
-    try {
-      const { data, error: fnErr } = await supabase.functions.invoke('request-pin-reset', {
-        body: { phone: cleanedPhone }
-      });
-
-      if (fnErr) {
-        // Still show success message to prevent phone enumeration
-        setSuccessMsg('If this phone is registered to an admin account, a verification code has been sent.');
-        setResetCodeSent(true);
-        setMode('verify');
-        return;
-      }
-
-      setSuccessMsg(data?.message || 'If this phone is registered to an admin account, a verification code has been sent.');
-      setResetCodeSent(true);
-      setMode('verify');
-    } catch (e: any) {
-      // Still show generic success to prevent enumeration
-      setSuccessMsg('If this phone is registered to an admin account, a verification code has been sent.');
-      setResetCodeSent(true);
-      setMode('verify');
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  // Verify SMS code and get OTP token
-  async function handleVerifyCode(e?: React.FormEvent) {
-    e?.preventDefault();
-    setLocalErr(null);
-    setSuccessMsg(null);
-
-    if (!/^\d{4,8}$/.test(smsCode)) {
-      setLocalErr('Please enter the verification code from your SMS.');
-      return;
-    }
-
-    const cleanedPhone = resetPhone.replace(/[^\d+]/g, '');
-
-    setBusy(true);
-    try {
-      const { data, error: fnErr } = await supabase.functions.invoke('verify-pin-reset', {
-        body: { phone: cleanedPhone, code: smsCode }
-      });
-
-      if (fnErr) {
-        setLocalErr(fnErr.message || 'Invalid or expired verification code.');
-        return;
-      }
-
-      if (!data?.otp_token) {
-        setLocalErr('Verification failed. Please try again.');
-        return;
-      }
-
-      // Store OTP token and move to reset mode
-      setOtpToken(data.otp_token);
-      setSuccessMsg('Code verified! Please set your new PIN.');
-      setSmsCode('');
-      setMode('reset');
-    } catch (e: any) {
-      setLocalErr(e?.message || 'Could not verify code.');
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  // Set new PIN using OTP token
-  async function handleResetPin(e?: React.FormEvent) {
-    e?.preventDefault();
-    setLocalErr(null);
-    setSuccessMsg(null);
-    const p1 = cleanPin(pin);
-    const p2 = cleanPin(pin2);
-
-    if (!/^\d{4,8}$/.test(p1)) {
-      setLocalErr('PIN must be 4–8 digits.');
-      return;
-    }
-    if (p1 !== p2) {
-      setLocalErr('PINs do not match.');
-      return;
-    }
-
-    if (!otpToken) {
-      setLocalErr('Reset session expired. Please start over.');
-      setMode('forgot');
-      return;
-    }
-
-    setBusy(true);
-    try {
-      const hashedPin = await hashPinForTransmission(p1);
-
-      const { error: fnErr } = await supabase.functions.invoke('admin_set_pin', {
-        body: { pin: hashedPin, role, otp_token: otpToken }
-      });
-
-      if (fnErr) {
-        setLocalErr(fnErr.message || 'Could not reset PIN.');
-        return;
-      }
-
-      // Clear reset state
-      setOtpToken(null);
-      setResetPhone('');
-      setSmsCode('');
-      setResetCodeSent(false);
-      setPin('');
-      setPin2('');
-
-      setSuccessMsg('PIN reset successfully! You can now unlock with your new PIN.');
-      setMode('unlock');
-    } catch (e: any) {
-      setLocalErr(e?.message || 'Could not reset PIN.');
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  // Helper function to get dashboard route for a role
-  // NOTE: This is the WellFit Facility Admin login, NOT the Envision portal.
-  // Super admins accessing via this route should go to the WellFit admin panel,
-  // not the Envision platform system. Envision portal is accessed via /envision login.
+  // Get dashboard route for role
   const getDashboardForRole = (staffRole: StaffRole): string => {
     switch (staffRole) {
       case 'nurse':
@@ -364,557 +219,522 @@ export default function AdminLoginPage() {
       case 'doctor':
         return '/physician-dashboard';
       case 'it_admin':
-        return '/it-admin'; // Tenant IT Administration Dashboard
+        return '/it-admin';
       case 'super_admin':
       case 'admin':
       case 'department_head':
-        // All admin roles go to the WellFit admin panel when using facility login
-        // Envision platform access requires /envision login route
-        return '/admin';
       default:
-        return '/admin'; // Fallback to admin panel
+        return '/admin';
     }
   };
 
+  // === HANDLERS ===
+
   async function handleUnlock(e?: React.FormEvent) {
     e?.preventDefault();
-    setLocalErr(null);
-    setSuccessMsg(null);
+    clearMessages();
 
-    // Validate PIN format (always 4-8 digits, regardless of tenant)
     const cleanedPin = cleanPin(pin);
     if (!/^\d{4,8}$/.test(cleanedPin)) {
-      setLocalErr('Enter your 4–8 digit PIN.');
+      setLocalErr('Enter your 4-8 digit PIN.');
       return;
     }
 
-    // Construct the full credential to send to the server
-    // If user has a tenant code, combine it with the PIN (e.g., "MH-6702-1234")
-    // Otherwise, just send the PIN
     const credential = (userTenantId && userTenantCode)
       ? `${userTenantCode}-${cleanedPin}`
       : cleanedPin;
 
     try {
-      // Send the full credential (PIN or TenantCode-PIN) - server will parse it
       const success = await verifyPinAndLogin(credential, role);
       if (!success) {
-        setLocalErr('Incorrect PIN or verification failed.');
+        setLocalErr('Incorrect PIN.');
+        return;
+      }
+      const defaultDashboard = getDashboardForRole(role);
+      const intendedPath = state.from?.pathname || defaultDashboard;
+      navigate(intendedPath, { replace: true });
+    } catch (err: any) {
+      setLocalErr(err?.message || 'Verification failed.');
+    }
+  }
+
+  async function handleSetPin(e?: React.FormEvent) {
+    e?.preventDefault();
+    clearMessages();
+    const p1 = cleanPin(pin);
+    const p2 = cleanPin(pin2);
+
+    if (!/^\d{4,8}$/.test(p1)) {
+      setLocalErr('PIN must be 4-8 digits.');
+      return;
+    }
+    if (p1 !== p2) {
+      setLocalErr('PINs do not match.');
+      return;
+    }
+
+    setBusy(true);
+    try {
+      const hashedPin = await hashPinForTransmission(p1);
+      const { error: fnErr } = await supabase.functions.invoke('admin_set_pin', {
+        body: { pin: hashedPin, role }
+      });
+
+      if (fnErr) {
+        setLocalErr(fnErr.message || 'Could not set PIN.');
+        return;
+      }
+      setSuccessMsg('PIN saved successfully.');
+      setMode('unlock');
+      setPin('');
+      setPin2('');
+    } catch (e: any) {
+      setLocalErr(e?.message || 'Could not set PIN.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleRequestReset(e?: React.FormEvent) {
+    e?.preventDefault();
+    clearMessages();
+
+    const cleaned = resetPhone.replace(/[^\d]/g, '');
+    if (cleaned.length < 10) {
+      setLocalErr('Enter a valid 10-digit phone number.');
+      return;
+    }
+
+    // Normalize to E.164 with +1 for Twilio
+    const normalizedPhone = normalizePhoneForTwilio(resetPhone);
+
+    setBusy(true);
+    try {
+      await supabase.functions.invoke('request-pin-reset', {
+        body: { phone: normalizedPhone }
+      });
+      // Always show success to prevent phone enumeration
+      setSuccessMsg('If this phone is registered, a code has been sent.');
+      setMode('verify');
+    } catch {
+      setSuccessMsg('If this phone is registered, a code has been sent.');
+      setMode('verify');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleVerifyCode(e?: React.FormEvent) {
+    e?.preventDefault();
+    clearMessages();
+
+    if (!/^\d{4,8}$/.test(smsCode)) {
+      setLocalErr('Enter the verification code.');
+      return;
+    }
+
+    const normalizedPhone = normalizePhoneForTwilio(resetPhone);
+
+    setBusy(true);
+    try {
+      const { data, error: fnErr } = await supabase.functions.invoke('verify-pin-reset', {
+        body: { phone: normalizedPhone, code: smsCode }
+      });
+
+      if (fnErr || !data?.otp_token) {
+        setLocalErr('Invalid or expired code.');
         return;
       }
 
-      // Redirect to role-specific dashboard
-      const defaultDashboard = getDashboardForRole(role);
-      const intendedPath = state.from?.pathname || defaultDashboard;
+      setOtpToken(data.otp_token);
+      setSuccessMsg('Verified! Set your new PIN.');
+      setSmsCode('');
+      setMode('reset');
+    } catch (e: any) {
+      setLocalErr(e?.message || 'Verification failed.');
+    } finally {
+      setBusy(false);
+    }
+  }
 
+  async function handleResetPin(e?: React.FormEvent) {
+    e?.preventDefault();
+    clearMessages();
+    const p1 = cleanPin(pin);
+    const p2 = cleanPin(pin2);
 
-      navigate(intendedPath, { replace: true });
-    } catch (err: any) {
-      setLocalErr(err?.message || 'Unable to verify PIN. Please try again.');
+    if (!/^\d{4,8}$/.test(p1)) {
+      setLocalErr('PIN must be 4-8 digits.');
+      return;
+    }
+    if (p1 !== p2) {
+      setLocalErr('PINs do not match.');
+      return;
+    }
+    if (!otpToken) {
+      setLocalErr('Session expired. Start over.');
+      setMode('forgot');
+      return;
+    }
+
+    setBusy(true);
+    try {
+      const hashedPin = await hashPinForTransmission(p1);
+      const { error: fnErr } = await supabase.functions.invoke('admin_set_pin', {
+        body: { pin: hashedPin, role, otp_token: otpToken }
+      });
+
+      if (fnErr) {
+        setLocalErr(fnErr.message || 'Could not reset PIN.');
+        return;
+      }
+
+      setOtpToken(null);
+      setResetPhone('');
+      setPin('');
+      setPin2('');
+      setSuccessMsg('PIN reset successfully!');
+      setMode('unlock');
+    } catch (e: any) {
+      setLocalErr(e?.message || 'Could not reset PIN.');
+    } finally {
+      setBusy(false);
     }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      switch (mode) {
-        case 'unlock':
-          void handleUnlock();
-          break;
-        case 'setpin':
-          void handleSetPin();
-          break;
-        case 'forgot':
-          void handleRequestReset();
-          break;
-        case 'verify':
-          void handleVerifyCode();
-          break;
-        case 'reset':
-          void handleResetPin();
-          break;
-      }
+      if (mode === 'unlock') handleUnlock();
+      else if (mode === 'setpin') handleSetPin();
+      else if (mode === 'forgot') handleRequestReset();
+      else if (mode === 'verify') handleVerifyCode();
+      else if (mode === 'reset') handleResetPin();
     }
   };
 
-  // Helper to reset to forgot mode
-  const goToForgotMode = () => {
-    setMode('forgot');
-    setLocalErr(null);
-    setSuccessMsg(null);
-    setPin('');
-    setPin2('');
-    setResetPhone('');
-    setSmsCode('');
-    setOtpToken(null);
-    setResetCodeSent(false);
-  };
-
-  // Helper to go back to unlock mode
-  const goToUnlockMode = () => {
-    setMode('unlock');
-    setLocalErr(null);
-    setSuccessMsg(null);
-    setPin('');
-    setResetPhone('');
-    setSmsCode('');
-    setOtpToken(null);
-    setResetCodeSent(false);
-  };
+  // === RENDER ===
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 p-4">
       <div className="w-full max-w-md">
-        {/* Simple Banner Header */}
+        {/* Header */}
         <div
-          className="text-white text-center py-6 px-6 rounded-t-lg shadow-lg"
-          style={{ background: branding.gradient }}
+          className="text-white text-center py-8 px-6 rounded-t-2xl"
+          style={{ background: branding.gradient || 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)' }}
         >
-          <h1 className="text-2xl font-bold">Facility Admin Login</h1>
-          <p className="text-sm text-blue-100 mt-1">{branding.appName} - Staff PIN Verification</p>
+          <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold">Admin Access</h1>
+          <p className="text-blue-100 text-sm mt-1">{branding.appName || 'WellFit'}</p>
         </div>
 
-        {/* Card Content */}
-        <div className="bg-white p-6 rounded-b-lg shadow-lg">
-          <p className="text-sm text-gray-600 mb-2">Logged in as: {userLabel}</p>
+        {/* Card */}
+        <div className="bg-white p-6 rounded-b-2xl shadow-xl">
+          {/* User info */}
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
+            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+              <span className="text-blue-600 font-semibold text-sm">
+                {userLabel.charAt(0).toUpperCase()}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 truncate">{userLabel}</p>
+              {detectedRole && (
+                <p className="text-xs text-gray-500">{ROLE_DISPLAY_NAMES[detectedRole] || detectedRole}</p>
+              )}
+            </div>
+            {userTenantCode && (
+              <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded">
+                {userTenantCode}
+              </span>
+            )}
+          </div>
 
-          {/* Tenant Badge - Smart Recognition */}
-          {userTenantCode && (
-            <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-600 rounded">
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-                <div className="flex-1">
-                  <p className="text-xs text-blue-700 font-medium">Managing Facility:</p>
-                  <p className="text-sm font-semibold text-blue-900">{userTenantCode}</p>
-                </div>
-                <div className="px-2 py-1 bg-blue-600 text-white text-xs font-bold rounded">
-                  {userTenantCode}
-                </div>
+          {/* Messages */}
+          {localErr && (
+            <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r">
+              <p className="text-red-700 text-sm">{localErr}</p>
+            </div>
+          )}
+          {(error && !localErr) && (
+            <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r">
+              <p className="text-red-700 text-sm">{error}</p>
+            </div>
+          )}
+          {successMsg && (
+            <div className="mb-4 p-3 bg-green-50 border-l-4 border-green-500 rounded-r">
+              <p className="text-green-700 text-sm">{successMsg}</p>
+            </div>
+          )}
+
+          {/* === UNLOCK MODE === */}
+          {mode === 'unlock' && (
+            <form onSubmit={handleUnlock} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Enter PIN
+                </label>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  autoComplete="current-password"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-center text-2xl tracking-[0.5em] font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="••••"
+                  value={pin}
+                  onChange={(e) => setPin(cleanPin(e.target.value))}
+                  onKeyDown={handleKeyDown}
+                  maxLength={8}
+                  autoFocus
+                />
               </div>
-            </div>
+
+              <button
+                type="submit"
+                disabled={isLoading || !pin.trim()}
+                className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {isLoading ? 'Verifying...' : 'Unlock'}
+              </button>
+
+              <div className="flex justify-between text-sm pt-2">
+                <button
+                  type="button"
+                  onClick={() => { clearMessages(); setMode('forgot'); setPin(''); }}
+                  className="text-blue-600 hover:text-blue-800"
+                >
+                  Forgot PIN?
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { clearMessages(); setMode('setpin'); setPin(''); }}
+                  className="text-gray-600 hover:text-gray-800"
+                >
+                  Set/Change PIN
+                </button>
+              </div>
+            </form>
           )}
 
-      {state.message && (
-        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-yellow-800 text-sm">
-          {state.message}
-        </div>
-      )}
+          {/* === SET PIN MODE === */}
+          {mode === 'setpin' && (
+            <form onSubmit={handleSetPin} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">New PIN</label>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-center text-xl tracking-[0.3em] font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="4-8 digits"
+                  value={pin}
+                  onChange={(e) => setPin(cleanPin(e.target.value))}
+                  onKeyDown={handleKeyDown}
+                  maxLength={8}
+                  autoFocus
+                />
+              </div>
 
-      <div className="flex gap-2 mb-4" role="tablist" aria-label="Admin security mode">
-        <button
-          className={`px-3 py-2 rounded text-sm ${mode === 'unlock' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-          onClick={() => {
-            setMode('unlock');
-            setLocalErr(null);
-            setSuccessMsg(null);
-            setPin('');
-          }}
-          type="button"
-          role="tab"
-          aria-selected={mode === 'unlock'}
-        >
-          Unlock Admin Panel
-        </button>
-        <button
-          className={`px-3 py-2 rounded text-sm ${mode === 'setpin' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-          onClick={() => {
-            setMode('setpin');
-            setLocalErr(null);
-            setSuccessMsg(null);
-            setPin('');
-            setPin2('');
-          }}
-          type="button"
-          role="tab"
-          aria-selected={mode === 'setpin'}
-        >
-          Set/Update PIN
-        </button>
-      </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Confirm PIN</label>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-center text-xl tracking-[0.3em] font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Confirm"
+                  value={pin2}
+                  onChange={(e) => setPin2(cleanPin(e.target.value))}
+                  onKeyDown={handleKeyDown}
+                  maxLength={8}
+                />
+              </div>
 
-      {mode === 'unlock' ? (
-        <form className="grid gap-3" onSubmit={handleUnlock} noValidate>
-          {/* Role Display - Auto-detected from profile */}
-          {detectedRole && (
-            <div className="p-3 bg-gray-50 border border-gray-200 rounded">
-              <p className="text-xs text-gray-500 mb-1">Your Role</p>
-              <p className="text-sm font-medium text-gray-900">{ROLE_DISPLAY_NAMES[detectedRole] || detectedRole}</p>
-            </div>
+              <button
+                type="submit"
+                disabled={busy || !pin.trim() || !pin2.trim()}
+                className="w-full py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {busy ? 'Saving...' : 'Save PIN'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { clearMessages(); setMode('unlock'); setPin(''); setPin2(''); }}
+                className="w-full py-2 text-gray-600 hover:text-gray-800 text-sm"
+              >
+                Back to Unlock
+              </button>
+            </form>
           )}
 
-          {/* PIN Input - Always masked for security */}
-          <div>
-            <label htmlFor="pin-input" className="block text-sm font-medium text-gray-700 mb-1">
-              Enter Admin PIN
-            </label>
-            <input
-              id="pin-input"
-              className="border border-gray-300 p-3 rounded w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono tracking-widest"
-              type="password"
-              inputMode="numeric"
-              pattern="\d{4,8}"
-              placeholder="Enter PIN (4–8 digits)"
-              value={pin}
-              onChange={(e) => setPin(cleanPin(e.target.value))}
-              onKeyDown={handleKeyDown}
-              autoComplete="one-time-code"
-              required
-              maxLength={8}
-              autoFocus
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Enter your 4-8 digit admin PIN
+          {/* === FORGOT PIN MODE === */}
+          {mode === 'forgot' && (
+            <form onSubmit={handleRequestReset} className="space-y-4">
+              <p className="text-sm text-gray-600 mb-4">
+                Enter your phone number to receive a verification code.
+              </p>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                <input
+                  type="tel"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="(555) 123-4567"
+                  value={resetPhone}
+                  onChange={(e) => setResetPhone(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  autoFocus
+                />
+                <p className="text-xs text-gray-500 mt-1">US numbers only. We'll add +1 automatically.</p>
+              </div>
+
+              <button
+                type="submit"
+                disabled={busy || !resetPhone.trim()}
+                className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {busy ? 'Sending...' : 'Send Code'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { clearMessages(); setMode('unlock'); setResetPhone(''); }}
+                className="w-full py-2 text-gray-600 hover:text-gray-800 text-sm"
+              >
+                Back to Unlock
+              </button>
+            </form>
+          )}
+
+          {/* === VERIFY CODE MODE === */}
+          {mode === 'verify' && (
+            <form onSubmit={handleVerifyCode} className="space-y-4">
+              <div className="text-center mb-4">
+                <p className="text-sm text-gray-600">Code sent to:</p>
+                <p className="font-medium text-gray-900">{formatPhoneDisplay(resetPhone)}</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Verification Code</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  className="w-full px-4 py-4 border border-gray-300 rounded-lg text-center text-2xl tracking-[0.5em] font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="••••••"
+                  value={smsCode}
+                  onChange={(e) => setSmsCode(e.target.value.replace(/[^\d]/g, '').slice(0, 8))}
+                  onKeyDown={handleKeyDown}
+                  maxLength={8}
+                  autoFocus
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={busy || !smsCode.trim()}
+                className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {busy ? 'Verifying...' : 'Verify'}
+              </button>
+
+              <div className="flex justify-between text-sm pt-2">
+                <button
+                  type="button"
+                  onClick={() => { clearMessages(); setMode('forgot'); setSmsCode(''); }}
+                  className="text-blue-600 hover:text-blue-800"
+                >
+                  Resend Code
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { clearMessages(); setMode('unlock'); setSmsCode(''); setResetPhone(''); }}
+                  className="text-gray-600 hover:text-gray-800"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* === RESET PIN MODE === */}
+          {mode === 'reset' && (
+            <form onSubmit={handleResetPin} className="space-y-4">
+              <div className="text-center mb-4 p-3 bg-green-50 rounded-lg">
+                <p className="text-sm text-green-700 font-medium">Code verified! Set your new PIN.</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">New PIN</label>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-center text-xl tracking-[0.3em] font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="4-8 digits"
+                  value={pin}
+                  onChange={(e) => setPin(cleanPin(e.target.value))}
+                  onKeyDown={handleKeyDown}
+                  maxLength={8}
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Confirm PIN</label>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-center text-xl tracking-[0.3em] font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Confirm"
+                  value={pin2}
+                  onChange={(e) => setPin2(cleanPin(e.target.value))}
+                  onKeyDown={handleKeyDown}
+                  maxLength={8}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={busy || !pin.trim() || !pin2.trim()}
+                className="w-full py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {busy ? 'Saving...' : 'Set New PIN'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { clearMessages(); setMode('unlock'); setPin(''); setPin2(''); setOtpToken(null); }}
+                className="w-full py-2 text-gray-600 hover:text-gray-800 text-sm"
+              >
+                Cancel
+              </button>
+            </form>
+          )}
+
+          {/* Footer */}
+          <div className="mt-6 pt-4 border-t border-gray-100">
+            <p className="text-xs text-gray-500 text-center">
+              Session expires after 30 minutes of inactivity.
             </p>
-          </div>
-
-          {(localErr || error) && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded" role="alert">
-              <p className="text-red-600 text-sm">{localErr || error}</p>
+            <div className="mt-3 flex justify-center gap-4">
+              <button
+                type="button"
+                onClick={() => navigate('/dashboard')}
+                className="text-xs text-gray-500 hover:text-gray-700"
+              >
+                Return to Dashboard
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/envision')}
+                className="text-xs text-gray-400 hover:text-teal-600"
+              >
+                Envision
+              </button>
             </div>
-          )}
-
-          {successMsg && (
-            <div className="p-3 bg-green-50 border border-green-200 rounded" role="status">
-              <p className="text-green-700 text-sm">{successMsg}</p>
-            </div>
-          )}
-
-          <button
-            className="w-full py-2 bg-blue-600 text-white rounded disabled:opacity-50 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            disabled={isLoading || !pin.trim()}
-            type="submit"
-          >
-            {isLoading ? 'Verifying…' : 'Unlock Admin Panel'}
-          </button>
-
-          <div className="text-center space-y-2">
-            <button
-              type="button"
-              onClick={goToForgotMode}
-              className="text-sm text-blue-600 hover:text-blue-800 underline"
-            >
-              Forgot PIN?
-            </button>
-            <br />
-            <button
-              type="button"
-              onClick={() => navigate('/dashboard')}
-              className="text-sm text-gray-600 hover:text-gray-800 underline"
-            >
-              Cancel and return to dashboard
-            </button>
           </div>
-        </form>
-      ) : mode === 'setpin' ? (
-        <form className="grid gap-3" onSubmit={handleSetPin} noValidate>
-          {/* Role Display - Auto-detected from profile */}
-          {detectedRole && (
-            <div className="p-3 bg-gray-50 border border-gray-200 rounded">
-              <p className="text-xs text-gray-500 mb-1">Setting PIN for Role</p>
-              <p className="text-sm font-medium text-gray-900">{ROLE_DISPLAY_NAMES[detectedRole] || detectedRole}</p>
-            </div>
-          )}
-
-          <div>
-            <label htmlFor="new-pin-input" className="block text-sm font-medium text-gray-700 mb-1">
-              New PIN
-            </label>
-            <input
-              id="new-pin-input"
-              className="border border-gray-300 p-3 rounded w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              type="password"
-              inputMode="numeric"
-              pattern="\\d{4,8}"
-              placeholder="New PIN (4–8 digits)"
-              value={pin}
-              onChange={(e) => setPin(cleanPin(e.target.value))}
-              onKeyDown={handleKeyDown}
-              required
-              maxLength={8}
-              autoFocus
-            />
-          </div>
-
-          <div>
-            <label htmlFor="confirm-pin-input" className="block text-sm font-medium text-gray-700 mb-1">
-              Confirm PIN
-            </label>
-            <input
-              id="confirm-pin-input"
-              className="border border-gray-300 p-3 rounded w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              type="password"
-              inputMode="numeric"
-              pattern="\\d{4,8}"
-              placeholder="Confirm PIN"
-              value={pin2}
-              onChange={(e) => setPin2(cleanPin(e.target.value))}
-              onKeyDown={handleKeyDown}
-              required
-              maxLength={8}
-            />
-          </div>
-
-          {(localErr || error) && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded" role="alert">
-              <p className="text-red-600 text-sm">{localErr || error}</p>
-            </div>
-          )}
-
-          {successMsg && (
-            <div className="p-3 bg-green-50 border border-green-200 rounded" role="status">
-              <p className="text-green-700 text-sm">{successMsg}</p>
-            </div>
-          )}
-
-          <button
-            className="w-full py-2 bg-green-600 text-white rounded disabled:opacity-50 hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-            disabled={busy || !pin.trim() || !pin2.trim()}
-            type="submit"
-          >
-            {busy ? 'Saving…' : 'Save PIN'}
-          </button>
-
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={() => navigate('/dashboard')}
-              className="text-sm text-gray-600 hover:text-gray-800 underline"
-            >
-              Cancel and return to dashboard
-            </button>
-          </div>
-        </form>
-      ) : mode === 'forgot' ? (
-        /* Forgot PIN - Enter phone number */
-        <form className="grid gap-3" onSubmit={handleRequestReset} noValidate>
-          <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
-            <p className="text-sm text-yellow-800">
-              Enter the phone number associated with your admin account. We'll send you a verification code.
-            </p>
-          </div>
-
-          <div>
-            <label htmlFor="reset-phone-input" className="block text-sm font-medium text-gray-700 mb-1">
-              Phone Number
-            </label>
-            <input
-              id="reset-phone-input"
-              className="border border-gray-300 p-3 rounded w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              type="tel"
-              inputMode="tel"
-              placeholder="(555) 123-4567"
-              value={resetPhone}
-              onChange={(e) => setResetPhone(e.target.value)}
-              onKeyDown={handleKeyDown}
-              required
-              autoFocus
-            />
-          </div>
-
-          {localErr && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded" role="alert">
-              <p className="text-red-600 text-sm">{localErr}</p>
-            </div>
-          )}
-
-          {successMsg && (
-            <div className="p-3 bg-green-50 border border-green-200 rounded" role="status">
-              <p className="text-green-700 text-sm">{successMsg}</p>
-            </div>
-          )}
-
-          <button
-            className="w-full py-2 bg-blue-600 text-white rounded disabled:opacity-50 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            disabled={busy || !resetPhone.trim()}
-            type="submit"
-          >
-            {busy ? 'Sending…' : 'Send Verification Code'}
-          </button>
-
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={goToUnlockMode}
-              className="text-sm text-gray-600 hover:text-gray-800 underline"
-            >
-              Back to PIN entry
-            </button>
-          </div>
-        </form>
-      ) : mode === 'verify' ? (
-        /* Verify SMS code */
-        <form className="grid gap-3" onSubmit={handleVerifyCode} noValidate>
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded">
-            <p className="text-sm text-blue-800">
-              Enter the verification code sent to your phone.
-            </p>
-            <p className="text-xs text-blue-600 mt-1">
-              Phone: {resetPhone.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3')}
-            </p>
-          </div>
-
-          <div>
-            <label htmlFor="sms-code-input" className="block text-sm font-medium text-gray-700 mb-1">
-              Verification Code
-            </label>
-            <input
-              id="sms-code-input"
-              className="border border-gray-300 p-3 rounded w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono tracking-widest text-center text-xl"
-              type="text"
-              inputMode="numeric"
-              pattern="\d{4,8}"
-              placeholder="Enter code"
-              value={smsCode}
-              onChange={(e) => setSmsCode(e.target.value.replace(/[^\d]/g, '').slice(0, 8))}
-              onKeyDown={handleKeyDown}
-              required
-              maxLength={8}
-              autoFocus
-            />
-          </div>
-
-          {localErr && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded" role="alert">
-              <p className="text-red-600 text-sm">{localErr}</p>
-            </div>
-          )}
-
-          {successMsg && (
-            <div className="p-3 bg-green-50 border border-green-200 rounded" role="status">
-              <p className="text-green-700 text-sm">{successMsg}</p>
-            </div>
-          )}
-
-          <button
-            className="w-full py-2 bg-blue-600 text-white rounded disabled:opacity-50 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            disabled={busy || !smsCode.trim()}
-            type="submit"
-          >
-            {busy ? 'Verifying…' : 'Verify Code'}
-          </button>
-
-          <div className="text-center space-y-2">
-            <button
-              type="button"
-              onClick={() => {
-                setMode('forgot');
-                setSmsCode('');
-                setLocalErr(null);
-                setSuccessMsg(null);
-              }}
-              className="text-sm text-blue-600 hover:text-blue-800 underline"
-            >
-              Resend code
-            </button>
-            <br />
-            <button
-              type="button"
-              onClick={goToUnlockMode}
-              className="text-sm text-gray-600 hover:text-gray-800 underline"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
-      ) : mode === 'reset' ? (
-        /* Set new PIN with OTP token */
-        <form className="grid gap-3" onSubmit={handleResetPin} noValidate>
-          <div className="p-3 bg-green-50 border border-green-200 rounded">
-            <p className="text-sm text-green-800">
-              Code verified! Please set your new PIN.
-            </p>
-          </div>
-
-          <div>
-            <label htmlFor="new-reset-pin-input" className="block text-sm font-medium text-gray-700 mb-1">
-              New PIN
-            </label>
-            <input
-              id="new-reset-pin-input"
-              className="border border-gray-300 p-3 rounded w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              type="password"
-              inputMode="numeric"
-              pattern="\d{4,8}"
-              placeholder="New PIN (4–8 digits)"
-              value={pin}
-              onChange={(e) => setPin(cleanPin(e.target.value))}
-              onKeyDown={handleKeyDown}
-              required
-              maxLength={8}
-              autoFocus
-            />
-          </div>
-
-          <div>
-            <label htmlFor="confirm-reset-pin-input" className="block text-sm font-medium text-gray-700 mb-1">
-              Confirm PIN
-            </label>
-            <input
-              id="confirm-reset-pin-input"
-              className="border border-gray-300 p-3 rounded w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              type="password"
-              inputMode="numeric"
-              pattern="\d{4,8}"
-              placeholder="Confirm PIN"
-              value={pin2}
-              onChange={(e) => setPin2(cleanPin(e.target.value))}
-              onKeyDown={handleKeyDown}
-              required
-              maxLength={8}
-            />
-          </div>
-
-          {localErr && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded" role="alert">
-              <p className="text-red-600 text-sm">{localErr}</p>
-            </div>
-          )}
-
-          {successMsg && (
-            <div className="p-3 bg-green-50 border border-green-200 rounded" role="status">
-              <p className="text-green-700 text-sm">{successMsg}</p>
-            </div>
-          )}
-
-          <button
-            className="w-full py-2 bg-green-600 text-white rounded disabled:opacity-50 hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-            disabled={busy || !pin.trim() || !pin2.trim()}
-            type="submit"
-          >
-            {busy ? 'Saving…' : 'Set New PIN'}
-          </button>
-
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={goToUnlockMode}
-              className="text-sm text-gray-600 hover:text-gray-800 underline"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
-      ) : null}
-
-      <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded text-sm">
-        <p className="text-blue-800">
-          <strong>Security Note:</strong> Your admin PIN provides an additional layer of security for administrative functions.
-          It expires after 2 hours of inactivity.
-        </p>
-      </div>
-
-      {/* Subtle Envision link at bottom - visible to all, understood by Envision staff */}
-      <div className="mt-6 pt-4 border-t border-gray-100 text-center">
-        <button
-          type="button"
-          onClick={() => navigate('/envision')}
-          className="text-xs text-gray-400 hover:text-teal-600 transition-colors"
-        >
-          Envision
-        </button>
-      </div>
         </div>
       </div>
     </div>
