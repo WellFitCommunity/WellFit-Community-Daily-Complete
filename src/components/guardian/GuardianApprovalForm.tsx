@@ -67,7 +67,7 @@ export const GuardianApprovalForm: React.FC = () => {
           await service.markInReview(ticketId);
         }
       } else {
-        setError(result.error || 'Failed to load ticket');
+        setError(result.error?.message || 'Failed to load ticket');
       }
       setLoading(false);
     };
@@ -101,7 +101,7 @@ export const GuardianApprovalForm: React.FC = () => {
       });
       navigate('/guardian/approvals', { state: { message: 'Ticket approved. Fix will be auto-applied.' } });
     } else {
-      setError(result.error || 'Failed to approve ticket');
+      setError(result.error?.message || 'Failed to approve ticket');
     }
 
     setSubmitting(false);
@@ -127,7 +127,7 @@ export const GuardianApprovalForm: React.FC = () => {
       });
       navigate('/guardian/approvals', { state: { message: 'Ticket rejected. Fix will not be applied.' } });
     } else {
-      setError(result.error || 'Failed to reject ticket');
+      setError(result.error?.message || 'Failed to reject ticket');
     }
 
     setSubmitting(false);
