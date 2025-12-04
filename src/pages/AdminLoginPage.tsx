@@ -481,6 +481,7 @@ export default function AdminLoginPage() {
                 <input
                   type="password"
                   inputMode="numeric"
+                  autoComplete="current-password"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg text-center text-2xl tracking-[0.5em] font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="••••"
                   value={pin}
@@ -620,6 +621,7 @@ export default function AdminLoginPage() {
                 <input
                   type="text"
                   inputMode="numeric"
+                  autoComplete="one-time-code"
                   className="w-full px-4 py-4 border border-gray-300 rounded-lg text-center text-2xl tracking-[0.5em] font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="••••••"
                   value={smsCode}
