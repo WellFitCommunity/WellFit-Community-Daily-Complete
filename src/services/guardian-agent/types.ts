@@ -76,6 +76,7 @@ export interface ErrorContext {
   lineNumber?: number;
   userId?: string;
   sessionId?: string;
+  tenantId?: string;
   apiEndpoint?: string;
   databaseQuery?: string;
   environmentState: Record<string, any>;

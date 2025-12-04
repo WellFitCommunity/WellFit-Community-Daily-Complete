@@ -23,6 +23,7 @@ import { AuditLogger } from './AuditLogger';
 import { SafetyValidator, RateLimiter, SandboxEnvironment } from './SafetyConstraints';
 import { GuardianAlertService } from './GuardianAlertService';
 import { aiSystemRecorder } from './AISystemRecorder';
+import { guardianEyesRecorder } from './GuardianEyesRecorder';
 
 export class AgentBrain {
   private state: AgentState;
@@ -223,6 +224,8 @@ export class AgentBrain {
 
   /**
    * Initiates healing process for an issue
+   * NOTE: This is called AFTER SOC staff approves the fix from the Pool Report
+   * Guardian Eyes recording starts here - during the actual fix execution
    */
   private async initiateHealing(issue: DetectedIssue): Promise<void> {
     this.state.mode = 'healing';
@@ -272,14 +275,29 @@ export class AgentBrain {
     // Record action for rate limiting
     this.rateLimiter.recordAction(strategy);
 
-    // Execute healing
+    // 🎥 START RECORDING: Guardian Eyes starts recording NOW - as fix execution begins
+    // This happens AFTER approval, DURING the actual fix
+    const recordingSessionId = await guardianEyesRecorder.startRecording({
+      triggerType: this.mapCategoryToTriggerType(issue.signature.category),
+      triggerAlertId: issue.id,
+      triggerDescription: `Executing fix for ${issue.signature.category}: ${issue.signature.description || issue.metadata?.message || 'Issue detected'}`,
+      userId: issue.context.userId,
+      tenantId: issue.context.tenantId,
+    });
+
+    // Execute healing (being recorded by Guardian Eyes)
     const result = await this.healingEngine.execute(action, issue);
+
+    // 🎥 STOP RECORDING: Fix complete, recording saved
+    const recordingMetadata = await guardianEyesRecorder.stopRecording(
+      result.success ? 'Fix applied successfully' : 'Fix attempt completed with errors'
+    );
 
     // ✅ AUDIT LOG: Record every healing attempt
     await this.auditLogger.logHealingAction(issue, action, result);
 
     // ✅ NEW: Send alert to Security Panel with Guardian Eyes recording link
-    await this.sendSecurityPanelAlert(issue, action, result);
+    await this.sendSecurityPanelAlert(issue, action, result, recordingMetadata?.sessionId);
 
     // Update state
     this.state.healingInProgress = this.state.healingInProgress.filter(a => a.id !== action.id);
@@ -401,17 +419,30 @@ export class AgentBrain {
   }
 
   /**
+   * Map issue category to Guardian Eyes trigger type
+   */
+  private mapCategoryToTriggerType(category: string): 'security_vulnerability' | 'phi_exposure' | 'memory_leak' | 'api_failure' | 'healing_operation' | 'manual' | 'system_health' {
+    const categoryLower = category.toLowerCase();
+    if (categoryLower.includes('phi') || categoryLower.includes('hipaa')) return 'phi_exposure';
+    if (categoryLower.includes('security') || categoryLower.includes('xss') || categoryLower.includes('injection')) return 'security_vulnerability';
+    if (categoryLower.includes('memory') || categoryLower.includes('leak')) return 'memory_leak';
+    if (categoryLower.includes('api') || categoryLower.includes('network')) return 'api_failure';
+    if (categoryLower.includes('health') || categoryLower.includes('system')) return 'system_health';
+    return 'healing_operation';
+  }
+
+  /**
    * Send alert to Security Panel with Guardian Eyes recording link
    */
   private async sendSecurityPanelAlert(
     issue: DetectedIssue,
     action: HealingAction,
-    result: HealingResult
+    result: HealingResult,
+    recordingSessionId?: string
   ): Promise<void> {
     try {
-      // Get current Guardian Eyes recording session ID
-      const recordingStatus = aiSystemRecorder.getStatus();
-      const sessionId = recordingStatus.session_id;
+      // Use the recording session ID passed from the healing process
+      const sessionId = recordingSessionId;
 
       // Send appropriate alert based on issue category
       if (issue.signature.category === 'phi_exposure_risk' ||
