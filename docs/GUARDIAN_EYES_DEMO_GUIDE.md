@@ -266,4 +266,241 @@ console.log('🎬 Saved!', result);
 
 ---
 
+## Guardian Agent Sandbox Systems
+
+The Guardian Agent has **two sandbox systems** for enterprise-grade safety:
+
+### 1. Safety Constraints Sandbox (Pre-Execution Validation)
+
+Tests fixes BEFORE they're applied. Located in `SafetyConstraints.ts`.
+
+#### Protected Resources (NEVER Auto-Modified)
+
+| Category | Protected Paths |
+|----------|-----------------|
+| **Core Libraries** | `node_modules/`, `package.json`, `package-lock.json`, `tsconfig.json`, `src/contexts/`, `src/services/supabase`, `src/services/auth` |
+| **Shared Libraries** | `src/utils/`, `src/lib/`, `src/hooks/`, `src/types/` |
+| **Infrastructure** | `supabase/migrations/`, `.env`, `.env.production`, `Dockerfile`, `docker-compose.yml` |
+| **Security-Critical** | `src/services/guardian-agent/` (can't modify itself!), `src/components/auth/`, `src/middleware/` |
+
+#### Allowed Autonomous Actions
+
+These can run without human approval:
+- `retry_with_backoff` - Retry failed API calls with exponential backoff
+- `circuit_breaker` - Stop calling failing services temporarily
+- `fallback_to_cache` - Use cached data when live data unavailable
+- `graceful_degradation` - Reduce functionality instead of crashing
+- `state_rollback` - Revert to previous known-good state
+- `resource_cleanup` - Clean up memory leaks, orphaned subscriptions
+- `session_recovery` - Recover expired/broken sessions
+- `dependency_isolation` - Isolate failing dependencies
+
+#### Actions Requiring Human Approval
+
+These ALWAYS need SOC staff approval:
+- `auto_patch` - Any code changes
+- `configuration_reset` - Config file changes
+- `data_reconciliation` - Data modifications
+- `security_lockdown` - Security-related actions
+- `emergency_shutdown` - Critical system actions
+
+#### Safety Validation Rules
+
+| Rule | What It Blocks |
+|------|----------------|
+| No file system writes | `write_file`, `modify_file` actions |
+| No production deploys | `deploy`, `publish` actions |
+| No AI code generation | `generate_code`, `ai_fix` without approval |
+| No schema changes | `alter_table`, `drop_table` actions |
+
+#### Rate Limiter
+
+Prevents "action storms":
+- Max 3 of same action type per 60 seconds
+- Cooldown period enforced between same action types
+- Prevents runaway healing loops
+
+---
+
+### 2. Execution Sandbox (Runtime Isolation)
+
+Enforces security during tool execution. Located in `ExecutionSandbox.ts`.
+
+#### Per-Tool Security Policies
+
+Each tool has its own allow-list:
+
+| Tool | Allowed Domains | Max Time | Max Concurrent |
+|------|-----------------|----------|----------------|
+| `guardian.retry-api` | (inherits from original call) | 30s | 10 |
+| `guardian.circuit-breaker` | (none - no network) | 5s | 1 |
+| `guardian.cache-fallback` | (none - no network) | 10s | 20 |
+| `guardian.state-rollback` | (none - no network) | 15s | 5 |
+| `guardian.resource-cleanup` | (none - no network) | 20s | 3 |
+| `guardian.session-recovery` | `api.wellfit.community` only | 10s | 10 |
+| `fhir.read-observation` | `fhir.wellfit.community` only | 15s | 20 |
+| `ehr.write-note` | `ehr.wellfit.community` only | 20s | 10 |
+
+#### Network Isolation
+
+- Overrides browser's `fetch()` function
+- Blocks ANY network call not in the tool's allow-list
+- Logs all allowed and denied network access
+- Wildcard support (e.g., `*.wellfit.community`)
+
+#### Database Isolation
+
+- Each tool declares which tables it can access
+- Access to unauthorized tables is blocked
+- All access attempts are logged
+
+#### File System Isolation
+
+- Each tool declares allowed paths
+- Access outside allowed paths is blocked
+- Prevents tools from reading sensitive files
+
+#### Access Logging
+
+Every resource access is logged:
+```typescript
+{
+  timestamp: Date,
+  toolId: string,
+  resourceType: 'network' | 'database' | 'filesystem',
+  resource: string,
+  allowed: boolean,
+  reason?: string
+}
+```
+
+Query denied access for security monitoring:
+```javascript
+// In browser console
+const sandbox = window.__guardianSandbox;
+if (sandbox) {
+  console.log('Denied Access:', sandbox.getDeniedAccess());
+}
+```
+
+---
+
+### How the Sandboxes Work Together
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    ISSUE DETECTED                                │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  STEP 1: SAFETY CONSTRAINTS (Pre-check)                         │
+│  ────────────────────────────────────────                       │
+│  ✓ Is action in allowed list?                                   │
+│  ✓ Does it touch protected files?                               │
+│  ✓ Is it rate-limited?                                          │
+│  ✓ Does it need human approval?                                 │
+│                                                                  │
+│  If FAILS → Block action, store for human review                │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓ (if passes)
+┌─────────────────────────────────────────────────────────────────┐
+│  STEP 2: SANDBOX TEST (Dry run)                                 │
+│  ────────────────────────────────                               │
+│  ✓ Simulate all steps in isolation                              │
+│  ✓ Check each step for policy violations                        │
+│  ✓ Log what WOULD happen (side effects)                         │
+│                                                                  │
+│  If FAILS → Block action, log errors                            │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓ (if passes)
+┌─────────────────────────────────────────────────────────────────┐
+│  STEP 3: GUARDIAN EYES STARTS RECORDING                         │
+│  ───────────────────────────────────────                        │
+│  🎥 rrweb begins capturing screen activity                      │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  STEP 4: EXECUTION SANDBOX (Runtime)                            │
+│  ────────────────────────────────────                           │
+│  ✓ Enforce domain allow-lists (network isolation)               │
+│  ✓ Block unauthorized network calls                             │
+│  ✓ Enforce execution timeouts                                   │
+│  ✓ Enforce concurrency limits                                   │
+│  ✓ Log all resource access                                      │
+│                                                                  │
+│  If TIMEOUT → Abort action, rollback                            │
+│  If BLOCKED → Log violation, continue if possible               │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  STEP 5: GUARDIAN EYES STOPS RECORDING                          │
+│  ────────────────────────────────────                           │
+│  🎬 Recording saved to Supabase Storage                         │
+│  📋 Metadata saved to guardian_eyes_sessions                    │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  STEP 6: AUDIT LOG & ALERT                                      │
+│  ─────────────────────────────                                  │
+│  📝 Full audit trail created                                    │
+│  🚨 Alert sent to Security Panel                                │
+│  👀 SOC staff can review recording                              │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Action Constraints (Runtime Limits)
+
+| Constraint | Value |
+|------------|-------|
+| Max execution time | 30 seconds |
+| Max retries | 3 |
+| Max concurrent healings | 5 |
+| Action cooldown | 60 seconds |
+| Max memory usage | 85% |
+| Max affected resources | 10 |
+
+---
+
+### Key Sandbox Files
+
+| File | Purpose |
+|------|---------|
+| `src/services/guardian-agent/SafetyConstraints.ts` | Pre-execution validation, protected resources, rate limiting |
+| `src/services/guardian-agent/ExecutionSandbox.ts` | Runtime isolation, allow-lists, network/DB/file access control |
+| `src/services/guardian-agent/AgentBrain.ts` | Orchestrates safety checks before healing |
+| `src/services/guardian-agent/SAFETY_AND_COMPLIANCE.md` | Full safety documentation |
+| `src/services/guardian-agent/SECURITY_ARCHITECTURE.md` | Security architecture details |
+
+---
+
+### FAQ for Presentation
+
+**Q: Can the Guardian Agent modify its own code?**
+> No. `src/services/guardian-agent/` is in the protected resources list. The agent cannot modify itself.
+
+**Q: Can it access production databases directly?**
+> Only through approved tools with table allow-lists. Each tool declares which tables it can access.
+
+**Q: What if it tries to call an unauthorized API?**
+> The Execution Sandbox overrides `fetch()` and blocks any domain not in the tool's allow-list. The attempt is logged.
+
+**Q: Can it run forever?**
+> No. Max execution time is 30 seconds. Actions that exceed this are automatically aborted.
+
+**Q: What if it tries to do the same thing over and over?**
+> Rate limiter blocks more than 3 of the same action type per minute.
+
+**Q: Can it deploy code to production?**
+> No. `deploy` and `publish` actions are blocked at the safety validation step.
+
+**Q: Who reviews the recordings?**
+> SOC staff (Security Operations Center) can view recordings in the Security Panel and approve/reject fixes.
+
+**Q: How long are recordings kept?**
+> 10 days by default. Can be extended to 30 days or permanent for important issues.
+
+---
+
 *Last Updated: December 4, 2025*
