@@ -93,6 +93,7 @@ const EnhancedQuestionsPage = React.lazy(() => import('./pages/EnhancedQuestions
 const AdminQuestionsPage = React.lazy(() => import('./pages/AdminQuestionsPage'));
 const MemoryLaneTriviaPage = React.lazy(() => import('./pages/MemoryLaneTriviaPage'));
 const BillingDashboard = React.lazy(() => import('./components/admin/BillingDashboard'));
+const ClinicalAlertsDashboard = React.lazy(() => import('./components/alerts/ClinicalAlertsDashboard'));
 const EnvisionLoginPage = React.lazy(() => import('./pages/EnvisionLoginPage'));
 const ApiKeyManager = React.lazy(() => import('./components/admin/ApiKeyManager'));
 const PhotoApprovalPage = React.lazy(() => import('./pages/PhotoApprovalPage'));
