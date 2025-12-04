@@ -13,9 +13,9 @@ interface HandoffCelebrationProps {
   nurseWhoAccepted?: string;
   bypassUsed?: boolean; // Was emergency bypass used?
   bypassNumber?: number; // Which bypass number (1, 2, 3...)?
-  // Epic comparison metrics
-  timeSavedMinutes?: number; // Minutes saved vs Epic benchmark (30 min)
-  efficiencyPercent?: number; // % faster than Epic
+  // Time efficiency metrics
+  timeSavedMinutes?: number; // Minutes saved vs industry benchmark (30 min)
+  efficiencyPercent?: number; // % faster than industry average
   patientCount?: number; // Number of patients in handoff
 }
 

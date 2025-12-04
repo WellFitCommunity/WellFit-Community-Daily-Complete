@@ -40,7 +40,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedPatients, setSelectedPatients] = useState<Set<string>>(new Set());
 
-  // Time tracking for Epic comparison
+  // Time tracking for efficiency metrics
   const [sessionStartTime] = useState<number>(Date.now());
   const [timeSavings, setTimeSavings] = useState<{
     time_saved_minutes: number;
@@ -207,7 +207,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
     const timeSpentSeconds = Math.round((Date.now() - sessionStartTime) / 1000);
     const patientCount = metrics?.total_patients || 0;
 
-    // Record time savings vs Epic benchmark (30 min)
+    // Record time savings vs industry benchmark (30 min)
     try {
       const savings = await ShiftHandoffService.recordHandoffTimeSavings(
         timeSpentSeconds,
