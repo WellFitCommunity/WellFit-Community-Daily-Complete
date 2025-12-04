@@ -3,7 +3,7 @@
 // Envision Atlus Dark Theme
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import * as XLSX from 'exceljs';
 import {
@@ -19,6 +19,9 @@ import {
   Bed,
   ArrowRight,
   Eye,
+  Plus,
+  FileText,
+  UserMinus,
 } from 'lucide-react';
 import HandoffService from '../../services/handoffService';
 import type {
@@ -32,21 +35,52 @@ import type {
 import { URGENCY_LABELS, STATUS_LABELS } from '../../types/handoff';
 import { EACard, EACardHeader, EACardContent, EAButton } from '../envision-atlus';
 
+// Discharge transfer info passed from bed management
+interface DischargeTransferState {
+  createTransfer?: boolean;
+  patientId?: string;
+  patientName?: string;
+  patientMrn?: string;
+  disposition?: string;
+  fromBedManagement?: boolean;
+}
+
 const AdminTransferLogs: React.FC<AdminTransferLogsProps> = ({
   showExportButton = true,
   defaultFilters,
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [packets, setPackets] = useState<HandoffPacket[]>([]);
   const [stats, setStats] = useState<HandoffPacketStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [selectedPacket, setSelectedPacket] = useState<HandoffPacket | null>(null);
 
+  // Discharge transfer from bed management
+  const [showDischargeTransferModal, setShowDischargeTransferModal] = useState(false);
+  const [dischargeTransferInfo, setDischargeTransferInfo] = useState<DischargeTransferState | null>(null);
+  const [receivingFacility, setReceivingFacility] = useState('');
+  const [receivingContact, setReceivingContact] = useState('');
+  const [receivingPhone, setReceivingPhone] = useState('');
+  const [clinicalSummary, setClinicalSummary] = useState('');
+  const [creatingTransfer, setCreatingTransfer] = useState(false);
+
   // Filters
   const [filters, setFilters] = useState<HandoffPacketListFilters>(
     defaultFilters || {}
   );
+
+  // Check for incoming discharge transfer from bed management
+  useEffect(() => {
+    const state = location.state as DischargeTransferState | null;
+    if (state?.createTransfer && state?.fromBedManagement) {
+      setDischargeTransferInfo(state);
+      setShowDischargeTransferModal(true);
+      // Clear the location state to prevent re-showing on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const loadData = useCallback(async () => {
     try {
@@ -210,6 +244,58 @@ const AdminTransferLogs: React.FC<AdminTransferLogsProps> = ({
       toast.error(`Failed to export: ${error.message}`);
     } finally {
       setExporting(false);
+    }
+  };
+
+  /**
+   * Create discharge transfer packet from bed management
+   */
+  const handleCreateDischargeTransfer = async () => {
+    if (!dischargeTransferInfo || !receivingFacility) {
+      toast.error('Please enter the receiving facility information');
+      return;
+    }
+
+    setCreatingTransfer(true);
+    try {
+      // Create handoff packet
+      const result = await HandoffService.createPacket({
+        patient_name: dischargeTransferInfo.patientName || 'Unknown Patient',
+        patient_mrn: dischargeTransferInfo.patientMrn,
+        patient_dob: '1970-01-01', // Required field - will be updated in future
+        sending_facility: 'Current Hospital', // Will use user's facility
+        receiving_facility: receivingFacility,
+        urgency_level: 'routine',
+        reason_for_transfer: `Post-Acute Discharge - ${dischargeTransferInfo.disposition || 'Transfer'}`,
+        clinical_data: {
+          notes: clinicalSummary || undefined,
+        },
+        sender_provider_name: 'Discharge Planning Team',
+        sender_callback_number: 'N/A',
+        sender_notes: clinicalSummary,
+        receiver_contact_name: receivingContact || undefined,
+        receiver_contact_phone: receivingPhone || undefined,
+      });
+
+      toast.success('Transfer packet created successfully!');
+      setShowDischargeTransferModal(false);
+      setDischargeTransferInfo(null);
+      setReceivingFacility('');
+      setReceivingContact('');
+      setReceivingPhone('');
+      setClinicalSummary('');
+
+      // Reload data to show the new packet
+      await loadData();
+
+      // Show the newly created packet
+      if (result?.packet) {
+        setSelectedPacket(result.packet);
+      }
+    } catch (error: any) {
+      toast.error(`Failed to create transfer: ${error.message}`);
+    } finally {
+      setCreatingTransfer(false);
     }
   };
 
@@ -618,6 +704,128 @@ const AdminTransferLogs: React.FC<AdminTransferLogsProps> = ({
               <div className="p-6 border-t border-slate-700 flex justify-end">
                 <EAButton variant="secondary" onClick={() => setSelectedPacket(null)}>
                   Close
+                </EAButton>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Discharge Transfer Modal - from Bed Management */}
+        {showDischargeTransferModal && dischargeTransferInfo && (
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+            <div className="bg-slate-800 rounded-xl shadow-xl max-w-lg w-full border border-slate-700">
+              <div className="p-6 border-b border-slate-700">
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-teal-500/20 rounded-lg flex items-center justify-center">
+                      <UserMinus className="w-5 h-5 text-teal-400" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold text-white">
+                        Create Discharge Transfer
+                      </h2>
+                      <p className="text-sm text-slate-400 mt-1">
+                        Patient discharged from Bed Management
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowDischargeTransferModal(false);
+                      setDischargeTransferInfo(null);
+                    }}
+                    className="text-slate-400 hover:text-white transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-6 space-y-4">
+                {/* Patient Info */}
+                <div className="p-4 bg-slate-700/50 rounded-lg">
+                  <p className="text-sm text-slate-400 mb-1">Patient</p>
+                  <p className="text-white font-medium">{dischargeTransferInfo.patientName || 'Unknown'}</p>
+                  {dischargeTransferInfo.patientMrn && (
+                    <p className="text-sm text-slate-400">MRN: {dischargeTransferInfo.patientMrn}</p>
+                  )}
+                  <p className="text-sm text-teal-400 mt-2">
+                    Disposition: {dischargeTransferInfo.disposition}
+                  </p>
+                </div>
+
+                {/* Receiving Facility */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-400 mb-1">
+                    Receiving Facility Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={receivingFacility}
+                    onChange={(e) => setReceivingFacility(e.target.value)}
+                    placeholder="e.g., Sunrise Skilled Nursing"
+                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-[#00857a] focus:border-transparent"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-400 mb-1">
+                      Contact Name
+                    </label>
+                    <input
+                      type="text"
+                      value={receivingContact}
+                      onChange={(e) => setReceivingContact(e.target.value)}
+                      placeholder="Admissions coordinator"
+                      className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-[#00857a] focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-400 mb-1">
+                      Contact Phone
+                    </label>
+                    <input
+                      type="tel"
+                      value={receivingPhone}
+                      onChange={(e) => setReceivingPhone(e.target.value)}
+                      placeholder="(555) 555-5555"
+                      className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-[#00857a] focus:border-transparent"
+                    />
+                  </div>
+                </div>
+
+                {/* Clinical Summary */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-400 mb-1">
+                    Clinical Summary
+                  </label>
+                  <textarea
+                    value={clinicalSummary}
+                    onChange={(e) => setClinicalSummary(e.target.value)}
+                    placeholder="Key clinical information for the receiving facility..."
+                    rows={4}
+                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-[#00857a] focus:border-transparent resize-none"
+                  />
+                </div>
+              </div>
+
+              <div className="p-6 border-t border-slate-700 flex justify-end gap-3">
+                <EAButton
+                  variant="secondary"
+                  onClick={() => {
+                    setShowDischargeTransferModal(false);
+                    setDischargeTransferInfo(null);
+                  }}
+                >
+                  Skip Transfer
+                </EAButton>
+                <EAButton
+                  onClick={handleCreateDischargeTransfer}
+                  disabled={!receivingFacility || creatingTransfer}
+                  icon={<FileText className="w-4 h-4" />}
+                >
+                  {creatingTransfer ? 'Creating...' : 'Create Transfer Packet'}
                 </EAButton>
               </div>
             </div>

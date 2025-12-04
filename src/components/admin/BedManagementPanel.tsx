@@ -31,6 +31,9 @@ import {
   Sparkles,
   Target,
   BarChart3,
+  UserMinus,
+  FileText,
+  ArrowRight,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { BedManagementService } from '../../services/bedManagementService';
@@ -103,6 +106,9 @@ const BedManagementPanel: React.FC = () => {
   const [expandedUnit, setExpandedUnit] = useState<string | null>(null);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [selectedBed, setSelectedBed] = useState<BedBoardEntry | null>(null);
+  const [showDischargeModal, setShowDischargeModal] = useState(false);
+  const [dischargeDisposition, setDischargeDisposition] = useState<string>('');
+  const [discharging, setDischarging] = useState(false);
 
   // Learning feedback state
   const [feedbackUnit, setFeedbackUnit] = useState<string>('');
@@ -269,6 +275,72 @@ const BedManagementPanel: React.FC = () => {
       setError(result.error.message);
     }
   };
+
+  /**
+   * Handle patient discharge
+   */
+  const handleDischargePatient = async () => {
+    if (!selectedBed?.patient_id || !dischargeDisposition) {
+      setError('Please select a discharge disposition');
+      return;
+    }
+
+    setDischarging(true);
+    try {
+      const result = await BedManagementService.dischargePatient(
+        selectedBed.patient_id,
+        dischargeDisposition
+      );
+
+      if (result.success) {
+        // Check if this is a post-acute disposition that needs a transfer packet
+        const postAcuteDispositions = [
+          'Skilled Nursing Facility',
+          'Inpatient Rehab',
+          'Long-Term Acute Care',
+          'Hospice',
+        ];
+
+        if (postAcuteDispositions.includes(dischargeDisposition)) {
+          // Navigate to transfer portal to create handoff packet
+          navigate('/transfer-logs', {
+            state: {
+              createTransfer: true,
+              patientId: selectedBed.patient_id,
+              patientName: selectedBed.patient_name,
+              patientMrn: selectedBed.patient_mrn,
+              disposition: dischargeDisposition,
+              fromBedManagement: true,
+            },
+          });
+        } else {
+          // Simple discharge - just reload the bed board
+          await loadData();
+        }
+
+        setShowDischargeModal(false);
+        setSelectedBed(null);
+        setDischargeDisposition('');
+      } else {
+        setError(result.error.message);
+      }
+    } finally {
+      setDischarging(false);
+    }
+  };
+
+  // Discharge disposition options
+  const DISCHARGE_DISPOSITIONS = [
+    { value: 'Home', label: 'Home', isPostAcute: false },
+    { value: 'Home with Home Health', label: 'Home with Home Health', isPostAcute: false },
+    { value: 'Skilled Nursing Facility', label: 'Skilled Nursing Facility (SNF)', isPostAcute: true },
+    { value: 'Inpatient Rehab', label: 'Inpatient Rehabilitation', isPostAcute: true },
+    { value: 'Long-Term Acute Care', label: 'Long-Term Acute Care (LTAC)', isPostAcute: true },
+    { value: 'Hospice', label: 'Hospice Care', isPostAcute: true },
+    { value: 'Against Medical Advice', label: 'Against Medical Advice (AMA)', isPostAcute: false },
+    { value: 'Expired', label: 'Expired', isPostAcute: false },
+    { value: 'Transfer to Another Hospital', label: 'Transfer to Another Hospital', isPostAcute: true },
+  ];
 
   // Calculate summary metrics
   const totalBeds = unitCapacity.reduce((sum, u) => sum + (u.total_beds ?? 0), 0);
@@ -1050,6 +1122,15 @@ const BedManagementPanel: React.FC = () => {
               <EAButton variant="secondary" onClick={() => setSelectedBed(null)}>
                 Close
               </EAButton>
+              {selectedBed.status === 'occupied' && selectedBed.patient_id && (
+                <EAButton
+                  onClick={() => setShowDischargeModal(true)}
+                  icon={<UserMinus className="w-4 h-4" />}
+                  variant="secondary"
+                >
+                  Discharge Patient
+                </EAButton>
+              )}
               {selectedBed.status === 'dirty' && (
                 <EAButton
                   onClick={() => {
@@ -1070,6 +1151,113 @@ const BedManagementPanel: React.FC = () => {
                   Mark Available
                 </EAButton>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Discharge Modal */}
+      {showDischargeModal && selectedBed && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-slate-900 rounded-xl shadow-xl max-w-lg w-full mx-4 border border-slate-700">
+            <div className="p-6 border-b border-slate-700">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                  <UserMinus className="w-5 h-5 text-orange-400" />
+                  Discharge Patient
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowDischargeModal(false);
+                    setDischargeDisposition('');
+                  }}
+                  className="text-slate-400 hover:text-white"
+                >
+                  <XCircle className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="p-4 bg-slate-800 rounded-lg">
+                <p className="text-sm text-slate-400 mb-1">Patient</p>
+                <p className="text-white font-medium">{selectedBed.patient_name}</p>
+                {selectedBed.patient_mrn && (
+                  <p className="text-sm text-slate-400">MRN: {selectedBed.patient_mrn}</p>
+                )}
+                <p className="text-sm text-slate-400 mt-2">
+                  Bed: {selectedBed.bed_label} | Room: {selectedBed.room_number}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm text-slate-400 mb-2">
+                  Discharge Disposition
+                </label>
+                <select
+                  value={dischargeDisposition}
+                  onChange={(e) => setDischargeDisposition(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-teal-500"
+                >
+                  <option value="">Select disposition...</option>
+                  {DISCHARGE_DISPOSITIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Show transfer notice for post-acute dispositions */}
+              {dischargeDisposition &&
+                DISCHARGE_DISPOSITIONS.find((d) => d.value === dischargeDisposition)?.isPostAcute && (
+                  <div className="p-4 bg-teal-500/10 border border-teal-500/30 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <FileText className="w-5 h-5 text-teal-400 mt-0.5" />
+                      <div>
+                        <p className="text-sm text-teal-400 font-medium">
+                          Transfer Packet Required
+                        </p>
+                        <p className="text-xs text-slate-400 mt-1">
+                          This discharge type requires a clinical handoff packet. After
+                          confirming discharge, you will be redirected to create the
+                          transfer documentation.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+            </div>
+
+            <div className="p-6 border-t border-slate-700 flex justify-end gap-3">
+              <EAButton
+                variant="secondary"
+                onClick={() => {
+                  setShowDischargeModal(false);
+                  setDischargeDisposition('');
+                }}
+              >
+                Cancel
+              </EAButton>
+              <EAButton
+                onClick={handleDischargePatient}
+                disabled={!dischargeDisposition || discharging}
+                icon={
+                  DISCHARGE_DISPOSITIONS.find((d) => d.value === dischargeDisposition)
+                    ?.isPostAcute ? (
+                    <ArrowRight className="w-4 h-4" />
+                  ) : (
+                    <CheckCircle className="w-4 h-4" />
+                  )
+                }
+              >
+                {discharging
+                  ? 'Processing...'
+                  : DISCHARGE_DISPOSITIONS.find((d) => d.value === dischargeDisposition)
+                      ?.isPostAcute
+                  ? 'Discharge & Create Transfer'
+                  : 'Confirm Discharge'}
+              </EAButton>
             </div>
           </div>
         </div>
