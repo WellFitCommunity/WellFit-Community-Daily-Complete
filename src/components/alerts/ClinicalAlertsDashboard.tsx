@@ -168,17 +168,19 @@ export const ClinicalAlertsDashboard: React.FC = () => {
       if (error) throw error;
 
       // Record effectiveness (in production, this would go to alert_effectiveness table)
-      await supabase.from('alert_effectiveness').insert({
-        alert_id: alertId,
-        user_id: user?.id,
-        alert_type: 'clinical',
-        severity: alerts.find(a => a.id === alertId)?.severity || 'info',
-        was_actionable: wasActionable,
-        false_positive: !wasActionable,
-        time_to_acknowledge_seconds: 45, // Mock - would be calculated
-      }).catch(() => {
-        // Non-critical
-      });
+      try {
+        await supabase.from('alert_effectiveness').insert({
+          alert_id: alertId,
+          user_id: user?.id,
+          alert_type: 'clinical',
+          severity: alerts.find(a => a.id === alertId)?.severity || 'info',
+          was_actionable: wasActionable,
+          false_positive: !wasActionable,
+          time_to_acknowledge_seconds: 45, // Mock - would be calculated
+        });
+      } catch {
+        // Non-critical - effectiveness tracking failure shouldn't block alert resolution
+      }
 
       setAlerts(prev => prev.filter(a => a.id !== alertId));
       loadAlerts(); // Refresh metrics
