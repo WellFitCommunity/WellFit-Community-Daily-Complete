@@ -274,23 +274,17 @@ export async function getRoleSpecificStats(
       stats.pendingApprovals = pendingApprovals || 0;
     }
 
-    // Super Admin stats (NO PHI - aggregated only)
-    if (roleLower.includes('super_admin')) {
-      // Total tenants
-      const { count: tenantCount } = await supabase
-        .from('tenants')
-        .select('id', { count: 'exact', head: true });
-
-      // Platform-wide health score (derived from Guardian alerts)
+    // Critical alerts for this tenant (useful for all admin roles)
+    if (roleLower.includes('admin') && tenantId) {
+      // Facility-level critical alerts (tenant-scoped)
       const { count: criticalAlerts } = await supabase
         .from('guardian_alerts')
         .select('id', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId)
         .eq('severity', 'critical')
         .eq('status', 'pending');
 
-      stats.totalTenants = tenantCount || 0;
       stats.criticalAlerts = criticalAlerts || 0;
-      stats.platformHealth = (criticalAlerts || 0) === 0 ? 100 : Math.max(0, 100 - ((criticalAlerts || 0) * 5));
     }
   } catch (error) {
     // Fail gracefully - return empty stats

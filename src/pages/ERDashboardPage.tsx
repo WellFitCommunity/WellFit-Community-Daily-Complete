@@ -1,63 +1,185 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ERIncomingPatientBoard from '../components/ems/ERIncomingPatientBoard';
+import { useUser } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabaseClient';
 
 /**
  * ER Dashboard Page
- * Full-screen view for ER charge nurses to monitor all incoming ambulances
- * Optimized for display on ER monitors/tablets
+ *
+ * Emergency Room command center for physicians and providers.
+ * Key features:
+ * - Real-time EMS incoming patient board
+ * - Provider sign-off workflow (MD/DO/PA/NP required)
+ * - Coordinated response for critical cases
+ * - Bed availability integration
+ *
+ * This is separate from NursePanel because:
+ * - Physicians/providers must sign off on incoming patients
+ * - Different workflow than nursing tasks
+ * - ER-specific metrics and alerts
+ *
+ * Copyright © 2025 Envision VirtualEdge Group LLC. All rights reserved.
  */
 const ERDashboardPage: React.FC = () => {
-  const [hospitalName, setHospitalName] = useState('Your Hospital Name');
+  const navigate = useNavigate();
+  const user = useUser();
+  const [hospitalName, setHospitalName] = useState('Emergency Department');
   const [isEditingHospital, setIsEditingHospital] = useState(false);
+  const [stats, setStats] = useState({
+    incomingPatients: 0,
+    criticalIncoming: 0,
+    awaitingSignoff: 0,
+  });
+
+  // Load hospital name from tenant
+  useEffect(() => {
+    const loadHospitalInfo = async () => {
+      if (!user?.id) return;
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('tenant_id')
+          .eq('user_id', user.id)
+          .single();
+
+        if (profile?.tenant_id) {
+          const { data: tenant } = await supabase
+            .from('tenants')
+            .select('name')
+            .eq('id', profile.tenant_id)
+            .single();
+          if (tenant?.name) {
+            setHospitalName(tenant.name);
+          }
+        }
+      } catch {
+        // Keep default
+      }
+    };
+    loadHospitalInfo();
+  }, [user?.id]);
+
+  // Load stats
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        const { count: incomingCount } = await supabase
+          .from('ems_handoffs')
+          .select('id', { count: 'exact', head: true })
+          .in('status', ['submitted', 'acknowledged', 'en_route']);
+
+        const { count: criticalCount } = await supabase
+          .from('ems_handoffs')
+          .select('id', { count: 'exact', head: true })
+          .in('status', ['submitted', 'acknowledged', 'en_route'])
+          .or('is_stemi.eq.true,is_stroke.eq.true,is_trauma.eq.true,is_sepsis.eq.true');
+
+        const { count: awaitingCount } = await supabase
+          .from('ems_handoffs')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'arrived')
+          .is('provider_signoff_at', null);
+
+        setStats({
+          incomingPatients: incomingCount || 0,
+          criticalIncoming: criticalCount || 0,
+          awaitingSignoff: awaitingCount || 0,
+        });
+      } catch {
+        // Stats will show zeros
+      }
+    };
+    loadStats();
+    const interval = setInterval(loadStats, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="text-4xl">🚑</div>
               <div>
-                <h1 className="text-3xl font-bold">ER Dashboard - Incoming Patients</h1>
-                <p className="text-red-100 text-sm mt-1">
-                  Real-time ambulance notifications and handoffs
+                <h1 className="text-2xl font-bold">ER Command Center</h1>
+                <p className="text-red-100 text-sm">
+                  {hospitalName} - Real-time EMS handoffs
                 </p>
               </div>
             </div>
 
-            {/* Hospital Name Selector */}
+            {/* Quick Stats */}
+            <div className="hidden md:flex items-center gap-6">
+              <div className="text-center">
+                <div className="text-2xl font-bold">{stats.incomingPatients}</div>
+                <div className="text-xs text-red-200">Incoming</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-yellow-300">{stats.criticalIncoming}</div>
+                <div className="text-xs text-red-200">Critical</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-orange-300">{stats.awaitingSignoff}</div>
+                <div className="text-xs text-red-200">Need Sign-off</div>
+              </div>
+            </div>
+
+            {/* Actions */}
             <div className="flex items-center gap-3">
+              <button
+                onClick={() => navigate('/bed-management')}
+                className="flex items-center gap-2 px-4 py-2 bg-red-800 rounded-lg hover:bg-red-900 transition-colors"
+              >
+                <span>🛏️</span>
+                <span className="font-medium">Beds</span>
+              </button>
               {isEditingHospital ? (
                 <div className="flex items-center gap-2">
                   <input
                     type="text"
                     value={hospitalName}
                     onChange={(e) => setHospitalName(e.target.value)}
-                    className="px-3 py-2 rounded-lg border-2 border-white text-gray-900 font-medium"
+                    className="px-3 py-2 rounded-lg border-2 border-white text-gray-900 font-medium w-40"
                     placeholder="Hospital Name"
                   />
                   <button
                     onClick={() => setIsEditingHospital(false)}
-                    className="px-4 py-2 bg-white text-red-600 rounded-lg font-medium hover:bg-red-50 transition-colors"
+                    className="px-3 py-2 bg-white text-red-600 rounded-lg font-medium hover:bg-red-50"
                   >
-                    Save
+                    ✓
                   </button>
                 </div>
               ) : (
                 <button
                   onClick={() => setIsEditingHospital(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-red-800 rounded-lg hover:bg-red-900 transition-colors"
+                  className="p-2 bg-red-800 rounded-lg hover:bg-red-900 transition-colors"
+                  title="Edit Hospital Name"
                 >
-                  <span className="text-lg">🏥</span>
-                  <span className="font-medium">{hospitalName}</span>
-                  <span className="text-sm opacity-75">✏️</span>
+                  ⚙️
                 </button>
               )}
             </div>
           </div>
         </div>
       </header>
+
+      {/* Provider Sign-off Alert Banner */}
+      {stats.awaitingSignoff > 0 && (
+        <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 px-4">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">⚠️</span>
+              <div>
+                <span className="font-bold">{stats.awaitingSignoff} Patient(s) Awaiting Provider Sign-off</span>
+                <span className="ml-2 text-orange-100">- Physician/PA/NP acceptance required</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

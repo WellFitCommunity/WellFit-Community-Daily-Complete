@@ -77,8 +77,31 @@ const AdminSettingsPanel: React.FC = memo(() => {
         }
 
         if (data) {
+          const loadedTheme = data.theme || 'light';
+
+          // Sync database theme to localStorage and apply immediately
+          localStorage.setItem('admin_theme', loadedTheme);
+          if (loadedTheme === 'dark') {
+            document.documentElement.classList.add('dark');
+          } else if (loadedTheme === 'light') {
+            document.documentElement.classList.remove('dark');
+          } else {
+            // Auto mode
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (prefersDark) {
+              document.documentElement.classList.add('dark');
+            } else {
+              document.documentElement.classList.remove('dark');
+            }
+          }
+          // Dispatch storage event so AdminHeader syncs
+          window.dispatchEvent(new StorageEvent('storage', {
+            key: 'admin_theme',
+            newValue: loadedTheme,
+          }));
+
           setSettings({
-            theme: data.theme || 'light',
+            theme: loadedTheme,
             notifications: {
               email: data.email_notifications ?? true,
               browser: data.browser_notifications ?? true,
