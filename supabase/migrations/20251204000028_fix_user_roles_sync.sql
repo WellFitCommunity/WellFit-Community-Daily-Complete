@@ -25,12 +25,10 @@ BEGIN
 
   -- Only sync if role_id is set
   IF NEW.role_id IS NOT NULL THEN
-    -- Insert or update user_roles
-    INSERT INTO user_roles (user_id, role_id, is_primary, created_at)
-    VALUES (NEW.user_id, NEW.role_id, true, NOW())
-    ON CONFLICT (user_id, role_id) DO UPDATE SET
-      is_primary = true,
-      updated_at = NOW();
+    -- Insert or update user_roles (no is_primary column in current schema)
+    INSERT INTO user_roles (user_id, role_id)
+    VALUES (NEW.user_id, NEW.role_id)
+    ON CONFLICT (user_id, role_id) DO NOTHING;
   END IF;
 
   RETURN NEW;
