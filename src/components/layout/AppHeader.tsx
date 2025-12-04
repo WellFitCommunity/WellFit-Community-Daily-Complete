@@ -47,6 +47,10 @@ const ENVISION_ATLUS_ROUTES = [
   '/system-admin',
   '/healthcare-algorithms',
   '/ai-revenue',
+  '/staff-wellness',
+  '/hospital-transfer',
+  '/transfer-logs',
+  '/bed-management',
 ];
 
 export default function AppHeader() {

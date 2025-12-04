@@ -151,6 +151,12 @@ const CareCoordinationDashboard = React.lazy(() => import('./components/careCoor
 const ReferralsDashboard = React.lazy(() => import('./components/referrals/ReferralsDashboard'));
 const QuestionnaireAnalyticsDashboard = React.lazy(() => import('./components/questionnaires/QuestionnaireAnalyticsDashboard'));
 
+// Staff Wellness & Burnout Prevention
+const StaffWellnessDashboard = React.lazy(() => import('./pages/StaffWellnessDashboard'));
+
+// Hospital-to-Hospital Transfer Portal
+const HospitalTransferPortal = React.lazy(() => import('./pages/HospitalTransferPortal'));
+
 // SOC Dashboard - Security Operations Center for super_admins
 const SOCDashboard = React.lazy(() => import('./components/soc/SOCDashboard'));
 
@@ -964,6 +970,30 @@ function Shell() {
                   <RequireAuth>
                     <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'nurse', 'physician', 'case_manager']}>
                       <AdminTransferLogs />
+                    </RequireAdminAuth>
+                  </RequireAuth>
+                }
+              />
+
+              {/* Hospital-to-Hospital Transfer Portal */}
+              <Route
+                path="/hospital-transfer"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'nurse', 'physician', 'case_manager']}>
+                      <HospitalTransferPortal />
+                    </RequireAdminAuth>
+                  </RequireAuth>
+                }
+              />
+
+              {/* Staff Wellness & Burnout Prevention Dashboard */}
+              <Route
+                path="/staff-wellness"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'nurse', 'physician', 'case_manager']}>
+                      <StaffWellnessDashboard />
                     </RequireAdminAuth>
                   </RequireAuth>
                 }
