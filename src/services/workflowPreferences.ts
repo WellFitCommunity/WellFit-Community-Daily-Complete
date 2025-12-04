@@ -56,15 +56,8 @@ export const ROLE_BASED_DEFAULTS: Record<string, CategoryOrder[]> = {
     { categoryId: 'admin', defaultOpen: false, priority: 5 },
   ],
 
-  // Billing/Finance: Revenue first
+  // Billing: Revenue first
   billing_specialist: [
-    { categoryId: 'revenue', defaultOpen: true, priority: 1 },
-    { categoryId: 'patient-care', defaultOpen: false, priority: 2 },
-    { categoryId: 'clinical', defaultOpen: false, priority: 3 },
-    { categoryId: 'admin', defaultOpen: false, priority: 4 },
-    { categoryId: 'security', defaultOpen: false, priority: 5 },
-  ],
-  finance: [
     { categoryId: 'revenue', defaultOpen: true, priority: 1 },
     { categoryId: 'patient-care', defaultOpen: false, priority: 2 },
     { categoryId: 'clinical', defaultOpen: false, priority: 3 },

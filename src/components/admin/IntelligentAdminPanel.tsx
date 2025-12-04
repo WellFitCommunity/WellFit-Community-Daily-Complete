@@ -115,7 +115,7 @@ const IntelligentAdminPanel: React.FC = () => {
     if (adminRole === 'nurse' || adminRole === 'physician' || adminRole === 'doctor') {
       return categoryId === 'patient-care';
     }
-    if (adminRole === 'billing_specialist' || adminRole === 'finance') {
+    if (adminRole === 'billing_specialist') {
       return categoryId === 'revenue';
     }
     if (adminRole === 'it_admin') {
@@ -144,7 +144,6 @@ const IntelligentAdminPanel: React.FC = () => {
         return ['patient-care', 'clinical', 'revenue', 'security', 'admin'];
 
       case 'billing_specialist':
-      case 'finance':
         return ['revenue', 'patient-care', 'clinical', 'admin', 'security'];
 
       case 'it_admin':
