@@ -2,10 +2,14 @@
  * AI-Powered Billing Code Suggester
  *
  * Skill #2: Encounter-Time Billing Code Suggester
- * - Uses Claude Haiku 4.5 (75% cheaper than Sonnet)
- * - Aggressive prompt caching for diagnosis→code mappings
+ * - Uses Claude Sonnet 4.5 for CLINICAL-GRADE accuracy (billing requires precision)
+ * - MCP cost optimization + aggressive prompt caching keeps costs manageable
  * - Real-time suggestions during encounters
- * - 95%+ cache hit rate for common diagnoses
+ * - 95%+ cache hit rate for common diagnoses (cached results = $0)
+ *
+ * WHY SONNET 4.5: Billing codes directly impact revenue and compliance.
+ * Incorrect codes = denied claims, audits, penalties. This is not a place to cut corners.
+ * MCP caching already provides 95%+ cost reduction for repeat diagnoses.
  *
  * Security: Input validation, SQL injection prevention, rate limiting
  * Testing: Comprehensive Jest unit + integration tests
@@ -206,7 +210,7 @@ export class BillingCodeSuggester {
   }
 
   /**
-   * Generate billing codes using AI (Claude Haiku for cost efficiency)
+   * Generate billing codes using AI (Claude Sonnet 4.5 for clinical-grade accuracy)
    */
   private async generateWithAI(
     context: EncounterContext,
@@ -236,11 +240,11 @@ Return response as strict JSON with this structure:
 }`;
 
     try {
-      // Call AI via MCP Cost Optimizer (uses Haiku + prompt caching)
+      // Call AI via MCP Cost Optimizer (Sonnet 4.5 for clinical-grade accuracy + prompt caching)
       const aiResponse = await this.optimizer.call({
         prompt,
         systemPrompt,
-        model: config.billing_suggester_model || 'claude-haiku-4-5-20250929',
+        model: config.billing_suggester_model || 'claude-sonnet-4-5-20241022',
         complexity: 'medium',
         userId: context.patientId,
         context: {
@@ -375,7 +379,7 @@ Return response as strict JSON with this structure:
     return data || {
       billing_suggester_enabled: false,
       billing_suggester_confidence_threshold: 0.85,
-      billing_suggester_model: 'claude-haiku-4-5-20250929'
+      billing_suggester_model: 'claude-sonnet-4-5-20241022'
     };
   }
 
