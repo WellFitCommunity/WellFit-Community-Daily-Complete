@@ -50,7 +50,7 @@ interface SpeechRecognitionConstructor {
 const getSpeechRecognition = (): SpeechRecognitionConstructor | null => {
   if (typeof window === 'undefined') return null;
 
-  const win = window as Window & {
+  const win = window as unknown as {
     SpeechRecognition?: SpeechRecognitionConstructor;
     webkitSpeechRecognition?: SpeechRecognitionConstructor;
     mozSpeechRecognition?: SpeechRecognitionConstructor;

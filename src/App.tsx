@@ -93,6 +93,7 @@ const EnhancedQuestionsPage = React.lazy(() => import('./pages/EnhancedQuestions
 const AdminQuestionsPage = React.lazy(() => import('./pages/AdminQuestionsPage'));
 const MemoryLaneTriviaPage = React.lazy(() => import('./pages/MemoryLaneTriviaPage'));
 const BillingDashboard = React.lazy(() => import('./components/admin/BillingDashboard'));
+const ClinicalAlertsDashboard = React.lazy(() => import('./components/alerts/ClinicalAlertsDashboard'));
 const EnvisionLoginPage = React.lazy(() => import('./pages/EnvisionLoginPage'));
 const ApiKeyManager = React.lazy(() => import('./components/admin/ApiKeyManager'));
 const PhotoApprovalPage = React.lazy(() => import('./pages/PhotoApprovalPage'));
@@ -815,6 +816,20 @@ function Shell() {
                   }
                 />
               )}
+
+              {/* Clinical Alerts Dashboard - AI-filtered alerts with effectiveness tracking */}
+              <Route
+                path="/clinical-alerts"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'nurse', 'physician', 'doctor', 'case_manager']}>
+                      <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading Alerts Dashboard...</div>}>
+                        <ClinicalAlertsDashboard />
+                      </Suspense>
+                    </RequireAdminAuth>
+                  </RequireAuth>
+                }
+              />
 
               {/* Referrals Dashboard - External referral management for hospital partnerships */}
               {featureFlags.referralManagement && (
