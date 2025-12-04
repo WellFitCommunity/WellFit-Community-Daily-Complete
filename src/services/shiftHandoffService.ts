@@ -631,17 +631,17 @@ export async function logEmergencyBypass(
 }
 
 // ============================================================================
-// PART 8: TIME TRACKING (Industry Comparison)
+// PART 8: TIME TRACKING (Epic Comparison)
 // ============================================================================
 
 /**
- * Industry benchmark: 30 minutes (1800 seconds) for shift handoff in legacy EHRs
+ * Epic benchmark: 30 minutes (1800 seconds) for shift handoff
  * Source: Stanford Resident Study, Mayo Clinic Burnout Study
  */
-const INDUSTRY_HANDOFF_BENCHMARK_SECONDS = 1800;
+const EPIC_HANDOFF_BENCHMARK_SECONDS = 1800;
 
 /**
- * Record time spent on shift handoff vs industry benchmark
+ * Record time spent on shift handoff vs Epic benchmark
  * @param actualTimeSeconds Time spent in our system
  * @param patientCount Number of patients in handoff
  * @param aiAssisted Whether AI auto-scoring was used
@@ -666,9 +666,9 @@ export async function recordHandoffTimeSavings(
     .eq('id', user.id)
     .single();
 
-  const industryBenchmark = INDUSTRY_HANDOFF_BENCHMARK_SECONDS;
-  const timeSaved = industryBenchmark - actualTimeSeconds;
-  const efficiencyPercent = Math.round((1 - actualTimeSeconds / industryBenchmark) * 100);
+  const epicBenchmark = EPIC_HANDOFF_BENCHMARK_SECONDS;
+  const timeSaved = epicBenchmark - actualTimeSeconds;
+  const efficiencyPercent = Math.round((1 - actualTimeSeconds / epicBenchmark) * 100);
 
   // Record to clinician_time_tracking table
   const { error } = await supabase
@@ -678,7 +678,7 @@ export async function recordHandoffTimeSavings(
       user_id: user.id,
       action_type: 'shift_handoff',
       actual_time_seconds: actualTimeSeconds,
-      epic_benchmark_seconds: industryBenchmark, // Column name retained for DB compatibility
+      epic_benchmark_seconds: epicBenchmark,
       ai_assisted: aiAssisted,
       ai_confidence_score: aiAssisted ? 0.85 : null, // 80/20 rule
       patient_count: patientCount,

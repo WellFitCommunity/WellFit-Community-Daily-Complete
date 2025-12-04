@@ -179,7 +179,7 @@ export const HandoffCelebration: React.FC<HandoffCelebrationProps> = ({
             </div>
           )}
 
-          {/* Time Savings - THE KEY METRIC */}
+          {/* Time Savings vs Epic - THE KEY METRIC */}
           {timeSavedMinutes !== undefined && timeSavedMinutes > 0 && (
             <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-500 rounded-lg p-4 mb-4">
               <div className="flex items-center justify-center gap-3">
@@ -189,14 +189,14 @@ export const HandoffCelebration: React.FC<HandoffCelebrationProps> = ({
                     {timeSavedMinutes} min saved
                   </div>
                   <div className="text-sm text-emerald-600 font-medium">
-                    vs industry average (30 min handoff)
+                    vs Epic benchmark (30 min handoff)
                   </div>
                 </div>
                 <span className="text-3xl">⚡</span>
               </div>
               <div className="mt-2 text-center">
                 <span className="inline-block bg-emerald-600 text-white px-3 py-1 rounded-full text-sm font-bold">
-                  {efficiencyPercent}% faster than average
+                  {efficiencyPercent}% faster than Epic
                 </span>
               </div>
             </div>

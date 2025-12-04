@@ -367,10 +367,10 @@ export const ShiftHandoffDashboard: React.FC = () => {
               <div className="text-2xl font-bold text-blue-700">{metrics.avg_auto_score}</div>
               <div className="text-xs text-blue-700">Avg Auto Score</div>
             </div>
-            {/* Time Savings Badge */}
+            {/* Epic Comparison - Time Savings */}
             <div className="bg-gradient-to-br from-emerald-100 to-teal-50 border-2 border-emerald-500 rounded-lg p-3 shadow-md">
               <div className="text-2xl font-bold text-emerald-700">⚡ 80%</div>
-              <div className="text-xs text-emerald-600 font-medium">Faster than Average</div>
+              <div className="text-xs text-emerald-600 font-medium">Faster than Epic</div>
             </div>
           </div>
         )}
