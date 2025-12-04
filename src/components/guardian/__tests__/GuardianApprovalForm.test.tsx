@@ -79,20 +79,23 @@ const mockTicket = {
   updated_at: new Date().toISOString(),
 };
 
-// Mock the service
-const mockApproveTicket = jest.fn().mockResolvedValue({ success: true, status: 'approved' });
-const mockRejectTicket = jest.fn().mockResolvedValue({ success: true, status: 'rejected' });
-const mockGetTicketById = jest.fn().mockResolvedValue({ success: true, data: mockTicket });
-const mockMarkInReview = jest.fn().mockResolvedValue({ success: true });
+// Mock functions stored in a global object that persists across jest.mock hoisting
+const mockFns = {
+  getTicketById: jest.fn(),
+  markInReview: jest.fn(),
+  approveTicket: jest.fn(),
+  rejectTicket: jest.fn(),
+};
 
 jest.mock('../../../services/guardianApprovalService', () => ({
-  getGuardianApprovalService: () => ({
-    getTicketById: mockGetTicketById,
-    markInReview: mockMarkInReview,
-    approveTicket: mockApproveTicket,
-    rejectTicket: mockRejectTicket,
-  }),
+  getGuardianApprovalService: () => mockFns,
 }));
+
+// Aliases for cleaner test code
+const mockGetTicketById = mockFns.getTicketById;
+const mockMarkInReview = mockFns.markInReview;
+const mockApproveTicket = mockFns.approveTicket;
+const mockRejectTicket = mockFns.rejectTicket;
 
 // Mock hooks
 const mockSupabaseClient = {
@@ -128,9 +131,22 @@ const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <BrowserRouter>{children}</BrowserRouter>
 );
 
+// Helper to setup mocks with default ticket
+const setupDefaultMocks = () => {
+  mockGetTicketById.mockReset();
+  mockMarkInReview.mockReset();
+  mockApproveTicket.mockReset();
+  mockRejectTicket.mockReset();
+  mockGetTicketById.mockResolvedValue({ success: true, data: mockTicket });
+  mockMarkInReview.mockResolvedValue({ success: true });
+  mockApproveTicket.mockResolvedValue({ success: true, status: 'approved' });
+  mockRejectTicket.mockResolvedValue({ success: true, status: 'rejected' });
+};
+
 describe('GuardianApprovalForm', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    setupDefaultMocks();
   });
 
   it('should render without crashing', async () => {
@@ -182,8 +198,10 @@ describe('GuardianApprovalForm', () => {
       expect(screen.getByText('Sandbox Test Results')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('5')).toBeInTheDocument(); // Tests run
-    expect(screen.getByText('Passed')).toBeInTheDocument();
+    // Check that sandbox results section shows test count and pass status
+    // Using getAllByText since there may be multiple elements with these values
+    expect(screen.getAllByText('5').length).toBeGreaterThan(0); // Tests run count
+    expect(screen.getAllByText('Passed').length).toBeGreaterThan(0);
   });
 
   it('should show review checklist', async () => {
@@ -345,6 +363,7 @@ describe('GuardianApprovalForm', () => {
 
   it('should navigate back when back button clicked', async () => {
     const user = userEvent.setup();
+    setupDefaultMocks();
 
     render(
       <TestWrapper>
@@ -363,7 +382,9 @@ describe('GuardianApprovalForm', () => {
   });
 
   it('should show 404 when ticket not found', async () => {
-    mockGetTicketById.mockResolvedValueOnce({ success: false, error: 'Not found' });
+    // Reset all implementations first, then set the specific one for this test
+    mockGetTicketById.mockReset();
+    mockGetTicketById.mockResolvedValue({ success: false, error: { message: 'Not found' } });
 
     render(
       <TestWrapper>

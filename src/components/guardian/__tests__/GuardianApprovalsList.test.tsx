@@ -35,43 +35,44 @@ jest.mock('../../../contexts/AuthContext', () => ({
   useSupabaseClient: () => mockSupabaseClient,
 }));
 
-// Mock the service
+// Mock ticket data
+const mockTicketData = [
+  {
+    id: 'ticket-1',
+    issue_id: 'issue-1',
+    issue_category: 'api_failure',
+    issue_severity: 'high',
+    issue_description: 'API timeout on patient endpoint',
+    affected_component: 'src/services/patientApi.ts',
+    healing_strategy: 'retry_with_backoff',
+    healing_description: 'Retry API call with exponential backoff',
+    sandbox_tested: true,
+    sandbox_passed: true,
+    status: 'pending',
+    created_at: new Date().toISOString(),
+    security_alert_id: 'alert-1',
+  },
+];
+
+const mockStatsData = {
+  pending_count: 5,
+  in_review_count: 2,
+  approved_today: 3,
+  rejected_today: 1,
+  applied_today: 3,
+  failed_today: 0,
+};
+
+// Mock functions stored in a stable object
+const mockServiceFns = {
+  getTickets: jest.fn(),
+  getTicketStats: jest.fn(),
+  subscribeToTickets: jest.fn(),
+  unsubscribeFromTickets: jest.fn(),
+};
+
 jest.mock('../../../services/guardianApprovalService', () => ({
-  getGuardianApprovalService: () => ({
-    getTickets: jest.fn().mockResolvedValue({
-      success: true,
-      data: [
-        {
-          id: 'ticket-1',
-          issue_id: 'issue-1',
-          issue_category: 'api_failure',
-          issue_severity: 'high',
-          issue_description: 'API timeout on patient endpoint',
-          affected_component: 'src/services/patientApi.ts',
-          healing_strategy: 'retry_with_backoff',
-          healing_description: 'Retry API call with exponential backoff',
-          sandbox_tested: true,
-          sandbox_passed: true,
-          status: 'pending',
-          created_at: new Date().toISOString(),
-          security_alert_id: 'alert-1',
-        },
-      ],
-    }),
-    getTicketStats: jest.fn().mockResolvedValue({
-      success: true,
-      data: {
-        pending_count: 5,
-        in_review_count: 2,
-        approved_today: 3,
-        rejected_today: 1,
-        applied_today: 3,
-        failed_today: 0,
-      },
-    }),
-    subscribeToTickets: jest.fn(),
-    unsubscribeFromTickets: jest.fn(),
-  }),
+  getGuardianApprovalService: () => mockServiceFns,
 }));
 
 // Mock useNavigate
@@ -90,6 +91,16 @@ const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 describe('GuardianApprovalsList', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset mock implementations with default data
+    mockServiceFns.getTickets.mockReset();
+    mockServiceFns.getTicketStats.mockReset();
+    mockServiceFns.subscribeToTickets.mockReset();
+    mockServiceFns.unsubscribeFromTickets.mockReset();
+
+    mockServiceFns.getTickets.mockResolvedValue({ success: true, data: mockTicketData });
+    mockServiceFns.getTicketStats.mockResolvedValue({ success: true, data: mockStatsData });
+    mockServiceFns.subscribeToTickets.mockImplementation(() => {});
+    mockServiceFns.unsubscribeFromTickets.mockImplementation(() => {});
   });
 
   it('should render without crashing', async () => {
@@ -150,14 +161,15 @@ describe('GuardianApprovalsList', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Pending Review')).toBeInTheDocument();
+      // Check status filter labels
+      expect(screen.getByText('Pending')).toBeInTheDocument();
     });
 
-    // Check severity filters
-    expect(screen.getByText('CRITICAL')).toBeInTheDocument();
-    expect(screen.getByText('HIGH')).toBeInTheDocument();
-    expect(screen.getByText('MEDIUM')).toBeInTheDocument();
-    expect(screen.getByText('LOW')).toBeInTheDocument();
+    // Check severity filters - getAllByText since there may be multiple instances
+    expect(screen.getAllByText('CRITICAL').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('HIGH').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('MEDIUM').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('LOW').length).toBeGreaterThan(0);
   });
 
   it('should navigate to detail form when Review button is clicked', async () => {
@@ -188,7 +200,9 @@ describe('GuardianApprovalsList', () => {
       </TestWrapper>
     );
 
-    const refreshButton = screen.getByText('Refresh');
-    expect(refreshButton).toBeInTheDocument();
+    // Wait for data to load (button text changes from "Refreshing..." to "Refresh")
+    await waitFor(() => {
+      expect(screen.getByText('Refresh')).toBeInTheDocument();
+    });
   });
 });

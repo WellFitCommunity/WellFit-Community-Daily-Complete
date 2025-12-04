@@ -313,7 +313,8 @@ export class AuditLogger {
     try {
       // The security alert is already created by the create_guardian_review_ticket
       // RPC function. Here we just log the notification for audit purposes.
-      systemAuditLogger.info('GUARDIAN_ADMIN_NOTIFICATION', 'SOC notification created for review ticket', {
+      systemAuditLogger.info('GUARDIAN_ADMIN_NOTIFICATION', {
+        message: 'SOC notification created for review ticket',
         ticket_id: ticket.id,
         priority: ticket.priority,
         issue_category: ticket.issue.signature.category,
@@ -551,7 +552,8 @@ class AuditLogStorage {
       // Update the ticket ID to match the database ID
       if (data) {
         ticket.id = data as string;
-        systemAuditLogger.info('GUARDIAN_TICKET_PERSISTED', 'Review ticket persisted to database', {
+        systemAuditLogger.info('GUARDIAN_TICKET_PERSISTED', {
+          message: 'Review ticket persisted to database',
           ticket_id: data,
           issue_category: ticket.issue.signature.category,
           healing_strategy: ticket.action.strategy,
