@@ -215,7 +215,7 @@ export const GuardianApprovalForm: React.FC = () => {
                     <div>
                       <label className="text-xs text-slate-400 uppercase">Severity</label>
                       <div className="mt-1">
-                        <EABadge variant={ticket.issue_severity === 'critical' ? 'critical' : ticket.issue_severity === 'high' ? 'high' : 'medium'}>
+                        <EABadge variant={ticket.issue_severity === 'critical' ? 'critical' : ticket.issue_severity === 'high' ? 'high' : 'elevated'}>
                           {ticket.issue_severity.toUpperCase()}
                         </EABadge>
                       </div>
