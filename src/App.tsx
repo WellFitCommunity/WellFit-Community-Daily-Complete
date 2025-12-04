@@ -147,6 +147,9 @@ const CareCoordinationDashboard = React.lazy(() => import('./components/careCoor
 const ReferralsDashboard = React.lazy(() => import('./components/referrals/ReferralsDashboard'));
 const QuestionnaireAnalyticsDashboard = React.lazy(() => import('./components/questionnaires/QuestionnaireAnalyticsDashboard'));
 
+// Clinical Alerts Dashboard - AI-filtered alerts with effectiveness tracking
+const ClinicalAlertsDashboard = React.lazy(() => import('./components/alerts/ClinicalAlertsDashboard'));
+
 // Healthcare Integrations (Lab, Pharmacy, Imaging, Insurance)
 const HealthcareIntegrationsDashboard = React.lazy(() => import('./components/healthcareIntegrations/HealthcareIntegrationsDashboard'));
 
@@ -770,6 +773,20 @@ function Shell() {
                   }
                 />
               )}
+
+              {/* Clinical Alerts Dashboard - AI-filtered alerts with effectiveness tracking */}
+              <Route
+                path="/clinical-alerts"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'nurse', 'physician', 'doctor', 'case_manager']}>
+                      <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading Alerts Dashboard...</div>}>
+                        <ClinicalAlertsDashboard />
+                      </Suspense>
+                    </RequireAdminAuth>
+                  </RequireAuth>
+                }
+              />
 
               {/* Referrals Dashboard - External referral management for hospital partnerships */}
               {featureFlags.referralManagement && (
