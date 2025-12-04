@@ -29,6 +29,8 @@ const ENVISION_ATLUS_ROUTES = [
   '/memory-clinic',
   '/mental-health',
   '/frequent-flyer',
+  '/frequent-flyers',
+  '/community-readmission',
   '/revenue-dashboard',
   '/shift-handoff',
   '/discharged-patients',

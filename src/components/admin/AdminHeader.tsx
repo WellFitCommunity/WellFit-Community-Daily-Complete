@@ -29,6 +29,7 @@ import {
   ClipboardList,
   Menu,
   X,
+  Heart,
 } from 'lucide-react';
 
 interface AdminHeaderProps {
@@ -107,6 +108,13 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
       accent: true, // Special styling for WellFit button
     },
     {
+      label: 'Readmission Prevention',
+      path: '/community-readmission',
+      icon: Heart,
+      show: true,
+      methodist: true, // Methodist branding
+    },
+    {
       label: 'Risk Assessment',
       path: '/admin-questions',
       icon: ClipboardList,
@@ -174,6 +182,8 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
                       ${
                         item.accent
                           ? 'bg-[#8cc63f] hover:bg-[#7ab835] text-white shadow-md'
+                          : 'methodist' in item && item.methodist
+                          ? 'bg-[#003087] hover:bg-[#002266] text-white shadow-md border border-blue-400/30'
                           : isActive(item.path)
                           ? 'bg-white/20 text-white'
                           : 'bg-white/10 hover:bg-white/20 text-white/90 hover:text-white'
@@ -312,6 +322,8 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
                       ${
                         item.accent
                           ? 'bg-[#8cc63f] text-white'
+                          : 'methodist' in item && item.methodist
+                          ? 'bg-[#003087] text-white border border-blue-400/30'
                           : 'bg-white/10 text-white/90 hover:bg-white/20'
                       }
                     `}

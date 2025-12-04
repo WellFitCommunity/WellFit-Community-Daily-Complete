@@ -157,6 +157,9 @@ const SOCDashboard = React.lazy(() => import('./components/soc/SOCDashboard'));
 // Healthcare Integrations (Lab, Pharmacy, Imaging, Insurance)
 const HealthcareIntegrationsDashboard = React.lazy(() => import('./components/healthcareIntegrations/HealthcareIntegrationsDashboard'));
 
+// Community Readmission Prevention Dashboard
+const CommunityReadmissionDashboard = React.lazy(() => import('./components/community/CommunityReadmissionDashboard'));
+
 // CHW (Community Health Worker) Components
 const CHWDashboardPage = React.lazy(() => import('./pages/CHWDashboardPage'));
 const KioskCheckIn = React.lazy(() => import('./components/chw/KioskCheckIn'));
@@ -903,6 +906,18 @@ function Shell() {
                   }
                 />
               )}
+
+              {/* Community Readmission Prevention Dashboard - always enabled for demo */}
+              <Route
+                path="/community-readmission"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'case_manager', 'social_worker', 'nurse', 'chw']}>
+                      <CommunityReadmissionDashboard />
+                    </RequireAdminAuth>
+                  </RequireAuth>
+                }
+              />
 
               {/* Financial/Billing - Feature Flagged */}
               {featureFlags.revenueDashboard && (

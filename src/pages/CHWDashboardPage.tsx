@@ -384,12 +384,21 @@ const CHWDashboardPage: React.FC = () => {
                 CHW visits sync with WellFit app for continuous patient engagement
               </p>
             </div>
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors"
-            >
-              View Community Dashboard
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => navigate('/community-readmission')}
+                className="px-4 py-2 bg-[#003087] hover:bg-[#002266] text-white rounded-lg transition-colors border border-blue-400/30 flex items-center gap-2"
+              >
+                <span>❤️</span>
+                Readmission Prevention
+              </button>
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors"
+              >
+                View Community Dashboard
+              </button>
+            </div>
           </div>
         </div>
       </div>

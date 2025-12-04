@@ -130,6 +130,14 @@ const ERDashboardPage: React.FC = () => {
             {/* Actions */}
             <div className="flex items-center gap-3">
               <button
+                onClick={() => navigate('/community-readmission')}
+                className="flex items-center gap-2 px-4 py-2 bg-[#003087] rounded-lg hover:bg-[#002266] transition-colors border border-blue-400/30"
+                title="View Readmission Prevention Dashboard"
+              >
+                <span>❤️</span>
+                <span className="font-medium">Readmission</span>
+              </button>
+              <button
                 onClick={() => navigate('/bed-management')}
                 className="flex items-center gap-2 px-4 py-2 bg-red-800 rounded-lg hover:bg-red-900 transition-colors"
               >
