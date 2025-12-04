@@ -96,7 +96,8 @@ export const GuardianApprovalForm: React.FC = () => {
     const result = await service.approveTicket(ticketId, formData);
 
     if (result.success) {
-      auditLogger.info('GUARDIAN_APPROVAL_FORM_APPROVED', 'Ticket approved via form', {
+      auditLogger.info('GUARDIAN_APPROVAL_FORM_APPROVED', {
+        message: 'Ticket approved via form',
         ticket_id: ticketId,
       });
       navigate('/guardian/approvals', { state: { message: 'Ticket approved. Fix will be auto-applied.' } });
@@ -122,7 +123,8 @@ export const GuardianApprovalForm: React.FC = () => {
     const result = await service.rejectTicket(ticketId, { review_notes: formData.review_notes });
 
     if (result.success) {
-      auditLogger.info('GUARDIAN_APPROVAL_FORM_REJECTED', 'Ticket rejected via form', {
+      auditLogger.info('GUARDIAN_APPROVAL_FORM_REJECTED', {
+        message: 'Ticket rejected via form',
         ticket_id: ticketId,
       });
       navigate('/guardian/approvals', { state: { message: 'Ticket rejected. Fix will not be applied.' } });
