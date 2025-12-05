@@ -123,11 +123,8 @@ const SuperAdminDashboard: React.FC = () => {
 
   useEffect(() => {
     checkAccess();
-    const hasSeenVault = sessionStorage.getItem('envision_vault_seen');
-    if (!hasSeenVault) {
-      setShowVaultAnimation(true);
-      sessionStorage.setItem('envision_vault_seen', 'true');
-    }
+    // Vault animation disabled for production - proceed directly to dashboard
+    setShowVaultAnimation(false);
   }, []);
 
   const checkAccess = async () => {

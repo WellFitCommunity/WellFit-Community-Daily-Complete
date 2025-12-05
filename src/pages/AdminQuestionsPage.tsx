@@ -69,7 +69,7 @@ export default function AdminQuestionsPage() {
             <div className="mb-4">
               <h2 className="text-lg font-semibold text-gray-900 mb-2">AI-Powered Medical Scribe</h2>
               <p className="text-sm text-gray-600">
-                Record patient consultations with voice transcription and AI-powered clinical note generation using Claude Sonnet 4.5
+                Record patient consultations with voice transcription and AI-powered clinical note generation
               </p>
             </div>
             <SmartScribe />

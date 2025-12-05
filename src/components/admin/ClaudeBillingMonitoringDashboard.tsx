@@ -301,11 +301,11 @@ const ClaudeBillingMonitoringDashboard: React.FC = () => {
     if (claudeMetrics && claudeMetrics.totalCost > 1000) {
       insights.push({
         type: 'warning',
-        title: 'High Claude AI Costs Detected',
-        description: `Total Claude spending: $${claudeMetrics.totalCost.toFixed(2)} in the last ${dateRange}`,
+        title: 'High AI Costs Detected',
+        description: `Total AI spending: $${claudeMetrics.totalCost.toFixed(2)} in the last ${dateRange}`,
         potentialSavings: claudeMetrics.totalCost * 0.2,
         actionItems: [
-          'Consider using Haiku model for simple queries',
+          'Consider using faster AI model for simple queries',
           'Implement request caching for common questions',
           'Review and optimize prompt lengths',
           'Set stricter user rate limits'
@@ -381,14 +381,14 @@ const ClaudeBillingMonitoringDashboard: React.FC = () => {
       if (sonnetPercentage > 60) {
         insights.push({
           type: 'info',
-          title: 'Model Mix Optimization',
-          description: `${sonnetPercentage.toFixed(1)}% of costs from Sonnet 4.5`,
+          title: 'AI Model Mix Optimization',
+          description: `${sonnetPercentage.toFixed(1)}% of costs from premium AI tier`,
           potentialSavings: sonnetCost * 0.7,
           actionItems: [
-            'Use Haiku for simple health questions',
-            'Reserve Sonnet/Opus for complex medical analysis',
+            'Use fast AI tier for simple health questions',
+            'Reserve premium AI for complex medical analysis',
             'Implement automatic model selection based on query complexity',
-            'Test Haiku performance on current workload'
+            'Test fast tier performance on current workload'
           ]
         });
       }

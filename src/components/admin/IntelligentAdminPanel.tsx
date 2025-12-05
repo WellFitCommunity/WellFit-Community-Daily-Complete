@@ -2,7 +2,7 @@
  * Intelligent Admin Panel
  *
  * AI-powered adaptive dashboard that learns each user's behavior and reorganizes itself
- * Uses Claude Haiku 4.5 for ultra-fast personalization predictions
+ * Uses enterprise AI for ultra-fast personalization predictions
  *
  * Features:
  * - Learns user patterns over time

@@ -39,7 +39,7 @@ const SystemConfigurationPanel: React.FC = () => {
       {
         id: 'smart_scribe',
         name: 'SmartScribe Atlus',
-        description: 'AI-powered medical transcription with Claude Sonnet 4.5',
+        description: 'AI-powered medical transcription for clinical documentation',
         enabled: true,
         category: 'Clinical'
       },

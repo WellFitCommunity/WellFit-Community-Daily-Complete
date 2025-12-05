@@ -160,7 +160,7 @@ const ClaudeTestWidget: React.FC = () => {
 
         {/* Configuration Info */}
         <div className="text-xs text-gray-600 space-y-1">
-          <p><strong>Model:</strong> claude-3-5-sonnet-20241022</p>
+          <p><strong>AI Engine:</strong> Enterprise AI</p>
           <p><strong>API Key:</strong> ✅ Configured server-side</p>
           <p><strong>Environment:</strong> {process.env.NODE_ENV}</p>
           <p><strong>Rate Limit:</strong> {remainingDisplay} requests remaining</p>
