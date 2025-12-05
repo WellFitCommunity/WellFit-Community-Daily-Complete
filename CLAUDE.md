@@ -283,6 +283,32 @@ When asked to "clean up" or reduce "tech debt":
 - Only modify what is necessary to complete the task
 - Preserve existing functionality unless explicitly asked to change it
 
+### Route Connectivity & Wiring - CRITICAL
+**ALWAYS ensure components are properly connected and routed.**
+
+When creating or referencing components:
+1. **Verify routes exist in `src/App.tsx`** - Every page/dashboard needs a `<Route path="..." />` entry
+2. **Check lazy imports** - Components must be imported with `React.lazy()` at the top of App.tsx
+3. **Validate route references** - If a component links to `/some-route`, that route MUST exist
+4. **Test navigation paths** - Demo pages, menus, and links must point to actual routes
+
+**Before completing any feature work:**
+```bash
+# Verify route exists in App.tsx
+grep -c 'path="/your-route"' src/App.tsx  # Should return 1+
+
+# Verify component is imported
+grep -c 'YourComponent' src/App.tsx  # Should return 2+ (import + usage)
+```
+
+**Common routing issues to avoid:**
+- Creating a component but forgetting to add its route
+- Referencing routes in UI that don't exist (e.g., Demo Page linking to missing routes)
+- Mismatched route names (e.g., `/memory-lane` vs `/memory-lane-trivia`)
+- Missing `RequireAuth` or `RequireAdminAuth` wrappers on protected routes
+
+**Demo Page routes must be verified** - The Demo Page (`/demo`) is used for client presentations. ALL routes referenced in `src/pages/DemoPage.tsx` MUST exist in App.tsx.
+
 ### Component Testing Requirements - MANDATORY
 **When creating a new React component, you MUST create a corresponding test file.**
 
