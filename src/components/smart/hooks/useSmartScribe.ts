@@ -158,7 +158,7 @@ export interface UseSmartScribeProps {
 // ============================================================================
 
 export function useSmartScribe(props: UseSmartScribeProps) {
-  const { selectedPatientId, selectedPatientName, onSessionComplete, forceDemoMode } = props;
+  const { selectedPatientId, onSessionComplete, forceDemoMode } = props;
 
   // Core state
   const [transcript, setTranscript] = useState('');
@@ -179,6 +179,7 @@ export function useSmartScribe(props: UseSmartScribeProps) {
   // Assistance level state
   const [assistanceLevel, setAssistanceLevel] = useState<number>(5);
   const [assistanceLevelLoaded, setAssistanceLevelLoaded] = useState(false);
+  const [assistanceLevelSaved, setAssistanceLevelSaved] = useState(false);
 
   // Voice learning state
   const [voiceProfile, setVoiceProfile] = useState<ProviderVoiceProfile | null>(null);
@@ -194,7 +195,8 @@ export function useSmartScribe(props: UseSmartScribeProps) {
   const streamRef = useRef<MediaStream | null>(null);
 
   // Demo mode state - can be forced via props or enabled via env var
-  const [isDemoMode] = useState(forceDemoMode ?? DEMO_MODE);
+  // Use a ref to track the actual demo mode state that updates with props
+  const isDemoMode = forceDemoMode ?? DEMO_MODE;
   const demoIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const demoTimeoutsRef = useRef<NodeJS.Timeout[]>([]);
 
@@ -388,8 +390,6 @@ export function useSmartScribe(props: UseSmartScribeProps) {
   const runDemoSimulation = useCallback(() => {
     const words = DEMO_TRANSCRIPT.split(' ');
     let wordIndex = 0;
-    let messageIndex = 0;
-    let codeIndex = 0;
 
     // Set initial greeting
     setConversationalMessages([{
@@ -737,6 +737,7 @@ export function useSmartScribe(props: UseSmartScribeProps) {
    */
   const handleAssistanceLevelChange = async (newLevel: number) => {
     setAssistanceLevel(newLevel);
+    setAssistanceLevelSaved(false); // Clear saved state while saving
 
     try {
       const {
@@ -781,12 +782,15 @@ export function useSmartScribe(props: UseSmartScribeProps) {
         );
 
       if (!error) {
+        setAssistanceLevelSaved(true); // Mark as saved on success
         auditLogger.info('SCRIBE_ASSISTANCE_LEVEL_UPDATED', {
           providerId: user.id,
           newLevel,
           verbosityText,
           label: getAssistanceSettings(newLevel).label,
         });
+        // Auto-hide saved indicator after 3 seconds
+        setTimeout(() => setAssistanceLevelSaved(false), 3000);
       } else {
         auditLogger.error('SCRIBE_ASSISTANCE_LEVEL_SAVE_FAILED', error, {
           providerId: user.id,
@@ -818,6 +822,7 @@ export function useSmartScribe(props: UseSmartScribeProps) {
     soapNote,
     assistanceLevel,
     assistanceLevelLoaded,
+    assistanceLevelSaved,
     voiceProfile,
     showCorrectionModal,
     correctionHeard,
