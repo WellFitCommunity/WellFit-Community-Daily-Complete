@@ -553,7 +553,7 @@ const PhysicianPanel: React.FC = () => {
                     alert('Please select a patient first');
                     return;
                   }
-                  navigate(`/medicine-cabinet?patientId=${selectedPatient.user_id}`);
+                  navigate(`/medication-management?patientId=${selectedPatient.user_id}`);
                 }}
                 disabled={!selectedPatient}
                 className={`p-5 rounded-lg shadow transition-all border group text-left ${

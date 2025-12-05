@@ -103,6 +103,7 @@ const HealthObservationsPage = React.lazy(() => import('./pages/HealthObservatio
 const ImmunizationsPage = React.lazy(() => import('./pages/ImmunizationsPage'));
 const CarePlansPage = React.lazy(() => import('./pages/CarePlansPage'));
 const MedicineCabinet = React.lazy(() => import('./components/patient/MedicineCabinet'));
+const MedicationManagementPage = React.lazy(() => import('./pages/MedicationManagementPage'));
 const WearableDashboard = React.lazy(() => import('./components/patient/WearableDashboard'));
 const AllergiesPage = React.lazy(() => import('./pages/AllergiesPage'));
 const ConditionsPage = React.lazy(() => import('./pages/ConditionsPage'));
@@ -268,6 +269,7 @@ function Shell() {
               <Route path="/immunizations" element={<RequireAuth><ImmunizationsPage /></RequireAuth>} />
               <Route path="/care-plans" element={<RequireAuth><CarePlansPage /></RequireAuth>} />
               <Route path="/medicine-cabinet" element={<RequireAuth><MedicineCabinet /></RequireAuth>} />
+              <Route path="/medication-management" element={<RequireAuth><MedicationManagementPage /></RequireAuth>} />
               <Route path="/wearables" element={<RequireAuth><WearableDashboard /></RequireAuth>} />
               <Route path="/allergies" element={<RequireAuth><AllergiesPage /></RequireAuth>} />
               <Route path="/conditions" element={<RequireAuth><ConditionsPage /></RequireAuth>} />
