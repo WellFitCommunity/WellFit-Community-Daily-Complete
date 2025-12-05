@@ -2,12 +2,107 @@
  * useSmartScribe Custom Hook
  * Business logic for SmartScribe medical transcription system
  * Handles state management, recording session, and database operations
+ *
+ * DEMO MODE: Set REACT_APP_COMPASS_DEMO=true in .env to enable demo simulation
  */
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { supabase } from '../../../lib/supabaseClient';
 import { auditLogger } from '../../../services/auditLogger';
 import { VoiceLearningService, ProviderVoiceProfile } from '../../../services/voiceLearningService';
+
+// Check if demo mode is enabled
+const DEMO_MODE = process.env.REACT_APP_COMPASS_DEMO === 'true';
+
+// ============================================================================
+// DEMO DATA
+// ============================================================================
+
+const DEMO_TRANSCRIPT = `Good morning Mrs. Johnson. I see you're here for your diabetes follow-up. How have you been feeling since our last visit?
+
+Patient reports feeling generally well but mentions occasional dizziness in the mornings. She's been checking her blood sugar regularly, fasting glucose around 140 to 150. She admits she hasn't been as consistent with her diet over the holidays.
+
+Let me check your vitals. Blood pressure is 138 over 85, pulse 78, temperature 98.6. Weight is 185 pounds, which is up 3 pounds from last visit.
+
+Looking at your labs from last week, your A1C is 7.8, up from 7.2 three months ago. Kidney function looks stable, eGFR 72. Lipid panel shows LDL at 118.
+
+Based on today's visit, I think we need to adjust your Metformin. I'd like to increase it from 500 twice daily to 850 twice daily. Let's also add a morning blood pressure check routine. I want you to keep a log and bring it to your next visit.
+
+We'll schedule a follow-up in 6 weeks. In the meantime, I'd like you to meet with our nutritionist to review your diet plan. Any questions?`;
+
+const DEMO_CODES: Array<{
+  code: string;
+  type: 'CPT' | 'ICD10' | 'HCPCS';
+  description: string;
+  reimbursement: number;
+  confidence: number;
+  reasoning?: string;
+  missingDocumentation?: string;
+}> = [
+  {
+    code: '99214',
+    type: 'CPT',
+    description: 'Office visit, established patient, moderate complexity (30-39 min)',
+    reimbursement: 164.00,
+    confidence: 0.94,
+    reasoning: 'Moderate complexity MDM with chronic condition management, medication adjustment, and coordination of care',
+    missingDocumentation: 'Consider documenting time spent if >50% on counseling'
+  },
+  {
+    code: 'E11.65',
+    type: 'ICD10',
+    description: 'Type 2 diabetes mellitus with hyperglycemia',
+    reimbursement: 0,
+    confidence: 0.96,
+    reasoning: 'A1C 7.8% indicates poor glycemic control, fasting glucose 140-150 mg/dL'
+  },
+  {
+    code: 'I10',
+    type: 'ICD10',
+    description: 'Essential (primary) hypertension',
+    reimbursement: 0,
+    confidence: 0.88,
+    reasoning: 'BP 138/85 indicates elevated blood pressure requiring monitoring'
+  },
+  {
+    code: 'R42',
+    type: 'ICD10',
+    description: 'Dizziness and giddiness',
+    reimbursement: 0,
+    confidence: 0.82,
+    reasoning: 'Patient reports morning dizziness, possibly related to BP or glucose'
+  },
+  {
+    code: 'Z71.3',
+    type: 'ICD10',
+    description: 'Dietary counseling and surveillance',
+    reimbursement: 0,
+    confidence: 0.90,
+    reasoning: 'Nutritionist referral for diet plan review'
+  }
+];
+
+const DEMO_SOAP = {
+  subjective: 'Patient presents for diabetes follow-up. Reports feeling generally well with occasional morning dizziness. Self-monitoring blood glucose shows fasting levels 140-150 mg/dL. Admits to dietary non-compliance over holidays. No polyuria, polydipsia, or vision changes.',
+  objective: 'Vitals: BP 138/85, HR 78, Temp 98.6°F, Weight 185 lbs (+3 lbs from last visit). Labs: A1C 7.8% (up from 7.2%), eGFR 72 (stable), LDL 118 mg/dL. Patient appears well-nourished, no acute distress.',
+  assessment: '1. Type 2 diabetes mellitus with hyperglycemia (E11.65) - suboptimally controlled, A1C worsening\n2. Essential hypertension (I10) - borderline elevated today\n3. Dizziness (R42) - likely related to glycemic variability',
+  plan: '1. Increase Metformin from 500mg BID to 850mg BID\n2. Home BP monitoring - log readings for next visit\n3. Refer to nutritionist for dietary counseling\n4. Follow-up in 6 weeks with A1C recheck\n5. Continue current statin therapy',
+  hpi: 'Mrs. Johnson is a 62-year-old female with established type 2 diabetes presenting for routine follow-up. She reports generally feeling well but describes intermittent morning dizziness over the past month. Home glucose monitoring shows fasting readings consistently between 140-150 mg/dL. She acknowledges dietary indiscretion during the holiday season. Denies hypoglycemic episodes, chest pain, shortness of breath, or changes in vision. Currently taking Metformin 500mg twice daily and Lisinopril 10mg daily.',
+  ros: 'Constitutional: Denies fever, chills, fatigue, unintentional weight loss. Cardiovascular: Denies chest pain, palpitations, leg swelling. Respiratory: Denies cough, shortness of breath. Neurological: Positive for morning dizziness, denies headache, numbness, tingling. Endocrine: Denies polyuria, polydipsia, heat/cold intolerance.'
+};
+
+const DEMO_SUGGESTIONS = [
+  'Consider documenting patient\'s medication adherence rate',
+  'PHQ-2 screening may capture depression comorbidity for Z-code billing',
+  'Document diabetic foot exam if performed for quality measure'
+];
+
+const DEMO_MESSAGES = [
+  "Hey! I'm Riley, your AI scribe. I'll be documenting this visit for you.",
+  "I'm picking up on diabetes management discussion. Capturing A1C values and medication changes.",
+  "Nice catch on the dizziness - I've added R42 to the assessment.",
+  "Looks like a solid 99214 visit. I've captured the medication adjustment and referral."
+];
 
 // ============================================================================
 // TYPES
@@ -95,6 +190,11 @@ export function useSmartScribe(props: UseSmartScribeProps) {
   const wsRef = useRef<WebSocket | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+
+  // Demo mode state
+  const [isDemoMode] = useState(DEMO_MODE);
+  const demoIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const demoTimeoutsRef = useRef<NodeJS.Timeout[]>([]);
 
   // ============================================================================
   // HELPER FUNCTIONS
@@ -265,14 +365,158 @@ export function useSmartScribe(props: UseSmartScribeProps) {
   }, [isRecording, recordingStartTime]);
 
   // ============================================================================
+  // DEMO MODE SIMULATION
+  // ============================================================================
+
+  /**
+   * Clean up demo mode intervals and timeouts
+   */
+  const cleanupDemo = useCallback(() => {
+    if (demoIntervalRef.current) {
+      clearInterval(demoIntervalRef.current);
+      demoIntervalRef.current = null;
+    }
+    demoTimeoutsRef.current.forEach(t => clearTimeout(t));
+    demoTimeoutsRef.current = [];
+  }, []);
+
+  /**
+   * Run demo simulation with realistic typing and progressive updates
+   */
+  const runDemoSimulation = useCallback(() => {
+    const words = DEMO_TRANSCRIPT.split(' ');
+    let wordIndex = 0;
+    let messageIndex = 0;
+    let codeIndex = 0;
+
+    // Set initial greeting
+    setConversationalMessages([{
+      type: 'scribe',
+      message: DEMO_MESSAGES[0],
+      timestamp: new Date(),
+      context: 'greeting',
+    }]);
+    setStatus('Demo Mode - Simulating transcription...');
+
+    // Simulate typing transcript word by word (faster for demo)
+    demoIntervalRef.current = setInterval(() => {
+      if (wordIndex < words.length) {
+        const wordsToAdd = words.slice(wordIndex, wordIndex + 3).join(' '); // Add 3 words at a time
+        setTranscript(prev => prev ? `${prev} ${wordsToAdd}` : wordsToAdd);
+        wordIndex += 3;
+      } else {
+        // Done with transcript
+        if (demoIntervalRef.current) {
+          clearInterval(demoIntervalRef.current);
+          demoIntervalRef.current = null;
+        }
+      }
+    }, 150); // Every 150ms add 3 words
+
+    // Add Riley messages progressively
+    const messageDelays = [3000, 8000, 15000, 22000];
+    messageDelays.forEach((delay, idx) => {
+      if (idx > 0 && idx < DEMO_MESSAGES.length) {
+        const timeout = setTimeout(() => {
+          setConversationalMessages(prev => [...prev, {
+            type: 'scribe',
+            message: DEMO_MESSAGES[idx],
+            timestamp: new Date(),
+            context: 'suggestion',
+          }]);
+        }, delay);
+        demoTimeoutsRef.current.push(timeout);
+      }
+    });
+
+    // Add codes progressively
+    const codeDelays = [5000, 10000, 14000, 18000, 21000];
+    codeDelays.forEach((delay, idx) => {
+      if (idx < DEMO_CODES.length) {
+        const timeout = setTimeout(() => {
+          setSuggestedCodes(prev => [...prev, DEMO_CODES[idx]]);
+        }, delay);
+        demoTimeoutsRef.current.push(timeout);
+      }
+    });
+
+    // Add suggestions at 12 seconds
+    const suggestionsTimeout = setTimeout(() => {
+      setScribeSuggestions(DEMO_SUGGESTIONS);
+    }, 12000);
+    demoTimeoutsRef.current.push(suggestionsTimeout);
+
+    // Generate SOAP note at 25 seconds
+    const soapTimeout = setTimeout(() => {
+      setSoapNote(DEMO_SOAP);
+      setStatus('Demo Mode - Documentation complete');
+    }, 25000);
+    demoTimeoutsRef.current.push(soapTimeout);
+  }, []);
+
+  /**
+   * Start demo mode simulation
+   */
+  const startDemoRecording = useCallback(() => {
+    // Reset state
+    setTranscript('');
+    setSuggestedCodes([]);
+    setSoapNote(null);
+    setConversationalMessages([]);
+    setScribeSuggestions([]);
+    setCorrectionsAppliedCount(0);
+
+    // Start recording state
+    setIsRecording(true);
+    setRecordingStartTime(Date.now());
+    setStatus('Demo Mode - Recording...');
+
+    // Run simulation
+    runDemoSimulation();
+  }, [runDemoSimulation]);
+
+  /**
+   * Stop demo mode simulation
+   */
+  const stopDemoRecording = useCallback(() => {
+    cleanupDemo();
+    setIsRecording(false);
+    setRecordingStartTime(null);
+    setStatus('Demo Mode - Session ended');
+
+    // Ensure all demo data is shown when stopping early
+    if (suggestedCodes.length < DEMO_CODES.length) {
+      setSuggestedCodes(DEMO_CODES);
+    }
+    if (!soapNote) {
+      setSoapNote(DEMO_SOAP);
+    }
+    if (scribeSuggestions.length === 0) {
+      setScribeSuggestions(DEMO_SUGGESTIONS);
+    }
+  }, [cleanupDemo, suggestedCodes.length, soapNote, scribeSuggestions.length]);
+
+  // Cleanup demo on unmount
+  useEffect(() => {
+    return () => cleanupDemo();
+  }, [cleanupDemo]);
+
+  // ============================================================================
   // RECORDING HANDLERS
   // ============================================================================
 
   /**
    * Start audio recording and transcription
    * Note: Audio processor is lazy-loaded only when this function is called
+   * In demo mode, runs simulation instead of real recording
    */
   const startRecording = async () => {
+    // Use demo mode if enabled
+    if (isDemoMode) {
+      startDemoRecording();
+      return;
+    }
+
     try {
       // Lazy-load audio processor module
       const { initializeAudioRecording } = await import('../utils/audioProcessor');
@@ -369,6 +613,12 @@ export function useSmartScribe(props: UseSmartScribeProps) {
    * Stop recording and save session to database
    */
   const stopRecording = async () => {
+    // Use demo mode if enabled
+    if (isDemoMode) {
+      stopDemoRecording();
+      return;
+    }
+
     try {
       const endTime = Date.now();
       const durationSeconds = recordingStartTime
@@ -573,6 +823,7 @@ export function useSmartScribe(props: UseSmartScribeProps) {
     selectedTextForCorrection,
     correctionsAppliedCount,
     assistanceSettings,
+    isDemoMode,
 
     // Setters
     setTranscript,

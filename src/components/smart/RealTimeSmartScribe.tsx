@@ -34,6 +34,7 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = (props) => {
     correctionCorrect,
     correctionsAppliedCount,
     assistanceSettings,
+    isDemoMode,
     setShowCorrectionModal,
     setCorrectionHeard,
     setCorrectionCorrect,
@@ -65,6 +66,9 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = (props) => {
               <div>
                 <h2 className="text-lg font-semibold text-white flex items-center gap-2">
                   Compass Riley
+                  {isDemoMode && (
+                    <EABadge variant="elevated" size="sm">DEMO</EABadge>
+                  )}
                   {isRecording && (
                     <EABadge variant="critical" pulse size="sm">LIVE</EABadge>
                   )}
