@@ -231,6 +231,18 @@ CREATE VIEW app_patients AS SELECT ... WHERE enrollment_type = 'app';
 
 ## Critical Development Principles
 
+### Development Philosophy
+**"I have time to do it right. I do not have time to do it twice."**
+
+**"Always be a pace car, never a race car."**
+
+These principles guide all development on this codebase:
+- Take the time to understand the problem fully before writing code
+- Research the existing architecture and patterns before making changes
+- Implement solutions thoroughly the first time rather than rushing
+- Slow, deliberate progress prevents costly rework and technical debt
+- When in doubt, pause and investigate rather than forge ahead
+
 ### Zero Technical Debt
 - Do NOT introduce technical debt with quick fixes or workarounds
 - Always implement proper, maintainable solutions
