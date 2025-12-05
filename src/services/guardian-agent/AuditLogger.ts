@@ -313,16 +313,16 @@ export class AuditLogger {
     try {
       // The security alert is already created by the create_guardian_review_ticket
       // RPC function. Here we just log the notification for audit purposes.
-      systemAuditLogger.info('GUARDIAN_ADMIN_NOTIFICATION', 'SOC notification created for review ticket', {
+      systemAuditLogger.info('GUARDIAN_ADMIN_NOTIFICATION', {
+        message: 'SOC notification created for review ticket',
         ticket_id: ticket.id,
         priority: ticket.priority,
         issue_category: ticket.issue.signature.category,
         healing_strategy: ticket.action.strategy,
       });
     } catch (error) {
-      systemAuditLogger.error('GUARDIAN_NOTIFICATION_ERROR', 'Failed to notify admins', {
+      systemAuditLogger.error('GUARDIAN_NOTIFICATION_ERROR', new Error(error instanceof Error ? error.message : 'Failed to notify admins'), {
         ticket_id: ticket.id,
-        error: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   }
@@ -477,9 +477,8 @@ class AuditLogStorage {
         timestamp: entry.timestamp.toISOString(),
       });
     } catch (error) {
-      systemAuditLogger.error('AUDIT_LOG_PERSIST_ERROR', 'Failed to persist audit log entry', {
+      systemAuditLogger.error('AUDIT_LOG_PERSIST_ERROR', new Error(error instanceof Error ? error.message : 'Failed to persist audit log entry'), {
         entry_id: entry.id,
-        error: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   }
@@ -541,9 +540,8 @@ class AuditLogStorage {
       });
 
       if (error) {
-        systemAuditLogger.error('GUARDIAN_TICKET_PERSIST_ERROR', 'Failed to persist review ticket', {
+        systemAuditLogger.error('GUARDIAN_TICKET_PERSIST_ERROR', new Error(error.message), {
           ticket_id: ticket.id,
-          error: error.message,
         });
         return;
       }
@@ -551,16 +549,16 @@ class AuditLogStorage {
       // Update the ticket ID to match the database ID
       if (data) {
         ticket.id = data as string;
-        systemAuditLogger.info('GUARDIAN_TICKET_PERSISTED', 'Review ticket persisted to database', {
+        systemAuditLogger.info('GUARDIAN_TICKET_PERSISTED', {
+          message: 'Review ticket persisted to database',
           ticket_id: data,
           issue_category: ticket.issue.signature.category,
           healing_strategy: ticket.action.strategy,
         });
       }
     } catch (error) {
-      systemAuditLogger.error('GUARDIAN_TICKET_PERSIST_EXCEPTION', 'Exception persisting review ticket', {
+      systemAuditLogger.error('GUARDIAN_TICKET_PERSIST_EXCEPTION', new Error(error instanceof Error ? error.message : 'Exception persisting review ticket'), {
         ticket_id: ticket.id,
-        error: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   }
@@ -588,15 +586,13 @@ class AuditLogStorage {
         .eq('id', ticket.id);
 
       if (error) {
-        systemAuditLogger.error('GUARDIAN_TICKET_UPDATE_ERROR', 'Failed to update review ticket', {
+        systemAuditLogger.error('GUARDIAN_TICKET_UPDATE_ERROR', new Error(error.message), {
           ticket_id: ticket.id,
-          error: error.message,
         });
       }
     } catch (error) {
-      systemAuditLogger.error('GUARDIAN_TICKET_UPDATE_EXCEPTION', 'Exception updating review ticket', {
+      systemAuditLogger.error('GUARDIAN_TICKET_UPDATE_EXCEPTION', new Error(error instanceof Error ? error.message : 'Exception updating review ticket'), {
         ticket_id: ticket.id,
-        error: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   }

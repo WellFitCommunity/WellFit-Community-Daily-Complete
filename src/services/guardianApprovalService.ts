@@ -70,7 +70,8 @@ export class GuardianApprovalService {
         return failure('DATABASE_ERROR', error.message, error);
       }
 
-      auditLogger.info('GUARDIAN_TICKET_CREATED', 'Review ticket created', {
+      auditLogger.info('GUARDIAN_TICKET_CREATED', {
+        message: 'Review ticket created',
         ticket_id: data,
         issue_id: params.issue_id,
         healing_strategy: params.healing_strategy,
@@ -270,7 +271,8 @@ export class GuardianApprovalService {
         return failure('VALIDATION_ERROR', result.error || 'Approval failed', null);
       }
 
-      auditLogger.info('GUARDIAN_TICKET_APPROVED', 'Ticket approved', {
+      auditLogger.info('GUARDIAN_TICKET_APPROVED', {
+        message: 'Ticket approved',
         ticket_id: ticketId,
         review_notes: formData.review_notes,
       });
@@ -304,7 +306,8 @@ export class GuardianApprovalService {
         return failure('VALIDATION_ERROR', result.error || 'Rejection failed', null);
       }
 
-      auditLogger.info('GUARDIAN_TICKET_REJECTED', 'Ticket rejected', {
+      auditLogger.info('GUARDIAN_TICKET_REJECTED', {
+        message: 'Ticket rejected',
         ticket_id: ticketId,
         rejection_reason: formData.review_notes,
       });
@@ -340,7 +343,8 @@ export class GuardianApprovalService {
         return failure('VALIDATION_ERROR', 'Failed to mark ticket as applied', null);
       }
 
-      auditLogger.info('GUARDIAN_TICKET_APPLIED', `Ticket marked as ${response.status}`, {
+      auditLogger.info('GUARDIAN_TICKET_APPLIED', {
+        message: `Ticket marked as ${response.status}`,
         ticket_id: ticketId,
         status: response.status,
         had_error: !!error,

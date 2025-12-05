@@ -41,6 +41,9 @@ import { useSupabaseClient } from './contexts/AuthContext';
 // Offline indicator
 import OfflineIndicator from './components/OfflineIndicator';
 
+// Voice Command Bar - Global speech recognition UI
+import { VoiceCommandBar } from './components/admin/VoiceCommandBar';
+
 // AI Transparency - LearningMilestone (global component)
 import { LearningMilestone } from './components/ai-transparency';
 
@@ -1068,6 +1071,11 @@ function Shell() {
 
             {/* Offline indicator for all users */}
             <OfflineIndicator />
+
+            {/* Voice Command Bar - Global speech recognition UI */}
+            {/* Shows a floating microphone button that expands to show voice command UI */}
+            {/* Users can press Ctrl+Shift+V or click the mic to start voice commands */}
+            <VoiceCommandBar />
           </AuthGate>
           </TimeClockProvider>
         </SessionTimeoutProvider>

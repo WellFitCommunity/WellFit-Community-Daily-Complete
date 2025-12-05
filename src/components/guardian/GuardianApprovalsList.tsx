@@ -76,7 +76,8 @@ const TicketRow: React.FC<TicketRowProps> = ({ ticket, onClick }) => {
             variant={
               ticket.issue_severity === 'critical' ? 'critical' :
               ticket.issue_severity === 'high' ? 'high' :
-              ticket.issue_severity === 'medium' ? 'medium' : 'low'
+              ticket.issue_severity === 'medium' ? 'elevated' :
+              ticket.issue_severity === 'low' ? 'normal' : 'info'
             }
           >
             {ticket.issue_severity.toUpperCase()}
