@@ -4,6 +4,9 @@ import { MemoryRouter, useNavigate, Routes, Route } from 'react-router-dom';
 import { NavigationHistoryProvider, useNavigationHistory } from '../NavigationHistoryContext';
 import { AuthProvider } from '../AuthContext';
 
+// Type for the navigation history context
+type NavigationHistoryType = ReturnType<typeof useNavigationHistory>;
+
 // Mock Supabase client
 jest.mock('@supabase/supabase-js', () => ({
   createClient: () => ({
@@ -24,7 +27,7 @@ jest.mock('@supabase/supabase-js', () => ({
 }));
 
 // Test component that uses the navigation history hook
-const TestComponent: React.FC<{ onMount?: (nav: ReturnType<typeof useNavigationHistory>) => void }> = ({ onMount }) => {
+const TestComponent: React.FC<{ onMount?: (nav: NavigationHistoryType) => void }> = ({ onMount }) => {
   const nav = useNavigationHistory();
   const navigate = useNavigate();
 
@@ -96,7 +99,7 @@ describe('NavigationHistoryContext', () => {
   });
 
   it('should track navigation to non-auth routes', async () => {
-    let navRef: ReturnType<typeof useNavigationHistory> | null = null;
+    let navRef: NavigationHistoryType | null = null;
 
     render(
       <TestWrapper initialEntries={['/dashboard']}>
@@ -105,11 +108,11 @@ describe('NavigationHistoryContext', () => {
     );
 
     // Initial route should be in history
-    expect(navRef?.historyStack).toContain('/dashboard');
+    expect(navRef!.historyStack).toContain('/dashboard');
   });
 
   it('should NOT track auth routes like /login', async () => {
-    let navRef: ReturnType<typeof useNavigationHistory> | null = null;
+    let navRef: NavigationHistoryType | null = null;
 
     render(
       <TestWrapper initialEntries={['/login']}>
@@ -118,11 +121,11 @@ describe('NavigationHistoryContext', () => {
     );
 
     // Login route should NOT be in history
-    expect(navRef?.historyStack).not.toContain('/login');
+    expect(navRef!.historyStack).not.toContain('/login');
   });
 
   it('should clear history when clearHistory is called', async () => {
-    let navRef: ReturnType<typeof useNavigationHistory> | null = null;
+    let navRef: NavigationHistoryType | null = null;
 
     render(
       <TestWrapper initialEntries={['/dashboard']}>
@@ -135,12 +138,12 @@ describe('NavigationHistoryContext', () => {
       navRef?.clearHistory();
     });
 
-    expect(navRef?.historyStack).toHaveLength(0);
-    expect(navRef?.canGoBack).toBe(false);
+    expect(navRef!.historyStack).toHaveLength(0);
+    expect(navRef!.canGoBack).toBe(false);
   });
 
   it('should provide context-aware fallback when no history', () => {
-    let navRef: ReturnType<typeof useNavigationHistory> | null = null;
+    let navRef: NavigationHistoryType | null = null;
 
     render(
       <TestWrapper initialEntries={['/admin/settings']}>
@@ -149,12 +152,12 @@ describe('NavigationHistoryContext', () => {
     );
 
     // Even without history, goBack should use fallback
-    expect(navRef?.goBack).toBeDefined();
-    expect(typeof navRef?.goBack).toBe('function');
+    expect(navRef!.goBack).toBeDefined();
+    expect(typeof navRef!.goBack).toBe('function');
   });
 
   it('should get previous route when available', async () => {
-    let navRef: ReturnType<typeof useNavigationHistory> | null = null;
+    let navRef: NavigationHistoryType | null = null;
 
     // Start at dashboard, then navigate to profile
     render(
@@ -164,7 +167,7 @@ describe('NavigationHistoryContext', () => {
     );
 
     // Should have /profile in history (current route)
-    expect(navRef?.historyStack).toContain('/profile');
+    expect(navRef!.historyStack).toContain('/profile');
   });
 });
 
@@ -183,7 +186,7 @@ describe('NavigationHistoryContext - Auth Route Filtering', () => {
 
   authRoutes.forEach((route) => {
     it(`should NOT track ${route} in history`, () => {
-      let navRef: ReturnType<typeof useNavigationHistory> | null = null;
+      let navRef: NavigationHistoryType | null = null;
 
       render(
         <TestWrapper initialEntries={[route]}>
@@ -191,7 +194,7 @@ describe('NavigationHistoryContext - Auth Route Filtering', () => {
         </TestWrapper>
       );
 
-      expect(navRef?.historyStack).not.toContain(route);
+      expect(navRef!.historyStack).not.toContain(route);
     });
   });
 });
@@ -209,7 +212,7 @@ describe('NavigationHistoryContext - Protected Route Tracking', () => {
 
   protectedRoutes.forEach((route) => {
     it(`should track ${route} in history`, () => {
-      let navRef: ReturnType<typeof useNavigationHistory> | null = null;
+      let navRef: NavigationHistoryType | null = null;
 
       render(
         <TestWrapper initialEntries={[route]}>
@@ -217,7 +220,7 @@ describe('NavigationHistoryContext - Protected Route Tracking', () => {
         </TestWrapper>
       );
 
-      expect(navRef?.historyStack).toContain(route);
+      expect(navRef!.historyStack).toContain(route);
     });
   });
 });
