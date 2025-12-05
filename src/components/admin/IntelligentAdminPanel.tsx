@@ -252,23 +252,130 @@ const IntelligentAdminPanel: React.FC = () => {
     }
   };
 
-  // Handle suggestion click
-  const handleSuggestionClick = (suggestion: string) => {
-    // Extract section ID from suggestion if possible
-    const sectionMatch = suggestion.match(/work on ([\w-]+)/);
-    if (sectionMatch) {
-      const sectionId = sectionMatch[1].replace(/\s+/g, '-');
-      const element = document.getElementById(sectionId);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
+  // Handle suggestion click - Extract section/category from suggestion and navigate
+  const handleSuggestionClick = useCallback((suggestion: string) => {
+    // Normalize the suggestion text
+    const normalized = suggestion.toLowerCase();
+
+    // Map of known section/category names to their IDs and types
+    const sectionMap: Record<string, { id: string; type: 'section' | 'category' | 'route' }> = {
+      // Categories
+      'revenue': { id: 'revenue', type: 'category' },
+      'billing': { id: 'revenue', type: 'category' },
+      'patient care': { id: 'patient-care', type: 'category' },
+      'patient-care': { id: 'patient-care', type: 'category' },
+      'clinical': { id: 'clinical', type: 'category' },
+      'security': { id: 'security', type: 'category' },
+      'admin': { id: 'admin', type: 'category' },
+
+      // Sections
+      'smartscribe': { id: 'smartscribe-atlus', type: 'section' },
+      'smart scribe': { id: 'smartscribe-atlus', type: 'section' },
+      'scribe': { id: 'smartscribe-atlus', type: 'section' },
+      'patient engagement': { id: 'patient-engagement', type: 'section' },
+      'patient-engagement': { id: 'patient-engagement', type: 'section' },
+      'user management': { id: 'user-management', type: 'section' },
+      'user-management': { id: 'user-management', type: 'section' },
+      'patient list': { id: 'user-management', type: 'section' },
+      'billing dashboard': { id: 'billing-dashboard', type: 'section' },
+      'billing-dashboard': { id: 'billing-dashboard', type: 'section' },
+      'revenue dashboard': { id: 'revenue-dashboard', type: 'section' },
+      'revenue-dashboard': { id: 'revenue-dashboard', type: 'section' },
+      'ccm': { id: 'ccm-autopilot', type: 'section' },
+      'ccm autopilot': { id: 'ccm-autopilot', type: 'section' },
+      'ccm-autopilot': { id: 'ccm-autopilot', type: 'section' },
+      'fhir': { id: 'fhir-analytics', type: 'section' },
+      'fhir analytics': { id: 'fhir-analytics', type: 'section' },
+      'fhir-analytics': { id: 'fhir-analytics', type: 'section' },
+      'claims': { id: 'claims-submission', type: 'section' },
+      'claims submission': { id: 'claims-submission', type: 'section' },
+      'handoff': { id: 'patient-handoff', type: 'section' },
+      'patient handoff': { id: 'patient-handoff', type: 'section' },
+
+      // Routes
+      'er dashboard': { id: '/er-dashboard', type: 'route' },
+      'er-dashboard': { id: '/er-dashboard', type: 'route' },
+      'emergency': { id: '/er-dashboard', type: 'route' },
+      'nurse dashboard': { id: '/nurse-dashboard', type: 'route' },
+      'nurse-dashboard': { id: '/nurse-dashboard', type: 'route' },
+      'physician dashboard': { id: '/physician-dashboard', type: 'route' },
+      'physician-dashboard': { id: '/physician-dashboard', type: 'route' },
+      'neuro': { id: '/neuro-suite', type: 'route' },
+      'neuro suite': { id: '/neuro-suite', type: 'route' },
+      'neuro-suite': { id: '/neuro-suite', type: 'route' },
+      'physical therapy': { id: '/physical-therapy', type: 'route' },
+      'physical-therapy': { id: '/physical-therapy', type: 'route' },
+      'care coordination': { id: '/care-coordination', type: 'route' },
+      'care-coordination': { id: '/care-coordination', type: 'route' },
+      'referrals': { id: '/referrals', type: 'route' },
+    };
+
+    // Find matching section/category/route
+    let matched: { id: string; type: 'section' | 'category' | 'route' } | null = null;
+
+    for (const [keyword, target] of Object.entries(sectionMap)) {
+      if (normalized.includes(keyword)) {
+        matched = target;
+        break;
+      }
+    }
+
+    if (matched) {
+      if (matched.type === 'route') {
+        // Navigate to route
+        navigate(matched.id);
         addLearningEvent({
           type: 'suggestion_generated',
-          message: `Jumped to ${sectionId}`,
+          message: `Navigated to ${matched.id}`,
+          timestamp: new Date()
+        });
+      } else if (matched.type === 'category') {
+        // Scroll to category and expand it
+        handleOpenCategory(matched.id);
+        addLearningEvent({
+          type: 'suggestion_generated',
+          message: `Opened ${matched.id} category`,
+          timestamp: new Date()
+        });
+      } else {
+        // Scroll to section
+        handleScrollToSection(matched.id);
+        addLearningEvent({
+          type: 'suggestion_generated',
+          message: `Jumped to ${matched.id}`,
           timestamp: new Date()
         });
       }
+    } else {
+      // Fallback: try to find element by ID from suggestion text
+      const words = suggestion.replace(/[^a-zA-Z0-9\s-]/g, '').toLowerCase().split(/\s+/);
+      for (const word of words) {
+        if (word.length > 3) {
+          const element = document.getElementById(word) ||
+                         document.getElementById(word.replace(/\s+/g, '-')) ||
+                         document.querySelector(`[data-category-id="${word}"]`);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            element.classList.add('ring-2', 'ring-indigo-500');
+            setTimeout(() => element.classList.remove('ring-2', 'ring-indigo-500'), 2000);
+            addLearningEvent({
+              type: 'suggestion_generated',
+              message: `Found and scrolled to ${word}`,
+              timestamp: new Date()
+            });
+            return;
+          }
+        }
+      }
+
+      // If nothing matched, show a subtle notification
+      addLearningEvent({
+        type: 'suggestion_generated',
+        message: 'Suggestion noted - exploring...',
+        timestamp: new Date()
+      });
     }
-  };
+  }, [navigate, handleOpenCategory, handleScrollToSection, addLearningEvent]);
 
   // Load personalized layout on mount
   useEffect(() => {

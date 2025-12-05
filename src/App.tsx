@@ -1076,8 +1076,9 @@ function Shell() {
             {/* Offline indicator for all users */}
             <OfflineIndicator />
 
-            {/* Voice Command Bar disabled - feature in development */}
-            {/* To re-enable: <VoiceCommandBar /> */}
+            {/* Global Voice Command Bar - compact mic icon that expands when clicked */}
+            {/* Note: IntelligentAdminPanel has its own VoiceCommandBar with section scrolling */}
+            <VoiceCommandBar />
           </AuthGate>
           </TimeClockProvider>
         </SessionTimeoutProvider>
