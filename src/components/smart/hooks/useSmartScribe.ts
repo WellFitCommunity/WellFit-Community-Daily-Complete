@@ -178,6 +178,9 @@ export function useSmartScribe(props: UseSmartScribeProps) {
   // EFFECTS
   // ============================================================================
 
+  // Track user's tenant_id for preferences storage
+  const [userTenantId, setUserTenantId] = useState<string | null>(null);
+
   /**
    * Load assistance level from provider preferences on mount
    */
@@ -188,6 +191,17 @@ export function useSmartScribe(props: UseSmartScribeProps) {
           data: { user },
         } = await supabase.auth.getUser();
         if (!user) return;
+
+        // Get user's tenant_id from their profile
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('tenant_id')
+          .eq('user_id', user.id)
+          .single();
+
+        if (profile?.tenant_id) {
+          setUserTenantId(profile.tenant_id);
+        }
 
         const { data: prefs, error } = await supabase
           .from('provider_scribe_preferences')
@@ -268,9 +282,9 @@ export function useSmartScribe(props: UseSmartScribeProps) {
       } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error('Not authenticated');
 
-      // Build WebSocket URL
+      // Build WebSocket URL - use underscore to match edge function folder name
       const base = (process.env.REACT_APP_SUPABASE_URL ?? '').replace('https://', 'wss://');
-      const wsUrl = `${base}/functions/v1/realtime-medical-transcription?access_token=${encodeURIComponent(
+      const wsUrl = `${base}/functions/v1/realtime_medical_transcription?access_token=${encodeURIComponent(
         session.access_token
       )}`;
 
@@ -478,6 +492,26 @@ export function useSmartScribe(props: UseSmartScribeProps) {
       } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Need tenant_id for RLS - if we don't have it yet, try to get it
+      let tenantId = userTenantId;
+      if (!tenantId) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('tenant_id')
+          .eq('user_id', user.id)
+          .single();
+        tenantId = profile?.tenant_id || null;
+        if (tenantId) setUserTenantId(tenantId);
+      }
+
+      if (!tenantId) {
+        auditLogger.warn('SCRIBE_ASSISTANCE_LEVEL_NO_TENANT', {
+          providerId: user.id,
+          newLevel,
+        });
+        return; // Can't save without tenant_id due to RLS
+      }
+
       const verbosityText = levelToVerbosity(newLevel);
 
       const { error } = await supabase
@@ -485,6 +519,7 @@ export function useSmartScribe(props: UseSmartScribeProps) {
         .upsert(
           {
             provider_id: user.id,
+            tenant_id: tenantId,
             verbosity: verbosityText,
             updated_at: new Date().toISOString(),
           },
@@ -500,9 +535,16 @@ export function useSmartScribe(props: UseSmartScribeProps) {
           verbosityText,
           label: getAssistanceSettings(newLevel).label,
         });
+      } else {
+        auditLogger.error('SCRIBE_ASSISTANCE_LEVEL_SAVE_FAILED', error, {
+          providerId: user.id,
+          newLevel,
+        });
       }
     } catch (error) {
-      // Silent fail
+      auditLogger.error('SCRIBE_ASSISTANCE_LEVEL_ERROR', error instanceof Error ? error : new Error('Unknown error'), {
+        newLevel,
+      });
     }
   };
 
