@@ -6,6 +6,7 @@ import React from 'react';
 import { useSmartScribe } from './hooks/useSmartScribe';
 import { VoiceLearningService } from '../../services/voiceLearningService';
 import { supabase } from '../../lib/supabaseClient';
+import { useDemoMode } from '../../contexts/DemoModeContext';
 import { EACard, EACardHeader, EACardContent } from '../envision-atlus/EACard';
 import { EAButton } from '../envision-atlus/EAButton';
 import { EABadge } from '../envision-atlus/EABadge';
@@ -17,6 +18,9 @@ interface RealTimeSmartScribeProps {
 }
 
 const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = (props) => {
+  // Check if demo mode is enabled globally (from DemoPage or elsewhere)
+  const { isDemo: globalDemoMode, enableDemo, disableDemo } = useDemoMode();
+
   const {
     transcript,
     suggestedCodes,
@@ -43,7 +47,7 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = (props) => {
     startRecording,
     stopRecording,
     handleAssistanceLevelChange,
-  } = useSmartScribe(props);
+  } = useSmartScribe({ ...props, forceDemoMode: globalDemoMode || undefined });
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -100,6 +104,30 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = (props) => {
                 </EABadge>
               </div>
             )}
+
+            {/* Demo Toggle Button */}
+            <div className="flex items-center gap-2">
+              {isDemoMode ? (
+                <EAButton
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => disableDemo()}
+                  disabled={isRecording}
+                >
+                  Exit Demo
+                </EAButton>
+              ) : (
+                <EAButton
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => enableDemo({ durationMs: 30 * 60 * 1000 })}
+                  disabled={isRecording}
+                  title="Enter Demo Mode - simulates a patient visit"
+                >
+                  Demo Mode
+                </EAButton>
+              )}
+            </div>
           </div>
         </EACardContent>
       </EACard>

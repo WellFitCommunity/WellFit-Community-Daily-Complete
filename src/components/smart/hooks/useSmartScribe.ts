@@ -149,6 +149,8 @@ export interface UseSmartScribeProps {
   selectedPatientId?: string;
   selectedPatientName?: string;
   onSessionComplete?: (sessionId: string) => void;
+  /** Force demo mode regardless of env var. When true, simulates a patient visit. */
+  forceDemoMode?: boolean;
 }
 
 // ============================================================================
@@ -156,7 +158,7 @@ export interface UseSmartScribeProps {
 // ============================================================================
 
 export function useSmartScribe(props: UseSmartScribeProps) {
-  const { selectedPatientId, selectedPatientName, onSessionComplete } = props;
+  const { selectedPatientId, selectedPatientName, onSessionComplete, forceDemoMode } = props;
 
   // Core state
   const [transcript, setTranscript] = useState('');
@@ -191,8 +193,8 @@ export function useSmartScribe(props: UseSmartScribeProps) {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  // Demo mode state
-  const [isDemoMode] = useState(DEMO_MODE);
+  // Demo mode state - can be forced via props or enabled via env var
+  const [isDemoMode] = useState(forceDemoMode ?? DEMO_MODE);
   const demoIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const demoTimeoutsRef = useRef<NodeJS.Timeout[]>([]);
 
