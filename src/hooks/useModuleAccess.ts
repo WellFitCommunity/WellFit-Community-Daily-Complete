@@ -77,10 +77,14 @@ export function useModuleAccess(moduleName: ModuleName): ModuleAccessResult {
       setLoading(true);
       setError(null);
       const configData = await getTenantModuleConfig();
+      // null config is OK - means tenant doesn't have config yet, use defaults
       setConfig(configData);
     } catch (err) {
+      // Don't treat as fatal error - log but allow graceful degradation
       const error = err instanceof Error ? err : new Error('Failed to load module config');
       setError(error);
+      // Set empty config to allow access checks to proceed with defaults
+      setConfig(null);
     } finally {
       setLoading(false);
     }

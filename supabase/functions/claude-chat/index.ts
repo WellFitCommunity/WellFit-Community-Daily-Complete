@@ -116,36 +116,13 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    // HIPAA AUDIT LOGGING: Log failure to database
-    try {
-      const requestId = crypto.randomUUID();
-      await supabaseClient.from('claude_api_audit').insert({
-        request_id: requestId,
-        user_id: user.id,
-        request_type: 'chat',
-        model: model || "claude-3-5-sonnet-20241022",
-        input_tokens: 0,
-        output_tokens: 0,
-        cost: 0,
-        response_time_ms: 0,
-        success: false,
-        error_code: error.name || 'UNKNOWN_ERROR',
-        error_message: error.message || error.toString(),
-        phi_scrubbed: true,
-        metadata: {
-          error_type: error.constructor.name
-        }
-      });
-    } catch (logError) {
-      logger.error('Audit log insertion failed', { error: logError instanceof Error ? logError.message : String(logError) });
-    }
-
+    // Log error - audit logging happens in try block only when we have valid context
     logger.error('Claude API request failed', { error: error instanceof Error ? error.message : String(error) });
 
     return new Response(
       JSON.stringify({
-        error: error.message || "Internal server error",
-        details: error.toString(),
+        error: error instanceof Error ? error.message : "Internal server error",
+        details: String(error),
       }),
       {
         status: 500,

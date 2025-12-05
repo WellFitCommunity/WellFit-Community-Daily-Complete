@@ -136,22 +136,29 @@ const AdminSettingsPanel: React.FC = memo(() => {
 
   // Apply theme changes and save to localStorage
   useEffect(() => {
-    if (settings.theme === 'dark') {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('admin_theme', 'dark');
-    } else if (settings.theme === 'light') {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('admin_theme', 'light');
-    } else {
-      // Auto mode - check system preference
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (prefersDark) {
+    const applyTheme = (theme: string) => {
+      if (theme === 'dark') {
         document.documentElement.classList.add('dark');
-      } else {
+      } else if (theme === 'light') {
         document.documentElement.classList.remove('dark');
+      } else {
+        // Auto mode - check system preference
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (prefersDark) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
       }
-      localStorage.setItem('admin_theme', 'auto');
-    }
+      localStorage.setItem('admin_theme', theme);
+      // Dispatch storage event so other components (AdminHeader) sync immediately
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'admin_theme',
+        newValue: theme,
+      }));
+    };
+
+    applyTheme(settings.theme);
   }, [settings.theme]);
 
   const saveSettings = async () => {

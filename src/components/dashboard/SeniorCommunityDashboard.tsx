@@ -12,6 +12,7 @@ import PositiveAffirmations from './PositiveAffirmations';
 import EmergencyContact from '../features/EmergencyContact';
 import WhatsNewSeniorModal from '../WhatsNewSeniorModal';
 import UpcomingAppointmentBanner from './UpcomingAppointmentBanner';
+import { allRecipes } from '../../data/allRecipes';
 // Health widgets removed - now accessible via My Health Hub page
 
 const SeniorCommunityDashboard: React.FC = () => {
@@ -35,18 +36,12 @@ const SeniorCommunityDashboard: React.FC = () => {
   const [showWhatsNew, setShowWhatsNew] = useState(false);
   const [emergencyBannerTimeoutId, setEmergencyBannerTimeoutId] = useState<NodeJS.Timeout | null>(null);
 
-  // Get today's meal
+  // Get today's meal from actual recipe data (same logic as DashMealOfTheDay)
   useEffect(() => {
-    // This would typically come from your recipes data
     const today = new Date();
     const dayOfYear = Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
-    // Placeholder meal data - replace with your actual meal data
-    const meals = [
-      { name: "Heart-Healthy Salmon", description: "Rich in omega-3 fatty acids" },
-      { name: "Vegetable Lentil Soup", description: "High in fiber and protein" },
-      { name: "Grilled Chicken Salad", description: "Lean protein with fresh vegetables" }
-    ];
-    setTodaysMeal(meals[dayOfYear % meals.length]);
+    const mealIndex = dayOfYear % allRecipes.length;
+    setTodaysMeal(allRecipes[mealIndex]);
   }, []);
 
   // Load recent community photo and caregiver contact

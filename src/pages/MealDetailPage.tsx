@@ -150,6 +150,41 @@ export default function MealDetailPage() {
     };
   }, [recipe?.name]);
 
+  // Track meal view for engagement reporting
+  useEffect(() => {
+    const trackMealView = async () => {
+      if (!recipe?.id || !user?.id) return;
+
+      try {
+        // Get user's tenant_id from profile
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('tenant_id')
+          .eq('user_id', user.id)
+          .single();
+
+        if (profile?.tenant_id) {
+          await supabase.from('feature_engagement').insert({
+            user_id: user.id,
+            tenant_id: profile.tenant_id,
+            feature_type: 'meal_view',
+            feature_id: recipe.id,
+            metadata: { meal_name: recipe.name }
+          });
+        }
+      } catch {
+        // Silently fail - engagement tracking is not critical
+      }
+    };
+
+    // Only track once per session per meal
+    const viewKey = `meal-viewed-${id}`;
+    if (recipe && user && !sessionStorage.getItem(viewKey)) {
+      sessionStorage.setItem(viewKey, 'true');
+      trackMealView();
+    }
+  }, [recipe, user, supabase, id]);
+
   // Check if user already interacted with this meal
   useEffect(() => {
     if (!user?.id || !id) return;

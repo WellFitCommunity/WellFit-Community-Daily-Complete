@@ -131,6 +131,42 @@ const TechTip: React.FC = () => {
     }
   }, [todaysDateString]);
 
+  // Track tech tip view for engagement reporting
+  useEffect(() => {
+    const trackView = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          // Get user's tenant_id from profile
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('tenant_id')
+            .eq('user_id', user.id)
+            .single();
+
+          if (profile?.tenant_id) {
+            await supabase.from('feature_engagement').insert({
+              user_id: user.id,
+              tenant_id: profile.tenant_id,
+              feature_type: 'tech_tip_view',
+              feature_id: `tip-${todaysTipIndex}`,
+              metadata: { date: todaysDateString }
+            });
+          }
+        }
+      } catch {
+        // Silently fail - engagement tracking is not critical
+      }
+    };
+
+    // Only track once per session per tip
+    const viewKey = `tech-tip-viewed-${todaysDateString}`;
+    if (!sessionStorage.getItem(viewKey)) {
+      sessionStorage.setItem(viewKey, 'true');
+      trackView();
+    }
+  }, [supabase, todaysTipIndex, todaysDateString]);
+
   const handleFeedback = async (reaction: 'helpful' | 'not-helpful') => {
     const newFeedback: TipFeedback = {
       date: todaysDateString,

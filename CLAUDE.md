@@ -500,6 +500,14 @@ import { EACard, EAButton, EASwitch } from '../envision-atlus';
 
 ## Common Issues & Solutions
 
+### Supabase Timing - Wait for Changes to Propagate
+**IMPORTANT:** After deploying edge functions, running migrations, or making database changes via Supabase:
+- **Wait at least 60 seconds** before testing changes
+- Supabase needs time to propagate changes across their infrastructure
+- Edge function deployments may take 30-90 seconds to become active
+- RLS policy changes may take a moment to take effect
+- If something isn't working immediately after a change, wait and retry before debugging
+
 ### Null-Safe Number Formatting
 When displaying database values with `.toFixed()`, always use null coalescing:
 ```typescript

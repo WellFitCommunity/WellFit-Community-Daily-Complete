@@ -171,13 +171,17 @@ const ReportsSection: React.FC = () => {
         emergencyCheckInsQuery,
         weeklyCheckInsQuery,
         monthlyCheckInsQuery,
-        usersQuery
+        usersQuery,
+        mealViewsQuery,
+        techTipViewsQuery
       ] = await Promise.allSettled([
         supabase.from('check_ins').select('*', { count: 'exact', head: true }),
         supabase.from('check_ins').select('*', { count: 'exact', head: true }).eq('is_emergency', true),
         supabase.from('check_ins').select('*', { count: 'exact', head: true }).gte('created_at', oneWeekAgo.toISOString()),
         supabase.from('check_ins').select('*', { count: 'exact', head: true }).gte('created_at', oneMonthAgo.toISOString()),
-        supabase.from('profiles').select('user_id', { count: 'exact', head: true })
+        supabase.from('profiles').select('user_id', { count: 'exact', head: true }),
+        supabase.from('feature_engagement').select('*', { count: 'exact', head: true }).eq('feature_type', 'meal_view'),
+        supabase.from('feature_engagement').select('*', { count: 'exact', head: true }).eq('feature_type', 'tech_tip_view')
       ]);
 
       // Extract results with error handling
@@ -185,6 +189,8 @@ const ReportsSection: React.FC = () => {
       const emergencyCheckIns = emergencyCheckInsQuery.status === 'fulfilled' ? emergencyCheckInsQuery.value.count ?? 0 : 0;
       const checkInsThisWeek = weeklyCheckInsQuery.status === 'fulfilled' ? weeklyCheckInsQuery.value.count ?? 0 : 0;
       const checkInsThisMonth = monthlyCheckInsQuery.status === 'fulfilled' ? monthlyCheckInsQuery.value.count ?? 0 : 0;
+      const mealsPrepared = mealViewsQuery.status === 'fulfilled' ? mealViewsQuery.value.count ?? 0 : 0;
+      const techTipsViewed = techTipViewsQuery.status === 'fulfilled' ? techTipViewsQuery.value.count ?? 0 : 0;
 
       let activeUsers = 0;
       if (usersQuery.status === 'fulfilled') {
@@ -198,8 +204,8 @@ const ReportsSection: React.FC = () => {
       const newStats: EngagementStats = {
         totalCheckIns,
         emergencyCheckIns,
-        mealsPrepared: 0, // Placeholder
-        techTipsViewed: 0, // Placeholder
+        mealsPrepared,
+        techTipsViewed,
         activeUsers,
         checkInsThisWeek,
         checkInsThisMonth,
@@ -217,7 +223,9 @@ const ReportsSection: React.FC = () => {
         emergencyCheckInsQuery,
         weeklyCheckInsQuery,
         monthlyCheckInsQuery,
-        usersQuery
+        usersQuery,
+        mealViewsQuery,
+        techTipViewsQuery
       ].filter(q => q.status === 'rejected');
 
       if (failedQueries.length > 0) {
@@ -292,8 +300,8 @@ const ReportsSection: React.FC = () => {
         { metric: 'Check-Ins This Week', value: stats.checkInsThisWeek, period: 'Last 7 Days', notes: 'Recent user activity indicator' },
         { metric: 'Check-Ins This Month', value: stats.checkInsThisMonth, period: 'Last 30 Days', notes: 'Monthly engagement metric' },
         { metric: 'Registered Users', value: stats.activeUsers, period: 'All Time', notes: 'Total users registered in the platform' },
-        { metric: 'Meals Prepared', value: stats.mealsPrepared, period: 'All Time', notes: 'Feature requires additional setup' },
-        { metric: 'Tech Tips Viewed', value: stats.techTipsViewed, period: 'All Time', notes: 'Feature requires additional setup' },
+        { metric: 'Meals Viewed', value: stats.mealsPrepared, period: 'All Time', notes: 'Recipe page visits by users' },
+        { metric: 'Tech Tips Viewed', value: stats.techTipsViewed, period: 'All Time', notes: 'Daily tech tip views' },
       ];
 
       const csvContent = [
@@ -558,8 +566,8 @@ const ReportsSection: React.FC = () => {
           <StatCard icon="📅" title="This Week" value={stats.checkInsThisWeek} subtitle="Last 7 days" />
           <StatCard icon="📊" title="This Month" value={stats.checkInsThisMonth} subtitle="Last 30 days" />
           <StatCard icon="👥" title="Registered Users" value={stats.activeUsers} trend={trends.users} subtitle="Platform total" />
-          <StatCard icon="🍽️" title="Meals Prepared" value={stats.mealsPrepared} subtitle="Feature requires setup" isPlaceholder />
-          <StatCard icon="💡" title="Tech Tips Viewed" value={stats.techTipsViewed} subtitle="Feature requires setup" isPlaceholder />
+          <StatCard icon="🍽️" title="Meals Viewed" value={stats.mealsPrepared} subtitle="Recipe page visits" />
+          <StatCard icon="💡" title="Tech Tips Viewed" value={stats.techTipsViewed} subtitle="Daily tech tip views" />
           <StatCard
             icon="📈"
             title="Engagement Rate"
