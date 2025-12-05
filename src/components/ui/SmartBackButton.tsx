@@ -1,6 +1,7 @@
 import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNavigationHistory } from '../../contexts/NavigationHistoryContext';
 import { ArrowLeft } from 'lucide-react';
 
 interface SmartBackButtonProps {
@@ -38,103 +39,20 @@ const checkIsAdmin = (user: any): boolean => {
 
 /**
  * Smart back button that provides intuitive navigation:
- * 1. First tries browser history (go back to where you came from)
+ * 1. Uses NavigationHistoryContext to track in-app navigation
  * 2. Falls back to context-aware parent route if no history
  *
- * Loop prevention: Detects if going back would cause a redirect loop
- * (e.g., admin on /dashboard would redirect back to /admin)
+ * This solves the problem where navigate(-1) might take you to login
+ * or external pages instead of the previous in-app screen.
  */
 const SmartBackButton: React.FC<SmartBackButtonProps> = ({
   className = '',
   label,
   fallbackPath,
 }) => {
-  const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-
-  // Get smart fallback based on current location and user role
-  const getSmartFallback = (): string => {
-    if (fallbackPath) return fallbackPath;
-
-    const isAdmin = checkIsAdmin(user);
-    const path = location.pathname;
-
-    // Envision/Super Admin pages → back to Envision dashboard
-    if (path.startsWith('/super-admin') || path.startsWith('/envision')) {
-      return '/super-admin';
-    }
-
-    // Admin sub-pages → back to admin panel
-    if (path.startsWith('/admin/') || path === '/admin-settings' || path === '/admin-questions') {
-      return '/admin';
-    }
-
-    // Billing pages → back to admin
-    if (path.startsWith('/billing')) {
-      return '/admin';
-    }
-
-    // IT Admin pages → back to admin
-    if (path.startsWith('/it-admin')) {
-      return '/admin';
-    }
-
-    // Nurse/Physician dashboards → back to their respective dashboards
-    if (path.startsWith('/nurse-')) {
-      return '/nurse-dashboard';
-    }
-    if (path.startsWith('/physician-')) {
-      return '/physician-dashboard';
-    }
-
-    // Senior-facing pages should go back to dashboard
-    if (['/health-insights', '/questions', '/check-in', '/self-reporting', '/profile', '/settings', '/memory-lane'].some(
-      p => path.startsWith(p)
-    )) {
-      return '/dashboard';
-    }
-
-    // Default: admins go to admin, others go to dashboard
-    return isAdmin ? '/admin' : '/dashboard';
-  };
-
-  // Check if a path would cause a redirect loop for this user
-  const wouldCauseLoop = (targetPath: string): boolean => {
-    const isAdmin = checkIsAdmin(user);
-
-    // Admin going to /dashboard would redirect back to /admin (loop)
-    if (isAdmin && targetPath === '/dashboard') {
-      return true;
-    }
-
-    // Non-admin going to /admin would be unauthorized (not a loop, but bad)
-    if (!isAdmin && targetPath === '/admin') {
-      return true;
-    }
-
-    return false;
-  };
-
-  const handleBack = () => {
-    // Check if we have explicit "from" state passed during navigation
-    const fromState = (location.state as any)?.from;
-    if (fromState && !wouldCauseLoop(fromState)) {
-      navigate(fromState);
-      return;
-    }
-
-    // Try browser history if we have meaningful history
-    // (more than 2 entries means we navigated within the app)
-    if (window.history.length > 2) {
-      // Use navigate(-1) which is the React Router way
-      navigate(-1);
-      return;
-    }
-
-    // Fallback to smart context-aware navigation
-    navigate(getSmartFallback());
-  };
+  const { goBack, canGoBack, getPreviousRoute } = useNavigationHistory();
 
   const getDefaultLabel = (): string => {
     if (label) return label;
@@ -142,6 +60,30 @@ const SmartBackButton: React.FC<SmartBackButtonProps> = ({
     const isAdmin = checkIsAdmin(user);
     const path = location.pathname;
 
+    // Check if we have a previous route in history
+    const previousRoute = getPreviousRoute();
+    if (previousRoute) {
+      // Context-aware labels based on where we're going back to
+      if (previousRoute.startsWith('/super-admin') || previousRoute.startsWith('/envision')) {
+        return 'Back to Envision';
+      }
+      if (previousRoute.startsWith('/admin') || previousRoute.startsWith('/billing')) {
+        return 'Back to Admin';
+      }
+      if (previousRoute.startsWith('/nurse-')) {
+        return 'Back to Nurse Dashboard';
+      }
+      if (previousRoute.startsWith('/physician-')) {
+        return 'Back to Physician Dashboard';
+      }
+      if (previousRoute === '/dashboard') {
+        return 'Back to Dashboard';
+      }
+      // Generic "Back" for other cases with history
+      return 'Back';
+    }
+
+    // No history - use current location context for label
     if (path.startsWith('/super-admin') || path.startsWith('/envision')) {
       return 'Back to Envision';
     }
@@ -159,6 +101,10 @@ const SmartBackButton: React.FC<SmartBackButtonProps> = ({
     }
 
     return isAdmin ? 'Back to Admin' : 'Back to Dashboard';
+  };
+
+  const handleBack = () => {
+    goBack(fallbackPath);
   };
 
   return (

@@ -101,11 +101,11 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
   // Navigation items
   const navItems = [
     {
-      label: 'WellFit Community',
+      label: branding?.appName || 'Community',
       path: '/dashboard',
       icon: Home,
       show: true,
-      accent: true, // Special styling for WellFit button
+      accent: true, // Special styling for community button - uses branding colors
     },
     {
       label: 'Readmission Prevention',
@@ -148,7 +148,13 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
 
   return (
     <>
-      <header className="bg-gradient-to-r from-[#00857a] to-[#006d64] text-white shadow-xl border-b border-[#00554e]">
+      <header
+        className="text-white shadow-xl border-b"
+        style={{
+          background: branding?.gradient || 'linear-gradient(to right, #003865, #8cc63f)',
+          borderColor: branding?.primaryColor || '#002a4d'
+        }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Left: Logo/Title */}
@@ -163,7 +169,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
                 )}
                 <div>
                   <h1 className="text-xl font-bold tracking-tight">{headerTitle}</h1>
-                  <p className="text-xs text-teal-200 opacity-80">Clinical Platform</p>
+                  <p className="text-xs text-white/70">Clinical Platform</p>
                 </div>
               </div>
             </div>
@@ -181,7 +187,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
                       transition-all duration-200
                       ${
                         item.accent
-                          ? 'bg-[#8cc63f] hover:bg-[#7ab835] text-white shadow-md'
+                          ? 'text-white shadow-md hover:brightness-90'
                           : 'methodist' in item && item.methodist
                           ? 'bg-[#003087] hover:bg-[#002266] text-white shadow-md border border-blue-400/30'
                           : isActive(item.path)
@@ -189,6 +195,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
                           : 'bg-white/10 hover:bg-white/20 text-white/90 hover:text-white'
                       }
                     `}
+                    style={item.accent ? { backgroundColor: branding?.secondaryColor || '#8cc63f' } : undefined}
                   >
                     <item.icon className="h-4 w-4 mr-2" />
                     {item.label}
@@ -198,7 +205,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
               {/* System Status */}
               <div className="flex items-center px-3 py-2 text-sm">
                 <span className="h-2 w-2 rounded-full bg-green-400 animate-pulse mr-2" />
-                <span className="text-xs text-teal-100">Online</span>
+                <span className="text-xs text-white/80">Online</span>
               </div>
             </nav>
 
@@ -309,7 +316,13 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
 
         {/* Mobile Navigation */}
         {showMobileMenu && (
-          <div className="lg:hidden border-t border-[#00554e] bg-[#006d64]/50 backdrop-blur">
+          <div
+            className="lg:hidden border-t backdrop-blur"
+            style={{
+              borderColor: branding?.primaryColor || '#002a4d',
+              backgroundColor: `${branding?.primaryColor || '#003865'}cc` // 80% opacity
+            }}
+          >
             <div className="px-4 py-3 space-y-2">
               {navItems
                 .filter((item) => item.show)
@@ -321,12 +334,13 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
                       w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium
                       ${
                         item.accent
-                          ? 'bg-[#8cc63f] text-white'
+                          ? 'text-white'
                           : 'methodist' in item && item.methodist
                           ? 'bg-[#003087] text-white border border-blue-400/30'
                           : 'bg-white/10 text-white/90 hover:bg-white/20'
                       }
                     `}
+                    style={item.accent ? { backgroundColor: branding?.secondaryColor || '#8cc63f' } : undefined}
                   >
                     <item.icon className="h-4 w-4 mr-3" />
                     {item.label}

@@ -6,6 +6,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
 import { SessionTimeoutProvider } from './contexts/SessionTimeoutContext';
 import { TimeClockProvider } from './contexts/TimeClockContext';
+import { NavigationHistoryProvider } from './contexts/NavigationHistoryContext';
 import { BrandingConfig, getCurrentBranding } from './branding.config';
 import { BrandingContext } from './BrandingContext';
 import { performanceMonitor } from './services/performanceMonitoring';
@@ -243,12 +244,14 @@ function Shell() {
         <SessionTimeoutProvider>
           {/* Time Clock - Auto clock-in on login, prompt on logout */}
           <TimeClockProvider>
-            {/* Global Learning Milestone Celebration Display */}
-            <LearningMilestone />
+            {/* Navigation History - Track in-app navigation for reliable back button */}
+            <NavigationHistoryProvider>
+              {/* Global Learning Milestone Celebration Display */}
+              <LearningMilestone />
 
-            <AppHeader />
+              <AppHeader />
 
-          <AuthGate>
+            <AuthGate>
             <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
               <Routes>
               {/* Public */}
@@ -1119,6 +1122,7 @@ function Shell() {
             {/* Note: IntelligentAdminPanel has its own VoiceCommandBar with section scrolling */}
             <VoiceCommandBar />
           </AuthGate>
+            </NavigationHistoryProvider>
           </TimeClockProvider>
         </SessionTimeoutProvider>
     </BrandingContext.Provider>
