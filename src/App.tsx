@@ -84,6 +84,7 @@ const BulkExportPanel = React.lazy(() => import('./components/admin/BulkExportPa
 const EnrollSeniorPage = React.lazy(() => import('./pages/EnrollSeniorPage'));
 const CommunityMoments = React.lazy(() => import('./components/CommunityMoments'));
 const DemographicsPage = React.lazy(() => import('./pages/DemographicsPage'));
+const DemoPage = React.lazy(() => import('./pages/DemoPage'));
 // TriviaGame removed - use Memory Lane Trivia at /memory-lane-trivia instead
 const CaregiverDashboardPage = React.lazy(() => import('./pages/CaregiverDashboardPage'));
 const SetCaregiverPinPage = React.lazy(() => import('./pages/SetCaregiverPinPage'));
@@ -300,6 +301,9 @@ function Shell() {
               {featureFlags.timeClock && (
                 <Route path="/time-clock" element={<RequireAuth><TimeClockPage /></RequireAuth>} />
               )}
+
+              {/* Demo Showcase (public - for Methodist presentation) */}
+              <Route path="/demo" element={<DemoPage />} />
 
               {/* Caregiver Suite */}
               {/* Public caregiver access (no auth - PIN-based access) */}
