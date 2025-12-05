@@ -49,7 +49,7 @@ export const getAllSections = (): DashboardSection[] => [
   {
     id: 'smartscribe-atlus',
     title: 'SmartScribe Atlus 💰',
-    subtitle: 'AI transcription with Claude Sonnet 4.5 for maximum billing accuracy',
+    subtitle: 'AI transcription for maximum billing accuracy',
     icon: '🎤',
     headerColor: 'text-purple-800',
     component: <Suspense fallback={<SectionLoadingFallback />}><SmartScribe /></Suspense>,

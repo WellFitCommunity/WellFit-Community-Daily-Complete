@@ -62,37 +62,17 @@ export const EnvisionLoginPage: React.FC = () => {
   const captchaRef = useRef<HCaptchaRef>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
-  // Check if already logged in as super admin
+  // Envision portal requires explicit login - do NOT auto-login from WellFit session
+  // This is a security requirement: Envision Master Panel requires separate authentication
   useEffect(() => {
-    const checkExistingSession = async () => {
-      // Check if logged in via Supabase
-      if (user) {
-        // Check if user is a super admin
-        const { data: superAdmin } = await supabase
-          .from('super_admin_users')
-          .select('id, is_active, totp_enabled, totp_secret')
-          .eq('user_id', user.id)
-          .eq('is_active', true)
-          .single();
+    // Clear any existing TOTP verification state on page load
+    // Users must always enter credentials for Envision portal
+    localStorage.removeItem('envision_totp_verified');
 
-        if (superAdmin) {
-          // Check if TOTP verification is needed
-          const totpEnabled = Boolean(superAdmin.totp_enabled && superAdmin.totp_secret);
-          const totpVerified = localStorage.getItem('envision_totp_verified') === user.id;
-
-          if (totpEnabled && !totpVerified) {
-            // Need TOTP verification
-            setStep('totp');
-          } else {
-            // Already fully authenticated, redirect to Master Panel
-            navigate('/super-admin');
-          }
-        }
-      }
-    };
-
-    checkExistingSession();
-  }, [user, navigate, supabase]);
+    // Note: We don't auto-redirect authenticated users here.
+    // Users must explicitly enter their credentials for the Envision portal,
+    // even if they're already logged into WellFit Community.
+  }, []);
 
   // Step 1: Login with Supabase auth
   const handleCredentials = async (e: React.FormEvent) => {

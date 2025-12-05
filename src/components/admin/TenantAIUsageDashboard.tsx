@@ -385,7 +385,7 @@ const TenantAIUsageDashboard: React.FC = () => {
           <div className="text-sm text-blue-900">
             <p className="font-medium mb-1">AI Cost Breakdown</p>
             <p className="text-blue-800">
-              Costs include Claude AI (Sonnet, Haiku, Opus), SmartScribe transcription, and MCP tool usage.
+              Costs include AI processing, SmartScribe transcription, and intelligent automation features.
               Top users are highlighted to help manage AI resource allocation.
             </p>
           </div>

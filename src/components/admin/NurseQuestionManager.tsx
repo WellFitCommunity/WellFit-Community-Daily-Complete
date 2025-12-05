@@ -264,7 +264,7 @@ Format your response as a clear, professional message that can be sent to the pa
       const aiSuggestion: AISuggestion = {
         response: aiResponse,
         confidence: 0.90,
-        reasoning: `AI-generated response based on patient's ${question.category} question using Claude 3.5 Sonnet via secure Edge Function.`,
+        reasoning: `AI-generated response based on patient's ${question.category} question via secure Edge Function.`,
         resources: [
           'Evidence-Based Guidelines',
           'Patient Education Materials',

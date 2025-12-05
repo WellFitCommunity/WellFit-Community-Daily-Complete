@@ -1076,10 +1076,8 @@ function Shell() {
             {/* Offline indicator for all users */}
             <OfflineIndicator />
 
-            {/* Voice Command Bar - Global speech recognition UI */}
-            {/* Shows a floating microphone button that expands to show voice command UI */}
-            {/* Users can press Ctrl+Shift+V or click the mic to start voice commands */}
-            <VoiceCommandBar />
+            {/* Voice Command Bar disabled - feature in development */}
+            {/* To re-enable: <VoiceCommandBar /> */}
           </AuthGate>
           </TimeClockProvider>
         </SessionTimeoutProvider>

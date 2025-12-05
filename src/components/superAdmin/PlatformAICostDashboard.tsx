@@ -336,8 +336,8 @@ const PlatformAICostDashboard: React.FC = () => {
           <div className="text-sm text-orange-900">
             <p className="font-medium mb-1">AI Cost Tracking</p>
             <p className="text-orange-800">
-              Costs include Claude AI usage (Sonnet, Haiku, Opus), SmartScribe transcription,
-              MCP tool usage, and other AI-powered features. Costs are calculated based on token usage
+              Costs include AI processing, SmartScribe transcription,
+              intelligent automation, and other AI-powered features. Costs are calculated based on token usage
               and API pricing.
             </p>
           </div>
