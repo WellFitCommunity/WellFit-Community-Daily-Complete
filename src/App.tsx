@@ -150,6 +150,9 @@ const FHIRConflictResolution = React.lazy(() =>
 const EMSMetricsDashboard = React.lazy(() => import('./components/ems/EMSMetricsDashboard'));
 const CoordinatedResponseDashboard = React.lazy(() => import('./components/ems/CoordinatedResponseDashboard'));
 
+// Compass Riley - AI Medical Scribe (for Methodist demo)
+const CompassRileyPage = React.lazy(() => import('./components/smart/RealTimeSmartScribe'));
+
 // Physical Therapy, Care Coordination, Referrals, Questionnaires - newly wired dashboards
 const PhysicalTherapyDashboard = React.lazy(() => import('./components/physicalTherapy/PhysicalTherapyDashboard'));
 const CareCoordinationDashboard = React.lazy(() => import('./components/careCoordination/CareCoordinationDashboard'));
@@ -304,6 +307,42 @@ function Shell() {
 
               {/* Demo Showcase (public - for Methodist presentation) */}
               <Route path="/demo" element={<DemoPage />} />
+
+              {/* Compass Riley - AI Medical Scribe (Demo route) */}
+              <Route
+                path="/compass-riley"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'physician', 'doctor', 'nurse', 'nurse_practitioner', 'physician_assistant']}>
+                      <CompassRileyPage />
+                    </RequireAdminAuth>
+                  </RequireAuth>
+                }
+              />
+
+              {/* Readmissions Dashboard (Demo route) */}
+              <Route
+                path="/readmissions"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'physician', 'doctor', 'nurse', 'case_manager']}>
+                      <CommunityReadmissionDashboard />
+                    </RequireAdminAuth>
+                  </RequireAuth>
+                }
+              />
+
+              {/* Nurse Panel alias for demo (same as /nurse-dashboard) */}
+              <Route
+                path="/nurse-panel"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth allowedRoles={['admin', 'super_admin', 'nurse', 'nurse_practitioner', 'clinical_supervisor']}>
+                      <NursePanel />
+                    </RequireAdminAuth>
+                  </RequireAuth>
+                }
+              />
 
               {/* Caregiver Suite */}
               {/* Public caregiver access (no auth - PIN-based access) */}

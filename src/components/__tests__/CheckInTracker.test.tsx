@@ -3,9 +3,15 @@
 // Tests match ACTUAL component UI - title "Check-In Center", buttons as defined in component
 
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
 import CheckInTracker from '../CheckInTracker';
 import { useSupabaseClient, useUser } from '../../contexts/AuthContext';
+
+// Helper to render with router
+const renderWithRouter = (ui: React.ReactElement) => {
+  return render(<MemoryRouter>{ui}</MemoryRouter>);
+};
 
 // Mock scrollIntoView which is not available in jsdom
 Element.prototype.scrollIntoView = jest.fn();
@@ -51,14 +57,14 @@ describe('CheckInTracker - Senior Facing Component', () => {
 
   describe('Component Rendering', () => {
     it('should render the check-in center title', () => {
-      render(<CheckInTracker />);
+      renderWithRouter(<CheckInTracker />);
 
       // Actual component title is "Check-In Center"
       expect(screen.getByText('Check-In Center')).toBeInTheDocument();
     });
 
     it('should display quick check-in buttons', () => {
-      render(<CheckInTracker />);
+      renderWithRouter(<CheckInTracker />);
 
       // These are the actual buttons defined in the component
       expect(screen.getByText('😊 Feeling Great Today')).toBeInTheDocument();
@@ -70,13 +76,13 @@ describe('CheckInTracker - Senior Facing Component', () => {
     });
 
     it('should display the emotional state dropdown', () => {
-      render(<CheckInTracker />);
+      renderWithRouter(<CheckInTracker />);
 
       expect(screen.getByLabelText(/Emotional State/i)).toBeInTheDocument();
     });
 
     it('should display vitals input fields', () => {
-      render(<CheckInTracker />);
+      renderWithRouter(<CheckInTracker />);
 
       expect(screen.getByLabelText(/Heart Rate/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/Pulse Oximeter/i)).toBeInTheDocument();
@@ -86,7 +92,7 @@ describe('CheckInTracker - Senior Facing Component', () => {
     });
 
     it('should have submit button disabled when no emotional state selected', () => {
-      render(<CheckInTracker />);
+      renderWithRouter(<CheckInTracker />);
 
       const submitButton = screen.getByText('Submit Check-In Details');
       expect(submitButton).toBeDisabled();
@@ -95,7 +101,7 @@ describe('CheckInTracker - Senior Facing Component', () => {
 
   describe('Quick Check-in Flow', () => {
     it('should call edge function when clicking "Feeling Great Today"', async () => {
-      render(<CheckInTracker />);
+      renderWithRouter(<CheckInTracker />);
 
       const feelingGreatButton = screen.getByText('😊 Feeling Great Today');
       fireEvent.click(feelingGreatButton);
@@ -114,7 +120,7 @@ describe('CheckInTracker - Senior Facing Component', () => {
     });
 
     it('should show success message after quick check-in', async () => {
-      render(<CheckInTracker />);
+      renderWithRouter(<CheckInTracker />);
 
       const feelingGreatButton = screen.getByText('😊 Feeling Great Today');
       fireEvent.click(feelingGreatButton);
@@ -128,7 +134,7 @@ describe('CheckInTracker - Senior Facing Component', () => {
 
   describe('Detailed Check-in Form', () => {
     it('should enable submit when emotional state is selected', async () => {
-      render(<CheckInTracker />);
+      renderWithRouter(<CheckInTracker />);
 
       const emotionalStateSelect = screen.getByLabelText(/Emotional State/i);
       fireEvent.change(emotionalStateSelect, { target: { value: 'Happy' } });
@@ -138,7 +144,7 @@ describe('CheckInTracker - Senior Facing Component', () => {
     });
 
     it('should submit detailed check-in with form data', async () => {
-      render(<CheckInTracker />);
+      renderWithRouter(<CheckInTracker />);
 
       // Fill in the form
       fireEvent.change(screen.getByLabelText(/Emotional State/i), { target: { value: 'Happy' } });
@@ -168,7 +174,7 @@ describe('CheckInTracker - Senior Facing Component', () => {
 
   describe('Crisis Options Flow', () => {
     it('should show crisis options when clicking "Not Feeling My Best"', async () => {
-      render(<CheckInTracker />);
+      renderWithRouter(<CheckInTracker />);
 
       const notFeelingBestButton = screen.getByText('🤒 Not Feeling My Best');
       fireEvent.click(notFeelingBestButton);
@@ -184,7 +190,7 @@ describe('CheckInTracker - Senior Facing Component', () => {
     it('should show local save message when user is not logged in', async () => {
       (useUser as jest.Mock).mockReturnValue(null);
 
-      render(<CheckInTracker />);
+      renderWithRouter(<CheckInTracker />);
 
       const feelingGreatButton = screen.getByText('😊 Feeling Great Today');
       fireEvent.click(feelingGreatButton);
@@ -202,7 +208,7 @@ describe('CheckInTracker - Senior Facing Component', () => {
         error: new Error('Network error')
       });
 
-      render(<CheckInTracker />);
+      renderWithRouter(<CheckInTracker />);
 
       const feelingGreatButton = screen.getByText('😊 Feeling Great Today');
       fireEvent.click(feelingGreatButton);
@@ -215,14 +221,14 @@ describe('CheckInTracker - Senior Facing Component', () => {
 
   describe('Accessibility', () => {
     it('should have proper ARIA attributes on form elements', () => {
-      render(<CheckInTracker />);
+      renderWithRouter(<CheckInTracker />);
 
       const emotionalStateSelect = screen.getByLabelText(/Emotional State/i);
       expect(emotionalStateSelect).toHaveAttribute('aria-required', 'true');
     });
 
     it('should have role="status" on feedback messages', async () => {
-      render(<CheckInTracker />);
+      renderWithRouter(<CheckInTracker />);
 
       const feelingGreatButton = screen.getByText('😊 Feeling Great Today');
       fireEvent.click(feelingGreatButton);
