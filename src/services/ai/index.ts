@@ -41,7 +41,7 @@ export { sdohPassiveDetector, SDOHPassiveDetector } from './sdohPassiveDetector'
 export { welfareCheckDispatcher } from './welfareCheckDispatcher';
 export { emergencyAccessIntelligence } from './emergencyAccessIntelligence';
 export { ccmEligibilityScorer, CCMEligibilityScorer } from './ccmEligibilityScorer';
-export { culturalHealthCoach, CulturalHealthCoach } from './culturalHealthCoach';
+export { culturalHealthCoach } from './culturalHealthCoach';
 export { handoffRiskSynthesizer, HandoffRiskSynthesizer } from './handoffRiskSynthesizer';
 
 // Bed optimization (Sonnet-powered for accuracy)
