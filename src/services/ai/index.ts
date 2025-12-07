@@ -43,3 +43,15 @@ export { emergencyAccessIntelligence } from './emergencyAccessIntelligence';
 export { ccmEligibilityScorer, CCMEligibilityScorer } from './ccmEligibilityScorer';
 export { culturalHealthCoach, CulturalHealthCoach } from './culturalHealthCoach';
 export { handoffRiskSynthesizer, HandoffRiskSynthesizer } from './handoffRiskSynthesizer';
+
+// Bed optimization (Sonnet-powered for accuracy)
+export {
+  bedOptimizer,
+  BedOptimizerService,
+  type CapacityForecast,
+  type DischargeRecommendation,
+  type BedAssignmentRecommendation,
+  type CapacityInsight,
+  type OptimizationReport,
+  type IncomingPatient
+} from './bedOptimizer';
