@@ -14,6 +14,7 @@
 import { supabase } from '../../lib/supabaseClient';
 import { mcpOptimizer } from '../mcp/mcpCostOptimizer';
 import type { MCPCostOptimizer } from '../mcp/mcpCostOptimizer';
+import { createAccuracyTrackingService, type AccuracyTrackingService } from './accuracyTrackingService';
 
 // =====================================================
 // TYPES
@@ -152,9 +153,11 @@ class InputValidator {
 export class BillingCodeSuggester {
   private optimizer: MCPCostOptimizer;
   private cacheEnabled: boolean = true;
+  private accuracyTracker: AccuracyTrackingService;
 
   constructor(optimizer?: MCPCostOptimizer) {
     this.optimizer = optimizer || mcpOptimizer;
+    this.accuracyTracker = createAccuracyTrackingService(supabase);
   }
 
   /**
@@ -188,8 +191,11 @@ export class BillingCodeSuggester {
     // Cache miss - generate with AI
     const aiResult = await this.generateWithAI(context, config);
 
-    // Store suggestion in database
-    await this.storeSuggestion(context, aiResult);
+    // Track prediction for accuracy monitoring (only for non-cached results)
+    const trackingId = await this.trackPrediction(context, aiResult);
+
+    // Store suggestion in database (include tracking ID for linking outcomes)
+    await this.storeSuggestion(context, aiResult, trackingId);
 
     // Cache the diagnosis→code mapping for future use
     if (context.diagnosisCodes && context.diagnosisCodes.length > 0) {
@@ -462,11 +468,55 @@ Return response as strict JSON with this structure:
   }
 
   /**
+   * Track prediction for accuracy monitoring
+   */
+  private async trackPrediction(
+    context: EncounterContext,
+    result: BillingSuggestionResult
+  ): Promise<string | null> {
+    try {
+      const allCodes = [
+        ...result.suggestedCodes.cpt.map(c => ({ ...c, system: 'CPT' })),
+        ...result.suggestedCodes.hcpcs.map(c => ({ ...c, system: 'HCPCS' })),
+        ...result.suggestedCodes.icd10.map(c => ({ ...c, system: 'ICD10' }))
+      ];
+
+      const trackResult = await this.accuracyTracker.recordPrediction({
+        tenantId: context.tenantId,
+        skillName: 'billing_codes',
+        predictionType: 'code',
+        predictionValue: {
+          suggestedCodes: allCodes.map(c => c.code),
+          cptCount: result.suggestedCodes.cpt.length,
+          hcpcsCount: result.suggestedCodes.hcpcs.length,
+          icd10Count: result.suggestedCodes.icd10.length,
+          requiresReview: result.requiresReview
+        },
+        confidence: result.overallConfidence,
+        patientId: context.patientId,
+        entityType: 'encounter',
+        entityId: context.encounterId,
+        model: result.aiModel,
+        costUsd: result.aiCost
+      });
+
+      if (trackResult.success) {
+        return trackResult.data ?? null;
+      }
+      return null;
+    } catch (error) {
+      // Don't fail the suggestion if tracking fails
+      return null;
+    }
+  }
+
+  /**
    * Store suggestion in database
    */
   private async storeSuggestion(
     context: EncounterContext,
-    result: BillingSuggestionResult
+    result: BillingSuggestionResult,
+    trackingId?: string | null
   ): Promise<void> {
     const duration = context.encounterEnd && context.encounterStart
       ? Math.floor((new Date(context.encounterEnd).getTime() - new Date(context.encounterStart).getTime()) / 60000)
@@ -490,7 +540,8 @@ Return response as strict JSON with this structure:
         status: 'pending',
         ai_model_used: result.aiModel,
         ai_cost: result.aiCost,
-        from_cache: result.fromCache
+        from_cache: result.fromCache,
+        ai_prediction_tracking_id: trackingId
       });
   }
 
@@ -501,15 +552,41 @@ Return response as strict JSON with this structure:
     InputValidator.validateUUID(suggestionId, 'suggestionId');
     InputValidator.validateUUID(providerId, 'providerId');
 
+    // Get the suggestion first
+    const { data: suggestion } = await supabase
+      .from('encounter_billing_suggestions')
+      .select('suggested_codes, ai_prediction_tracking_id, encounter_id')
+      .eq('id', suggestionId)
+      .single();
+
+    if (!suggestion) return;
+
     await supabase
       .from('encounter_billing_suggestions')
       .update({
         status: 'accepted',
         provider_id: providerId,
         provider_accepted_at: new Date().toISOString(),
-        final_codes_used: supabase.from('encounter_billing_suggestions').select('suggested_codes').eq('id', suggestionId).single().then(r => r.data?.suggested_codes)
+        final_codes_used: suggestion.suggested_codes
       })
       .eq('id', suggestionId);
+
+    // Record accuracy outcome (100% acceptance = accurate)
+    if (suggestion.ai_prediction_tracking_id) {
+      const allCodes = [
+        ...(suggestion.suggested_codes.cpt || []).map((c: any) => ({ code: c.code, type: 'CPT' })),
+        ...(suggestion.suggested_codes.hcpcs || []).map((c: any) => ({ code: c.code, type: 'HCPCS' })),
+        ...(suggestion.suggested_codes.icd10 || []).map((c: any) => ({ code: c.code, type: 'ICD10' }))
+      ];
+
+      await this.accuracyTracker.recordBillingCodeAccuracy(
+        suggestion.ai_prediction_tracking_id,
+        suggestion.encounter_id,
+        allCodes,
+        allCodes, // Same codes = 100% acceptance
+        providerId
+      );
+    }
   }
 
   /**
@@ -524,6 +601,13 @@ Return response as strict JSON with this structure:
     InputValidator.validateUUID(suggestionId, 'suggestionId');
     InputValidator.validateUUID(providerId, 'providerId');
 
+    // Get the original suggestion
+    const { data: suggestion } = await supabase
+      .from('encounter_billing_suggestions')
+      .select('suggested_codes, ai_prediction_tracking_id, encounter_id')
+      .eq('id', suggestionId)
+      .single();
+
     await supabase
       .from('encounter_billing_suggestions')
       .update({
@@ -534,6 +618,29 @@ Return response as strict JSON with this structure:
         final_codes_used: modifiedCodes
       })
       .eq('id', suggestionId);
+
+    // Record accuracy outcome with modifications
+    if (suggestion?.ai_prediction_tracking_id) {
+      const suggestedCodes = [
+        ...(suggestion.suggested_codes.cpt || []).map((c: any) => ({ code: c.code, type: 'CPT' })),
+        ...(suggestion.suggested_codes.hcpcs || []).map((c: any) => ({ code: c.code, type: 'HCPCS' })),
+        ...(suggestion.suggested_codes.icd10 || []).map((c: any) => ({ code: c.code, type: 'ICD10' }))
+      ];
+
+      const finalCodes = [
+        ...(modifiedCodes.cpt || []).map((c: any) => ({ code: c.code || c, type: 'CPT' })),
+        ...(modifiedCodes.hcpcs || []).map((c: any) => ({ code: c.code || c, type: 'HCPCS' })),
+        ...(modifiedCodes.icd10 || []).map((c: any) => ({ code: c.code || c, type: 'ICD10' }))
+      ];
+
+      await this.accuracyTracker.recordBillingCodeAccuracy(
+        suggestion.ai_prediction_tracking_id,
+        suggestion.encounter_id,
+        suggestedCodes,
+        finalCodes,
+        providerId
+      );
+    }
   }
 
   /**
@@ -543,6 +650,13 @@ Return response as strict JSON with this structure:
     InputValidator.validateUUID(suggestionId, 'suggestionId');
     InputValidator.validateUUID(providerId, 'providerId');
 
+    // Get the suggestion
+    const { data: suggestion } = await supabase
+      .from('encounter_billing_suggestions')
+      .select('suggested_codes, ai_prediction_tracking_id, encounter_id')
+      .eq('id', suggestionId)
+      .single();
+
     await supabase
       .from('encounter_billing_suggestions')
       .update({
@@ -551,6 +665,23 @@ Return response as strict JSON with this structure:
         review_reason: reason || 'Rejected by provider'
       })
       .eq('id', suggestionId);
+
+    // Record rejection as inaccurate (0% of codes used)
+    if (suggestion?.ai_prediction_tracking_id) {
+      const suggestedCodes = [
+        ...(suggestion.suggested_codes.cpt || []).map((c: any) => ({ code: c.code, type: 'CPT' })),
+        ...(suggestion.suggested_codes.hcpcs || []).map((c: any) => ({ code: c.code, type: 'HCPCS' })),
+        ...(suggestion.suggested_codes.icd10 || []).map((c: any) => ({ code: c.code, type: 'ICD10' }))
+      ];
+
+      await this.accuracyTracker.recordBillingCodeAccuracy(
+        suggestion.ai_prediction_tracking_id,
+        suggestion.encounter_id,
+        suggestedCodes,
+        [], // No codes used = 0% acceptance
+        providerId
+      );
+    }
   }
 }
 
