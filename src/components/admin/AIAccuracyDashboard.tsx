@@ -25,6 +25,10 @@ import {
   EAMetricCard,
   EAAlert,
   EASelect,
+  EASelectTrigger,
+  EASelectContent,
+  EASelectItem,
+  EASelectValue,
   EATabs
 } from '../envision-atlus';
 
@@ -234,15 +238,16 @@ export default function AIAccuracyDashboard() {
         </div>
 
         <div className="flex items-center gap-4">
-          <EASelect
-            value={days.toString()}
-            onChange={(value) => setDays(parseInt(value, 10))}
-            options={[
-              { value: '7', label: 'Last 7 days' },
-              { value: '30', label: 'Last 30 days' },
-              { value: '90', label: 'Last 90 days' }
-            ]}
-          />
+          <EASelect value={days.toString()} onValueChange={(value) => setDays(parseInt(value, 10))}>
+            <EASelectTrigger className="w-40">
+              <EASelectValue placeholder="Select period" />
+            </EASelectTrigger>
+            <EASelectContent>
+              <EASelectItem value="7">Last 7 days</EASelectItem>
+              <EASelectItem value="30">Last 30 days</EASelectItem>
+              <EASelectItem value="90">Last 90 days</EASelectItem>
+            </EASelectContent>
+          </EASelect>
           <EAButton variant="secondary" onClick={loadData}>
             Refresh
           </EAButton>
