@@ -13,6 +13,7 @@
 import { supabase } from '../../lib/supabaseClient';
 import { mcpOptimizer } from '../mcp/mcpCostOptimizer';
 import type { MCPCostOptimizer } from '../mcp/mcpCostOptimizer';
+import { createAccuracyTrackingService, type AccuracyTrackingService } from './accuracyTrackingService';
 
 // =====================================================
 // TYPES
@@ -236,9 +237,11 @@ const SDOH_PATTERNS: Record<SDOHCategory, { keywords: string[]; zCode?: string }
 
 export class SDOHPassiveDetector {
   private optimizer: MCPCostOptimizer;
+  private accuracyTracker: AccuracyTrackingService;
 
   constructor(optimizer?: MCPCostOptimizer) {
     this.optimizer = optimizer || mcpOptimizer;
+    this.accuracyTracker = createAccuracyTrackingService(supabase);
   }
 
   /**
@@ -260,9 +263,13 @@ export class SDOHPassiveDetector {
     // Perform AI-powered detection
     const detections = await this.detectWithAI(content, config);
 
-    // Store detections in database
+    // Store detections in database and track for accuracy monitoring
     for (const detection of detections) {
-      await this.storeDetection(content, detection);
+      // Track detection for accuracy monitoring
+      const trackingId = await this.trackDetection(content, detection, config);
+
+      // Store detection with tracking ID
+      await this.storeDetection(content, detection, trackingId);
 
       // Auto-create SDOH indicator if enabled and high confidence
       if (
@@ -394,11 +401,49 @@ Return empty array [] if no SDOH concerns detected.`;
   }
 
   /**
+   * Track detection for accuracy monitoring
+   */
+  private async trackDetection(
+    content: SourceContent,
+    detection: SDOHDetection,
+    config: any
+  ): Promise<string | null> {
+    try {
+      const result = await this.accuracyTracker.recordPrediction({
+        tenantId: content.tenantId,
+        skillName: 'sdoh_detection',
+        predictionType: 'classification',
+        predictionValue: {
+          category: detection.category,
+          riskLevel: detection.riskLevel,
+          urgency: detection.urgency,
+          detectedKeywords: detection.detectedKeywords,
+          zCodeMapping: detection.zCodeMapping
+        },
+        confidence: detection.confidenceScore,
+        patientId: content.patientId,
+        entityType: content.sourceType,
+        entityId: content.sourceId,
+        model: config.sdoh_passive_detector_model || 'claude-haiku-4-5-20250929'
+      });
+
+      if (result.success) {
+        return result.data ?? null;
+      }
+      return null;
+    } catch (error) {
+      // Don't fail the detection if tracking fails
+      return null;
+    }
+  }
+
+  /**
    * Store detection in database
    */
   private async storeDetection(
     content: SourceContent,
-    detection: SDOHDetection
+    detection: SDOHDetection,
+    trackingId?: string | null
   ): Promise<void> {
     await supabase.from('passive_sdoh_detections').insert({
       tenant_id: content.tenantId,
@@ -418,7 +463,8 @@ Return empty array [] if no SDOH concerns detected.`;
       ai_rationale: detection.aiRationale,
       recommended_actions: detection.recommendedActions,
       status: 'pending',
-      ai_model_used: 'claude-haiku-4-5-20250929'
+      ai_model_used: 'claude-haiku-4-5-20250929',
+      ai_prediction_tracking_id: trackingId
     });
   }
 
@@ -557,6 +603,13 @@ Return empty array [] if no SDOH concerns detected.`;
     SDOHValidator.validateUUID(detectionId, 'detectionId');
     SDOHValidator.validateUUID(providerId, 'providerId');
 
+    // Get the detection first to get tracking ID
+    const { data: detection } = await supabase
+      .from('passive_sdoh_detections')
+      .select('ai_prediction_tracking_id')
+      .eq('id', detectionId)
+      .single();
+
     await supabase
       .from('passive_sdoh_detections')
       .update({
@@ -566,6 +619,17 @@ Return empty array [] if no SDOH concerns detected.`;
         review_notes: notes
       })
       .eq('id', detectionId);
+
+    // Record accuracy outcome (confirmed = accurate)
+    if (detection?.ai_prediction_tracking_id) {
+      await this.accuracyTracker.recordSDOHDetectionAccuracy(
+        detectionId,
+        detection.ai_prediction_tracking_id,
+        true,  // wasConfirmed
+        false, // wasFalsePositive
+        providerId
+      );
+    }
   }
 
   /**
@@ -574,6 +638,13 @@ Return empty array [] if no SDOH concerns detected.`;
   async dismissDetection(detectionId: string, providerId: string, reason?: string): Promise<void> {
     SDOHValidator.validateUUID(detectionId, 'detectionId');
     SDOHValidator.validateUUID(providerId, 'providerId');
+
+    // Get the detection first to get tracking ID
+    const { data: detection } = await supabase
+      .from('passive_sdoh_detections')
+      .select('ai_prediction_tracking_id')
+      .eq('id', detectionId)
+      .single();
 
     await supabase
       .from('passive_sdoh_detections')
@@ -584,6 +655,17 @@ Return empty array [] if no SDOH concerns detected.`;
         review_notes: reason
       })
       .eq('id', detectionId);
+
+    // Record accuracy outcome (dismissed = inaccurate, was false positive)
+    if (detection?.ai_prediction_tracking_id) {
+      await this.accuracyTracker.recordSDOHDetectionAccuracy(
+        detectionId,
+        detection.ai_prediction_tracking_id,
+        false, // wasConfirmed
+        true,  // wasFalsePositive
+        providerId
+      );
+    }
   }
 }
 

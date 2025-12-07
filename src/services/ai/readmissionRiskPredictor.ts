@@ -18,6 +18,7 @@ import { ReadmissionTrackingService } from '../readmissionTrackingService';
 import { featureExtractor } from './readmissionFeatureExtractor';
 import type { ReadmissionRiskFeatures } from '../../types/readmissionRiskFeatures';
 import { EVIDENCE_BASED_WEIGHTS, ENGAGEMENT_FEATURE_WEIGHTS } from '../../types/readmissionRiskFeatures';
+import { createAccuracyTrackingService, type AccuracyTrackingService } from './accuracyTrackingService';
 
 // =====================================================
 // TYPES
@@ -134,9 +135,11 @@ class DischargeValidator {
 
 export class ReadmissionRiskPredictor {
   private optimizer: MCPCostOptimizer;
+  private accuracyTracker: AccuracyTrackingService;
 
   constructor(optimizer?: MCPCostOptimizer) {
     this.optimizer = optimizer || mcpOptimizer;
+    this.accuracyTracker = createAccuracyTrackingService(supabase);
   }
 
   /**
@@ -161,6 +164,9 @@ export class ReadmissionRiskPredictor {
 
     // Store prediction in database with comprehensive features
     await this.storePrediction(context, prediction, features);
+
+    // Track prediction for accuracy monitoring
+    await this.trackPrediction(context, prediction);
 
     // Auto-create care plan if high risk and enabled
     if (
@@ -818,6 +824,44 @@ Return response as strict JSON with this structure:
   }
 
   /**
+   * Track prediction for accuracy monitoring
+   * Records to ai_predictions table for cross-skill analytics
+   */
+  private async trackPrediction(
+    context: DischargeContext,
+    prediction: ReadmissionPrediction
+  ): Promise<string | null> {
+    try {
+      const result = await this.accuracyTracker.recordPrediction({
+        tenantId: context.tenantId,
+        skillName: 'readmission_risk',
+        predictionType: 'score',
+        predictionValue: {
+          readmissionRisk30Day: prediction.readmissionRisk30Day,
+          readmissionRisk7Day: prediction.readmissionRisk7Day,
+          readmissionRisk90Day: prediction.readmissionRisk90Day,
+          riskCategory: prediction.riskCategory,
+          topRiskFactors: prediction.riskFactors.slice(0, 3).map(f => f.factor)
+        },
+        confidence: prediction.predictionConfidence,
+        patientId: context.patientId,
+        entityType: 'discharge',
+        entityId: context.patientId,
+        model: prediction.aiModel,
+        costUsd: prediction.aiCost
+      });
+
+      if (result.success) {
+        return result.data ?? null;
+      }
+      return null;
+    } catch (error) {
+      // Don't fail the prediction if tracking fails
+      return null;
+    }
+  }
+
+  /**
    * Update prediction with actual outcome (for continuous learning)
    */
   async updateActualOutcome(
@@ -831,22 +875,48 @@ Return response as strict JSON with this structure:
       actual_readmission_occurred: actualReadmission
     };
 
+    let daysPostDischarge: number | undefined;
+
     if (actualReadmission && actualReadmissionDate) {
       updates.actual_readmission_date = actualReadmissionDate;
 
       // Calculate days post-discharge
       const { data: prediction } = await supabase
         .from('readmission_risk_predictions')
-        .select('discharge_date')
+        .select('discharge_date, readmission_risk_30_day, ai_prediction_tracking_id')
         .eq('id', predictionId)
         .single();
 
       if (prediction) {
-        const daysDiff = Math.floor(
+        daysPostDischarge = Math.floor(
           (new Date(actualReadmissionDate).getTime() - new Date(prediction.discharge_date).getTime()) /
           (24 * 60 * 60 * 1000)
         );
-        updates.actual_readmission_days_post_discharge = daysDiff;
+        updates.actual_readmission_days_post_discharge = daysPostDischarge;
+
+        // Record outcome for accuracy tracking
+        // Prediction is accurate if:
+        // - High risk (>0.5) AND patient was readmitted within 30 days
+        // - Low risk (<=0.5) AND patient was NOT readmitted within 30 days
+        const predictedHighRisk = prediction.readmission_risk_30_day > 0.5;
+        const wasReadmittedWithin30Days = actualReadmission && daysPostDischarge <= 30;
+        const isAccurate = predictedHighRisk === wasReadmittedWithin30Days;
+
+        if (prediction.ai_prediction_tracking_id) {
+          await this.accuracyTracker.recordOutcome({
+            predictionId: prediction.ai_prediction_tracking_id,
+            actualOutcome: {
+              wasReadmitted: actualReadmission,
+              daysToReadmission: daysPostDischarge,
+              within30Days: wasReadmittedWithin30Days
+            },
+            isAccurate,
+            outcomeSource: 'system_event',
+            notes: actualReadmission
+              ? `Readmitted ${daysPostDischarge} days post-discharge`
+              : 'No readmission within observation window'
+          });
+        }
       }
     }
 
@@ -854,8 +924,6 @@ Return response as strict JSON with this structure:
       .from('readmission_risk_predictions')
       .update(updates)
       .eq('id', predictionId);
-
-    // Note: Accuracy score is calculated automatically by database trigger
   }
 }
 

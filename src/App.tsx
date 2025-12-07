@@ -98,6 +98,7 @@ const EnhancedQuestionsPage = React.lazy(() => import('./pages/EnhancedQuestions
 const AdminQuestionsPage = React.lazy(() => import('./pages/AdminQuestionsPage'));
 const MemoryLaneTriviaPage = React.lazy(() => import('./pages/MemoryLaneTriviaPage'));
 const BillingDashboard = React.lazy(() => import('./components/admin/BillingDashboard'));
+const AIAccuracyDashboard = React.lazy(() => import('./components/admin/AIAccuracyDashboard'));
 const ClinicalAlertsDashboard = React.lazy(() => import('./components/alerts/ClinicalAlertsDashboard'));
 const EnvisionLoginPage = React.lazy(() => import('./pages/EnvisionLoginPage'));
 const ApiKeyManager = React.lazy(() => import('./components/admin/ApiKeyManager'));
@@ -673,6 +674,20 @@ function Shell() {
                             <h1 className="text-3xl font-bold text-gray-900 mb-6">API Key Manager</h1>
                             <ApiKeyManager />
                           </div>
+                        </div>
+                      </Suspense>
+                    </RequireAdminAuth>
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/admin/ai-accuracy"
+                element={
+                  <RequireAuth>
+                    <RequireAdminAuth allowedRoles={['admin', 'super_admin']}>
+                      <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
+                        <div className="min-h-screen bg-slate-900">
+                          <AIAccuracyDashboard />
                         </div>
                       </Suspense>
                     </RequireAdminAuth>
