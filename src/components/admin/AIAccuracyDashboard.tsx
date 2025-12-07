@@ -29,7 +29,9 @@ import {
   EASelectContent,
   EASelectItem,
   EASelectValue,
-  EATabs
+  EATabs,
+  EATabsList,
+  EATabsTrigger
 } from '../envision-atlus';
 
 // Types
@@ -201,12 +203,12 @@ export default function AIAccuracyDashboard() {
     loadData();
   }, [loadData]);
 
-  // Get accuracy badge color
-  const getAccuracyColor = (rate: number | null): 'success' | 'warning' | 'danger' | 'secondary' => {
-    if (rate === null) return 'secondary';
-    if (rate >= 0.85) return 'success';
-    if (rate >= 0.70) return 'warning';
-    return 'danger';
+  // Get accuracy badge color (maps to EABadge variants)
+  const getAccuracyColor = (rate: number | null): 'critical' | 'high' | 'elevated' | 'normal' | 'info' | 'neutral' => {
+    if (rate === null) return 'neutral';
+    if (rate >= 0.85) return 'normal';  // green - good accuracy
+    if (rate >= 0.70) return 'elevated';  // yellow - moderate accuracy
+    return 'critical';  // red - low accuracy
   };
 
   // Render loading state
@@ -256,7 +258,7 @@ export default function AIAccuracyDashboard() {
 
       {/* Error alert */}
       {error && (
-        <EAAlert variant="danger">
+        <EAAlert variant="critical">
           {error}
         </EAAlert>
       )}
@@ -264,38 +266,36 @@ export default function AIAccuracyDashboard() {
       {/* Summary metrics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <EAMetricCard
-          title="Total Predictions"
+          label="Total Predictions"
           value={totalPredictions.toLocaleString()}
-          subtitle={`Last ${days} days`}
+          sublabel={`Last ${days} days`}
         />
         <EAMetricCard
-          title="Overall Accuracy"
+          label="Overall Accuracy"
           value={formatPercent(overallAccuracy)}
-          subtitle="Across all skills"
-          trend={overallAccuracy !== null && overallAccuracy >= 0.80 ? 'up' : undefined}
+          sublabel="Across all skills"
+          trend={overallAccuracy !== null && overallAccuracy >= 0.80 ? { value: 5, direction: 'up' } : undefined}
         />
         <EAMetricCard
-          title="Active Skills"
+          label="Active Skills"
           value={skillMetrics.filter(s => s.totalPredictions > 0).length.toString()}
-          subtitle="With predictions"
+          sublabel="With predictions"
         />
         <EAMetricCard
-          title="Total AI Cost"
+          label="Total AI Cost"
           value={formatCurrency(totalCost)}
-          subtitle={`Last ${days} days`}
+          sublabel={`Last ${days} days`}
         />
       </div>
 
       {/* Tabs */}
-      <EATabs
-        tabs={[
-          { id: 'overview', label: 'Skill Overview' },
-          { id: 'experiments', label: 'A/B Experiments' },
-          { id: 'prompts', label: 'Prompt Versions' }
-        ]}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
+      <EATabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab}>
+        <EATabsList>
+          <EATabsTrigger value="overview">Skill Overview</EATabsTrigger>
+          <EATabsTrigger value="experiments">A/B Experiments</EATabsTrigger>
+          <EATabsTrigger value="prompts">Prompt Versions</EATabsTrigger>
+        </EATabsList>
+      </EATabs>
 
       {/* Tab content */}
       {activeTab === 'overview' && (
@@ -414,9 +414,9 @@ export default function AIAccuracyDashboard() {
                           <EABadge
                             variant={
                               exp.status === 'running' ? 'info' :
-                              exp.status === 'completed' ? 'success' :
-                              exp.status === 'cancelled' ? 'danger' :
-                              'secondary'
+                              exp.status === 'completed' ? 'normal' :
+                              exp.status === 'cancelled' ? 'critical' :
+                              'neutral'
                             }
                           >
                             {exp.status}
@@ -491,9 +491,9 @@ export default function AIAccuracyDashboard() {
                         </td>
                         <td className="py-3 pr-4">
                           {prompt.isActive ? (
-                            <EABadge variant="success">Active</EABadge>
+                            <EABadge variant="normal">Active</EABadge>
                           ) : (
-                            <EABadge variant="secondary">Inactive</EABadge>
+                            <EABadge variant="neutral">Inactive</EABadge>
                           )}
                         </td>
                         <td className="py-3 pr-4 text-slate-300">

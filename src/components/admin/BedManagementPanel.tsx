@@ -1084,7 +1084,7 @@ const BedManagementPanel: React.FC = () => {
           </div>
 
           {aiError && (
-            <EAAlert variant="danger">
+            <EAAlert variant="critical">
               {aiError}
             </EAAlert>
           )}

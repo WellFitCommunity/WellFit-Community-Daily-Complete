@@ -246,7 +246,7 @@ export class BedOptimizerService {
 
       // Calculate overall scores
       const totalBeds = unitCapacity.reduce((sum, u) => sum + u.total_beds, 0);
-      const occupiedBeds = unitCapacity.reduce((sum, u) => sum + u.occupied_count, 0);
+      const occupiedBeds = unitCapacity.reduce((sum, u) => sum + u.occupied, 0);
       const occupancyRate = totalBeds > 0 ? occupiedBeds / totalBeds : 0;
       const targetOccupancy = 0.85; // Industry standard
 
@@ -270,7 +270,7 @@ export class BedOptimizerService {
         unitBreakdown: unitCapacity.map(u => ({
           unitId: u.unit_id,
           unitName: u.unit_name,
-          occupancy: u.total_beds > 0 ? u.occupied_count / u.total_beds : 0,
+          occupancy: u.total_beds > 0 ? u.occupied / u.total_beds : 0,
           efficiency: this.calculateUnitEfficiency(u),
           bottlenecks: this.identifyUnitBottlenecks(u),
           opportunities: this.identifyUnitOpportunities(u)
@@ -284,7 +284,7 @@ export class BedOptimizerService {
 
       return success(report);
     } catch (error: any) {
-      return failure('OPTIMIZATION_FAILED', `Failed to generate optimization report: ${error.message}`, error);
+      return failure('OPERATION_FAILED', `Failed to generate optimization report: ${error.message}`, error);
     }
   }
 
@@ -430,16 +430,24 @@ Return response as strict JSON:
 
       const parsed = this.parseJSON(aiResponse.response);
 
+      // Safely extract and validate risk level
+      const riskLevelValue = parsed.riskLevel as string | undefined;
+      const validRiskLevels = ['low', 'moderate', 'high', 'critical'] as const;
+      const riskLevel: 'low' | 'moderate' | 'high' | 'critical' =
+        validRiskLevels.includes(riskLevelValue as typeof validRiskLevels[number])
+          ? (riskLevelValue as 'low' | 'moderate' | 'high' | 'critical')
+          : 'moderate';
+
       const forecast: CapacityForecast = {
         forecastDate: forecastDate.toISOString(),
         shiftPeriod,
-        predictedCensus: parsed.predictedCensus || currentCensus,
-        predictedDischarges: parsed.predictedDischarges || Math.round(avgDischarges),
-        predictedAdmissions: parsed.predictedAdmissions || Math.round(avgAdmissions),
-        predictedAvailableBeds: parsed.predictedAvailableBeds || (totalBeds - currentCensus),
-        confidenceLevel: parsed.confidenceLevel || 0.75,
-        riskLevel: parsed.riskLevel || 'moderate',
-        capacityUtilization: parsed.capacityUtilization || (currentCensus / totalBeds),
+        predictedCensus: Number(parsed.predictedCensus) || currentCensus,
+        predictedDischarges: Number(parsed.predictedDischarges) || Math.round(avgDischarges),
+        predictedAdmissions: Number(parsed.predictedAdmissions) || Math.round(avgAdmissions),
+        predictedAvailableBeds: Number(parsed.predictedAvailableBeds) || (totalBeds - currentCensus),
+        confidenceLevel: Number(parsed.confidenceLevel) || 0.75,
+        riskLevel,
+        capacityUtilization: Number(parsed.capacityUtilization) || (currentCensus / totalBeds),
         factors: {
           dayOfWeek,
           historicalPattern: `Avg ${Math.round(avgDischarges)} discharges, ${Math.round(avgAdmissions)} admissions`,
@@ -448,7 +456,7 @@ Return response as strict JSON:
           pendingTransfers: 0,
           seasonalAdjustment: 1.0
         },
-        recommendations: parsed.recommendations || [],
+        recommendations: Array.isArray(parsed.recommendations) ? parsed.recommendations as string[] : [],
         aiModel: aiResponse.model,
         aiCost: aiResponse.cost
       };
@@ -509,8 +517,8 @@ Return response as strict JSON:
 
     prompt += `=== UNIT BREAKDOWN ===\n`;
     unitCapacity.forEach(u => {
-      const occ = u.total_beds > 0 ? ((u.occupied_count / u.total_beds) * 100).toFixed(0) : 0;
-      prompt += `- ${u.unit_name}: ${u.occupied_count}/${u.total_beds} (${occ}%)\n`;
+      const occ = u.total_beds > 0 ? ((u.occupied / u.total_beds) * 100).toFixed(0) : 0;
+      prompt += `- ${u.unit_name}: ${u.occupied}/${u.total_beds} (${occ}%)\n`;
     });
 
     prompt += `\n=== HISTORICAL PATTERNS (${dayOfWeek}s) ===\n`;
@@ -653,7 +661,7 @@ Return JSON array of top 10 discharge candidates:
         .eq('is_active', true);
 
       if (error || !availableBeds || availableBeds.length === 0) {
-        return failure('NO_BEDS_AVAILABLE', 'No available beds found');
+        return failure('NOT_FOUND', 'No available beds found');
       }
 
       // Build AI prompt for bed matching
@@ -707,12 +715,34 @@ Return JSON:
 
       const parsed = this.parseJSON(aiResponse.response);
 
-      // Track for accuracy monitoring
-      await this.trackBedAssignment(tenantId, patient, parsed);
+      // Safely extract matchFactors from parsed response
+      const matchFactorsRaw = parsed.matchFactors as Record<string, unknown> | undefined;
 
-      return success(parsed as BedAssignmentRecommendation);
+      // Validate and construct the recommendation
+      const recommendation: BedAssignmentRecommendation = {
+        recommendedBedId: String(parsed.recommendedBedId || ''),
+        bedLabel: String(parsed.bedLabel || ''),
+        unitName: String(parsed.unitName || ''),
+        matchScore: Number(parsed.matchScore) || 0,
+        matchFactors: {
+          acuityMatch: Boolean(matchFactorsRaw?.acuityMatch),
+          equipmentMatch: Boolean(matchFactorsRaw?.equipmentMatch),
+          isolationMatch: Boolean(matchFactorsRaw?.isolationMatch),
+          unitPreference: Boolean(matchFactorsRaw?.unitPreference),
+          proximityToNurseStation: Boolean(matchFactorsRaw?.proximityToNurseStation),
+        },
+        alternativeBeds: Array.isArray(parsed.alternativeBeds)
+          ? (parsed.alternativeBeds as Array<{bedId: string; bedLabel: string; matchScore: number; reason: string}>)
+          : [],
+        aiRationale: String(parsed.aiRationale || ''),
+      };
+
+      // Track for accuracy monitoring
+      await this.trackBedAssignment(tenantId, patient, recommendation);
+
+      return success(recommendation);
     } catch (error: any) {
-      return failure('ASSIGNMENT_FAILED', `Failed to recommend bed: ${error.message}`, error);
+      return failure('OPERATION_FAILED', `Failed to recommend bed: ${error.message}`, error);
     }
   }
 
@@ -757,16 +787,16 @@ Return JSON:
 
     // Check for high occupancy units
     unitCapacity.forEach(unit => {
-      const occupancy = unit.total_beds > 0 ? unit.occupied_count / unit.total_beds : 0;
+      const occupancy = unit.total_beds > 0 ? unit.occupied / unit.total_beds : 0;
 
       if (occupancy > 0.95) {
         insights.push({
           insightType: 'warning',
           severity: 'critical',
           title: `${unit.unit_name} at critical capacity`,
-          description: `${unit.unit_name} is at ${Math.round(occupancy * 100)}% occupancy with only ${unit.available_count} beds available.`,
+          description: `${unit.unit_name} is at ${Math.round(occupancy * 100)}% occupancy with only ${unit.available} beds available.`,
           affectedUnits: [unit.unit_name],
-          metrics: { occupancy, available: unit.available_count },
+          metrics: { occupancy, available: unit.available },
           recommendations: [
             { action: 'Expedite discharge rounds', priority: 'urgent', estimatedImpact: '1-2 beds freed', timeframe: '2 hours' },
             { action: 'Consider overflow to adjacent unit', priority: 'high', estimatedImpact: 'Prevent diversion', timeframe: 'Immediate' }
@@ -779,7 +809,7 @@ Return JSON:
           title: `${unit.unit_name} approaching capacity`,
           description: `${unit.unit_name} is at ${Math.round(occupancy * 100)}% occupancy.`,
           affectedUnits: [unit.unit_name],
-          metrics: { occupancy, available: unit.available_count },
+          metrics: { occupancy, available: unit.available },
           recommendations: [
             { action: 'Review discharge readiness', priority: 'medium', estimatedImpact: 'Proactive bed management', timeframe: '4 hours' }
           ]
@@ -806,7 +836,7 @@ Return JSON:
 
     // Check for underutilization
     unitCapacity.forEach(unit => {
-      const occupancy = unit.total_beds > 0 ? unit.occupied_count / unit.total_beds : 0;
+      const occupancy = unit.total_beds > 0 ? unit.occupied / unit.total_beds : 0;
 
       if (occupancy < 0.5 && unit.total_beds >= 10) {
         insights.push({
@@ -815,7 +845,7 @@ Return JSON:
           title: `${unit.unit_name} underutilized`,
           description: `${unit.unit_name} is at ${Math.round(occupancy * 100)}% occupancy. Consider accepting overflow.`,
           affectedUnits: [unit.unit_name],
-          metrics: { occupancy, available: unit.available_count },
+          metrics: { occupancy, available: unit.available },
           recommendations: [
             { action: 'Accept overflow from high-census units', priority: 'low', estimatedImpact: 'Balance census', timeframe: 'As needed' }
           ]
@@ -885,8 +915,8 @@ Return JSON:
 
     // Adjust for overall occupancy
     const totalBeds = unitCapacity.reduce((sum, u) => sum + u.total_beds, 0);
-    const occupied = unitCapacity.reduce((sum, u) => sum + u.occupied_count, 0);
-    const occupancy = totalBeds > 0 ? occupied / totalBeds : 0;
+    const occupiedCount = unitCapacity.reduce((sum, u) => sum + u.occupied, 0);
+    const occupancy = totalBeds > 0 ? occupiedCount / totalBeds : 0;
 
     if (occupancy >= 0.75 && occupancy <= 0.90) {
       score += 10; // Optimal range bonus
@@ -895,7 +925,7 @@ Return JSON:
     }
 
     // Adjust for dirty bed count
-    const dirtyCount = unitCapacity.reduce((sum, u) => sum + (u.pending_clean_count || 0), 0);
+    const dirtyCount = unitCapacity.reduce((sum, u) => sum + (u.pending_clean || 0), 0);
     if (dirtyCount > 5) {
       score -= 5;
     }
@@ -904,28 +934,28 @@ Return JSON:
   }
 
   private calculateUnitEfficiency(unit: UnitCapacity): number {
-    const occupancy = unit.total_beds > 0 ? unit.occupied_count / unit.total_beds : 0;
+    const occupancy = unit.total_beds > 0 ? unit.occupied / unit.total_beds : 0;
     const targetOccupancy = 0.85;
     return Math.max(0, 100 - Math.abs(occupancy - targetOccupancy) * 100);
   }
 
   private identifyUnitBottlenecks(unit: UnitCapacity): string[] {
     const bottlenecks: string[] = [];
-    const occupancy = unit.total_beds > 0 ? unit.occupied_count / unit.total_beds : 0;
+    const occupancy = unit.total_beds > 0 ? unit.occupied / unit.total_beds : 0;
 
     if (occupancy > 0.95) bottlenecks.push('Critical occupancy');
-    if ((unit.pending_clean_count || 0) > 2) bottlenecks.push('Bed turnaround delays');
-    if (unit.available_count === 0) bottlenecks.push('No available beds');
+    if ((unit.pending_clean || 0) > 2) bottlenecks.push('Bed turnaround delays');
+    if (unit.available === 0) bottlenecks.push('No available beds');
 
     return bottlenecks;
   }
 
   private identifyUnitOpportunities(unit: UnitCapacity): string[] {
     const opportunities: string[] = [];
-    const occupancy = unit.total_beds > 0 ? unit.occupied_count / unit.total_beds : 0;
+    const occupancy = unit.total_beds > 0 ? unit.occupied / unit.total_beds : 0;
 
     if (occupancy < 0.70) opportunities.push('Accept overflow patients');
-    if (unit.available_count > 5) opportunities.push('Elective admission capacity');
+    if (unit.available > 5) opportunities.push('Elective admission capacity');
 
     return opportunities;
   }

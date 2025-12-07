@@ -138,13 +138,13 @@ describe('AccuracyTrackingService', () => {
         { is_accurate: null, confidence_score: 0.8, cost_usd: 0.01, latency_ms: 1050 } // Pending
       ];
 
-      mockSupabase.from.mockReturnValueOnce({
+      (mockSupabase.from as jest.Mock).mockReturnValueOnce({
         select: jest.fn().mockReturnValueOnce({
           eq: jest.fn().mockReturnValueOnce({
             gte: jest.fn().mockResolvedValueOnce({ data: mockPredictions, error: null })
           })
         })
-      });
+      } as any);
 
       const result = await service.getSkillAccuracy('readmission_risk', 30);
 
@@ -156,13 +156,13 @@ describe('AccuracyTrackingService', () => {
     });
 
     it('should handle no predictions gracefully', async () => {
-      mockSupabase.from.mockReturnValueOnce({
+      (mockSupabase.from as jest.Mock).mockReturnValueOnce({
         select: jest.fn().mockReturnValueOnce({
           eq: jest.fn().mockReturnValueOnce({
             gte: jest.fn().mockResolvedValueOnce({ data: [], error: null })
           })
         })
-      });
+      } as any);
 
       const result = await service.getSkillAccuracy('sdoh_detection', 30);
 
@@ -185,7 +185,7 @@ describe('AccuracyTrackingService', () => {
         accuracy_rate: 0.87
       };
 
-      mockSupabase.from.mockReturnValueOnce({
+      (mockSupabase.from as jest.Mock).mockReturnValueOnce({
         select: jest.fn().mockReturnValueOnce({
           eq: jest.fn().mockReturnValueOnce({
             eq: jest.fn().mockReturnValueOnce({
@@ -195,7 +195,7 @@ describe('AccuracyTrackingService', () => {
             })
           })
         })
-      });
+      } as any);
 
       const result = await service.getActivePrompt('billing_codes');
 
@@ -206,7 +206,7 @@ describe('AccuracyTrackingService', () => {
 
     it('should create new prompt version with incremented number', async () => {
       // Mock existing versions query
-      mockSupabase.from.mockReturnValueOnce({
+      (mockSupabase.from as jest.Mock).mockReturnValueOnce({
         select: jest.fn().mockReturnValueOnce({
           eq: jest.fn().mockReturnValueOnce({
             eq: jest.fn().mockReturnValueOnce({
@@ -219,10 +219,10 @@ describe('AccuracyTrackingService', () => {
             })
           })
         })
-      });
+      } as any);
 
       // Mock insert
-      mockSupabase.from.mockReturnValueOnce({
+      (mockSupabase.from as jest.Mock).mockReturnValueOnce({
         insert: jest.fn().mockReturnValueOnce({
           select: jest.fn().mockReturnValueOnce({
             single: jest.fn().mockResolvedValueOnce({
@@ -240,7 +240,7 @@ describe('AccuracyTrackingService', () => {
             })
           })
         })
-      });
+      } as any);
 
       const result = await service.createPromptVersion(
         'billing_codes',
@@ -258,9 +258,9 @@ describe('AccuracyTrackingService', () => {
 
   describe('billing code accuracy tracking', () => {
     it('should calculate code acceptance rate correctly', async () => {
-      mockSupabase.from.mockReturnValueOnce({
+      (mockSupabase.from as jest.Mock).mockReturnValueOnce({
         insert: jest.fn().mockResolvedValueOnce({ error: null })
-      });
+      } as any);
       mockSupabase.rpc.mockResolvedValueOnce({ data: true, error: null });
 
       const result = await service.recordBillingCodeAccuracy(
@@ -287,7 +287,7 @@ describe('AccuracyTrackingService', () => {
 
   describe('experiment management', () => {
     it('should create A/B test experiment', async () => {
-      mockSupabase.from.mockReturnValueOnce({
+      (mockSupabase.from as jest.Mock).mockReturnValueOnce({
         insert: jest.fn().mockReturnValueOnce({
           select: jest.fn().mockReturnValueOnce({
             single: jest.fn().mockResolvedValueOnce({
@@ -296,7 +296,7 @@ describe('AccuracyTrackingService', () => {
             })
           })
         })
-      });
+      } as any);
 
       const result = await service.createExperiment({
         experimentName: 'billing-v2-vs-v3',
@@ -313,7 +313,7 @@ describe('AccuracyTrackingService', () => {
     });
 
     it('should calculate statistical significance correctly', async () => {
-      mockSupabase.from.mockReturnValueOnce({
+      (mockSupabase.from as jest.Mock).mockReturnValueOnce({
         select: jest.fn().mockReturnValueOnce({
           eq: jest.fn().mockReturnValueOnce({
             single: jest.fn().mockResolvedValueOnce({
@@ -328,7 +328,7 @@ describe('AccuracyTrackingService', () => {
             })
           })
         })
-      });
+      } as any);
 
       const result = await service.getExperimentResults('exp-123');
 
@@ -393,8 +393,9 @@ describe('Optimized Prompts', () => {
 
   it('should include structured output format in all prompts', () => {
     for (const [skillName, prompt] of Object.entries(PROMPT_REGISTRY)) {
-      expect(prompt.systemPrompt).toContain('JSON');
-      expect(prompt.expectedOutputFormat).toBe('json');
+      const p = prompt as { systemPrompt: string; expectedOutputFormat: string };
+      expect(p.systemPrompt).toContain('JSON');
+      expect(p.expectedOutputFormat).toBe('json');
     }
   });
 });
