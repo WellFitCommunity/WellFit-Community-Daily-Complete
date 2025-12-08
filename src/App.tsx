@@ -7,6 +7,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { SessionTimeoutProvider } from './contexts/SessionTimeoutContext';
 import { TimeClockProvider } from './contexts/TimeClockContext';
 import { NavigationHistoryProvider } from './contexts/NavigationHistoryContext';
+import { PatientProvider } from './contexts/PatientContext';
 import { BrandingConfig, getCurrentBranding } from './branding.config';
 import { BrandingContext } from './BrandingContext';
 import { performanceMonitor } from './services/performanceMonitoring';
@@ -245,6 +246,8 @@ function Shell() {
         <SessionTimeoutProvider>
           {/* Time Clock - Auto clock-in on login, prompt on logout */}
           <TimeClockProvider>
+            {/* Patient Context - Maintain selected patient across dashboards (ATLUS: Unity) */}
+            <PatientProvider>
             {/* Navigation History - Track in-app navigation for reliable back button */}
             <NavigationHistoryProvider>
               {/* Global Learning Milestone Celebration Display */}
@@ -1138,6 +1141,7 @@ function Shell() {
             <VoiceCommandBar />
           </AuthGate>
             </NavigationHistoryProvider>
+            </PatientProvider>
           </TimeClockProvider>
         </SessionTimeoutProvider>
     </BrandingContext.Provider>

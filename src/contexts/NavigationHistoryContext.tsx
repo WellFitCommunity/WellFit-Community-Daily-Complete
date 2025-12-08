@@ -7,11 +7,18 @@
  *
  * This solves the problem where navigate(-1) might go back to login
  * or external pages.
+ *
+ * ATLUS Enhancement: Now persists to localStorage for session continuity
+ * - Navigation history survives page refresh
+ * - "Resume where you left off" functionality
  */
 
-import React, { createContext, useContext, useEffect, useRef, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useCallback, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
+
+// localStorage key for persistence
+const STORAGE_KEY = 'wf_navigation_history';
 
 // Routes that should NOT be added to navigation history
 const AUTH_ROUTES = [
@@ -47,9 +54,40 @@ interface NavigationHistoryContextType {
   clearHistory: () => void;
   /** Current navigation stack (for debugging) */
   historyStack: string[];
+  /** Get the last route user was on (for "resume where you left off") */
+  getLastRoute: () => string | null;
+  /** Check if session can be resumed */
+  canResumeSession: boolean;
+  /** Resume to last visited route */
+  resumeSession: () => void;
 }
 
 const NavigationHistoryContext = createContext<NavigationHistoryContextType | undefined>(undefined);
+
+// Helper to safely parse localStorage
+const loadFromStorage = (): string[] => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+    }
+  } catch {
+    // Ignore parse errors
+  }
+  return [];
+};
+
+// Helper to save to localStorage
+const saveToStorage = (stack: string[]) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(stack));
+  } catch {
+    // Ignore storage errors (quota exceeded, etc.)
+  }
+};
 
 export const NavigationHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
@@ -57,10 +95,17 @@ export const NavigationHistoryProvider: React.FC<{ children: React.ReactNode }> 
   const { user } = useAuth();
 
   // Use ref to avoid re-renders on every navigation
-  const historyStackRef = useRef<string[]>([]);
+  // Initialize from localStorage for session continuity
+  const historyStackRef = useRef<string[]>(loadFromStorage());
 
   // Track if we're in a back navigation to avoid re-adding the route
   const isNavigatingBackRef = useRef(false);
+
+  // Track if there's a resumable session
+  const [canResumeSession, setCanResumeSession] = useState(() => {
+    const stored = loadFromStorage();
+    return stored.length > 0;
+  });
 
   // Get user role for fallback determination
   const getUserRole = useCallback((): string => {
@@ -129,13 +174,25 @@ export const NavigationHistoryProvider: React.FC<{ children: React.ReactNode }> 
     }
 
     // Add to stack (limit to 50 entries to prevent memory issues)
-    historyStackRef.current = [...stack.slice(-49), currentPath];
+    const newStack = [...stack.slice(-49), currentPath];
+    historyStackRef.current = newStack;
+
+    // Persist to localStorage for session continuity (ATLUS: Unity)
+    saveToStorage(newStack);
+    setCanResumeSession(true);
   }, [location.pathname]);
 
   // Clear history on logout or when user changes
   useEffect(() => {
     if (!user) {
       historyStackRef.current = [];
+      // Also clear localStorage on logout
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch {
+        // Ignore
+      }
+      setCanResumeSession(false);
     }
   }, [user]);
 
@@ -177,7 +234,36 @@ export const NavigationHistoryProvider: React.FC<{ children: React.ReactNode }> 
 
   const clearHistory = useCallback(() => {
     historyStackRef.current = [];
+    // Also clear localStorage
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // Ignore
+    }
+    setCanResumeSession(false);
   }, []);
+
+  // Get the last route user was on (ATLUS: Unity - "resume where you left off")
+  const getLastRoute = useCallback((): string | null => {
+    const stack = historyStackRef.current;
+    if (stack.length > 0) {
+      return stack[stack.length - 1];
+    }
+    // Try loading from storage if stack is empty
+    const stored = loadFromStorage();
+    if (stored.length > 0) {
+      return stored[stored.length - 1];
+    }
+    return null;
+  }, []);
+
+  // Resume to last visited route
+  const resumeSession = useCallback(() => {
+    const lastRoute = getLastRoute();
+    if (lastRoute && lastRoute !== location.pathname) {
+      navigate(lastRoute);
+    }
+  }, [getLastRoute, navigate, location.pathname]);
 
   const value: NavigationHistoryContextType = {
     canGoBack,
@@ -185,6 +271,9 @@ export const NavigationHistoryProvider: React.FC<{ children: React.ReactNode }> 
     getPreviousRoute,
     clearHistory,
     historyStack: historyStackRef.current,
+    getLastRoute,
+    canResumeSession,
+    resumeSession,
   };
 
   return (

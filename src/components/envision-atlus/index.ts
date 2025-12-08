@@ -16,6 +16,8 @@ export { EAPageLayout } from './EAPageLayout';
 export { EARiskIndicator } from './EARiskIndicator';
 export { EASwitch } from './EASwitch';
 export { EATabs, EATabsList, EATabsTrigger, EATabsContent } from './EATabs';
+export { EABreadcrumbs } from './EABreadcrumbs';
+export { EAAffirmationToast, useAffirmationToast } from './EAAffirmationToast';
 
 // Re-export theme utilities
 export { envisionAtlus, getRiskStyles } from '../../styles/envision-atlus-theme';
