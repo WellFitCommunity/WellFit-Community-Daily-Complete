@@ -374,6 +374,143 @@ export const VOICE_COMMANDS: VoiceCommandMapping[] = [
     targetId: '/admin/bulk-export',
     displayName: 'Bulk Export',
   },
+
+  // ============================================================================
+  // HEALTHCARE WORKER VOICE COMMANDS (ATLUS: Intuitive Technology)
+  // These commands reduce clicks for common healthcare workflows
+  // ============================================================================
+
+  // Shift Handoff Commands
+  {
+    phrases: ['shift handoff', 'handoff dashboard', 'nurse handoff', 'start handoff'],
+    targetType: 'route',
+    targetId: '/shift-handoff',
+    displayName: 'Shift Handoff Dashboard',
+  },
+  {
+    phrases: ['accept handoff', 'accept all handoffs', 'confirm handoff'],
+    targetType: 'action',
+    targetId: 'handoff:accept_all',
+    displayName: 'Accept All Handoffs',
+  },
+
+  // Bed Management Voice Commands
+  {
+    phrases: ['available beds', 'show available beds', 'free beds', 'open beds'],
+    targetType: 'action',
+    targetId: 'beds:filter_available',
+    displayName: 'Show Available Beds',
+  },
+  {
+    phrases: ['icu beds', 'show icu', 'icu available'],
+    targetType: 'action',
+    targetId: 'beds:filter_icu',
+    displayName: 'Show ICU Beds',
+  },
+  {
+    phrases: ['refresh beds', 'update bed board', 'refresh bed board'],
+    targetType: 'action',
+    targetId: 'beds:refresh',
+    displayName: 'Refresh Bed Board',
+  },
+
+  // Mental Health Dashboard
+  {
+    phrases: ['mental health', 'mental health dashboard', 'psych dashboard'],
+    targetType: 'route',
+    targetId: '/mental-health',
+    displayName: 'Mental Health Dashboard',
+  },
+
+  // Discharged Patients
+  {
+    phrases: ['discharged patients', 'discharge dashboard', 'discharged'],
+    targetType: 'route',
+    targetId: '/discharged-patients',
+    displayName: 'Discharged Patients',
+  },
+
+  // Transfer Logs
+  {
+    phrases: ['transfer logs', 'transfers', 'patient transfers'],
+    targetType: 'route',
+    targetId: '/transfer-logs',
+    displayName: 'Transfer Logs',
+  },
+
+  // Frequent Flyers
+  {
+    phrases: ['frequent flyers', 'repeat patients', 'high utilizers'],
+    targetType: 'route',
+    targetId: '/frequent-flyers',
+    displayName: 'Frequent Flyer Dashboard',
+  },
+
+  // Questionnaire Analytics
+  {
+    phrases: ['questionnaire analytics', 'questionnaires', 'survey analytics'],
+    targetType: 'route',
+    targetId: '/questionnaire-analytics',
+    displayName: 'Questionnaire Analytics',
+  },
+
+  // Clinical Alerts
+  {
+    phrases: ['clinical alerts', 'alerts dashboard', 'patient alerts'],
+    targetType: 'route',
+    targetId: '/clinical-alerts',
+    displayName: 'Clinical Alerts',
+  },
+
+  // Memory Clinic
+  {
+    phrases: ['memory clinic', 'dementia clinic', 'cognitive assessment'],
+    targetType: 'route',
+    targetId: '/memory-clinic',
+    displayName: 'Memory Clinic',
+  },
+
+  // Healthcare Algorithms
+  {
+    phrases: ['healthcare algorithms', 'ai algorithms', 'clinical algorithms'],
+    targetType: 'route',
+    targetId: '/healthcare-algorithms',
+    displayName: 'Healthcare Algorithms',
+  },
+
+  // AI Revenue Dashboard
+  {
+    phrases: ['ai revenue', 'ai billing', 'revenue ai'],
+    targetType: 'route',
+    targetId: '/ai-revenue',
+    displayName: 'AI Revenue Dashboard',
+  },
+
+  // Quick Status Commands (ATLUS: Service - reduce cognitive load)
+  {
+    phrases: ['show all patients', 'all patients', 'patient list all'],
+    targetType: 'action',
+    targetId: 'patients:show_all',
+    displayName: 'Show All Patients',
+  },
+  {
+    phrases: ['high risk patients', 'critical patients', 'show critical'],
+    targetType: 'action',
+    targetId: 'patients:filter_high_risk',
+    displayName: 'Show High Risk Patients',
+  },
+  {
+    phrases: ['pending tasks', 'my tasks', 'show tasks'],
+    targetType: 'action',
+    targetId: 'tasks:show_pending',
+    displayName: 'Show Pending Tasks',
+  },
+  {
+    phrases: ['go home', 'home', 'main dashboard', 'dashboard'],
+    targetType: 'route',
+    targetId: '/admin-panel',
+    displayName: 'Admin Dashboard',
+  },
 ];
 
 /**
