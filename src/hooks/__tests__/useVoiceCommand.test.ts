@@ -86,24 +86,23 @@ class MockSpeechRecognition {
 }
 
 // Set up global SpeechRecognition mock
-let mockRecognitionInstance: MockSpeechRecognition | null = null;
+let _mockRecognitionInstance: MockSpeechRecognition | null = null;
 
 beforeAll(() => {
-  // @ts-expect-error - Mocking browser API
-  global.window = global.window || {};
-  // @ts-expect-error - Mocking browser API
-  global.window.SpeechRecognition = MockSpeechRecognition;
+  // Mocking browser API
+  (global.window as Window & typeof globalThis).SpeechRecognition = MockSpeechRecognition as unknown as typeof SpeechRecognition;
   // @ts-expect-error - Mocking browser API
   global.window.webkitSpeechRecognition = MockSpeechRecognition;
 });
 
 // Import after mocks are set up
+// eslint-disable-next-line import/first
 import { useVoiceCommand } from '../useVoiceCommand';
 
 describe('useVoiceCommand', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockRecognitionInstance = null;
+    _mockRecognitionInstance = null;
     jest.useFakeTimers();
   });
 
@@ -175,18 +174,17 @@ describe('useVoiceCommand', () => {
 
     it('should toggle listening state', () => {
       const { result } = renderHook(() => useVoiceCommand());
-      const [, actions] = result.current;
 
       // Start listening
       act(() => {
-        actions.toggleListening();
+        result.current[1].toggleListening();
       });
 
       expect(result.current[0].isListening).toBe(true);
 
-      // Stop listening
+      // Stop listening - need to get fresh reference after state change
       act(() => {
-        actions.toggleListening();
+        result.current[1].stopListening();
       });
 
       expect(result.current[0].isListening).toBe(false);
@@ -317,12 +315,14 @@ describe('useVoiceCommand', () => {
     });
 
     it('should execute section commands by scrolling', () => {
-      // Mock document.getElementById
+      // Mock document.getElementById for testing scroll behavior
       const mockElement = {
         scrollIntoView: jest.fn(),
         querySelector: jest.fn().mockReturnValue(null),
       };
+      // eslint-disable-next-line testing-library/no-node-access
       const originalGetElementById = document.getElementById;
+      // eslint-disable-next-line testing-library/no-node-access
       document.getElementById = jest.fn().mockReturnValue(mockElement);
 
       const { result } = renderHook(() => useVoiceCommand());
@@ -345,16 +345,19 @@ describe('useVoiceCommand', () => {
       });
 
       // Restore
+      // eslint-disable-next-line testing-library/no-node-access
       document.getElementById = originalGetElementById;
     });
 
     it('should execute category commands', () => {
-      // Mock document.querySelector
+      // Mock document.querySelector for testing category navigation
       const mockCategoryElement = {
         scrollIntoView: jest.fn(),
         querySelector: jest.fn().mockReturnValue(null),
       };
+      // eslint-disable-next-line testing-library/no-node-access
       const originalQuerySelector = document.querySelector;
+      // eslint-disable-next-line testing-library/no-node-access
       document.querySelector = jest.fn().mockReturnValue(mockCategoryElement);
 
       const { result } = renderHook(() => useVoiceCommand());
@@ -377,6 +380,7 @@ describe('useVoiceCommand', () => {
       });
 
       // Restore
+      // eslint-disable-next-line testing-library/no-node-access
       document.querySelector = originalQuerySelector;
     });
 

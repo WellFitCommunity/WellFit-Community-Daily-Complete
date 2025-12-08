@@ -42,7 +42,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { BedManagementService } from '../../services/bedManagementService';
-import { bedOptimizer, type OptimizationReport, type CapacityInsight } from '../../services/ai';
+import { bedOptimizer, type OptimizationReport } from '../../services/ai';
 import {
   EACard,
   EACardHeader,
@@ -157,7 +157,7 @@ const BedManagementPanel: React.FC = () => {
 
   // UI state
   const [expandedUnit, setExpandedUnit] = useState<string | null>(null);
-  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [_showAssignModal, _setShowAssignModal] = useState(false);
   const [selectedBed, setSelectedBed] = useState<BedBoardEntry | null>(null);
   const [showDischargeModal, setShowDischargeModal] = useState(false);
   const [dischargeDisposition, setDischargeDisposition] = useState<string>('');
@@ -261,7 +261,7 @@ const BedManagementPanel: React.FC = () => {
 
     return () => {
       if (recognitionRef.current) {
-        recognitionRef.current.abort();
+        recognitionRef.current.stop();
       }
     };
   }, []);

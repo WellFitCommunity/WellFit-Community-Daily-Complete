@@ -777,47 +777,30 @@ For real-time medical documentation, use **SmartScribe**:
 
 ---
 
-## 🚨 MORNING TODO (2025-12-02) - FIX THESE FIRST
+## Current Development Status (2025-12-08)
 
-### Priority 1: Verify Envision Super Admin Dashboard
-**Status:** Migration applied, edge function deployed - needs verification
+### Recently Completed
+- **ATLUS Alignment Audit** - Comprehensive audit of platform alignment with ATLUS principles
+- **Global Voice Commands** - `VoiceCommandBar` integrated in App.tsx with 40+ voice commands
+- **Bed Management Voice** - Local voice commands for bed management workflows
+- **Test Suites** - VoiceCommandBar (27 tests), useVoiceCommand (29 tests) - all passing
 
-**What was done:**
-- Applied migration `20251202000002_complete_super_admin_setup.sql`
-- Deployed `envision-check-super-admin` edge function
-- Created RPC functions: `is_super_admin()`, `get_system_overview()`, `get_all_tenants_with_status()`
-- Created tables: `system_feature_flags`, `system_health_checks`, `super_admin_audit_log`, `system_metrics`, `ai_skill_config`
-- Added RLS policies for all super admin tables
+### ATLUS Audit Summary (Score: 7/10)
 
-**To verify:**
-1. Login to Envision portal at `/envision/login`
-2. Use Maria or Akima credentials
-3. Dashboard should load without 403/404/500 errors
-4. Check that tenant list, system overview, and feature flags display correctly
+The ATLUS alignment audit identified key areas for improvement:
 
-**If errors persist, check:**
-- Browser console for specific RPC function errors
-- Supabase logs for edge function errors
-- RLS policies may need adjustments
+| Principle | Score | Key Gap |
+|-----------|-------|---------|
+| **A - Accountability** | 9/10 | AI reasoning transparency |
+| **T - Technology** | 6/10 | Too many clicks (70% reduction needed) |
+| **L - Leading** | 7.5/10 | Missing real-time collaboration |
+| **U - Unity** | 5.5/10 | No PatientContext (critical) |
+| **S - Service** | 7/10 | No provider affirmations |
 
-### Priority 2: Fix WellFit Admin PIN Issue
-**Status:** Not started - user reported PIN stopped working
-
-**Problem:** Maria's PIN no longer works for WellFit admin login
-
-**Investigation steps:**
-1. Check `staff_pins` table for Maria's record:
-   ```sql
-   SELECT * FROM staff_pins WHERE user_id = 'ba4f20ad-2707-467b-a87f-d46fe9255d2f';
-   ```
-2. Verify PIN hash is valid (should be PBKDF2 hashed)
-3. Check if PIN verification edge function is working
-4. Review recent changes that might have affected PIN auth flow
-
-**Key files:**
-- `src/pages/AdminLoginPage.tsx` - Admin PIN login UI
-- `supabase/functions/verify-admin-pin/` - PIN verification logic
-- `staff_pins` table - stores hashed PINs
+**Critical Gaps to Address:**
+1. **PatientContext** - Patient selection lost between dashboards
+2. **Session Persistence** - Navigation history lost on refresh
+3. **Click Reduction** - Voice commands added, but need more voice-first workflows
 
 ### Super Admin Credentials Reference
 | User | Email | UUID | Role |

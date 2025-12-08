@@ -7,10 +7,10 @@
  * Copyright © 2025 Envision VirtualEdge Group LLC. All rights reserved.
  */
 
-import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
+import type { VoiceCommandMapping } from '../../../services/workflowPreferences';
 import { VoiceCommandBar, VoiceCommandButton } from '../VoiceCommandBar';
 
 // Mock react-router-dom navigation
@@ -27,7 +27,15 @@ const mockToggleListening = jest.fn();
 const mockClearTranscript = jest.fn();
 const mockExecuteCommand = jest.fn();
 
-const defaultMockState = {
+const defaultMockState: {
+  isListening: boolean;
+  isSupported: boolean;
+  transcript: string;
+  interimTranscript: string;
+  error: string | null;
+  matchedCommand: VoiceCommandMapping | null;
+  confidence: number;
+} = {
   isListening: false,
   isSupported: true,
   transcript: '',
@@ -101,7 +109,8 @@ describe('VoiceCommandBar', () => {
         </MemoryRouter>
       );
 
-      expect(container.firstChild).toBeNull();
+      // Component returns null when voice is not supported
+      expect(container.innerHTML).toBe('');
     });
 
     it('should render in minimized state by default', () => {
@@ -136,7 +145,10 @@ describe('VoiceCommandBar', () => {
         </MemoryRouter>
       );
 
-      expect(container.firstChild).toHaveClass('custom-class');
+      // The voice command bar wrapper has fixed positioning with the custom class
+      // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
+      const commandBarWrapper = container.querySelector('.custom-class');
+      expect(commandBarWrapper).toBeInTheDocument();
     });
   });
 
@@ -256,14 +268,10 @@ describe('VoiceCommandBar', () => {
       expect(screen.queryByText('Voice Commands')).not.toBeInTheDocument();
 
       // Click help button (second button with Volume2 icon)
-      const buttons = screen.getAllByRole('button');
-      const helpButton = buttons.find(btn => btn.getAttribute('title') === 'Show voice commands');
-
-      if (helpButton) {
-        await userEvent.click(helpButton);
-        // After clicking, help panel should be visible
-        expect(screen.getByText('Voice Commands')).toBeInTheDocument();
-      }
+      const helpButton = screen.getByTitle('Show voice commands');
+      await userEvent.click(helpButton);
+      // After clicking, help panel should be visible
+      expect(screen.getByText('Voice Commands')).toBeInTheDocument();
     });
 
     it('should display healthcare quick tips when listening', () => {
@@ -421,7 +429,8 @@ describe('VoiceCommandButton', () => {
       </MemoryRouter>
     );
 
-    expect(container.firstChild).toBeNull();
+    // Component returns null when voice is not supported
+    expect(container.innerHTML).toBe('');
   });
 
   it('should toggle listening on click', async () => {

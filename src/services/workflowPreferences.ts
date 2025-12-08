@@ -422,12 +422,13 @@ export const VOICE_COMMANDS: VoiceCommandMapping[] = [
     displayName: 'Mental Health Dashboard',
   },
 
-  // Discharged Patients
+  // Discharged Patients - Note: This feature is planned but route not yet implemented
+  // Redirecting to patient engagement dashboard for now
   {
     phrases: ['discharged patients', 'discharge dashboard', 'discharged'],
     targetType: 'route',
-    targetId: '/discharged-patients',
-    displayName: 'Discharged Patients',
+    targetId: '/admin',
+    displayName: 'Discharged Patients (Dashboard)',
   },
 
   // Transfer Logs
@@ -462,19 +463,19 @@ export const VOICE_COMMANDS: VoiceCommandMapping[] = [
     displayName: 'Clinical Alerts',
   },
 
-  // Memory Clinic
+  // Memory Clinic - Note: This route requires a patient ID, redirecting to neuro-suite
   {
     phrases: ['memory clinic', 'dementia clinic', 'cognitive assessment'],
     targetType: 'route',
-    targetId: '/memory-clinic',
-    displayName: 'Memory Clinic',
+    targetId: '/neuro-suite',
+    displayName: 'Memory Clinic (NeuroSuite)',
   },
 
   // Healthcare Algorithms
   {
     phrases: ['healthcare algorithms', 'ai algorithms', 'clinical algorithms'],
     targetType: 'route',
-    targetId: '/healthcare-algorithms',
+    targetId: '/admin/healthcare-algorithms',
     displayName: 'Healthcare Algorithms',
   },
 
@@ -482,7 +483,7 @@ export const VOICE_COMMANDS: VoiceCommandMapping[] = [
   {
     phrases: ['ai revenue', 'ai billing', 'revenue ai'],
     targetType: 'route',
-    targetId: '/ai-revenue',
+    targetId: '/admin/ai-revenue',
     displayName: 'AI Revenue Dashboard',
   },
 
@@ -508,7 +509,7 @@ export const VOICE_COMMANDS: VoiceCommandMapping[] = [
   {
     phrases: ['go home', 'home', 'main dashboard', 'dashboard'],
     targetType: 'route',
-    targetId: '/admin-panel',
+    targetId: '/admin',
     displayName: 'Admin Dashboard',
   },
 ];
