@@ -156,9 +156,15 @@ export const VoiceCommandBar: React.FC<VoiceCommandBarProps> = ({
               </div>
             )}
 
-            {/* Quick Tips */}
+            {/* Quick Tips - Healthcare focused (ATLUS: Intuitive Technology) */}
             <div className="flex flex-wrap gap-1">
-              {['Billing', 'Patient List', 'ER Dashboard'].map((tip) => (
+              {[
+                'Shift Handoff',
+                'Available Beds',
+                'High Risk Patients',
+                'NeuroSuite',
+                'Care Coordination',
+              ].map((tip) => (
                 <span key={tip} className="px-2 py-0.5 bg-slate-700 rounded text-xs text-slate-300">
                   "{tip}"
                 </span>
