@@ -7,11 +7,13 @@
  * - Bed assignment and discharge workflows
  * - ML learning feedback for prediction improvement
  * - Forecast visualization and accuracy tracking
+ * - VOICE COMMANDS for hands-free operation (ATLUS aligned)
+ * - Positive affirmations for healthcare worker support
  *
  * Copyright © 2025 Envision VirtualEdge Group LLC. All rights reserved.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Bed as BedIcon,
@@ -34,6 +36,9 @@ import {
   UserMinus,
   FileText,
   ArrowRight,
+  Mic,
+  MicOff,
+  Volume2,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { BedManagementService } from '../../services/bedManagementService';
@@ -63,8 +68,40 @@ import {
   getOccupancyColor,
 } from '../../types/bed';
 
-// Tab type
-type TabType = 'bed-board' | 'capacity' | 'forecasts' | 'learning' | 'ai-optimization';
+// Tab type - SIMPLIFIED from 5 tabs to 3 (ATLUS: reduce cognitive load)
+type TabType = 'real-time' | 'forecasts-ai' | 'learning';
+
+// Voice command patterns for bed management
+const BED_VOICE_COMMANDS = [
+  { pattern: /mark\s+(?:bed\s+)?(.+?)\s+(?:as\s+)?ready/i, action: 'mark_ready' },
+  { pattern: /start\s+cleaning\s+(?:bed\s+)?(.+)/i, action: 'start_cleaning' },
+  { pattern: /discharge\s+(?:bed\s+)?(.+?)\s+(?:to\s+)?(.+)?/i, action: 'discharge' },
+  { pattern: /show\s+(?:me\s+)?available\s+(?:beds\s+)?(?:in\s+)?(.+)?/i, action: 'filter_available' },
+  { pattern: /show\s+(?:me\s+)?(?:all\s+)?(.+?)\s+beds/i, action: 'filter_unit' },
+  { pattern: /refresh|update/i, action: 'refresh' },
+];
+
+// Positive affirmations for healthcare workers (ATLUS: Service)
+const BED_AFFIRMATIONS = {
+  bed_ready: [
+    "Bed ready! You're keeping the flow moving.",
+    "Nice work! That's one more bed available for patients.",
+    "Bed turned over successfully. Great hustle!",
+  ],
+  cleaning_started: [
+    "Cleaning started. Thanks for staying on top of it!",
+    "Got it! EVS notified.",
+  ],
+  discharge_complete: [
+    "Discharge complete! Smooth transition.",
+    "Patient discharged successfully. Great care coordination!",
+    "Done! Transfer packet created for seamless handoff.",
+  ],
+  bulk_action: [
+    "Bulk update complete! You just saved 5 minutes.",
+    "All beds updated. Efficiency at its finest!",
+  ],
+};
 
 // Unit type categories for quick filtering
 type UnitTypeCategory = 'all' | 'icu' | 'step_down' | 'telemetry' | 'med_surg' | 'emergency' | 'labor_delivery' | 'pediatric' | 'specialty' | 'other';
@@ -82,13 +119,28 @@ const UNIT_TYPE_CATEGORIES: { id: UnitTypeCategory; label: string; types: UnitTy
   { id: 'other', label: 'Other', types: ['or', 'pacu', 'observation', 'other'] },
 ];
 
+// Helper to get random affirmation
+const getAffirmation = (type: keyof typeof BED_AFFIRMATIONS): string => {
+  const messages = BED_AFFIRMATIONS[type];
+  return messages[Math.floor(Math.random() * messages.length)];
+};
+
 const BedManagementPanel: React.FC = () => {
   const navigate = useNavigate();
 
   // Core state
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<TabType>('bed-board');
+  const [activeTab, setActiveTab] = useState<TabType>('real-time');
+
+  // Voice command state (ATLUS: Intuitive Technology)
+  const [isVoiceListening, setIsVoiceListening] = useState(false);
+  const [voiceTranscript, setVoiceTranscript] = useState('');
+  const [voiceSupported, setVoiceSupported] = useState(false);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+
+  // Affirmation toast state (ATLUS: Service)
+  const [affirmationToast, setAffirmationToast] = useState<{ message: string; type: 'success' | 'info' } | null>(null);
 
   // Data state
   const [bedBoard, setBedBoard] = useState<BedBoardEntry[]>([]);
@@ -172,6 +224,133 @@ const BedManagementPanel: React.FC = () => {
     loadData();
   }, [loadData]);
 
+  // Initialize voice recognition (ATLUS: Intuitive Technology)
+  useEffect(() => {
+    const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    setVoiceSupported(!!SpeechRecognitionAPI);
+
+    if (SpeechRecognitionAPI) {
+      const recognition = new SpeechRecognitionAPI();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+
+      recognition.onresult = (event: any) => {
+        const transcript = Array.from(event.results)
+          .map((result: any) => result[0].transcript)
+          .join('');
+        setVoiceTranscript(transcript);
+
+        // Check if final result
+        if (event.results[event.results.length - 1].isFinal) {
+          processVoiceCommand(transcript);
+        }
+      };
+
+      recognition.onend = () => {
+        setIsVoiceListening(false);
+      };
+
+      recognition.onerror = () => {
+        setIsVoiceListening(false);
+        setVoiceTranscript('');
+      };
+
+      recognitionRef.current = recognition;
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
+      }
+    };
+  }, []);
+
+  // Show affirmation toast (ATLUS: Service - positive feedback)
+  const showAffirmation = useCallback((type: keyof typeof BED_AFFIRMATIONS) => {
+    const message = getAffirmation(type);
+    setAffirmationToast({ message, type: 'success' });
+
+    // Auto-dismiss after 4 seconds
+    setTimeout(() => {
+      setAffirmationToast(null);
+    }, 4000);
+  }, []);
+
+  // Process voice commands (ATLUS: Intuitive Technology)
+  const processVoiceCommand = useCallback((transcript: string) => {
+    const lowerTranscript = transcript.toLowerCase().trim();
+
+    for (const cmd of BED_VOICE_COMMANDS) {
+      const match = lowerTranscript.match(cmd.pattern);
+      if (match) {
+        switch (cmd.action) {
+          case 'mark_ready': {
+            const bedLabel = match[1]?.toUpperCase();
+            const bed = bedBoard.find(b =>
+              b.bed_label.toUpperCase().includes(bedLabel) ||
+              b.room_number.toUpperCase().includes(bedLabel)
+            );
+            if (bed && bed.status === 'cleaning') {
+              handleUpdateStatus(bed.bed_id, 'available');
+              showAffirmation('bed_ready');
+            }
+            break;
+          }
+          case 'start_cleaning': {
+            const bedLabel = match[1]?.toUpperCase();
+            const bed = bedBoard.find(b =>
+              b.bed_label.toUpperCase().includes(bedLabel) ||
+              b.room_number.toUpperCase().includes(bedLabel)
+            );
+            if (bed && bed.status === 'dirty') {
+              handleUpdateStatus(bed.bed_id, 'cleaning');
+              showAffirmation('cleaning_started');
+            }
+            break;
+          }
+          case 'filter_available': {
+            setSelectedStatus('available');
+            if (match[1]) {
+              // Try to match unit type
+              const unitType = match[1].toLowerCase();
+              const category = UNIT_TYPE_CATEGORIES.find(c =>
+                c.label.toLowerCase().includes(unitType)
+              );
+              if (category) {
+                setSelectedUnitTypeCategory(category.id);
+              }
+            }
+            break;
+          }
+          case 'refresh': {
+            loadData();
+            break;
+          }
+        }
+        setVoiceTranscript('');
+        return;
+      }
+    }
+
+    // No match found
+    setVoiceTranscript('');
+  }, [bedBoard, loadData, showAffirmation]);
+
+  // Toggle voice listening
+  const toggleVoiceListening = useCallback(() => {
+    if (!recognitionRef.current) return;
+
+    if (isVoiceListening) {
+      recognitionRef.current.stop();
+      setIsVoiceListening(false);
+      setVoiceTranscript('');
+    } else {
+      recognitionRef.current.start();
+      setIsVoiceListening(true);
+    }
+  }, [isVoiceListening]);
+
   /**
    * Filter beds based on search, status, and unit type category
    */
@@ -215,12 +394,18 @@ const BedManagementPanel: React.FC = () => {
   }, {} as Record<string, { unitId: string; unitName: string; unitCode: string; beds: BedBoardEntry[] }>);
 
   /**
-   * Update bed status
+   * Update bed status with positive affirmation (ATLUS: Service)
    */
   const handleUpdateStatus = async (bedId: string, newStatus: BedStatus) => {
     const result = await BedManagementService.updateBedStatus(bedId, newStatus);
     if (result.success) {
       await loadData();
+      // Show affirmation based on status change (ATLUS: Service)
+      if (newStatus === 'available') {
+        showAffirmation('bed_ready');
+      } else if (newStatus === 'cleaning') {
+        showAffirmation('cleaning_started');
+      }
     } else {
       setError(result.error.message);
     }
@@ -299,6 +484,9 @@ const BedManagementPanel: React.FC = () => {
       );
 
       if (result.success) {
+        // Show affirmation (ATLUS: Service)
+        showAffirmation('discharge_complete');
+
         // Check if this is a post-acute disposition that needs a transfer packet
         const postAcuteDispositions = [
           'Skilled Nursing Facility',
@@ -373,6 +561,35 @@ const BedManagementPanel: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Affirmation Toast (ATLUS: Service - positive feedback) */}
+      {affirmationToast && (
+        <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-top-2 duration-300">
+          <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow-lg">
+            <CheckCircle className="w-5 h-5" />
+            <span className="font-medium">{affirmationToast.message}</span>
+            <button
+              onClick={() => setAffirmationToast(null)}
+              className="ml-2 text-white/80 hover:text-white"
+            >
+              <XCircle className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Voice Command Feedback (ATLUS: Intuitive Technology) */}
+      {isVoiceListening && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
+          <div className="flex items-center gap-3 px-4 py-3 bg-slate-800 border border-teal-500 rounded-lg shadow-lg">
+            <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+            <span className="text-white font-medium">
+              {voiceTranscript || 'Listening... Try "Mark bed 205A ready"'}
+            </span>
+            <Volume2 className="w-4 h-4 text-teal-400 animate-pulse" />
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -385,6 +602,27 @@ const BedManagementPanel: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          {/* Voice Command Button (ATLUS: Intuitive Technology) */}
+          {voiceSupported && (
+            <button
+              onClick={toggleVoiceListening}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${
+                isVoiceListening
+                  ? 'bg-red-500 text-white animate-pulse'
+                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-white'
+              }`}
+              title={isVoiceListening ? 'Stop listening' : 'Voice commands: "Mark bed ready", "Start cleaning", "Show available ICU beds"'}
+            >
+              {isVoiceListening ? (
+                <MicOff className="w-4 h-4" />
+              ) : (
+                <Mic className="w-4 h-4" />
+              )}
+              <span className="text-sm hidden sm:inline">
+                {isVoiceListening ? 'Stop' : 'Voice'}
+              </span>
+            </button>
+          )}
           <EAButton
             onClick={() => navigate('/transfer-logs')}
             icon={<Package className="w-4 h-4" />}
@@ -476,14 +714,12 @@ const BedManagementPanel: React.FC = () => {
         </EACard>
       </div>
 
-      {/* Main Tabs */}
+      {/* Main Tabs - SIMPLIFIED from 5 to 3 (ATLUS: Unity - reduce cognitive load) */}
       <div className="flex gap-1 bg-slate-800 p-1 rounded-lg w-fit">
         {[
-          { id: 'bed-board', label: 'Bed Board', icon: BedIcon },
-          { id: 'capacity', label: 'Unit Capacity', icon: Building2 },
-          { id: 'forecasts', label: 'Forecasts', icon: TrendingUp },
-          { id: 'ai-optimization', label: 'AI Optimization', icon: Sparkles },
-          { id: 'learning', label: 'ML Learning', icon: Brain },
+          { id: 'real-time', label: 'Real-Time', icon: BedIcon, description: 'Bed board & capacity' },
+          { id: 'forecasts-ai', label: 'Forecasts & AI', icon: Sparkles, description: 'Predictions & optimization' },
+          { id: 'learning', label: 'ML Feedback', icon: Brain, description: 'Train the algorithm' },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -493,6 +729,7 @@ const BedManagementPanel: React.FC = () => {
                 ? 'bg-teal-600 text-white'
                 : 'text-slate-400 hover:text-white hover:bg-slate-700'
             }`}
+            title={tab.description}
           >
             <tab.icon className="w-4 h-4" />
             {tab.label}
@@ -500,8 +737,8 @@ const BedManagementPanel: React.FC = () => {
         ))}
       </div>
 
-      {/* Unit Type Quick Filter Tabs - Only visible on Bed Board */}
-      {activeTab === 'bed-board' && (
+      {/* Unit Type Quick Filter Tabs - Only visible on Real-Time tab */}
+      {activeTab === 'real-time' && (
         <div className="space-y-2">
           <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Quick Filter by Unit Type</p>
           <div className="flex flex-wrap gap-2">
@@ -537,7 +774,7 @@ const BedManagementPanel: React.FC = () => {
       )}
 
       {/* Filters */}
-      {(activeTab === 'bed-board' || activeTab === 'capacity') && (
+      {activeTab === 'real-time' && (
         <div className="flex flex-wrap items-center gap-4">
           <div className="relative flex-1 max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -581,7 +818,8 @@ const BedManagementPanel: React.FC = () => {
       )}
 
       {/* Tab Content */}
-      {activeTab === 'bed-board' && (
+      {/* REAL-TIME TAB: Combines Bed Board + Capacity (ATLUS: Unity) */}
+      {activeTab === 'real-time' && (
         <div className="space-y-4">
           {Object.values(bedsByUnit).length === 0 ? (
             <EACard>
@@ -694,9 +932,13 @@ const BedManagementPanel: React.FC = () => {
         </div>
       )}
 
-      {activeTab === 'capacity' && (
-        <div className="space-y-4">
+      {/* Unit Capacity Table - shown in real-time tab below bed board */}
+      {activeTab === 'real-time' && unitCapacity.length > 0 && (
+        <div className="space-y-4 mt-6">
           <EACard>
+            <EACardHeader icon={<Building2 className="w-5 h-5" />}>
+              Unit Capacity Overview
+            </EACardHeader>
             <EACardContent className="p-0">
               <table className="w-full">
                 <thead>
@@ -771,7 +1013,8 @@ const BedManagementPanel: React.FC = () => {
         </div>
       )}
 
-      {activeTab === 'forecasts' && (
+      {/* FORECASTS & AI TAB: Combines Forecasts + AI Optimization (ATLUS: Unity) */}
+      {activeTab === 'forecasts-ai' && (
         <div className="space-y-4">
           <EACard>
             <EACardHeader icon={<TrendingUp className="w-5 h-5" />}>
@@ -860,6 +1103,87 @@ const BedManagementPanel: React.FC = () => {
               )}
             </EACardContent>
           </EACard>
+        </div>
+      )}
+
+      {/* AI Optimization - now part of forecasts-ai tab */}
+      {activeTab === 'forecasts-ai' && (
+        <div className="space-y-6 mt-6">
+          {/* Header with Generate Button */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-teal-400" />
+                AI-Powered Capacity Optimization
+              </h2>
+              <p className="text-sm text-slate-400 mt-1">
+                Using Claude Sonnet for intelligent bed management and capacity forecasting
+              </p>
+            </div>
+            <EAButton
+              onClick={async () => {
+                setLoadingAiReport(true);
+                setAiError(null);
+                try {
+                  const { data: session } = await supabase.auth.getSession();
+                  if (!session?.session?.user) {
+                    throw new Error('Not authenticated');
+                  }
+                  // Get tenant ID from user metadata or use default
+                  const tenantId = '2b902657-6a20-4435-a78a-576f397517ca'; // WF-0001 default
+                  const result = await bedOptimizer.generateOptimizationReport(tenantId);
+                  if (result.success && result.data) {
+                    setAiReport(result.data);
+                  } else {
+                    setAiError(result.error?.message || 'Failed to generate report');
+                  }
+                } catch (err: any) {
+                  setAiError(err.message || 'Failed to generate AI report');
+                } finally {
+                  setLoadingAiReport(false);
+                }
+              }}
+              disabled={loadingAiReport}
+              icon={<Sparkles className="w-4 h-4" />}
+            >
+              {loadingAiReport ? 'Generating AI Report...' : 'Generate AI Report'}
+            </EAButton>
+          </div>
+
+          {aiError && (
+            <EAAlert variant="critical">
+              {aiError}
+            </EAAlert>
+          )}
+
+          {!aiReport && !loadingAiReport && (
+            <EACard>
+              <EACardContent className="p-12 text-center">
+                <Sparkles className="w-16 h-16 text-teal-400/30 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-white mb-2">
+                  AI Optimization Ready
+                </h3>
+                <p className="text-slate-400 max-w-md mx-auto">
+                  Click "Generate AI Report" to analyze current bed utilization and receive
+                  AI-powered recommendations for capacity optimization using Claude Sonnet.
+                </p>
+              </EACardContent>
+            </EACard>
+          )}
+
+          {loadingAiReport && (
+            <EACard>
+              <EACardContent className="p-12 text-center">
+                <div className="animate-spin w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-white mb-2">
+                  Analyzing Capacity Data...
+                </h3>
+                <p className="text-slate-400">
+                  Claude Sonnet is analyzing bed utilization patterns and generating recommendations
+                </p>
+              </EACardContent>
+            </EACard>
+          )}
         </div>
       )}
 
@@ -1039,88 +1363,10 @@ const BedManagementPanel: React.FC = () => {
         </div>
       )}
 
-      {/* AI Optimization Tab */}
-      {activeTab === 'ai-optimization' && (
-        <div className="space-y-6">
-          {/* Header with Generate Button */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-teal-400" />
-                AI-Powered Capacity Optimization
-              </h2>
-              <p className="text-sm text-slate-400 mt-1">
-                Using Claude Sonnet for intelligent bed management and capacity forecasting
-              </p>
-            </div>
-            <EAButton
-              onClick={async () => {
-                setLoadingAiReport(true);
-                setAiError(null);
-                try {
-                  const { data: session } = await supabase.auth.getSession();
-                  if (!session?.session?.user) {
-                    throw new Error('Not authenticated');
-                  }
-                  // Get tenant ID from user metadata or use default
-                  const tenantId = '2b902657-6a20-4435-a78a-576f397517ca'; // WF-0001 default
-                  const result = await bedOptimizer.generateOptimizationReport(tenantId);
-                  if (result.success && result.data) {
-                    setAiReport(result.data);
-                  } else {
-                    setAiError(result.error?.message || 'Failed to generate report');
-                  }
-                } catch (err: any) {
-                  setAiError(err.message || 'Failed to generate AI report');
-                } finally {
-                  setLoadingAiReport(false);
-                }
-              }}
-              disabled={loadingAiReport}
-              icon={<Sparkles className="w-4 h-4" />}
-            >
-              {loadingAiReport ? 'Generating AI Report...' : 'Generate AI Report'}
-            </EAButton>
-          </div>
-
-          {aiError && (
-            <EAAlert variant="critical">
-              {aiError}
-            </EAAlert>
-          )}
-
-          {!aiReport && !loadingAiReport && (
-            <EACard>
-              <EACardContent className="p-12 text-center">
-                <Sparkles className="w-16 h-16 text-teal-400/30 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-white mb-2">
-                  AI Optimization Ready
-                </h3>
-                <p className="text-slate-400 max-w-md mx-auto">
-                  Click "Generate AI Report" to analyze current bed utilization and receive
-                  AI-powered recommendations for capacity optimization using Claude Sonnet.
-                </p>
-              </EACardContent>
-            </EACard>
-          )}
-
-          {loadingAiReport && (
-            <EACard>
-              <EACardContent className="p-12 text-center">
-                <div className="animate-spin w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-white mb-2">
-                  Analyzing Capacity Data...
-                </h3>
-                <p className="text-slate-400">
-                  Claude Sonnet is analyzing bed utilization patterns and generating recommendations
-                </p>
-              </EACardContent>
-            </EACard>
-          )}
-
-          {aiReport && (
-            <>
-              {/* Score Cards */}
+      {/* AI Report Display - shown in forecasts-ai tab when report exists */}
+      {activeTab === 'forecasts-ai' && aiReport && (
+        <div className="space-y-6 mt-6">
+          {/* Score Cards */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <EACard>
                   <EACardContent className="p-4 text-center">
@@ -1442,13 +1688,11 @@ const BedManagementPanel: React.FC = () => {
                 </EACard>
               )}
 
-              {/* Report Footer */}
-              <div className="text-center text-sm text-slate-500">
-                Report generated at {new Date(aiReport.generatedAt).toLocaleString()} •
-                Model: {aiReport.aiModel}
-              </div>
-            </>
-          )}
+          {/* Report Footer */}
+          <div className="text-center text-sm text-slate-500">
+            Report generated at {new Date(aiReport.generatedAt).toLocaleString()} •
+            Model: {aiReport.aiModel}
+          </div>
         </div>
       )}
 
