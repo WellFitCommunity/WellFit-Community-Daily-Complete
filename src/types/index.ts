@@ -24,3 +24,6 @@ export * from './facility';
 
 // Employee types
 export * from './employee';
+
+// Hospital Workforce Migration types
+export * from './hospitalWorkforce';

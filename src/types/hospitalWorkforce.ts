@@ -424,9 +424,9 @@ export type HCDepartmentUpdate = Partial<
 >;
 
 /**
- * Facility types
+ * Facility types (prefixed with HC to avoid conflicts with facility.ts)
  */
-export type FacilityType =
+export type HCFacilityType =
   | 'MAIN_CAMPUS'
   | 'SATELLITE'
   | 'CLINIC'
@@ -441,7 +441,7 @@ export interface HCFacility {
   organization_id: string;
   facility_code: string;
   facility_name: string;
-  facility_type: FacilityType | null;
+  facility_type: HCFacilityType | null;
   address_line1: string | null;
   address_line2: string | null;
   city: string | null;
@@ -1238,9 +1238,9 @@ export function isValidNPIFormat(npi: string | null | undefined): boolean {
 }
 
 /**
- * Get employment status badge color
+ * Get employment status badge color (prefixed with HC to avoid conflicts with employee.ts)
  */
-export function getEmploymentStatusColor(status: HCEmploymentStatus): string {
+export function getHCEmploymentStatusColor(status: HCEmploymentStatus): string {
   switch (status) {
     case 'ACTIVE':
       return 'green';
