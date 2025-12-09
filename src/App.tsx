@@ -156,6 +156,9 @@ const CoordinatedResponseDashboard = React.lazy(() => import('./components/ems/C
 // Compass Riley - AI Medical Scribe (for Methodist demo)
 const CompassRileyPage = React.lazy(() => import('./components/smart/RealTimeSmartScribe'));
 
+// Web Vital Capture - multi-modal vital sign capture (manual, camera, BLE)
+const VitalCapturePage = React.lazy(() => import('./pages/VitalCapturePage'));
+
 // Physical Therapy, Care Coordination, Referrals, Questionnaires - newly wired dashboards
 const PhysicalTherapyDashboard = React.lazy(() => import('./components/physicalTherapy/PhysicalTherapyDashboard'));
 const CareCoordinationDashboard = React.lazy(() => import('./components/careCoordination/CareCoordinationDashboard'));
@@ -294,6 +297,7 @@ function Shell() {
               <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
               <Route path="/profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />
               <Route path="/check-in" element={<RequireAuth><CheckInPage /></RequireAuth>} />
+              <Route path="/vital-capture" element={<RequireAuth><VitalCapturePage /></RequireAuth>} />
               <Route path="/word-find" element={<RequireAuth><WordFindPage /></RequireAuth>} />
               <Route path="/memory-lane-trivia" element={<RequireAuth><MemoryLaneTriviaPage /></RequireAuth>} />
               <Route path="/meals/:id" element={<RequireAuth><MealDetailPage /></RequireAuth>} />
