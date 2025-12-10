@@ -777,13 +777,49 @@ For real-time medical documentation, use **SmartScribe**:
 
 ---
 
-## Current Development Status (2025-12-08)
+## Current Development Status (2025-12-10)
 
 ### Recently Completed
+- **P0 AI Quick Wins** (2025-12-10)
+  - `PatientRiskStrip` component for unified risk display in patient headers
+  - `AIFeedbackButton` component for one-click AI feedback capture (learning health system)
+  - Demographic columns added to `ai_predictions` for bias detection
+  - Migration: `20251210120000_ai_demographic_tracking.sql` (run this!)
+- **AI/ML Scale Optimization Audit** - Full 7-area analysis with 90-day roadmap (see `docs/AI_ML_SCALE_OPTIMIZATION_AUDIT.md`)
 - **ATLUS Alignment Audit** - Comprehensive audit of platform alignment with ATLUS principles
 - **Global Voice Commands** - `VoiceCommandBar` integrated in App.tsx with 40+ voice commands
 - **Bed Management Voice** - Local voice commands for bed management workflows
 - **Test Suites** - VoiceCommandBar (27 tests), useVoiceCommand (29 tests) - all passing
+
+### Next Agent Todo: P1 Items (90-Day Roadmap Month 2)
+
+**Priority 1 - Differentiation Features:**
+
+1. **GuardianFlowEngine** (`src/services/ai/guardianFlowEngine.ts`)
+   - ED crowding prediction (predict ambulance arrivals, estimate wait times)
+   - Recommend diversions when capacity critical
+   - Calculate EMS capacity impact score
+   - Tables: Use existing `bed_management_*`, `shift_handoff_*` data
+
+2. **Patient-Friendly AVS Generation** (`src/services/ai/patientFriendlyAVS.ts`)
+   - Generate After Visit Summaries at Flesch-Kincaid grade 6 reading level
+   - Use SmartScribe transcription as input
+   - Output: plain-language discharge instructions
+
+3. **Plain-Language AI Explanations**
+   - Add `plainLanguageExplanation` field to AI prediction outputs
+   - Example: "Risk is HIGH because Maria missed 3 check-ins AND has transportation barriers"
+   - Start with readmission risk, then extend to other skills
+
+4. **Rural Model Weights** (`src/services/ai/readmissionFeatureExtractor.ts`)
+   - Add distance-to-care as risk factor
+   - Weight differently for rural vs urban patients
+   - Use `patient_rurality` column from new demographic tracking
+
+**Reference:**
+- See `docs/AI_ML_SCALE_OPTIMIZATION_AUDIT.md` for full context
+- Priority matrix: P0 (done) -> P1 (next) -> P2 -> P3
+- 90-day roadmap: Month 1 complete, start Month 2 items
 
 ### ATLUS Audit Summary (Score: 7/10)
 
