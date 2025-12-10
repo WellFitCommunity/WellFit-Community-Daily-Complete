@@ -1,7 +1,8 @@
 // Claude Service Integration Test
 // This file tests the Claude service without running in the full app context
+// Located in scripts/ to allow console output for CLI visibility
 
-import { claudeService } from '../services/claudeService';
+import { claudeService } from '../src/services/claudeService';
 
 /**
  * Simple test to verify Claude service initialization and basic functionality
