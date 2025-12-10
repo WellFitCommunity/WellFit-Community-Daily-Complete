@@ -33,7 +33,7 @@ export class MonitoringSystem {
   private baselines: Map<string, number> = new Map();
   private isMonitoring: boolean = false;
   private monitoringInterval?: NodeJS.Timeout;
-  private errorWindow: Error[] = [];
+  private errorWindow: { error: Error; timestamp: number }[] = [];
   private performanceObserver?: PerformanceObserver;
 
   constructor(agentBrain: AgentBrain, securityScanner: SecurityScanner) {
@@ -359,8 +359,8 @@ export class MonitoringSystem {
    * Handles detected errors autonomously
    */
   private async handleError(error: Error, context: ErrorContext): Promise<void> {
-    // Add to error window
-    this.errorWindow.push(error);
+    // Add to error window with timestamp
+    this.errorWindow.push({ error, timestamp: Date.now() });
     if (this.errorWindow.length > 100) {
       this.errorWindow.shift();
     }
@@ -483,7 +483,7 @@ export class MonitoringSystem {
     if (this.errorWindow.length === 0) return 0;
 
     const recentErrors = this.errorWindow.filter(
-      e => Date.now() - (e as any).timestamp < 60000 // Last minute
+      e => Date.now() - e.timestamp < 60000 // Last minute
     );
 
     return recentErrors.length / 60; // Errors per second

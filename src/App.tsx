@@ -13,6 +13,7 @@ import { BrandingContext } from './BrandingContext';
 import { performanceMonitor } from './services/performanceMonitoring';
 import { GuardianErrorBoundary } from './components/GuardianErrorBoundary';
 import { GuardianAgent } from './services/guardian-agent/GuardianAgent';
+import { smartRecordingStrategy } from './services/guardian-agent/SmartRecordingStrategy';
 import { queryClient } from './lib/queryClient';
 
 // ❌ Do NOT import or use AuthProvider here — it lives in index.tsx
@@ -216,7 +217,7 @@ function Shell() {
     }
   }, [supabase, user?.id]);
 
-  // Initialize Guardian Agent - Self-healing system
+  // Initialize Guardian Agent - Self-healing system with Guardian Eyes recording
   useEffect(() => {
     const guardian = GuardianAgent.getInstance({
       autoHealEnabled: true,
@@ -226,13 +227,19 @@ function Shell() {
     });
 
     guardian.start();
-    // Guardian Agent is now active and monitoring
-    // Guardian Eyes recording is managed by SmartRecordingStrategy
+
+    // Start Guardian Eyes smart recording (1% sampling + all errors/security events)
+    // This enables session recording for debugging and AI learning
+    smartRecordingStrategy.startSmartRecording(user?.id).catch(() => {
+      // Silent fail - recording is optional enhancement
+    });
 
     return () => {
       guardian.stop();
+      // Stop Guardian Eyes recording on unmount
+      smartRecordingStrategy.stopSmartRecording().catch(() => {});
     };
-  }, []);
+  }, [user?.id]);
 
   useEffect(() => {
     setBranding(getCurrentBranding());

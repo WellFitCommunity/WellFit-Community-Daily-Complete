@@ -286,6 +286,11 @@ export class AgentBrain {
     this.state.activeIssues = this.state.activeIssues.filter(i => i.id !== issue.id);
     this.state.recentHealings.push(result);
 
+    // Bound recentHealings to prevent memory leak (keep last 100)
+    if (this.state.recentHealings.length > 100) {
+      this.state.recentHealings = this.state.recentHealings.slice(-100);
+    }
+
     // Update metrics
     this.state.performanceMetrics.issuesHealed++;
     this.state.performanceMetrics.successRate =
