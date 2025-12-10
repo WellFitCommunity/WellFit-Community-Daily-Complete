@@ -263,6 +263,36 @@ These principles guide all development on this codebase:
 - Use proper migrations for any schema changes
 - Leverage Postgres 17 features (JSONB, CTEs, window functions, etc.)
 
+### Supabase Migration Workflow - CRITICAL
+**ALWAYS run migrations you create. Do NOT leave migrations unexecuted.**
+
+**Login Early - Supabase/Docker takes time:**
+```bash
+# Do this FIRST thing in your session - it takes 30-60 seconds
+npx supabase login
+```
+Supabase and Docker need time to initialize. Log in early so you're not waiting when you need to run migrations.
+
+**Running Migrations:**
+```bash
+# Link to project (if not already linked)
+npx supabase link --project-ref xkybsjnvuohpqpbkikyn
+
+# Push migrations to remote database
+npx supabase db push
+
+# Or run a specific migration directly via psql
+PGPASSWORD="$DATABASE_PASSWORD" psql "postgresql://postgres.xkybsjnvuohpqpbkikyn:$DATABASE_PASSWORD@aws-0-us-east-1.pooler.supabase.com:6543/postgres" -f supabase/migrations/MIGRATION_FILE.sql
+```
+
+**After creating any migration file, you MUST:**
+1. Run the migration against the database
+2. Verify it succeeded (check for errors)
+3. Test that the new schema works as expected
+4. Only then commit and push
+
+**DO NOT** create migration files and leave them unexecuted - this causes schema drift between code and database.
+
 ### Database Cleanup Policy - CRITICAL
 **DO NOT aggressively delete database tables, functions, or data.**
 
@@ -784,7 +814,7 @@ For real-time medical documentation, use **SmartScribe**:
   - `PatientRiskStrip` component for unified risk display in patient headers
   - `AIFeedbackButton` component for one-click AI feedback capture (learning health system)
   - Demographic columns added to `ai_predictions` for bias detection
-  - Migration: `20251210120000_ai_demographic_tracking.sql` (run this!)
+  - **PENDING MIGRATION**: `20251210120000_ai_demographic_tracking.sql` - run via Supabase dashboard or psql
 - **AI/ML Scale Optimization Audit** - Full 7-area analysis with 90-day roadmap (see `docs/AI_ML_SCALE_OPTIMIZATION_AUDIT.md`)
 - **ATLUS Alignment Audit** - Comprehensive audit of platform alignment with ATLUS principles
 - **Global Voice Commands** - `VoiceCommandBar` integrated in App.tsx with 40+ voice commands
