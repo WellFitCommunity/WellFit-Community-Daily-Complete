@@ -1,18 +1,19 @@
 /**
- * Guardian Eyes - AI System Recorder
+ * Guardian Eyes - AI System Recorder with rrweb
  *
- * Records system behavior from the inside using AI to understand and document:
- * - User interactions
- * - System state changes
+ * Records system behavior using rrweb for full DOM replay:
+ * - User interactions (clicks, inputs, scrolls)
+ * - DOM mutations
  * - Error conditions
  * - Performance metrics
  * - Security events
  *
- * This creates a "digital twin" of your system that AI can analyze and learn from.
- * The Guardian Eyes watch over your application 24/7, recording everything for healing and optimization.
+ * Recordings are stored in the guardian-eyes Supabase bucket.
  */
 
 import React from 'react';
+import { record } from 'rrweb';
+import type { eventWithTime, listenerHandler } from '@rrweb/types';
 import { supabase } from '../../lib/supabaseClient';
 
 export interface SystemSnapshot {
@@ -21,8 +22,8 @@ export interface SystemSnapshot {
   type: 'user_action' | 'state_change' | 'error' | 'performance' | 'security';
   component: string;
   action?: string;
-  state_before?: Record<string, any>;
-  state_after?: Record<string, any>;
+  state_before?: Record<string, unknown>;
+  state_after?: Record<string, unknown>;
   metadata: {
     user_id?: string;
     session_id?: string;
@@ -34,7 +35,7 @@ export interface SystemSnapshot {
       cpu_usage?: number;
       network_latency?: number;
     };
-    context?: Record<string, any>;
+    context?: Record<string, unknown>;
   };
   ai_analysis?: {
     intent_detected?: string;
@@ -50,6 +51,8 @@ export interface SessionRecording {
   start_time: string;
   end_time?: string;
   snapshots: SystemSnapshot[];
+  rrweb_events: eventWithTime[];
+  recording_url?: string;
   ai_summary?: {
     user_goal?: string;
     success?: boolean;
@@ -60,7 +63,7 @@ export interface SessionRecording {
 }
 
 /**
- * GuardianEyes (AISystemRecorder) - Records system behavior for AI analysis
+ * GuardianEyes (AISystemRecorder) - Records system behavior with rrweb
  *
  * The Guardian Eyes are always watching, recording every interaction,
  * state change, error, and security event for intelligent healing.
@@ -68,13 +71,23 @@ export interface SessionRecording {
 export class AISystemRecorder {
   private currentSession: SessionRecording | null = null;
   private snapshotBuffer: SystemSnapshot[] = [];
+  private rrwebEvents: eventWithTime[] = [];
   private isRecording = false;
   private recordingInterval: number | null = null;
+  private rrwebStopFn: listenerHandler | null = null;
+  private eventBuffer: eventWithTime[] = [];
+  private lastUploadTime: number = 0;
+  private readonly UPLOAD_INTERVAL = 30000; // Upload every 30 seconds
+  private readonly MAX_EVENTS_BEFORE_UPLOAD = 500;
 
   /**
-   * Start recording system behavior
+   * Start recording system behavior with rrweb
    */
   async startRecording(userId?: string): Promise<string> {
+    if (this.isRecording) {
+      return this.currentSession?.session_id || '';
+    }
+
     const sessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
     this.currentSession = {
@@ -82,28 +95,127 @@ export class AISystemRecorder {
       user_id: userId,
       start_time: new Date().toISOString(),
       snapshots: [],
+      rrweb_events: [],
     };
 
     this.isRecording = true;
+    this.rrwebEvents = [];
+    this.eventBuffer = [];
+    this.lastUploadTime = Date.now();
 
-    // Install global event listeners
+    // Start rrweb recording
+    try {
+      const stopFn = record({
+        emit: (event) => {
+          this.handleRrwebEvent(event as eventWithTime);
+        },
+        // Recording options for HIPAA compliance
+        maskAllInputs: true, // Mask all input values
+        blockClass: 'phi-block', // Block elements with this class
+        maskInputOptions: {
+          password: true,
+          email: true,
+          tel: true,
+        },
+        sampling: {
+          mousemove: true,
+          mouseInteraction: true,
+          scroll: 150, // Sample scroll every 150ms
+          input: 'last', // Only record last input value
+        },
+        recordCanvas: false, // Don't record canvas (perf)
+        collectFonts: false, // Don't collect fonts (size)
+      });
+      if (stopFn) {
+        this.rrwebStopFn = stopFn;
+      }
+    } catch {
+      // rrweb may fail in some environments (e.g., SSR, tests)
+    }
+
+    // Install additional event listeners
     this.installEventListeners();
 
-    // Start periodic snapshots
+    // Start periodic snapshots and uploads
     this.recordingInterval = window.setInterval(() => {
       this.capturePerformanceSnapshot();
-    }, 5000); // Every 5 seconds
+      this.checkAndUpload();
+    }, 5000);
 
     return sessionId;
   }
 
   /**
-   * Stop recording and save to database
+   * Handle rrweb events
+   */
+  private handleRrwebEvent(event: eventWithTime) {
+    if (!this.isRecording || !this.currentSession) return;
+
+    this.rrwebEvents.push(event);
+    this.eventBuffer.push(event);
+
+    // Check if we should upload
+    if (this.eventBuffer.length >= this.MAX_EVENTS_BEFORE_UPLOAD) {
+      this.uploadEventBuffer();
+    }
+  }
+
+  /**
+   * Check and upload buffer periodically
+   */
+  private async checkAndUpload() {
+    const now = Date.now();
+    if (now - this.lastUploadTime >= this.UPLOAD_INTERVAL && this.eventBuffer.length > 0) {
+      await this.uploadEventBuffer();
+    }
+  }
+
+  /**
+   * Upload event buffer to Supabase storage
+   */
+  private async uploadEventBuffer(): Promise<void> {
+    if (!this.currentSession || this.eventBuffer.length === 0) return;
+
+    const eventsToUpload = [...this.eventBuffer];
+    this.eventBuffer = [];
+    this.lastUploadTime = Date.now();
+
+    const chunkId = `${this.currentSession.session_id}-${Date.now()}`;
+    const fileName = `${this.currentSession.session_id}/${chunkId}.json`;
+
+    try {
+      const blob = new Blob([JSON.stringify(eventsToUpload)], { type: 'application/json' });
+
+      const { error } = await supabase.storage
+        .from('guardian-eyes')
+        .upload(fileName, blob, {
+          contentType: 'application/json',
+          upsert: false,
+        });
+
+      if (error) {
+        // Put events back in buffer on failure
+        this.eventBuffer = [...eventsToUpload, ...this.eventBuffer];
+      }
+    } catch (error) {
+      // Silent fail - events will be retried
+      this.eventBuffer = [...eventsToUpload, ...this.eventBuffer];
+    }
+  }
+
+  /**
+   * Stop recording and save final data
    */
   async stopRecording(): Promise<SessionRecording | null> {
     if (!this.currentSession) return null;
 
     this.isRecording = false;
+
+    // Stop rrweb
+    if (this.rrwebStopFn) {
+      this.rrwebStopFn();
+      this.rrwebStopFn = null;
+    }
 
     // Clear interval
     if (this.recordingInterval) {
@@ -114,18 +226,29 @@ export class AISystemRecorder {
     // Remove event listeners
     this.removeEventListeners();
 
+    // Upload remaining events
+    await this.uploadEventBuffer();
+
     // Set end time
     this.currentSession.end_time = new Date().toISOString();
+    this.currentSession.rrweb_events = this.rrwebEvents;
 
     // Generate AI summary
     this.currentSession.ai_summary = await this.generateAISummary(this.currentSession);
 
-    // Save to database
+    // Save session metadata to database
     await this.saveRecording(this.currentSession);
+
+    // Generate recording URL
+    const { data } = supabase.storage
+      .from('guardian-eyes')
+      .getPublicUrl(`${this.currentSession.session_id}/`);
+    this.currentSession.recording_url = data?.publicUrl;
 
     const recording = this.currentSession;
     this.currentSession = null;
     this.snapshotBuffer = [];
+    this.rrwebEvents = [];
 
     return recording;
   }
@@ -133,7 +256,7 @@ export class AISystemRecorder {
   /**
    * Capture user action
    */
-  captureUserAction(component: string, action: string, metadata?: Record<string, any>) {
+  captureUserAction(component: string, action: string, metadata?: Record<string, unknown>) {
     if (!this.isRecording) return;
 
     const snapshot: SystemSnapshot = {
@@ -156,9 +279,9 @@ export class AISystemRecorder {
    */
   captureStateChange(
     component: string,
-    stateBefore: Record<string, any>,
-    stateAfter: Record<string, any>,
-    metadata?: Record<string, any>
+    stateBefore: Record<string, unknown>,
+    stateAfter: Record<string, unknown>,
+    metadata?: Record<string, unknown>
   ) {
     if (!this.isRecording) return;
 
@@ -179,9 +302,9 @@ export class AISystemRecorder {
   }
 
   /**
-   * Capture error
+   * Capture error - triggers immediate upload
    */
-  captureError(component: string, error: Error, metadata?: Record<string, any>) {
+  captureError(component: string, error: Error, metadata?: Record<string, unknown>) {
     if (!this.isRecording) return;
 
     const contextMeta = this.getContextMetadata();
@@ -201,11 +324,14 @@ export class AISystemRecorder {
           error_name: error.name,
           error_message: error.message,
           error_stack: error.stack,
-        } as Record<string, any>,
+        } as Record<string, unknown>,
       },
     };
 
     this.addSnapshot(snapshot);
+
+    // Upload immediately on error
+    this.uploadEventBuffer();
   }
 
   /**
@@ -234,16 +360,7 @@ export class AISystemRecorder {
    * Install global event listeners
    */
   private installEventListeners() {
-    // Click tracking
-    document.addEventListener('click', this.handleClick);
-
-    // Navigation tracking
-    window.addEventListener('popstate', this.handleNavigation);
-
-    // Error tracking
     window.addEventListener('error', this.handleGlobalError);
-
-    // Unhandled promise rejections
     window.addEventListener('unhandledrejection', this.handleUnhandledRejection);
   }
 
@@ -251,29 +368,9 @@ export class AISystemRecorder {
    * Remove global event listeners
    */
   private removeEventListeners() {
-    document.removeEventListener('click', this.handleClick);
-    window.removeEventListener('popstate', this.handleNavigation);
     window.removeEventListener('error', this.handleGlobalError);
     window.removeEventListener('unhandledrejection', this.handleUnhandledRejection);
   }
-
-  private handleClick = (event: MouseEvent) => {
-    const target = event.target as HTMLElement;
-    const tagName = target.tagName.toLowerCase();
-    const text = target.textContent?.substring(0, 50) || '';
-
-    this.captureUserAction('dom_element', 'click', {
-      element: tagName,
-      text,
-      coordinates: { x: event.clientX, y: event.clientY },
-    });
-  };
-
-  private handleNavigation = () => {
-    this.captureUserAction('navigation', 'route_change', {
-      new_url: window.location.href,
-    });
-  };
 
   private handleGlobalError = (event: ErrorEvent) => {
     this.captureError('global', new Error(event.message), {
@@ -312,13 +409,12 @@ export class AISystemRecorder {
     this.snapshotBuffer = [];
 
     try {
-      // Store in database
       await supabase.from('system_recordings').insert({
         session_id: this.currentSession?.session_id,
         snapshots: snapshots,
         recorded_at: new Date().toISOString(),
       });
-    } catch (error) {
+    } catch {
       // Snapshots will be retried on next flush
     }
   }
@@ -328,21 +424,13 @@ export class AISystemRecorder {
    */
   private async generateAISummary(recording: SessionRecording) {
     try {
-      // Analyze patterns in user behavior
       const userActions = recording.snapshots.filter((s) => s.type === 'user_action');
       const errors = recording.snapshots.filter((s) => s.type === 'error');
       const stateChanges = recording.snapshots.filter((s) => s.type === 'state_change');
 
-      // Detect user goal (simplified - in production, use Claude API)
       const userGoal = this.detectUserGoal(userActions);
-
-      // Detect pain points
       const painPoints = this.detectPainPoints(errors, stateChanges);
-
-      // Generate optimizations
       const optimizations = this.generateOptimizations(recording);
-
-      // Security concerns
       const securityConcerns = this.detectSecurityConcerns(recording);
 
       return {
@@ -352,18 +440,14 @@ export class AISystemRecorder {
         optimizations: optimizations,
         security_concerns: securityConcerns,
       };
-    } catch (error) {
+    } catch {
       return undefined;
     }
   }
 
-  /**
-   * Detect user goal from actions
-   */
   private detectUserGoal(actions: SystemSnapshot[]): string {
     if (actions.length === 0) return 'Unknown goal';
 
-    // Simple heuristic - in production, use Claude API
     const components = actions.map((a) => a.component);
     const uniqueComponents = Array.from(new Set(components));
 
@@ -375,9 +459,6 @@ export class AISystemRecorder {
     return `User interacting with ${uniqueComponents.join(', ')}`;
   }
 
-  /**
-   * Detect pain points
-   */
   private detectPainPoints(errors: SystemSnapshot[], stateChanges: SystemSnapshot[]): string[] {
     const painPoints: string[] = [];
 
@@ -393,21 +474,17 @@ export class AISystemRecorder {
     return painPoints;
   }
 
-  /**
-   * Generate optimization recommendations
-   */
   private generateOptimizations(recording: SessionRecording): string[] {
     const optimizations: string[] = [];
 
     const performanceSnapshots = recording.snapshots.filter((s) => s.type === 'performance');
     const avgMemory =
       performanceSnapshots.reduce(
-        (sum, s) => sum + (s.metadata.performance?.memory_used || 0),
+        (sum, s) => sum + ((s.metadata.performance?.memory_used as number) || 0),
         0
-      ) / performanceSnapshots.length;
+      ) / (performanceSnapshots.length || 1);
 
     if (avgMemory > 100 * 1024 * 1024) {
-      // > 100MB
       optimizations.push('High memory usage detected - consider optimizing component rendering');
     }
 
@@ -419,15 +496,10 @@ export class AISystemRecorder {
     return optimizations;
   }
 
-  /**
-   * Detect security concerns
-   */
   private detectSecurityConcerns(recording: SessionRecording): string[] {
     const concerns: string[] = [];
 
-    // Check for potential PHI exposure
-    const snapshots = recording.snapshots;
-    for (const snapshot of snapshots) {
+    for (const snapshot of recording.snapshots) {
       const metadataStr = JSON.stringify(snapshot.metadata);
       if (/\b\d{3}-\d{2}-\d{4}\b/.test(metadataStr)) {
         concerns.push('Potential SSN detected in captured data');
@@ -440,9 +512,6 @@ export class AISystemRecorder {
     return concerns;
   }
 
-  /**
-   * Detect repeated actions (possible user confusion)
-   */
   private detectRepeatedActions(snapshots: SystemSnapshot[]): number {
     if (snapshots.length < 2) return 0;
 
@@ -454,7 +523,7 @@ export class AISystemRecorder {
       if (
         current.component === previous.component &&
         current.action === previous.action &&
-        Date.parse(current.timestamp) - Date.parse(previous.timestamp) < 3000 // Within 3 seconds
+        Date.parse(current.timestamp) - Date.parse(previous.timestamp) < 3000
       ) {
         repeatedCount++;
       }
@@ -463,9 +532,6 @@ export class AISystemRecorder {
     return repeatedCount;
   }
 
-  /**
-   * Get context metadata
-   */
   private getContextMetadata() {
     return {
       session_id: this.currentSession?.session_id,
@@ -479,11 +545,8 @@ export class AISystemRecorder {
     };
   }
 
-  /**
-   * Get performance metrics
-   */
   private getPerformanceMetrics() {
-    const memory = (performance as any).memory;
+    const memory = (performance as unknown as { memory?: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number } }).memory;
 
     return {
       memory_used: memory?.usedJSHeapSize,
@@ -493,9 +556,6 @@ export class AISystemRecorder {
     };
   }
 
-  /**
-   * Save recording to database
-   */
   private async saveRecording(recording: SessionRecording) {
     try {
       await supabase.from('session_recordings').insert({
@@ -504,6 +564,8 @@ export class AISystemRecorder {
         start_time: recording.start_time,
         end_time: recording.end_time,
         snapshot_count: recording.snapshots.length,
+        rrweb_event_count: recording.rrweb_events.length,
+        recording_url: recording.recording_url,
         ai_summary: recording.ai_summary,
         metadata: {
           duration_seconds: recording.end_time
@@ -511,16 +573,11 @@ export class AISystemRecorder {
             : 0,
         },
       });
-
-      // Recording saved successfully
-    } catch (error) {
+    } catch {
       // Recording will be saved on next attempt
     }
   }
 
-  /**
-   * Generate snapshot ID
-   */
   private generateSnapshotId(): string {
     return `snap-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
@@ -533,23 +590,32 @@ export class AISystemRecorder {
       is_recording: this.isRecording,
       session_id: this.currentSession?.session_id,
       snapshots_captured: this.currentSession?.snapshots.length || 0,
+      rrweb_events_captured: this.rrwebEvents.length,
       buffer_size: this.snapshotBuffer.length,
+      event_buffer_size: this.eventBuffer.length,
     };
+  }
+
+  /**
+   * Get current session events for replay
+   */
+  getEvents(): eventWithTime[] {
+    return this.rrwebEvents;
   }
 }
 
 /**
  * Global singleton instance - Guardian Eyes
- * The always-watching protector of your application
  */
 export const aiSystemRecorder = new AISystemRecorder();
-export const guardianEyes = aiSystemRecorder; // Alias for semantic clarity
+export const guardianEyes = aiSystemRecorder;
 
 /**
  * React Hook for easy recording
  */
 export function useSystemRecording(autoStart = false) {
   const [isRecording, setIsRecording] = React.useState(false);
+  const [status, setStatus] = React.useState(aiSystemRecorder.getStatus());
 
   React.useEffect(() => {
     if (autoStart) {
@@ -563,7 +629,14 @@ export function useSystemRecording(autoStart = false) {
         setIsRecording(false);
       }
     };
-  }, [autoStart]);  
+  }, [autoStart]);
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setStatus(aiSystemRecorder.getStatus());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   return {
     startRecording: async (userId?: string) => {
@@ -571,13 +644,15 @@ export function useSystemRecording(autoStart = false) {
       setIsRecording(true);
     },
     stopRecording: async () => {
-      await aiSystemRecorder.stopRecording();
+      const recording = await aiSystemRecorder.stopRecording();
       setIsRecording(false);
+      return recording;
     },
     captureAction: aiSystemRecorder.captureUserAction.bind(aiSystemRecorder),
     captureState: aiSystemRecorder.captureStateChange.bind(aiSystemRecorder),
     captureError: aiSystemRecorder.captureError.bind(aiSystemRecorder),
+    getEvents: aiSystemRecorder.getEvents.bind(aiSystemRecorder),
     isRecording,
-    status: aiSystemRecorder.getStatus(),
+    status,
   };
 }
