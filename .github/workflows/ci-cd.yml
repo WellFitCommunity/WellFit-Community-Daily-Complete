@@ -86,12 +86,29 @@ jobs:
           fi
 
   # ============================================
-  # Job 3: Unit Tests
+  # Job 3: Unit Tests (Parallel - 4 shards)
   # ============================================
   test-unit:
-    name: Unit Tests
+    name: Unit Tests (${{ matrix.shard }})
     runs-on: ubuntu-latest
-    timeout-minutes: 15  # Sufficient timeout with proper timer cleanup
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [components, services, pages, other]
+        include:
+          - shard: components
+            pattern: "src/components/"
+            name: "Components"
+          - shard: services
+            pattern: "src/services/"
+            name: "Services"
+          - shard: pages
+            pattern: "src/pages/"
+            name: "Pages"
+          - shard: other
+            pattern: "src/(adapters|types|utils|contexts|hooks|__tests__)/"
+            name: "Other"
 
     steps:
       - name: Checkout code
@@ -101,31 +118,28 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Run unit tests
+      - name: Run ${{ matrix.name }} tests
         id: unit-tests
-        run: npm run test:unit
+        run: |
+          npm run test:unit -- --testPathPattern="${{ matrix.pattern }}" --maxWorkers=2
         env:
           CI: true
           NODE_OPTIONS: "--max-old-space-size=4096"
-        continue-on-error: false  # Let the job fail naturally if tests fail
+        continue-on-error: false
 
       - name: Report to summary
         if: always()
         run: |
-          echo "## 🧪 Unit Tests" >> $GITHUB_STEP_SUMMARY
+          echo "## 🧪 Unit Tests - ${{ matrix.name }}" >> $GITHUB_STEP_SUMMARY
           if [ "${{ steps.unit-tests.outcome }}" == "success" ]; then
-            echo "✅ All unit tests passed" >> $GITHUB_STEP_SUMMARY
+            echo "✅ ${{ matrix.name }} tests passed" >> $GITHUB_STEP_SUMMARY
           else
-            echo "❌ Unit tests failed or timed out" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "**Troubleshooting:**" >> $GITHUB_STEP_SUMMARY
-            echo "- Check for hanging tests or infinite loops" >> $GITHUB_STEP_SUMMARY
-            echo "- Review test logs for specific failures" >> $GITHUB_STEP_SUMMARY
-            echo "- Consider splitting tests into parallel jobs if timeout persists" >> $GITHUB_STEP_SUMMARY
+            echo "❌ ${{ matrix.name }} tests failed" >> $GITHUB_STEP_SUMMARY
           fi
 
   # ============================================
@@ -311,12 +325,13 @@ jobs:
             echo "| ESLint | ⚠️ Non-blocking |" >> $GITHUB_STEP_SUMMARY
           fi
 
+          # Test matrix result - success only if ALL shards passed
           if [ "$TEST" == "success" ]; then
-            echo "| Unit Tests | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+            echo "| Unit Tests (4 shards) | ✅ All Passed |" >> $GITHUB_STEP_SUMMARY
           elif [ "$TEST" == "cancelled" ]; then
-            echo "| Unit Tests | ⏸️ Cancelled (likely timeout) |" >> $GITHUB_STEP_SUMMARY
+            echo "| Unit Tests | ⏸️ Cancelled |" >> $GITHUB_STEP_SUMMARY
           else
-            echo "| Unit Tests | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+            echo "| Unit Tests | ❌ Some Failed |" >> $GITHUB_STEP_SUMMARY
           fi
 
           if [ "$BUILD" == "success" ]; then
