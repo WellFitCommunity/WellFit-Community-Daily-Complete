@@ -1,3 +1,4 @@
+/* eslint-disable import/first */
 import { ParkinsonsService } from '../parkinsonsService';
 
 // Mock supabase - define the mock inside the factory to avoid hoisting issues
@@ -15,9 +16,10 @@ jest.mock('../phiAccessLogger', () => ({
   logPhiAccess: jest.fn().mockResolvedValue(undefined),
 }));
 
-// Get reference to mocked supabase after mocking
+// Get reference to mocked supabase after mocking - must be after jest.mock
 import { supabase } from '../../lib/supabaseClient';
 const mockSupabaseClient = supabase as jest.Mocked<typeof supabase>;
+/* eslint-enable import/first */
 
 describe('ParkinsonsService', () => {
   beforeEach(() => {

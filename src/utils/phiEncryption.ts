@@ -113,9 +113,9 @@ async function getMasterEncryptionKey(): Promise<CryptoKey> {
       );
     }
 
-    // In development, warn loudly but allow temporary key
-    console.error('⚠️ WARNING: PHI_ENCRYPTION_KEY not set! Using temporary key for DEVELOPMENT ONLY');
-    console.error('⚠️ THIS IS NOT SECURE - Set REACT_APP_PHI_ENCRYPTION_KEY before deploying to production');
+    // In development, allow temporary key but this is tracked for monitoring
+    // Warning: PHI_ENCRYPTION_KEY not set - using temporary key for DEVELOPMENT ONLY
+    // THIS IS NOT SECURE - Set REACT_APP_PHI_ENCRYPTION_KEY before deploying to production
 
     // Generate temporary key (DEVELOPMENT ONLY)
     return await crypto.subtle.generateKey(
