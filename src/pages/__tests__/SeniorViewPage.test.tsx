@@ -70,7 +70,7 @@ describe('SeniorViewPage', () => {
     renderWithRouter();
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /log in/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /return to login/i })).toBeInTheDocument();
     });
   });
 });

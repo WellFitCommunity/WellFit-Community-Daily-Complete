@@ -48,7 +48,9 @@ describe('CaregiverAccessPage', () => {
     renderWithRouter();
 
     await waitFor(() => {
-      expect(screen.getByText(/caregiver access/i)).toBeInTheDocument();
+      // Multiple elements match "caregiver access" so we use getAllByText
+      const elements = screen.getAllByText(/caregiver access/i);
+      expect(elements.length).toBeGreaterThan(0);
     });
   });
 

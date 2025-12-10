@@ -1,21 +1,23 @@
 import { ParkinsonsService } from '../parkinsonsService';
 
-// Mock supabase
-const mockSupabaseClient = {
-  from: jest.fn(),
-  auth: {
-    getUser: jest.fn(),
-  },
-};
-
+// Mock supabase - define the mock inside the factory to avoid hoisting issues
 jest.mock('../../lib/supabaseClient', () => ({
-  supabase: mockSupabaseClient,
+  supabase: {
+    from: jest.fn(),
+    auth: {
+      getUser: jest.fn(),
+    },
+  },
 }));
 
 // Mock PHI access logger
 jest.mock('../phiAccessLogger', () => ({
   logPhiAccess: jest.fn().mockResolvedValue(undefined),
 }));
+
+// Get reference to mocked supabase after mocking
+import { supabase } from '../../lib/supabaseClient';
+const mockSupabaseClient = supabase as jest.Mocked<typeof supabase>;
 
 describe('ParkinsonsService', () => {
   beforeEach(() => {

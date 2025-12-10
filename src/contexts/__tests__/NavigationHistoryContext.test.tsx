@@ -2,28 +2,29 @@ import React from 'react';
 import { render, screen, act } from '@testing-library/react';
 import { MemoryRouter, useNavigate, Routes, Route } from 'react-router-dom';
 import { NavigationHistoryProvider, useNavigationHistory } from '../NavigationHistoryContext';
-import { AuthProvider } from '../AuthContext';
 
 // Type for the navigation history context
 type NavigationHistoryType = ReturnType<typeof useNavigationHistory>;
 
-// Mock Supabase client
-jest.mock('@supabase/supabase-js', () => ({
-  createClient: () => ({
-    auth: {
-      getSession: jest.fn().mockResolvedValue({ data: { session: null }, error: null }),
-      onAuthStateChange: jest.fn(() => ({
-        data: { subscription: { unsubscribe: jest.fn() } }
-      })),
-    },
-    from: jest.fn(() => ({
-      select: jest.fn(() => ({
-        eq: jest.fn(() => ({
-          single: jest.fn().mockResolvedValue({ data: null, error: null }),
-        })),
-      })),
-    })),
+// Mock AuthContext - provide the user object that NavigationHistoryContext needs
+jest.mock('../AuthContext', () => ({
+  useAuth: () => ({
+    user: { id: 'test-user-id', email: 'test@example.com' },
+    session: null,
+    loading: false,
+    isLoading: false,
+    signIn: jest.fn(),
+    signUp: jest.fn(),
+    signOut: jest.fn(),
+    resetPassword: jest.fn(),
+    updatePassword: jest.fn(),
+    profile: null,
+    roleCode: null,
+    isSenior: false,
+    isCaregiver: false,
+    isVolunteer: false,
   }),
+  AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
 // Test component that uses the navigation history hook
@@ -64,13 +65,11 @@ const TestWrapper: React.FC<{ initialEntries?: string[]; children: React.ReactNo
 }) => {
   return (
     <MemoryRouter initialEntries={initialEntries}>
-      <AuthProvider>
-        <NavigationHistoryProvider>
-          <Routes>
-            <Route path="*" element={children} />
-          </Routes>
-        </NavigationHistoryProvider>
-      </AuthProvider>
+      <NavigationHistoryProvider>
+        <Routes>
+          <Route path="*" element={children} />
+        </Routes>
+      </NavigationHistoryProvider>
     </MemoryRouter>
   );
 };
@@ -78,6 +77,7 @@ const TestWrapper: React.FC<{ initialEntries?: string[]; children: React.ReactNo
 describe('NavigationHistoryContext', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    localStorage.clear();
   });
 
   it('should render without crashing', () => {
@@ -184,6 +184,10 @@ describe('NavigationHistoryContext - Auth Route Filtering', () => {
     '/',
   ];
 
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
   authRoutes.forEach((route) => {
     it(`should NOT track ${route} in history`, () => {
       let navRef: NavigationHistoryType | null = null;
@@ -209,6 +213,10 @@ describe('NavigationHistoryContext - Protected Route Tracking', () => {
     '/profile',
     '/billing',
   ];
+
+  beforeEach(() => {
+    localStorage.clear();
+  });
 
   protectedRoutes.forEach((route) => {
     it(`should track ${route} in history`, () => {

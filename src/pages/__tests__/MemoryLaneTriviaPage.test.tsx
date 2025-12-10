@@ -16,6 +16,33 @@ jest.mock('../../contexts/AuthContext', () => ({
     rpc: jest.fn().mockResolvedValue({ data: [], error: null }),
   }),
   useUser: () => ({ id: 'test-user-id' }),
+  useAuth: () => ({
+    user: { id: 'test-user-id', email: 'test@example.com' },
+    session: null,
+    loading: false,
+    isLoading: false,
+    signIn: jest.fn(),
+    signUp: jest.fn(),
+    signOut: jest.fn(),
+    resetPassword: jest.fn(),
+    updatePassword: jest.fn(),
+    profile: null,
+    roleCode: null,
+    isSenior: false,
+    isCaregiver: false,
+    isVolunteer: false,
+  }),
+}));
+
+// Mock NavigationHistoryContext
+jest.mock('../../contexts/NavigationHistoryContext', () => ({
+  useNavigationHistory: () => ({
+    historyStack: [],
+    canGoBack: false,
+    goBack: jest.fn(),
+    getPreviousRoute: jest.fn(),
+    clearHistory: jest.fn(),
+  }),
 }));
 
 // Mock BrandingContext
