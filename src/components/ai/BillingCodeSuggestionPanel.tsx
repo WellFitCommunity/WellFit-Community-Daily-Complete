@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from '../ui/alert';
 import { CheckCircle2, XCircle, Edit, AlertTriangle, Sparkles, DollarSign } from 'lucide-react';
 import { billingCodeSuggester } from '../../services/ai/billingCodeSuggester';
 import type { BillingSuggestionResult } from '../../services/ai/billingCodeSuggester';
+import { AIFeedbackButton } from './AIFeedbackButton';
 
 interface BillingCodeSuggestionPanelProps {
   encounterId: string;
@@ -301,9 +302,20 @@ export const BillingCodeSuggestionPanel: React.FC<BillingCodeSuggestionPanelProp
           </Button>
         </div>
 
-        <p className="text-xs text-gray-500 text-center mt-2">
-          AI suggestions are for reference only. Provider review and approval required.
-        </p>
+        {/* AI Feedback Section */}
+        <div className="flex items-center justify-between pt-2">
+          <p className="text-xs text-gray-500">
+            AI suggestions are for reference only.
+          </p>
+          {suggestionId && (
+            <AIFeedbackButton
+              predictionId={suggestionId}
+              skillName="billing_code_suggester"
+              size="sm"
+              variant="minimal"
+            />
+          )}
+        </div>
       </CardContent>
     </Card>
   );

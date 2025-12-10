@@ -11,6 +11,7 @@ import EnhancedFhirService from '../admin/EnhancedFhirService';
 import { auditLogger } from '../../services/auditLogger';
 import { SDOHStatusBar } from '../sdoh/SDOHStatusBar';
 import { SDOHIndicatorService } from '../../services/sdohIndicatorService';
+import { PatientRiskStrip } from './PatientRiskStrip';
 import type { SDOHProfile } from '../../types/sdohIndicators';
 
 interface PatientDashboardProps {
@@ -526,6 +527,16 @@ const FhirAiPatientDashboard: React.FC<PatientDashboardProps> = ({ supabaseUrl, 
       {/* Emergency Alerts */}
       {insights.emergencyAlerts.length > 0 && (
         <EmergencyAlerts alerts={insights.emergencyAlerts} />
+      )}
+
+      {/* Patient Risk Strip - Unified Risk Display */}
+      {user?.id && (
+        <PatientRiskStrip
+          patientId={user.id}
+          variant="compact"
+          showLabels={true}
+          className="mb-4"
+        />
       )}
 
       {/* SDOH Indicators */}

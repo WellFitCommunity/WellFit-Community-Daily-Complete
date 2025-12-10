@@ -20,6 +20,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import type { ReadmissionPrediction } from '../../services/ai/readmissionRiskPredictor';
+import { AIFeedbackButton } from './AIFeedbackButton';
 
 interface ReadmissionRiskPanelProps {
   predictionId: string;
@@ -313,9 +314,19 @@ export const ReadmissionRiskPanel: React.FC<ReadmissionRiskPanelProps> = ({
           </div>
         )}
 
-        <p className="text-xs text-gray-500 text-center mt-2">
-          AI prediction for clinical decision support. Not a substitute for professional judgment.
-        </p>
+        {/* AI Feedback Section */}
+        <div className="flex items-center justify-between pt-4 border-t">
+          <p className="text-xs text-gray-500">
+            AI prediction for clinical decision support.
+          </p>
+          <AIFeedbackButton
+            predictionId={predictionId}
+            skillName="readmission_risk"
+            size="sm"
+            variant="inline"
+            showLabels={false}
+          />
+        </div>
       </CardContent>
     </Card>
   );
