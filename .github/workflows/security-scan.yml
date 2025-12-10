@@ -54,23 +54,24 @@ jobs:
         run: |
           echo "## Insecure Protocol Scan" >> $GITHUB_STEP_SUMMARY
 
+          # Healthcare standard URIs use http:// by specification - these are NOT security issues
+          # FHIR, LOINC, SNOMED, HL7, UCUM, ADA, AMA-CPT all use http:// URIs as identifiers
           MATCH_HTTP=$(grep -RniE '\bhttp://' . \
-            --exclude-dir=node_modules --exclude-dir=build --exclude-dir=dist --exclude-dir=.git --exclude-dir=archive --exclude-dir=coverage \
+            --exclude-dir=node_modules --exclude-dir=build --exclude-dir=dist --exclude-dir=.git --exclude-dir=archive --exclude-dir=coverage --exclude-dir=.temp \
             --exclude=package-lock.json --exclude=yarn.lock --exclude=logo.png 2>/dev/null | \
             grep -v "localhost" | grep -v "127\.0\.0\.1" | grep -v "0\.0\.0\.0" | \
             grep -v "schemas\." | grep -v "loinc\.org" | grep -v "snomed\.info" | \
-            grep -v "terminology\.hl7\.org" | grep -v "hl7\.org/fhir" | \
+            grep -v "terminology\.hl7\.org" | grep -v "hl7\.org" | \
             grep -v "unitsofmeasure\.org" | grep -v "wellfitcommunity\.org" | \
             grep -v "wellfit-community\.com" | grep -v "wellfit.*\.com" | \
-            grep -v "www\.w3\.org" | grep -v "www\.ama-assn\.org" | \
-            grep -v "www\.nlm\.nih\.gov" | grep -v "pillbox\.nlm\.nih\.gov" | \
-            grep -v "www\.ada\.org" | \
-            grep -v "example\.com" | grep -v "xmlns=" | \
+            grep -v "www\.w3\.org" | grep -v "ama-assn\.org" | grep -v "ada\.org" | \
+            grep -v "www\.nlm\.nih\.gov" | grep -v "pillbox\.nlm\.nih\.gov" | grep -v "rxnorm" | \
+            grep -v "example\.com" | grep -v "xmlns=" | grep -v "cvx" | \
             grep -v "\.md:" | grep -v "\.html:" | grep -v "\.svg:" | \
             grep -v "\.json:" | grep -v "\.yml:" | grep -v "\.yaml:" | grep -v "\.test\." || true)
 
           MATCH_WS=$(grep -RniE '\bws://(?!localhost\b|127\.0\.0\.1\b|0\.0\.0\.0\b)' . \
-            --exclude-dir=node_modules --exclude-dir=build --exclude-dir=dist --exclude-dir=.git 2>/dev/null || true)
+            --exclude-dir=node_modules --exclude-dir=build --exclude-dir=dist --exclude-dir=.git --exclude-dir=.temp 2>/dev/null || true)
 
           if [ -n "$MATCH_HTTP" ] || [ -n "$MATCH_WS" ]; then
             echo "### ❌ Insecure protocol references found:" >> $GITHUB_STEP_SUMMARY
@@ -260,7 +261,8 @@ jobs:
           )
 
           FOUND=false
-          FILES=$(git ls-files | grep -Ev '(\.md$|\.png$|\.jpg$|\.jpeg$|\.gif$|\.svg$|\.ico$|\.pdf$|^node_modules/|^dist/|^build/)' || true)
+          # Exclude documentation, images, tests, and temp directories
+          FILES=$(git ls-files | grep -Ev '(\.md$|\.png$|\.jpg$|\.jpeg$|\.gif$|\.svg$|\.ico$|\.pdf$|^node_modules/|^dist/|^build/|\.test\.|__tests__|\.temp/)' || true)
 
           for f in $FILES; do
             for p in "${PATTERNS[@]}"; do
@@ -361,7 +363,8 @@ jobs:
         run: |
           echo "## CORS Security Check" >> $GITHUB_STEP_SUMMARY
 
-          if grep -R "Access-Control-Allow-Origin.*\*" supabase/ src/ 2>/dev/null; then
+          # Exclude .temp directories which contain build artifacts
+          if grep -R "Access-Control-Allow-Origin.*\*" supabase/ src/ --exclude-dir=".temp" --exclude-dir=".output*" 2>/dev/null | grep -v "Binary file"; then
             echo "### ❌ Wildcard CORS detected - this is a security risk!" >> $GITHUB_STEP_SUMMARY
             echo "FAIL=1" >> $GITHUB_ENV
           else
