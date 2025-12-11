@@ -57,7 +57,7 @@ describe('PatientRiskStrip', () => {
 
     it('renders compact variant by default', () => {
       render(<PatientRiskStrip {...defaultProps} />);
-      expect(screen.queryByText(/loading risk assessment/i)).toBeInTheDocument();
+      expect(screen.getByText(/loading risk assessment/i)).toBeInTheDocument();
     });
 
     it('renders expanded variant when specified', async () => {
@@ -65,9 +65,9 @@ describe('PatientRiskStrip', () => {
 
       await waitFor(() => {
         expect(screen.getByText(/30-day readmission/i)).toBeInTheDocument();
-        expect(screen.getByText(/clinical acuity/i)).toBeInTheDocument();
-        expect(screen.getByText(/no-show risk/i)).toBeInTheDocument();
       });
+      expect(screen.getByText(/clinical acuity/i)).toBeInTheDocument();
+      expect(screen.getByText(/no-show risk/i)).toBeInTheDocument();
     });
   });
 
@@ -76,10 +76,12 @@ describe('PatientRiskStrip', () => {
       render(<PatientRiskStrip {...defaultProps} />);
 
       await waitFor(() => {
-        const refreshButton = screen.getByTitle(/refresh/i);
-        expect(refreshButton).toBeInTheDocument();
-        fireEvent.click(refreshButton);
+        expect(screen.getByTitle(/refresh/i)).toBeInTheDocument();
       });
+
+      const refreshButton = screen.getByTitle(/refresh/i);
+      fireEvent.click(refreshButton);
+      expect(refreshButton).toBeInTheDocument();
     });
   });
 

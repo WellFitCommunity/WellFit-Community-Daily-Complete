@@ -1,8 +1,30 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 
+// Define admin role types
+type AdminRole = 'admin' | 'nurse' | 'physician' | 'super_admin' | null;
+
+// Define context value interface
+interface MockContextValue {
+  isAdminAuthenticated: boolean;
+  adminRole: AdminRole;
+  accessScopes: string[] | null;
+  isLoading: boolean;
+  error: string | null;
+  verifyPinAndLogin: jest.Mock;
+  logoutAdmin: jest.Mock;
+  autoAuthenticateAsSuperAdmin: jest.Mock;
+  hasAccess: jest.Mock;
+  canViewNurse: boolean;
+  canViewPhysician: boolean;
+  canViewAdmin: boolean;
+  canSupervise: boolean;
+  canManageDepartment: boolean;
+  invokeAdminFunction: jest.Mock;
+}
+
 // Mock the entire AdminAuthContext module
-const mockContextValue = {
+const mockContextValue: MockContextValue = {
   isAdminAuthenticated: false,
   adminRole: null,
   accessScopes: null,
@@ -21,7 +43,7 @@ const mockContextValue = {
 };
 
 // Create a real context for the provider test
-const AdminAuthContext = React.createContext<typeof mockContextValue | undefined>(undefined);
+const AdminAuthContext = React.createContext<MockContextValue | undefined>(undefined);
 
 // Test component to access context - renders values to DOM for testing
 const TestConsumer: React.FC = () => {
@@ -47,7 +69,7 @@ const TestConsumer: React.FC = () => {
 };
 
 // Simple provider for testing
-const TestProvider: React.FC<{ children: React.ReactNode; value?: typeof mockContextValue }> = ({
+const TestProvider: React.FC<{ children: React.ReactNode; value?: MockContextValue }> = ({
   children,
   value = mockContextValue
 }) => {
