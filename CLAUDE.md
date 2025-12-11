@@ -814,7 +814,7 @@ For real-time medical documentation, use **SmartScribe**:
   - `PatientRiskStrip` component for unified risk display in patient headers
   - `AIFeedbackButton` component for one-click AI feedback capture (learning health system)
   - Demographic columns added to `ai_predictions` for bias detection
-  - **PENDING MIGRATION**: `20251210120000_ai_demographic_tracking.sql` - run via Supabase dashboard or psql
+  - Migration `20251210130000_ai_demographic_tracking.sql` - **APPLIED**
 - **AI/ML Scale Optimization Audit** - Full 7-area analysis with 90-day roadmap (see `docs/AI_ML_SCALE_OPTIMIZATION_AUDIT.md`)
 - **ATLUS Alignment Audit** - Comprehensive audit of platform alignment with ATLUS principles
 - **Global Voice Commands** - `VoiceCommandBar` integrated in App.tsx with 40+ voice commands
