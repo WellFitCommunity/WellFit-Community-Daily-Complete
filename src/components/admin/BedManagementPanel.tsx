@@ -258,16 +258,30 @@ const BedManagementPanel: React.FC = () => {
     };
   }, []);
 
+  // Track completed actions for metrics (ATLUS: Service)
+  const [actionsCompleted, setActionsCompleted] = useState(0);
+
   // Show affirmation toast (ATLUS: Service - positive feedback via shared service)
   const showAffirmation = useCallback((type: BedAffirmationType) => {
-    const message = getAffirmation(type);
+    // Increment action counter
+    const newCount = actionsCompleted + 1;
+    setActionsCompleted(newCount);
+
+    // Every 5 actions, show a metrics-based message using METRICS_TEMPLATES
+    let message: string;
+    if (newCount > 0 && newCount % 5 === 0) {
+      message = METRICS_TEMPLATES.tasksCompleted(newCount);
+    } else {
+      message = getAffirmation(type);
+    }
+
     setAffirmationToast({ message, type: 'success' });
 
     // Auto-dismiss after 4 seconds
     setTimeout(() => {
       setAffirmationToast(null);
     }, 4000);
-  }, []);
+  }, [actionsCompleted]);
 
   // Process voice commands (ATLUS: Intuitive Technology)
   const processVoiceCommand = useCallback((transcript: string) => {
@@ -553,20 +567,15 @@ const BedManagementPanel: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Affirmation Toast (ATLUS: Service - positive feedback) */}
+      {/* Affirmation Toast (ATLUS: Service - using shared EAAffirmationToast component) */}
       {affirmationToast && (
-        <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-top-2 duration-300">
-          <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg shadow-lg">
-            <CheckCircle className="w-5 h-5" />
-            <span className="font-medium">{affirmationToast.message}</span>
-            <button
-              onClick={() => setAffirmationToast(null)}
-              className="ml-2 text-white/80 hover:text-white"
-            >
-              <XCircle className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+        <EAAffirmationToast
+          message={affirmationToast.message}
+          type={affirmationToast.type === 'success' ? 'success' : 'info'}
+          onDismiss={() => setAffirmationToast(null)}
+          autoDismiss={4000}
+          position="top-right"
+        />
       )}
 
       {/* Voice Command Feedback (ATLUS: Intuitive Technology) */}

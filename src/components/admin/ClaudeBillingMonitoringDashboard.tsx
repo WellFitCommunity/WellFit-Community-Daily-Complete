@@ -101,6 +101,18 @@ const ClaudeBillingMonitoringDashboard: React.FC = () => {
   const [insights, setInsights] = useState<CostOptimizationInsight[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
 
+  // Real-time service status from claudeService
+  const [serviceStatus, setServiceStatus] = useState<{
+    isHealthy: boolean;
+    circuitBreakerState: string;
+    lastHealthCheck: Date;
+  } | null>(null);
+  const [spendingSummary, setSpendingSummary] = useState<{
+    totalDaily: number;
+    totalMonthly: number;
+    userCount: number;
+  } | null>(null);
+
   // Calculate date range
   const { dateFrom, dateTo } = useMemo(() => {
     const now = new Date();
@@ -120,15 +132,43 @@ const ClaudeBillingMonitoringDashboard: React.FC = () => {
 
   const loadAllMetrics = async () => {
     setLoading(true);
+    const startTime = performance.now();
 
     try {
+      // Load real-time service status
+      const status = claudeService.getServiceStatus();
+      setServiceStatus({
+        isHealthy: status.isHealthy,
+        circuitBreakerState: status.circuitBreakerState,
+        lastHealthCheck: status.lastHealthCheck
+      });
+
+      // Load spending summary
+      const spending = claudeService.getSpendingSummary();
+      setSpendingSummary(spending);
+
       await Promise.all([
         loadClaudeMetrics(),
         loadBillingMetrics(),
         generateInsights()
       ]);
-    } catch (error) {
 
+      // Track dashboard load performance
+      const duration = performance.now() - startTime;
+      performanceMonitor.trackMetric({
+        metric_type: 'page_load',
+        metric_name: 'claude_billing_dashboard_load',
+        duration_ms: duration,
+        metadata: { dateRange }
+      });
+    } catch (error) {
+      // Track errors
+      performanceMonitor.logError({
+        error_message: error instanceof Error ? error.message : 'Dashboard load failed',
+        error_type: 'dashboard_load_error',
+        component_name: 'ClaudeBillingMonitoringDashboard',
+        severity: 'warning'
+      });
     } finally {
       setLoading(false);
     }
@@ -295,7 +335,38 @@ const ClaudeBillingMonitoringDashboard: React.FC = () => {
 
     // Load current service status
     const claudeStatus = claudeService.getServiceStatus();
-    const spendingSummary = claudeService.getSpendingSummary();
+    const currentSpending = claudeService.getSpendingSummary();
+
+    // Insight 0: Service Health Warning
+    if (!claudeStatus.isHealthy) {
+      insights.push({
+        type: 'warning',
+        title: 'Claude AI Service Unhealthy',
+        description: `Service is currently unhealthy. Circuit breaker: ${claudeStatus.circuitBreakerState}`,
+        actionItems: [
+          'Check API key configuration',
+          'Review rate limit status',
+          'Monitor circuit breaker recovery',
+          'Contact support if issue persists'
+        ]
+      });
+    }
+
+    // Insight 0.5: Daily spending alert
+    if (currentSpending.totalDaily > 20) {
+      insights.push({
+        type: 'warning',
+        title: 'High Daily AI Spending',
+        description: `Today's spending: $${currentSpending.totalDaily.toFixed(2)} across ${currentSpending.userCount} users`,
+        potentialSavings: currentSpending.totalDaily * 0.3,
+        actionItems: [
+          'Review high-usage users',
+          'Implement request batching',
+          'Consider model tier optimization',
+          'Set daily budget alerts'
+        ]
+      });
+    }
 
     // Insight 1: High cost alert
     if (claudeMetrics && claudeMetrics.totalCost > 1000) {
@@ -454,6 +525,51 @@ const ClaudeBillingMonitoringDashboard: React.FC = () => {
             </svg>
             Refresh
           </button>
+        </div>
+      </div>
+
+      {/* Real-Time Service Status */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Service Health */}
+        <div className={`border rounded-lg p-4 ${
+          serviceStatus?.isHealthy ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'
+        }`}>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-semibold text-gray-900">Claude AI Service</h3>
+            <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+              serviceStatus?.isHealthy ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            }`}>
+              {serviceStatus?.isHealthy ? '✓ Healthy' : '⚠ Unhealthy'}
+            </span>
+          </div>
+          <div className="text-sm text-gray-600 space-y-1">
+            <p>Circuit Breaker: <span className="font-medium">{serviceStatus?.circuitBreakerState || 'Unknown'}</span></p>
+            <p>Last Check: <span className="font-medium">
+              {serviceStatus?.lastHealthCheck ? new Date(serviceStatus.lastHealthCheck).toLocaleTimeString() : 'N/A'}
+            </span></p>
+          </div>
+        </div>
+
+        {/* Real-Time Spending */}
+        <div className="border border-blue-200 bg-blue-50 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-semibold text-gray-900">Real-Time Spending</h3>
+            <span className="text-2xl">💵</span>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div>
+              <p className="text-xs text-gray-600">Today</p>
+              <p className="text-lg font-bold text-gray-900">${(spendingSummary?.totalDaily ?? 0).toFixed(2)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-600">This Month</p>
+              <p className="text-lg font-bold text-gray-900">${(spendingSummary?.totalMonthly ?? 0).toFixed(2)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-600">Active Users</p>
+              <p className="text-lg font-bold text-gray-900">{spendingSummary?.userCount ?? 0}</p>
+            </div>
+          </div>
         </div>
       </div>
 

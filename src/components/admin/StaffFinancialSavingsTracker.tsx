@@ -22,6 +22,9 @@ import {
   EAButton,
   EAAlert,
   EATabs,
+  EATabsList,
+  EATabsTrigger,
+  EATabsContent,
 } from '../envision-atlus';
 import {
   RefreshCw,
@@ -308,6 +311,7 @@ export const StaffFinancialSavingsTracker: React.FC = () => {
           <div className="flex flex-wrap gap-4">
             {/* Date Range */}
             <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-slate-400" />
               <label className="text-sm text-slate-400">From:</label>
               <input
                 type="date"
@@ -412,42 +416,26 @@ export const StaffFinancialSavingsTracker: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="bg-slate-800/50 rounded-xl border border-slate-700">
-        <div className="flex border-b border-slate-700">
-          <button
-            onClick={() => setActiveTab('position')}
-            className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
-              activeTab === 'position'
-                ? 'text-[#00857a] border-b-2 border-[#00857a] bg-slate-800'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Briefcase className="inline-block h-4 w-4 mr-2" />
+      <EATabs defaultValue="position" value={activeTab} onValueChange={(v) => setActiveTab(v as 'staff' | 'position')}>
+        <EATabsList className="bg-slate-800/50 rounded-xl border border-slate-700 p-1">
+          <EATabsTrigger value="position">
+            <Briefcase className="h-4 w-4 mr-2" />
             By Position
-          </button>
-          <button
-            onClick={() => setActiveTab('staff')}
-            className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
-              activeTab === 'staff'
-                ? 'text-[#00857a] border-b-2 border-[#00857a] bg-slate-800'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Users className="inline-block h-4 w-4 mr-2" />
+          </EATabsTrigger>
+          <EATabsTrigger value="staff">
+            <Users className="h-4 w-4 mr-2" />
             By Individual Staff
-          </button>
-        </div>
+          </EATabsTrigger>
+        </EATabsList>
 
-        <div className="p-6">
-          {/* Position View */}
-          {activeTab === 'position' && (
-            <div className="space-y-4">
-              {positionSavings.length === 0 ? (
-                <div className="text-center py-12 text-slate-500">
-                  No savings data available for the selected filters
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
+        {/* Position View */}
+        <EATabsContent value="position" className="mt-6 bg-slate-800/50 rounded-xl border border-slate-700 p-6">
+          {positionSavings.length === 0 ? (
+            <div className="text-center py-12 text-slate-500">
+              No savings data available for the selected filters
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
                   <table className="min-w-full">
                     <thead>
                       <tr className="border-b border-slate-700">
@@ -509,13 +497,12 @@ export const StaffFinancialSavingsTracker: React.FC = () => {
                     </tbody>
                   </table>
                 </div>
-              )}
-            </div>
           )}
+        </EATabsContent>
 
-          {/* Staff View */}
-          {activeTab === 'staff' && (
-            <div className="space-y-4">
+        {/* Staff View */}
+        <EATabsContent value="staff" className="mt-6 bg-slate-800/50 rounded-xl border border-slate-700 p-6">
+          <div className="space-y-4">
               {staffSavings.length === 0 ? (
                 <div className="text-center py-12 text-slate-500">
                   No savings data available for the selected filters
@@ -604,10 +591,9 @@ export const StaffFinancialSavingsTracker: React.FC = () => {
                   ))}
                 </div>
               )}
-            </div>
-          )}
-        </div>
-      </div>
+          </div>
+        </EATabsContent>
+      </EATabs>
     </div>
   );
 };

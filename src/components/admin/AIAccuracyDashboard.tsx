@@ -312,10 +312,23 @@ export default function AIAccuracyDashboard() {
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {skillMetrics.map((skill) => (
-                <EACard key={skill.skillName}>
+                <EACard
+                  key={skill.skillName}
+                  className={`cursor-pointer transition-all ${
+                    selectedSkill === skill.skillName
+                      ? 'ring-2 ring-teal-500 bg-slate-800/80'
+                      : 'hover:bg-slate-800/50'
+                  }`}
+                  onClick={() => setSelectedSkill(
+                    selectedSkill === skill.skillName ? null : skill.skillName
+                  )}
+                >
                   <EACardHeader className="flex items-center justify-between">
                     <h3 className="font-medium text-white">
                       {SKILL_DISPLAY_NAMES[skill.skillName] || skill.skillName}
+                      {selectedSkill === skill.skillName && (
+                        <span className="ml-2 text-xs text-teal-400">● Selected</span>
+                      )}
                     </h3>
                     <EABadge variant={getAccuracyColor(skill.accuracyRate)}>
                       {formatPercent(skill.accuracyRate)} accuracy
