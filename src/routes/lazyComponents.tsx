@@ -110,6 +110,7 @@ export const SuperAdminDashboard = React.lazy(() => import('../components/superA
 export const MultiTenantSelector = React.lazy(() => import('../components/superAdmin/MultiTenantSelector'));
 export const MultiTenantMonitor = React.lazy(() => import('../components/superAdmin/MultiTenantMonitor'));
 export const SOCDashboard = React.lazy(() => import('../components/soc/SOCDashboard'));
+export const EnterpriseMigrationDashboard = React.lazy(() => import('../components/migration/EnterpriseMigrationDashboard'));
 export const GuardianApprovalsList = React.lazy(() =>
   import('../components/guardian/GuardianApprovalsList').then(m => ({ default: m.GuardianApprovalsList }))
 );

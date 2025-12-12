@@ -215,6 +215,7 @@ export const superAdminRoutes: RouteConfig[] = [
   { path: '/tenant-selector', component: 'MultiTenantSelector', auth: 'superAdmin', category: 'superAdmin' },
   { path: '/multi-tenant-monitor', component: 'MultiTenantMonitor', auth: 'superAdmin', category: 'superAdmin' },
   { path: '/soc-dashboard', component: 'SOCDashboard', auth: 'superAdmin', category: 'superAdmin' },
+  { path: '/enterprise-migration', component: 'EnterpriseMigrationDashboard', auth: 'superAdmin', category: 'superAdmin' },
   { path: '/guardian/approvals', component: 'GuardianApprovalsList', auth: 'superAdmin', category: 'superAdmin' },
   { path: '/guardian/approval/:ticketId', component: 'GuardianApprovalForm', auth: 'superAdmin', category: 'superAdmin' },
 ];
