@@ -285,11 +285,11 @@ export const EnterpriseMigrationDashboard: React.FC = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const colors: Record<string, 'success' | 'warning' | 'error' | 'info'> = {
-      'COMPLETED': 'success',
-      'COMPLETED_WITH_ERRORS': 'warning',
+    const colors: Record<string, 'critical' | 'high' | 'elevated' | 'normal' | 'info' | 'neutral'> = {
+      'COMPLETED': 'normal',
+      'COMPLETED_WITH_ERRORS': 'elevated',
       'PROCESSING': 'info',
-      'FAILED': 'error',
+      'FAILED': 'critical',
       'DRY_RUN': 'info'
     };
     return <EABadge variant={colors[status] || 'info'}>{status}</EABadge>;
@@ -666,7 +666,7 @@ export const EnterpriseMigrationDashboard: React.FC = () => {
         <EACardHeader>
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-white">Potential Duplicates</h3>
-            <EABadge variant="warning">{duplicates.length} pending</EABadge>
+            <EABadge variant="elevated">{duplicates.length} pending</EABadge>
           </div>
         </EACardHeader>
         <EACardContent>
@@ -796,7 +796,7 @@ export const EnterpriseMigrationDashboard: React.FC = () => {
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-white font-medium">{retry.failedOperation}</span>
-                    <EABadge variant={retry.status === 'retrying' ? 'warning' : 'info'}>
+                    <EABadge variant={retry.status === 'retrying' ? 'elevated' : 'info'}>
                       Attempt {retry.attemptNumber}/{retry.maxAttempts}
                     </EABadge>
                   </div>
@@ -886,7 +886,7 @@ export const EnterpriseMigrationDashboard: React.FC = () => {
 
       {/* Error Alert */}
       {error && (
-        <EAAlert variant="error" onDismiss={() => setError(null)}>
+        <EAAlert variant="critical" onDismiss={() => setError(null)}>
           {error}
         </EAAlert>
       )}
