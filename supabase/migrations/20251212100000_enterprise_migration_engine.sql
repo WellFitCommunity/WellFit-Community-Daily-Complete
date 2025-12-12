@@ -953,6 +953,8 @@ CREATE OR REPLACE FUNCTION calculate_name_similarity(
 RETURNS NUMERIC
 LANGUAGE plpgsql
 IMMUTABLE
+SECURITY INVOKER
+SET search_path = public
 AS $$
 DECLARE
     v_soundex_match BOOLEAN;
