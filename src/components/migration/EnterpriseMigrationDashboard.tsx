@@ -701,21 +701,21 @@ export const EnterpriseMigrationDashboard: React.FC = () => {
                   <div className="flex gap-2">
                     <EAButton
                       variant="secondary"
-                      size="small"
+                      size="sm"
                       onClick={() => handleResolveDuplicate(dup.candidateId, 'merge_a')}
                     >
                       Keep A
                     </EAButton>
                     <EAButton
                       variant="secondary"
-                      size="small"
+                      size="sm"
                       onClick={() => handleResolveDuplicate(dup.candidateId, 'merge_b')}
                     >
                       Keep B
                     </EAButton>
                     <EAButton
                       variant="secondary"
-                      size="small"
+                      size="sm"
                       onClick={() => handleResolveDuplicate(dup.candidateId, 'keep_both')}
                     >
                       Keep Both
@@ -761,7 +761,7 @@ export const EnterpriseMigrationDashboard: React.FC = () => {
                   </div>
                   <EAButton
                     variant="danger"
-                    size="small"
+                    size="sm"
                     onClick={() => handleRollback(snap.snapshotId)}
                   >
                     Rollback

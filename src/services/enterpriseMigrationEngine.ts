@@ -543,7 +543,7 @@ export class SnapshotService {
       throw new Error(`Failed to create snapshot: ${error.message}`);
     }
 
-    auditLogger.info('Snapshot', 'Created migration snapshot', {
+    auditLogger.info('Snapshot: Created migration snapshot', {
       snapshotId: data,
       tables,
       type: snapshotType
@@ -559,7 +559,7 @@ export class SnapshotService {
     userId: string,
     approverId: string
   ): Promise<RollbackResult> {
-    auditLogger.warn('Snapshot', 'Initiating rollback', {
+    auditLogger.warn('Snapshot: Initiating rollback', {
       snapshotId,
       reason,
       userId,
@@ -585,7 +585,7 @@ export class SnapshotService {
 
     const result = data as Record<string, unknown>;
 
-    auditLogger.info('Snapshot', 'Rollback completed', {
+    auditLogger.info('Snapshot: Rollback completed', {
       snapshotId,
       rowsRestored: result.rows_restored,
       durationMs: result.duration_ms
@@ -1012,7 +1012,7 @@ export class DeduplicationService {
     // DOB match (weight: 0.25)
     const dobA = recordA['date_of_birth'] || recordA['dob'];
     const dobB = recordB['date_of_birth'] || recordB['dob'];
-    const dobMatch = dobA && dobB && String(dobA) === String(dobB);
+    const dobMatch = Boolean(dobA && dobB && String(dobA) === String(dobB));
     if (dobA && dobB) {
       weightedScore += (dobMatch ? 1 : 0) * 0.25;
       totalWeight += 0.25;
@@ -1454,7 +1454,7 @@ export class EnterpriseMigrationService extends IntelligentMigrationService {
       stopOnQualityThreshold: options.stopOnQualityThreshold ?? 70
     };
 
-    auditLogger.info('EnterpriseMigration', 'Starting enterprise migration', {
+    auditLogger.info('EnterpriseMigration: Starting enterprise migration', {
       organizationId: this.enterpriseOrgId,
       sourceSystem: dna.sourceSystem,
       rowCount: data.length,
@@ -1471,7 +1471,7 @@ export class EnterpriseMigrationService extends IntelligentMigrationService {
           'pre_migration',
           `Pre-migration snapshot for ${dna.sourceSystem || dna.sourceType} import`
         );
-        auditLogger.info('EnterpriseMigration', 'Created pre-migration snapshot', { snapshotId });
+        auditLogger.info('EnterpriseMigration: Created pre-migration snapshot', { snapshotId });
       }
 
       // 2. Deduplication check
@@ -1483,7 +1483,7 @@ export class EnterpriseMigrationService extends IntelligentMigrationService {
         duplicatesFound = duplicates.length;
 
         if (duplicatesFound > 0) {
-          auditLogger.warn('EnterpriseMigration', 'Duplicates found', {
+          auditLogger.warn('EnterpriseMigration: Duplicates found', {
             count: duplicatesFound,
             threshold: opts.dedupThreshold
           });
@@ -1620,7 +1620,7 @@ export class EnterpriseMigrationService extends IntelligentMigrationService {
 
         // Check quality threshold
         if (qualityScore.overallScore < opts.stopOnQualityThreshold) {
-          auditLogger.warn('EnterpriseMigration', 'Quality below threshold', {
+          auditLogger.warn('EnterpriseMigration: Quality below threshold', {
             score: qualityScore.overallScore,
             threshold: opts.stopOnQualityThreshold
           });
@@ -1631,7 +1631,7 @@ export class EnterpriseMigrationService extends IntelligentMigrationService {
       const processingTimeMs = endTime - startTime;
       const throughput = data.length / (processingTimeMs / 1000);
 
-      auditLogger.info('EnterpriseMigration', 'Migration completed', {
+      auditLogger.info('EnterpriseMigration: Migration completed', {
         batchId,
         successCount,
         errorCount,
