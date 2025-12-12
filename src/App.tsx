@@ -53,6 +53,9 @@ import { EAPatientBanner } from './components/envision-atlus/EAPatientBanner';
 // Session Resume - Prompts users to resume where they left off (ATLUS: Unity)
 import { EASessionResume } from './components/envision-atlus/EASessionResume';
 
+// Keyboard Shortcuts - Global keyboard navigation (ATLUS: Technology - Click Reduction)
+import { EAKeyboardShortcutsProvider } from './components/envision-atlus/EAKeyboardShortcutsProvider';
+
 // AI Transparency - LearningMilestone (global component)
 import { LearningMilestone } from './components/ai-transparency';
 
@@ -266,6 +269,8 @@ function Shell() {
             <PatientProvider>
             {/* Navigation History - Track in-app navigation for reliable back button */}
             <NavigationHistoryProvider>
+            {/* Keyboard Shortcuts - Global keyboard navigation (ATLUS: Technology) */}
+            <EAKeyboardShortcutsProvider>
               {/* Global Learning Milestone Celebration Display */}
               <LearningMilestone />
 
@@ -1163,6 +1168,7 @@ function Shell() {
             {/* Session Resume Prompt - Shows when user returns and has previous session (ATLUS: Unity) */}
             <EASessionResume />
           </AuthGate>
+            </EAKeyboardShortcutsProvider>
             </NavigationHistoryProvider>
             </PatientProvider>
           </TimeClockProvider>
