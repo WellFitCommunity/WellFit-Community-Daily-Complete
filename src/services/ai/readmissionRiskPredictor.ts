@@ -69,6 +69,12 @@ export interface ReadmissionPrediction {
   recommendedInterventions: RecommendedIntervention[];
   predictedReadmissionDate?: string; // ISO date
   predictionConfidence: number; // 0.00 to 1.00
+  /**
+   * Plain-language explanation of risk assessment
+   * Written at 6th grade reading level for patient/family understanding
+   * Example: "Risk is HIGH because Maria missed 3 check-ins AND has transportation barriers"
+   */
+  plainLanguageExplanation: string;
   dataSourcesAnalyzed: {
     readmissionHistory: boolean;
     sdohIndicators: boolean;
@@ -78,6 +84,202 @@ export interface ReadmissionPrediction {
   };
   aiModel: string;
   aiCost: number;
+}
+
+// =====================================================
+// PLAIN LANGUAGE EXPLANATION GENERATOR
+// =====================================================
+
+/**
+ * Generates patient-friendly explanations at 6th grade reading level
+ * Uses simple words and connects risk factors to actionable understanding
+ */
+class PlainLanguageExplainer {
+  /**
+   * Generate a plain-language summary of the risk prediction
+   * Target: Flesch-Kincaid Grade 6 or lower
+   */
+  static generateExplanation(
+    riskCategory: string,
+    riskFactors: RiskFactor[],
+    protectiveFactors: ProtectiveFactor[],
+    features: ReadmissionRiskFeatures
+  ): string {
+    const parts: string[] = [];
+
+    // Opening - state the risk level in simple terms
+    const riskLevelText = this.getRiskLevelText(riskCategory);
+    parts.push(riskLevelText);
+
+    // Top 3 risk factors in plain language
+    const topRisks = riskFactors.slice(0, 3);
+    if (topRisks.length > 0) {
+      const riskReasons = topRisks
+        .map(rf => this.translateRiskFactor(rf, features))
+        .filter(Boolean);
+
+      if (riskReasons.length === 1) {
+        parts.push(`The main concern is ${riskReasons[0]}.`);
+      } else if (riskReasons.length === 2) {
+        parts.push(`This is because ${riskReasons[0]} AND ${riskReasons[1]}.`);
+      } else if (riskReasons.length >= 3) {
+        parts.push(`This is because ${riskReasons[0]}, ${riskReasons[1]}, and ${riskReasons[2]}.`);
+      }
+    }
+
+    // Highlight protective factors (hope/positive framing)
+    if (protectiveFactors.length > 0) {
+      const goodNews = this.translateProtectiveFactor(protectiveFactors[0]);
+      if (goodNews) {
+        parts.push(`Good news: ${goodNews}`);
+      }
+    }
+
+    // Add actionable next step
+    parts.push(this.getActionableAdvice(riskCategory, features));
+
+    return parts.join(' ');
+  }
+
+  private static getRiskLevelText(riskCategory: string): string {
+    switch (riskCategory) {
+      case 'critical':
+        return 'Your risk of going back to the hospital is VERY HIGH.';
+      case 'high':
+        return 'Your risk of going back to the hospital is HIGH.';
+      case 'moderate':
+        return 'Your risk of going back to the hospital is MEDIUM.';
+      case 'low':
+        return 'Your risk of going back to the hospital is LOW. Great job!';
+      default:
+        return 'We checked your risk of going back to the hospital.';
+    }
+  }
+
+  private static translateRiskFactor(rf: RiskFactor, features: ReadmissionRiskFeatures): string {
+    const factor = rf.factor.toLowerCase();
+
+    // Prior admissions
+    if (factor.includes('readmission') || factor.includes('prior admission')) {
+      const count = features.clinical.priorAdmissions30Day || features.clinical.priorAdmissions90Day;
+      if (count > 0) {
+        return `you were in the hospital ${count} time${count > 1 ? 's' : ''} recently`;
+      }
+      return 'you have been in the hospital before';
+    }
+
+    // Check-in compliance
+    if (factor.includes('check-in') || factor.includes('missed')) {
+      if (features.engagement.consecutiveMissedCheckIns >= 3) {
+        return `you missed ${features.engagement.consecutiveMissedCheckIns} check-ins in a row`;
+      }
+      return 'some daily check-ins were missed';
+    }
+
+    // Transportation
+    if (factor.includes('transportation')) {
+      if (features.socialDeterminants.distanceToNearestHospitalMiles) {
+        return `it is hard to get to the doctor (${features.socialDeterminants.distanceToNearestHospitalMiles} miles away)`;
+      }
+      return 'it is hard to get to your doctor visits';
+    }
+
+    // Rural/isolation
+    if (factor.includes('rural') || factor.includes('isolation')) {
+      return 'you live far from medical help';
+    }
+
+    // Lives alone
+    if (factor.includes('lives alone') || factor.includes('alone')) {
+      return 'you live alone without help at home';
+    }
+
+    // Follow-up
+    if (factor.includes('follow-up') || factor.includes('no appointment')) {
+      return 'you do not have a doctor visit set up yet';
+    }
+
+    // Medication
+    if (factor.includes('medication') || factor.includes('polypharmacy')) {
+      if (features.medication.activeMedicationCount >= 5) {
+        return `you take ${features.medication.activeMedicationCount} medicines which can be hard to manage`;
+      }
+      return 'your medicines need close attention';
+    }
+
+    // High-risk conditions
+    if (factor.includes('chf') || factor.includes('heart failure')) {
+      return 'your heart condition needs careful watching';
+    }
+    if (factor.includes('copd') || factor.includes('breathing')) {
+      return 'your breathing condition needs careful watching';
+    }
+    if (factor.includes('diabetes')) {
+      return 'your blood sugar needs careful watching';
+    }
+
+    // Engagement/mood
+    if (factor.includes('engagement') || factor.includes('disengaging')) {
+      return 'you have been less active with your health lately';
+    }
+    if (factor.includes('mood')) {
+      return 'you have been feeling down lately';
+    }
+
+    // Generic fallback - simplify the AI's language
+    return rf.factor.toLowerCase()
+      .replace('utilization history', 'past hospital visits')
+      .replace('social determinants', 'life circumstances')
+      .replace('clinical', 'health')
+      .replace('adherence', 'following your plan');
+  }
+
+  private static translateProtectiveFactor(pf: ProtectiveFactor): string {
+    const factor = pf.factor.toLowerCase();
+
+    if (factor.includes('family') || factor.includes('caregiver')) {
+      return 'You have family or friends who can help you.';
+    }
+    if (factor.includes('follow-up') || factor.includes('appointment')) {
+      return 'You have a doctor visit coming up soon.';
+    }
+    if (factor.includes('check-in') || factor.includes('compliance')) {
+      return 'You have been doing your daily check-ins.';
+    }
+    if (factor.includes('support')) {
+      return 'You have good support at home.';
+    }
+    if (factor.includes('medication')) {
+      return 'You are taking your medicines as planned.';
+    }
+
+    return `${pf.factor} helps protect you.`;
+  }
+
+  private static getActionableAdvice(riskCategory: string, features: ReadmissionRiskFeatures): string {
+    // Prioritize the most actionable advice based on features
+    if (!features.postDischarge.followUpScheduled) {
+      return 'Please call your doctor to set up a visit in the next 7 days.';
+    }
+
+    if (features.engagement.consecutiveMissedCheckIns >= 2) {
+      return 'Please do your daily check-in today - it helps us help you.';
+    }
+
+    if (features.socialDeterminants.hasTransportationBarrier) {
+      return 'Talk to your care team about getting rides to your appointments.';
+    }
+
+    if (features.socialDeterminants.livesAlone && !features.socialDeterminants.hasCaregiver) {
+      return 'Consider asking a family member or friend to check on you this week.';
+    }
+
+    if (riskCategory === 'critical' || riskCategory === 'high') {
+      return 'Your care team will reach out to help you stay healthy at home.';
+    }
+
+    return 'Keep doing your check-ins and take your medicines as planned.';
+  }
 }
 
 // =====================================================
@@ -409,6 +611,14 @@ Return response as strict JSON with this structure:
       // Parse AI response
       const parsed = this.parseAIPrediction(aiResponse.response);
 
+      // Generate plain-language explanation for patients/families
+      const plainLanguageExplanation = PlainLanguageExplainer.generateExplanation(
+        parsed.riskCategory,
+        parsed.riskFactors,
+        parsed.protectiveFactors || [],
+        features
+      );
+
       return {
         patientId: context.patientId,
         dischargeDate: context.dischargeDate,
@@ -421,6 +631,7 @@ Return response as strict JSON with this structure:
         recommendedInterventions: parsed.recommendedInterventions,
         predictedReadmissionDate: parsed.predictedReadmissionDate,
         predictionConfidence: parsed.predictionConfidence * (features.dataCompletenessScore / 100),
+        plainLanguageExplanation,
         dataSourcesAnalyzed: {
           readmissionHistory: features.clinical.priorAdmissions30Day !== undefined,
           sdohIndicators: features.socialDeterminants.livesAlone !== undefined,
@@ -516,20 +727,50 @@ Return response as strict JSON with this structure:
       prompt += `  Tests: ${features.postDischarge.pendingTestResultsList.join(', ')}\n`;
     }
 
-    // SOCIAL DETERMINANTS (Rural Focus)
+    // SOCIAL DETERMINANTS (Rural Focus with Enhanced RUCA-based Classification)
     prompt += `\n=== SOCIAL DETERMINANTS (Rural Population Focus) ===\n`;
     prompt += `- Lives alone: ${features.socialDeterminants.livesAlone ? 'YES [Weight: 0.14]' : 'No'}\n`;
     prompt += `- Has caregiver: ${features.socialDeterminants.hasCaregiver ? 'Yes (protective)' : 'NO (risk)'}\n`;
+
+    // Enhanced Rural Classification (RUCA-based)
+    prompt += `\nGEOGRAPHIC ACCESS TO CARE:\n`;
+    if (features.socialDeterminants.rucaCategory) {
+      const rucaWeights: Record<string, string> = {
+        'urban': '0.00 (baseline)',
+        'large_rural': '0.08',
+        'small_rural': '0.12',
+        'isolated_rural': '0.18'
+      };
+      prompt += `- RUCA Classification: ${features.socialDeterminants.rucaCategory.toUpperCase()} [Weight: ${rucaWeights[features.socialDeterminants.rucaCategory] || 'N/A'}]\n`;
+    }
+    if (features.socialDeterminants.patientRurality) {
+      prompt += `- Rurality Category: ${features.socialDeterminants.patientRurality}\n`;
+    }
+    if (features.socialDeterminants.distanceToCareRiskWeight && features.socialDeterminants.distanceToCareRiskWeight > 0) {
+      prompt += `⚠️ DISTANCE-TO-CARE RISK WEIGHT: ${(features.socialDeterminants.distanceToCareRiskWeight * 100).toFixed(0)}% contribution\n`;
+    }
+    if (features.socialDeterminants.minutesToNearestED) {
+      prompt += `  - Minutes to nearest ED: ${features.socialDeterminants.minutesToNearestED}\n`;
+    }
+    if (features.socialDeterminants.isInHealthcareShortageArea) {
+      prompt += `⚠️ HEALTHCARE PROFESSIONAL SHORTAGE AREA (HPSA) [Weight: +0.10]\n`;
+    }
+
     if (features.socialDeterminants.hasTransportationBarrier) {
       prompt += `⚠️ TRANSPORTATION BARRIER [Weight: 0.16]\n`;
       if (features.socialDeterminants.distanceToNearestHospitalMiles) {
         prompt += `  Distance to hospital: ${features.socialDeterminants.distanceToNearestHospitalMiles} miles\n`;
+      }
+      if (features.socialDeterminants.distanceToPcpMiles) {
+        prompt += `  Distance to PCP: ${features.socialDeterminants.distanceToPcpMiles} miles\n`;
       }
     }
     if (features.socialDeterminants.isRuralLocation) {
       prompt += `⚠️ RURAL LOCATION [Weight: 0.15]\n`;
       prompt += `  Rural isolation score: ${features.socialDeterminants.ruralIsolationScore}/10\n`;
     }
+
+    prompt += `\nSOCIOECONOMIC FACTORS:\n`;
     prompt += `- Insurance: ${features.socialDeterminants.insuranceType}\n`;
     if (features.socialDeterminants.hasMedicaid || features.socialDeterminants.hasInsuranceGaps) {
       prompt += `  Financial barriers: ${features.socialDeterminants.financialBarriersToMedications ? 'Medications' : ''} ${features.socialDeterminants.financialBarriersToFollowUp ? 'Follow-up' : ''}\n`;
@@ -639,7 +880,8 @@ Return response as strict JSON with this structure:
     prompt += `1. Prior admissions (strongest predictor)\n`;
     prompt += `2. WellFit engagement patterns (unique early warning)\n`;
     prompt += `3. Post-discharge setup (follow-up timing is critical)\n`;
-    prompt += `4. Rural/social barriers\n\n`;
+    prompt += `4. Rural/geographic access barriers (RUCA category, distance-to-care, HPSA status)\n`;
+    prompt += `5. Social determinants (transportation, caregiver, health literacy)\n\n`;
     prompt += `Provide comprehensive 30-day readmission risk prediction with:\n`;
     prompt += `- Risk scores (7-day, 30-day, 90-day)\n`;
     prompt += `- Risk category (low/moderate/high/critical)\n`;

@@ -36,6 +36,8 @@ export interface PatientRiskData {
     level: 'low' | 'moderate' | 'high' | 'critical';
     daysUntilPredicted?: number;
     topFactor?: string;
+    /** Plain-language explanation at 6th grade reading level */
+    plainLanguageExplanation?: string;
   } | null;
   deterioration: {
     score: number;           // 0-100 (MEWS/NEWS normalized)
@@ -115,7 +117,7 @@ export const PatientRiskStrip: React.FC<PatientRiskStripProps> = ({
       // Fetch readmission risk
       const { data: readmissionData } = await supabase
         .from('readmission_risk_predictions')
-        .select('readmission_risk_30_day, risk_category, predicted_readmission_date, top_risk_factors')
+        .select('readmission_risk_30_day, risk_category, predicted_readmission_date, top_risk_factors, plain_language_explanation')
         .eq('patient_id', patientId)
         .order('created_at', { ascending: false })
         .limit(1)
@@ -139,6 +141,7 @@ export const PatientRiskStrip: React.FC<PatientRiskStripProps> = ({
             ? Math.ceil((new Date(readmissionData.predicted_readmission_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
             : undefined,
           topFactor: readmissionData.top_risk_factors?.[0]?.factor,
+          plainLanguageExplanation: readmissionData.plain_language_explanation,
         } : null,
         deterioration: deteriorationData ? {
           score: deteriorationData.auto_composite_score ?? 0,
@@ -427,6 +430,23 @@ export const PatientRiskStrip: React.FC<PatientRiskStripProps> = ({
             <p className="text-sm text-slate-500">No prediction available</p>
           )}
         </button>
+
+        {/* Plain Language Explanation - Spans full width when available */}
+        {riskData.readmission?.plainLanguageExplanation && (
+          <div className="col-span-3 p-3 rounded-lg bg-teal-900/20 border border-teal-800/50">
+            <div className="flex items-start gap-2">
+              <Info className="h-4 w-4 text-teal-400 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-xs font-medium text-teal-300 mb-1">
+                  In Simple Terms
+                </p>
+                <p className="text-sm text-slate-200 leading-relaxed">
+                  {riskData.readmission.plainLanguageExplanation}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Deterioration Risk Card */}
         <button

@@ -807,9 +807,18 @@ For real-time medical documentation, use **SmartScribe**:
 
 ---
 
-## Current Development Status (2025-12-10)
+## Current Development Status (2025-12-12)
 
 ### Recently Completed
+- **P1 Features Complete** (2025-12-12)
+  - All P1 Differentiation Features from AI/ML Scale Optimization Audit are now **DONE**
+  - See full P1 breakdown below
+- **P1 GuardianFlowEngine & Patient-Friendly AVS** (2025-12-11)
+  - `GuardianFlowEngine` service (`src/services/guardianFlowEngine.ts`) - ED crowding prediction
+  - `PatientFriendlyAVSService` service (`src/services/patientFriendlyAVSService.ts`) - Flesch-Kincaid Grade 6 AVS
+  - Type definitions: `src/types/guardianFlow.ts`, `src/types/patientFriendlyAVS.ts`
+  - Database migration `20251211230000_guardian_flow_and_avs.sql` - **APPLIED**
+  - Test suites: 47 passing tests for both services
 - **P0 AI Quick Wins** (2025-12-10)
   - `PatientRiskStrip` component for unified risk display in patient headers
   - `AIFeedbackButton` component for one-click AI feedback capture (learning health system)
@@ -819,53 +828,120 @@ For real-time medical documentation, use **SmartScribe**:
 - **ATLUS Alignment Audit** - Comprehensive audit of platform alignment with ATLUS principles
 - **Global Voice Commands** - `VoiceCommandBar` integrated in App.tsx with 40+ voice commands
 - **Bed Management Voice** - Local voice commands for bed management workflows
-- **Test Suites** - VoiceCommandBar (27 tests), useVoiceCommand (29 tests) - all passing
 
-### Next Agent Todo: P1 Items (90-Day Roadmap Month 2)
+### P1 Features - All Complete (2025-12-12)
 
-**Priority 1 - Differentiation Features:**
+| Feature | Status | Description |
+|---------|--------|-------------|
+| **GuardianFlowEngine** | ✅ DONE | ED crowding prediction with NEDOCS-style levels |
+| **Patient-Friendly AVS** | ✅ DONE | Flesch-Kincaid Grade 6 discharge summaries |
+| **Plain-Language AI Explanations** | ✅ DONE | Human-readable risk explanations at 6th grade level |
+| **Rural Model Weights** | ✅ DONE | RUCA-based classification with distance-to-care weighting |
 
-1. **GuardianFlowEngine** (`src/services/ai/guardianFlowEngine.ts`)
-   - ED crowding prediction (predict ambulance arrivals, estimate wait times)
-   - Recommend diversions when capacity critical
-   - Calculate EMS capacity impact score
-   - Tables: Use existing `bed_management_*`, `shift_handoff_*` data
+### Plain-Language AI Explanations (2025-12-12)
+- Added `plainLanguageExplanation` field to `ReadmissionPrediction` interface
+- New `PlainLanguageExplainer` class in `src/services/ai/readmissionRiskPredictor.ts`
+- Generates explanations at 6th grade reading level (Flesch-Kincaid)
+- Translates clinical risk factors to patient-friendly language
+- Example: "Your risk of coming back to the hospital is HIGH. This is mostly because you had to go to the ER 2 times in the past month. Also, it is hard to get to the doctor (30 miles away)."
 
-2. **Patient-Friendly AVS Generation** (`src/services/ai/patientFriendlyAVS.ts`)
-   - Generate After Visit Summaries at Flesch-Kincaid grade 6 reading level
-   - Use SmartScribe transcription as input
-   - Output: plain-language discharge instructions
+**UI Integration:**
+- `PatientRiskStrip` component updated to display plain-language explanations
+- Shows in expanded view under "In Simple Terms" section
+- Fetches `plain_language_explanation` from `readmission_risk_predictions` table
+- Tests: 16 tests in `src/components/patient/__tests__/PatientRiskStrip.test.tsx`
 
-3. **Plain-Language AI Explanations**
-   - Add `plainLanguageExplanation` field to AI prediction outputs
-   - Example: "Risk is HIGH because Maria missed 3 check-ins AND has transportation barriers"
-   - Start with readmission risk, then extend to other skills
+### Rural Model Weights (2025-12-12)
+- Enhanced `SocialDeterminants` interface in `src/types/readmissionRiskFeatures.ts`:
+  - `rucaCategory`: 'urban' | 'large_rural' | 'small_rural' | 'isolated_rural'
+  - `distanceToCareRiskWeight`: 0.0 to 0.25 contribution to overall risk
+  - `patientRurality`: 'urban' | 'suburban' | 'rural' | 'frontier'
+  - `isInHealthcareShortageArea`: HPSA status
+  - `minutesToNearestED`: Time-based access metric
+- Updated `ReadmissionFeatureExtractor` in `src/services/ai/readmissionFeatureExtractor.ts`:
+  - `checkRuralStatus()` - Returns detailed RUCA classification
+  - `calculateDistanceToCareRiskWeight()` - Distance-based risk (>60mi = 0.20, >30mi = 0.15)
+  - `checkHPSAStatus()` - Checks Healthcare Professional Shortage Area designation
+- Updated AI prompt to include RUCA category, distance-to-care weight, and HPSA status
 
-4. **Rural Model Weights** (`src/services/ai/readmissionFeatureExtractor.ts`)
-   - Add distance-to-care as risk factor
-   - Weight differently for rural vs urban patients
-   - Use `patient_rurality` column from new demographic tracking
+### GuardianFlowEngine Features
+| Function | Description |
+|----------|-------------|
+| `predictCrowding(facilityId, horizon)` | Predicts ED crowding 1h/4h/8h ahead with NEDOCS-style levels |
+| `recommendActions(facilityId)` | Returns prioritized capacity actions (expedite discharge, surge, divert) |
+| `scoreInboundEMS(facilityId, emsUnit)` | Calculates capacity impact for incoming ambulance |
+| `getAccuracyMetrics(facilityId, days)` | Returns prediction accuracy for learning dashboard |
+
+### Patient-Friendly AVS Features
+| Function | Description |
+|----------|-------------|
+| `generateAVS(request)` | Generates plain-language AVS from SOAP note/SmartScribe |
+| `approveAVS(avsId, approvedBy)` | Clinician approval workflow |
+| `markDelivered(avsId, method)` | Track delivery (print/email/portal/sms) |
+| `recordFeedback(avsId, feedback)` | Patient feedback (helpful/confusing/incomplete) |
+| Helper functions | `calculateFleschKincaidGrade`, `countSyllables`, `meetsGradeLevel`, `formatAVSAsPlainText` |
+
+### Database Tables Added (2025-12-11)
+- `ed_crowding_predictions` - Stores predictions with accuracy tracking
+- `staff_workload_snapshots` - Point-in-time workload for load balancing
+- `patient_friendly_avs` - AVS records with reading level metrics
+- `guardian_flow_config` - Per-facility configuration for thresholds
+
+### Next Agent Todo: P2 Items (90-Day Roadmap Month 3)
+
+**Priority 2 - Scale/Efficiency Features:**
+
+1. **Batch Inference Pipeline** - Process multiple predictions efficiently
+   - Collect predictions for batch processing
+   - Use smaller model for initial screening, escalate high-risk to full model
+   - Target: 10x cost reduction for routine screenings
+
+2. **Prediction Caching** - Reduce redundant AI calls
+   - Cache recent predictions by patient + context hash
+   - TTL: 4 hours for stable patients, 1 hour for high-risk
+   - Invalidate on significant events (new admission, alert)
+
+3. **Model Selection Logic** - Right-size AI for the task
+   - Use Claude Haiku for simple classifications
+   - Use Claude Sonnet for complex reasoning
+   - Reserve Claude Opus for audit/review scenarios
+
+4. **AI Cost Dashboard** - Visibility into AI spending
+   - Track cost per skill, per tenant, per model
+   - Alert on anomalies (sudden spike in usage)
+   - Monthly cost projection and optimization suggestions
 
 **Reference:**
 - See `docs/AI_ML_SCALE_OPTIMIZATION_AUDIT.md` for full context
-- Priority matrix: P0 (done) -> P1 (next) -> P2 -> P3
-- 90-day roadmap: Month 1 complete, start Month 2 items
+- Priority matrix: P0 ✅ -> P1 ✅ -> P2 (next) -> P3
+- 90-day roadmap: Month 1 ✅, Month 2 ✅, Month 3 in queue
 
-### ATLUS Audit Summary (Score: 7/10)
+### ATLUS Audit Summary (Score: 8/10 - Updated 2025-12-12)
 
-The ATLUS alignment audit identified key areas for improvement:
+The ATLUS alignment audit identified key areas for improvement. **Two critical gaps have been fixed:**
 
-| Principle | Score | Key Gap |
-|-----------|-------|---------|
-| **A - Accountability** | 9/10 | AI reasoning transparency |
-| **T - Technology** | 6/10 | Too many clicks (70% reduction needed) |
-| **L - Leading** | 7.5/10 | Missing real-time collaboration |
-| **U - Unity** | 5.5/10 | No PatientContext (critical) |
-| **S - Service** | 7/10 | No provider affirmations |
+| Principle | Score | Key Gap | Status |
+|-----------|-------|---------|--------|
+| **A - Accountability** | 9/10 | AI reasoning transparency | |
+| **T - Technology** | 6/10 | Too many clicks (70% reduction needed) | |
+| **L - Leading** | 7.5/10 | Missing real-time collaboration | |
+| **U - Unity** | 8/10 | ~~No PatientContext~~ | ✅ FIXED |
+| **S - Service** | 7/10 | No provider affirmations | |
 
-**Critical Gaps to Address:**
-1. **PatientContext** - Patient selection lost between dashboards
-2. **Session Persistence** - Navigation history lost on refresh
+**Critical Gaps Fixed (2025-12-12):**
+1. ✅ **PatientContext Persistence** - `EAPatientBanner` component now shows selected patient across all dashboards
+   - Component: `src/components/envision-atlus/EAPatientBanner.tsx`
+   - Features: Patient name/MRN/room, risk badge, recent patients dropdown, clear button
+   - Tests: 27 passing tests in `__tests__/EAPatientBanner.test.tsx`
+   - Integrated in `App.tsx` - renders globally below AppHeader
+
+2. ✅ **Session Persistence** - `EASessionResume` component prompts users to resume where they left off
+   - Component: `src/components/envision-atlus/EASessionResume.tsx`
+   - Features: Auto-shows on login if resumable session, auto-dismiss timer, "Resume" or "Start Fresh" options
+   - Tests: 19 passing tests in `__tests__/EASessionResume.test.tsx`
+   - Uses `NavigationHistoryContext` which persists to localStorage
+
+**Remaining Gap:**
 3. **Click Reduction** - Voice commands added, but need more voice-first workflows
 
 ### Super Admin Credentials Reference

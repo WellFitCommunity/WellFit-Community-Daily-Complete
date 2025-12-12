@@ -140,9 +140,32 @@ export interface SocialDeterminants {
   distanceToPcpMiles?: number;
   publicTransitAvailable: boolean;
 
-  // Rural isolation
+  // Rural isolation - ENHANCED with RUCA-based classification
   isRuralLocation: boolean;
   ruralIsolationScore?: number; // 0-10 scale
+  /**
+   * RUCA (Rural-Urban Commuting Area) code category
+   * 1-3: Urban, 4-6: Large Rural, 7-9: Small Rural, 10: Isolated Rural
+   */
+  rucaCategory?: 'urban' | 'large_rural' | 'small_rural' | 'isolated_rural';
+  /**
+   * Distance-to-care risk factor (miles to nearest appropriate care)
+   * Used to weight rural risk - higher distance = higher risk
+   */
+  distanceToCareRiskWeight?: number; // 0.0 to 0.25 contribution to risk
+  /**
+   * Patient's rurality classification (from demographic tracking)
+   * Maps to patient_rurality column in ai_predictions
+   */
+  patientRurality?: 'urban' | 'suburban' | 'rural' | 'frontier';
+  /**
+   * Whether patient is in a healthcare shortage area (HPSA)
+   */
+  isInHealthcareShortageArea?: boolean;
+  /**
+   * Minutes to nearest emergency department
+   */
+  minutesToNearestED?: number;
 
   // Insurance & financial
   insuranceType?: 'medicare' | 'medicaid' | 'commercial' | 'uninsured' | 'dual_eligible';

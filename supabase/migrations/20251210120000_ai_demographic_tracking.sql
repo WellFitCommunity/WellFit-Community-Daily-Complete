@@ -160,9 +160,9 @@ SELECT
     END AS accuracy_rate,
     AVG(confidence_score) FILTER (WHERE confidence_score IS NOT NULL) AS avg_confidence,
     COUNT(*) FILTER (WHERE feedback_type = 'unsafe') AS unsafe_flags,
-    MAX(created_at) AS last_prediction
+    MAX(predicted_at) AS last_prediction
 FROM ai_predictions
-WHERE created_at > NOW() - INTERVAL '90 days'
+WHERE predicted_at > NOW() - INTERVAL '90 days'
 GROUP BY skill_name, patient_age_group, patient_race, patient_payer, patient_rurality;
 
 COMMENT ON VIEW ai_accuracy_by_demographics IS
@@ -204,7 +204,7 @@ BEGIN
     INTO v_baseline_rate
     FROM ai_predictions
     WHERE skill_name = p_skill_name
-    AND created_at > NOW() - INTERVAL '90 days';
+    AND predicted_at > NOW() - INTERVAL '90 days';
 
     IF v_baseline_rate IS NULL THEN
         RETURN;

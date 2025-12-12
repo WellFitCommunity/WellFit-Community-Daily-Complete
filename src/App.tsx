@@ -47,6 +47,12 @@ import OfflineIndicator from './components/OfflineIndicator';
 // Voice Command Bar - Global speech recognition UI
 import { VoiceCommandBar } from './components/admin/VoiceCommandBar';
 
+// Patient Banner - Persistent patient display for ATLUS: Unity
+import { EAPatientBanner } from './components/envision-atlus/EAPatientBanner';
+
+// Session Resume - Prompts users to resume where they left off (ATLUS: Unity)
+import { EASessionResume } from './components/envision-atlus/EASessionResume';
+
 // AI Transparency - LearningMilestone (global component)
 import { LearningMilestone } from './components/ai-transparency';
 
@@ -264,6 +270,9 @@ function Shell() {
               <LearningMilestone />
 
               <AppHeader />
+
+              {/* Patient Banner - Shows currently selected patient (ATLUS: Unity) */}
+              <EAPatientBanner className="sticky top-0 z-40" />
 
             <AuthGate>
             <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
@@ -1150,6 +1159,9 @@ function Shell() {
             {/* Global Voice Command Bar - compact mic icon that expands when clicked */}
             {/* Note: IntelligentAdminPanel has its own VoiceCommandBar with section scrolling */}
             <VoiceCommandBar />
+
+            {/* Session Resume Prompt - Shows when user returns and has previous session (ATLUS: Unity) */}
+            <EASessionResume />
           </AuthGate>
             </NavigationHistoryProvider>
             </PatientProvider>

@@ -263,6 +263,7 @@ export class ReadmissionFeatureExtractor {
 
   /**
    * Extract social determinants - critical for rural populations
+   * ENHANCED with RUCA-based rural classification and distance-to-care weighting
    */
   private async extractSocialDeterminants(context: DischargeContext): Promise<SocialDeterminants> {
     const patientId = context.patientId;
@@ -292,8 +293,25 @@ export class ReadmissionFeatureExtractor {
       .eq('id', patientId)
       .single();
 
-    // Determine if rural location
-    const isRural = await this.checkRuralStatus(profile?.address_zip);
+    // Determine rural status with RUCA-based classification
+    const ruralStatus = await this.checkRuralStatus(profile?.address_zip);
+
+    // Calculate distance-to-care risk weight (for rural model weighting)
+    const distanceToHospital = transportation?.details?.distance_to_hospital;
+    const distanceToPcp = transportation?.details?.distance_to_pcp;
+    const distanceToCareRiskWeight = this.calculateDistanceToCareRiskWeight(
+      distanceToHospital,
+      distanceToPcp,
+      ruralStatus.rucaCategory
+    );
+
+    // Check HPSA status (Healthcare Professional Shortage Area)
+    const isInHPSA = await this.checkHPSAStatus(profile?.address_zip);
+
+    // Calculate estimated minutes to ED (rough estimate: 1 mile = 1.5-2 min in rural areas)
+    const minutesToED = distanceToHospital
+      ? Math.round(distanceToHospital * (ruralStatus.isRural ? 2 : 1.5))
+      : undefined;
 
     return {
       livesAlone: housing?.details?.lives_alone || false,
@@ -302,12 +320,18 @@ export class ReadmissionFeatureExtractor {
       caregiverReliable: socialSupport?.details?.caregiver_reliable || false,
 
       hasTransportationBarrier: transportation?.risk_level === 'high' || transportation?.risk_level === 'critical',
-      distanceToNearestHospitalMiles: transportation?.details?.distance_to_hospital,
-      distanceToPcpMiles: transportation?.details?.distance_to_pcp,
+      distanceToNearestHospitalMiles: distanceToHospital,
+      distanceToPcpMiles: distanceToPcp,
       publicTransitAvailable: transportation?.details?.public_transit || false,
 
-      isRuralLocation: isRural,
-      ruralIsolationScore: this.calculateRuralIsolationScore(transportation, isRural),
+      // Enhanced rural classification
+      isRuralLocation: ruralStatus.isRural,
+      ruralIsolationScore: this.calculateRuralIsolationScore(transportation, ruralStatus.isRural, ruralStatus.rucaCategory),
+      rucaCategory: ruralStatus.rucaCategory,
+      distanceToCareRiskWeight,
+      patientRurality: ruralStatus.patientRurality,
+      isInHealthcareShortageArea: isInHPSA,
+      minutesToNearestED: minutesToED,
 
       insuranceType: this.categorizeInsurance(insurance?.details?.type),
       hasMedicaid: insurance?.details?.type === 'medicaid' || insurance?.details?.type === 'dual_eligible',
@@ -325,6 +349,25 @@ export class ReadmissionFeatureExtractor {
       hasCommunitySupport: socialSupport?.details?.community_support || false,
       sociallyIsolated: socialSupport?.risk_level === 'high' || socialSupport?.risk_level === 'critical'
     };
+  }
+
+  /**
+   * Check if ZIP code is in a Healthcare Professional Shortage Area (HPSA)
+   * HPSA status increases readmission risk due to limited access to care
+   */
+  private async checkHPSAStatus(zipCode?: string): Promise<boolean> {
+    if (!zipCode) return false;
+
+    // Try to get HPSA status from database
+    const { data } = await supabase
+      .from('hpsa_designations')
+      .select('designation_type')
+      .eq('zip_code', zipCode.substring(0, 5))
+      .eq('status', 'active')
+      .limit(1)
+      .single();
+
+    return !!data?.designation_type;
   }
 
   /**
@@ -964,18 +1007,135 @@ export class ReadmissionFeatureExtractor {
     return data?.details?.has_caregiver || data?.details?.family_support || false;
   }
 
-  private async checkRuralStatus(zipCode?: string): Promise<boolean> {
-    // This would use RUCA codes or similar rural classification
-    // For now, simple placeholder
-    return false;
+  /**
+   * Check rural status using RUCA (Rural-Urban Commuting Area) codes
+   * Returns detailed rural classification for risk weighting
+   */
+  private async checkRuralStatus(zipCode?: string): Promise<{
+    isRural: boolean;
+    rucaCategory: 'urban' | 'large_rural' | 'small_rural' | 'isolated_rural';
+    patientRurality: 'urban' | 'suburban' | 'rural' | 'frontier';
+  }> {
+    if (!zipCode) {
+      return { isRural: false, rucaCategory: 'urban', patientRurality: 'urban' };
+    }
+
+    // Try to get RUCA classification from database
+    const { data: ruralData } = await supabase
+      .from('zip_ruca_codes')
+      .select('ruca_code, ruca_category')
+      .eq('zip_code', zipCode.substring(0, 5))
+      .limit(1)
+      .single();
+
+    if (ruralData?.ruca_code) {
+      const ruca = ruralData.ruca_code;
+      if (ruca <= 3) {
+        return { isRural: false, rucaCategory: 'urban', patientRurality: 'urban' };
+      } else if (ruca <= 6) {
+        return { isRural: true, rucaCategory: 'large_rural', patientRurality: 'suburban' };
+      } else if (ruca <= 9) {
+        return { isRural: true, rucaCategory: 'small_rural', patientRurality: 'rural' };
+      } else {
+        return { isRural: true, rucaCategory: 'isolated_rural', patientRurality: 'frontier' };
+      }
+    }
+
+    // Fallback: Estimate rurality from first 3 digits of ZIP (regional patterns)
+    // In production, this would use a proper RUCA lookup table
+    const zip3 = zipCode.substring(0, 3);
+
+    // Example: Some rural ZIP code prefixes (this is simplified)
+    const ruralPrefixes = ['592', '593', '594', '595', '596', '597', '598', '599', // Montana
+                          '693', '694', '695', '696', '697', // North Dakota
+                          '570', '571', '572', '573', '574', '575', '576', '577']; // South Dakota
+    const frontierPrefixes = ['592', '593', '697']; // Very remote areas
+
+    if (frontierPrefixes.includes(zip3)) {
+      return { isRural: true, rucaCategory: 'isolated_rural', patientRurality: 'frontier' };
+    } else if (ruralPrefixes.includes(zip3)) {
+      return { isRural: true, rucaCategory: 'small_rural', patientRurality: 'rural' };
+    }
+
+    return { isRural: false, rucaCategory: 'urban', patientRurality: 'urban' };
   }
 
-  private calculateRuralIsolationScore(transportation: any, isRural: boolean): number {
+  /**
+   * Calculate distance-to-care risk weight
+   * Higher distances contribute more to readmission risk
+   * Based on research showing 15+ miles to care increases risk significantly
+   */
+  private calculateDistanceToCareRiskWeight(
+    distanceToHospital?: number,
+    distanceToPcp?: number,
+    rucaCategory?: string
+  ): number {
+    let weight = 0;
+
+    // Hospital distance factor (most critical for readmissions)
+    if (distanceToHospital !== undefined) {
+      if (distanceToHospital > 60) {
+        weight += 0.20; // Very high risk - over 1 hour drive
+      } else if (distanceToHospital > 30) {
+        weight += 0.15; // High risk - 30-60 min drive
+      } else if (distanceToHospital > 15) {
+        weight += 0.10; // Moderate risk
+      } else if (distanceToHospital > 5) {
+        weight += 0.05; // Slight risk
+      }
+    }
+
+    // PCP distance factor (important for follow-up)
+    if (distanceToPcp !== undefined) {
+      if (distanceToPcp > 30) {
+        weight += 0.08;
+      } else if (distanceToPcp > 15) {
+        weight += 0.05;
+      }
+    }
+
+    // RUCA category multiplier for rural areas
+    if (rucaCategory === 'isolated_rural') {
+      weight *= 1.3; // 30% increase for frontier areas
+    } else if (rucaCategory === 'small_rural') {
+      weight *= 1.15; // 15% increase for small rural
+    }
+
+    // Cap at 0.25 (25% contribution to total risk)
+    return Math.min(weight, 0.25);
+  }
+
+  private calculateRuralIsolationScore(
+    transportation: any,
+    isRural: boolean,
+    rucaCategory?: string
+  ): number {
     if (!isRural) return 0;
 
-    let score = 5; // Base rural score
-    if (transportation?.details?.distance_to_hospital > 30) score += 2;
-    if (transportation?.details?.distance_to_pcp > 20) score += 2;
+    let score = 0;
+
+    // Base score by RUCA category
+    switch (rucaCategory) {
+      case 'isolated_rural':
+        score = 8;
+        break;
+      case 'small_rural':
+        score = 6;
+        break;
+      case 'large_rural':
+        score = 4;
+        break;
+      default:
+        score = 3;
+    }
+
+    // Distance factors
+    if (transportation?.details?.distance_to_hospital > 60) score += 2;
+    else if (transportation?.details?.distance_to_hospital > 30) score += 1;
+
+    if (transportation?.details?.distance_to_pcp > 30) score += 1;
+
+    // Infrastructure factors
     if (!transportation?.details?.public_transit) score += 1;
 
     return Math.min(score, 10);

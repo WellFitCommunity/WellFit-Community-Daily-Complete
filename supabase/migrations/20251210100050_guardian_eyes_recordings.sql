@@ -119,7 +119,7 @@ END $$;
 CREATE OR REPLACE FUNCTION public.get_alert_recordings(p_alert_id UUID)
 RETURNS TABLE (
   id UUID,
-  timestamp TIMESTAMPTZ,
+  recording_ts TIMESTAMPTZ,
   type TEXT,
   component TEXT,
   action TEXT,
@@ -132,7 +132,7 @@ BEGIN
   RETURN QUERY
   SELECT
     ger.id,
-    ger.timestamp,
+    ger."timestamp" AS recording_ts,
     ger.type,
     ger.component,
     ger.action,
