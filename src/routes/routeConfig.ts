@@ -205,6 +205,14 @@ export const adminRoutes: RouteConfig[] = [
     roles: ['super_admin', 'admin'],
     category: 'admin',
   },
+  {
+    path: '/billing/review',
+    component: 'BillingReviewDashboard',
+    auth: 'admin',
+    roles: ['admin', 'super_admin', 'billing_specialist'],
+    category: 'admin',
+    featureFlag: 'billingReview',
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -493,6 +501,14 @@ export const workflowRoutes: RouteConfig[] = [
   {
     path: '/hospital-transfer',
     component: 'HospitalTransferPortal',
+    auth: 'admin',
+    roles: ['admin', 'super_admin', 'nurse', 'physician', 'case_manager'],
+    category: 'workflow',
+  },
+  // Receiving Dashboard (for incoming transfers)
+  {
+    path: '/handoff/receiving',
+    component: 'ReceivingDashboardWrapper',
     auth: 'admin',
     roles: ['admin', 'super_admin', 'nurse', 'physician', 'case_manager'],
     category: 'workflow',

@@ -89,6 +89,9 @@ export const ReportsPrintPage = React.lazy(() => import('../pages/ReportsPrintPa
 
 // Billing & Finance
 export const BillingDashboard = React.lazy(() => import('../components/admin/BillingDashboard'));
+export const BillingReviewDashboard = React.lazy(() =>
+  import('../components/billing/BillingReviewDashboard').then(m => ({ default: m.BillingReviewDashboard }))
+);
 export const AIAccuracyDashboard = React.lazy(() => import('../components/admin/AIAccuracyDashboard'));
 export const RevenueDashboard = React.lazy(() => import('../components/atlas/RevenueDashboard'));
 export const AIRevenueDashboard = React.lazy(() => import('../components/ai/AIRevenueDashboard'));
@@ -179,6 +182,7 @@ export const KioskDashboard = React.lazy(() => import('../components/chw/KioskDa
 export const ShiftHandoffDashboard = React.lazy(() => import('../components/nurse/ShiftHandoffDashboard'));
 export const BedManagementPanel = React.lazy(() => import('../components/admin/BedManagementPanel'));
 export const AdminTransferLogs = React.lazy(() => import('../components/handoff/AdminTransferLogs'));
+export const ReceivingDashboard = React.lazy(() => import('../components/handoff/ReceivingDashboard'));
 export const HospitalTransferPortal = React.lazy(() => import('../pages/HospitalTransferPortal'));
 export const StaffWellnessDashboard = React.lazy(() => import('../pages/StaffWellnessDashboard'));
 
@@ -269,6 +273,7 @@ export const componentMap: Record<string, React.LazyExoticComponent<any>> = {
   ApiKeyManager,
   ReportsPrintPage,
   BillingDashboard,
+  BillingReviewDashboard,
   AIAccuracyDashboard,
   RevenueDashboard,
   AIRevenueDashboard,
@@ -324,6 +329,7 @@ export const componentMap: Record<string, React.LazyExoticComponent<any>> = {
   ShiftHandoffDashboard,
   BedManagementPanel,
   AdminTransferLogs,
+  ReceivingDashboard,
   HospitalTransferPortal,
   StaffWellnessDashboard,
   LawEnforcementLandingPage,

@@ -116,6 +116,22 @@ const GuardianPlaceholder: React.FC = () => (
   <div>Guardian Agent moved to Edge Functions</div>
 );
 
+/**
+ * Wrapper for ReceivingDashboard to provide facility name from user's tenant
+ */
+export const ReceivingDashboardWrapper: React.FC = () => {
+  const { user, profile } = useSupabaseClient() as any;
+
+  // Use tenant name or facility name from profile
+  const facilityName = profile?.tenant_name || profile?.facility_name || 'Default Facility';
+
+  return (
+    <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading Receiving Dashboard...</div>}>
+      <LazyComponents.ReceivingDashboard facilityName={facilityName} />
+    </Suspense>
+  );
+};
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // PAGE WRAPPERS (for routes needing special layout)
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -180,6 +196,7 @@ const wrapperComponentMap: Record<string, React.FC> = {
   FieldVisitWorkflowWrapper,
   MemoryClinicDashboardWrapper,
   CoordinatedResponseDashboardWrapper,
+  ReceivingDashboardWrapper,
   GuardianPlaceholder,
 };
 
