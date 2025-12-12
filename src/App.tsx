@@ -53,6 +53,9 @@ import { EAPatientBanner } from './components/envision-atlus/EAPatientBanner';
 // Session Resume - Prompts users to resume where they left off (ATLUS: Unity)
 import { EASessionResume } from './components/envision-atlus/EASessionResume';
 
+// Real-Time Alerts - Push-based instant notifications (ATLUS: Leading - Innovation)
+import { EARealtimeAlertNotifications } from './components/envision-atlus/EARealtimeAlertNotifications';
+
 // Keyboard Shortcuts - Global keyboard navigation (ATLUS: Technology - Click Reduction)
 import { EAKeyboardShortcutsProvider } from './components/envision-atlus/EAKeyboardShortcutsProvider';
 
@@ -1167,6 +1170,9 @@ function Shell() {
 
             {/* Session Resume Prompt - Shows when user returns and has previous session (ATLUS: Unity) */}
             <EASessionResume />
+
+            {/* Real-Time Alert Notifications - Push-based critical alerts (ATLUS: Leading) */}
+            <EARealtimeAlertNotifications />
           </AuthGate>
             </EAKeyboardShortcutsProvider>
             </NavigationHistoryProvider>

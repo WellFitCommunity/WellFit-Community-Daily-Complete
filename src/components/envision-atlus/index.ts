@@ -18,6 +18,7 @@ export { EASwitch } from './EASwitch';
 export { EATabs, EATabsList, EATabsTrigger, EATabsContent } from './EATabs';
 export { EABreadcrumbs } from './EABreadcrumbs';
 export { EAAffirmationToast, useAffirmationToast } from './EAAffirmationToast';
+export { EARealtimeAlertNotifications } from './EARealtimeAlertNotifications';
 
 // Re-export theme utilities
 export { envisionAtlus, getRiskStyles } from '../../styles/envision-atlus-theme';
