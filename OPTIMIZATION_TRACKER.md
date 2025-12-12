@@ -1,8 +1,110 @@
 # WellFit Codebase Optimization Tracker
 
 **Started**: 2025-11-22
+**Last Updated**: 2025-12-12
 **Status**: In Progress
-**Goal**: Improve performance, reduce bundle size, implement proper caching
+**Goal**: Improve performance, reduce bundle size, implement proper caching, optimize AI/ML costs
+
+---
+
+## AI/ML Scale Optimization (P0-P3 Roadmap)
+
+**Reference:** `docs/AI_ML_SCALE_OPTIMIZATION_AUDIT.md`
+
+### Priority Matrix Summary
+
+| Priority | Status | Description |
+|----------|--------|-------------|
+| **P0** | ✅ COMPLETE | AI Quick Wins (immediate value) |
+| **P1** | ✅ COMPLETE | Differentiation Features (competitive moat) |
+| **P2** | 🔜 NEXT | Scale/Efficiency Features (cost optimization) |
+| **P3** | 📋 PLANNED | Advanced ML (future innovation) |
+
+### P0 - AI Quick Wins ✅ COMPLETE (2025-12-10)
+
+| Component | Purpose | Location |
+|-----------|---------|----------|
+| **PatientRiskStrip** | Unified risk display in patient headers | `src/components/patient/PatientRiskStrip.tsx` |
+| **AIFeedbackButton** | One-click AI feedback capture | `src/components/ai/AIFeedbackButton.tsx` |
+| **Demographic Tracking** | Bias detection columns | Migration `20251210130000_ai_demographic_tracking.sql` |
+
+### P1 - Differentiation Features ✅ COMPLETE (2025-12-12)
+
+| Feature | Status | Key Files |
+|---------|--------|-----------|
+| **GuardianFlowEngine** | ✅ DONE | `src/services/guardianFlowEngine.ts`, `src/types/guardianFlow.ts` |
+| **Patient-Friendly AVS** | ✅ DONE | `src/services/patientFriendlyAVSService.ts`, `src/types/patientFriendlyAVS.ts` |
+| **Plain-Language AI Explanations** | ✅ DONE | `PlainLanguageExplainer` in `readmissionRiskPredictor.ts` |
+| **Rural Model Weights** | ✅ DONE | `src/types/readmissionRiskFeatures.ts`, `readmissionFeatureExtractor.ts` |
+
+**Database Tables Added (2025-12-11):**
+- `ed_crowding_predictions` - ED crowding prediction accuracy tracking
+- `staff_workload_snapshots` - Point-in-time workload for load balancing
+- `patient_friendly_avs` - AVS records with reading level metrics
+- `guardian_flow_config` - Per-facility configuration
+
+### P2 - Scale/Efficiency Features 🔜 NEXT (Month 3)
+
+1. **Batch Inference Pipeline** - 10x cost reduction for routine screenings
+2. **Prediction Caching** - Reduce redundant AI calls by 60%
+3. **Model Selection Logic** - Right-size AI (Haiku/Sonnet/Opus)
+4. **AI Cost Dashboard** - Visibility into AI spending
+
+### P3 - Advanced ML 📋 PLANNED
+
+- Custom Fine-Tuned Models
+- Federated Learning
+- Real-Time Stream Processing
+- Explainable AI Dashboard
+
+---
+
+## ATLUS Alignment Tracker
+
+**Overall Score: 8.6/10** (Updated 2025-12-12 - VERIFIED)
+
+| Principle | Score | Status | Verification |
+|-----------|-------|--------|--------------|
+| **A - Accountability** | 9/10 | ✅ | Plain-language AI explanations in PatientRiskStrip |
+| **T - Technology** | 8.5/10 | ✅ | Keyboard shortcuts work (Ctrl+1-9 navigation verified) |
+| **L - Leading** | 8/10 | ✅ | Session resume works, NavigationHistory persists to localStorage |
+| **U - Unity** | 8.5/10 | ✅ | PatientContext wired to NeuroSuite + CareCoordination dashboards |
+| **S - Service** | 8.5/10 | ✅ | Provider affirmations wired to ShiftHandoff + BedManagement |
+
+**Integrations Verified (2025-12-12):**
+
+| Dashboard | PatientContext | Affirmations | Status |
+|-----------|----------------|--------------|--------|
+| `NeuroSuiteDashboard` | ✅ Wired | N/A | Patient select on name click + View Chart |
+| `CareCoordinationDashboard` | ✅ Wired | N/A | Patient select on care plan click |
+| `ShiftHandoffDashboard` | N/A | ✅ Wired | Toast on confirm/accept/bulk actions |
+| `BedManagementPanel` | N/A | ✅ Refactored | Uses shared `providerAffirmations.ts` |
+
+**Key Components:**
+- `PatientContext.tsx` - Patient selection persists to localStorage
+- `EAPatientBanner.tsx` - Displays selected patient globally
+- `EAKeyboardShortcutsProvider.tsx` - Global shortcuts provider
+- `useKeyboardShortcuts.ts` - Navigation (Ctrl+1-9) and filters (Shift+H/C/A)
+- `EASessionResume.tsx` - "Resume where you left off" prompt
+- `providerAffirmations.ts` - 80 messages across 16 categories
+- `EAAffirmationToast.tsx` - Reusable toast component
+
+**Remaining Work for 9.0+:**
+- Wire PatientContext to more dashboards (PhysicalTherapy, Referrals, etc.)
+- Wire filter shortcuts (Shift+H/C/A) to dashboard filter callbacks
+- Add real-time collaboration features (L principle)
+
+---
+
+## Next Agent Todo: P2 Implementation
+
+**Priority Order:**
+1. Create `src/services/ai/batchInference.ts` - Batch processing queue
+2. Create `src/services/ai/predictionCache.ts` - TTL-based caching
+3. Create `src/services/ai/modelSelector.ts` - Task complexity routing
+4. Create `src/components/admin/AICostDashboard.tsx` - Cost visibility
+
+---
 
 ---
 

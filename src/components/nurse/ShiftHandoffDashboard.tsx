@@ -12,6 +12,8 @@ import HandoffCelebration from './HandoffCelebration';
 import HandoffBypassModal, { BypassFormData } from './HandoffBypassModal';
 import PersonalizedGreeting from '../shared/PersonalizedGreeting';
 import { auditLogger } from '../../services/auditLogger';
+import { getProviderAffirmation, AffirmationCategory } from '../../services/providerAffirmations';
+import { EAAffirmationToast } from '../envision-atlus/EAAffirmationToast';
 import type {
   ShiftHandoffSummary,
   HandoffDashboardMetrics,
@@ -39,6 +41,18 @@ export const ShiftHandoffDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPatients, setSelectedPatients] = useState<Set<string>>(new Set());
+
+  // ATLUS: Service - Provider affirmation toast state
+  const [affirmationToast, setAffirmationToast] = useState<{
+    message: string;
+    type: 'success' | 'info' | 'achievement';
+  } | null>(null);
+
+  // Show affirmation toast (ATLUS: Service - positive feedback for healthcare workers)
+  const showAffirmation = (category: AffirmationCategory) => {
+    const message = getProviderAffirmation(category);
+    setAffirmationToast({ message, type: category === 'milestone_reached' ? 'achievement' : 'success' });
+  };
 
   // Time tracking for efficiency metrics
   const [sessionStartTime] = useState<number>(Date.now());
@@ -101,6 +115,9 @@ export const ShiftHandoffDashboard: React.FC = () => {
       const updatedMetrics = await ShiftHandoffService.getHandoffDashboardMetrics(shiftType);
       setMetrics(updatedMetrics);
       auditLogger.clinical('HANDOFF_RISK_CONFIRMED', true, { patientId, riskScoreId });
+
+      // ATLUS: Service - Show affirmation on patient assessment
+      showAffirmation('patient_assessed');
     } catch (err) {
       auditLogger.error('HANDOFF_CONFIRM_FAILED', err instanceof Error ? err : new Error('Failed'), { patientId });
       alert('Failed to confirm risk score');
@@ -173,6 +190,9 @@ export const ShiftHandoffDashboard: React.FC = () => {
       await ShiftHandoffService.bulkConfirmAutoScores(riskScoreIds);
       setSelectedPatients(new Set());
       loadHandoffData();
+
+      // ATLUS: Service - Show milestone affirmation for bulk action
+      showAffirmation('milestone_reached');
     } catch (err) {
 
       alert('Failed to bulk confirm');
@@ -227,6 +247,9 @@ export const ShiftHandoffDashboard: React.FC = () => {
     setBypassUsed(false);
     setBypassNumber(0);
     setShowCelebration(true);
+
+    // ATLUS: Service - Show handoff complete affirmation
+    showAffirmation('handoff_complete');
   };
 
   // Handle emergency bypass
@@ -298,6 +321,16 @@ export const ShiftHandoffDashboard: React.FC = () => {
 
   return (
     <div className="shift-handoff-dashboard">
+      {/* ATLUS: Service - Provider Affirmation Toast */}
+      {affirmationToast && (
+        <EAAffirmationToast
+          message={affirmationToast.message}
+          type={affirmationToast.type}
+          onDismiss={() => setAffirmationToast(null)}
+          position="bottom-right"
+        />
+      )}
+
       {/* Personalized Greeting */}
       <PersonalizedGreeting
         userName={user?.email || user?.user_metadata?.full_name}

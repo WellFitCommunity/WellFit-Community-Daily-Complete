@@ -809,149 +809,68 @@ For real-time medical documentation, use **SmartScribe**:
 
 ## Current Development Status (2025-12-12)
 
-### Recently Completed
-- **P1 Features Complete** (2025-12-12)
-  - All P1 Differentiation Features from AI/ML Scale Optimization Audit are now **DONE**
-  - See full P1 breakdown below
-- **P1 GuardianFlowEngine & Patient-Friendly AVS** (2025-12-11)
-  - `GuardianFlowEngine` service (`src/services/guardianFlowEngine.ts`) - ED crowding prediction
-  - `PatientFriendlyAVSService` service (`src/services/patientFriendlyAVSService.ts`) - Flesch-Kincaid Grade 6 AVS
-  - Type definitions: `src/types/guardianFlow.ts`, `src/types/patientFriendlyAVS.ts`
-  - Database migration `20251211230000_guardian_flow_and_avs.sql` - **APPLIED**
-  - Test suites: 47 passing tests for both services
-- **P0 AI Quick Wins** (2025-12-10)
-  - `PatientRiskStrip` component for unified risk display in patient headers
-  - `AIFeedbackButton` component for one-click AI feedback capture (learning health system)
-  - Demographic columns added to `ai_predictions` for bias detection
-  - Migration `20251210130000_ai_demographic_tracking.sql` - **APPLIED**
-- **AI/ML Scale Optimization Audit** - Full 7-area analysis with 90-day roadmap (see `docs/AI_ML_SCALE_OPTIMIZATION_AUDIT.md`)
-- **ATLUS Alignment Audit** - Comprehensive audit of platform alignment with ATLUS principles
-- **Global Voice Commands** - `VoiceCommandBar` integrated in App.tsx with 40+ voice commands
-- **Bed Management Voice** - Local voice commands for bed management workflows
+**Full optimization tracking:** See `OPTIMIZATION_TRACKER.md` in project root.
 
-### P1 Features - All Complete (2025-12-12)
+### AI/ML Optimization Progress
+| Priority | Status | Description |
+|----------|--------|-------------|
+| **P0** | ✅ COMPLETE | PatientRiskStrip, AIFeedbackButton, demographic tracking |
+| **P1** | ✅ COMPLETE | GuardianFlowEngine, Patient-Friendly AVS, Plain-Language AI, Rural Weights |
+| **P2** | 🔜 NEXT | Batch inference, prediction caching, model selection, AI cost dashboard |
 
-| Feature | Status | Description |
-|---------|--------|-------------|
-| **GuardianFlowEngine** | ✅ DONE | ED crowding prediction with NEDOCS-style levels |
-| **Patient-Friendly AVS** | ✅ DONE | Flesch-Kincaid Grade 6 discharge summaries |
-| **Plain-Language AI Explanations** | ✅ DONE | Human-readable risk explanations at 6th grade level |
-| **Rural Model Weights** | ✅ DONE | RUCA-based classification with distance-to-care weighting |
+### ATLUS Alignment Score: 8.6/10 (Verified 2025-12-12)
 
-### Plain-Language AI Explanations (2025-12-12)
-- Added `plainLanguageExplanation` field to `ReadmissionPrediction` interface
-- New `PlainLanguageExplainer` class in `src/services/ai/readmissionRiskPredictor.ts`
-- Generates explanations at 6th grade reading level (Flesch-Kincaid)
-- Translates clinical risk factors to patient-friendly language
-- Example: "Your risk of coming back to the hospital is HIGH. This is mostly because you had to go to the ER 2 times in the past month. Also, it is hard to get to the doctor (30 miles away)."
+| Principle | Score | Status | Verified Integration |
+|-----------|-------|--------|----------------------|
+| **A - Accountability** | 9/10 | ✅ | Plain-language AI in PatientRiskStrip |
+| **T - Technology** | 8.5/10 | ✅ | Keyboard shortcuts (Ctrl+1-9 navigation works) |
+| **L - Leading** | 8/10 | ✅ | Session resume, NavigationHistory persists |
+| **U - Unity** | 8.5/10 | ✅ | PatientContext wired to NeuroSuite, CareCoordination |
+| **S - Service** | 8.5/10 | ✅ | Affirmations wired to ShiftHandoff, BedManagement |
 
-**UI Integration:**
-- `PatientRiskStrip` component updated to display plain-language explanations
-- Shows in expanded view under "In Simple Terms" section
-- Fetches `plain_language_explanation` from `readmission_risk_predictions` table
-- Tests: 16 tests in `src/components/patient/__tests__/PatientRiskStrip.test.tsx`
+**Dashboard Integrations (2025-12-12):**
+- `NeuroSuiteDashboard` - PatientContext wired (patient names/View buttons)
+- `CareCoordinationDashboard` - PatientContext wired (care plan selection)
+- `ShiftHandoffDashboard` - providerAffirmations wired (confirm/accept toasts)
+- `BedManagementPanel` - Refactored to use shared affirmation service
 
-### Rural Model Weights (2025-12-12)
-- Enhanced `SocialDeterminants` interface in `src/types/readmissionRiskFeatures.ts`:
-  - `rucaCategory`: 'urban' | 'large_rural' | 'small_rural' | 'isolated_rural'
-  - `distanceToCareRiskWeight`: 0.0 to 0.25 contribution to overall risk
-  - `patientRurality`: 'urban' | 'suburban' | 'rural' | 'frontier'
-  - `isInHealthcareShortageArea`: HPSA status
-  - `minutesToNearestED`: Time-based access metric
-- Updated `ReadmissionFeatureExtractor` in `src/services/ai/readmissionFeatureExtractor.ts`:
-  - `checkRuralStatus()` - Returns detailed RUCA classification
-  - `calculateDistanceToCareRiskWeight()` - Distance-based risk (>60mi = 0.20, >30mi = 0.15)
-  - `checkHPSAStatus()` - Checks Healthcare Professional Shortage Area designation
-- Updated AI prompt to include RUCA category, distance-to-care weight, and HPSA status
+**Key ATLUS Components:**
+- `PatientContext.tsx` - Patient selection persists to localStorage
+- `EAPatientBanner.tsx` - Displays selected patient globally
+- `EAKeyboardShortcutsProvider.tsx` - Global shortcuts provider
+- `providerAffirmations.ts` - 80 messages, 16 categories (shared service)
+- `EAAffirmationToast.tsx` - Reusable toast component
 
-### GuardianFlowEngine Features
-| Function | Description |
-|----------|-------------|
-| `predictCrowding(facilityId, horizon)` | Predicts ED crowding 1h/4h/8h ahead with NEDOCS-style levels |
-| `recommendActions(facilityId)` | Returns prioritized capacity actions (expedite discharge, surge, divert) |
-| `scoreInboundEMS(facilityId, emsUnit)` | Calculates capacity impact for incoming ambulance |
-| `getAccuracyMetrics(facilityId, days)` | Returns prediction accuracy for learning dashboard |
+### Next Agent Todo: ATLUS Unity + P2 Implementation
 
-### Patient-Friendly AVS Features
-| Function | Description |
-|----------|-------------|
-| `generateAVS(request)` | Generates plain-language AVS from SOAP note/SmartScribe |
-| `approveAVS(avsId, approvedBy)` | Clinician approval workflow |
-| `markDelivered(avsId, method)` | Track delivery (print/email/portal/sms) |
-| `recordFeedback(avsId, feedback)` | Patient feedback (helpful/confusing/incomplete) |
-| Helper functions | `calculateFleschKincaidGrade`, `countSyllables`, `meetsGradeLevel`, `formatAVSAsPlainText` |
+**Priority 1: Wire PatientContext to More Dashboards (ATLUS: Unity)**
 
-### Database Tables Added (2025-12-11)
-- `ed_crowding_predictions` - Stores predictions with accuracy tracking
-- `staff_workload_snapshots` - Point-in-time workload for load balancing
-- `patient_friendly_avs` - AVS records with reading level metrics
-- `guardian_flow_config` - Per-facility configuration for thresholds
+Currently wired: `NeuroSuiteDashboard`, `CareCoordinationDashboard`
 
-### Next Agent Todo: P2 Items (90-Day Roadmap Month 3)
+Wire PatientContext to these dashboards next:
+1. `src/components/nurse/ShiftHandoffDashboard.tsx` - When viewing patient details
+2. `src/components/physicalTherapy/PhysicalTherapyDashboard.tsx` - When selecting PT patient
+3. `src/components/referrals/ReferralsDashboard.tsx` - When viewing referred patient
+4. `src/components/admin/NurseDashboard.tsx` - When selecting patient from list
+5. `src/components/physician/PhysicianDashboard.tsx` - When selecting patient
 
-**Priority 2 - Scale/Efficiency Features:**
+Pattern to follow (see `NeuroSuiteDashboard.tsx` for reference):
+```typescript
+import { usePatientContext, SelectedPatient } from '../../contexts/PatientContext';
+const { selectPatient } = usePatientContext();
+// On patient click/view:
+selectPatient({ id, firstName, lastName, mrn, roomNumber, riskLevel, snapshot: { unit } });
+```
 
-1. **Batch Inference Pipeline** - Process multiple predictions efficiently
-   - Collect predictions for batch processing
-   - Use smaller model for initial screening, escalate high-risk to full model
-   - Target: 10x cost reduction for routine screenings
+**Priority 2: P2 AI Scale Optimization**
 
-2. **Prediction Caching** - Reduce redundant AI calls
-   - Cache recent predictions by patient + context hash
-   - TTL: 4 hours for stable patients, 1 hour for high-risk
-   - Invalidate on significant events (new admission, alert)
+Create these files in order:
+1. `src/services/ai/batchInference.ts` - Batch prediction queue
+2. `src/services/ai/predictionCache.ts` - TTL-based caching
+3. `src/services/ai/modelSelector.ts` - Haiku/Sonnet/Opus routing
+4. `src/components/admin/AICostDashboard.tsx` - Cost visibility
 
-3. **Model Selection Logic** - Right-size AI for the task
-   - Use Claude Haiku for simple classifications
-   - Use Claude Sonnet for complex reasoning
-   - Reserve Claude Opus for audit/review scenarios
-
-4. **AI Cost Dashboard** - Visibility into AI spending
-   - Track cost per skill, per tenant, per model
-   - Alert on anomalies (sudden spike in usage)
-   - Monthly cost projection and optimization suggestions
-
-**Reference:**
-- See `docs/AI_ML_SCALE_OPTIMIZATION_AUDIT.md` for full context
-- Priority matrix: P0 ✅ -> P1 ✅ -> P2 (next) -> P3
-- 90-day roadmap: Month 1 ✅, Month 2 ✅, Month 3 in queue
-
-### ATLUS Audit Summary (Score: 9/10 - Updated 2025-12-12)
-
-The ATLUS alignment audit identified key areas for improvement. **All three critical gaps have been fixed:**
-
-| Principle | Score | Key Gap | Status |
-|-----------|-------|---------|--------|
-| **A - Accountability** | 9/10 | AI reasoning transparency | |
-| **T - Technology** | 8/10 | ~~Too many clicks~~ Keyboard shortcuts added | ✅ FIXED |
-| **L - Leading** | 7.5/10 | Missing real-time collaboration | |
-| **U - Unity** | 8/10 | ~~No PatientContext~~ | ✅ FIXED |
-| **S - Service** | 7/10 | No provider affirmations | |
-
-**Critical Gaps Fixed (2025-12-12):**
-1. ✅ **PatientContext Persistence** - `EAPatientBanner` component now shows selected patient across all dashboards
-   - Component: `src/components/envision-atlus/EAPatientBanner.tsx`
-   - Features: Patient name/MRN/room, risk badge, recent patients dropdown, clear button
-   - Tests: 27 passing tests in `__tests__/EAPatientBanner.test.tsx`
-   - Integrated in `App.tsx` - renders globally below AppHeader
-
-2. ✅ **Session Persistence** - `EASessionResume` component prompts users to resume where they left off
-   - Component: `src/components/envision-atlus/EASessionResume.tsx`
-   - Features: Auto-shows on login if resumable session, auto-dismiss timer, "Resume" or "Start Fresh" options
-   - Tests: 19 passing tests in `__tests__/EASessionResume.test.tsx`
-   - Uses `NavigationHistoryContext` which persists to localStorage
-
-3. ✅ **Click Reduction** - Global keyboard shortcuts now available (ATLUS: Technology)
-   - Hook: `src/hooks/useKeyboardShortcuts.ts` - Global keyboard shortcut system
-   - Provider: `src/components/envision-atlus/EAKeyboardShortcutsProvider.tsx`
-   - Help Modal: `src/components/envision-atlus/EAKeyboardShortcutsHelp.tsx`
-   - Tests: 42 passing tests
-   - **Navigation Shortcuts**: Ctrl+1 through Ctrl+9 for quick dashboard access
-   - **Filter Shortcuts**: Shift+H (High Risk), Shift+C (Critical), Shift+A (All), Shift+R (Refresh)
-   - **Action Shortcuts**: Ctrl+K (Quick Search), Ctrl+/ (Focus Patient Search)
-   - **Help**: Press `?` anytime to show keyboard shortcuts
-
-**All ATLUS Critical Gaps Now Fixed!**
+**Reference:** `docs/AI_ML_SCALE_OPTIMIZATION_AUDIT.md`, `ATLUS_ALIGNMENT_AUDIT.md`
 
 ### Super Admin Credentials Reference
 | User | Email | UUID | Role |

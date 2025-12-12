@@ -2,7 +2,7 @@
 // Dashboard for care plan management, team coordination, and patient care tracking
 // White-label ready - uses Envision Atlus design system
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   Users,
   ClipboardList,
@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { CareCoordinationService, CarePlan, CareTeamAlert } from '../../services/careCoordinationService';
 import { useSupabaseClient } from '../../contexts/AuthContext';
+import { usePatientContext, SelectedPatient } from '../../contexts/PatientContext';
 import {
   EACard,
   EACardHeader,
@@ -40,12 +41,36 @@ interface DashboardMetrics {
 
 export const CareCoordinationDashboard: React.FC = () => {
   const { user } = useSupabaseClient() as any;
+  const { selectPatient } = usePatientContext();
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [plansNeedingReview, setPlansNeedingReview] = useState<CarePlan[]>([]);
   const [activeAlerts, setActiveAlerts] = useState<CareTeamAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<CarePlan | null>(null);
+
+  /**
+   * Handle patient selection from care plan - sets PatientContext
+   * ATLUS: Unity - Patient context persists when navigating between dashboards
+   */
+  const handlePatientSelect = useCallback((plan: CarePlan) => {
+    // Use plan title as a proxy for patient info since CarePlan doesn't have patient_name
+    // In a real scenario, we'd fetch patient details from patient_id
+    const planTitle = plan.title || 'Patient Care Plan';
+
+    const patient: SelectedPatient = {
+      id: plan.patient_id,
+      firstName: planTitle.split(' ')[0] || 'Patient',
+      lastName: plan.patient_id.slice(0, 8), // Use partial ID as placeholder
+      riskLevel: plan.priority === 'critical' ? 'critical' : plan.priority === 'high' ? 'high' : 'medium',
+      snapshot: {
+        primaryDiagnosis: plan.plan_type.replace(/_/g, ' '),
+        unit: 'Care Coordination',
+      },
+    };
+
+    selectPatient(patient);
+  }, [selectPatient]);
 
   useEffect(() => {
     loadDashboard();
@@ -306,7 +331,10 @@ export const CareCoordinationDashboard: React.FC = () => {
                       <div
                         key={plan.id}
                         className="p-4 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition-colors cursor-pointer"
-                        onClick={() => setSelectedPlan(plan)}
+                        onClick={() => {
+                          setSelectedPlan(plan);
+                          handlePatientSelect(plan); // ATLUS: Unity - Set patient context
+                        }}
                       >
                         <div className="flex justify-between items-start">
                           <div className="flex-1">

@@ -50,6 +50,8 @@ import {
   EAButton,
   EAAlert,
 } from '../envision-atlus';
+import { EAAffirmationToast } from '../envision-atlus/EAAffirmationToast';
+import { getProviderAffirmation, AffirmationCategory, METRICS_TEMPLATES } from '../../services/providerAffirmations';
 import type {
   BedBoardEntry,
   UnitCapacity,
@@ -81,26 +83,22 @@ const BED_VOICE_COMMANDS = [
   { pattern: /refresh|update/i, action: 'refresh' },
 ];
 
-// Positive affirmations for healthcare workers (ATLUS: Service)
-const BED_AFFIRMATIONS = {
-  bed_ready: [
-    "Bed ready! You're keeping the flow moving.",
-    "Nice work! That's one more bed available for patients.",
-    "Bed turned over successfully. Great hustle!",
-  ],
-  cleaning_started: [
-    "Cleaning started. Thanks for staying on top of it!",
-    "Got it! EVS notified.",
-  ],
-  discharge_complete: [
-    "Discharge complete! Smooth transition.",
-    "Patient discharged successfully. Great care coordination!",
-    "Done! Transfer packet created for seamless handoff.",
-  ],
-  bulk_action: [
-    "Bulk update complete! You just saved 5 minutes.",
-    "All beds updated. Efficiency at its finest!",
-  ],
+// Map bed actions to shared affirmation categories (ATLUS: Service)
+// This ensures BedManagement uses the centralized providerAffirmations service
+type BedAffirmationType = 'bed_ready' | 'cleaning_started' | 'discharge_complete' | 'admit_complete' | 'bulk_action';
+
+const BED_AFFIRMATION_MAP: Record<BedAffirmationType, AffirmationCategory> = {
+  bed_ready: 'task_completed',
+  cleaning_started: 'task_completed',
+  discharge_complete: 'discharge_complete',
+  admit_complete: 'admission_complete',
+  bulk_action: 'milestone_reached',
+};
+
+// Helper to get affirmation using shared service
+const getAffirmation = (type: BedAffirmationType): string => {
+  const category = BED_AFFIRMATION_MAP[type];
+  return getProviderAffirmation(category);
 };
 
 // Unit type categories for quick filtering
@@ -118,12 +116,6 @@ const UNIT_TYPE_CATEGORIES: { id: UnitTypeCategory; label: string; types: UnitTy
   { id: 'specialty', label: 'Specialty', types: ['cardiac', 'neuro', 'oncology', 'ortho', 'rehab', 'psych'] },
   { id: 'other', label: 'Other', types: ['or', 'pacu', 'observation', 'other'] },
 ];
-
-// Helper to get random affirmation
-const getAffirmation = (type: keyof typeof BED_AFFIRMATIONS): string => {
-  const messages = BED_AFFIRMATIONS[type];
-  return messages[Math.floor(Math.random() * messages.length)];
-};
 
 const BedManagementPanel: React.FC = () => {
   const navigate = useNavigate();
@@ -266,8 +258,8 @@ const BedManagementPanel: React.FC = () => {
     };
   }, []);
 
-  // Show affirmation toast (ATLUS: Service - positive feedback)
-  const showAffirmation = useCallback((type: keyof typeof BED_AFFIRMATIONS) => {
+  // Show affirmation toast (ATLUS: Service - positive feedback via shared service)
+  const showAffirmation = useCallback((type: BedAffirmationType) => {
     const message = getAffirmation(type);
     setAffirmationToast({ message, type: 'success' });
 

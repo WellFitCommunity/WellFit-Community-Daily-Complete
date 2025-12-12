@@ -17,6 +17,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { NeuroSuiteService } from '../../services/neuroSuiteService';
 import { ParkinsonsService } from '../../services/parkinsonsService';
 import { useAuth } from '../../contexts/AuthContext';
+import { usePatientContext, SelectedPatient } from '../../contexts/PatientContext';
 import type { ParkinsonsDashboardMetrics, ParkinsonsPatientSummary } from '../../types/parkinsons';
 import {
   EACard,
@@ -55,11 +56,42 @@ interface PatientAlert {
 
 export const NeuroSuiteDashboard: React.FC = () => {
   const { user } = useAuth();
+  const { selectPatient } = usePatientContext();
   const [activeStrokePatients, setActiveStrokePatients] = useState<any[]>([]);
   const [dementiaPatients, setDementiaPatients] = useState<any[]>([]);
   const [recentAlerts, setRecentAlerts] = useState<PatientAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<string>('stroke');
+
+  /**
+   * Handle patient selection - sets PatientContext for cross-dashboard persistence
+   * ATLUS: Unity - Patient context persists when navigating between dashboards
+   */
+  const handlePatientSelect = useCallback((patient: {
+    patient_id: string;
+    patient_name: string;
+    mrn?: string;
+    room_number?: string;
+  }, riskLevel?: 'low' | 'medium' | 'high' | 'critical') => {
+    // Parse patient name (expected format: "Last, First" or "First Last")
+    const nameParts = patient.patient_name.includes(',')
+      ? patient.patient_name.split(',').map(s => s.trim()).reverse()
+      : patient.patient_name.split(' ');
+
+    const selectedPatient: SelectedPatient = {
+      id: patient.patient_id,
+      firstName: nameParts[0] || '',
+      lastName: nameParts[1] || nameParts[0] || '',
+      mrn: patient.mrn,
+      roomNumber: patient.room_number,
+      riskLevel: riskLevel,
+      snapshot: {
+        unit: 'Neuro',
+      },
+    };
+
+    selectPatient(selectedPatient);
+  }, [selectPatient]);
 
   // Parkinson's state
   const [parkinsonsMetrics, setParkinsonsMetrics] = useState<ParkinsonsDashboardMetrics | null>(null);
@@ -260,7 +292,12 @@ export const NeuroSuiteDashboard: React.FC = () => {
                         {activeStrokePatients.map((patient) => (
                           <tr key={patient.patient_id} className="hover:bg-slate-700/30 transition-colors">
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="font-medium text-white">{patient.patient_name}</div>
+                              <button
+                                className="font-medium text-white hover:text-teal-400 transition-colors text-left"
+                                onClick={() => handlePatientSelect(patient, 'high')}
+                              >
+                                {patient.patient_name}
+                              </button>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <EABadge variant="info">{patient.stroke_type}</EABadge>
@@ -273,7 +310,12 @@ export const NeuroSuiteDashboard: React.FC = () => {
                               {new Date(patient.next_assessment_due).toLocaleDateString()}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <EAButton variant="ghost" size="sm" icon={<Eye className="h-4 w-4" />}>
+                              <EAButton
+                                variant="ghost"
+                                size="sm"
+                                icon={<Eye className="h-4 w-4" />}
+                                onClick={() => handlePatientSelect(patient, 'high')}
+                              >
                                 View Chart
                               </EAButton>
                             </td>
@@ -379,10 +421,24 @@ export const NeuroSuiteDashboard: React.FC = () => {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-700">
-                          {parkinsonsPatients.map((patient) => (
+                          {parkinsonsPatients.map((patient) => {
+                            // Map risk level string to typed value
+                            const riskLevel = patient.risk_level === 'high' ? 'high'
+                              : patient.risk_level === 'moderate' ? 'medium'
+                              : 'low' as const;
+
+                            return (
                             <tr key={patient.patient_id} className="hover:bg-slate-700/30 transition-colors">
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="font-medium text-white">{patient.patient_name}</div>
+                                <button
+                                  className="font-medium text-white hover:text-teal-400 transition-colors text-left"
+                                  onClick={() => handlePatientSelect({
+                                    patient_id: patient.patient_id,
+                                    patient_name: patient.patient_name,
+                                  }, riskLevel)}
+                                >
+                                  {patient.patient_name}
+                                </button>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <EABadge variant="info">Stage {patient.hoehn_yahr_stage || '--'}</EABadge>
@@ -411,11 +467,20 @@ export const NeuroSuiteDashboard: React.FC = () => {
                                 </EABadge>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap space-x-2">
-                                <EAButton variant="ghost" size="sm">View</EAButton>
+                                <EAButton
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handlePatientSelect({
+                                    patient_id: patient.patient_id,
+                                    patient_name: patient.patient_name,
+                                  }, riskLevel)}
+                                >
+                                  View
+                                </EAButton>
                                 <EAButton variant="ghost" size="sm">UPDRS</EAButton>
                               </td>
                             </tr>
-                          ))}
+                          );})}
                         </tbody>
                       </table>
                     </div>
