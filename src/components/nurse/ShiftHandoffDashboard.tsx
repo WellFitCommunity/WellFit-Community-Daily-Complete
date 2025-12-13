@@ -16,6 +16,8 @@ import PersonalizedGreeting from '../shared/PersonalizedGreeting';
 import { auditLogger } from '../../services/auditLogger';
 import { getProviderAffirmation, AffirmationCategory } from '../../services/providerAffirmations';
 import { EAAffirmationToast } from '../envision-atlus/EAAffirmationToast';
+import { usePresence } from '../../hooks/usePresence';
+import { PresenceAvatars, ActivityFeed, useActivityBroadcast } from '../collaboration';
 import type {
   ShiftHandoffSummary,
   HandoffDashboardMetrics,
@@ -33,6 +35,13 @@ export const ShiftHandoffDashboard: React.FC = () => {
   const user = useUser();
   const { selectPatient } = usePatientContext();
   const keyboardShortcuts = useKeyboardShortcutsContextSafe();
+
+  // Real-time presence tracking (ATLUS: Leading - team awareness)
+  const { otherUsers } = usePresence({
+    roomId: 'dashboard:shift-handoff',
+    componentName: 'ShiftHandoffDashboard',
+  });
+  const { broadcast } = useActivityBroadcast('dashboard:shift-handoff');
 
   // ATLUS: Technology - Filter state synced with keyboard shortcuts (Shift+H/C/A)
   const [riskFilter, setRiskFilter] = useState<'high' | 'critical' | 'all'>('all');
@@ -302,6 +311,15 @@ export const ShiftHandoffDashboard: React.FC = () => {
 
     // ATLUS: Service - Show handoff complete affirmation
     showAffirmation('handoff_complete');
+
+    // Broadcast to team (ATLUS: Leading - team awareness)
+    broadcast(
+      'update',
+      'handoff',
+      `Accepted shift handoff for ${patientCount} patients`,
+      undefined,
+      `${shiftType.charAt(0).toUpperCase() + shiftType.slice(1)} Shift`
+    );
   };
 
   // Handle emergency bypass
@@ -393,7 +411,11 @@ export const ShiftHandoffDashboard: React.FC = () => {
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex-1">
-            <h2 className="text-2xl font-bold text-gray-800 mb-1">Smart Shift Handoff</h2>
+            <div className="flex items-center gap-4">
+              <h2 className="text-2xl font-bold text-gray-800 mb-1">Smart Shift Handoff</h2>
+              {/* Real-time team presence (ATLUS: Leading) */}
+              <PresenceAvatars users={otherUsers} maxDisplay={4} size="sm" />
+            </div>
             <p className="text-gray-600">AI-scored patient risks — quick review in 5-10 minutes</p>
             {/* ATLUS: Technology - Filter indicator and controls (Shift+H/C/A) */}
             <div className="flex items-center gap-2 mt-2">
@@ -858,6 +880,13 @@ export const ShiftHandoffDashboard: React.FC = () => {
           patientCount={metrics?.total_patients}
         />
       )}
+
+      {/* Real-time activity feed (ATLUS: Leading - team awareness) */}
+      <ActivityFeed
+        roomId="dashboard:shift-handoff"
+        floating
+        maxEvents={15}
+      />
     </div>
   );
 };

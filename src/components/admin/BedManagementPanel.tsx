@@ -72,6 +72,8 @@ import {
 import { useVoiceSearch } from '../../hooks/useVoiceSearch';
 import { SearchResult } from '../../contexts/VoiceActionContext';
 import { auditLogger } from '../../services/auditLogger';
+import { usePresence } from '../../hooks/usePresence';
+import { PresenceAvatars, ActivityFeed, useActivityBroadcast } from '../collaboration';
 
 // Tab type - SIMPLIFIED from 5 tabs to 3 (ATLUS: reduce cognitive load)
 type TabType = 'real-time' | 'forecasts-ai' | 'learning';
@@ -133,6 +135,13 @@ const BedManagementPanel: React.FC = () => {
   const [voiceTranscript, setVoiceTranscript] = useState('');
   const [voiceSupported, setVoiceSupported] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+
+  // Real-time presence tracking (ATLUS: Leading - team awareness)
+  const { otherUsers, setEditing } = usePresence({
+    roomId: 'dashboard:bed-management',
+    componentName: 'BedManagementPanel',
+  });
+  const { broadcast } = useActivityBroadcast('dashboard:bed-management');
 
   // Affirmation toast state (ATLUS: Service)
   const [affirmationToast, setAffirmationToast] = useState<{ message: string; type: 'success' | 'info' } | null>(null);
@@ -340,6 +349,8 @@ const BedManagementPanel: React.FC = () => {
             if (bed && bed.status === 'cleaning') {
               handleUpdateStatus(bed.bed_id, 'available');
               showAffirmation('bed_ready');
+              // Broadcast to team (ATLUS: Leading)
+              broadcast('update', 'bed', `Marked bed ${bed.bed_label} as ready`, bed.bed_id, `Bed ${bed.bed_label}`);
             }
             break;
           }
@@ -352,6 +363,8 @@ const BedManagementPanel: React.FC = () => {
             if (bed && bed.status === 'dirty') {
               handleUpdateStatus(bed.bed_id, 'cleaning');
               showAffirmation('cleaning_started');
+              // Broadcast to team (ATLUS: Leading)
+              broadcast('update', 'bed', `Started cleaning bed ${bed.bed_label}`, bed.bed_id, `Bed ${bed.bed_label}`);
             }
             break;
           }
@@ -533,6 +546,15 @@ const BedManagementPanel: React.FC = () => {
         // Show affirmation (ATLUS: Service)
         showAffirmation('discharge_complete');
 
+        // Broadcast activity to team (ATLUS: Leading)
+        broadcast(
+          'update',
+          'bed',
+          `Discharged patient from ${selectedBed.bed_label}`,
+          selectedBed.bed_id,
+          `Bed ${selectedBed.bed_label}`
+        );
+
         // Check if this is a post-acute disposition that needs a transfer packet
         const postAcuteDispositions = [
           'Skilled Nursing Facility',
@@ -633,14 +655,18 @@ const BedManagementPanel: React.FC = () => {
 
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-            <BedIcon className="w-6 h-6 text-teal-400" />
-            Bed Management
-          </h2>
-          <p className="text-sm text-slate-400 mt-1">
-            Real-time bed tracking with predictive analytics
-          </p>
+        <div className="flex items-center gap-4">
+          <div>
+            <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+              <BedIcon className="w-6 h-6 text-teal-400" />
+              Bed Management
+            </h2>
+            <p className="text-sm text-slate-400 mt-1">
+              Real-time bed tracking with predictive analytics
+            </p>
+          </div>
+          {/* Real-time team presence (ATLUS: Leading) */}
+          <PresenceAvatars users={otherUsers} maxDisplay={4} size="sm" />
         </div>
         <div className="flex items-center gap-3">
           {/* Voice Command Button (ATLUS: Intuitive Technology) */}
@@ -1967,6 +1993,13 @@ const BedManagementPanel: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Real-time activity feed (ATLUS: Leading - team awareness) */}
+      <ActivityFeed
+        roomId="dashboard:bed-management"
+        floating
+        maxEvents={15}
+      />
     </div>
   );
 };
