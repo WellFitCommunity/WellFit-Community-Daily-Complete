@@ -3,7 +3,7 @@
 // Supports: referral tracking, engagement reports, alerts
 // White-label ready - uses Envision Atlus design system
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   Building2,
   Users,
@@ -20,6 +20,8 @@ import {
   Phone,
 } from 'lucide-react';
 import { useSupabaseClient } from '../../contexts/AuthContext';
+import { usePatientContext, SelectedPatient } from '../../contexts/PatientContext';
+import { useKeyboardShortcutsContextSafe } from '../envision-atlus/EAKeyboardShortcutsProvider';
 import {
   EACard,
   EACardHeader,
@@ -82,6 +84,55 @@ interface DashboardMetrics {
 
 export const ReferralsDashboard: React.FC = () => {
   const { supabase } = useSupabaseClient() as any;
+  const { selectPatient } = usePatientContext();
+  const keyboardShortcuts = useKeyboardShortcutsContextSafe();
+
+  // ATLUS: Technology - Filter state synced with keyboard shortcuts (Shift+H/C/A)
+  const [priorityFilter, setPriorityFilter] = useState<'high' | 'critical' | 'all'>('all');
+
+  // ATLUS: Technology - Sync filter with keyboard shortcuts
+  useEffect(() => {
+    if (keyboardShortcuts?.currentFilter) {
+      setPriorityFilter(keyboardShortcuts.currentFilter);
+    }
+  }, [keyboardShortcuts?.currentFilter]);
+
+  // Filter referrals based on priority filter
+  const getFilteredReferrals = useCallback((referrals: PatientReferral[]) => {
+    if (priorityFilter === 'all') return referrals;
+    if (priorityFilter === 'critical') {
+      return referrals.filter(r => r.priority === 'emergency');
+    }
+    if (priorityFilter === 'high') {
+      return referrals.filter(r => r.priority === 'emergency' || r.priority === 'urgent');
+    }
+    return referrals;
+  }, [priorityFilter]);
+
+  /**
+   * Handle patient selection - sets PatientContext for cross-dashboard persistence
+   * ATLUS: Unity - Patient context persists when navigating between dashboards
+   */
+  const handlePatientSelect = useCallback((referral: PatientReferral) => {
+    // Map priority to risk level
+    const riskLevel = referral.priority === 'emergency' ? 'critical'
+      : referral.priority === 'urgent' ? 'high'
+      : 'low' as const;
+
+    const selectedPatient: SelectedPatient = {
+      id: referral.linked_user_id || referral.id, // Use linked user ID if available, else referral ID
+      firstName: referral.patient_first_name,
+      lastName: referral.patient_last_name,
+      riskLevel,
+      snapshot: {
+        primaryDiagnosis: referral.referral_reason,
+        unit: 'Referrals',
+      },
+    };
+
+    selectPatient(selectedPatient);
+  }, [selectPatient]);
+
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [referralSources, setReferralSources] = useState<ReferralSource[]>([]);
   const [pendingReferrals, setPendingReferrals] = useState<PatientReferral[]>([]);
@@ -283,6 +334,40 @@ export const ReferralsDashboard: React.FC = () => {
           <div>
             <h1 className="text-2xl font-bold text-white">Referrals Dashboard</h1>
             <p className="text-slate-400">External Referral Management & Engagement Tracking</p>
+            {/* ATLUS: Technology - Filter indicator and controls (Shift+H/C/A) */}
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-xs text-slate-500 font-medium">Filter:</span>
+              <button
+                onClick={() => setPriorityFilter('all')}
+                className={`px-2 py-1 text-xs rounded font-medium transition-colors ${
+                  priorityFilter === 'all'
+                    ? 'bg-teal-500 text-white'
+                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                }`}
+              >
+                All (Shift+A)
+              </button>
+              <button
+                onClick={() => setPriorityFilter('high')}
+                className={`px-2 py-1 text-xs rounded font-medium transition-colors ${
+                  priorityFilter === 'high'
+                    ? 'bg-orange-500 text-white'
+                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                }`}
+              >
+                Urgent+ (Shift+H)
+              </button>
+              <button
+                onClick={() => setPriorityFilter('critical')}
+                className={`px-2 py-1 text-xs rounded font-medium transition-colors ${
+                  priorityFilter === 'critical'
+                    ? 'bg-red-600 text-white'
+                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                }`}
+              >
+                Emergency (Shift+C)
+              </button>
+            </div>
           </div>
           <div className="flex items-center space-x-3">
             <EAButton onClick={loadDashboard} variant="secondary" size="sm">
@@ -406,7 +491,7 @@ export const ReferralsDashboard: React.FC = () => {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {pendingReferrals.slice(0, 5).map((referral) => (
+                  {getFilteredReferrals(pendingReferrals).slice(0, 5).map((referral) => (
                     <div
                       key={referral.id}
                       className="p-4 bg-slate-700/50 rounded-lg"
@@ -414,9 +499,12 @@ export const ReferralsDashboard: React.FC = () => {
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
                           <div className="flex items-center space-x-2">
-                            <h3 className="font-medium text-white">
+                            <button
+                              className="font-medium text-white hover:text-teal-400 transition-colors"
+                              onClick={() => handlePatientSelect(referral)}
+                            >
                               {referral.patient_first_name} {referral.patient_last_name}
-                            </h3>
+                            </button>
                             <EABadge variant={getPriorityBadgeVariant(referral.priority)} size="sm">
                               {referral.priority}
                             </EABadge>
@@ -468,7 +556,7 @@ export const ReferralsDashboard: React.FC = () => {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {activeReferrals.slice(0, 5).map((referral) => (
+                  {getFilteredReferrals(activeReferrals).slice(0, 5).map((referral) => (
                     <div
                       key={referral.id}
                       className="p-4 bg-slate-700/50 rounded-lg"
@@ -476,9 +564,12 @@ export const ReferralsDashboard: React.FC = () => {
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
                           <div className="flex items-center space-x-2">
-                            <h3 className="font-medium text-white">
+                            <button
+                              className="font-medium text-white hover:text-teal-400 transition-colors"
+                              onClick={() => handlePatientSelect(referral)}
+                            >
                               {referral.patient_first_name} {referral.patient_last_name}
-                            </h3>
+                            </button>
                             <EABadge variant={getStatusBadgeVariant(referral.status)} size="sm">
                               {referral.status}
                             </EABadge>

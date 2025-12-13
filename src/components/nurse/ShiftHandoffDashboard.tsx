@@ -5,8 +5,10 @@
 // Design: System does 80% (auto-score), nurse does 20% (confirm/adjust)
 // ============================================================================
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useUser } from '../../contexts/AuthContext';
+import { usePatientContext, SelectedPatient } from '../../contexts/PatientContext';
+import { useKeyboardShortcutsContextSafe } from '../envision-atlus/EAKeyboardShortcutsProvider';
 import { ShiftHandoffService } from '../../services/shiftHandoffService';
 import HandoffCelebration from './HandoffCelebration';
 import HandoffBypassModal, { BypassFormData } from './HandoffBypassModal';
@@ -29,6 +31,37 @@ import {
 
 export const ShiftHandoffDashboard: React.FC = () => {
   const user = useUser();
+  const { selectPatient } = usePatientContext();
+  const keyboardShortcuts = useKeyboardShortcutsContextSafe();
+
+  // ATLUS: Technology - Filter state synced with keyboard shortcuts (Shift+H/C/A)
+  const [riskFilter, setRiskFilter] = useState<'high' | 'critical' | 'all'>('all');
+
+  /**
+   * Handle patient selection - sets PatientContext for cross-dashboard persistence
+   * ATLUS: Unity - Patient context persists when navigating between dashboards
+   */
+  const handlePatientSelect = useCallback((patient: ShiftHandoffSummary) => {
+    // Map risk level to PatientContext format
+    const riskLevel = patient.final_risk_level === 'CRITICAL' ? 'critical'
+      : patient.final_risk_level === 'HIGH' ? 'high'
+      : patient.final_risk_level === 'MEDIUM' ? 'medium'
+      : 'low' as const;
+
+    const selectedPatient: SelectedPatient = {
+      id: patient.patient_id,
+      firstName: patient.patient_name.split(' ')[0] || patient.patient_name,
+      lastName: patient.patient_name.split(' ').slice(1).join(' ') || '',
+      roomNumber: patient.room_number ?? undefined,
+      riskLevel,
+      snapshot: {
+        primaryDiagnosis: patient.clinical_snapshot.diagnosis,
+        unit: 'Handoff',
+      },
+    };
+
+    selectPatient(selectedPatient);
+  }, [selectPatient]);
 
   const [shiftType, setShiftType] = useState<ShiftType>('night');
   const [handoffSummary, setHandoffSummary] = useState<ShiftHandoffSummary[]>([]);
@@ -60,6 +93,25 @@ export const ShiftHandoffDashboard: React.FC = () => {
     time_saved_minutes: number;
     efficiency_percent: number;
   } | null>(null);
+
+  // ATLUS: Technology - Sync filter with keyboard shortcuts (Shift+H/C/A)
+  useEffect(() => {
+    if (keyboardShortcuts?.currentFilter) {
+      setRiskFilter(keyboardShortcuts.currentFilter);
+    }
+  }, [keyboardShortcuts?.currentFilter]);
+
+  // Filter patients based on risk filter
+  const getFilteredPatients = useCallback((patients: ShiftHandoffSummary[]) => {
+    if (riskFilter === 'all') return patients;
+    if (riskFilter === 'critical') {
+      return patients.filter(p => p.final_risk_level === 'CRITICAL');
+    }
+    if (riskFilter === 'high') {
+      return patients.filter(p => p.final_risk_level === 'CRITICAL' || p.final_risk_level === 'HIGH');
+    }
+    return patients;
+  }, [riskFilter]);
 
   // Load handoff data
   const loadHandoffData = async () => {
@@ -343,6 +395,40 @@ export const ShiftHandoffDashboard: React.FC = () => {
           <div className="flex-1">
             <h2 className="text-2xl font-bold text-gray-800 mb-1">Smart Shift Handoff</h2>
             <p className="text-gray-600">AI-scored patient risks — quick review in 5-10 minutes</p>
+            {/* ATLUS: Technology - Filter indicator and controls (Shift+H/C/A) */}
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-xs text-gray-500 font-medium">Filter:</span>
+              <button
+                onClick={() => setRiskFilter('all')}
+                className={`px-2 py-1 text-xs rounded font-medium transition-colors ${
+                  riskFilter === 'all'
+                    ? 'bg-[#1BA39C] text-white'
+                    : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                }`}
+              >
+                All (Shift+A)
+              </button>
+              <button
+                onClick={() => setRiskFilter('high')}
+                className={`px-2 py-1 text-xs rounded font-medium transition-colors ${
+                  riskFilter === 'high'
+                    ? 'bg-orange-500 text-white'
+                    : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                }`}
+              >
+                High+ (Shift+H)
+              </button>
+              <button
+                onClick={() => setRiskFilter('critical')}
+                className={`px-2 py-1 text-xs rounded font-medium transition-colors ${
+                  riskFilter === 'critical'
+                    ? 'bg-red-600 text-white'
+                    : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                }`}
+              >
+                Critical (Shift+C)
+              </button>
+            </div>
           </div>
 
           {/* Accept Handoff Button (BIG AND PROMINENT) */}
@@ -451,7 +537,9 @@ export const ShiftHandoffDashboard: React.FC = () => {
           {/* HIGH ACUITY SECTION - Critical & High Risk - SEE FIRST! */}
           {/* ================================================================ */}
           {(() => {
-            const highAcuityPatients = handoffSummary.filter(
+            // Apply keyboard shortcut filter first, then filter for high acuity
+            const filteredPatients = getFilteredPatients(handoffSummary);
+            const highAcuityPatients = filteredPatients.filter(
               p => p.final_risk_level === 'CRITICAL' || p.final_risk_level === 'HIGH'
             );
             if (highAcuityPatients.length === 0) return null;
@@ -516,9 +604,12 @@ export const ShiftHandoffDashboard: React.FC = () => {
                           </div>
 
                           <div className="flex-1">
-                            <div className="font-bold text-xl text-gray-900">
+                            <button
+                              className="font-bold text-xl text-gray-900 hover:text-[#1BA39C] transition-colors text-left"
+                              onClick={() => handlePatientSelect(patient)}
+                            >
                               {patient.room_number ? `Room ${patient.room_number}` : 'No Room'} — {patient.patient_name}
-                            </div>
+                            </button>
                             <div className="text-sm text-gray-600 font-medium">
                               {patient.clinical_snapshot.diagnosis || 'No diagnosis'}
                             </div>
@@ -615,7 +706,9 @@ export const ShiftHandoffDashboard: React.FC = () => {
           {/* STANDARD ACUITY SECTION - Medium & Low Risk */}
           {/* ================================================================ */}
           {(() => {
-            const standardPatients = handoffSummary.filter(
+            // Apply keyboard shortcut filter first, then filter for standard acuity
+            const filteredPatients = getFilteredPatients(handoffSummary);
+            const standardPatients = filteredPatients.filter(
               p => p.final_risk_level === 'MEDIUM' || p.final_risk_level === 'LOW'
             );
             if (standardPatients.length === 0) return null;
@@ -668,9 +761,12 @@ export const ShiftHandoffDashboard: React.FC = () => {
                           </div>
 
                           <div>
-                            <div className="font-semibold text-gray-800">
+                            <button
+                              className="font-semibold text-gray-800 hover:text-[#1BA39C] transition-colors text-left"
+                              onClick={() => handlePatientSelect(patient)}
+                            >
                               {patient.room_number ? `Room ${patient.room_number}` : 'No Room'} — {patient.patient_name}
-                            </div>
+                            </button>
                             <div className="text-xs text-gray-500">{patient.clinical_snapshot.diagnosis || 'No diagnosis'}</div>
                           </div>
 

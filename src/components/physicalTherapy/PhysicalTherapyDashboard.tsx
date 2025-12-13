@@ -2,10 +2,12 @@
 // Comprehensive dashboard for PT assessments, treatment plans, and outcome tracking
 // White-label ready - uses Envision Atlus design system
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Activity, Users, ClipboardList, TrendingUp, Calendar, FileText, Award, AlertTriangle, RefreshCw } from 'lucide-react';
 import { PhysicalTherapyService, PTApiResponse } from '../../services/physicalTherapyService';
 import { useSupabaseClient } from '../../contexts/AuthContext';
+import { usePatientContext, SelectedPatient } from '../../contexts/PatientContext';
+import { useKeyboardShortcutsContextSafe } from '../envision-atlus/EAKeyboardShortcutsProvider';
 import {
   EACard,
   EACardHeader,
@@ -34,6 +36,60 @@ interface DashboardMetrics {
 
 export const PhysicalTherapyDashboard: React.FC = () => {
   const { user } = useSupabaseClient() as any;
+  const { selectPatient } = usePatientContext();
+  const keyboardShortcuts = useKeyboardShortcutsContextSafe();
+
+  // ATLUS: Technology - Filter state synced with keyboard shortcuts (Shift+H/C/A)
+  const [progressFilter, setProgressFilter] = useState<'high' | 'critical' | 'all'>('all');
+
+  // ATLUS: Technology - Sync filter with keyboard shortcuts
+  useEffect(() => {
+    if (keyboardShortcuts?.currentFilter) {
+      setProgressFilter(keyboardShortcuts.currentFilter);
+    }
+  }, [keyboardShortcuts?.currentFilter]);
+
+  // Filter patients based on progress filter (maps to risk levels)
+  const getFilteredCaseload = useCallback((patients: PTCaseloadPatient[]) => {
+    if (progressFilter === 'all') return patients;
+    if (progressFilter === 'critical') {
+      return patients.filter(p => p.progress_status === 'not_progressing');
+    }
+    if (progressFilter === 'high') {
+      return patients.filter(p => p.progress_status === 'not_progressing' || p.progress_status === 'at_risk');
+    }
+    return patients;
+  }, [progressFilter]);
+
+  /**
+   * Handle patient selection - sets PatientContext for cross-dashboard persistence
+   * ATLUS: Unity - Patient context persists when navigating between dashboards
+   */
+  const handlePatientSelect = useCallback((patient: PTCaseloadPatient) => {
+    // Map progress status to risk level
+    const riskLevel = patient.progress_status === 'not_progressing' ? 'high'
+      : patient.progress_status === 'at_risk' ? 'medium'
+      : 'low' as const;
+
+    // Parse patient name (format may vary)
+    const nameParts = patient.patient_name.includes(',')
+      ? patient.patient_name.split(',').map(s => s.trim()).reverse()
+      : patient.patient_name.split(' ');
+
+    const selectedPatient: SelectedPatient = {
+      id: patient.patient_id,
+      firstName: nameParts[0] || patient.patient_name,
+      lastName: nameParts[1] || '',
+      riskLevel,
+      snapshot: {
+        primaryDiagnosis: patient.diagnosis,
+        unit: 'Physical Therapy',
+      },
+    };
+
+    selectPatient(selectedPatient);
+  }, [selectPatient]);
+
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [caseload, setCaseload] = useState<PTCaseloadPatient[]>([]);
   const [recentAssessments, setRecentAssessments] = useState<PTFunctionalAssessment[]>([]);
@@ -175,6 +231,40 @@ export const PhysicalTherapyDashboard: React.FC = () => {
           <div>
             <h1 className="text-2xl font-bold text-white">Physical Therapy Dashboard</h1>
             <p className="text-slate-400">ICF-Based Clinical Workflow Management</p>
+            {/* ATLUS: Technology - Filter indicator and controls (Shift+H/C/A) */}
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-xs text-slate-500 font-medium">Filter:</span>
+              <button
+                onClick={() => setProgressFilter('all')}
+                className={`px-2 py-1 text-xs rounded font-medium transition-colors ${
+                  progressFilter === 'all'
+                    ? 'bg-teal-500 text-white'
+                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                }`}
+              >
+                All (Shift+A)
+              </button>
+              <button
+                onClick={() => setProgressFilter('high')}
+                className={`px-2 py-1 text-xs rounded font-medium transition-colors ${
+                  progressFilter === 'high'
+                    ? 'bg-orange-500 text-white'
+                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                }`}
+              >
+                At Risk+ (Shift+H)
+              </button>
+              <button
+                onClick={() => setProgressFilter('critical')}
+                className={`px-2 py-1 text-xs rounded font-medium transition-colors ${
+                  progressFilter === 'critical'
+                    ? 'bg-red-600 text-white'
+                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                }`}
+              >
+                Not Progressing (Shift+C)
+              </button>
+            </div>
           </div>
           <EAButton onClick={loadDashboard} variant="secondary" size="sm">
             <RefreshCw className="h-4 w-4 mr-2" />
@@ -229,7 +319,7 @@ export const PhysicalTherapyDashboard: React.FC = () => {
               <EACardHeader>
                 <div className="flex justify-between items-center">
                   <h2 className="text-lg font-semibold text-white">Active Caseload</h2>
-                  <EABadge variant="info">{caseload.length} patients</EABadge>
+                  <EABadge variant="info">{getFilteredCaseload(caseload).length} patients</EABadge>
                 </div>
               </EACardHeader>
               <EACardContent>
@@ -253,10 +343,15 @@ export const PhysicalTherapyDashboard: React.FC = () => {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-700">
-                        {caseload.map((patient) => (
+                        {getFilteredCaseload(caseload).map((patient) => (
                           <tr key={patient.patient_id} className="hover:bg-slate-700/50">
                             <td className="px-4 py-3">
-                              <div className="font-medium text-white">{patient.patient_name}</div>
+                              <button
+                                className="font-medium text-white hover:text-teal-400 transition-colors text-left"
+                                onClick={() => handlePatientSelect(patient)}
+                              >
+                                {patient.patient_name}
+                              </button>
                               <div className="text-xs text-slate-400">{patient.patient_id.substring(0, 8)}...</div>
                             </td>
                             <td className="px-4 py-3 text-sm text-slate-300">{patient.diagnosis}</td>
@@ -279,7 +374,10 @@ export const PhysicalTherapyDashboard: React.FC = () => {
                               <EAButton
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => loadPatientDetails(patient)}
+                                onClick={() => {
+                                  handlePatientSelect(patient);
+                                  loadPatientDetails(patient);
+                                }}
                               >
                                 View
                               </EAButton>
@@ -344,9 +442,10 @@ export const PhysicalTherapyDashboard: React.FC = () => {
                       .map((patient) => (
                         <div
                           key={patient.patient_id}
-                          className="p-3 bg-slate-700/50 rounded-lg border-l-4 border-orange-500"
+                          className="p-3 bg-slate-700/50 rounded-lg border-l-4 border-orange-500 cursor-pointer hover:bg-slate-600/50 transition-colors"
+                          onClick={() => handlePatientSelect(patient)}
                         >
-                          <div className="font-medium text-white">{patient.patient_name}</div>
+                          <div className="font-medium text-white hover:text-teal-400">{patient.patient_name}</div>
                           <div className="text-sm text-slate-400 mt-1">
                             {patient.days_since_last_visit} days since last visit
                           </div>
