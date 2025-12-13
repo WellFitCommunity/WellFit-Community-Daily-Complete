@@ -7,6 +7,7 @@
  * 2. PostgreSQL MCP - Safe database queries
  * 3. Edge Functions MCP - Workflow orchestration
  * 4. Medical Codes MCP - CPT/ICD-10/HCPCS lookups
+ * 5. FHIR MCP - Healthcare interoperability (FHIR R4)
  */
 
 // =====================================================
@@ -140,3 +141,48 @@ export {
   type SDOHCategory,
   type MedicalCodeResult
 } from './mcpMedicalCodesClient';
+
+// =====================================================
+// FHIR MCP (Healthcare Interoperability)
+// =====================================================
+
+export {
+  // Bundle operations
+  exportPatientFHIRBundle,
+  // Patient-centric operations
+  getPatientClinicalSummary,
+  getPatientMedications,
+  getPatientConditions,
+  getPatientVitals,
+  getPatientLabResults,
+  getPatientAllergies,
+  getPatientImmunizations,
+  getPatientCarePlans,
+  getPatientCareTeam,
+  getPatientSDOHRisks,
+  // Resource operations
+  validateFHIRResource,
+  createCondition,
+  createMedicationRequest,
+  createObservation,
+  // EHR integration
+  listEHRConnections,
+  syncPatientWithEHR,
+  // LOINC codes reference
+  LOINC_CODES,
+  // Client class
+  fhirMCP,
+  FHIRMCPClient,
+  // Types
+  type FHIRResourceType,
+  type FHIRBundle,
+  type FHIRPatient,
+  type PatientSummary,
+  type MedicationListResult,
+  type ConditionListResult,
+  type SDOHAssessmentResult,
+  type CareTeamResult,
+  type EHRConnection,
+  type ValidationResult,
+  type FHIRResult
+} from './mcpFHIRClient';

@@ -92,6 +92,58 @@
         "suggest_codes",
         "get_sdoh_codes"
       ]
+    },
+    "fhir": {
+      "transport": "http",
+      "url": "${REACT_APP_SUPABASE_URL}/functions/v1/mcp-fhir-server",
+      "description": "FHIR R4 MCP server for healthcare interoperability",
+      "enabled": true,
+      "env": {
+        "SUPABASE_URL": "${REACT_APP_SUPABASE_URL}",
+        "SUPABASE_SERVICE_ROLE_KEY": "${SUPABASE_SERVICE_ROLE_KEY}"
+      },
+      "tools": [
+        "export_patient_bundle",
+        "get_resource",
+        "search_resources",
+        "create_resource",
+        "update_resource",
+        "validate_resource",
+        "get_patient_summary",
+        "get_observations",
+        "get_medication_list",
+        "get_condition_list",
+        "get_sdoh_assessments",
+        "get_care_team",
+        "list_ehr_connections",
+        "trigger_ehr_sync"
+      ],
+      "supportedResources": [
+        "Patient",
+        "MedicationRequest",
+        "Condition",
+        "DiagnosticReport",
+        "Procedure",
+        "Observation",
+        "Immunization",
+        "CarePlan",
+        "CareTeam",
+        "Practitioner",
+        "PractitionerRole",
+        "Encounter",
+        "DocumentReference",
+        "AllergyIntolerance",
+        "Goal",
+        "Location",
+        "Organization",
+        "Medication"
+      ],
+      "ehrSystems": [
+        "epic",
+        "cerner",
+        "allscripts",
+        "custom"
+      ]
     }
   },
   "features": {
