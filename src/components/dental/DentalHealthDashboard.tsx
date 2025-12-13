@@ -220,9 +220,9 @@ export const DentalHealthDashboard: React.FC = () => {
 };
 
 /**
- * Health Overview Section
+ * Health Overview Section - Memoized
  */
-const HealthOverview: React.FC<{ summary: DentalHealthDashboardSummary }> = ({ summary }) => {
+const HealthOverview: React.FC<{ summary: DentalHealthDashboardSummary }> = React.memo(({ summary }) => {
   const getRiskLevel = (rating?: number): 'critical' | 'high' | 'elevated' | 'normal' => {
     if (!rating) return 'elevated';
     if (rating >= 4) return 'normal';
@@ -310,12 +310,12 @@ const HealthOverview: React.FC<{ summary: DentalHealthDashboardSummary }> = ({ s
       </EACard>
     </div>
   );
-};
+});
 
 /**
- * Treatment Summary
+ * Treatment Summary - Memoized
  */
-const TreatmentSummary: React.FC<{ summary: DentalHealthDashboardSummary }> = ({ summary }) => {
+const TreatmentSummary: React.FC<{ summary: DentalHealthDashboardSummary }> = React.memo(({ summary }) => {
   return (
     <EACard>
       <EACardHeader icon={<FileText className="h-5 w-5" />}>
@@ -346,12 +346,12 @@ const TreatmentSummary: React.FC<{ summary: DentalHealthDashboardSummary }> = ({
       </EACardContent>
     </EACard>
   );
-};
+});
 
 /**
- * Current Symptoms Display
+ * Current Symptoms Display - Memoized
  */
-const CurrentSymptoms: React.FC<{ symptoms: string[] }> = ({ symptoms }) => {
+const CurrentSymptoms: React.FC<{ symptoms: string[] }> = React.memo(({ symptoms }) => {
   return (
     <EACard>
       <EACardHeader icon={<Heart className="h-5 w-5 text-red-400" />}>
@@ -379,12 +379,12 @@ const CurrentSymptoms: React.FC<{ symptoms: string[] }> = ({ symptoms }) => {
       </EACardContent>
     </EACard>
   );
-};
+});
 
 /**
- * Risk Alerts Component
+ * Risk Alerts Component - Memoized
  */
-const RiskAlerts: React.FC<{ alerts: DentalRiskAlert[] }> = ({ alerts }) => {
+const RiskAlerts: React.FC<{ alerts: DentalRiskAlert[] }> = React.memo(({ alerts }) => {
   const getAlertVariant = (severity: string): 'critical' | 'warning' | 'info' | 'success' => {
     if (severity === 'critical') return 'critical';
     if (severity === 'high') return 'warning';
@@ -414,12 +414,12 @@ const RiskAlerts: React.FC<{ alerts: DentalRiskAlert[] }> = ({ alerts }) => {
       ))}
     </div>
   );
-};
+});
 
 /**
- * Daily Tracking Form
+ * Daily Tracking Form - Memoized
  */
-const DailyTrackingForm: React.FC<{ onSave: () => void }> = ({ onSave }) => {
+const DailyTrackingForm: React.FC<{ onSave: () => void }> = React.memo(({ onSave }) => {
   const [formData, setFormData] = useState<CreatePatientTrackingRequest>({});
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -582,12 +582,12 @@ const DailyTrackingForm: React.FC<{ onSave: () => void }> = ({ onSave }) => {
       </EACardContent>
     </EACard>
   );
-};
+});
 
 /**
- * Tracking History Display
+ * Tracking History Display - Memoized
  */
-const TrackingHistory: React.FC<{ reports: PatientDentalHealthTracking[] }> = ({ reports }) => {
+const TrackingHistory: React.FC<{ reports: PatientDentalHealthTracking[] }> = React.memo(({ reports }) => {
   if (reports.length === 0) {
     return (
       <EACard>
@@ -652,12 +652,12 @@ const TrackingHistory: React.FC<{ reports: PatientDentalHealthTracking[] }> = ({
       ))}
     </div>
   );
-};
+});
 
 /**
- * Educational Content Section
+ * Educational Content Section - Memoized
  */
-const EducationalContent: React.FC = () => {
+const EducationalContent: React.FC = React.memo(() => {
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       <EACard variant="highlight">
@@ -751,12 +751,12 @@ const EducationalContent: React.FC = () => {
       </EACard>
     </div>
   );
-};
+});
 
 /**
- * Loading Skeleton
+ * Loading Skeleton - Memoized
  */
-const DashboardSkeleton: React.FC = () => {
+const DashboardSkeleton: React.FC = React.memo(() => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-8">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -770,6 +770,6 @@ const DashboardSkeleton: React.FC = () => {
       </div>
     </div>
   );
-};
+});
 
 export default DentalHealthDashboard;
