@@ -143,6 +143,19 @@
 - ✅ **Backup File Cleanup** - Removed obsolete backup files
 - ✅ Voice command patterns for: patients, medications, diagnoses, units, beds, alerts, tasks, referrals, shifts, admissions, discharges
 - ✅ **Real-Time Collaboration** - Presence tracking + activity feeds (ATLUS: Leading complete!)
+- ✅ **SmartScribe Component Split** - 610→213 lines (65% reduction), 7 memoized child components
+
+**SmartScribe Component Split (2025-12-13):**
+| Component | Lines | Purpose |
+|-----------|-------|---------|
+| `RealTimeSmartScribe.tsx` | 213 (was 610) | Main orchestrator |
+| `ScribeHeader.tsx` | 117 | Header with status, timer, demo toggle |
+| `AssistanceLevelControl.tsx` | 121 | Concise/Balanced/Detailed selector |
+| `RecordingButton.tsx` | 59 | Start/stop recording |
+| `LiveTranscript.tsx` | 79 | Real-time transcript display |
+| `BillingCodesList.tsx` | 98 | AI-suggested billing codes |
+| `SOAPNote.tsx` | 128 | Generated SOAP documentation |
+| `VoiceCorrectionModal.tsx` | 120 | Voice learning modal |
 
 **Real-Time Collaboration Features (2025-12-13):**
 - `usePresence.ts` - Supabase Realtime presence channels
