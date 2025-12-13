@@ -26,6 +26,7 @@ import Footer from './components/layout/Footer';
 import OfflineIndicator from './components/OfflineIndicator';
 import { VoiceCommandBar } from './components/admin/VoiceCommandBar';
 import { VoiceSearchOverlay } from './components/voice/VoiceSearchOverlay';
+import { GlobalSearchBar } from './components/search/GlobalSearchBar';
 import { EAPatientBanner } from './components/envision-atlus/EAPatientBanner';
 import { EASessionResume } from './components/envision-atlus/EASessionResume';
 import { EARealtimeAlertNotifications } from './components/envision-atlus/EARealtimeAlertNotifications';
@@ -110,6 +111,11 @@ function Shell() {
 
         {/* Global Voice Command Bar - compact mic icon that expands when clicked */}
         <VoiceCommandBar />
+
+        {/* Global Search Bar - keyboard-accessible search (Ctrl+/) (ATLUS: Intuitive) */}
+        <div className="fixed top-4 right-4 z-50">
+          <GlobalSearchBar />
+        </div>
 
         {/* Voice Search Overlay - Shows search results from smart voice commands (ATLUS: Intuitive) */}
         <VoiceSearchOverlay />

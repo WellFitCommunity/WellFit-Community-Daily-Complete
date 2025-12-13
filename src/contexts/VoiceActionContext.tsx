@@ -891,7 +891,7 @@ function parseDateFromMatch(match: RegExpMatchArray): string | null {
 // ROUTE MAPPING - Entity type to dashboard route
 // ============================================================================
 
-const ENTITY_ROUTES: Record<EntityType, string> = {
+export const ENTITY_ROUTES: Record<EntityType, string> = {
   patient: '/admin',
   bed: '/bed-management',
   room: '/bed-management',
