@@ -1,6 +1,6 @@
 // src/routes/AppProviders.tsx
 // Composed providers to reduce nesting in App.tsx
-import React from 'react';
+import React, { useEffect } from 'react';
 import { SessionTimeoutProvider } from '../contexts/SessionTimeoutContext';
 import { TimeClockProvider } from '../contexts/TimeClockContext';
 import { NavigationHistoryProvider } from '../contexts/NavigationHistoryContext';
@@ -10,6 +10,7 @@ import { EAKeyboardShortcutsProvider } from '../components/envision-atlus/EAKeyb
 import { BrandingConfig } from '../branding.config';
 import { BrandingContext } from '../BrandingContext';
 import { GuardianErrorBoundary } from '../components/GuardianErrorBoundary';
+import { initializePHIEncryption } from '../lib/phi-encryption';
 
 interface AppProvidersProps {
   children: React.ReactNode;
@@ -28,6 +29,13 @@ export const AppProviders: React.FC<AppProvidersProps> = ({
   setBranding,
   refreshBranding,
 }) => {
+  // Initialize PHI encryption for database-level encryption (pgcrypto)
+  useEffect(() => {
+    initializePHIEncryption().catch(() => {
+      // Encryption init failure is logged internally, app continues
+    });
+  }, []);
+
   return (
     <GuardianErrorBoundary>
       <BrandingContext.Provider value={{ branding, setBranding, loading: false, refreshBranding }}>

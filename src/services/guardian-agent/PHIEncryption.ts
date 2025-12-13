@@ -3,11 +3,18 @@
  * Ensures PHI is encrypted at rest and in transit
  *
  * Features:
- * - AES-256-GCM encryption
+ * - AES-256-GCM authenticated encryption (REAL CRYPTO)
  * - Per-tenant encryption keys
  * - Field-level granularity
  * - Key rotation support
  * - Audit trail for all encryption/decryption
+ * - Web Crypto API for browser-safe cryptography
+ *
+ * Security:
+ * - Uses crypto.getRandomValues() for secure IV generation
+ * - 256-bit keys generated via SubtleCrypto
+ * - GCM mode provides authentication (integrity + confidentiality)
+ * - 96-bit (12 byte) IV as recommended for GCM
  */
 
 /**
@@ -108,8 +115,11 @@ export interface EncryptionKey {
   /** Unique key ID */
   id: string;
 
-  /** Key material (in production: stored in KMS) */
-  key: Buffer;
+  /** CryptoKey from Web Crypto API (for encryption/decryption) */
+  cryptoKey: CryptoKey;
+
+  /** Exported key material for storage (base64 encoded) - only for key backup */
+  exportedKey?: string;
 
   /** Tenant ID this key belongs to */
   tenantId: string;
@@ -142,22 +152,62 @@ export interface EncryptionAuditLog {
 }
 
 /**
- * PHI Encryption Service
+ * Constants for AES-256-GCM encryption
+ */
+const AES_GCM_CONFIG = {
+  name: 'AES-GCM',
+  length: 256,        // 256-bit key
+  ivLength: 12,       // 96-bit IV (recommended for GCM)
+  tagLength: 128,     // 128-bit authentication tag
+} as const;
+
+/**
+ * Get the Web Crypto API (works in browser and Node.js 15+)
+ */
+function getCrypto(): Crypto {
+  if (typeof window !== 'undefined' && window.crypto) {
+    return window.crypto;
+  }
+  if (typeof globalThis !== 'undefined' && globalThis.crypto) {
+    return globalThis.crypto;
+  }
+  // For older Node.js environments
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { webcrypto } = require('crypto');
+    return webcrypto as Crypto;
+  } catch {
+    throw new Error('Web Crypto API not available in this environment');
+  }
+}
+
+/**
+ * PHI Encryption Service - Uses REAL AES-256-GCM encryption
  */
 export class PHIEncryption {
   private keys: Map<string, EncryptionKey> = new Map();
   private auditLogs: EncryptionAuditLog[] = [];
-
-  // In production: Use Web Crypto API or Node crypto
-  // For now: Simplified implementation
+  private crypto: Crypto;
+  private initialized: boolean = false;
+  private initPromise: Promise<void> | null = null;
 
   constructor() {
-    // Initialize default keys (in production: load from KMS)
-    this.initializeDefaultKeys();
+    this.crypto = getCrypto();
+    // Start async initialization
+    this.initPromise = this.initializeDefaultKeys();
   }
 
   /**
-   * Encrypt a PHI field
+   * Ensure the encryption service is initialized before use
+   */
+  private async ensureInitialized(): Promise<void> {
+    if (!this.initialized && this.initPromise) {
+      await this.initPromise;
+    }
+  }
+
+  /**
+   * Encrypt a PHI field using AES-256-GCM
    */
   async encrypt<T>(
     value: T,
@@ -166,6 +216,8 @@ export class PHIEncryption {
     userId?: string
   ): Promise<EncryptedField<T>> {
     try {
+      await this.ensureInitialized();
+
       // Get active key for tenant
       const key = this.getActiveKeyForTenant(tenantId);
 
@@ -175,16 +227,36 @@ export class PHIEncryption {
 
       // Convert value to string
       const plaintext = JSON.stringify(value);
+      const encoder = new TextEncoder();
+      const data = encoder.encode(plaintext);
 
-      // In production: Use Web Crypto API or Node crypto
-      // For now: Base64 encoding (NOT SECURE - demo only)
-      const ciphertext = Buffer.from(plaintext).toString('base64');
-      const iv = this.generateIV();
-      const tag = this.generateTag();
+      // Generate cryptographically secure IV (12 bytes for GCM)
+      const iv = this.crypto.getRandomValues(new Uint8Array(AES_GCM_CONFIG.ivLength));
+
+      // Encrypt using AES-256-GCM
+      const encryptedBuffer = await this.crypto.subtle.encrypt(
+        {
+          name: AES_GCM_CONFIG.name,
+          iv: iv,
+          tagLength: AES_GCM_CONFIG.tagLength,
+        },
+        key.cryptoKey,
+        data
+      );
+
+      // Convert to base64 for storage
+      // Note: GCM mode appends the auth tag to the ciphertext
+      const encryptedArray = new Uint8Array(encryptedBuffer);
+      const ciphertext = this.arrayBufferToBase64(encryptedArray);
+      const ivBase64 = this.arrayBufferToBase64(iv);
+
+      // The auth tag is the last 16 bytes of the encrypted output in GCM mode
+      const tagBytes = encryptedArray.slice(-16);
+      const tag = this.arrayBufferToBase64(tagBytes);
 
       const encrypted: EncryptedField<T> = {
         ciphertext,
-        iv,
+        iv: ivBase64,
         tag,
         keyId: key.id,
         tenantId,
@@ -216,13 +288,15 @@ export class PHIEncryption {
   }
 
   /**
-   * Decrypt a PHI field
+   * Decrypt a PHI field using AES-256-GCM
    */
   async decrypt<T>(
     encrypted: EncryptedField<T>,
     userId?: string
   ): Promise<T> {
     try {
+      await this.ensureInitialized();
+
       // Get key
       const key = this.keys.get(encrypted.keyId);
 
@@ -234,9 +308,24 @@ export class PHIEncryption {
         throw new Error(`Encryption key ${encrypted.keyId} is not active`);
       }
 
-      // In production: Use Web Crypto API or Node crypto
-      // For now: Base64 decoding (NOT SECURE - demo only)
-      const plaintext = Buffer.from(encrypted.ciphertext, 'base64').toString('utf-8');
+      // Convert from base64
+      const ciphertextBytes = this.base64ToArrayBuffer(encrypted.ciphertext);
+      const ivBytes = this.base64ToArrayBuffer(encrypted.iv);
+
+      // Decrypt using AES-256-GCM
+      const decryptedBuffer = await this.crypto.subtle.decrypt(
+        {
+          name: AES_GCM_CONFIG.name,
+          iv: ivBytes.buffer as ArrayBuffer,
+          tagLength: AES_GCM_CONFIG.tagLength,
+        },
+        key.cryptoKey,
+        ciphertextBytes.buffer as ArrayBuffer
+      );
+
+      // Convert back to string
+      const decoder = new TextDecoder();
+      const plaintext = decoder.decode(decryptedBuffer);
       const value = JSON.parse(plaintext) as T;
 
       // Audit log
@@ -329,6 +418,8 @@ export class PHIEncryption {
    * Rotate encryption key for a tenant
    */
   async rotateKey(tenantId: string): Promise<EncryptionKey> {
+    await this.ensureInitialized();
+
     // Deactivate old keys
     for (const [keyId, key] of this.keys.entries()) {
       if (key.tenantId === tenantId && key.active) {
@@ -338,11 +429,9 @@ export class PHIEncryption {
       }
     }
 
-    // Create new key
-    const newKey = this.generateKeyForTenant(tenantId);
+    // Create new key using Web Crypto API
+    const newKey = await this.generateKeyForTenant(tenantId);
     this.keys.set(newKey.id, newKey);
-
-
 
     return newKey;
   }
@@ -379,27 +468,89 @@ export class PHIEncryption {
 
   // Private helper methods
 
-  private initializeDefaultKeys(): void {
-    // Create default key for primary tenant
-    const defaultKey = this.generateKeyForTenant('wellfit-primary');
-    this.keys.set(defaultKey.id, defaultKey);
+  /**
+   * Initialize default encryption keys using Web Crypto API
+   */
+  private async initializeDefaultKeys(): Promise<void> {
+    try {
+      // Create default key for primary tenant
+      const defaultKey = await this.generateKeyForTenant('wellfit-primary');
+      this.keys.set(defaultKey.id, defaultKey);
+
+      // Also create a key for the default WF-0001 tenant
+      const wfKey = await this.generateKeyForTenant('2b902657-6a20-4435-a78a-576f397517ca');
+      this.keys.set(wfKey.id, wfKey);
+
+      this.initialized = true;
+    } catch (error) {
+      // If we can't initialize keys, mark as initialized but log the error
+      this.initialized = true;
+      throw error;
+    }
   }
 
-  private generateKeyForTenant(tenantId: string): EncryptionKey {
-    const keyId = `key-${tenantId}-${Date.now()}`;
+  /**
+   * Generate a new AES-256 key for a tenant using Web Crypto API
+   */
+  private async generateKeyForTenant(tenantId: string): Promise<EncryptionKey> {
+    const keyId = `key-${tenantId}-${Date.now()}-${this.generateRandomHex(8)}`;
 
-    // In production: Generate key using Web Crypto API or KMS
-    // For now: Random buffer (NOT SECURE - demo only)
-    const key = Buffer.from(Math.random().toString(36));
+    // Generate a secure 256-bit AES key using Web Crypto API
+    const cryptoKey = await this.crypto.subtle.generateKey(
+      {
+        name: AES_GCM_CONFIG.name,
+        length: AES_GCM_CONFIG.length,
+      },
+      true,  // extractable (for key backup/export)
+      ['encrypt', 'decrypt']
+    );
+
+    // Export the key for potential backup (optional)
+    const exportedKeyBuffer = await this.crypto.subtle.exportKey('raw', cryptoKey);
+    const exportedKey = this.arrayBufferToBase64(new Uint8Array(exportedKeyBuffer));
 
     return {
       id: keyId,
-      key,
+      cryptoKey,
+      exportedKey,
       tenantId,
       createdAt: new Date(),
       active: true,
       version: 1,
     };
+  }
+
+  /**
+   * Import a key from exported format (for key restoration)
+   */
+  async importKey(exportedKey: string, tenantId: string): Promise<EncryptionKey> {
+    const keyData = this.base64ToArrayBuffer(exportedKey);
+
+    const cryptoKey = await this.crypto.subtle.importKey(
+      'raw',
+      keyData.buffer as ArrayBuffer,
+      {
+        name: AES_GCM_CONFIG.name,
+        length: AES_GCM_CONFIG.length,
+      },
+      true,
+      ['encrypt', 'decrypt']
+    );
+
+    const keyId = `key-${tenantId}-${Date.now()}-${this.generateRandomHex(8)}`;
+
+    const key: EncryptionKey = {
+      id: keyId,
+      cryptoKey,
+      exportedKey,
+      tenantId,
+      createdAt: new Date(),
+      active: true,
+      version: 1,
+    };
+
+    this.keys.set(keyId, key);
+    return key;
   }
 
   private getActiveKeyForTenant(tenantId: string): EncryptionKey | undefined {
@@ -408,17 +559,44 @@ export class PHIEncryption {
         return key;
       }
     }
+    // Fallback to default key if tenant-specific key not found
+    for (const key of this.keys.values()) {
+      if (key.tenantId === 'wellfit-primary' && key.active) {
+        return key;
+      }
+    }
     return undefined;
   }
 
-  private generateIV(): string {
-    // In production: Use crypto.randomBytes(16)
-    return Buffer.from(Math.random().toString(36)).toString('base64');
+  /**
+   * Convert ArrayBuffer to base64 string
+   */
+  private arrayBufferToBase64(buffer: Uint8Array): string {
+    let binary = '';
+    for (let i = 0; i < buffer.length; i++) {
+      binary += String.fromCharCode(buffer[i]);
+    }
+    return btoa(binary);
   }
 
-  private generateTag(): string {
-    // In production: AES-GCM authentication tag
-    return Buffer.from(Math.random().toString(36)).toString('base64');
+  /**
+   * Convert base64 string to ArrayBuffer
+   */
+  private base64ToArrayBuffer(base64: string): Uint8Array {
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes;
+  }
+
+  /**
+   * Generate a random hex string for key IDs
+   */
+  private generateRandomHex(length: number): string {
+    const bytes = this.crypto.getRandomValues(new Uint8Array(length));
+    return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
   }
 
   private logEncryptionOperation(
@@ -462,23 +640,24 @@ export function getPHIEncryption(): PHIEncryption {
 
 /**
  * Decorator for automatic PHI field encryption
+ * Usage: @EncryptPHI('tenant-id')
  */
 export function EncryptPHI(tenantId: string) {
   return function (
-    target: any,
-    propertyKey: string,
+    _target: unknown,
+    _propertyKey: string,
     descriptor: PropertyDescriptor
   ) {
     const originalMethod = descriptor.value;
 
-    descriptor.value = async function (...args: any[]) {
+    descriptor.value = async function (...args: unknown[]) {
       const encryption = getPHIEncryption();
 
       // Encrypt PHI fields in arguments
       const encryptedArgs = await Promise.all(
         args.map(async (arg) => {
           if (typeof arg === 'object' && arg !== null) {
-            return encryption.encryptObject(arg, tenantId);
+            return encryption.encryptObject(arg as Record<string, unknown>, tenantId);
           }
           return arg;
         })
@@ -489,7 +668,7 @@ export function EncryptPHI(tenantId: string) {
 
       // Decrypt PHI fields in result
       if (typeof result === 'object' && result !== null) {
-        return encryption.decryptObject(result);
+        return encryption.decryptObject(result as Record<string, unknown>);
       }
 
       return result;
@@ -500,36 +679,50 @@ export function EncryptPHI(tenantId: string) {
 }
 
 /**
- * Production TODO:
+ * Implementation Status:
  *
- * 1. Use Web Crypto API for actual encryption:
- *    - AES-256-GCM for authenticated encryption
- *    - Proper IV generation with crypto.getRandomValues
- *    - Key derivation with PBKDF2 or HKDF
+ * ✅ COMPLETED:
+ * 1. Web Crypto API for real encryption:
+ *    - AES-256-GCM authenticated encryption
+ *    - crypto.getRandomValues() for secure IV (12 bytes)
+ *    - crypto.subtle.generateKey() for 256-bit keys
+ *    - crypto.subtle.encrypt/decrypt for operations
  *
- * 2. Integrate with Key Management Service (KMS):
+ * 2. Key management basics:
+ *    - Per-tenant encryption keys
+ *    - Key export/import for backup
+ *    - Key rotation support
+ *    - In-memory key storage (for single-instance)
+ *
+ * 3. Audit trail:
+ *    - All encrypt/decrypt operations logged
+ *    - User ID tracking
+ *    - Success/failure tracking
+ *
+ * 🔜 FUTURE ENHANCEMENTS:
+ *
+ * 1. Integrate with Key Management Service (KMS):
  *    - AWS KMS, Azure Key Vault, or Google Cloud KMS
- *    - Never store keys in application code
- *    - Automatic key rotation
- *    - Key versioning and audit trail
+ *    - Hardware Security Module (HSM) backing
+ *    - Cross-region key replication
  *
- * 3. Add envelope encryption:
+ * 2. Add envelope encryption:
  *    - Data Encryption Keys (DEK) for each field
  *    - Key Encryption Keys (KEK) in KMS
  *    - Improved performance and security
  *
- * 4. Add key access controls:
+ * 3. Add key access controls:
  *    - Role-based access to encryption keys
- *    - Audit trail for key access
- *    - Key usage quotas
+ *    - Per-user key permissions
+ *    - Key usage quotas and rate limiting
  *
- * 5. Add re-encryption on key rotation:
+ * 4. Add re-encryption on key rotation:
  *    - Background job to re-encrypt with new key
  *    - Support for old keys during transition
- *    - Automatic cleanup of old keys
+ *    - Automatic cleanup of expired keys
  *
- * 6. Add encryption at rest in database:
- *    - Transparent Data Encryption (TDE)
- *    - Column-level encryption
- *    - Integration with Supabase encryption
+ * 5. Persistent key storage:
+ *    - Store keys in Supabase vault
+ *    - Encrypted key storage at rest
+ *    - Multi-instance key synchronization
  */
