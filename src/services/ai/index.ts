@@ -55,3 +55,17 @@ export {
   type OptimizationReport,
   type IncomingPatient
 } from './bedOptimizer';
+
+// Batch inference (P2 optimization - 10x cost reduction)
+export {
+  batchInference,
+  BatchInferenceService,
+  type InferencePriority,
+  type InferenceStatus,
+  type InferenceType,
+  type InferenceRequest,
+  type InferenceResult,
+  type BatchResult,
+  type BatchConfig,
+  type QueueStats
+} from './batchInference';

@@ -93,6 +93,7 @@ export const BillingReviewDashboard = React.lazy(() =>
   import('../components/billing/BillingReviewDashboard').then(m => ({ default: m.BillingReviewDashboard }))
 );
 export const AIAccuracyDashboard = React.lazy(() => import('../components/admin/AIAccuracyDashboard'));
+export const AICostDashboard = React.lazy(() => import('../components/admin/AICostDashboard'));
 export const RevenueDashboard = React.lazy(() => import('../components/atlas/RevenueDashboard'));
 export const AIRevenueDashboard = React.lazy(() => import('../components/ai/AIRevenueDashboard'));
 
@@ -275,6 +276,7 @@ export const componentMap: Record<string, React.LazyExoticComponent<any>> = {
   BillingDashboard,
   BillingReviewDashboard,
   AIAccuracyDashboard,
+  AICostDashboard,
   RevenueDashboard,
   AIRevenueDashboard,
   HealthcareAlgorithmsDashboard,

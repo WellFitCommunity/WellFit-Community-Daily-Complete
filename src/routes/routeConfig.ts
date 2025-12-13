@@ -156,6 +156,14 @@ export const adminRoutes: RouteConfig[] = [
     wrapper: 'darkWrapper',
   },
   {
+    path: '/admin/ai-cost',
+    component: 'AICostDashboard',
+    auth: 'superAdmin',
+    roles: ['super_admin'],
+    category: 'superAdmin',
+    wrapper: 'darkWrapper',
+  },
+  {
     path: '/admin/photo-approval',
     component: 'PhotoApprovalPage',
     auth: 'admin',
