@@ -69,6 +69,9 @@ import {
   calculateOccupancy,
   getOccupancyColor,
 } from '../../types/bed';
+import { useVoiceSearch } from '../../hooks/useVoiceSearch';
+import { SearchResult } from '../../contexts/VoiceActionContext';
+import { auditLogger } from '../../services/auditLogger';
 
 // Tab type - SIMPLIFIED from 5 tabs to 3 (ATLUS: reduce cognitive load)
 type TabType = 'real-time' | 'forecasts-ai' | 'learning';
@@ -168,6 +171,43 @@ const BedManagementPanel: React.FC = () => {
   const [aiReport, setAiReport] = useState<OptimizationReport | null>(null);
   const [loadingAiReport, setLoadingAiReport] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
+
+  // ATLUS: Intuitive Technology - Global voice search for beds
+  // When user says "bed 205A" or "room 302", this handles the search and result selection
+  const handleBedSelected = useCallback((result: SearchResult) => {
+    auditLogger.info('VOICE_BED_SELECTED', {
+      bedId: result.id,
+      bedName: result.primaryText,
+    });
+
+    // Find the bed in our data and select it
+    const bedId = result.metadata?.bedId as string;
+    const matchingBed = bedBoard.find(b => b.bed_id === bedId || b.bed_id === result.id);
+    if (matchingBed) {
+      setSelectedBed(matchingBed);
+      // Expand the unit containing this bed
+      setExpandedUnit(matchingBed.unit_id);
+      // Scroll to the bed
+      const bedElement = document.getElementById(`bed-${matchingBed.bed_id}`);
+      if (bedElement) {
+        bedElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        bedElement.classList.add('ring-2', 'ring-teal-500', 'ring-offset-2');
+        setTimeout(() => {
+          bedElement.classList.remove('ring-2', 'ring-teal-500', 'ring-offset-2');
+        }, 3000);
+      }
+    }
+
+    // Set search query to highlight
+    setSearchQuery(bedId || result.primaryText);
+  }, [bedBoard]);
+
+  // Register voice search for beds and rooms
+  useVoiceSearch({
+    entityTypes: ['bed', 'room'],
+    onBedSelected: handleBedSelected,
+    onRoomSelected: handleBedSelected, // Rooms route to bed selection too
+  });
 
   /**
    * Load all data

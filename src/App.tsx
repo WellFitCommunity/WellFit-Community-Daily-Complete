@@ -25,6 +25,7 @@ import Footer from './components/layout/Footer';
 // Global UI Components
 import OfflineIndicator from './components/OfflineIndicator';
 import { VoiceCommandBar } from './components/admin/VoiceCommandBar';
+import { VoiceSearchOverlay } from './components/voice/VoiceSearchOverlay';
 import { EAPatientBanner } from './components/envision-atlus/EAPatientBanner';
 import { EASessionResume } from './components/envision-atlus/EASessionResume';
 import { EARealtimeAlertNotifications } from './components/envision-atlus/EARealtimeAlertNotifications';
@@ -109,6 +110,9 @@ function Shell() {
 
         {/* Global Voice Command Bar - compact mic icon that expands when clicked */}
         <VoiceCommandBar />
+
+        {/* Voice Search Overlay - Shows search results from smart voice commands (ATLUS: Intuitive) */}
+        <VoiceSearchOverlay />
 
         {/* Session Resume Prompt - Shows when user returns and has previous session (ATLUS: Unity) */}
         <EASessionResume />

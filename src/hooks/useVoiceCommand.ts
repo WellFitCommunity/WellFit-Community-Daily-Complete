@@ -17,6 +17,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { findVoiceCommandMatch, VoiceCommandMapping } from '../services/workflowPreferences';
 import { auditLogger } from '../services/auditLogger';
+import { parseVoiceEntity, useVoiceActionSafe } from '../contexts/VoiceActionContext';
 
 // TypeScript types for Web Speech API
 interface SpeechRecognitionEvent extends Event {
@@ -107,6 +108,9 @@ export function useVoiceCommand(options: UseVoiceCommandOptions = {}): [VoiceCom
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const autoStopTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Smart entity parsing via VoiceActionContext (ATLUS: Intuitive Technology)
+  const voiceAction = useVoiceActionSafe();
+
   const [state, setState] = useState<VoiceCommandState>({
     isListening: false,
     isSupported: false,
@@ -158,7 +162,41 @@ export function useVoiceCommand(options: UseVoiceCommandOptions = {}): [VoiceCom
         if (result.isFinal) {
           finalTranscript += transcriptText;
 
-          // Try to match command
+          // ATLUS: Intuitive Technology - Try smart entity parsing FIRST
+          // This enables natural language like "patient Maria LeBlanc birthdate June 10 1976"
+          const smartEntity = parseVoiceEntity(transcriptText);
+
+          if (smartEntity && voiceAction) {
+            // Smart entity detected - process through VoiceActionContext
+            auditLogger.debug('VOICE_SMART_ENTITY_DETECTED', {
+              transcript: transcriptText,
+              entityType: smartEntity.type,
+              query: smartEntity.query,
+              confidence: smartEntity.confidence,
+            });
+
+            setState(prev => ({
+              ...prev,
+              transcript: prev.transcript + transcriptText,
+              interimTranscript: '',
+              matchedCommand: {
+                phrases: [transcriptText],
+                targetType: 'action',
+                targetId: `smart:${smartEntity.type}:${smartEntity.query}`,
+                displayName: `Search ${smartEntity.type}: "${smartEntity.query}"`,
+              },
+              confidence: smartEntity.confidence,
+            }));
+
+            // Process through VoiceActionContext (auto-navigate + search)
+            voiceAction.processVoiceInput(transcriptText, confidence);
+
+            // Stop listening after smart command
+            stopListening();
+            return;
+          }
+
+          // Fallback: Try to match regular voice command
           const matchedCommand = findVoiceCommandMatch(transcriptText);
 
           setState(prev => ({
@@ -229,7 +267,8 @@ export function useVoiceCommand(options: UseVoiceCommandOptions = {}): [VoiceCom
     };
 
     return recognition;
-  }, [language, autoExecute, onCommandMatched]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [language, autoExecute, onCommandMatched, voiceAction]);
 
   // Execute a matched command
   const executeCommandInternal = useCallback((command: VoiceCommandMapping) => {

@@ -40,6 +40,8 @@ import { Clock, TrendingUp, Zap } from 'lucide-react';
 import { SectionLoadingFallback } from './sections/sectionDefinitions';
 import { VoiceCommandBar } from './VoiceCommandBar';
 import { useWorkflowPreferences } from '../../hooks/useWorkflowPreferences';
+import { useVoiceSearch } from '../../hooks/useVoiceSearch';
+import { SearchResult } from '../../contexts/VoiceActionContext';
 
 // Lazy-load category components for code splitting
 // This reduces the initial bundle size by ~30-40%
@@ -79,6 +81,35 @@ const IntelligentAdminPanel: React.FC = () => {
 
   // Category refs for voice command scrolling
   const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  // ATLUS: Intuitive Technology - Voice search for patients, beds, providers
+  // When user says "patient Maria LeBlanc", this handles the search and result selection
+  const handlePatientSelected = useCallback((result: SearchResult) => {
+    auditLogger.info('VOICE_PATIENT_SELECTED', {
+      patientId: result.id,
+      patientName: result.primaryText,
+    });
+
+    // Scroll to patient-care category and expand it
+    const patientCareCategory = categoryRefs.current['patient-care'];
+    if (patientCareCategory) {
+      patientCareCategory.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const button = patientCareCategory.querySelector('button');
+      if (button) button.click();
+    }
+
+    // Dispatch custom event for PatientCareCategory to highlight the patient
+    window.dispatchEvent(new CustomEvent('voicePatientSelected', {
+      detail: { patientId: result.id, patientName: result.primaryText, metadata: result.metadata }
+    }));
+  }, []);
+
+  // Register voice search for this dashboard
+  useVoiceSearch({
+    entityTypes: ['patient', 'provider'],
+    onPatientSelected: handlePatientSelected,
+    updatePatientContext: true, // Auto-update global patient context
+  });
 
   // Voice command handlers
   const handleScrollToSection = useCallback((sectionId: string) => {

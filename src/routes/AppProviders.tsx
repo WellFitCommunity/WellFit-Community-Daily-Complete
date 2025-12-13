@@ -5,6 +5,7 @@ import { SessionTimeoutProvider } from '../contexts/SessionTimeoutContext';
 import { TimeClockProvider } from '../contexts/TimeClockContext';
 import { NavigationHistoryProvider } from '../contexts/NavigationHistoryContext';
 import { PatientProvider } from '../contexts/PatientContext';
+import { VoiceActionProvider } from '../contexts/VoiceActionContext';
 import { EAKeyboardShortcutsProvider } from '../components/envision-atlus/EAKeyboardShortcutsProvider';
 import { BrandingConfig } from '../branding.config';
 import { BrandingContext } from '../BrandingContext';
@@ -34,9 +35,11 @@ export const AppProviders: React.FC<AppProvidersProps> = ({
           <TimeClockProvider>
             <PatientProvider>
               <NavigationHistoryProvider>
-                <EAKeyboardShortcutsProvider>
-                  {children}
-                </EAKeyboardShortcutsProvider>
+                <VoiceActionProvider>
+                  <EAKeyboardShortcutsProvider>
+                    {children}
+                  </EAKeyboardShortcutsProvider>
+                </VoiceActionProvider>
               </NavigationHistoryProvider>
             </PatientProvider>
           </TimeClockProvider>
