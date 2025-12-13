@@ -21,6 +21,7 @@ import RiskAssessmentManager from '../admin/RiskAssessmentManager';
 import ReportsSection from '../admin/ReportsSection';
 import CCMTimeline from '../atlas/CCMTimeline';
 import { useSupabaseClient } from '../../contexts/AuthContext';
+import { usePatientContext, SelectedPatient } from '../../contexts/PatientContext';
 import { FHIRService } from '../../services/fhirResourceService';
 import { SDOHBillingService } from '../../services/sdohBillingService';
 import { PhysicianWellnessHub } from './PhysicianWellnessHub';
@@ -52,6 +53,7 @@ import { WorkflowModeSwitcher, type WorkflowMode } from './WorkflowModeSwitcher'
 const PhysicianPanel: React.FC = () => {
   const supabase = useSupabaseClient();
   const navigate = useNavigate();
+  const { selectPatient: setGlobalPatient } = usePatientContext();
 
   const [selectedPatient, setSelectedPatient] = useState<PatientListItem | null>(null);
   const [patientSummary, setPatientSummary] = useState<PatientSummary | null>(null);
@@ -96,6 +98,23 @@ const PhysicianPanel: React.FC = () => {
   const handlePatientSelect = useCallback(async (patient: PatientListItem) => {
     setSelectedPatient(patient);
     setLoading(true);
+
+    // ATLUS: Unity - Update global PatientContext for cross-dashboard persistence
+    const riskLevel = patient.risk_score && patient.risk_score >= 80 ? 'critical'
+      : patient.risk_score && patient.risk_score >= 60 ? 'high'
+      : patient.risk_score && patient.risk_score >= 40 ? 'medium'
+      : 'low' as const;
+
+    const globalPatient: SelectedPatient = {
+      id: patient.user_id,
+      firstName: patient.first_name,
+      lastName: patient.last_name,
+      riskLevel,
+      snapshot: {
+        unit: 'Physician Panel',
+      },
+    };
+    setGlobalPatient(globalPatient);
 
     try {
       // Fetch comprehensive patient data in parallel
@@ -204,7 +223,7 @@ const PhysicianPanel: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [supabase]);
+  }, [supabase, setGlobalPatient]);
 
   // Command palette actions
   const commandActions: CommandAction[] = [

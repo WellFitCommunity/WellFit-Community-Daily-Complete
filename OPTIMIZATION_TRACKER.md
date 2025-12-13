@@ -79,14 +79,14 @@
 
 ## ATLUS Alignment Tracker
 
-**Overall Score: 9.1/10** (Updated 2025-12-13 - ATLUS Unity + Technology improvements)
+**Overall Score: 9.2/10** (Updated 2025-12-13 - PhysicianPanel added)
 
 | Principle | Score | Status | Verification |
 |-----------|-------|--------|--------------|
 | **A - Accountability** | 9/10 | ✅ | Plain-language AI explanations in PatientRiskStrip |
 | **T - Technology** | 9/10 | ✅ | Keyboard shortcuts + filter shortcuts (Shift+H/C/A) wired to dashboards |
 | **L - Leading** | 8/10 | ✅ | Session resume works, NavigationHistory persists to localStorage |
-| **U - Unity** | 9.5/10 | ✅ | PatientContext wired to 5 dashboards (NeuroSuite, CareCoordination, ShiftHandoff, PT, Referrals) |
+| **U - Unity** | 9.5/10 | ✅ | PatientContext wired to 6 dashboards (NeuroSuite, CareCoordination, ShiftHandoff, PT, Referrals, Physician) |
 | **S - Service** | 8.5/10 | ✅ | Provider affirmations wired to ShiftHandoff + BedManagement |
 
 **Integrations Verified (2025-12-13):**
@@ -98,6 +98,8 @@
 | `ShiftHandoffDashboard` | ✅ Wired | ✅ Wired | Patient names clickable + Shift+H/C/A filters |
 | `PhysicalTherapyDashboard` | ✅ Wired | ✅ Wired | Patient names clickable + progress filter |
 | `ReferralsDashboard` | ✅ Wired | ✅ Wired | Referral names clickable + priority filter |
+| `PhysicianPanel` | ✅ Wired | N/A | Patient selector sets global context |
+| `NursePanel` | N/A (embeds ShiftHandoff) | N/A | Uses ShiftHandoffDashboard |
 | `BedManagementPanel` | N/A | N/A | Uses shared `providerAffirmations.ts` |
 
 **Key Components:**
@@ -612,22 +614,24 @@
 
 ### 2025-12-13 (Session 2)
 - ✅ **ATLUS Unity + Technology Improvements COMPLETE**
-  - **PatientContext Integration** - Wired to 3 additional dashboards:
+  - **PatientContext Integration** - Wired to 4 additional dashboards:
     - `ShiftHandoffDashboard.tsx` - Patient names now clickable, sets global patient context
     - `PhysicalTherapyDashboard.tsx` - Patient names + View button set context
     - `ReferralsDashboard.tsx` - Referral patient names set context
-  - **Filter Shortcuts (Shift+H/C/A)** - Wired to all 3 dashboards:
+    - `PhysicianPanel.tsx` - Patient selector now sets global PatientContext
+  - **Filter Shortcuts (Shift+H/C/A)** - Wired to 3 dashboards:
     - Each dashboard now has filter state synced with `EAKeyboardShortcutsProvider`
     - Added visual filter toggle buttons (All/High+/Critical)
     - Filters apply to patient lists (ShiftHandoff: risk level, PT: progress status, Referrals: priority)
-  - **ATLUS Alignment Score**: Improved from 8.6/10 to 9.1/10
+  - **ATLUS Alignment Score**: Improved from 8.6/10 to 9.2/10
     - Technology (T): 8.5 → 9/10 (filter shortcuts wired)
-    - Unity (U): 8.5 → 9.5/10 (PatientContext on 5 dashboards)
+    - Unity (U): 8.5 → 9.5/10 (PatientContext on 6 dashboards)
   - TypeScript type checking: ✅ PASS
   - **Files Modified**:
     - `src/components/nurse/ShiftHandoffDashboard.tsx`
     - `src/components/physicalTherapy/PhysicalTherapyDashboard.tsx`
     - `src/components/referrals/ReferralsDashboard.tsx`
+    - `src/components/physician/PhysicianPanel.tsx`
     - `OPTIMIZATION_TRACKER.md`
 
 ### 2025-12-13
