@@ -16,11 +16,105 @@
         "SUPABASE_URL": "${REACT_APP_SUPABASE_URL}",
         "SUPABASE_SERVICE_ROLE_KEY": "${SUPABASE_SERVICE_ROLE_KEY}"
       }
+    },
+    "postgres": {
+      "transport": "http",
+      "url": "${REACT_APP_SUPABASE_URL}/functions/v1/mcp-postgres-server",
+      "description": "PostgreSQL MCP server for safe database queries",
+      "enabled": true,
+      "env": {
+        "SUPABASE_URL": "${REACT_APP_SUPABASE_URL}",
+        "SUPABASE_SERVICE_ROLE_KEY": "${SUPABASE_SERVICE_ROLE_KEY}"
+      },
+      "tools": [
+        "execute_query",
+        "list_queries",
+        "get_table_schema",
+        "get_row_count"
+      ],
+      "whitelistedQueries": [
+        "get_patient_count_by_risk",
+        "get_readmission_risk_summary",
+        "get_encounter_summary",
+        "get_sdoh_flags_summary",
+        "get_medication_adherence_stats",
+        "get_claims_status_summary",
+        "get_billing_revenue_summary",
+        "get_care_plan_summary",
+        "get_task_completion_rate",
+        "get_referral_summary",
+        "get_bed_availability",
+        "get_shift_handoff_summary",
+        "get_dashboard_metrics",
+        "get_quality_metrics"
+      ]
+    },
+    "edge-functions": {
+      "transport": "http",
+      "url": "${REACT_APP_SUPABASE_URL}/functions/v1/mcp-edge-functions-server",
+      "description": "Edge Functions MCP server for workflow orchestration",
+      "enabled": true,
+      "env": {
+        "SUPABASE_URL": "${REACT_APP_SUPABASE_URL}",
+        "SUPABASE_SERVICE_ROLE_KEY": "${SUPABASE_SERVICE_ROLE_KEY}"
+      },
+      "tools": [
+        "invoke_function",
+        "list_functions",
+        "get_function_info",
+        "batch_invoke"
+      ],
+      "categories": [
+        "analytics",
+        "reports",
+        "workflow",
+        "integration",
+        "utility"
+      ]
+    },
+    "medical-codes": {
+      "transport": "http",
+      "url": "${REACT_APP_SUPABASE_URL}/functions/v1/mcp-medical-codes-server",
+      "description": "Medical Codes MCP server for CPT, ICD-10, HCPCS lookups",
+      "enabled": true,
+      "env": {
+        "SUPABASE_URL": "${REACT_APP_SUPABASE_URL}",
+        "SUPABASE_SERVICE_ROLE_KEY": "${SUPABASE_SERVICE_ROLE_KEY}"
+      },
+      "tools": [
+        "search_cpt",
+        "search_icd10",
+        "search_hcpcs",
+        "get_modifiers",
+        "validate_code_combination",
+        "check_bundling",
+        "get_code_details",
+        "suggest_codes",
+        "get_sdoh_codes"
+      ]
     }
   },
   "features": {
     "promptCaching": true,
     "auditLogging": true,
-    "errorSanitization": true
+    "errorSanitization": true,
+    "queryWhitelisting": true,
+    "functionSandboxing": true,
+    "multiTenantIsolation": true
+  },
+  "security": {
+    "requireAuth": true,
+    "auditAllCalls": true,
+    "rateLimiting": {
+      "enabled": true,
+      "maxRequestsPerMinute": 60
+    },
+    "blockedFunctions": [
+      "register",
+      "enrollClient",
+      "admin-create-user",
+      "delete-user",
+      "service-role-query"
+    ]
   }
 }
