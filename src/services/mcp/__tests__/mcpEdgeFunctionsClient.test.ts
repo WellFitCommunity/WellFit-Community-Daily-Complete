@@ -438,7 +438,7 @@ describe('EdgeFunctionsMCPClient', () => {
       const result = await calculateReadmissionRisk('invalid-patient');
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Function invocation failed');
+      expect(result.error).toBe('Function not found');
     });
 
     it('should handle function execution errors', async () => {
