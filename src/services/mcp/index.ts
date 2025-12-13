@@ -8,6 +8,8 @@
  * 3. Edge Functions MCP - Workflow orchestration
  * 4. Medical Codes MCP - CPT/ICD-10/HCPCS lookups
  * 5. FHIR MCP - Healthcare interoperability (FHIR R4)
+ * 6. HL7/X12 MCP - Healthcare message transformation
+ * 7. Clearinghouse MCP - Claims submission and eligibility
  */
 
 // =====================================================
@@ -186,3 +188,95 @@ export {
   type ValidationResult,
   type FHIRResult
 } from './mcpFHIRClient';
+
+// =====================================================
+// HL7/X12 MCP (Healthcare Message Transformation)
+// =====================================================
+
+export {
+  // HL7 operations
+  parseHL7Message,
+  convertHL7ToFHIR,
+  validateHL7Message,
+  generateACK,
+  // X12 operations
+  generate837PClaim as generateX12Claim,
+  parseX12Claim,
+  validateX12Claim,
+  convertX12ToFHIR,
+  // Utility
+  getSupportedMessageTypes,
+  // Templates and helpers
+  HL7_TEMPLATES,
+  X12_HELPERS,
+  // Client class
+  hl7x12MCP,
+  HL7X12MCPClient,
+  // Types
+  type HL7MessageType,
+  type HL7Segment,
+  type HL7ParsedMessage,
+  type HL7ValidationResult,
+  type HL7ACK,
+  type X12ClaimData,
+  type X12GeneratedClaim,
+  type X12ParsedClaim,
+  type X12ValidationResult,
+  type FHIRBundle as HL7FHIRBundle,
+  type FHIRClaim,
+  type MessageTypeInfo,
+  type HL7X12Result
+} from './mcpHL7X12Client';
+
+// =====================================================
+// CLEARINGHOUSE MCP (Claims & Eligibility)
+// =====================================================
+
+export {
+  // Claim operations
+  submitClaim,
+  checkClaimStatus,
+  // Eligibility operations
+  verifyPatientEligibility,
+  // Remittance operations
+  processRemittanceAdvice,
+  // Prior authorization
+  submitPriorAuthorization,
+  // Configuration
+  testClearinghouseConnection,
+  searchPayers,
+  getBillingStats,
+  // Rejection guidance
+  lookupRejectionReason,
+  getRejectionsByCategory,
+  // Reference data
+  SERVICE_TYPE_CODES,
+  RELATIONSHIP_CODES,
+  ADJUSTMENT_REASON_CODES,
+  // Client class
+  clearinghouseMCP,
+  ClearinghouseMCPClient,
+  // Types
+  type ClearinghouseProvider,
+  type ClaimType,
+  type ClaimStatus,
+  type PriorAuthUrgency,
+  type PayerType,
+  type RejectionCategory,
+  type ClaimSubmissionData,
+  type ClaimSubmissionResult,
+  type ClaimStatusRequest,
+  type ClaimStatusResponse,
+  type EligibilityRequest,
+  type EligibilityResponse,
+  type RemittanceClaim,
+  type RemittanceResult,
+  type PriorAuthRequest,
+  type PriorAuthResult,
+  type ConnectionTestResult,
+  type PayerInfo,
+  type SubmissionStats,
+  type RejectionReason,
+  type RejectionGuidance,
+  type ClearinghouseResult
+} from './mcpClearinghouseClient';

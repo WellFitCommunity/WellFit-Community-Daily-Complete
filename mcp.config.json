@@ -144,6 +144,85 @@
         "allscripts",
         "custom"
       ]
+    },
+    "hl7-x12": {
+      "transport": "http",
+      "url": "${REACT_APP_SUPABASE_URL}/functions/v1/mcp-hl7-x12-server",
+      "description": "HL7/X12 Transformer MCP server for healthcare message conversion",
+      "enabled": true,
+      "env": {
+        "SUPABASE_URL": "${REACT_APP_SUPABASE_URL}",
+        "SUPABASE_SERVICE_ROLE_KEY": "${SUPABASE_SERVICE_ROLE_KEY}"
+      },
+      "tools": [
+        "parse_hl7",
+        "hl7_to_fhir",
+        "generate_hl7_ack",
+        "validate_hl7",
+        "generate_837p",
+        "validate_x12",
+        "parse_x12",
+        "x12_to_fhir",
+        "get_message_types"
+      ],
+      "supportedHL7Types": [
+        "ADT",
+        "ORU",
+        "ORM",
+        "ACK"
+      ],
+      "supportedHL7Events": [
+        "A01",
+        "A02",
+        "A03",
+        "A04",
+        "A08",
+        "R01"
+      ],
+      "supportedX12Types": [
+        "837P",
+        "837I",
+        "835",
+        "270",
+        "271",
+        "276",
+        "277",
+        "278"
+      ]
+    },
+    "clearinghouse": {
+      "transport": "http",
+      "url": "${REACT_APP_SUPABASE_URL}/functions/v1/mcp-clearinghouse-server",
+      "description": "Clearinghouse MCP server for claims submission and eligibility",
+      "enabled": true,
+      "env": {
+        "SUPABASE_URL": "${REACT_APP_SUPABASE_URL}",
+        "SUPABASE_SERVICE_ROLE_KEY": "${SUPABASE_SERVICE_ROLE_KEY}"
+      },
+      "tools": [
+        "submit_claim",
+        "check_claim_status",
+        "verify_eligibility",
+        "process_remittance",
+        "submit_prior_auth",
+        "test_connection",
+        "get_payer_list",
+        "get_submission_stats",
+        "get_rejection_reasons"
+      ],
+      "supportedProviders": [
+        "waystar",
+        "change_healthcare",
+        "availity"
+      ],
+      "supportedTransactions": [
+        "837P",
+        "837I",
+        "270/271",
+        "276/277",
+        "278",
+        "835"
+      ]
     }
   },
   "features": {
