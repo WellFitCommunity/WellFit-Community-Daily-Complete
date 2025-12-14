@@ -651,7 +651,10 @@ serve(withCORS(async (req) => {
 | `src/components/careCoordination/` | Interdisciplinary care team management |
 | `src/components/referrals/` | External referral management (hospital partnerships) |
 | `src/components/questionnaires/` | SMART questionnaire deployment & analytics |
+| `src/components/patient-avatar/` | Patient Avatar Visualization System (body diagrams, markers) |
 | `src/services/_base/` | ServiceResult pattern utilities |
+| `src/services/patientAvatarService.ts` | Patient avatar and marker CRUD operations |
+| `src/services/smartscribe-avatar-integration.ts` | SmartScribe integration for auto-marker detection |
 | `src/services/parkinsonsService.ts` | Parkinson's disease management service |
 | `src/types/parkinsons.ts` | Parkinson's TypeScript types (UPDRS, ROBERT/FORBES) |
 | `src/hooks/` | Custom React hooks (useModuleAccess, etc.) |
@@ -807,7 +810,96 @@ For real-time medical documentation, use **SmartScribe**:
 
 ---
 
-## Current Development Status (2025-12-12)
+## Patient Avatar Visualization System (2025-12-14)
+
+Interactive SVG-based human body diagram for visualizing patient medical devices, conditions, and markers.
+
+### Architecture
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| `PatientAvatar` | `src/components/patient-avatar/PatientAvatar.tsx` | Main container (compact/expanded modes) |
+| `AvatarBody` | `src/components/patient-avatar/AvatarBody.tsx` | SVG body with skin tones & gender |
+| `AvatarThumbnail` | `src/components/patient-avatar/AvatarThumbnail.tsx` | Compact view for patient lists |
+| `AvatarFullBody` | `src/components/patient-avatar/AvatarFullBody.tsx` | Expanded modal with marker sidebar |
+| `AvatarMarker` | `src/components/patient-avatar/AvatarMarker.tsx` | Individual marker component |
+| `MarkerForm` | `src/components/patient-avatar/MarkerForm.tsx` | Add/edit marker form |
+| `MarkerDetailPopover` | `src/components/patient-avatar/MarkerDetailPopover.tsx` | Marker details popup |
+
+### Database Tables
+
+| Table | Purpose |
+|-------|---------|
+| `patient_avatars` | Skin tone & gender preferences per patient |
+| `patient_markers` | Active markers (devices, conditions, wounds) |
+| `patient_marker_history` | Audit trail of marker changes |
+
+### Marker Categories (Color-Coded)
+
+| Category | Color | Examples |
+|----------|-------|----------|
+| **Critical** | Red | Central lines, chest tubes, tracheostomy |
+| **Moderate** | Yellow | PICC lines, foleys, G-tubes, drains |
+| **Informational** | Blue | Surgical incisions, implants, joint replacements |
+| **Monitoring** | Purple | CGM, cardiac monitor, insulin pump |
+| **Chronic** | Green | CHF, COPD, diabetes, CKD |
+| **Neurological** | Orange | Stroke, Parkinson's, Alzheimer's, MS |
+
+### SmartScribe Integration
+
+When SmartScribe transcription completes, call `onSmartScribeComplete()` to auto-detect markers:
+
+```typescript
+import { onSmartScribeComplete } from '../services/smartscribe-avatar-integration';
+
+const result = await onSmartScribeComplete(
+  transcriptionId,
+  patientId,
+  providerId,
+  transcriptText
+);
+// result: { created: 2, removed: 0, errors: [] }
+```
+
+**Detection patterns:**
+- Device insertions: "placed central line", "inserted PICC", "started IV access"
+- Device removals: "removed foley", "discontinued central line"
+- Conditions: "patient has COPD", "diagnosed with CHF"
+
+### Usage
+
+```tsx
+import { PatientAvatar, AvatarThumbnail } from './components/patient-avatar';
+
+// Compact thumbnail in patient list
+<AvatarThumbnail
+  patientId={patient.id}
+  patientName="John Doe"
+  skinTone="medium"
+  genderPresentation="neutral"
+  markers={[]}
+/>
+
+// Full avatar (starts compact, expands on click)
+<PatientAvatar
+  patientId={patient.id}
+  patientName="John Doe"
+  initialMode="compact"  // or "expanded"
+  editable={true}
+/>
+```
+
+### Current Integrations
+
+- **ShiftHandoffDashboard** - Avatar thumbnails in patient cards (high acuity + standard sections)
+
+### Progress
+
+See `PATIENT_AVATAR_PROGRESS.md` for detailed status. Phase 1-3 complete (17/23 tasks, 74%).
+
+---
+
+## Current Development Status (2025-12-14)
 
 **Full optimization tracking:** See `OPTIMIZATION_TRACKER.md` in project root.
 
@@ -828,10 +920,10 @@ For real-time medical documentation, use **SmartScribe**:
 | **U - Unity** | 8.5/10 | ✅ | PatientContext wired to NeuroSuite, CareCoordination |
 | **S - Service** | 8.5/10 | ✅ | Affirmations wired to ShiftHandoff, BedManagement |
 
-**Dashboard Integrations (2025-12-12):**
+**Dashboard Integrations (2025-12-14):**
 - `NeuroSuiteDashboard` - PatientContext wired (patient names/View buttons)
 - `CareCoordinationDashboard` - PatientContext wired (care plan selection)
-- `ShiftHandoffDashboard` - providerAffirmations wired (confirm/accept toasts)
+- `ShiftHandoffDashboard` - providerAffirmations wired + **PatientAvatar thumbnails** in patient cards
 - `BedManagementPanel` - Refactored to use shared affirmation service
 
 **Key ATLUS Components:**
