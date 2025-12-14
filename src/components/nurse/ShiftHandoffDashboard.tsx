@@ -30,6 +30,7 @@ import {
   formatTimeSince,
   sortHandoffByPriority,
 } from '../../types/shiftHandoff';
+import { AvatarThumbnail } from '../patient-avatar';
 
 export const ShiftHandoffDashboard: React.FC = () => {
   const user = useUser();
@@ -625,6 +626,17 @@ export const ShiftHandoffDashboard: React.FC = () => {
                             {index + 1}
                           </div>
 
+                          {/* Patient Avatar Thumbnail */}
+                          <div className="flex-shrink-0 transform scale-50 origin-center -my-6">
+                            <AvatarThumbnail
+                              patientId={patient.patient_id}
+                              patientName={patient.patient_name}
+                              skinTone="medium"
+                              genderPresentation="neutral"
+                              markers={[]}
+                            />
+                          </div>
+
                           <div className="flex-1">
                             <button
                               className="font-bold text-xl text-gray-900 hover:text-[#1BA39C] transition-colors text-left"
@@ -780,6 +792,17 @@ export const ShiftHandoffDashboard: React.FC = () => {
                               : 'bg-green-100 text-green-700'
                           }`}>
                             {index + 1}
+                          </div>
+
+                          {/* Patient Avatar Thumbnail */}
+                          <div className="flex-shrink-0 transform scale-[0.35] origin-center -my-8 -mx-4">
+                            <AvatarThumbnail
+                              patientId={patient.patient_id}
+                              patientName={patient.patient_name}
+                              skinTone="medium"
+                              genderPresentation="neutral"
+                              markers={[]}
+                            />
                           </div>
 
                           <div>
