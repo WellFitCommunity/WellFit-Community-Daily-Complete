@@ -17,10 +17,18 @@ export { AvatarMarker } from './AvatarMarker';
 // Form components
 export { MarkerForm } from './MarkerForm';
 export { MarkerDetailPopover } from './MarkerDetailPopover';
+export { AvatarSettingsForm } from './AvatarSettingsForm';
 
 // Hooks
 export { usePatientAvatar } from './hooks/usePatientAvatar';
 export { usePatientMarkers } from './hooks/usePatientMarkers';
+export { useTouchGestures } from './hooks/useTouchGestures';
+
+// Styles (import for side effects)
+export * from './styles';
+
+// Utilities
+export * from './utils';
 
 // Constants
 export { SKIN_TONE_COLORS, SKIN_TONES, SKIN_TONE_LABELS } from './constants/skinTones';

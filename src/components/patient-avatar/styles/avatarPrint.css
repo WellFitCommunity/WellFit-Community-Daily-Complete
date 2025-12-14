@@ -1,0 +1,324 @@
+/**
+ * Patient Avatar Print Styles
+ *
+ * Print-friendly stylesheet for shift handoff reports and documentation.
+ */
+
+@media print {
+  /* ============================================
+     PAGE SETUP
+     ============================================ */
+
+  @page {
+    size: letter portrait;
+    margin: 0.5in;
+  }
+
+  /* ============================================
+     HIDE INTERACTIVE ELEMENTS
+     ============================================ */
+
+  .avatar-modal-close,
+  .avatar-view-toggle,
+  .avatar-add-marker-btn,
+  .avatar-settings-btn,
+  .marker-confirm-btn,
+  .marker-edit-btn,
+  .marker-reject-btn,
+  .avatar-thumbnail:hover,
+  .no-print {
+    display: none !important;
+  }
+
+  /* ============================================
+     AVATAR BODY STYLING
+     ============================================ */
+
+  .avatar-body-container {
+    background: white !important;
+    border: 2px solid #333 !important;
+    border-radius: 8px !important;
+    padding: 10px !important;
+    page-break-inside: avoid;
+  }
+
+  .avatar-body svg {
+    max-width: 300px !important;
+    height: auto !important;
+  }
+
+  /* Ensure skin tones print well */
+  .avatar-body path,
+  .avatar-body ellipse {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* ============================================
+     MARKER VISIBILITY
+     ============================================ */
+
+  .avatar-marker {
+    /* Ensure markers are visible and labeled */
+    position: relative !important;
+  }
+
+  /* Add marker labels for print */
+  .avatar-marker::before {
+    content: attr(data-marker-number);
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 8px;
+    font-weight: bold;
+    background: white;
+    border: 1px solid #333;
+    border-radius: 50%;
+    width: 14px;
+    height: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+  }
+
+  /* Category colors for print (high contrast) */
+  .avatar-marker--critical circle {
+    fill: #dc2626 !important;
+    stroke: #7f1d1d !important;
+  }
+
+  .avatar-marker--moderate circle {
+    fill: #f59e0b !important;
+    stroke: #92400e !important;
+  }
+
+  .avatar-marker--informational circle {
+    fill: #3b82f6 !important;
+    stroke: #1e40af !important;
+  }
+
+  .avatar-marker--monitoring circle {
+    fill: #8b5cf6 !important;
+    stroke: #5b21b6 !important;
+  }
+
+  .avatar-marker--chronic circle {
+    fill: #22c55e !important;
+    stroke: #15803d !important;
+  }
+
+  .avatar-marker--neurological circle {
+    fill: #f97316 !important;
+    stroke: #c2410c !important;
+  }
+
+  /* ============================================
+     MARKER LIST FOR PRINT
+     ============================================ */
+
+  .avatar-marker-list {
+    margin-top: 20px;
+    page-break-inside: avoid;
+  }
+
+  .avatar-marker-list-title {
+    font-size: 14px;
+    font-weight: bold;
+    border-bottom: 2px solid #333;
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+  }
+
+  .marker-list-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #ddd;
+    font-size: 11px;
+    page-break-inside: avoid;
+  }
+
+  .marker-list-item:last-child {
+    border-bottom: none;
+  }
+
+  .marker-list-number {
+    font-weight: bold;
+    min-width: 20px;
+  }
+
+  .marker-list-category {
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    font-weight: bold;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .marker-list-category--critical {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #dc2626;
+  }
+
+  .marker-list-category--moderate {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #f59e0b;
+  }
+
+  .marker-list-category--informational {
+    background: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #3b82f6;
+  }
+
+  .marker-list-category--monitoring {
+    background: #ede9fe;
+    color: #5b21b6;
+    border: 1px solid #8b5cf6;
+  }
+
+  .marker-list-category--chronic {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #22c55e;
+  }
+
+  .marker-list-category--neurological {
+    background: #ffedd5;
+    color: #c2410c;
+    border: 1px solid #f97316;
+  }
+
+  .marker-list-name {
+    font-weight: 600;
+    flex: 1;
+  }
+
+  .marker-list-details {
+    font-size: 10px;
+    color: #666;
+  }
+
+  /* ============================================
+     PRINT HEADER/FOOTER
+     ============================================ */
+
+  .avatar-print-header {
+    display: block !important;
+    border-bottom: 2px solid #333;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+  }
+
+  .avatar-print-header h1 {
+    font-size: 16px;
+    margin: 0;
+  }
+
+  .avatar-print-header .patient-info {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+  }
+
+  .avatar-print-footer {
+    display: block !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-top: 1px solid #ccc;
+    padding-top: 5px;
+    font-size: 9px;
+    color: #999;
+  }
+
+  /* ============================================
+     FULL BODY PRINT LAYOUT
+     ============================================ */
+
+  .avatar-fullbody-print {
+    display: flex;
+    gap: 30px;
+    page-break-inside: avoid;
+  }
+
+  .avatar-fullbody-print .avatar-front,
+  .avatar-fullbody-print .avatar-back {
+    flex: 1;
+  }
+
+  .avatar-fullbody-print .view-label {
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+  }
+
+  /* ============================================
+     LEGEND
+     ============================================ */
+
+  .avatar-print-legend {
+    display: block !important;
+    margin-top: 15px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 10px;
+    page-break-inside: avoid;
+  }
+
+  .avatar-print-legend h3 {
+    font-size: 11px;
+    margin: 0 0 8px 0;
+    font-weight: bold;
+  }
+
+  .avatar-print-legend .legend-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .avatar-print-legend .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .avatar-print-legend .legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1px solid #333;
+  }
+
+  /* ============================================
+     DISABLE ANIMATIONS FOR PRINT
+     ============================================ */
+
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ============================================
+   PRINT-ONLY ELEMENTS (hidden on screen)
+   ============================================ */
+
+.avatar-print-header,
+.avatar-print-footer,
+.avatar-print-legend,
+.print-only {
+  display: none;
+}
