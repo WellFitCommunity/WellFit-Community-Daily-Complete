@@ -3,8 +3,6 @@
 ## Project Overview
 This codebase contains **two separate white-label products** that can be used independently or together:
 
-### Two White-Label Products
-
 | Product | Purpose | Target Users |
 |---------|---------|--------------|
 | **WellFit** | Community engagement platform | Seniors, caregivers, community orgs |
@@ -19,215 +17,19 @@ This codebase contains **two separate white-label products** that can be used in
 
 Tenant codes follow the format: `{ORG}-{LICENSE}{SEQUENCE}`
 
-**Format Breakdown:**
-- `{ORG}` = 2-4 letter organization prefix (e.g., `WF`, `HH`, `VG`)
-- `{LICENSE}` = Single digit indicating licensed products
-- `{SEQUENCE}` = 3-digit sequence number
+| Digit | License Type | Example |
+|-------|--------------|---------|
+| `0` | **Both Products** | `VG-0002` |
+| `8` | **Envision Atlus Only** | `HH-8001` |
+| `9` | **WellFit Only** | `MC-9001` |
 
-**License Digit Convention:**
-
-| Digit | License Type | Example | Description |
-|-------|--------------|---------|-------------|
-| `0` | **Both Products** | `VG-0002` | Vegas Clinic - WellFit + Envision Atlus |
-| `8` | **Envision Atlus Only** | `HH-8001` | Houston Hospital - Clinical engine only |
-| `9` | **WellFit Only** | `MC-9001` | Miami Care - Community platform only |
-
-**Example Tenant Codes:**
-
-| Code | Organization | Products |
-|------|--------------|----------|
-| `WF-0001` | WellFit Community (default/testing) | Both |
-| `HH-8001` | Houston Hospital | Envision Atlus Only |
-| `VG-0002` | Vegas Clinic | Both |
-| `MC-9003` | Miami Care Center | WellFit Only |
-
-**Default Tenant for Testing:**
-- `WF-0001` = WellFit Community (UUID: `2b902657-6a20-4435-a78a-576f397517ca`)
-- Licensed for BOTH products to enable full integration testing
+**Default Tenant for Testing:** `WF-0001` (UUID: `2b902657-6a20-4435-a78a-576f397517ca`)
 
 ### White-Label Architecture
 - **Multi-tenant**: Multiple organizations use the same codebase with their own domains
 - **Dynamic origins**: CORS must accept any tenant's HTTPS domain (no hardcoded allowlists)
 - **Tenant branding**: Each tenant can customize appearance via `useBranding()` hook
 - **Shared backend**: All tenants share Supabase database with RLS for isolation
-- **Shared tenant ID**: Same tenant_id used across both products when licensed together
-
-### External Referral & Reporting System
-
-Hospitals with Atlus-only licenses can refer patients to WellFit Community and receive reports:
-
-```
-Hospital (HH-8001, Atlus-only)
-         │
-         │ Refers patient
-         ▼
-WellFit Community (patient joins, does check-ins)
-         │
-         │ Generates reports & alerts
-         ▼
-Hospital receives insights about THEIR patients only
-```
-
-**Tables:**
-- `external_referral_sources` - Organizations that can refer patients
-- `patient_referrals` - Individual patient referrals with status tracking
-- `referral_reports` - Generated engagement/health reports
-- `referral_alerts` - Real-time alerts (missed check-ins, mood decline, SDOH flags)
-
-**Subscription Tiers:**
-- `basic` - Monthly summary reports
-- `standard` - Weekly reports + alerts
-- `premium` - Real-time alerts + dashboard access
-- `enterprise` - FHIR integration + SLA
-
-**Key Functions:**
-- `link_user_to_referral(user_id, phone)` - Auto-links new user to pending referral
-- `get_patient_engagement_summary(user_id, start, end)` - Generates engagement data
-- `check_referral_alerts(user_id)` - Creates alerts based on patient activity
-
-### Caregiver Suite (Family Access)
-
-Allows family caregivers to view senior health information using a PIN shared by the senior.
-
-**Key Principle: NO REGISTRATION REQUIRED for caregivers** - just need senior's phone + PIN + their own name/phone for logging.
-
-```
-Senior sets 4-digit PIN in Settings
-         │
-         │ Shares PIN with family
-         ▼
-Caregiver goes to /caregiver-access
-         │
-         │ Enters: Senior phone + PIN + Their name/phone
-         ▼
-30-minute read-only session granted
-         │
-         │ All access is logged
-         ▼
-Senior can see "Who viewed my data" in Settings
-```
-
-**Routes:**
-| Route | Purpose | Auth |
-|-------|---------|------|
-| `/caregiver-access` | Public entry point for caregivers | None (PIN-based) |
-| `/senior-view/:seniorId` | Read-only health dashboard | Session token |
-| `/senior-reports/:seniorId` | Printable health reports | Session token |
-| `/set-caregiver-pin` | Senior sets their 4-digit PIN | Authenticated |
-| `/caregiver-dashboard` | Legacy route for registered caregivers (role_code 6) | Authenticated |
-
-**Database Tables:**
-- `caregiver_pins` - Stores hashed PINs (PBKDF2 via `hash-pin` edge function)
-- `caregiver_access_log` - HIPAA audit trail of all access
-- `caregiver_sessions` - Active session management with 30-min expiry
-
-**Key Functions:**
-- `create_caregiver_session(...)` - Creates session after PIN verification
-- `validate_caregiver_session(token)` - Validates active session
-- `end_caregiver_session(token)` - Ends session and logs
-- `get_my_access_history(limit)` - Senior views who accessed their data
-- `log_caregiver_page_view(token, page)` - Logs which pages were viewed
-
-**Components:**
-- `CaregiverAccessPage` - Public PIN entry form
-- `SeniorViewPage` - Read-only dashboard (check-ins, mood trends, meds)
-- `SeniorReportsPage` - Printable health reports
-- `CaregiverAccessHistory` - "Who viewed my data" in senior settings
-
-**Security:**
-- Sessions auto-expire after 30 minutes
-- All access logged with caregiver identity (name + phone)
-- PIN hashed with PBKDF2 (100,000 iterations)
-- Senior can change PIN to revoke all access
-- Senior can view complete access history
-
-### Three Registration Flows
-
-**CRITICAL: There are THREE distinct registration flows. Each creates different database records.**
-
-#### Flow 1: Self-Registration (WellFit App)
-**Who:** End users signing up themselves via `/register`
-
-```
-User fills form → SMS verification → auth.users created → profile created
-```
-
-| Aspect | Details |
-|--------|---------|
-| **Files** | `RegisterPage.tsx`, `supabase/functions/register/`, `sms-verify-code/` |
-| **auth.users** | YES - created after SMS verification |
-| **enrollment_type** | `app` |
-| **role_code** | 4 (senior), 5 (volunteer), 6 (caregiver), 11 (contractor), 13 (regular) |
-| **Can Login** | YES |
-| **Phone Verified** | Via SMS code |
-
-#### Flow 2: Admin/Nurse Enrollment (WellFit App)
-**Who:** Staff enrolling community members via `/enroll-senior`
-
-```
-Admin fills form → auth.users created immediately → profile created → temp password given to member
-```
-
-| Aspect | Details |
-|--------|---------|
-| **Files** | `EnrollSeniorPage.tsx`, `supabase/functions/enrollClient/` |
-| **auth.users** | YES - created immediately by admin |
-| **enrollment_type** | `app` |
-| **role_code** | 4 (senior) OR 19 (patient) |
-| **Can Login** | YES - with temp password from admin |
-| **Phone Verified** | Auto-verified (admin-attested) |
-| **Audit** | `admin_enroll_audit` table, `created_by` field |
-
-**Role Distinction:**
-- **role_code 4 (senior)** - Geriatric patients with age-specific needs and UI
-- **role_code 19 (patient)** - Regular (non-geriatric) patients
-
-#### Flow 3: Hospital Registration (Envision Atlus Only)
-**Who:** Hospital staff creating clinical patient records - **NO APP ACCESS**
-
-```
-Hospital staff fills form → profile ONLY created → NO auth.users record
-```
-
-| Aspect | Details |
-|--------|---------|
-| **Files** | `HospitalPatientEnrollment.tsx`, `enroll_hospital_patient()` function |
-| **auth.users** | **NO** - patient cannot login |
-| **enrollment_type** | `hospital` |
-| **role_code** | 1 (patient - clinical context) |
-| **Can Login** | **NO** - backend/clinical record only |
-| **Clinical Fields** | MRN, room_number, bed_number, acuity_level, code_status, admission_date, attending_physician_id |
-| **Purpose** | EHR integration, physician workflows, shift handoffs |
-
-#### Quick Reference Table
-
-| Aspect | Self-Registration | Admin Enrollment | Hospital Registration |
-|--------|-------------------|------------------|----------------------|
-| **Product** | WellFit | WellFit | Envision Atlus |
-| **auth.users Created** | YES | YES | **NO** |
-| **enrollment_type** | `app` | `app` | `hospital` |
-| **Can Login to App** | YES | YES | **NO** |
-| **role_code** | 4,5,6,11,13 | 4 (senior) or 19 (patient) | 1 |
-| **Clinical Fields** | No | No | Yes |
-
-#### Key Schema Fields
-
-```sql
--- Differentiates app users from hospital-only patients
-enrollment_type TEXT DEFAULT 'app' CHECK (enrollment_type IN ('hospital', 'app'))
-
--- Hospital-specific fields (Flow 3 only)
-mrn, hospital_unit, bed_number, acuity_level, code_status,
-admission_date, attending_physician_id, enrolled_by, enrollment_notes
-```
-
-#### Database Views
-
-```sql
--- Filter by enrollment type
-CREATE VIEW hospital_patients AS SELECT ... WHERE enrollment_type = 'hospital';
-CREATE VIEW app_patients AS SELECT ... WHERE enrollment_type = 'app';
-```
 
 ## Critical Development Principles
 
@@ -236,18 +38,16 @@ CREATE VIEW app_patients AS SELECT ... WHERE enrollment_type = 'app';
 
 **"Always be a pace car, never a race car."**
 
-These principles guide all development on this codebase:
+These principles guide all development:
 - Take the time to understand the problem fully before writing code
 - Research the existing architecture and patterns before making changes
 - Implement solutions thoroughly the first time rather than rushing
-- Slow, deliberate progress prevents costly rework and technical debt
 - When in doubt, pause and investigate rather than forge ahead
 
 ### Zero Technical Debt
 - Do NOT introduce technical debt with quick fixes or workarounds
 - Always implement proper, maintainable solutions
 - Refactor when necessary to maintain code quality
-- Document any temporary solutions with clear TODO comments and tracking
 
 ### HIPAA Compliance & PHI Protection
 - **NEVER introduce PHI (Protected Health Information) to the browser**
@@ -258,168 +58,66 @@ These principles guide all development on this codebase:
 
 ### Database Standards
 - This project uses **PostgreSQL 17**
-- Always be proficient with Postgres 17 features and best practices
 - Respect the existing database schema - review before making changes
 - Use proper migrations for any schema changes
-- Leverage Postgres 17 features (JSONB, CTEs, window functions, etc.)
 
 ### Supabase Migration Workflow - CRITICAL
 **ALWAYS run migrations you create. Do NOT leave migrations unexecuted.**
 
-**Login Early - Supabase/Docker takes time:**
 ```bash
-# Do this FIRST thing in your session - it takes 30-60 seconds
+# Login early - takes 30-60 seconds
 npx supabase login
-```
-Supabase and Docker need time to initialize. Log in early so you're not waiting when you need to run migrations.
 
-**Running Migrations:**
-```bash
 # Link to project (if not already linked)
 npx supabase link --project-ref xkybsjnvuohpqpbkikyn
 
 # Push migrations to remote database
 npx supabase db push
-
-# Or run a specific migration directly via psql
-PGPASSWORD="$DATABASE_PASSWORD" psql "postgresql://postgres.xkybsjnvuohpqpbkikyn:$DATABASE_PASSWORD@aws-0-us-east-1.pooler.supabase.com:6543/postgres" -f supabase/migrations/MIGRATION_FILE.sql
 ```
 
 **After creating any migration file, you MUST:**
 1. Run the migration against the database
 2. Verify it succeeded (check for errors)
 3. Test that the new schema works as expected
-4. Only then commit and push
-
-**DO NOT** create migration files and leave them unexecuted - this causes schema drift between code and database.
 
 ### Database Cleanup Policy - CRITICAL
 **DO NOT aggressively delete database tables, functions, or data.**
 
-When asked to "clean up" or reduce "tech debt":
-1. **Tables that exist are FEATURES** - Even if not currently referenced in code, they represent planned functionality
-2. **Only delete obvious debug/backup tables** - Tables starting with `_` prefix (e.g., `_policy_backup`, `_trigger_log`)
-3. **NEVER delete without explicit confirmation** - List candidates and get approval before dropping anything
-4. **Seniors vs Patients are DIFFERENT** - Geriatric care (role_code 4) requires separate tracking tables (senior_demographics, senior_health, senior_sdoh) from regular patients
-5. **When in doubt, DON'T delete** - It's easier to clean up later than to restore lost schema/data
-
-**Feature modules to PRESERVE (even if not yet wired up in UI):**
-- Mobile app support (mobile_*)
-- Hospital/shift handoff (hospital_*, handoff_*, shift_handoff_*) - ShiftHandoffDashboard exists
-- Billing/claims (claim_*, clearinghouse_*, remittances) - BillingDashboard exists
-- Medical codes reference (code_cpt, code_icd10, code_hcpcs, code_modifiers)
-
-**Feature modules NOW WIRED UP (as of 2025-12-02):**
-- Referral system - `/referrals` route, `ReferralsDashboard` component
-- Physical therapy - `/physical-therapy` route, `PhysicalTherapyDashboard` component
-- Mental health - `/mental-health` route, `MentalHealthDashboard` component
-- Questionnaires - `/questionnaire-analytics` route, `QuestionnaireAnalyticsDashboard` component
-- Care coordination - `/care-coordination` route, `CareCoordinationDashboard` component
-- **Parkinson's tracking** - `/neuro-suite` route (Parkinson's tab), integrated into `NeuroSuiteDashboard`
-- **NeuroSuite** - `/neuro-suite` route, `NeuroSuiteDashboard` (Stroke, Dementia, Parkinson's, Alerts, Wearables)
+When asked to "clean up":
+1. **Tables that exist are FEATURES** - Even if not currently referenced in code
+2. **Only delete obvious debug/backup tables** - Tables starting with `_` prefix
+3. **NEVER delete without explicit confirmation**
+4. **When in doubt, DON'T delete**
 
 ### Code Quality Standards
 - **Be a surgeon, never a butcher** - make precise, targeted changes
 - Respect the existing codebase architecture and patterns
-- Do not refactor unrelated code when making targeted fixes
 - Only modify what is necessary to complete the task
 - Preserve existing functionality unless explicitly asked to change it
 
 ### Route Connectivity & Wiring - CRITICAL
 **ALWAYS ensure components are properly connected and routed.**
 
-When creating or referencing components:
-1. **Verify routes exist in `src/App.tsx`** - Every page/dashboard needs a `<Route path="..." />` entry
-2. **Check lazy imports** - Components must be imported with `React.lazy()` at the top of App.tsx
-3. **Validate route references** - If a component links to `/some-route`, that route MUST exist
-4. **Test navigation paths** - Demo pages, menus, and links must point to actual routes
-
-**Before completing any feature work:**
-```bash
-# Verify route exists in App.tsx
-grep -c 'path="/your-route"' src/App.tsx  # Should return 1+
-
-# Verify component is imported
-grep -c 'YourComponent' src/App.tsx  # Should return 2+ (import + usage)
-```
-
-**Common routing issues to avoid:**
-- Creating a component but forgetting to add its route
-- Referencing routes in UI that don't exist (e.g., Demo Page linking to missing routes)
-- Mismatched route names (e.g., `/memory-lane` vs `/memory-lane-trivia`)
-- Missing `RequireAuth` or `RequireAdminAuth` wrappers on protected routes
-
-**Demo Page routes must be verified** - The Demo Page (`/demo`) is used for client presentations. ALL routes referenced in `src/pages/DemoPage.tsx` MUST exist in App.tsx.
+1. **Verify routes exist in `src/App.tsx`**
+2. **Check lazy imports** - Components must be imported with `React.lazy()`
+3. **Validate route references** - Links must point to actual routes
 
 ### Component Testing Requirements - MANDATORY
 **When creating a new React component, you MUST create a corresponding test file.**
 
-**Test File Location:**
-- For component at `src/components/admin/MyComponent.tsx`
-- Create test at `src/components/admin/__tests__/MyComponent.test.tsx`
-
-**Minimum Test Coverage Required:**
-1. **Rendering tests** - Component renders without crashing
-2. **Loading state tests** - Loading skeleton/spinner displays correctly
-3. **Data display tests** - Data from API renders in UI
-4. **Error handling tests** - Errors are caught and displayed gracefully
-5. **User interaction tests** - Buttons, forms, filters work correctly
-
-**Test File Template:**
-```typescript
-import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { MyComponent } from '../MyComponent';
-
-// Mock the AuthContext
-const mockSupabaseClient = {
-  from: jest.fn(),
-  rpc: jest.fn(),
-};
-
-jest.mock('../../../contexts/AuthContext', () => ({
-  useSupabaseClient: () => mockSupabaseClient,
-}));
-
-describe('MyComponent', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it('should render without crashing', () => {
-    render(<MyComponent />);
-    expect(screen.getByText(/expected text/i)).toBeInTheDocument();
-  });
-
-  // Add more tests...
-});
-```
-
-**DO NOT skip tests when:**
-- Creating any component in `src/components/`
-- Creating any page in `src/pages/`
-- Adding significant new functionality
-
-**Exceptions (tests optional):**
-- Pure utility functions without React (still encouraged)
-- Simple wrapper components with no logic
-- Temporary/debug components
+- Location: `src/components/admin/__tests__/MyComponent.test.tsx`
+- Minimum: Rendering tests, loading states, data display, error handling
 
 ### UI/UX Requirements
 - **Always ensure UI/UX remains in working order** after any changes
-- Test visual components after modifications
 - Maintain responsive design principles
 - Preserve accessibility features
-- Do not break existing user workflows
 
 ### Context & Code Review Protocol
-Before starting ANY work, ALWAYS:
-1. Review the last 3 commits using `git log --oneline -3` and `git show` for context
+Before starting ANY work:
+1. Review the last 3 commits using `git log --oneline -3`
 2. Understand recent changes and their purpose
-3. Check for related branches that might provide context
-4. Review the affected schema/database tables
-5. Understand the full scope of the change before implementing
+3. Review the affected schema/database tables
 
 ## Build System
 
@@ -431,20 +129,14 @@ Before starting ANY work, ALWAYS:
 
 ## Environment Variables
 
-**Frontend (CRA):**
 | Variable | Purpose |
 |----------|---------|
 | `REACT_APP_SUPABASE_URL` | Supabase project URL |
 | `REACT_APP_SUPABASE_ANON_KEY` | Supabase publishable/anon key |
 
-**Supabase Key Naming Migration:**
-Supabase has migrated to new naming conventions:
-| Old Name | New Name | Usage |
-|----------|----------|-------|
-| `anon` key | `SB_PUBLISHABLE_KEY` | Client-side, safe to expose |
-| `service_role` key | `SB_SECRET_KEY` | Server-side only, NEVER expose |
-
-For edge functions, use the Deno.env.get() pattern with the new names when available.
+**Supabase Key Naming:**
+- `SB_PUBLISHABLE_KEY` (anon) - Client-side, safe to expose
+- `SB_SECRET_KEY` (service_role) - Server-side only, NEVER expose
 
 ## Development Commands
 - `npm run dev` - Start development server
@@ -453,35 +145,22 @@ For edge functions, use the Deno.env.get() pattern with the new names when avail
 - `npm run typecheck` - Run TypeScript type checking
 - `npm test` - Run tests
 
-## Key Files and Directories
-- `src/components/` - React components
-- `src/services/` - Service layer for API calls and business logic
-- `supabase/` - Database schema, migrations, and functions
-- Registration flow includes hCaptcha widget integration
-
 ## Testing and Quality Assurance
-Always run the following before considering work complete:
-1. `npm run lint` - Ensure code style compliance (must pass with 0 errors)
+Always run before considering work complete:
+1. `npm run lint` - Must pass with 0 errors
 2. `npm run typecheck` - Verify TypeScript types
-3. `npm test` - Run test suite if available
+3. `npm test` - Run test suite
 4. Visual inspection - Ensure UI/UX functions correctly
-5. Schema review - Verify no unintended database changes
 
 ## Git Workflow
 - Main branch: `main`
-- Only commit when explicitly requested by the user
-- Follow existing commit message patterns from git log
+- Only commit when explicitly requested
+- Follow existing commit message patterns
 - Always review last 3 commits before starting work
 
 ## Audit Logging Requirements
 - Use the audit logger service for all application logging
 - Never use `console.log`, `console.error`, etc. in production code
-- Audit logs must include:
-  - User ID (when applicable)
-  - Action taken
-  - Timestamp
-  - Relevant context (without PHI)
-  - Security-sensitive operations
 
 ## Security Reminders
 - All authentication must use secure tokens
@@ -489,23 +168,18 @@ Always run the following before considering work complete:
 - Input validation on all user inputs
 - SQL injection prevention via parameterized queries
 - XSS prevention via proper output encoding
-- CSRF protection on state-changing operations
 
 ## Architecture Patterns
 
 ### Module Access (Feature Flags)
 - Use `useModuleAccess(moduleName)` hook - the ONE way to check module access
 - Two-tier system: entitlements (paid for) + enabled (turned on)
-- See `src/hooks/useModuleAccess.ts` for implementation
-- See `src/types/tenantModules.ts` for module definitions
 
 ### Service Layer Standards
 - All services should use `ServiceResult<T>` return type from `src/services/_base/`
 - Never throw exceptions - return errors in the result
-- Always log errors via `auditLogger`
-- Use `success()` and `failure()` helpers for consistent responses
+- Use `success()` and `failure()` helpers
 
-Example:
 ```typescript
 import { ServiceResult, success, failure } from './_base';
 
@@ -525,118 +199,37 @@ async function getData(id: string): Promise<ServiceResult<Data>> {
 - **CORS**: Fully white-label ready (any HTTPS origin allowed)
 - **Database**: PostgreSQL 17 via Supabase with RLS
 - **UI**: Envision Atlus design system migration in progress
-- **Edge Functions**: All using shared `_shared/cors.ts` module
-
-## Envision Atlus Design System
-
-The codebase is being migrated to the **Envision Atlus** design system - a clinical-grade UI component library.
-
-### Component Location
-- `src/components/envision-atlus/` - All EA components
-- `src/styles/envision-atlus-theme.ts` - Theme utilities and color palette
-
-### Available Components
-| Component | Purpose |
-|-----------|---------|
-| `EACard` | Card containers with header/content/footer |
-| `EAButton` | Clinical-grade buttons |
-| `EABadge` | Status badges |
-| `EAMetricCard` | Dashboard metric displays |
-| `EAAlert` | Alert/notification displays |
-| `EASlider` | Input sliders |
-| `EASelect` | Dropdown selections |
-| `EAPageLayout` | Page layout wrapper |
-| `EARiskIndicator` | Risk level indicators |
-| `EASwitch` | Toggle switches for settings |
-| `EATabs` | Tab navigation with accessibility |
-
-### Theme Colors
-- **Primary (Teal)**: `#00857a` (main), `#33bfb7` (light)
-- **Background**: Slate-based dark theme (`slate-900`, `slate-800`)
-- **Text**: High contrast for accessibility
-
-### Usage Pattern
-```typescript
-import { EACard, EAButton, EASwitch } from '../envision-atlus';
-
-// Use components with consistent styling
-<EACard>
-  <EACardHeader>Title</EACardHeader>
-  <EACardContent>...</EACardContent>
-</EACard>
-```
 
 ## Common Issues & Solutions
 
-### Supabase Timing - Wait for Changes to Propagate
-**IMPORTANT:** After deploying edge functions, running migrations, or making database changes via Supabase:
-- **Wait at least 60 seconds** before testing changes
-- Supabase needs time to propagate changes across their infrastructure
-- Edge function deployments may take 30-90 seconds to become active
-- RLS policy changes may take a moment to take effect
-- If something isn't working immediately after a change, wait and retry before debugging
+### Supabase Timing
+**Wait at least 60 seconds** after deploying edge functions or running migrations before testing.
 
 ### Null-Safe Number Formatting
-When displaying database values with `.toFixed()`, always use null coalescing:
 ```typescript
-// ❌ Unsafe - will throw if value is null
-{metrics.total_saved.toFixed(2)}
-
-// ✅ Safe - handles null values
+// Safe - handles null values
 {(metrics.total_saved ?? 0).toFixed(2)}
 
-// ✅ Safe division - prevents divide by zero
+// Safe division - prevents divide by zero
 {(((numerator ?? 0) / (denominator || 1)) * 100).toFixed(0)}%
 ```
 
-### CORS for Edge Functions (White-Label Ready)
+### CORS for Edge Functions
 
-**CRITICAL: This is a white-label multi-tenant SaaS. CORS must work for ANY tenant domain.**
-
-All edge functions MUST use the shared CORS module - NEVER create local CORS implementations:
+All edge functions MUST use the shared CORS module:
 
 ```typescript
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
 
 serve(async (req) => {
-  // Handle preflight
   if (req.method === 'OPTIONS') {
     return handleOptions(req);
   }
-
-  // Get dynamic CORS headers for this request's origin
   const { headers: corsHeaders } = corsFromRequest(req);
-
-  // Use corsHeaders in all responses
   return new Response(JSON.stringify(data), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' }
   });
 });
-```
-
-**How it works:**
-- `WHITE_LABEL_MODE=true` (default) - allows any HTTPS origin
-- Each request's origin is echoed back (NOT wildcard `*`)
-- Credentials supported (`Access-Control-Allow-Credentials: true`)
-- NEVER use hardcoded origin allowlists in individual functions
-
-**Available exports from `_shared/cors.ts`:**
-| Export | Usage |
-|--------|-------|
-| `corsFromRequest(req)` | Returns `{ headers, allowed }` for the request's origin |
-| `handleOptions(req)` | Returns preflight response (use for OPTIONS) |
-| `cors(origin, options)` | Generate headers for specific origin string |
-| `withCors(req, response)` | Merge CORS headers into existing response |
-| `corsHeaders` | Legacy static export (avoid - use `corsFromRequest`) |
-
-**Auth helper with CORS:**
-```typescript
-import { withCORS } from '../_shared/auth.ts';
-
-serve(withCORS(async (req) => {
-  // Your handler - CORS is handled automatically
-  return new Response(JSON.stringify({ ok: true }));
-}));
 ```
 
 ## Important Directories
@@ -644,92 +237,46 @@ serve(withCORS(async (req) => {
 | Directory | Purpose |
 |-----------|---------|
 | `src/components/admin/` | Admin dashboards and management panels |
-| `src/components/superAdmin/` | Super admin features (tenant management) |
 | `src/components/envision-atlus/` | Shared UI component library (EA design system) |
-| `src/components/neuro/` | NeuroSuite: Stroke, Dementia, Parkinson's tracking |
-| `src/components/physicalTherapy/` | PT workflow dashboard (ICF-based) |
-| `src/components/careCoordination/` | Interdisciplinary care team management |
-| `src/components/referrals/` | External referral management (hospital partnerships) |
-| `src/components/questionnaires/` | SMART questionnaire deployment & analytics |
-| `src/components/patient-avatar/` | Patient Avatar Visualization System (body diagrams, markers) |
+| `src/components/patient-avatar/` | Patient Avatar Visualization System |
 | `src/services/_base/` | ServiceResult pattern utilities |
-| `src/services/patientAvatarService.ts` | Patient avatar and marker CRUD operations |
-| `src/services/smartscribe-avatar-integration.ts` | SmartScribe integration for auto-marker detection |
-| `src/services/parkinsonsService.ts` | Parkinson's disease management service |
-| `src/types/parkinsons.ts` | Parkinson's TypeScript types (UPDRS, ROBERT/FORBES) |
-| `src/hooks/` | Custom React hooks (useModuleAccess, etc.) |
+| `src/hooks/` | Custom React hooks |
 | `supabase/functions/` | Edge functions (Deno runtime) |
 | `supabase/functions/_shared/` | Shared utilities for edge functions |
 
 ## Branch Naming Convention
-Claude Code branches follow this pattern:
 ```
 claude/{feature-description}-{unique-id}
 ```
-Example: `claude/fix-service-worker-api-01SydJ7ZTrj4W9T3DDpW3sUJ`
 
 ---
 
-## Newly Wired Feature Dashboards (2025-12-02)
+## Feature Documentation (Separate Files)
 
-The following dashboards were wired up to connect existing backend infrastructure to the UI:
+Detailed documentation for specific features has been moved to the `docs/` folder:
 
-### Physical Therapy Dashboard
-| Aspect | Details |
-|--------|---------|
-| **Route** | `/physical-therapy` |
-| **Component** | `src/components/physicalTherapy/PhysicalTherapyDashboard.tsx` |
-| **Service** | `src/services/physicalTherapyService.ts` |
-| **Types** | `src/types/physicalTherapy.ts` (1,023 lines - comprehensive) |
-| **Feature Flag** | `REACT_APP_FEATURE_PHYSICAL_THERAPY=true` |
-| **Allowed Roles** | admin, super_admin, physical_therapist, pt, physician, nurse |
-| **Features** | ICF-based assessments, treatment plans, SMART goals, HEP management, outcome measures (LEFS, ODI, etc.) |
+| Document | Description |
+|----------|-------------|
+| [docs/REFERRAL_SYSTEM.md](docs/REFERRAL_SYSTEM.md) | External referral & reporting system |
+| [docs/CAREGIVER_SUITE.md](docs/CAREGIVER_SUITE.md) | Family caregiver PIN-based access |
+| [docs/REGISTRATION_FLOWS.md](docs/REGISTRATION_FLOWS.md) | Three registration flows (self, admin, hospital) |
+| [docs/ENVISION_ATLUS_DESIGN.md](docs/ENVISION_ATLUS_DESIGN.md) | EA design system components |
+| [docs/FEATURE_DASHBOARDS.md](docs/FEATURE_DASHBOARDS.md) | Feature dashboard routes & config |
+| [docs/VOICE_COMMANDS.md](docs/VOICE_COMMANDS.md) | Voice command infrastructure |
+| [docs/PATIENT_AVATAR.md](docs/PATIENT_AVATAR.md) | Patient avatar visualization system |
+| [DEVELOPMENT_STATUS.md](DEVELOPMENT_STATUS.md) | Current dev status & ATLUS alignment |
 
-### Care Coordination Dashboard
-| Aspect | Details |
-|--------|---------|
-| **Route** | `/care-coordination` |
-| **Component** | `src/components/careCoordination/CareCoordinationDashboard.tsx` |
-| **Service** | `src/services/careCoordinationService.ts` |
-| **Feature Flag** | `REACT_APP_FEATURE_CARE_COORDINATION=true` |
-| **Allowed Roles** | admin, super_admin, case_manager, social_worker, nurse, physician |
-| **Features** | Care plan management, team alerts, interdisciplinary coordination, AI recommendations |
+---
 
-### Referrals Dashboard
-| Aspect | Details |
-|--------|---------|
-| **Route** | `/referrals` |
-| **Component** | `src/components/referrals/ReferralsDashboard.tsx` |
-| **Database Tables** | `external_referral_sources`, `patient_referrals`, `referral_alerts`, `referral_reports` |
-| **Feature Flag** | `REACT_APP_FEATURE_REFERRAL_MANAGEMENT=true` |
-| **Allowed Roles** | admin, super_admin, case_manager, nurse |
-| **Features** | Hospital referral tracking, patient linking, engagement reports, subscription tiers |
+## Quick Reference
 
-### Questionnaire Analytics Dashboard
-| Aspect | Details |
-|--------|---------|
-| **Route** | `/questionnaire-analytics` |
-| **Component** | `src/components/questionnaires/QuestionnaireAnalyticsDashboard.tsx` |
-| **Database Tables** | `questionnaire_deployments`, `questionnaire_responses`, `question_templates` |
-| **Feature Flag** | `REACT_APP_FEATURE_QUESTIONNAIRE_ANALYTICS=true` |
-| **Allowed Roles** | admin, super_admin, nurse, case_manager, quality_manager |
-| **Features** | SMART questionnaire deployment, response tracking, completion analytics, risk flag detection |
+### Super Admin Credentials
+| User | Email | UUID |
+|------|-------|------|
+| Maria | maria@wellfitcommunity.com | `ba4f20ad-2707-467b-a87f-d46fe9255d2f` |
+| Akima | akima@wellfitcommunity.com | `06ce7189-1da3-4e22-a6b2-ede88aa1445a` |
 
-### NeuroSuite Dashboard (with Parkinson's Tab)
-| Aspect | Details |
-|--------|---------|
-| **Route** | `/neuro-suite` |
-| **Component** | `src/components/neuro/NeuroSuiteDashboard.tsx` |
-| **Service** | `src/services/neuroSuiteService.ts`, `src/services/parkinsonsService.ts` |
-| **Types** | `src/types/neuroSuite.ts`, `src/types/parkinsons.ts` |
-| **Database Tables** | `parkinsons_patient_registry`, `parkinsons_medications`, `parkinsons_medication_log`, `parkinsons_symptom_diary`, `parkinsons_updrs`, `parkinsons_dbs_sessions`, `parkinsons_robert_tracking`, `parkinsons_forbes_tracking` |
-| **Feature Flag** | `REACT_APP_FEATURE_NEURO_SUITE=true` |
-| **Allowed Roles** | admin, super_admin, physician, doctor, nurse |
-| **Tabs** | Stroke, Dementia, **Parkinson's**, Alerts, Wearables |
-| **Parkinson's Features** | Patient registry, medication tracking, UPDRS assessments, DBS session logging, symptom diary, ROBERT & FORBES framework guides, risk stratification |
-
-### Enabling These Dashboards
-Add the following to your `.env` file to enable these dashboards:
+### Feature Flags
 ```env
 REACT_APP_FEATURE_PHYSICAL_THERAPY=true
 REACT_APP_FEATURE_CARE_COORDINATION=true
@@ -737,312 +284,3 @@ REACT_APP_FEATURE_REFERRAL_MANAGEMENT=true
 REACT_APP_FEATURE_QUESTIONNAIRE_ANALYTICS=true
 REACT_APP_FEATURE_NEURO_SUITE=true
 ```
-
----
-
-## Voice Command Infrastructure (ATLUS: Intuitive Technology)
-
-The application includes **continuous global voice recognition** for healthcare workers, enabling hands-free navigation and actions throughout the platform.
-
-### Voice Components
-
-| Component | Location | Purpose |
-|-----------|----------|---------|
-| `VoiceCommandBar` | `src/components/admin/VoiceCommandBar.tsx` | Global floating voice UI (rendered in App.tsx) |
-| `VoiceCommandButton` | `src/components/voice/VoiceCommandButton.tsx` | Standalone floating "Hey Riley" button |
-| `useVoiceCommand` | `src/hooks/useVoiceCommand.ts` | React hook for voice recognition |
-| `voiceCommandService` | `src/services/voiceCommandService.ts` | "Hey Riley" wake word service |
-| `workflowPreferences` | `src/services/workflowPreferences.ts` | Voice command registry (VOICE_COMMANDS array) |
-
-### How Voice Works
-
-1. **Global Availability**: `VoiceCommandBar` is rendered in `App.tsx` - available on ALL pages
-2. **Keyboard Shortcut**: `Ctrl+Shift+V` toggles listening
-3. **Wake Word**: Say "Hey Riley" to activate the VoiceCommandButton
-4. **Command Matching**: Spoken phrases matched against `VOICE_COMMANDS` in `workflowPreferences.ts`
-
-### Adding New Voice Commands
-
-Add commands to `VOICE_COMMANDS` array in `src/services/workflowPreferences.ts`:
-
-```typescript
-{
-  phrases: ['my command', 'alternative phrase'],
-  targetType: 'route' | 'section' | 'category' | 'action',
-  targetId: '/route-path' | 'section-id' | 'action:identifier',
-  displayName: 'Human Readable Name',
-}
-```
-
-**Target Types:**
-- `route` - Navigate to a page (targetId = route path)
-- `section` - Scroll to section in admin panel
-- `category` - Expand/collapse category in admin panel
-- `action` - Custom action (handled by component)
-
-### Healthcare Voice Commands (Current)
-
-| Command | Action |
-|---------|--------|
-| "Shift handoff" | Navigate to `/shift-handoff` |
-| "Available beds" | Filter bed board to available |
-| "High risk patients" | Filter to critical patients |
-| "NeuroSuite" | Navigate to `/neuro-suite` |
-| "Care coordination" | Navigate to `/care-coordination` |
-| "Refresh beds" | Reload bed board data |
-
-### Voice in Specific Dashboards
-
-Some dashboards have **local voice commands** for context-specific actions:
-
-- **BedManagementPanel**: "Mark bed 205A ready", "Start cleaning room 302"
-- **ShiftHandoffDashboard**: "Accept all handoffs", "Escalate patient in room 101"
-
-These are implemented directly in the component and work in addition to global commands.
-
-### SmartScribe (Medical Transcription)
-
-For real-time medical documentation, use **SmartScribe**:
-- Location: `src/components/smart/RealTimeSmartScribe.tsx`
-- Route: `/smart-scribe`
-- Features: Real-time transcription, SOAP notes, CPT/ICD-10 suggestions
-- Voice: "Start scribe", "Stop recording"
-
----
-
-## Patient Avatar Visualization System (2025-12-14)
-
-Interactive SVG-based human body diagram for visualizing patient medical devices, conditions, and markers.
-
-### Architecture
-
-| Component | Location | Purpose |
-|-----------|----------|---------|
-| `PatientAvatar` | `src/components/patient-avatar/PatientAvatar.tsx` | Main container (compact/expanded modes) |
-| `AvatarBody` | `src/components/patient-avatar/AvatarBody.tsx` | SVG body with skin tones & gender |
-| `AvatarThumbnail` | `src/components/patient-avatar/AvatarThumbnail.tsx` | Compact view for patient lists |
-| `AvatarFullBody` | `src/components/patient-avatar/AvatarFullBody.tsx` | Expanded modal with marker sidebar |
-| `AvatarMarker` | `src/components/patient-avatar/AvatarMarker.tsx` | Individual marker component |
-| `MarkerForm` | `src/components/patient-avatar/MarkerForm.tsx` | Add/edit marker form |
-| `MarkerDetailPopover` | `src/components/patient-avatar/MarkerDetailPopover.tsx` | Marker details popup |
-
-### Database Tables
-
-| Table | Purpose |
-|-------|---------|
-| `patient_avatars` | Skin tone & gender preferences per patient |
-| `patient_markers` | Active markers (devices, conditions, wounds) |
-| `patient_marker_history` | Audit trail of marker changes |
-
-### Marker Categories (Color-Coded)
-
-| Category | Color | Examples |
-|----------|-------|----------|
-| **Critical** | Red | Central lines, chest tubes, tracheostomy |
-| **Moderate** | Yellow | PICC lines, foleys, G-tubes, drains |
-| **Informational** | Blue | Surgical incisions, implants, joint replacements |
-| **Monitoring** | Purple | CGM, cardiac monitor, insulin pump |
-| **Chronic** | Green | CHF, COPD, diabetes, CKD |
-| **Neurological** | Orange | Stroke, Parkinson's, Alzheimer's, MS |
-
-### Status Badges (Displayed Around Avatar)
-
-Status badges are displayed around the avatar perimeter (not on the body):
-
-| Position | Badge Types |
-|----------|-------------|
-| **Top** | Code Status (Full Code, DNR, DNI, Comfort Care) |
-| **Left** | Precautions (Fall Risk, Aspiration, NPO, Seizure, Bleeding, Elopement) |
-| **Right** | Isolation (Contact, Droplet, Airborne, Protective) + Alerts (Allergies, Latex, Difficult Airway) |
-
-**Isolation Color Codes:**
-- Yellow = Contact (MRSA, VRE, C.diff)
-- Green = Droplet (Flu, RSV)
-- Blue = Airborne (TB, Measles, COVID)
-- Purple = Protective (Neutropenic)
-
-### Priority Scoring (AI-Ranked)
-
-Use `getTopPriorityMarkers()` to get the top N conditions for thumbnail display:
-
-```typescript
-import { getTopPriorityMarkers } from './components/patient-avatar';
-
-// Get top 6 conditions for thumbnail (excludes status badges)
-const topMarkers = getTopPriorityMarkers(markers, 6);
-```
-
-Priority weights:
-- DNR/DNI/Comfort Care: 140-150
-- Isolation (Airborne): 125-130
-- Fall Risk/Allergies: 115-125
-- Critical devices (Trach, Central Lines): 105-110
-- Neurological (Stroke, TBI): 95-105
-- Chronic conditions: 50-80
-
-### Auto-Population from Diagnoses
-
-Database triggers auto-create markers when conditions are added to `fhir_conditions` or `encounter_diagnoses` tables:
-
-```sql
--- Bulk sync markers for a patient from their conditions
-SELECT * FROM sync_patient_markers_from_conditions('patient-uuid');
--- Returns: { created_count, skipped_count, conditions_processed }
-```
-
-ICD-10 code patterns are mapped in `condition_marker_mappings` table.
-
-### SmartScribe Integration
-
-When SmartScribe transcription completes, call `onSmartScribeComplete()` to auto-detect markers:
-
-```typescript
-import { onSmartScribeComplete } from '../services/smartscribe-avatar-integration';
-
-const result = await onSmartScribeComplete(
-  transcriptionId,
-  patientId,
-  providerId,
-  transcriptText
-);
-// result: { created: 2, removed: 0, errors: [] }
-```
-
-**Detection patterns:**
-- Device insertions: "placed central line", "inserted PICC", "started IV access"
-- Device removals: "removed foley", "discontinued central line"
-- Conditions: "patient has COPD", "diagnosed with CHF"
-
-### Usage
-
-```tsx
-import { PatientAvatar, AvatarThumbnail, StatusBadgeRing } from './components/patient-avatar';
-
-// Compact thumbnail in patient list
-<AvatarThumbnail
-  patientId={patient.id}
-  patientName="John Doe"
-  skinTone="medium"
-  genderPresentation="neutral"
-  markers={patientMarkers}
-  allergyCount={3}  // Shows count on allergy badge
-  showChangesSince={new Date(Date.now() - 12 * 60 * 60 * 1000)}  // Highlight changes since 12h ago
-  onBadgeClick={(marker) => console.log('Badge clicked', marker)}
-/>
-
-// Full avatar (starts compact, expands on click)
-<PatientAvatar
-  patientId={patient.id}
-  patientName="John Doe"
-  initialMode="compact"  // or "expanded"
-  editable={true}
-/>
-
-// Standalone status badge ring (if needed separately)
-<StatusBadgeRing
-  markers={patientMarkers}
-  size="sm"  // sm, md, lg
-  allergyCount={3}
-  onBadgeClick={(marker) => handleBadgeClick(marker)}
-/>
-```
-
-### Time-Based Change Detection ("What's New")
-
-For shift handoff workflows, use `showChangesSince` to highlight recent changes:
-
-```tsx
-// Highlight markers created/updated in the last 12 hours
-const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
-
-<AvatarThumbnail
-  patientId={patient.id}
-  markers={markers}
-  showChangesSince={twelveHoursAgo}
-/>
-// Shows cyan "What's New" badge if any markers changed since that time
-// Markers are highlighted with glow effect
-```
-
-### Current Integrations
-
-- **ShiftHandoffDashboard** - Avatar thumbnails in patient cards (high acuity + standard sections)
-
-### Progress
-
-See `PATIENT_AVATAR_PROGRESS.md` for detailed status. Phase 1-3 complete (17/23 tasks, 74%).
-
----
-
-## Current Development Status (2025-12-14)
-
-**Full optimization tracking:** See `OPTIMIZATION_TRACKER.md` in project root.
-
-### AI/ML Optimization Progress
-| Priority | Status | Description |
-|----------|--------|-------------|
-| **P0** | ✅ COMPLETE | PatientRiskStrip, AIFeedbackButton, demographic tracking |
-| **P1** | ✅ COMPLETE | GuardianFlowEngine, Patient-Friendly AVS, Plain-Language AI, Rural Weights |
-| **P2** | 🔜 NEXT | Batch inference, prediction caching, model selection, AI cost dashboard |
-
-### ATLUS Alignment Score: 8.6/10 (Verified 2025-12-12)
-
-| Principle | Score | Status | Verified Integration |
-|-----------|-------|--------|----------------------|
-| **A - Accountability** | 9/10 | ✅ | Plain-language AI in PatientRiskStrip |
-| **T - Technology** | 8.5/10 | ✅ | Keyboard shortcuts (Ctrl+1-9 navigation works) |
-| **L - Leading** | 8/10 | ✅ | Session resume, NavigationHistory persists |
-| **U - Unity** | 8.5/10 | ✅ | PatientContext wired to NeuroSuite, CareCoordination |
-| **S - Service** | 8.5/10 | ✅ | Affirmations wired to ShiftHandoff, BedManagement |
-
-**Dashboard Integrations (2025-12-14):**
-- `NeuroSuiteDashboard` - PatientContext wired (patient names/View buttons)
-- `CareCoordinationDashboard` - PatientContext wired (care plan selection)
-- `ShiftHandoffDashboard` - providerAffirmations wired + **PatientAvatar thumbnails** in patient cards
-- `BedManagementPanel` - Refactored to use shared affirmation service
-
-**Key ATLUS Components:**
-- `PatientContext.tsx` - Patient selection persists to localStorage
-- `EAPatientBanner.tsx` - Displays selected patient globally
-- `EAKeyboardShortcutsProvider.tsx` - Global shortcuts provider
-- `providerAffirmations.ts` - 80 messages, 16 categories (shared service)
-- `EAAffirmationToast.tsx` - Reusable toast component
-
-### Next Agent Todo: ATLUS Unity + P2 Implementation
-
-**Priority 1: Wire PatientContext to More Dashboards (ATLUS: Unity)**
-
-Currently wired: `NeuroSuiteDashboard`, `CareCoordinationDashboard`
-
-Wire PatientContext to these dashboards next:
-1. `src/components/nurse/ShiftHandoffDashboard.tsx` - When viewing patient details
-2. `src/components/physicalTherapy/PhysicalTherapyDashboard.tsx` - When selecting PT patient
-3. `src/components/referrals/ReferralsDashboard.tsx` - When viewing referred patient
-4. `src/components/admin/NurseDashboard.tsx` - When selecting patient from list
-5. `src/components/physician/PhysicianDashboard.tsx` - When selecting patient
-
-Pattern to follow (see `NeuroSuiteDashboard.tsx` for reference):
-```typescript
-import { usePatientContext, SelectedPatient } from '../../contexts/PatientContext';
-const { selectPatient } = usePatientContext();
-// On patient click/view:
-selectPatient({ id, firstName, lastName, mrn, roomNumber, riskLevel, snapshot: { unit } });
-```
-
-**Priority 2: P2 AI Scale Optimization**
-
-Create these files in order:
-1. `src/services/ai/batchInference.ts` - Batch prediction queue
-2. `src/services/ai/predictionCache.ts` - TTL-based caching
-3. `src/services/ai/modelSelector.ts` - Haiku/Sonnet/Opus routing
-4. `src/components/admin/AICostDashboard.tsx` - Cost visibility
-
-**Reference:** `docs/AI_ML_SCALE_OPTIMIZATION_AUDIT.md`, `ATLUS_ALIGNMENT_AUDIT.md`
-
-### Super Admin Credentials Reference
-| User | Email | UUID | Role |
-|------|-------|------|------|
-| Maria | maria@wellfitcommunity.com | `ba4f20ad-2707-467b-a87f-d46fe9255d2f` | super_admin |
-| Akima | akima@wellfitcommunity.com | `06ce7189-1da3-4e22-a6b2-ede88aa1445a` | super_admin |
-
----
