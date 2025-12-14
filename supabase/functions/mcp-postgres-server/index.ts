@@ -7,6 +7,7 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkMCPRateLimit, getRequestIdentifier, createRateLimitResponse, createRateLimitHeaders, MCP_RATE_LIMITS } from "../_shared/mcpRateLimiter.ts";
 
 // Environment
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
@@ -389,6 +390,13 @@ serve(async (req: Request) => {
 
   const { headers: corsHeaders } = corsFromRequest(req);
 
+  // Rate limiting
+  const identifier = getRequestIdentifier(req);
+  const rateLimitResult = checkMCPRateLimit(identifier, MCP_RATE_LIMITS.postgres);
+  if (!rateLimitResult.allowed) {
+    return createRateLimitResponse(rateLimitResult, MCP_RATE_LIMITS.postgres, corsHeaders);
+  }
+
   try {
     const { method, params } = await req.json();
 
@@ -422,30 +430,19 @@ serve(async (req: Request) => {
             throw new Error(`Query '${query_name}' is not whitelisted`);
           }
 
-          // Execute the query with tenant_id parameter
+          // Execute the query with tenant_id parameter via RPC
           const { data, error } = await sb.rpc('execute_safe_query', {
             query_text: queryDef.query,
-            params: [tenant_id, ...(extraParams ? Object.values(extraParams) : [])]
+            params: JSON.stringify([tenant_id, ...(extraParams ? Object.values(extraParams) : [])])
           });
 
-          // Fallback: direct query if RPC doesn't exist
-          if (error && error.message.includes('function')) {
-            // Use direct query with proper parameter substitution
-            const queryWithParams = queryDef.query.replace(/\$1/g, `'${tenant_id}'`);
-            const { data: directData, error: directError } = await sb.from('_raw_query')
-              .select('*')
-              .limit(queryDef.maxRows || 1000);
-
-            if (directError) {
-              throw new Error(`Query failed: ${directError.message}`);
-            }
-
-            result = directData;
-          } else if (error) {
-            throw new Error(`Query failed: ${error.message}`);
-          } else {
-            result = data;
+          if (error) {
+            // Log detailed error for debugging
+            console.error(`[MCP Postgres] Query '${query_name}' failed:`, error);
+            throw new Error(`Query '${query_name}' failed: ${error.message}`);
           }
+
+          result = data;
 
           // Apply row limit
           if (Array.isArray(result) && queryDef.maxRows) {

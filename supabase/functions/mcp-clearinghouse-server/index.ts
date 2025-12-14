@@ -14,6 +14,7 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
+import { checkMCPRateLimit, getRequestIdentifier, createRateLimitResponse, MCP_RATE_LIMITS } from '../_shared/mcpRateLimiter.ts';
 
 // =====================================================
 // Types
@@ -865,6 +866,13 @@ serve(async (req: Request) => {
   }
 
   const { headers: corsHeaders } = corsFromRequest(req);
+
+  // Rate limiting - strict for expensive clearinghouse calls
+  const identifier = getRequestIdentifier(req);
+  const rateLimitResult = checkMCPRateLimit(identifier, MCP_RATE_LIMITS.clearinghouse);
+  if (!rateLimitResult.allowed) {
+    return createRateLimitResponse(rateLimitResult, MCP_RATE_LIMITS.clearinghouse, corsHeaders);
+  }
 
   try {
     // Verify authentication
