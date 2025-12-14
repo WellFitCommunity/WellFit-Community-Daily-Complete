@@ -13,7 +13,13 @@ export { AvatarBody } from './AvatarBody';
 export { AvatarThumbnail } from './AvatarThumbnail';
 export { AvatarFullBody } from './AvatarFullBody';
 export { AvatarMarker } from './AvatarMarker';
-export { StatusBadgeRing } from './StatusBadgeRing';
+export {
+  StatusBadgeRing,
+  BadgeLegend,
+  BadgeOnboardingTour,
+  useBadgeOnboarding,
+  BADGE_DESCRIPTIONS,
+} from './StatusBadgeRing';
 
 // Form components
 export { MarkerForm } from './MarkerForm';

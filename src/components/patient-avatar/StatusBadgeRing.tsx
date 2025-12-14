@@ -5,9 +5,39 @@
  * - Top: Code Status (DNR, DNI, Full Code, Comfort Care)
  * - Left: Precautions (Fall Risk, Aspiration, NPO, etc.)
  * - Right: Isolation & Alerts (Contact, Droplet, Airborne, Allergies)
+ *
+ * Learning mechanisms:
+ * 1. Hover tooltips - show display name on hover
+ * 2. BadgeLegend component - collapsible legend explaining all badges
+ * 3. First-time tour - localStorage-based onboarding
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import {
+  AlertTriangle,
+  Ban,
+  Zap,
+  Droplets,
+  Footprints,
+  Hand,
+  Wind,
+  Shield,
+  ShieldCheck,
+  Heart,
+  HeartOff,
+  Minus,
+  CircleSlash,
+  Flower2,
+  AlertCircle,
+  Syringe,
+  Stethoscope,
+  Activity,
+  HelpCircle,
+  ChevronDown,
+  ChevronUp,
+  X,
+  type LucideIcon,
+} from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { PatientMarker } from '../../types/patientAvatar';
 import { getMarkerTypeDefinition } from './constants/markerTypeLibrary';
@@ -20,210 +50,223 @@ interface StatusBadgeRingProps {
   allergyCount?: number;
   /** Callback when badge is clicked */
   onBadgeClick?: (marker: PatientMarker) => void;
+  /** Show the legend below the avatar */
+  showLegend?: boolean;
+  /** Show first-time onboarding tour */
+  showOnboarding?: boolean;
   className?: string;
 }
 
 /**
- * Badge icon components
+ * Badge icon mapping using Lucide icons
  */
-const BadgeIcons: Record<string, React.FC<{ className?: string }>> = {
+const BadgeIconMap: Record<string, LucideIcon> = {
   // Precautions
-  fall: ({ className }) => (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-    </svg>
-  ),
-  aspiration: ({ className }) => (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M8.1 13.34l2.83-2.83L3.91 3.5c-1.56 1.56-1.56 4.09 0 5.66l4.19 4.18zm6.78-1.81c1.53.71 3.68.21 5.27-1.38 1.91-1.91 2.28-4.65.81-6.12-1.46-1.46-4.20-1.10-6.12.81-1.59 1.59-2.09 3.74-1.38 5.27L3.7 19.87l1.41 1.41L12 14.41l6.88 6.88 1.41-1.41L13.41 13l1.47-1.47z"/>
-    </svg>
-  ),
-  npo: ({ className }) => (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M21 5H3v14h18V5zm-2 12H5V7h14v10zm-3-7H8v2h8v-2z"/>
-      <path d="M3 3L1 5l2 2v12h12l6 6 1.41-1.41L3 3z"/>
-    </svg>
-  ),
-  seizure: ({ className }) => (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M7 2v11h3v9l7-12h-4l4-8H7z"/>
-    </svg>
-  ),
-  bleeding: ({ className }) => (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 2c-4 4-8 7.46-8 12 0 4.42 3.58 8 8 8s8-3.58 8-8c0-4.54-4-8-8-12zm0 18c-3.31 0-6-2.69-6-6 0-2.97 2.16-5.7 4-7.65V18h4V6.35c1.84 1.95 4 4.68 4 7.65 0 3.31-2.69 6-6 6z"/>
-    </svg>
-  ),
-  elopement: ({ className }) => (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1L6 8.3V13h2V9.6l1.8-.7"/>
-    </svg>
-  ),
+  fall: AlertTriangle,
+  aspiration: Stethoscope,
+  npo: Ban,
+  seizure: Zap,
+  bleeding: Droplets,
+  elopement: Footprints,
 
   // Isolation
-  isolation_contact: ({ className }) => (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
-    </svg>
-  ),
-  isolation_droplet: ({ className }) => (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 2c-5.33 4.55-8 8.48-8 11.8 0 4.98 3.8 8.2 8 8.2s8-3.22 8-8.2c0-3.32-2.67-7.25-8-11.8zm0 18c-3.35 0-6-2.57-6-6.2 0-2.34 1.95-5.44 6-9.14 4.05 3.7 6 6.79 6 9.14 0 3.63-2.65 6.2-6 6.2z"/>
-    </svg>
-  ),
-  isolation_airborne: ({ className }) => (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M14.5 17c0 1.65-1.35 3-3 3s-3-1.35-3-3h2c0 .55.45 1 1 1s1-.45 1-1-.45-1-1-1H2v-2h9.5c1.65 0 3 1.35 3 3zM19 6.5C19 4.57 17.43 3 15.5 3S12 4.57 12 6.5h2c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5S16.33 8 15.5 8H2v2h13.5c1.93 0 3.5-1.57 3.5-3.5zm-.5 4.5H2v2h16.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5v2c1.93 0 3.5-1.57 3.5-3.5S20.43 11 18.5 11z"/>
-    </svg>
-  ),
-  isolation_protective: ({ className }) => (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm7 10c0 4.52-2.98 8.69-7 9.93-4.02-1.24-7-5.41-7-9.93V6.3l7-3.11 7 3.11V11zm-11.59.59L6 13l4 4 8-8-1.41-1.42L10 14.17z"/>
-    </svg>
-  ),
+  isolation_contact: Hand,
+  isolation_droplet: Droplets,
+  isolation_airborne: Wind,
+  isolation_protective: ShieldCheck,
 
   // Code Status
-  code_full: ({ className }) => (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M19.77 7.23l.01-.01-3.72-3.72L15 4.56l2.11 2.11c-.94.36-1.61 1.26-1.61 2.33 0 1.38 1.12 2.5 2.5 2.5.36 0 .69-.08 1-.21v7.21c0 .55-.45 1-1 1s-1-.45-1-1V14c0-1.1-.9-2-2-2h-1V5c0-1.1-.9-2-2-2H6c-1.1 0-2 .9-2 2v16h10v-7.5h1.5v5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V9c0-.69-.28-1.32-.73-1.77zM18 10c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zM8 18v-4.5H6L10 6v5h2l-4 7z"/>
-    </svg>
-  ),
-  code_dnr: ({ className }) => (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8 0-1.85.63-3.55 1.69-4.9L16.9 18.31C15.55 19.37 13.85 20 12 20zm6.31-3.1L7.1 5.69C8.45 4.63 10.15 4 12 4c4.42 0 8 3.58 8 8 0 1.85-.63 3.55-1.69 4.9z"/>
-    </svg>
-  ),
-  code_dni: ({ className }) => (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11H7v-2h10v2z"/>
-    </svg>
-  ),
-  code_dnr_dni: ({ className }) => (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm-1-6h2v2h-2zm0-8h2v6h-2z"/>
-    </svg>
-  ),
-  code_comfort: ({ className }) => (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-    </svg>
-  ),
+  code_full: Heart,
+  code_dnr: HeartOff,
+  code_dni: Minus,
+  code_dnr_dni: CircleSlash,
+  code_comfort: Flower2,
 
   // Alerts
-  allergy: ({ className }) => (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
-    </svg>
-  ),
-  allergy_latex: ({ className }) => (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M18 7c0-1.1-.9-2-2-2h-2c0-1.1-.9-2-2-2s-2 .9-2 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7zm-2 0H8v-1h8v1zm-8 12V9h8v10H8zm2-8h4v2h-4v-2zm0 4h4v2h-4v-2z"/>
-    </svg>
-  ),
-  difficult_airway: ({ className }) => (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M4.47 21h15.06c1.54 0 2.5-1.67 1.73-3L13.73 4.99c-.77-1.33-2.69-1.33-3.46 0L2.74 18c-.77 1.33.19 3 1.73 3zM12 14c-.55 0-1-.45-1-1v-2c0-.55.45-1 1-1s1 .45 1 1v2c0 .55-.45 1-1 1zm1 4h-2v-2h2v2z"/>
-    </svg>
-  ),
-  limb_alert: ({ className }) => (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.56-.89-1.68-1.25-2.65-.84L6 8.3V13h2V9.6l1.8-.7"/>
-    </svg>
-  ),
-  // Difficult IV Access - syringe with X
-  difficult_iv: ({ className }) => (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M11.15 15.18l-2.73-2.73 2.2-2.2-1.41-1.41-2.2 2.2L4.88 8.9l.71-.71-.71-.71L3.47 8.9c-.39.39-.39 1.02 0 1.41l1.42 1.42-.71.71.71.71 1.41-1.41L8.44 14l-.71.71.71.71 2.12-2.12 2.73 2.73 1.41-1.41-3.55-3.55z"/>
-      <path d="M19.78 9.24l-3.02-3.02 1.41-1.41-1.41-1.41-1.41 1.41-.71-.71-1.42 1.42.71.71-5.66 5.66.71.71-1.42 1.42.71.71 1.41-1.41 3.02 3.02c.39.39 1.02.39 1.41 0l5.66-5.66c.39-.39.39-1.03.01-1.42zm-3.54 4.95l-2.32-2.32 4.24-4.24 2.32 2.32-4.24 4.24z"/>
-      <circle cx="18" cy="18" r="4" fill="#ef4444"/>
-      <path d="M16.59 16.59L19.41 19.41M19.41 16.59L16.59 19.41" stroke="white" strokeWidth="1.5" fill="none"/>
-    </svg>
-  ),
+  allergy: AlertCircle,
+  allergy_latex: AlertCircle,
+  difficult_airway: Activity,
+  limb_alert: AlertTriangle,
+  difficult_iv: Syringe,
 };
 
 /**
- * Default icon for unknown badge types
+ * Badge descriptions for learning
  */
-const DefaultBadgeIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-  </svg>
-);
+export const BADGE_DESCRIPTIONS: Record<string, { name: string; description: string; color: string }> = {
+  // Precautions (Left side - Red/Yellow)
+  fall: {
+    name: 'Fall Risk',
+    description: 'Patient at risk of falling. Use bed rails, assist with ambulation.',
+    color: '#ef4444'
+  },
+  aspiration: {
+    name: 'Aspiration Risk',
+    description: 'Risk of food/liquid entering airway. Thickened liquids, upright positioning.',
+    color: '#ef4444'
+  },
+  npo: {
+    name: 'NPO (Nothing by Mouth)',
+    description: 'No food or drink. May be pre-surgery or for diagnostic testing.',
+    color: '#ef4444'
+  },
+  seizure: {
+    name: 'Seizure Precautions',
+    description: 'Padded rails, suction at bedside, O2 ready.',
+    color: '#ef4444'
+  },
+  bleeding: {
+    name: 'Bleeding Precautions',
+    description: 'On anticoagulants or low platelets. Avoid IM injections, use soft toothbrush.',
+    color: '#ef4444'
+  },
+  elopement: {
+    name: 'Elopement Risk',
+    description: 'Flight risk or wandering. May need 1:1 observation or alarm.',
+    color: '#f97316'
+  },
+
+  // Isolation (Right side - Color-coded per hospital standard)
+  isolation_contact: {
+    name: 'Contact Isolation',
+    description: 'MRSA, VRE, C.diff. Gown and gloves required.',
+    color: '#eab308' // Yellow - hospital standard
+  },
+  isolation_droplet: {
+    name: 'Droplet Isolation',
+    description: 'Flu, RSV, Pertussis. Surgical mask within 6 feet.',
+    color: '#22c55e' // Green - hospital standard
+  },
+  isolation_airborne: {
+    name: 'Airborne Isolation',
+    description: 'TB, Measles, COVID, Chickenpox. N95 required, negative pressure room.',
+    color: '#3b82f6' // Blue - hospital standard
+  },
+  isolation_protective: {
+    name: 'Protective/Reverse Isolation',
+    description: 'Neutropenic, BMT patient. Protect patient FROM infection.',
+    color: '#a855f7' // Purple - hospital standard
+  },
+
+  // Code Status (Top - varies)
+  code_full: {
+    name: 'Full Code',
+    description: 'All resuscitative measures. CPR, intubation, defibrillation.',
+    color: '#22c55e'
+  },
+  code_dnr: {
+    name: 'DNR (Do Not Resuscitate)',
+    description: 'No CPR if heart stops. May still receive other treatments.',
+    color: '#ef4444'
+  },
+  code_dni: {
+    name: 'DNI (Do Not Intubate)',
+    description: 'No mechanical ventilation. May still receive CPR.',
+    color: '#f97316'
+  },
+  code_dnr_dni: {
+    name: 'DNR/DNI',
+    description: 'No CPR and no intubation. Comfort-focused care.',
+    color: '#ef4444'
+  },
+  code_comfort: {
+    name: 'Comfort Care Only',
+    description: 'Hospice/palliative. Focus on comfort, not life extension.',
+    color: '#a855f7'
+  },
+
+  // Alerts (Right side - Red/Orange)
+  allergy: {
+    name: 'Allergies',
+    description: 'Has documented allergies. Check MAR before giving meds.',
+    color: '#ef4444'
+  },
+  allergy_latex: {
+    name: 'Latex Allergy',
+    description: 'Use non-latex gloves and equipment.',
+    color: '#ef4444'
+  },
+  difficult_airway: {
+    name: 'Difficult Airway',
+    description: 'Hard to intubate. Video laryngoscope, call anesthesia early.',
+    color: '#f97316'
+  },
+  limb_alert: {
+    name: 'Limb Alert',
+    description: 'No BP or blood draw on affected limb. May have fistula or lymphedema.',
+    color: '#eab308'
+  },
+  difficult_iv: {
+    name: 'Difficult IV Access',
+    description: 'Hard stick. Bring ultrasound, consider vein finder, small gauge.',
+    color: '#f97316'
+  },
+};
 
 /**
- * Individual badge component
+ * Individual badge component using Lucide icons
  */
 const StatusBadge: React.FC<{
   marker: PatientMarker;
   size: 'sm' | 'md' | 'lg';
-  position: 'top' | 'left' | 'right';
+  position: { x: number; y: number };
   index: number;
   onClick?: (marker: PatientMarker) => void;
   count?: number;
 }> = ({ marker, size, position, index, onClick, count }) => {
   const typeDef = getMarkerTypeDefinition(marker.marker_type);
-  const Icon = typeDef?.badge_icon
-    ? BadgeIcons[typeDef.badge_icon] || DefaultBadgeIcon
-    : DefaultBadgeIcon;
-  const color = typeDef?.badge_color || '#64748b';
+  const iconKey = typeDef?.badge_icon || marker.marker_type;
+  const Icon = BadgeIconMap[iconKey] || HelpCircle;
+  const badgeInfo = BADGE_DESCRIPTIONS[iconKey];
+  const color = typeDef?.badge_color || badgeInfo?.color || '#64748b';
 
   const sizeClasses = {
-    sm: 'w-5 h-5 text-[8px]',
-    md: 'w-6 h-6 text-[10px]',
-    lg: 'w-8 h-8 text-xs',
+    sm: 'w-5 h-5',
+    md: 'w-6 h-6',
+    lg: 'w-8 h-8',
   };
 
-  const iconSizes = {
+  const iconSizeClasses = {
     sm: 'w-3 h-3',
-    md: 'w-3.5 h-3.5',
-    lg: 'w-4 h-4',
+    md: 'w-4 h-4',
+    lg: 'w-5 h-5',
   };
-
-  // Position offsets based on slot
-  const getPositionStyle = (): React.CSSProperties => {
-    const spacing = size === 'sm' ? 22 : size === 'md' ? 26 : 32;
-
-    if (position === 'top') {
-      return {
-        top: -4,
-        left: '50%',
-        transform: `translateX(calc(-50% + ${(index - 0.5) * spacing}px))`,
-      };
-    } else if (position === 'left') {
-      return {
-        left: -4,
-        top: 20 + index * spacing,
-      };
-    } else {
-      return {
-        right: -4,
-        top: 20 + index * spacing,
-      };
-    }
-  };
-
-  const isPending = marker.status === 'pending_confirmation';
 
   return (
     <button
       className={cn(
         'absolute flex items-center justify-center rounded-full',
-        'shadow-lg transition-transform hover:scale-110',
-        'focus:outline-none focus:ring-2 focus:ring-white/50',
-        isPending && 'animate-pulse ring-2 ring-dashed ring-white/50',
-        sizeClasses[size]
+        'border-2 border-slate-800 shadow-md',
+        'transition-all duration-200',
+        'hover:scale-125 hover:z-20 hover:shadow-lg',
+        'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900',
+        sizeClasses[size],
+        onClick && 'cursor-pointer'
       )}
       style={{
+        left: `${position.x}%`,
+        top: `${position.y}%`,
+        transform: 'translate(-50%, -50%)',
         backgroundColor: color,
-        ...getPositionStyle(),
+        zIndex: 10 + index,
       }}
       onClick={() => onClick?.(marker)}
-      title={marker.display_name}
+      title={`${marker.display_name}${badgeInfo ? `: ${badgeInfo.description}` : ''}`}
       aria-label={marker.display_name}
     >
-      <Icon className={cn('text-white', iconSizes[size])} />
+      <Icon className={cn(iconSizeClasses[size], 'text-white')} strokeWidth={2.5} />
+
+      {/* Count badge for allergies */}
       {count !== undefined && count > 0 && (
-        <span className="absolute -top-1 -right-1 bg-white text-red-600 rounded-full w-3.5 h-3.5 flex items-center justify-center font-bold text-[8px]">
+        <span
+          className={cn(
+            'absolute -top-1 -right-1 flex items-center justify-center',
+            'bg-white text-xs font-bold rounded-full',
+            'border border-slate-300',
+            size === 'sm' ? 'w-3 h-3 text-[8px]' : 'w-4 h-4 text-[10px]'
+          )}
+          style={{ color }}
+        >
           {count > 9 ? '9+' : count}
         </span>
       )}
@@ -232,88 +275,354 @@ const StatusBadge: React.FC<{
 };
 
 /**
+ * Badge Legend Component - Collapsible legend explaining all badge types
+ */
+export const BadgeLegend: React.FC<{
+  expanded?: boolean;
+  onToggle?: () => void;
+  className?: string;
+}> = ({ expanded = false, onToggle, className }) => {
+  const [isExpanded, setIsExpanded] = useState(expanded);
+
+  const handleToggle = () => {
+    setIsExpanded(!isExpanded);
+    onToggle?.();
+  };
+
+  const categories = [
+    {
+      title: 'Precautions',
+      badges: ['fall', 'aspiration', 'npo', 'seizure', 'bleeding', 'elopement']
+    },
+    {
+      title: 'Isolation',
+      badges: ['isolation_contact', 'isolation_droplet', 'isolation_airborne', 'isolation_protective']
+    },
+    {
+      title: 'Code Status',
+      badges: ['code_full', 'code_dnr', 'code_dni', 'code_dnr_dni', 'code_comfort']
+    },
+    {
+      title: 'Alerts',
+      badges: ['allergy', 'difficult_airway', 'difficult_iv', 'limb_alert']
+    },
+  ];
+
+  return (
+    <div className={cn('mt-2', className)}>
+      <button
+        onClick={handleToggle}
+        className={cn(
+          'flex items-center gap-1 text-xs text-slate-400 hover:text-slate-300',
+          'transition-colors'
+        )}
+      >
+        <HelpCircle className="w-3 h-3" />
+        <span>What do these badges mean?</span>
+        {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+      </button>
+
+      {isExpanded && (
+        <div className={cn(
+          'mt-2 p-3 bg-slate-800/80 rounded-lg border border-slate-700',
+          'text-xs space-y-3 max-h-64 overflow-y-auto'
+        )}>
+          {categories.map((cat) => (
+            <div key={cat.title}>
+              <h4 className="font-semibold text-slate-300 mb-1">{cat.title}</h4>
+              <div className="space-y-1">
+                {cat.badges.map((badgeKey) => {
+                  const info = BADGE_DESCRIPTIONS[badgeKey];
+                  const Icon = BadgeIconMap[badgeKey] || HelpCircle;
+                  if (!info) return null;
+                  return (
+                    <div key={badgeKey} className="flex items-start gap-2">
+                      <div
+                        className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+                        style={{ backgroundColor: info.color }}
+                      >
+                        <Icon className="w-2.5 h-2.5 text-white" strokeWidth={2.5} />
+                      </div>
+                      <div>
+                        <span className="font-medium text-slate-200">{info.name}</span>
+                        <span className="text-slate-400 ml-1">- {info.description}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+/**
+ * First-time onboarding tour component
+ */
+export const BadgeOnboardingTour: React.FC<{
+  onComplete: () => void;
+  onSkip: () => void;
+}> = ({ onComplete, onSkip }) => {
+  const [step, setStep] = useState(0);
+
+  const steps = [
+    {
+      title: 'Status Badges',
+      description: 'Badges around the avatar show critical patient information at a glance.',
+      highlight: 'all',
+    },
+    {
+      title: 'Color = Meaning',
+      description: 'Yellow = Contact, Green = Droplet, Blue = Airborne, Purple = Protective isolation.',
+      highlight: 'isolation',
+    },
+    {
+      title: 'Hover for Details',
+      description: 'Hover over any badge to see what it means and care instructions.',
+      highlight: 'hover',
+    },
+    {
+      title: 'Click for More',
+      description: 'Click a badge to see full details and related orders.',
+      highlight: 'click',
+    },
+  ];
+
+  const currentStep = steps[step];
+  const isLastStep = step === steps.length - 1;
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+      <div className="bg-slate-800 rounded-xl border border-slate-700 p-6 max-w-md w-full shadow-2xl">
+        <div className="flex justify-between items-start mb-4">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-[#00857a] flex items-center justify-center">
+              <HelpCircle className="w-5 h-5 text-white" />
+            </div>
+            <h3 className="text-lg font-semibold text-white">{currentStep.title}</h3>
+          </div>
+          <button
+            onClick={onSkip}
+            className="text-slate-400 hover:text-white p-1"
+            aria-label="Skip tour"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <p className="text-slate-300 mb-6">{currentStep.description}</p>
+
+        {/* Progress dots */}
+        <div className="flex justify-center gap-2 mb-4">
+          {steps.map((_, i) => (
+            <div
+              key={i}
+              className={cn(
+                'w-2 h-2 rounded-full transition-colors',
+                i === step ? 'bg-[#00857a]' : 'bg-slate-600'
+              )}
+            />
+          ))}
+        </div>
+
+        <div className="flex justify-between">
+          <button
+            onClick={onSkip}
+            className="text-slate-400 hover:text-white text-sm"
+          >
+            Skip tour
+          </button>
+          <button
+            onClick={() => {
+              if (isLastStep) {
+                onComplete();
+              } else {
+                setStep(step + 1);
+              }
+            }}
+            className={cn(
+              'px-4 py-2 rounded-lg font-medium text-sm',
+              'bg-[#00857a] hover:bg-[#006b62] text-white',
+              'transition-colors'
+            )}
+          >
+            {isLastStep ? 'Got it!' : 'Next'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/**
+ * Hook to manage onboarding tour state
+ */
+export const useBadgeOnboarding = () => {
+  const STORAGE_KEY = 'avatar_badge_tour_completed';
+  const [showTour, setShowTour] = useState(false);
+
+  useEffect(() => {
+    const completed = localStorage.getItem(STORAGE_KEY);
+    if (!completed) {
+      // Delay showing tour slightly for better UX
+      const timer = setTimeout(() => setShowTour(true), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  const completeTour = () => {
+    localStorage.setItem(STORAGE_KEY, 'true');
+    setShowTour(false);
+  };
+
+  const skipTour = () => {
+    localStorage.setItem(STORAGE_KEY, 'skipped');
+    setShowTour(false);
+  };
+
+  const resetTour = () => {
+    localStorage.removeItem(STORAGE_KEY);
+    setShowTour(true);
+  };
+
+  return { showTour, completeTour, skipTour, resetTour };
+};
+
+/**
+ * Default icon for unknown badge types
+ */
+const DefaultBadgeIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <HelpCircle className={className} />
+);
+
+/**
  * StatusBadgeRing Component
- *
- * Displays status badges around the patient avatar perimeter.
  */
 export const StatusBadgeRing: React.FC<StatusBadgeRingProps> = ({
   markers,
-  size = 'md',
+  size = 'sm',
   allergyCount,
   onBadgeClick,
+  showLegend = false,
+  showOnboarding = true,
   className,
 }) => {
-  // Filter to only status badge markers
-  const statusBadges = markers.filter((m) => {
-    const typeDef = getMarkerTypeDefinition(m.marker_type);
-    return typeDef?.is_status_badge && m.is_active && m.status !== 'rejected';
-  });
+  const { showTour, completeTour, skipTour } = useBadgeOnboarding();
 
-  if (statusBadges.length === 0) {
-    return null;
-  }
+  // Separate badges by position
+  const { topBadges, leftBadges, rightBadges } = React.useMemo(() => {
+    const top: PatientMarker[] = [];
+    const left: PatientMarker[] = [];
+    const right: PatientMarker[] = [];
 
-  // Categorize badges by position
-  const codeStatus = statusBadges.filter((m) =>
-    m.marker_type.startsWith('code_')
-  );
-  const precautions = statusBadges.filter(
-    (m) =>
-      ['fall_risk', 'aspiration_risk', 'npo', 'seizure_precautions', 'bleeding_precautions', 'elopement_risk'].includes(m.marker_type)
-  );
-  const isolationAndAlerts = statusBadges.filter(
-    (m) =>
-      m.marker_type.startsWith('isolation_') ||
-      m.marker_type.startsWith('allergy') ||
-      m.marker_type === 'difficult_airway' ||
-      m.marker_type === 'limb_alert'
-  );
+    for (const marker of markers) {
+      if (!marker.is_active || marker.status === 'rejected') continue;
+
+      const typeDef = getMarkerTypeDefinition(marker.marker_type);
+      if (!typeDef?.is_status_badge) continue;
+
+      // Categorize by marker type
+      const type = marker.marker_type;
+      if (type.startsWith('code_')) {
+        top.push(marker);
+      } else if (
+        type.startsWith('isolation_') ||
+        type.startsWith('allergy') ||
+        type === 'difficult_airway' ||
+        type === 'difficult_iv' ||
+        type === 'limb_alert'
+      ) {
+        right.push(marker);
+      } else {
+        // Precautions go on left
+        left.push(marker);
+      }
+    }
+
+    return { topBadges: top, leftBadges: left, rightBadges: right };
+  }, [markers]);
+
+  // Calculate positions for each section
+  const getPositions = (
+    badges: PatientMarker[],
+    section: 'top' | 'left' | 'right'
+  ): Array<{ marker: PatientMarker; position: { x: number; y: number } }> => {
+    const positions: Array<{ marker: PatientMarker; position: { x: number; y: number } }> = [];
+
+    badges.forEach((marker, index) => {
+      let x: number, y: number;
+
+      switch (section) {
+        case 'top':
+          // Spread across top, centered
+          const topSpacing = 20;
+          const topStart = 50 - ((badges.length - 1) * topSpacing) / 2;
+          x = topStart + index * topSpacing;
+          y = -5;
+          break;
+        case 'left':
+          // Stack vertically on left
+          x = -5;
+          y = 20 + index * 18;
+          break;
+        case 'right':
+          // Stack vertically on right
+          x = 105;
+          y = 20 + index * 18;
+          break;
+      }
+
+      positions.push({ marker, position: { x, y } });
+    });
+
+    return positions;
+  };
+
+  const allPositions = [
+    ...getPositions(topBadges, 'top'),
+    ...getPositions(leftBadges, 'left'),
+    ...getPositions(rightBadges, 'right'),
+  ];
+
+  if (allPositions.length === 0 && !showLegend) return null;
 
   return (
-    <div className={cn('absolute inset-0 pointer-events-none', className)}>
-      {/* Top - Code Status */}
-      <div className="pointer-events-auto">
-        {codeStatus.map((marker, idx) => (
-          <StatusBadge
-            key={marker.id}
-            marker={marker}
-            size={size}
-            position="top"
-            index={idx}
-            onClick={onBadgeClick}
-          />
+    <>
+      {/* Onboarding tour */}
+      {showOnboarding && showTour && (
+        <BadgeOnboardingTour onComplete={completeTour} onSkip={skipTour} />
+      )}
+
+      {/* Badge ring */}
+      <div className={cn('absolute inset-0 pointer-events-none', className)}>
+        {allPositions.map(({ marker, position }, index) => (
+          <div key={marker.id} className="pointer-events-auto">
+            <StatusBadge
+              marker={marker}
+              size={size}
+              position={position}
+              index={index}
+              onClick={onBadgeClick}
+              count={
+                marker.marker_type === 'allergy_alert' || marker.marker_type === 'allergy'
+                  ? allergyCount
+                  : undefined
+              }
+            />
+          </div>
         ))}
       </div>
 
-      {/* Left - Precautions */}
-      <div className="pointer-events-auto">
-        {precautions.map((marker, idx) => (
-          <StatusBadge
-            key={marker.id}
-            marker={marker}
-            size={size}
-            position="left"
-            index={idx}
-            onClick={onBadgeClick}
-          />
-        ))}
-      </div>
-
-      {/* Right - Isolation & Alerts */}
-      <div className="pointer-events-auto">
-        {isolationAndAlerts.map((marker, idx) => (
-          <StatusBadge
-            key={marker.id}
-            marker={marker}
-            size={size}
-            position="right"
-            index={idx}
-            onClick={onBadgeClick}
-            count={marker.marker_type === 'allergy_alert' ? allergyCount : undefined}
-          />
-        ))}
-      </div>
-    </div>
+      {/* Optional legend */}
+      {showLegend && (
+        <div className="pointer-events-auto">
+          <BadgeLegend />
+        </div>
+      )}
+    </>
   );
 };
 
