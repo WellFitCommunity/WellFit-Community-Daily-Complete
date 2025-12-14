@@ -485,15 +485,40 @@
 |---------|--------|---------|
 | `billingService.ts` | ✅ GOOD | Uses `PAGINATION_LIMITS` + `applyLimit` throughout |
 | `wearableService.ts` | ✅ GOOD | Uses `PAGINATION_LIMITS` + `applyLimit` throughout |
-| `patientService.ts` | ❌ N/A | File doesn't exist - no action needed |
+| `patientService.ts` | ✅ CREATED | **NEW** (2025-12-13) - Enterprise patient service with pagination |
 | `UsersList.tsx` | ⚠️ NEEDS WORK | Loads all profiles without limit |
 
-**Services Already Using Pagination** (15 files):
+**Services Already Using Pagination** (16 files):
 - `shiftHandoffService.ts`, `parkinsonsService.ts`, `wearableService.ts`
 - `readmissionTrackingService.ts`, `physicalTherapyService.ts`, `neuroSuiteService.ts`
 - `labResultVaultService.ts`, `handoffService.ts`, `dischargePlanningService.ts`
 - `billingService.ts`, `careCoordinationService.ts`, `userBehaviorTracking.ts`
-- `soc2MonitoringService.ts`
+- `soc2MonitoringService.ts`, **`patientService.ts`** (NEW)
+
+#### NEW: patientService.ts (2025-12-13)
+
+**Location:** `src/services/patientService.ts`
+
+**Features:**
+- Enterprise-grade patient data access
+- Uses `PAGINATION_LIMITS.PATIENTS` (50 records default)
+- Full `ServiceResult<T>` pattern for error handling
+- HIPAA-compliant audit logging via `auditLogger`
+
+**Methods:**
+| Method | Description |
+|--------|-------------|
+| `getPatients(options)` | Paginated patient list |
+| `getPatientById(userId)` | Single patient with PHI audit |
+| `searchPatients(term, options)` | Name/phone search with pagination |
+| `getPatientsByUnit(unitId, options)` | Hospital unit patients |
+| `getPatientsByRisk(level, limit)` | Risk-stratified patient list |
+| `getHospitalPatients(options)` | `enrollment_type='hospital'` patients |
+| `getAppPatients(options)` | `enrollment_type='app'` patients (seniors) |
+| `getPatientsByTenant(tenantId, options)` | Multi-tenant patient lists |
+| `getFilteredPatients(filters, options)` | Multi-criteria search |
+| `getRecentPatients(limit)` | Last 7 days admissions |
+| `getPatientCount(tenantId?)` | Patient count metrics |
 
 **Remaining Work**:
 - [ ] Add pagination to `UsersList.tsx` fetchProfiles query (currently loads ALL profiles)
