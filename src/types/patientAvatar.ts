@@ -259,6 +259,12 @@ export interface MarkerTypeDefinition {
     left?: { x: number; y: number };
     right?: { x: number; y: number };
   };
+  /** If true, displayed as badge around avatar instead of on body */
+  is_status_badge?: boolean;
+  /** Custom badge color (hex) for status badges */
+  badge_color?: string;
+  /** Icon identifier for badge display */
+  badge_icon?: string;
 }
 
 /**

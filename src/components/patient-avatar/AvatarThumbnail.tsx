@@ -3,13 +3,16 @@
  *
  * Shows a small avatar with marker indicators.
  * Click to expand to full-body view.
+ * Includes StatusBadgeRing for precautions, isolation, code status, and alerts.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { cn } from '../../lib/utils';
 import { PatientMarker, SkinTone, GenderPresentation, BodyView, MarkerCategory, CATEGORY_COLORS } from '../../types/patientAvatar';
 import { AvatarBody } from './AvatarBody';
 import { AvatarMarker } from './AvatarMarker';
+import { StatusBadgeRing } from './StatusBadgeRing';
+import { getMarkerTypeDefinition } from './constants/markerTypeLibrary';
 
 interface AvatarThumbnailProps {
   patientId: string;
@@ -18,6 +21,12 @@ interface AvatarThumbnailProps {
   genderPresentation: GenderPresentation;
   markers: PatientMarker[];
   pendingCount?: number;
+  /** Number of allergies for the allergy badge count */
+  allergyCount?: number;
+  /** Highlight markers created/updated since this time (for shift handoff "What's New") */
+  showChangesSince?: Date | string;
+  /** Callback when a status badge is clicked */
+  onBadgeClick?: (marker: PatientMarker) => void;
   onClick?: () => void;
   className?: string;
 }
@@ -73,6 +82,15 @@ const CategoryBadge: React.FC<{ category: MarkerCategory; count: number }> = ({
 };
 
 /**
+ * Check if a marker is "new" since the reference time
+ */
+function isMarkerNew(marker: PatientMarker, since: Date): boolean {
+  const createdAt = new Date(marker.created_at);
+  const updatedAt = new Date(marker.updated_at);
+  return createdAt >= since || updatedAt >= since;
+}
+
+/**
  * AvatarThumbnail Component
  */
 export const AvatarThumbnail: React.FC<AvatarThumbnailProps> = React.memo(({
@@ -82,15 +100,56 @@ export const AvatarThumbnail: React.FC<AvatarThumbnailProps> = React.memo(({
   genderPresentation,
   markers,
   pendingCount = 0,
+  allergyCount,
+  showChangesSince,
+  onBadgeClick,
   onClick,
   className,
 }) => {
   const [showTooltip, setShowTooltip] = useState(false);
 
-  // Filter to active markers for front view (most common in thumbnail)
-  const frontMarkers = markers.filter(
-    (m) => m.is_active && m.status !== 'rejected' && m.body_view === 'front'
-  );
+  // Parse showChangesSince into a Date
+  const changeSinceDate = useMemo(() => {
+    if (!showChangesSince) return null;
+    return typeof showChangesSince === 'string'
+      ? new Date(showChangesSince)
+      : showChangesSince;
+  }, [showChangesSince]);
+
+  // Separate anatomical markers (on body) from status badges (around body)
+  const { anatomicalMarkers, statusBadgeMarkers, newMarkersCount, newMarkerIds } = useMemo(() => {
+    const anatomical: PatientMarker[] = [];
+    const badges: PatientMarker[] = [];
+    const newIds = new Set<string>();
+    let newCount = 0;
+
+    for (const marker of markers) {
+      if (!marker.is_active || marker.status === 'rejected') continue;
+
+      // Track new markers
+      if (changeSinceDate && isMarkerNew(marker, changeSinceDate)) {
+        newCount++;
+        newIds.add(marker.id);
+      }
+
+      const typeDef = getMarkerTypeDefinition(marker.marker_type);
+      if (typeDef?.is_status_badge) {
+        badges.push(marker);
+      } else {
+        anatomical.push(marker);
+      }
+    }
+
+    return {
+      anatomicalMarkers: anatomical,
+      statusBadgeMarkers: badges,
+      newMarkersCount: newCount,
+      newMarkerIds: newIds,
+    };
+  }, [markers, changeSinceDate]);
+
+  // Filter to front view anatomical markers
+  const frontMarkers = anatomicalMarkers.filter((m) => m.body_view === 'front');
 
   const counts = getMarkerCounts(markers);
   const totalMarkers = markers.filter((m) => m.is_active && m.status !== 'rejected').length;
@@ -125,16 +184,27 @@ export const AvatarThumbnail: React.FC<AvatarThumbnailProps> = React.memo(({
           view="front"
           size="thumbnail"
         >
-          {/* Render markers on the body */}
+          {/* Render anatomical markers on the body */}
           {frontMarkers.slice(0, 10).map((marker) => (
             <AvatarMarker
               key={marker.id}
               marker={marker}
               size="sm"
               isPending={marker.status === 'pending_confirmation'}
+              isHighlighted={newMarkerIds.has(marker.id)}
             />
           ))}
         </AvatarBody>
+
+        {/* Status badges around the body */}
+        {statusBadgeMarkers.length > 0 && (
+          <StatusBadgeRing
+            markers={statusBadgeMarkers}
+            size="sm"
+            allergyCount={allergyCount}
+            onBadgeClick={onBadgeClick}
+          />
+        )}
 
         {/* More markers indicator */}
         {frontMarkers.length > 10 && (
@@ -148,6 +218,13 @@ export const AvatarThumbnail: React.FC<AvatarThumbnailProps> = React.memo(({
       {pendingCount > 0 && (
         <div className="absolute -top-2 -right-2 bg-amber-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
           {pendingCount}
+        </div>
+      )}
+
+      {/* "What's New" badge for recent changes (shift handoff) */}
+      {newMarkersCount > 0 && !pendingCount && (
+        <div className="absolute -top-2 -right-2 bg-cyan-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center animate-pulse">
+          {newMarkersCount}
         </div>
       )}
 
@@ -183,6 +260,16 @@ export const AvatarThumbnail: React.FC<AvatarThumbnailProps> = React.memo(({
             <div className="mt-2 pt-2 border-t border-slate-700">
               <span className="text-xs text-amber-400">
                 {pendingCount} pending confirmation
+              </span>
+            </div>
+          )}
+          {newMarkersCount > 0 && (
+            <div className={cn(
+              "mt-2 pt-2 border-t border-slate-700",
+              pendingCount > 0 && "mt-1 pt-1"
+            )}>
+              <span className="text-xs text-cyan-400">
+                {newMarkersCount} new/updated since handoff
               </span>
             </div>
           )}

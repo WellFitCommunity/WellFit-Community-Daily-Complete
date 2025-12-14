@@ -875,6 +875,402 @@ const NEUROLOGICAL_CONDITION_TYPES: MarkerTypeDefinition[] = [
 ];
 
 // ============================================================================
+// PRECAUTIONS & SAFETY
+// ============================================================================
+
+const PRECAUTION_TYPES: MarkerTypeDefinition[] = [
+  {
+    type: 'fall_risk',
+    display_name: 'Fall Risk',
+    category: 'critical',
+    default_body_region: 'badge_area',
+    default_body_view: 'front',
+    default_position: { x: 5, y: 5 },
+    keywords: ['fall risk', 'falls', 'fall precautions', 'high fall risk'],
+    is_status_badge: true,
+    badge_color: '#ef4444', // red
+    badge_icon: 'fall',
+  },
+  {
+    type: 'aspiration_risk',
+    display_name: 'Aspiration Risk',
+    category: 'critical',
+    default_body_region: 'badge_area',
+    default_body_view: 'front',
+    default_position: { x: 5, y: 15 },
+    keywords: ['aspiration risk', 'aspiration precautions', 'dysphagia', 'swallowing difficulty'],
+    is_status_badge: true,
+    badge_color: '#ef4444', // red
+    badge_icon: 'aspiration',
+  },
+  {
+    type: 'npo',
+    display_name: 'NPO',
+    category: 'critical',
+    default_body_region: 'badge_area',
+    default_body_view: 'front',
+    default_position: { x: 5, y: 25 },
+    keywords: ['npo', 'nothing by mouth', 'nil per os', 'no food or drink'],
+    is_status_badge: true,
+    badge_color: '#ef4444', // red
+    badge_icon: 'npo',
+  },
+  {
+    type: 'seizure_precautions',
+    display_name: 'Seizure Precautions',
+    category: 'critical',
+    default_body_region: 'badge_area',
+    default_body_view: 'front',
+    default_position: { x: 5, y: 35 },
+    keywords: ['seizure precautions', 'seizure risk', 'epilepsy precautions'],
+    is_status_badge: true,
+    badge_color: '#f97316', // orange
+    badge_icon: 'seizure',
+  },
+  {
+    type: 'bleeding_precautions',
+    display_name: 'Bleeding Precautions',
+    category: 'critical',
+    default_body_region: 'badge_area',
+    default_body_view: 'front',
+    default_position: { x: 5, y: 45 },
+    keywords: ['bleeding precautions', 'anticoagulated', 'on blood thinners', 'coumadin', 'warfarin', 'eliquis', 'xarelto'],
+    is_status_badge: true,
+    badge_color: '#ef4444', // red
+    badge_icon: 'bleeding',
+  },
+  {
+    type: 'elopement_risk',
+    display_name: 'Elopement Risk',
+    category: 'critical',
+    default_body_region: 'badge_area',
+    default_body_view: 'front',
+    default_position: { x: 5, y: 55 },
+    keywords: ['elopement risk', 'wandering', 'flight risk', 'wander guard'],
+    is_status_badge: true,
+    badge_color: '#f97316', // orange
+    badge_icon: 'elopement',
+  },
+];
+
+// ============================================================================
+// ISOLATION PRECAUTIONS (Color-Coded)
+// ============================================================================
+
+const ISOLATION_TYPES: MarkerTypeDefinition[] = [
+  {
+    type: 'isolation_contact',
+    display_name: 'Contact Isolation',
+    category: 'critical',
+    default_body_region: 'badge_area',
+    default_body_view: 'front',
+    default_position: { x: 95, y: 5 },
+    keywords: ['contact isolation', 'contact precautions', 'mrsa', 'vre', 'c diff', 'cdiff', 'clostridium'],
+    is_status_badge: true,
+    badge_color: '#eab308', // yellow - standard for contact
+    badge_icon: 'isolation_contact',
+  },
+  {
+    type: 'isolation_droplet',
+    display_name: 'Droplet Isolation',
+    category: 'critical',
+    default_body_region: 'badge_area',
+    default_body_view: 'front',
+    default_position: { x: 95, y: 15 },
+    keywords: ['droplet isolation', 'droplet precautions', 'flu', 'influenza', 'rsv', 'pertussis', 'meningitis'],
+    is_status_badge: true,
+    badge_color: '#22c55e', // green - standard for droplet
+    badge_icon: 'isolation_droplet',
+  },
+  {
+    type: 'isolation_airborne',
+    display_name: 'Airborne Isolation',
+    category: 'critical',
+    default_body_region: 'badge_area',
+    default_body_view: 'front',
+    default_position: { x: 95, y: 25 },
+    keywords: ['airborne isolation', 'airborne precautions', 'tb', 'tuberculosis', 'measles', 'varicella', 'chickenpox', 'covid', 'n95'],
+    is_status_badge: true,
+    badge_color: '#3b82f6', // blue - standard for airborne
+    badge_icon: 'isolation_airborne',
+  },
+  {
+    type: 'isolation_protective',
+    display_name: 'Protective Isolation',
+    category: 'critical',
+    default_body_region: 'badge_area',
+    default_body_view: 'front',
+    default_position: { x: 95, y: 35 },
+    keywords: ['protective isolation', 'reverse isolation', 'neutropenic', 'immunocompromised', 'bone marrow transplant'],
+    is_status_badge: true,
+    badge_color: '#a855f7', // purple - for protective
+    badge_icon: 'isolation_protective',
+  },
+];
+
+// ============================================================================
+// CODE STATUS
+// ============================================================================
+
+const CODE_STATUS_TYPES: MarkerTypeDefinition[] = [
+  {
+    type: 'code_full',
+    display_name: 'Full Code',
+    category: 'informational',
+    default_body_region: 'badge_area',
+    default_body_view: 'front',
+    default_position: { x: 50, y: 0 },
+    keywords: ['full code', 'resuscitate', 'cpr'],
+    is_status_badge: true,
+    badge_color: '#22c55e', // green
+    badge_icon: 'code_full',
+  },
+  {
+    type: 'code_dnr',
+    display_name: 'DNR',
+    category: 'critical',
+    default_body_region: 'badge_area',
+    default_body_view: 'front',
+    default_position: { x: 50, y: 0 },
+    keywords: ['dnr', 'do not resuscitate', 'no cpr', 'no code'],
+    is_status_badge: true,
+    badge_color: '#ef4444', // red
+    badge_icon: 'code_dnr',
+  },
+  {
+    type: 'code_dni',
+    display_name: 'DNI',
+    category: 'critical',
+    default_body_region: 'badge_area',
+    default_body_view: 'front',
+    default_position: { x: 50, y: 0 },
+    keywords: ['dni', 'do not intubate', 'no intubation'],
+    is_status_badge: true,
+    badge_color: '#f97316', // orange
+    badge_icon: 'code_dni',
+  },
+  {
+    type: 'code_dnr_dni',
+    display_name: 'DNR/DNI',
+    category: 'critical',
+    default_body_region: 'badge_area',
+    default_body_view: 'front',
+    default_position: { x: 50, y: 0 },
+    keywords: ['dnr dni', 'dnr/dni', 'no code no intubation'],
+    is_status_badge: true,
+    badge_color: '#ef4444', // red
+    badge_icon: 'code_dnr_dni',
+  },
+  {
+    type: 'code_comfort',
+    display_name: 'Comfort Care',
+    category: 'informational',
+    default_body_region: 'badge_area',
+    default_body_view: 'front',
+    default_position: { x: 50, y: 0 },
+    keywords: ['comfort care', 'comfort measures', 'cmo', 'hospice', 'palliative', 'end of life'],
+    is_status_badge: true,
+    badge_color: '#a855f7', // purple
+    badge_icon: 'code_comfort',
+  },
+];
+
+// ============================================================================
+// ALERTS
+// ============================================================================
+
+const ALERT_TYPES: MarkerTypeDefinition[] = [
+  {
+    type: 'allergy_alert',
+    display_name: 'Allergies',
+    category: 'critical',
+    default_body_region: 'badge_area',
+    default_body_view: 'front',
+    default_position: { x: 95, y: 50 },
+    keywords: ['allergy', 'allergies', 'allergic', 'drug allergy', 'food allergy', 'latex allergy'],
+    is_status_badge: true,
+    badge_color: '#ef4444', // red
+    badge_icon: 'allergy',
+  },
+  {
+    type: 'allergy_latex',
+    display_name: 'Latex Allergy',
+    category: 'critical',
+    default_body_region: 'badge_area',
+    default_body_view: 'front',
+    default_position: { x: 95, y: 60 },
+    keywords: ['latex allergy', 'latex sensitive', 'no latex'],
+    is_status_badge: true,
+    badge_color: '#ef4444', // red
+    badge_icon: 'allergy_latex',
+  },
+  {
+    type: 'difficult_airway',
+    display_name: 'Difficult Airway',
+    category: 'critical',
+    default_body_region: 'badge_area',
+    default_body_view: 'front',
+    default_position: { x: 95, y: 70 },
+    keywords: ['difficult airway', 'difficult intubation', 'mallampati iv', 'poor visualization'],
+    is_status_badge: true,
+    badge_color: '#f97316', // orange
+    badge_icon: 'difficult_airway',
+  },
+  {
+    type: 'limb_alert',
+    display_name: 'Limb Alert',
+    category: 'moderate',
+    default_body_region: 'badge_area',
+    default_body_view: 'front',
+    default_position: { x: 95, y: 80 },
+    keywords: ['limb alert', 'no bp', 'no blood draw', 'lymphedema', 'av fistula protect'],
+    is_status_badge: true,
+    badge_color: '#eab308', // yellow
+    badge_icon: 'limb_alert',
+  },
+  {
+    type: 'difficult_iv_access',
+    display_name: 'Difficult IV Access',
+    category: 'critical',
+    default_body_region: 'badge_area',
+    default_body_view: 'front',
+    default_position: { x: 95, y: 90 },
+    keywords: ['difficult iv', 'hard stick', 'difficult access', 'poor veins', 'dva', 'difficult vascular access'],
+    is_status_badge: true,
+    badge_color: '#f97316', // orange - matches difficult airway
+    badge_icon: 'difficult_iv',
+  },
+];
+
+// ============================================================================
+// VEIN ACCESS & PHLEBOTOMY
+// For tracking vein quality, access history, and equipment needs
+// ============================================================================
+
+const VEIN_ACCESS_TYPES: MarkerTypeDefinition[] = [
+  // Vein quality markers (anatomical - placed on arms)
+  {
+    type: 'blown_vein',
+    display_name: 'Blown Vein',
+    category: 'moderate',
+    default_body_region: 'left_arm',
+    default_body_view: 'front',
+    default_position: { x: 20, y: 45 },
+    keywords: ['blown vein', 'infiltrated', 'extravasation', 'failed iv'],
+  },
+  {
+    type: 'scarred_vein',
+    display_name: 'Scarred Vein',
+    category: 'moderate',
+    default_body_region: 'left_arm',
+    default_body_view: 'front',
+    default_position: { x: 20, y: 48 },
+    keywords: ['scarred vein', 'sclerosed', 'fibrotic vein', 'chemo vein', 'iv drug use'],
+  },
+  {
+    type: 'preferred_vein',
+    display_name: 'Preferred Access Site',
+    category: 'informational',
+    default_body_region: 'left_arm',
+    default_body_view: 'front',
+    default_position: { x: 20, y: 42 },
+    keywords: ['preferred vein', 'good vein', 'best access', 'use this vein', 'preferred site'],
+  },
+  {
+    type: 'avoid_access',
+    display_name: 'Avoid This Arm',
+    category: 'critical',
+    default_body_region: 'left_arm',
+    default_body_view: 'front',
+    default_position: { x: 15, y: 40 },
+    keywords: ['avoid arm', 'no access', 'mastectomy side', 'lymph node dissection', 'lymphedema arm', 'fistula arm', 'shunt arm'],
+  },
+  {
+    type: 'rolling_veins',
+    display_name: 'Rolling Veins',
+    category: 'moderate',
+    default_body_region: 'left_arm',
+    default_body_view: 'front',
+    default_position: { x: 20, y: 46 },
+    keywords: ['rolling veins', 'mobile veins', 'veins roll', 'slippery veins'],
+  },
+  {
+    type: 'fragile_veins',
+    display_name: 'Fragile Veins',
+    category: 'moderate',
+    default_body_region: 'left_arm',
+    default_body_view: 'front',
+    default_position: { x: 20, y: 44 },
+    keywords: ['fragile veins', 'elderly veins', 'thin veins', 'bruise easily', 'steroid skin'],
+  },
+  // Access equipment requirements (anatomical markers)
+  {
+    type: 'ultrasound_guided',
+    display_name: 'Ultrasound Guided Access Required',
+    category: 'critical',
+    default_body_region: 'left_arm',
+    default_body_view: 'front',
+    default_position: { x: 18, y: 43 },
+    keywords: ['ultrasound guided', 'us guided', 'ultrasound iv', 'blind stick failed', 'deep veins'],
+  },
+  {
+    type: 'vein_finder',
+    display_name: 'Vein Finder Recommended',
+    category: 'moderate',
+    default_body_region: 'left_arm',
+    default_body_view: 'front',
+    default_position: { x: 18, y: 45 },
+    keywords: ['vein finder', 'accuvein', 'vein light', 'nir', 'near infrared'],
+  },
+  {
+    type: 'small_gauge_needle',
+    display_name: 'Small Gauge Needle Required',
+    category: 'moderate',
+    default_body_region: 'left_arm',
+    default_body_view: 'front',
+    default_position: { x: 18, y: 47 },
+    keywords: ['small gauge', 'butterfly', 'pediatric needle', '23 gauge', '25 gauge', 'small veins'],
+  },
+  {
+    type: 'warm_compress_first',
+    display_name: 'Warm Compress First',
+    category: 'informational',
+    default_body_region: 'left_arm',
+    default_body_view: 'front',
+    default_position: { x: 18, y: 49 },
+    keywords: ['warm compress', 'heat pack', 'warm arm first', 'vasodilate'],
+  },
+  // Special access notes
+  {
+    type: 'hand_veins_only',
+    display_name: 'Hand Veins Only',
+    category: 'moderate',
+    default_body_region: 'left_hand',
+    default_body_view: 'front',
+    default_position: { x: 15, y: 60 },
+    keywords: ['hand veins', 'dorsal hand', 'hand only', 'no ac veins'],
+  },
+  {
+    type: 'foot_veins_backup',
+    display_name: 'Foot Veins (Backup)',
+    category: 'moderate',
+    default_body_region: 'left_foot',
+    default_body_view: 'front',
+    default_position: { x: 40, y: 95 },
+    keywords: ['foot veins', 'pedal veins', 'saphenous', 'foot access'],
+  },
+  {
+    type: 'external_jugular_backup',
+    display_name: 'External Jugular (Last Resort)',
+    category: 'critical',
+    default_body_region: 'neck',
+    default_body_view: 'front',
+    default_position: { x: 45, y: 15 },
+    keywords: ['ej', 'external jugular', 'neck access', 'ej access'],
+  },
+];
+
+// ============================================================================
 // COMBINE ALL TYPES
 // ============================================================================
 
@@ -883,6 +1279,7 @@ const NEUROLOGICAL_CONDITION_TYPES: MarkerTypeDefinition[] = [
  */
 export const MARKER_TYPE_LIBRARY: MarkerTypeDefinition[] = [
   ...VASCULAR_ACCESS_TYPES,
+  ...VEIN_ACCESS_TYPES,
   ...DRAINAGE_TUBE_TYPES,
   ...WOUND_SURGICAL_TYPES,
   ...ORTHOPEDIC_TYPES,
@@ -890,6 +1287,10 @@ export const MARKER_TYPE_LIBRARY: MarkerTypeDefinition[] = [
   ...IMPLANT_TYPES,
   ...CHRONIC_CONDITION_TYPES,
   ...NEUROLOGICAL_CONDITION_TYPES,
+  ...PRECAUTION_TYPES,
+  ...ISOLATION_TYPES,
+  ...CODE_STATUS_TYPES,
+  ...ALERT_TYPES,
 ];
 
 /**
@@ -900,6 +1301,11 @@ export const MARKER_TYPE_GROUPS: MarkerTypeGroup[] = [
     label: 'Vascular Access',
     category: 'moderate',
     types: VASCULAR_ACCESS_TYPES,
+  },
+  {
+    label: 'Vein Access & Phlebotomy',
+    category: 'moderate',
+    types: VEIN_ACCESS_TYPES,
   },
   {
     label: 'Drainage & Tubes',
@@ -936,7 +1342,41 @@ export const MARKER_TYPE_GROUPS: MarkerTypeGroup[] = [
     category: 'neurological',
     types: NEUROLOGICAL_CONDITION_TYPES,
   },
+  {
+    label: 'Precautions & Safety',
+    category: 'critical',
+    types: PRECAUTION_TYPES,
+  },
+  {
+    label: 'Isolation',
+    category: 'critical',
+    types: ISOLATION_TYPES,
+  },
+  {
+    label: 'Code Status',
+    category: 'critical',
+    types: CODE_STATUS_TYPES,
+  },
+  {
+    label: 'Alerts',
+    category: 'critical',
+    types: ALERT_TYPES,
+  },
 ];
+
+/**
+ * Get all status badge types (displayed around avatar, not on body)
+ */
+export function getStatusBadgeTypes(): MarkerTypeDefinition[] {
+  return MARKER_TYPE_LIBRARY.filter((t) => t.is_status_badge === true);
+}
+
+/**
+ * Get all anatomical marker types (displayed on body)
+ */
+export function getAnatomicalMarkerTypes(): MarkerTypeDefinition[] {
+  return MARKER_TYPE_LIBRARY.filter((t) => !t.is_status_badge);
+}
 
 /**
  * Find marker type definition by type ID
@@ -985,4 +1425,200 @@ export function calculateMarkerPosition(
 
   const adjustment = markerType.laterality_adjustments[laterality];
   return adjustment || markerType.default_position;
+}
+
+// ============================================================================
+// PRIORITY SCORING FOR THUMBNAIL DISPLAY
+// ============================================================================
+
+/**
+ * Priority weights for marker categories
+ * Higher = more important = displayed first in thumbnail
+ */
+const CATEGORY_PRIORITY_WEIGHTS: Record<string, number> = {
+  critical: 100,
+  neurological: 80,
+  monitoring: 60,
+  chronic: 50,
+  moderate: 40,
+  informational: 20,
+};
+
+/**
+ * Priority weights for specific marker types (overrides category)
+ * Acute conditions and life-threatening items get highest priority
+ */
+const MARKER_TYPE_PRIORITY_OVERRIDES: Record<string, number> = {
+  // Life-threatening / Code Status
+  code_dnr: 150,
+  code_dni: 150,
+  code_dnr_dni: 150,
+  code_comfort: 140,
+
+  // Critical Precautions
+  fall_risk: 120,
+  bleeding_precautions: 115,
+  aspiration_risk: 115,
+  seizure_precautions: 110,
+  npo: 100,
+
+  // Isolation (infection control)
+  isolation_airborne: 130,
+  isolation_droplet: 125,
+  isolation_contact: 120,
+  isolation_protective: 115,
+
+  // Allergies & Access Alerts
+  allergy_alert: 125,
+  allergy_latex: 120,
+  difficult_airway: 125,
+  difficult_iv_access: 120, // Important for phlebotomy - bring equipment
+
+  // Vein Access (for phlebotomy preparation)
+  ultrasound_guided: 100, // Bring the machine
+  avoid_access: 95, // Critical to know
+  scarred_vein: 60,
+  blown_vein: 55,
+  rolling_veins: 50,
+  fragile_veins: 50,
+  small_gauge_needle: 45,
+  vein_finder: 40,
+  preferred_vein: 35, // Helpful but not critical
+  warm_compress_first: 30,
+  hand_veins_only: 50,
+  foot_veins_backup: 40,
+  external_jugular_backup: 85,
+
+  // Critical devices (life-sustaining)
+  tracheostomy: 110,
+  central_line_subclavian: 105,
+  central_line_jugular: 105,
+  central_line_femoral: 105,
+  chest_tube: 105,
+
+  // Acute neuro
+  stroke: 95,
+  tbi: 95,
+  seizure_disorder: 90,
+
+  // Active monitoring
+  cgm: 75,
+  cardiac_monitor: 70,
+  insulin_pump: 70,
+};
+
+/**
+ * Priority bonus for markers with specific flags
+ */
+const PRIORITY_BONUSES = {
+  requires_attention: 50,
+  pending_confirmation: 25,
+  recent_24h: 15,
+  recent_12h: 25,
+  has_complications: 20,
+};
+
+/**
+ * Calculate priority score for a single marker
+ * @param marker The patient marker to score
+ * @param referenceTimes Optional reference times for recency scoring
+ * @returns Priority score (higher = more important)
+ */
+export function calculateMarkerPriority(
+  marker: {
+    marker_type: string;
+    category: string;
+    requires_attention?: boolean;
+    status?: string;
+    created_at?: string;
+    details?: { complications_watch?: string[] };
+  },
+  referenceTimes?: { now?: Date; threshold12h?: Date; threshold24h?: Date }
+): number {
+  let score = 0;
+
+  // Base score from category
+  score += CATEGORY_PRIORITY_WEIGHTS[marker.category] || 30;
+
+  // Type-specific override (additive, not replacement)
+  const typeOverride = MARKER_TYPE_PRIORITY_OVERRIDES[marker.marker_type];
+  if (typeOverride) {
+    score = Math.max(score, typeOverride);
+  }
+
+  // Bonus for attention-required markers
+  if (marker.requires_attention) {
+    score += PRIORITY_BONUSES.requires_attention;
+  }
+
+  // Bonus for pending confirmation (new discoveries)
+  if (marker.status === 'pending_confirmation') {
+    score += PRIORITY_BONUSES.pending_confirmation;
+  }
+
+  // Bonus for recent markers
+  if (marker.created_at && referenceTimes) {
+    const createdAt = new Date(marker.created_at);
+    if (referenceTimes.threshold12h && createdAt >= referenceTimes.threshold12h) {
+      score += PRIORITY_BONUSES.recent_12h;
+    } else if (referenceTimes.threshold24h && createdAt >= referenceTimes.threshold24h) {
+      score += PRIORITY_BONUSES.recent_24h;
+    }
+  }
+
+  // Bonus for markers with complications to watch
+  if (marker.details?.complications_watch?.length) {
+    score += PRIORITY_BONUSES.has_complications;
+  }
+
+  return score;
+}
+
+/**
+ * Get the top N priority markers for thumbnail display
+ * @param markers All patient markers
+ * @param limit Maximum number to return (default 6)
+ * @param filterBadges If true, excludes status badges (they're shown separately)
+ * @returns Sorted array of top priority markers
+ */
+export function getTopPriorityMarkers<T extends {
+  marker_type: string;
+  category: string;
+  requires_attention?: boolean;
+  status?: string;
+  is_active?: boolean;
+  created_at?: string;
+  details?: { complications_watch?: string[] };
+}>(
+  markers: T[],
+  limit: number = 6,
+  filterBadges: boolean = true
+): T[] {
+  const now = new Date();
+  const threshold12h = new Date(now.getTime() - 12 * 60 * 60 * 1000);
+  const threshold24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+  // Filter to active, non-rejected markers
+  let activeMarkers = markers.filter((m) =>
+    m.is_active !== false &&
+    m.status !== 'rejected'
+  );
+
+  // Optionally filter out status badges
+  if (filterBadges) {
+    activeMarkers = activeMarkers.filter((m) => {
+      const typeDef = getMarkerTypeDefinition(m.marker_type);
+      return !typeDef?.is_status_badge;
+    });
+  }
+
+  // Score and sort
+  const scored = activeMarkers.map((marker) => ({
+    marker,
+    score: calculateMarkerPriority(marker, { now, threshold12h, threshold24h }),
+  }));
+
+  scored.sort((a, b) => b.score - a.score);
+
+  return scored.slice(0, limit).map((s) => s.marker);
 }

@@ -845,6 +845,53 @@ Interactive SVG-based human body diagram for visualizing patient medical devices
 | **Chronic** | Green | CHF, COPD, diabetes, CKD |
 | **Neurological** | Orange | Stroke, Parkinson's, Alzheimer's, MS |
 
+### Status Badges (Displayed Around Avatar)
+
+Status badges are displayed around the avatar perimeter (not on the body):
+
+| Position | Badge Types |
+|----------|-------------|
+| **Top** | Code Status (Full Code, DNR, DNI, Comfort Care) |
+| **Left** | Precautions (Fall Risk, Aspiration, NPO, Seizure, Bleeding, Elopement) |
+| **Right** | Isolation (Contact, Droplet, Airborne, Protective) + Alerts (Allergies, Latex, Difficult Airway) |
+
+**Isolation Color Codes:**
+- Yellow = Contact (MRSA, VRE, C.diff)
+- Green = Droplet (Flu, RSV)
+- Blue = Airborne (TB, Measles, COVID)
+- Purple = Protective (Neutropenic)
+
+### Priority Scoring (AI-Ranked)
+
+Use `getTopPriorityMarkers()` to get the top N conditions for thumbnail display:
+
+```typescript
+import { getTopPriorityMarkers } from './components/patient-avatar';
+
+// Get top 6 conditions for thumbnail (excludes status badges)
+const topMarkers = getTopPriorityMarkers(markers, 6);
+```
+
+Priority weights:
+- DNR/DNI/Comfort Care: 140-150
+- Isolation (Airborne): 125-130
+- Fall Risk/Allergies: 115-125
+- Critical devices (Trach, Central Lines): 105-110
+- Neurological (Stroke, TBI): 95-105
+- Chronic conditions: 50-80
+
+### Auto-Population from Diagnoses
+
+Database triggers auto-create markers when conditions are added to `fhir_conditions` or `encounter_diagnoses` tables:
+
+```sql
+-- Bulk sync markers for a patient from their conditions
+SELECT * FROM sync_patient_markers_from_conditions('patient-uuid');
+-- Returns: { created_count, skipped_count, conditions_processed }
+```
+
+ICD-10 code patterns are mapped in `condition_marker_mappings` table.
+
 ### SmartScribe Integration
 
 When SmartScribe transcription completes, call `onSmartScribeComplete()` to auto-detect markers:
@@ -869,7 +916,7 @@ const result = await onSmartScribeComplete(
 ### Usage
 
 ```tsx
-import { PatientAvatar, AvatarThumbnail } from './components/patient-avatar';
+import { PatientAvatar, AvatarThumbnail, StatusBadgeRing } from './components/patient-avatar';
 
 // Compact thumbnail in patient list
 <AvatarThumbnail
@@ -877,7 +924,10 @@ import { PatientAvatar, AvatarThumbnail } from './components/patient-avatar';
   patientName="John Doe"
   skinTone="medium"
   genderPresentation="neutral"
-  markers={[]}
+  markers={patientMarkers}
+  allergyCount={3}  // Shows count on allergy badge
+  showChangesSince={new Date(Date.now() - 12 * 60 * 60 * 1000)}  // Highlight changes since 12h ago
+  onBadgeClick={(marker) => console.log('Badge clicked', marker)}
 />
 
 // Full avatar (starts compact, expands on click)
@@ -887,6 +937,31 @@ import { PatientAvatar, AvatarThumbnail } from './components/patient-avatar';
   initialMode="compact"  // or "expanded"
   editable={true}
 />
+
+// Standalone status badge ring (if needed separately)
+<StatusBadgeRing
+  markers={patientMarkers}
+  size="sm"  // sm, md, lg
+  allergyCount={3}
+  onBadgeClick={(marker) => handleBadgeClick(marker)}
+/>
+```
+
+### Time-Based Change Detection ("What's New")
+
+For shift handoff workflows, use `showChangesSince` to highlight recent changes:
+
+```tsx
+// Highlight markers created/updated in the last 12 hours
+const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
+
+<AvatarThumbnail
+  patientId={patient.id}
+  markers={markers}
+  showChangesSince={twelveHoursAgo}
+/>
+// Shows cyan "What's New" badge if any markers changed since that time
+// Markers are highlighted with glow effect
 ```
 
 ### Current Integrations
