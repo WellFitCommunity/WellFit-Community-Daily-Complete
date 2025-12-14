@@ -109,10 +109,9 @@ export function useSOCNotifications(
         icon: '/logo192.png',
         badge: '/logo192.png',
         tag: 'soc-alert',
-        renotify: true,
         requireInteraction: true,
         ...options,
-      });
+      } as NotificationOptions);
 
       // Auto-close after 10 seconds
       setTimeout(() => {

@@ -307,7 +307,8 @@ describe('AvatarThumbnail', () => {
       />
     );
 
-    const thumbnail = screen.getByRole('button');
+    // Use aria-label to target the wrapper button, not the marker buttons inside
+    const thumbnail = screen.getByRole('button', { name: /view.*avatar/i });
     fireEvent.click(thumbnail);
 
     expect(handleClick).toHaveBeenCalled();
@@ -335,8 +336,8 @@ describe('PatientAvatar (Integration)', () => {
       />
     );
 
-    // Click the thumbnail
-    const thumbnail = screen.getByRole('button');
+    // Click the thumbnail (use aria-label to avoid matching marker buttons)
+    const thumbnail = screen.getByRole('button', { name: /view.*avatar/i });
     fireEvent.click(thumbnail);
 
     // Should show expanded view

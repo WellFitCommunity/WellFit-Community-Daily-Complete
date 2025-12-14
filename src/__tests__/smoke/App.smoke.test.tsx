@@ -93,7 +93,7 @@ describe('App Smoke Tests', () => {
   });
 
   it('should have correct React version', () => {
-    expect(React.version).toMatch(/^18\./);
+    expect(React.version).toMatch(/^19\./);
   });
 
   it('should render BrowserRouter without crashing', () => {

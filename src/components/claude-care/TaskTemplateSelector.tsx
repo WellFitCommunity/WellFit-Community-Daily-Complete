@@ -29,7 +29,7 @@ const TaskTemplateSelector: React.FC<Props> = ({ role, templates, onSelect }) =>
       .join(' ');
   };
 
-  const getOutputFormatBadge = (format: string): JSX.Element => {
+  const getOutputFormatBadge = (format: string): React.ReactElement => {
     const colors: Record<string, string> = {
       narrative: 'bg-blue-100 text-blue-800',
       form: 'bg-green-100 text-green-800',

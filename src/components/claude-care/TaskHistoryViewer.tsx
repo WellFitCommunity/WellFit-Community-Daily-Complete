@@ -34,7 +34,7 @@ const TaskHistoryViewer: React.FC<Props> = ({ userId, history, limit = 20 }) => 
       .join(' ');
   };
 
-  const renderStars = (rating: number | undefined): JSX.Element => {
+  const renderStars = (rating: number | undefined): React.ReactElement => {
     if (!rating) {
       return <span className="text-gray-400 text-xs">Not rated</span>;
     }

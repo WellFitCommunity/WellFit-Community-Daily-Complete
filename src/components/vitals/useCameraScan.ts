@@ -20,8 +20,8 @@ export interface UseCameraScanResult {
   state: CameraScanState;
   startScanning: (vitalType: VitalType) => Promise<void>;
   stopScanning: () => void;
-  videoRef: React.RefObject<HTMLVideoElement>;
-  canvasRef: React.RefObject<HTMLCanvasElement>;
+  videoRef: React.RefObject<HTMLVideoElement | null>;
+  canvasRef: React.RefObject<HTMLCanvasElement | null>;
 }
 
 // Debounce threshold - readings must be stable for this many consecutive frames

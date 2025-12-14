@@ -50,7 +50,7 @@ beforeAll(() => {
 });
 
 afterAll(() => {
-  window.location = originalLocation;
+  (window as { location: Location }).location = originalLocation;
 });
 
 // ============================================================================
