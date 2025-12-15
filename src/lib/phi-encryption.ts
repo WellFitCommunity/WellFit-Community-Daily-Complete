@@ -7,55 +7,16 @@ import { supabase } from './supabaseClient';
  * Set the PHI encryption key for the current session
  * This should be called once at app startup with a secure key
  */
-export async function setPHIEncryptionKey(key?: string): Promise<void> {
-  // Use environment variable or provided key
-  // PHI_ENCRYPTION_KEY is server-side only (not exposed to client)
-  const encryptionKey = key || process.env.PHI_ENCRYPTION_KEY || generateSessionKey();
-
-  try {
-    // Set the encryption key for this session
-    await supabase.rpc('set_config', {
-      setting_name: 'app.phi_encryption_key',
-      new_value: encryptionKey,
-      is_local: true
-    });
-
-    // HIPAA COMPLIANCE: Log encryption key initialization to security_events
-    await logSecurityEvent({
-      event_type: 'ENCRYPTION_KEY_INITIALIZED',
-      severity: 'LOW',
-      description: 'PHI encryption key successfully initialized for session',
-      metadata: {
-        key_source: key ? 'provided' : process.env.PHI_ENCRYPTION_KEY ? 'environment' : 'generated',
-        timestamp: new Date().toISOString(),
-        session_id: crypto.randomUUID()
-      }
-    });
-  } catch (error) {
-    // Log encryption failure as HIGH severity security event
-    await logSecurityEvent({
-      event_type: 'ENCRYPTION_KEY_FAILURE',
-      severity: 'HIGH',
-      description: `PHI encryption key initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      metadata: {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString()
-      }
-    }).catch(() => {}); // Don't throw on logging failure
-
-    throw new Error('PHI encryption setup failed');
-  }
-}
-
-/**
- * Generate a session-specific encryption key
- * In production, this should be loaded from secure environment variables
- */
-function generateSessionKey(): string {
-  // For development - in production use a proper key management system
-  const baseKey = process.env.PHI_ENCRYPTION_KEY || 'wellfit-phi-key-2025';
-  const sessionId = Math.random().toString(36).substring(2, 15);
-  return `${baseKey}-${sessionId}`;
+export async function setPHIEncryptionKey(_key?: string): Promise<void> {
+  // NOTE: PostgreSQL's set_config() cannot be called via Supabase REST API.
+  // Each REST API call creates a new database session, so session-level configs
+  // don't persist anyway. PHI encryption is handled server-side via:
+  // 1. Edge Functions that use direct database connections
+  // 2. Database triggers with encryption keys stored in vault
+  //
+  // This function is kept for API compatibility but is now a no-op on the client.
+  // The actual encryption happens via database triggers (encrypt_phi_trigger).
+  return;
 }
 
 /**
@@ -130,40 +91,13 @@ export const PHIUtils = {
 };
 
 /**
- * HIPAA COMPLIANCE: Log security events related to encryption
- */
-async function logSecurityEvent(event: {
-  event_type: string;
-  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-  description: string;
-  metadata?: Record<string, any>;
-}): Promise<void> {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-
-    await supabase.from('security_events').insert({
-      event_type: event.event_type,
-      severity: event.severity,
-      actor_user_id: user?.id || null,
-      description: event.description,
-      metadata: event.metadata || {},
-      requires_investigation: event.severity === 'HIGH' || event.severity === 'CRITICAL'
-    });
-  } catch (error) {
-    // Don't throw - audit logging failure should not break functionality
-    // Error is silently ignored to prevent blocking application functionality
-  }
-}
-
-/**
  * Initialize PHI encryption on app startup
  * Call this in your main App component
+ *
+ * NOTE: This is now a no-op since PHI encryption is handled server-side.
+ * Kept for API compatibility with existing code that calls it.
  */
 export async function initializePHIEncryption(): Promise<void> {
-  try {
-    await setPHIEncryptionKey();
-  } catch (error) {
-    // In production, you might want to prevent app startup if encryption fails
-    // Error is caught to allow graceful degradation
-  }
+  // No-op - encryption handled by database triggers
+  return;
 }

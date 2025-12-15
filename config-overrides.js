@@ -9,7 +9,47 @@
  * Browser imports just need empty polyfills to compile.
  */
 
-module.exports = function override(config) {
+/**
+ * Override dev server to fix webpack-dev-server 5.x compatibility.
+ * react-scripts 5.0.1 uses deprecated options:
+ * - onAfterSetupMiddleware/onBeforeSetupMiddleware -> setupMiddlewares
+ */
+function overrideDevServer(configFunction) {
+  return function (proxy, allowedHost) {
+    const config = configFunction(proxy, allowedHost);
+
+    // Extract and remove all deprecated options
+    const {
+      onBeforeSetupMiddleware,
+      onAfterSetupMiddleware,
+      https,
+      ...cleanConfig
+    } = config;
+
+    // Convert to new setupMiddlewares API
+    cleanConfig.setupMiddlewares = (middlewares, devServer) => {
+      if (onBeforeSetupMiddleware) {
+        onBeforeSetupMiddleware(devServer);
+      }
+      if (onAfterSetupMiddleware) {
+        onAfterSetupMiddleware(devServer);
+      }
+      return middlewares;
+    };
+
+    // Convert https option to server option (webpack-dev-server 5.x)
+    if (https) {
+      cleanConfig.server = {
+        type: 'https',
+        options: typeof https === 'object' ? https : {},
+      };
+    }
+
+    return cleanConfig;
+  };
+}
+
+function override(config) {
   // Add fallbacks for Node.js modules (both node: protocol and standard)
   config.resolve.fallback = {
     ...config.resolve.fallback,
@@ -70,4 +110,9 @@ module.exports = function override(config) {
   };
 
   return config;
+}
+
+module.exports = {
+  webpack: override,
+  devServer: overrideDevServer,
 };
