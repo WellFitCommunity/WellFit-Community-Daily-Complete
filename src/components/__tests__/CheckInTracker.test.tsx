@@ -14,17 +14,17 @@ const renderWithRouter = (ui: React.ReactElement) => {
 };
 
 // Mock scrollIntoView which is not available in jsdom
-Element.prototype.scrollIntoView = jest.fn();
+Element.prototype.scrollIntoView = vi.fn();
 
 // Mock dependencies
-jest.mock('../../contexts/AuthContext', () => ({
-  useSupabaseClient: jest.fn(),
-  useUser: jest.fn(),
+vi.mock('../../contexts/AuthContext', () => ({
+  useSupabaseClient: vi.fn(),
+  useUser: vi.fn(),
 }));
 
 describe('CheckInTracker - Senior Facing Component', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     const mockUser = {
       id: 'senior-user-123',
@@ -33,23 +33,23 @@ describe('CheckInTracker - Senior Facing Component', () => {
 
     // Mock supabase with functions.invoke for edge function calls
     const mockSupabase = {
-      from: jest.fn().mockReturnThis(),
-      select: jest.fn().mockReturnThis(),
-      insert: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      order: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({
+      from: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      insert: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
         data: { emergency_contact_phone: '+15551234567' },
         error: null
       }),
       functions: {
-        invoke: jest.fn().mockResolvedValue({ data: null, error: null })
+        invoke: vi.fn().mockResolvedValue({ data: null, error: null })
       }
     };
 
-    (useUser as jest.Mock).mockReturnValue(mockUser);
-    (useSupabaseClient as jest.Mock).mockReturnValue(mockSupabase);
+    (useUser as ReturnType<typeof vi.fn>).mockReturnValue(mockUser);
+    (useSupabaseClient as ReturnType<typeof vi.fn>).mockReturnValue(mockSupabase);
   });
 
   describe('Component Rendering', () => {
@@ -139,7 +139,7 @@ describe('CheckInTracker - Senior Facing Component', () => {
 
   describe('Unauthenticated User', () => {
     it('should show local save message when user is not logged in', async () => {
-      (useUser as jest.Mock).mockReturnValue(null);
+      (useUser as ReturnType<typeof vi.fn>).mockReturnValue(null);
 
       renderWithRouter(<CheckInTracker />);
 

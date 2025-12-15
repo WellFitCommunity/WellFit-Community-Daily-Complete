@@ -330,7 +330,7 @@ Provide a 2-3 sentence clinical summary suitable for the care team. Focus on wha
   ): Promise<void> {
     try {
       // Check if Twilio is configured
-      const twilioConfigured = process.env.REACT_APP_TWILIO_ENABLED === 'true';
+      const twilioConfigured = import.meta.env.VITE_TWILIO_ENABLED === 'true';
 
       if (!twilioConfigured) {
 

@@ -107,7 +107,7 @@ export interface PillLabelComparison {
 
 const CONFIG = {
   // Claude API Configuration
-  MODEL: process.env.REACT_APP_CLAUDE_DEFAULT_MODEL || 'claude-haiku-4-5-20250919', // Haiku 4.5 for fast pill identification
+  MODEL: import.meta.env.VITE_CLAUDE_DEFAULT_MODEL || 'claude-haiku-4-5-20250919', // Haiku 4.5 for fast pill identification
   MAX_TOKENS: 4000,
 
   // Image constraints
@@ -116,7 +116,7 @@ const CONFIG = {
 
   // NIH Pillbox API (optional - requires signup at http://pillbox.nlm.nih.gov/signup.html)
   PILLBOX_API_ENDPOINT: 'https://rximage.nlm.nih.gov/api/rximage/1/rxnav',
-  PILLBOX_API_KEY: process.env.REACT_APP_PILLBOX_API_KEY,
+  PILLBOX_API_KEY: import.meta.env.VITE_PILLBOX_API_KEY,
 
   // Match thresholds
   HIGH_CONFIDENCE_THRESHOLD: 0.85,
@@ -137,7 +137,7 @@ export class PillIdentifierService {
   private apiKey: string | null = null;
 
   constructor(apiKey?: string) {
-    this.apiKey = apiKey || process.env.REACT_APP_ANTHROPIC_API_KEY || null;
+    this.apiKey = apiKey || import.meta.env.VITE_ANTHROPIC_API_KEY || null;
 
     if (this.apiKey) {
       loadAnthropicSDK().then((Anthropic: any) => {

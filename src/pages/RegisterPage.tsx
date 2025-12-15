@@ -19,9 +19,9 @@ type FormState = {
 // Use the dedicated register URL if available, otherwise construct from Supabase URL
 // Correct format: https://yourproject.supabase.co/functions/v1/register
 const REGISTER_URL =
-  process.env.REACT_APP_SUPABASE_REGISTER_URL ||
-  (process.env.REACT_APP_SUPABASE_FUNCTIONS_URL && `${process.env.REACT_APP_SUPABASE_FUNCTIONS_URL}/register`) ||
-  `${process.env.REACT_APP_SB_URL || process.env.REACT_APP_SUPABASE_URL || ''}/functions/v1/register`;
+  import.meta.env.VITE_SUPABASE_REGISTER_URL ||
+  (import.meta.env.VITE_SUPABASE_FUNCTIONS_URL && `${import.meta.env.VITE_SUPABASE_FUNCTIONS_URL}/register`) ||
+  `${import.meta.env.VITE_SB_URL || import.meta.env.VITE_SUPABASE_URL || ''}/functions/v1/register`;
 
 const PUBLIC_ROLES = [
   'Patient',

@@ -11,20 +11,20 @@ import { SuperAdminService } from '../superAdminService';
 import { supabase } from '../../lib/supabaseClient';
 
 // Mock Supabase
-jest.mock('../../lib/supabaseClient', () => ({
+vi.mock('../../lib/supabaseClient', () => ({
   supabase: {
-    from: jest.fn(),
+    from: vi.fn(),
     auth: {
-      getUser: jest.fn()
+      getUser: vi.fn()
     }
   }
 }));
 
 // Mock audit logger
-jest.mock('../auditLogger', () => ({
+vi.mock('../auditLogger', () => ({
   auditLogger: {
-    error: jest.fn(),
-    log: jest.fn()
+    error: vi.fn(),
+    log: vi.fn()
   }
 }));
 
@@ -41,13 +41,13 @@ describe('SuperAdminService - Tenant Code Management', () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Mock getCurrentSuperAdmin
-    (supabase.from as jest.Mock).mockReturnValue({
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({
+    (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
         data: {
           id: mockSuperAdmin.id,
           user_id: mockSuperAdmin.userId,
@@ -62,18 +62,18 @@ describe('SuperAdminService - Tenant Code Management', () => {
       })
     });
 
-    (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+    (supabase.auth.getUser as ReturnType<typeof vi.fn>).mockResolvedValue({
       data: { user: { id: mockSuperAdmin.userId } }
     });
   });
 
   describe('Format Validation', () => {
     test('should accept valid tenant code: MH-6702', async () => {
-      const mockUpdate = jest.fn().mockResolvedValue({ error: null });
-      (supabase.from as jest.Mock).mockReturnValueOnce({
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
+      const mockUpdate = vi.fn().mockResolvedValue({ error: null });
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
           data: {
             id: mockSuperAdmin.id,
             user_id: mockSuperAdmin.userId,
@@ -85,7 +85,7 @@ describe('SuperAdminService - Tenant Code Management', () => {
           error: null
         })
       }).mockReturnValueOnce({
-        update: jest.fn().mockReturnThis(),
+        update: vi.fn().mockReturnThis(),
         eq: mockUpdate
       });
 
@@ -99,16 +99,16 @@ describe('SuperAdminService - Tenant Code Management', () => {
     });
 
     test('should accept valid tenant code: PH-1234', async () => {
-      const mockUpdate = jest.fn().mockResolvedValue({ error: null });
-      (supabase.from as jest.Mock).mockReturnValueOnce({
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
+      const mockUpdate = vi.fn().mockResolvedValue({ error: null });
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
           data: mockSuperAdmin,
           error: null
         })
       }).mockReturnValueOnce({
-        update: jest.fn().mockReturnThis(),
+        update: vi.fn().mockReturnThis(),
         eq: mockUpdate
       });
 
@@ -122,16 +122,16 @@ describe('SuperAdminService - Tenant Code Management', () => {
     });
 
     test('should accept 1-letter prefix: A-123456', async () => {
-      const mockUpdate = jest.fn().mockResolvedValue({ error: null });
-      (supabase.from as jest.Mock).mockReturnValueOnce({
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
+      const mockUpdate = vi.fn().mockResolvedValue({ error: null });
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
           data: mockSuperAdmin,
           error: null
         })
       }).mockReturnValueOnce({
-        update: jest.fn().mockReturnThis(),
+        update: vi.fn().mockReturnThis(),
         eq: mockUpdate
       });
 
@@ -145,16 +145,16 @@ describe('SuperAdminService - Tenant Code Management', () => {
     });
 
     test('should accept 4-letter prefix: ABCD-1234', async () => {
-      const mockUpdate = jest.fn().mockResolvedValue({ error: null });
-      (supabase.from as jest.Mock).mockReturnValueOnce({
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
+      const mockUpdate = vi.fn().mockResolvedValue({ error: null });
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
           data: mockSuperAdmin,
           error: null
         })
       }).mockReturnValueOnce({
-        update: jest.fn().mockReturnThis(),
+        update: vi.fn().mockReturnThis(),
         eq: mockUpdate
       });
 
@@ -168,10 +168,10 @@ describe('SuperAdminService - Tenant Code Management', () => {
     });
 
     test('should reject code without hyphen: MH6702', async () => {
-      (supabase.from as jest.Mock).mockReturnValueOnce({
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
           data: mockSuperAdmin,
           error: null
         })
@@ -187,16 +187,16 @@ describe('SuperAdminService - Tenant Code Management', () => {
     });
 
     test('should accept lowercase prefix (auto-uppercased): mh-6702', async () => {
-      const mockUpdate = jest.fn().mockResolvedValue({ error: null });
-      (supabase.from as jest.Mock).mockReturnValueOnce({
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
+      const mockUpdate = vi.fn().mockResolvedValue({ error: null });
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
           data: mockSuperAdmin,
           error: null
         })
       }).mockReturnValueOnce({
-        update: jest.fn().mockReturnThis(),
+        update: vi.fn().mockReturnThis(),
         eq: mockUpdate
       });
 
@@ -211,10 +211,10 @@ describe('SuperAdminService - Tenant Code Management', () => {
     });
 
     test('should reject letters in number: MH-67A2', async () => {
-      (supabase.from as jest.Mock).mockReturnValueOnce({
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
           data: mockSuperAdmin,
           error: null
         })
@@ -230,10 +230,10 @@ describe('SuperAdminService - Tenant Code Management', () => {
     });
 
     test('should reject prefix too long: ABCDE-1234', async () => {
-      (supabase.from as jest.Mock).mockReturnValueOnce({
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
           data: mockSuperAdmin,
           error: null
         })
@@ -249,10 +249,10 @@ describe('SuperAdminService - Tenant Code Management', () => {
     });
 
     test('should reject number too short: MH-123', async () => {
-      (supabase.from as jest.Mock).mockReturnValueOnce({
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
           data: mockSuperAdmin,
           error: null
         })
@@ -268,10 +268,10 @@ describe('SuperAdminService - Tenant Code Management', () => {
     });
 
     test('should reject number too long: MH-1234567', async () => {
-      (supabase.from as jest.Mock).mockReturnValueOnce({
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
           data: mockSuperAdmin,
           error: null
         })
@@ -289,16 +289,16 @@ describe('SuperAdminService - Tenant Code Management', () => {
 
   describe('Unique Constraint Handling', () => {
     test('should handle duplicate tenant code error', async () => {
-      (supabase.from as jest.Mock).mockReturnValueOnce({
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
           data: mockSuperAdmin,
           error: null
         })
       }).mockReturnValueOnce({
-        update: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockResolvedValue({
+        update: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockResolvedValue({
           error: { code: '23505', message: 'duplicate key value' }
         })
       });
@@ -315,13 +315,13 @@ describe('SuperAdminService - Tenant Code Management', () => {
 
   describe('Auto-Uppercase Conversion', () => {
     test('should convert lowercase to uppercase', async () => {
-      const mockUpdate = jest.fn().mockReturnThis();
-      const mockEq = jest.fn().mockResolvedValue({ error: null });
+      const mockUpdate = vi.fn().mockReturnThis();
+      const mockEq = vi.fn().mockResolvedValue({ error: null });
 
-      (supabase.from as jest.Mock).mockReturnValueOnce({
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
           data: mockSuperAdmin,
           error: null
         })
@@ -347,10 +347,10 @@ describe('SuperAdminService - Tenant Code Management', () => {
 
   describe('Authorization', () => {
     test('should reject if not super admin', async () => {
-      (supabase.from as jest.Mock).mockReturnValueOnce({
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
           data: null,
           error: null
         })
@@ -368,10 +368,10 @@ describe('SuperAdminService - Tenant Code Management', () => {
 
   describe('SQL Injection Protection', () => {
     test('should handle SQL injection attempts in tenant code', async () => {
-      (supabase.from as jest.Mock).mockReturnValueOnce({
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
           data: mockSuperAdmin,
           error: null
         })
@@ -387,10 +387,10 @@ describe('SuperAdminService - Tenant Code Management', () => {
     });
 
     test('should handle XSS attempts in tenant code', async () => {
-      (supabase.from as jest.Mock).mockReturnValueOnce({
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
           data: mockSuperAdmin,
           error: null
         })
@@ -408,10 +408,10 @@ describe('SuperAdminService - Tenant Code Management', () => {
 
   describe('Edge Cases', () => {
     test('should handle empty string', async () => {
-      (supabase.from as jest.Mock).mockReturnValueOnce({
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
           data: mockSuperAdmin,
           error: null
         })
@@ -427,10 +427,10 @@ describe('SuperAdminService - Tenant Code Management', () => {
     });
 
     test('should handle whitespace', async () => {
-      (supabase.from as jest.Mock).mockReturnValueOnce({
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
           data: mockSuperAdmin,
           error: null
         })
@@ -446,10 +446,10 @@ describe('SuperAdminService - Tenant Code Management', () => {
     });
 
     test('should handle special characters', async () => {
-      (supabase.from as jest.Mock).mockReturnValueOnce({
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
           data: mockSuperAdmin,
           error: null
         })

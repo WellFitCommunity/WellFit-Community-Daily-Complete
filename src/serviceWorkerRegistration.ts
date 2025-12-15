@@ -8,7 +8,7 @@ type Config = {
 
 // ---------- Configurable switches ----------
 const ENV_ENABLE =
-  String(process.env.REACT_APP_ENABLE_SW ?? 'true').toLowerCase() !== 'false';
+  String(import.meta.env.VITE_ENABLE_SW ?? 'true').toLowerCase() !== 'false';
 
 const PUBLIC_URL = process.env.PUBLIC_URL || '';
 

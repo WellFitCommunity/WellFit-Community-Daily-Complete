@@ -1,3 +1,4 @@
+import { type Mock } from 'vitest';
 // src/components/dashboard/__tests__/SeniorHealthDashboard.test.tsx
 // Tests for the senior-facing health dashboard component
 /* eslint-disable testing-library/no-container, testing-library/no-node-access */
@@ -10,72 +11,72 @@ import { useNavigate } from 'react-router-dom';
 import { useBranding } from '../../../BrandingContext';
 
 // Mock dependencies
-jest.mock('react-router-dom', () => ({
-  useNavigate: jest.fn(),
+vi.mock('react-router-dom', () => ({
+  useNavigate: vi.fn(),
 }));
 
-jest.mock('../../../BrandingContext', () => ({
-  useBranding: jest.fn(),
+vi.mock('../../../BrandingContext', () => ({
+  useBranding: vi.fn(),
 }));
 
 // Mock child components
-jest.mock('../../CheckInTracker', () => {
+vi.mock('../../CheckInTracker', () => {
   return function MockCheckInTracker() {
     return <div data-testid="check-in-tracker">Check In Tracker</div>;
   };
 });
 
-jest.mock('../../HealthHistory', () => {
+vi.mock('../../HealthHistory', () => {
   return function MockHealthHistory() {
     return <div data-testid="health-history">Health History</div>;
   };
 });
 
-jest.mock('../DashMealOfTheDay', () => {
+vi.mock('../DashMealOfTheDay', () => {
   return function MockDashMealOfTheDay() {
     return <div data-testid="meal-of-day">Meal of the Day</div>;
   };
 });
 
-jest.mock('../WeatherWidget', () => {
+vi.mock('../WeatherWidget', () => {
   return function MockWeatherWidget() {
     return <div data-testid="weather-widget">Weather Widget</div>;
   };
 });
 
-jest.mock('../DailyScripture', () => {
+vi.mock('../DailyScripture', () => {
   return function MockDailyScripture() {
     return <div data-testid="daily-scripture">Daily Scripture</div>;
   };
 });
 
-jest.mock('../TechTip', () => {
+vi.mock('../TechTip', () => {
   return function MockTechTip() {
     return <div data-testid="tech-tip">Tech Tip</div>;
   };
 });
 
-jest.mock('../../features/EmergencyContact', () => {
+vi.mock('../../features/EmergencyContact', () => {
   return function MockEmergencyContact() {
     return <div data-testid="emergency-contact">Emergency Contact</div>;
   };
 });
 
-jest.mock('../PositiveAffirmations', () => {
+vi.mock('../PositiveAffirmations', () => {
   return function MockPositiveAffirmations() {
     return <div data-testid="positive-affirmations">Positive Affirmations</div>;
   };
 });
 
 describe('SeniorHealthDashboard - Senior Facing Component', () => {
-  let mockNavigate: jest.Mock;
+  let mockNavigate: Mock;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
-    mockNavigate = jest.fn();
-    (useNavigate as jest.Mock).mockReturnValue(mockNavigate);
-    (useBranding as jest.Mock).mockReturnValue({
+    mockNavigate = vi.fn();
+    (useNavigate as ReturnType<typeof vi.fn>).mockReturnValue(mockNavigate);
+    (useBranding as ReturnType<typeof vi.fn>).mockReturnValue({
       branding: {
         gradient: 'linear-gradient(to bottom, #E0F2FE, #FFFFFF)',
         primaryColor: '#4F46E5',
@@ -300,7 +301,7 @@ describe('SeniorHealthDashboard - Senior Facing Component', () => {
     });
 
     it('should handle missing branding gracefully', () => {
-      (useBranding as jest.Mock).mockReturnValue({
+      (useBranding as ReturnType<typeof vi.fn>).mockReturnValue({
         branding: {},
       });
 

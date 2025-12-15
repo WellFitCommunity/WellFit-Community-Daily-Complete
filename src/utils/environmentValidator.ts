@@ -34,24 +34,24 @@ export function validateCriticalEnvironment(): ValidationResult {
   // CRITICAL: Supabase Configuration
   // ============================================================================
 
-  if (!process.env.REACT_APP_SUPABASE_URL) {
-    errors.push('CRITICAL: REACT_APP_SUPABASE_URL is not set - database connection will fail');
+  if (!import.meta.env.VITE_SUPABASE_URL) {
+    errors.push('CRITICAL: VITE_SUPABASE_URL is not set - database connection will fail');
   }
 
-  if (!process.env.REACT_APP_SUPABASE_ANON_KEY) {
-    errors.push('CRITICAL: REACT_APP_SUPABASE_ANON_KEY is not set - authentication will fail');
+  if (!import.meta.env.VITE_SUPABASE_ANON_KEY) {
+    errors.push('CRITICAL: VITE_SUPABASE_ANON_KEY is not set - authentication will fail');
   }
 
   // ============================================================================
   // IMPORTANT: Third-Party Services
   // ============================================================================
 
-  if (!process.env.REACT_APP_HCAPTCHA_SITE_KEY) {
-    warnings.push('⚠️ REACT_APP_HCAPTCHA_SITE_KEY is not set - bot protection disabled');
+  if (!import.meta.env.VITE_HCAPTCHA_SITE_KEY) {
+    warnings.push('⚠️ VITE_HCAPTCHA_SITE_KEY is not set - bot protection disabled');
   }
 
-  if (!process.env.REACT_APP_ANTHROPIC_API_KEY && isProduction) {
-    warnings.push('⚠️ REACT_APP_ANTHROPIC_API_KEY is not set - Claude AI features disabled');
+  if (!import.meta.env.VITE_ANTHROPIC_API_KEY && isProduction) {
+    warnings.push('⚠️ VITE_ANTHROPIC_API_KEY is not set - Claude AI features disabled');
   }
 
   // ============================================================================
@@ -60,8 +60,8 @@ export function validateCriticalEnvironment(): ValidationResult {
 
   if (isProduction) {
     // Verify HTTPS in production
-    if (process.env.REACT_APP_SUPABASE_URL && !process.env.REACT_APP_SUPABASE_URL.startsWith('https://')) {
-      errors.push('CRITICAL: REACT_APP_SUPABASE_URL must use HTTPS in production');
+    if (import.meta.env.VITE_SUPABASE_URL && !import.meta.env.VITE_SUPABASE_URL.startsWith('https://')) {
+      errors.push('CRITICAL: VITE_SUPABASE_URL must use HTTPS in production');
     }
   }
 

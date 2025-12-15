@@ -59,7 +59,7 @@ export class SecurityAlertNotifier {
       type: 'email',
       enabled: true,
       config: {
-        recipientEmails: process.env.REACT_APP_SECURITY_ALERT_EMAILS?.split(',') || [
+        recipientEmails: import.meta.env.VITE_SECURITY_ALERT_EMAILS?.split(',') || [
           'info@thewellfitcommunity.org',
         ],
       },
@@ -68,9 +68,9 @@ export class SecurityAlertNotifier {
     // SMS channel (via Supabase Edge Function send-sms)
     this.channels.set('sms', {
       type: 'sms',
-      enabled: !!process.env.REACT_APP_SECURITY_ALERT_PHONES,
+      enabled: !!import.meta.env.VITE_SECURITY_ALERT_PHONES,
       config: {
-        recipientPhones: process.env.REACT_APP_SECURITY_ALERT_PHONES?.split(',') || [],
+        recipientPhones: import.meta.env.VITE_SECURITY_ALERT_PHONES?.split(',') || [],
       },
     });
 

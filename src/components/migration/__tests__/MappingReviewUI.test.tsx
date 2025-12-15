@@ -135,13 +135,13 @@ describe('MappingReviewUI', () => {
     suggestions: mockSuggestions,
     similarPastMigrations: mockSimilarMigrations,
     estimatedAccuracy: 0.82,
-    onConfirm: jest.fn(),
-    onCancel: jest.fn(),
+    onConfirm: vi.fn(),
+    onCancel: vi.fn(),
     migrationService: mockMigrationService
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Rendering', () => {
@@ -282,7 +282,7 @@ describe('MappingReviewUI', () => {
 
     it('should call onConfirm with mappings when confirmed', async () => {
       const user = userEvent.setup();
-      const onConfirm = jest.fn();
+      const onConfirm = vi.fn();
       render(<MappingReviewUI {...defaultProps} onConfirm={onConfirm} />);
 
       // Confirm without changes
@@ -310,7 +310,7 @@ describe('MappingReviewUI', () => {
 
     it('should not include skipped mappings in confirmation', async () => {
       const user = userEvent.setup();
-      const onConfirm = jest.fn();
+      const onConfirm = vi.fn();
       render(<MappingReviewUI {...defaultProps} onConfirm={onConfirm} />);
 
       // Skip first mapping
@@ -424,7 +424,7 @@ describe('MappingReviewUI', () => {
   describe('Confirmation', () => {
     it('should call onConfirm with all non-skipped mappings', async () => {
       const user = userEvent.setup();
-      const onConfirm = jest.fn();
+      const onConfirm = vi.fn();
       render(<MappingReviewUI {...defaultProps} onConfirm={onConfirm} />);
 
       const confirmButton = screen.getAllByText('Confirm & Import')[0];
@@ -436,7 +436,7 @@ describe('MappingReviewUI', () => {
 
     it('should call onCancel when clicking Cancel', async () => {
       const user = userEvent.setup();
-      const onCancel = jest.fn();
+      const onCancel = vi.fn();
       render(<MappingReviewUI {...defaultProps} onCancel={onCancel} />);
 
       const cancelButton = screen.getAllByText('Cancel')[0];

@@ -100,8 +100,8 @@ export async function decryptPHI(
  * - Key Management Service (AWS KMS, Azure Key Vault, etc.)
  */
 async function getMasterEncryptionKey(): Promise<CryptoKey> {
-  // Check for environment variable first (Create React App uses REACT_APP_ prefix)
-  const keyMaterial = process.env.REACT_APP_PHI_ENCRYPTION_KEY;
+  // Check for environment variable first (Create React App uses VITE_ prefix)
+  const keyMaterial = import.meta.env.VITE_PHI_ENCRYPTION_KEY;
 
   if (!keyMaterial) {
     // FAIL HARD in production - this is a HIPAA compliance requirement
@@ -109,13 +109,13 @@ async function getMasterEncryptionKey(): Promise<CryptoKey> {
       throw new Error(
         'CRITICAL SECURITY ERROR: PHI_ENCRYPTION_KEY is not set in production environment. ' +
         'This is a HIPAA compliance violation. Application cannot start without encryption keys. ' +
-        'Set REACT_APP_PHI_ENCRYPTION_KEY in your environment variables.'
+        'Set VITE_PHI_ENCRYPTION_KEY in your environment variables.'
       );
     }
 
     // In development, allow temporary key but this is tracked for monitoring
     // Warning: PHI_ENCRYPTION_KEY not set - using temporary key for DEVELOPMENT ONLY
-    // THIS IS NOT SECURE - Set REACT_APP_PHI_ENCRYPTION_KEY before deploying to production
+    // THIS IS NOT SECURE - Set VITE_PHI_ENCRYPTION_KEY before deploying to production
 
     // Generate temporary key (DEVELOPMENT ONLY)
     return await crypto.subtle.generateKey(

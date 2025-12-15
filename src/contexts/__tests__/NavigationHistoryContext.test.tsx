@@ -7,17 +7,17 @@ import { NavigationHistoryProvider, useNavigationHistory } from '../NavigationHi
 type NavigationHistoryType = ReturnType<typeof useNavigationHistory>;
 
 // Mock AuthContext - provide the user object that NavigationHistoryContext needs
-jest.mock('../AuthContext', () => ({
+vi.mock('../AuthContext', () => ({
   useAuth: () => ({
     user: { id: 'test-user-id', email: 'test@example.com' },
     session: null,
     loading: false,
     isLoading: false,
-    signIn: jest.fn(),
-    signUp: jest.fn(),
-    signOut: jest.fn(),
-    resetPassword: jest.fn(),
-    updatePassword: jest.fn(),
+    signIn: vi.fn(),
+    signUp: vi.fn(),
+    signOut: vi.fn(),
+    resetPassword: vi.fn(),
+    updatePassword: vi.fn(),
     profile: null,
     roleCode: null,
     isSenior: false,
@@ -76,7 +76,7 @@ const TestWrapper: React.FC<{ initialEntries?: string[]; children: React.ReactNo
 
 describe('NavigationHistoryContext', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     localStorage.clear();
   });
 

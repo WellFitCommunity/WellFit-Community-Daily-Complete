@@ -10,38 +10,38 @@ import { supabase } from '../../../lib/supabaseClient';
 import bcrypt from 'bcryptjs';
 
 // Mock dependencies
-jest.mock('../../../lib/supabaseClient', () => ({
+vi.mock('../../../lib/supabaseClient', () => ({
   supabase: {
-    from: jest.fn()
+    from: vi.fn()
   }
 }));
 
-jest.mock('../../../services/chwService', () => ({
+vi.mock('../../../services/chwService', () => ({
   chwService: {
-    logSecurityEvent: jest.fn(),
-    startFieldVisit: jest.fn()
+    logSecurityEvent: vi.fn(),
+    startFieldVisit: vi.fn()
   }
 }));
 
-jest.mock('bcryptjs', () => ({
-  compare: jest.fn()
+vi.mock('bcryptjs', () => ({
+  compare: vi.fn()
 }));
 
 describe('KioskCheckIn - Security Tests', () => {
   const mockProps = {
     kioskId: 'test-kiosk-001',
     locationName: 'Test Library',
-    onCheckInComplete: jest.fn()
+    onCheckInComplete: vi.fn()
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Input Validation', () => {
     it('should reject SQL injection in name fields', async () => {
       // Mock logSecurityEvent to resolve
-      (chwService.logSecurityEvent as jest.Mock).mockResolvedValue({});
+      (chwService.logSecurityEvent as ReturnType<typeof vi.fn>).mockResolvedValue({});
 
       render(<KioskCheckIn {...mockProps} />);
 
@@ -81,7 +81,7 @@ describe('KioskCheckIn - Security Tests', () => {
     });
 
     it('should reject XSS attempts', async () => {
-      (chwService.logSecurityEvent as jest.Mock).mockResolvedValue({});
+      (chwService.logSecurityEvent as ReturnType<typeof vi.fn>).mockResolvedValue({});
 
       render(<KioskCheckIn {...mockProps} />);
 
@@ -113,7 +113,7 @@ describe('KioskCheckIn - Security Tests', () => {
     });
 
     it('should validate date of birth format', async () => {
-      (chwService.logSecurityEvent as jest.Mock).mockResolvedValue({});
+      (chwService.logSecurityEvent as ReturnType<typeof vi.fn>).mockResolvedValue({});
 
       render(<KioskCheckIn {...mockProps} />);
 
@@ -134,7 +134,7 @@ describe('KioskCheckIn - Security Tests', () => {
     });
 
     it('should reject future dates of birth', async () => {
-      (chwService.logSecurityEvent as jest.Mock).mockResolvedValue({});
+      (chwService.logSecurityEvent as ReturnType<typeof vi.fn>).mockResolvedValue({});
 
       render(<KioskCheckIn {...mockProps} />);
 
@@ -159,7 +159,7 @@ describe('KioskCheckIn - Security Tests', () => {
     });
 
     it('should validate SSN format', async () => {
-      (chwService.logSecurityEvent as jest.Mock).mockResolvedValue({});
+      (chwService.logSecurityEvent as ReturnType<typeof vi.fn>).mockResolvedValue({});
 
       render(<KioskCheckIn {...mockProps} />);
 
@@ -180,7 +180,7 @@ describe('KioskCheckIn - Security Tests', () => {
     });
 
     it('should block obviously fake SSNs', async () => {
-      (chwService.logSecurityEvent as jest.Mock).mockResolvedValue({});
+      (chwService.logSecurityEvent as ReturnType<typeof vi.fn>).mockResolvedValue({});
 
       render(<KioskCheckIn {...mockProps} />);
 
@@ -201,7 +201,7 @@ describe('KioskCheckIn - Security Tests', () => {
     });
 
     it('should block common weak PINs', async () => {
-      (chwService.logSecurityEvent as jest.Mock).mockResolvedValue({});
+      (chwService.logSecurityEvent as ReturnType<typeof vi.fn>).mockResolvedValue({});
 
       render(<KioskCheckIn {...mockProps} />);
 
@@ -225,11 +225,11 @@ describe('KioskCheckIn - Security Tests', () => {
 
   describe('Multi-Factor Authentication', () => {
     it('should require DOB + SSN match for patient verification', async () => {
-      const mockFrom = jest.fn().mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          ilike: jest.fn().mockReturnValue({
-            ilike: jest.fn().mockReturnValue({
-              limit: jest.fn().mockResolvedValue({
+      const mockFrom = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          ilike: vi.fn().mockReturnValue({
+            ilike: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue({
                 data: [
                   {
                     id: 'patient-123',
@@ -246,7 +246,7 @@ describe('KioskCheckIn - Security Tests', () => {
         })
       });
 
-      (supabase.from as jest.Mock) = mockFrom;
+      (supabase.from as ReturnType<typeof vi.fn>) = mockFrom;
 
       render(<KioskCheckIn {...mockProps} />);
 
@@ -280,11 +280,11 @@ describe('KioskCheckIn - Security Tests', () => {
     });
 
     it('should verify PIN with bcrypt when provided', async () => {
-      const mockFrom = jest.fn().mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          ilike: jest.fn().mockReturnValue({
-            ilike: jest.fn().mockReturnValue({
-              limit: jest.fn().mockResolvedValue({
+      const mockFrom = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          ilike: vi.fn().mockReturnValue({
+            ilike: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue({
                 data: [
                   {
                     id: 'patient-123',
@@ -302,8 +302,8 @@ describe('KioskCheckIn - Security Tests', () => {
         })
       });
 
-      (supabase.from as jest.Mock) = mockFrom;
-      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      (supabase.from as ReturnType<typeof vi.fn>) = mockFrom;
+      (bcrypt.compare as ReturnType<typeof vi.fn>).mockResolvedValue(true);
 
       render(<KioskCheckIn {...mockProps} />);
 
@@ -333,11 +333,11 @@ describe('KioskCheckIn - Security Tests', () => {
     });
 
     it('should reject incorrect PIN', async () => {
-      const mockFrom = jest.fn().mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          ilike: jest.fn().mockReturnValue({
-            ilike: jest.fn().mockReturnValue({
-              limit: jest.fn().mockResolvedValue({
+      const mockFrom = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          ilike: vi.fn().mockReturnValue({
+            ilike: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue({
                 data: [
                   {
                     id: 'patient-123',
@@ -355,8 +355,8 @@ describe('KioskCheckIn - Security Tests', () => {
         })
       });
 
-      (supabase.from as jest.Mock) = mockFrom;
-      (bcrypt.compare as jest.Mock).mockResolvedValue(false); // Wrong PIN
+      (supabase.from as ReturnType<typeof vi.fn>) = mockFrom;
+      (bcrypt.compare as ReturnType<typeof vi.fn>).mockResolvedValue(false); // Wrong PIN
 
       render(<KioskCheckIn {...mockProps} />);
 
@@ -394,11 +394,11 @@ describe('KioskCheckIn - Security Tests', () => {
 
   describe('Rate Limiting', () => {
     it('should rate limit after 5 failed attempts', async () => {
-      const mockFrom = jest.fn().mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          ilike: jest.fn().mockReturnValue({
-            ilike: jest.fn().mockReturnValue({
-              limit: jest.fn().mockResolvedValue({
+      const mockFrom = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          ilike: vi.fn().mockReturnValue({
+            ilike: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue({
                 data: [],
                 error: null
               })
@@ -407,7 +407,7 @@ describe('KioskCheckIn - Security Tests', () => {
         })
       });
 
-      (supabase.from as jest.Mock) = mockFrom;
+      (supabase.from as ReturnType<typeof vi.fn>) = mockFrom;
 
       render(<KioskCheckIn {...mockProps} />);
 
@@ -458,11 +458,11 @@ describe('KioskCheckIn - Security Tests', () => {
 
   describe('Security Event Logging', () => {
     it('should log patient lookup errors without PHI', async () => {
-      const mockFrom = jest.fn().mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          ilike: jest.fn().mockReturnValue({
-            ilike: jest.fn().mockReturnValue({
-              limit: jest.fn().mockResolvedValue({
+      const mockFrom = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          ilike: vi.fn().mockReturnValue({
+            ilike: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue({
                 data: null,
                 error: { code: 'PGRST116', message: 'Database error' }
               })
@@ -471,7 +471,7 @@ describe('KioskCheckIn - Security Tests', () => {
         })
       });
 
-      (supabase.from as jest.Mock) = mockFrom;
+      (supabase.from as ReturnType<typeof vi.fn>) = mockFrom;
 
       render(<KioskCheckIn {...mockProps} />);
 
@@ -505,18 +505,18 @@ describe('KioskCheckIn - Security Tests', () => {
       });
 
       // Should NOT log patient names or SSN
-      const logCall = (chwService.logSecurityEvent as jest.Mock).mock.calls[0][0];
+      const logCall = (chwService.logSecurityEvent as ReturnType<typeof vi.fn>).mock.calls[0][0];
       expect(JSON.stringify(logCall)).not.toContain('John');
       expect(JSON.stringify(logCall)).not.toContain('Doe');
       expect(JSON.stringify(logCall)).not.toContain('5678');
     });
 
     it('should log successful authentication', async () => {
-      const mockFrom = jest.fn().mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          ilike: jest.fn().mockReturnValue({
-            ilike: jest.fn().mockReturnValue({
-              limit: jest.fn().mockResolvedValue({
+      const mockFrom = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          ilike: vi.fn().mockReturnValue({
+            ilike: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue({
                 data: [
                   {
                     id: 'patient-123',
@@ -534,8 +534,8 @@ describe('KioskCheckIn - Security Tests', () => {
         })
       });
 
-      (supabase.from as jest.Mock) = mockFrom;
-      (chwService.startFieldVisit as jest.Mock).mockResolvedValue({ id: 'visit-123' });
+      (supabase.from as ReturnType<typeof vi.fn>) = mockFrom;
+      (chwService.startFieldVisit as ReturnType<typeof vi.fn>).mockResolvedValue({ id: 'visit-123' });
 
       render(<KioskCheckIn {...mockProps} />);
 
@@ -571,11 +571,11 @@ describe('KioskCheckIn - Security Tests', () => {
 
   describe('Session Timeout', () => {
     beforeEach(() => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
     });
 
     afterEach(() => {
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     it('should timeout after 2 minutes of inactivity', () => {
@@ -585,7 +585,7 @@ describe('KioskCheckIn - Security Tests', () => {
 
       // Fast-forward time by 2 minutes and run all timers
       act(() => {
-        jest.advanceTimersByTime(120000);
+        vi.advanceTimersByTime(120000);
       });
 
       // Should show timeout notification
@@ -607,18 +607,18 @@ describe('KioskCheckIn - Security Tests', () => {
 
       // Timeout - advance past the initial timeout
       act(() => {
-        jest.advanceTimersByTime(120000);
+        vi.advanceTimersByTime(120000);
       });
 
       // Wait for reset notification display time
       act(() => {
-        jest.advanceTimersByTime(5000);
+        vi.advanceTimersByTime(5000);
       });
 
       // Should be back to language selection (all data cleared)
       expect(screen.getByText('Select Your Language')).toBeInTheDocument();
     });
 
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 });

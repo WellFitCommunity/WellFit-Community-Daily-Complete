@@ -1,17 +1,17 @@
 import { BillingService } from '../billingService';
 
 // Mock supabase client
-jest.mock('../../lib/supabaseClient', () => ({
+vi.mock('../../lib/supabaseClient', () => ({
   supabase: {
-    from: jest.fn(() => ({
-      insert: jest.fn(() => ({
-        select: jest.fn(() => Promise.resolve({ data: null, error: null })),
+    from: vi.fn(() => ({
+      insert: vi.fn(() => ({
+        select: vi.fn(() => Promise.resolve({ data: null, error: null })),
       })),
-      select: jest.fn(() => ({
-        eq: jest.fn(() => Promise.resolve({ data: [], error: null })),
+      select: vi.fn(() => ({
+        eq: vi.fn(() => Promise.resolve({ data: [], error: null })),
       })),
-      update: jest.fn(() => ({
-        eq: jest.fn(() => Promise.resolve({ data: null, error: null })),
+      update: vi.fn(() => ({
+        eq: vi.fn(() => Promise.resolve({ data: null, error: null })),
       })),
     })),
   },
@@ -19,7 +19,7 @@ jest.mock('../../lib/supabaseClient', () => ({
 
 describe('BillingService', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should be defined as a class', () => {

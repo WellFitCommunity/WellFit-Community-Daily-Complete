@@ -14,9 +14,9 @@ const toMs = (val: string | undefined, fallback: number) => {
 // CC6.1: Reasonable session timeout periods to prevent unauthorized access
 // - All Users: 30 minutes of inactivity before auto-logout (HIPAA compliant)
 // - Staff/Admin: Additional PIN verification at admin panel level
-// - Override via REACT_APP_INACTIVITY_TIMEOUT_MS env var if needed
-const DEFAULT_TIMEOUT_MS = toMs(process.env.REACT_APP_INACTIVITY_TIMEOUT_MS, 30 * 60 * 1000); // 30 minutes
-const DEFAULT_WARNING_MS = toMs(process.env.REACT_APP_TIMEOUT_WARNING_MS, 5 * 60 * 1000);        // 5 minutes warning
+// - Override via VITE_INACTIVITY_TIMEOUT_MS env var if needed
+const DEFAULT_TIMEOUT_MS = toMs(import.meta.env.VITE_INACTIVITY_TIMEOUT_MS, 30 * 60 * 1000); // 30 minutes
+const DEFAULT_WARNING_MS = toMs(import.meta.env.VITE_TIMEOUT_WARNING_MS, 5 * 60 * 1000);        // 5 minutes warning
 const THROTTLE_MS = 500;
 
 // ---------- types ----------

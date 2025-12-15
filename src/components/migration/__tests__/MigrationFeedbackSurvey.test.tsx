@@ -16,11 +16,11 @@ import {
 } from '../MigrationFeedbackSurvey';
 
 // Mock Supabase client
-const mockInsert = jest.fn().mockResolvedValue({ data: null, error: null });
-const mockRpc = jest.fn().mockResolvedValue({ data: null, error: null });
+const mockInsert = vi.fn().mockResolvedValue({ data: null, error: null });
+const mockRpc = vi.fn().mockResolvedValue({ data: null, error: null });
 
 const mockSupabase = {
-  from: jest.fn().mockReturnValue({
+  from: vi.fn().mockReturnValue({
     insert: mockInsert
   }),
   rpc: mockRpc
@@ -63,13 +63,13 @@ describe('MigrationFeedbackSurvey', () => {
         { sourceColumn: 'first_name', targetTable: 'hc_staff', targetColumn: 'first_name' },
         { sourceColumn: 'email', targetTable: 'hc_staff', targetColumn: 'email_address' }
       ],
-      onComplete: jest.fn(),
-      onSkip: jest.fn(),
+      onComplete: vi.fn(),
+      onSkip: vi.fn(),
       supabase: mockSupabase as unknown as Parameters<typeof MigrationSurvey>[0]['supabase']
     };
 
     beforeEach(() => {
-      jest.clearAllMocks();
+      vi.clearAllMocks();
     });
 
     it('should render survey with header', () => {
@@ -197,13 +197,13 @@ describe('MigrationFeedbackSurvey', () => {
   describe('QuickFeedbackWidget', () => {
     const defaultProps = {
       batchId: 'test-batch-123',
-      onRated: jest.fn(),
-      onDetailedFeedback: jest.fn(),
-      onDismiss: jest.fn()
+      onRated: vi.fn(),
+      onDetailedFeedback: vi.fn(),
+      onDismiss: vi.fn()
     };
 
     beforeEach(() => {
-      jest.clearAllMocks();
+      vi.clearAllMocks();
     });
 
     it('should render with title', () => {
@@ -377,9 +377,9 @@ describe('MigrationFeedbackSurvey', () => {
     it('should have accessible star rating labels', () => {
       render(<QuickFeedbackWidget
         batchId="test"
-        onRated={jest.fn()}
-        onDetailedFeedback={jest.fn()}
-        onDismiss={jest.fn()}
+        onRated={vi.fn()}
+        onDetailedFeedback={vi.fn()}
+        onDismiss={vi.fn()}
       />);
 
       // Check for aria-labels on star buttons
@@ -393,9 +393,9 @@ describe('MigrationFeedbackSurvey', () => {
     it('should have accessible celebration emoji', async () => {
       render(<QuickFeedbackWidget
         batchId="test"
-        onRated={jest.fn()}
-        onDetailedFeedback={jest.fn()}
-        onDismiss={jest.fn()}
+        onRated={vi.fn()}
+        onDetailedFeedback={vi.fn()}
+        onDismiss={vi.fn()}
       />);
 
       // Click on 5 star rating using accessible query
@@ -415,8 +415,8 @@ describe('MigrationFeedbackSurvey', () => {
         batchId="test"
         organizationId="org"
         mappedFields={[]}
-        onComplete={jest.fn()}
-        onSkip={jest.fn()}
+        onComplete={vi.fn()}
+        onSkip={vi.fn()}
         supabase={mockSupabase as unknown as Parameters<typeof MigrationSurvey>[0]['supabase']}
       />);
 
@@ -431,8 +431,8 @@ describe('MigrationFeedbackSurvey', () => {
         batchId="test"
         organizationId="org"
         mappedFields={[]}
-        onComplete={jest.fn()}
-        onSkip={jest.fn()}
+        onComplete={vi.fn()}
+        onSkip={vi.fn()}
         supabase={mockSupabase as unknown as Parameters<typeof MigrationSurvey>[0]['supabase']}
       />);
 

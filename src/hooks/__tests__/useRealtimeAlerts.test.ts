@@ -7,53 +7,53 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 import { AlertSeverity } from '../useRealtimeAlerts';
 
 // Mock the dependencies BEFORE importing the hook
-const mockUseRealtimeSubscription = jest.fn();
+const mockUseRealtimeSubscription = vi.fn();
 
-jest.mock('../useRealtimeSubscription', () => ({
+vi.mock('../useRealtimeSubscription', () => ({
   useRealtimeSubscription: (...args: any[]) => mockUseRealtimeSubscription(...args),
 }));
 
-const mockFrom = jest.fn();
+const mockFrom = vi.fn();
 
-jest.mock('../../contexts/AuthContext', () => ({
+vi.mock('../../contexts/AuthContext', () => ({
   useSupabaseClient: () => ({
     from: mockFrom,
   }),
 }));
 
-jest.mock('../../services/auditLogger', () => ({
+vi.mock('../../services/auditLogger', () => ({
   auditLogger: {
-    info: jest.fn(),
-    debug: jest.fn(),
-    error: jest.fn(),
-    clinical: jest.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+    error: vi.fn(),
+    clinical: vi.fn(),
   },
 }));
 
 // Mock Audio API
-const mockPlay = jest.fn().mockImplementation(() => Promise.reject(new Error('Not implemented')));
-global.Audio = jest.fn().mockImplementation(() => ({
+const mockPlay = vi.fn().mockImplementation(() => Promise.reject(new Error('Not implemented')));
+global.Audio = vi.fn().mockImplementation(() => ({
   play: mockPlay,
   volume: 0,
 }));
 
 // Mock AudioContext for beep fallback
 const mockOscillator = {
-  connect: jest.fn(),
+  connect: vi.fn(),
   frequency: { value: 0 },
   type: 'sine',
-  start: jest.fn(),
-  stop: jest.fn(),
+  start: vi.fn(),
+  stop: vi.fn(),
 };
 const mockGainNode = {
-  connect: jest.fn(),
+  connect: vi.fn(),
   gain: { value: 0 },
 };
-global.AudioContext = jest.fn().mockImplementation(() => ({
+global.AudioContext = vi.fn().mockImplementation(() => ({
   createOscillator: () => mockOscillator,
   createGain: () => mockGainNode,
   destination: {},
-  close: jest.fn(),
+  close: vi.fn(),
 }));
 
 // Import after mocks are set up
@@ -61,7 +61,7 @@ import { useRealtimeAlerts } from '../useRealtimeAlerts';
 
 describe('useRealtimeAlerts', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Default mock implementation for useRealtimeSubscription
     mockUseRealtimeSubscription.mockReturnValue({
@@ -69,21 +69,21 @@ describe('useRealtimeAlerts', () => {
       loading: false,
       error: null,
       isSubscribed: true,
-      refresh: jest.fn(),
+      refresh: vi.fn(),
     });
 
     // Setup default mock for Supabase from()
     mockFrom.mockReturnValue({
-      select: jest.fn().mockReturnValue({
-        order: jest.fn().mockReturnValue({
-          limit: jest.fn().mockReturnValue({
-            in: jest.fn().mockResolvedValue({ data: [], error: null }),
+      select: vi.fn().mockReturnValue({
+        order: vi.fn().mockReturnValue({
+          limit: vi.fn().mockReturnValue({
+            in: vi.fn().mockResolvedValue({ data: [], error: null }),
           }),
         }),
       }),
-      update: jest.fn().mockReturnValue({
-        eq: jest.fn().mockResolvedValue({ error: null }),
-        in: jest.fn().mockResolvedValue({ error: null }),
+      update: vi.fn().mockReturnValue({
+        eq: vi.fn().mockResolvedValue({ error: null }),
+        in: vi.fn().mockResolvedValue({ error: null }),
       }),
     });
   });
@@ -124,7 +124,7 @@ describe('useRealtimeAlerts', () => {
   });
 
   it('should accept onNewAlert callback', () => {
-    const onNewAlert = jest.fn();
+    const onNewAlert = vi.fn();
     const { result } = renderHook(() =>
       useRealtimeAlerts({ onNewAlert })
     );
@@ -175,7 +175,7 @@ describe('useRealtimeAlerts', () => {
       loading: false,
       error: null,
       isSubscribed: true,
-      refresh: jest.fn(),
+      refresh: vi.fn(),
     });
 
     const { result } = renderHook(() => useRealtimeAlerts());
@@ -190,8 +190,8 @@ describe('useRealtimeAlerts', () => {
 
   it('should provide markAsRead function', async () => {
     mockFrom.mockReturnValue({
-      update: jest.fn().mockReturnValue({
-        eq: jest.fn().mockResolvedValue({ error: null }),
+      update: vi.fn().mockReturnValue({
+        eq: vi.fn().mockResolvedValue({ error: null }),
       }),
     });
 
@@ -215,12 +215,12 @@ describe('useRealtimeAlerts', () => {
       loading: false,
       error: null,
       isSubscribed: true,
-      refresh: jest.fn(),
+      refresh: vi.fn(),
     });
 
     mockFrom.mockReturnValue({
-      update: jest.fn().mockReturnValue({
-        in: jest.fn().mockResolvedValue({ error: null }),
+      update: vi.fn().mockReturnValue({
+        in: vi.fn().mockResolvedValue({ error: null }),
       }),
     });
 
@@ -238,7 +238,7 @@ describe('useRealtimeAlerts', () => {
   });
 
   it('should provide refresh function', async () => {
-    const mockRefresh = jest.fn();
+    const mockRefresh = vi.fn();
 
     mockUseRealtimeSubscription.mockReturnValue({
       data: [],
@@ -263,7 +263,7 @@ describe('useRealtimeAlerts', () => {
       loading: false,
       error: null,
       isSubscribed: false,
-      refresh: jest.fn(),
+      refresh: vi.fn(),
     });
 
     const { result } = renderHook(() => useRealtimeAlerts());
@@ -279,7 +279,7 @@ describe('useRealtimeAlerts', () => {
       loading: false,
       error: mockError,
       isSubscribed: false,
-      refresh: jest.fn(),
+      refresh: vi.fn(),
     });
 
     const { result } = renderHook(() => useRealtimeAlerts());
@@ -293,7 +293,7 @@ describe('useRealtimeAlerts', () => {
       loading: true,
       error: null,
       isSubscribed: false,
-      refresh: jest.fn(),
+      refresh: vi.fn(),
     });
 
     const { result } = renderHook(() => useRealtimeAlerts());

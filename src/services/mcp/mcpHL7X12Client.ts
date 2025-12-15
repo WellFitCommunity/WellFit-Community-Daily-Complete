@@ -303,7 +303,7 @@ export class HL7X12MCPClient {
   private baseUrl: string;
 
   constructor(baseUrl?: string) {
-    this.baseUrl = baseUrl || `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/mcp-hl7-x12-server`;
+    this.baseUrl = baseUrl || `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mcp-hl7-x12-server`;
   }
 
   /**

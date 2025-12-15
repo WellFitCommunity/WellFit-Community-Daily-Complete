@@ -20,7 +20,7 @@ import {
 } from '../mcpClearinghouseClient';
 
 // Mock fetch
-const mockFetch = jest.fn();
+const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
 // Mock localStorage
@@ -39,7 +39,7 @@ Object.defineProperty(global, 'localStorage', {
 
 describe('ClearinghouseMCPClient', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Claim Operations', () => {

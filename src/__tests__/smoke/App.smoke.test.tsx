@@ -12,20 +12,20 @@ import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 
 // Mock the contexts that App depends on
-jest.mock('../../contexts/AuthContext', () => ({
+vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({
     user: null,
     loading: false,
     isAuthenticated: false,
   }),
   useSupabaseClient: () => ({
-    auth: { getUser: jest.fn() },
-    from: jest.fn(),
+    auth: { getUser: vi.fn() },
+    from: vi.fn(),
   }),
   AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
-jest.mock('../../contexts/AdminAuthContext', () => ({
+vi.mock('../../contexts/AdminAuthContext', () => ({
   useAdminAuth: () => ({
     isAdminAuthenticated: false,
     adminUser: null,
@@ -34,42 +34,42 @@ jest.mock('../../contexts/AdminAuthContext', () => ({
   AdminAuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
-jest.mock('../../contexts/SessionTimeoutContext', () => ({
+vi.mock('../../contexts/SessionTimeoutContext', () => ({
   SessionTimeoutProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   useSessionTimeout: () => ({
     isActive: true,
     lastActivity: new Date(),
-    resetTimeout: jest.fn(),
+    resetTimeout: vi.fn(),
   }),
 }));
 
 // Mock services that make external calls
-jest.mock('../../services/performanceMonitoring', () => ({
+vi.mock('../../services/performanceMonitoring', () => ({
   performanceMonitor: {
-    logNavigation: jest.fn(),
-    logError: jest.fn(),
+    logNavigation: vi.fn(),
+    logError: vi.fn(),
   },
 }));
 
-jest.mock('../../services/guardian-agent/GuardianAgent', () => ({
+vi.mock('../../services/guardian-agent/GuardianAgent', () => ({
   GuardianAgent: {
-    getInstance: jest.fn(() => ({
-      init: jest.fn(),
-      shutdown: jest.fn(),
+    getInstance: vi.fn(() => ({
+      init: vi.fn(),
+      shutdown: vi.fn(),
     })),
   },
 }));
 
-jest.mock('../../lib/queryClient', () => ({
+vi.mock('../../lib/queryClient', () => ({
   queryClient: {
-    clear: jest.fn(),
-    getQueryCache: jest.fn(() => ({ clear: jest.fn() })),
-    getMutationCache: jest.fn(() => ({ clear: jest.fn() })),
+    clear: vi.fn(),
+    getQueryCache: vi.fn(() => ({ clear: vi.fn() })),
+    getMutationCache: vi.fn(() => ({ clear: vi.fn() })),
   },
 }));
 
 // Mock branding config
-jest.mock('../../branding.config', () => ({
+vi.mock('../../branding.config', () => ({
   getCurrentBranding: () => ({
     id: 'test',
     name: 'Test App',
@@ -89,7 +89,7 @@ const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 describe('App Smoke Tests', () => {
   beforeEach(() => {
     // Clear any previous render artifacts
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should have correct React version', () => {

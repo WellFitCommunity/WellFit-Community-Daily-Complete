@@ -159,11 +159,11 @@ describe('FHIRMappingService', () => {
   describe('generateMapping', () => {
     beforeEach(() => {
       // Mock fetch for API calls
-      global.fetch = jest.fn();
+      global.fetch = vi.fn();
     });
 
     afterEach(() => {
-      jest.restoreAllMocks();
+      vi.restoreAllMocks();
     });
 
     it('should throw error for invalid content', async () => {
@@ -171,7 +171,7 @@ describe('FHIRMappingService', () => {
     });
 
     it('should handle API errors gracefully', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: false,
         status: 500,
         statusText: 'Internal Server Error'
@@ -182,7 +182,7 @@ describe('FHIRMappingService', () => {
     });
 
     it('should handle invalid API response format', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,
         json: () => Promise.resolve({ content: null })
       });
@@ -192,7 +192,7 @@ describe('FHIRMappingService', () => {
     });
 
     it('should handle invalid JSON response', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,
         json: () => Promise.resolve({
           content: [{ text: 'invalid json response' }]
@@ -227,7 +227,7 @@ describe('FHIRMappingService', () => {
         }
       };
 
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,
         json: () => Promise.resolve({
           content: [{ text: JSON.stringify(mockMapping) }]
@@ -258,10 +258,10 @@ describe('FHIRMappingService', () => {
 
       // Mock DOM methods
       const mockLink = {
-        setAttribute: jest.fn(),
-        click: jest.fn()
+        setAttribute: vi.fn(),
+        click: vi.fn()
       };
-      jest.spyOn(document, 'createElement').mockReturnValue(mockLink as any);
+      vi.spyOn(document, 'createElement').mockReturnValue(mockLink as any);
 
       service.downloadMapping(mockMapping);
 

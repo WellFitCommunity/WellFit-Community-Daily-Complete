@@ -7,14 +7,14 @@ import { render, screen, act, waitFor } from '@testing-library/react';
 import { CelebrationOverlay } from '../CelebrationOverlay';
 
 // Mock react-confetti
-jest.mock('react-confetti', () => {
+vi.mock('react-confetti', () => {
   return function MockConfetti() {
     return <div data-testid="confetti">Confetti</div>;
   };
 });
 
 // Mock framer-motion
-jest.mock('framer-motion', () => ({
+vi.mock('framer-motion', () => ({
   motion: {
     div: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) => (
       <div {...props}>{children}</div>
@@ -25,11 +25,11 @@ jest.mock('framer-motion', () => ({
 
 describe('CelebrationOverlay', () => {
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it('should not render when show is false', () => {
@@ -80,7 +80,7 @@ describe('CelebrationOverlay', () => {
   });
 
   it('should call onComplete after duration', async () => {
-    const onComplete = jest.fn();
+    const onComplete = vi.fn();
 
     render(
       <CelebrationOverlay
@@ -94,7 +94,7 @@ describe('CelebrationOverlay', () => {
     expect(onComplete).not.toHaveBeenCalled();
 
     act(() => {
-      jest.advanceTimersByTime(2000);
+      vi.advanceTimersByTime(2000);
     });
 
     await waitFor(() => {
@@ -112,7 +112,7 @@ describe('CelebrationOverlay', () => {
     );
 
     act(() => {
-      jest.advanceTimersByTime(1000);
+      vi.advanceTimersByTime(1000);
     });
 
     // Should not throw

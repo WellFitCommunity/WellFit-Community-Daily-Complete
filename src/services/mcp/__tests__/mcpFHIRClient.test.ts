@@ -25,7 +25,7 @@ import {
 } from '../mcpFHIRClient';
 
 // Mock fetch
-const mockFetch = jest.fn();
+const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
 // Mock localStorage
@@ -44,7 +44,7 @@ Object.defineProperty(global, 'localStorage', {
 
 describe('FHIRMCPClient', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('exportPatientFHIRBundle', () => {

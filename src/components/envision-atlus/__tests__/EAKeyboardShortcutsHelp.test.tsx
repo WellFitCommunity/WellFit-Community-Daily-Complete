@@ -10,7 +10,7 @@ import userEvent from '@testing-library/user-event';
 import { EAKeyboardShortcutsHelp } from '../EAKeyboardShortcutsHelp';
 
 // Mock the hook
-jest.mock('../../../hooks/useKeyboardShortcuts', () => ({
+vi.mock('../../../hooks/useKeyboardShortcuts', () => ({
   formatKeyCombo: (combo: string) => {
     const parts = combo.split('+');
     return parts.map(p => p === 'ctrl' ? 'Ctrl' : p.toUpperCase()).join('+');
@@ -32,11 +32,11 @@ jest.mock('../../../hooks/useKeyboardShortcuts', () => ({
 describe('EAKeyboardShortcutsHelp', () => {
   const defaultProps = {
     isOpen: true,
-    onClose: jest.fn(),
+    onClose: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Rendering', () => {
@@ -110,7 +110,7 @@ describe('EAKeyboardShortcutsHelp', () => {
 
   describe('Close Functionality', () => {
     it('should call onClose when close button is clicked', async () => {
-      const onClose = jest.fn();
+      const onClose = vi.fn();
       render(<EAKeyboardShortcutsHelp {...defaultProps} onClose={onClose} />);
 
       const closeButton = screen.getByLabelText('Close');
@@ -120,7 +120,7 @@ describe('EAKeyboardShortcutsHelp', () => {
     });
 
     it('should call onClose when backdrop is clicked', async () => {
-      const onClose = jest.fn();
+      const onClose = vi.fn();
       render(<EAKeyboardShortcutsHelp {...defaultProps} onClose={onClose} />);
 
       // The backdrop is the first fixed element
@@ -164,7 +164,7 @@ describe('EAKeyboardShortcutsHelp', () => {
   describe('Additional Shortcuts', () => {
     it('should display additional shortcuts when provided', () => {
       const additionalShortcuts = [
-        { key: 'ctrl+s', description: 'Save Patient', category: 'actions' as const, action: jest.fn() },
+        { key: 'ctrl+s', description: 'Save Patient', category: 'actions' as const, action: vi.fn() },
       ];
 
       render(

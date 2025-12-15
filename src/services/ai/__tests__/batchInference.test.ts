@@ -6,23 +6,23 @@ import { BatchInferenceService, batchInference } from '../batchInference';
 import type { InferenceType, InferencePriority } from '../batchInference';
 
 // Mock supabaseClient
-jest.mock('../../../lib/supabaseClient', () => ({
+vi.mock('../../../lib/supabaseClient', () => ({
   supabase: {
-    from: jest.fn(() => ({
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      gte: jest.fn().mockReturnThis(),
-      order: jest.fn().mockResolvedValue({ data: [], error: null }),
-      insert: jest.fn().mockResolvedValue({ data: null, error: null }),
+    from: vi.fn(() => ({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      gte: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({ data: [], error: null }),
+      insert: vi.fn().mockResolvedValue({ data: null, error: null }),
     })),
-    rpc: jest.fn().mockResolvedValue({ data: null, error: null }),
+    rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
   },
 }));
 
 // Mock MCP optimizer
-jest.mock('../../mcp/mcpCostOptimizer', () => ({
+vi.mock('../../mcp/mcpCostOptimizer', () => ({
   mcpOptimizer: {
-    call: jest.fn().mockResolvedValue({
+    call: vi.fn().mockResolvedValue({
       response: JSON.stringify([
         { index: 0, risk_score: 0.75, risk_level: 'high', factors: ['age', 'history'] },
       ]),
@@ -30,7 +30,7 @@ jest.mock('../../mcp/mcpCostOptimizer', () => ({
       cost: 0.003,
       model: 'claude-sonnet-4-5-20250929',
     }),
-    getMetrics: jest.fn().mockReturnValue({
+    getMetrics: vi.fn().mockReturnValue({
       totalCalls: 100,
       cachedCalls: 30,
       totalCost: 0.50,
@@ -38,21 +38,21 @@ jest.mock('../../mcp/mcpCostOptimizer', () => ({
       haikuCalls: 60,
       sonnetCalls: 40,
     }),
-    getCacheHitRate: jest.fn().mockReturnValue(30),
+    getCacheHitRate: vi.fn().mockReturnValue(30),
   },
   MCPCostOptimizer: {
-    getInstance: jest.fn(),
+    getInstance: vi.fn(),
   },
 }));
 
 // Mock audit logger
-jest.mock('../../auditLogger', () => ({
+vi.mock('../../auditLogger', () => ({
   auditLogger: {
-    info: jest.fn().mockResolvedValue(undefined),
-    warn: jest.fn().mockResolvedValue(undefined),
-    error: jest.fn().mockResolvedValue(undefined),
-    log: jest.fn().mockResolvedValue(undefined),
-    logSync: jest.fn(),
+    info: vi.fn().mockResolvedValue(undefined),
+    warn: vi.fn().mockResolvedValue(undefined),
+    error: vi.fn().mockResolvedValue(undefined),
+    log: vi.fn().mockResolvedValue(undefined),
+    logSync: vi.fn(),
   },
 }));
 
@@ -60,7 +60,7 @@ describe('BatchInferenceService', () => {
   let service: BatchInferenceService;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     // Reset singleton for testing
     (BatchInferenceService as any).instance = null;
     service = BatchInferenceService.getInstance();

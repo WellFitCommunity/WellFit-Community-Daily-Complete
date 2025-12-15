@@ -8,19 +8,19 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { SDOHAssessment } from '../SDOHAssessment';
 import { chwService } from '../../../services/chwService';
 
-jest.mock('../../../services/chwService');
+vi.mock('../../../services/chwService');
 
 describe('SDOHAssessment - Question selection', () => {
   const mockProps = {
     visitId: 'visit-123',
     language: 'en' as const,
-    onComplete: jest.fn(),
-    onBack: jest.fn(),
-    onSkip: jest.fn(),
+    onComplete: vi.fn(),
+    onBack: vi.fn(),
+    onSkip: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('PRAPARE Questions Rendering', () => {
@@ -188,7 +188,7 @@ describe('SDOHAssessment - Question selection', () => {
     });
 
     it('should call chwService.recordSDOHAssessment on submission', async () => {
-      (chwService.recordSDOHAssessment as jest.Mock).mockResolvedValue(undefined);
+      (chwService.recordSDOHAssessment as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
 
       render(<SDOHAssessment {...mockProps} />);
 
@@ -218,7 +218,7 @@ describe('SDOHAssessment - Question selection', () => {
     });
 
     it('should call onComplete after successful submission', async () => {
-      (chwService.recordSDOHAssessment as jest.Mock).mockResolvedValue(undefined);
+      (chwService.recordSDOHAssessment as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
 
       render(<SDOHAssessment {...mockProps} />);
 
@@ -295,7 +295,7 @@ describe('SDOHAssessment - Question selection', () => {
     });
 
     it('should include notes in submission', async () => {
-      (chwService.recordSDOHAssessment as jest.Mock).mockResolvedValue(undefined);
+      (chwService.recordSDOHAssessment as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
 
       render(<SDOHAssessment {...mockProps} />);
 
@@ -380,7 +380,7 @@ describe('SDOHAssessment - Question selection', () => {
     });
 
     it('should include timestamp for audit trail', async () => {
-      (chwService.recordSDOHAssessment as jest.Mock).mockResolvedValue(undefined);
+      (chwService.recordSDOHAssessment as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
 
       render(<SDOHAssessment {...mockProps} />);
 
@@ -432,7 +432,7 @@ describe('SDOHAssessment - Question selection', () => {
 
   describe('Error Handling', () => {
     it('should display error if submission fails', async () => {
-      (chwService.recordSDOHAssessment as jest.Mock).mockRejectedValue(new Error('Network error'));
+      (chwService.recordSDOHAssessment as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Network error'));
 
       render(<SDOHAssessment {...mockProps} />);
 
@@ -458,7 +458,7 @@ describe('SDOHAssessment - Question selection', () => {
     });
 
     it('should allow retry after error', async () => {
-      (chwService.recordSDOHAssessment as jest.Mock)
+      (chwService.recordSDOHAssessment as ReturnType<typeof vi.fn>)
         .mockRejectedValueOnce(new Error('Error'))
         .mockResolvedValueOnce(undefined);
 

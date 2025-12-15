@@ -7,19 +7,19 @@ import { logPhiAccess, logBulkPhiAccess, extractPatientId } from '../phiAccessLo
 import { supabase } from '../../lib/supabaseClient';
 
 // Mock supabase
-jest.mock('../../lib/supabaseClient', () => ({
+vi.mock('../../lib/supabaseClient', () => ({
   supabase: {
     auth: {
-      getUser: jest.fn(),
+      getUser: vi.fn(),
     },
-    from: jest.fn(),
-    rpc: jest.fn(),
+    from: vi.fn(),
+    rpc: vi.fn(),
   },
 }));
 
 describe('PHI Access Logger - HIPAA Compliance', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('logPhiAccess', () => {
@@ -27,21 +27,21 @@ describe('PHI Access Logger - HIPAA Compliance', () => {
       const mockUser = { id: 'user-123' };
       const mockProfile = { role: 'provider', is_admin: false };
 
-      (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+      (supabase.auth.getUser as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: { user: mockUser },
       });
 
-      (supabase.from as jest.Mock).mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
               data: mockProfile,
             }),
           }),
         }),
       });
 
-      (supabase.rpc as jest.Mock).mockResolvedValue({ error: null });
+      (supabase.rpc as ReturnType<typeof vi.fn>).mockResolvedValue({ error: null });
 
       await logPhiAccess({
         phiType: 'patient_record',
@@ -67,7 +67,7 @@ describe('PHI Access Logger - HIPAA Compliance', () => {
     });
 
     it('should handle unauthenticated users gracefully', async () => {
-      (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+      (supabase.auth.getUser as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: { user: null },
       });
 
@@ -87,21 +87,21 @@ describe('PHI Access Logger - HIPAA Compliance', () => {
 
     it('should handle RPC errors gracefully', async () => {
       const mockUser = { id: 'user-123' };
-      (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+      (supabase.auth.getUser as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: { user: mockUser },
       });
 
-      (supabase.from as jest.Mock).mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
               data: { role: 'provider', is_admin: false },
             }),
           }),
         }),
       });
 
-      (supabase.rpc as jest.Mock).mockResolvedValue({
+      (supabase.rpc as ReturnType<typeof vi.fn>).mockResolvedValue({
         error: { message: 'Database error' },
       });
 
@@ -118,21 +118,21 @@ describe('PHI Access Logger - HIPAA Compliance', () => {
 
     it('should default to UI access method and treatment purpose', async () => {
       const mockUser = { id: 'user-123' };
-      (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+      (supabase.auth.getUser as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: { user: mockUser },
       });
 
-      (supabase.from as jest.Mock).mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
               data: { role: 'nurse', is_admin: false },
             }),
           }),
         }),
       });
 
-      (supabase.rpc as jest.Mock).mockResolvedValue({ error: null });
+      (supabase.rpc as ReturnType<typeof vi.fn>).mockResolvedValue({ error: null });
 
       await logPhiAccess({
         phiType: 'encounter',
@@ -154,22 +154,22 @@ describe('PHI Access Logger - HIPAA Compliance', () => {
   describe('logBulkPhiAccess', () => {
     it('should log individual accesses for up to 50 patients', async () => {
       const mockUser = { id: 'user-123' };
-      (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+      (supabase.auth.getUser as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: { user: mockUser },
       });
 
-      (supabase.from as jest.Mock).mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
               data: { role: 'admin', is_admin: true },
             }),
           }),
         }),
-        insert: jest.fn().mockResolvedValue({ error: null }),
+        insert: vi.fn().mockResolvedValue({ error: null }),
       });
 
-      (supabase.rpc as jest.Mock).mockResolvedValue({ error: null });
+      (supabase.rpc as ReturnType<typeof vi.fn>).mockResolvedValue({ error: null });
 
       const patientIds = Array.from({ length: 30 }, (_, i) => `patient-${i}`);
 
@@ -181,15 +181,15 @@ describe('PHI Access Logger - HIPAA Compliance', () => {
 
     it('should create audit log summary for >50 patients', async () => {
       const mockUser = { id: 'user-123' };
-      (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+      (supabase.auth.getUser as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: { user: mockUser },
       });
 
-      const mockInsert = jest.fn().mockResolvedValue({ error: null });
-      (supabase.from as jest.Mock).mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
+      const mockInsert = vi.fn().mockResolvedValue({ error: null });
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
               data: { role: 'admin', is_admin: true },
             }),
           }),
@@ -197,7 +197,7 @@ describe('PHI Access Logger - HIPAA Compliance', () => {
         insert: mockInsert,
       });
 
-      (supabase.rpc as jest.Mock).mockResolvedValue({ error: null });
+      (supabase.rpc as ReturnType<typeof vi.fn>).mockResolvedValue({ error: null });
 
       const patientIds = Array.from({ length: 75 }, (_, i) => `patient-${i}`);
 

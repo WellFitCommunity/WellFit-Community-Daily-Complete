@@ -24,8 +24,8 @@ import { auditLogger } from '../services/auditLogger';
 import { createClient } from '@supabase/supabase-js';
 
 // Create anonymous Supabase client
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || '';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 const anonSupabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const SESSION_STORAGE_KEY = 'caregiver_session';

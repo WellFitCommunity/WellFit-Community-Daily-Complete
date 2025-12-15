@@ -9,50 +9,50 @@ import { SDOHBillingService } from '../sdohBillingService';
 import { supabase } from '../../lib/supabaseClient';
 
 // Mock supabase for integration tests
-jest.mock('../../lib/supabaseClient');
+vi.mock('../../lib/supabaseClient');
 
 describe('PHI Logging Integration Tests', () => {
   const mockUser = { id: 'provider-123' };
   const mockProfile = { role: 'provider', is_admin: false };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Setup auth mock
-    (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+    (supabase.auth.getUser as ReturnType<typeof vi.fn>).mockResolvedValue({
       data: { user: mockUser },
     });
 
     // Setup profile lookup mock
-    (supabase.from as jest.Mock).mockImplementation((table: string) => {
+    (supabase.from as ReturnType<typeof vi.fn>).mockImplementation((table: string) => {
       if (table === 'profiles') {
         return {
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({ data: mockProfile }),
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({ data: mockProfile }),
             }),
           }),
         };
       }
       return {
-        insert: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
+        insert: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
               data: { id: 'enc-123', patient_id: 'patient-456' },
             }),
           }),
         }),
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
               data: { id: 'enc-123', patient_id: 'patient-456' },
             }),
           }),
         }),
-        update: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            select: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            select: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
                 data: { id: 'enc-123', patient_id: 'patient-456' },
               }),
             }),
@@ -61,7 +61,7 @@ describe('PHI Logging Integration Tests', () => {
       };
     });
 
-    (supabase.rpc as jest.Mock).mockResolvedValue({ error: null });
+    (supabase.rpc as ReturnType<typeof vi.fn>).mockResolvedValue({ error: null });
   });
 
   describe('EncounterService PHI Logging', () => {
@@ -118,21 +118,21 @@ describe('PHI Logging Integration Tests', () => {
     });
 
     it('should log PHI access when viewing patient encounters', async () => {
-      (supabase.from as jest.Mock).mockImplementation((table: string) => {
+      (supabase.from as ReturnType<typeof vi.fn>).mockImplementation((table: string) => {
         if (table === 'profiles') {
           return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({ data: mockProfile }),
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({ data: mockProfile }),
               }),
             }),
           };
         }
         // encounters table
         return {
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              order: jest.fn().mockResolvedValue({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              order: vi.fn().mockResolvedValue({
                 data: [
                   { id: 'enc-1', patient_id: 'patient-456' },
                   { id: 'enc-2', patient_id: 'patient-456' },
@@ -159,22 +159,22 @@ describe('PHI Logging Integration Tests', () => {
 
   describe('SDOHBillingService PHI Logging', () => {
     it('should log PHI access when assessing SDOH complexity', async () => {
-      (supabase.from as jest.Mock).mockImplementation((table: string) => {
+      (supabase.from as ReturnType<typeof vi.fn>).mockImplementation((table: string) => {
         if (table === 'profiles') {
           return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({ data: mockProfile }),
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({ data: mockProfile }),
               }),
             }),
           };
         }
         if (table === 'check_ins') {
           return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                order: jest.fn().mockReturnValue({
-                  limit: jest.fn().mockResolvedValue({ data: [], error: null }),
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                order: vi.fn().mockReturnValue({
+                  limit: vi.fn().mockResolvedValue({ data: [], error: null }),
                 }),
               }),
             }),
@@ -182,16 +182,16 @@ describe('PHI Logging Integration Tests', () => {
         }
         if (table === 'sdoh_assessments') {
           return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                order: jest.fn().mockReturnValue({
-                  limit: jest.fn().mockResolvedValue({ data: null, error: null }),
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                order: vi.fn().mockReturnValue({
+                  limit: vi.fn().mockResolvedValue({ data: null, error: null }),
                 }),
               }),
             }),
-            insert: jest.fn().mockReturnValue({
-              select: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({
+            insert: vi.fn().mockReturnValue({
+              select: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
                   data: { id: 'assessment-123', patient_id: 'patient-789' },
                   error: null
                 }),
@@ -200,8 +200,8 @@ describe('PHI Logging Integration Tests', () => {
           };
         }
         return {
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockResolvedValue({ data: [], error: null }),
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({ data: [], error: null }),
           }),
         };
       });
@@ -224,7 +224,7 @@ describe('PHI Logging Integration Tests', () => {
   describe('PHI Logging Error Handling', () => {
     it('should continue operation if PHI logging fails', async () => {
       // Make log_phi_access fail
-      (supabase.rpc as jest.Mock).mockResolvedValue({
+      (supabase.rpc as ReturnType<typeof vi.fn>).mockResolvedValue({
         error: { message: 'Logging failed' },
       });
 
@@ -243,7 +243,7 @@ describe('PHI Logging Integration Tests', () => {
     });
 
     it('should handle missing user gracefully', async () => {
-      (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+      (supabase.auth.getUser as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: { user: null },
       });
 
@@ -286,24 +286,24 @@ describe('PHI Logging Integration Tests', () => {
       const patientUser = { id: 'patient-456' };
       const patientProfile = { role: 'patient', is_admin: false };
 
-      (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+      (supabase.auth.getUser as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: { user: patientUser },
       });
 
-      (supabase.from as jest.Mock).mockImplementation((table: string) => {
+      (supabase.from as ReturnType<typeof vi.fn>).mockImplementation((table: string) => {
         if (table === 'profiles') {
           return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({ data: patientProfile }),
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({ data: patientProfile }),
               }),
             }),
           };
         }
         return {
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
                 data: { id: 'enc-123', patient_id: 'patient-456' },
               }),
             }),

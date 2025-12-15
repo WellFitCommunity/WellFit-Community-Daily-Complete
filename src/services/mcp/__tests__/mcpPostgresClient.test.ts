@@ -21,7 +21,7 @@ import {
 } from '../mcpPostgresClient';
 
 // Mock fetch
-const mockFetch = jest.fn();
+const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
 // Mock localStorage
@@ -40,7 +40,7 @@ Object.defineProperty(global, 'localStorage', {
 
 describe('PostgresMCPClient', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('getDashboardMetrics', () => {

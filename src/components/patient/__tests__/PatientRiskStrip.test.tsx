@@ -10,19 +10,19 @@ import userEvent from '@testing-library/user-event';
 import { PatientRiskStrip, PatientRiskData } from '../PatientRiskStrip';
 
 // Mock Supabase client
-const mockFrom = jest.fn();
-jest.mock('../../../lib/supabaseClient', () => ({
+const mockFrom = vi.fn();
+vi.mock('../../../lib/supabaseClient', () => ({
   supabase: {
     from: (...args: unknown[]) => mockFrom(...args),
   },
 }));
 
 // Mock audit logger
-jest.mock('../../../services/auditLogger', () => ({
+vi.mock('../../../services/auditLogger', () => ({
   auditLogger: {
-    error: jest.fn(),
-    info: jest.fn(),
-    warn: jest.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
   },
 }));
 
@@ -58,28 +58,28 @@ function setupMocks(options?: {
   mockFrom.mockImplementation((table: string) => {
     if (table === 'readmission_risk_predictions') {
       return {
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        order: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockReturnThis(),
-        maybeSingle: jest.fn().mockResolvedValue({ data: readmission, error: null }),
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        order: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: readmission, error: null }),
       };
     }
     if (table === 'shift_handoff_risk_scores') {
       return {
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        order: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockReturnThis(),
-        maybeSingle: jest.fn().mockResolvedValue({ data: deterioration, error: null }),
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        order: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: deterioration, error: null }),
       };
     }
     return {
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      order: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockReturnThis(),
-      maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
     };
   });
 }
@@ -90,7 +90,7 @@ function setupMocks(options?: {
 
 describe('PatientRiskStrip', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Rendering', () => {
@@ -244,7 +244,7 @@ describe('PatientRiskStrip', () => {
 
   describe('Interactions', () => {
     it('should call onRiskClick when risk is clicked', async () => {
-      const onRiskClick = jest.fn();
+      const onRiskClick = vi.fn();
       setupMocks();
       render(
         <PatientRiskStrip patientId="test-patient-id" onRiskClick={onRiskClick} />

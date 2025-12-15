@@ -83,7 +83,7 @@ export interface ImageValidation {
 
 const CONFIG = {
   // Claude API Configuration
-  MODEL: process.env.REACT_APP_CLAUDE_DEFAULT_MODEL || 'claude-3-5-sonnet-20241022',
+  MODEL: import.meta.env.VITE_CLAUDE_DEFAULT_MODEL || 'claude-3-5-sonnet-20241022',
   MAX_TOKENS: 4000,
   TIMEOUT: 60000, // 60 seconds
 
@@ -106,7 +106,7 @@ export class MedicationLabelReaderService {
   private apiKey: string | null = null;
 
   constructor(apiKey?: string) {
-    this.apiKey = apiKey || process.env.REACT_APP_ANTHROPIC_API_KEY || null;
+    this.apiKey = apiKey || import.meta.env.VITE_ANTHROPIC_API_KEY || null;
 
     if (this.apiKey) {
       loadAnthropicSDK().then((Anthropic: any) => {
@@ -180,7 +180,7 @@ export class MedicationLabelReaderService {
       if (!this.anthropic || !this.apiKey) {
         return {
           success: false,
-          error: 'Anthropic API key not configured. Please set REACT_APP_ANTHROPIC_API_KEY in your environment.',
+          error: 'Anthropic API key not configured. Please set VITE_ANTHROPIC_API_KEY in your environment.',
           processingTimeMs: Date.now() - startTime,
           modelUsed: CONFIG.MODEL
         };

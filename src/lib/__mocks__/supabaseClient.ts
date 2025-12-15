@@ -71,43 +71,43 @@ function createQueryBuilder(table: string, method: string, prevCalls: QueryCall[
   return builder;
 }
 
-// Create from as a jest.fn() so tests can use mockImplementation
+// Create from as a vi.fn() so tests can use mockImplementation
 const defaultFrom = (table: string) => createQueryBuilder(table, 'from');
 
 export const supabase = {
-  from: jest.fn(defaultFrom),
+  from: vi.fn(defaultFrom),
 
-  rpc: jest.fn().mockResolvedValue({ data: null, error: null }),
+  rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
 
   auth: {
-    getSession: jest.fn().mockResolvedValue({ data: { session: null }, error: null }),
-    getUser: jest.fn().mockResolvedValue({ data: { user: null }, error: null }),
-    signInWithPassword: jest.fn().mockResolvedValue({ data: { session: null, user: null }, error: null }),
-    signOut: jest.fn().mockResolvedValue({ error: null }),
-    onAuthStateChange: jest.fn().mockReturnValue({
-      data: { subscription: { unsubscribe: jest.fn() } },
+    getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
+    getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
+    signInWithPassword: vi.fn().mockResolvedValue({ data: { session: null, user: null }, error: null }),
+    signOut: vi.fn().mockResolvedValue({ error: null }),
+    onAuthStateChange: vi.fn().mockReturnValue({
+      data: { subscription: { unsubscribe: vi.fn() } },
     }),
-    setSession: jest.fn().mockResolvedValue({ data: { session: null }, error: null }),
+    setSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
   },
 
-  channel: jest.fn(() => ({
-    on: jest.fn().mockReturnThis(),
-    subscribe: jest.fn().mockResolvedValue({ status: 'SUBSCRIBED' }),
-    unsubscribe: jest.fn().mockResolvedValue({ status: 'UNSUBSCRIBED' }),
+  channel: vi.fn(() => ({
+    on: vi.fn().mockReturnThis(),
+    subscribe: vi.fn().mockResolvedValue({ status: 'SUBSCRIBED' }),
+    unsubscribe: vi.fn().mockResolvedValue({ status: 'UNSUBSCRIBED' }),
   })),
 
   functions: {
-    invoke: jest.fn().mockResolvedValue({ data: null, error: null }),
+    invoke: vi.fn().mockResolvedValue({ data: null, error: null }),
   },
 
   storage: {
-    from: jest.fn().mockReturnValue({
-      upload: jest.fn().mockResolvedValue({ data: null, error: null }),
-      download: jest.fn().mockResolvedValue({ data: null, error: null }),
-      list: jest.fn().mockResolvedValue({ data: [], error: null }),
-      remove: jest.fn().mockResolvedValue({ data: null, error: null }),
-      createSignedUrl: jest.fn().mockResolvedValue({ data: { signedUrl: 'https://test.url' }, error: null }),
-      getPublicUrl: jest.fn().mockReturnValue({ data: { publicUrl: 'https://test.url' } }),
+    from: vi.fn().mockReturnValue({
+      upload: vi.fn().mockResolvedValue({ data: null, error: null }),
+      download: vi.fn().mockResolvedValue({ data: null, error: null }),
+      list: vi.fn().mockResolvedValue({ data: [], error: null }),
+      remove: vi.fn().mockResolvedValue({ data: null, error: null }),
+      createSignedUrl: vi.fn().mockResolvedValue({ data: { signedUrl: 'https://test.url' }, error: null }),
+      getPublicUrl: vi.fn().mockReturnValue({ data: { publicUrl: 'https://test.url' } }),
     }),
   },
 };

@@ -10,7 +10,7 @@ import HCaptcha from '@hcaptcha/react-hcaptcha';
 
 // hCaptcha site key from environment
 // Note: Using process.env for Create React App compatibility
-const SITE_KEY = process.env.REACT_APP_HCAPTCHA_SITE_KEY || '';
+const SITE_KEY = import.meta.env.VITE_HCAPTCHA_SITE_KEY || '';
 
 export interface HCaptchaRef {
   execute: () => Promise<string>;
@@ -121,7 +121,7 @@ const HCaptchaWidget = forwardRef<HCaptchaRef, Props>(
     if (!SITE_KEY) {
       return (
         <div className="text-red-600 text-sm">
-          hCaptcha not configured (set REACT_APP_HCAPTCHA_SITE_KEY or VITE_HCAPTCHA_SITE_KEY)
+          hCaptcha not configured (set VITE_HCAPTCHA_SITE_KEY or VITE_HCAPTCHA_SITE_KEY)
         </div>
       );
     }

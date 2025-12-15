@@ -9,27 +9,27 @@ import { useSupabaseClient, useUser, useAuth } from '../../contexts/AuthContext'
 import { useBranding } from '../../BrandingContext';
 
 // Mock dependencies
-jest.mock('../../contexts/AuthContext', () => ({
-  useSupabaseClient: jest.fn(),
-  useUser: jest.fn(),
-  useAuth: jest.fn(),
+vi.mock('../../contexts/AuthContext', () => ({
+  useSupabaseClient: vi.fn(),
+  useUser: vi.fn(),
+  useAuth: vi.fn(),
 }));
 
-jest.mock('../../BrandingContext', () => ({
-  useBranding: jest.fn(),
+vi.mock('../../BrandingContext', () => ({
+  useBranding: vi.fn(),
 }));
 
-jest.mock('react-router-dom', () => ({
-  useNavigate: jest.fn(() => jest.fn()),
+vi.mock('react-router-dom', () => ({
+  useNavigate: vi.fn(() => vi.fn()),
 }));
 
 // Mock fetchMyProfile
-jest.mock('../../data/profile', () => ({
-  fetchMyProfile: jest.fn().mockResolvedValue({ role: 'senior', role_code: 4 }),
+vi.mock('../../data/profile', () => ({
+  fetchMyProfile: vi.fn().mockResolvedValue({ role: 'senior', role_code: 4 }),
 }));
 
 // Mock the SeniorCommunityDashboard component
-jest.mock('../../components/dashboard/SeniorCommunityDashboard', () => {
+vi.mock('../../components/dashboard/SeniorCommunityDashboard', () => {
   return function MockSeniorCommunityDashboard() {
     return <div data-testid="senior-community-dashboard">Senior Community Dashboard</div>;
   };
@@ -40,7 +40,7 @@ describe('DashboardPage - Senior Facing Page', () => {
   let mockUser: any;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockUser = {
       id: 'senior-user-123',
@@ -48,19 +48,19 @@ describe('DashboardPage - Senior Facing Page', () => {
     };
 
     mockSupabase = {
-      from: jest.fn().mockReturnThis(),
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({
+      from: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
         data: { first_name: 'John', role: 'senior' },
         error: null
       }),
     };
 
-    (useUser as jest.Mock).mockReturnValue(mockUser);
-    (useSupabaseClient as jest.Mock).mockReturnValue(mockSupabase);
-    (useAuth as jest.Mock).mockReturnValue({ user: mockUser });
-    (useBranding as jest.Mock).mockReturnValue({
+    (useUser as ReturnType<typeof vi.fn>).mockReturnValue(mockUser);
+    (useSupabaseClient as ReturnType<typeof vi.fn>).mockReturnValue(mockSupabase);
+    (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({ user: mockUser });
+    (useBranding as ReturnType<typeof vi.fn>).mockReturnValue({
       branding: {
         gradient: 'linear-gradient(to bottom, #E0F2FE, #FFFFFF)',
         primaryColor: '#4F46E5',
@@ -116,8 +116,8 @@ describe('DashboardPage - Senior Facing Page', () => {
     });
 
     it('should handle missing user', async () => {
-      (useUser as jest.Mock).mockReturnValue(null);
-      (useAuth as jest.Mock).mockReturnValue({ user: null });
+      (useUser as ReturnType<typeof vi.fn>).mockReturnValue(null);
+      (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({ user: null });
 
       render(<DashboardPage />);
 

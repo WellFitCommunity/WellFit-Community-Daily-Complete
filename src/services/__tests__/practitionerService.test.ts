@@ -12,16 +12,16 @@ import { supabase } from '../../lib/supabaseClient';
 import type { FHIRPractitioner, FHIRPractitionerRole } from '../../types/fhir';
 
 // Mock Supabase client
-jest.mock('../../lib/supabaseClient', () => ({
+vi.mock('../../lib/supabaseClient', () => ({
   supabase: {
-    from: jest.fn(),
-    rpc: jest.fn(),
+    from: vi.fn(),
+    rpc: vi.fn(),
   },
 }));
 
 describe('PractitionerService', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   // Sample practitioner data for tests
@@ -66,7 +66,7 @@ describe('PractitionerService', () => {
 
   describe('getAll', () => {
     it('should fetch all active practitioners', async () => {
-      (supabase.rpc as jest.Mock).mockResolvedValue({
+      (supabase.rpc as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: mockPractitioners,
         error: null,
       });
@@ -78,7 +78,7 @@ describe('PractitionerService', () => {
     });
 
     it('should return empty array when no practitioners found', async () => {
-      (supabase.rpc as jest.Mock).mockResolvedValue({
+      (supabase.rpc as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: [],
         error: null,
       });
@@ -90,7 +90,7 @@ describe('PractitionerService', () => {
 
     it('should throw error on database failure', async () => {
       const mockError = new Error('Database connection failed');
-      (supabase.rpc as jest.Mock).mockResolvedValue({
+      (supabase.rpc as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: null,
         error: mockError,
       });
@@ -104,15 +104,15 @@ describe('PractitionerService', () => {
   describe('getById', () => {
     it('should fetch practitioner by ID', async () => {
       const mockQuery = {
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
           data: mockPractitioner,
           error: null,
         }),
       };
 
-      (supabase.from as jest.Mock).mockReturnValue(mockQuery);
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue(mockQuery);
 
       const result = await PractitionerService.getById('pract-123');
 
@@ -124,15 +124,15 @@ describe('PractitionerService', () => {
     it('should throw error when practitioner not found', async () => {
       const mockError = new Error('Practitioner not found');
       const mockQuery = {
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
           data: null,
           error: mockError,
         }),
       };
 
-      (supabase.from as jest.Mock).mockReturnValue(mockQuery);
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue(mockQuery);
 
       await expect(PractitionerService.getById('invalid-id')).rejects.toThrow(
         'Practitioner not found'
@@ -143,15 +143,15 @@ describe('PractitionerService', () => {
   describe('getByUserId', () => {
     it('should fetch practitioner by user ID', async () => {
       const mockQuery = {
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
           data: mockPractitioner,
           error: null,
         }),
       };
 
-      (supabase.from as jest.Mock).mockReturnValue(mockQuery);
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue(mockQuery);
 
       const result = await PractitionerService.getByUserId('user-456');
 
@@ -161,15 +161,15 @@ describe('PractitionerService', () => {
 
     it('should return null when practitioner not found', async () => {
       const mockQuery = {
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
           data: null,
           error: { code: 'PGRST116' }, // Not found error
         }),
       };
 
-      (supabase.from as jest.Mock).mockReturnValue(mockQuery);
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue(mockQuery);
 
       const result = await PractitionerService.getByUserId('user-999');
 
@@ -179,7 +179,7 @@ describe('PractitionerService', () => {
 
   describe('getByNPI', () => {
     it('should fetch practitioner by NPI', async () => {
-      (supabase.rpc as jest.Mock).mockResolvedValue({
+      (supabase.rpc as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: [mockPractitioner],
         error: null,
       });
@@ -193,7 +193,7 @@ describe('PractitionerService', () => {
     });
 
     it('should return null when NPI not found', async () => {
-      (supabase.rpc as jest.Mock).mockResolvedValue({
+      (supabase.rpc as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: [],
         error: null,
       });
@@ -206,7 +206,7 @@ describe('PractitionerService', () => {
 
   describe('search', () => {
     it('should search practitioners by name', async () => {
-      (supabase.rpc as jest.Mock).mockResolvedValue({
+      (supabase.rpc as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: [mockPractitioner],
         error: null,
       });
@@ -220,7 +220,7 @@ describe('PractitionerService', () => {
     });
 
     it('should search practitioners by specialty', async () => {
-      (supabase.rpc as jest.Mock).mockResolvedValue({
+      (supabase.rpc as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: mockPractitioners.filter((p) =>
           p.specialties?.includes('Cardiology')
         ),
@@ -234,7 +234,7 @@ describe('PractitionerService', () => {
     });
 
     it('should return empty array when no matches found', async () => {
-      (supabase.rpc as jest.Mock).mockResolvedValue({
+      (supabase.rpc as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: [],
         error: null,
       });
@@ -247,7 +247,7 @@ describe('PractitionerService', () => {
 
   describe('getBySpecialty', () => {
     it('should fetch practitioners by specialty', async () => {
-      (supabase.rpc as jest.Mock).mockResolvedValue({
+      (supabase.rpc as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: [mockPractitioner],
         error: null,
       });
@@ -276,15 +276,15 @@ describe('PractitionerService', () => {
       };
 
       const mockQuery = {
-        insert: jest.fn().mockReturnThis(),
-        select: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
+        insert: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
           data: { id: 'pract-125', ...newPractitioner },
           error: null,
         }),
       };
 
-      (supabase.from as jest.Mock).mockReturnValue(mockQuery);
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue(mockQuery);
 
       const result = await PractitionerService.create(newPractitioner);
 
@@ -303,15 +303,15 @@ describe('PractitionerService', () => {
     it('should throw error on duplicate NPI', async () => {
       const mockError = new Error('Duplicate NPI');
       const mockQuery = {
-        insert: jest.fn().mockReturnThis(),
-        select: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
+        insert: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
           data: null,
           error: mockError,
         }),
       };
 
-      (supabase.from as jest.Mock).mockReturnValue(mockQuery);
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue(mockQuery);
 
       await expect(
         PractitionerService.create({
@@ -330,16 +330,16 @@ describe('PractitionerService', () => {
       };
 
       const mockQuery = {
-        update: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        select: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
+        update: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
           data: { ...mockPractitioner, ...updates },
           error: null,
         }),
       };
 
-      (supabase.from as jest.Mock).mockReturnValue(mockQuery);
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue(mockQuery);
 
       const result = await PractitionerService.update('pract-123', updates);
 
@@ -357,11 +357,11 @@ describe('PractitionerService', () => {
   describe('delete (soft delete)', () => {
     it('should soft delete practitioner by setting active to false', async () => {
       const mockQuery = {
-        update: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockResolvedValue({ data: null, error: null }),
+        update: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockResolvedValue({ data: null, error: null }),
       };
 
-      (supabase.from as jest.Mock).mockReturnValue(mockQuery);
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue(mockQuery);
 
       await PractitionerService.delete('pract-123');
 
@@ -378,11 +378,11 @@ describe('PractitionerService', () => {
   describe('hardDelete', () => {
     it('should permanently delete practitioner', async () => {
       const mockQuery = {
-        delete: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockResolvedValue({ data: null, error: null }),
+        delete: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockResolvedValue({ data: null, error: null }),
       };
 
-      (supabase.from as jest.Mock).mockReturnValue(mockQuery);
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue(mockQuery);
 
       await PractitionerService.hardDelete('pract-123');
 
@@ -452,7 +452,7 @@ describe('PractitionerService', () => {
 
 describe('PractitionerRoleService', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   const mockRole: FHIRPractitionerRole = {
@@ -474,7 +474,7 @@ describe('PractitionerRoleService', () => {
 
   describe('getByPractitioner', () => {
     it('should fetch all roles for a practitioner', async () => {
-      (supabase.rpc as jest.Mock).mockResolvedValue({
+      (supabase.rpc as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: [mockRole],
         error: null,
       });
@@ -491,16 +491,16 @@ describe('PractitionerRoleService', () => {
   describe('getActiveByPractitioner', () => {
     it('should fetch active roles for a practitioner', async () => {
       const mockQuery = {
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        is: jest.fn().mockReturnThis(),
-        or: jest.fn().mockResolvedValue({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        or: vi.fn().mockResolvedValue({
           data: [mockRole],
           error: null,
         }),
       };
 
-      (supabase.from as jest.Mock).mockReturnValue(mockQuery);
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue(mockQuery);
 
       const result = await PractitionerRoleService.getActiveByPractitioner(
         'pract-123'
@@ -523,15 +523,15 @@ describe('PractitionerRoleService', () => {
       };
 
       const mockQuery = {
-        insert: jest.fn().mockReturnThis(),
-        select: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
+        insert: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
           data: { id: 'role-124', ...newRole },
           error: null,
         }),
       };
 
-      (supabase.from as jest.Mock).mockReturnValue(mockQuery);
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue(mockQuery);
 
       const result = await PractitionerRoleService.create(newRole);
 
@@ -554,16 +554,16 @@ describe('PractitionerRoleService', () => {
       };
 
       const mockQuery = {
-        update: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        select: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
+        update: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
           data: { ...mockRole, ...updates },
           error: null,
         }),
       };
 
-      (supabase.from as jest.Mock).mockReturnValue(mockQuery);
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue(mockQuery);
 
       const result = await PractitionerRoleService.update('role-123', updates);
 
@@ -575,11 +575,11 @@ describe('PractitionerRoleService', () => {
   describe('end', () => {
     it('should end a practitioner role by setting period_end', async () => {
       const mockQuery = {
-        update: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockResolvedValue({ data: null, error: null }),
+        update: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockResolvedValue({ data: null, error: null }),
       };
 
-      (supabase.from as jest.Mock).mockReturnValue(mockQuery);
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue(mockQuery);
 
       await PractitionerRoleService.end('role-123');
 
@@ -597,11 +597,11 @@ describe('PractitionerRoleService', () => {
   describe('delete', () => {
     it('should delete a practitioner role', async () => {
       const mockQuery = {
-        delete: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockResolvedValue({ data: null, error: null }),
+        delete: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockResolvedValue({ data: null, error: null }),
       };
 
-      (supabase.from as jest.Mock).mockReturnValue(mockQuery);
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue(mockQuery);
 
       await PractitionerRoleService.delete('role-123');
 

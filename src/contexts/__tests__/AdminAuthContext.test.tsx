@@ -1,3 +1,4 @@
+import { type Mock } from 'vitest';
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 
@@ -11,16 +12,16 @@ interface MockContextValue {
   accessScopes: string[] | null;
   isLoading: boolean;
   error: string | null;
-  verifyPinAndLogin: jest.Mock;
-  logoutAdmin: jest.Mock;
-  autoAuthenticateAsSuperAdmin: jest.Mock;
-  hasAccess: jest.Mock;
+  verifyPinAndLogin: Mock;
+  logoutAdmin: Mock;
+  autoAuthenticateAsSuperAdmin: Mock;
+  hasAccess: Mock;
   canViewNurse: boolean;
   canViewPhysician: boolean;
   canViewAdmin: boolean;
   canSupervise: boolean;
   canManageDepartment: boolean;
-  invokeAdminFunction: jest.Mock;
+  invokeAdminFunction: Mock;
 }
 
 // Mock the entire AdminAuthContext module
@@ -30,16 +31,16 @@ const mockContextValue: MockContextValue = {
   accessScopes: null,
   isLoading: false,
   error: null,
-  verifyPinAndLogin: jest.fn().mockResolvedValue(false),
-  logoutAdmin: jest.fn(),
-  autoAuthenticateAsSuperAdmin: jest.fn().mockResolvedValue(false),
-  hasAccess: jest.fn().mockReturnValue(false),
+  verifyPinAndLogin: vi.fn().mockResolvedValue(false),
+  logoutAdmin: vi.fn(),
+  autoAuthenticateAsSuperAdmin: vi.fn().mockResolvedValue(false),
+  hasAccess: vi.fn().mockReturnValue(false),
   canViewNurse: false,
   canViewPhysician: false,
   canViewAdmin: false,
   canSupervise: false,
   canManageDepartment: false,
-  invokeAdminFunction: jest.fn().mockResolvedValue({ data: null, error: null }),
+  invokeAdminFunction: vi.fn().mockResolvedValue({ data: null, error: null }),
 };
 
 // Create a real context for the provider test
@@ -82,7 +83,7 @@ const TestProvider: React.FC<{ children: React.ReactNode; value?: MockContextVal
 
 describe('AdminAuthContext', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     sessionStorage.clear();
   });
 
@@ -109,7 +110,7 @@ describe('AdminAuthContext', () => {
 
   it('throws error when used outside provider', () => {
     // Suppress React error output for this test since we expect an error
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     expect(() => {
       render(<TestConsumer />);

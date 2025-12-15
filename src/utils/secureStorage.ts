@@ -42,7 +42,7 @@ async function getEncryptionKey(): Promise<CryptoKey> {
     }
 
     // Generate new key material from environment + random salt
-    const masterKey = process.env.REACT_APP_PHI_ENCRYPTION_KEY ||
+    const masterKey = import.meta.env.VITE_PHI_ENCRYPTION_KEY ||
                       'wellfit-secure-storage-2025'; // Fallback for development
 
     const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH));

@@ -6,19 +6,19 @@
 import React from 'react';
 
 // Mock all dependencies before importing the component
-jest.mock('../../../contexts/AuthContext', () => ({
+vi.mock('../../../contexts/AuthContext', () => ({
   useSupabaseClient: () => ({
-    from: jest.fn(() => ({
-      select: jest.fn().mockReturnThis(),
-      gte: jest.fn().mockReturnThis(),
-      order: jest.fn().mockResolvedValue({ data: [], error: null }),
+    from: vi.fn(() => ({
+      select: vi.fn().mockReturnThis(),
+      gte: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({ data: [], error: null }),
     })),
   }),
 }));
 
-jest.mock('../../../services/mcp/mcpCostOptimizer', () => ({
+vi.mock('../../../services/mcp/mcpCostOptimizer', () => ({
   mcpOptimizer: {
-    getMetrics: jest.fn().mockReturnValue({
+    getMetrics: vi.fn().mockReturnValue({
       totalCalls: 150,
       cachedCalls: 60,
       totalCost: 0.75,
@@ -26,19 +26,19 @@ jest.mock('../../../services/mcp/mcpCostOptimizer', () => ({
       haikuCalls: 100,
       sonnetCalls: 50,
     }),
-    getCacheHitRate: jest.fn().mockReturnValue(40),
+    getCacheHitRate: vi.fn().mockReturnValue(40),
   },
 }));
 
-jest.mock('../../../services/ai/batchInference', () => ({
+vi.mock('../../../services/ai/batchInference', () => ({
   batchInference: {
-    getCumulativeStats: jest.fn().mockReturnValue({
+    getCumulativeStats: vi.fn().mockReturnValue({
       totalRequestsProcessed: 500,
       totalCostSaved: 15.50,
       currentQueueSize: 25,
       processingCount: 5,
     }),
-    getQueueStats: jest.fn().mockReturnValue({
+    getQueueStats: vi.fn().mockReturnValue({
       totalQueued: 25,
       byPriority: { critical: 0, high: 5, normal: 15, low: 3, batch: 2 },
       byType: { readmission_risk: 10, sdoh_detection: 8 },
@@ -48,14 +48,14 @@ jest.mock('../../../services/ai/batchInference', () => ({
   },
 }));
 
-jest.mock('../../../services/auditLogger', () => ({
+vi.mock('../../../services/auditLogger', () => ({
   auditLogger: {
-    info: jest.fn().mockResolvedValue(undefined),
-    error: jest.fn().mockResolvedValue(undefined),
+    info: vi.fn().mockResolvedValue(undefined),
+    error: vi.fn().mockResolvedValue(undefined),
   },
 }));
 
-jest.mock('../../envision-atlus', () => ({
+vi.mock('../../envision-atlus', () => ({
   EACard: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   EACardHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   EACardContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,

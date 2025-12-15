@@ -2,7 +2,7 @@
  * AuthContext Mock for Jest Tests
  *
  * Provides consistent mock implementations for all AuthContext exports.
- * Tests can override these mocks as needed using jest.mocked().
+ * Tests can override these mocks as needed using vi.mocked().
  */
 import React from 'react';
 
@@ -28,37 +28,37 @@ export const mockSession = {
 
 // Default mock supabase client
 export const mockSupabaseClient = {
-  from: jest.fn().mockReturnThis(),
-  select: jest.fn().mockReturnThis(),
-  eq: jest.fn().mockReturnThis(),
-  neq: jest.fn().mockReturnThis(),
-  single: jest.fn().mockResolvedValue({ data: null, error: null }),
-  maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
-  insert: jest.fn().mockReturnThis(),
-  update: jest.fn().mockReturnThis(),
-  delete: jest.fn().mockReturnThis(),
-  upsert: jest.fn().mockReturnThis(),
-  order: jest.fn().mockReturnThis(),
-  limit: jest.fn().mockReturnThis(),
-  range: jest.fn().mockReturnThis(),
-  rpc: jest.fn().mockResolvedValue({ data: null, error: null }),
+  from: vi.fn().mockReturnThis(),
+  select: vi.fn().mockReturnThis(),
+  eq: vi.fn().mockReturnThis(),
+  neq: vi.fn().mockReturnThis(),
+  single: vi.fn().mockResolvedValue({ data: null, error: null }),
+  maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+  insert: vi.fn().mockReturnThis(),
+  update: vi.fn().mockReturnThis(),
+  delete: vi.fn().mockReturnThis(),
+  upsert: vi.fn().mockReturnThis(),
+  order: vi.fn().mockReturnThis(),
+  limit: vi.fn().mockReturnThis(),
+  range: vi.fn().mockReturnThis(),
+  rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
   auth: {
-    getSession: jest.fn().mockResolvedValue({ data: { session: mockSession }, error: null }),
-    getUser: jest.fn().mockResolvedValue({ data: { user: mockUser }, error: null }),
-    signInWithPassword: jest.fn().mockResolvedValue({ data: { session: mockSession, user: mockUser }, error: null }),
-    signOut: jest.fn().mockResolvedValue({ error: null }),
-    onAuthStateChange: jest.fn().mockReturnValue({
-      data: { subscription: { unsubscribe: jest.fn() } },
+    getSession: vi.fn().mockResolvedValue({ data: { session: mockSession }, error: null }),
+    getUser: vi.fn().mockResolvedValue({ data: { user: mockUser }, error: null }),
+    signInWithPassword: vi.fn().mockResolvedValue({ data: { session: mockSession, user: mockUser }, error: null }),
+    signOut: vi.fn().mockResolvedValue({ error: null }),
+    onAuthStateChange: vi.fn().mockReturnValue({
+      data: { subscription: { unsubscribe: vi.fn() } },
     }),
   },
   functions: {
-    invoke: jest.fn().mockResolvedValue({ data: null, error: null }),
+    invoke: vi.fn().mockResolvedValue({ data: null, error: null }),
   },
   storage: {
-    from: jest.fn().mockReturnValue({
-      upload: jest.fn().mockResolvedValue({ data: null, error: null }),
-      download: jest.fn().mockResolvedValue({ data: null, error: null }),
-      getPublicUrl: jest.fn().mockReturnValue({ data: { publicUrl: 'https://test.url' } }),
+    from: vi.fn().mockReturnValue({
+      upload: vi.fn().mockResolvedValue({ data: null, error: null }),
+      download: vi.fn().mockResolvedValue({ data: null, error: null }),
+      getPublicUrl: vi.fn().mockReturnValue({ data: { publicUrl: 'https://test.url' } }),
     }),
   },
 };
@@ -71,13 +71,13 @@ export const mockAuthContextValue = {
   loading: false,
   error: null,
   isAdmin: false,
-  signInEmailPassword: jest.fn().mockResolvedValue(undefined),
-  sendPhoneOtp: jest.fn().mockResolvedValue(undefined),
-  verifyPhoneOtp: jest.fn().mockResolvedValue(undefined),
-  signIn: jest.fn().mockResolvedValue(undefined),
-  signUp: jest.fn().mockResolvedValue(undefined),
-  signOut: jest.fn().mockResolvedValue(undefined),
-  handleAuthError: jest.fn().mockResolvedValue(false),
+  signInEmailPassword: vi.fn().mockResolvedValue(undefined),
+  sendPhoneOtp: vi.fn().mockResolvedValue(undefined),
+  verifyPhoneOtp: vi.fn().mockResolvedValue(undefined),
+  signIn: vi.fn().mockResolvedValue(undefined),
+  signUp: vi.fn().mockResolvedValue(undefined),
+  signOut: vi.fn().mockResolvedValue(undefined),
+  handleAuthError: vi.fn().mockResolvedValue(false),
 };
 
 // AuthProvider mock - just renders children
@@ -86,12 +86,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 };
 
 // Hook mocks
-export const useSupabaseClient = jest.fn(() => mockSupabaseClient);
-export const useSession = jest.fn(() => mockSession);
-export const useUser = jest.fn(() => mockUser);
-export const useAuth = jest.fn(() => mockAuthContextValue);
-export const useAuthErrorHandler = jest.fn(() => ({
-  handleError: jest.fn().mockResolvedValue(false),
+export const useSupabaseClient = vi.fn(() => mockSupabaseClient);
+export const useSession = vi.fn(() => mockSession);
+export const useUser = vi.fn(() => mockUser);
+export const useAuth = vi.fn(() => mockAuthContextValue);
+export const useAuthErrorHandler = vi.fn(() => ({
+  handleError: vi.fn().mockResolvedValue(false),
 }));
 
 // Helper to reset all mocks
@@ -100,7 +100,7 @@ export const resetAuthMocks = () => {
   useSession.mockReturnValue(mockSession);
   useUser.mockReturnValue(mockUser);
   useAuth.mockReturnValue(mockAuthContextValue);
-  useAuthErrorHandler.mockReturnValue({ handleError: jest.fn().mockResolvedValue(false) });
+  useAuthErrorHandler.mockReturnValue({ handleError: vi.fn().mockResolvedValue(false) });
 };
 
 // Utility function mock

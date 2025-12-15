@@ -3,11 +3,11 @@ import React from 'react';
 
 export const EnvironmentDebug: React.FC = () => {
   const envVars = {
-    'REACT_APP_ANTHROPIC_API_KEY': process.env.REACT_APP_ANTHROPIC_API_KEY ?
-      `${process.env.REACT_APP_ANTHROPIC_API_KEY.substring(0, 7)}...` : 'NOT SET',
+    'VITE_ANTHROPIC_API_KEY': import.meta.env.VITE_ANTHROPIC_API_KEY ?
+      `${import.meta.env.VITE_ANTHROPIC_API_KEY.substring(0, 7)}...` : 'NOT SET',
     'NODE_ENV': process.env.NODE_ENV,
-    'REACT_APP_SUPABASE_URL': process.env.REACT_APP_SUPABASE_URL ? 'SET' : 'NOT SET',
-    'REACT_APP_SB_ANON_KEY': process.env.REACT_APP_SB_ANON_KEY ? 'SET' : 'NOT SET',
+    'VITE_SUPABASE_URL': import.meta.env.VITE_SUPABASE_URL ? 'SET' : 'NOT SET',
+    'VITE_SB_ANON_KEY': import.meta.env.VITE_SB_ANON_KEY ? 'SET' : 'NOT SET',
   };
 
   if (process.env.NODE_ENV === 'production') {

@@ -7,19 +7,19 @@ import { LawEnforcementService } from '../lawEnforcementService';
 import type { EmergencyResponseFormData, ResponsePriority } from '../../types/lawEnforcement';
 
 // Mock Supabase client
-jest.mock('../../lib/supabaseClient', () => ({
+vi.mock('../../lib/supabaseClient', () => ({
   supabase: {
-    from: jest.fn(),
-    rpc: jest.fn(),
+    from: vi.fn(),
+    rpc: vi.fn(),
     functions: {
-      invoke: jest.fn()
+      invoke: vi.fn()
     }
   }
 }));
 
 describe('LawEnforcementService', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('getEmergencyResponseInfo', () => {
@@ -45,10 +45,10 @@ describe('LawEnforcementService', () => {
       };
 
       const { supabase } = require('../../lib/supabaseClient');
-      (supabase.from as jest.Mock).mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn<any, any>().mockResolvedValue({
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
               data: mockData,
               error: null
             })
@@ -67,10 +67,10 @@ describe('LawEnforcementService', () => {
 
     it('should return null when no emergency info exists', async () => {
       const { supabase } = require('../../lib/supabaseClient');
-      (supabase.from as jest.Mock).mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn<any, any>().mockResolvedValue({
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
               data: null,
               error: { code: 'PGRST116' } // Not found
             })
@@ -119,10 +119,10 @@ describe('LawEnforcementService', () => {
       };
 
       const { supabase } = require('../../lib/supabaseClient');
-      (supabase.from as jest.Mock).mockReturnValue({
-        upsert: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            single: jest.fn<any, any>().mockResolvedValue({
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
+        upsert: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
               data: mockResponse,
               error: null
             })
@@ -143,10 +143,10 @@ describe('LawEnforcementService', () => {
 
     it('should throw error when save fails', async () => {
       const { supabase } = require('../../lib/supabaseClient');
-      (supabase.from as jest.Mock).mockReturnValue({
-        upsert: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            single: jest.fn<any, any>().mockResolvedValue({
+      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
+        upsert: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
               data: null,
               error: { message: 'Database error' }
             })
@@ -185,8 +185,8 @@ describe('LawEnforcementService', () => {
       };
 
       const { supabase } = require('../../lib/supabaseClient');
-      (supabase.rpc as jest.Mock).mockReturnValue({
-        single: jest.fn<any, any>().mockResolvedValue({
+      (supabase.rpc as ReturnType<typeof vi.fn>).mockReturnValue({
+        single: vi.fn().mockResolvedValue({
           data: mockData,
           error: null
         })

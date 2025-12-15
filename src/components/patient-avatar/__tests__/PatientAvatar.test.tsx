@@ -13,7 +13,7 @@ import { AvatarThumbnail } from '../AvatarThumbnail';
 import { PatientMarker } from '../../../types/patientAvatar';
 
 // Mock the hooks
-jest.mock('../hooks/usePatientAvatar', () => ({
+vi.mock('../hooks/usePatientAvatar', () => ({
   usePatientAvatar: () => ({
     avatar: {
       id: 'test-avatar-id',
@@ -25,13 +25,13 @@ jest.mock('../hooks/usePatientAvatar', () => ({
     },
     loading: false,
     error: null,
-    updateSkinTone: jest.fn(),
-    updateGenderPresentation: jest.fn(),
-    refresh: jest.fn(),
+    updateSkinTone: vi.fn(),
+    updateGenderPresentation: vi.fn(),
+    refresh: vi.fn(),
   }),
 }));
 
-jest.mock('../hooks/usePatientMarkers', () => ({
+vi.mock('../hooks/usePatientMarkers', () => ({
   usePatientMarkers: () => ({
     markers: [
       {
@@ -78,18 +78,18 @@ jest.mock('../hooks/usePatientMarkers', () => ({
     attentionCount: 1,
     loading: false,
     error: null,
-    refresh: jest.fn(),
-    createMarker: jest.fn(),
-    updateMarker: jest.fn(),
-    confirmMarker: jest.fn(),
-    rejectMarker: jest.fn(),
-    deactivateMarker: jest.fn(),
-    confirmAllPending: jest.fn(),
+    refresh: vi.fn(),
+    createMarker: vi.fn(),
+    updateMarker: vi.fn(),
+    confirmMarker: vi.fn(),
+    rejectMarker: vi.fn(),
+    deactivateMarker: vi.fn(),
+    confirmAllPending: vi.fn(),
   }),
 }));
 
 // Mock AuthContext
-jest.mock('../../../contexts/AuthContext', () => ({
+vi.mock('../../../contexts/AuthContext', () => ({
   useAuth: () => ({
     user: { id: 'test-user-id' },
   }),
@@ -208,7 +208,7 @@ describe('AvatarMarker', () => {
   });
 
   it('calls onClick when clicked', () => {
-    const handleClick = jest.fn();
+    const handleClick = vi.fn();
 
     render(
       <svg viewBox="0 0 100 160">
@@ -295,7 +295,7 @@ describe('AvatarThumbnail', () => {
   });
 
   it('calls onClick when clicked', () => {
-    const handleClick = jest.fn();
+    const handleClick = vi.fn();
 
     render(
       <AvatarThumbnail

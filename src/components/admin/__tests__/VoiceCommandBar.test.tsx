@@ -14,18 +14,18 @@ import type { VoiceCommandMapping } from '../../../services/workflowPreferences'
 import { VoiceCommandBar, VoiceCommandButton } from '../VoiceCommandBar';
 
 // Mock react-router-dom navigation
-const mockNavigate = jest.fn();
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
+const mockNavigate = vi.fn();
+vi.mock('react-router-dom', () => ({
+  ...vi.importActual('react-router-dom'),
   useNavigate: () => mockNavigate,
 }));
 
 // Mock useVoiceCommand hook
-const mockStartListening = jest.fn();
-const mockStopListening = jest.fn();
-const mockToggleListening = jest.fn();
-const mockClearTranscript = jest.fn();
-const mockExecuteCommand = jest.fn();
+const mockStartListening = vi.fn();
+const mockStopListening = vi.fn();
+const mockToggleListening = vi.fn();
+const mockClearTranscript = vi.fn();
+const mockExecuteCommand = vi.fn();
 
 const defaultMockState: {
   isListening: boolean;
@@ -55,35 +55,35 @@ const mockActions = {
 
 let mockState = { ...defaultMockState };
 
-jest.mock('../../../hooks/useVoiceCommand', () => ({
+vi.mock('../../../hooks/useVoiceCommand', () => ({
   useVoiceCommand: () => [mockState, mockActions],
   VoiceCommandState: {},
   VoiceCommandActions: {},
 }));
 
 // Mock workflowPreferences
-jest.mock('../../../services/workflowPreferences', () => ({
+vi.mock('../../../services/workflowPreferences', () => ({
   getAllVoiceCommands: () => [
     { phrase: 'shift handoff', displayName: 'Shift Handoff Dashboard', targetId: '/shift-handoff', targetType: 'route' },
     { phrase: 'available beds', displayName: 'Show Available Beds', targetId: 'beds:filter_available', targetType: 'action' },
     { phrase: 'high risk patients', displayName: 'High Risk Patients', targetId: 'patients:filter_critical', targetType: 'action' },
   ],
-  findVoiceCommandMatch: jest.fn(),
+  findVoiceCommandMatch: vi.fn(),
 }));
 
 // Mock auditLogger
-jest.mock('../../../services/auditLogger', () => ({
+vi.mock('../../../services/auditLogger', () => ({
   auditLogger: {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    debug: jest.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
   },
 }));
 
 describe('VoiceCommandBar', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockState = { ...defaultMockState };
   });
 
@@ -366,7 +366,7 @@ describe('VoiceCommandBar', () => {
 
   describe('Navigation Callbacks', () => {
     it('should use custom onNavigate when provided', async () => {
-      const customNavigate = jest.fn();
+      const customNavigate = vi.fn();
 
       render(
         <MemoryRouter>
@@ -379,7 +379,7 @@ describe('VoiceCommandBar', () => {
     });
 
     it('should use custom onScrollToSection when provided', () => {
-      const scrollHandler = jest.fn();
+      const scrollHandler = vi.fn();
 
       render(
         <MemoryRouter>
@@ -391,7 +391,7 @@ describe('VoiceCommandBar', () => {
     });
 
     it('should use custom onOpenCategory when provided', () => {
-      const categoryHandler = jest.fn();
+      const categoryHandler = vi.fn();
 
       render(
         <MemoryRouter>
@@ -406,7 +406,7 @@ describe('VoiceCommandBar', () => {
 
 describe('VoiceCommandButton', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockState = { ...defaultMockState };
   });
 

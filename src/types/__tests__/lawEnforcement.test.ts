@@ -3,7 +3,7 @@
  * Tests for helper functions and type utilities
  */
 
-import { describe, it, expect } from '@jest/globals';
+// describe, it, expect from vitest globals
 import {
   getMobilityStatusText,
   getUrgencyColor,

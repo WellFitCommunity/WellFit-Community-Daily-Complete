@@ -18,20 +18,20 @@ import {
 import { supabase } from '../../lib/supabaseClient';
 
 // Mock Supabase
-jest.mock('../../lib/supabaseClient', () => ({
+vi.mock('../../lib/supabaseClient', () => ({
   supabase: {
     functions: {
-      invoke: jest.fn()
+      invoke: vi.fn()
     }
   }
 }));
 
 // Mock fetch for RxNorm API calls
-global.fetch = jest.fn();
+global.fetch = vi.fn();
 
 describe('Drug Interaction Service', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('checkDrugInteractions', () => {
@@ -53,7 +53,7 @@ describe('Drug Interaction Service', () => {
         cache_hit: false
       };
 
-      (supabase.functions.invoke as jest.Mock).mockResolvedValue({
+      (supabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: mockResult,
         error: null
       });
@@ -83,7 +83,7 @@ describe('Drug Interaction Service', () => {
         cache_hit: true
       };
 
-      (supabase.functions.invoke as jest.Mock).mockResolvedValue({
+      (supabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: mockResult,
         error: null
       });
@@ -96,7 +96,7 @@ describe('Drug Interaction Service', () => {
     });
 
     it('should handle edge function errors', async () => {
-      (supabase.functions.invoke as jest.Mock).mockResolvedValue({
+      (supabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: null,
         error: { message: 'Network error' }
       });
@@ -130,7 +130,7 @@ describe('Drug Interaction Service', () => {
         })
       };
 
-      (supabase.functions.invoke as jest.Mock).mockResolvedValue({
+      (supabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: claudeResponse,
         error: null
       });
@@ -148,7 +148,7 @@ describe('Drug Interaction Service', () => {
     });
 
     it('should handle Claude errors gracefully', async () => {
-      (supabase.functions.invoke as jest.Mock).mockResolvedValue({
+      (supabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: null,
         error: { message: 'Claude timeout' }
       });
@@ -175,7 +175,7 @@ describe('Drug Interaction Service', () => {
 Hope this helps!`
       };
 
-      (supabase.functions.invoke as jest.Mock).mockResolvedValue({
+      (supabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: claudeResponse,
         error: null
       });
@@ -195,7 +195,7 @@ Hope this helps!`
         }
       };
 
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         json: async () => mockResponse
       });
 
@@ -208,7 +208,7 @@ Hope this helps!`
     });
 
     it('should return null if medication not found', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         json: async () => ({})
       });
 
@@ -218,7 +218,7 @@ Hope this helps!`
     });
 
     it('should handle API errors', async () => {
-      (global.fetch as jest.Mock).mockRejectedValue(new Error('Network error'));
+      (global.fetch as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Network error'));
 
       const rxcui = await findRxCUI('Warfarin');
 
@@ -236,7 +236,7 @@ Hope this helps!`
         }
       };
 
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         json: async () => mockResponse
       });
 
@@ -250,7 +250,7 @@ Hope this helps!`
     });
 
     it('should return null if medication not found', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         json: async () => ({})
       });
 
@@ -275,7 +275,7 @@ Hope this helps!`
         }
       };
 
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         json: async () => mockResponse
       });
 
@@ -305,7 +305,7 @@ Hope this helps!`
         }
       };
 
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
         json: async () => mockResponse
       });
 
@@ -343,7 +343,7 @@ Hope this helps!`
         })
       };
 
-      (supabase.functions.invoke as jest.Mock)
+      (supabase.functions.invoke as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce({ data: basicResult, error: null }) // First call: check interactions
         .mockResolvedValueOnce({ data: claudeResponse, error: null }); // Second call: Claude enhancement
 
@@ -377,7 +377,7 @@ Hope this helps!`
         cache_hit: false
       };
 
-      (supabase.functions.invoke as jest.Mock).mockResolvedValue({
+      (supabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: basicResult,
         error: null
       });
@@ -425,7 +425,7 @@ Hope this helps!`
   describe('Integration Tests', () => {
     it('should handle complete workflow: search -> check -> enhance', async () => {
       // Mock search
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         json: async () => ({
           drugGroup: {
             conceptGroup: [
@@ -455,7 +455,7 @@ Hope this helps!`
         cache_hit: false
       };
 
-      (supabase.functions.invoke as jest.Mock)
+      (supabase.functions.invoke as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce({ data: basicResult, error: null })
         .mockResolvedValueOnce({
           data: {
@@ -495,7 +495,7 @@ Hope this helps!`
         source: 'rxnorm'
       };
 
-      (supabase.functions.invoke as jest.Mock).mockResolvedValue({
+      (supabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: {
           response: JSON.stringify({
             clinical_effects: 'Test',
@@ -520,7 +520,7 @@ Hope this helps!`
         source: 'rxnorm'
       };
 
-      (supabase.functions.invoke as jest.Mock).mockResolvedValue({
+      (supabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: { response: 'This is not JSON at all!' },
         error: null
       });
@@ -555,7 +555,7 @@ Hope this helps!`
         cache_hit: false
       };
 
-      (supabase.functions.invoke as jest.Mock)
+      (supabase.functions.invoke as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce({ data: basicResult, error: null })
         .mockResolvedValue({
           data: {

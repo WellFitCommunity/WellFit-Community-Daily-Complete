@@ -8,10 +8,10 @@ import { renderHook, act } from '@testing-library/react';
 import { formatKeyCombo, GLOBAL_SHORTCUTS } from '../useKeyboardShortcuts';
 
 // Mock react-router-dom
-const mockNavigate = jest.fn();
+const mockNavigate = vi.fn();
 const mockLocation = { pathname: '/admin' };
 
-jest.mock('react-router-dom', () => ({
+vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
   useLocation: () => mockLocation,
 }));
@@ -22,7 +22,7 @@ jest.mock('react-router-dom', () => ({
 
 describe('useKeyboardShortcuts', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('formatKeyCombo', () => {

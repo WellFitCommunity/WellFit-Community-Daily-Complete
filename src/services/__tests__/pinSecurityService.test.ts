@@ -13,10 +13,10 @@
 import { supabase } from '../../lib/supabaseClient';
 
 // Mock Supabase client
-jest.mock('../../lib/supabaseClient', () => {
-  const mockInvoke = jest.fn();
-  const mockRpc = jest.fn();
-  const mockFrom = jest.fn();
+vi.mock('../../lib/supabaseClient', () => {
+  const mockInvoke = vi.fn();
+  const mockRpc = vi.fn();
+  const mockFrom = vi.fn();
 
   return {
     supabase: {
@@ -29,16 +29,16 @@ jest.mock('../../lib/supabaseClient', () => {
   };
 });
 
-const mockSupabase = supabase as jest.Mocked<typeof supabase>;
+const mockSupabase = supabase as typeof supabase;
 
 describe('PIN Security Service', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('PIN Verification Rate Limiting', () => {
     it('should allow PIN verification when under rate limit', async () => {
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: {
           success: true,
           expires_at: new Date(Date.now() + 120 * 60 * 1000).toISOString(),
@@ -57,7 +57,7 @@ describe('PIN Security Service', () => {
 
     it('should return error after 5 failed PIN attempts', async () => {
       // Simulate 5 failed attempts leading to lockout
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: {
           success: false,
           error: 'Account locked for 15 minutes due to too many failed attempts',
@@ -76,7 +76,7 @@ describe('PIN Security Service', () => {
     });
 
     it('should show remaining attempts warning when near lockout', async () => {
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: {
           success: false,
           error: 'Incorrect PIN',
@@ -96,7 +96,7 @@ describe('PIN Security Service', () => {
     });
 
     it('should require PIN to be 4-8 digits', async () => {
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: null,
         error: { message: 'PIN must be 4-8 digits' },
       });
@@ -110,7 +110,7 @@ describe('PIN Security Service', () => {
     });
 
     it('should reject non-numeric PIN', async () => {
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: null,
         error: { message: 'PIN must contain only digits' },
       });
@@ -127,7 +127,7 @@ describe('PIN Security Service', () => {
     const validPhone = '+15551234567';
 
     it('should accept valid phone number for reset request', async () => {
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: {
           success: true,
           message: 'If this phone is registered to an admin account, a verification code has been sent.',
@@ -145,7 +145,7 @@ describe('PIN Security Service', () => {
     });
 
     it('should return generic success for non-existent phone (enumeration protection)', async () => {
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: {
           success: true,
           message: 'If this phone is registered to an admin account, a verification code has been sent.',
@@ -162,7 +162,7 @@ describe('PIN Security Service', () => {
     });
 
     it('should reject invalid phone format', async () => {
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: { error: 'Invalid phone number format' },
         error: null,
       });
@@ -177,14 +177,14 @@ describe('PIN Security Service', () => {
     it('should enforce rate limit of 3 requests per hour', async () => {
       // First 3 requests should succeed
       for (let i = 0; i < 3; i++) {
-        (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+        (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
           data: { success: true },
           error: null,
         });
       }
 
       // 4th request should be rate limited (but still return generic success)
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: {
           success: true, // Still returns success to prevent enumeration
           message: 'If this phone is registered...',
@@ -205,7 +205,7 @@ describe('PIN Security Service', () => {
     });
 
     it('should require phone number parameter', async () => {
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: { error: 'Phone number is required' },
         error: null,
       });
@@ -226,7 +226,7 @@ describe('PIN Security Service', () => {
       const mockOtpToken = 'otp-token-uuid';
       const mockExpiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
 
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: {
           success: true,
           otp_token: mockOtpToken,
@@ -246,7 +246,7 @@ describe('PIN Security Service', () => {
     });
 
     it('should reject invalid verification code', async () => {
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: { error: 'Invalid or expired verification code' },
         error: null,
       });
@@ -259,7 +259,7 @@ describe('PIN Security Service', () => {
     });
 
     it('should reject expired verification code', async () => {
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: { error: 'Invalid or expired verification code' },
         error: null,
       });
@@ -272,7 +272,7 @@ describe('PIN Security Service', () => {
     });
 
     it('should reject code format that is not 4-8 digits', async () => {
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: { error: 'Invalid verification code format' },
         error: null,
       });
@@ -285,7 +285,7 @@ describe('PIN Security Service', () => {
     });
 
     it('should require phone number parameter', async () => {
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: { error: 'Phone number is required' },
         error: null,
       });
@@ -298,7 +298,7 @@ describe('PIN Security Service', () => {
     });
 
     it('should handle case when no pending reset request exists', async () => {
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: {
           error: 'No pending PIN reset request found. Please request a new reset.',
         },
@@ -318,7 +318,7 @@ describe('PIN Security Service', () => {
     const newPin = '5678';
 
     it('should allow PIN change with valid OTP token', async () => {
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: {
           success: true,
           message: 'PIN has been reset successfully.',
@@ -334,7 +334,7 @@ describe('PIN Security Service', () => {
     });
 
     it('should reject expired OTP token', async () => {
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: { error: 'OTP token expired. Please request a new PIN reset.' },
         error: null,
       });
@@ -347,7 +347,7 @@ describe('PIN Security Service', () => {
     });
 
     it('should reject already-used OTP token', async () => {
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: { error: 'Invalid or already used OTP token.' },
         error: null,
       });
@@ -365,7 +365,7 @@ describe('PIN Security Service', () => {
     const newPin = '5678';
 
     it('should allow PIN change with correct old PIN', async () => {
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: {
           success: true,
           message: 'PIN updated successfully.',
@@ -381,7 +381,7 @@ describe('PIN Security Service', () => {
     });
 
     it('should reject incorrect old PIN', async () => {
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: { error: 'Invalid current PIN' },
         error: null,
       });
@@ -394,7 +394,7 @@ describe('PIN Security Service', () => {
     });
 
     it('should require either old_pin or otp_token', async () => {
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: { error: 'Either old_pin or otp_token is required' },
         error: null,
       });
@@ -412,7 +412,7 @@ describe('PIN Security Service', () => {
     const validPassword = 'hashedpassword123';
 
     it('should require PIN after password verification', async () => {
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: {
           success: true,
           session_token: 'pending-session-token',
@@ -436,7 +436,7 @@ describe('PIN Security Service', () => {
       const sessionToken = 'pending-session-token';
       const pin = '1234';
 
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: {
           success: true,
           session_token: 'full-session-token',
@@ -463,7 +463,7 @@ describe('PIN Security Service', () => {
     });
 
     it('should handle rate limiting on Envision password attempts', async () => {
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: {
           error: 'Account temporarily locked. Try again in 15 minutes.',
           locked_until: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
@@ -481,7 +481,7 @@ describe('PIN Security Service', () => {
     });
 
     it('should handle expired pending session', async () => {
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: { error: 'Session expired. Please login again.' },
         error: null,
       });
@@ -498,7 +498,7 @@ describe('PIN Security Service', () => {
     const validEmail = 'admin@envision.com';
 
     it('should initiate password reset via SMS', async () => {
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: {
           success: true,
           message: 'If this email is registered, a verification code has been sent to the associated phone number.',
@@ -514,7 +514,7 @@ describe('PIN Security Service', () => {
     });
 
     it('should initiate PIN reset via SMS', async () => {
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: {
           success: true,
           message: 'If this email is registered, a verification code has been sent to the associated phone number.',
@@ -530,7 +530,7 @@ describe('PIN Security Service', () => {
     });
 
     it('should complete password reset with SMS code', async () => {
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: {
           success: true,
           message: 'Your password has been reset successfully. You can now log in with your new password.',
@@ -551,7 +551,7 @@ describe('PIN Security Service', () => {
     });
 
     it('should complete PIN reset with SMS code', async () => {
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: {
           success: true,
           message: 'Your PIN has been reset successfully. You can now log in with your new PIN.',
@@ -572,7 +572,7 @@ describe('PIN Security Service', () => {
     });
 
     it('should validate reset_type parameter', async () => {
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: { error: "Reset type must be 'password' or 'pin'" },
         error: null,
       });
@@ -585,7 +585,7 @@ describe('PIN Security Service', () => {
     });
 
     it('should validate new password length', async () => {
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: { error: 'Password must be at least 8 characters' },
         error: null,
       });
@@ -603,7 +603,7 @@ describe('PIN Security Service', () => {
     });
 
     it('should validate new PIN format', async () => {
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: { error: 'PIN must be 4-8 digits' },
         error: null,
       });
@@ -623,12 +623,12 @@ describe('PIN Security Service', () => {
 
   describe('Security Audit Logging', () => {
     it('should log PIN verification attempts', async () => {
-      const mockFrom = jest.fn().mockReturnValue({
-        insert: jest.fn().mockResolvedValue({ error: null }),
+      const mockFrom = vi.fn().mockReturnValue({
+        insert: vi.fn().mockResolvedValue({ error: null }),
       });
-      (mockSupabase.from as jest.Mock) = mockFrom;
+      (mockSupabase.from as ReturnType<typeof vi.fn>) = mockFrom;
 
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: { success: false, error: 'Incorrect PIN' },
         error: null,
       });
@@ -643,7 +643,7 @@ describe('PIN Security Service', () => {
     });
 
     it('should log successful login events', async () => {
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: {
           success: true,
           admin_token: 'token',
@@ -660,7 +660,7 @@ describe('PIN Security Service', () => {
     });
 
     it('should log PIN reset requests', async () => {
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: { success: true },
         error: null,
       });
@@ -678,7 +678,7 @@ describe('PIN Security Service', () => {
       // Client pre-hashes PIN with SHA-256 before sending
       const clientHashedPin = 'sha256:' + 'a'.repeat(64);
 
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: {
           success: true,
           admin_token: 'token',
@@ -696,7 +696,7 @@ describe('PIN Security Service', () => {
 
     it('should handle both hashed and plain PIN formats', async () => {
       // Plain PIN
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: { success: true },
         error: null,
       });
@@ -707,7 +707,7 @@ describe('PIN Security Service', () => {
       expect(plainResponse.data.success).toBe(true);
 
       // Hashed PIN
-      (mockSupabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+      (mockSupabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         data: { success: true },
         error: null,
       });

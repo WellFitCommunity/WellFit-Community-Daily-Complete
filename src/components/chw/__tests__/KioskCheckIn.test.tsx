@@ -9,10 +9,10 @@ import { KioskCheckIn } from '../KioskCheckIn';
 import { chwService } from '../../../services/chwService';
 import { supabase } from '../../../lib/supabaseClient';
 
-jest.mock('../../../services/chwService');
-jest.mock('../../../lib/supabaseClient', () => ({
+vi.mock('../../../services/chwService');
+vi.mock('../../../lib/supabaseClient', () => ({
   supabase: {
-    from: jest.fn()
+    from: vi.fn()
   }
 }));
 
@@ -20,13 +20,13 @@ describe('KioskCheckIn - Privacy consent display', () => {
   const mockProps = {
     kioskId: 'kiosk-001',
     locationName: 'Test Library',
-    onCheckInComplete: jest.fn(),
+    onCheckInComplete: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    (chwService.logSecurityEvent as jest.Mock).mockResolvedValue(undefined);
-    (chwService.startFieldVisit as jest.Mock).mockResolvedValue({ id: 'visit-123' });
+    vi.clearAllMocks();
+    (chwService.logSecurityEvent as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
+    (chwService.startFieldVisit as ReturnType<typeof vi.fn>).mockResolvedValue({ id: 'visit-123' });
   });
 
   describe('Language Selection', () => {
@@ -95,11 +95,11 @@ describe('KioskCheckIn - Privacy consent display', () => {
 
   describe('Privacy Consent - HIPAA Compliance', () => {
     it('should show privacy consent after successful patient lookup', async () => {
-      const mockFrom = jest.fn().mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          ilike: jest.fn().mockReturnValue({
-            ilike: jest.fn().mockReturnValue({
-              limit: jest.fn().mockResolvedValue({
+      const mockFrom = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          ilike: vi.fn().mockReturnValue({
+            ilike: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue({
                 data: [{
                   id: 'patient-123',
                   first_name: 'John',
@@ -115,7 +115,7 @@ describe('KioskCheckIn - Privacy consent display', () => {
         })
       });
 
-      (supabase.from as jest.Mock) = mockFrom;
+      (supabase.from as ReturnType<typeof vi.fn>) = mockFrom;
 
       render(<KioskCheckIn {...mockProps} />);
 
@@ -135,11 +135,11 @@ describe('KioskCheckIn - Privacy consent display', () => {
     });
 
     it('should display HIPAA compliance information in privacy text', async () => {
-      const mockFrom = jest.fn().mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          ilike: jest.fn().mockReturnValue({
-            ilike: jest.fn().mockReturnValue({
-              limit: jest.fn().mockResolvedValue({
+      const mockFrom = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          ilike: vi.fn().mockReturnValue({
+            ilike: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue({
                 data: [{
                   id: 'patient-123',
                   first_name: 'John',
@@ -155,7 +155,7 @@ describe('KioskCheckIn - Privacy consent display', () => {
         })
       });
 
-      (supabase.from as jest.Mock) = mockFrom;
+      (supabase.from as ReturnType<typeof vi.fn>) = mockFrom;
 
       render(<KioskCheckIn {...mockProps} />);
 
@@ -175,11 +175,11 @@ describe('KioskCheckIn - Privacy consent display', () => {
     });
 
     it('should call onCheckInComplete when privacy consent is accepted', async () => {
-      const mockFrom = jest.fn().mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          ilike: jest.fn().mockReturnValue({
-            ilike: jest.fn().mockReturnValue({
-              limit: jest.fn().mockResolvedValue({
+      const mockFrom = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          ilike: vi.fn().mockReturnValue({
+            ilike: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue({
                 data: [{
                   id: 'patient-456',
                   first_name: 'John',
@@ -195,9 +195,9 @@ describe('KioskCheckIn - Privacy consent display', () => {
         })
       });
 
-      (supabase.from as jest.Mock) = mockFrom;
+      (supabase.from as ReturnType<typeof vi.fn>) = mockFrom;
 
-      (chwService.startFieldVisit as jest.Mock).mockResolvedValue({
+      (chwService.startFieldVisit as ReturnType<typeof vi.fn>).mockResolvedValue({
         id: 'visit-123',
         patient_id: 'patient-456',
       });

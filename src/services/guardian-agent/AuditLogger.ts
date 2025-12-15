@@ -347,7 +347,7 @@ export class AuditLogger {
 
   private captureVersionInfo(): string {
     // Capture current app version
-    return process.env.REACT_APP_VERSION || 'unknown';
+    return import.meta.env.VITE_VERSION || 'unknown';
   }
 
   private getClientIP(): string | undefined {

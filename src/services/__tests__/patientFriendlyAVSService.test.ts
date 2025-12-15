@@ -18,30 +18,30 @@ import {
   formatAVSAsPlainText,
 } from '../../types/patientFriendlyAVS';
 
-// Mock Supabase client - must be defined BEFORE jest.mock
-jest.mock('../../lib/supabaseClient', () => {
-  const mockFrom = jest.fn(() => ({
-    select: jest.fn(() => ({
-      eq: jest.fn(() => ({
-        single: jest.fn(() => Promise.resolve({
+// Mock Supabase client - must be defined BEFORE vi.mock
+vi.mock('../../lib/supabaseClient', () => {
+  const mockFrom = vi.fn(() => ({
+    select: vi.fn(() => ({
+      eq: vi.fn(() => ({
+        single: vi.fn(() => Promise.resolve({
           data: { tenant_id: 'test-tenant' },
           error: null,
         })),
-        order: jest.fn(() => ({
-          limit: jest.fn(() => ({
-            single: jest.fn(() => Promise.resolve({ data: null, error: null })),
+        order: vi.fn(() => ({
+          limit: vi.fn(() => ({
+            single: vi.fn(() => Promise.resolve({ data: null, error: null })),
           })),
         })),
       })),
     })),
-    insert: jest.fn(() => Promise.resolve({ data: null, error: null })),
-    update: jest.fn(() => ({
-      eq: jest.fn(() => Promise.resolve({ data: null, error: null })),
+    insert: vi.fn(() => Promise.resolve({ data: null, error: null })),
+    update: vi.fn(() => ({
+      eq: vi.fn(() => Promise.resolve({ data: null, error: null })),
     })),
   }));
 
   const mockAuth = {
-    getUser: jest.fn(() => Promise.resolve({
+    getUser: vi.fn(() => Promise.resolve({
       data: { user: { id: 'test-user-id' } },
     })),
   };
@@ -54,11 +54,11 @@ jest.mock('../../lib/supabaseClient', () => {
   };
 });
 
-jest.mock('../auditLogger', () => ({
+vi.mock('../auditLogger', () => ({
   auditLogger: {
-    info: jest.fn(() => Promise.resolve()),
-    warn: jest.fn(() => Promise.resolve()),
-    error: jest.fn(() => Promise.resolve()),
+    info: vi.fn(() => Promise.resolve()),
+    warn: vi.fn(() => Promise.resolve()),
+    error: vi.fn(() => Promise.resolve()),
   },
 }));
 
@@ -66,11 +66,11 @@ jest.mock('../auditLogger', () => ({
 import { PatientFriendlyAVSService } from '../patientFriendlyAVSService';
 import { supabase } from '../../lib/supabaseClient';
 
-const mockSupabaseClient = supabase as jest.Mocked<typeof supabase>;
+const mockSupabaseClient = supabase as typeof supabase;
 
 describe('PatientFriendlyAVSService', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('generateAVS', () => {

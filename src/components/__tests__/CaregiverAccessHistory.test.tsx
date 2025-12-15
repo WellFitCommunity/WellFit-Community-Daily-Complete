@@ -8,28 +8,28 @@ import CaregiverAccessHistory from '../CaregiverAccessHistory';
 import { useSupabaseClient } from '../../contexts/AuthContext';
 
 // Mock AuthContext
-jest.mock('../../contexts/AuthContext', () => ({
-  useSupabaseClient: jest.fn(),
+vi.mock('../../contexts/AuthContext', () => ({
+  useSupabaseClient: vi.fn(),
 }));
 
 // Mock auditLogger
-jest.mock('../../services/auditLogger', () => ({
+vi.mock('../../services/auditLogger', () => ({
   auditLogger: {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
 describe('CaregiverAccessHistory', () => {
-  const mockRpc = jest.fn();
+  const mockRpc = vi.fn();
   const mockSupabase = {
     rpc: mockRpc,
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    (useSupabaseClient as jest.Mock).mockReturnValue(mockSupabase);
+    vi.clearAllMocks();
+    (useSupabaseClient as ReturnType<typeof vi.fn>).mockReturnValue(mockSupabase);
     mockRpc.mockResolvedValue({ data: [], error: null });
   });
 

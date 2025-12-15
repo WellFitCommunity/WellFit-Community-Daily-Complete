@@ -26,9 +26,9 @@ type Recipe = {
 };
 
 // Change this to 'supabase' later when MealsService is ready.
-// You can also drive this with process.env.REACT_APP_MEALS_SOURCE.
+// You can also drive this with import.meta.env.VITE_MEALS_SOURCE.
 const MEALS_SOURCE: 'local' | 'supabase' =
-  (process.env.REACT_APP_MEALS_SOURCE as 'local' | 'supabase') || 'local';
+  (import.meta.env.VITE_MEALS_SOURCE as 'local' | 'supabase') || 'local';
 
 // If Unsplash is blocked by CSP, swap this to a WellFit-hosted asset.
 const DEFAULT_IMAGE = 'https://example.com/default-meal.jpg';

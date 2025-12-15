@@ -1,3 +1,4 @@
+import { type Mock } from 'vitest';
 /**
  * CHW Service Test Suite
  * Comprehensive tests for Community Health Worker kiosk operations
@@ -9,31 +10,31 @@ import { supabase } from '../../lib/supabaseClient';
 import { offlineSync } from '../specialist-workflow-engine/OfflineDataSync';
 
 // Mock dependencies
-jest.mock('../../lib/supabaseClient', () => ({
+vi.mock('../../lib/supabaseClient', () => ({
   supabase: {
-    from: jest.fn(),
+    from: vi.fn(),
   },
 }));
 
-jest.mock('../specialist-workflow-engine/OfflineDataSync', () => ({
+vi.mock('../specialist-workflow-engine/OfflineDataSync', () => ({
   offlineSync: {
-    initialize: jest.fn(),
-    startAutoSync: jest.fn(),
-    saveOffline: jest.fn(),
-    syncAll: jest.fn(),
-    getSyncStatus: jest.fn(),
+    initialize: vi.fn(),
+    startAutoSync: vi.fn(),
+    saveOffline: vi.fn(),
+    syncAll: vi.fn(),
+    getSyncStatus: vi.fn(),
   },
 }));
 
 describe('CHWService', () => {
   let chwService: CHWService;
-  let mockSupabaseFrom: jest.Mock;
+  let mockSupabaseFrom: Mock;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     chwService = new CHWService();
-    mockSupabaseFrom = jest.fn();
-    (supabase.from as jest.Mock) = mockSupabaseFrom;
+    mockSupabaseFrom = vi.fn();
+    (supabase.from as ReturnType<typeof vi.fn>) = mockSupabaseFrom;
   });
 
   describe('Initialize', () => {
@@ -478,13 +479,13 @@ describe('CHWService', () => {
       });
 
       // Mock supabase to provide select and insert methods for offline scenario
-      const mockSelect = jest.fn().mockReturnValue({
-        eq: jest.fn().mockReturnValue({
-          single: jest.fn().mockResolvedValue({ data: { patient_id: 'patient-123' }, error: null })
+      const mockSelect = vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({ data: { patient_id: 'patient-123' }, error: null })
         })
       });
 
-      const mockInsert = jest.fn().mockResolvedValue({ error: null });
+      const mockInsert = vi.fn().mockResolvedValue({ error: null });
 
       mockSupabaseFrom.mockReturnValue({
         select: mockSelect,
@@ -509,17 +510,17 @@ describe('CHWService', () => {
         value: true,
       });
 
-      const mockUpdate = jest.fn().mockReturnValue({
-        eq: jest.fn().mockResolvedValue({ error: null }),
+      const mockUpdate = vi.fn().mockReturnValue({
+        eq: vi.fn().mockResolvedValue({ error: null }),
       });
 
-      const mockSelect = jest.fn().mockReturnValue({
-        eq: jest.fn().mockReturnValue({
-          single: jest.fn().mockResolvedValue({ data: { patient_id: 'patient-123' }, error: null })
+      const mockSelect = vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({ data: { patient_id: 'patient-123' }, error: null })
         })
       });
 
-      const mockInsert = jest.fn().mockResolvedValue({ error: null });
+      const mockInsert = vi.fn().mockResolvedValue({ error: null });
 
       mockSupabaseFrom.mockReturnValue({
         update: mockUpdate,
@@ -572,7 +573,7 @@ describe('CHWService', () => {
         lastSync: Date.now() - 60000,
       };
 
-      (offlineSync.getSyncStatus as jest.Mock).mockResolvedValue(mockStatus);
+      (offlineSync.getSyncStatus as ReturnType<typeof vi.fn>).mockResolvedValue(mockStatus);
 
       const status = await chwService.getSyncStatus();
 
@@ -591,7 +592,7 @@ describe('CHWService', () => {
         errors: [],
       };
 
-      (offlineSync.syncAll as jest.Mock).mockResolvedValue(mockSyncResult);
+      (offlineSync.syncAll as ReturnType<typeof vi.fn>).mockResolvedValue(mockSyncResult);
 
       const result = await chwService.syncOfflineData();
 

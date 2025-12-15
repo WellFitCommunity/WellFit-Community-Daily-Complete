@@ -13,11 +13,11 @@ import { EASessionResume } from '../EASessionResume';
 // MOCKS
 // ============================================================================
 
-const mockResumeSession = jest.fn();
-const mockClearHistory = jest.fn();
-const mockGetLastRoute = jest.fn();
+const mockResumeSession = vi.fn();
+const mockClearHistory = vi.fn();
+const mockGetLastRoute = vi.fn();
 
-jest.mock('../../../contexts/NavigationHistoryContext', () => ({
+vi.mock('../../../contexts/NavigationHistoryContext', () => ({
   useNavigationHistory: () => ({
     canResumeSession: true,
     getLastRoute: mockGetLastRoute,
@@ -28,7 +28,7 @@ jest.mock('../../../contexts/NavigationHistoryContext', () => ({
 
 const mockUser = { id: 'user-123', email: 'test@example.com' };
 
-jest.mock('../../../contexts/AuthContext', () => ({
+vi.mock('../../../contexts/AuthContext', () => ({
   useAuth: () => ({
     user: mockUser,
   }),
@@ -59,7 +59,7 @@ afterAll(() => {
 
 describe('EASessionResume', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockGetLastRoute.mockReturnValue('/shift-handoff');
 
     // Clear sessionStorage before each test
@@ -119,7 +119,7 @@ describe('EASessionResume', () => {
     });
 
     it('should call onResume callback when provided', async () => {
-      const onResume = jest.fn();
+      const onResume = vi.fn();
       render(<EASessionResume onResume={onResume} />);
       const resumeButton = screen.getByText('Resume');
       await userEvent.click(resumeButton);
@@ -145,7 +145,7 @@ describe('EASessionResume', () => {
     });
 
     it('should call onDismiss callback when Start Fresh is clicked', async () => {
-      const onDismiss = jest.fn();
+      const onDismiss = vi.fn();
       render(<EASessionResume onDismiss={onDismiss} />);
       const startFreshButton = screen.getByText('Start Fresh');
       await userEvent.click(startFreshButton);
@@ -173,7 +173,7 @@ describe('EASessionResume', () => {
     });
 
     it('should call onDismiss callback when dismissed', async () => {
-      const onDismiss = jest.fn();
+      const onDismiss = vi.fn();
       render(<EASessionResume onDismiss={onDismiss} />);
       const dismissButton = screen.getByTitle('Dismiss');
       await userEvent.click(dismissButton);
@@ -192,11 +192,11 @@ describe('EASessionResume', () => {
 
   describe('Auto-Dismiss', () => {
     beforeEach(() => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
     });
 
     afterEach(() => {
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     it('should auto-dismiss after specified time', async () => {
@@ -204,7 +204,7 @@ describe('EASessionResume', () => {
       expect(screen.getByText('Resume Session?')).toBeInTheDocument();
 
       act(() => {
-        jest.advanceTimersByTime(5000);
+        vi.advanceTimersByTime(5000);
       });
 
       await waitFor(() => {
@@ -217,7 +217,7 @@ describe('EASessionResume', () => {
       expect(screen.getByText('Resume Session?')).toBeInTheDocument();
 
       act(() => {
-        jest.advanceTimersByTime(30000);
+        vi.advanceTimersByTime(30000);
       });
 
       expect(screen.getByText('Resume Session?')).toBeInTheDocument();

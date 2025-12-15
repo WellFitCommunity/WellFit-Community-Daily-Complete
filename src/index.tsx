@@ -81,7 +81,7 @@ function DemoModeBridge({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const id = user?.id ?? null;
   const demoEnabled =
-    String(process.env.REACT_APP_DEMO_ENABLED ?? 'false').toLowerCase() === 'true';
+    String(import.meta.env.VITE_DEMO_ENABLED ?? 'false').toLowerCase() === 'true';
 
   return (
     <DemoModeProvider enabled={demoEnabled} userId={id}>

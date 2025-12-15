@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabaseClient';
 
-const GUARDIAN_FUNCTION_URL = `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/guardian-agent-api`;
+const GUARDIAN_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/guardian-agent-api`;
 
 interface GuardianResponse<T = any> {
   success: boolean;

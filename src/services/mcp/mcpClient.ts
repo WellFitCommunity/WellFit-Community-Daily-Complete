@@ -147,7 +147,7 @@ export class MCPClient {
  */
 export function createClaudeMCPClient(): MCPClient {
   // Get Supabase URL from environment
-  const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || process.env.REACT_APP_SB_URL;
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_SB_URL;
 
   if (!supabaseUrl) {
     throw new Error('Supabase URL not configured');

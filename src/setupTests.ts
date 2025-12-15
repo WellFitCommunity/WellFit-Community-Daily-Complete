@@ -1,10 +1,11 @@
 /**
- * Jest Test Setup
+ * Vitest Test Setup
  *
  * Safe configuration for smoke and unit tests.
  * Provides necessary polyfills and mocks without breaking production code.
  */
 import '@testing-library/jest-dom';
+import { vi, beforeEach, afterEach, expect } from 'vitest';
 import { TextEncoder, TextDecoder } from 'util';
 import { webcrypto } from 'crypto';
 
@@ -18,36 +19,36 @@ global.TextDecoder = TextDecoder as typeof global.TextDecoder;
 global.crypto = webcrypto as unknown as Crypto;
 
 // Mock supabaseClient
-jest.mock('./lib/supabaseClient');
+vi.mock('./lib/supabaseClient');
 
 // Mock AuthContext - provides useAuth, useUser, useSession, etc.
-jest.mock('./contexts/AuthContext');
+vi.mock('./contexts/AuthContext');
 
 // Mock AdminAuthContext - provides useAdminAuth
-jest.mock('./contexts/AdminAuthContext');
+vi.mock('./contexts/AdminAuthContext');
 
-// Polyfill fetch for Jest environment
-global.fetch = jest.fn(() =>
+// Polyfill fetch for test environment
+global.fetch = vi.fn(() =>
   Promise.resolve({
     ok: true,
     status: 200,
     json: async () => ({}),
     text: async () => '',
   })
-) as jest.Mock;
+) as unknown as typeof global.fetch;
 
 // Mock window.matchMedia (required for many UI components)
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
-  value: jest.fn().mockImplementation((query: string) => ({
+  value: vi.fn().mockImplementation((query: string) => ({
     matches: false,
     media: query,
     onchange: null,
-    addListener: jest.fn(),
-    removeListener: jest.fn(),
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
   })),
 });
 
@@ -86,7 +87,7 @@ Object.defineProperty(window, 'ResizeObserver', {
 // Mock scrollTo
 Object.defineProperty(window, 'scrollTo', {
   writable: true,
-  value: jest.fn(),
+  value: vi.fn(),
 });
 
 // ============================================
@@ -301,39 +302,29 @@ export async function testTimingAttackResistance(
 // Global Test Configuration
 // ============================================
 
-// Set test timeout (10 seconds for most tests, can be overridden per-test)
-jest.setTimeout(10000);
-
 // Mock console methods to reduce noise in tests
 global.console = {
   ...console,
-  log: jest.fn(),
-  debug: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
+  log: vi.fn(),
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
 };
 
 // Global beforeEach to reset mocks
 beforeEach(() => {
-  // Reset fetch mock if it's a jest mock
-  if (global.fetch && typeof (global.fetch as jest.Mock).mockClear === 'function') {
-    (global.fetch as jest.Mock).mockClear();
-  }
+  // Reset fetch mock
+  vi.mocked(global.fetch).mockClear();
 });
 
 // Global afterEach cleanup to prevent timer leaks
 afterEach(() => {
   // Clear all timers to prevent hanging tests
-  jest.clearAllTimers();
+  vi.clearAllTimers();
   // Clear all mocks to prevent memory leaks
-  jest.clearAllMocks();
+  vi.clearAllMocks();
 });
-
-// Mock environment variables
-process.env.REACT_APP_SUPABASE_URL = 'https://test.supabase.co';
-process.env.REACT_APP_SUPABASE_ANON_KEY = 'test-anon-key';
-// NODE_ENV is already set to 'test' by Jest and is read-only
 
 // ============================================
 // Security Test Matchers
@@ -403,12 +394,15 @@ expect.extend({
 });
 
 // Declare custom matchers for TypeScript
-declare global {
-  namespace jest {
-    interface Matchers<R> {
-      toBeSecurePassword(): R;
-      toContainSQLInjection(): R;
-      toContainXSS(): R;
-    }
+declare module 'vitest' {
+  interface Assertion<T = any> {
+    toBeSecurePassword(): T;
+    toContainSQLInjection(): T;
+    toContainXSS(): T;
+  }
+  interface AsymmetricMatchersContaining {
+    toBeSecurePassword(): any;
+    toContainSQLInjection(): any;
+    toContainXSS(): any;
   }
 }

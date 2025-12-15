@@ -17,19 +17,19 @@ import {
 
 // Mock the AuthContext
 const mockSupabaseClient = {
-  from: jest.fn().mockReturnValue({
-    insert: jest.fn().mockReturnValue({ error: null }),
-    select: jest.fn().mockReturnValue({
-      single: jest.fn().mockResolvedValue({ data: { id: 'test-job' }, error: null }),
+  from: vi.fn().mockReturnValue({
+    insert: vi.fn().mockReturnValue({ error: null }),
+    select: vi.fn().mockReturnValue({
+      single: vi.fn().mockResolvedValue({ data: { id: 'test-job' }, error: null }),
     }),
   }),
   storage: {
-    from: jest.fn().mockReturnValue({
-      upload: jest.fn().mockResolvedValue({ error: null }),
+    from: vi.fn().mockReturnValue({
+      upload: vi.fn().mockResolvedValue({ error: null }),
     }),
   },
   functions: {
-    invoke: jest.fn().mockResolvedValue({ data: { success: false, error: 'ocr_client_required' }, error: null }),
+    invoke: vi.fn().mockResolvedValue({ data: { success: false, error: 'ocr_client_required' }, error: null }),
   },
 };
 
@@ -38,7 +38,7 @@ const mockUser = {
   email: 'test@example.com',
 };
 
-jest.mock('../../../contexts/AuthContext', () => ({
+vi.mock('../../../contexts/AuthContext', () => ({
   useSupabaseClient: () => mockSupabaseClient,
   useUser: () => mockUser,
 }));
@@ -50,7 +50,7 @@ const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 
 describe('VitalCapture Component', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Rendering', () => {
@@ -146,7 +146,7 @@ describe('VitalCapture Component', () => {
 
   describe('Back Button', () => {
     it('should call onCancel when back button is clicked', () => {
-      const onCancel = jest.fn();
+      const onCancel = vi.fn();
 
       render(
         <TestWrapper>

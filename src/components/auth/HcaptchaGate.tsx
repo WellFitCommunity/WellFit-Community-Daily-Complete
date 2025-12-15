@@ -8,7 +8,7 @@ type Props = {
 };
 
 export default function HcaptchaGate({ onVerified }: Props) {
-  const siteKey = process.env.REACT_APP_HCAPTCHA_SITE_KEY as string;
+  const siteKey = import.meta.env.VITE_HCAPTCHA_SITE_KEY as string;
   const { HCaptcha, captchaRef, execute } = useHcaptcha(siteKey);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);

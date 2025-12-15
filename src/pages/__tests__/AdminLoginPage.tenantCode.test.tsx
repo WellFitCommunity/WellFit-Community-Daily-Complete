@@ -4,16 +4,16 @@ import { MemoryRouter } from 'react-router-dom';
 import AdminLoginPage from '../AdminLoginPage';
 
 // Mock AuthContext - all values must be defined inline due to jest hoisting
-jest.mock('../../contexts/AuthContext', () => ({
+vi.mock('../../contexts/AuthContext', () => ({
   useSupabaseClient: () => ({
-    from: jest.fn(() => ({
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({ data: null, error: null }),
-      maybeSingle: jest.fn().mockResolvedValue({ data: { is_admin: false, role: 'admin', tenant_id: null }, error: null }),
+    from: vi.fn(() => ({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: null, error: null }),
+      maybeSingle: vi.fn().mockResolvedValue({ data: { is_admin: false, role: 'admin', tenant_id: null }, error: null }),
     })),
     functions: {
-      invoke: jest.fn().mockResolvedValue({ data: null, error: null }),
+      invoke: vi.fn().mockResolvedValue({ data: null, error: null }),
     },
   }),
   useUser: () => null,
@@ -25,18 +25,18 @@ jest.mock('../../contexts/AuthContext', () => ({
 }));
 
 // Mock AdminAuthContext
-jest.mock('../../contexts/AdminAuthContext', () => ({
+vi.mock('../../contexts/AdminAuthContext', () => ({
   useAdminAuth: () => ({
     isAdminAuthenticated: false,
-    verifyPinAndLogin: jest.fn(),
-    logoutAdmin: jest.fn(),
+    verifyPinAndLogin: vi.fn(),
+    logoutAdmin: vi.fn(),
     isLoading: false,
     error: null,
   }),
 }));
 
 // Mock BrandingContext
-jest.mock('../../BrandingContext', () => ({
+vi.mock('../../BrandingContext', () => ({
   useBranding: () => ({
     branding: {
       primaryColor: '#00857a',
@@ -46,13 +46,13 @@ jest.mock('../../BrandingContext', () => ({
 }));
 
 // Mock pinHashingService
-jest.mock('../../services/pinHashingService', () => ({
-  hashPinForTransmission: jest.fn().mockResolvedValue('hashed-pin'),
+vi.mock('../../services/pinHashingService', () => ({
+  hashPinForTransmission: vi.fn().mockResolvedValue('hashed-pin'),
 }));
 
 describe('AdminLoginPage - Tenant Code', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('renders without crashing', async () => {

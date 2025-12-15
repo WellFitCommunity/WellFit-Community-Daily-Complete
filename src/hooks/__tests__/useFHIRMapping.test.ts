@@ -3,13 +3,13 @@ import { useFHIRMapping } from '../useFHIRMapping';
 import { fhirMappingService } from '../../services/fhirMappingService';
 
 // Mock the service
-jest.mock('../../services/fhirMappingService');
+vi.mock('../../services/fhirMappingService');
 
 describe('useFHIRMapping', () => {
-  const mockService = fhirMappingService as jest.Mocked<typeof fhirMappingService>;
+  const mockService = vi.mocked(fhirMappingService);
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should initialize with default state', () => {
@@ -116,13 +116,13 @@ describe('useFHIRMapping', () => {
 
     // Mock FileReader
     const mockFileReader = {
-      readAsText: jest.fn(),
+      readAsText: vi.fn(),
       onload: null as any,
       onerror: null as any,
       result: '{"test": "data"}'
     };
 
-    jest.spyOn(global, 'FileReader').mockImplementation(() => mockFileReader as any);
+    vi.spyOn(global, 'FileReader').mockImplementation(() => mockFileReader as any);
 
     const { result } = renderHook(() => useFHIRMapping());
     const [, actions] = result.current;

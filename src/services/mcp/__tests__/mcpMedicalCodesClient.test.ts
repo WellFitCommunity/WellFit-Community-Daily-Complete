@@ -18,7 +18,7 @@ import {
 } from '../mcpMedicalCodesClient';
 
 // Mock fetch
-const mockFetch = jest.fn();
+const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
 // Mock localStorage
@@ -37,7 +37,7 @@ Object.defineProperty(global, 'localStorage', {
 
 describe('MedicalCodesMCPClient', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('searchCPTCodes', () => {

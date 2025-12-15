@@ -9,30 +9,30 @@ import { useSupabaseClient, useSession, useUser } from '../../contexts/AuthConte
 import { useBranding } from '../../BrandingContext';
 
 // Mock dependencies
-jest.mock('../../contexts/AuthContext', () => ({
-  useSupabaseClient: jest.fn(),
-  useSession: jest.fn(),
-  useUser: jest.fn(),
+vi.mock('../../contexts/AuthContext', () => ({
+  useSupabaseClient: vi.fn(),
+  useSession: vi.fn(),
+  useUser: vi.fn(),
 }));
 
-jest.mock('../../BrandingContext', () => ({
-  useBranding: jest.fn(),
+vi.mock('../../BrandingContext', () => ({
+  useBranding: vi.fn(),
 }));
 
-jest.mock('../admin/AdminFeatureToggle', () => {
+vi.mock('../admin/AdminFeatureToggle', () => {
   return function MockAdminFeatureToggle() {
     return null;
   };
 });
 
 // Mock external libraries
-jest.mock('react-confetti', () => {
+vi.mock('react-confetti', () => {
   return function MockConfetti() {
     return null;
   };
 });
 
-jest.mock('framer-motion', () => ({
+vi.mock('framer-motion', () => ({
   motion: {
     div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
     button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
@@ -41,7 +41,7 @@ jest.mock('framer-motion', () => ({
   AnimatePresence: ({ children }: any) => <>{children}</>,
 }));
 
-jest.mock('emoji-picker-react', () => {
+vi.mock('emoji-picker-react', () => {
   return function MockEmojiPicker({ onEmojiClick }: any) {
     return (
       <div data-testid="emoji-picker">
@@ -58,7 +58,7 @@ describe('CommunityMoments - Senior Facing Component', () => {
   let mockSession: any;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockUser = {
       id: 'senior-user-123',
@@ -70,48 +70,48 @@ describe('CommunityMoments - Senior Facing Component', () => {
     };
 
     mockSupabase = {
-      from: jest.fn().mockReturnThis(),
-      select: jest.fn().mockReturnThis(),
-      insert: jest.fn().mockReturnThis(),
-      update: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      order: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockReturnThis(),
-      range: jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({
+      from: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      insert: vi.fn().mockReturnThis(),
+      update: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      range: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
         data: { first_name: 'John', role: 'senior' },
         error: null
       }),
       storage: {
-        from: jest.fn().mockReturnValue({
-          upload: jest.fn().mockResolvedValue({
+        from: vi.fn().mockReturnValue({
+          upload: vi.fn().mockResolvedValue({
             data: { path: 'test-path.jpg' },
             error: null
           }),
-          createSignedUrl: jest.fn().mockResolvedValue({
+          createSignedUrl: vi.fn().mockResolvedValue({
             data: { signedUrl: 'https://test.com/signed-url' },
             error: null
           }),
         }),
       },
-      channel: jest.fn().mockReturnValue({
-        on: jest.fn().mockReturnThis(),
-        subscribe: jest.fn().mockReturnThis(),
-        unsubscribe: jest.fn(),
+      channel: vi.fn().mockReturnValue({
+        on: vi.fn().mockReturnThis(),
+        subscribe: vi.fn().mockReturnThis(),
+        unsubscribe: vi.fn(),
       }),
     };
 
     // Mock moments data
     mockSupabase.from.mockImplementation((table: string) => {
       const chain = {
-        select: jest.fn().mockReturnThis(),
-        insert: jest.fn().mockReturnThis(),
-        update: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        order: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockReturnThis(),
-        range: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({
+        select: vi.fn().mockReturnThis(),
+        insert: vi.fn().mockReturnThis(),
+        update: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        order: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        range: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
           data: table === 'profiles' ? { first_name: 'John', role: 'senior' } : null,
           error: null
         }),
@@ -152,10 +152,10 @@ describe('CommunityMoments - Senior Facing Component', () => {
       return chain;
     });
 
-    (useUser as jest.Mock).mockReturnValue(mockUser);
-    (useSession as jest.Mock).mockReturnValue(mockSession);
-    (useSupabaseClient as jest.Mock).mockReturnValue(mockSupabase);
-    (useBranding as jest.Mock).mockReturnValue({
+    (useUser as ReturnType<typeof vi.fn>).mockReturnValue(mockUser);
+    (useSession as ReturnType<typeof vi.fn>).mockReturnValue(mockSession);
+    (useSupabaseClient as ReturnType<typeof vi.fn>).mockReturnValue(mockSupabase);
+    (useBranding as ReturnType<typeof vi.fn>).mockReturnValue({
       branding: { primaryColor: '#4F46E5', appName: 'WellFit' },
     });
   });
@@ -282,14 +282,14 @@ describe('CommunityMoments - Senior Facing Component', () => {
     it('should submit new moment to database', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
         const chain = {
-          select: jest.fn().mockReturnThis(),
-          insert: jest.fn().mockResolvedValue({ data: { id: 'new-moment' }, error: null }),
-          update: jest.fn().mockReturnThis(),
-          eq: jest.fn().mockReturnThis(),
-          order: jest.fn().mockReturnThis(),
-          limit: jest.fn().mockReturnThis(),
-          range: jest.fn().mockReturnThis(),
-          single: jest.fn().mockResolvedValue({
+          select: vi.fn().mockReturnThis(),
+          insert: vi.fn().mockResolvedValue({ data: { id: 'new-moment' }, error: null }),
+          update: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          order: vi.fn().mockReturnThis(),
+          limit: vi.fn().mockReturnThis(),
+          range: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({
             data: table === 'profiles' ? { first_name: 'John', role: 'senior' } : null,
             error: null
           }),
@@ -326,14 +326,14 @@ describe('CommunityMoments - Senior Facing Component', () => {
     it('should show confetti animation after successful post', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
         const chain = {
-          select: jest.fn().mockReturnThis(),
-          insert: jest.fn().mockResolvedValue({ data: { id: 'new-moment' }, error: null }),
-          update: jest.fn().mockReturnThis(),
-          eq: jest.fn().mockReturnThis(),
-          order: jest.fn().mockReturnThis(),
-          limit: jest.fn().mockReturnThis(),
-          range: jest.fn().mockReturnThis(),
-          single: jest.fn().mockResolvedValue({
+          select: vi.fn().mockReturnThis(),
+          insert: vi.fn().mockResolvedValue({ data: { id: 'new-moment' }, error: null }),
+          update: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          order: vi.fn().mockReturnThis(),
+          limit: vi.fn().mockReturnThis(),
+          range: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({
             data: table === 'profiles' ? { first_name: 'John', role: 'senior' } : null,
             error: null
           }),
@@ -408,7 +408,7 @@ describe('CommunityMoments - Senior Facing Component', () => {
 
   describe('Error Handling', () => {
     it('should handle missing user gracefully', async () => {
-      (useUser as jest.Mock).mockReturnValue(null);
+      (useUser as ReturnType<typeof vi.fn>).mockReturnValue(null);
 
       render(<CommunityMoments />);
 
@@ -419,7 +419,7 @@ describe('CommunityMoments - Senior Facing Component', () => {
 
     it('should show error message when upload fails', async () => {
       mockSupabase.storage.from.mockReturnValue({
-        upload: jest.fn().mockResolvedValue({
+        upload: vi.fn().mockResolvedValue({
           data: null,
           error: { message: 'Upload failed' }
         }),
@@ -447,7 +447,7 @@ describe('CommunityMoments - Senior Facing Component', () => {
 
     it('should handle database errors when loading moments', async () => {
       mockSupabase.from.mockImplementation(() => ({
-        select: jest.fn().mockResolvedValue({
+        select: vi.fn().mockResolvedValue({
           data: null,
           error: { message: 'Database error' }
         }),

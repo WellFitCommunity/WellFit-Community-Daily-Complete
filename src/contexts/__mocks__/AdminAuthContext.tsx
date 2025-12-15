@@ -24,15 +24,15 @@ export const mockAdminAuthContextValue = {
   accessScopes: mockAccessScopes,
   isLoading: false,
   error: null as string | null,
-  verifyPinAndLogin: jest.fn().mockResolvedValue(true),
-  logoutAdmin: jest.fn(),
-  hasAccess: jest.fn().mockReturnValue(true),
+  verifyPinAndLogin: vi.fn().mockResolvedValue(true),
+  logoutAdmin: vi.fn(),
+  hasAccess: vi.fn().mockReturnValue(true),
   canViewNurse: true,
   canViewPhysician: true,
   canViewAdmin: true,
   canSupervise: true,
   canManageDepartment: true,
-  invokeAdminFunction: jest.fn().mockResolvedValue({ data: null, error: null }),
+  invokeAdminFunction: vi.fn().mockResolvedValue({ data: null, error: null }),
 };
 
 // AdminAuthProvider mock - just renders children
@@ -41,7 +41,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 };
 
 // Hook mock
-export const useAdminAuth = jest.fn(() => mockAdminAuthContextValue);
+export const useAdminAuth = vi.fn(() => mockAdminAuthContextValue);
 
 // Helper to reset all mocks
 export const resetAdminAuthMocks = () => {

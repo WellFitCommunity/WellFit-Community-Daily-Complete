@@ -267,7 +267,7 @@ class ClaudeService {
       }
 
       // Get API key from environment or process.env as fallback
-      const apiKey = env.REACT_APP_ANTHROPIC_API_KEY || process.env.REACT_APP_ANTHROPIC_API_KEY;
+      const apiKey = env.VITE_ANTHROPIC_API_KEY || import.meta.env.VITE_ANTHROPIC_API_KEY;
 
       if (!apiKey) {
         // Don't throw error, just log warning to prevent crashes
@@ -284,7 +284,7 @@ class ClaudeService {
       // Initialize Anthropic client
       this.client = new Anthropic({
         apiKey: apiKey,
-        timeout: env.REACT_APP_CLAUDE_TIMEOUT,
+        timeout: env.VITE_CLAUDE_TIMEOUT,
         dangerouslyAllowBrowser: true, // Required for client-side usage
         maxRetries: 3
       });
@@ -982,7 +982,7 @@ Most Common Conditions: ${Array.from(conditionCounts.entries())
       isHealthy: this.client !== null,
       lastHealthCheck: this.lastHealthCheck || new Date(0),
       circuitBreakerState: this.circuitBreaker.getState(),
-      apiKeyValid: !!env.REACT_APP_ANTHROPIC_API_KEY,
+      apiKeyValid: !!env.VITE_ANTHROPIC_API_KEY,
       modelsAvailable: Object.values(ClaudeModel)
     };
   }

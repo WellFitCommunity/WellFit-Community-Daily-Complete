@@ -8,18 +8,18 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { CHWVitalsCapture } from '../CHWVitalsCapture';
 import { chwService } from '../../../services/chwService';
 
-jest.mock('../../../services/chwService');
+vi.mock('../../../services/chwService');
 
 describe('CHWVitalsCapture - Error message handling', () => {
   const mockProps = {
     visitId: 'visit-123',
     language: 'en' as const,
-    onComplete: jest.fn(),
-    onBack: jest.fn(),
+    onComplete: vi.fn(),
+    onBack: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Manual Vitals Entry', () => {
@@ -176,7 +176,7 @@ describe('CHWVitalsCapture - Error message handling', () => {
     });
 
     it('should call chwService.captureVitals on submission', async () => {
-      (chwService.captureVitals as jest.Mock).mockResolvedValue(undefined);
+      (chwService.captureVitals as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
 
       render(<CHWVitalsCapture {...mockProps} />);
 
@@ -200,7 +200,7 @@ describe('CHWVitalsCapture - Error message handling', () => {
     });
 
     it('should call onComplete callback after successful submission', async () => {
-      (chwService.captureVitals as jest.Mock).mockResolvedValue(undefined);
+      (chwService.captureVitals as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
 
       render(<CHWVitalsCapture {...mockProps} />);
 
@@ -265,7 +265,7 @@ describe('CHWVitalsCapture - Error message handling', () => {
 
   describe('Data Integrity', () => {
     it('should include timestamp in captured vitals', async () => {
-      (chwService.captureVitals as jest.Mock).mockResolvedValue(undefined);
+      (chwService.captureVitals as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
 
       render(<CHWVitalsCapture {...mockProps} />);
 
@@ -285,7 +285,7 @@ describe('CHWVitalsCapture - Error message handling', () => {
     });
 
     it('should include device type in captured data', async () => {
-      (chwService.captureVitals as jest.Mock).mockResolvedValue(undefined);
+      (chwService.captureVitals as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
 
       render(<CHWVitalsCapture {...mockProps} />);
 
@@ -307,7 +307,7 @@ describe('CHWVitalsCapture - Error message handling', () => {
 
   describe('Error Handling', () => {
     it('should display error message if save fails', async () => {
-      (chwService.captureVitals as jest.Mock).mockRejectedValue(new Error('Save failed'));
+      (chwService.captureVitals as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Save failed'));
 
       render(<CHWVitalsCapture {...mockProps} />);
 
@@ -325,7 +325,7 @@ describe('CHWVitalsCapture - Error message handling', () => {
     });
 
     it('should allow retry after error', async () => {
-      (chwService.captureVitals as jest.Mock)
+      (chwService.captureVitals as ReturnType<typeof vi.fn>)
         .mockRejectedValueOnce(new Error('Network error'))
         .mockResolvedValueOnce(undefined);
 

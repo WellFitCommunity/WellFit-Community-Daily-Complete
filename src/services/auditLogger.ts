@@ -43,7 +43,7 @@ export interface AuditLogEntry {
 
 class AuditLogger {
   private isDevelopment = process.env.NODE_ENV === 'development';
-  private loggingEnabled = process.env.REACT_APP_HIPAA_LOGGING_ENABLED !== 'false';
+  private loggingEnabled = import.meta.env.VITE_HIPAA_LOGGING_ENABLED !== 'false';
 
   /**
    * Get current user context for audit logs

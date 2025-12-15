@@ -6,7 +6,7 @@ import { FitbitAdapter } from '../implementations/FitbitAdapter';
 import type { WearableAdapterConfig } from '../UniversalWearableRegistry';
 
 // Mock fetch
-global.fetch = jest.fn();
+global.fetch = vi.fn();
 
 describe('FitbitAdapter', () => {
   let adapter: FitbitAdapter;
@@ -22,7 +22,7 @@ describe('FitbitAdapter', () => {
       scopes: ['activity', 'heartrate', 'sleep'],
     };
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Metadata', () => {
@@ -85,7 +85,7 @@ describe('FitbitAdapter', () => {
         }),
       };
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce(mockResponse);
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(mockResponse);
 
       const result = await adapter.handleOAuthCallback('auth-code-123');
 
@@ -103,7 +103,7 @@ describe('FitbitAdapter', () => {
         }),
       };
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce(mockResponse);
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(mockResponse);
 
       const newToken = await adapter.refreshAccessToken('old-refresh-token');
 
@@ -126,7 +126,7 @@ describe('FitbitAdapter', () => {
         }),
       };
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce(mockOAuthResponse);
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(mockOAuthResponse);
       await adapter.handleOAuthCallback('test-code');
     });
 
@@ -145,7 +145,7 @@ describe('FitbitAdapter', () => {
         }),
       };
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce(mockHeartRateResponse);
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(mockHeartRateResponse);
 
       const vitals = await adapter.fetchVitals({
         userId: 'test-user',
@@ -176,7 +176,7 @@ describe('FitbitAdapter', () => {
         }),
       };
 
-      (global.fetch as jest.Mock).mockResolvedValue(mockActivityResponse);
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockActivityResponse);
 
       const activities = await adapter.fetchActivity({
         userId: 'test-user',
@@ -211,7 +211,7 @@ describe('FitbitAdapter', () => {
         }),
       };
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce(mockSleepResponse);
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(mockSleepResponse);
 
       const sleep = await adapter.fetchSleep({
         userId: 'test-user',
@@ -240,7 +240,7 @@ describe('FitbitAdapter', () => {
         }),
       };
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce(mockOAuthResponse);
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(mockOAuthResponse);
       await adapter.handleOAuthCallback('test-code');
     });
 
@@ -251,7 +251,7 @@ describe('FitbitAdapter', () => {
         json: async () => ({ summary: { steps: 100 } }),
       };
 
-      (global.fetch as jest.Mock).mockResolvedValue(mockResponse);
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockResponse);
 
       // Make 150 requests - should succeed
       for (let i = 0; i < 150; i++) {
@@ -287,7 +287,7 @@ describe('FitbitAdapter', () => {
         }),
       };
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce(mockOAuthResponse);
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(mockOAuthResponse);
       await adapter.handleOAuthCallback('test-code');
     });
 
@@ -304,7 +304,7 @@ describe('FitbitAdapter', () => {
         ],
       };
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce(mockDevicesResponse);
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(mockDevicesResponse);
 
       const devices = await adapter.listConnectedDevices('test-user');
 
@@ -328,7 +328,7 @@ describe('FitbitAdapter', () => {
         }),
       };
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce(mockOAuthResponse);
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(mockOAuthResponse);
       await adapter.handleOAuthCallback('test-code');
     });
 
@@ -339,7 +339,7 @@ describe('FitbitAdapter', () => {
         statusText: 'Unauthorized',
       };
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce(mockErrorResponse);
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(mockErrorResponse);
 
       await expect(
         adapter.fetchVitals({
@@ -350,7 +350,7 @@ describe('FitbitAdapter', () => {
     });
 
     it('should handle network errors', async () => {
-      (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
+      (global.fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('Network error'));
 
       await expect(
         adapter.fetchActivity({

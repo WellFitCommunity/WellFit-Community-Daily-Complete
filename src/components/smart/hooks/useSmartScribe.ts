@@ -3,7 +3,7 @@
  * Business logic for SmartScribe medical transcription system
  * Handles state management, recording session, and database operations
  *
- * DEMO MODE: Set REACT_APP_COMPASS_DEMO=true in .env to enable demo simulation
+ * DEMO MODE: Set VITE_COMPASS_DEMO=true in .env to enable demo simulation
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
@@ -12,7 +12,7 @@ import { auditLogger } from '../../../services/auditLogger';
 import { VoiceLearningService, ProviderVoiceProfile } from '../../../services/voiceLearningService';
 
 // Check if demo mode is enabled
-const DEMO_MODE = process.env.REACT_APP_COMPASS_DEMO === 'true';
+const DEMO_MODE = import.meta.env.VITE_COMPASS_DEMO === 'true';
 
 // ============================================================================
 // DEMO DATA
@@ -529,7 +529,7 @@ export function useSmartScribe(props: UseSmartScribeProps) {
       if (!session?.access_token) throw new Error('Not authenticated');
 
       // Build WebSocket URL - use underscore to match edge function folder name
-      const base = (process.env.REACT_APP_SUPABASE_URL ?? '').replace('https://', 'wss://');
+      const base = (import.meta.env.VITE_SUPABASE_URL ?? '').replace('https://', 'wss://');
       const wsUrl = `${base}/functions/v1/realtime_medical_transcription?access_token=${encodeURIComponent(
         session.access_token
       )}`;

@@ -9,31 +9,31 @@ import { AccuracyTrackingService } from '../accuracyTrackingService';
 
 // Mock Supabase client
 const mockSupabase = {
-  rpc: jest.fn(),
-  from: jest.fn(() => ({
-    select: jest.fn(() => ({
-      eq: jest.fn(() => ({
-        eq: jest.fn(() => ({
-          single: jest.fn(),
-          order: jest.fn(() => ({
-            limit: jest.fn()
+  rpc: vi.fn(),
+  from: vi.fn(() => ({
+    select: vi.fn(() => ({
+      eq: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          single: vi.fn(),
+          order: vi.fn(() => ({
+            limit: vi.fn()
           }))
         })),
-        gte: jest.fn(() => ({
-          order: jest.fn()
+        gte: vi.fn(() => ({
+          order: vi.fn()
         })),
-        single: jest.fn()
+        single: vi.fn()
       })),
-      single: jest.fn()
+      single: vi.fn()
     })),
-    insert: jest.fn(() => ({
-      select: jest.fn(() => ({
-        single: jest.fn()
+    insert: vi.fn(() => ({
+      select: vi.fn(() => ({
+        single: vi.fn()
       }))
     })),
-    update: jest.fn(() => ({
-      eq: jest.fn(() => ({
-        eq: jest.fn()
+    update: vi.fn(() => ({
+      eq: vi.fn(() => ({
+        eq: vi.fn()
       }))
     }))
   }))
@@ -43,7 +43,7 @@ describe('AccuracyTrackingService', () => {
   let service: AccuracyTrackingService;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     service = new AccuracyTrackingService(mockSupabase as any);
   });
 
@@ -138,10 +138,10 @@ describe('AccuracyTrackingService', () => {
         { is_accurate: null, confidence_score: 0.8, cost_usd: 0.01, latency_ms: 1050 } // Pending
       ];
 
-      (mockSupabase.from as jest.Mock).mockReturnValueOnce({
-        select: jest.fn().mockReturnValueOnce({
-          eq: jest.fn().mockReturnValueOnce({
-            gte: jest.fn().mockResolvedValueOnce({ data: mockPredictions, error: null })
+      (mockSupabase.from as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        select: vi.fn().mockReturnValueOnce({
+          eq: vi.fn().mockReturnValueOnce({
+            gte: vi.fn().mockResolvedValueOnce({ data: mockPredictions, error: null })
           })
         })
       } as any);
@@ -156,10 +156,10 @@ describe('AccuracyTrackingService', () => {
     });
 
     it('should handle no predictions gracefully', async () => {
-      (mockSupabase.from as jest.Mock).mockReturnValueOnce({
-        select: jest.fn().mockReturnValueOnce({
-          eq: jest.fn().mockReturnValueOnce({
-            gte: jest.fn().mockResolvedValueOnce({ data: [], error: null })
+      (mockSupabase.from as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        select: vi.fn().mockReturnValueOnce({
+          eq: vi.fn().mockReturnValueOnce({
+            gte: vi.fn().mockResolvedValueOnce({ data: [], error: null })
           })
         })
       } as any);
@@ -185,12 +185,12 @@ describe('AccuracyTrackingService', () => {
         accuracy_rate: 0.87
       };
 
-      (mockSupabase.from as jest.Mock).mockReturnValueOnce({
-        select: jest.fn().mockReturnValueOnce({
-          eq: jest.fn().mockReturnValueOnce({
-            eq: jest.fn().mockReturnValueOnce({
-              eq: jest.fn().mockReturnValueOnce({
-                single: jest.fn().mockResolvedValueOnce({ data: mockPrompt, error: null })
+      (mockSupabase.from as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        select: vi.fn().mockReturnValueOnce({
+          eq: vi.fn().mockReturnValueOnce({
+            eq: vi.fn().mockReturnValueOnce({
+              eq: vi.fn().mockReturnValueOnce({
+                single: vi.fn().mockResolvedValueOnce({ data: mockPrompt, error: null })
               })
             })
           })
@@ -206,12 +206,12 @@ describe('AccuracyTrackingService', () => {
 
     it('should create new prompt version with incremented number', async () => {
       // Mock existing versions query
-      (mockSupabase.from as jest.Mock).mockReturnValueOnce({
-        select: jest.fn().mockReturnValueOnce({
-          eq: jest.fn().mockReturnValueOnce({
-            eq: jest.fn().mockReturnValueOnce({
-              order: jest.fn().mockReturnValueOnce({
-                limit: jest.fn().mockResolvedValueOnce({
+      (mockSupabase.from as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        select: vi.fn().mockReturnValueOnce({
+          eq: vi.fn().mockReturnValueOnce({
+            eq: vi.fn().mockReturnValueOnce({
+              order: vi.fn().mockReturnValueOnce({
+                limit: vi.fn().mockResolvedValueOnce({
                   data: [{ version_number: 2 }],
                   error: null
                 })
@@ -222,10 +222,10 @@ describe('AccuracyTrackingService', () => {
       } as any);
 
       // Mock insert
-      (mockSupabase.from as jest.Mock).mockReturnValueOnce({
-        insert: jest.fn().mockReturnValueOnce({
-          select: jest.fn().mockReturnValueOnce({
-            single: jest.fn().mockResolvedValueOnce({
+      (mockSupabase.from as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        insert: vi.fn().mockReturnValueOnce({
+          select: vi.fn().mockReturnValueOnce({
+            single: vi.fn().mockResolvedValueOnce({
               data: {
                 id: 'new-prompt-123',
                 skill_name: 'billing_codes',
@@ -258,8 +258,8 @@ describe('AccuracyTrackingService', () => {
 
   describe('billing code accuracy tracking', () => {
     it('should calculate code acceptance rate correctly', async () => {
-      (mockSupabase.from as jest.Mock).mockReturnValueOnce({
-        insert: jest.fn().mockResolvedValueOnce({ error: null })
+      (mockSupabase.from as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        insert: vi.fn().mockResolvedValueOnce({ error: null })
       } as any);
       mockSupabase.rpc.mockResolvedValueOnce({ data: true, error: null });
 
@@ -287,10 +287,10 @@ describe('AccuracyTrackingService', () => {
 
   describe('experiment management', () => {
     it('should create A/B test experiment', async () => {
-      (mockSupabase.from as jest.Mock).mockReturnValueOnce({
-        insert: jest.fn().mockReturnValueOnce({
-          select: jest.fn().mockReturnValueOnce({
-            single: jest.fn().mockResolvedValueOnce({
+      (mockSupabase.from as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        insert: vi.fn().mockReturnValueOnce({
+          select: vi.fn().mockReturnValueOnce({
+            single: vi.fn().mockResolvedValueOnce({
               data: { id: 'exp-123' },
               error: null
             })
@@ -313,10 +313,10 @@ describe('AccuracyTrackingService', () => {
     });
 
     it('should calculate statistical significance correctly', async () => {
-      (mockSupabase.from as jest.Mock).mockReturnValueOnce({
-        select: jest.fn().mockReturnValueOnce({
-          eq: jest.fn().mockReturnValueOnce({
-            single: jest.fn().mockResolvedValueOnce({
+      (mockSupabase.from as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        select: vi.fn().mockReturnValueOnce({
+          eq: vi.fn().mockReturnValueOnce({
+            single: vi.fn().mockResolvedValueOnce({
               data: {
                 experiment_name: 'billing-v2-vs-v3',
                 control_predictions: 100,

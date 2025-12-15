@@ -7,8 +7,8 @@ import { analyzeText, generateSuggestion, summarizeContent } from '../mcpHelpers
 import { getMCPClient } from '../mcpClient';
 
 // Mock the MCP client
-jest.mock('../mcpClient', () => ({
-  getMCPClient: jest.fn()
+vi.mock('../mcpClient', () => ({
+  getMCPClient: vi.fn()
 }));
 
 describe('MCP Helper Functions', () => {
@@ -17,17 +17,17 @@ describe('MCP Helper Functions', () => {
   beforeEach(() => {
     // Create a fresh mock client for each test
     mockClient = {
-      callTool: jest.fn(),
-      initialize: jest.fn(),
-      listTools: jest.fn(),
-      close: jest.fn()
+      callTool: vi.fn(),
+      initialize: vi.fn(),
+      listTools: vi.fn(),
+      close: vi.fn()
     };
 
-    (getMCPClient as jest.Mock).mockReturnValue(mockClient);
+    (getMCPClient as ReturnType<typeof vi.fn>).mockReturnValue(mockClient);
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('analyzeText', () => {

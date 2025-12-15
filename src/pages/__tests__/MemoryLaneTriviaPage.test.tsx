@@ -4,16 +4,16 @@ import { MemoryRouter } from 'react-router-dom';
 import MemoryLaneTriviaPage from '../MemoryLaneTriviaPage';
 
 // Mock AuthContext
-jest.mock('../../contexts/AuthContext', () => ({
+vi.mock('../../contexts/AuthContext', () => ({
   useSupabaseClient: () => ({
-    from: jest.fn(() => ({
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      order: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({ data: null, error: null }),
+    from: vi.fn(() => ({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: null, error: null }),
     })),
-    rpc: jest.fn().mockResolvedValue({ data: [], error: null }),
+    rpc: vi.fn().mockResolvedValue({ data: [], error: null }),
   }),
   useUser: () => ({ id: 'test-user-id' }),
   useAuth: () => ({
@@ -21,11 +21,11 @@ jest.mock('../../contexts/AuthContext', () => ({
     session: null,
     loading: false,
     isLoading: false,
-    signIn: jest.fn(),
-    signUp: jest.fn(),
-    signOut: jest.fn(),
-    resetPassword: jest.fn(),
-    updatePassword: jest.fn(),
+    signIn: vi.fn(),
+    signUp: vi.fn(),
+    signOut: vi.fn(),
+    resetPassword: vi.fn(),
+    updatePassword: vi.fn(),
     profile: null,
     roleCode: null,
     isSenior: false,
@@ -35,18 +35,18 @@ jest.mock('../../contexts/AuthContext', () => ({
 }));
 
 // Mock NavigationHistoryContext
-jest.mock('../../contexts/NavigationHistoryContext', () => ({
+vi.mock('../../contexts/NavigationHistoryContext', () => ({
   useNavigationHistory: () => ({
     historyStack: [],
     canGoBack: false,
-    goBack: jest.fn(),
-    getPreviousRoute: jest.fn(),
-    clearHistory: jest.fn(),
+    goBack: vi.fn(),
+    getPreviousRoute: vi.fn(),
+    clearHistory: vi.fn(),
   }),
 }));
 
 // Mock BrandingContext
-jest.mock('../../BrandingContext', () => ({
+vi.mock('../../BrandingContext', () => ({
   useBranding: () => ({
     branding: {
       primaryColor: '#00857a',
@@ -57,7 +57,7 @@ jest.mock('../../BrandingContext', () => ({
 
 describe('MemoryLaneTriviaPage', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('renders without crashing', () => {

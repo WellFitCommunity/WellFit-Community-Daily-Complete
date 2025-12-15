@@ -7,20 +7,20 @@ import { SpecialistWorkflowEngine } from '../SpecialistWorkflowEngine';
 import { chwWorkflow } from '../templates/chwTemplate';
 
 // Mock Supabase
-jest.mock('../../../lib/supabaseClient', () => ({
+vi.mock('../../../lib/supabaseClient', () => ({
   supabase: {
-    from: jest.fn(() => ({
-      insert: jest.fn(() => ({
-        select: jest.fn(() => ({
-          single: jest.fn(() => ({ data: { id: 'test-visit-id' }, error: null }))
+    from: vi.fn(() => ({
+      insert: vi.fn(() => ({
+        select: vi.fn(() => ({
+          single: vi.fn(() => ({ data: { id: 'test-visit-id' }, error: null }))
         }))
       })),
-      update: jest.fn(() => ({
-        eq: jest.fn(() => ({ error: null }))
+      update: vi.fn(() => ({
+        eq: vi.fn(() => ({ error: null }))
       })),
-      select: jest.fn(() => ({
-        eq: jest.fn(() => ({
-          single: jest.fn(() => ({ data: null, error: null }))
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          single: vi.fn(() => ({ data: null, error: null }))
         }))
       }))
     }))
@@ -28,8 +28,8 @@ jest.mock('../../../lib/supabaseClient', () => ({
 }));
 
 // Mock PHI logger
-jest.mock('../../phiAccessLogger', () => ({
-  logPhiAccess: jest.fn()
+vi.mock('../../phiAccessLogger', () => ({
+  logPhiAccess: vi.fn()
 }));
 
 describe.skip('SpecialistWorkflowEngine - TODO: Fix alert evaluation', () => {

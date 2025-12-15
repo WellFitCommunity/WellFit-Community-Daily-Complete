@@ -21,29 +21,29 @@ import {
 } from '../../types/guardianFlow';
 
 // Mock Supabase client
-jest.mock('../../lib/supabaseClient', () => ({
+vi.mock('../../lib/supabaseClient', () => ({
   supabase: {
-    from: jest.fn(() => ({
-      select: jest.fn(() => ({
-        eq: jest.fn(() => ({
-          single: jest.fn(() => Promise.resolve({ data: null, error: null })),
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          single: vi.fn(() => Promise.resolve({ data: null, error: null })),
         })),
       })),
     })),
-    rpc: jest.fn(() => Promise.resolve({ data: null, error: null })),
+    rpc: vi.fn(() => Promise.resolve({ data: null, error: null })),
     auth: {
-      getUser: jest.fn(() => Promise.resolve({
+      getUser: vi.fn(() => Promise.resolve({
         data: { user: { id: 'test-user-id' } },
       })),
     },
   },
 }));
 
-jest.mock('../auditLogger', () => ({
+vi.mock('../auditLogger', () => ({
   auditLogger: {
-    info: jest.fn(() => Promise.resolve()),
-    warn: jest.fn(() => Promise.resolve()),
-    error: jest.fn(() => Promise.resolve()),
+    info: vi.fn(() => Promise.resolve()),
+    warn: vi.fn(() => Promise.resolve()),
+    error: vi.fn(() => Promise.resolve()),
   },
 }));
 

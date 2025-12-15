@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- CSP configured via vercel.json and _headers for proper build compatibility -->
+
+  <title>WellFit Community App</title>
+  <meta name="description" content="White-label senior wellness & community safety app: RPM, caregiver tools, resident check-ins, youth & family self-reports. HIPAA-ready." />
+  <meta name="theme-color" content="#003865" />
+
+  <!-- Manifest path (Vite serves from public/) -->
+  <link rel="manifest" href="/manifest.json" />
+
+  <!-- Icons located in /public (root) -->
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="apple-touch-icon" href="/android-chrome-192x192.png" />
+
+  <!-- Open Graph / Twitter -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="WellFit Community App" />
+  <meta property="og:description" content="Self-reports, check-ins, caregiver tools, and alerts in one platform." />
+  <meta property="og:url" content="https://wellfitcommunity.live/" />
+  <meta property="og:image" content="/android-chrome-512x512.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="WellFit Community App" />
+  <meta name="twitter:description" content="Self-reports, check-ins, caregiver tools, and alerts in one platform." />
+  <meta name="twitter:image" content="/android-chrome-512x512.png" />
+
+  <!-- hCaptcha (if you render explicitly) -->
+  <script>window.hcaptchaOnLoad = window.hcaptchaOnLoad || function() {};</script>
+  <script src="https://js.hcaptcha.com/1/api.js?onload=hcaptchaOnLoad&render=explicit" async defer></script>
+</head>
+
+<body>
+  <noscript>You need JavaScript enabled to run this app.</noscript>
+  <!-- IMPORTANT: React mounts here; must be 'root' to match src/index.tsx -->
+  <div id="root"></div>
+  <!-- Vite entry point -->
+  <script type="module" src="/src/index.tsx"></script>
+</body>
+</html>

@@ -49,8 +49,8 @@ const mockRecentPatients: SelectedPatient[] = [
 // MOCK PATIENT CONTEXT
 // ============================================================================
 
-const mockSelectFromHistory = jest.fn();
-const mockClearPatient = jest.fn();
+const mockSelectFromHistory = vi.fn();
+const mockClearPatient = vi.fn();
 
 const createMockContext = (options?: {
   hasPatient?: boolean;
@@ -62,18 +62,18 @@ const createMockContext = (options?: {
   recentPatients: options?.recentPatients ?? mockRecentPatients,
   selectFromHistory: mockSelectFromHistory,
   clearPatient: mockClearPatient,
-  selectPatient: jest.fn(),
-  getPatientDisplayName: jest.fn().mockReturnValue('Doe, John'),
-  clearHistory: jest.fn(),
+  selectPatient: vi.fn(),
+  getPatientDisplayName: vi.fn().mockReturnValue('Doe, John'),
+  clearHistory: vi.fn(),
 });
 
-jest.mock('../../../contexts/PatientContext', () => ({
-  usePatientContextSafe: jest.fn(),
+vi.mock('../../../contexts/PatientContext', () => ({
+  usePatientContextSafe: vi.fn(),
   // Re-export types
 }));
 
 import { usePatientContextSafe } from '../../../contexts/PatientContext';
-const mockedUsePatientContextSafe = usePatientContextSafe as jest.MockedFunction<typeof usePatientContextSafe>;
+const mockedUsePatientContextSafe = vi.mocked(usePatientContextSafe);
 
 // ============================================================================
 // TESTS
@@ -81,7 +81,7 @@ const mockedUsePatientContextSafe = usePatientContextSafe as jest.MockedFunction
 
 describe('EAPatientBanner', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockedUsePatientContextSafe.mockReturnValue(createMockContext());
   });
 
@@ -256,7 +256,7 @@ describe('EAPatientBanner', () => {
     });
 
     it('should call onPatientChange callback with null when cleared', async () => {
-      const onPatientChange = jest.fn();
+      const onPatientChange = vi.fn();
       render(<EAPatientBanner onPatientChange={onPatientChange} />);
       const clearButton = screen.getByTitle('Clear patient selection');
       await userEvent.click(clearButton);
@@ -282,7 +282,7 @@ describe('EAPatientBanner', () => {
 
   describe('Callbacks', () => {
     it('should call onPatientChange when selecting from recent', async () => {
-      const onPatientChange = jest.fn();
+      const onPatientChange = vi.fn();
       render(<EAPatientBanner showRecent={true} onPatientChange={onPatientChange} />);
 
       const recentButton = screen.getByTitle('Recent patients');

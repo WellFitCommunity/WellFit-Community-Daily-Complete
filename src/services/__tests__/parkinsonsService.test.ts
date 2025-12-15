@@ -1,33 +1,34 @@
+import { type Mock } from 'vitest';
 /* eslint-disable import/first */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ParkinsonsService } from '../parkinsonsService';
 
 // Mock supabase - define the mock inside the factory to avoid hoisting issues
-jest.mock('../../lib/supabaseClient', () => ({
+vi.mock('../../lib/supabaseClient', () => ({
   supabase: {
-    from: jest.fn(),
+    from: vi.fn(),
     auth: {
-      getUser: jest.fn(),
+      getUser: vi.fn(),
     },
   },
 }));
 
 // Mock PHI access logger
-jest.mock('../phiAccessLogger', () => ({
-  logPhiAccess: jest.fn().mockResolvedValue(undefined),
+vi.mock('../phiAccessLogger', () => ({
+  logPhiAccess: vi.fn().mockResolvedValue(undefined),
 }));
 
-// Get reference to mocked supabase after mocking - must be after jest.mock
+// Get reference to mocked supabase after mocking - must be after vi.mock
 import { supabase } from '../../lib/supabaseClient';
 const mockSupabaseClient = supabase as unknown as {
-  from: jest.Mock;
-  auth: { getUser: jest.Mock };
+  from: Mock;
+  auth: { getUser: Mock };
 };
 /* eslint-enable import/first */
 
 describe('ParkinsonsService', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('enrollPatient', () => {
@@ -46,9 +47,9 @@ describe('ParkinsonsService', () => {
       });
 
       mockSupabaseClient.from.mockReturnValue({
-        insert: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
+        insert: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
               data: mockPatient,
               error: null,
             }),
@@ -96,9 +97,9 @@ describe('ParkinsonsService', () => {
       };
 
       mockSupabaseClient.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            maybeSingle: jest.fn().mockResolvedValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockResolvedValue({
               data: mockPatient,
               error: null,
             }),
@@ -114,9 +115,9 @@ describe('ParkinsonsService', () => {
 
     it('should return null if patient not found', async () => {
       mockSupabaseClient.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            maybeSingle: jest.fn().mockResolvedValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockResolvedValue({
               data: null,
               error: null,
             }),
@@ -144,9 +145,9 @@ describe('ParkinsonsService', () => {
       };
 
       mockSupabaseClient.from.mockReturnValue({
-        insert: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
+        insert: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
               data: mockMedication,
               error: null,
             }),
@@ -185,10 +186,10 @@ describe('ParkinsonsService', () => {
       ];
 
       mockSupabaseClient.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              order: jest.fn().mockResolvedValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              order: vi.fn().mockResolvedValue({
                 data: mockMedications,
                 error: null,
               }),
@@ -222,9 +223,9 @@ describe('ParkinsonsService', () => {
       });
 
       mockSupabaseClient.from.mockReturnValue({
-        insert: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
+        insert: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
               data: mockAssessment,
               error: null,
             }),
@@ -262,9 +263,9 @@ describe('ParkinsonsService', () => {
       };
 
       mockSupabaseClient.from.mockReturnValue({
-        insert: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
+        insert: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
               data: mockEntry,
               error: null,
             }),
@@ -292,8 +293,8 @@ describe('ParkinsonsService', () => {
   describe('getDashboardMetrics', () => {
     it('should return dashboard metrics', async () => {
       mockSupabaseClient.from.mockReturnValueOnce({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockResolvedValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({
             data: [
               { id: 'p1', hoehn_yahr_stage: '2', dbs_implant: false },
               { id: 'p2', hoehn_yahr_stage: '3', dbs_implant: true },
@@ -306,9 +307,9 @@ describe('ParkinsonsService', () => {
       });
 
       mockSupabaseClient.from.mockReturnValueOnce({
-        select: jest.fn().mockReturnValue({
-          gte: jest.fn().mockReturnValue({
-            not: jest.fn().mockResolvedValue({
+        select: vi.fn().mockReturnValue({
+          gte: vi.fn().mockReturnValue({
+            not: vi.fn().mockResolvedValue({
               data: [{ total_score: 30 }, { total_score: 40 }],
               error: null,
             }),
@@ -317,8 +318,8 @@ describe('ParkinsonsService', () => {
       });
 
       mockSupabaseClient.from.mockReturnValueOnce({
-        select: jest.fn().mockReturnValue({
-          lt: jest.fn().mockResolvedValue({
+        select: vi.fn().mockReturnValue({
+          lt: vi.fn().mockResolvedValue({
             count: 1,
             error: null,
           }),
@@ -343,9 +344,9 @@ describe('ParkinsonsService', () => {
       };
 
       mockSupabaseClient.from.mockReturnValue({
-        insert: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
+        insert: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
               data: mockLog,
               error: null,
             }),
@@ -373,10 +374,10 @@ describe('ParkinsonsService', () => {
       };
 
       mockSupabaseClient.from.mockReturnValue({
-        update: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            select: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            select: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
                 data: mockPatient,
                 error: null,
               }),
@@ -401,10 +402,10 @@ describe('ParkinsonsService', () => {
       };
 
       mockSupabaseClient.from.mockReturnValue({
-        update: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            select: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            select: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
                 data: mockMedication,
                 error: null,
               }),

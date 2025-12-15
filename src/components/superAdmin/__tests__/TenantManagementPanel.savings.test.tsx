@@ -13,11 +13,11 @@ import TenantManagementPanel from '../TenantManagementPanel';
 import { SuperAdminService } from '../../../services/superAdminService';
 
 // Mock dependencies
-jest.mock('../../../services/superAdminService');
-jest.mock('../../../services/auditLogger');
+vi.mock('../../../services/superAdminService');
+vi.mock('../../../services/auditLogger');
 
 // Mock lucide-react icons
-jest.mock('lucide-react', () => ({
+vi.mock('lucide-react', () => ({
   Building2: () => <span data-testid="icon-building">Building2</span>,
   Users: () => <span data-testid="icon-users">Users</span>,
   Activity: () => <span data-testid="icon-activity">Activity</span>,
@@ -41,13 +41,13 @@ jest.mock('lucide-react', () => ({
 }));
 
 // Mock EACard components
-jest.mock('../../envision-atlus/EACard', () => ({
+vi.mock('../../envision-atlus/EACard', () => ({
   EACard: ({ children, className }: any) => <div className={className}>{children}</div>,
   EACardHeader: ({ children, icon, action }: any) => <div>{icon}{children}{action}</div>,
   EACardContent: ({ children, className }: any) => <div className={className}>{children}</div>,
 }));
 
-jest.mock('../../envision-atlus/EAButton', () => ({
+vi.mock('../../envision-atlus/EAButton', () => ({
   EAButton: ({ children, onClick, icon, disabled, loading }: any) => (
     <button onClick={onClick} disabled={disabled || loading}>{icon}{children}</button>
   ),
@@ -111,9 +111,9 @@ describe('TenantManagementPanel - Savings Counter', () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    (SuperAdminService.getAllTenants as jest.Mock).mockResolvedValue(mockTenantsWithSavings);
-    (SuperAdminService.getCurrentSuperAdmin as jest.Mock).mockResolvedValue(mockSuperAdmin);
+    vi.clearAllMocks();
+    (SuperAdminService.getAllTenants as ReturnType<typeof vi.fn>).mockResolvedValue(mockTenantsWithSavings);
+    (SuperAdminService.getCurrentSuperAdmin as ReturnType<typeof vi.fn>).mockResolvedValue(mockSuperAdmin);
   });
 
   describe('Stats Grid - Total Saved', () => {
@@ -202,7 +202,7 @@ describe('TenantManagementPanel - Savings Counter', () => {
         },
       ];
 
-      (SuperAdminService.getAllTenants as jest.Mock).mockResolvedValue(tenantsWithNull);
+      (SuperAdminService.getAllTenants as ReturnType<typeof vi.fn>).mockResolvedValue(tenantsWithNull);
 
       // Should not throw
       expect(() => render(<TenantManagementPanel />)).not.toThrow();
@@ -220,7 +220,7 @@ describe('TenantManagementPanel - Savings Counter', () => {
         },
       ];
 
-      (SuperAdminService.getAllTenants as jest.Mock).mockResolvedValue(tenantsWithNull);
+      (SuperAdminService.getAllTenants as ReturnType<typeof vi.fn>).mockResolvedValue(tenantsWithNull);
 
       render(<TenantManagementPanel />);
 
@@ -243,7 +243,7 @@ describe('TenantManagementPanel - Savings Counter', () => {
         },
       ];
 
-      (SuperAdminService.getAllTenants as jest.Mock).mockResolvedValue(tenantsWithLargeSavings);
+      (SuperAdminService.getAllTenants as ReturnType<typeof vi.fn>).mockResolvedValue(tenantsWithLargeSavings);
 
       render(<TenantManagementPanel />);
 
@@ -285,7 +285,7 @@ describe('TenantManagementPanel - Savings Counter', () => {
       const updatedTenants = [
         { ...mockTenantsWithSavings[0], totalSavings: 777777 },
       ];
-      (SuperAdminService.getAllTenants as jest.Mock).mockResolvedValue(updatedTenants);
+      (SuperAdminService.getAllTenants as ReturnType<typeof vi.fn>).mockResolvedValue(updatedTenants);
 
       render(<TenantManagementPanel />);
 
@@ -301,7 +301,7 @@ describe('TenantManagementPanel - Savings Counter', () => {
 
   describe('Empty State', () => {
     it('should display $0 total when no tenants exist', async () => {
-      (SuperAdminService.getAllTenants as jest.Mock).mockResolvedValue([]);
+      (SuperAdminService.getAllTenants as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 
       render(<TenantManagementPanel />);
 
@@ -322,7 +322,7 @@ describe('TenantManagementPanel - Savings Counter', () => {
         totalSavings: 0,
       }));
 
-      (SuperAdminService.getAllTenants as jest.Mock).mockResolvedValue(tenantsWithZeroSavings);
+      (SuperAdminService.getAllTenants as ReturnType<typeof vi.fn>).mockResolvedValue(tenantsWithZeroSavings);
 
       render(<TenantManagementPanel />);
 

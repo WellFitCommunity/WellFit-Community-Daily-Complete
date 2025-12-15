@@ -3,9 +3,9 @@
 
 import { loadAnthropicSDK } from './anthropicLoader';
 
-// Create React App uses REACT_APP_ prefix for environment variables
+// Create React App uses VITE_ prefix for environment variables
 // Access via process.env (available in CRA)
-const ANTHROPIC_API_KEY = process.env.REACT_APP_ANTHROPIC_API_KEY as string | undefined;
+const ANTHROPIC_API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY as string | undefined;
 
 interface AdapterAssistantResponse {
   message: string;

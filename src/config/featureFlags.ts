@@ -51,57 +51,57 @@ export interface FeatureFlags {
 }
 
 // Environment-based feature flag configuration
-// Override these in .env with REACT_APP_FEATURE_<NAME>=true
+// Override these in .env with VITE_FEATURE_<NAME>=true
 const getFeatureFlags = (): FeatureFlags => {
   const env = process.env;
 
   return {
     // Clinical Features (default: disabled, enable per tenant)
-    memoryClinic: env.REACT_APP_FEATURE_MEMORY_CLINIC === 'true',
-    mentalHealth: env.REACT_APP_FEATURE_MENTAL_HEALTH === 'true',
-    dentalHealth: env.REACT_APP_FEATURE_DENTAL_HEALTH === 'true' || true, // Already routed, always on
-    strokeAssessment: env.REACT_APP_FEATURE_STROKE_ASSESSMENT === 'true',
-    neuroSuite: env.REACT_APP_FEATURE_NEURO_SUITE === 'true',
-    wearableIntegration: env.REACT_APP_FEATURE_WEARABLES === 'true',
-    physicalTherapy: env.REACT_APP_FEATURE_PHYSICAL_THERAPY === 'true',
+    memoryClinic: env.VITE_FEATURE_MEMORY_CLINIC === 'true',
+    mentalHealth: env.VITE_FEATURE_MENTAL_HEALTH === 'true',
+    dentalHealth: env.VITE_FEATURE_DENTAL_HEALTH === 'true' || true, // Already routed, always on
+    strokeAssessment: env.VITE_FEATURE_STROKE_ASSESSMENT === 'true',
+    neuroSuite: env.VITE_FEATURE_NEURO_SUITE === 'true',
+    wearableIntegration: env.VITE_FEATURE_WEARABLES === 'true',
+    physicalTherapy: env.VITE_FEATURE_PHYSICAL_THERAPY === 'true',
 
     // Healthcare Integrations (default: disabled)
-    healthcareIntegrations: env.REACT_APP_FEATURE_HEALTHCARE_INTEGRATIONS === 'true',
+    healthcareIntegrations: env.VITE_FEATURE_HEALTHCARE_INTEGRATIONS === 'true',
 
     // Population Health (default: disabled)
-    frequentFlyers: env.REACT_APP_FEATURE_FREQUENT_FLYERS === 'true',
-    dischargeTracking: env.REACT_APP_FEATURE_DISCHARGE_TRACKING === 'true',
-    careCoordination: env.REACT_APP_FEATURE_CARE_COORDINATION === 'true',
+    frequentFlyers: env.VITE_FEATURE_FREQUENT_FLYERS === 'true',
+    dischargeTracking: env.VITE_FEATURE_DISCHARGE_TRACKING === 'true',
+    careCoordination: env.VITE_FEATURE_CARE_COORDINATION === 'true',
 
     // External Referrals & Reporting (default: disabled)
-    referralManagement: env.REACT_APP_FEATURE_REFERRAL_MANAGEMENT === 'true',
+    referralManagement: env.VITE_FEATURE_REFERRAL_MANAGEMENT === 'true',
 
     // Questionnaires & Surveys (default: disabled)
-    questionnaireAnalytics: env.REACT_APP_FEATURE_QUESTIONNAIRE_ANALYTICS === 'true',
+    questionnaireAnalytics: env.VITE_FEATURE_QUESTIONNAIRE_ANALYTICS === 'true',
 
     // Financial/Billing (default: disabled)
-    revenueDashboard: env.REACT_APP_FEATURE_REVENUE_DASHBOARD === 'true',
-    billingReview: env.REACT_APP_FEATURE_BILLING_REVIEW === 'true',
+    revenueDashboard: env.VITE_FEATURE_REVENUE_DASHBOARD === 'true',
+    billingReview: env.VITE_FEATURE_BILLING_REVIEW === 'true',
 
     // Workflow Features (default: disabled)
-    shiftHandoff: env.REACT_APP_FEATURE_SHIFT_HANDOFF === 'true',
-    fieldVisits: env.REACT_APP_FEATURE_FIELD_VISITS === 'true',
-    caregiverPortal: env.REACT_APP_FEATURE_CAREGIVER_PORTAL === 'true',
-    timeClock: env.REACT_APP_FEATURE_TIME_CLOCK === 'true',
+    shiftHandoff: env.VITE_FEATURE_SHIFT_HANDOFF === 'true',
+    fieldVisits: env.VITE_FEATURE_FIELD_VISITS === 'true',
+    caregiverPortal: env.VITE_FEATURE_CAREGIVER_PORTAL === 'true',
+    timeClock: env.VITE_FEATURE_TIME_CLOCK === 'true',
 
     // Emergency Response (default: disabled)
-    emsMetrics: env.REACT_APP_FEATURE_EMS_METRICS === 'true',
-    coordinatedResponse: env.REACT_APP_FEATURE_COORDINATED_RESPONSE === 'true',
-    lawEnforcement: env.REACT_APP_FEATURE_LAW_ENFORCEMENT === 'true' || true, // Enable by default (you have constable dispatch)
+    emsMetrics: env.VITE_FEATURE_EMS_METRICS === 'true',
+    coordinatedResponse: env.VITE_FEATURE_COORDINATED_RESPONSE === 'true',
+    lawEnforcement: env.VITE_FEATURE_LAW_ENFORCEMENT === 'true' || true, // Enable by default (you have constable dispatch)
 
     // Admin Features (default: enabled for admins)
-    adminReports: env.REACT_APP_FEATURE_ADMIN_REPORTS !== 'false', // Default ON
-    enhancedQuestions: env.REACT_APP_FEATURE_ENHANCED_QUESTIONS === 'true',
+    adminReports: env.VITE_FEATURE_ADMIN_REPORTS !== 'false', // Default ON
+    enhancedQuestions: env.VITE_FEATURE_ENHANCED_QUESTIONS === 'true',
 
     // Internal/Monitoring (default: disabled, super admin only)
-    soc2Dashboards: env.REACT_APP_FEATURE_SOC2_DASHBOARDS === 'true',
-    performanceMonitoring: env.REACT_APP_FEATURE_PERFORMANCE_MONITORING === 'true',
-    aiCostTracking: env.REACT_APP_FEATURE_AI_COST_TRACKING === 'true',
+    soc2Dashboards: env.VITE_FEATURE_SOC2_DASHBOARDS === 'true',
+    performanceMonitoring: env.VITE_FEATURE_PERFORMANCE_MONITORING === 'true',
+    aiCostTracking: env.VITE_FEATURE_AI_COST_TRACKING === 'true',
   };
 };
 

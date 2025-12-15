@@ -4,41 +4,41 @@ import { MemoryRouter } from 'react-router-dom';
 import { SystemAdminDashboard } from '../SystemAdminDashboard';
 
 // Mock AuthContext
-jest.mock('../../../contexts/AuthContext', () => ({
+vi.mock('../../../contexts/AuthContext', () => ({
   useSupabaseClient: () => ({
-    from: jest.fn(() => ({
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      order: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({ data: null, error: null }),
+    from: vi.fn(() => ({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: null, error: null }),
     })),
-    rpc: jest.fn().mockResolvedValue({ data: null, error: null }),
+    rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
   }),
   useUser: () => ({ id: 'test-user-id' }),
 }));
 
 // Mock AdminAuthContext
-jest.mock('../../../contexts/AdminAuthContext', () => ({
+vi.mock('../../../contexts/AdminAuthContext', () => ({
   useAdminAuth: () => ({
     isAdminAuthenticated: true,
     adminRole: 'admin',
-    hasAccess: jest.fn(() => true),
+    hasAccess: vi.fn(() => true),
   }),
 }));
 
 // Mock auditLogger
-jest.mock('../../../services/auditLogger', () => ({
+vi.mock('../../../services/auditLogger', () => ({
   auditLogger: {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
 describe('SystemAdminDashboard', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('renders without crashing', () => {

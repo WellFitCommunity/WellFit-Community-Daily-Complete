@@ -225,7 +225,7 @@ ${alert.session_recording_url ? `View Recording: ${alert.session_recording_url}`
 
 ${alert.generated_fix ? 'Generated Fix Available - Review in Security Panel' : ''}
 
-View Alert: ${process.env.REACT_APP_BASE_URL}/security/alerts/${alert.id}
+View Alert: ${import.meta.env.VITE_BASE_URL}/security/alerts/${alert.id}
 
 ---
 This is an automated alert from the WellFit Guardian Agent.

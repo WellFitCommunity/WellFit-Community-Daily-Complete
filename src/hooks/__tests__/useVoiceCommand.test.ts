@@ -1,3 +1,4 @@
+import { type Mock } from 'vitest';
 /**
  * useVoiceCommand Hook Test Suite
  *
@@ -10,25 +11,25 @@
 import { renderHook, act } from '@testing-library/react';
 
 // Mock react-router-dom
-const mockNavigate = jest.fn();
-jest.mock('react-router-dom', () => ({
+const mockNavigate = vi.fn();
+vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
 }));
 
 // Mock workflowPreferences
-const mockFindVoiceCommandMatch = jest.fn();
-jest.mock('../../services/workflowPreferences', () => ({
+const mockFindVoiceCommandMatch = vi.fn();
+vi.mock('../../services/workflowPreferences', () => ({
   findVoiceCommandMatch: (text: string) => mockFindVoiceCommandMatch(text),
   VoiceCommandMapping: {},
 }));
 
 // Mock auditLogger
-jest.mock('../../services/auditLogger', () => ({
+vi.mock('../../services/auditLogger', () => ({
   auditLogger: {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    debug: jest.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
   },
 }));
 
@@ -42,15 +43,15 @@ class MockSpeechRecognition {
   onerror: ((event: { error: string; message?: string }) => void) | null = null;
   onend: (() => void) | null = null;
 
-  start = jest.fn(() => {
+  start = vi.fn(() => {
     if (this.onstart) this.onstart();
   });
 
-  stop = jest.fn(() => {
+  stop = vi.fn(() => {
     if (this.onend) this.onend();
   });
 
-  abort = jest.fn();
+  abort = vi.fn();
 
   // Helper to simulate speech result
   simulateResult(transcript: string, isFinal: boolean, confidence: number = 0.9) {
@@ -101,13 +102,13 @@ import { useVoiceCommand } from '../useVoiceCommand';
 
 describe('useVoiceCommand', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     _mockRecognitionInstance = null;
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   describe('Initialization', () => {
@@ -202,7 +203,7 @@ describe('useVoiceCommand', () => {
 
       // Fast-forward 30 seconds
       act(() => {
-        jest.advanceTimersByTime(30000);
+        vi.advanceTimersByTime(30000);
       });
 
       expect(result.current[0].isListening).toBe(false);
@@ -257,7 +258,7 @@ describe('useVoiceCommand', () => {
       };
       mockFindVoiceCommandMatch.mockReturnValue(mockCommand);
 
-      const onCommandMatched = jest.fn();
+      const onCommandMatched = vi.fn();
 
       const { result } = renderHook(() =>
         useVoiceCommand({ onCommandMatched })
@@ -292,7 +293,7 @@ describe('useVoiceCommand', () => {
     });
 
     it('should use custom onNavigate when provided', () => {
-      const customNavigate = jest.fn();
+      const customNavigate = vi.fn();
 
       const { result } = renderHook(() =>
         useVoiceCommand({ onNavigate: customNavigate })
@@ -317,13 +318,13 @@ describe('useVoiceCommand', () => {
     it('should execute section commands by scrolling', () => {
       // Mock document.getElementById for testing scroll behavior
       const mockElement = {
-        scrollIntoView: jest.fn(),
-        querySelector: jest.fn().mockReturnValue(null),
+        scrollIntoView: vi.fn(),
+        querySelector: vi.fn().mockReturnValue(null),
       };
       // eslint-disable-next-line testing-library/no-node-access
       const originalGetElementById = document.getElementById;
       // eslint-disable-next-line testing-library/no-node-access
-      document.getElementById = jest.fn().mockReturnValue(mockElement);
+      document.getElementById = vi.fn().mockReturnValue(mockElement);
 
       const { result } = renderHook(() => useVoiceCommand());
       const [, actions] = result.current;
@@ -352,13 +353,13 @@ describe('useVoiceCommand', () => {
     it('should execute category commands', () => {
       // Mock document.querySelector for testing category navigation
       const mockCategoryElement = {
-        scrollIntoView: jest.fn(),
-        querySelector: jest.fn().mockReturnValue(null),
+        scrollIntoView: vi.fn(),
+        querySelector: vi.fn().mockReturnValue(null),
       };
       // eslint-disable-next-line testing-library/no-node-access
       const originalQuerySelector = document.querySelector;
       // eslint-disable-next-line testing-library/no-node-access
-      document.querySelector = jest.fn().mockReturnValue(mockCategoryElement);
+      document.querySelector = vi.fn().mockReturnValue(mockCategoryElement);
 
       const { result } = renderHook(() => useVoiceCommand());
       const [, actions] = result.current;
@@ -385,7 +386,7 @@ describe('useVoiceCommand', () => {
     });
 
     it('should use custom scroll handler when provided', () => {
-      const customScrollHandler = jest.fn();
+      const customScrollHandler = vi.fn();
 
       const { result } = renderHook(() =>
         useVoiceCommand({ onScrollToSection: customScrollHandler })
@@ -407,7 +408,7 @@ describe('useVoiceCommand', () => {
     });
 
     it('should use custom category handler when provided', () => {
-      const customCategoryHandler = jest.fn();
+      const customCategoryHandler = vi.fn();
 
       const { result } = renderHook(() =>
         useVoiceCommand({ onOpenCategory: customCategoryHandler })
@@ -545,12 +546,12 @@ describe('useVoiceCommand', () => {
 
 describe('Healthcare Voice Commands Integration', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers();
+    vi.clearAllMocks();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it('should work with shift handoff command', () => {

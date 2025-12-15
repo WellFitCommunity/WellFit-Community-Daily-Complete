@@ -3,7 +3,7 @@ import { getToken, onMessage } from 'firebase/messaging';
 import { getFirebaseMessaging } from '../firebase';
 import { supabase } from '../lib/supabaseClient';
 
-const VAPID_KEY = process.env.REACT_APP_FIREBASE_VAPID_KEY as string;
+const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY as string;
 
 export const requestNotificationPermission = async (): Promise<void> => {
   try {
@@ -33,7 +33,7 @@ export const requestNotificationPermission = async (): Promise<void> => {
     }
 
     if (!VAPID_KEY) {
-      alert('Missing REACT_APP_FIREBASE_VAPID_KEY.');
+      alert('Missing VITE_FIREBASE_VAPID_KEY.');
       return;
     }
 

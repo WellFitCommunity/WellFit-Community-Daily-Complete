@@ -1,5 +1,5 @@
 // src/settings/settings.ts
-// CRA only exposes envs that START with REACT_APP_
+// CRA only exposes envs that START with VITE_
 // We support Maria's new names + legacy fallbacks.
 
 const truthy = (v?: string | null) => !!v && v.trim().length > 0;
@@ -9,13 +9,13 @@ export const IS_PROD = process.env.NODE_ENV === "production";
 
 // ---- Supabase (client) values ----
 export const SB_URL = pick(
-  process.env.REACT_APP_SB_URL,
-  process.env.REACT_APP_SUPABASE_URL
+  import.meta.env.VITE_SB_URL,
+  import.meta.env.VITE_SUPABASE_URL
 );
 
 export const SB_PUBLISHABLE_API_KEY = pick(
-  process.env.REACT_APP_SB_PUBLISHABLE_API_KEY,
-  process.env.REACT_APP_SUPABASE_ANON_KEY
+  import.meta.env.VITE_SB_PUBLISHABLE_API_KEY,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
 );
 
 // Aliases for backward compatibility
@@ -35,11 +35,11 @@ export function assertClientSupabaseEnv() {
   if (!hasUrl || !hasKey) {
     const msg = [
       "[SB CONFIG] Missing required env(s) for CRA runtime:",
-      !hasUrl ? " - REACT_APP_SB_URL (or REACT_APP_SUPABASE_URL)" : "",
+      !hasUrl ? " - VITE_SB_URL (or VITE_SUPABASE_URL)" : "",
       !hasKey
-        ? " - REACT_APP_SB_PUBLISHABLE_API_KEY (or REACT_APP_SUPABASE_ANON_KEY)"
+        ? " - VITE_SB_PUBLISHABLE_API_KEY (or VITE_SUPABASE_ANON_KEY)"
         : "",
-      "Remember: CRA requires REACT_APP_* and a dev-server restart after changes.",
+      "Remember: CRA requires VITE_* and a dev-server restart after changes.",
     ]
       .filter(Boolean)
       .join("\n");
@@ -77,12 +77,12 @@ export const APP_INFO = {
 // ---- Firebase Configuration (for push notifications only) ----
 // Direct environment variable mapping - no broken require() needed
 export const FIREBASE = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY || '',
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || '',
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID || '',
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET || '',
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID || '',
-  appId: process.env.REACT_APP_FIREBASE_APP_ID || '',
-  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID || '',
-  vapidKey: process.env.REACT_APP_FIREBASE_VAPID_KEY || '',
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || '',
+  vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY || '',
 };

@@ -16,9 +16,9 @@ import {
 import { supabase } from '../../lib/supabaseClient';
 
 // Mock Supabase client
-jest.mock('../../lib/supabaseClient', () => ({
+vi.mock('../../lib/supabaseClient', () => ({
   supabase: {
-    from: jest.fn(),
+    from: vi.fn(),
   },
 }));
 
@@ -26,28 +26,28 @@ describe('FHIR Search API', () => {
   let mockQuery: any;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Create fully chainable mock query object that is also awaitable
     mockQuery = {
-      select: jest.fn(),
-      eq: jest.fn(),
-      lt: jest.fn(),
-      lte: jest.fn(),
-      gt: jest.fn(),
-      gte: jest.fn(),
-      contains: jest.fn(),
-      order: jest.fn(),
-      limit: jest.fn(),
-      neq: jest.fn(),
-      in: jest.fn(),
-      like: jest.fn(),
-      ilike: jest.fn(),
-      is: jest.fn(),
-      filter: jest.fn(),
-      range: jest.fn(),
+      select: vi.fn(),
+      eq: vi.fn(),
+      lt: vi.fn(),
+      lte: vi.fn(),
+      gt: vi.fn(),
+      gte: vi.fn(),
+      contains: vi.fn(),
+      order: vi.fn(),
+      limit: vi.fn(),
+      neq: vi.fn(),
+      in: vi.fn(),
+      like: vi.fn(),
+      ilike: vi.fn(),
+      is: vi.fn(),
+      filter: vi.fn(),
+      range: vi.fn(),
       // Make it awaitable - this is key for Supabase queries!
-      then: jest.fn((resolve: any) => resolve({ data: [], error: null })),
+      then: vi.fn((resolve: any) => resolve({ data: [], error: null })),
     };
 
     // Make ALL methods return the same mockQuery object to maintain chain

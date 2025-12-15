@@ -316,7 +316,7 @@ export class ClearinghouseMCPClient {
   private baseUrl: string;
 
   constructor(baseUrl?: string) {
-    this.baseUrl = baseUrl || `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/mcp-clearinghouse-server`;
+    this.baseUrl = baseUrl || `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mcp-clearinghouse-server`;
   }
 
   /**

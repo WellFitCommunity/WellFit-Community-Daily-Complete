@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import SeniorViewPage from '../SeniorViewPage';
 
 // Mock the BrandingContext
-jest.mock('../../BrandingContext', () => ({
+vi.mock('../../BrandingContext', () => ({
   useBranding: () => ({
     branding: {
       primaryColor: '#00857a',
@@ -14,24 +14,24 @@ jest.mock('../../BrandingContext', () => ({
 }));
 
 // Mock auditLogger
-jest.mock('../../services/auditLogger', () => ({
+vi.mock('../../services/auditLogger', () => ({
   auditLogger: {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
 // Mock Supabase client
-jest.mock('@supabase/supabase-js', () => ({
+vi.mock('@supabase/supabase-js', () => ({
   createClient: () => ({
-    rpc: jest.fn().mockResolvedValue({ data: null, error: null }),
-    from: jest.fn(() => ({
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      order: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({ data: null, error: null }),
+    rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
+    from: vi.fn(() => ({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: null, error: null }),
     })),
   }),
 }));
@@ -48,7 +48,7 @@ const renderWithRouter = (seniorId: string = 'test-senior-id') => {
 
 describe('SeniorViewPage', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     sessionStorage.clear();
   });
 

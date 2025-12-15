@@ -18,7 +18,7 @@ import {
 } from '../mcpHL7X12Client';
 
 // Mock fetch
-const mockFetch = jest.fn();
+const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
 // Mock localStorage
@@ -37,7 +37,7 @@ Object.defineProperty(global, 'localStorage', {
 
 describe('HL7X12MCPClient', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('HL7 Operations', () => {

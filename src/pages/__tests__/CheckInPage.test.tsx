@@ -4,20 +4,20 @@ import { MemoryRouter } from 'react-router-dom';
 import CheckInPage from '../CheckInPage';
 
 // Mock AuthContext
-jest.mock('../../contexts/AuthContext', () => ({
+vi.mock('../../contexts/AuthContext', () => ({
   useSupabaseClient: () => ({
-    from: jest.fn(() => ({
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      insert: jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({ data: null, error: null }),
+    from: vi.fn(() => ({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      insert: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: null, error: null }),
     })),
   }),
   useUser: () => ({ id: 'test-user-id' }),
 }));
 
 // Mock BrandingContext
-jest.mock('../../BrandingContext', () => ({
+vi.mock('../../BrandingContext', () => ({
   useBranding: () => ({
     branding: {
       primaryColor: '#00857a',
@@ -28,7 +28,7 @@ jest.mock('../../BrandingContext', () => ({
 
 describe('CheckInPage', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('renders without crashing', () => {

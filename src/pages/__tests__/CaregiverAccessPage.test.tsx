@@ -5,7 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 import CaregiverAccessPage from '../CaregiverAccessPage';
 
 // Mock the BrandingContext
-jest.mock('../../BrandingContext', () => ({
+vi.mock('../../BrandingContext', () => ({
   useBranding: () => ({
     branding: {
       primaryColor: '#00857a',
@@ -15,18 +15,18 @@ jest.mock('../../BrandingContext', () => ({
 }));
 
 // Mock auditLogger
-jest.mock('../../services/auditLogger', () => ({
+vi.mock('../../services/auditLogger', () => ({
   auditLogger: {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
 // Mock Supabase client
-jest.mock('@supabase/supabase-js', () => ({
+vi.mock('@supabase/supabase-js', () => ({
   createClient: () => ({
-    rpc: jest.fn().mockResolvedValue({ data: null, error: null }),
+    rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
   }),
 }));
 
@@ -40,7 +40,7 @@ const renderWithRouter = () => {
 
 describe('CaregiverAccessPage', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     sessionStorage.clear();
   });
 
