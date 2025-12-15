@@ -38,18 +38,37 @@ export const PasskeySetup: React.FC<PasskeySetupProps> = ({
 
   // Check browser support
   useEffect(() => {
+    let isMounted = true;
+
     const checkSupport = async () => {
       const isSupported = isPasskeySupported();
+      if (!isMounted) return;
       setSupported(isSupported);
 
       if (isSupported) {
         const platformAuth = await isPlatformAuthenticatorAvailable();
+        if (!isMounted) return;
         setPlatformAvailable(platformAuth);
       }
     };
 
+    const loadCreds = async () => {
+      try {
+        const creds = await getUserPasskeys();
+        if (isMounted) {
+          setCredentials(creds);
+        }
+      } catch (err: any) {
+        // Silent error - credentials optional
+      }
+    };
+
     checkSupport();
-    loadCredentials();
+    loadCreds();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Load existing credentials

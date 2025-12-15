@@ -289,10 +289,12 @@ const MemoryClinicDashboard: React.FC<MemoryClinicDashboardProps> = ({ patientId
                 <h2 className="text-xl font-bold text-gray-900 mb-4">Montreal Cognitive Assessment (MoCA)</h2>
 
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="years-education" className="block text-sm font-medium text-gray-700 mb-2">
                     Years of Education
                   </label>
                   <input
+                    id="years-education"
+                    name="years-education"
                     type="number"
                     value={yearsEducation}
                     onChange={(e) => setYearsEducation(parseInt(e.target.value))}
@@ -307,10 +309,12 @@ const MemoryClinicDashboard: React.FC<MemoryClinicDashboardProps> = ({ patientId
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="moca-visuospatial" className="block text-sm font-medium text-gray-700 mb-1">
                       Visuospatial/Executive (0-5)
                     </label>
                     <input
+                      id="moca-visuospatial"
+                      name="moca-visuospatial"
                       type="number"
                       value={mocaVisuospatial}
                       onChange={(e) => setMocaVisuospatial(Math.min(5, parseInt(e.target.value) || 0))}
@@ -320,10 +324,12 @@ const MemoryClinicDashboard: React.FC<MemoryClinicDashboardProps> = ({ patientId
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="moca-naming" className="block text-sm font-medium text-gray-700 mb-1">
                       Naming (0-3)
                     </label>
                     <input
+                      id="moca-naming"
+                      name="moca-naming"
                       type="number"
                       value={mocaNaming}
                       onChange={(e) => setMocaNaming(Math.min(3, parseInt(e.target.value) || 0))}
@@ -333,10 +339,12 @@ const MemoryClinicDashboard: React.FC<MemoryClinicDashboardProps> = ({ patientId
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="moca-attention" className="block text-sm font-medium text-gray-700 mb-1">
                       Attention (0-6)
                     </label>
                     <input
+                      id="moca-attention"
+                      name="moca-attention"
                       type="number"
                       value={mocaAttention}
                       onChange={(e) => setMocaAttention(Math.min(6, parseInt(e.target.value) || 0))}
@@ -346,10 +354,12 @@ const MemoryClinicDashboard: React.FC<MemoryClinicDashboardProps> = ({ patientId
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="moca-language" className="block text-sm font-medium text-gray-700 mb-1">
                       Language (0-3)
                     </label>
                     <input
+                      id="moca-language"
+                      name="moca-language"
                       type="number"
                       value={mocaLanguage}
                       onChange={(e) => setMocaLanguage(Math.min(3, parseInt(e.target.value) || 0))}
@@ -359,10 +369,12 @@ const MemoryClinicDashboard: React.FC<MemoryClinicDashboardProps> = ({ patientId
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="moca-abstraction" className="block text-sm font-medium text-gray-700 mb-1">
                       Abstraction (0-2)
                     </label>
                     <input
+                      id="moca-abstraction"
+                      name="moca-abstraction"
                       type="number"
                       value={mocaAbstraction}
                       onChange={(e) => setMocaAbstraction(Math.min(2, parseInt(e.target.value) || 0))}
@@ -372,10 +384,12 @@ const MemoryClinicDashboard: React.FC<MemoryClinicDashboardProps> = ({ patientId
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="moca-delayed-recall" className="block text-sm font-medium text-gray-700 mb-1">
                       Delayed Recall (0-5)
                     </label>
                     <input
+                      id="moca-delayed-recall"
+                      name="moca-delayed-recall"
                       type="number"
                       value={mocaDelayedRecall}
                       onChange={(e) => setMocaDelayedRecall(Math.min(5, parseInt(e.target.value) || 0))}
@@ -385,10 +399,12 @@ const MemoryClinicDashboard: React.FC<MemoryClinicDashboardProps> = ({ patientId
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="moca-orientation" className="block text-sm font-medium text-gray-700 mb-1">
                       Orientation (0-6)
                     </label>
                     <input
+                      id="moca-orientation"
+                      name="moca-orientation"
                       type="number"
                       value={mocaOrientation}
                       onChange={(e) => setMocaOrientation(Math.min(6, parseInt(e.target.value) || 0))}

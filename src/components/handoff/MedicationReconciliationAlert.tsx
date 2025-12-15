@@ -23,6 +23,8 @@ const MedicationReconciliationAlert: React.FC<MedicationReconciliationAlertProps
   const [patientDOB, setPatientDOB] = useState('');
 
   useEffect(() => {
+    let isMounted = true;
+
     async function analyzeAndGenerate() {
       // Decrypt patient name and DOB
       const decryptedName = await HandoffService.decryptPHI(
@@ -31,6 +33,10 @@ const MedicationReconciliationAlert: React.FC<MedicationReconciliationAlertProps
       const decryptedDOB = await HandoffService.decryptPHI(
         packet.patient_dob_encrypted || ''
       );
+
+      // React 19: Check if component is still mounted before state updates
+      if (!isMounted) return;
+
       setPatientName(decryptedName);
       setPatientDOB(decryptedDOB);
 
@@ -39,6 +45,10 @@ const MedicationReconciliationAlert: React.FC<MedicationReconciliationAlertProps
         packet,
         decryptedName
       );
+
+      // React 19: Check again after async operation
+      if (!isMounted) return;
+
       setReport(medRecReport);
 
       // Auto-expand if discrepancies found
@@ -48,6 +58,10 @@ const MedicationReconciliationAlert: React.FC<MedicationReconciliationAlertProps
     }
 
     analyzeAndGenerate();
+
+    return () => {
+      isMounted = false;
+    };
   }, [packet]);
 
   if (!report) {

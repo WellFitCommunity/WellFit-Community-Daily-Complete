@@ -9,6 +9,7 @@ import React, {
 import { supabase } from '../lib/supabaseClient';
 import { StaffRole, RoleAccessScopes, roleHasAccess, ROLE_DISPLAY_NAMES as _ROLE_DISPLAY_NAMES } from '../types/roles';
 import { prepareAdminPinForVerification } from '../services/pinHashingService';
+import { auditLogger } from '../services/auditLogger';
 
 // Backwards compatibility: AdminRole is now StaffRole
 export type AdminRole = StaffRole;
@@ -142,9 +143,8 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       // Check session before calling edge function
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        await import('../services/auditLogger').then(({ auditLogger }) =>
-          auditLogger.error('ADMIN_PIN_VERIFICATION_NO_SESSION', new Error('No active session'), { role })
-        );
+        // Use static import - no await on audit logger (fire-and-forget)
+        auditLogger.error('ADMIN_PIN_VERIFICATION_NO_SESSION', new Error('No active session'), { role }).catch(() => {});
         setError('Session expired. Please log in again.');
         setIsAdminAuthenticated(false); setAdminRole(null); setExpiresAt(null);
         persistSession(false, null, null); clearExpiryTimer();
@@ -166,13 +166,12 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       });
 
       if (fnErr) {
-        await import('../services/auditLogger').then(({ auditLogger }) =>
-          auditLogger.error('ADMIN_PIN_VERIFICATION_FAILED', fnErr, {
-            role,
-            errorMessage: fnErr.message,
-            userEmail: session.user?.email
-          })
-        );
+        // Fire-and-forget audit logging - don't block on it
+        auditLogger.error('ADMIN_PIN_VERIFICATION_FAILED', fnErr, {
+          role,
+          errorMessage: fnErr.message,
+          userEmail: session.user?.email
+        }).catch(() => {});
         setError(fnErr.message || 'PIN verification failed.');
         setIsAdminAuthenticated(false); setAdminRole(null); setExpiresAt(null);
         persistSession(false, null, null); clearExpiryTimer();
@@ -187,13 +186,11 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         const token: string | null = data.admin_token ?? null;
 
         if (!token || !exp) {
-          await import('../services/auditLogger').then(({ auditLogger }) =>
-            auditLogger.error('ADMIN_PIN_VERIFICATION_INCOMPLETE_RESPONSE', new Error('Missing token or expiry'), {
-              role,
-              hasToken: !!token,
-              hasExpiry: !!exp
-            })
-          );
+          auditLogger.error('ADMIN_PIN_VERIFICATION_INCOMPLETE_RESPONSE', new Error('Missing token or expiry'), {
+            role,
+            hasToken: !!token,
+            hasExpiry: !!exp
+          }).catch(() => {});
           setError('Server did not return admin token or expiry.');
           setIsAdminAuthenticated(false); setAdminRole(null); setExpiresAt(null);
           persistSession(false, null, null); clearExpiryTimer();
@@ -216,25 +213,21 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           const scopes = await fetchAccessScopes(user.id);
           setAccessScopes(scopes);
 
-          // Audit successful PIN verification
-          await import('../services/auditLogger').then(({ auditLogger }) =>
-            auditLogger.info('ADMIN_PIN_VERIFICATION_SUCCESS', {
-              role,
-              userId: user.id,
-              userEmail: user.email,
-              expiresAt: exp
-            })
-          );
+          // Fire-and-forget audit logging
+          auditLogger.info('ADMIN_PIN_VERIFICATION_SUCCESS', {
+            role,
+            userId: user.id,
+            userEmail: user.email,
+            expiresAt: exp
+          }).catch(() => {});
         }
 
         return true;
       } else {
-        await import('../services/auditLogger').then(({ auditLogger }) =>
-          auditLogger.error('ADMIN_PIN_VERIFICATION_REJECTED', new Error(data?.error || 'Invalid PIN'), {
-            role,
-            errorMessage: data?.error
-          })
-        );
+        auditLogger.error('ADMIN_PIN_VERIFICATION_REJECTED', new Error(data?.error || 'Invalid PIN'), {
+          role,
+          errorMessage: data?.error
+        }).catch(() => {});
         setError(data?.error || 'Invalid PIN or unexpected response.');
         setIsAdminAuthenticated(false); setAdminRole(null); setExpiresAt(null);
         persistSession(false, null, null); clearExpiryTimer();
@@ -242,12 +235,10 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         return false;
       }
     } catch (e: any) {
-      await import('../services/auditLogger').then(({ auditLogger }) =>
-        auditLogger.error('ADMIN_PIN_VERIFICATION_EXCEPTION', e, {
-          role,
-          errorMessage: e?.message
-        })
-      );
+      auditLogger.error('ADMIN_PIN_VERIFICATION_EXCEPTION', e, {
+        role,
+        errorMessage: e?.message
+      }).catch(() => {});
       setError(e?.message || 'An unexpected error occurred.');
       setIsAdminAuthenticated(false); setAdminRole(null); setExpiresAt(null);
       persistSession(false, null, null); clearExpiryTimer();
@@ -280,13 +271,12 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         .maybeSingle();
 
       if (saError || !superAdminRecord) {
-        await import('../services/auditLogger').then(({ auditLogger }) =>
-          auditLogger.warn('SUPER_ADMIN_AUTO_AUTH_DENIED', {
-            userId: session.user.id,
-            userEmail: session.user.email,
-            reason: saError?.message || 'Not a super admin'
-          })
-        );
+        // Fire-and-forget audit logging
+        auditLogger.warn('SUPER_ADMIN_AUTO_AUTH_DENIED', {
+          userId: session.user.id,
+          userEmail: session.user.email,
+          reason: saError?.message || 'Not a super admin'
+        }).catch(() => {});
         setError('You are not authorized as a super admin.');
         return false;
       }
@@ -309,22 +299,19 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const scopes = await fetchAccessScopes(session.user.id);
       setAccessScopes(scopes);
 
-      await import('../services/auditLogger').then(({ auditLogger }) =>
-        auditLogger.info('SUPER_ADMIN_AUTO_AUTH_SUCCESS', {
-          userId: session.user.id,
-          userEmail: session.user.email,
-          expiresAt,
-          method: 'envision_portal_bypass'
-        })
-      );
+      // Fire-and-forget audit logging
+      auditLogger.info('SUPER_ADMIN_AUTO_AUTH_SUCCESS', {
+        userId: session.user.id,
+        userEmail: session.user.email,
+        expiresAt,
+        method: 'envision_portal_bypass'
+      }).catch(() => {});
 
       return true;
     } catch (e: any) {
-      await import('../services/auditLogger').then(({ auditLogger }) =>
-        auditLogger.error('SUPER_ADMIN_AUTO_AUTH_ERROR', e, {
-          errorMessage: e?.message
-        })
-      );
+      auditLogger.error('SUPER_ADMIN_AUTO_AUTH_ERROR', e, {
+        errorMessage: e?.message
+      }).catch(() => {});
       setError(e?.message || 'Auto-authentication failed.');
       return false;
     } finally {

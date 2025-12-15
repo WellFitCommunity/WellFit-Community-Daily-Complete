@@ -28,13 +28,56 @@ const ReceivingDashboard: React.FC<ReceivingFacilityDashboardProps> = ({
   const [acknowledgementNotes, setAcknowledgementNotes] = useState('');
 
   useEffect(() => {
-    loadPackets();
+    let isMounted = true;
+
+    const loadPacketsAsync = async () => {
+      try {
+        setLoading(true);
+        const data = await HandoffService.listPackets({
+          receiving_facility: facilityName,
+          status: 'sent',
+        });
+        if (isMounted) {
+          setPackets(data);
+        }
+      } catch (error: any) {
+        if (isMounted) {
+          toast.error(`Failed to load transfers: ${error.message}`);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadPacketsAsync();
+
+    return () => {
+      isMounted = false;
+    };
   }, [facilityName]);
 
   useEffect(() => {
-    if (selectedPacket) {
-      loadAttachments(selectedPacket.id);
-    }
+    let isMounted = true;
+
+    const loadAttachmentsAsync = async () => {
+      if (!selectedPacket) return;
+      try {
+        const data = await HandoffService.getAttachments(selectedPacket.id);
+        if (isMounted) {
+          setAttachments(data);
+        }
+      } catch (error: any) {
+        // Silent error - attachments are optional
+      }
+    };
+
+    loadAttachmentsAsync();
+
+    return () => {
+      isMounted = false;
+    };
   }, [selectedPacket]);
 
   const loadPackets = async () => {
@@ -202,15 +245,23 @@ const PacketCard: React.FC<{
   });
 
   useEffect(() => {
+    let isMounted = true;
+
     (async () => {
-      const info = await HandoffService.decryptPHI(
+      const name = await HandoffService.decryptPHI(
         packet.patient_name_encrypted || ''
-      ).then((name) => ({
-        name,
-        dob: packet.patient_dob_encrypted || 'N/A',
-      }));
-      setPatientInfo(info);
+      );
+      if (isMounted) {
+        setPatientInfo({
+          name,
+          dob: packet.patient_dob_encrypted || 'N/A',
+        });
+      }
     })();
+
+    return () => {
+      isMounted = false;
+    };
   }, [packet]);
 
   const getUrgencyColor = (level: string): string => {
@@ -298,13 +349,23 @@ const PacketViewer: React.FC<{
   });
 
   useEffect(() => {
+    let isMounted = true;
+
     (async () => {
       const name = await HandoffService.decryptPHI(
         packet.patient_name_encrypted || ''
       );
       const dob = await HandoffService.decryptPHI(packet.patient_dob_encrypted || '');
-      setPatientInfo({ name, dob });
+
+      // React 19: Only update state if component is still mounted
+      if (isMounted) {
+        setPatientInfo({ name, dob });
+      }
     })();
+
+    return () => {
+      isMounted = false;
+    };
   }, [packet]);
 
   const vitals = packet.clinical_data.vitals;
