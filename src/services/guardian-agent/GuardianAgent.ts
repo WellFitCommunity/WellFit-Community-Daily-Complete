@@ -242,7 +242,7 @@ export const getGuardianAgent = (config?: Partial<AgentConfig>) =>
   GuardianAgent.getInstance(config);
 
 // Auto-start in production
-if (process.env.NODE_ENV === 'production') {
+if (import.meta.env.MODE === 'production') {
   const agent = GuardianAgent.getInstance();
   agent.start();
 

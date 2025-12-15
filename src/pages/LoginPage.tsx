@@ -680,7 +680,7 @@ const LoginPage: React.FC = () => {
           </div>
 
           {/* Dev-only debug canary */}
-          {process.env.NODE_ENV !== 'production' && (
+          {import.meta.env.MODE !== 'production' && (
             <div className="mt-3 text-xs text-gray-500 text-center">
               <div>Auth URL: {debug.url}</div>
               <div>Client Ready: {String(debug.hasAuth)}</div>
@@ -785,7 +785,7 @@ const LoginPage: React.FC = () => {
           </div>
 
           {/* Dev-only debug canary */}
-          {process.env.NODE_ENV !== 'production' && (
+          {import.meta.env.MODE !== 'production' && (
             <div className="mt-3 text-xs text-gray-500 text-center">
               <div>Auth URL: {debug.url}</div>
               <div>Client Ready: {String(debug.hasAuth)}</div>

@@ -342,7 +342,7 @@ export class AuditLogger {
   }
 
   private getEnvironment(): 'production' | 'staging' | 'development' {
-    return (process.env.NODE_ENV as any) || 'development';
+    return (import.meta.env.MODE as any) || 'development';
   }
 
   private captureVersionInfo(): string {

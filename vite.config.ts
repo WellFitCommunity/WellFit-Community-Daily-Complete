@@ -4,18 +4,13 @@ import svgr from 'vite-plugin-svgr';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import type { UserConfig as VitestConfig } from 'vitest/config';
 
-// Node.js polyfills (same as config-overrides.js - MCP SDK requires these)
-const nodePolyfills = [
-  'child_process', 'fs', 'net', 'tls', 'dns', 'path', 'os', 'crypto',
-  'stream', 'http', 'https', 'zlib', 'util', 'buffer', 'url', 'assert',
-  'querystring', 'events', 'process'
+// Node.js modules that should be stubbed for browser (MCP SDK, etc.)
+// Using empty object export instead of false (which doesn't work in Vite 7+)
+const nodeModules = [
+  'child_process', 'fs', 'net', 'tls', 'dns', 'path', 'os',
+  'stream', 'http', 'https', 'zlib', 'util', 'url', 'assert',
+  'querystring', 'events'
 ];
-
-const nodeAliases: Record<string, string | false> = {};
-for (const mod of nodePolyfills) {
-  nodeAliases[mod] = false;
-  nodeAliases[`node:${mod}`] = false;
-}
 
 export default defineConfig({
   plugins: [
@@ -25,7 +20,21 @@ export default defineConfig({
   ],
 
   resolve: {
-    alias: nodeAliases,
+    alias: {
+      // Stub out Node.js-only modules with empty exports
+      ...Object.fromEntries(nodeModules.flatMap(mod => [
+        [mod, 'data:text/javascript,export default {};export const __esModule = true;'],
+        [`node:${mod}`, 'data:text/javascript,export default {};export const __esModule = true;']
+      ])),
+    },
+  },
+
+  optimizeDeps: {
+    // Only scan the main entry point, not test HTML files
+    entries: ['index.html'],
+    // Exclude packages that have Node.js conditional imports
+    // bcryptjs checks for crypto at runtime and works fine in browser
+    exclude: ['bcryptjs'],
   },
 
   server: {

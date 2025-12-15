@@ -42,7 +42,7 @@ export interface AuditLogEntry {
 }
 
 class AuditLogger {
-  private isDevelopment = process.env.NODE_ENV === 'development';
+  private isDevelopment = import.meta.env.MODE === 'development';
   private loggingEnabled = import.meta.env.VITE_HIPAA_LOGGING_ENABLED !== 'false';
 
   /**

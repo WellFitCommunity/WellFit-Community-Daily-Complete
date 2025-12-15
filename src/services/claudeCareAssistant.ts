@@ -177,7 +177,7 @@ export class ClaudeCareAssistant {
       };
     } catch (error) {
       // Cache lookup is non-critical, silently return null
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.MODE === 'development') {
 
       }
       return null;
@@ -208,7 +208,7 @@ export class ClaudeCareAssistant {
       // Translation cached successfully
     } catch (error) {
       // Don't fail the request if caching fails
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.MODE === 'development') {
 
       }
     }
@@ -299,7 +299,7 @@ CONFIDENCE: [0.0-1.0]
       };
     } catch (error) {
       // Return raw content as fallback
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.MODE === 'development') {
 
       }
       return {
@@ -404,7 +404,7 @@ CONFIDENCE: [0.0-1.0]
         suggestedEdits: [],
       };
     } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.MODE === 'development') {
 
       }
       throw new ClaudeCareError(
@@ -449,7 +449,7 @@ CONFIDENCE: [0.0-1.0]
         isActive: data.is_active,
       };
     } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.MODE === 'development') {
 
       }
       return null;
@@ -500,7 +500,7 @@ CONFIDENCE: [0.0-1.0]
 
       return data.id;
     } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.MODE === 'development') {
 
       }
       throw new ClaudeCareError(
@@ -543,7 +543,7 @@ CONFIDENCE: [0.0-1.0]
         isActive: row.is_active,
       }));
     } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.MODE === 'development') {
 
       }
       return [];
@@ -585,7 +585,7 @@ CONFIDENCE: [0.0-1.0]
         createdAt: row.created_at,
       }));
     } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.MODE === 'development') {
 
       }
       return [];
@@ -688,7 +688,7 @@ CONFIDENCE: [0.0-1.0]
         confidence,
       };
     } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.MODE === 'development') {
 
       }
       throw new ClaudeCareError(
@@ -742,7 +742,7 @@ CONFIDENCE: [0.0-1.0]
 
       return undefined;
     } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.MODE === 'development') {
 
       }
       return undefined;
@@ -778,7 +778,7 @@ CONFIDENCE: [0.0-1.0]
 
       // Care context shared successfully
     } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.MODE === 'development') {
 
       }
       throw new ClaudeCareError(
@@ -819,7 +819,7 @@ CONFIDENCE: [0.0-1.0]
         createdAt: row.created_at,
       }));
     } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.MODE === 'development') {
 
       }
       return [];

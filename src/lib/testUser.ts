@@ -10,7 +10,7 @@ export async function createTestPatient(opts: {
 }) {
   const token = (await supabase.auth.getSession()).data.session?.access_token;
   if (!token) throw new Error("Not authenticated");
-  const res = await fetch(`${process.env.SUPABASE_URL}/functions/v1/test-users/create`, {
+  const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/test-users/create`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     body: JSON.stringify(opts),
@@ -26,7 +26,7 @@ export async function purgeTestPatients(opts: {
 }) {
   const token = (await supabase.auth.getSession()).data.session?.access_token;
   if (!token) throw new Error("Not authenticated");
-  const res = await fetch(`${process.env.SUPABASE_URL}/functions/v1/test-users/purge`, {
+  const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/test-users/purge`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     body: JSON.stringify(opts),

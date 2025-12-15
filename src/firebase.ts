@@ -30,7 +30,7 @@ type FirebaseClientConfig = {
 export function getFirebaseApp(): Maybe<FirebaseApp> {
   const cfg = FIREBASE as unknown as FirebaseClientConfig;
   if (!cfg?.apiKey || !cfg?.projectId || !cfg?.appId) {
-    if (process.env.NODE_ENV !== 'production') {
+    if (import.meta.env.MODE !== 'production') {
 
     }
     return null;
@@ -54,7 +54,7 @@ async function ensureMessagingServiceWorker(): Promise<ServiceWorkerRegistration
   if (swReg) return swReg;
 
   // Only try to register in production; in dev you likely don't serve the file
-  if (process.env.NODE_ENV !== 'production') return null;
+  if (import.meta.env.MODE !== 'production') return null;
 
   try {
     // Check file exists so we don't throw on 404

@@ -91,7 +91,7 @@ const AdminFeatureToggle: React.FC<Props> = ({
       onError?.(errorMessage);
       
       // Log error for debugging (in development)
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.MODE === 'development') {
 
       }
     } finally {

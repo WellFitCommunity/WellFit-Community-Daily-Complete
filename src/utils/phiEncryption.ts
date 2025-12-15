@@ -105,7 +105,7 @@ async function getMasterEncryptionKey(): Promise<CryptoKey> {
 
   if (!keyMaterial) {
     // FAIL HARD in production - this is a HIPAA compliance requirement
-    if (process.env.NODE_ENV === 'production') {
+    if (import.meta.env.MODE === 'production') {
       throw new Error(
         'CRITICAL SECURITY ERROR: PHI_ENCRYPTION_KEY is not set in production environment. ' +
         'This is a HIPAA compliance violation. Application cannot start without encryption keys. ' +

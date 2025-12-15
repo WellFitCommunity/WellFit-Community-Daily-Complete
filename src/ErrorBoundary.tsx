@@ -57,7 +57,7 @@ class InnerErrorBoundary extends React.Component<Props, State> {
     if (fallbackRender) return fallbackRender({ error, reset: this.reset });
 
     // Default fallback UI
-    const isDev = process.env.NODE_ENV !== 'production';
+    const isDev = import.meta.env.MODE !== 'production';
 
     return (
       <div

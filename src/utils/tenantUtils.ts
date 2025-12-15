@@ -88,7 +88,7 @@ export function validateTenantConfig(subdomain: string): boolean {
  * Development utility to test different tenant configurations
  */
 export function simulateTenant(subdomain: string): void {
-  if (process.env.NODE_ENV !== 'development') {
+  if (import.meta.env.MODE !== 'development') {
 
     return;
   }

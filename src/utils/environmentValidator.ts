@@ -18,7 +18,7 @@ export interface ValidationResult {
 export function validateCriticalEnvironment(): ValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
-  const env = process.env.NODE_ENV || 'development';
+  const env = import.meta.env.MODE || 'development';
   const isProduction = env === 'production';
 
   // Environment validation running in ${env} mode

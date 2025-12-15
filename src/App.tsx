@@ -139,7 +139,7 @@ const App: React.FC = () => {
     <QueryClientProvider client={queryClient}>
       <Shell />
       {/* React Query DevTools - Only visible in development */}
-      {process.env.NODE_ENV === 'development' && (
+      {import.meta.env.MODE === 'development' && (
         <ReactQueryDevtools initialIsOpen={false} />
       )}
     </QueryClientProvider>

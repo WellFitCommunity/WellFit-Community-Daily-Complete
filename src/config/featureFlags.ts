@@ -53,7 +53,7 @@ export interface FeatureFlags {
 // Environment-based feature flag configuration
 // Override these in .env with VITE_FEATURE_<NAME>=true
 const getFeatureFlags = (): FeatureFlags => {
-  const env = process.env;
+  const env = import.meta.env;
 
   return {
     // Clinical Features (default: disabled, enable per tenant)
@@ -116,7 +116,7 @@ export const isFeatureEnabled = (feature: keyof FeatureFlags): boolean => {
 // Helper for logging feature flag status (useful for debugging)
 // Note: Use auditLogger for production logging to comply with HIPAA
 export const logFeatureFlags = () => {
-  if (process.env.NODE_ENV === 'development') {
+  if (import.meta.env.DEV) {
     // Feature flags can be inspected in browser DevTools: window.featureFlags
   }
 };

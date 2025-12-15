@@ -109,7 +109,7 @@ export const usePerformanceMonitor = (componentName: string) => {
 };
 
 // Initialize performance monitoring in production
-if (process.env.NODE_ENV === 'production') {
+if (import.meta.env.MODE === 'production') {
   const monitor = PerformanceMonitor.getInstance();
   monitor.measureWebVitals();
 

@@ -29,7 +29,7 @@ function parseEnvironment() {
       VITE_CLAUDE_ADMIN_MODEL: import.meta.env.VITE_CLAUDE_ADMIN_MODEL,
       VITE_CLAUDE_MAX_TOKENS: import.meta.env.VITE_CLAUDE_MAX_TOKENS,
       VITE_CLAUDE_TIMEOUT: import.meta.env.VITE_CLAUDE_TIMEOUT,
-      NODE_ENV: process.env.NODE_ENV,
+      NODE_ENV: import.meta.env.MODE,
       VITE_APP_NAME: import.meta.env.VITE_APP_NAME,
       VITE_DEMO_ENABLED: import.meta.env.VITE_DEMO_ENABLED,
     });
@@ -68,7 +68,7 @@ export function validateEnvironment(): { success: boolean; message: string; deta
       message: errorMessage,
       details: {
         secureMode: true, // No API keys exposed in browser
-        environment: process.env.NODE_ENV
+        environment: import.meta.env.MODE
       }
     };
   }

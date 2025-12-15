@@ -10,7 +10,7 @@ type Config = {
 const ENV_ENABLE =
   String(import.meta.env.VITE_ENABLE_SW ?? 'true').toLowerCase() !== 'false';
 
-const PUBLIC_URL = process.env.PUBLIC_URL || '';
+const PUBLIC_URL = import.meta.env.BASE_URL || '';
 
 const ALLOWED_HOSTS = new Set<string>([
   // Primary domains

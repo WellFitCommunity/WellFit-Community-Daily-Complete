@@ -44,7 +44,7 @@ export interface ErrorStats {
 
 class ErrorReporter {
   private errors: Map<string, ErrorStats> = new Map();
-  private isDevelopment = process.env.NODE_ENV === 'development';
+  private isDevelopment = import.meta.env.MODE === 'development';
   private reportInterval = 10; // Log every 10th occurrence in production
   private devReportInterval = 1; // Log every occurrence in development
 

@@ -121,18 +121,21 @@ Before starting ANY work:
 
 ## Build System
 
-**IMPORTANT: This is a Create React App (CRA) project, NOT Vite.**
+**IMPORTANT: This is a Vite project (migrated from CRA in Dec 2025).**
 
-- Environment variables must use `REACT_APP_` prefix
-- NEVER use `import.meta.env` (that's Vite syntax)
-- Always use `process.env.REACT_APP_*`
+- Environment variables must use `VITE_` prefix
+- Use `import.meta.env.VITE_*` for environment variables
+- NEVER use `process.env.REACT_APP_*` (that's CRA syntax)
+- Entry point is `/index.html` (root), NOT `/public/index.html`
 
 ## Environment Variables
 
 | Variable | Purpose |
 |----------|---------|
-| `REACT_APP_SUPABASE_URL` | Supabase project URL |
-| `REACT_APP_SUPABASE_ANON_KEY` | Supabase publishable/anon key |
+| `VITE_SUPABASE_URL` | Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | Supabase publishable/anon key |
+| `VITE_HCAPTCHA_SITE_KEY` | hCaptcha site key for bot protection |
+| `VITE_ANTHROPIC_API_KEY` | Claude AI API key |
 
 **Supabase Key Naming:**
 - `SB_PUBLISHABLE_KEY` (anon) - Client-side, safe to expose

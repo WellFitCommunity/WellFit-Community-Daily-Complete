@@ -162,7 +162,7 @@ const ClaudeTestWidget: React.FC = () => {
         <div className="text-xs text-gray-600 space-y-1">
           <p><strong>AI Engine:</strong> Enterprise AI</p>
           <p><strong>API Key:</strong> ✅ Configured server-side</p>
-          <p><strong>Environment:</strong> {process.env.NODE_ENV}</p>
+          <p><strong>Environment:</strong> {import.meta.env.MODE}</p>
           <p><strong>Rate Limit:</strong> {remainingDisplay} requests remaining</p>
           {isLimited && (
             <p className="text-red-600"><strong>⚠️ Rate Limited:</strong> Resets at {resetTimeDisplay}</p>

@@ -5,12 +5,12 @@ export const EnvironmentDebug: React.FC = () => {
   const envVars = {
     'VITE_ANTHROPIC_API_KEY': import.meta.env.VITE_ANTHROPIC_API_KEY ?
       `${import.meta.env.VITE_ANTHROPIC_API_KEY.substring(0, 7)}...` : 'NOT SET',
-    'NODE_ENV': process.env.NODE_ENV,
+    'NODE_ENV': import.meta.env.MODE,
     'VITE_SUPABASE_URL': import.meta.env.VITE_SUPABASE_URL ? 'SET' : 'NOT SET',
     'VITE_SB_ANON_KEY': import.meta.env.VITE_SB_ANON_KEY ? 'SET' : 'NOT SET',
   };
 
-  if (process.env.NODE_ENV === 'production') {
+  if (import.meta.env.MODE === 'production') {
     return null; // Don't show in production
   }
 

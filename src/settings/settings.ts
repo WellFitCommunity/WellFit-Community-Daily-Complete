@@ -5,7 +5,7 @@
 const truthy = (v?: string | null) => !!v && v.trim().length > 0;
 const pick = (...c: Array<string | undefined>) => c.find(truthy)?.trim() ?? "";
 
-export const IS_PROD = process.env.NODE_ENV === "production";
+export const IS_PROD = import.meta.env.MODE === "production";
 
 // ---- Supabase (client) values ----
 export const SB_URL = pick(
