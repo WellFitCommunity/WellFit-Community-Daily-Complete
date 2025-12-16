@@ -1,10 +1,16 @@
 /**
  * Guardian Error Boundary - Integrates React Error Boundaries with Guardian Agent
  * Automatically reports React errors to the agent for healing
+ *
+ * IMPORTANT: This component is designed to "fail quiet" to prevent error cascades.
+ * - Throttles error reporting to once per page load
+ * - Skips API calls when unauthenticated
+ * - Limits recovery attempts to prevent infinite loops
  */
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { logGuardianAuditEvent } from '../services/guardianAgentClient';
+import { supabase } from '../lib/supabaseClient';
 
 interface Props {
   children: ReactNode;
@@ -19,6 +25,11 @@ interface State {
   isHealing: boolean;
   healingAttempts: number;
 }
+
+// Module-level throttle to prevent spam across all boundary instances
+let lastReportedAt = 0;
+const REPORT_THROTTLE_MS = 60000; // 1 minute throttle between reports
+let hasReportedThisSession = false;
 
 /**
  * Error Boundary with Guardian Agent integration
@@ -62,17 +73,35 @@ export class GuardianErrorBoundary extends Component<Props, State> {
 
   private async reportAndHeal(error: Error, errorInfo: ErrorInfo): Promise<void> {
     try {
-      // Report to Guardian Agent via Edge Function
-      await logGuardianAuditEvent({
-        event_type: 'REACT_ERROR',
-        severity: 'HIGH',
-        description: `${error.message} in ${errorInfo.componentStack?.split('\n')[1]?.trim()}`,
-        requires_investigation: true
-      });
+      // THROTTLE: Only report once per session or once per minute
+      const now = Date.now();
+      const shouldReport = !hasReportedThisSession || (now - lastReportedAt > REPORT_THROTTLE_MS);
 
-      // Attempt automatic recovery
+      if (shouldReport) {
+        // CHECK AUTH: Only report if user is authenticated to prevent 401 spam
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (session?.access_token) {
+          // Report to Guardian Agent via Edge Function
+          // Non-blocking: don't await, don't let failures affect recovery
+          logGuardianAuditEvent({
+            event_type: 'REACT_ERROR',
+            severity: 'HIGH',
+            description: `${error.message} in ${errorInfo.componentStack?.split('\n')[1]?.trim()}`,
+            requires_investigation: true
+          }).catch(() => {
+            // Silently ignore reporting failures - don't cascade errors
+          });
+
+          lastReportedAt = now;
+          hasReportedThisSession = true;
+        }
+      }
+
+      // Attempt automatic recovery (limited by healingAttempts)
       await this.attemptRecovery();
     } catch (healingError) {
+      // Fail quiet - don't let healing errors cascade
       this.setState({ isHealing: false });
     }
   }
@@ -80,14 +109,15 @@ export class GuardianErrorBoundary extends Component<Props, State> {
   private async attemptRecovery(): Promise<void> {
     const { healingAttempts } = this.state;
 
-    // Don't attempt recovery more than 3 times
-    if (healingAttempts >= 3) {
+    // REDUCED: Only attempt recovery once to prevent loops
+    // If first recovery fails, show error UI and let user decide
+    if (healingAttempts >= 1) {
       this.setState({ isHealing: false });
       return;
     }
 
-    // Wait before attempting recovery (exponential backoff)
-    const delay = Math.pow(2, healingAttempts) * 1000;
+    // Longer initial delay to let async operations settle
+    const delay = 3000; // 3 seconds before first recovery attempt
     await new Promise(resolve => setTimeout(resolve, delay));
 
     // Attempt to reset state and recover
@@ -111,7 +141,7 @@ export class GuardianErrorBoundary extends Component<Props, State> {
   };
 
   render(): ReactNode {
-    const { hasError, error, isHealing, healingAttempts } = this.state;
+    const { hasError, error, isHealing } = this.state;
     const { children, fallback } = this.props;
 
     if (hasError && error) {
@@ -135,7 +165,7 @@ export class GuardianErrorBoundary extends Component<Props, State> {
               <div className="flex items-center justify-center space-x-2">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
                 <span className="text-sm text-gray-500">
-                  Attempt {healingAttempts + 1} of 3
+                  Recovering...
                 </span>
               </div>
             </div>

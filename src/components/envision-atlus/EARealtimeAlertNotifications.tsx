@@ -20,6 +20,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertTriangle, Bell, X, Volume2, VolumeX, ExternalLink } from 'lucide-react';
 import { useRealtimeAlerts, RealtimeAlert, AlertSeverity } from '../../hooks/useRealtimeAlerts';
+import { useAuth } from '../../contexts/AuthContext';
 
 // ============================================================================
 // TOAST COMPONENT
@@ -107,7 +108,8 @@ const AlertToast: React.FC<AlertToastProps> = ({ alert, onDismiss, onNavigate })
 // MAIN COMPONENT
 // ============================================================================
 
-export const EARealtimeAlertNotifications: React.FC = () => {
+// Inner component that actually uses the hooks
+const EARealtimeAlertNotificationsInner: React.FC = () => {
   const navigate = useNavigate();
   const [toasts, setToasts] = useState<RealtimeAlert[]>([]);
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -238,6 +240,19 @@ export const EARealtimeAlertNotifications: React.FC = () => {
       </div>
     </>
   );
+};
+
+// Wrapper component that checks authentication before rendering
+export const EARealtimeAlertNotifications: React.FC = () => {
+  const { user } = useAuth();
+
+  // Don't render or subscribe if user is not authenticated
+  // This prevents 500 errors from RLS-protected guardian_alerts table
+  if (!user) {
+    return null;
+  }
+
+  return <EARealtimeAlertNotificationsInner />;
 };
 
 export default EARealtimeAlertNotifications;

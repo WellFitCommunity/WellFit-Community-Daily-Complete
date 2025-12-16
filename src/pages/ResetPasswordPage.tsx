@@ -1,7 +1,8 @@
 // src/pages/ResetPasswordPage.tsx — PRODUCTION-READY VERSION
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSupabaseClient } from '../contexts/AuthContext';
+import HCaptchaWidget, { HCaptchaRef } from '../components/HCaptchaWidget';
 
 const ResetPasswordPage: React.FC = () => {
   const navigate = useNavigate();
@@ -11,6 +12,10 @@ const ResetPasswordPage: React.FC = () => {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+
+  // Captcha state
+  const captchaRef = useRef<HCaptchaRef>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -32,10 +37,31 @@ const ResetPasswordPage: React.FC = () => {
 
     setBusy(true);
     try {
+      // Get captcha token
+      let token = captchaToken;
+      if (!token) {
+        try {
+          token = await captchaRef.current?.execute() || null;
+        } catch {
+          setErr('Captcha verification failed. Please try again.');
+          setBusy(false);
+          return;
+        }
+      }
+
+      if (!token) {
+        setErr('Please complete the captcha verification.');
+        setBusy(false);
+        return;
+      }
+
       // Safer redirect URL construction
       const redirectTo = new URL('/change-password', window.location.origin).toString();
 
-      const { error } = await supabase.auth.resetPasswordForEmail(value, { redirectTo });
+      const { error } = await supabase.auth.resetPasswordForEmail(value, {
+        redirectTo,
+        captchaToken: token,
+      });
 
       // Always use neutral messaging to avoid leaking whether an email exists
       const genericMsg =
@@ -124,6 +150,13 @@ const ResetPasswordPage: React.FC = () => {
             Back to Login
           </button>
         </div>
+
+        <HCaptchaWidget
+          ref={captchaRef}
+          size="invisible"
+          onVerify={(t: string) => setCaptchaToken(t)}
+          onExpire={() => setCaptchaToken(null)}
+        />
       </form>
 
       {msg && (

@@ -126,6 +126,23 @@ export function useRealtimeSubscription<T = any>(
   const registryIdRef = useRef<string | null>(null);
   const mountedRef = useRef<boolean>(true);
   const consecutiveHeartbeatFailures = useRef<number>(0);
+  const consecutiveFetchFailures = useRef<number>(0);
+  const subscriptionSetupAttempted = useRef<boolean>(false);
+  const MAX_FETCH_FAILURES = 3;
+
+  // Store callbacks in refs to avoid dependency issues (React 19 fix)
+  const initialFetchRef = useRef(initialFetch);
+  const onChangeRef = useRef(onChange);
+  const filterRef = useRef(filter);
+  const eventRef = useRef(event);
+
+  // Keep refs updated
+  useEffect(() => {
+    initialFetchRef.current = initialFetch;
+    onChangeRef.current = onChange;
+    filterRef.current = filter;
+    eventRef.current = event;
+  });
 
   /**
    * Fetch data function
@@ -143,18 +160,22 @@ export function useRealtimeSubscription<T = any>(
     } catch (err) {
       if (mountedRef.current) {
         setError(err as Error);
-        // Log fetch error - don't break if audit logging fails
+        // FAIL QUIET: Wrap all error logging in try/catch to prevent cascades
         try {
           auditLogger.error('REALTIME_FETCH_ERROR', err as Error, {
             component: componentName,
             table,
           });
-        } catch (auditError) {
-          // Don't break app if audit logging fails, but do report it
-          errorReporter.report('AUDIT_LOG_FAILURE', auditError as Error, {
-            context: 'realtime fetch error logging',
-            component: componentName,
-          });
+        } catch {
+          // Silently ignore - don't let logging break the app
+          try {
+            errorReporter.report('AUDIT_LOG_FAILURE', err as Error, {
+              context: 'realtime fetch error logging',
+              component: componentName,
+            });
+          } catch {
+            // Absolutely fail quiet
+          }
         }
       }
     } finally {
@@ -183,8 +204,8 @@ export function useRealtimeSubscription<T = any>(
             table_filters: {
               table,
               schema,
-              event,
-              filter: filter || null,
+              event: eventRef.current,
+              filter: filterRef.current || null,
             },
             last_heartbeat_at: new Date().toISOString(),
             is_active: true,
@@ -225,7 +246,8 @@ export function useRealtimeSubscription<T = any>(
         return null;
       }
     },
-    [componentName, table, schema, event, filter]
+    // REACT 19 FIX: event and filter now use refs, so remove from dependencies
+    [componentName, table, schema]
   );
 
   /**
@@ -290,29 +312,57 @@ export function useRealtimeSubscription<T = any>(
 
   /**
    * Setup subscription
+   * REACT 19 FIX: Only run once per mount, not on callback changes
    */
   useEffect(() => {
+    // Prevent multiple setup attempts in React 19 strict mode
+    if (subscriptionSetupAttempted.current) {
+      return;
+    }
+    subscriptionSetupAttempted.current = true;
     mountedRef.current = true;
     let isCleanedUp = false;
 
     const setupSubscription = async () => {
+      // Don't retry if we've failed too many times
+      if (consecutiveFetchFailures.current >= MAX_FETCH_FAILURES) {
+        setLoading(false);
+        return;
+      }
+
       try {
-        // Fetch initial data
-        if (initialFetch) {
+        // Fetch initial data using ref to avoid dependency issues
+        const fetchFn = initialFetchRef.current;
+        if (fetchFn) {
           try {
             setLoading(true);
-            const result = await initialFetch();
+            const result = await fetchFn();
             if (mountedRef.current) {
               setData(result);
               setError(null);
+              consecutiveFetchFailures.current = 0; // Reset on success
             }
           } catch (err) {
+            consecutiveFetchFailures.current++;
             if (mountedRef.current) {
               setError(err as Error);
-              auditLogger.error('REALTIME_INITIAL_FETCH_ERROR', err as Error, {
-                component: componentName,
-                table,
-              });
+              // Only log first failure to prevent log spam
+              // FAIL QUIET: Wrap in try/catch to prevent cascades
+              if (consecutiveFetchFailures.current === 1) {
+                try {
+                  auditLogger.error('REALTIME_INITIAL_FETCH_ERROR', err as Error, {
+                    component: componentName,
+                    table,
+                  });
+                } catch {
+                  // Silently ignore logging failures
+                }
+              }
+            }
+            // Don't continue with subscription if fetch failed
+            if (consecutiveFetchFailures.current >= MAX_FETCH_FAILURES) {
+              setLoading(false);
+              return;
             }
           } finally {
             if (mountedRef.current) {
@@ -331,12 +381,14 @@ export function useRealtimeSubscription<T = any>(
         // Create subscription channel
         const channel = supabase.channel(channelName);
 
-        // Build subscription
+        // Build subscription using refs to avoid dependency issues
+        const currentEvent = eventRef.current;
+        const currentFilter = filterRef.current;
         const subscription = channel.on('postgres_changes', {
-          event: event === '*' ? '*' : (event as any),
+          event: currentEvent === '*' ? '*' : (currentEvent as any),
           schema: schema,
           table: table,
-          filter: filter,
+          filter: currentFilter,
         } as any, (payload) => {
           if (isCleanedUp || !mountedRef.current) return;
 
@@ -346,24 +398,31 @@ export function useRealtimeSubscription<T = any>(
             event: payload.eventType,
           });
 
-          // Call user-provided onChange
-          if (onChange) {
-            onChange(payload);
+          // Call user-provided onChange using ref
+          const onChangeFn = onChangeRef.current;
+          if (onChangeFn) {
+            onChangeFn(payload);
           }
 
-          // Auto-refresh data if initialFetch is provided
-          if (initialFetch) {
-            initialFetch().then((result) => {
+          // Auto-refresh data if initialFetch is provided (using ref)
+          const fetchFn = initialFetchRef.current;
+          if (fetchFn) {
+            fetchFn().then((result) => {
               if (mountedRef.current) {
                 setData(result);
               }
             }).catch((err) => {
               if (mountedRef.current) {
                 setError(err as Error);
-                auditLogger.error('REALTIME_REFRESH_ERROR', err as Error, {
-                  component: componentName,
-                  table,
-                });
+                // FAIL QUIET: Wrap in try/catch to prevent cascades
+                try {
+                  auditLogger.error('REALTIME_REFRESH_ERROR', err as Error, {
+                    component: componentName,
+                    table,
+                  });
+                } catch {
+                  // Silently ignore logging failures
+                }
               }
             });
           }
@@ -391,10 +450,15 @@ export function useRealtimeSubscription<T = any>(
             const err = new Error('Realtime channel error');
             setError(err);
             setIsSubscribed(false);
-            auditLogger.error('REALTIME_CHANNEL_ERROR', err, {
-              component: componentName,
-              table,
-            });
+            // FAIL QUIET: Wrap in try/catch to prevent cascades
+            try {
+              auditLogger.error('REALTIME_CHANNEL_ERROR', err, {
+                component: componentName,
+                table,
+              });
+            } catch {
+              // Silently ignore logging failures
+            }
           }
         });
 
@@ -411,10 +475,15 @@ export function useRealtimeSubscription<T = any>(
           const error = err as Error;
           setError(error);
           setLoading(false);
-          auditLogger.error('REALTIME_SETUP_ERROR', error, {
-            component: componentName,
-            table,
-          });
+          // FAIL QUIET: Wrap in try/catch to prevent cascades
+          try {
+            auditLogger.error('REALTIME_SETUP_ERROR', error, {
+              component: componentName,
+              table,
+            });
+          } catch {
+            // Silently ignore logging failures
+          }
         }
       }
     };
@@ -425,6 +494,7 @@ export function useRealtimeSubscription<T = any>(
     return () => {
       isCleanedUp = true;
       mountedRef.current = false;
+      subscriptionSetupAttempted.current = false; // Reset for next mount
 
       // Clear heartbeat interval
       if (heartbeatIntervalRef.current) {
@@ -447,20 +517,9 @@ export function useRealtimeSubscription<T = any>(
 
       setIsSubscribed(false);
     };
-  }, [
-    table,
-    schema,
-    event,
-    filter,
-    componentName,
-    enableHeartbeat,
-    heartbeatInterval,
-    initialFetch,
-    onChange,
-    registerSubscription,
-    unregisterSubscription,
-    updateHeartbeat,
-  ]);
+    // REACT 19 FIX: Only depend on stable values, not callbacks
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [table, schema, componentName]);
 
   // Manual refresh function
   const refresh = useCallback(async () => {

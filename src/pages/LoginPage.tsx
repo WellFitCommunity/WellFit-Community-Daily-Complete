@@ -801,6 +801,17 @@ const LoginPage: React.FC = () => {
           />
         </form>
       )}
+
+        {/* Hidden Envision login link - if you know, you know */}
+        <div className="mt-6 text-center">
+          <button
+            type="button"
+            onClick={() => navigate('/envision')}
+            className="text-xs text-gray-400 hover:text-teal-600 transition-colors"
+          >
+            Envision
+          </button>
+        </div>
       </div>
     </div>
   );
