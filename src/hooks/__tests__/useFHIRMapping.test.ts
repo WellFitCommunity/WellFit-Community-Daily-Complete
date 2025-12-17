@@ -1,5 +1,5 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { useFHIRMapping } from '../useFHIRMapping';
 import { fhirMappingService } from '../../services/fhirMappingService';
 
@@ -103,10 +103,7 @@ describe('useFHIRMapping', () => {
     expect(state.errors).toEqual(['Invalid file type']);
   });
 
-  // Note: This test is skipped because FileReader's async onload callback
-  // is difficult to mock correctly with React Testing Library's act().
-  // The core functionality is covered by other tests and integration tests.
-  it.skip('should load from file successfully', async () => {
+  it('should load from file successfully', async () => {
     const mockFile = new File(['{"test": "data"}'], 'test.json', { type: 'application/json' });
     const mockValidation = {
       isValid: true,
@@ -118,22 +115,25 @@ describe('useFHIRMapping', () => {
     mockService.validateFile.mockReturnValue(mockValidation);
     mockService.detectSourceType.mockReturnValue('JSON');
 
-    // FileReader mock - the async onload pattern is problematic with act()
+    const mockResult = '{"test": "data"}';
+
+    // Mock FileReader using class syntax
     class MockFileReader {
+      result: string | null = null;
       onload: ((event: ProgressEvent<FileReader>) => void) | null = null;
       onerror: ((event: ProgressEvent<FileReader>) => void) | null = null;
-      result: string = '{"test": "data"}';
 
-      readAsText(_file: Blob) {
-        queueMicrotask(() => {
-          if (this.onload) {
-            this.onload({ target: { result: this.result } } as unknown as ProgressEvent<FileReader>);
-          }
-        });
+      readAsText() {
+        this.result = mockResult;
+        // Trigger onload synchronously
+        if (this.onload) {
+          this.onload({ target: { result: mockResult } } as unknown as ProgressEvent<FileReader>);
+        }
       }
     }
 
-    vi.spyOn(global, 'FileReader').mockImplementation(() => new MockFileReader() as unknown as FileReader);
+    const originalFileReader = global.FileReader;
+    global.FileReader = MockFileReader as unknown as typeof FileReader;
 
     const { result } = renderHook(() => useFHIRMapping());
     const [, actions] = result.current;
@@ -141,6 +141,9 @@ describe('useFHIRMapping', () => {
     await act(async () => {
       await actions.loadFromFile(mockFile);
     });
+
+    // Restore original FileReader
+    global.FileReader = originalFileReader;
 
     const [state] = result.current;
     expect(state.sourceData).toBe('{"test": "data"}');
