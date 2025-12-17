@@ -12,7 +12,7 @@
  * Copyright 2025 Envision VirtualEdge Group LLC. All rights reserved.
  */
 
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback, useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 /**
@@ -180,8 +180,8 @@ export function useKeyboardShortcuts(
   const [showHelp, setShowHelp] = useState(false);
   const [currentFilter, setCurrentFilter] = useState<'high' | 'critical' | 'all' | null>(null);
 
-  // Build shortcuts with actions
-  const shortcuts: KeyboardShortcut[] = [
+  // Build shortcuts with actions - memoized to prevent unnecessary re-renders
+  const shortcuts: KeyboardShortcut[] = useMemo(() => [
     // Navigation shortcuts
     ...Object.entries(NAVIGATION_ROUTES).map(([key, route]) => ({
       key,
@@ -284,7 +284,7 @@ export function useKeyboardShortcuts(
 
     // Custom shortcuts
     ...customShortcuts,
-  ];
+  ], [location.pathname, navigate, onFilter, onRefresh, onQuickSearch, onShowHelp, customShortcuts]);
 
   // Keyboard event handler
   const handleKeyDown = useCallback(

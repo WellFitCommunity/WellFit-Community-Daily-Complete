@@ -1,6 +1,97 @@
 # Claude Instructions for WellFit-Community-Daily-Complete
 
+---
+
+## CRITICAL RULES - READ FIRST
+
+### Development Philosophy - NON-NEGOTIABLE
+
+**"I have time to do it right. I do not have time to do it twice."**
+
+**"Always be a pace car, never a race car."**
+
+**"Be a surgeon, never a butcher."**
+
+These are not suggestions. They are requirements.
+
+---
+
+### NO WORKAROUNDS POLICY - ABSOLUTE
+
+- **Do NOT implement workarounds, hacks, or "temporary" solutions**
+- If blocked, **STOP and ASK** - do not improvise
+- If you find yourself typing "workaround", "hack", "temporary fix", "for now", or "we can refactor later" - **STOP IMMEDIATELY**
+- Workarounds ARE technical debt. Technical debt is forbidden.
+- Violating this requires **explicit written approval from Maria**
+
+---
+
+### STOP AND ASK PROTOCOL
+
+**When ANY of these apply, STOP and ask before proceeding:**
+
+- Requirements are unclear or ambiguous
+- Multiple valid implementation approaches exist
+- You're about to change an existing pattern
+- You're about to delete anything (tables, functions, files, tests)
+- The "right" solution seems harder than a shortcut
+- You're unsure if something violates these rules
+
+**Do NOT guess. Do NOT improvise. ASK.**
+
+---
+
+### Zero Technical Debt - ENFORCED
+
+- Do NOT introduce technical debt with quick fixes
+- Always implement proper, maintainable solutions
+- Refactor when necessary to maintain code quality
+- "We can fix it later" is not acceptable
+- Every shortcut creates future problems during enterprise deployments
+
+---
+
+## Test Standards - MANDATORY
+
+### Test Baseline
+| Metric | Current |
+|--------|---------|
+| Total Tests | 1,200+ |
+| Test Suites | 71 |
+| Pass Rate Required | 100% |
+
+### Test Rules
+- **All tests must pass before any work is considered complete**
+- New components MUST include corresponding test files
+- Do NOT delete, skip, or disable existing tests
+- Do NOT use `.skip()` or `.only()` in committed code
+- Location: `src/components/admin/__tests__/ComponentName.test.tsx`
+- Minimum coverage: Rendering, loading states, data display, error handling
+
+---
+
+## React 19 / Vite Standards - ENFORCED
+
+**This project migrated to Vite + React 19 in December 2025.**
+
+### Required Patterns
+| Do This | Not This |
+|---------|----------|
+| `import.meta.env.VITE_*` | `process.env.REACT_APP_*` |
+| `ref` as prop directly | `forwardRef()` wrapper |
+| `use()` hook for promises | `useEffect` + state for data fetching |
+| Entry: `/index.html` (root) | `/public/index.html` |
+
+### Forbidden Patterns
+- NO `process.env` anywhere in client code
+- NO `forwardRef` - React 19 passes ref as prop
+- NO Create React App patterns or assumptions
+- NO Webpack-specific configurations
+
+---
+
 ## Project Overview
+
 This codebase contains **two separate white-label products** that can be used independently or together:
 
 | Product | Purpose | Target Users |
@@ -31,35 +122,49 @@ Tenant codes follow the format: `{ORG}-{LICENSE}{SEQUENCE}`
 - **Tenant branding**: Each tenant can customize appearance via `useBranding()` hook
 - **Shared backend**: All tenants share Supabase database with RLS for isolation
 
-## Critical Development Principles
+---
 
-### Development Philosophy
-**"I have time to do it right. I do not have time to do it twice."**
+## HIPAA Compliance & PHI Protection - CRITICAL
 
-**"Always be a pace car, never a race car."**
-
-These principles guide all development:
-- Take the time to understand the problem fully before writing code
-- Research the existing architecture and patterns before making changes
-- Implement solutions thoroughly the first time rather than rushing
-- When in doubt, pause and investigate rather than forge ahead
-
-### Zero Technical Debt
-- Do NOT introduce technical debt with quick fixes or workarounds
-- Always implement proper, maintainable solutions
-- Refactor when necessary to maintain code quality
-
-### HIPAA Compliance & PHI Protection
 - **NEVER introduce PHI (Protected Health Information) to the browser**
 - All PHI must remain server-side only
 - Use patient IDs/tokens for client-side operations, never names, SSN, DOB, etc.
 - Use audit logger for all logging - **NEVER use console.log**
 - All security-sensitive operations must be logged via the audit system
 
-### Database Standards
-- This project uses **PostgreSQL 17**
+---
+
+## Code Quality Standards
+
+### Surgical Precision Required
+- **Be a surgeon, never a butcher** - make precise, targeted changes
+- Respect the existing codebase architecture and patterns
+- Only modify what is necessary to complete the task
+- Preserve existing functionality unless explicitly asked to change it
+- Review affected code thoroughly before making changes
+
+### Before Starting ANY Work
+1. Review the last 3 commits: `git log --oneline -3`
+2. Understand recent changes and their purpose
+3. Review the affected schema/database tables
+4. Identify existing patterns in similar code
+5. If unclear, **STOP and ASK**
+
+---
+
+## Database Standards
+
+### PostgreSQL 17 via Supabase
 - Respect the existing database schema - review before making changes
 - Use proper migrations for any schema changes
+- **DO NOT aggressively delete database tables, functions, or data**
+
+### Database Cleanup Policy - CRITICAL
+When asked to "clean up":
+1. **Tables that exist are FEATURES** - Even if not currently referenced in code
+2. **Only delete obvious debug/backup tables** - Tables starting with `_` prefix
+3. **NEVER delete without explicit confirmation from Maria**
+4. **When in doubt, DON'T delete**
 
 ### Supabase Migration Workflow - CRITICAL
 **ALWAYS run migrations you create. Do NOT leave migrations unexecuted.**
@@ -80,53 +185,27 @@ npx supabase db push
 2. Verify it succeeded (check for errors)
 3. Test that the new schema works as expected
 
-### Database Cleanup Policy - CRITICAL
-**DO NOT aggressively delete database tables, functions, or data.**
+---
 
-When asked to "clean up":
-1. **Tables that exist are FEATURES** - Even if not currently referenced in code
-2. **Only delete obvious debug/backup tables** - Tables starting with `_` prefix
-3. **NEVER delete without explicit confirmation**
-4. **When in doubt, DON'T delete**
+## Route Connectivity & Wiring - CRITICAL
 
-### Code Quality Standards
-- **Be a surgeon, never a butcher** - make precise, targeted changes
-- Respect the existing codebase architecture and patterns
-- Only modify what is necessary to complete the task
-- Preserve existing functionality unless explicitly asked to change it
-
-### Route Connectivity & Wiring - CRITICAL
 **ALWAYS ensure components are properly connected and routed.**
 
 1. **Verify routes exist in `src/App.tsx`**
 2. **Check lazy imports** - Components must be imported with `React.lazy()`
 3. **Validate route references** - Links must point to actual routes
+4. After creating any new page/component, verify it's accessible in the browser
 
-### Component Testing Requirements - MANDATORY
-**When creating a new React component, you MUST create a corresponding test file.**
+---
 
-- Location: `src/components/admin/__tests__/MyComponent.test.tsx`
-- Minimum: Rendering tests, loading states, data display, error handling
+## UI/UX Requirements
 
-### UI/UX Requirements
 - **Always ensure UI/UX remains in working order** after any changes
 - Maintain responsive design principles
 - Preserve accessibility features
+- Test visual changes in the browser before considering complete
 
-### Context & Code Review Protocol
-Before starting ANY work:
-1. Review the last 3 commits using `git log --oneline -3`
-2. Understand recent changes and their purpose
-3. Review the affected schema/database tables
-
-## Build System
-
-**IMPORTANT: This is a Vite project (migrated from CRA in Dec 2025).**
-
-- Environment variables must use `VITE_` prefix
-- Use `import.meta.env.VITE_*` for environment variables
-- NEVER use `process.env.REACT_APP_*` (that's CRA syntax)
-- Entry point is `/index.html` (root), NOT `/public/index.html`
+---
 
 ## Environment Variables
 
@@ -141,36 +220,41 @@ Before starting ANY work:
 - `SB_PUBLISHABLE_KEY` (anon) - Client-side, safe to expose
 - `SB_SECRET_KEY` (service_role) - Server-side only, NEVER expose
 
-## Development Commands
-- `npm run dev` - Start development server
-- `npm run build` - Build the project
-- `npm run lint` - Run linting
-- `npm run typecheck` - Run TypeScript type checking
-- `npm test` - Run tests
+---
 
-## Testing and Quality Assurance
-Always run before considering work complete:
+## Development Commands
+
+```bash
+npm run dev        # Start development server
+npm run build      # Build the project
+npm run lint       # Run linting
+npm run typecheck  # Run TypeScript type checking
+npm test           # Run tests
+```
+
+---
+
+## Quality Assurance Checklist - REQUIRED
+
+**Run ALL before considering work complete:**
+
 1. `npm run lint` - Must pass with 0 errors
 2. `npm run typecheck` - Verify TypeScript types
-3. `npm test` - Run test suite
+3. `npm test` - All 1,200+ tests must pass
 4. Visual inspection - Ensure UI/UX functions correctly
+5. Route verification - New pages are accessible
+
+---
 
 ## Git Workflow
+
 - Main branch: `main`
 - Only commit when explicitly requested
 - Follow existing commit message patterns
 - Always review last 3 commits before starting work
+- Branch naming: `claude/{feature-description}-{unique-id}`
 
-## Audit Logging Requirements
-- Use the audit logger service for all application logging
-- Never use `console.log`, `console.error`, etc. in production code
-
-## Security Reminders
-- All authentication must use secure tokens
-- Rate limiting on sensitive endpoints
-- Input validation on all user inputs
-- SQL injection prevention via parameterized queries
-- XSS prevention via proper output encoding
+---
 
 ## Architecture Patterns
 
@@ -197,27 +281,23 @@ async function getData(id: string): Promise<ServiceResult<Data>> {
 }
 ```
 
-## Current Status
-- **Architecture**: White-label multi-tenant SaaS
-- **CORS**: Fully white-label ready (any HTTPS origin allowed)
-- **Database**: PostgreSQL 17 via Supabase with RLS
-- **UI**: Envision Atlus design system migration in progress
+### Audit Logging Requirements
+- Use the audit logger service for all application logging
+- **NEVER use console.log, console.error, etc. in production code**
 
-## Common Issues & Solutions
+---
 
-### Supabase Timing
-**Wait at least 60 seconds** after deploying edge functions or running migrations before testing.
+## Security Requirements
 
-### Null-Safe Number Formatting
-```typescript
-// Safe - handles null values
-{(metrics.total_saved ?? 0).toFixed(2)}
+- All authentication must use secure tokens
+- Rate limiting on sensitive endpoints
+- Input validation on all user inputs
+- SQL injection prevention via parameterized queries
+- XSS prevention via proper output encoding
 
-// Safe division - prevents divide by zero
-{(((numerator ?? 0) / (denominator || 1)) * 100).toFixed(0)}%
-```
+---
 
-### CORS for Edge Functions
+## CORS for Edge Functions
 
 All edge functions MUST use the shared CORS module:
 
@@ -235,6 +315,24 @@ serve(async (req) => {
 });
 ```
 
+---
+
+## Common Issues & Solutions
+
+### Supabase Timing
+**Wait at least 60 seconds** after deploying edge functions or running migrations before testing.
+
+### Null-Safe Number Formatting
+```typescript
+// Safe - handles null values
+{(metrics.total_saved ?? 0).toFixed(2)}
+
+// Safe division - prevents divide by zero
+{(((numerator ?? 0) / (denominator || 1)) * 100).toFixed(0)}%
+```
+
+---
+
 ## Important Directories
 
 | Directory | Purpose |
@@ -247,22 +345,17 @@ serve(async (req) => {
 | `supabase/functions/` | Edge functions (Deno runtime) |
 | `supabase/functions/_shared/` | Shared utilities for edge functions |
 
-## Branch Naming Convention
-```
-claude/{feature-description}-{unique-id}
-```
-
 ---
 
-## Feature Documentation (Separate Files)
+## Feature Documentation
 
-Detailed documentation for specific features has been moved to the `docs/` folder:
+Detailed documentation for specific features is in the `docs/` folder:
 
 | Document | Description |
 |----------|-------------|
 | [docs/REFERRAL_SYSTEM.md](docs/REFERRAL_SYSTEM.md) | External referral & reporting system |
 | [docs/CAREGIVER_SUITE.md](docs/CAREGIVER_SUITE.md) | Family caregiver PIN-based access |
-| [docs/REGISTRATION_FLOWS.md](docs/REGISTRATION_FLOWS.md) | Three registration flows (self, admin, hospital) |
+| [docs/REGISTRATION_FLOWS.md](docs/REGISTRATION_FLOWS.md) | Three registration flows |
 | [docs/ENVISION_ATLUS_DESIGN.md](docs/ENVISION_ATLUS_DESIGN.md) | EA design system components |
 | [docs/FEATURE_DASHBOARDS.md](docs/FEATURE_DASHBOARDS.md) | Feature dashboard routes & config |
 | [docs/VOICE_COMMANDS.md](docs/VOICE_COMMANDS.md) | Voice command infrastructure |
@@ -281,9 +374,19 @@ Detailed documentation for specific features has been moved to the `docs/` folde
 
 ### Feature Flags
 ```env
-REACT_APP_FEATURE_PHYSICAL_THERAPY=true
-REACT_APP_FEATURE_CARE_COORDINATION=true
-REACT_APP_FEATURE_REFERRAL_MANAGEMENT=true
-REACT_APP_FEATURE_QUESTIONNAIRE_ANALYTICS=true
-REACT_APP_FEATURE_NEURO_SUITE=true
+VITE_FEATURE_PHYSICAL_THERAPY=true
+VITE_FEATURE_CARE_COORDINATION=true
+VITE_FEATURE_REFERRAL_MANAGEMENT=true
+VITE_FEATURE_QUESTIONNAIRE_ANALYTICS=true
+VITE_FEATURE_NEURO_SUITE=true
 ```
+
+---
+
+## Current Status
+- **Architecture**: White-label multi-tenant SaaS
+- **CORS**: Fully white-label ready (any HTTPS origin allowed)
+- **Database**: PostgreSQL 17 via Supabase with RLS
+- **UI**: Envision Atlus design system migration in progress
+- **Build**: Vite + React 19 (migrated December 2025)
+- **Tests**: 1,200+ tests across 71 suites (100% pass rate)

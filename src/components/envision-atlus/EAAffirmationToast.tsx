@@ -28,7 +28,7 @@
  * Copyright 2025 Envision VirtualEdge Group LLC. All rights reserved.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { CheckCircle, Info, Award, X } from 'lucide-react';
 
 export interface EAAffirmationToastProps {
@@ -82,6 +82,13 @@ export const EAAffirmationToast: React.FC<EAAffirmationToastProps> = ({
   const [isVisible, setIsVisible] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
 
+  const handleDismiss = useCallback(() => {
+    setIsExiting(true);
+    setTimeout(() => {
+      onDismiss?.();
+    }, 300); // Match exit animation duration
+  }, [onDismiss]);
+
   useEffect(() => {
     // Animate in
     const showTimeout = setTimeout(() => setIsVisible(true), 50);
@@ -98,14 +105,7 @@ export const EAAffirmationToast: React.FC<EAAffirmationToastProps> = ({
       clearTimeout(showTimeout);
       if (dismissTimeout) clearTimeout(dismissTimeout);
     };
-  }, [autoDismiss]);
-
-  const handleDismiss = () => {
-    setIsExiting(true);
-    setTimeout(() => {
-      onDismiss?.();
-    }, 300); // Match exit animation duration
-  };
+  }, [autoDismiss, handleDismiss]);
 
   const styles = TYPE_STYLES[type] || TYPE_STYLES.success;
   const positionClass = POSITION_CLASSES[position] || POSITION_CLASSES['bottom-right'];

@@ -110,19 +110,6 @@ export const EASessionResume: React.FC<EASessionResumeProps> = ({
     setIsVisible(true);
   }, [user, canResumeSession, getLastRoute]);
 
-  // Auto-dismiss timer
-  useEffect(() => {
-    if (!isVisible || autoDismissMs === 0) {
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      handleDismiss();
-    }, autoDismissMs);
-
-    return () => clearTimeout(timer);
-  }, [isVisible, autoDismissMs]);
-
   const handleDismiss = useCallback(() => {
     setIsVisible(false);
 
@@ -135,6 +122,19 @@ export const EASessionResume: React.FC<EASessionResumeProps> = ({
 
     onDismiss?.();
   }, [onDismiss]);
+
+  // Auto-dismiss timer
+  useEffect(() => {
+    if (!isVisible || autoDismissMs === 0) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      handleDismiss();
+    }, autoDismissMs);
+
+    return () => clearTimeout(timer);
+  }, [isVisible, autoDismissMs, handleDismiss]);
 
   const handleResume = useCallback(() => {
     setIsVisible(false);
