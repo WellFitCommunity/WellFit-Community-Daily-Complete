@@ -46,7 +46,6 @@ describe('CaregiverAccessHistory', () => {
       const { container } = render(<CaregiverAccessHistory userId="user-123" />);
 
       // Component shows loading skeleton with animation
-      // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
       expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
     });
 
@@ -102,7 +101,6 @@ describe('CaregiverAccessHistory', () => {
         expect(screen.getByText(/Who Viewed My Data/i)).toBeInTheDocument();
       });
 
-      // eslint-disable-next-line testing-library/no-node-access
       const expandButton = screen.getByText(/Who Viewed My Data/i).closest('div');
       if (expandButton) {
         fireEvent.click(expandButton);
@@ -123,7 +121,6 @@ describe('CaregiverAccessHistory', () => {
         expect(screen.getByText(/Who Viewed My Data/i)).toBeInTheDocument();
       });
 
-      // eslint-disable-next-line testing-library/no-node-access
       const expandButton = screen.getByText(/Who Viewed My Data/i).closest('div');
       if (expandButton) {
         fireEvent.click(expandButton);
@@ -146,7 +143,6 @@ describe('CaregiverAccessHistory', () => {
       });
 
       // Click to expand and see details
-      // eslint-disable-next-line testing-library/no-node-access
       const expandButton = screen.getByText(/Who Viewed My Data/i).closest('div')?.parentElement;
       if (expandButton) {
         fireEvent.click(expandButton);
@@ -168,7 +164,6 @@ describe('CaregiverAccessHistory', () => {
         expect(screen.getByText(/Who Viewed My Data/i)).toBeInTheDocument();
       });
 
-      // eslint-disable-next-line testing-library/no-node-access
       const expandButton = screen.getByText(/Who Viewed My Data/i).closest('div');
       if (expandButton) {
         fireEvent.click(expandButton);
@@ -191,7 +186,6 @@ describe('CaregiverAccessHistory', () => {
         expect(screen.getByText(/Who Viewed My Data/i)).toBeInTheDocument();
       });
 
-      // eslint-disable-next-line testing-library/no-node-access
       const expandButton = screen.getByText(/Who Viewed My Data/i).closest('div');
       if (expandButton) {
         fireEvent.click(expandButton);
@@ -249,7 +243,6 @@ describe('CaregiverAccessHistory', () => {
       // The clickable element has cursor-pointer class
       // Structure: div.cursor-pointer > div.flex.items-center > ... > div (contains "Who Viewed My Data")
       const titleElement = screen.getByText(/Who Viewed My Data/i);
-      // eslint-disable-next-line testing-library/no-node-access
       const clickableArea = titleElement.closest('.cursor-pointer');
       expect(clickableArea).toBeInTheDocument();
     });

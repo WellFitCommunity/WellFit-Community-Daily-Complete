@@ -147,7 +147,7 @@ const DemographicsPage: React.FC = () => {
           const seniorProfileResult = await SeniorDataService.getCompleteSeniorProfile(supabase, user.id);
 
           // Map senior table data back to form fields
-          let seniorData = {
+          const seniorData = {
             marital_status: '',
             living_situation: '',
             education_level: '',

@@ -1,7 +1,6 @@
 import { vi, describe, it, expect, beforeEach, type Mock } from 'vitest';
 // src/components/dashboard/__tests__/SeniorHealthDashboard.test.tsx
 // Tests for the senior-facing health dashboard component
-/* eslint-disable testing-library/no-container, testing-library/no-node-access */
 
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';

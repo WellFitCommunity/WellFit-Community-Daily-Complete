@@ -35,7 +35,7 @@ export const EnvisionLoginPage: React.FC = () => {
 
   // Auth flow state
   const [step, setStep] = useState<AuthStep>('credentials');
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   const [_superAdminData, setSuperAdminData] = useState<SuperAdminUser | null>(null);
 
   // Form state
@@ -165,7 +165,7 @@ export const EnvisionLoginPage: React.FC = () => {
   };
 
   // Initiate TOTP setup (for users who need to set up 2FA)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   const _handleInitiateTotpSetup = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();

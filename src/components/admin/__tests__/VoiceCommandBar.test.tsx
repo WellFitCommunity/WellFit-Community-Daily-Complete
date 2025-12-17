@@ -150,7 +150,6 @@ describe('VoiceCommandBar', () => {
       );
 
       // The voice command bar wrapper has fixed positioning with the custom class
-      // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
       const commandBarWrapper = container.querySelector('.custom-class');
       expect(commandBarWrapper).toBeInTheDocument();
     });

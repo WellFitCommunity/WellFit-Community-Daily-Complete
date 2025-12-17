@@ -1,6 +1,5 @@
 import { type Mock } from 'vitest';
-/* eslint-disable import/first */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 import { ParkinsonsService } from '../parkinsonsService';
 
 // Mock supabase - define the mock inside the factory to avoid hoisting issues

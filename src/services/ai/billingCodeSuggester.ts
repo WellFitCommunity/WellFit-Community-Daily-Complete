@@ -102,7 +102,7 @@ class InputValidator {
     if (!text) return '';
 
     // Remove potentially dangerous characters
-    let sanitized = text
+    const sanitized = text
       .replace(/[<>'"]/g, '') // Remove HTML/JS injection chars
       .replace(/;/g, '') // Remove SQL statement terminators
       .replace(/--/g, '') // Remove SQL comments

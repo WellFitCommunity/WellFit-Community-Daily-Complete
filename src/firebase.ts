@@ -30,9 +30,7 @@ type FirebaseClientConfig = {
 export function getFirebaseApp(): Maybe<FirebaseApp> {
   const cfg = FIREBASE as unknown as FirebaseClientConfig;
   if (!cfg?.apiKey || !cfg?.projectId || !cfg?.appId) {
-    if (import.meta.env.MODE !== 'production') {
-
-    }
+    // Firebase config incomplete - this is expected in some environments
     return null;
   }
   if (app) return app;

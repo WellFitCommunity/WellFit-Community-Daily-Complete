@@ -5,7 +5,6 @@
  *
  * Copyright © 2025 Envision VirtualEdge Group LLC. All rights reserved.
  */
-/* eslint-disable testing-library/no-wait-for-multiple-assertions */
 
 import React from 'react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';

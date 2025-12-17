@@ -1,7 +1,6 @@
 /**
  * Unit Tests for MappingReviewUI Component
  */
-/* eslint-disable testing-library/no-node-access, jest/no-conditional-expect */
 
 import React from 'react';
 import { render, screen, within } from '@testing-library/react';

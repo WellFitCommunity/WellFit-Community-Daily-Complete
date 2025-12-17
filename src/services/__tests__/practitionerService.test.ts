@@ -2,7 +2,6 @@
  * FHIR Practitioner Service Tests
  * Comprehensive unit tests for PractitionerService and PractitionerRoleService
  */
-/* eslint-disable testing-library/no-await-sync-query */
 
 import {
   PractitionerService,

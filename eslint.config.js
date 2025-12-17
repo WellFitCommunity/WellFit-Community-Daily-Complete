@@ -79,6 +79,7 @@ export default tseslint.config(
       'no-debugger': 'error',
       'prefer-const': 'warn',
       'no-var': 'error',
+      'no-empty': ['error', { allowEmptyCatch: true }], // Allow empty catch blocks (intentional error suppression)
     },
   },
 

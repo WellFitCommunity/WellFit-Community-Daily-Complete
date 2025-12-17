@@ -63,7 +63,7 @@ export const AdminBurnoutRadar: React.FC<AdminBurnoutRadarProps> = ({
       today.setHours(0, 0, 0, 0);
 
       // Fetch check-ins for the period
-      let checkinsQuery = supabase
+      const checkinsQuery = supabase
         .from('provider_daily_checkins')
         .select('user_id, stress_level, energy_level, mood_rating, missed_break, checkin_date')
         .gte('checkin_date', startDate.toISOString().split('T')[0]);

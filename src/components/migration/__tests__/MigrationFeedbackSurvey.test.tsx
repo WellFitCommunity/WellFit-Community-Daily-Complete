@@ -3,7 +3,6 @@
  *
  * Tests the NPS survey and quick feedback widget components
  */
-/* eslint-disable testing-library/no-node-access, jest/no-conditional-expect */
 
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';

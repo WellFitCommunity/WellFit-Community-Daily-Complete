@@ -97,7 +97,6 @@ beforeAll(() => {
 });
 
 // Import after mocks are set up
-// eslint-disable-next-line import/first
 import { useVoiceCommand } from '../useVoiceCommand';
 
 describe('useVoiceCommand', () => {
@@ -321,9 +320,7 @@ describe('useVoiceCommand', () => {
         scrollIntoView: vi.fn(),
         querySelector: vi.fn().mockReturnValue(null),
       };
-      // eslint-disable-next-line testing-library/no-node-access
       const originalGetElementById = document.getElementById;
-      // eslint-disable-next-line testing-library/no-node-access
       document.getElementById = vi.fn().mockReturnValue(mockElement);
 
       const { result } = renderHook(() => useVoiceCommand());
@@ -346,7 +343,6 @@ describe('useVoiceCommand', () => {
       });
 
       // Restore
-      // eslint-disable-next-line testing-library/no-node-access
       document.getElementById = originalGetElementById;
     });
 
@@ -356,9 +352,7 @@ describe('useVoiceCommand', () => {
         scrollIntoView: vi.fn(),
         querySelector: vi.fn().mockReturnValue(null),
       };
-      // eslint-disable-next-line testing-library/no-node-access
       const originalQuerySelector = document.querySelector;
-      // eslint-disable-next-line testing-library/no-node-access
       document.querySelector = vi.fn().mockReturnValue(mockCategoryElement);
 
       const { result } = renderHook(() => useVoiceCommand());
@@ -381,7 +375,6 @@ describe('useVoiceCommand', () => {
       });
 
       // Restore
-      // eslint-disable-next-line testing-library/no-node-access
       document.querySelector = originalQuerySelector;
     });
 

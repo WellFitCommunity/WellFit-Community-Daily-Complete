@@ -173,7 +173,7 @@ function getCrypto(): Crypto {
   }
   // For older Node.js environments
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+     
     const { webcrypto } = require('crypto');
     return webcrypto as Crypto;
   } catch {

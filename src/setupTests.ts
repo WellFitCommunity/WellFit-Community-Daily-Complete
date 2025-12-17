@@ -49,13 +49,12 @@ class MockIntersectionObserver {
   readonly root: Element | null = null;
   readonly rootMargin: string = '';
   readonly thresholds: ReadonlyArray<number> = [];
-  constructor() {}
-  disconnect() {}
-  observe() {}
+  disconnect(): void { /* no-op mock */ }
+  observe(): void { /* no-op mock */ }
   takeRecords(): IntersectionObserverEntry[] {
     return [];
   }
-  unobserve() {}
+  unobserve(): void { /* no-op mock */ }
 }
 
 Object.defineProperty(window, 'IntersectionObserver', {
@@ -65,10 +64,9 @@ Object.defineProperty(window, 'IntersectionObserver', {
 
 // Mock ResizeObserver (required for responsive components)
 class MockResizeObserver {
-  constructor() {}
-  disconnect() {}
-  observe() {}
-  unobserve() {}
+  disconnect(): void { /* no-op mock */ }
+  observe(): void { /* no-op mock */ }
+  unobserve(): void { /* no-op mock */ }
 }
 
 Object.defineProperty(window, 'ResizeObserver', {
@@ -315,7 +313,7 @@ expect.extend({
     const hasUpperCase = /[A-Z]/.test(received);
     const hasLowerCase = /[a-z]/.test(received);
     const hasNumber = /\d/.test(received);
-    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(received);
+    const hasSpecialChar = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(received);
 
     const pass = hasMinLength && hasUpperCase && hasLowerCase && hasNumber && hasSpecialChar;
 
