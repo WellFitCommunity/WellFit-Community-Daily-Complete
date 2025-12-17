@@ -372,16 +372,5 @@ expect.extend({
   },
 });
 
-// Declare custom matchers for TypeScript
-declare module 'vitest' {
-  interface Assertion<T = unknown> {
-    toBeSecurePassword(): T;
-    toContainSQLInjection(): T;
-    toContainXSS(): T;
-  }
-  interface AsymmetricMatchersContaining {
-    toBeSecurePassword(): unknown;
-    toContainSQLInjection(): unknown;
-    toContainXSS(): unknown;
-  }
-}
+// Custom matchers are extended via expect.extend() above
+// Type augmentation handled by @testing-library/jest-dom/vitest
