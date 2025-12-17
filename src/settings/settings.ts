@@ -1,5 +1,5 @@
 // src/settings/settings.ts
-// CRA only exposes envs that START with VITE_
+// Vite only exposes envs that START with VITE_
 // We support Maria's new names + legacy fallbacks.
 
 const truthy = (v?: string | null) => !!v && v.trim().length > 0;
@@ -34,12 +34,12 @@ export function assertClientSupabaseEnv() {
 
   if (!hasUrl || !hasKey) {
     const msg = [
-      "[SB CONFIG] Missing required env(s) for CRA runtime:",
+      "[SB CONFIG] Missing required env(s) for Vite runtime:",
       !hasUrl ? " - VITE_SB_URL (or VITE_SUPABASE_URL)" : "",
       !hasKey
         ? " - VITE_SB_PUBLISHABLE_API_KEY (or VITE_SUPABASE_ANON_KEY)"
         : "",
-      "Remember: CRA requires VITE_* and a dev-server restart after changes.",
+      "Remember: Vite requires VITE_* prefix and a dev-server restart after changes.",
     ]
       .filter(Boolean)
       .join("\n");

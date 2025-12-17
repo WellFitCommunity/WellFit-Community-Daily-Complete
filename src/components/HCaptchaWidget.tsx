@@ -118,12 +118,9 @@ const HCaptchaWidget = forwardRef<HCaptchaRef, Props>(
       }
     };
 
+    // If hCaptcha is not configured, render nothing - don't expose config details to users
     if (!SITE_KEY) {
-      return (
-        <div className="text-red-600 text-sm">
-          hCaptcha not configured (set VITE_HCAPTCHA_SITE_KEY or VITE_HCAPTCHA_SITE_KEY)
-        </div>
-      );
+      return null;
     }
 
     // Off-screen wrapper ensures no layout jump and keeps it effectively invisible.
