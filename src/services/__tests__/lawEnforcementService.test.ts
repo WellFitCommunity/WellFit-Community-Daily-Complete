@@ -1,10 +1,11 @@
 /**
  * Law Enforcement Service Tests
  * Comprehensive test suite for Precinct 3 welfare check system
- * Jest globals are available without import per project config
  */
+import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { LawEnforcementService } from '../lawEnforcementService';
 import type { EmergencyResponseFormData, ResponsePriority } from '../../types/lawEnforcement';
+import { supabase } from '../../lib/supabaseClient';
 
 // Mock Supabase client
 vi.mock('../../lib/supabaseClient', () => ({
@@ -16,6 +17,9 @@ vi.mock('../../lib/supabaseClient', () => ({
     }
   }
 }));
+
+// Get mocked supabase for test setup
+const mockSupabase = vi.mocked(supabase);
 
 describe('LawEnforcementService', () => {
   beforeEach(() => {
@@ -44,8 +48,7 @@ describe('LawEnforcementService', () => {
         updated_at: '2025-01-01'
       };
 
-      const { supabase } = require('../../lib/supabaseClient');
-      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
+      mockSupabase.from.mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({
@@ -54,7 +57,7 @@ describe('LawEnforcementService', () => {
             })
           })
         })
-      });
+      } as any);
 
       const result = await LawEnforcementService.getEmergencyResponseInfo('patient-123');
 
@@ -66,8 +69,7 @@ describe('LawEnforcementService', () => {
     });
 
     it('should return null when no emergency info exists', async () => {
-      const { supabase } = require('../../lib/supabaseClient');
-      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
+      mockSupabase.from.mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({
@@ -76,7 +78,7 @@ describe('LawEnforcementService', () => {
             })
           })
         })
-      });
+      } as any);
 
       const result = await LawEnforcementService.getEmergencyResponseInfo('patient-123');
       expect(result).toBeNull();
@@ -118,8 +120,7 @@ describe('LawEnforcementService', () => {
         updated_at: '2025-01-01'
       };
 
-      const { supabase } = require('../../lib/supabaseClient');
-      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
+      mockSupabase.from.mockReturnValue({
         upsert: vi.fn().mockReturnValue({
           select: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({
@@ -128,7 +129,7 @@ describe('LawEnforcementService', () => {
             })
           })
         })
-      });
+      } as any);
 
       const result = await LawEnforcementService.upsertEmergencyResponseInfo(
         'patient-123',
@@ -142,8 +143,7 @@ describe('LawEnforcementService', () => {
     });
 
     it('should throw error when save fails', async () => {
-      const { supabase } = require('../../lib/supabaseClient');
-      (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
+      mockSupabase.from.mockReturnValue({
         upsert: vi.fn().mockReturnValue({
           select: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({
@@ -152,7 +152,7 @@ describe('LawEnforcementService', () => {
             })
           })
         })
-      });
+      } as any);
 
       await expect(
         LawEnforcementService.upsertEmergencyResponseInfo('patient-123', {})
@@ -184,13 +184,12 @@ describe('LawEnforcementService', () => {
         hours_since_check_in: 8.5
       };
 
-      const { supabase } = require('../../lib/supabaseClient');
-      (supabase.rpc as ReturnType<typeof vi.fn>).mockReturnValue({
+      mockSupabase.rpc.mockReturnValue({
         single: vi.fn().mockResolvedValue({
           data: mockData,
           error: null
         })
-      });
+      } as any);
 
       const result = await LawEnforcementService.getWelfareCheckInfo('patient-123');
 
@@ -233,11 +232,10 @@ describe('LawEnforcementService', () => {
         }
       ];
 
-      const { supabase } = require('../../lib/supabaseClient');
-      supabase.rpc.mockResolvedValue({
+      mockSupabase.rpc.mockResolvedValue({
         data: mockAlerts,
         error: null
-      });
+      } as any);
 
       const result = await LawEnforcementService.getMissedCheckInAlerts();
 
@@ -248,11 +246,10 @@ describe('LawEnforcementService', () => {
     });
 
     it('should return empty array when no alerts', async () => {
-      const { supabase } = require('../../lib/supabaseClient');
-      supabase.rpc.mockResolvedValue({
+      mockSupabase.rpc.mockResolvedValue({
         data: [],
         error: null
-      });
+      } as any);
 
       const result = await LawEnforcementService.getMissedCheckInAlerts();
       expect(result).toEqual([]);

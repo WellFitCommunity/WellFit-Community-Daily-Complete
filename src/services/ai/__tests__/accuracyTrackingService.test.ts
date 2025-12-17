@@ -5,7 +5,9 @@
  * evidence-based prompt optimization with human oversight loops.
  */
 
+import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { AccuracyTrackingService } from '../accuracyTrackingService';
+import { getOptimizedPrompt, getAvailableSkills, PROMPT_REGISTRY } from '../optimizedPrompts';
 
 // Mock Supabase client
 const mockSupabase = {
@@ -342,8 +344,7 @@ describe('AccuracyTrackingService', () => {
 });
 
 describe('Optimized Prompts', () => {
-  // Import at test time to avoid module issues
-  const { getOptimizedPrompt, getAvailableSkills, PROMPT_REGISTRY } = require('../optimizedPrompts');
+  // Imports are at the top of the file now (ES modules)
 
   it('should return all available skills', () => {
     const skills = getAvailableSkills();

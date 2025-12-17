@@ -1,4 +1,4 @@
-import { type Mock } from 'vitest';
+import { vi, describe, it, expect, beforeEach, type Mock } from 'vitest';
 // src/components/dashboard/__tests__/SeniorHealthDashboard.test.tsx
 // Tests for the senior-facing health dashboard component
 /* eslint-disable testing-library/no-container, testing-library/no-node-access */
@@ -19,54 +19,54 @@ vi.mock('../../../BrandingContext', () => ({
   useBranding: vi.fn(),
 }));
 
-// Mock child components
-vi.mock('../../CheckInTracker', () => {
-  return function MockCheckInTracker() {
+// Mock child components - must return object with default for default exports
+vi.mock('../../CheckInTracker', () => ({
+  default: function MockCheckInTracker() {
     return <div data-testid="check-in-tracker">Check In Tracker</div>;
-  };
-});
+  },
+}));
 
-vi.mock('../../HealthHistory', () => {
-  return function MockHealthHistory() {
+vi.mock('../../HealthHistory', () => ({
+  default: function MockHealthHistory() {
     return <div data-testid="health-history">Health History</div>;
-  };
-});
+  },
+}));
 
-vi.mock('../DashMealOfTheDay', () => {
-  return function MockDashMealOfTheDay() {
+vi.mock('../DashMealOfTheDay', () => ({
+  default: function MockDashMealOfTheDay() {
     return <div data-testid="meal-of-day">Meal of the Day</div>;
-  };
-});
+  },
+}));
 
-vi.mock('../WeatherWidget', () => {
-  return function MockWeatherWidget() {
+vi.mock('../WeatherWidget', () => ({
+  default: function MockWeatherWidget() {
     return <div data-testid="weather-widget">Weather Widget</div>;
-  };
-});
+  },
+}));
 
-vi.mock('../DailyScripture', () => {
-  return function MockDailyScripture() {
+vi.mock('../DailyScripture', () => ({
+  default: function MockDailyScripture() {
     return <div data-testid="daily-scripture">Daily Scripture</div>;
-  };
-});
+  },
+}));
 
-vi.mock('../TechTip', () => {
-  return function MockTechTip() {
+vi.mock('../TechTip', () => ({
+  default: function MockTechTip() {
     return <div data-testid="tech-tip">Tech Tip</div>;
-  };
-});
+  },
+}));
 
-vi.mock('../../features/EmergencyContact', () => {
-  return function MockEmergencyContact() {
+vi.mock('../../features/EmergencyContact', () => ({
+  default: function MockEmergencyContact() {
     return <div data-testid="emergency-contact">Emergency Contact</div>;
-  };
-});
+  },
+}));
 
-vi.mock('../PositiveAffirmations', () => {
-  return function MockPositiveAffirmations() {
+vi.mock('../PositiveAffirmations', () => ({
+  default: function MockPositiveAffirmations() {
     return <div data-testid="positive-affirmations">Positive Affirmations</div>;
-  };
-});
+  },
+}));
 
 describe('SeniorHealthDashboard - Senior Facing Component', () => {
   let mockNavigate: Mock;

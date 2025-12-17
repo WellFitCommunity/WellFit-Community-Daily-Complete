@@ -9,16 +9,20 @@
 
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import type { VoiceCommandMapping } from '../../../services/workflowPreferences';
 import { VoiceCommandBar, VoiceCommandButton } from '../VoiceCommandBar';
 
 // Mock react-router-dom navigation
 const mockNavigate = vi.fn();
-vi.mock('react-router-dom', () => ({
-  ...vi.importActual('react-router-dom'),
-  useNavigate: () => mockNavigate,
-}));
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react-router-dom')>();
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
 
 // Mock useVoiceCommand hook
 const mockStartListening = vi.fn();

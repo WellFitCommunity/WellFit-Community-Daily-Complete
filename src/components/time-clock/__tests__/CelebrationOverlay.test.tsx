@@ -3,15 +3,16 @@
  */
 
 import React from 'react';
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { render, screen, act, waitFor } from '@testing-library/react';
 import { CelebrationOverlay } from '../CelebrationOverlay';
 
-// Mock react-confetti
-vi.mock('react-confetti', () => {
-  return function MockConfetti() {
+// Mock react-confetti - must return object with default for default export
+vi.mock('react-confetti', () => ({
+  default: function MockConfetti() {
     return <div data-testid="confetti">Confetti</div>;
-  };
-});
+  },
+}));
 
 // Mock framer-motion
 vi.mock('framer-motion', () => ({
@@ -79,7 +80,7 @@ describe('CelebrationOverlay', () => {
     expect(screen.getByTestId('confetti')).toBeInTheDocument();
   });
 
-  it('should call onComplete after duration', async () => {
+  it('should call onComplete after duration', () => {
     const onComplete = vi.fn();
 
     render(
@@ -93,13 +94,13 @@ describe('CelebrationOverlay', () => {
 
     expect(onComplete).not.toHaveBeenCalled();
 
+    // Advance timers and flush React state updates
     act(() => {
       vi.advanceTimersByTime(2000);
     });
 
-    await waitFor(() => {
-      expect(onComplete).toHaveBeenCalledTimes(1);
-    });
+    // After advancing fake timers, callback should have been called
+    expect(onComplete).toHaveBeenCalledTimes(1);
   });
 
   it('should not call onComplete if not provided', () => {

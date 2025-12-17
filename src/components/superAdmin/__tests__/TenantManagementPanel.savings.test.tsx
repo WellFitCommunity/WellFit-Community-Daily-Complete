@@ -8,6 +8,7 @@
 /* eslint-disable testing-library/no-wait-for-multiple-assertions */
 
 import React from 'react';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import TenantManagementPanel from '../TenantManagementPanel';
 import { SuperAdminService } from '../../../services/superAdminService';
@@ -16,29 +17,34 @@ import { SuperAdminService } from '../../../services/superAdminService';
 vi.mock('../../../services/superAdminService');
 vi.mock('../../../services/auditLogger');
 
-// Mock lucide-react icons
-vi.mock('lucide-react', () => ({
-  Building2: () => <span data-testid="icon-building">Building2</span>,
-  Users: () => <span data-testid="icon-users">Users</span>,
-  Activity: () => <span data-testid="icon-activity">Activity</span>,
-  AlertCircle: () => <span data-testid="icon-alert">AlertCircle</span>,
-  CheckCircle: () => <span data-testid="icon-check">CheckCircle</span>,
-  XCircle: () => <span data-testid="icon-x">XCircle</span>,
-  Eye: () => <span data-testid="icon-eye">Eye</span>,
-  Settings: () => <span data-testid="icon-settings">Settings</span>,
-  Edit2: () => <span data-testid="icon-edit">Edit2</span>,
-  Hash: () => <span data-testid="icon-hash">Hash</span>,
-  Sliders: () => <span data-testid="icon-sliders">Sliders</span>,
-  Plus: () => <span data-testid="icon-plus">Plus</span>,
-  Heart: () => <span data-testid="icon-heart">Heart</span>,
-  Stethoscope: () => <span data-testid="icon-stethoscope">Stethoscope</span>,
-  Layers: () => <span data-testid="icon-layers">Layers</span>,
-  Filter: () => <span data-testid="icon-filter">Filter</span>,
-  Search: () => <span data-testid="icon-search">Search</span>,
-  Calendar: () => <span data-testid="icon-calendar">Calendar</span>,
-  Shield: () => <span data-testid="icon-shield">Shield</span>,
-  DollarSign: () => <span data-testid="icon-dollar">DollarSign</span>,
-}));
+// Mock lucide-react icons - use importOriginal to get all icons
+vi.mock('lucide-react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('lucide-react')>();
+  return {
+    ...actual,
+    // Override specific icons for testing if needed
+    Building2: () => <span data-testid="icon-building">Building2</span>,
+    Users: () => <span data-testid="icon-users">Users</span>,
+    Activity: () => <span data-testid="icon-activity">Activity</span>,
+    AlertCircle: () => <span data-testid="icon-alert">AlertCircle</span>,
+    CheckCircle: () => <span data-testid="icon-check">CheckCircle</span>,
+    XCircle: () => <span data-testid="icon-x">XCircle</span>,
+    Eye: () => <span data-testid="icon-eye">Eye</span>,
+    Settings: () => <span data-testid="icon-settings">Settings</span>,
+    Edit2: () => <span data-testid="icon-edit">Edit2</span>,
+    Hash: () => <span data-testid="icon-hash">Hash</span>,
+    Sliders: () => <span data-testid="icon-sliders">Sliders</span>,
+    Plus: () => <span data-testid="icon-plus">Plus</span>,
+    Heart: () => <span data-testid="icon-heart">Heart</span>,
+    Stethoscope: () => <span data-testid="icon-stethoscope">Stethoscope</span>,
+    Layers: () => <span data-testid="icon-layers">Layers</span>,
+    Filter: () => <span data-testid="icon-filter">Filter</span>,
+    Search: () => <span data-testid="icon-search">Search</span>,
+    Calendar: () => <span data-testid="icon-calendar">Calendar</span>,
+    Shield: () => <span data-testid="icon-shield">Shield</span>,
+    DollarSign: () => <span data-testid="icon-dollar">DollarSign</span>,
+  };
+});
 
 // Mock EACard components
 vi.mock('../../envision-atlus/EACard', () => ({

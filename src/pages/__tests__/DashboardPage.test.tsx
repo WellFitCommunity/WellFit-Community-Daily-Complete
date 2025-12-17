@@ -2,6 +2,7 @@
 // Tests for the senior-facing main dashboard page
 
 import React from 'react';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import DashboardPage from '../DashboardPage';
@@ -29,11 +30,11 @@ vi.mock('../../data/profile', () => ({
 }));
 
 // Mock the SeniorCommunityDashboard component
-vi.mock('../../components/dashboard/SeniorCommunityDashboard', () => {
-  return function MockSeniorCommunityDashboard() {
+vi.mock('../../components/dashboard/SeniorCommunityDashboard', () => ({
+  default: function MockSeniorCommunityDashboard() {
     return <div data-testid="senior-community-dashboard">Senior Community Dashboard</div>;
-  };
-});
+  },
+}));
 
 describe('DashboardPage - Senior Facing Page', () => {
   let mockSupabase: any;

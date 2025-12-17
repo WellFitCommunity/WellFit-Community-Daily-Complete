@@ -3,6 +3,7 @@
  * Tests authentication, rate limiting, and security event logging
  */
 
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { KioskCheckIn } from '../KioskCheckIn';
 import { chwService } from '../../../services/chwService';
@@ -24,6 +25,9 @@ vi.mock('../../../services/chwService', () => ({
 }));
 
 vi.mock('bcryptjs', () => ({
+  default: {
+    compare: vi.fn()
+  },
   compare: vi.fn()
 }));
 

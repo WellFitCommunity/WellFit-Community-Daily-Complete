@@ -5,6 +5,7 @@
  */
 
 import React from 'react';
+import { vi, describe, it, expect, beforeEach, beforeAll, afterAll, afterEach } from 'vitest';
 import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { EASessionResume } from '../EASessionResume';
@@ -199,17 +200,17 @@ describe('EASessionResume', () => {
       vi.useRealTimers();
     });
 
-    it('should auto-dismiss after specified time', async () => {
+    it('should auto-dismiss after specified time', () => {
       render(<EASessionResume autoDismissMs={5000} />);
       expect(screen.getByText('Resume Session?')).toBeInTheDocument();
 
+      // Advance timers and flush React state updates
       act(() => {
         vi.advanceTimersByTime(5000);
       });
 
-      await waitFor(() => {
-        expect(screen.queryByText('Resume Session?')).not.toBeInTheDocument();
-      });
+      // After advancing fake timers, state should be updated synchronously
+      expect(screen.queryByText('Resume Session?')).not.toBeInTheDocument();
     });
 
     it('should not auto-dismiss when autoDismissMs is 0', async () => {
