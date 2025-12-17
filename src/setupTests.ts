@@ -2,21 +2,13 @@
  * Vitest Test Setup
  *
  * Safe configuration for smoke and unit tests.
- * Provides necessary polyfills and mocks without breaking production code.
+ * Provides necessary polyfills and mocks for browser environment testing.
  */
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/vitest';
 import { vi, beforeEach, afterEach, expect } from 'vitest';
-import { TextEncoder, TextDecoder } from 'util';
-import { webcrypto } from 'crypto';
 
-// Polyfill TextEncoder/TextDecoder for Node.js test environment
-// Required for Web Crypto API usage in pinHashingService
-global.TextEncoder = TextEncoder;
-global.TextDecoder = TextDecoder as typeof global.TextDecoder;
-
-// Polyfill Web Crypto API for Node.js test environment
-// Required for pinHashingService SHA-256 hashing
-global.crypto = webcrypto as unknown as Crypto;
+// Note: TextEncoder, TextDecoder, and crypto are provided by jsdom
+// No need to import from Node.js modules
 
 // Mock supabaseClient
 vi.mock('./lib/supabaseClient');
@@ -167,12 +159,11 @@ export function testInputSanitization(
   input: string,
   sanitizedOutput: string
 ): boolean {
-  // Check that dangerous characters are removed or escaped
   const dangerousChars = ['<', '>', '"', "'", '&', ';', '|', '`', '$'];
 
   for (const char of dangerousChars) {
     if (input.includes(char) && sanitizedOutput.includes(char)) {
-      return false; // Input not properly sanitized
+      return false;
     }
   }
 
@@ -188,12 +179,10 @@ export class MockRateLimiter {
   check(identifier: string, maxAttempts: number, windowMs: number): boolean {
     const now = Date.now();
     const attempts = this.attempts.get(identifier) || [];
-
-    // Remove old attempts outside the window
     const recentAttempts = attempts.filter((time) => now - time < windowMs);
 
     if (recentAttempts.length >= maxAttempts) {
-      return false; // Rate limit exceeded
+      return false;
     }
 
     recentAttempts.push(now);
@@ -220,8 +209,8 @@ export function assertNoSensitiveDataInLogs(logs: string[]): void {
     /secret/i,
     /token/i,
     /bearer\s+[a-zA-Z0-9\-._~+/]+=*/i,
-    /\d{3}-\d{2}-\d{4}/, // SSN
-    /\d{4}[- ]?\d{4}[- ]?\d{4}[- ]?\d{4}/, // Credit card
+    /\d{3}-\d{2}-\d{4}/,
+    /\d{4}[- ]?\d{4}[- ]?\d{4}[- ]?\d{4}/,
   ];
 
   for (const log of logs) {
@@ -253,9 +242,6 @@ export function verifyCSPHeaders(headers: Headers): void {
   if (!csp) {
     throw new Error('Missing Content-Security-Policy header');
   }
-
-  // Check for unsafe directives - documented for test awareness
-  // Note: unsafe-inline and unsafe-eval are security risks in production
 }
 
 /**
@@ -274,7 +260,7 @@ export function generateFuzzData(length: number): string {
  * Test helper for timing attack resistance
  */
 export async function testTimingAttackResistance(
-  fn: () => Promise<any>,
+  fn: () => Promise<unknown>,
   runs: number = 100
 ): Promise<boolean> {
   const times: number[] = [];
@@ -286,16 +272,12 @@ export async function testTimingAttackResistance(
     times.push(end - start);
   }
 
-  // Calculate standard deviation
   const mean = times.reduce((a, b) => a + b, 0) / times.length;
   const variance = times.reduce((sum, time) => sum + Math.pow(time - mean, 2), 0) / times.length;
   const stdDev = Math.sqrt(variance);
-
-  // If standard deviation is too high, timing attacks may be possible
   const coefficientOfVariation = stdDev / mean;
 
-  // Return true if consistent timing (resistant to timing attacks)
-  return coefficientOfVariation < 0.1; // Less than 10% variation
+  return coefficientOfVariation < 0.1;
 }
 
 // ============================================
@@ -314,15 +296,12 @@ global.console = {
 
 // Global beforeEach to reset mocks
 beforeEach(() => {
-  // Reset fetch mock
   vi.mocked(global.fetch).mockClear();
 });
 
 // Global afterEach cleanup to prevent timer leaks
 afterEach(() => {
-  // Clear all timers to prevent hanging tests
   vi.clearAllTimers();
-  // Clear all mocks to prevent memory leaks
   vi.clearAllMocks();
 });
 
@@ -395,14 +374,14 @@ expect.extend({
 
 // Declare custom matchers for TypeScript
 declare module 'vitest' {
-  interface Assertion<T = any> {
+  interface Assertion<T = unknown> {
     toBeSecurePassword(): T;
     toContainSQLInjection(): T;
     toContainXSS(): T;
   }
   interface AsymmetricMatchersContaining {
-    toBeSecurePassword(): any;
-    toContainSQLInjection(): any;
-    toContainXSS(): any;
+    toBeSecurePassword(): unknown;
+    toContainSQLInjection(): unknown;
+    toContainXSS(): unknown;
   }
 }
