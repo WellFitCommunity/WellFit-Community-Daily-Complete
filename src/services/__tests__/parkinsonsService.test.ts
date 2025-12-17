@@ -23,7 +23,6 @@ const mockSupabaseClient = supabase as unknown as {
   from: Mock;
   auth: { getUser: Mock };
 };
-/* eslint-enable import/first */
 
 describe('ParkinsonsService', () => {
   beforeEach(() => {

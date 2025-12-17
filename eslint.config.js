@@ -79,7 +79,18 @@ export default tseslint.config(
       'no-debugger': 'error',
       'prefer-const': 'warn',
       'no-var': 'error',
-      'no-empty': ['error', { allowEmptyCatch: true }], // Allow empty catch blocks (intentional error suppression)
+
+      // CRA-compatible rules (these were off/warn in eslint-config-react-app)
+      'no-empty': 'off', // CRA default
+      'no-useless-catch': 'off', // CRA default
+      'no-case-declarations': 'off', // CRA default
+      'no-useless-escape': 'off', // CRA default
+      'no-dupe-else-if': 'warn', // CRA default
+      '@typescript-eslint/ban-ts-comment': 'off', // CRA default - allows @ts-ignore
+      '@typescript-eslint/no-require-imports': 'off', // CRA default - allows require()
+      '@typescript-eslint/no-empty-object-type': 'off', // CRA default
+      '@typescript-eslint/triple-slash-reference': 'off', // CRA default
+      '@typescript-eslint/no-duplicate-enum-values': 'warn', // CRA default
     },
   },
 
