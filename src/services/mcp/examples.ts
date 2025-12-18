@@ -397,8 +397,8 @@ export async function exampleDischargeSummary(
 //     try {
 //       const codes = await exampleGenerateBillingCodes(currentUser.id);
 //       setBillingCodes(codes);
-//     } catch {
-//       // Error handled by toast
+//     } catch (err: unknown) {
+//       auditLogger.error('BILLING_CODE_GENERATION_FAILED', err instanceof Error ? err : new Error('Unknown error'));
 //       toast.error('Could not generate billing codes');
 //     }
 //   };
