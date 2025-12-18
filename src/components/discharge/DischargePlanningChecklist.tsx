@@ -7,9 +7,10 @@ import { DischargePlanningService } from '../../services/dischargePlanningServic
 import { PostAcuteFacilityMatcher } from '../../services/postAcuteFacilityMatcher';
 import type {
   DischargePlan,
-  UpdateDischargePlanRequest,
-  DischargeDisposition
+  UpdateDischargePlanRequest
 } from '../../types/dischargePlanning';
+import type { DischargeDisposition } from '../../types/dischargePlanning';
+import { DischargeDispositionSelector } from './DischargeDispositionSelector';
 
 interface DischargePlanningChecklistProps {
   patientId: string;
@@ -68,6 +69,10 @@ export const DischargePlanningChecklist: React.FC<DischargePlanningChecklistProp
 
   const handleCheckboxChange = (field: keyof DischargePlan, value: boolean) => {
     updatePlan({ [field]: value } as UpdateDischargePlanRequest);
+  };
+
+  const handleDispositionChange = (disposition: DischargeDisposition) => {
+    updatePlan({ discharge_disposition: disposition } as UpdateDischargePlanRequest);
   };
 
   const markPlanReady = async () => {
@@ -223,6 +228,18 @@ export const DischargePlanningChecklist: React.FC<DischargePlanningChecklistProp
           {/* Checklist Tab */}
           {activeTab === 'checklist' && (
             <div className="space-y-6">
+              {/* Discharge Disposition */}
+              <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
+                <DischargeDispositionSelector
+                  value={dischargePlan.discharge_disposition}
+                  onChange={handleDispositionChange}
+                  disabled={saving || dischargePlan.status === 'discharged'}
+                  required
+                  showDescriptions
+                  variant="dropdown"
+                />
+              </div>
+
               {/* Medication Management */}
               <ChecklistSection title="Medication Management" icon="💊">
                 <ChecklistItem
