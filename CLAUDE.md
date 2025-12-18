@@ -2,6 +2,31 @@
 
 ---
 
+# ⛔ NO SHORTCUTS. NO EXCUSES. NO EXCEPTIONS. ⛔
+
+**THIS CODEBASE REQUIRES ANTHROPIC-QUALITY ENGINEERING.**
+
+We do NOT accept:
+- Sloppy, error-ridden code that leaves technical debt
+- "Quick fixes" that break other things
+- Removing variables without checking if they're used
+- Ignoring CLAUDE.md rules to save time
+- Sub-agent work that isn't verified before completion
+- ANY pattern that prioritizes speed over correctness
+
+We REQUIRE:
+- **Seasoned, stable, careful coding** that Anthropic is known for
+- Every catch block properly typed (`err: unknown`) with `auditLogger`
+- Every change verified with `npm run typecheck` before considering it done
+- Reading and following EVERY rule in this document
+- Asking questions when uncertain instead of guessing
+
+**If you take a shortcut, Maria has to fix it. That is unacceptable.**
+
+**Do it right the first time. There is no second chance.**
+
+---
+
 ## CRITICAL RULES - READ FIRST
 
 ### Development Philosophy - NON-NEGOTIABLE
