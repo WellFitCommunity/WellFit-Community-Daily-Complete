@@ -14,10 +14,9 @@ export default tseslint.config(
       'supabase/**',
       'coverage/**',
       '*.config.js',
+      '*.config.cjs',
       '*.config.ts',
       'vite.config.ts',
-      'tailwind.config.js',
-      'postcss.config.js',
     ],
   },
 
