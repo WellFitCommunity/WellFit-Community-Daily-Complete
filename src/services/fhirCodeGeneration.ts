@@ -17,7 +17,7 @@ export class WellFitCodeTemplate implements CodeGenerationTemplate {
   resourceType: 'Bundle';
   id: string;
   type: 'transaction';
-  entry: Array<{ resource: any }>;
+  entry: Array<{ resource: unknown }>;
 }
 
 export interface FHIRPatient {
@@ -48,7 +48,7 @@ export interface FHIRObservation {
     const observationRules = mapping.mappingRules.filter(rule => rule.fhirResource === 'Observation');
 
     return `export class WellFitDataTransformer {
-  async transformAndSync(sourceData: any): Promise<FHIRBundle> {
+  async transformAndSync(sourceData: unknown): Promise<FHIRBundle> {
     const bundle: FHIRBundle = {
       resourceType: 'Bundle',
       id: \`wellfit-transform-\${Date.now()}\`,
@@ -110,16 +110,16 @@ ${rules.map(rule => `      // ${rule.sourceField} -> ${rule.fhirPath}${rule.tran
 
   private generateHelperMethods(): string {
     return `
-  private extractValue(data: any, path: string): any {
+  private extractValue(data: unknown, path: string): unknown {
     return path.split('.').reduce((obj, key) => obj?.[key], data);
   }
 
-  private sanitizeValue(value: any): string {
+  private sanitizeValue(value: unknown): string {
     if (value == null) return '';
     return String(value).trim();
   }
 
-  private parseNumericValue(value: any): number | null {
+  private parseNumericValue(value: unknown): number | null {
     const parsed = parseFloat(String(value));
     return isNaN(parsed) ? null : parsed;
   }`;
@@ -145,7 +145,7 @@ ${rules.map(rule => `      // ${rule.sourceField} -> ${rule.fhirPath}${rule.tran
 
         throw new Error(\`Patient sync failed: \${error.message}\`);
       }
-    } catch (error) {
+    } catch {
 
       throw error;
     }
@@ -153,7 +153,7 @@ ${rules.map(rule => `      // ${rule.sourceField} -> ${rule.fhirPath}${rule.tran
 
   private async syncObservationToWellFit(observation: FHIRObservation): Promise<void> {
     try {
-      const checkInData: any = {
+      const checkInData: Record<string, unknown> = {
         user_id: observation.subject.reference.replace('Patient/', ''),
         created_at: observation.effectiveDateTime,
       };
@@ -183,7 +183,7 @@ ${rules.map(rule => `      // ${rule.sourceField} -> ${rule.fhirPath}${rule.tran
 
         throw new Error(\`Observation sync failed: \${error.message}\`);
       }
-    } catch (error) {
+    } catch {
 
       throw error;
     }
@@ -202,7 +202,7 @@ ${rules.map(rule => `      // ${rule.sourceField} -> ${rule.fhirPath}${rule.tran
     const validationRules = mapping.mappingRules.filter(rule => rule.validation);
 
     return `
-  validateData(data: any): { isValid: boolean; errors: string[] } {
+  validateData(data: unknown): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
 
 ${validationRules.map(rule => `    // Validate ${rule.sourceField}: ${rule.validation}
@@ -213,7 +213,7 @@ ${validationRules.map(rule => `    // Validate ${rule.sourceField}: ${rule.valid
     return { isValid: errors.length === 0, errors };
   }
 
-  private validateField(data: any, field: string, rule: string): boolean {
+  private validateField(data: unknown, field: string, rule: string): boolean {
     const value = this.extractValue(data, field);
 
     // Common validation patterns

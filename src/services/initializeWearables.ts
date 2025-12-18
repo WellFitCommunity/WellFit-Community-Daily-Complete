@@ -13,7 +13,7 @@ export function initializeWearables(): void {
     // Register all adapters
     registerAllWearableAdapters();
 
-  } catch (error) {
+  } catch {
     // Don't throw - wearables are optional feature, app should continue
   }
 }

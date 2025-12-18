@@ -168,7 +168,7 @@ export async function fetchUserProfile(
       tenantId: profile.tenant_id,
       tenantName
     };
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -286,7 +286,7 @@ export async function getRoleSpecificStats(
 
       stats.criticalAlerts = criticalAlerts || 0;
     }
-  } catch (error) {
+  } catch {
     // Fail gracefully - return empty stats
   }
 

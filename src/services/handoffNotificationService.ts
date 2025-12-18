@@ -127,7 +127,7 @@ export class HandoffNotificationService {
         // Fallback: Log to database for manual review
         await this.logFailedNotification('email', recipients, error.message);
       }
-    } catch (error) {
+    } catch {
 
     }
   }
@@ -155,7 +155,7 @@ export class HandoffNotificationService {
 
         await this.logFailedNotification('sms', recipients, error.message);
       }
-    } catch (error) {
+    } catch {
 
     }
   }
@@ -307,7 +307,7 @@ Access full report: [Link in email]
         sms_sent: smsCount,
         sent_at: new Date().toISOString()
       });
-    } catch (error) {
+    } catch {
 
     }
   }
@@ -328,7 +328,7 @@ Access full report: [Link in email]
         failed_at: new Date().toISOString(),
         retry_count: 0
       });
-    } catch (error) {
+    } catch {
 
     }
   }

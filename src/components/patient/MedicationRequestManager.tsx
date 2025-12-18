@@ -125,7 +125,7 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
         try {
           await createMutation.mutateAsync(formData as CreateMedicationRequest);
           resetForm();
-        } catch (err) {
+        } catch (err: unknown) {
           // Check if it's an allergy warning
           const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
           if (errorMessage.includes('ALLERGY ALERT')) {
@@ -135,7 +135,7 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
           }
         }
       }
-    } catch (err) {
+    } catch (err: unknown) {
       alert(err instanceof Error ? err.message : 'An unexpected error occurred');
     }
   };
@@ -169,7 +169,7 @@ export const MedicationRequestManager: React.FC<MedicationRequestManagerProps> =
 
     try {
       await cancelMutation.mutateAsync({ id: medicationId, reason });
-    } catch (err) {
+    } catch (err: unknown) {
       alert(err instanceof Error ? err.message : 'An unexpected error occurred');
     }
   };

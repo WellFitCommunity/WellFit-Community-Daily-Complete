@@ -15,8 +15,7 @@ import type {
   EnabledModule,
   TenantModuleConfigUpdate,
 } from '../types/tenantModules';
-import type { ServiceResult } from './_base';
-import { success, failure, createSupabaseQuery, withServiceWrapper } from './_base';
+import { withServiceWrapper } from './_base';
 
 /**
  * Check if a specific module is enabled for the current tenant

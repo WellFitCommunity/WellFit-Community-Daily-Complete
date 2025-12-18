@@ -103,7 +103,7 @@ export const CareCoordinationDashboard: React.FC = () => {
         completedThisMonth: 8, // Would need separate query
         avgPlanDuration: 45, // Would come from analytics
       });
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load dashboard');
     } finally {
       setLoading(false);
@@ -116,7 +116,7 @@ export const CareCoordinationDashboard: React.FC = () => {
       // Refresh alerts
       const alerts = await CareCoordinationService.getActiveAlerts();
       setActiveAlerts(alerts);
-    } catch (err) {
+    } catch {
       // Handle error
     }
   };
@@ -487,7 +487,7 @@ const PlanDetailModal: React.FC<PlanDetailModalProps> = ({ plan, onClose, onUpda
       await CareCoordinationService.completeCarePlan(plan.id!, 'Plan completed successfully');
       onUpdate();
       onClose();
-    } catch (err) {
+    } catch {
       // Handle error
     }
   };

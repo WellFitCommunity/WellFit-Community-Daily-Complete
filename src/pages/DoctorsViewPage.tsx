@@ -336,7 +336,7 @@ const DoctorsView: React.FC = () => {
       return;
     }
     fetchData(userId);
-  }, [userId, fetchData]);
+  }, [userId, fetchData, supabase.auth]);
 
   // Helper functions
   const getVitalStatus = (type: string, value: number): 'normal' | 'warning' | 'critical' => {

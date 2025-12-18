@@ -100,7 +100,7 @@ export class CHWService {
     try {
       // Log to phi_access_logs table
       await supabase.from('phi_access_logs').insert(auditLog);
-    } catch (error) {
+    } catch {
       // CRITICAL: If audit logging fails, we should not proceed
 
       throw new Error('Audit logging failed. Cannot proceed with PHI operation for compliance reasons.');
@@ -127,7 +127,7 @@ export class CHWService {
       }
 
       return data === true;
-    } catch (error) {
+    } catch {
 
       return false;
     }
@@ -211,7 +211,7 @@ export class CHWService {
 
       if (error) throw error;
       return data as FieldVisit;
-    } catch (error) {
+    } catch {
       // Fallback to offline storage
 
       await offlineSync.saveOffline('visits', visit);
@@ -292,7 +292,7 @@ export class CHWService {
 
         }
       }
-    } catch (error) {
+    } catch {
 
       await offlineSync.saveOffline('visits', visitUpdate);
       for (const alert of alerts) {
@@ -415,7 +415,7 @@ export class CHWService {
           timestamp: photo.timestamp
         });
       }
-    } catch (error) {
+    } catch {
 
       await offlineSync.saveOffline('visits', photoData);
       for (const photo of encryptedPhotos) {
@@ -502,7 +502,7 @@ export class CHWService {
           updated_at: new Date()
         })
         .eq('id', visitId);
-    } catch (error) {
+    } catch {
 
       await offlineSync.saveOffline('assessments', assessment);
       for (const alert of alerts) {
@@ -558,7 +558,7 @@ export class CHWService {
         .eq('id', visitId);
 
       if (error) throw error;
-    } catch (error) {
+    } catch {
 
       await offlineSync.saveOffline('visits', visitUpdate);
     }
@@ -793,7 +793,7 @@ export class CHWService {
         // DB logging failed - silently fail to not block user workflow
         // Security events are logged best-effort only
       }
-    } catch (err) {
+    } catch {
       // Silent fail - don't block user flow for logging failures
 
     }

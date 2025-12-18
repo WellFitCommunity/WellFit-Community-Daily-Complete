@@ -258,7 +258,7 @@ const TelehealthCall: React.FC<TelehealthConsultationProps> = ({
       });
 
       if (onEndCall) onEndCall();
-    } catch (error) {
+    } catch {
 
     }
   }, [daily, callState.encounterId, onEndCall]);
@@ -281,7 +281,7 @@ const TelehealthCall: React.FC<TelehealthConsultationProps> = ({
 
       if (stethoscope && daily) {
         // Add second audio track for stethoscope
-        const _stream = await navigator.mediaDevices.getUserMedia({
+        await navigator.mediaDevices.getUserMedia({
           audio: { deviceId: stethoscope.deviceId },
         });
 
@@ -294,7 +294,7 @@ const TelehealthCall: React.FC<TelehealthConsultationProps> = ({
       } else {
         alert('No stethoscope device found. Please ensure your Bluetooth stethoscope is paired.');
       }
-    } catch (error) {
+    } catch {
 
       alert('Failed to connect stethoscope. Please check Bluetooth settings.');
     }

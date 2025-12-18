@@ -462,7 +462,7 @@ Return response as strict JSON with this structure:
         }, {
           onConflict: 'tenant_id,diagnosis_codes,encounter_type'
         });
-    } catch (error) {
+    } catch {
       // Don't fail if caching fails - it's an optimization, not critical
     }
   }
@@ -504,7 +504,7 @@ Return response as strict JSON with this structure:
         return trackResult.data ?? null;
       }
       return null;
-    } catch (error) {
+    } catch {
       // Don't fail the suggestion if tracking fails
       return null;
     }

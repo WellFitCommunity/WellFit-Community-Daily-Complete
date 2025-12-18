@@ -18,7 +18,7 @@
  * Copyright © 2025 Envision VirtualEdge Group LLC. All rights reserved.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabaseClient';
@@ -61,51 +61,51 @@ const CHWDashboardPage: React.FC = () => {
   }, []);
 
   // Load stats
-  useEffect(() => {
-    const loadStats = async () => {
-      try {
-        // Get today's date range
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const todayISO = today.toISOString();
+  const loadStats = useCallback(async () => {
+    try {
+      // Get today's date range
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayISO = today.toISOString();
 
-        // Get vitals recorded today
-        const { count: vitalsCount } = await supabase
-          .from('health_data')
-          .select('id', { count: 'exact', head: true })
-          .gte('created_at', todayISO);
+      // Get vitals recorded today
+      const { count: vitalsCount } = await supabase
+        .from('health_data')
+        .select('id', { count: 'exact', head: true })
+        .gte('created_at', todayISO);
 
-        // Get SDOH assessments
-        const { count: sdohCount } = await supabase
-          .from('questionnaire_responses')
-          .select('id', { count: 'exact', head: true })
-          .gte('created_at', todayISO);
+      // Get SDOH assessments
+      const { count: sdohCount } = await supabase
+        .from('questionnaire_responses')
+        .select('id', { count: 'exact', head: true })
+        .gte('created_at', todayISO);
 
-        // Get at-risk patients (those with high SDOH flags or missed check-ins)
-        const { count: riskCount } = await supabase
-          .from('profiles')
-          .select('id', { count: 'exact', head: true })
-          .eq('role', 'senior')
-          .eq('is_active', true);
+      // Get at-risk patients (those with high SDOH flags or missed check-ins)
+      const { count: riskCount } = await supabase
+        .from('profiles')
+        .select('id', { count: 'exact', head: true })
+        .eq('role', 'senior')
+        .eq('is_active', true);
 
-        setStats({
-          totalVisitsToday: (vitalsCount || 0) + (sdohCount || 0),
-          vitalsRecorded: vitalsCount || 0,
-          sdohAssessments: sdohCount || 0,
-          medicationPhotos: 0, // Would query medication_photos table
-          pendingSync: 0, // Would check IndexedDB
-          patientsAtRisk: Math.min(riskCount || 0, 5), // Cap for demo
-          scheduledVisits: 3, // Would come from scheduling system
-        });
-      } catch {
-        // Stats will show zeros
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadStats();
+      setStats({
+        totalVisitsToday: (vitalsCount || 0) + (sdohCount || 0),
+        vitalsRecorded: vitalsCount || 0,
+        sdohAssessments: sdohCount || 0,
+        medicationPhotos: 0, // Would query medication_photos table
+        pendingSync: 0, // Would check IndexedDB
+        patientsAtRisk: Math.min(riskCount || 0, 5), // Cap for demo
+        scheduledVisits: 3, // Would come from scheduling system
+      });
+    } catch {
+      // Stats will show zeros
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadStats();
+  }, [loadStats]);
 
   const quickActions = [
     {

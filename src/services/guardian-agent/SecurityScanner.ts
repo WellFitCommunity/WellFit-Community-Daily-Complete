@@ -57,7 +57,7 @@ export class SecurityScanner {
   /**
    * Scans runtime data for PHI exposure
    */
-  async scanForPHI(data: any, context: ErrorContext): Promise<SecurityVulnerability[]> {
+  async scanForPHI(data: unknown, context: ErrorContext): Promise<SecurityVulnerability[]> {
     const vulnerabilities: SecurityVulnerability[] = [];
 
     const dataString = JSON.stringify(data, null, 2);
@@ -120,7 +120,7 @@ export class SecurityScanner {
     endpoint: string,
     method: string,
     headers: Record<string, string>,
-    body: any
+    body: unknown
   ): Promise<SecurityVulnerability[]> {
     const vulnerabilities: SecurityVulnerability[] = [];
 
@@ -198,7 +198,7 @@ export class SecurityScanner {
         default:
           return null; // Cannot auto-fix
       }
-    } catch (error) {
+    } catch {
 
       return null;
     }
@@ -214,7 +214,7 @@ export class SecurityScanner {
     try {
       const result = await this.healingImplementations.fixMemoryLeak(componentName, leakType);
       return result.success ? result.fixedCode || null : null;
-    } catch (error) {
+    } catch {
 
       return null;
     }
@@ -227,7 +227,7 @@ export class SecurityScanner {
     try {
       const result = await this.healingImplementations.fixDatabaseConnectionPool();
       return result.success;
-    } catch (error) {
+    } catch {
 
       return false;
     }
@@ -246,7 +246,7 @@ export class SecurityScanner {
         failureThreshold
       );
       return result.success ? result.fixedCode || null : null;
-    } catch (error) {
+    } catch {
 
       return null;
     }

@@ -353,7 +353,7 @@ export const SDOHPassiveDetectionService = {
       if (error) {
         // Error logged server-side, fail silently on client
       }
-    } catch (error) {
+    } catch {
       // Error logged server-side, fail silently on client
     }
   },
@@ -388,7 +388,7 @@ export const SDOHPassiveDetectionService = {
         sourceId: record.source_id,
         detectedAt: record.detected_at
       }));
-    } catch (error) {
+    } catch {
       // Error logged server-side, fail silently on client
       return [];
     }
@@ -435,7 +435,7 @@ export const SDOHPassiveDetectionService = {
           }
         );
       }
-    } catch (error) {
+    } catch {
       // Error logged server-side, fail silently on client
     }
   },
@@ -517,7 +517,7 @@ export const SDOHPassiveDetectionService = {
       }
 
       return allDetections;
-    } catch (error) {
+    } catch {
       // Error logged server-side, fail silently on client
       return allDetections;
     }
@@ -564,7 +564,7 @@ export const SDOHPassiveDetectionService = {
         byCategoryCount,
         highRiskCount
       };
-    } catch (error) {
+    } catch {
       // Error logged server-side, fail silently on client
       return {
         totalDetections: 0,

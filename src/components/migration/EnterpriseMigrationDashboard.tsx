@@ -106,7 +106,7 @@ export const EnterpriseMigrationDashboard: React.FC = () => {
         startedAt: new Date(row.started_at),
         completedAt: row.completed_at ? new Date(row.completed_at) : undefined
       })));
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load batches');
     } finally {
       setIsLoading(false);
@@ -134,7 +134,7 @@ export const EnterpriseMigrationDashboard: React.FC = () => {
           readyForProduction: data.overall_score >= 85
         });
       }
-    } catch (err) {
+    } catch {
       // Quality score may not exist
     }
   }, [supabase]);
@@ -164,7 +164,7 @@ export const EnterpriseMigrationDashboard: React.FC = () => {
         resolution: row.resolution,
         requiresHumanReview: row.requires_human_review
       })));
-    } catch (err) {
+    } catch {
       // Duplicates may not exist
     }
   }, [supabase]);
@@ -192,7 +192,7 @@ export const EnterpriseMigrationDashboard: React.FC = () => {
         status: row.status,
         createdAt: new Date(row.created_at)
       })));
-    } catch (err) {
+    } catch {
       // Snapshots may not exist
     }
   }, [supabase]);
@@ -220,7 +220,7 @@ export const EnterpriseMigrationDashboard: React.FC = () => {
         nextRetryAt: new Date(row.next_retry_at),
         status: row.status
       })));
-    } catch (err) {
+    } catch {
       // Retry queue may not exist
     }
   }, [supabase]);
@@ -244,7 +244,7 @@ export const EnterpriseMigrationDashboard: React.FC = () => {
         transformations: (row.transformations || []).map((t: { type: string }) => t.type),
         validationPassed: row.validation_passed
       })));
-    } catch (err) {
+    } catch {
       // Lineage may not exist
     }
   }, [supabase]);
@@ -326,7 +326,7 @@ export const EnterpriseMigrationDashboard: React.FC = () => {
       const service = new EnterpriseMigrationService(supabase, 'temp');
       const analysis = await service.analyzeSource('CSV', data);
       setMappingSuggestions(analysis.suggestions);
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to parse file');
     }
   };
@@ -387,7 +387,7 @@ export const EnterpriseMigrationDashboard: React.FC = () => {
 
       // Show success
       setActiveTab('quality');
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Migration failed');
     } finally {
       setIsMigrating(false);
@@ -412,7 +412,7 @@ export const EnterpriseMigrationDashboard: React.FC = () => {
 
       await loadSnapshots();
       await loadBatches();
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Rollback failed');
     }
   };
@@ -431,7 +431,7 @@ export const EnterpriseMigrationDashboard: React.FC = () => {
       if (selectedBatch) {
         await loadDuplicates(selectedBatch);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to resolve duplicate');
     }
   };

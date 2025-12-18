@@ -91,7 +91,7 @@ export async function trackBehaviorEvent(
     if (events.length % 10 === 0) {
       await syncBehaviorToDatabase(supabase, event.userId, events);
     }
-  } catch (error) {
+  } catch {
     // Fail silently - behavior tracking should never break functionality
   }
 }
@@ -122,7 +122,7 @@ async function syncBehaviorToDatabase(
       }, {
         onConflict: 'user_id'
       });
-  } catch (error) {
+  } catch {
     // Database sync failed - data still persists in localStorage
   }
 }
@@ -264,7 +264,7 @@ export async function getUserBehaviorProfile(
       avgSessionDuration: data.avg_session_duration || 0,
       lastUpdated: new Date(data.updated_at)
     };
-  } catch (error) {
+  } catch {
     return null;
   }
 }

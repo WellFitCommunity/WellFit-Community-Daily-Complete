@@ -198,12 +198,12 @@ export class PatternDetector {
   }
 
   /** Analyze a column of values to determine its DNA */
-  static analyzeColumn(columnName: string, values: (string | null | undefined)[]): ColumnDNA {
-    const nonNullValues = values.filter(v => v != null && String(v).trim() !== '') as string[];
+  static analyzeColumn(columnName: string, values: (string | number | boolean | null | undefined)[]): ColumnDNA {
+    const nonNullValues = values.filter(v => v != null && String(v).trim() !== '');
     const stringValues = nonNullValues.map(v => String(v).trim());
 
     // Count patterns across all values
-    const patternCounts: Record<DataPattern, number> = {} as Record<DataPattern, number>;
+    const patternCounts: Partial<Record<DataPattern, number>> = {};
 
     for (const value of stringValues.slice(0, 100)) { // Sample first 100
       const patterns = this.detectValuePattern(value);
@@ -216,7 +216,7 @@ export class PatternDetector {
     let primaryPattern: DataPattern = 'UNKNOWN';
     let maxCount = 0;
     for (const [pattern, count] of Object.entries(patternCounts)) {
-      if (count > maxCount && pattern !== 'TEXT_SHORT' && pattern !== 'TEXT_LONG') {
+      if (count && count > maxCount && pattern !== 'TEXT_SHORT' && pattern !== 'TEXT_LONG') {
         maxCount = count;
         primaryPattern = pattern as DataPattern;
       }
@@ -285,7 +285,13 @@ export class DataDNAGenerator {
   ): SourceDNA {
 
     const columnDNAs: ColumnDNA[] = columns.map(col => {
-      const values = data.map(row => row[col] as string | null | undefined);
+      const values = data.map(row => {
+        const value = row[col];
+        if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' || value === null || value === undefined) {
+          return value;
+        }
+        return String(value);
+      }) as (string | number | boolean | null | undefined)[];
       return PatternDetector.analyzeColumn(col, values);
     });
 
@@ -658,19 +664,19 @@ export class MappingIntelligence {
         return null;
       }
 
-      const row = data[0];
+      const row = data[0] as Record<string, unknown>;
       return {
-        mappingId: row.mapping_id,
-        sourceColumnNormalized: row.source_column_normalized,
-        sourcePatterns: row.source_patterns,
-        targetTable: row.target_table,
-        targetColumn: row.target_column,
-        transformFunction: row.transform_function,
-        successCount: row.success_count,
-        failureCount: row.failure_count,
-        lastUsed: new Date(row.last_used),
-        confidence: row.confidence,
-        organizationId: row.organization_id
+        mappingId: row.mapping_id as string,
+        sourceColumnNormalized: row.source_column_normalized as string,
+        sourcePatterns: row.source_patterns as DataPattern[],
+        targetTable: row.target_table as string,
+        targetColumn: row.target_column as string,
+        transformFunction: row.transform_function as string | undefined,
+        successCount: row.success_count as number,
+        failureCount: row.failure_count as number,
+        lastUsed: new Date(row.last_used as string),
+        confidence: row.confidence as number,
+        organizationId: row.organization_id as string | undefined
       };
     } catch {
       return null;
@@ -817,15 +823,21 @@ export class MappingIntelligence {
     if (!pastDNAs) return [];
 
     return pastDNAs
-      .map(past => ({
-        dnaId: past.dna_id,
+      .map((past: Record<string, unknown>) => ({
+        dnaId: past.dna_id as string,
         similarity: DataDNAGenerator.calculateSimilarity(dna, {
-          ...past,
-          signatureVector: past.signature_vector,
-          columns: past.columns
-        } as SourceDNA),
-        sourceSystem: past.source_system,
-        successRate: past.success_rate || 0
+          dnaId: past.dna_id as string,
+          sourceType: past.source_type as SourceDNA['sourceType'],
+          sourceSystem: past.source_system as string | undefined,
+          columnCount: past.column_count as number,
+          rowCount: past.row_count as number,
+          columns: past.columns as ColumnDNA[],
+          structureHash: past.structure_hash as string,
+          signatureVector: past.signature_vector as number[],
+          detectedAt: new Date(past.detected_at as string)
+        }),
+        sourceSystem: past.source_system as string | undefined,
+        successRate: (past.success_rate as number | undefined) || 0
       }))
       .filter(m => m.similarity > 0.7)
       .sort((a, b) => b.similarity - a.similarity)
@@ -932,7 +944,8 @@ export class IntelligentMigrationService {
       .select()
       .single();
 
-    const batchId = batch?.batch_id || crypto.randomUUID();
+    const batchRecord = batch as Record<string, unknown> | null;
+    const batchId = (batchRecord?.batch_id as string) || crypto.randomUUID();
 
     // Group mappings by target table
     const tableGroups = this.groupMappingsByTable(mappings);
@@ -1026,10 +1039,15 @@ export class IntelligentMigrationService {
 
     for (let i = 0; i < data.length; i++) {
       const row = data[i];
+      const idValue = row['id'] || row['employee_id'];
+      const sourceId = typeof idValue === 'string' || typeof idValue === 'number'
+        ? String(idValue)
+        : String(i);
+
       const transformed: Record<string, unknown> = {
         organization_id: this.organizationId,
         source_system: dna.sourceSystem || dna.sourceType,
-        source_id: (row['id'] as string) || (row['employee_id'] as string) || String(i),
+        source_id: sourceId,
         migration_batch_id: batchId,
         migration_status: 'IMPORTED'
       };
@@ -1066,7 +1084,7 @@ export class IntelligentMigrationService {
           } else {
             transformed[mapping.targetColumn] = transformedValue;
           }
-        } catch (err) {
+        } catch (err: unknown) {
           const errorMessage = err instanceof Error ? err.message : 'Unknown error';
           errors.push({
             row: i + 1,
@@ -1107,6 +1125,7 @@ export class IntelligentMigrationService {
 
     // Create result records for learning
     for (const mapping of mappings) {
+      const errorSet = new Set(errors.map(e => e.error));
       results.push({
         mappingId: `${batchId}-${mapping.sourceColumn}`,
         sourceColumn: mapping.sourceColumn,
@@ -1115,7 +1134,7 @@ export class IntelligentMigrationService {
         recordsAttempted: data.length,
         recordsSucceeded: successCount,
         recordsFailed: errorCount,
-        errorTypes: [...new Set(errors.map(e => e.error))],
+        errorTypes: Array.from(errorSet),
         userAccepted: true // Will be updated if user makes corrections
       });
     }
@@ -1285,6 +1304,7 @@ export class IntelligentMigrationService {
       .single();
 
     if (existing) {
+      const existingRecord = existing as Record<string, unknown>;
       await this.supabase
         .from('migration_results')
         .update({
@@ -1292,7 +1312,7 @@ export class IntelligentMigrationService {
           user_corrected_table: correctedMapping.table,
           user_corrected_column: correctedMapping.column
         })
-        .eq('result_id', existing.result_id);
+        .eq('result_id', existingRecord.result_id);
     }
 
     // Immediately learn from correction

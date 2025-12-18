@@ -8,7 +8,7 @@ import { analyzeText, generateSuggestion, summarizeContent } from './mcpHelpers'
 
 export interface ClaudeRequest {
   prompt: string;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
   model?: 'haiku' | 'sonnet';
   maxTokens?: number;
   userId?: string;
@@ -57,9 +57,9 @@ export async function analyzeWithClaude(request: ClaudeRequest): Promise<ClaudeR
  * MCP-powered version of your billing assistant
  */
 export async function generateCodingSuggestions(params: {
-  encounterData: Record<string, any>;
+  encounterData: Record<string, unknown>;
   userId?: string;
-}): Promise<any> {
+}): Promise<unknown> {
   const suggestion = await generateSuggestion({
     context: params.encounterData,
     task: 'Generate CPT, HCPCS, and ICD-10 codes for this encounter. Return strict JSON format.',
@@ -94,9 +94,9 @@ export async function summarizeClinicalNotes(params: {
  * Generate personalized dashboard recommendations
  */
 export async function generateDashboardRecommendations(params: {
-  userBehavior: Record<string, any>;
+  userBehavior: Record<string, unknown>;
   userId?: string;
-}): Promise<any> {
+}): Promise<unknown> {
   const suggestion = await generateSuggestion({
     context: params.userBehavior,
     task: 'Analyze this admin behavior and suggest workflow improvements. Return JSON with top 3 recommendations.',

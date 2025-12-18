@@ -11,7 +11,7 @@
  * Uses Envision Atlus design system.
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { SuperAdminService } from '../../services/superAdminService';
 import { TenantWithStatus, SuperAdminUser, ProductFilter, LicensedProduct } from '../../types/superAdmin';
 import {
@@ -73,11 +73,7 @@ const TenantManagementPanel: React.FC<TenantManagementPanelProps> = ({ onViewTen
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'suspended'>('all');
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -95,7 +91,11 @@ const TenantManagementPanel: React.FC<TenantManagementPanelProps> = ({ onViewTen
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   // Filter tenants based on product, search, and status
   const filteredTenants = useMemo(() => {

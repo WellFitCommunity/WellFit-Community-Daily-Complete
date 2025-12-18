@@ -7,7 +7,7 @@
  * Copyright © 2025 Envision VirtualEdge Group LLC. All rights reserved.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { Shield, AlertTriangle, CheckCircle, TrendingUp, Building2, Users, FileText, Activity } from 'lucide-react';
 import { auditLogger } from '../../services/auditLogger';
@@ -42,11 +42,7 @@ const PlatformSOC2Dashboard: React.FC = () => {
   const [tenantMetrics, setTenantMetrics] = useState<TenantComplianceMetrics[]>([]);
   const [filterStatus, setFilterStatus] = useState<'all' | 'compliant' | 'issues'>('all');
 
-  useEffect(() => {
-    loadPlatformCompliance();
-  }, []);
-
-  const loadPlatformCompliance = async () => {
+  const loadPlatformCompliance = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -151,7 +147,11 @@ const PlatformSOC2Dashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadPlatformCompliance();
+  }, [loadPlatformCompliance]);
 
   const getComplianceColor = (score: number) => {
     if (score >= 80) return { bg: 'bg-green-50', text: 'text-green-800', border: 'border-green-200' };

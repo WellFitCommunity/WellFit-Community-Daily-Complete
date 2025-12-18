@@ -225,7 +225,7 @@ export class FeeScheduleService {
       if (rate) {
         return rate.rate;
       }
-    } catch (error) {
+    } catch {
 
     }
 

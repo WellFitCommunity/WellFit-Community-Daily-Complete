@@ -12,7 +12,6 @@ import TaskHistoryViewer from './TaskHistoryViewer';
 interface Props {
   userRole: string;
   userId?: string;
-  availableTaskTypes: string[];
   preferredModel: ClaudeModel;
   voiceTemplateId?: string;
   voiceTranscription?: string;
@@ -22,7 +21,6 @@ interface Props {
 const AdminTaskModule: React.FC<Props> = ({
   userRole,
   userId,
-  availableTaskTypes,
   preferredModel,
   voiceTemplateId,
   voiceTranscription,
@@ -95,7 +93,7 @@ const AdminTaskModule: React.FC<Props> = ({
     try {
       const loaded = await ClaudeCareAssistant.getTemplatesForRole(userRole);
       setTemplates(loaded);
-    } catch (err) {
+    } catch {
 
       setError('Failed to load templates');
     }
@@ -107,7 +105,7 @@ const AdminTaskModule: React.FC<Props> = ({
     try {
       const history = await ClaudeCareAssistant.getUserTaskHistory(userId, 10);
       setTaskHistory(history);
-    } catch (err) {
+    } catch {
 
     }
   };
@@ -177,7 +175,7 @@ const AdminTaskModule: React.FC<Props> = ({
     try {
       await navigator.clipboard.writeText(generatedContent);
       alert('Content copied to clipboard!');
-    } catch (err) {
+    } catch {
 
     }
   };

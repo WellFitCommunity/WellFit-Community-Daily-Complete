@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { TenantWithStatus } from '../../types/superAdmin';
 import { Users, Activity, FileText, AlertCircle, Eye, X } from 'lucide-react';
@@ -23,11 +23,7 @@ const TenantDataViewer: React.FC<TenantDataViewerProps> = ({ tenant, onClose }) 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadTenantData();
-  }, [tenant.tenantId, activeSection]);
-
-  const loadTenantData = async () => {
+  const loadTenantData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -63,7 +59,11 @@ const TenantDataViewer: React.FC<TenantDataViewerProps> = ({ tenant, onClose }) 
     } finally {
       setLoading(false);
     }
-  };
+  }, [tenant.tenantId, activeSection]);
+
+  useEffect(() => {
+    loadTenantData();
+  }, [loadTenantData]);
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {

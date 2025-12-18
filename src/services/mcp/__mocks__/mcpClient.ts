@@ -12,12 +12,12 @@ export interface MCPConfig {
 
 export interface MCPCallOptions {
   tool: string;
-  arguments: Record<string, any>;
+  arguments: Record<string, unknown>;
   userId?: string;
   timeout?: number;
 }
 
-export interface MCPResponse<T = any> {
+export interface MCPResponse<T = unknown> {
   content: Array<{ type: string; text: string }>;
   metadata?: {
     inputTokens?: number;
@@ -40,7 +40,7 @@ export class MCPClient {
     this.initialized = true;
   }
 
-  async callTool<T = any>(options: MCPCallOptions): Promise<MCPResponse<T>> {
+  async callTool<T = unknown>(options: MCPCallOptions): Promise<MCPResponse<T>> {
     return {
       content: [{ type: 'text', text: 'mock response' }],
       metadata: {

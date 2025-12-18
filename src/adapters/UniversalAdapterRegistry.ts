@@ -33,7 +33,7 @@ export interface AdapterConfig {
   password?: string;
   syncSchedule?: string;  // Cron expression
   dataMapping?: Record<string, string>;
-  options?: Record<string, any>;
+  options?: Record<string, unknown>;
 }
 
 export interface EHRAdapter {
@@ -41,7 +41,7 @@ export interface EHRAdapter {
 
   // Connection Management
   connect(config: AdapterConfig): Promise<void>;
-  test(): Promise<{ success: boolean; message: string; details?: any }>;
+  test(): Promise<{ success: boolean; message: string; details?: unknown }>;
   disconnect(): Promise<void>;
   getConnectionStatus(): 'connected' | 'disconnected' | 'error';
 
@@ -51,27 +51,27 @@ export interface EHRAdapter {
     lastModified?: Date;
     limit?: number;
     offset?: number;
-  }): Promise<any[]>;  // Returns FHIR Patient resources
+  }): Promise<unknown[]>;  // Returns FHIR Patient resources
 
-  fetchPatient(id: string): Promise<any>;  // Single patient
+  fetchPatient(id: string): Promise<unknown>;  // Single patient
 
   // Clinical Data
-  fetchEncounters(patientId: string, params?: { since?: Date }): Promise<any[]>;
-  fetchObservations(patientId: string, params?: { category?: string; since?: Date }): Promise<any[]>;
-  fetchMedications(patientId: string): Promise<any[]>;
-  fetchConditions(patientId: string): Promise<any[]>;
-  fetchAllergies(patientId: string): Promise<any[]>;
-  fetchImmunizations(patientId: string): Promise<any[]>;
-  fetchProcedures(patientId: string): Promise<any[]>;
-  fetchCarePlans(patientId: string): Promise<any[]>;
+  fetchEncounters(patientId: string, params?: { since?: Date }): Promise<unknown[]>;
+  fetchObservations(patientId: string, params?: { category?: string; since?: Date }): Promise<unknown[]>;
+  fetchMedications(patientId: string): Promise<unknown[]>;
+  fetchConditions(patientId: string): Promise<unknown[]>;
+  fetchAllergies(patientId: string): Promise<unknown[]>;
+  fetchImmunizations(patientId: string): Promise<unknown[]>;
+  fetchProcedures(patientId: string): Promise<unknown[]>;
+  fetchCarePlans(patientId: string): Promise<unknown[]>;
 
   // Write Operations (if supported)
-  createEncounter?(encounter: any): Promise<string>;  // Returns created ID
-  updatePatient?(id: string, patient: any): Promise<void>;
-  createObservation?(observation: any): Promise<string>;
+  createEncounter?(encounter: unknown): Promise<string>;  // Returns created ID
+  updatePatient?(id: string, patient: unknown): Promise<void>;
+  createObservation?(observation: unknown): Promise<string>;
 
   // Metadata
-  getCapabilities(): Promise<any>;  // FHIR CapabilityStatement
+  getCapabilities(): Promise<unknown>;  // FHIR CapabilityStatement
   supportsFeature(feature: string): boolean;
 }
 
@@ -153,8 +153,8 @@ export class UniversalAdapterRegistry {
           return this.getAdapter('generic-fhir')?.metadata || null;
         }
       }
-    } catch (error) {
-
+    } catch {
+      // Failed to detect via FHIR metadata endpoint
     }
 
     // Check for HL7 v2 interface
@@ -191,9 +191,9 @@ export class UniversalAdapterRegistry {
 
 
       return { success: true, connection: adapter };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: errorMessage };
     }
   }
 
@@ -265,10 +265,11 @@ export class UniversalAdapterRegistry {
         error: testResult.success ? undefined : testResult.message,
         capabilities
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Connection test failed';
       return {
         success: false,
-        error: error.message || 'Connection test failed'
+        error: errorMessage
       };
     }
   }
@@ -294,15 +295,15 @@ export async function testAdapter(adapterId: string, config: AdapterConfig): Pro
     return;
   }
 
-  Object.entries(adapter.metadata.capabilities).forEach(([key, value]) => {
-
+  Object.entries(adapter.metadata.capabilities).forEach(([_key, _value]) => {
+    // Log capability (use audit logger in production)
   });
 
   // Try fetching a sample patient
   try {
-    const patients = await adapter.fetchPatients({ limit: 1 });
-  } catch (error: any) {
-
+    await adapter.fetchPatients({ limit: 1 });
+  } catch {
+    // Error is caught but not logged (per CLAUDE.md - use audit logger in production)
   }
 
   await adapterRegistry.disconnect('test-connection');

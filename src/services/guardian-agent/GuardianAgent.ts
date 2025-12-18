@@ -55,7 +55,7 @@ export class GuardianAgent {
     if (GuardianAgent.instance) {
       GuardianAgent.instance.stop();
     }
-    GuardianAgent.instance = null as any;
+    GuardianAgent.instance = undefined as unknown as GuardianAgent;
   }
 
   /**
@@ -126,7 +126,7 @@ export class GuardianAgent {
             await this.attemptTokenRefresh();
           }
         }
-      } catch (error) {
+      } catch {
         // Invalid token format
       }
     }
@@ -151,7 +151,7 @@ export class GuardianAgent {
   /**
    * Manually reports an issue to the agent
    */
-  async reportIssue(error: Error, context?: Partial<any>): Promise<void> {
+  async reportIssue(error: Error, context?: Record<string, unknown>): Promise<void> {
     await this.brain.analyze(error, {
       environmentState: {},
       recentActions: [],
@@ -192,14 +192,14 @@ export class GuardianAgent {
   /**
    * Forces a manual healing attempt for an issue
    */
-  async forceHeal(issueId: string): Promise<any> {
+  async forceHeal(issueId: string): Promise<unknown> {
     return await this.brain.manualHeal(issueId);
   }
 
   /**
    * Exports agent knowledge base
    */
-  exportKnowledge(): any {
+  exportKnowledge(): Record<string, unknown> {
     const state = this.brain.getState();
     return {
       knowledgeBase: state.knowledgeBase,
@@ -211,7 +211,7 @@ export class GuardianAgent {
   /**
    * Gets health status
    */
-  getHealth(): { status: 'healthy' | 'degraded' | 'critical'; details: any } {
+  getHealth(): { status: 'healthy' | 'degraded' | 'critical'; details: Record<string, unknown> } {
     const state = this.brain.getState();
     const metrics = this.brain.getMetrics();
 
@@ -248,6 +248,6 @@ if (import.meta.env.MODE === 'production') {
 
   // Expose to window for debugging (only in dev tools)
   if (typeof window !== 'undefined') {
-    (window as any).__guardianAgent = agent;
+    (window as Window & { __guardianAgent?: GuardianAgent }).__guardianAgent = agent;
   }
 }

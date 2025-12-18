@@ -130,6 +130,78 @@ export function useVoiceCommand(options: UseVoiceCommandOptions = {}): [VoiceCom
     }));
   }, []);
 
+  // Stop listening - defined early so it can be used in other callbacks
+  const stopListening = useCallback(() => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+
+    if (autoStopTimerRef.current) {
+      clearTimeout(autoStopTimerRef.current);
+      autoStopTimerRef.current = null;
+    }
+
+    setState(prev => ({
+      ...prev,
+      isListening: false,
+    }));
+  }, []);
+
+  // Execute a matched command - needs stopListening
+  const executeCommandInternal = useCallback((command: VoiceCommandMapping) => {
+    switch (command.targetType) {
+      case 'route':
+        if (onNavigate) {
+          onNavigate(command.targetId);
+        } else {
+          navigate(command.targetId);
+        }
+        break;
+
+      case 'section':
+        if (onScrollToSection) {
+          onScrollToSection(command.targetId);
+        } else {
+          // Default: scroll to section element
+          const element = document.getElementById(command.targetId);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // Try to expand if it's a collapsible section
+            const button = element.querySelector('button');
+            if (button) {
+              button.click();
+            }
+          }
+        }
+        break;
+
+      case 'category':
+        if (onOpenCategory) {
+          onOpenCategory(command.targetId);
+        } else {
+          // Default: find category and expand it
+          const categoryElement = document.querySelector(`[data-category-id="${command.targetId}"]`);
+          if (categoryElement) {
+            categoryElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            const expandButton = categoryElement.querySelector('button');
+            if (expandButton) {
+              expandButton.click();
+            }
+          }
+        }
+        break;
+
+      case 'action':
+        // Custom actions handled by callback
+        auditLogger.debug('VOICE_COMMAND_ACTION', { action: command.targetId });
+        break;
+    }
+
+    // Stop listening after command execution
+    stopListening();
+  }, [navigate, onNavigate, onScrollToSection, onOpenCategory, stopListening]);
+
   // Initialize speech recognition
   const initRecognition = useCallback(() => {
     const SpeechRecognitionClass = getSpeechRecognition();
@@ -151,7 +223,6 @@ export function useVoiceCommand(options: UseVoiceCommandOptions = {}): [VoiceCom
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let finalTranscript = '';
       let interimTranscript = '';
 
       for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -160,7 +231,6 @@ export function useVoiceCommand(options: UseVoiceCommandOptions = {}): [VoiceCom
         const confidence = result[0].confidence;
 
         if (result.isFinal) {
-          finalTranscript += transcriptText;
 
           // ATLUS: Intuitive Technology - Try smart entity parsing FIRST
           // This enables natural language like "patient Maria LeBlanc birthdate June 10 1976"
@@ -267,62 +337,7 @@ export function useVoiceCommand(options: UseVoiceCommandOptions = {}): [VoiceCom
     };
 
     return recognition;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [language, autoExecute, onCommandMatched, voiceAction]);
-
-  // Execute a matched command
-  const executeCommandInternal = useCallback((command: VoiceCommandMapping) => {
-    switch (command.targetType) {
-      case 'route':
-        if (onNavigate) {
-          onNavigate(command.targetId);
-        } else {
-          navigate(command.targetId);
-        }
-        break;
-
-      case 'section':
-        if (onScrollToSection) {
-          onScrollToSection(command.targetId);
-        } else {
-          // Default: scroll to section element
-          const element = document.getElementById(command.targetId);
-          if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            // Try to expand if it's a collapsible section
-            const button = element.querySelector('button');
-            if (button) {
-              button.click();
-            }
-          }
-        }
-        break;
-
-      case 'category':
-        if (onOpenCategory) {
-          onOpenCategory(command.targetId);
-        } else {
-          // Default: find category and expand it
-          const categoryElement = document.querySelector(`[data-category-id="${command.targetId}"]`);
-          if (categoryElement) {
-            categoryElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            const expandButton = categoryElement.querySelector('button');
-            if (expandButton) {
-              expandButton.click();
-            }
-          }
-        }
-        break;
-
-      case 'action':
-        // Custom actions handled by callback
-        auditLogger.debug('VOICE_COMMAND_ACTION', { action: command.targetId });
-        break;
-    }
-
-    // Stop listening after command execution
-    stopListening();
-  }, [navigate, onNavigate, onScrollToSection, onOpenCategory]);
+  }, [language, autoExecute, onCommandMatched, voiceAction, stopListening, executeCommandInternal]);
 
   // Start listening
   const startListening = useCallback(() => {
@@ -346,25 +361,7 @@ export function useVoiceCommand(options: UseVoiceCommandOptions = {}): [VoiceCom
     autoStopTimerRef.current = setTimeout(() => {
       stopListening();
     }, 30000);
-  }, [initRecognition]);
-
-  // Stop listening
-  const stopListening = useCallback(() => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-      recognitionRef.current = null;
-    }
-
-    if (autoStopTimerRef.current) {
-      clearTimeout(autoStopTimerRef.current);
-      autoStopTimerRef.current = null;
-    }
-
-    setState(prev => ({
-      ...prev,
-      isListening: false,
-    }));
-  }, []);
+  }, [initRecognition, stopListening]);
 
   // Toggle listening
   const toggleListening = useCallback(() => {

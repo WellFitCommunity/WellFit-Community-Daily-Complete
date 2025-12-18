@@ -1,18 +1,50 @@
 # ESLint Technical Debt Report
 
 **Generated:** 2025-12-17
-**Total Issues:** 2,733 warnings across 538 files
-**Status:** Currently suppressed via CRA-compatible rule settings
+**Last Updated:** 2025-12-18
+**Total Issues:** 2,140 warnings (down from 2,733)
+**Status:** Recovered from sub-agent errors; cleanup continuing
+
+## Progress Tracking
+
+| Date | Warnings | Change | Notes |
+|------|----------|--------|-------|
+| 2025-12-17 | 2,733 | - | Initial report |
+| 2025-12-17 | 2,589 | -144 | FhirAiService, EnhancedFhirService cleanup |
+| 2025-12-18 | 2,499 | -90 | mentalHealthService, neuroSuiteService, more FHIR fixes |
+| 2025-12-18 | 2,009 | -490 | Sub-agents made changes (introduced 628 TS errors) |
+| 2025-12-18 | 2,140 | +131 | **RECOVERY:** Reverted 82 broken files, kept valid changes |
+
+### Sub-Agent Incident (2025-12-18)
+
+Sub-agents attempted to fix `no-unused-vars` warnings by removing error variable names from catch blocks. However, they removed variables that were **still being used** inside the catch blocks, causing 628 TypeScript errors across 79 files.
+
+**Pattern of broken changes:**
+```typescript
+// Sub-agents changed this:
+} catch (error) {
+  throw new Error(`Failed: ${error.message}`);
+}
+
+// To this (BROKEN - error is still referenced):
+} catch {
+  throw new Error(`Failed: ${error.message}`);  // TS2304: Cannot find name 'error'
+}
+```
+
+**Resolution:** Reverted all 82 affected service files using `git checkout HEAD --`. Valid changes in other files (type annotations, hook dependencies) were preserved.
 
 ## Summary
 
-| Issue Type | Count | Severity | Priority |
-|------------|-------|----------|----------|
-| `@typescript-eslint/no-explicit-any` | 1,636 | Medium | P2 |
-| `@typescript-eslint/no-unused-vars` | 902 | Low | P3 |
-| `react-hooks/exhaustive-deps` | 98 | High | P1 |
-| `@typescript-eslint/no-non-null-assertion` | 95 | Medium | P2 |
-| Other (duplicate enum, dupe else-if) | 2 | Low | P3 |
+| Issue Type | Original | Current | Priority |
+|------------|----------|---------|----------|
+| `@typescript-eslint/no-explicit-any` | 1,636 | ~1,400 | P2 |
+| `@typescript-eslint/no-unused-vars` | 902 | ~600 | P3 |
+| `react-hooks/exhaustive-deps` | 98 | ~90 | P1 |
+| `@typescript-eslint/no-non-null-assertion` | 95 | ~50 | P2 |
+| Other (duplicate enum, dupe else-if) | 2 | 2 | P3 |
+
+**Note:** Current counts are estimates. Total warnings: 2,140 (verified via `npm run lint`).
 
 ---
 
@@ -126,7 +158,6 @@ These files have the highest concentration of `any` types due to external API in
 | File | Issues | Primary Type |
 |------|--------|--------------|
 | `intelligentMigrationEngine.ts` | 45+ | any, unused |
-| `claudeEdgeService.ts` | 30+ | any |
 | `ccmAutopilotService.ts` | 25+ | any, deps |
 | `fhirCodeGeneration.ts` | 20+ | any |
 
@@ -195,7 +226,7 @@ npm run lint 2>&1 | grep -c "warning"
 ```
 
 Target milestones:
-- [ ] < 2000 warnings
+- [ ] < 2000 warnings (140 to go)
 - [ ] < 1000 warnings
 - [ ] < 500 warnings
 - [ ] < 100 warnings

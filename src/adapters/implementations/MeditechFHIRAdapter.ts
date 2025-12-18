@@ -18,6 +18,52 @@
 
 import type { EHRAdapter, AdapterMetadata, AdapterConfig } from '../UniversalAdapterRegistry';
 
+// FHIR R4 Type Definitions
+interface FHIRBundle {
+  resourceType: 'Bundle';
+  entry?: Array<{
+    resource: FHIRResource;
+  }>;
+  [key: string]: unknown;
+}
+
+interface FHIRResource {
+  resourceType: string;
+  id?: string;
+  [key: string]: unknown;
+}
+
+interface FHIRCapabilityStatement extends FHIRResource {
+  resourceType: 'CapabilityStatement';
+  software?: {
+    name?: string;
+    version?: string;
+  };
+  fhirVersion?: string;
+  publisher?: string;
+  implementation?: {
+    description?: string;
+  };
+  [key: string]: unknown;
+}
+
+interface OAuthTokenResponse {
+  access_token: string;
+  refresh_token?: string;
+  expires_in?: number;
+  token_type?: string;
+}
+
+interface FHIROperationOutcome extends FHIRResource {
+  resourceType: 'OperationOutcome';
+  issue?: Array<{
+    diagnostics?: string;
+    details?: {
+      text?: string;
+    };
+  }>;
+}
+
 interface MeditechConfig extends AdapterConfig {
   // Meditech-specific configuration
   platform: 'expanse' | 'magic' | 'client-server'; // Meditech platform version
@@ -91,9 +137,9 @@ export class MeditechFHIRAdapter implements EHRAdapter {
 
   }
 
-  async test(): Promise<{ success: boolean; message: string; details?: any }> {
+  async test(): Promise<{ success: boolean; message: string; details?: Record<string, unknown> }> {
     try {
-      const response = await this.fetchFHIR('/metadata');
+      const response = await this.fetchFHIR('/metadata') as FHIRCapabilityStatement;
 
       if (response.resourceType === 'CapabilityStatement') {
         // Validate it's Meditech
@@ -122,9 +168,10 @@ export class MeditechFHIRAdapter implements EHRAdapter {
       }
 
       return { success: false, message: 'Invalid FHIR response' };
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.status = 'error';
-      return { success: false, message: error.message };
+      const message = error instanceof Error ? error.message : 'Unknown error occurred';
+      return { success: false, message };
     }
   }
 
@@ -149,7 +196,7 @@ export class MeditechFHIRAdapter implements EHRAdapter {
     lastModified?: Date;
     limit?: number;
     offset?: number;
-  }): Promise<any[]> {
+  }): Promise<FHIRResource[]> {
     const searchParams = new URLSearchParams();
 
     if (params?.ids?.length) {
@@ -173,11 +220,11 @@ export class MeditechFHIRAdapter implements EHRAdapter {
     return this.extractResources(bundle);
   }
 
-  async fetchPatient(id: string): Promise<any> {
+  async fetchPatient(id: string): Promise<FHIRResource> {
     return await this.fetchFHIR(`/Patient/${id}`);
   }
 
-  async fetchEncounters(patientId: string, params?: { since?: Date }): Promise<any[]> {
+  async fetchEncounters(patientId: string, params?: { since?: Date }): Promise<FHIRResource[]> {
     const searchParams = new URLSearchParams({
       patient: patientId,
       _sort: '-date',
@@ -195,7 +242,7 @@ export class MeditechFHIRAdapter implements EHRAdapter {
   async fetchObservations(
     patientId: string,
     params?: { category?: string; since?: Date }
-  ): Promise<any[]> {
+  ): Promise<FHIRResource[]> {
     const searchParams = new URLSearchParams({
       patient: patientId,
       _sort: '-date',
@@ -214,7 +261,7 @@ export class MeditechFHIRAdapter implements EHRAdapter {
     return this.extractResources(bundle);
   }
 
-  async fetchMedications(patientId: string): Promise<any[]> {
+  async fetchMedications(patientId: string): Promise<FHIRResource[]> {
     // Meditech Expanse uses MedicationRequest
     const bundle = await this.fetchFHIR(
       `/MedicationRequest?patient=${patientId}&status=active&_count=20`
@@ -222,43 +269,43 @@ export class MeditechFHIRAdapter implements EHRAdapter {
     return this.extractResources(bundle);
   }
 
-  async fetchConditions(patientId: string): Promise<any[]> {
+  async fetchConditions(patientId: string): Promise<FHIRResource[]> {
     const bundle = await this.fetchFHIR(
       `/Condition?patient=${patientId}&clinical-status=active&_count=20`
     );
     return this.extractResources(bundle);
   }
 
-  async fetchAllergies(patientId: string): Promise<any[]> {
+  async fetchAllergies(patientId: string): Promise<FHIRResource[]> {
     const bundle = await this.fetchFHIR(
       `/AllergyIntolerance?patient=${patientId}&clinical-status=active`
     );
     return this.extractResources(bundle);
   }
 
-  async fetchImmunizations(patientId: string): Promise<any[]> {
+  async fetchImmunizations(patientId: string): Promise<FHIRResource[]> {
     const bundle = await this.fetchFHIR(
       `/Immunization?patient=${patientId}&_count=20&_sort=-date`
     );
     return this.extractResources(bundle);
   }
 
-  async fetchProcedures(patientId: string): Promise<any[]> {
+  async fetchProcedures(patientId: string): Promise<FHIRResource[]> {
     const bundle = await this.fetchFHIR(
       `/Procedure?patient=${patientId}&_count=20&_sort=-date`
     );
     return this.extractResources(bundle);
   }
 
-  async fetchCarePlans(patientId: string): Promise<any[]> {
+  async fetchCarePlans(patientId: string): Promise<FHIRResource[]> {
     // Meditech CarePlan support varies by version
     try {
       const bundle = await this.fetchFHIR(
         `/CarePlan?patient=${patientId}&status=active&_count=20`
       );
       return this.extractResources(bundle);
-    } catch (error) {
-
+    } catch {
+      // CarePlan not supported in this version
       return [];
     }
   }
@@ -266,7 +313,7 @@ export class MeditechFHIRAdapter implements EHRAdapter {
   /**
    * Meditech-specific: Fetch lab results (DiagnosticReport)
    */
-  async fetchLabResults(patientId: string, params?: { since?: Date }): Promise<any[]> {
+  async fetchLabResults(patientId: string, params?: { since?: Date }): Promise<FHIRResource[]> {
     const searchParams = new URLSearchParams({
       patient: patientId,
       category: 'LAB',
@@ -280,14 +327,14 @@ export class MeditechFHIRAdapter implements EHRAdapter {
     try {
       const bundle = await this.fetchFHIR(`/DiagnosticReport?${searchParams}`);
       return this.extractResources(bundle);
-    } catch (error) {
-
+    } catch {
+      // DiagnosticReport not supported
       return [];
     }
   }
 
-  async getCapabilities(): Promise<any> {
-    return await this.fetchFHIR('/metadata');
+  async getCapabilities(): Promise<FHIRCapabilityStatement> {
+    return await this.fetchFHIR('/metadata') as FHIRCapabilityStatement;
   }
 
   supportsFeature(feature: string): boolean {
@@ -331,9 +378,9 @@ export class MeditechFHIRAdapter implements EHRAdapter {
       throw new Error(`Meditech authentication failed: ${response.status} - ${error}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as OAuthTokenResponse;
     this.authToken = `Bearer ${data.access_token}`;
-    this.refreshToken = data.refresh_token;
+    this.refreshToken = data.refresh_token || '';
 
     if (data.expires_in) {
       this.tokenExpiry = new Date(Date.now() + data.expires_in * 1000);
@@ -369,7 +416,7 @@ export class MeditechFHIRAdapter implements EHRAdapter {
       throw new Error('Token refresh failed');
     }
 
-    const data = await response.json();
+    const data = await response.json() as OAuthTokenResponse;
     this.authToken = `Bearer ${data.access_token}`;
 
     if (data.expires_in) {
@@ -383,7 +430,7 @@ export class MeditechFHIRAdapter implements EHRAdapter {
   // HELPER METHODS (Meditech-specific)
   // ========================================================================
 
-  private async fetchFHIR(path: string, options?: RequestInit): Promise<any> {
+  private async fetchFHIR(path: string, options?: RequestInit): Promise<FHIRResource> {
     // Check token expiry
     if (this.tokenExpiry && new Date() >= this.tokenExpiry) {
 
@@ -420,7 +467,7 @@ export class MeditechFHIRAdapter implements EHRAdapter {
     const contentType = response.headers.get('content-type');
 
     if (contentType?.includes('application/fhir+json')) {
-      const outcome = await response.json();
+      const outcome = await response.json() as FHIROperationOutcome;
       const issue = outcome.issue?.[0];
       throw new Error(
         `Meditech FHIR Error [${response.status}]: ${issue?.diagnostics || issue?.details?.text || response.statusText}`
@@ -457,7 +504,7 @@ export class MeditechFHIRAdapter implements EHRAdapter {
   /**
    * Detect Meditech platform from capability statement
    */
-  private detectPlatform(capability: any): string {
+  private detectPlatform(capability: FHIRCapabilityStatement): string {
     const impl = capability.implementation?.description || '';
     const software = capability.software?.name || '';
 
@@ -472,11 +519,12 @@ export class MeditechFHIRAdapter implements EHRAdapter {
     return this.config?.platform.toUpperCase() || 'Unknown';
   }
 
-  private extractResources(bundle: any): any[] {
+  private extractResources(bundle: FHIRResource): FHIRResource[] {
     if (bundle.resourceType !== 'Bundle') {
       return [bundle];
     }
 
-    return (bundle.entry || []).map((entry: any) => entry.resource);
+    const bundleData = bundle as FHIRBundle;
+    return (bundleData.entry || []).map((entry) => entry.resource);
   }
 }

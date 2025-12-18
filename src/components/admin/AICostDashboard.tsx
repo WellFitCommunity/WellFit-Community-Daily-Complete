@@ -18,7 +18,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useSupabaseClient } from '../../contexts/AuthContext';
 import { mcpOptimizer } from '../../services/mcp/mcpCostOptimizer';
 import { batchInference } from '../../services/ai/batchInference';
-import type { QueueStats, InferenceType } from '../../services/ai/batchInference';
+import type { QueueStats } from '../../services/ai/batchInference';
 import {
   EACard,
   EACardHeader,
@@ -187,6 +187,39 @@ const AICostDashboard: React.FC = () => {
   const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d'>('30d');
   const [autoRefresh, setAutoRefresh] = useState(true);
 
+  // Load historical trends from database
+  const loadHistoricalTrends = useCallback(async () => {
+    try {
+      const daysAgo = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90;
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - daysAgo);
+
+      const { data, error } = await supabase
+        .from('mcp_cost_metrics')
+        .select('created_at, total_cost, saved_cost, total_calls')
+        .gte('created_at', startDate.toISOString())
+        .order('created_at', { ascending: true });
+
+      if (data && !error) {
+        // Group by date
+        const grouped: Record<string, CostTrend> = {};
+        for (const row of data) {
+          const date = new Date(row.created_at).toLocaleDateString();
+          if (!grouped[date]) {
+            grouped[date] = { date, cost: 0, savings: 0, calls: 0 };
+          }
+          grouped[date].cost += row.total_cost || 0;
+          grouped[date].savings += row.saved_cost || 0;
+          grouped[date].calls += row.total_calls || 0;
+        }
+        setCostTrends(Object.values(grouped));
+      }
+    } catch {
+      // Non-critical - use empty trends
+      setCostTrends([]);
+    }
+  }, [dateRange, supabase]);
+
   // Load metrics
   const loadMetrics = useCallback(async () => {
     try {
@@ -241,39 +274,7 @@ const AICostDashboard: React.FC = () => {
       auditLogger.error('AI_COST_DASHBOARD_LOAD_ERROR', error instanceof Error ? error : new Error('Unknown error'));
       setLoading(false);
     }
-  }, [supabase, dateRange]);
-
-  const loadHistoricalTrends = async () => {
-    try {
-      const daysAgo = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90;
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - daysAgo);
-
-      const { data, error } = await supabase
-        .from('mcp_cost_metrics')
-        .select('created_at, total_cost, saved_cost, total_calls')
-        .gte('created_at', startDate.toISOString())
-        .order('created_at', { ascending: true });
-
-      if (data && !error) {
-        // Group by date
-        const grouped: Record<string, CostTrend> = {};
-        for (const row of data) {
-          const date = new Date(row.created_at).toLocaleDateString();
-          if (!grouped[date]) {
-            grouped[date] = { date, cost: 0, savings: 0, calls: 0 };
-          }
-          grouped[date].cost += row.total_cost || 0;
-          grouped[date].savings += row.saved_cost || 0;
-          grouped[date].calls += row.total_calls || 0;
-        }
-        setCostTrends(Object.values(grouped));
-      }
-    } catch {
-      // Non-critical - use empty trends
-      setCostTrends([]);
-    }
-  };
+  }, [loadHistoricalTrends]);
 
   const generateRecommendations = (
     metrics: Omit<CostMetrics, 'cacheHitRate'>,
@@ -362,7 +363,7 @@ const AICostDashboard: React.FC = () => {
   // Log dashboard view
   useEffect(() => {
     auditLogger.info('AI_COST_DASHBOARD_VIEW', { dateRange });
-  }, []);
+  }, [dateRange]);
 
   if (loading) {
     return (

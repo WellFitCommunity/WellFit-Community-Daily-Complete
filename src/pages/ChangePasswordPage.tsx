@@ -85,8 +85,7 @@ if (q.type === 'recovery' && q.code) {
         setSessionReady(false);
       }
     })();
-     
-  }, []);
+  }, [supabase.auth]);
 
   async function submit(e?: React.FormEvent) {
     e?.preventDefault();

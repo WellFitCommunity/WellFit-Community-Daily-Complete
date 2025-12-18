@@ -15,7 +15,7 @@
  *
  *   try {
  *     await riskyOperation();
- *   } catch (error) {
+ *   } catch {
  *     errorReporter.report('AUDIT_LOG_FAILURE', error, {
  *       context: 'User login'
  *     });
@@ -125,14 +125,11 @@ class ErrorReporter {
    * Internal logging method
    */
   private logError(
-    category: ErrorCategory,
-    error: Error | string,
-    occurrences: number,
-    metadata?: Record<string, any>
+    _category: ErrorCategory,
+    _error: Error | string,
+    _occurrences: number,
+    _metadata?: Record<string, any>
   ): void {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    const categoryEmoji = this.getCategoryEmoji(category);
-
     // Error tracking enabled - errors stored in stats
     // Console logging disabled for HIPAA compliance in all environments
     // Access error data via getStats(), getStatsByCategory(), or exportStats()

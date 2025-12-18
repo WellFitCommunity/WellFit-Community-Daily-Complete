@@ -185,7 +185,7 @@ export class FHIREncounterWrapper {
     try {
       const billingEncounter = await EncounterService.getEncounter(encounterId);
       return this.toFHIR(billingEncounter);
-    } catch (error) {
+    } catch {
 
       return null;
     }
@@ -198,7 +198,7 @@ export class FHIREncounterWrapper {
     try {
       const billingEncounters = await EncounterService.getEncountersByPatient(patientId);
       return billingEncounters.map((enc) => this.toFHIR(enc));
-    } catch (error) {
+    } catch {
 
       return [];
     }
@@ -233,7 +233,7 @@ export class FHIREncounterWrapper {
       }
 
       return fhirEncounters;
-    } catch (error) {
+    } catch {
 
       return [];
     }
@@ -297,7 +297,7 @@ export class FHIREncounterWrapper {
       }
 
       return bundle;
-    } catch (error) {
+    } catch {
 
       return null;
     }

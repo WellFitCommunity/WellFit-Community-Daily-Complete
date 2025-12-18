@@ -12,7 +12,6 @@ import { auditLogger } from './auditLogger';
 import type {
   SuperAdminUser,
   SystemFeatureFlag,
-  TenantSystemStatus,
   SystemHealthCheck,
   SuperAdminAuditLog,
   SystemMetric,
@@ -41,7 +40,7 @@ export const SuperAdminService = {
       if (error) throw error;
 
       return data === true;
-    } catch (error) {
+    } catch {
       return false;
     }
   },
@@ -67,7 +66,7 @@ export const SuperAdminService = {
       }
 
       return this.transformSuperAdminUser(data);
-    } catch (error) {
+    } catch {
       return null;
     }
   },
@@ -109,7 +108,7 @@ export const SuperAdminService = {
       });
 
       return this.transformSuperAdminUser(data);
-    } catch (error) {
+    } catch {
       throw new Error('Failed to create super admin user');
     }
   },
@@ -249,7 +248,7 @@ export const SuperAdminService = {
       });
 
       if (error) throw error;
-    } catch (error) {
+    } catch {
       throw new Error('Failed to suspend tenant');
     }
   },
@@ -286,7 +285,7 @@ export const SuperAdminService = {
         newValue: { is_active: true, is_suspended: false },
         severity: 'warning'
       });
-    } catch (error) {
+    } catch {
       throw new Error('Failed to activate tenant');
     }
   },
@@ -360,7 +359,7 @@ export const SuperAdminService = {
       if (error) throw error;
 
       return (data || []).map(this.transformFeatureFlag);
-    } catch (error) {
+    } catch {
       throw new Error('Failed to load feature flags');
     }
   },
@@ -399,7 +398,7 @@ export const SuperAdminService = {
         newValue: updates,
         severity: payload.forceDisabled ? 'critical' : 'info'
       });
-    } catch (error) {
+    } catch {
       throw new Error('Failed to update feature flag');
     }
   },
@@ -416,7 +415,7 @@ export const SuperAdminService = {
       });
 
       if (error) throw error;
-    } catch (error) {
+    } catch {
       throw new Error('Failed to emergency disable feature');
     }
   },
@@ -441,7 +440,7 @@ export const SuperAdminService = {
       if (error) throw error;
 
       return (data || []).map(this.transformHealthCheck);
-    } catch (error) {
+    } catch {
       return [];
     }
   },
@@ -463,7 +462,7 @@ export const SuperAdminService = {
         });
 
       if (error) throw error;
-    } catch (error) {
+    } catch {
       // Fail silently on client
     }
   },
@@ -486,7 +485,7 @@ export const SuperAdminService = {
       if (error) throw error;
 
       return (data || []).map(this.transformAuditLog);
-    } catch (error) {
+    } catch {
       return [];
     }
   },
@@ -508,7 +507,7 @@ export const SuperAdminService = {
       if (error) throw error;
 
       return (data || []).map(this.transformAuditLog);
-    } catch (error) {
+    } catch {
       return [];
     }
   },
@@ -536,7 +535,7 @@ export const SuperAdminService = {
         });
 
       if (error) throw error;
-    } catch (error) {
+    } catch {
       // Fail silently on client
     }
   },
@@ -567,7 +566,7 @@ export const SuperAdminService = {
       if (error) throw error;
 
       return (data || []).map(this.transformMetric);
-    } catch (error) {
+    } catch {
       return [];
     }
   },

@@ -42,13 +42,13 @@ interface CacheEntry {
 class PromptCache {
   private cache: Map<string, CacheEntry> = new Map();
 
-  generateKey(prompt: string, context: Record<string, any> = {}): string {
+  generateKey(prompt: string, context: Record<string, unknown> = {}): string {
     // Create deterministic hash for caching
     const combined = JSON.stringify({ prompt, context: this.normalizeContext(context) });
     return this.simpleHash(combined);
   }
 
-  private normalizeContext(context: Record<string, any>): any {
+  private normalizeContext(context: Record<string, unknown>): Record<string, unknown> {
     // Remove timestamp and user-specific fields for better cache hits
     const normalized = { ...context };
     delete normalized.timestamp;
@@ -171,7 +171,7 @@ class CostTracker {
         sonnet_calls: this.metrics.sonnetCalls,
         cache_hit_rate: this.getCacheHitRate(),
       });
-    } catch (error) {
+    } catch {
       // Error handled silently - metrics are nice-to-have
     }
   }
@@ -237,7 +237,7 @@ export class MCPCostOptimizer {
 
   async call(options: {
     prompt: string;
-    context?: Record<string, any>;
+    context?: Record<string, unknown>;
     systemPrompt?: string;
     model?: string;
     complexity?: 'simple' | 'medium' | 'complex';
@@ -335,7 +335,7 @@ Always prioritize patient safety and HIPAA compliance.`;
   /**
    * Generate billing codes - High volume, perfect for caching
    */
-  async generateBillingCodes(encounterData: Record<string, any>, userId?: string) {
+  async generateBillingCodes(encounterData: Record<string, unknown>, userId?: string) {
     return this.call({
       prompt: 'Generate CPT, HCPCS, and ICD-10 codes for this encounter. Return strict JSON.',
       context: encounterData,
@@ -361,7 +361,7 @@ Always prioritize patient safety and HIPAA compliance.`;
   /**
    * Dashboard personalization - Low cost, use Haiku
    */
-  async getDashboardRecommendations(userBehavior: Record<string, any>, userId?: string) {
+  async getDashboardRecommendations(userBehavior: Record<string, unknown>, userId?: string) {
     return this.call({
       prompt: 'Analyze user behavior and suggest top 3 dashboard improvements. Return JSON.',
       context: userBehavior,

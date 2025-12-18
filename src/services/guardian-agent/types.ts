@@ -67,7 +67,7 @@ export interface DetectedIssue {
   severity: SeverityLevel;
   affectedResources: string[];
   stackTrace?: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 export interface ErrorContext {
@@ -78,7 +78,7 @@ export interface ErrorContext {
   sessionId?: string;
   apiEndpoint?: string;
   databaseQuery?: string;
-  environmentState: Record<string, any>;
+  environmentState: Record<string, unknown>;
   recentActions: string[];
 }
 
@@ -99,7 +99,7 @@ export interface HealingStep {
   order: number;
   action: string;
   target: string;
-  parameters: Record<string, any>;
+  parameters: Record<string, unknown>;
   validation: ValidationRule;
   timeout: number;
 }
@@ -107,7 +107,7 @@ export interface HealingStep {
 export interface ValidationRule {
   type: 'assertion' | 'metric' | 'state_check';
   condition: string;
-  expectedValue?: any;
+  expectedValue?: unknown;
   threshold?: number;
 }
 
@@ -175,5 +175,5 @@ export interface AgentConfig {
 export interface NotificationChannel {
   type: 'email' | 'slack' | 'sms' | 'pagerduty' | 'dashboard';
   severity: SeverityLevel[];
-  config: Record<string, any>;
+  config: Record<string, unknown>;
 }

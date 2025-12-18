@@ -22,9 +22,6 @@ import type {
   PatientFriendlyAVS,
   AVSRecord,
   MedicationChangesSection,
-  MedicationInstruction,
-  calculateFleschKincaidGrade,
-  formatAVSAsPlainText,
 } from '../types/patientFriendlyAVS';
 import {
   calculateFleschKincaidGrade as calcGrade,
@@ -238,7 +235,7 @@ function generateWhatToDoNext(input: AVSInput): string[] {
  * Generate warning signs based on assessment
  */
 function generateWarningSigns(input: AVSInput): string[] {
-  const { soapNote, suggestedCodes } = input;
+  const { suggestedCodes } = input;
 
   const warningSigns: string[] = [];
 

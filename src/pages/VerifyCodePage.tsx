@@ -1,5 +1,5 @@
 // src/pages/VerifyCodePage.tsx
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSupabaseClient } from '../contexts/AuthContext';
 
@@ -41,8 +41,7 @@ export default function VerifyCodePage() {
       mounted = false;
       sub?.subscription?.unsubscribe?.();
     };
-     
-  }, []);
+  }, [navigate, supabase.auth]);
 
   // Start cooldown if we arrived with a phone from prior step
   useEffect(() => {
@@ -74,7 +73,7 @@ export default function VerifyCodePage() {
 
   const normalizeCode = (v: string) => v.replace(/\D/g, '').slice(0, 6);
 
-  const handleVerify = async (e?: React.FormEvent) => {
+  const handleVerify = useCallback(async (e?: React.FormEvent) => {
     e?.preventDefault?.();
     setError('');
 
@@ -110,7 +109,7 @@ export default function VerifyCodePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [phone, code, supabase, navigate]);
 
   const handleResend = async () => {
     setError('');
@@ -136,11 +135,10 @@ export default function VerifyCodePage() {
   // Optional: auto-submit when 6 digits present
   useEffect(() => {
     if (!loading && code.length === 6 && phoneIsValid) {
-      // Don’t auto-submit if an error is currently shown; let user correct first
+      // Don't auto-submit if an error is currently shown; let user correct first
       if (!error) handleVerify();
     }
-     
-  }, [code, phoneIsValid]);
+  }, [code, phoneIsValid, error, handleVerify, loading]);
 
   return (
     <div className="max-w-lg mx-auto p-6 bg-white shadow-xl rounded-xl flex flex-col items-center">

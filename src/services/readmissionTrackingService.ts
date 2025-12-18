@@ -199,7 +199,7 @@ export class ReadmissionTrackingService {
         await this.generateAutomatedCarePlan(readmission);
       }
 
-    } catch (error) {
+    } catch {
 
       // Don't throw - we don't want to fail the readmission logging
     }
@@ -286,7 +286,7 @@ Format as JSON with this structure:
         clinical_notes: `Automatically generated care plan based on ${readmission.is_readmission ? 'readmission' : 'ER visit'} on ${readmission.admission_date}. AI-assisted planning with ${aiResponse.model}.`
       });
 
-    } catch (error) {
+    } catch {
 
       // Create basic plan as fallback
       await supabase.from('care_coordination_plans').insert({

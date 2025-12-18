@@ -138,7 +138,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
       setHandoffSummary(sortHandoffByPriority(summary));
       setMetrics(dashboardMetrics);
       setCurrentBypassCount(bypassCount);
-    } catch (err) {
+    } catch (err: unknown) {
       auditLogger.error('HANDOFF_LOAD_FAILED', err instanceof Error ? err : new Error('Failed to load handoff data'), { shiftType });
       setError(err instanceof Error ? err.message : 'Failed to load handoff data');
     } finally {
@@ -180,7 +180,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
 
       // ATLUS: Service - Show affirmation on patient assessment
       showAffirmation('patient_assessed');
-    } catch (err) {
+    } catch (err: unknown) {
       auditLogger.error('HANDOFF_CONFIRM_FAILED', err instanceof Error ? err : new Error('Failed'), { patientId });
       alert('Failed to confirm risk score');
     }
@@ -205,8 +205,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
 
       // Reload data to get updated priority
       loadHandoffData();
-    } catch (err) {
-
+    } catch (err: unknown) {
       alert('Failed to escalate risk');
     }
   };
@@ -230,7 +229,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
 
       // Reload data
       loadHandoffData();
-    } catch (err) {
+    } catch {
 
       alert('Failed to de-escalate risk');
     }
@@ -255,7 +254,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
 
       // ATLUS: Service - Show milestone affirmation for bulk action
       showAffirmation('milestone_reached');
-    } catch (err) {
+    } catch {
 
       alert('Failed to bulk confirm');
     }
@@ -300,7 +299,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
         time_saved_minutes: savings.time_saved_minutes,
         efficiency_percent: savings.efficiency_percent,
       });
-    } catch (err) {
+    } catch (err: unknown) {
       // Non-critical - still show celebration
       auditLogger.warn('TIME_TRACKING_FAILED', { error: err });
     }
@@ -355,7 +354,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
 
       // Update bypass count
       setCurrentBypassCount(bypassResult.weekly_total);
-    } catch (err) {
+    } catch (err: unknown) {
       throw err; // Let modal handle error display
     }
   };

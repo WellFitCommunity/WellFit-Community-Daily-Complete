@@ -28,7 +28,7 @@ const FeatureFlagControlPanel: React.FC = () => {
       ]);
       setFeatures(featuresData);
       setSuperAdmin(adminData);
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('SUPER_ADMIN_FEATURE_FLAGS_LOAD_FAILED', err as Error, {
         category: 'ADMINISTRATIVE'
       });
@@ -49,7 +49,7 @@ const FeatureFlagControlPanel: React.FC = () => {
         superAdminId: superAdmin.id
       });
       await loadData();
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('SUPER_ADMIN_FEATURE_TOGGLE_FAILED', err as Error, {
         category: 'SECURITY_EVENT',
         featureKey: feature.featureKey,
@@ -78,7 +78,7 @@ const FeatureFlagControlPanel: React.FC = () => {
         superAdminId: superAdmin.id
       });
       await loadData();
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('SUPER_ADMIN_KILL_SWITCH_FAILED', err as Error, {
         category: 'SECURITY_EVENT',
         featureKey: selectedFeature.featureKey,

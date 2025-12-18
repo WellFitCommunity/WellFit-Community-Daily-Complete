@@ -92,8 +92,7 @@ const WelcomePage: React.FC = () => {
     return () => {
       mounted = false;
     };
-     
-  }, []);
+  }, [navigate, supabase]);
 
   const handleContinue = () => {
     navigate('/register', { replace: true });

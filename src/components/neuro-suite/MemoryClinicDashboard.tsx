@@ -7,12 +7,10 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Brain, Heart, Users, TrendingDown, AlertTriangle } from 'lucide-react';
+import { Brain, Users, TrendingDown, AlertTriangle } from 'lucide-react';
 import { NeuroSuiteService } from '../../services/neuroSuiteService';
 import type {
   CognitiveAssessment,
-  DementiaStaging,
-  CaregiverAssessment,
   CreateCognitiveAssessmentRequest,
   CreateCaregiverAssessmentRequest,
   CognitiveAssessmentTool,
@@ -24,11 +22,14 @@ interface MemoryClinicDashboardProps {
 }
 
 const MemoryClinicDashboard: React.FC<MemoryClinicDashboardProps> = ({ patientId }) => {
+  // Loading and saving states
+  const [loading, setLoading] = useState(false);
+
   // Active tab
   const [activeTab, setActiveTab] = useState<'cognitive' | 'staging' | 'caregiver'>('cognitive');
 
   // Cognitive Assessment State
-  const [assessmentTool, setAssessmentTool] = useState<CognitiveAssessmentTool>('MoCA');
+  const [assessmentTool] = useState<CognitiveAssessmentTool>('MoCA');
   const [yearsEducation, setYearsEducation] = useState<number>(12);
 
   // MoCA Scores
@@ -75,7 +76,6 @@ const MemoryClinicDashboard: React.FC<MemoryClinicDashboardProps> = ({ patientId
 
   // History
   const [cognitiveHistory, setCognitiveHistory] = useState<CognitiveAssessment[]>([]);
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // Calculate MoCA total
@@ -229,13 +229,6 @@ const MemoryClinicDashboard: React.FC<MemoryClinicDashboardProps> = ({ patientId
     }
 
     setSaving(false);
-  };
-
-  const getScoreColor = (score: number, max: number) => {
-    const percentage = (score / max) * 100;
-    if (percentage >= 75) return 'text-green-600';
-    if (percentage >= 50) return 'text-yellow-600';
-    return 'text-red-600';
   };
 
   return (

@@ -7,7 +7,7 @@
  * Copyright © 2025 Envision VirtualEdge Group LLC. All rights reserved.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { TenantAssignmentService, TenantAssignment } from '../../services/tenantAssignmentService';
 import { Building2, X, Maximize2, Minimize2, AlertCircle, ArrowLeft } from 'lucide-react';
@@ -21,11 +21,7 @@ const MultiTenantMonitor: React.FC = () => {
   const [tenants, setTenants] = useState<TenantAssignment[]>([]);
   const [fullscreenTenant, setFullscreenTenant] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadTenants();
-  }, [searchParams]);
-
-  const loadTenants = async () => {
+  const loadTenants = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -75,7 +71,11 @@ const MultiTenantMonitor: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchParams]);
+
+  useEffect(() => {
+    loadTenants();
+  }, [loadTenants]);
 
   const getTenantColor = (index: number) => {
     const colors = ['blue', 'green', 'purple', 'orange'];

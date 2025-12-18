@@ -1012,7 +1012,7 @@ Return response as strict JSON with this structure:
         },
         clinical_notes: `Automatically generated based on AI readmission risk prediction. Risk: ${(prediction.readmissionRisk30Day * 100).toFixed(0)}% 30-day readmission probability. Model: ${prediction.aiModel}. Confidence: ${(prediction.predictionConfidence * 100).toFixed(0)}%.`
       });
-    } catch (error) {
+    } catch {
       // Don't fail prediction if care plan creation fails
     }
   }
@@ -1041,7 +1041,7 @@ Return response as strict JSON with this structure:
         },
         status: 'active'
       });
-    } catch (error) {
+    } catch {
       // Don't fail prediction if alert creation fails
     }
   }
@@ -1097,7 +1097,7 @@ Return response as strict JSON with this structure:
         return result.data ?? null;
       }
       return null;
-    } catch (error) {
+    } catch {
       // Don't fail the prediction if tracking fails
       return null;
     }

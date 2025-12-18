@@ -610,7 +610,7 @@ Return JSON array of top 10 discharge candidates:
 
       const parsed = this.parseJSONArray(aiResponse.response);
       return parsed.slice(0, 10);
-    } catch (error) {
+    } catch {
       return [];
     }
   }

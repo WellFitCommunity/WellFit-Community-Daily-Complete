@@ -150,7 +150,7 @@ const AISkillsControlPanel: React.FC = () => {
       });
 
       setStats(statsData);
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('AI_SKILLS_LOAD_FAILED', err as Error, {
         category: 'ADMINISTRATIVE'
       });
@@ -202,7 +202,7 @@ const AISkillsControlPanel: React.FC = () => {
       });
 
       await loadData();
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('AI_SKILL_TOGGLE_FAILED', err as Error, {
         category: 'SECURITY_EVENT',
         tenantId,
@@ -249,7 +249,7 @@ const AISkillsControlPanel: React.FC = () => {
       });
 
       await loadData();
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('AI_SKILLS_BULK_ENABLE_FAILED', err as Error, {
         category: 'SECURITY_EVENT'
       });

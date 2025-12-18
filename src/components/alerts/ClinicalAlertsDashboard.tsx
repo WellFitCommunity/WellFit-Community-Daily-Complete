@@ -123,7 +123,7 @@ export const ClinicalAlertsDashboard: React.FC = () => {
         pending_count: pendingCount,
         acknowledged_count: acknowledgedCount,
       });
-    } catch (err) {
+    } catch (err: unknown) {
       auditLogger.error('ALERTS_LOAD_ERROR', err instanceof Error ? err : new Error('Unknown error'));
     } finally {
       setLoading(false);
@@ -156,7 +156,7 @@ export const ClinicalAlertsDashboard: React.FC = () => {
       );
 
       auditLogger.clinical('ALERT_ACKNOWLEDGED', true, { alertId });
-    } catch (err) {
+    } catch (err: unknown) {
       auditLogger.error('ALERT_ACK_FAILED', err instanceof Error ? err : new Error('Failed'));
     }
   };
@@ -206,7 +206,7 @@ export const ClinicalAlertsDashboard: React.FC = () => {
       loadAlerts(); // Refresh metrics
 
       auditLogger.clinical('ALERT_RESOLVED', true, { alertId, wasActionable });
-    } catch (err) {
+    } catch (err: unknown) {
       auditLogger.error('ALERT_RESOLVE_FAILED', err instanceof Error ? err : new Error('Failed'));
     }
   };

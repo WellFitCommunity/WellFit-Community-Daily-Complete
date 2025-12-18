@@ -399,7 +399,7 @@ export class SDOHBillingService {
   private static async enhanceWithSDOH(
     baseSuggestions: CodingSuggestion,
     sdohAssessment: SDOHAssessment,
-    encounter: any
+    _encounter: any
   ): Promise<EnhancedCodingSuggestion> {
     // Add SDOH Z-codes to ICD-10 suggestions
     const sdohCodes = this.generateSDOHCodes(sdohAssessment);
@@ -678,7 +678,7 @@ export class SDOHBillingService {
     return !!(encounter.clinical_notes || encounter.documentation);
   }
 
-  private static determineCCMCodes(billableMinutes: number, patientId: string): string[] {
+  private static determineCCMCodes(billableMinutes: number, _patientId: string): string[] {
     const codes = [];
 
     if (billableMinutes >= 60) {
@@ -759,7 +759,7 @@ export class SDOHBillingService {
     suggestion: EnhancedCodingSuggestion,
     errors: ValidationError[],
     warnings: ValidationWarning[],
-    auditFlags: AuditFlag[]
+    _auditFlags: AuditFlag[]
   ): void {
     const ccmCodes = suggestion.procedureCodes.cpt.filter(code =>
       ['99490', '99491', '99487', '99489'].includes(code.code)
@@ -804,7 +804,7 @@ export class SDOHBillingService {
   private static validateCodeCombinations(
     suggestion: EnhancedCodingSuggestion,
     errors: ValidationError[],
-    warnings: ValidationWarning[]
+    _warnings: ValidationWarning[]
   ): void {
     const cptCodes = suggestion.procedureCodes.cpt.map(c => c.code);
 

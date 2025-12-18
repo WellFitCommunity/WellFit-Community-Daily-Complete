@@ -17,7 +17,7 @@
  * - Envision Atlus professional EMR branding
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { TenantWithStatus } from '../../types/superAdmin';
 import {
@@ -84,11 +84,7 @@ export const SuperAdminTenantModuleConfig: React.FC<SuperAdminTenantModuleConfig
     security: true,
   });
 
-  useEffect(() => {
-    loadTenantConfig();
-  }, [tenant.tenantId]);
-
-  const loadTenantConfig = async () => {
+  const loadTenantConfig = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -166,7 +162,11 @@ export const SuperAdminTenantModuleConfig: React.FC<SuperAdminTenantModuleConfig
     } finally {
       setLoading(false);
     }
-  };
+  }, [tenant.tenantId, tenant.tenantName]);
+
+  useEffect(() => {
+    loadTenantConfig();
+  }, [loadTenantConfig]);
 
   // Handle entitlement toggle (SuperAdmin controls this)
   const handleEntitlementToggle = (moduleName: ModuleName, entitled: boolean) => {

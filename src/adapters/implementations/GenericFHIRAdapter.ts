@@ -4,6 +4,36 @@
 
 import type { EHRAdapter, AdapterMetadata, AdapterConfig } from '../UniversalAdapterRegistry';
 
+// FHIR R4 Type Definitions
+interface FHIRBundle {
+  resourceType: 'Bundle';
+  entry?: Array<{
+    resource: FHIRResource;
+  }>;
+  [key: string]: unknown;
+}
+
+interface FHIRResource {
+  resourceType: string;
+  id?: string;
+  [key: string]: unknown;
+}
+
+interface FHIRCapabilityStatement extends FHIRResource {
+  resourceType: 'CapabilityStatement';
+  software?: {
+    name?: string;
+    version?: string;
+  };
+  fhirVersion?: string;
+  [key: string]: unknown;
+}
+
+interface OAuthTokenResponse {
+  access_token: string;
+  [key: string]: unknown;
+}
+
 export class GenericFHIRAdapter implements EHRAdapter {
   metadata: AdapterMetadata = {
     id: 'generic-fhir',
@@ -42,10 +72,10 @@ export class GenericFHIRAdapter implements EHRAdapter {
 
   }
 
-  async test(): Promise<{ success: boolean; message: string; details?: any }> {
+  async test(): Promise<{ success: boolean; message: string; details?: Record<string, unknown> }> {
     try {
       // Test with capability statement
-      const response = await this.fetchFHIR('/metadata');
+      const response = await this.fetchFHIR('/metadata') as FHIRCapabilityStatement;
 
       if (response.resourceType === 'CapabilityStatement') {
         return {
@@ -59,8 +89,9 @@ export class GenericFHIRAdapter implements EHRAdapter {
       }
 
       return { success: false, message: 'Invalid FHIR response' };
-    } catch (error: any) {
-      return { success: false, message: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error occurred';
+      return { success: false, message };
     }
   }
 
@@ -80,7 +111,7 @@ export class GenericFHIRAdapter implements EHRAdapter {
     lastModified?: Date;
     limit?: number;
     offset?: number;
-  }): Promise<any[]> {
+  }): Promise<FHIRResource[]> {
     const searchParams = new URLSearchParams();
 
     if (params?.ids?.length) {
@@ -97,11 +128,11 @@ export class GenericFHIRAdapter implements EHRAdapter {
     return this.extractResources(bundle);
   }
 
-  async fetchPatient(id: string): Promise<any> {
+  async fetchPatient(id: string): Promise<FHIRResource> {
     return await this.fetchFHIR(`/Patient/${id}`);
   }
 
-  async fetchEncounters(patientId: string, params?: { since?: Date }): Promise<any[]> {
+  async fetchEncounters(patientId: string, params?: { since?: Date }): Promise<FHIRResource[]> {
     const searchParams = new URLSearchParams({ patient: patientId });
     if (params?.since) {
       searchParams.set('date', `gt${params.since.toISOString()}`);
@@ -114,7 +145,7 @@ export class GenericFHIRAdapter implements EHRAdapter {
   async fetchObservations(
     patientId: string,
     params?: { category?: string; since?: Date }
-  ): Promise<any[]> {
+  ): Promise<FHIRResource[]> {
     const searchParams = new URLSearchParams({ patient: patientId });
     if (params?.category) {
       searchParams.set('category', params.category);
@@ -127,38 +158,38 @@ export class GenericFHIRAdapter implements EHRAdapter {
     return this.extractResources(bundle);
   }
 
-  async fetchMedications(patientId: string): Promise<any[]> {
+  async fetchMedications(patientId: string): Promise<FHIRResource[]> {
     const bundle = await this.fetchFHIR(`/MedicationRequest?patient=${patientId}`);
     return this.extractResources(bundle);
   }
 
-  async fetchConditions(patientId: string): Promise<any[]> {
+  async fetchConditions(patientId: string): Promise<FHIRResource[]> {
     const bundle = await this.fetchFHIR(`/Condition?patient=${patientId}`);
     return this.extractResources(bundle);
   }
 
-  async fetchAllergies(patientId: string): Promise<any[]> {
+  async fetchAllergies(patientId: string): Promise<FHIRResource[]> {
     const bundle = await this.fetchFHIR(`/AllergyIntolerance?patient=${patientId}`);
     return this.extractResources(bundle);
   }
 
-  async fetchImmunizations(patientId: string): Promise<any[]> {
+  async fetchImmunizations(patientId: string): Promise<FHIRResource[]> {
     const bundle = await this.fetchFHIR(`/Immunization?patient=${patientId}`);
     return this.extractResources(bundle);
   }
 
-  async fetchProcedures(patientId: string): Promise<any[]> {
+  async fetchProcedures(patientId: string): Promise<FHIRResource[]> {
     const bundle = await this.fetchFHIR(`/Procedure?patient=${patientId}`);
     return this.extractResources(bundle);
   }
 
-  async fetchCarePlans(patientId: string): Promise<any[]> {
+  async fetchCarePlans(patientId: string): Promise<FHIRResource[]> {
     const bundle = await this.fetchFHIR(`/CarePlan?patient=${patientId}`);
     return this.extractResources(bundle);
   }
 
-  async getCapabilities(): Promise<any> {
-    return await this.fetchFHIR('/metadata');
+  async getCapabilities(): Promise<FHIRCapabilityStatement> {
+    return await this.fetchFHIR('/metadata') as FHIRCapabilityStatement;
   }
 
   supportsFeature(feature: string): boolean {
@@ -220,11 +251,11 @@ export class GenericFHIRAdapter implements EHRAdapter {
       throw new Error(`OAuth2 failed: ${response.statusText}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as OAuthTokenResponse;
     return `Bearer ${data.access_token}`;
   }
 
-  private async fetchFHIR(path: string): Promise<any> {
+  private async fetchFHIR(path: string): Promise<FHIRResource> {
     const url = path.startsWith('http') ? path : `${this.baseUrl}${path}`;
 
     const response = await fetch(url, {
@@ -241,11 +272,12 @@ export class GenericFHIRAdapter implements EHRAdapter {
     return await response.json();
   }
 
-  private extractResources(bundle: any): any[] {
+  private extractResources(bundle: FHIRResource): FHIRResource[] {
     if (bundle.resourceType !== 'Bundle') {
       return [bundle]; // Single resource
     }
 
-    return (bundle.entry || []).map((entry: any) => entry.resource);
+    const bundleData = bundle as FHIRBundle;
+    return (bundleData.entry || []).map((entry) => entry.resource);
   }
 }

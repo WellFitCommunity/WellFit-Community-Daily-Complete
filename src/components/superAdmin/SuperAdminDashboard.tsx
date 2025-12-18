@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SuperAdminService } from '../../services/superAdminService';
 import { SystemOverview, TenantWithStatus } from '../../types/superAdmin';
@@ -121,13 +121,7 @@ const SuperAdminDashboard: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    checkAccess();
-    // Vault animation disabled for production - proceed directly to dashboard
-    setShowVaultAnimation(false);
-  }, []);
-
-  const checkAccess = async () => {
+  const checkAccess = useCallback(async () => {
     try {
       setLoading(true);
       const isSuperAdmin = await SuperAdminService.isSuperAdmin();
@@ -138,7 +132,7 @@ const SuperAdminDashboard: React.FC = () => {
       }
 
       await loadSystemData();
-    } catch (err) {
+    } catch (err: unknown) {
       await auditLogger.error('SUPER_ADMIN_ACCESS_CHECK_FAILED', err as Error, {
         category: 'SECURITY_EVENT'
       });
@@ -146,14 +140,20 @@ const SuperAdminDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]);
+
+  useEffect(() => {
+    checkAccess();
+    // Vault animation disabled for production - proceed directly to dashboard
+    setShowVaultAnimation(false);
+  }, [checkAccess]);
 
   const loadSystemData = async () => {
     try {
       setError(null);
       const systemOverview = await SuperAdminService.getSystemOverview();
       setOverview(systemOverview);
-    } catch (err) {
+    } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       await auditLogger.error('SUPER_ADMIN_OVERVIEW_LOAD_FAILED', err as Error, {
         category: 'ADMINISTRATIVE',

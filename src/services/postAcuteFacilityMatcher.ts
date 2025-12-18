@@ -190,7 +190,7 @@ Be evidence-based and follow Medicare/Medicaid eligibility criteria.`;
       }
 
       return recommendation;
-    } catch (error) {
+    } catch {
 
       return this.getFallbackRecommendation(needs);
     }
@@ -251,7 +251,7 @@ Be evidence-based and follow Medicare/Medicaid eligibility criteria.`;
       matchedFacilities.sort((a, b) => b.match_score - a.match_score);
 
       return matchedFacilities;
-    } catch (error) {
+    } catch {
 
       return [];
     }

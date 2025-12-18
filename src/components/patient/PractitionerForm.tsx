@@ -64,7 +64,7 @@ const PractitionerForm: React.FC<PractitionerFormProps> = ({
         setBio(data.bio || '');
         setActive(data.active);
       }
-    } catch (err) {
+    } catch {
 
       setError('Failed to load practitioner data');
     }
@@ -116,8 +116,7 @@ const PractitionerForm: React.FC<PractitionerFormProps> = ({
       if (onSave) {
         onSave(result);
       }
-    } catch (err) {
-
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to save practitioner');
     }
     setSaving(false);

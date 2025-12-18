@@ -54,8 +54,7 @@ export const ResilienceLibrary: React.FC<ResilienceLibraryProps> = ({ onClose })
 
       setModules(modulesData);
       setCompletions(completionsData);
-    } catch (err) {
-
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load modules');
     } finally {
       setLoading(false);
@@ -104,7 +103,7 @@ export const ResilienceLibrary: React.FC<ResilienceLibraryProps> = ({ onClose })
       // Refresh completions
       const updated = await getMyCompletions();
       setCompletions(updated);
-    } catch (err) {
+    } catch {
 
       alert('Failed to start module. Please try again.');
     }
@@ -133,7 +132,7 @@ export const ResilienceLibrary: React.FC<ResilienceLibraryProps> = ({ onClose })
       setIsViewing(false);
       setSelectedModule(null);
       setStartTime(null);
-    } catch (err) {
+    } catch {
 
       alert('Failed to record completion. Please try again.');
     }

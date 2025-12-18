@@ -85,7 +85,7 @@ class PerformanceMonitor {
       if (error) {
         // Performance metric logging error - fail silently
       }
-    } catch (err) {
+    } catch {
       // Fail silently to avoid infinite loops
     }
   }
@@ -113,7 +113,7 @@ class PerformanceMonitor {
       });
 
       perfObserver.observe({ entryTypes: ['navigation'] });
-    } catch (err) {
+    } catch {
 
     }
   }
@@ -126,7 +126,7 @@ class PerformanceMonitor {
         ...data,
         user_id: this.userId
       });
-    } catch (err) {
+    } catch {
 
     }
   }
@@ -181,7 +181,7 @@ class PerformanceMonitor {
         ...data,
         user_id: this.userId
       });
-    } catch (err) {
+    } catch {
 
     }
   }

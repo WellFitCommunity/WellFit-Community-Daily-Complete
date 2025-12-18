@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { SuperAdminService } from '../../services/superAdminService';
 import { SuperAdminAuditLog } from '../../types/superAdmin';
 import { FileText, AlertTriangle, Info, AlertCircle, Filter, Clock, User, Activity, Shield } from 'lucide-react';
@@ -11,11 +11,7 @@ const AuditLogViewer: React.FC = () => {
   const [filterSeverity, setFilterSeverity] = useState<'all' | 'info' | 'warning' | 'critical'>('all');
   const [showCriticalOnly, setShowCriticalOnly] = useState(false);
 
-  useEffect(() => {
-    loadAuditLogs();
-  }, [showCriticalOnly]);
-
-  const loadAuditLogs = async () => {
+  const loadAuditLogs = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -32,7 +28,11 @@ const AuditLogViewer: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showCriticalOnly]);
+
+  useEffect(() => {
+    loadAuditLogs();
+  }, [loadAuditLogs]);
 
   const getSeverityIcon = (severity: string) => {
     switch (severity) {

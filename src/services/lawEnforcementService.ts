@@ -36,7 +36,7 @@ export const LawEnforcementService = {
       }
 
       return this.transformFromDb(data);
-    } catch (error) {
+    } catch {
       // Error logged server-side
       return null;
     }
@@ -65,7 +65,7 @@ export const LawEnforcementService = {
       if (error) throw error;
 
       return this.transformFromDb(result);
-    } catch (error) {
+    } catch {
       throw new Error('Failed to save emergency response information');
     }
   },
@@ -109,7 +109,7 @@ export const LawEnforcementService = {
         lastCheckInTime: result.last_check_in_time,
         hoursSinceCheckIn: result.hours_since_check_in
       } : null;
-    } catch (error) {
+    } catch {
       // Error logged server-side
       return null;
     }
@@ -139,7 +139,7 @@ export const LawEnforcementService = {
         emergencyContactPhone: row.emergency_contact_phone,
         urgencyScore: row.urgency_score
       }));
-    } catch (error) {
+    } catch {
       // Error logged server-side
       return [];
     }
@@ -193,7 +193,7 @@ export const LawEnforcementService = {
           requiresAction: status === 'critical' || status === 'overdue'
         };
       });
-    } catch (error) {
+    } catch {
       // Error logged server-side
       return [];
     }
@@ -226,7 +226,7 @@ export const LawEnforcementService = {
       // TODO: Send email reminder if email available
 
       return true;
-    } catch (error) {
+    } catch {
       // Error logged server-side
       return false;
     }
@@ -261,7 +261,7 @@ export const LawEnforcementService = {
       }
 
       return false;
-    } catch (error) {
+    } catch {
       // Error logged server-side
       return false;
     }

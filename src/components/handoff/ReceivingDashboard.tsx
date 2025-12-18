@@ -12,10 +12,8 @@ import type {
   HandoffPacket,
   HandoffAttachment,
   ReceivingFacilityDashboardProps,
-  URGENCY_COLORS,
-  STATUS_COLORS,
 } from '../../types/handoff';
-import { URGENCY_LABELS, STATUS_LABELS } from '../../types/handoff';
+import { URGENCY_LABELS } from '../../types/handoff';
 
 const ReceivingDashboard: React.FC<ReceivingFacilityDashboardProps> = ({
   facilityName,
@@ -40,9 +38,9 @@ const ReceivingDashboard: React.FC<ReceivingFacilityDashboardProps> = ({
         if (isMounted) {
           setPackets(data);
         }
-      } catch (error: any) {
+      } catch (_error: any) {
         if (isMounted) {
-          toast.error(`Failed to load transfers: ${error.message}`);
+          toast.error(`Failed to load transfers: ${_error.message}`);
         }
       } finally {
         if (isMounted) {
@@ -68,7 +66,7 @@ const ReceivingDashboard: React.FC<ReceivingFacilityDashboardProps> = ({
         if (isMounted) {
           setAttachments(data);
         }
-      } catch (error: any) {
+      } catch {
         // Silent error - attachments are optional
       }
     };
@@ -88,19 +86,10 @@ const ReceivingDashboard: React.FC<ReceivingFacilityDashboardProps> = ({
         status: 'sent', // Only show sent packets awaiting acknowledgement
       });
       setPackets(data);
-    } catch (error: any) {
-      toast.error(`Failed to load transfers: ${error.message}`);
+    } catch (_error: any) {
+      toast.error(`Failed to load transfers: ${_error.message}`);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadAttachments = async (packetId: string) => {
-    try {
-      const data = await HandoffService.getAttachments(packetId);
-      setAttachments(data);
-    } catch (error: any) {
-
     }
   };
 
@@ -141,9 +130,9 @@ const ReceivingDashboard: React.FC<ReceivingFacilityDashboardProps> = ({
 
       // Refresh to ensure sync with server
       loadPackets();
-    } catch (error: any) {
+    } catch (_error: any) {
       // Rollback on error - reload all packets
-      toast.error(`Failed to acknowledge: ${error.message}`);
+      toast.error(`Failed to acknowledge: ${_error.message}`);
       loadPackets();
     } finally {
       setAcknowledging(false);
@@ -155,22 +144,8 @@ const ReceivingDashboard: React.FC<ReceivingFacilityDashboardProps> = ({
       const url = await HandoffService.getAttachmentUrl(attachment);
       window.open(url, '_blank');
       toast.success('Opening attachment...');
-    } catch (error: any) {
-      toast.error(`Failed to download attachment: ${error.message}`);
-    }
-  };
-
-  const decryptPatientInfo = async (packet: HandoffPacket) => {
-    try {
-      const name = packet.patient_name_encrypted
-        ? await HandoffService.decryptPHI(packet.patient_name_encrypted)
-        : 'N/A';
-      const dob = packet.patient_dob_encrypted
-        ? await HandoffService.decryptPHI(packet.patient_dob_encrypted)
-        : 'N/A';
-      return { name, dob };
-    } catch {
-      return { name: '[Decryption Error]', dob: '[Decryption Error]' };
+    } catch (_error: any) {
+      toast.error(`Failed to download attachment: ${_error.message}`);
     }
   };
 

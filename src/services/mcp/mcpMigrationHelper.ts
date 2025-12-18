@@ -16,7 +16,7 @@ export const claudeService = {
    */
   async analyze(options: {
     prompt: string;
-    context?: Record<string, any>;
+    context?: Record<string, unknown>;
     userId?: string;
     model?: 'haiku' | 'sonnet';
   }): Promise<string> {
@@ -40,7 +40,7 @@ export const claudeService = {
    */
   async generateSuggestion(options: {
     task: string;
-    context: Record<string, any>;
+    context: Record<string, unknown>;
     userId?: string;
   }): Promise<string> {
     const result = await mcpOptimizer.call({
@@ -87,7 +87,7 @@ export const claudeService = {
         status: result.response.includes('OK') ? 'healthy' : 'unhealthy',
         model: result.model,
       };
-    } catch (error) {
+    } catch {
       return {
         status: 'unhealthy',
         model: 'unknown',
@@ -117,7 +117,7 @@ export const mcpServices = {
   /**
    * Billing code generation - Optimized for caching
    */
-  async generateBillingCodes(encounterData: Record<string, any>, userId?: string) {
+  async generateBillingCodes(encounterData: Record<string, unknown>, userId?: string) {
     return mcpOptimizer.generateBillingCodes(encounterData, userId);
   },
 
@@ -131,7 +131,7 @@ export const mcpServices = {
   /**
    * Dashboard recommendations - Uses Haiku for cost savings
    */
-  async getDashboardRecommendations(userBehavior: Record<string, any>, userId?: string) {
+  async getDashboardRecommendations(userBehavior: Record<string, unknown>, userId?: string) {
     return mcpOptimizer.getDashboardRecommendations(userBehavior, userId);
   },
 

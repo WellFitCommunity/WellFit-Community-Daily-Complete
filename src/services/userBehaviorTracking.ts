@@ -57,7 +57,7 @@ export class UserBehaviorTracker {
         role: interaction.role,
         created_at: interaction.timestamp.toISOString()
       });
-    } catch (error) {
+    } catch {
 
       // Fail silently - tracking should never break the app
     }
@@ -125,7 +125,7 @@ export class UserBehaviorTracker {
 
       // Sort by frequency score
       return patterns.sort((a, b) => b.frequencyScore - a.frequencyScore);
-    } catch (error) {
+    } catch {
 
       return []; // Return empty array on error (no localStorage fallback)
     }
@@ -158,7 +158,7 @@ export class UserBehaviorTracker {
         .from('admin_usage_tracking')
         .delete()
         .eq('user_id', userId);
-    } catch (error) {
+    } catch {
 
     }
   }

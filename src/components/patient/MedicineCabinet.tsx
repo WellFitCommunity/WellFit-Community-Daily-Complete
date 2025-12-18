@@ -18,24 +18,21 @@ import { Medication } from '../../api/medications';
 import { toast } from 'react-toastify';
 import {
   Camera,
-  Plus,
   Pill,
   Clock,
   Calendar,
   TrendingUp,
   AlertTriangle,
   CheckCircle,
-  XCircle,
-  Edit,
   Trash2,
   Bell,
   Upload,
   Sparkles,
-  Activity,
   BarChart3,
   Info,
   Search,
-  Shield
+  Shield,
+  Activity
 } from 'lucide-react';
 import { PillIdentifier } from './PillIdentifier';
 
@@ -111,7 +108,7 @@ export function MedicineCabinet() {
       } else {
         toast.error(result?.error || 'Failed to scan medication');
       }
-    } catch (err) {
+    } catch {
       toast.error('Error scanning medication label');
     }
   };
@@ -315,7 +312,6 @@ export function MedicineCabinet() {
               <MedicationCard
                 key={med.id}
                 medication={med}
-                onEdit={() => setSelectedMedication(med)}
                 onDelete={() => handleDeleteMedication(med.id)}
                 onTakeDose={() => handleTakeDose(med.id)}
                 onAddReminder={() => handleAddReminder(med.id)}
@@ -436,21 +432,18 @@ export function MedicineCabinet() {
 // Medication Card Component
 function MedicationCard({
   medication,
-  onEdit,
   onDelete,
   onTakeDose,
   onAddReminder,
   onVerifyPill
 }: {
   medication: Medication;
-  onEdit: () => void;
   onDelete: () => void;
   onTakeDose: () => void;
   onAddReminder: () => void;
   onVerifyPill: () => void;
 }) {
   const needsReview = medication.needs_review;
-  const lowConfidence = (medication.ai_confidence || 0) < 0.7;
   const needsRefillSoon = medication.next_refill_date &&
     new Date(medication.next_refill_date) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 

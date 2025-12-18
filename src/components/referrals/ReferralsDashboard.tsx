@@ -223,8 +223,8 @@ export const ReferralsDashboard: React.FC = () => {
         alertsToday: (alertsData || []).length,
         engagementRate: 78, // Would be calculated from engagement data
       });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load dashboard');
+    } catch (_err) {
+      setError(_err instanceof Error ? _err.message : 'Failed to load dashboard');
     } finally {
       setLoading(false);
     }
@@ -237,7 +237,7 @@ export const ReferralsDashboard: React.FC = () => {
         .update({ status: 'accepted', updated_at: new Date().toISOString() })
         .eq('id', referralId);
       loadDashboard();
-    } catch (err) {
+    } catch {
       // Handle error
     }
   };
@@ -249,7 +249,7 @@ export const ReferralsDashboard: React.FC = () => {
         .update({ status: 'declined', updated_at: new Date().toISOString() })
         .eq('id', referralId);
       loadDashboard();
-    } catch (err) {
+    } catch {
       // Handle error
     }
   };
@@ -261,7 +261,7 @@ export const ReferralsDashboard: React.FC = () => {
         .update({ acknowledged: true })
         .eq('id', alertId);
       setAlerts(alerts.filter(a => a.id !== alertId));
-    } catch (err) {
+    } catch {
       // Handle error
     }
   };

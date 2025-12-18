@@ -98,7 +98,7 @@ export interface ToolExecutionContext {
 /**
  * Tool execution result
  */
-export interface ToolExecutionResult<T = any> {
+export interface ToolExecutionResult<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;

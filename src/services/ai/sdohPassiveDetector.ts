@@ -431,7 +431,7 @@ Return empty array [] if no SDOH concerns detected.`;
         return result.data ?? null;
       }
       return null;
-    } catch (error) {
+    } catch {
       // Don't fail the detection if tracking fails
       return null;
     }
@@ -502,7 +502,7 @@ Return empty array [] if no SDOH concerns detected.`;
         notes: `Auto-detected via passive detection. ${detection.aiRationale}`,
         z_code: detection.zCodeMapping
       });
-    } catch (error) {
+    } catch {
       // Don't fail detection if indicator creation fails
     }
   }
@@ -572,7 +572,7 @@ Return empty array [] if no SDOH concerns detected.`;
           results.processed++;
           results.detections += result.totalDetections;
           results.cost += result.aiCost;
-        } catch (error) {
+        } catch {
           // Continue processing other items
         }
       }

@@ -86,7 +86,7 @@ export async function exampleNurseHandoffSummary(
 // ============================================================================
 
 export async function exampleSDOHRiskAssessment(
-  patientIntake: any,
+  patientIntake: Record<string, unknown>,
   socialWorkerId: string
 ) {
   const intake = {
@@ -255,7 +255,7 @@ export async function examplePatientEducation(
 // ============================================================================
 
 export async function examplePriorAuthLetter(
-  patientInfo: any,
+  patientInfo: Record<string, unknown>,
   procedure: string,
   providerId: string
 ) {
@@ -290,7 +290,7 @@ export async function examplePriorAuthLetter(
 
 export async function exampleTriageSeverity(
   chiefComplaint: string,
-  vitals: any,
+  vitals: Record<string, unknown>,
   symptoms: string[],
   nurseId: string
 ) {
@@ -321,8 +321,8 @@ export async function exampleTriageSeverity(
 // ============================================================================
 
 export async function exampleLabInterpretation(
-  labResults: any,
-  patientContext: any,
+  labResults: Record<string, unknown>,
+  patientContext: Record<string, unknown>,
   providerId: string
 ) {
   const interpretation = await analyzeText({
@@ -351,8 +351,8 @@ export async function exampleLabInterpretation(
 // ============================================================================
 
 export async function exampleDischargeSummary(
-  admissionData: any,
-  hospitalization: any,
+  admissionData: Record<string, unknown>,
+  hospitalization: Record<string, unknown>,
   providerId: string
 ) {
   const summary = await generateSuggestion({
@@ -397,8 +397,8 @@ export async function exampleDischargeSummary(
 //     try {
 //       const codes = await exampleGenerateBillingCodes(currentUser.id);
 //       setBillingCodes(codes);
-//     } catch (error) {
-//       console.error('Failed to generate codes:', error);
+//     } catch {
+//       // Error handled by toast
 //       toast.error('Could not generate billing codes');
 //     }
 //   };

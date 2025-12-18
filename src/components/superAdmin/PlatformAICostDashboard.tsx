@@ -7,7 +7,7 @@
  * Copyright © 2025 Envision VirtualEdge Group LLC. All rights reserved.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { DollarSign, TrendingUp, Zap, AlertCircle, Building2, Activity } from 'lucide-react';
 import { auditLogger } from '../../services/auditLogger';
@@ -37,11 +37,7 @@ const PlatformAICostDashboard: React.FC = () => {
   const [tenantCosts, setTenantCosts] = useState<TenantAICost[]>([]);
   const [timeRange, setTimeRange] = useState<'24h' | '7d' | '30d'>('30d');
 
-  useEffect(() => {
-    loadAICosts();
-  }, [timeRange]);
-
-  const loadAICosts = async () => {
+  const loadAICosts = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -129,7 +125,11 @@ const PlatformAICostDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [timeRange]);
+
+  useEffect(() => {
+    loadAICosts();
+  }, [loadAICosts]);
 
   const formatCost = (cost: number) => {
     return new Intl.NumberFormat('en-US', {

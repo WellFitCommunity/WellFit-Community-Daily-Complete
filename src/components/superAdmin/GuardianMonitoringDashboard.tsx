@@ -7,7 +7,7 @@
  * Copyright © 2025 Envision VirtualEdge Group LLC. All rights reserved.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { Shield, AlertTriangle, CheckCircle, XCircle, Activity, Clock, TrendingUp, Zap } from 'lucide-react';
 import { auditLogger } from '../../services/auditLogger';
@@ -50,11 +50,7 @@ const GuardianMonitoringDashboard: React.FC = () => {
   const [healthCheckRunning, setHealthCheckRunning] = useState(false);
   const [timeRange, setTimeRange] = useState<'24h' | '7d' | '30d'>('24h');
 
-  useEffect(() => {
-    loadGuardianMetrics();
-  }, [timeRange]);
-
-  const loadGuardianMetrics = async () => {
+  const loadGuardianMetrics = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -138,7 +134,11 @@ const GuardianMonitoringDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [timeRange]);
+
+  useEffect(() => {
+    loadGuardianMetrics();
+  }, [loadGuardianMetrics]);
 
   const runHealthCheck = async () => {
     try {

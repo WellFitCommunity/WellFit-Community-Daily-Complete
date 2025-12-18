@@ -93,7 +93,7 @@ export default function UserQuestions({
         // Use mock data if no loader provided
         setQuestions(mockQuestions);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load questions');
       // Fallback to mock data
       setQuestions(mockQuestions);
@@ -123,7 +123,7 @@ export default function UserQuestions({
       setNewQuestion('');
       setCategory('general');
       loadQuestions();
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to submit question');
     } finally {
       setSubmitting(false);
@@ -147,7 +147,7 @@ export default function UserQuestions({
       setResponseText('');
       setRespondingTo(null);
       loadQuestions();
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to submit response');
     } finally {
       setSubmitting(false);

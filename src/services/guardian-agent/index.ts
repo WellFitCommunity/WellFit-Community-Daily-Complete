@@ -55,7 +55,7 @@ export {
  *
  *    try {
  *      // your code
- *    } catch (error) {
+ *    } catch {
  *      getGuardianAgent().reportIssue(error, { component: 'MyComponent' });
  *    }
  *

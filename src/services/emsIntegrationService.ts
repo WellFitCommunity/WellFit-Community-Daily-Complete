@@ -250,7 +250,7 @@ async function documentEMSVitals(
         if (!error && data) {
           observationIds.push(data.id);
         }
-      } catch (err) {
+      } catch {
 
       }
     }
@@ -319,7 +319,7 @@ async function generateBillingCodesFromHandoff(
         },
       })
       .eq('id', encounterId);
-  } catch (err) {
+  } catch {
 
   }
 
@@ -343,7 +343,7 @@ async function linkHandoffToPatient(
         integrated_at: new Date().toISOString(),
       })
       .eq('id', handoffId);
-  } catch (err) {
+  } catch {
 
   }
 }
@@ -398,7 +398,7 @@ export async function getHandoffIntegrationStatus(
     }
 
     return { isIntegrated: false };
-  } catch (err) {
+  } catch {
     return { isIntegrated: false };
   }
 }

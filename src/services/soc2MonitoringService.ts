@@ -191,7 +191,7 @@ export class SOC2MonitoringService {
       }
 
       return data as SecurityMetrics;
-    } catch (error) {
+    } catch {
 
       return null;
     }
@@ -236,7 +236,7 @@ export class SOC2MonitoringService {
       }
 
       return (data as SecurityEvent[]) || [];
-    } catch (error) {
+    } catch {
 
       return [];
     }
@@ -286,7 +286,7 @@ export class SOC2MonitoringService {
       }
 
       return (data as AuditLog[]) || [];
-    } catch (error) {
+    } catch {
 
       return [];
     }
@@ -308,7 +308,7 @@ export class SOC2MonitoringService {
       }
 
       return (data as PHIAccessAudit[]) || [];
-    } catch (error) {
+    } catch {
 
       return [];
     }
@@ -330,7 +330,7 @@ export class SOC2MonitoringService {
       }
 
       return (data as SecurityEventsAnalysis[]) || [];
-    } catch (error) {
+    } catch {
 
       return [];
     }
@@ -348,7 +348,7 @@ export class SOC2MonitoringService {
       // Apply pagination limit to prevent unbounded queries
       // Limit to 100 audit summary stats for performance
       return await applyLimit<AuditSummaryStats>(query, PAGINATION_LIMITS.AUDIT_LOGS);
-    } catch (error) {
+    } catch {
 
       return [];
     }
@@ -366,7 +366,7 @@ export class SOC2MonitoringService {
       // Apply pagination limit to prevent unbounded queries
       // Limit to 100 encryption keys for performance
       return await applyLimit<EncryptionStatus>(query, PAGINATION_LIMITS.AUDIT_LOGS);
-    } catch (error) {
+    } catch {
 
       return [];
     }
@@ -384,7 +384,7 @@ export class SOC2MonitoringService {
       // Apply pagination limit to prevent unbounded queries
       // Limit to 100 incident response items for performance
       return await applyLimit<IncidentResponseItem>(query, PAGINATION_LIMITS.ALERTS);
-    } catch (error) {
+    } catch {
 
       return [];
     }
@@ -402,7 +402,7 @@ export class SOC2MonitoringService {
       // Apply pagination limit to prevent unbounded queries
       // Limit to 100 compliance controls for performance
       return await applyLimit<ComplianceStatus>(query, PAGINATION_LIMITS.AUDIT_LOGS);
-    } catch (error) {
+    } catch {
 
       return [];
     }
@@ -432,7 +432,7 @@ export class SOC2MonitoringService {
       }
 
       return true;
-    } catch (error) {
+    } catch {
 
       return false;
     }
@@ -463,7 +463,7 @@ export class SOC2MonitoringService {
       }
 
       return true;
-    } catch (error) {
+    } catch {
 
       return false;
     }
@@ -506,7 +506,7 @@ export class SOC2MonitoringService {
         complianceScore,
         trendDirection,
       };
-    } catch (error) {
+    } catch {
 
       return null;
     }

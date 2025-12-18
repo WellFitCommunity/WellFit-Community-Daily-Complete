@@ -18,6 +18,63 @@
 
 import type { EHRAdapter, AdapterMetadata, AdapterConfig } from '../UniversalAdapterRegistry';
 
+// FHIR R4 Type Definitions
+interface FHIRBundle {
+  resourceType: 'Bundle';
+  entry?: Array<{
+    resource: FHIRResource;
+  }>;
+  [key: string]: unknown;
+}
+
+interface FHIRResource {
+  resourceType: string;
+  id?: string;
+  [key: string]: unknown;
+}
+
+interface FHIRCapabilityStatement extends FHIRResource {
+  resourceType: 'CapabilityStatement';
+  software?: {
+    name?: string;
+    version?: string;
+  };
+  fhirVersion?: string;
+  publisher?: string;
+  implementation?: {
+    description?: string;
+  };
+  rest?: Array<{
+    resource?: Array<{
+      extension?: Array<{
+        url?: string;
+      }>;
+    }>;
+  }>;
+}
+
+interface OAuthTokenResponse {
+  access_token: string;
+  refresh_token?: string;
+  expires_in?: number;
+  token_type?: string;
+}
+
+interface SMARTConfiguration {
+  token_endpoint?: string;
+  [key: string]: unknown;
+}
+
+interface FHIROperationOutcome extends FHIRResource {
+  resourceType: 'OperationOutcome';
+  issue?: Array<{
+    diagnostics?: string;
+    details?: {
+      text?: string;
+    };
+  }>;
+}
+
 interface CernerConfig extends AdapterConfig {
   // Cerner-specific configuration
   tenantId?: string; // Cerner Millennium tenant ID
@@ -93,9 +150,9 @@ export class CernerFHIRAdapter implements EHRAdapter {
 
   }
 
-  async test(): Promise<{ success: boolean; message: string; details?: any }> {
+  async test(): Promise<{ success: boolean; message: string; details?: Record<string, unknown> }> {
     try {
-      const response = await this.fetchFHIR('/metadata');
+      const response = await this.fetchFHIR('/metadata') as FHIRCapabilityStatement;
 
       if (response.resourceType === 'CapabilityStatement') {
         // Validate it's Cerner
@@ -124,9 +181,10 @@ export class CernerFHIRAdapter implements EHRAdapter {
       }
 
       return { success: false, message: 'Invalid FHIR response' };
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.status = 'error';
-      return { success: false, message: error.message };
+      const message = error instanceof Error ? error.message : 'Unknown error occurred';
+      return { success: false, message };
     }
   }
 
@@ -151,7 +209,7 @@ export class CernerFHIRAdapter implements EHRAdapter {
     lastModified?: Date;
     limit?: number;
     offset?: number;
-  }): Promise<any[]> {
+  }): Promise<FHIRResource[]> {
     const searchParams = new URLSearchParams();
 
     if (params?.ids?.length) {
@@ -170,11 +228,11 @@ export class CernerFHIRAdapter implements EHRAdapter {
     return this.extractResources(bundle);
   }
 
-  async fetchPatient(id: string): Promise<any> {
+  async fetchPatient(id: string): Promise<FHIRResource> {
     return await this.fetchFHIR(`/Patient/${id}`);
   }
 
-  async fetchEncounters(patientId: string, params?: { since?: Date }): Promise<any[]> {
+  async fetchEncounters(patientId: string, params?: { since?: Date }): Promise<FHIRResource[]> {
     const searchParams = new URLSearchParams({
       patient: patientId,
       _sort: '-date',
@@ -194,7 +252,7 @@ export class CernerFHIRAdapter implements EHRAdapter {
   async fetchObservations(
     patientId: string,
     params?: { category?: string; since?: Date }
-  ): Promise<any[]> {
+  ): Promise<FHIRResource[]> {
     const searchParams = new URLSearchParams({
       patient: patientId,
       _sort: '-date',
@@ -215,7 +273,7 @@ export class CernerFHIRAdapter implements EHRAdapter {
     return this.extractResources(bundle);
   }
 
-  async fetchMedications(patientId: string): Promise<any[]> {
+  async fetchMedications(patientId: string): Promise<FHIRResource[]> {
     // Cerner recommends MedicationRequest for active medications
     const bundle = await this.fetchFHIR(
       `/MedicationRequest?patient=${patientId}&status=active,completed&_count=50`
@@ -223,7 +281,7 @@ export class CernerFHIRAdapter implements EHRAdapter {
     return this.extractResources(bundle);
   }
 
-  async fetchConditions(patientId: string): Promise<any[]> {
+  async fetchConditions(patientId: string): Promise<FHIRResource[]> {
     // Cerner-specific: Use clinical-status parameter
     const bundle = await this.fetchFHIR(
       `/Condition?patient=${patientId}&clinical-status=active,recurrence,remission&_count=50`
@@ -231,28 +289,28 @@ export class CernerFHIRAdapter implements EHRAdapter {
     return this.extractResources(bundle);
   }
 
-  async fetchAllergies(patientId: string): Promise<any[]> {
+  async fetchAllergies(patientId: string): Promise<FHIRResource[]> {
     const bundle = await this.fetchFHIR(
       `/AllergyIntolerance?patient=${patientId}&clinical-status=active,resolved`
     );
     return this.extractResources(bundle);
   }
 
-  async fetchImmunizations(patientId: string): Promise<any[]> {
+  async fetchImmunizations(patientId: string): Promise<FHIRResource[]> {
     const bundle = await this.fetchFHIR(
       `/Immunization?patient=${patientId}&_count=50&_sort=-date`
     );
     return this.extractResources(bundle);
   }
 
-  async fetchProcedures(patientId: string): Promise<any[]> {
+  async fetchProcedures(patientId: string): Promise<FHIRResource[]> {
     const bundle = await this.fetchFHIR(
       `/Procedure?patient=${patientId}&_count=50&_sort=-date`
     );
     return this.extractResources(bundle);
   }
 
-  async fetchCarePlans(patientId: string): Promise<any[]> {
+  async fetchCarePlans(patientId: string): Promise<FHIRResource[]> {
     const bundle = await this.fetchFHIR(
       `/CarePlan?patient=${patientId}&status=active,completed&_count=50`
     );
@@ -262,7 +320,7 @@ export class CernerFHIRAdapter implements EHRAdapter {
   /**
    * Cerner-specific: Fetch diagnostic reports
    */
-  async fetchDiagnosticReports(patientId: string, params?: { category?: string }): Promise<any[]> {
+  async fetchDiagnosticReports(patientId: string, params?: { category?: string }): Promise<FHIRResource[]> {
     const searchParams = new URLSearchParams({
       patient: patientId,
       _count: '50',
@@ -279,15 +337,15 @@ export class CernerFHIRAdapter implements EHRAdapter {
   /**
    * Cerner-specific: Fetch clinical documents (DocumentReference)
    */
-  async fetchDocuments(patientId: string): Promise<any[]> {
+  async fetchDocuments(patientId: string): Promise<FHIRResource[]> {
     const bundle = await this.fetchFHIR(
       `/DocumentReference?patient=${patientId}&_count=50&_sort=-date`
     );
     return this.extractResources(bundle);
   }
 
-  async getCapabilities(): Promise<any> {
-    return await this.fetchFHIR('/metadata');
+  async getCapabilities(): Promise<FHIRCapabilityStatement> {
+    return await this.fetchFHIR('/metadata') as FHIRCapabilityStatement;
   }
 
   supportsFeature(feature: string): boolean {
@@ -325,9 +383,9 @@ export class CernerFHIRAdapter implements EHRAdapter {
       throw new Error(`Cerner authentication failed: ${response.status} - ${error}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as OAuthTokenResponse;
     this.authToken = `Bearer ${data.access_token}`;
-    this.refreshToken = data.refresh_token;
+    this.refreshToken = data.refresh_token || '';
 
     if (data.expires_in) {
       this.tokenExpiry = new Date(Date.now() + data.expires_in * 1000);
@@ -346,13 +404,13 @@ export class CernerFHIRAdapter implements EHRAdapter {
         throw new Error('SMART configuration not found');
       }
 
-      const config = await response.json();
+      const config = await response.json() as SMARTConfiguration;
       if (!config.token_endpoint) {
         throw new Error('Token endpoint not found in SMART configuration');
       }
 
       return config.token_endpoint;
-    } catch (error) {
+    } catch {
       // Fallback to Cerner's authorization server
 
       return `${this.authUrl}/protocol/openid-connect/token`;
@@ -386,7 +444,7 @@ export class CernerFHIRAdapter implements EHRAdapter {
       throw new Error('Token refresh failed');
     }
 
-    const data = await response.json();
+    const data = await response.json() as OAuthTokenResponse;
     this.authToken = `Bearer ${data.access_token}`;
 
     if (data.expires_in) {
@@ -400,7 +458,7 @@ export class CernerFHIRAdapter implements EHRAdapter {
   // HELPER METHODS (Cerner-specific)
   // ========================================================================
 
-  private async fetchFHIR(path: string, options?: RequestInit): Promise<any> {
+  private async fetchFHIR(path: string, options?: RequestInit): Promise<FHIRResource> {
     // Check token expiry
     if (this.tokenExpiry && new Date() >= this.tokenExpiry) {
 
@@ -437,7 +495,7 @@ export class CernerFHIRAdapter implements EHRAdapter {
     const contentType = response.headers.get('content-type');
 
     if (contentType?.includes('application/fhir+json')) {
-      const outcome = await response.json();
+      const outcome = await response.json() as FHIROperationOutcome;
       const issue = outcome.issue?.[0];
       throw new Error(
         `Cerner FHIR Error [${response.status}]: ${issue?.diagnostics || issue?.details?.text || response.statusText}`
@@ -474,7 +532,7 @@ export class CernerFHIRAdapter implements EHRAdapter {
   /**
    * Extract Millennium version from capability statement
    */
-  private extractMillenniumVersion(capability: any): string {
+  private extractMillenniumVersion(capability: FHIRCapabilityStatement): string {
     // Cerner includes Millennium version in implementation description
     const impl = capability.implementation;
     if (impl?.description) {
@@ -487,15 +545,15 @@ export class CernerFHIRAdapter implements EHRAdapter {
   /**
    * Detect Cerner proprietary extensions
    */
-  private detectCernerExtensions(capability: any): string[] {
+  private detectCernerExtensions(capability: FHIRCapabilityStatement): string[] {
     const extensions: string[] = [];
 
     // Check for Cerner-specific extensions in supported resources
     const resources = capability.rest?.[0]?.resource || [];
 
-    resources.forEach((resource: any) => {
+    resources.forEach((resource) => {
       if (resource.extension) {
-        resource.extension.forEach((ext: any) => {
+        resource.extension.forEach((ext) => {
           if (ext.url?.includes('cerner')) {
             extensions.push(ext.url);
           }
@@ -506,11 +564,12 @@ export class CernerFHIRAdapter implements EHRAdapter {
     return [...new Set(extensions)]; // Deduplicate
   }
 
-  private extractResources(bundle: any): any[] {
+  private extractResources(bundle: FHIRResource): FHIRResource[] {
     if (bundle.resourceType !== 'Bundle') {
       return [bundle];
     }
 
-    return (bundle.entry || []).map((entry: any) => entry.resource);
+    const bundleData = bundle as FHIRBundle;
+    return (bundleData.entry || []).map((entry) => entry.resource);
   }
 }

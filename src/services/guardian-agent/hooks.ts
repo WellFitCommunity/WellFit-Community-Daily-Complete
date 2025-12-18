@@ -11,8 +11,8 @@ import { AgentState, DetectedIssue } from './types';
  */
 export function useGuardianAgent() {
   const [state, setState] = useState<AgentState | null>(null);
-  const [statistics, setStatistics] = useState<any>(null);
-  const [health, setHealth] = useState<any>(null);
+  const [statistics, setStatistics] = useState<Record<string, unknown> | null>(null);
+  const [health, setHealth] = useState<{ status: 'healthy' | 'degraded' | 'critical'; details: Record<string, unknown> } | null>(null);
 
   const agent = getGuardianAgent();
 
@@ -31,7 +31,7 @@ export function useGuardianAgent() {
   }, [refresh]);
 
   const reportIssue = useCallback(
-    async (error: Error, context?: any) => {
+    async (error: Error, context?: Record<string, unknown>) => {
       await agent.reportIssue(error, context);
       refresh();
     },
@@ -48,7 +48,7 @@ export function useGuardianAgent() {
   );
 
   const updateConfig = useCallback(
-    (config: any) => {
+    (config: Record<string, unknown>) => {
       agent.updateConfig(config);
       refresh();
     },

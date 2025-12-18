@@ -197,7 +197,7 @@ export class AISystemRecorder {
         // Put events back in buffer on failure
         this.eventBuffer = [...eventsToUpload, ...this.eventBuffer];
       }
-    } catch (error) {
+    } catch {
       // Silent fail - events will be retried
       this.eventBuffer = [...eventsToUpload, ...this.eventBuffer];
     }
@@ -546,7 +546,7 @@ export class AISystemRecorder {
   }
 
   private getPerformanceMetrics() {
-    const memory = (performance as unknown as { memory?: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number } }).memory;
+    const memory = (performance as { memory?: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number } }).memory;
 
     return {
       memory_used: memory?.usedJSHeapSize,

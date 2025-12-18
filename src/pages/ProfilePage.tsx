@@ -1,5 +1,5 @@
 // ProfilePage - Senior-friendly profile management with photo upload
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSupabaseClient, useUser } from '../contexts/AuthContext';
 import { useBranding } from '../BrandingContext';
 import { useNavigate } from 'react-router-dom';
@@ -33,15 +33,7 @@ const ProfilePage: React.FC = () => {
   const [checkInCount, setCheckInCount] = useState(0);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  useEffect(() => {
-    if (user?.id) {
-      loadProfile();
-      loadStats();
-    }
-     
-  }, [user?.id]);
-
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     if (!user?.id) return;
 
     try {
@@ -58,9 +50,9 @@ const ProfilePage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id, supabase]);
 
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     if (!user?.id) return;
 
     try {
@@ -82,7 +74,14 @@ const ProfilePage: React.FC = () => {
     } catch (error) {
 
     }
-  };
+  }, [user?.id, supabase]);
+
+  useEffect(() => {
+    if (user?.id) {
+      loadProfile();
+      loadStats();
+    }
+  }, [user?.id, loadProfile, loadStats]);
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!event.target.files || event.target.files.length === 0 || !user?.id || !profile) {

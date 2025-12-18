@@ -334,7 +334,7 @@ export class PostAcuteTransferService {
         };
       }
 
-    } catch (error) {
+    } catch {
 
       // Continue with partial data
     }
@@ -462,7 +462,7 @@ ${packet.sender_notes ? `\nNotes:\n${packet.sender_notes}` : ''}
       `.trim();
 
       return summary;
-    } catch (error) {
+    } catch {
 
       return 'Error generating summary';
     }

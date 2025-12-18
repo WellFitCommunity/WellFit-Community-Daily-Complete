@@ -570,7 +570,7 @@ export class HandoffService {
         user_email: user?.email,
         metadata: metadata || {},
       });
-    } catch (error) {
+    } catch {
       // Don't throw - logging errors shouldn't break main flow
 
     }
@@ -654,7 +654,7 @@ export class HandoffService {
 
       if (error) throw error;
       return encrypted || data; // Fallback to plaintext if encryption fails (logged in DB)
-    } catch (error) {
+    } catch {
 
       // In production, you may want to throw instead of fallback
       return data;
@@ -674,7 +674,7 @@ export class HandoffService {
 
       if (error) throw error;
       return decrypted || encryptedData; // Fallback to showing encrypted if decryption fails
-    } catch (error) {
+    } catch {
 
       return encryptedData;
     }

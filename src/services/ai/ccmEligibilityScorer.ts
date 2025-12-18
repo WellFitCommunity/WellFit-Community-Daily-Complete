@@ -550,7 +550,7 @@ Return response as strict JSON:
         .eq('tenant_id', tenantId)
         .order('assessment_date', { ascending: false })
         .limit(1);
-    } catch (error) {
+    } catch {
       // Don't fail assessment if enrollment initiation fails
     }
   }
@@ -639,7 +639,7 @@ Return response as strict JSON:
         }
         results.predictedRevenue += assessment.predictedMonthlyReimbursement;
         results.cost += assessment.aiCost;
-      } catch (error) {
+      } catch {
         // Continue processing other patients
       }
     }

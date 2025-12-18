@@ -71,17 +71,18 @@ const HospitalTransferPortal: React.FC = () => {
   const [transfers, setTransfers] = useState<TransferPacket[]>([]);
   const [selectedTransfer, setSelectedTransfer] = useState<TransferPacket | null>(null);
 
-  // Demo data for Methodist presentation
-  const demoMetrics: TransferMetrics = {
-    pendingOutgoing: 3,
-    pendingIncoming: 2,
-    inTransit: 4,
-    completedToday: 12,
-    avgTransferTime: '47 min',
-    complianceRate: 98.5,
-  };
+  useEffect(() => {
+    // Demo data for Methodist presentation
+    const demoMetrics: TransferMetrics = {
+      pendingOutgoing: 3,
+      pendingIncoming: 2,
+      inTransit: 4,
+      completedToday: 12,
+      avgTransferTime: '47 min',
+      complianceRate: 98.5,
+    };
 
-  const demoTransfers: TransferPacket[] = [
+    const demoTransfers: TransferPacket[] = [
     {
       id: '1',
       patientName: 'Robert Martinez',
@@ -166,7 +167,6 @@ const HospitalTransferPortal: React.FC = () => {
     },
   ];
 
-  useEffect(() => {
     const timer = setTimeout(() => {
       setMetrics(demoMetrics);
       setTransfers(demoTransfers);

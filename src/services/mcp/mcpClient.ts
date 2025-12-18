@@ -15,12 +15,12 @@ export interface MCPConfig {
 
 export interface MCPCallOptions {
   tool: string;
-  arguments: Record<string, any>;
+  arguments: Record<string, unknown>;
   userId?: string;
   timeout?: number;
 }
 
-export interface MCPResponse<T = any> {
+export interface MCPResponse<T = unknown> {
   content: Array<{ type: string; text: string }>;
   metadata?: {
     inputTokens?: number;
@@ -55,7 +55,7 @@ export class MCPClient {
   /**
    * Call an MCP tool via Edge Function
    */
-  async callTool<T = any>(options: MCPCallOptions): Promise<MCPResponse<T>> {
+  async callTool<T = unknown>(options: MCPCallOptions): Promise<MCPResponse<T>> {
     if (!this.initialized) {
       await this.initialize();
     }
@@ -111,7 +111,7 @@ export class MCPClient {
   /**
    * List available tools
    */
-  async listTools(): Promise<any[]> {
+  async listTools(): Promise<unknown[]> {
     if (!this.initialized) {
       await this.initialize();
     }

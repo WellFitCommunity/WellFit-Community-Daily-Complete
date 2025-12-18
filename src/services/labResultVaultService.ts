@@ -58,7 +58,7 @@ export class LabResultVaultService {
       }));
 
       return parsedLabs;
-    } catch (error) {
+    } catch {
 
       // Fallback: Use regex-based extraction for common formats
       return this.fallbackRegexParsing(file);
@@ -107,7 +107,7 @@ export class LabResultVaultService {
       if (error) throw error;
 
 
-    } catch (error) {
+    } catch {
 
     }
   }
@@ -138,7 +138,7 @@ export class LabResultVaultService {
       // Apply pagination limit to prevent unbounded queries
       // Limit to 50 most recent lab results for performance
       return await applyLimit<ParsedLabResult>(query, PAGINATION_LIMITS.LABS);
-    } catch (error) {
+    } catch {
 
       return [];
     }
@@ -329,7 +329,7 @@ export class LabResultVaultService {
       // Apply pagination limit to prevent unbounded queries
       // Limit to 50 most recent lab results per packet
       return await applyLimit<ParsedLabResult>(query, PAGINATION_LIMITS.LABS);
-    } catch (error) {
+    } catch {
 
       return [];
     }

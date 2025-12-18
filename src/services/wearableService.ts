@@ -264,10 +264,10 @@ export class WearableService {
    * Send vital sign alert to care team
    */
   static async sendVitalAlert(
-    userId: string,
-    vitalType: string,
-    value: number,
-    alertType?: 'high' | 'low' | 'irregular'
+    _userId: string,
+    _vitalType: string,
+    _value: number,
+    _alertType?: 'high' | 'low' | 'irregular'
   ): Promise<void> {
     // TODO: Integrate with notification system
 
@@ -632,7 +632,6 @@ export class WearableService {
       }
 
       // Get adapter from registry
-      const adapterId = this.mapDeviceTypeToAdapter(request.deviceType);
       const adapter = wearableRegistry.getConnection(connection.connection_id);
 
       if (!adapter) {
@@ -664,11 +663,11 @@ export class WearableService {
                 vital.metadata?.context as 'resting' | 'active' | 'sleeping' | undefined
               );
               syncedCount++;
-            } catch (error) {
+            } catch {
               failedCount++;
             }
           }
-        } catch (error) {
+        } catch {
           failedCount++;
         }
       }
@@ -697,11 +696,11 @@ export class WearableService {
                 }
               );
               syncedCount++;
-            } catch (error) {
+            } catch {
               failedCount++;
             }
           }
-        } catch (error) {
+        } catch {
           failedCount++;
         }
       }

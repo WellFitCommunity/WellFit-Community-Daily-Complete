@@ -8,8 +8,6 @@
 
 import { supabase } from '../lib/supabaseClient';
 import { claudeService } from './claudeService';
-import { PatientOutreachService } from './patientOutreachService';
-import { MentalHealthService } from './mentalHealthService';
 import { CareCoordinationService } from './careCoordinationService';
 import { DischargePlanningService } from './dischargePlanningService';
 import { UserRole, RequestType, ClaudeRequestContext } from '../types/claude';
@@ -22,7 +20,6 @@ import type {
   EnhancedCheckInResponse,
   MentalHealthScreeningTrigger,
   MentalHealthScreeningResult,
-  DischargedPatientSummary,
   CareTeamDashboardMetrics,
   DischargeToWellnessServiceResponse,
   WellnessBridgeConfig,
@@ -483,7 +480,7 @@ Provide a 2-3 sentence clinical summary. Focus on:
 
       const aiResponse = await claudeService.generateMedicalAnalytics(prompt, [], context);
       return aiResponse.content;
-    } catch (error) {
+    } catch {
 
       return `Patient check-in shows ${riskAnalysis.overall_risk_level} risk. ${riskAnalysis.warning_signs_detected.length > 0 ? `Concerns detected: ${riskAnalysis.warning_signs_detected.join(', ')}` : 'No major concerns detected.'}`;
     }
@@ -512,7 +509,7 @@ Provide a 2-3 sentence clinical summary. Focus on:
         },
         status: 'active',
       });
-    } catch (error) {
+    } catch {
 
     }
   }
@@ -677,7 +674,7 @@ Provide a 2-3 sentence clinical summary. Focus on:
   private static async sendMentalHealthScreening(
     patientId: string,
     screeningType: 'PHQ9' | 'GAD7' | 'both',
-    reason: string
+    _reason: string
   ): Promise<void> {
     try {
       const { data: profile } = await supabase
@@ -700,7 +697,7 @@ Takes only 2 minutes. Your responses help your care team support you better.`;
           body: { to: profile.phone, message },
         });
       }
-    } catch (error) {
+    } catch {
 
     }
   }

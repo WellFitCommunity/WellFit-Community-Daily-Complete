@@ -33,7 +33,7 @@ export async function analyzeText(params: {
  * Generate AI suggestions
  */
 export async function generateSuggestion(params: {
-  context: Record<string, any>;
+  context: Record<string, unknown>;
   task: string;
   model?: string;
   userId?: string;

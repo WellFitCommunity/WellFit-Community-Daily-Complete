@@ -169,7 +169,6 @@ const ClaudeCareAssistantPanel: React.FC<Props> = ({ userRole, patientId, userId
           <AdminTaskModule
             userRole={userRole}
             userId={userId}
-            availableTaskTypes={moduleConfig.availableTaskTypes}
             preferredModel={moduleConfig.preferredModel}
             voiceTemplateId={voiceTemplateId}
             voiceTranscription={voiceTranscription}

@@ -135,7 +135,7 @@ export default function AdminLoginPage() {
       }
     })();
     return () => { cancelled = true; };
-  }, [supabase, user?.id]);
+  }, [supabase, supabase.auth, user?.id]);
 
   const isUserAdmin = useMemo(() => {
     if (!user) return false;
