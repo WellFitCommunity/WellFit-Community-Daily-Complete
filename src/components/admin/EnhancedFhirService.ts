@@ -11,8 +11,163 @@ import FhirAiService, {
   type HealthStatistics
 } from './FhirAiService';
 
+// Type definitions for patient data structures
+interface PatientProfile {
+  id?: string;
+  user_id?: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  dob?: string;
+  age?: number;
+  [key: string]: unknown;
+}
+
+interface VitalsEntry {
+  created_at?: string;
+  bp_systolic?: number | null;
+  bp_diastolic?: number | null;
+  heart_rate?: number | null;
+  glucose_mg_dl?: number | null;
+  blood_sugar?: number | null;
+  pulse_oximeter?: number | null;
+  blood_oxygen?: number | null;
+  spo2?: number | null;
+  [key: string]: unknown;
+}
+
+interface CheckInRecord {
+  user_id: string;
+  created_at?: string;
+  [key: string]: unknown;
+}
+
+interface MedicationRecord {
+  medication_display?: string;
+  name?: string;
+  [key: string]: unknown;
+}
+
+interface ComprehensivePatientData {
+  profile?: PatientProfile;
+  checkIns?: CheckInRecord[];
+  vitals?: VitalsEntry[];
+  healthEntries?: VitalsEntry[];
+  medications?: MedicationRecord[];
+  medicationRequests?: MedicationRecord[];
+  conditions?: string[];
+}
+
+interface FhirBundle {
+  resourceType: string;
+  type: string;
+  entry?: Array<{ resource: Record<string, unknown> }>;
+  [key: string]: unknown;
+}
+
+interface CacheEntry {
+  data: ComprehensivePatientData | ComprehensivePatientData[];
+  timestamp: number;
+  ttl: number;
+}
+
+interface EvidenceBasedRecommendation {
+  recommendation: string;
+  evidenceLevel: 'A' | 'B' | 'C' | 'D';
+  source: string;
+  contraindications?: string[];
+}
+
+interface DrugInteraction {
+  medications: string[];
+  severity: string;
+  description: string;
+  recommendation: string;
+}
+
+interface ClinicalGuideline {
+  guideline: string;
+  organization: string;
+  applicability: number;
+  keyPoints: string[];
+  patientSpecificNotes?: string;
+}
+
+interface WeeklyReport {
+  period: string;
+  generatedAt: string;
+  summary: {
+    totalPatients: number;
+    activePatients: number;
+    highRiskPatients: number;
+    newEmergencyAlerts: number;
+  };
+  keyInsights: string[];
+  actionItems: string[];
+}
+
+interface MonthlyReport {
+  period: string;
+  generatedAt: string;
+  executiveSummary: {
+    populationHealth: number;
+    riskDistribution: Record<string, number>;
+    qualityScores: {
+      fhirCompliance: number;
+      dataQuality: number;
+      clinicalQuality: number;
+    };
+  };
+  trends: string[];
+  recommendations: ResourceRecommendation[];
+  nextMonthPredictions: PredictiveAlert[];
+}
+
+interface EmergencyReport {
+  alertCount: number;
+  generatedAt: string;
+  criticalAlerts: PredictiveAlert[];
+  immediateActions: string[];
+  escalationRequired: boolean;
+}
+
+interface FhirComplianceResult {
+  score: number;
+  issues: string[];
+  recommendations: string[];
+}
+
+interface DataQualityResult {
+  completeness: number;
+  accuracy: number;
+  consistency: number;
+  timeliness: number;
+  issues: Array<{ type: string; count: number; description: string; severity: 'LOW' | 'MEDIUM' | 'HIGH' }>;
+}
+
+interface ClinicalQualityResult {
+  adherenceToGuidelines: number;
+  outcomeMetrics: {
+    readmissionRate: number;
+    mortalityRate: number;
+    patientSatisfaction: number;
+    qualityOfLifeImprovement: number;
+  };
+}
+
+interface SmartSession {
+  accessToken: string;
+  patient: string;
+  [key: string]: unknown;
+}
+
+interface AiConfiguration {
+  [key: string]: unknown;
+}
+
 interface EnhancedPatientData {
-  fhirBundle: any;
+  fhirBundle: FhirBundle;
   aiInsights: PatientInsight;
   emergencyAlerts: EmergencyAlert[];
   recommendedActions: string[];
@@ -133,7 +288,7 @@ export class EnhancedFhirService {
   private fhirService: FHIRIntegrationService;
   private aiService: FhirAiService;
   private supabase: SupabaseClient;
-  private cache: Map<string, { data: any; timestamp: number; ttl: number }>;
+  private cache: Map<string, CacheEntry>;
 
   constructor() {
     this.fhirService = new FHIRIntegrationService();
@@ -323,10 +478,10 @@ export class EnhancedFhirService {
 
   // Automated reporting and insights generation
   async generateAutomatedReports(): Promise<{
-    weeklyReport: any;
-    monthlyReport: any;
-    emergencyReport: any;
-    qualityReport: any;
+    weeklyReport: WeeklyReport;
+    monthlyReport: MonthlyReport;
+    emergencyReport: EmergencyReport;
+    qualityReport: QualityMetrics;
   }> {
     try {
       const populationData = await this.fetchPopulationData();
@@ -347,7 +502,7 @@ export class EnhancedFhirService {
   }
 
   // Private helper methods
-  private async fetchComprehensivePatientData(userId: string): Promise<any> {
+  private async fetchComprehensivePatientData(userId: string): Promise<ComprehensivePatientData> {
     const cacheKey = `patient-${userId}`;
     const cached = this.getFromCache(cacheKey);
     if (cached) return cached;
@@ -382,7 +537,7 @@ export class EnhancedFhirService {
     }
   }
 
-  private async fetchPopulationData(): Promise<any[]> {
+  private async fetchPopulationData(): Promise<ComprehensivePatientData[]> {
     const cacheKey = 'population-data';
     const cached = this.getFromCache(cacheKey);
     if (cached) return cached;
@@ -410,7 +565,7 @@ export class EnhancedFhirService {
     }
   }
 
-  private async fetchRecentCheckIns(): Promise<any[]> {
+  private async fetchRecentCheckIns(): Promise<CheckInRecord[]> {
     const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
 
     const { data } = await this.supabase
@@ -421,7 +576,7 @@ export class EnhancedFhirService {
     return data || [];
   }
 
-  private generateClinicalSummary(aiInsights: PatientInsight, fhirBundle: any): string {
+  private generateClinicalSummary(aiInsights: PatientInsight, fhirBundle: FhirBundle): string {
     const summary = [
       `Patient: ${aiInsights.patientName}`,
       `Overall Health Score: ${aiInsights.overallHealthScore}/100`,
@@ -497,7 +652,7 @@ export class EnhancedFhirService {
     return now.toISOString();
   }
 
-  private generateRiskMatrix(populationData: any[]): RiskMatrix {
+  private generateRiskMatrix(populationData: ComprehensivePatientData[]): RiskMatrix {
     let highRiskHighAdherence = 0;
     let highRiskLowAdherence = 0;
     let lowRiskHighAdherence = 0;
@@ -550,7 +705,7 @@ export class EnhancedFhirService {
     };
   }
 
-  private async generateInterventionQueue(populationData: any[]): Promise<InterventionItem[]> {
+  private async generateInterventionQueue(populationData: ComprehensivePatientData[]): Promise<InterventionItem[]> {
     const interventions: InterventionItem[] = [];
 
     for (const patient of populationData) {
@@ -607,7 +762,7 @@ export class EnhancedFhirService {
     return recommendations.sort((a, b) => b.priority - a.priority);
   }
 
-  private generatePredictiveAlerts(populationData: any[], overview: PopulationInsights): PredictiveAlert[] {
+  private generatePredictiveAlerts(populationData: ComprehensivePatientData[], overview: PopulationInsights): PredictiveAlert[] {
     const alerts: PredictiveAlert[] = [];
 
     // Population trend alerts
@@ -652,9 +807,9 @@ export class EnhancedFhirService {
     return 'General Wellness Monitoring';
   }
 
-  private getEvidenceBasedRecommendations(condition: string, aiInsights: PatientInsight): any[] {
+  private getEvidenceBasedRecommendations(condition: string, _aiInsights: PatientInsight): EvidenceBasedRecommendation[] {
     // Simplified evidence-based recommendations
-    const recommendations: Record<string, any[]> = {
+    const recommendations: Record<string, EvidenceBasedRecommendation[]> = {
       'Hypertension': [
         {
           recommendation: 'ACE inhibitor or ARB therapy initiation',
@@ -682,9 +837,9 @@ export class EnhancedFhirService {
     return recommendations[condition] || [];
   }
 
-  private checkDrugInteractions(patientData: any): any[] {
+  private checkDrugInteractions(patientData: ComprehensivePatientData): DrugInteraction[] {
     // Drug interaction checking based on patient medication data
-    const interactions: any[] = [];
+    const interactions: DrugInteraction[] = [];
     const medications = patientData?.medications || patientData?.medicationRequests || [];
 
     // Known high-risk interaction pairs (simplified for demo)
@@ -705,7 +860,7 @@ export class EnhancedFhirService {
     };
 
     // Check each medication against known interactions
-    const medNames = medications.map((m: any) =>
+    const medNames = medications.map((m: MedicationRecord) =>
       (m.medication_display || m.name || '').toLowerCase()
     );
 
@@ -727,9 +882,9 @@ export class EnhancedFhirService {
     return interactions;
   }
 
-  private getApplicableClinicalGuidelines(condition: string, patientData: any): any[] {
+  private getApplicableClinicalGuidelines(condition: string, patientData: ComprehensivePatientData): ClinicalGuideline[] {
     // Clinical guidelines with patient-specific applicability scoring
-    const allGuidelines: Record<string, any[]> = {
+    const allGuidelines: Record<string, ClinicalGuideline[]> = {
       'Hypertension': [
         {
           guideline: '2017 ACC/AHA High Blood Pressure Clinical Practice Guideline',
@@ -780,7 +935,7 @@ export class EnhancedFhirService {
       }
 
       // Adjust for comorbidities
-      if (patientConditions.some((c: any) => c.includes?.('kidney') || c.includes?.('renal'))) {
+      if (patientConditions.some((c: string) => c.includes?.('kidney') || c.includes?.('renal'))) {
         adjustedApplicability -= 5; // May need renal dosing adjustments
       }
 
@@ -792,7 +947,7 @@ export class EnhancedFhirService {
     });
   }
 
-  private async assessFhirCompliance(populationData: any[]): Promise<any> {
+  private async assessFhirCompliance(populationData: ComprehensivePatientData[]): Promise<FhirComplianceResult> {
     let compliantBundles = 0;
     const issues: string[] = [];
 
@@ -816,7 +971,7 @@ export class EnhancedFhirService {
     };
   }
 
-  private async assessDataQuality(populationData: any[]): Promise<any> {
+  private async assessDataQuality(populationData: ComprehensivePatientData[]): Promise<DataQualityResult> {
     let completenessSum = 0;
     let accuracySum = 0;
     const issues: Array<{ type: string; count: number; description: string; severity: 'LOW' | 'MEDIUM' | 'HIGH' }> = [];
@@ -854,7 +1009,7 @@ export class EnhancedFhirService {
     };
   }
 
-  private async assessClinicalQuality(populationData: any[]): Promise<any> {
+  private async assessClinicalQuality(_populationData: ComprehensivePatientData[]): Promise<ClinicalQualityResult> {
     // Simplified clinical quality metrics
     return {
       adherenceToGuidelines: 85,
@@ -867,7 +1022,7 @@ export class EnhancedFhirService {
     };
   }
 
-  private cleanVitalSigns(vital: any): { modified: boolean } {
+  private cleanVitalSigns(vital: VitalsEntry): { modified: boolean } {
     let modified = false;
 
     // Clean blood pressure values
@@ -901,7 +1056,7 @@ export class EnhancedFhirService {
     return { modified };
   }
 
-  private generateWeeklyReport(populationData: any[], dashboard: PopulationDashboard): any {
+  private generateWeeklyReport(_populationData: ComprehensivePatientData[], dashboard: PopulationDashboard): WeeklyReport {
     return {
       period: 'Weekly',
       generatedAt: new Date().toISOString(),
@@ -920,7 +1075,7 @@ export class EnhancedFhirService {
     };
   }
 
-  private generateMonthlyReport(populationData: any[], dashboard: PopulationDashboard, qualityMetrics: QualityMetrics): any {
+  private generateMonthlyReport(_populationData: ComprehensivePatientData[], dashboard: PopulationDashboard, qualityMetrics: QualityMetrics): MonthlyReport {
     return {
       period: 'Monthly',
       generatedAt: new Date().toISOString(),
@@ -939,7 +1094,7 @@ export class EnhancedFhirService {
     };
   }
 
-  private generateEmergencyReport(alerts: PredictiveAlert[]): any {
+  private generateEmergencyReport(alerts: PredictiveAlert[]): EmergencyReport {
     const criticalAlerts = alerts.filter(a => a.severity === 'CRITICAL');
 
     return {
@@ -995,7 +1150,7 @@ export class EnhancedFhirService {
   }
 
   // Cache management
-  private getFromCache(key: string): any | null {
+  private getFromCache(key: string): ComprehensivePatientData | ComprehensivePatientData[] | null {
     const cached = this.cache.get(key);
     if (cached && Date.now() < cached.timestamp + cached.ttl) {
       return cached.data;
@@ -1004,7 +1159,7 @@ export class EnhancedFhirService {
     return null;
   }
 
-  private setCache(key: string, data: any, ttl: number): void {
+  private setCache(key: string, data: ComprehensivePatientData | ComprehensivePatientData[], ttl: number): void {
     this.cache.set(key, {
       data,
       timestamp: Date.now(),
@@ -1013,18 +1168,18 @@ export class EnhancedFhirService {
   }
 
   // Public configuration methods
-  updateAiConfiguration(config: any): void {
+  updateAiConfiguration(config: AiConfiguration): void {
     this.aiService.updateConfiguration(config);
   }
 
-  getAiConfiguration(): any {
+  getAiConfiguration(): AiConfiguration {
     return this.aiService.getConfiguration();
   }
 
   // SMART on FHIR data synchronization
-  async syncWithSmartSession(smartSession: any): Promise<{
-    patientData: any;
-    observations: any[];
+  async syncWithSmartSession(smartSession: SmartSession): Promise<{
+    patientData: ComprehensivePatientData;
+    observations: VitalsEntry[];
     synchronized: boolean;
   }> {
     try {
