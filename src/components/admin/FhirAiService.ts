@@ -22,7 +22,7 @@ interface VitalsReading {
 }
 
 interface CheckInEntry {
-  created_at: string;
+  created_at?: string;
   [key: string]: unknown;
 }
 
@@ -139,7 +139,7 @@ interface PopulationPrediction {
   factorsInfluencing: string[];
 }
 
-interface AiConfiguration {
+export interface AiConfiguration {
   riskThresholds: {
     bloodPressure: { systolic: { high: number; critical: number }; diastolic: { high: number; critical: number } };
     heartRate: { low: number; high: number; critical: number };
@@ -165,15 +165,15 @@ interface DailyHealthLog {
 }
 
 interface DailyAggregates {
-  bloodPressure: { systolic: number | null; diastolic: number | null; count: number } | null;
-  heartRate: { avg: number | null; min: number | null; max: number | null; count: number } | null;
-  bloodSugar: { avg: number | null; min: number | null; max: number | null; count: number } | null;
-  bloodOxygen: { avg: number | null; min: number | null; max: number | null; count: number } | null;
-  weight: { avg: number | null; count: number } | null;
-  mood: { predominant: string | null; entries: string[] } | null;
-  physicalActivity: { entries: string[] } | null;
-  socialEngagement: { entries: string[] } | null;
-  symptoms: { entries: string[] } | null;
+  bloodPressure: { systolic: number | null; diastolic: number | null; count: number };
+  heartRate: { avg: number | null; min: number | null; max: number | null; count: number };
+  bloodSugar: { avg: number | null; min: number | null; max: number | null; count: number };
+  bloodOxygen: { avg: number | null; min: number | null; max: number | null; count: number };
+  weight: { avg: number | null; count: number };
+  mood: { predominant: string | null; entries: string[] };
+  physicalActivity: { entries: string[] };
+  socialEngagement: { entries: string[] };
+  symptoms: { entries: string[] };
 }
 
 interface WeeklyHealthSummary {
@@ -317,7 +317,8 @@ export class FhirAiService {
   async generatePopulationInsights(populationData: PatientData[]): Promise<PopulationInsights> {
     const totalPatients = populationData.length;
     const activePatients = populationData.filter(p =>
-      p.checkIns?.length > 0 &&
+      (p.checkIns?.length ?? 0) > 0 &&
+      p.checkIns?.[0]?.created_at &&
       new Date(p.checkIns[0].created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
     ).length;
 
@@ -364,8 +365,13 @@ export class FhirAiService {
 
     // Critical vital signs
     if (latestVitals) {
-      if (latestVitals.bp_systolic > this.config.riskThresholds.bloodPressure.systolic.critical ||
-          latestVitals.bp_diastolic > this.config.riskThresholds.bloodPressure.diastolic.critical) {
+      const bpSystolic = latestVitals.bp_systolic ?? 0;
+      const bpDiastolic = latestVitals.bp_diastolic ?? 0;
+      const heartRate = latestVitals.heart_rate ?? 0;
+      const pulseOx = latestVitals.pulse_oximeter ?? 100;
+
+      if (bpSystolic > this.config.riskThresholds.bloodPressure.systolic.critical ||
+          bpDiastolic > this.config.riskThresholds.bloodPressure.diastolic.critical) {
         alerts.push(this.createEmergencyAlert(
           'CRITICAL',
           'VITAL_ANOMALY',
@@ -374,8 +380,8 @@ export class FhirAiService {
         ));
       }
 
-      if (latestVitals.heart_rate > this.config.riskThresholds.heartRate.critical ||
-          latestVitals.heart_rate < this.config.riskThresholds.heartRate.low) {
+      if (heartRate > this.config.riskThresholds.heartRate.critical ||
+          heartRate < this.config.riskThresholds.heartRate.low) {
         alerts.push(this.createEmergencyAlert(
           'CRITICAL',
           'VITAL_ANOMALY',
@@ -384,7 +390,7 @@ export class FhirAiService {
         ));
       }
 
-      if (latestVitals.pulse_oximeter < this.config.riskThresholds.oxygenSaturation.critical) {
+      if (pulseOx < this.config.riskThresholds.oxygenSaturation.critical) {
         alerts.push(this.createEmergencyAlert(
           'CRITICAL',
           'VITAL_ANOMALY',
@@ -395,8 +401,9 @@ export class FhirAiService {
     }
 
     // Missed check-ins
-    const daysSinceLastCheckIn = checkIns.length > 0 ?
-      (Date.now() - new Date(checkIns[0].created_at).getTime()) / (1000 * 60 * 60 * 24) : 999;
+    const lastCheckInDate = checkIns[0]?.created_at;
+    const daysSinceLastCheckIn = checkIns.length > 0 && lastCheckInDate ?
+      (Date.now() - new Date(lastCheckInDate).getTime()) / (1000 * 60 * 60 * 24) : 999;
 
     if (daysSinceLastCheckIn > this.config.adherenceSettings.missedCheckInThreshold) {
       alerts.push(this.createEmergencyAlert(
@@ -615,7 +622,7 @@ export class FhirAiService {
 
     // Calculate check-in frequency over last 30 days
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const recentCheckIns = checkIns.filter(c => new Date(c.created_at) > thirtyDaysAgo);
+    const recentCheckIns = checkIns.filter(c => c.created_at && new Date(c.created_at) > thirtyDaysAgo);
     const adherenceRate = (recentCheckIns.length / 30) * 100;
 
     if (adherenceRate < 30) {
@@ -629,11 +636,14 @@ export class FhirAiService {
     }
 
     // Check for recent gaps
-    const daysSinceLastCheckIn = (Date.now() - new Date(checkIns[0].created_at).getTime()) / (1000 * 60 * 60 * 24);
-    if (daysSinceLastCheckIn > 7) {
-      score += 10;
-      factors.push(`${Math.floor(daysSinceLastCheckIn)} days since last check-in`);
-      recommendations.push('Contact patient to ensure continued engagement');
+    const lastCheckInDate = checkIns[0]?.created_at;
+    if (lastCheckInDate) {
+      const daysSinceLastCheckIn = (Date.now() - new Date(lastCheckInDate).getTime()) / (1000 * 60 * 60 * 24);
+      if (daysSinceLastCheckIn > 7) {
+        score += 10;
+        factors.push(`${Math.floor(daysSinceLastCheckIn)} days since last check-in`);
+        recommendations.push('Contact patient to ensure continued engagement');
+      }
     }
 
     return { score, factors, recommendations };
@@ -739,7 +749,7 @@ export class FhirAiService {
     if (checkIns.length === 0) return 0;
 
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const recentCheckIns = checkIns.filter(c => new Date(c.created_at) > thirtyDaysAgo);
+    const recentCheckIns = checkIns.filter(c => c.created_at && new Date(c.created_at) > thirtyDaysAgo);
 
     // Expected check-ins (daily) vs actual
     const expectedCheckIns = 30;
@@ -759,7 +769,10 @@ export class FhirAiService {
 
     const gaps: number[] = [];
     for (let i = 0; i < checkIns.length - 1; i++) {
-      const gap = (new Date(checkIns[i].created_at).getTime() - new Date(checkIns[i + 1].created_at).getTime()) / (1000 * 60 * 60 * 24);
+      const currentDate = checkIns[i].created_at;
+      const nextDate = checkIns[i + 1].created_at;
+      if (!currentDate || !nextDate) continue;
+      const gap = (new Date(currentDate).getTime() - new Date(nextDate).getTime()) / (1000 * 60 * 60 * 24);
       gaps.push(gap);
     }
     return gaps;
@@ -875,8 +888,8 @@ export class FhirAiService {
 
     // Add specific cardiovascular factors
     const latestVitals = vitals[0];
-    if (latestVitals?.bp_systolic > 140) cvRisk += 15;
-    if (latestVitals?.heart_rate > 100) cvRisk += 10;
+    if ((latestVitals?.bp_systolic ?? 0) > 140) cvRisk += 15;
+    if ((latestVitals?.heart_rate ?? 0) > 100) cvRisk += 10;
 
     return Math.min(95, cvRisk);
   }
@@ -886,8 +899,9 @@ export class FhirAiService {
     let diabetesRisk = riskScore * 0.7;
 
     const latestVitals = vitals[0];
-    if (latestVitals?.glucose_mg_dl > 250) diabetesRisk += 20;
-    else if (latestVitals?.glucose_mg_dl > 180) diabetesRisk += 10;
+    const glucose = latestVitals?.glucose_mg_dl ?? 0;
+    if (glucose > 250) diabetesRisk += 20;
+    else if (glucose > 180) diabetesRisk += 10;
 
     return Math.min(90, diabetesRisk);
   }
@@ -902,10 +916,15 @@ export class FhirAiService {
       let score = 70; // Base score
 
       if (latestVitals) {
-        if (latestVitals.bp_systolic > 140) score -= 10;
-        if (latestVitals.heart_rate > 100 || latestVitals.heart_rate < 60) score -= 8;
-        if (latestVitals.glucose_mg_dl > 180) score -= 12;
-        if (latestVitals.pulse_oximeter < 95) score -= 15;
+        const bpSystolic = latestVitals.bp_systolic ?? 0;
+        const heartRate = latestVitals.heart_rate ?? 80;
+        const glucose = latestVitals.glucose_mg_dl ?? 0;
+        const pulseOx = latestVitals.pulse_oximeter ?? 100;
+
+        if (bpSystolic > 140) score -= 10;
+        if (heartRate > 100 || heartRate < 60) score -= 8;
+        if (glucose > 180) score -= 12;
+        if (pulseOx < 95) score -= 15;
       }
 
       // Adherence bonus
@@ -942,9 +961,13 @@ export class FhirAiService {
     populationData.forEach(patient => {
       const vitals = patient.vitals?.[0];
       if (vitals) {
-        if (vitals.bp_systolic > 140) conditionCounts['Hypertension'] = (conditionCounts['Hypertension'] || 0) + 1;
-        if (vitals.glucose_mg_dl > 126) conditionCounts['Diabetes'] = (conditionCounts['Diabetes'] || 0) + 1;
-        if (vitals.heart_rate > 100) conditionCounts['Tachycardia'] = (conditionCounts['Tachycardia'] || 0) + 1;
+        const bpSystolic = vitals.bp_systolic ?? 0;
+        const glucose = vitals.glucose_mg_dl ?? 0;
+        const heartRate = vitals.heart_rate ?? 0;
+
+        if (bpSystolic > 140) conditionCounts['Hypertension'] = (conditionCounts['Hypertension'] || 0) + 1;
+        if (glucose > 126) conditionCounts['Diabetes'] = (conditionCounts['Diabetes'] || 0) + 1;
+        if (heartRate > 100) conditionCounts['Tachycardia'] = (conditionCounts['Tachycardia'] || 0) + 1;
       }
     });
 
@@ -966,7 +989,9 @@ export class FhirAiService {
     if (patientsWithAge.length === 0) return 0;
 
     const ages = patientsWithAge.map(p => {
-      const birthDate = new Date(p.profile.dob);
+      const dob = p.profile?.dob;
+      if (!dob) return 0;
+      const birthDate = new Date(dob);
       const today = new Date();
       return today.getFullYear() - birthDate.getFullYear();
     });
@@ -1216,55 +1241,55 @@ export class FhirAiService {
       if (reading.mood) moods.push(reading.mood);
 
       // Activities (safe: getEmptyAggregates() guarantees non-null)
-      if (reading.physical_activity) aggregates.physicalActivity!.entries.push(reading.physical_activity);
-      if (reading.social_engagement) aggregates.socialEngagement!.entries.push(reading.social_engagement);
+      if (reading.physical_activity) aggregates.physicalActivity.entries.push(reading.physical_activity);
+      if (reading.social_engagement) aggregates.socialEngagement.entries.push(reading.social_engagement);
 
       // Symptoms and notes
-      if (reading.symptoms) aggregates.symptoms!.entries.push(reading.symptoms);
-      if (reading.activity_description) aggregates.symptoms!.entries.push(reading.activity_description);
+      if (reading.symptoms) aggregates.symptoms.entries.push(reading.symptoms);
+      if (reading.activity_description) aggregates.symptoms.entries.push(reading.activity_description);
     }
 
     // Calculate blood pressure (safe: getEmptyAggregates() guarantees non-null)
     if (bpSystolic.length > 0 && bpDiastolic.length > 0) {
-      aggregates.bloodPressure!.systolic = Math.round(this.average(bpSystolic));
-      aggregates.bloodPressure!.diastolic = Math.round(this.average(bpDiastolic));
-      aggregates.bloodPressure!.count = Math.min(bpSystolic.length, bpDiastolic.length);
+      aggregates.bloodPressure.systolic = Math.round(this.average(bpSystolic));
+      aggregates.bloodPressure.diastolic = Math.round(this.average(bpDiastolic));
+      aggregates.bloodPressure.count = Math.min(bpSystolic.length, bpDiastolic.length);
     }
 
     // Calculate heart rate
     if (heartRates.length > 0) {
-      aggregates.heartRate!.avg = Math.round(this.average(heartRates));
-      aggregates.heartRate!.min = Math.min(...heartRates);
-      aggregates.heartRate!.max = Math.max(...heartRates);
-      aggregates.heartRate!.count = heartRates.length;
+      aggregates.heartRate.avg = Math.round(this.average(heartRates));
+      aggregates.heartRate.min = Math.min(...heartRates);
+      aggregates.heartRate.max = Math.max(...heartRates);
+      aggregates.heartRate.count = heartRates.length;
     }
 
     // Calculate blood sugar
     if (bloodSugars.length > 0) {
-      aggregates.bloodSugar!.avg = Math.round(this.average(bloodSugars));
-      aggregates.bloodSugar!.min = Math.min(...bloodSugars);
-      aggregates.bloodSugar!.max = Math.max(...bloodSugars);
-      aggregates.bloodSugar!.count = bloodSugars.length;
+      aggregates.bloodSugar.avg = Math.round(this.average(bloodSugars));
+      aggregates.bloodSugar.min = Math.min(...bloodSugars);
+      aggregates.bloodSugar.max = Math.max(...bloodSugars);
+      aggregates.bloodSugar.count = bloodSugars.length;
     }
 
     // Calculate blood oxygen
     if (bloodOxygens.length > 0) {
-      aggregates.bloodOxygen!.avg = Math.round(this.average(bloodOxygens));
-      aggregates.bloodOxygen!.min = Math.min(...bloodOxygens);
-      aggregates.bloodOxygen!.max = Math.max(...bloodOxygens);
-      aggregates.bloodOxygen!.count = bloodOxygens.length;
+      aggregates.bloodOxygen.avg = Math.round(this.average(bloodOxygens));
+      aggregates.bloodOxygen.min = Math.min(...bloodOxygens);
+      aggregates.bloodOxygen.max = Math.max(...bloodOxygens);
+      aggregates.bloodOxygen.count = bloodOxygens.length;
     }
 
     // Calculate weight
     if (weights.length > 0) {
-      aggregates.weight!.avg = parseFloat(this.average(weights).toFixed(1));
-      aggregates.weight!.count = weights.length;
+      aggregates.weight.avg = parseFloat(this.average(weights).toFixed(1));
+      aggregates.weight.count = weights.length;
     }
 
     // Calculate mood
     if (moods.length > 0) {
-      aggregates.mood!.predominant = this.getMostFrequent(moods);
-      aggregates.mood!.entries = moods;
+      aggregates.mood.predominant = this.getMostFrequent(moods);
+      aggregates.mood.entries = moods;
     }
 
     return aggregates;
@@ -1319,13 +1344,16 @@ export class FhirAiService {
 
   private calculateOverallStatistics(allReadings: VitalsReading[]): OverallStatistics {
     const aggregates = this.calculateDailyAggregates(allReadings);
-    const readingsWithDates = allReadings.filter(r => r.created_at);
+    // Type guard filter to narrow created_at from undefined
+    const readingsWithDates = allReadings.filter(
+      (r): r is VitalsReading & { created_at: string } => r.created_at !== undefined && r.created_at !== null
+    );
 
     return {
       totalReadings: allReadings.length,
       dateRange: {
-        start: readingsWithDates.length > 0 ? this.getDateString(readingsWithDates[readingsWithDates.length - 1].created_at!) : null,
-        end: readingsWithDates.length > 0 ? this.getDateString(readingsWithDates[0].created_at!) : null
+        start: readingsWithDates.length > 0 ? this.getDateString(readingsWithDates[readingsWithDates.length - 1].created_at) : null,
+        end: readingsWithDates.length > 0 ? this.getDateString(readingsWithDates[0].created_at) : null
       },
       averages: aggregates,
       complianceRate: this.calculateComplianceRate(allReadings)
@@ -1335,13 +1363,16 @@ export class FhirAiService {
   private calculateComplianceRate(readings: VitalsReading[]): number {
     if (readings.length === 0) return 0;
 
-    const readingsWithDates = readings.filter(r => r.created_at);
+    // Type guard filter to narrow created_at from undefined
+    const readingsWithDates = readings.filter(
+      (r): r is VitalsReading & { created_at: string } => r.created_at !== undefined && r.created_at !== null
+    );
     if (readingsWithDates.length === 0) return 0;
 
-    const dates = new Set(readingsWithDates.map(r => this.getDateString(r.created_at!)));
+    const dates = new Set(readingsWithDates.map(r => this.getDateString(r.created_at)));
     const daysSinceFirst = this.daysBetween(
-      readingsWithDates[readingsWithDates.length - 1].created_at!,
-      readingsWithDates[0].created_at!
+      readingsWithDates[readingsWithDates.length - 1].created_at,
+      readingsWithDates[0].created_at
     );
 
     if (daysSinceFirst === 0) return 100;

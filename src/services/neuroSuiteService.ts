@@ -12,13 +12,10 @@ import { PAGINATION_LIMITS, applyLimit } from '../utils/pagination';
 import type {
   StrokeAssessment,
   ModifiedRankinScale,
-  BarthelIndex,
   CognitiveAssessment,
   DementiaStaging,
   CaregiverAssessment,
   NeuroCarePlan,
-  StrokeRiskAssessment,
-  FallRiskAssessment,
   CognitiveDeclineTrajectory,
   CreateStrokeAssessmentRequest,
   CreateCognitiveAssessmentRequest,
@@ -140,9 +137,9 @@ export class NeuroSuiteService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -214,9 +211,9 @@ export class NeuroSuiteService {
       const diffMinutes = (tpaTime.getTime() - arrival.getTime()) / 60000;
 
       return { success: true, data: diffMinutes };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -236,9 +233,9 @@ export class NeuroSuiteService {
 
       const data = await applyLimit<StrokeAssessment>(query, PAGINATION_LIMITS.ASSESSMENTS);
       return { success: true, data };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -277,9 +274,9 @@ export class NeuroSuiteService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -303,9 +300,9 @@ export class NeuroSuiteService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -404,9 +401,9 @@ export class NeuroSuiteService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -445,9 +442,9 @@ export class NeuroSuiteService {
 
       const data = await applyLimit<CognitiveAssessment>(query, PAGINATION_LIMITS.ASSESSMENTS);
       return { success: true, data };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -465,9 +462,9 @@ export class NeuroSuiteService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -536,9 +533,9 @@ export class NeuroSuiteService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -598,9 +595,9 @@ export class NeuroSuiteService {
 
       const data = await applyLimit<DementiaStaging>(query, PAGINATION_LIMITS.ASSESSMENTS);
       return { success: true, data };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -675,9 +672,9 @@ export class NeuroSuiteService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -706,9 +703,9 @@ export class NeuroSuiteService {
 
       const data = await applyLimit<CaregiverAssessment>(query, PAGINATION_LIMITS.ASSESSMENTS);
       return { success: true, data };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -724,9 +721,9 @@ export class NeuroSuiteService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -741,11 +738,11 @@ export class NeuroSuiteService {
     patientId: string,
     carePlanType: 'acute_stroke' | 'stroke_rehab' | 'stroke_secondary_prevention' | 'dementia_early_stage' | 'dementia_moderate_stage' | 'dementia_advanced_stage' | 'mci_monitoring',
     options?: {
-      strokePreventionMeds?: any;
-      cognitiveActivities?: any;
-      behavioralStrategies?: any;
-      safetyInterventions?: any;
-      followUpSchedule?: any;
+      strokePreventionMeds?: Record<string, unknown>[];
+      cognitiveActivities?: Record<string, unknown>[];
+      behavioralStrategies?: Record<string, unknown>[];
+      safetyInterventions?: Record<string, unknown>[];
+      followUpSchedule?: Record<string, unknown>;
     }
   ): Promise<NeuroApiResponse<NeuroCarePlan>> {
     try {
@@ -772,9 +769,9 @@ export class NeuroSuiteService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -798,9 +795,9 @@ export class NeuroSuiteService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -813,7 +810,7 @@ export class NeuroSuiteService {
    */
   static async getActiveStrokePatients(
     neurologistId: string
-  ): Promise<NeuroApiResponse<any[]>> {
+  ): Promise<NeuroApiResponse<Record<string, unknown>[]>> {
     try {
       const { data, error } = await supabase.rpc('get_active_stroke_patients', {
         p_neurologist_id: neurologistId,
@@ -822,9 +819,9 @@ export class NeuroSuiteService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -832,7 +829,7 @@ export class NeuroSuiteService {
    * Get dementia patients needing reassessment
    */
   static async getDementiaPatientsNeedingReassessment(): Promise<
-    NeuroApiResponse<any[]>
+    NeuroApiResponse<Record<string, unknown>[]>
   > {
     try {
       const { data, error } = await supabase.rpc(
@@ -842,9 +839,9 @@ export class NeuroSuiteService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -853,7 +850,7 @@ export class NeuroSuiteService {
    */
   static async calculateStrokeOutcomeImprovement(
     patientId: string
-  ): Promise<NeuroApiResponse<any>> {
+  ): Promise<NeuroApiResponse<Record<string, unknown>>> {
     try {
       const { data, error } = await supabase.rpc('calculate_stroke_outcome_improvement', {
         p_patient_id: patientId,
@@ -862,9 +859,9 @@ export class NeuroSuiteService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 }

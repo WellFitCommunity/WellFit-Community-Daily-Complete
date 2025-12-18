@@ -8,7 +8,8 @@ import FhirAiService, {
   type PatientInsight,
   type PopulationInsights,
   type EmergencyAlert,
-  type HealthStatistics
+  type HealthStatistics,
+  type AiConfiguration
 } from './FhirAiService';
 
 // Type definitions for patient data structures
@@ -26,14 +27,21 @@ interface PatientProfile {
 
 interface VitalsEntry {
   created_at?: string;
-  bp_systolic?: number | null;
-  bp_diastolic?: number | null;
-  heart_rate?: number | null;
-  glucose_mg_dl?: number | null;
-  blood_sugar?: number | null;
-  pulse_oximeter?: number | null;
-  blood_oxygen?: number | null;
-  spo2?: number | null;
+  bp_systolic?: number;
+  bp_diastolic?: number;
+  heart_rate?: number;
+  glucose_mg_dl?: number;
+  blood_sugar?: number;
+  pulse_oximeter?: number;
+  blood_oxygen?: number;
+  spo2?: number;
+  weight?: number;
+  mood?: string;
+  physical_activity?: string;
+  social_engagement?: string;
+  symptoms?: string;
+  activity_description?: string;
+  is_emergency?: boolean;
   [key: string]: unknown;
 }
 
@@ -59,12 +67,8 @@ interface ComprehensivePatientData {
   conditions?: string[];
 }
 
-interface FhirBundle {
-  resourceType: string;
-  type: string;
-  entry?: Array<{ resource: Record<string, unknown> }>;
-  [key: string]: unknown;
-}
+// Use generic FHIR bundle type - compatible with FHIRIntegrationService
+type FhirBundle = ReturnType<typeof FHIRIntegrationService.prototype.exportPatientData> extends Promise<infer T> ? T : never;
 
 interface CacheEntry {
   data: ComprehensivePatientData | ComprehensivePatientData[];
@@ -81,7 +85,7 @@ interface EvidenceBasedRecommendation {
 
 interface DrugInteraction {
   medications: string[];
-  severity: string;
+  severity: 'MINOR' | 'MODERATE' | 'MAJOR' | 'CONTRAINDICATED';
   description: string;
   recommendation: string;
 }
@@ -162,9 +166,7 @@ interface SmartSession {
   [key: string]: unknown;
 }
 
-interface AiConfiguration {
-  [key: string]: unknown;
-}
+// AiConfiguration imported from FhirAiService
 
 interface EnhancedPatientData {
   fhirBundle: FhirBundle;
@@ -433,8 +435,8 @@ export class EnhancedFhirService {
             await this.processEmergencyAlerts(alerts, checkIn.user_id);
           }
         }
-      } catch (error) {
-
+      } catch {
+        // Silently handle monitoring errors to avoid disrupting the interval
       }
     }, 60000); // Check every minute
   }
@@ -462,9 +464,12 @@ export class EnhancedFhirService {
         }
 
         // Validate FHIR compliance
-        const fhirBundle = await this.fhirService.exportPatientData(patientData.profile?.user_id);
-        if (!this.fhirService.validateBundle(fhirBundle)) {
-          issues.push(`FHIR bundle validation failed for patient ${patientData.profile?.id}`);
+        const userId = patientData.profile?.user_id;
+        if (userId) {
+          const fhirBundle = await this.fhirService.exportPatientData(userId);
+          if (!this.fhirService.validateBundle(fhirBundle)) {
+            issues.push(`FHIR bundle validation failed for patient ${patientData.profile?.id}`);
+          }
         }
       }
 
@@ -504,7 +509,7 @@ export class EnhancedFhirService {
   // Private helper methods
   private async fetchComprehensivePatientData(userId: string): Promise<ComprehensivePatientData> {
     const cacheKey = `patient-${userId}`;
-    const cached = this.getFromCache(cacheKey);
+    const cached = this.getFromCache<ComprehensivePatientData>(cacheKey);
     if (cached) return cached;
 
     try {
@@ -539,7 +544,7 @@ export class EnhancedFhirService {
 
   private async fetchPopulationData(): Promise<ComprehensivePatientData[]> {
     const cacheKey = 'population-data';
-    const cached = this.getFromCache(cacheKey);
+    const cached = this.getFromCache<ComprehensivePatientData[]>(cacheKey);
     if (cached) return cached;
 
     try {
@@ -549,8 +554,8 @@ export class EnhancedFhirService {
         (profiles || []).map(async (profile) => {
           try {
             return await this.fetchComprehensivePatientData(profile.user_id);
-          } catch (error) {
-
+          } catch {
+            // Return minimal data if fetch fails for this patient
             return { profile, checkIns: [], vitals: [], healthEntries: [] };
           }
         })
@@ -659,7 +664,8 @@ export class EnhancedFhirService {
     let lowRiskLowAdherence = 0;
 
     populationData.forEach(async (patient) => {
-      const aiInsights = await this.aiService.generatePatientInsights(patient.profile?.user_id, patient);
+      const userId = patient.profile?.user_id ?? '';
+      const aiInsights = await this.aiService.generatePatientInsights(userId, patient);
       const isHighRisk = aiInsights.riskAssessment.riskLevel === 'HIGH' || aiInsights.riskAssessment.riskLevel === 'CRITICAL';
       const isHighAdherence = aiInsights.adherenceScore >= 70;
 
@@ -709,12 +715,13 @@ export class EnhancedFhirService {
     const interventions: InterventionItem[] = [];
 
     for (const patient of populationData) {
-      const aiInsights = await this.aiService.generatePatientInsights(patient.profile?.user_id, patient);
+      const userId = patient.profile?.user_id ?? '';
+      const aiInsights = await this.aiService.generatePatientInsights(userId, patient);
 
       // Generate interventions based on care recommendations
-      aiInsights.careRecommendations.forEach((rec, index) => {
+      aiInsights.careRecommendations.forEach((rec) => {
         interventions.push({
-          patientId: patient.profile?.user_id,
+          patientId: userId,
           patientName: aiInsights.patientName,
           interventionType: rec.category,
           priority: this.mapPriorityToNumber(rec.priority),
@@ -843,7 +850,7 @@ export class EnhancedFhirService {
     const medications = patientData?.medications || patientData?.medicationRequests || [];
 
     // Known high-risk interaction pairs (simplified for demo)
-    const interactionPairs: Record<string, { drugs: string[], severity: string, description: string, recommendation: string }[]> = {
+    const interactionPairs: Record<string, { drugs: string[], severity: 'MINOR' | 'MODERATE' | 'MAJOR' | 'CONTRAINDICATED', description: string, recommendation: string }[]> = {
       'warfarin': [
         { drugs: ['aspirin'], severity: 'MAJOR', description: 'Increased bleeding risk', recommendation: 'Monitor INR closely' },
         { drugs: ['ibuprofen', 'naproxen'], severity: 'MAJOR', description: 'NSAIDs increase bleeding risk with anticoagulants', recommendation: 'Avoid NSAIDs or use with caution' }
@@ -923,7 +930,7 @@ export class EnhancedFhirService {
     const baseGuidelines = allGuidelines[condition] || [];
 
     // Adjust applicability based on patient data
-    const patientAge = patientData?.profile?.age || patientData?.age;
+    const patientAge = patientData?.profile?.age;
     const patientConditions = patientData?.conditions || [];
 
     return baseGuidelines.map(g => {
@@ -942,7 +949,7 @@ export class EnhancedFhirService {
       return {
         ...g,
         applicability: Math.max(0, Math.min(100, adjustedApplicability)),
-        patientSpecificNotes: patientAge > 75 ? 'Consider less aggressive targets for elderly patient' : undefined
+        patientSpecificNotes: (patientAge ?? 0) > 75 ? 'Consider less aggressive targets for elderly patient' : undefined
       };
     });
   }
@@ -953,13 +960,15 @@ export class EnhancedFhirService {
 
     for (const patient of populationData.slice(0, 10)) { // Sample check
       try {
-        const bundle = await this.fhirService.exportPatientData(patient.profile?.user_id);
+        const userId = patient.profile?.user_id;
+        if (!userId) continue;
+        const bundle = await this.fhirService.exportPatientData(userId);
         if (this.fhirService.validateBundle(bundle)) {
           compliantBundles++;
         } else {
           issues.push(`Non-compliant FHIR bundle for patient ${patient.profile?.id}`);
         }
-      } catch (error) {
+      } catch {
         issues.push(`FHIR export failed for patient ${patient.profile?.id}`);
       }
     }
@@ -1027,29 +1036,29 @@ export class EnhancedFhirService {
 
     // Clean blood pressure values
     if (vital.bp_systolic && (vital.bp_systolic < 50 || vital.bp_systolic > 300)) {
-      vital.bp_systolic = null;
+      vital.bp_systolic = undefined;
       modified = true;
     }
     if (vital.bp_diastolic && (vital.bp_diastolic < 30 || vital.bp_diastolic > 200)) {
-      vital.bp_diastolic = null;
+      vital.bp_diastolic = undefined;
       modified = true;
     }
 
     // Clean heart rate
     if (vital.heart_rate && (vital.heart_rate < 30 || vital.heart_rate > 250)) {
-      vital.heart_rate = null;
+      vital.heart_rate = undefined;
       modified = true;
     }
 
     // Clean glucose
     if (vital.glucose_mg_dl && (vital.glucose_mg_dl < 20 || vital.glucose_mg_dl > 800)) {
-      vital.glucose_mg_dl = null;
+      vital.glucose_mg_dl = undefined;
       modified = true;
     }
 
     // Clean oxygen saturation
     if (vital.pulse_oximeter && (vital.pulse_oximeter < 50 || vital.pulse_oximeter > 100)) {
-      vital.pulse_oximeter = null;
+      vital.pulse_oximeter = undefined;
       modified = true;
     }
 
@@ -1150,10 +1159,10 @@ export class EnhancedFhirService {
   }
 
   // Cache management
-  private getFromCache(key: string): ComprehensivePatientData | ComprehensivePatientData[] | null {
+  private getFromCache<T extends ComprehensivePatientData | ComprehensivePatientData[]>(key: string): T | null {
     const cached = this.cache.get(key);
     if (cached && Date.now() < cached.timestamp + cached.ttl) {
-      return cached.data;
+      return cached.data as T;
     }
     this.cache.delete(key);
     return null;
@@ -1190,23 +1199,56 @@ export class EnhancedFhirService {
 
       // Extract patient ID from session
       const patientId = smartSession.patient;
-      const fhirServerUrl = smartSession.fhirServerUrl || smartSession.serverUrl;
+      const fhirServerUrl = (smartSession.fhirServerUrl || smartSession.serverUrl) as string | undefined;
+      const patientName = (smartSession.patientName || 'SMART Patient') as string;
+      const sessionExpiry = (smartSession.expiresAt || new Date(Date.now() + 3600000).toISOString()) as string;
+      const scope = (smartSession.scope || 'patient/*.read') as string;
 
       // Fetch patient data from FHIR server (simulated for demo)
-      const patientData = {
-        id: patientId,
-        resourceType: 'Patient',
-        name: smartSession.patientName || 'SMART Patient',
-        serverUrl: fhirServerUrl,
-        sessionExpiry: smartSession.expiresAt || new Date(Date.now() + 3600000).toISOString(),
-        scope: smartSession.scope || 'patient/*.read'
+      // Map to ComprehensivePatientData structure
+      const patientData: ComprehensivePatientData = {
+        profile: {
+          id: patientId,
+          user_id: patientId,
+          first_name: patientName,
+          // Store FHIR metadata in profile
+        },
+        vitals: [],
+        checkIns: [],
+        medications: [],
+        conditions: []
       };
 
       // Fetch observations (simulated - in production would call FHIR server)
-      const observations = smartSession.observations || [];
+      const rawObservations = (smartSession.observations || []) as unknown[];
+      const observations: VitalsEntry[] = rawObservations.map((obs: unknown) => {
+        const o = obs as Record<string, unknown>;
+        return {
+          created_at: (o.effectiveDateTime || o.issued || new Date().toISOString()) as string | undefined,
+        };
+      });
 
-      // Sync to WellFit
-      await this.syncPatientToWellFit(patientData, observations);
+      // Store sync metadata
+      const fhirMetadata = {
+        serverUrl: fhirServerUrl,
+        sessionExpiry,
+        scope
+      };
+
+      // Sync to WellFit - cast rawObservations to expected observation type
+      type FhirObservation = {
+        id?: string;
+        code?: { coding?: Array<{ display?: string }>; text?: string };
+        valueQuantity?: { value?: number; unit?: string };
+        valueString?: string;
+        effectiveDateTime?: string;
+        issued?: string;
+        status?: string;
+      };
+      await this.syncPatientToWellFit(
+        { id: patientId, name: patientName, ...fhirMetadata },
+        rawObservations as FhirObservation[]
+      );
 
       return {
         patientData,
@@ -1220,18 +1262,34 @@ export class EnhancedFhirService {
   }
 
   // Helper method for EHR integration - syncs FHIR patient and observations to WellFit
-  private async syncPatientToWellFit(fhirPatient: any, observations: any[]): Promise<void> {
+  private async syncPatientToWellFit(
+    fhirPatient: {
+      id?: string;
+      name?: { given?: string[]; family?: string } | string;
+      serverUrl?: string;
+    },
+    observations: Array<{
+      id?: string;
+      code?: { coding?: Array<{ display?: string }>; text?: string };
+      valueQuantity?: { value?: number; unit?: string };
+      valueString?: string;
+      effectiveDateTime?: string;
+      issued?: string;
+      status?: string;
+    }>
+  ): Promise<void> {
     // Map FHIR patient to WellFit profile format
+    const patientName = typeof fhirPatient.name === 'object' ? fhirPatient.name : undefined;
     const wellFitProfile = {
       external_fhir_id: fhirPatient.id,
-      first_name: fhirPatient.name?.given?.[0] || fhirPatient.name || 'Unknown',
-      last_name: fhirPatient.name?.family || '',
+      first_name: patientName?.given?.[0] || (typeof fhirPatient.name === 'string' ? fhirPatient.name : 'Unknown'),
+      last_name: patientName?.family || '',
       fhir_server_url: fhirPatient.serverUrl,
       last_synced_at: new Date().toISOString()
     };
 
     // Map observations to WellFit health observations
-    const healthObservations = observations.map((obs: any) => ({
+    const healthObservations = observations.map((obs) => ({
       external_fhir_id: obs.id,
       patient_fhir_id: fhirPatient.id,
       observation_type: obs.code?.coding?.[0]?.display || obs.code?.text || 'Unknown',
@@ -1241,21 +1299,23 @@ export class EnhancedFhirService {
       status: obs.status || 'final'
     }));
 
-    // Store sync metadata for audit trail
-    const syncMetadata = {
-      patientId: fhirPatient.id,
-      observationCount: healthObservations.length,
-      syncTimestamp: new Date().toISOString(),
-      sourceServer: fhirPatient.serverUrl
+    // In production, this would upsert to Supabase with sync metadata
+    // For now, cache the synced data as ComprehensivePatientData
+    const cachedData: ComprehensivePatientData = {
+      profile: {
+        id: fhirPatient.id,
+        user_id: fhirPatient.id,
+        first_name: wellFitProfile.first_name,
+        last_name: wellFitProfile.last_name,
+      },
+      vitals: healthObservations.map(obs => ({
+        created_at: obs.effective_date,
+      })),
+      checkIns: [],
+      medications: [],
+      conditions: []
     };
-
-    // In production, this would upsert to Supabase
-    // For now, cache the synced data
-    this.setCache(`smart-sync-${fhirPatient.id}`, {
-      profile: wellFitProfile,
-      observations: healthObservations,
-      metadata: syncMetadata
-    }, 3600000); // 1 hour TTL
+    this.setCache(`smart-sync-${fhirPatient.id}`, cachedData, 3600000); // 1 hour TTL
   }
 }
 

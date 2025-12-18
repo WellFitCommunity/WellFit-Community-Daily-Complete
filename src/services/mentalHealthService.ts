@@ -15,8 +15,6 @@ import type {
   MentalHealthEscalation,
   MentalHealthFlag,
   MentalHealthDischargeChecklist,
-  MentalHealthQualityMetrics,
-  ActiveMentalHealthPatient,
   PendingMentalHealthSession,
   DischargeBlocker,
   MentalHealthDashboardSummary,
@@ -27,8 +25,6 @@ import type {
   CreateRiskAssessment,
   CreateSafetyPlan,
   RiskLevel,
-  SessionType,
-  Priority,
 } from '../types/mentalHealth';
 import {
   generateCrisisHotlines,
@@ -77,9 +73,9 @@ export class MentalHealthService {
       }
 
       return { success: true, data };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -99,9 +95,9 @@ export class MentalHealthService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -114,14 +110,21 @@ export class MentalHealthService {
     outcome?: string
   ): Promise<MentalHealthApiResponse<MentalHealthServiceRequest>> {
     try {
-      const updates: any = {
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      const updates: {
+        status: string;
+        updated_by: string | undefined;
+        completed_at?: string;
+        completed_by?: string;
+        outcome?: string;
+      } = {
         status,
-        updated_by: (await supabase.auth.getUser()).data.user?.id,
+        updated_by: userId,
       };
 
       if (status === 'completed') {
         updates.completed_at = new Date().toISOString();
-        updates.completed_by = (await supabase.auth.getUser()).data.user?.id;
+        updates.completed_by = userId;
         updates.outcome = outcome;
       }
 
@@ -135,9 +138,9 @@ export class MentalHealthService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -177,9 +180,9 @@ export class MentalHealthService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -204,9 +207,9 @@ export class MentalHealthService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -251,9 +254,9 @@ export class MentalHealthService {
       }
 
       return { success: true, data };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -272,9 +275,9 @@ export class MentalHealthService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -360,9 +363,9 @@ export class MentalHealthService {
       }
 
       return { success: true, data };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -384,9 +387,9 @@ export class MentalHealthService {
       if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows
 
       return { success: true, data: data || null };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -443,9 +446,9 @@ export class MentalHealthService {
       );
 
       return { success: true, data };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -468,9 +471,9 @@ export class MentalHealthService {
       if (error && error.code !== 'PGRST116') throw error;
 
       return { success: true, data: data || null };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -494,9 +497,9 @@ export class MentalHealthService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -524,9 +527,9 @@ export class MentalHealthService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -565,9 +568,9 @@ export class MentalHealthService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -588,9 +591,9 @@ export class MentalHealthService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -615,9 +618,9 @@ export class MentalHealthService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -646,9 +649,9 @@ export class MentalHealthService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -658,11 +661,11 @@ export class MentalHealthService {
   static async updateDischargeChecklistItem(
     patientId: string,
     field: string,
-    value: any,
-    additionalFields?: Record<string, any>
+    value: boolean | string | null,
+    additionalFields?: Record<string, string | boolean | null>
   ): Promise<MentalHealthApiResponse<MentalHealthDischargeChecklist>> {
     try {
-      const updates: any = {
+      const updates: Record<string, string | boolean | null | undefined> = {
         [field]: value,
         updated_by: (await supabase.auth.getUser()).data.user?.id,
         ...additionalFields,
@@ -678,9 +681,9 @@ export class MentalHealthService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -702,9 +705,9 @@ export class MentalHealthService {
       if (error && error.code !== 'PGRST116') throw error;
 
       return { success: true, data: data || null };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -722,9 +725,9 @@ export class MentalHealthService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
@@ -811,9 +814,9 @@ export class MentalHealthService {
       };
 
       return { success: true, data: summary };
-    } catch (error: any) {
-
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
