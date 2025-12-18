@@ -1,6 +1,51 @@
 // AI-Enhanced FHIR Service for WellFit Community
 // Provides intelligent analytics, predictive insights, and automated recommendations
 
+// Type definitions for patient data structures
+interface VitalsReading {
+  created_at?: string;
+  bp_systolic?: number;
+  bp_diastolic?: number;
+  heart_rate?: number;
+  glucose_mg_dl?: number;
+  blood_sugar?: number; // Alternative field name from self_reports
+  pulse_oximeter?: number;
+  spo2?: number; // Alternative field name
+  blood_oxygen?: number; // Alternative field name
+  weight?: number;
+  mood?: string;
+  physical_activity?: string;
+  social_engagement?: string;
+  symptoms?: string;
+  activity_description?: string;
+  is_emergency?: boolean;
+}
+
+interface CheckInEntry {
+  created_at: string;
+  [key: string]: unknown;
+}
+
+interface PatientProfile {
+  first_name?: string;
+  last_name?: string;
+  dob?: string;
+  [key: string]: unknown;
+}
+
+interface PatientData {
+  profile?: PatientProfile;
+  vitals?: VitalsReading[];
+  checkIns?: CheckInEntry[];
+}
+
+interface RiskDistribution {
+  low: number;
+  moderate: number;
+  high: number;
+  critical: number;
+}
+
 interface HealthRiskAssessment {
   riskLevel: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
   riskScore: number; // 0-100
@@ -115,7 +160,7 @@ interface AiConfiguration {
 // Type definitions for aggregation
 interface DailyHealthLog {
   date: string;
-  readings: any[];
+  readings: VitalsReading[];
   aggregates: DailyAggregates;
 }
 
@@ -188,10 +233,10 @@ export class FhirAiService {
   }
 
   // AI-powered patient risk assessment
-  async assessPatientRisk(patientData: any): Promise<HealthRiskAssessment> {
+  async assessPatientRisk(patientData: PatientData): Promise<HealthRiskAssessment> {
     const vitals = patientData.vitals || [];
     const checkIns = patientData.checkIns || [];
-    const profile = patientData.profile;
+    const _profile = patientData.profile; // Reserved for future use
 
     let riskScore = 0;
     const riskFactors: string[] = [];
@@ -246,7 +291,7 @@ export class FhirAiService {
   }
 
   // Generate comprehensive patient insights
-  async generatePatientInsights(patientId: string, patientData: any): Promise<PatientInsight> {
+  async generatePatientInsights(patientId: string, patientData: PatientData): Promise<PatientInsight> {
     const riskAssessment = await this.assessPatientRisk(patientData);
     const vitalsTrends = this.analyzeVitalsTrends(patientData.vitals || []);
     const adherenceScore = this.calculateAdherenceScore(patientData.checkIns || []);
@@ -269,7 +314,7 @@ export class FhirAiService {
   }
 
   // Population-level AI analytics
-  async generatePopulationInsights(populationData: any[]): Promise<PopulationInsights> {
+  async generatePopulationInsights(populationData: PatientData[]): Promise<PopulationInsights> {
     const totalPatients = populationData.length;
     const activePatients = populationData.filter(p =>
       p.checkIns?.length > 0 &&
@@ -312,7 +357,7 @@ export class FhirAiService {
   }
 
   // Real-time monitoring and alerts
-  async monitorPatientInRealTime(patientData: any): Promise<EmergencyAlert[]> {
+  async monitorPatientInRealTime(patientData: PatientData): Promise<EmergencyAlert[]> {
     const alerts: EmergencyAlert[] = [];
     const latestVitals = patientData.vitals?.[0];
     const checkIns = patientData.checkIns || [];
@@ -366,7 +411,7 @@ export class FhirAiService {
   }
 
   // Predictive modeling
-  private generatePredictedOutcomes(patientData: any, riskAssessment: HealthRiskAssessment): PredictedOutcome[] {
+  private generatePredictedOutcomes(patientData: PatientData, riskAssessment: HealthRiskAssessment): PredictedOutcome[] {
     const outcomes: PredictedOutcome[] = [];
     const vitals = patientData.vitals || [];
     const riskFactors = riskAssessment.riskFactors;
@@ -556,7 +601,7 @@ export class FhirAiService {
     return { score, factors, recommendations };
   }
 
-  private assessAdherenceRisk(checkIns: any[]): { score: number; factors: string[]; recommendations: string[] } {
+  private assessAdherenceRisk(checkIns: CheckInEntry[]): { score: number; factors: string[]; recommendations: string[] } {
     const factors: string[] = [];
     const recommendations: string[] = [];
     let score = 0;
@@ -594,7 +639,7 @@ export class FhirAiService {
     return { score, factors, recommendations };
   }
 
-  private analyzeTrends(vitals: any[]): { score: number; factors: string[]; recommendations: string[] } {
+  private analyzeTrends(vitals: VitalsReading[]): { score: number; factors: string[]; recommendations: string[] } {
     const factors: string[] = [];
     const recommendations: string[] = [];
     let score = 0;
@@ -620,16 +665,16 @@ export class FhirAiService {
     return { score, factors, recommendations };
   }
 
-  private calculateVitalTrend(vitals: any[], metric: string): VitalsTrend {
+  private calculateVitalTrend(vitals: VitalsReading[], metric: string): VitalsTrend {
     // FIX: Handle field name variations between self_reports and check_ins
-    const getVitalValue = (vital: any, metricName: string): number => {
+    const getVitalValue = (vital: VitalsReading | undefined, metricName: string): number => {
       if (metricName === 'glucose_mg_dl') {
         return vital?.glucose_mg_dl || vital?.blood_sugar || 0;
       }
       if (metricName === 'pulse_oximeter') {
         return vital?.pulse_oximeter || vital?.spo2 || vital?.blood_oxygen || 0;
       }
-      return vital?.[metricName] || 0;
+      return (vital as Record<string, number | undefined>)?.[metricName] || 0;
     };
 
     const current = getVitalValue(vitals[0], metric);
@@ -685,12 +730,12 @@ export class FhirAiService {
     return recommendations[metric]?.[status] || 'Consult healthcare provider';
   }
 
-  private analyzeVitalsTrends(vitals: any[]): VitalsTrend[] {
+  private analyzeVitalsTrends(vitals: VitalsReading[]): VitalsTrend[] {
     const metrics: Array<VitalsTrend['metric']> = ['bp_systolic', 'bp_diastolic', 'heart_rate', 'glucose_mg_dl', 'pulse_oximeter'];
     return metrics.map(metric => this.calculateVitalTrend(vitals, metric));
   }
 
-  private calculateAdherenceScore(checkIns: any[]): number {
+  private calculateAdherenceScore(checkIns: CheckInEntry[]): number {
     if (checkIns.length === 0) return 0;
 
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
@@ -709,7 +754,7 @@ export class FhirAiService {
     return Math.max(0, baseScore - gapPenalty);
   }
 
-  private calculateCheckInGaps(checkIns: any[]): number[] {
+  private calculateCheckInGaps(checkIns: CheckInEntry[]): number[] {
     if (checkIns.length < 2) return [];
 
     const gaps: number[] = [];
@@ -720,7 +765,7 @@ export class FhirAiService {
     return gaps;
   }
 
-  private detectEmergencyConditions(patientData: any): EmergencyAlert[] {
+  private detectEmergencyConditions(patientData: PatientData): EmergencyAlert[] {
     const alerts: EmergencyAlert[] = [];
     const latestVitals = patientData.vitals?.[0];
 
@@ -781,7 +826,7 @@ export class FhirAiService {
     return normalPercentage;
   }
 
-  private calculateTrendDirection(vitals: any[]): HealthRiskAssessment['trendDirection'] {
+  private calculateTrendDirection(vitals: VitalsReading[]): HealthRiskAssessment['trendDirection'] {
     if (vitals.length < 3) return 'STABLE';
 
     // Simple trend analysis based on overall vital signs improvement/deterioration
@@ -824,7 +869,7 @@ export class FhirAiService {
     return Math.min(5, basePriority + factorBonus);
   }
 
-  private calculateCardiovascularRisk(vitals: any[], riskScore: number): number {
+  private calculateCardiovascularRisk(vitals: VitalsReading[], riskScore: number): number {
     // Simplified cardiovascular risk model
     let cvRisk = riskScore * 0.6; // Base on overall risk
 
@@ -836,7 +881,7 @@ export class FhirAiService {
     return Math.min(95, cvRisk);
   }
 
-  private calculateDiabetesRisk(vitals: any[], riskScore: number): number {
+  private calculateDiabetesRisk(vitals: VitalsReading[], riskScore: number): number {
     // Simplified diabetes complications risk model
     let diabetesRisk = riskScore * 0.7;
 
@@ -847,7 +892,7 @@ export class FhirAiService {
     return Math.min(90, diabetesRisk);
   }
 
-  private calculatePopulationHealthScore(populationData: any[]): number {
+  private calculatePopulationHealthScore(populationData: PatientData[]): number {
     if (populationData.length === 0) return 0;
 
     // Calculate average health score across population
@@ -890,7 +935,7 @@ export class FhirAiService {
       .map(([concern]) => concern);
   }
 
-  private analyzeCommonConditions(populationData: any[]): Array<{ condition: string; prevalence: number }> {
+  private analyzeCommonConditions(populationData: PatientData[]): Array<{ condition: string; prevalence: number }> {
     const conditionCounts: Record<string, number> = {};
     const totalPatients = populationData.length;
 
@@ -909,14 +954,14 @@ export class FhirAiService {
     }));
   }
 
-  private calculatePopulationAdherence(populationData: any[]): number {
+  private calculatePopulationAdherence(populationData: PatientData[]): number {
     if (populationData.length === 0) return 0;
 
     const adherenceScores = populationData.map(patient => this.calculateAdherenceScore(patient.checkIns || []));
     return Math.round(adherenceScores.reduce((sum, score) => sum + score, 0) / adherenceScores.length);
   }
 
-  private calculateAverageAge(populationData: any[]): number {
+  private calculateAverageAge(populationData: PatientData[]): number {
     const patientsWithAge = populationData.filter(p => p.profile?.dob);
     if (patientsWithAge.length === 0) return 0;
 
@@ -930,7 +975,7 @@ export class FhirAiService {
   }
 
   private generatePopulationRecommendations(
-    riskDistribution: any,
+    riskDistribution: RiskDistribution,
     adherenceRate: number,
     trendingConcerns: string[]
   ): PopulationRecommendation[] {
@@ -972,7 +1017,7 @@ export class FhirAiService {
     return recommendations;
   }
 
-  private generatePopulationPredictions(populationData: any[], riskAssessments: HealthRiskAssessment[]): PopulationPrediction[] {
+  private generatePopulationPredictions(populationData: PatientData[], riskAssessments: HealthRiskAssessment[]): PopulationPrediction[] {
     const predictions: PopulationPrediction[] = [];
 
     const highRiskPercentage = (riskAssessments.filter(r => r.riskLevel === 'HIGH' || r.riskLevel === 'CRITICAL').length / riskAssessments.length) * 100;
@@ -1037,11 +1082,12 @@ export class FhirAiService {
    * @param healthData Array of health entries (self_reports, check_ins, etc.)
    * @returns Map of date strings to aggregated daily statistics
    */
-  computeDailyHealthLogs(healthData: any[]): Map<string, DailyHealthLog> {
+  computeDailyHealthLogs(healthData: VitalsReading[]): Map<string, DailyHealthLog> {
     const dailyLogs = new Map<string, DailyHealthLog>();
 
     // Group data by date
     for (const entry of healthData) {
+      if (!entry.created_at) continue;
       const dateStr = this.getDateString(entry.created_at);
 
       if (!dailyLogs.has(dateStr)) {
@@ -1096,7 +1142,7 @@ export class FhirAiService {
    * @param healthData Array of all health entries
    * @returns Structured daily and weekly statistics
    */
-  async computeHealthStatistics(healthData: any[]): Promise<HealthStatistics> {
+  async computeHealthStatistics(healthData: VitalsReading[]): Promise<HealthStatistics> {
     const dailyLogs = this.computeDailyHealthLogs(healthData);
     const weeklyAverages = this.computeWeeklyAverages(dailyLogs);
 
@@ -1133,7 +1179,7 @@ export class FhirAiService {
     };
   }
 
-  private calculateDailyAggregates(readings: any[]): DailyAggregates {
+  private calculateDailyAggregates(readings: VitalsReading[]): DailyAggregates {
     const aggregates = this.getEmptyAggregates();
 
     // Arrays to collect numeric values
@@ -1271,27 +1317,31 @@ export class FhirAiService {
     };
   }
 
-  private calculateOverallStatistics(allReadings: any[]): OverallStatistics {
+  private calculateOverallStatistics(allReadings: VitalsReading[]): OverallStatistics {
     const aggregates = this.calculateDailyAggregates(allReadings);
+    const readingsWithDates = allReadings.filter(r => r.created_at);
 
     return {
       totalReadings: allReadings.length,
       dateRange: {
-        start: allReadings.length > 0 ? this.getDateString(allReadings[allReadings.length - 1].created_at) : null,
-        end: allReadings.length > 0 ? this.getDateString(allReadings[0].created_at) : null
+        start: readingsWithDates.length > 0 ? this.getDateString(readingsWithDates[readingsWithDates.length - 1].created_at!) : null,
+        end: readingsWithDates.length > 0 ? this.getDateString(readingsWithDates[0].created_at!) : null
       },
       averages: aggregates,
       complianceRate: this.calculateComplianceRate(allReadings)
     };
   }
 
-  private calculateComplianceRate(readings: any[]): number {
+  private calculateComplianceRate(readings: VitalsReading[]): number {
     if (readings.length === 0) return 0;
 
-    const dates = new Set(readings.map(r => this.getDateString(r.created_at)));
+    const readingsWithDates = readings.filter(r => r.created_at);
+    if (readingsWithDates.length === 0) return 0;
+
+    const dates = new Set(readingsWithDates.map(r => this.getDateString(r.created_at!)));
     const daysSinceFirst = this.daysBetween(
-      readings[readings.length - 1].created_at,
-      readings[0].created_at
+      readingsWithDates[readingsWithDates.length - 1].created_at!,
+      readingsWithDates[0].created_at!
     );
 
     if (daysSinceFirst === 0) return 100;
