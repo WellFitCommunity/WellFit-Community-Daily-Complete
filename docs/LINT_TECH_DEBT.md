@@ -2,8 +2,8 @@
 
 **Generated:** 2025-12-17
 **Last Updated:** 2025-12-18
-**Total Issues:** 2,140 warnings (down from 2,733)
-**Status:** Recovered from sub-agent errors; cleanup continuing
+**Total Issues:** 2,131 warnings (down from 2,733)
+**Status:** Continuing cleanup - proper useCallback patterns applied
 
 ## Progress Tracking
 
@@ -14,6 +14,7 @@
 | 2025-12-18 | 2,499 | -90 | mentalHealthService, neuroSuiteService, more FHIR fixes |
 | 2025-12-18 | 2,009 | -490 | Sub-agents made changes (introduced 628 TS errors) |
 | 2025-12-18 | 2,140 | +131 | **RECOVERY:** Reverted 82 broken files, kept valid changes |
+| 2025-12-18 | 2,131 | -9 | Fixed exhaustive-deps in 6 dashboard components (useCallback) |
 
 ### Sub-Agent Incident (2025-12-18)
 
@@ -40,11 +41,11 @@ Sub-agents attempted to fix `no-unused-vars` warnings by removing error variable
 |------------|----------|---------|----------|
 | `@typescript-eslint/no-explicit-any` | 1,636 | ~1,400 | P2 |
 | `@typescript-eslint/no-unused-vars` | 902 | ~600 | P3 |
-| `react-hooks/exhaustive-deps` | 98 | ~90 | P1 |
+| `react-hooks/exhaustive-deps` | 98 | 69 | P1 |
 | `@typescript-eslint/no-non-null-assertion` | 95 | ~50 | P2 |
 | Other (duplicate enum, dupe else-if) | 2 | 2 | P3 |
 
-**Note:** Current counts are estimates. Total warnings: 2,140 (verified via `npm run lint`).
+**Note:** Total warnings: 2,131 (verified via `npm run lint`). exhaustive-deps count verified.
 
 ---
 
