@@ -201,7 +201,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
     [user, roomId, maxEvents, onNewActivity]
   );
 
-  // Subscribe to activity broadcasts
+  // Subscribe to activity broadcasts and announce join/leave
   useEffect(() => {
     const channel = supabase.channel(`activity:${roomId}`);
 
@@ -223,10 +223,23 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
       })
       .subscribe();
 
+    // Announce user joined the room
+    broadcastActivity({
+      type: 'join',
+      entityType: 'user',
+      description: 'joined the room',
+    });
+
     return () => {
+      // Announce user leaving the room
+      broadcastActivity({
+        type: 'leave',
+        entityType: 'user',
+        description: 'left the room',
+      });
       channel.unsubscribe();
     };
-  }, [roomId, user?.id, maxEvents, onNewActivity]);
+  }, [roomId, user?.id, maxEvents, onNewActivity, broadcastActivity]);
 
   // Floating variant
   if (floating) {

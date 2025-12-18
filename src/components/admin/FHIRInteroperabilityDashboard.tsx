@@ -39,7 +39,12 @@ export const FHIRInteroperabilityDashboard: React.FC = () => {
   const [complianceMetrics, setComplianceMetrics] = useState<any>(null);
   const [syncStats, setSyncStats] = useState<Record<string, any>>({});
 
-  // Load additional data
+  // Load connections on mount
+  useEffect(() => {
+    loadConnections();
+  }, [loadConnections]);
+
+  // Load additional data when connection is selected
   useEffect(() => {
     if (selectedConnection) {
       loadSyncHistory(selectedConnection.id);
@@ -248,36 +253,77 @@ const OverviewTab: React.FC<{
 
   const activeConnections = connections.filter(c => c.status === 'active').length;
   const recentSyncs = connections.filter(c => c.lastSync).length;
+  const errorConnections = connections.filter(c => c.status === 'error').length;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-gray-600 text-sm">Active Connections</p>
-            <p className="text-3xl font-bold text-gray-900 mt-1">{activeConnections}</p>
+    <div className="space-y-6">
+      {/* Connection Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-600 text-sm">Active Connections</p>
+              <p className="text-3xl font-bold text-gray-900 mt-1">{activeConnections}</p>
+            </div>
+            <Database className="w-12 h-12 text-blue-600 opacity-20" />
           </div>
-          <Database className="w-12 h-12 text-blue-600 opacity-20" />
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-600 text-sm">Recent Syncs</p>
+              <p className="text-3xl font-bold text-gray-900 mt-1">{recentSyncs}</p>
+              <p className="text-xs text-gray-500 mt-1">Connections with sync history</p>
+            </div>
+            <RefreshCw className="w-12 h-12 text-green-600 opacity-20" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-600 text-sm">Mapped Patients</p>
+              <p className="text-3xl font-bold text-gray-900 mt-1">{complianceMetrics?.mappedPatients || 0}</p>
+            </div>
+            <Settings className="w-12 h-12 text-purple-600 opacity-20" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-600 text-sm">Compliance Score</p>
+              <p className="text-3xl font-bold text-gray-900 mt-1">{complianceMetrics?.complianceScore || 0}%</p>
+            </div>
+            <Zap className="w-12 h-12 text-yellow-600 opacity-20" />
+          </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-        <div className="flex items-center justify-between">
+      {/* Connection Health */}
+      {errorConnections > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-gray-600 text-sm">Mapped Patients</p>
-            <p className="text-3xl font-bold text-gray-900 mt-1">{complianceMetrics?.mappedPatients || 0}</p>
+            <h3 className="font-semibold text-red-900">Connection Issues</h3>
+            <p className="text-red-700">{errorConnections} connection(s) have errors that need attention.</p>
           </div>
-          <Settings className="w-12 h-12 text-green-600 opacity-20" />
         </div>
-      </div>
+      )}
 
+      {/* Quick Actions */}
       <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-gray-600 text-sm">Compliance Score</p>
-            <p className="text-3xl font-bold text-gray-900 mt-1">{complianceMetrics?.complianceScore || 0}%</p>
-          </div>
-          <Zap className="w-12 h-12 text-yellow-600 opacity-20" />
+        <h3 className="font-semibold text-gray-900 mb-4">Quick Actions</h3>
+        <div className="flex flex-wrap gap-3">
+          <button className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition flex items-center gap-2">
+            <RefreshCw className="w-4 h-4" />
+            Sync All Active
+          </button>
+          <button className="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition flex items-center gap-2">
+            <Check className="w-4 h-4" />
+            Test All Connections
+          </button>
         </div>
       </div>
     </div>
@@ -356,32 +402,84 @@ const ConnectionsTab: React.FC<{
   );
 };
 
-const SyncTab: React.FC<any> = ({ connection, syncHistory, syncStats, syncing, onSync, onToggleAutoSync }) => {
+const SyncTab: React.FC<{
+  connection: FHIRConnection;
+  syncHistory: any[];
+  syncStats: any;
+  syncing: boolean;
+  onSync: (connectionId: string, direction: 'pull' | 'push' | 'bidirectional') => void;
+  onToggleAutoSync: (frequency: 'manual' | 'realtime' | 'hourly' | 'daily') => void;
+}> = ({ connection, syncHistory, syncStats, syncing, onSync, onToggleAutoSync }) => {
+  const [autoSyncFrequency, setAutoSyncFrequency] = useState<'manual' | 'realtime' | 'hourly' | 'daily'>(
+    connection.syncFrequency || 'manual'
+  );
+
+  const handleAutoSyncChange = (frequency: 'manual' | 'realtime' | 'hourly' | 'daily') => {
+    setAutoSyncFrequency(frequency);
+    onToggleAutoSync(frequency);
+  };
+
   return (
     <div className="space-y-6">
-      {/* Sync Controls */}
+      {/* Auto-Sync Configuration */}
       <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-        <h2 className="text-xl font-bold mb-4">Sync Controls</h2>
+        <h2 className="text-xl font-bold mb-4">Auto-Sync Configuration</h2>
+        <p className="text-gray-600 mb-4">Configure automatic synchronization frequency for this connection.</p>
+        <div className="flex flex-wrap gap-3">
+          {[
+            { value: 'manual', label: 'Manual Only', description: 'Sync only when triggered manually' },
+            { value: 'realtime', label: 'Real-time', description: 'Sync immediately on changes' },
+            { value: 'hourly', label: 'Hourly', description: 'Sync every hour' },
+            { value: 'daily', label: 'Daily', description: 'Sync once per day' }
+          ].map(option => (
+            <button
+              key={option.value}
+              onClick={() => handleAutoSyncChange(option.value as any)}
+              className={`px-4 py-3 rounded-lg border-2 transition text-left ${
+                autoSyncFrequency === option.value
+                  ? 'border-blue-600 bg-blue-50 text-blue-700'
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              <div className="font-medium">{option.label}</div>
+              <div className="text-xs text-gray-500 mt-1">{option.description}</div>
+            </button>
+          ))}
+        </div>
+        {autoSyncFrequency !== 'manual' && (
+          <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
+            <Check className="w-5 h-5 text-green-600" />
+            <span className="text-green-700">Auto-sync enabled: {autoSyncFrequency}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Manual Sync Controls */}
+      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+        <h2 className="text-xl font-bold mb-4">Manual Sync Controls</h2>
         <div className="flex gap-4">
           <button
             onClick={() => onSync(connection.id, 'pull')}
             disabled={syncing}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
           >
+            <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
             Pull from FHIR
           </button>
           <button
             onClick={() => onSync(connection.id, 'push')}
             disabled={syncing}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"
           >
+            <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
             Push to FHIR
           </button>
           <button
             onClick={() => onSync(connection.id, 'bidirectional')}
             disabled={syncing}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 flex items-center gap-2"
           >
+            <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
             Bi-directional Sync
           </button>
         </div>
@@ -488,9 +586,21 @@ const MappingsTab: React.FC<any> = ({ connection, mappings, loading }) => {
   );
 };
 
-const AnalyticsTab: React.FC<any> = ({ connections, syncStats, complianceMetrics }) => {
+const AnalyticsTab: React.FC<{
+  connections: FHIRConnection[];
+  syncStats: Record<string, any>;
+  complianceMetrics: any;
+}> = ({ connections, syncStats, complianceMetrics }) => {
+  // Calculate aggregate stats across all connections
+  const totalSyncs = Object.values(syncStats).reduce((sum: number, stats: any) => sum + (stats?.totalSyncs || 0), 0);
+  const avgSuccessRate = Object.values(syncStats).length > 0
+    ? Object.values(syncStats).reduce((sum: number, stats: any) => sum + (stats?.successRate || 0), 0) / Object.values(syncStats).length
+    : 0;
+  const totalRecordsProcessed = Object.values(syncStats).reduce((sum: number, stats: any) => sum + (stats?.totalRecordsProcessed || 0), 0);
+
   return (
     <div className="space-y-6">
+      {/* Compliance Overview */}
       <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
         <h2 className="text-xl font-bold mb-4">FHIR Compliance Overview</h2>
         {complianceMetrics && (
@@ -521,6 +631,77 @@ const AnalyticsTab: React.FC<any> = ({ connections, syncStats, complianceMetrics
             </div>
           </div>
         )}
+      </div>
+
+      {/* Aggregate Sync Statistics */}
+      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+        <h2 className="text-xl font-bold mb-4">Aggregate Sync Statistics</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <p className="text-gray-600 text-sm">Total Connections</p>
+            <p className="text-2xl font-bold">{connections.length}</p>
+          </div>
+          <div className="p-4 bg-blue-50 rounded-lg">
+            <p className="text-gray-600 text-sm">Total Syncs (30d)</p>
+            <p className="text-2xl font-bold text-blue-600">{totalSyncs}</p>
+          </div>
+          <div className="p-4 bg-green-50 rounded-lg">
+            <p className="text-gray-600 text-sm">Avg Success Rate</p>
+            <p className="text-2xl font-bold text-green-600">{avgSuccessRate.toFixed(1)}%</p>
+          </div>
+          <div className="p-4 bg-purple-50 rounded-lg">
+            <p className="text-gray-600 text-sm">Records Processed</p>
+            <p className="text-2xl font-bold text-purple-600">{totalRecordsProcessed.toLocaleString()}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Per-Connection Stats */}
+      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+        <h2 className="text-xl font-bold mb-4">Connection Performance</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Connection</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Syncs</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Success Rate</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Records</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Sync</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {connections.map(conn => {
+                const stats = syncStats[conn.id];
+                return (
+                  <tr key={conn.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium">{conn.name}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                        conn.status === 'active' ? 'bg-green-100 text-green-800' :
+                        conn.status === 'error' ? 'bg-red-100 text-red-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {conn.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">{stats?.totalSyncs || 0}</td>
+                    <td className="px-4 py-3">
+                      <span className={stats?.successRate >= 90 ? 'text-green-600' : stats?.successRate >= 70 ? 'text-yellow-600' : 'text-red-600'}>
+                        {stats?.successRate?.toFixed(1) || 0}%
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">{stats?.totalRecordsProcessed?.toLocaleString() || 0}</td>
+                    <td className="px-4 py-3 text-gray-600">
+                      {conn.lastSync ? new Date(conn.lastSync).toLocaleDateString() : 'Never'}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

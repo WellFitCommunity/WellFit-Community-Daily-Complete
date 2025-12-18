@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
@@ -27,13 +27,10 @@ export const VoiceProfileMaturity: React.FC<VoiceProfileMaturityProps> = ({
   const { user } = useAuth();
   const [profile, setProfile] = useState<VoiceProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [expanded, setExpanded] = useState(false);
+  // Initialize expanded state from showDetails prop
+  const [expanded, setExpanded] = useState(showDetails);
 
-  useEffect(() => {
-    fetchVoiceProfile();
-  }, [user]);
-
-  const fetchVoiceProfile = async () => {
+  const fetchVoiceProfile = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -45,12 +42,16 @@ export const VoiceProfileMaturity: React.FC<VoiceProfileMaturityProps> = ({
 
       if (error && error.code !== 'PGRST116') throw error;
       setProfile(data);
-    } catch (error) {
+    } catch {
       // Error handled silently - profile will show as not started
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    fetchVoiceProfile();
+  }, [fetchVoiceProfile]);
 
   if (loading) {
     return (

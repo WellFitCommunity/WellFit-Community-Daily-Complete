@@ -200,40 +200,75 @@ export const HealthcareAlgorithmsDashboard: React.FC<HealthcareAlgorithmsDashboa
               </p>
             </EACardHeader>
             <EACardContent className="space-y-6">
-              {/* Input Controls */}
+              {/* Input Controls with Icons */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <EASlider
-                  label="Days Since Last Contact"
-                  value={[silenceDemo.lastContact]}
-                  onValueChange={([v]) => setSilenceDemo({ ...silenceDemo, lastContact: v })}
-                  min={0}
-                  max={30}
-                  step={1}
-                />
-                <EASlider
-                  label="Missed Outreach Calls"
-                  value={[silenceDemo.missedCalls]}
-                  onValueChange={([v]) => setSilenceDemo({ ...silenceDemo, missedCalls: v })}
-                  min={0}
-                  max={5}
-                  step={1}
-                />
-                <EASlider
-                  label="Missed Appointments"
-                  value={[silenceDemo.missedAppts]}
-                  onValueChange={([v]) => setSilenceDemo({ ...silenceDemo, missedAppts: v })}
-                  min={0}
-                  max={3}
-                  step={1}
-                />
-                <EASlider
-                  label="Unread Messages"
-                  value={[silenceDemo.unreadMessages]}
-                  onValueChange={([v]) => setSilenceDemo({ ...silenceDemo, unreadMessages: v })}
-                  min={0}
-                  max={10}
-                  step={1}
-                />
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-slate-300">
+                    <Calendar className="h-4 w-4 text-[#00857a]" />
+                    <span className="text-sm">Days Since Last Contact</span>
+                  </div>
+                  <EASlider
+                    label=""
+                    value={[silenceDemo.lastContact]}
+                    onValueChange={([v]) => setSilenceDemo({ ...silenceDemo, lastContact: v })}
+                    min={0}
+                    max={30}
+                    step={1}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-slate-300">
+                    <Phone className="h-4 w-4 text-[#00857a]" />
+                    <span className="text-sm">Missed Outreach Calls</span>
+                  </div>
+                  <EASlider
+                    label=""
+                    value={[silenceDemo.missedCalls]}
+                    onValueChange={([v]) => setSilenceDemo({ ...silenceDemo, missedCalls: v })}
+                    min={0}
+                    max={5}
+                    step={1}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-slate-300">
+                    <Activity className="h-4 w-4 text-[#00857a]" />
+                    <span className="text-sm">Missed Appointments</span>
+                  </div>
+                  <EASlider
+                    label=""
+                    value={[silenceDemo.missedAppts]}
+                    onValueChange={([v]) => setSilenceDemo({ ...silenceDemo, missedAppts: v })}
+                    min={0}
+                    max={3}
+                    step={1}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-slate-300">
+                    <Mail className="h-4 w-4 text-[#00857a]" />
+                    <span className="text-sm">Unread Messages</span>
+                  </div>
+                  <EASlider
+                    label=""
+                    value={[silenceDemo.unreadMessages]}
+                    onValueChange={([v]) => setSilenceDemo({ ...silenceDemo, unreadMessages: v })}
+                    min={0}
+                    max={10}
+                    step={1}
+                  />
+                </div>
+              </div>
+
+              {/* Reset Button */}
+              <div className="flex justify-end">
+                <EAButton
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setSilenceDemo({ lastContact: 14, missedCalls: 2, missedAppts: 1, unreadMessages: 5 })}
+                >
+                  Reset Demo Values
+                </EAButton>
               </div>
 
               {/* Results Display */}
@@ -297,42 +332,69 @@ export const HealthcareAlgorithmsDashboard: React.FC<HealthcareAlgorithmsDashboa
               </p>
             </EACardHeader>
             <EACardContent className="space-y-6">
-              {/* Patient Inputs */}
+              {/* Patient Inputs with Icons */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <EASlider
-                  label="Age"
-                  value={[patientDemo.age]}
-                  onValueChange={([v]) => setPatientDemo({ ...patientDemo, age: v })}
-                  min={18}
-                  max={95}
-                  step={1}
-                />
-                <EASlider
-                  label="Prior Admissions (12mo)"
-                  value={[patientDemo.priorAdmissions]}
-                  onValueChange={([v]) => setPatientDemo({ ...patientDemo, priorAdmissions: v })}
-                  min={0}
-                  max={5}
-                  step={1}
-                />
-                <EASlider
-                  label="Chronic Conditions"
-                  value={[patientDemo.chronicConditions]}
-                  onValueChange={([v]) => setPatientDemo({ ...patientDemo, chronicConditions: v })}
-                  min={0}
-                  max={6}
-                  step={1}
-                />
-                <EASlider
-                  label="Medication Compliance %"
-                  value={[patientDemo.medicationCompliance]}
-                  onValueChange={([v]) => setPatientDemo({ ...patientDemo, medicationCompliance: v })}
-                  min={0}
-                  max={100}
-                  step={5}
-                />
                 <div className="space-y-2">
-                  <label className="text-sm text-slate-400">Social Support</label>
+                  <div className="flex items-center gap-2 text-slate-300">
+                    <Users className="h-4 w-4 text-[#00857a]" />
+                    <span className="text-sm">Age</span>
+                  </div>
+                  <EASlider
+                    label=""
+                    value={[patientDemo.age]}
+                    onValueChange={([v]) => setPatientDemo({ ...patientDemo, age: v })}
+                    min={18}
+                    max={95}
+                    step={1}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-slate-300">
+                    <Building2 className="h-4 w-4 text-[#00857a]" />
+                    <span className="text-sm">Prior Admissions (12mo)</span>
+                  </div>
+                  <EASlider
+                    label=""
+                    value={[patientDemo.priorAdmissions]}
+                    onValueChange={([v]) => setPatientDemo({ ...patientDemo, priorAdmissions: v })}
+                    min={0}
+                    max={5}
+                    step={1}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-slate-300">
+                    <Heart className="h-4 w-4 text-[#00857a]" />
+                    <span className="text-sm">Chronic Conditions</span>
+                  </div>
+                  <EASlider
+                    label=""
+                    value={[patientDemo.chronicConditions]}
+                    onValueChange={([v]) => setPatientDemo({ ...patientDemo, chronicConditions: v })}
+                    min={0}
+                    max={6}
+                    step={1}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-slate-300">
+                    <Pill className="h-4 w-4 text-[#00857a]" />
+                    <span className="text-sm">Medication Compliance %</span>
+                  </div>
+                  <EASlider
+                    label=""
+                    value={[patientDemo.medicationCompliance]}
+                    onValueChange={([v]) => setPatientDemo({ ...patientDemo, medicationCompliance: v })}
+                    min={0}
+                    max={100}
+                    step={5}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-slate-300">
+                    <Users className="h-4 w-4 text-[#00857a]" />
+                    <span className="text-sm">Social Support</span>
+                  </div>
                   <EASelect
                     value={patientDemo.socialSupport}
                     onValueChange={(v) => setPatientDemo({ ...patientDemo, socialSupport: v as 'high' | 'medium' | 'low' })}
@@ -348,7 +410,10 @@ export const HealthcareAlgorithmsDashboard: React.FC<HealthcareAlgorithmsDashboa
                   </EASelect>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm text-slate-400">Discharge Destination</label>
+                  <div className="flex items-center gap-2 text-slate-300">
+                    <Home className="h-4 w-4 text-[#00857a]" />
+                    <span className="text-sm">Discharge Destination</span>
+                  </div>
                   <EASelect
                     value={patientDemo.dischargeType}
                     onValueChange={(v) => setPatientDemo({ ...patientDemo, dischargeType: v as 'home' | 'snf' | 'ltac' | 'rehab' | 'home_health' })}
@@ -368,12 +433,20 @@ export const HealthcareAlgorithmsDashboard: React.FC<HealthcareAlgorithmsDashboa
               </div>
 
               {/* Risk Results */}
-              {readmissionResult && silenceResult && (
-                <div className="bg-slate-900 rounded-lg p-6 mt-6 border border-slate-700">
+              {readmissionResult && silenceResult && (() => {
+                // Use getRiskStyles to get dynamic styling for the risk category
+                const riskStyles = getRiskStyles(readmissionResult.riskCategory);
+                return (
+                <div className={`bg-slate-900 rounded-lg p-6 mt-6 ${riskStyles.border || 'border border-slate-700'}`}>
                   <div className="flex items-center justify-between mb-6">
-                    <span className="text-lg font-medium text-white">30-Day Readmission Risk</span>
+                    <div className="flex items-center gap-2">
+                      {(readmissionResult.riskCategory === 'High' || readmissionResult.riskCategory === 'Critical') && (
+                        <AlertTriangle className={`h-5 w-5 ${riskStyles.text || 'text-red-500'}`} />
+                      )}
+                      <span className="text-lg font-medium text-white">30-Day Readmission Risk</span>
+                    </div>
                     <div className="flex items-center gap-4">
-                      <span className="text-4xl font-bold text-[#00857a]">{readmissionResult.totalRiskScore}%</span>
+                      <span className={`text-4xl font-bold ${riskStyles.text || 'text-[#00857a]'}`}>{readmissionResult.totalRiskScore}%</span>
                       <EARiskIndicator level={readmissionResult.riskCategory} size="lg" />
                     </div>
                   </div>
@@ -422,7 +495,8 @@ export const HealthcareAlgorithmsDashboard: React.FC<HealthcareAlgorithmsDashboa
                     </EAAlert>
                   )}
                 </div>
-              )}
+                );
+              })()}
             </EACardContent>
           </EACard>
         </TabsContent>

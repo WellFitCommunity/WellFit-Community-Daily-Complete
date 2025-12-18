@@ -53,6 +53,8 @@ interface AlertEffectivenessMetrics {
   false_positive_rate: number;
   avg_ack_time_seconds: number;
   harm_prevented_count: number;
+  pending_count: number;
+  acknowledged_count: number;
 }
 
 // Industry benchmark: Legacy EHRs have 85-99% false positive rate (Joint Commission data)
@@ -72,6 +74,8 @@ export const ClinicalAlertsDashboard: React.FC = () => {
     false_positive_rate: 0,
     avg_ack_time_seconds: 0,
     harm_prevented_count: 0,
+    pending_count: 0,
+    acknowledged_count: 0,
   });
 
   // Load alerts
@@ -102,8 +106,9 @@ export const ClinicalAlertsDashboard: React.FC = () => {
 
       // Calculate mock effectiveness metrics (in production, this would come from alert_effectiveness table)
       const total = data?.length || 0;
-      const pending = data?.filter(a => a.status === 'pending').length || 0;
+      const pendingCount = data?.filter(a => a.status === 'pending').length || 0;
       const resolved = data?.filter(a => a.status === 'resolved').length || 0;
+      const acknowledgedCount = data?.filter(a => a.status === 'acknowledged').length || 0;
 
       // AI-filtered false positive rate - typically 2-8%
       const ourFalsePositiveRate = Math.max(2, Math.min(8, Math.round(Math.random() * 6 + 2)));
@@ -115,6 +120,8 @@ export const ClinicalAlertsDashboard: React.FC = () => {
         false_positive_rate: ourFalsePositiveRate,
         avg_ack_time_seconds: Math.round(Math.random() * 60 + 30), // 30-90 seconds
         harm_prevented_count: Math.round(resolved * 0.15), // ~15% of resolved alerts prevented harm
+        pending_count: pendingCount,
+        acknowledged_count: acknowledgedCount,
       });
     } catch (err) {
       auditLogger.error('ALERTS_LOAD_ERROR', err instanceof Error ? err : new Error('Unknown error'));
@@ -385,9 +392,25 @@ export const ClinicalAlertsDashboard: React.FC = () => {
       <EACard className="bg-slate-800 border-slate-700">
         <EACardHeader className="border-b border-slate-700 p-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white">
-              Active Alerts ({alerts.filter(a => a.status === 'pending').length} pending)
-            </h2>
+            <div>
+              <h2 className="text-lg font-semibold text-white">
+                Active Alerts
+              </h2>
+              <div className="flex items-center gap-4 mt-1">
+                <span className="text-sm text-yellow-400 flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {metrics.pending_count} pending
+                </span>
+                <span className="text-sm text-blue-400 flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3" />
+                  {metrics.acknowledged_count} acknowledged
+                </span>
+                <span className="text-sm text-green-400 flex items-center gap-1">
+                  <Shield className="w-3 h-3" />
+                  {metrics.actionable_alerts} resolved
+                </span>
+              </div>
+            </div>
             <span className="text-sm text-slate-400">
               Click to acknowledge, then mark as Actionable or False Positive
             </span>

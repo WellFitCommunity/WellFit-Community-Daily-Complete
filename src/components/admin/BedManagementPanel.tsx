@@ -255,6 +255,7 @@ const BedManagementPanel: React.FC = () => {
         }
       }
     } catch (err) {
+      auditLogger.error('BED_MANAGEMENT_LOAD_FAILED', err instanceof Error ? err : new Error(String(err)), { selectedUnit, context: 'loadData' });
       setError('Failed to load bed management data');
     } finally {
       setLoading(false);
@@ -940,7 +941,11 @@ const BedManagementPanel: React.FC = () => {
                           className={`p-3 rounded-lg border cursor-pointer transition-all hover:ring-2 hover:ring-teal-500 ${getBedStatusColor(
                             bed.status
                           )}`}
-                          onClick={() => setSelectedBed(bed)}
+                          onClick={() => {
+                            setSelectedBed(bed);
+                            // Track editing presence for other users (ATLUS: Leading)
+                            setEditing(true, `bed-${bed.bed_label}`);
+                          }}
                         >
                           <div className="flex items-center justify-between mb-1">
                             <span className="font-bold text-sm">{bed.bed_label}</span>
@@ -1773,7 +1778,10 @@ const BedManagementPanel: React.FC = () => {
                   Bed {selectedBed.bed_label}
                 </h3>
                 <button
-                  onClick={() => setSelectedBed(null)}
+                  onClick={() => {
+                    setSelectedBed(null);
+                    setEditing(false);
+                  }}
                   className="text-slate-400 hover:text-white"
                 >
                   <XCircle className="w-5 h-5" />
@@ -1850,7 +1858,10 @@ const BedManagementPanel: React.FC = () => {
             </div>
 
             <div className="p-6 border-t border-slate-700 flex justify-end gap-3">
-              <EAButton variant="secondary" onClick={() => setSelectedBed(null)}>
+              <EAButton variant="secondary" onClick={() => {
+                setSelectedBed(null);
+                setEditing(false);
+              }}>
                 Close
               </EAButton>
               {selectedBed.status === 'occupied' && selectedBed.patient_id && (
@@ -1867,6 +1878,7 @@ const BedManagementPanel: React.FC = () => {
                   onClick={() => {
                     handleUpdateStatus(selectedBed.bed_id, 'cleaning');
                     setSelectedBed(null);
+                    setEditing(false);
                   }}
                 >
                   Start Cleaning
@@ -1877,6 +1889,7 @@ const BedManagementPanel: React.FC = () => {
                   onClick={() => {
                     handleUpdateStatus(selectedBed.bed_id, 'available');
                     setSelectedBed(null);
+                    setEditing(false);
                   }}
                 >
                   Mark Available

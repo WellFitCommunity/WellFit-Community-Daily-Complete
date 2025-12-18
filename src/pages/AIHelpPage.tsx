@@ -237,7 +237,7 @@ const AIHelpPage: React.FC = () => {
 
     try {
       // Try Claude first, fallback to local responses
-      const claudeResponse = await claudeService.chatWithHealthAssistant(userMessage, userActivity);
+      const claudeResponse = await claudeService.chatWithHealthAssistant(userMessage, (userActivity as unknown) as Record<string, unknown> | undefined);
 
       const assistantMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),

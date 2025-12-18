@@ -21,12 +21,16 @@ const RiskAssessmentManager: React.FC = () => {
   const [patients, setPatients] = useState<PatientProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const [selectedPatient, setSelectedPatient] = useState<string | null>(null);
   // Remove unused showForm state since form is now always accessible
   // const [showForm, setShowForm] = useState(false);
   const [editingAssessment, setEditingAssessment] = useState<RiskAssessment | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
+
+  // Check if user has permission to manage assessments
+  const canManageAssessments = user && ['admin', 'healthcare_provider', 'nurse'].includes(user.role || '');
 
   // Load assessments and patient data
   const loadData = useCallback(async () => {
@@ -91,6 +95,17 @@ const RiskAssessmentManager: React.FC = () => {
   };
 
   const handleFormSubmit = (assessment: RiskAssessment) => {
+    // Show success message with assessment details
+    const patientName = patients.find(p => p.user_id === assessment.patient_id);
+    const displayName = patientName
+      ? `${patientName.first_name || ''} ${patientName.last_name || ''}`.trim()
+      : 'patient';
+
+    setSuccessMessage(`Risk assessment for ${displayName} saved successfully (Risk Level: ${assessment.risk_level || 'N/A'})`);
+
+    // Clear success message after 5 seconds
+    setTimeout(() => setSuccessMessage(null), 5000);
+
     loadData(); // Refresh data
     // Keep form open so user can create another assessment if needed
     // Just clear the current assessment
@@ -154,13 +169,22 @@ const RiskAssessmentManager: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Success message */}
+      {successMessage && (
+        <Alert className="bg-green-50 border-green-200">
+          <AlertDescription className="text-green-800">{successMessage}</AlertDescription>
+        </Alert>
+      )}
+
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className={`grid w-full ${canManageAssessments ? 'grid-cols-3' : 'grid-cols-2'}`}>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="assessments">All Assessments</TabsTrigger>
-          <TabsTrigger value="form">
-            Risk Assessment Form
-          </TabsTrigger>
+          {canManageAssessments && (
+            <TabsTrigger value="form">
+              Risk Assessment Form
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">

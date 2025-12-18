@@ -65,11 +65,14 @@ export const AvatarMarker: React.FC<AvatarMarkerProps> = React.memo(({
   onClick,
   size = 'md',
 }) => {
-  const { bgClass, borderClass, pulseClass } = getMarkerStyles(
+  // getMarkerStyles returns Tailwind CSS classes - we use pulseClass for animation state
+  // bgClass and borderClass are for HTML elements, not SVG, so we use getCategoryColor for fills
+  const { pulseClass } = getMarkerStyles(
     marker.category,
     isPending || marker.status === 'pending_confirmation',
     marker.requires_attention
   );
+  const shouldAnimate = pulseClass !== '';
 
   const markerSize = getMarkerSize(size);
   const halfSize = markerSize / 2;
@@ -104,7 +107,6 @@ export const AvatarMarker: React.FC<AvatarMarkerProps> = React.memo(({
   };
 
   const fillColor = getCategoryColor(marker.category);
-  const showPulse = marker.requires_attention || marker.status === 'pending_confirmation';
   const showDashed = marker.status === 'pending_confirmation';
 
   return (
@@ -124,8 +126,8 @@ export const AvatarMarker: React.FC<AvatarMarkerProps> = React.memo(({
         }
       }}
     >
-      {/* Pulse ring for attention items */}
-      {showPulse && (
+      {/* Pulse ring for attention items - uses shouldAnimate from getMarkerStyles */}
+      {shouldAnimate && (
         <circle
           cx={cx}
           cy={cy}

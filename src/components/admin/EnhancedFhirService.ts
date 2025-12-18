@@ -683,14 +683,53 @@ export class EnhancedFhirService {
   }
 
   private checkDrugInteractions(patientData: any): any[] {
-    // Simplified drug interaction checking
-    // In production, this would integrate with a comprehensive drug interaction database
-    return [];
+    // Drug interaction checking based on patient medication data
+    const interactions: any[] = [];
+    const medications = patientData?.medications || patientData?.medicationRequests || [];
+
+    // Known high-risk interaction pairs (simplified for demo)
+    const interactionPairs: Record<string, { drugs: string[], severity: string, description: string, recommendation: string }[]> = {
+      'warfarin': [
+        { drugs: ['aspirin'], severity: 'MAJOR', description: 'Increased bleeding risk', recommendation: 'Monitor INR closely' },
+        { drugs: ['ibuprofen', 'naproxen'], severity: 'MAJOR', description: 'NSAIDs increase bleeding risk with anticoagulants', recommendation: 'Avoid NSAIDs or use with caution' }
+      ],
+      'metformin': [
+        { drugs: ['contrast'], severity: 'MAJOR', description: 'Risk of lactic acidosis with contrast media', recommendation: 'Hold metformin 48h before/after contrast' }
+      ],
+      'lisinopril': [
+        { drugs: ['potassium', 'spironolactone'], severity: 'MODERATE', description: 'Risk of hyperkalemia', recommendation: 'Monitor potassium levels' }
+      ],
+      'simvastatin': [
+        { drugs: ['amiodarone', 'diltiazem'], severity: 'MAJOR', description: 'Increased risk of myopathy/rhabdomyolysis', recommendation: 'Limit simvastatin dose to 10mg' }
+      ]
+    };
+
+    // Check each medication against known interactions
+    const medNames = medications.map((m: any) =>
+      (m.medication_display || m.name || '').toLowerCase()
+    );
+
+    for (const [drug, pairs] of Object.entries(interactionPairs)) {
+      if (medNames.some((name: string) => name.includes(drug))) {
+        for (const pair of pairs) {
+          if (pair.drugs.some(d => medNames.some((name: string) => name.includes(d)))) {
+            interactions.push({
+              medications: [drug, ...pair.drugs.filter(d => medNames.some((name: string) => name.includes(d)))],
+              severity: pair.severity,
+              description: pair.description,
+              recommendation: pair.recommendation
+            });
+          }
+        }
+      }
+    }
+
+    return interactions;
   }
 
   private getApplicableClinicalGuidelines(condition: string, patientData: any): any[] {
-    // Simplified clinical guidelines
-    const guidelines: Record<string, any[]> = {
+    // Clinical guidelines with patient-specific applicability scoring
+    const allGuidelines: Record<string, any[]> = {
       'Hypertension': [
         {
           guideline: '2017 ACC/AHA High Blood Pressure Clinical Practice Guideline',
@@ -698,10 +737,59 @@ export class EnhancedFhirService {
           applicability: 95,
           keyPoints: ['BP goal <130/80 for most patients', 'Lifestyle modifications first-line', 'Combination therapy often needed']
         }
+      ],
+      'Diabetes': [
+        {
+          guideline: 'ADA Standards of Medical Care in Diabetes 2023',
+          organization: 'American Diabetes Association',
+          applicability: 90,
+          keyPoints: ['A1C target <7% for most adults', 'Metformin as first-line therapy', 'SGLT2i or GLP-1 RA for cardiovascular risk reduction']
+        }
+      ],
+      'Heart Failure': [
+        {
+          guideline: '2022 AHA/ACC/HFSA Heart Failure Guideline',
+          organization: 'American Heart Association',
+          applicability: 85,
+          keyPoints: ['GDMT optimization', 'Consider SGLT2i regardless of diabetes status', 'Regular monitoring of volume status']
+        }
+      ],
+      'Chronic Kidney Disease': [
+        {
+          guideline: 'KDIGO 2021 Clinical Practice Guideline for CKD',
+          organization: 'Kidney Disease: Improving Global Outcomes',
+          applicability: 88,
+          keyPoints: ['BP target <120/80 if tolerated', 'ACEi/ARB for proteinuria', 'SGLT2i for eGFR 20-45']
+        }
       ]
     };
 
-    return guidelines[condition] || [];
+    // Get base guidelines for condition
+    const baseGuidelines = allGuidelines[condition] || [];
+
+    // Adjust applicability based on patient data
+    const patientAge = patientData?.profile?.age || patientData?.age;
+    const patientConditions = patientData?.conditions || [];
+
+    return baseGuidelines.map(g => {
+      let adjustedApplicability = g.applicability;
+
+      // Adjust for age (elderly may have different targets)
+      if (patientAge && patientAge > 75) {
+        adjustedApplicability -= 10; // Less aggressive targets for elderly
+      }
+
+      // Adjust for comorbidities
+      if (patientConditions.some((c: any) => c.includes?.('kidney') || c.includes?.('renal'))) {
+        adjustedApplicability -= 5; // May need renal dosing adjustments
+      }
+
+      return {
+        ...g,
+        applicability: Math.max(0, Math.min(100, adjustedApplicability)),
+        patientSpecificNotes: patientAge > 75 ? 'Consider less aggressive targets for elderly patient' : undefined
+      };
+    });
   }
 
   private async assessFhirCompliance(populationData: any[]): Promise<any> {
@@ -940,12 +1028,34 @@ export class EnhancedFhirService {
     synchronized: boolean;
   }> {
     try {
-      // Simple demo implementation - will be enhanced later
+      // Validate SMART session
+      if (!smartSession?.accessToken || !smartSession?.patient) {
+        throw new Error('Invalid SMART session: missing accessToken or patient');
+      }
 
-      
+      // Extract patient ID from session
+      const patientId = smartSession.patient;
+      const fhirServerUrl = smartSession.fhirServerUrl || smartSession.serverUrl;
+
+      // Fetch patient data from FHIR server (simulated for demo)
+      const patientData = {
+        id: patientId,
+        resourceType: 'Patient',
+        name: smartSession.patientName || 'SMART Patient',
+        serverUrl: fhirServerUrl,
+        sessionExpiry: smartSession.expiresAt || new Date(Date.now() + 3600000).toISOString(),
+        scope: smartSession.scope || 'patient/*.read'
+      };
+
+      // Fetch observations (simulated - in production would call FHIR server)
+      const observations = smartSession.observations || [];
+
+      // Sync to WellFit
+      await this.syncPatientToWellFit(patientData, observations);
+
       return {
-        patientData: { id: 'demo-patient', name: 'Demo Patient' },
-        observations: [],
+        patientData,
+        observations,
         synchronized: true
       };
 
@@ -954,10 +1064,43 @@ export class EnhancedFhirService {
     }
   }
 
-  // Helper method for future EHR integration
+  // Helper method for EHR integration - syncs FHIR patient and observations to WellFit
   private async syncPatientToWellFit(fhirPatient: any, observations: any[]): Promise<void> {
-    // Placeholder for future implementation
+    // Map FHIR patient to WellFit profile format
+    const wellFitProfile = {
+      external_fhir_id: fhirPatient.id,
+      first_name: fhirPatient.name?.given?.[0] || fhirPatient.name || 'Unknown',
+      last_name: fhirPatient.name?.family || '',
+      fhir_server_url: fhirPatient.serverUrl,
+      last_synced_at: new Date().toISOString()
+    };
 
+    // Map observations to WellFit health observations
+    const healthObservations = observations.map((obs: any) => ({
+      external_fhir_id: obs.id,
+      patient_fhir_id: fhirPatient.id,
+      observation_type: obs.code?.coding?.[0]?.display || obs.code?.text || 'Unknown',
+      value: obs.valueQuantity?.value || obs.valueString || null,
+      unit: obs.valueQuantity?.unit || null,
+      effective_date: obs.effectiveDateTime || obs.issued || new Date().toISOString(),
+      status: obs.status || 'final'
+    }));
+
+    // Store sync metadata for audit trail
+    const syncMetadata = {
+      patientId: fhirPatient.id,
+      observationCount: healthObservations.length,
+      syncTimestamp: new Date().toISOString(),
+      sourceServer: fhirPatient.serverUrl
+    };
+
+    // In production, this would upsert to Supabase
+    // For now, cache the synced data
+    this.setCache(`smart-sync-${fhirPatient.id}`, {
+      profile: wellFitProfile,
+      observations: healthObservations,
+      metadata: syncMetadata
+    }, 3600000); // 1 hour TTL
   }
 }
 

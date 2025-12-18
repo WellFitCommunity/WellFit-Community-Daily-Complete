@@ -4,7 +4,7 @@
  * Shows risk factors, protective factors, and recommended interventions
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -17,10 +17,13 @@ import {
   Calendar,
   Activity,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  RefreshCw
 } from 'lucide-react';
 import type { ReadmissionPrediction } from '../../services/ai/readmissionRiskPredictor';
 import { AIFeedbackButton } from './AIFeedbackButton';
+import { supabase } from '../../lib/supabaseClient';
+import { auditLogger } from '../../services/auditLogger';
 
 interface ReadmissionRiskPanelProps {
   predictionId: string;
@@ -37,21 +40,71 @@ export const ReadmissionRiskPanel: React.FC<ReadmissionRiskPanelProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadPrediction();
-  }, [predictionId]);
+  const loadPrediction = useCallback(async () => {
+    if (!predictionId) {
+      setError('No prediction ID provided');
+      setLoading(false);
+      return;
+    }
 
-  const loadPrediction = async () => {
     try {
       setLoading(true);
-      // Load prediction from database
-      // Implementation would fetch from readmission_risk_predictions table
-      setLoading(false);
+      setError(null);
+
+      // Fetch prediction from database
+      const { data, error: fetchError } = await supabase
+        .from('readmission_risk_predictions')
+        .select('*')
+        .eq('id', predictionId)
+        .single();
+
+      if (fetchError) {
+        throw fetchError;
+      }
+
+      if (!data) {
+        throw new Error('Prediction not found');
+      }
+
+      // Transform database row to ReadmissionPrediction format
+      const transformedPrediction: ReadmissionPrediction = {
+        patientId: data.patient_id,
+        dischargeDate: data.discharge_date,
+        readmissionRisk30Day: data.readmission_risk_30_day || 0,
+        readmissionRisk7Day: data.readmission_risk_7_day || 0,
+        readmissionRisk90Day: data.readmission_risk_90_day || 0,
+        riskCategory: data.risk_category || 'low',
+        riskFactors: data.risk_factors || [],
+        protectiveFactors: data.protective_factors || [],
+        recommendedInterventions: data.recommended_interventions || [],
+        predictedReadmissionDate: data.predicted_readmission_date,
+        predictionConfidence: data.prediction_confidence || 0,
+        plainLanguageExplanation: data.plain_language_explanation ||
+          `Risk is ${(data.risk_category || 'low').toUpperCase()} based on clinical factors analyzed.`,
+        dataSourcesAnalyzed: data.data_sources_analyzed || {
+          readmissionHistory: false,
+          sdohIndicators: false,
+          checkinPatterns: false,
+          medicationAdherence: false,
+          carePlanAdherence: false
+        },
+        aiModel: data.ai_model_used || 'claude-3-haiku',
+        aiCost: data.ai_cost || 0
+      };
+
+      setPrediction(transformedPrediction);
+      auditLogger.clinical('READMISSION_PREDICTION_VIEWED', true, { predictionId });
     } catch (err: any) {
-      setError(err.message);
+      auditLogger.error('READMISSION_PREDICTION_LOAD_FAILED', err, { predictionId });
+      setError(err.message || 'Failed to load prediction');
+    } finally {
       setLoading(false);
     }
-  };
+  }, [predictionId]);
+
+  useEffect(() => {
+    loadPrediction();
+  }, [loadPrediction]);
 
   if (loading) {
     return (
@@ -69,7 +122,18 @@ export const ReadmissionRiskPanel: React.FC<ReadmissionRiskPanelProps> = ({
   if (error || !prediction) {
     return (
       <Alert variant="destructive">
-        <AlertDescription>{error || 'Failed to load prediction'}</AlertDescription>
+        <AlertDescription className="flex items-center justify-between">
+          <span>{error || 'Failed to load prediction'}</span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={loadPrediction}
+            className="ml-4"
+          >
+            <RefreshCw className="h-4 w-4 mr-1" />
+            Retry
+          </Button>
+        </AlertDescription>
       </Alert>
     );
   }

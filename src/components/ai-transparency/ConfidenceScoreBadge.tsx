@@ -62,8 +62,25 @@ export const ConfidenceScoreBadge: React.FC<ConfidenceScoreBadgeProps> = ({
     }
   };
 
+  // Get suggestion type-specific label for context
+  const getSuggestionTypeLabel = (type: typeof suggestionType): string => {
+    switch (type) {
+      case 'billing_code':
+        return 'Billing';
+      case 'clinical':
+        return 'Clinical';
+      case 'drug_interaction':
+        return 'Drug';
+      case 'risk_assessment':
+        return 'Risk';
+      default:
+        return 'AI';
+    }
+  };
+
   const level = getConfidenceLevel(score);
   const config = getConfidenceConfig(level);
+  const typeLabel = getSuggestionTypeLabel(suggestionType);
 
   const handleValidation = (accepted: boolean) => {
     setValidated(accepted);
@@ -88,6 +105,7 @@ export const ConfidenceScoreBadge: React.FC<ConfidenceScoreBadgeProps> = ({
           onClick={() => setShowExplanation(!showExplanation)}
         >
           <span className="text-sm font-bold">{config.icon}</span>
+          <span className={`text-xs ${config.textColor} opacity-75`}>{typeLabel}</span>
           <span className={`text-sm font-semibold ${config.textColor}`}>{score}%</span>
           <span className={`text-xs ${config.textColor} opacity-75`}>{level}</span>
         </motion.div>

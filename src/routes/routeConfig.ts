@@ -295,6 +295,14 @@ export const clinicalRoutes: RouteConfig[] = [
     roles: ['admin', 'super_admin', 'nurse', 'physician', 'doctor', 'case_manager'],
     category: 'clinical',
   },
+  // Medication Manager (Admin-level medication oversight)
+  {
+    path: '/medication-manager',
+    component: 'MedicationManager',
+    auth: 'admin',
+    roles: ['admin', 'super_admin', 'nurse', 'physician', 'doctor', 'pharmacist', 'nurse_practitioner'],
+    category: 'clinical',
+  },
   // Compass Riley (AI Scribe)
   {
     path: '/compass-riley',

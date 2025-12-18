@@ -19,7 +19,7 @@ export class ClaudeServiceError extends Error {
     message: string,
     public code: string,
     public statusCode?: number,
-    public originalError?: any,
+    public originalError?: unknown,
     public requestId?: string
   ) {
     super(message);
@@ -28,7 +28,7 @@ export class ClaudeServiceError extends Error {
 }
 
 export class ClaudeInitializationError extends ClaudeServiceError {
-  constructor(message: string, originalError?: any) {
+  constructor(message: string, originalError?: unknown) {
     super(message, 'INITIALIZATION_ERROR', 500, originalError);
     this.name = 'ClaudeInitializationError';
   }
@@ -206,7 +206,7 @@ class CircuitBreaker {
     this.state = 'CLOSED';
   }
 
-  private onFailure(error: any): void {
+  private onFailure(_error: unknown): void {
     this.failureCount++;
     this.lastFailureTime = new Date();
 
@@ -229,10 +229,25 @@ class CircuitBreaker {
   }
 }
 
+// Anthropic client interface (dynamically loaded)
+interface AnthropicClient {
+  messages: {
+    create: (params: {
+      model: string;
+      max_tokens: number;
+      messages: Array<{ role: string; content: string }>;
+      metadata?: { user_id: string };
+    }) => Promise<{
+      content: Array<{ type: string; text?: string }>;
+      usage: { input_tokens: number; output_tokens: number };
+    }>;
+  };
+}
+
 // Main Claude Service Class - Production Ready
 class ClaudeService {
   private static instance: ClaudeService | null = null;
-  private client: any = null;
+  private client: AnthropicClient | null = null;
   private rateLimiter: RateLimiter;
   private costTracker: CostTracker;
   private circuitBreaker: CircuitBreaker;
@@ -378,6 +393,10 @@ class ClaudeService {
         }]
       });
 
+      if (!response) {
+        return { success: false, message: '❌ Claude AI client not available' };
+      }
+
       const content = response.content[0]?.type === 'text' ? response.content[0].text : '';
 
       return {
@@ -385,10 +404,11 @@ class ClaudeService {
         message: `✅ Claude AI connected successfully. Response: ${content}`
       };
 
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return {
         success: false,
-        message: `❌ Claude AI connection failed: ${error.message || 'Unknown error'}`
+        message: `❌ Claude AI connection failed: ${errorMessage}`
       };
     }
   }
@@ -430,7 +450,7 @@ class ClaudeService {
    * Generate FHIR data insights
    */
   public async analyzeFHIRData(
-    fhirData: any,
+    fhirData: Record<string, unknown>,
     analysisType: 'summary' | 'risk_assessment' | 'care_gaps',
     context: ClaudeRequestContext
   ): Promise<ClaudeResponse> {
@@ -446,14 +466,15 @@ class ClaudeService {
   /**
    * Legacy methods for backward compatibility
    */
-  async chatWithHealthAssistant(message: string, userContext?: any): Promise<string> {
+  async chatWithHealthAssistant(message: string, userContext?: Record<string, unknown>): Promise<string> {
     if (!this.isAvailable()) {
       return "I'm sorry, the AI assistant is currently unavailable. Please try again later.";
     }
 
     try {
+      const userId = (userContext?.userId as string | undefined) || 'anonymous';
       const context: ClaudeRequestContext = {
-        userId: userContext?.userId || 'anonymous',
+        userId,
         userRole: UserRole.SENIOR_PATIENT,
         requestId: `chat-${Date.now()}`,
         timestamp: new Date(),
@@ -468,7 +489,7 @@ class ClaudeService {
     }
   }
 
-  async interpretHealthData(healthData: any): Promise<string> {
+  async interpretHealthData(healthData: Record<string, unknown>): Promise<string> {
     if (!this.isAvailable()) {
       return "Health data interpretation is currently unavailable.";
     }
@@ -496,7 +517,7 @@ class ClaudeService {
     }
   }
 
-  async analyzeRiskAssessment(assessmentData: any): Promise<{
+  async analyzeRiskAssessment(assessmentData: Record<string, unknown>): Promise<{
     suggestedRiskLevel: string;
     riskFactors: string[];
     recommendations: string[];
@@ -536,7 +557,7 @@ class ClaudeService {
     }
   }
 
-  async generateClinicalNotes(patientData: any, assessmentData: any): Promise<string> {
+  async generateClinicalNotes(patientData: Record<string, unknown>, assessmentData: Record<string, unknown>): Promise<string> {
     if (!this.isAvailable()) {
       return "Clinical notes generation unavailable. Please document findings manually.";
     }
@@ -563,14 +584,15 @@ class ClaudeService {
     }
   }
 
-  async generateHealthSuggestions(userProfile: any, recentActivity: any): Promise<string[]> {
+  async generateHealthSuggestions(userProfile: Record<string, unknown>, recentActivity: Record<string, unknown>): Promise<string[]> {
     if (!this.isAvailable()) {
       return ["Keep up your daily check-ins!", "Stay hydrated throughout the day.", "Take a short walk if you feel up to it."];
     }
 
     try {
+      const profileId = userProfile?.id as string | undefined;
       const context: ClaudeRequestContext = {
-        userId: userProfile?.id || 'suggestions-user',
+        userId: profileId || 'suggestions-user',
         userRole: UserRole.SENIOR_PATIENT,
         requestId: `suggestions-${Date.now()}`,
         timestamp: new Date(),
@@ -652,6 +674,16 @@ class ClaudeService {
         });
       });
 
+      if (!response) {
+        throw new ClaudeServiceError(
+          'No response from Claude API',
+          'NO_RESPONSE',
+          500,
+          undefined,
+          context.requestId
+        );
+      }
+
       const responseTime = Date.now() - startTime;
       const actualCost = this.costTracker.calculateCost(
         model,
@@ -664,8 +696,10 @@ class ClaudeService {
 
       // Request completion logged via auditLogger
 
+      const responseContent = response.content[0]?.type === 'text' ? response.content[0].text : '';
+
       return {
-        content: response.content[0]?.type === 'text' ? response.content[0].text : '',
+        content: responseContent || '',
         model,
         tokenUsage: {
           inputTokens: response.usage.input_tokens,
@@ -754,7 +788,7 @@ Provide comprehensive analysis including:
 Use appropriate medical terminology and cite relevant clinical guidelines where applicable.`;
   }
 
-  private createFHIRAnalysisPrompt(fhirData: any, analysisType: string): string {
+  private createFHIRAnalysisPrompt(fhirData: Record<string, unknown>, analysisType: string): string {
     return `You are analyzing FHIR healthcare data to provide clinical insights.
 
 FHIR DATA:
@@ -838,8 +872,11 @@ Most Common Conditions: ${Array.from(conditionCounts.entries())
   .join(', ')}`;
   }
 
-  private convertLegacyHealthData(healthData: any): HealthDataContext | undefined {
+  private convertLegacyHealthData(healthData: Record<string, unknown>): HealthDataContext | undefined {
     if (!healthData) return undefined;
+
+    const bpSystolic = healthData.bp_systolic as number | undefined;
+    const bpDiastolic = healthData.bp_diastolic as number | undefined;
 
     return {
       patientId: 'legacy-patient',
@@ -850,41 +887,46 @@ Most Common Conditions: ${Array.from(conditionCounts.entries())
       currentConditions: [],
       medications: [],
       recentVitals: {
-        bloodPressure: healthData.bp_systolic && healthData.bp_diastolic ?
-          `${healthData.bp_systolic}/${healthData.bp_diastolic}` : undefined,
-        heartRate: healthData.heart_rate,
-        weight: healthData.weight,
-        bloodSugar: healthData.blood_sugar || healthData.glucose_mg_dl,
+        bloodPressure: bpSystolic && bpDiastolic ?
+          `${bpSystolic}/${bpDiastolic}` : undefined,
+        heartRate: healthData.heart_rate as number | undefined,
+        weight: healthData.weight as number | undefined,
+        bloodSugar: (healthData.blood_sugar || healthData.glucose_mg_dl) as number | undefined,
         lastUpdated: new Date().toISOString()
       }
     };
   }
 
-  private formatUserContextForClaude(userProfile: any, recentActivity: any): string {
-    const parts = [];
+  private formatUserContextForClaude(userProfile: Record<string, unknown>, recentActivity: Record<string, unknown>): string {
+    const parts: string[] = [];
 
-    if (userProfile?.age || userProfile?.dob) {
-      const age = userProfile.age || (userProfile.dob ? new Date().getFullYear() - new Date(userProfile.dob).getFullYear() : null);
+    const profileAge = userProfile?.age as number | undefined;
+    const profileDob = userProfile?.dob as string | undefined;
+    if (profileAge || profileDob) {
+      const age = profileAge || (profileDob ? new Date().getFullYear() - new Date(profileDob).getFullYear() : null);
       if (age) parts.push(`Age: ${age}`);
     }
 
-    if (recentActivity?.checkInCount) {
-      parts.push(`Recent check-ins: ${recentActivity.checkInCount}`);
+    const checkInCount = recentActivity?.checkInCount as number | undefined;
+    if (checkInCount) {
+      parts.push(`Recent check-ins: ${checkInCount}`);
     }
 
-    if (recentActivity?.lastActivity) {
-      parts.push(`Last activity: ${recentActivity.lastActivity}`);
+    const lastActivity = recentActivity?.lastActivity as string | undefined;
+    if (lastActivity) {
+      parts.push(`Last activity: ${lastActivity}`);
     }
 
-    if (recentActivity?.mood) {
-      parts.push(`Recent mood: ${recentActivity.mood}`);
+    const mood = recentActivity?.mood as string | undefined;
+    if (mood) {
+      parts.push(`Recent mood: ${mood}`);
     }
 
     return parts.length > 0 ? parts.join(', ') : 'Limited user information available';
   }
 
-  private formatAssessmentForClaude(assessmentData: any): string {
-    const parts = [];
+  private formatAssessmentForClaude(assessmentData: Record<string, unknown>): string {
+    const parts: string[] = [];
 
     if (assessmentData.walking_ability) parts.push(`Walking: ${assessmentData.walking_ability}`);
     if (assessmentData.stair_climbing) parts.push(`Stairs: ${assessmentData.stair_climbing}`);
@@ -895,8 +937,9 @@ Most Common Conditions: ${Array.from(conditionCounts.entries())
     if (assessmentData.meal_preparation) parts.push(`Meals: ${assessmentData.meal_preparation}`);
     if (assessmentData.medication_management) parts.push(`Medications: ${assessmentData.medication_management}`);
 
-    if (assessmentData.fall_risk_factors?.length > 0) {
-      parts.push(`Fall risks: ${assessmentData.fall_risk_factors.join(', ')}`);
+    const fallRiskFactors = assessmentData.fall_risk_factors as string[] | undefined;
+    if (fallRiskFactors?.length && fallRiskFactors.length > 0) {
+      parts.push(`Fall risks: ${fallRiskFactors.join(', ')}`);
     }
 
     if (assessmentData.medical_risk_score) parts.push(`Medical risk: ${assessmentData.medical_risk_score}/10`);
@@ -907,15 +950,19 @@ Most Common Conditions: ${Array.from(conditionCounts.entries())
     return parts.length > 0 ? parts.join('; ') : 'Limited assessment data available';
   }
 
-  private formatClinicalContextForClaude(patientData: any, assessmentData: any): string {
-    const parts = [];
+  private formatClinicalContextForClaude(patientData: Record<string, unknown>, assessmentData: Record<string, unknown>): string {
+    const parts: string[] = [];
 
-    if (patientData?.first_name && patientData?.last_name) {
-      parts.push(`Patient: ${patientData.first_name} ${patientData.last_name}`);
+    const firstName = patientData?.first_name as string | undefined;
+    const lastName = patientData?.last_name as string | undefined;
+    if (firstName && lastName) {
+      parts.push(`Patient: ${firstName} ${lastName}`);
     }
 
-    if (patientData?.age || patientData?.dob) {
-      const age = patientData.age || (patientData.dob ? new Date().getFullYear() - new Date(patientData.dob).getFullYear() : null);
+    const patientAge = patientData?.age as number | undefined;
+    const patientDob = patientData?.dob as string | undefined;
+    if (patientAge || patientDob) {
+      const age = patientAge || (patientDob ? new Date().getFullYear() - new Date(patientDob).getFullYear() : null);
       if (age) parts.push(`Age: ${age}`);
     }
 

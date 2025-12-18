@@ -236,6 +236,7 @@ export const PatientAvatar: React.FC<PatientAvatarContainerProps> = ({
           onConfirmAllPending={confirmAllPending}
           onEditMarker={editable ? handleEditMarker : undefined}
           onAddMarker={editable ? handleAddMarker : undefined}
+          onMarkerClick={handleMarkerClick}
           editable={editable}
         />
       )}

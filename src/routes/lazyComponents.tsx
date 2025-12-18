@@ -141,6 +141,9 @@ export const NeuroSuiteDashboard = React.lazy(() => import('../components/neuro/
 export const MemoryClinicDashboard = React.lazy(() => import('../components/neuro-suite/MemoryClinicDashboard'));
 export const MentalHealthDashboard = React.lazy(() => import('../components/mental-health/MentalHealthDashboard'));
 
+// Medication Management (Admin)
+export const MedicationManager = React.lazy(() => import('../components/admin/MedicationManager'));
+
 // Specialty Care
 export const PhysicalTherapyDashboard = React.lazy(() => import('../components/physicalTherapy/PhysicalTherapyDashboard'));
 export const CareCoordinationDashboard = React.lazy(() => import('../components/careCoordination/CareCoordinationDashboard'));

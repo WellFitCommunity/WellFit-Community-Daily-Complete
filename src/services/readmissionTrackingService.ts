@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabaseClient';
 import { PAGINATION_LIMITS, applyLimit } from '../utils/pagination';
 import { claudeService } from './claudeService';
 import { UserRole, RequestType, ClaudeRequestContext } from '../types/claude';
+import { auditLogger } from './auditLogger';
 
 export interface ReadmissionEvent {
   id?: string;
@@ -40,8 +41,10 @@ export interface HighUtilizerMetrics {
   urgent_care_visits: number;
   total_visits: number;
   risk_score: number;
-  risk_category: 'low' | 'moderate' | 'high' | 'very_high';
+  risk_category: 'low' | 'moderate' | 'high' | 'critical';
   cms_penalty_risk: boolean;
+  inpatient_days?: number;
+  estimated_cost?: number;
 }
 
 export class ReadmissionTrackingService {
@@ -444,8 +447,8 @@ Format as JSON with this structure:
     return Math.min(score, 100);
   }
 
-  private static categorizeRisk(score: number): 'low' | 'moderate' | 'high' | 'very_high' {
-    if (score >= 80) return 'very_high';
+  private static categorizeRisk(score: number): 'low' | 'moderate' | 'high' | 'critical' {
+    if (score >= 80) return 'critical';
     if (score >= 60) return 'high';
     if (score >= 40) return 'moderate';
     return 'low';
@@ -529,6 +532,64 @@ Format as JSON with this structure:
         }
       ]
     };
+  }
+
+  /**
+   * Get patient's visit history for a given period
+   * Returns all recorded visits, ER visits, and hospital admissions
+   */
+  static async getPatientVisitHistory(patientId: string, days: number = 90): Promise<any[]> {
+    try {
+      const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+
+      const { data, error } = await supabase
+        .from('patient_readmissions')
+        .select(`
+          id,
+          admission_date,
+          discharge_date,
+          facility_name,
+          facility_type,
+          is_readmission,
+          readmission_category,
+          primary_diagnosis_description,
+          risk_score,
+          follow_up_scheduled,
+          follow_up_completed
+        `)
+        .eq('patient_id', patientId)
+        .gte('admission_date', cutoffDate)
+        .order('admission_date', { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+
+      // Transform to visit history format
+      return (data || []).map(visit => ({
+        id: visit.id,
+        visit_date: visit.admission_date,
+        visit_type: visit.facility_type === 'er' ? 'Emergency Room' :
+                    visit.facility_type === 'hospital' ? 'Hospital Admission' :
+                    visit.facility_type === 'urgent_care' ? 'Urgent Care' :
+                    visit.facility_type === 'observation' ? 'Observation' : 'Visit',
+        facility_name: visit.facility_name,
+        status: visit.discharge_date ? 'completed' : 'in_progress',
+        is_readmission: visit.is_readmission,
+        readmission_category: visit.readmission_category,
+        diagnosis: visit.primary_diagnosis_description,
+        risk_score: visit.risk_score,
+        follow_up_scheduled: visit.follow_up_scheduled,
+        follow_up_completed: visit.follow_up_completed,
+        created_at: visit.admission_date
+      }));
+    } catch (error: any) {
+      auditLogger.error('READMISSION_VISIT_HISTORY_FAILED', error, {
+        patientId,
+        days,
+        context: 'patient_visit_history'
+      });
+      return [];
+    }
   }
 }
 

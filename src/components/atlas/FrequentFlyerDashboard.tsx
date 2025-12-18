@@ -249,6 +249,82 @@ export const FrequentFlyerDashboard: React.FC = () => {
         </div>
       )}
 
+      {/* High Utilizer Metrics Summary */}
+      {utilizerMetrics.length > 0 && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold mb-4 flex items-center">
+            <TrendingUp className="mr-2 text-blue-600" size={20} />
+            High Utilizer Breakdown
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Utilization by Category */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <p className="text-sm text-gray-600 mb-2">Total ER Visits</p>
+              <p className="text-2xl font-bold text-orange-600">
+                {utilizerMetrics.reduce((sum, u) => sum + u.er_visits, 0)}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">Across all high utilizers</p>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-4">
+              <p className="text-sm text-gray-600 mb-2">Total Inpatient Days</p>
+              <p className="text-2xl font-bold text-blue-600">
+                {utilizerMetrics.reduce((sum, u) => sum + (u.inpatient_days || 0), 0)}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">Combined hospital stays</p>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-4">
+              <p className="text-sm text-gray-600 mb-2">Avg Risk Score</p>
+              <p className="text-2xl font-bold text-red-600">
+                {utilizerMetrics.length > 0
+                  ? Math.round(utilizerMetrics.reduce((sum, u) => sum + u.risk_score, 0) / utilizerMetrics.length)
+                  : 0}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">Average across group</p>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-4">
+              <p className="text-sm text-gray-600 mb-2">Est. Cost Impact</p>
+              <p className="text-2xl font-bold text-purple-600">
+                ${utilizerMetrics.reduce((sum, u) => sum + (u.estimated_cost || 0), 0).toLocaleString()}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">Estimated total cost</p>
+            </div>
+          </div>
+
+          {/* Top Utilizers List */}
+          <div className="mt-4">
+            <h3 className="text-sm font-medium text-gray-700 mb-2">Top 5 Utilizers by Visit Count</h3>
+            <div className="space-y-2">
+              {utilizerMetrics
+                .sort((a, b) => b.total_visits - a.total_visits)
+                .slice(0, 5)
+                .map((utilizer, index) => (
+                  <div key={utilizer.patient_id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                    <div className="flex items-center">
+                      <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-medium mr-2">
+                        {index + 1}
+                      </span>
+                      <span className="text-sm text-gray-600">ID: {utilizer.patient_id.substring(0, 8)}...</span>
+                    </div>
+                    <div className="flex items-center space-x-4 text-sm">
+                      <span className="text-gray-600">{utilizer.total_visits} visits</span>
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        utilizer.risk_score >= 80 ? 'bg-red-100 text-red-800' :
+                        utilizer.risk_score >= 60 ? 'bg-orange-100 text-orange-800' :
+                        'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        Risk: {utilizer.risk_score}
+                      </span>
+                      {utilizer.cms_penalty_risk && (
+                        <AlertTriangle className="text-red-500" size={16} />
+                      )}
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* High Risk Patients Table */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="p-6 border-b border-gray-200">
@@ -385,18 +461,26 @@ interface PatientDetailModalProps {
 const PatientDetailModal: React.FC<PatientDetailModalProps> = ({ patient, onClose }) => {
   const [checkIns, setCheckIns] = useState<any[]>([]);
   const [carePlans, setCarePlans] = useState<any[]>([]);
+  const [loadingDetails, setLoadingDetails] = useState(true);
 
   useEffect(() => {
     loadPatientDetails();
   }, [patient.patient_id]);
 
   const loadPatientDetails = async () => {
+    setLoadingDetails(true);
     try {
-      // Load patient's care plans and check-ins
+      // Load patient's care plans
       const plans = await CareCoordinationService.getPatientCarePlans(patient.patient_id, false);
       setCarePlans(plans);
-    } catch (error) {
 
+      // Load patient's recent check-ins/visits
+      const visits = await ReadmissionTrackingService.getPatientVisitHistory(patient.patient_id, 90);
+      setCheckIns(visits || []);
+    } catch (_error) {
+      // Error handled silently - UI will show empty state
+    } finally {
+      setLoadingDetails(false);
     }
   };
 
@@ -440,10 +524,60 @@ const PatientDetailModal: React.FC<PatientDetailModalProps> = ({ patient, onClos
             </div>
           </div>
 
+          {/* Recent Check-ins / Visits */}
+          <div>
+            <h3 className="text-lg font-semibold mb-3">Recent Visits & Check-ins</h3>
+            {loadingDetails ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+              </div>
+            ) : checkIns.length > 0 ? (
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {checkIns.map((checkIn, index) => (
+                  <div key={checkIn.id || index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center">
+                      <Calendar size={16} className="text-gray-400 mr-2" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          {checkIn.visit_type || checkIn.type || 'Visit'}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {new Date(checkIn.visit_date || checkIn.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        checkIn.status === 'completed' ? 'bg-green-100 text-green-800' :
+                        checkIn.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                        checkIn.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {checkIn.status || 'Recorded'}
+                      </span>
+                      {checkIn.facility_name && (
+                        <p className="text-xs text-gray-500 mt-1">{checkIn.facility_name}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6 bg-gray-50 rounded-lg">
+                <Calendar className="mx-auto text-gray-400 mb-2" size={24} />
+                <p className="text-gray-600 text-sm">No recent visits recorded</p>
+              </div>
+            )}
+          </div>
+
           {/* Care Plans */}
           <div>
             <h3 className="text-lg font-semibold mb-3">Care Plans</h3>
-            {carePlans.length > 0 ? (
+            {loadingDetails ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+              </div>
+            ) : carePlans.length > 0 ? (
               <div className="space-y-3">
                 {carePlans.map((plan) => (
                   <div key={plan.id} className="border border-gray-200 rounded-lg p-4">

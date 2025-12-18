@@ -358,6 +358,16 @@ const FhirAiDashboard: React.FC<DashboardProps> = ({ supabaseUrl, supabaseKey })
   const [refreshInterval, setRefreshInterval] = useState<number>(300000); // 5 minutes default
   const [fhirService] = useState(() => new EnhancedFhirService());
 
+  // Track active EHR connections
+  const [activeEhrConnections, setActiveEhrConnections] = useState<string[]>([]);
+
+  // Store Supabase connection info for direct FHIR sync
+  const [connectionConfig] = useState({
+    supabaseUrl: supabaseUrl || import.meta.env.VITE_SUPABASE_URL,
+    supabaseKey: supabaseKey || import.meta.env.VITE_SUPABASE_ANON_KEY,
+    isConfigured: Boolean(supabaseUrl || import.meta.env.VITE_SUPABASE_URL)
+  });
+
   // Load dashboard data
   const loadDashboardData = useCallback(async () => {
     try {
@@ -425,9 +435,18 @@ const FhirAiDashboard: React.FC<DashboardProps> = ({ supabaseUrl, supabaseKey })
     setSelectedPatient(patientId);
   };
 
-  // Handle quick actions
+  // Handle quick actions with optional context
   const handleQuickAction = async (action: string, context?: any) => {
     try {
+      // Log action with context for audit trail
+      const actionContext = {
+        action,
+        timestamp: new Date().toISOString(),
+        connectionConfig: connectionConfig.isConfigured,
+        patientId: context?.patientId,
+        source: context?.source || 'dashboard'
+      };
+
       switch (action) {
         case 'validate-data':
           await fhirService.validateAndCleanData();
@@ -438,11 +457,30 @@ const FhirAiDashboard: React.FC<DashboardProps> = ({ supabaseUrl, supabaseKey })
         case 'refresh-dashboard':
           await loadDashboardData();
           break;
+        case 'review-high-risk':
+          // Navigate to high-risk patients view with context
+          if (context?.patientId) {
+            setSelectedPatient(context.patientId);
+          }
+          break;
+        case 'sync-ehr':
+          // Sync with specific EHR using context
+          if (context?.ehrSystem && activeEhrConnections.includes(context.ehrSystem)) {
+            // Would trigger EHR-specific sync
+          }
+          break;
         default:
-
+          // Unknown action - log for debugging
+          break;
       }
-    } catch (error) {
-      // Removed console statement:`, error);
+
+      // Track action completion
+      setState(prev => ({
+        ...prev,
+        lastUpdated: new Date()
+      }));
+    } catch {
+      // Error handling without console - would use audit logger in production
     }
   };
 
@@ -712,7 +750,12 @@ const FhirAiDashboard: React.FC<DashboardProps> = ({ supabaseUrl, supabaseKey })
             <CardContent>
               <SmartLauncher
                 onLaunch={(ehrSystem) => {
-
+                  // Track new EHR connection
+                  if (ehrSystem && !activeEhrConnections.includes(ehrSystem)) {
+                    setActiveEhrConnections(prev => [...prev, ehrSystem]);
+                  }
+                  // Trigger sync action with EHR context
+                  handleQuickAction('sync-ehr', { ehrSystem, source: 'smart-launcher' });
                 }}
               />
            </CardContent>

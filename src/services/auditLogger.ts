@@ -38,7 +38,7 @@ export interface AuditLogEntry {
   success: boolean;
   error_code?: string;
   error_message?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 class AuditLogger {
@@ -107,7 +107,7 @@ class AuditLogger {
   /**
    * Log informational events (successful operations)
    */
-  async info(eventType: string, metadata?: Record<string, any>): Promise<void> {
+  async info(eventType: string, metadata?: Record<string, unknown>): Promise<void> {
     await this.log({
       event_type: eventType,
       event_category: 'SYSTEM_EVENT',
@@ -119,7 +119,7 @@ class AuditLogger {
   /**
    * Log warnings (non-critical issues)
    */
-  async warn(eventType: string, metadata?: Record<string, any>): Promise<void> {
+  async warn(eventType: string, metadata?: Record<string, unknown>): Promise<void> {
     await this.log({
       event_type: eventType,
       event_category: 'SYSTEM_EVENT',
@@ -131,7 +131,7 @@ class AuditLogger {
   /**
    * Log errors (operation failures)
    */
-  async error(eventType: string, error: Error | string, metadata?: Record<string, any>): Promise<void> {
+  async error(eventType: string, error: Error | string, metadata?: Record<string, unknown>): Promise<void> {
     const errorMessage = error instanceof Error ? error.message : error;
     const errorCode = error instanceof Error ? error.name : 'ERROR';
 
@@ -151,7 +151,7 @@ class AuditLogger {
   async phi(
     operation: string,
     patientId: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ): Promise<void> {
     await this.log({
       event_type: 'PHI_ACCESS',
@@ -170,7 +170,7 @@ class AuditLogger {
   async auth(
     eventType: 'LOGIN' | 'LOGOUT' | 'LOGIN_FAILED' | 'PASSWORD_RESET' | 'REGISTRATION',
     success: boolean,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ): Promise<void> {
     await this.log({
       event_type: `USER_${eventType}`,
@@ -188,7 +188,7 @@ class AuditLogger {
   async clinical(
     operation: string,
     success: boolean,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ): Promise<void> {
     await this.log({
       event_type: `CLINICAL_${operation.toUpperCase()}`,
@@ -205,7 +205,7 @@ class AuditLogger {
   async billing(
     operation: string,
     success: boolean,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ): Promise<void> {
     await this.log({
       event_type: `BILLING_${operation.toUpperCase()}`,
@@ -222,7 +222,7 @@ class AuditLogger {
   async security(
     eventType: string,
     severity: 'low' | 'medium' | 'high' | 'critical',
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ): Promise<void> {
     await this.log({
       event_type: `SECURITY_${eventType}`,
@@ -238,7 +238,7 @@ class AuditLogger {
    * Debug logging (development only)
    * Note: Logs are stored in audit_logs table, console disabled for HIPAA compliance
    */
-  debug(message: string, data?: any): void {
+  debug(_message: string, _data?: unknown): void {
     if (this.isDevelopment) {
       // Debug info is tracked in audit_logs table
       // Console logging disabled for HIPAA compliance
@@ -250,29 +250,29 @@ class AuditLogger {
 export const auditLogger = new AuditLogger();
 
 // Backward compatibility: export individual functions
-export const logInfo = (eventType: string, metadata?: Record<string, any>) =>
+export const logInfo = (eventType: string, metadata?: Record<string, unknown>) =>
   auditLogger.info(eventType, metadata);
 
-export const logError = (eventType: string, error: Error | string, metadata?: Record<string, any>) =>
+export const logError = (eventType: string, error: Error | string, metadata?: Record<string, unknown>) =>
   auditLogger.error(eventType, error, metadata);
 
-export const logPhiAccess = (operation: string, patientId: string, metadata?: Record<string, any>) =>
+export const logPhiAccess = (operation: string, patientId: string, metadata?: Record<string, unknown>) =>
   auditLogger.phi(operation, patientId, metadata);
 
 export const logAuth = (
   eventType: 'LOGIN' | 'LOGOUT' | 'LOGIN_FAILED' | 'PASSWORD_RESET' | 'REGISTRATION',
   success: boolean,
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 ) => auditLogger.auth(eventType, success, metadata);
 
-export const logClinical = (operation: string, success: boolean, metadata?: Record<string, any>) =>
+export const logClinical = (operation: string, success: boolean, metadata?: Record<string, unknown>) =>
   auditLogger.clinical(operation, success, metadata);
 
-export const logBilling = (operation: string, success: boolean, metadata?: Record<string, any>) =>
+export const logBilling = (operation: string, success: boolean, metadata?: Record<string, unknown>) =>
   auditLogger.billing(operation, success, metadata);
 
 export const logSecurity = (
   eventType: string,
   severity: 'low' | 'medium' | 'high' | 'critical',
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 ) => auditLogger.security(eventType, severity, metadata);

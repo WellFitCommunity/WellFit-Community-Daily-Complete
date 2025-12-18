@@ -4,6 +4,7 @@ import { Search, Filter, Clock, AlertTriangle, MessageCircle, Brain, Send, User,
 import { fetchNurseQueue, claimQuestion, fetchMyQuestions, addNurseNote, submitAnswer } from '../../lib/nurseApi';
 import { claudeEdgeService } from '../../services/claudeEdgeService';
 import { UserRole, RequestType, ClaudeRequestContext } from '../../types/claude';
+import { auditLogger } from '../../services/auditLogger';
 
 interface Question {
   id: string;
@@ -135,8 +136,11 @@ const NurseQuestionManager: React.FC = () => {
       };
       localStorage.setItem(draftKey, JSON.stringify(draft));
       setLastSaved(new Date());
-    } catch (error) {
-
+    } catch (err) {
+      auditLogger.error('NURSE_DRAFT_SAVE_FAILED', err instanceof Error ? err : new Error(String(err)), {
+        questionId: selectedQuestion?.id,
+        context: 'saveDraft'
+      });
     } finally {
       setAutoSaving(false);
     }
@@ -153,8 +157,8 @@ const NurseQuestionManager: React.FC = () => {
         setLastSaved(new Date(draft.timestamp));
         return true;
       }
-    } catch (error) {
-
+    } catch {
+      // localStorage may fail in private browsing - silent fallback
     }
     return false;
   };
@@ -164,8 +168,8 @@ const NurseQuestionManager: React.FC = () => {
       const draftKey = `nurse-draft-${questionId}`;
       localStorage.removeItem(draftKey);
       setLastSaved(null);
-    } catch (error) {
-
+    } catch {
+      // localStorage may fail in private browsing - silent fallback
     }
   };
 
@@ -186,8 +190,11 @@ const NurseQuestionManager: React.FC = () => {
           phone: ''
         }
       })));
-    } catch (error) {
-
+    } catch (err) {
+      auditLogger.error('NURSE_QUEUE_LOAD_FAILED', err instanceof Error ? err : new Error(String(err)), {
+        context: 'loadQuestions',
+        fallback: 'mockQuestions'
+      });
       setQuestions(mockQuestions);
     }
   };
@@ -227,6 +234,16 @@ const NurseQuestionManager: React.FC = () => {
         requestType: RequestType.HEALTH_QUESTION,
         healthContext
       };
+
+      // Log AI request with context for audit trail
+      auditLogger.info('NURSE_AI_SUGGESTION_REQUESTED', {
+        requestId: context.requestId,
+        userId: context.userId,
+        questionId: question.id,
+        category: question.category,
+        urgency: question.urgency,
+        hasPatientProfile: !!question.patient_profile
+      });
 
       // Build enhanced prompt with patient context
       const enhancedPrompt = `As a registered nurse reviewing a patient question, please provide a professional, evidence-based response.

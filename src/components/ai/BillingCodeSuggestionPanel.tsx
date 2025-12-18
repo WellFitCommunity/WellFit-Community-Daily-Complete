@@ -4,15 +4,17 @@
  * Allows providers to accept, modify, or reject suggestions
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Alert, AlertDescription } from '../ui/alert';
-import { CheckCircle2, XCircle, Edit, AlertTriangle, Sparkles, DollarSign } from 'lucide-react';
+import { CheckCircle2, XCircle, Edit, AlertTriangle, Sparkles, DollarSign, RefreshCw, FileText } from 'lucide-react';
 import { billingCodeSuggester } from '../../services/ai/billingCodeSuggester';
 import type { BillingSuggestionResult } from '../../services/ai/billingCodeSuggester';
 import { AIFeedbackButton } from './AIFeedbackButton';
+import { supabase } from '../../lib/supabaseClient';
+import { auditLogger } from '../../services/auditLogger';
 
 interface BillingCodeSuggestionPanelProps {
   encounterId: string;
@@ -34,23 +36,71 @@ export const BillingCodeSuggestionPanel: React.FC<BillingCodeSuggestionPanelProp
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
 
-  useEffect(() => {
-    if (suggestionId) {
-      loadSuggestion();
-    }
-  }, [suggestionId]);
-
-  const loadSuggestion = async () => {
+  const loadSuggestion = useCallback(async () => {
     try {
       setLoading(true);
-      // Load suggestion from database
-      // Implementation would fetch from encounter_billing_suggestions table
-      setLoading(false);
+      setError(null);
+
+      let suggestionData = null;
+
+      if (suggestionId) {
+        // Fetch specific suggestion by ID
+        const { data, error: fetchError } = await supabase
+          .from('encounter_billing_suggestions')
+          .select('*')
+          .eq('id', suggestionId)
+          .single();
+
+        if (fetchError) throw fetchError;
+        suggestionData = data;
+      } else if (encounterId) {
+        // Fetch latest suggestion for this encounter
+        const { data, error: fetchError } = await supabase
+          .from('encounter_billing_suggestions')
+          .select('*')
+          .eq('encounter_id', encounterId)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (fetchError && fetchError.code !== 'PGRST116') {
+          // PGRST116 = no rows returned, which is ok
+          throw fetchError;
+        }
+        suggestionData = data;
+      }
+
+      if (!suggestionData) {
+        // No existing suggestion - show empty state
+        setLoading(false);
+        return;
+      }
+
+      // Transform database row to BillingSuggestionResult format
+      const transformedSuggestion: BillingSuggestionResult = {
+        encounterId: suggestionData.encounter_id,
+        suggestedCodes: suggestionData.suggested_codes || { cpt: [], hcpcs: [], icd10: [] },
+        overallConfidence: suggestionData.overall_confidence || 0,
+        requiresReview: suggestionData.requires_review || false,
+        reviewReason: suggestionData.review_reason,
+        aiModel: suggestionData.ai_model || 'claude-3-haiku',
+        aiCost: suggestionData.ai_cost || 0,
+        fromCache: suggestionData.from_cache || false
+      };
+
+      setSuggestion(transformedSuggestion);
+      auditLogger.clinical('BILLING_SUGGESTION_VIEWED', true, { encounterId, suggestionId });
     } catch (err: any) {
-      setError(err.message);
+      auditLogger.error('BILLING_SUGGESTION_LOAD_FAILED', err, { encounterId, suggestionId });
+      setError(err.message || 'Failed to load billing suggestions');
+    } finally {
       setLoading(false);
     }
-  };
+  }, [suggestionId, encounterId]);
+
+  useEffect(() => {
+    loadSuggestion();
+  }, [loadSuggestion]);
 
   const handleAccept = async () => {
     if (!suggestionId) return;
@@ -119,6 +169,13 @@ export const BillingCodeSuggestionPanel: React.FC<BillingCodeSuggestionPanelProp
     ...suggestion.suggestedCodes.icd10
   ];
 
+  // Calculate summary stats for all codes
+  const avgConfidence = allCodes.length > 0
+    ? allCodes.reduce((sum, code) => sum + code.confidence, 0) / allCodes.length
+    : 0;
+  const highConfidenceCodes = allCodes.filter(code => code.confidence >= 0.85).length;
+  const lowConfidenceCodes = allCodes.filter(code => code.confidence < 0.60).length;
+
   const getConfidenceColor = (confidence: number) => {
     if (confidence >= 0.90) return 'bg-green-100 text-green-800 border-green-300';
     if (confidence >= 0.75) return 'bg-blue-100 text-blue-800 border-blue-300';
@@ -164,6 +221,31 @@ export const BillingCodeSuggestionPanel: React.FC<BillingCodeSuggestionPanelProp
       </CardHeader>
 
       <CardContent className="p-6 space-y-4">
+        {/* Code Summary */}
+        <div className="grid grid-cols-4 gap-3">
+          <div className="bg-gray-50 rounded-lg p-3 text-center">
+            <div className="flex items-center justify-center mb-1">
+              <FileText className="h-4 w-4 text-gray-500 mr-1" />
+            </div>
+            <div className="text-xl font-bold text-gray-900">{allCodes.length}</div>
+            <div className="text-xs text-gray-500">Total Codes</div>
+          </div>
+          <div className="bg-green-50 rounded-lg p-3 text-center">
+            <div className="text-xl font-bold text-green-700">{highConfidenceCodes}</div>
+            <div className="text-xs text-green-600">High Confidence</div>
+          </div>
+          <div className="bg-blue-50 rounded-lg p-3 text-center">
+            <div className="text-xl font-bold text-blue-700">{(avgConfidence * 100).toFixed(0)}%</div>
+            <div className="text-xs text-blue-600">Avg Confidence</div>
+          </div>
+          <div className={`rounded-lg p-3 text-center ${lowConfidenceCodes > 0 ? 'bg-yellow-50' : 'bg-gray-50'}`}>
+            <div className={`text-xl font-bold ${lowConfidenceCodes > 0 ? 'text-yellow-700' : 'text-gray-400'}`}>
+              {lowConfidenceCodes}
+            </div>
+            <div className={`text-xs ${lowConfidenceCodes > 0 ? 'text-yellow-600' : 'text-gray-400'}`}>Need Review</div>
+          </div>
+        </div>
+
         {suggestion.requiresReview && (
           <Alert variant="default" className="bg-yellow-50 border-yellow-300">
             <AlertTriangle className="h-4 w-4" />

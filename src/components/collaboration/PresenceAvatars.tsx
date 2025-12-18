@@ -66,7 +66,8 @@ const Avatar: React.FC<{
   user: PresenceUser;
   size: 'sm' | 'md' | 'lg';
   showTooltip?: boolean;
-}> = React.memo(({ user, size, showTooltip = true }) => {
+  showViewing?: boolean;
+}> = React.memo(({ user, size, showTooltip = true, showViewing = false }) => {
   const isInitials = !user.avatar?.startsWith('http');
   const roleColor = getRoleColor(user.role);
 
@@ -98,6 +99,13 @@ const Avatar: React.FC<{
             <Edit2 className="w-2.5 h-2.5 text-white" />
           </div>
         )}
+
+        {/* Viewing indicator (shows when showViewing is true and user has viewing data) */}
+        {showViewing && user.viewing && !user.isEditing && (
+          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center ring-2 ring-slate-900">
+            <Eye className="w-2.5 h-2.5 text-white" />
+          </div>
+        )}
       </div>
 
       {/* Tooltip */}
@@ -113,7 +121,7 @@ const Avatar: React.FC<{
               Editing: {user.editingField}
             </div>
           )}
-          {user.viewing && (
+          {showViewing && user.viewing && (
             <div className="text-slate-400 flex items-center gap-1 mt-1">
               <Eye className="w-3 h-3" />
               {user.viewing}
@@ -138,6 +146,7 @@ export const PresenceAvatars: React.FC<PresenceAvatarsProps> = React.memo(
     const displayUsers = users.slice(0, maxDisplay);
     const remainingCount = users.length - maxDisplay;
     const editingUsers = users.filter((u) => u.isEditing);
+    const viewingUsers = users.filter((u) => u.viewing && !u.isEditing);
 
     return (
       <div className={`flex items-center gap-2 ${className}`}>
@@ -152,7 +161,7 @@ export const PresenceAvatars: React.FC<PresenceAvatarsProps> = React.memo(
         {/* Avatar Stack */}
         <div className="flex -space-x-2">
           {displayUsers.map((user) => (
-            <Avatar key={user.userId} user={user} size={size} />
+            <Avatar key={user.userId} user={user} size={size} showViewing={showViewing} />
           ))}
 
           {/* Overflow indicator */}
@@ -176,6 +185,16 @@ export const PresenceAvatars: React.FC<PresenceAvatarsProps> = React.memo(
             <Edit2 className="w-3 h-3" />
             <span>
               {editingUsers.length} editing
+            </span>
+          </div>
+        )}
+
+        {/* Viewing indicator (shows what resources users are viewing) */}
+        {showViewing && viewingUsers.length > 0 && (
+          <div className="flex items-center gap-1 px-2 py-0.5 bg-blue-500/20 text-blue-400 text-xs rounded-full">
+            <Eye className="w-3 h-3" />
+            <span>
+              {viewingUsers.length} viewing
             </span>
           </div>
         )}

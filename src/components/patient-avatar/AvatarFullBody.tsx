@@ -41,6 +41,7 @@ interface AvatarFullBodyProps {
   onConfirmAllPending?: () => Promise<number>;
   onEditMarker?: (marker: PatientMarker) => void;
   onAddMarker?: () => void;
+  onMarkerClick?: (marker: PatientMarker) => void;
   editable?: boolean;
 }
 
@@ -125,6 +126,7 @@ export const AvatarFullBody: React.FC<AvatarFullBodyProps> = ({
   onConfirmAllPending,
   onEditMarker,
   onAddMarker,
+  onMarkerClick,
   editable = true,
 }) => {
   const [view, setView] = useState<BodyView>('front');
@@ -138,7 +140,9 @@ export const AvatarFullBody: React.FC<AvatarFullBodyProps> = ({
 
   const handleMarkerClick = useCallback((marker: PatientMarker) => {
     setSelectedMarker(marker);
-  }, []);
+    // Also notify parent component of the click
+    onMarkerClick?.(marker);
+  }, [onMarkerClick]);
 
   const handleConfirm = useCallback(async () => {
     if (!selectedMarker || !onConfirmMarker) return;
