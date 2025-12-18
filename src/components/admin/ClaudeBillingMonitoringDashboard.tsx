@@ -16,11 +16,12 @@
  * @module ClaudeBillingMonitoringDashboard
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSupabaseClient } from '../../contexts/AuthContext';
 import { claudeService } from '../../services/claudeService';
 import { UnifiedBillingService } from '../../services/unifiedBillingService';
 import { performanceMonitor } from '../../services/performanceMonitoring';
+import { auditLogger } from '../../services/auditLogger';
 
 // ============================================================================
 // Types
@@ -125,58 +126,21 @@ const ClaudeBillingMonitoringDashboard: React.FC = () => {
     };
   }, [dateRange]);
 
-  // Load metrics
-  useEffect(() => {
-    loadAllMetrics();
-  }, [dateRange, refreshKey]);
+  // Helper: aggregate cost trend from logs
+  const aggregateCostTrend = useCallback((logs: Array<{ created_at: string; cost?: number }>): Array<{ date: string; cost: number }> => {
+    const dailyCosts = new Map<string, number>();
+    logs.forEach(log => {
+      const date = new Date(log.created_at).toISOString().split('T')[0];
+      dailyCosts.set(date, (dailyCosts.get(date) || 0) + (log.cost || 0));
+    });
+    return Array.from(dailyCosts.entries())
+      .map(([date, cost]) => ({ date, cost }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+  }, []);
 
-  const loadAllMetrics = async () => {
-    setLoading(true);
-    const startTime = performance.now();
-
+  // Load Claude metrics and return the data
+  const loadClaudeMetrics = useCallback(async (): Promise<ClaudeUsageMetrics | null> => {
     try {
-      // Load real-time service status
-      const status = claudeService.getServiceStatus();
-      setServiceStatus({
-        isHealthy: status.isHealthy,
-        circuitBreakerState: status.circuitBreakerState,
-        lastHealthCheck: status.lastHealthCheck
-      });
-
-      // Load spending summary
-      const spending = claudeService.getSpendingSummary();
-      setSpendingSummary(spending);
-
-      await Promise.all([
-        loadClaudeMetrics(),
-        loadBillingMetrics(),
-        generateInsights()
-      ]);
-
-      // Track dashboard load performance
-      const duration = performance.now() - startTime;
-      performanceMonitor.trackMetric({
-        metric_type: 'page_load',
-        metric_name: 'claude_billing_dashboard_load',
-        duration_ms: duration,
-        metadata: { dateRange }
-      });
-    } catch (error) {
-      // Track errors
-      performanceMonitor.logError({
-        error_message: error instanceof Error ? error.message : 'Dashboard load failed',
-        error_type: 'dashboard_load_error',
-        component_name: 'ClaudeBillingMonitoringDashboard',
-        severity: 'warning'
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadClaudeMetrics = async () => {
-    try {
-      // Query Claude usage logs from database
       const { data: claudeLogs, error } = await supabase
         .from('claude_usage_logs')
         .select('*')
@@ -187,110 +151,77 @@ const ClaudeBillingMonitoringDashboard: React.FC = () => {
       if (error) throw error;
 
       if (!claudeLogs || claudeLogs.length === 0) {
-        setClaudeMetrics({
-          totalRequests: 0,
-          successfulRequests: 0,
-          failedRequests: 0,
-          successRate: 0,
-          totalCost: 0,
-          costByModel: {},
-          costTrend: [],
-          totalInputTokens: 0,
-          totalOutputTokens: 0,
-          avgTokensPerRequest: 0,
-          avgResponseTime: 0,
-          p95ResponseTime: 0,
-          p99ResponseTime: 0,
-          rateLimitHits: 0,
-          budgetExceeded: 0,
-          topUsers: []
-        });
-        return;
+        const emptyMetrics: ClaudeUsageMetrics = {
+          totalRequests: 0, successfulRequests: 0, failedRequests: 0, successRate: 0,
+          totalCost: 0, costByModel: {}, costTrend: [],
+          totalInputTokens: 0, totalOutputTokens: 0, avgTokensPerRequest: 0,
+          avgResponseTime: 0, p95ResponseTime: 0, p99ResponseTime: 0,
+          rateLimitHits: 0, budgetExceeded: 0, topUsers: []
+        };
+        setClaudeMetrics(emptyMetrics);
+        return emptyMetrics;
       }
 
-      // Aggregate metrics
       const totalRequests = claudeLogs.length;
-      const successfulRequests = claudeLogs.filter(log => log.success).length;
+      const successfulRequests = claudeLogs.filter((log: { success?: boolean }) => log.success).length;
       const failedRequests = totalRequests - successfulRequests;
       const successRate = (successfulRequests / totalRequests) * 100;
-
-      const totalCost = claudeLogs.reduce((sum, log) => sum + (log.cost || 0), 0);
-      const totalInputTokens = claudeLogs.reduce((sum, log) => sum + (log.input_tokens || 0), 0);
-      const totalOutputTokens = claudeLogs.reduce((sum, log) => sum + (log.output_tokens || 0), 0);
+      const totalCost = claudeLogs.reduce((sum: number, log: { cost?: number }) => sum + (log.cost || 0), 0);
+      const totalInputTokens = claudeLogs.reduce((sum: number, log: { input_tokens?: number }) => sum + (log.input_tokens || 0), 0);
+      const totalOutputTokens = claudeLogs.reduce((sum: number, log: { output_tokens?: number }) => sum + (log.output_tokens || 0), 0);
       const avgTokensPerRequest = (totalInputTokens + totalOutputTokens) / totalRequests;
 
-      // Cost by model
       const costByModel: Record<string, number> = {};
-      claudeLogs.forEach(log => {
+      claudeLogs.forEach((log: { model?: string; cost?: number }) => {
         const model = log.model || 'unknown';
         costByModel[model] = (costByModel[model] || 0) + (log.cost || 0);
       });
 
-      // Cost trend (daily)
       const costTrend = aggregateCostTrend(claudeLogs);
 
-      // Response times
       const responseTimes = claudeLogs
-        .map(log => log.response_time_ms)
-        .filter(t => t > 0)
+        .map((log: { response_time_ms?: number }) => log.response_time_ms)
+        .filter((t): t is number => typeof t === 'number' && t > 0)
         .sort((a, b) => a - b);
 
       const avgResponseTime = responseTimes.length > 0
-        ? responseTimes.reduce((sum, t) => sum + t, 0) / responseTimes.length
-        : 0;
-
+        ? responseTimes.reduce((sum, t) => sum + t, 0) / responseTimes.length : 0;
       const p95ResponseTime = responseTimes[Math.floor(responseTimes.length * 0.95)] || 0;
       const p99ResponseTime = responseTimes[Math.floor(responseTimes.length * 0.99)] || 0;
 
-      // Rate limiting
-      const rateLimitHits = claudeLogs.filter(log => log.error_code === 'RATE_LIMIT_EXCEEDED').length;
-      const budgetExceeded = claudeLogs.filter(log => log.error_code === 'BUDGET_EXCEEDED').length;
+      const rateLimitHits = claudeLogs.filter((log: { error_code?: string }) => log.error_code === 'RATE_LIMIT_EXCEEDED').length;
+      const budgetExceeded = claudeLogs.filter((log: { error_code?: string }) => log.error_code === 'BUDGET_EXCEEDED').length;
 
-      // Top users
       const userCosts = new Map<string, { requests: number; cost: number }>();
-      claudeLogs.forEach(log => {
+      claudeLogs.forEach((log: { user_id?: string; cost?: number }) => {
         const userId = log.user_id || 'anonymous';
         const existing = userCosts.get(userId) || { requests: 0, cost: 0 };
-        userCosts.set(userId, {
-          requests: existing.requests + 1,
-          cost: existing.cost + (log.cost || 0)
-        });
+        userCosts.set(userId, { requests: existing.requests + 1, cost: existing.cost + (log.cost || 0) });
       });
-
       const topUsers = Array.from(userCosts.entries())
         .map(([userId, data]) => ({ userId, ...data }))
         .sort((a, b) => b.cost - a.cost)
         .slice(0, 10);
 
-      setClaudeMetrics({
-        totalRequests,
-        successfulRequests,
-        failedRequests,
-        successRate,
-        totalCost,
-        costByModel,
-        costTrend,
-        totalInputTokens,
-        totalOutputTokens,
-        avgTokensPerRequest,
-        avgResponseTime,
-        p95ResponseTime,
-        p99ResponseTime,
-        rateLimitHits,
-        budgetExceeded,
-        topUsers
-      });
-
-    } catch (error) {
-
+      const metrics: ClaudeUsageMetrics = {
+        totalRequests, successfulRequests, failedRequests, successRate,
+        totalCost, costByModel, costTrend,
+        totalInputTokens, totalOutputTokens, avgTokensPerRequest,
+        avgResponseTime, p95ResponseTime, p99ResponseTime,
+        rateLimitHits, budgetExceeded, topUsers
+      };
+      setClaudeMetrics(metrics);
+      return metrics;
+    } catch (err: unknown) {
+      auditLogger.error('CLAUDE_METRICS_LOAD_FAILED', err instanceof Error ? err : new Error('Unknown error'));
+      return null;
     }
-  };
+  }, [supabase, dateFrom, dateTo, aggregateCostTrend]);
 
-  const loadBillingMetrics = async () => {
+  // Load billing metrics and return the data
+  const loadBillingMetrics = useCallback(async (): Promise<BillingWorkflowMetrics | null> => {
     try {
       const metrics = await UnifiedBillingService.getWorkflowMetrics(dateFrom, dateTo);
-
-      // Query additional billing data
       const { data: workflows, error } = await supabase
         .from('billing_workflows')
         .select('*')
@@ -299,187 +230,154 @@ const ClaudeBillingMonitoringDashboard: React.FC = () => {
 
       if (error) throw error;
 
-      // Calculate workflow distribution
       const workflowsByType: Record<string, number> = {};
-      workflows?.forEach(w => {
+      workflows?.forEach((w: { encounter_type?: string }) => {
         const type = w.encounter_type || 'unknown';
         workflowsByType[type] = (workflowsByType[type] || 0) + 1;
       });
 
-      // AI integration metrics
-      const aiSuggestionsUsed = workflows?.filter(w => w.ai_suggestions_used).length || 0;
-      const aiAccepted = workflows?.filter(w => w.ai_suggestions_accepted).length || 0;
+      const aiSuggestionsUsed = workflows?.filter((w: { ai_suggestions_used?: boolean }) => w.ai_suggestions_used).length || 0;
+      const aiAccepted = workflows?.filter((w: { ai_suggestions_accepted?: boolean }) => w.ai_suggestions_accepted).length || 0;
       const aiAcceptanceRate = aiSuggestionsUsed > 0 ? (aiAccepted / aiSuggestionsUsed) * 100 : 0;
-      const sdohEnhanced = workflows?.filter(w => w.sdoh_enhanced).length || 0;
-
+      const sdohEnhanced = workflows?.filter((w: { sdoh_enhanced?: boolean }) => w.sdoh_enhanced).length || 0;
       const reimbursementRate = metrics.totalCharges > 0
-        ? (metrics.estimatedReimbursement / metrics.totalCharges) * 100
-        : 0;
+        ? (metrics.estimatedReimbursement / metrics.totalCharges) * 100 : 0;
 
-      setBillingMetrics({
-        ...metrics,
-        reimbursementRate,
-        workflowsByType,
-        aiSuggestionsUsed,
-        aiAcceptanceRate,
-        sdohEnhanced
-      });
-
-    } catch (error) {
-
+      const billingData: BillingWorkflowMetrics = {
+        ...metrics, reimbursementRate, workflowsByType,
+        aiSuggestionsUsed, aiAcceptanceRate, sdohEnhanced
+      };
+      setBillingMetrics(billingData);
+      return billingData;
+    } catch (err: unknown) {
+      auditLogger.error('BILLING_METRICS_LOAD_FAILED', err instanceof Error ? err : new Error('Unknown error'));
+      return null;
     }
-  };
+  }, [supabase, dateFrom, dateTo]);
 
-  const generateInsights = async () => {
-    const insights: CostOptimizationInsight[] = [];
-
-    // Load current service status
+  // Generate insights based on loaded metrics (takes data as params, not from state)
+  const generateInsights = useCallback((
+    claudeData: ClaudeUsageMetrics | null,
+    billingData: BillingWorkflowMetrics | null
+  ) => {
+    const newInsights: CostOptimizationInsight[] = [];
     const claudeStatus = claudeService.getServiceStatus();
     const currentSpending = claudeService.getSpendingSummary();
 
-    // Insight 0: Service Health Warning
     if (!claudeStatus.isHealthy) {
-      insights.push({
+      newInsights.push({
         type: 'warning',
         title: 'Claude AI Service Unhealthy',
         description: `Service is currently unhealthy. Circuit breaker: ${claudeStatus.circuitBreakerState}`,
-        actionItems: [
-          'Check API key configuration',
-          'Review rate limit status',
-          'Monitor circuit breaker recovery',
-          'Contact support if issue persists'
-        ]
+        actionItems: ['Check API key configuration', 'Review rate limit status', 'Monitor circuit breaker recovery']
       });
     }
 
-    // Insight 0.5: Daily spending alert
     if (currentSpending.totalDaily > 20) {
-      insights.push({
+      newInsights.push({
         type: 'warning',
         title: 'High Daily AI Spending',
         description: `Today's spending: $${currentSpending.totalDaily.toFixed(2)} across ${currentSpending.userCount} users`,
         potentialSavings: currentSpending.totalDaily * 0.3,
-        actionItems: [
-          'Review high-usage users',
-          'Implement request batching',
-          'Consider model tier optimization',
-          'Set daily budget alerts'
-        ]
+        actionItems: ['Review high-usage users', 'Implement request batching', 'Consider model tier optimization']
       });
     }
 
-    // Insight 1: High cost alert
-    if (claudeMetrics && claudeMetrics.totalCost > 1000) {
-      insights.push({
+    if (claudeData && claudeData.totalCost > 1000) {
+      newInsights.push({
         type: 'warning',
         title: 'High AI Costs Detected',
-        description: `Total AI spending: $${claudeMetrics.totalCost.toFixed(2)} in the last ${dateRange}`,
-        potentialSavings: claudeMetrics.totalCost * 0.2,
-        actionItems: [
-          'Consider using faster AI model for simple queries',
-          'Implement request caching for common questions',
-          'Review and optimize prompt lengths',
-          'Set stricter user rate limits'
-        ]
+        description: `Total AI spending: $${claudeData.totalCost.toFixed(2)} in the selected period`,
+        potentialSavings: claudeData.totalCost * 0.2,
+        actionItems: ['Use faster AI model for simple queries', 'Implement request caching', 'Review prompt lengths']
       });
     }
 
-    // Insight 2: Rate limiting issues
-    if (claudeMetrics && claudeMetrics.rateLimitHits > 10) {
-      insights.push({
+    if (claudeData && claudeData.rateLimitHits > 10) {
+      newInsights.push({
         type: 'warning',
         title: 'Frequent Rate Limiting',
-        description: `${claudeMetrics.rateLimitHits} requests hit rate limits`,
-        actionItems: [
-          'Review user request patterns',
-          'Implement request queuing',
-          'Consider increasing rate limits for power users',
-          'Add request backoff logic'
-        ]
+        description: `${claudeData.rateLimitHits} requests hit rate limits`,
+        actionItems: ['Review user request patterns', 'Implement request queuing', 'Add request backoff logic']
       });
     }
 
-    // Insight 3: Low billing workflow success rate
-    if (billingMetrics && billingMetrics.successRate < 90) {
-      insights.push({
+    if (billingData && billingData.successRate < 90) {
+      newInsights.push({
         type: 'warning',
         title: 'Low Billing Workflow Success Rate',
-        description: `Only ${billingMetrics.successRate.toFixed(1)}% of workflows succeed on first attempt`,
-        actionItems: [
-          'Review top error codes and patterns',
-          'Improve data validation before workflow',
-          'Enhance AI coding accuracy',
-          'Train staff on documentation requirements'
-        ]
+        description: `Only ${billingData.successRate.toFixed(1)}% of workflows succeed on first attempt`,
+        actionItems: ['Review top error codes', 'Improve data validation', 'Enhance AI coding accuracy']
       });
     }
 
-    // Insight 4: High manual review rate
-    if (billingMetrics && billingMetrics.manualReviewRate > 30) {
-      insights.push({
+    if (billingData && billingData.manualReviewRate > 30) {
+      newInsights.push({
         type: 'info',
         title: 'High Manual Review Rate',
-        description: `${billingMetrics.manualReviewRate.toFixed(1)}% of workflows require manual review`,
-        potentialSavings: billingMetrics.totalWorkflows * billingMetrics.manualReviewRate * 0.01 * 50,
-        actionItems: [
-          'Improve decision tree logic',
-          'Enhance AI training data',
-          'Standardize encounter documentation',
-          'Create workflow templates for common scenarios'
-        ]
+        description: `${billingData.manualReviewRate.toFixed(1)}% of workflows require manual review`,
+        potentialSavings: billingData.totalWorkflows * billingData.manualReviewRate * 0.01 * 50,
+        actionItems: ['Improve decision tree logic', 'Enhance AI training data', 'Create workflow templates']
       });
     }
 
-    // Insight 5: Good performance
-    if (billingMetrics && billingMetrics.successRate > 95 && billingMetrics.manualReviewRate < 15) {
-      insights.push({
+    if (billingData && billingData.successRate > 95 && billingData.manualReviewRate < 15) {
+      newInsights.push({
         type: 'success',
         title: 'Excellent Billing Performance',
-        description: `${billingMetrics.successRate.toFixed(1)}% success rate with ${billingMetrics.manualReviewRate.toFixed(1)}% manual review`,
-        actionItems: [
-          'Document best practices',
-          'Share success metrics with team',
-          'Consider expanding automation to other areas'
-        ]
+        description: `${billingData.successRate.toFixed(1)}% success rate with ${billingData.manualReviewRate.toFixed(1)}% manual review`,
+        actionItems: ['Document best practices', 'Share success metrics with team']
       });
     }
 
-    // Insight 6: Model optimization
-    if (claudeMetrics && claudeMetrics.costByModel['claude-sonnet-4-5-20250929']) {
-      const sonnetCost = claudeMetrics.costByModel['claude-sonnet-4-5-20250929'];
-      const sonnetPercentage = (sonnetCost / claudeMetrics.totalCost) * 100;
+    setInsights(newInsights);
+  }, []);
 
-      if (sonnetPercentage > 60) {
-        insights.push({
-          type: 'info',
-          title: 'AI Model Mix Optimization',
-          description: `${sonnetPercentage.toFixed(1)}% of costs from premium AI tier`,
-          potentialSavings: sonnetCost * 0.7,
-          actionItems: [
-            'Use fast AI tier for simple health questions',
-            'Reserve premium AI for complex medical analysis',
-            'Implement automatic model selection based on query complexity',
-            'Test fast tier performance on current workload'
-          ]
+  // Load all metrics on mount and when dependencies change
+  useEffect(() => {
+    const loadAllMetrics = async () => {
+      setLoading(true);
+      const startTime = performance.now();
+
+      try {
+        // Load real-time service status
+        const status = claudeService.getServiceStatus();
+        setServiceStatus({
+          isHealthy: status.isHealthy,
+          circuitBreakerState: status.circuitBreakerState,
+          lastHealthCheck: status.lastHealthCheck
         });
+
+        // Load spending summary
+        const spending = claudeService.getSpendingSummary();
+        setSpendingSummary(spending);
+
+        // Load metrics in parallel and get returned data
+        const [claudeData, billingData] = await Promise.all([
+          loadClaudeMetrics(),
+          loadBillingMetrics()
+        ]);
+
+        // Generate insights with the loaded data (not stale state)
+        generateInsights(claudeData, billingData);
+
+        // Track dashboard load performance
+        const duration = performance.now() - startTime;
+        performanceMonitor.trackMetric({
+          metric_type: 'page_load',
+          metric_name: 'claude_billing_dashboard_load',
+          duration_ms: duration,
+          metadata: { dateRange }
+        });
+      } catch (err: unknown) {
+        auditLogger.error('DASHBOARD_LOAD_FAILED', err instanceof Error ? err : new Error('Dashboard load failed'));
+      } finally {
+        setLoading(false);
       }
-    }
+    };
 
-    setInsights(insights);
-  };
-
-  const aggregateCostTrend = (logs: any[]): Array<{ date: string; cost: number }> => {
-    const dailyCosts = new Map<string, number>();
-
-    logs.forEach(log => {
-      const date = new Date(log.created_at).toISOString().split('T')[0];
-      dailyCosts.set(date, (dailyCosts.get(date) || 0) + (log.cost || 0));
-    });
-
-    return Array.from(dailyCosts.entries())
-      .map(([date, cost]) => ({ date, cost }))
-      .sort((a, b) => a.date.localeCompare(b.date));
-  };
+    loadAllMetrics();
+  }, [dateRange, refreshKey, loadClaudeMetrics, loadBillingMetrics, generateInsights]);
 
   if (loading) {
     return (

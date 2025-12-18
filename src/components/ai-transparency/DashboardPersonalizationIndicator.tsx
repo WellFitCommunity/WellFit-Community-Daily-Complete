@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
@@ -25,11 +25,7 @@ export const DashboardPersonalizationIndicator: React.FC<DashboardPersonalizatio
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(false);
 
-  useEffect(() => {
-    fetchPersonalizationMetrics();
-  }, [user]);
-
-  const fetchPersonalizationMetrics = async () => {
+  const fetchPersonalizationMetrics = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -93,7 +89,11 @@ export const DashboardPersonalizationIndicator: React.FC<DashboardPersonalizatio
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    fetchPersonalizationMetrics();
+  }, [fetchPersonalizationMetrics]);
 
   if (loading) {
     return (

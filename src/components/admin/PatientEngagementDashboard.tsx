@@ -1,7 +1,7 @@
 // src/components/admin/PatientEngagementDashboard.tsx
 // Admin dashboard to view senior engagement metrics for risk assessment
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSupabaseClient } from '../../contexts/AuthContext';
 import { getAllPatientEngagementScores } from '../../services/engagementTracking';
 import { DashboardSkeleton } from '../ui/skeleton';
@@ -40,17 +40,7 @@ const PatientEngagementDashboard: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  useEffect(() => {
-    loadEngagementData();
-     
-  }, []);
-
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filterLevel, sortBy]);
-
-  const loadEngagementData = async () => {
+  const loadEngagementData = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -62,13 +52,21 @@ const PatientEngagementDashboard: React.FC = () => {
       }
 
       setEngagementData(data || []);
-    } catch (err) {
-
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load engagement data');
     } finally {
       setLoading(false);
     }
-  };
+  }, [supabase]);
+
+  useEffect(() => {
+    loadEngagementData();
+  }, [loadEngagementData]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterLevel, sortBy]);
 
   const getEngagementLevel = (score: number): 'high' | 'medium' | 'low' | 'critical' => {
     if (score >= 70) return 'high';

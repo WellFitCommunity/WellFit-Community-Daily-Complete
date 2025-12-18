@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSupabaseClient } from '../../contexts/AuthContext';
 
 interface ErrorLog {
@@ -35,15 +35,7 @@ const PerformanceMonitoringDashboard: React.FC<PerformanceDashboardProps> = ({ c
     info: 0
   });
 
-  useEffect(() => {
-    loadMonitoringData();
-
-    // Refresh every 30 seconds
-    const interval = setInterval(loadMonitoringData, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const loadMonitoringData = async () => {
+  const loadMonitoringData = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -76,12 +68,20 @@ const PerformanceMonitoringDashboard: React.FC<PerformanceDashboardProps> = ({ c
       if (metricsData) {
         setMetrics(metricsData);
       }
-    } catch (err) {
-
+    } catch {
+      // Error handled silently - monitoring should not interrupt user flow
     } finally {
       setLoading(false);
     }
-  };
+  }, [supabase]);
+
+  useEffect(() => {
+    loadMonitoringData();
+
+    // Refresh every 30 seconds
+    const interval = setInterval(loadMonitoringData, 30000);
+    return () => clearInterval(interval);
+  }, [loadMonitoringData]);
 
   const getSeverityColor = (severity: string) => {
     const colors = {

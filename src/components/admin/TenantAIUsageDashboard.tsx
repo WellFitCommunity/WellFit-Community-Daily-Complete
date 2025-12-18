@@ -7,7 +7,7 @@
  * Copyright © 2025 Envision VirtualEdge Group LLC. All rights reserved.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { DollarSign, Zap, TrendingUp, User, AlertCircle, Activity, Trophy } from 'lucide-react';
 import { auditLogger } from '../../services/auditLogger';
@@ -57,13 +57,7 @@ const TenantAIUsageDashboard: React.FC = () => {
     fetchProfile();
   }, [user]);
 
-  useEffect(() => {
-    if (tenantId) {
-      loadAIUsage();
-    }
-  }, [timeRange, tenantId]);
-
-  const loadAIUsage = async () => {
+  const loadAIUsage = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -174,7 +168,13 @@ const TenantAIUsageDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [tenantId, timeRange]);
+
+  useEffect(() => {
+    if (tenantId) {
+      loadAIUsage();
+    }
+  }, [tenantId, loadAIUsage]);
 
   const formatCost = (cost: number) => {
     return new Intl.NumberFormat('en-US', {

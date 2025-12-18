@@ -14,7 +14,7 @@
  * NOTE: Platform-wide compliance is tracked in Master Panel's SOC2 dashboards
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSupabaseClient, useUser } from '../../contexts/AuthContext';
 import { Shield, CheckCircle, AlertCircle, FileText, Download, TrendingUp } from 'lucide-react';
 import { auditLogger } from '../../services/auditLogger';
@@ -43,44 +43,7 @@ export const TenantComplianceReport: React.FC = () => {
   const [metrics, setMetrics] = useState<ComplianceMetric[]>([]);
   const [events, setEvents] = useState<ComplianceEvent[]>([]);
 
-  useEffect(() => {
-    loadComplianceData();
-  }, [user]);
-
-  const loadComplianceData = async () => {
-    if (!user?.id) return;
-
-    try {
-      setLoading(true);
-
-      // Get current user's tenant_id
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('tenant_id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!profile?.tenant_id) {
-        setLoading(false);
-        return;
-      }
-
-      setTenantId(profile.tenant_id);
-
-      // Load compliance metrics
-      await Promise.all([
-        calculateHIPAACompliance(profile.tenant_id),
-        loadRecentComplianceEvents(profile.tenant_id),
-      ]);
-
-    } catch (error) {
-      await auditLogger.error('TENANT_COMPLIANCE_LOAD_FAILED', error as Error, { tenantId });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const calculateHIPAACompliance = async (tenantId: string) => {
+  const calculateHIPAACompliance = useCallback(async (tid: string) => {
     // Check various HIPAA requirements
     const hipaaMetrics: ComplianceMetric[] = [
       {
@@ -119,7 +82,7 @@ export const TenantComplianceReport: React.FC = () => {
     const { data: admins, error } = await supabase
       .from('profiles')
       .select('user_id')
-      .eq('tenant_id', tenantId)
+      .eq('tenant_id', tid)
       .eq('is_admin', true);
 
     if (!error && admins && admins.length === 0) {
@@ -145,14 +108,14 @@ export const TenantComplianceReport: React.FC = () => {
     const totalRequired = hipaaMetrics.reduce((sum, m) => sum + m.total, 0);
     const score = Math.round((totalCompleted / totalRequired) * 100);
     setComplianceScore(score);
-  };
+  }, [supabase]);
 
-  const loadRecentComplianceEvents = async (tenantId: string) => {
+  const loadRecentComplianceEvents = useCallback(async (tid: string) => {
     // Get recent compliance-related events
     const { data: logs, error } = await supabase
       .from('audit_logs')
       .select('*')
-      .eq('tenant_id', tenantId)
+      .eq('tenant_id', tid)
       .in('action_category', ['ADMINISTRATIVE', 'SECURITY_EVENT'])
       .order('created_at', { ascending: false })
       .limit(5);
@@ -167,7 +130,44 @@ export const TenantComplianceReport: React.FC = () => {
               log.severity === 'warning' ? 'warning' : 'success',
       })));
     }
-  };
+  }, [supabase]);
+
+  const loadComplianceData = useCallback(async () => {
+    if (!user?.id) return;
+
+    try {
+      setLoading(true);
+
+      // Get current user's tenant_id
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile?.tenant_id) {
+        setLoading(false);
+        return;
+      }
+
+      setTenantId(profile.tenant_id);
+
+      // Load compliance metrics
+      await Promise.all([
+        calculateHIPAACompliance(profile.tenant_id),
+        loadRecentComplianceEvents(profile.tenant_id),
+      ]);
+
+    } catch (error: unknown) {
+      await auditLogger.error('TENANT_COMPLIANCE_LOAD_FAILED', error instanceof Error ? error : new Error('Unknown error'));
+    } finally {
+      setLoading(false);
+    }
+  }, [user, supabase, calculateHIPAACompliance, loadRecentComplianceEvents]);
+
+  useEffect(() => {
+    loadComplianceData();
+  }, [loadComplianceData]);
 
   const downloadComplianceReport = () => {
     const report = {
