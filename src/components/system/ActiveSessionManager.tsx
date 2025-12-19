@@ -41,7 +41,7 @@ const ActiveSessionManager: React.FC = () => {
       // Load active sessions from last 24 hours
       const { data: sessionsData, error: sessionsError } = await supabase
         .from('user_sessions')
-        .select('*, profiles(email, full_name)')
+        .select('*, profiles(email, first_name, last_name)')
         .gte('session_start', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
         .is('session_end', null)
         .order('session_start', { ascending: false });
@@ -52,7 +52,7 @@ const ActiveSessionManager: React.FC = () => {
         id: session.id,
         user_id: session.user_id,
         user_email: session.profiles?.email,
-        user_name: session.profiles?.full_name,
+        user_name: ((session.profiles?.first_name || '') + ' ' + (session.profiles?.last_name || '')).trim() || undefined,
         device_type: session.device_type || 'unknown',
         browser: session.browser || 'unknown',
         os: session.os || 'unknown',

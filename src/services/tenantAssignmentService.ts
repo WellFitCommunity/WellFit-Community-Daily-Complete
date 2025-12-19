@@ -49,7 +49,7 @@ export const TenantAssignmentService = {
       // Get user's profile
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('full_name')
+        .select('first_name, last_name')
         .eq('id', user.id)
         .single();
 
@@ -94,7 +94,7 @@ export const TenantAssignmentService = {
       return {
         id: user.id,
         email: user.email || '',
-        fullName: profileData?.full_name || user.email || 'Unknown',
+        fullName: profileData ? ((profileData.first_name || '') + ' ' + (profileData.last_name || '')).trim() || user.email || 'Unknown' : user.email || 'Unknown',
         role: superAdminData?.role || 'user',
         isSuperAdmin,
         assignedTenants

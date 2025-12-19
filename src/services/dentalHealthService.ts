@@ -617,7 +617,7 @@ export class DentalHealthService {
       // Get patient profile
       const { data: profile } = await supabase
         .from('profiles')
-        .select('full_name')
+        .select('first_name, last_name')
         .eq('id', targetPatientId)
         .single();
 
@@ -689,7 +689,7 @@ export class DentalHealthService {
 
       const summary: DentalHealthDashboardSummary = {
         patient_id: targetPatientId,
-        patient_name: profile?.full_name || 'Unknown',
+        patient_name: profile ? ((profile.first_name || '') + ' ' + (profile.last_name || '')).trim() || 'Unknown' : 'Unknown',
         latest_assessment: latestAssessment,
         last_visit_date: latestAssessment?.visit_date,
         next_recommended_visit: nextRecommendedVisit,

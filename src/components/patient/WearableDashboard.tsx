@@ -181,7 +181,7 @@ export const WearableDashboard: React.FC = () => {
       // Get caregiver phone for SMS notification
       const { data: profile } = await supabase
         .from('profiles')
-        .select('caregiver_phone, caregiver_first_name, full_name')
+        .select('caregiver_phone, caregiver_first_name, first_name, last_name')
         .eq('id', userId)
         .single();
 
@@ -189,7 +189,8 @@ export const WearableDashboard: React.FC = () => {
       if (profile?.caregiver_phone) {
         try {
           // Use a direct SMS function (not verification) - we'll invoke the send-check-in-reminder-sms style
-          const smsMessage = `🚨 EMERGENCY ALERT: ${profile?.full_name || 'Your loved one'} has triggered an emergency SOS from WellFit. Please check on them immediately.${location ? ` Location: ${location}` : ''}`;
+          const patientName = profile ? ((profile.first_name || '') + ' ' + (profile.last_name || '')).trim() : '';
+          const smsMessage = `🚨 EMERGENCY ALERT: ${patientName || 'Your loved one'} has triggered an emergency SOS from WellFit. Please check on them immediately.${location ? ` Location: ${location}` : ''}`;
 
           // Log that we're attempting SMS
           await auditLogger.info('EMERGENCY_SMS_ATTEMPT', {

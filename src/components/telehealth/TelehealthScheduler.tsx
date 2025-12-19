@@ -9,7 +9,6 @@ import { auditLogger } from '../../services/auditLogger';
 
 interface Patient {
   user_id: string;
-  full_name: string;
   first_name: string;
   last_name: string;
   phone: string;
@@ -89,8 +88,8 @@ const TelehealthScheduler: React.FC = () => {
 
         const { data, error } = await supabase
           .from('profiles')
-          .select('user_id, full_name, first_name, last_name, phone, email, dob')
-          .or(`full_name.ilike.%${sanitized}%,first_name.ilike.%${sanitized}%,last_name.ilike.%${sanitized}%,phone.ilike.%${sanitized}%`)
+          .select('user_id, first_name, last_name, phone, email, dob')
+          .or(`first_name.ilike.%${sanitized}%,last_name.ilike.%${sanitized}%,phone.ilike.%${sanitized}%`)
           .limit(10);
 
         if (error) throw error;
@@ -122,7 +121,6 @@ const TelehealthScheduler: React.FC = () => {
             status,
             reason_for_visit,
             patient:profiles!patient_id(
-              full_name,
               first_name,
               last_name,
               phone
@@ -139,7 +137,6 @@ const TelehealthScheduler: React.FC = () => {
         const formattedAppointments = (data || []).map((apt: any) => ({
           id: apt.id,
           patient_name:
-            apt.patient?.full_name ||
             `${apt.patient?.first_name || ''} ${apt.patient?.last_name || ''}`.trim() ||
             'Unknown Patient',
           patient_phone: apt.patient?.phone || '',
@@ -186,7 +183,7 @@ const TelehealthScheduler: React.FC = () => {
   const handleSelectPatient = (patient: Patient) => {
     setSelectedPatient(patient);
     setSearchQuery(
-      patient.full_name || `${patient.first_name} ${patient.last_name}`.trim()
+      `${patient.first_name || ''} ${patient.last_name || ''}`.trim()
     );
     setShowSearchResults(false);
   };
@@ -363,8 +360,7 @@ const TelehealthScheduler: React.FC = () => {
                     className="w-full px-4 py-3 text-left hover:bg-blue-50 border-b border-gray-100 last:border-b-0"
                   >
                     <div className="font-semibold text-gray-900">
-                      {patient.full_name ||
-                        `${patient.first_name} ${patient.last_name}`.trim()}
+                      {`${patient.first_name || ''} ${patient.last_name || ''}`.trim() || 'Unknown'}
                     </div>
                     <div className="text-sm text-gray-600">
                       {patient.phone} • {patient.email}
@@ -378,8 +374,7 @@ const TelehealthScheduler: React.FC = () => {
               <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">
                 <div>
                   <div className="font-semibold text-green-900">
-                    {selectedPatient.full_name ||
-                      `${selectedPatient.first_name} ${selectedPatient.last_name}`.trim()}
+                    {`${selectedPatient.first_name || ''} ${selectedPatient.last_name || ''}`.trim() || 'Unknown'}
                   </div>
                   <div className="text-sm text-green-700">{selectedPatient.phone}</div>
                 </div>

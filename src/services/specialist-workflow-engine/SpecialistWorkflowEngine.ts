@@ -309,7 +309,7 @@ export class SpecialistWorkflowEngine {
     // Get users to notify based on role
     const { data: users, error } = await supabase
       .from('profiles')
-      .select('id, email, full_name')
+      .select('id, email, first_name, last_name')
       .eq('role', rule.notifyRole)
       .eq('is_active', true);
 

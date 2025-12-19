@@ -39,13 +39,12 @@ const TelehealthAppointmentsPage: React.FC = () => {
         // Get patient info
         const { data: profile } = await supabase
           .from('profiles')
-          .select('first_name, last_name, full_name')
+          .select('first_name, last_name')
           .eq('user_id', user.id)
           .single();
 
         if (profile) {
           setPatientName(
-            profile.full_name ||
             `${profile.first_name || ''} ${profile.last_name || ''}`.trim() ||
             'Patient'
           );
@@ -63,7 +62,6 @@ const TelehealthAppointmentsPage: React.FC = () => {
             reason_for_visit,
             daily_room_url,
             provider:profiles!provider_id(
-              full_name,
               first_name,
               last_name,
               specialty
@@ -85,7 +83,6 @@ const TelehealthAppointmentsPage: React.FC = () => {
           status: apt.status,
           reason_for_visit: apt.reason_for_visit,
           provider_name:
-            apt.provider?.full_name ||
             `${apt.provider?.first_name || ''} ${apt.provider?.last_name || ''}`.trim() ||
             'Your Doctor',
           provider_specialty: apt.provider?.specialty || null,

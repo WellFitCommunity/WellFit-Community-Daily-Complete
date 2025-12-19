@@ -137,7 +137,7 @@ const TenantAIUsageDashboard: React.FC = () => {
       const userIds = Array.from(userUsageMap.keys());
       const { data: profilesData } = await supabase
         .from('profiles')
-        .select('id, email, full_name')
+        .select('id, email, first_name, last_name')
         .in('id', userIds);
 
       // Combine usage data with profile data
@@ -147,7 +147,7 @@ const TenantAIUsageDashboard: React.FC = () => {
           return {
             userId,
             userEmail: profile?.email || 'Unknown',
-            fullName: profile?.full_name,
+            fullName: profile ? ((profile.first_name || '') + ' ' + (profile.last_name || '')).trim() || null : null,
             totalCost: usage.cost,
             totalTokens: usage.tokens,
             totalRequests: usage.requests,

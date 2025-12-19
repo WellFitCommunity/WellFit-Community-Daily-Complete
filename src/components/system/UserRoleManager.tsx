@@ -13,7 +13,9 @@ import { UserPlus, UserMinus, Shield, Search, Filter } from 'lucide-react';
 interface UserWithRole {
   id: string;
   email: string;
-  full_name?: string;
+  first_name?: string;
+  last_name?: string;
+  full_name?: string; // Computed from first_name + last_name
   role?: string;
   user_roles?: Array<{ role: string }>;
   created_at: string;
@@ -47,7 +49,7 @@ const UserRoleManager: React.FC = () => {
       // Load all users with their roles
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, email, full_name, role, created_at')
+        .select('id, email, first_name, last_name, role, created_at')
         .order('created_at', { ascending: false });
 
       if (profilesError) throw profilesError;
@@ -64,6 +66,7 @@ const UserRoleManager: React.FC = () => {
       // Merge the data
       const usersWithRoles = (profilesData || []).map(profile => ({
         ...profile,
+        full_name: ((profile.first_name || '') + ' ' + (profile.last_name || '')).trim() || undefined,
         user_roles: (userRolesData || [])
           .filter(ur => ur.user_id === profile.id)
           .map(ur => ({ role: ur.role }))
