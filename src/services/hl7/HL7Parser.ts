@@ -153,7 +153,7 @@ export class HL7Parser {
         warnings: this.parseErrors.filter((e) => e.severity === 'warning'),
         rawMessage,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       auditLogger.security('HL7_PARSE_ERROR', 'high', {
         error: error instanceof Error ? error.message : 'Unknown error',
       });
@@ -161,7 +161,7 @@ export class HL7Parser {
       return failure(
         'UNKNOWN_ERROR',
         `Parse error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        error,
+        error instanceof Error ? error : undefined,
         { rawMessage }
       );
     }
@@ -196,12 +196,22 @@ export class HL7Parser {
       );
     }
 
+    // ✅ FIX: remove non-null assertion and validate PV1
+    if (!message.patientVisit) {
+      return failure(
+        'VALIDATION_ERROR',
+        'ADT message missing required PV1 segment',
+        undefined,
+        { rawMessage }
+      );
+    }
+
     const adtMessage: ADTMessage = {
       ...message,
       messageType: 'ADT',
       eventType: message.header.messageType.triggerEvent as ADTEventType,
       patientIdentification: message.patientIdentification,
-      patientVisit: message.patientVisit!,
+      patientVisit: message.patientVisit,
     };
 
     return success({
@@ -226,6 +236,16 @@ export class HL7Parser {
       return failure(
         'VALIDATION_ERROR',
         `Expected ORU message, got ${message.header.messageType.messageCode}`,
+        undefined,
+        { rawMessage }
+      );
+    }
+
+    // ✅ FIX: remove non-null assertion and validate PID
+    if (!message.patientIdentification) {
+      return failure(
+        'VALIDATION_ERROR',
+        'ORU message missing required PID segment',
         undefined,
         { rawMessage }
       );
@@ -270,7 +290,7 @@ export class HL7Parser {
       ...message,
       messageType: 'ORU',
       eventType: message.header.messageType.triggerEvent as ORUEventType,
-      patientIdentification: message.patientIdentification!,
+      patientIdentification: message.patientIdentification,
       observationResults,
     };
 
@@ -448,7 +468,7 @@ export class HL7Parser {
         default:
           return this.segmentParsers.parseGenericSegment(segmentString);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       this.addError(
         index,
         `Failed to parse ${segmentType} segment: ${error instanceof Error ? error.message : 'Unknown error'}`,

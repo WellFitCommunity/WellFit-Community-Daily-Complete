@@ -11,7 +11,7 @@
 // - Graceful degradation during network issues
 // ============================================================================
 
-import { openDB, DBSchema, IDBPDatabase } from 'idb';
+import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import { auditLogger } from './auditLogger';
 
 // ============================================================================
@@ -118,17 +118,31 @@ export class OfflineAudioService {
   private static instance: OfflineAudioService | null = null;
   private db: IDBPDatabase<OfflineAudioDB> | null = null;
   private config: OfflineServiceConfig;
+
   private connectionStatus: ConnectionStatus = {
-    online: navigator.onLine,
+    online: typeof navigator !== 'undefined' ? navigator.onLine : true,
     websocketConnected: false,
     lastCheck: Date.now(),
   };
+
   private syncInProgress = false;
   private listeners: Map<string, Set<(data: unknown) => void>> = new Map();
+
+  private autoSyncTimerId: number | null = null;
 
   private constructor(config: Partial<OfflineServiceConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
     this.setupConnectionListeners();
+  }
+
+  /**
+   * Safe DB accessor (removes non-null assertions + gives clearer failures)
+   */
+  private getDb(): IDBPDatabase<OfflineAudioDB> {
+    if (!this.db) {
+      throw new Error('OfflineAudioService DB not initialized. Call initialize() first.');
+    }
+    return this.db;
   }
 
   /**
@@ -182,7 +196,10 @@ export class OfflineAudioService {
         this.startAutoSync();
       }
     } catch (error) {
-      auditLogger.error('OFFLINE_AUDIO_DB_INIT_FAILED', error instanceof Error ? error : new Error('DB init failed'));
+      auditLogger.error(
+        'OFFLINE_AUDIO_DB_INIT_FAILED',
+        error instanceof Error ? error : new Error('DB init failed')
+      );
       throw error;
     }
   }
@@ -191,6 +208,8 @@ export class OfflineAudioService {
    * Setup network connection listeners
    */
   private setupConnectionListeners(): void {
+    if (typeof window === 'undefined') return;
+
     window.addEventListener('online', () => {
       this.connectionStatus.online = true;
       this.connectionStatus.lastCheck = Date.now();
@@ -199,7 +218,7 @@ export class OfflineAudioService {
 
       // Trigger sync when coming back online
       if (this.config.autoSyncEnabled) {
-        this.syncPendingSessions();
+        void this.syncPendingSessions();
       }
     });
 
@@ -230,7 +249,7 @@ export class OfflineAudioService {
       syncAttempts: 0,
     };
 
-    await this.db!.put('offline-sessions', session);
+    await this.getDb().put('offline-sessions', session);
 
     auditLogger.info('OFFLINE_SESSION_STARTED', {
       sessionId,
@@ -258,7 +277,7 @@ export class OfflineAudioService {
       await this.cleanupOldData();
     }
 
-    const session = await this.db!.get('offline-sessions', sessionId);
+    const session = await this.getDb().get('offline-sessions', sessionId);
     if (!session) {
       throw new Error(`Session not found: ${sessionId}`);
     }
@@ -279,12 +298,12 @@ export class OfflineAudioService {
       createdAt: new Date().toISOString(),
     };
 
-    await this.db!.put('audio-chunks', chunk);
+    await this.getDb().put('audio-chunks', chunk);
 
     // Update session
     session.chunkCount++;
     session.totalDuration += duration;
-    await this.db!.put('offline-sessions', session);
+    await this.getDb().put('offline-sessions', session);
 
     this.emit('chunk-saved', { sessionId, chunkId, sequence: chunk.sequence });
 
@@ -297,7 +316,7 @@ export class OfflineAudioService {
   async endSession(sessionId: string, transcript?: string): Promise<OfflineSession> {
     await this.initialize();
 
-    const session = await this.db!.get('offline-sessions', sessionId);
+    const session = await this.getDb().get('offline-sessions', sessionId);
     if (!session) {
       throw new Error(`Session not found: ${sessionId}`);
     }
@@ -306,7 +325,7 @@ export class OfflineAudioService {
     session.status = 'completed';
     session.transcript = transcript;
 
-    await this.db!.put('offline-sessions', session);
+    await this.getDb().put('offline-sessions', session);
 
     // Add to sync queue
     await this.addToSyncQueue(sessionId);
@@ -320,7 +339,7 @@ export class OfflineAudioService {
 
     // Trigger sync if online
     if (this.connectionStatus.online && this.config.autoSyncEnabled) {
-      this.syncPendingSessions();
+      void this.syncPendingSessions();
     }
 
     return session;
@@ -330,7 +349,7 @@ export class OfflineAudioService {
    * Add session to sync queue
    */
   private async addToSyncQueue(sessionId: string, priority: number = 1): Promise<void> {
-    await this.db!.put('sync-queue', {
+    await this.getDb().put('sync-queue', {
       id: crypto.randomUUID(),
       sessionId,
       priority,
@@ -354,7 +373,7 @@ export class OfflineAudioService {
     let failed = 0;
 
     try {
-      const sessions = await this.db!.getAllFromIndex(
+      const sessions = await this.getDb().getAllFromIndex(
         'offline-sessions',
         'by-status',
         'completed'
@@ -363,7 +382,7 @@ export class OfflineAudioService {
       for (const session of sessions) {
         if (session.syncAttempts >= this.config.maxRetries) {
           session.status = 'failed';
-          await this.db!.put('offline-sessions', session);
+          await this.getDb().put('offline-sessions', session);
           failed++;
           continue;
         }
@@ -372,10 +391,10 @@ export class OfflineAudioService {
           session.status = 'syncing';
           session.syncAttempts++;
           session.lastSyncAttempt = new Date().toISOString();
-          await this.db!.put('offline-sessions', session);
+          await this.getDb().put('offline-sessions', session);
 
           // Get all chunks for this session
-          const chunks = await this.db!.getAllFromIndex(
+          const chunks = await this.getDb().getAllFromIndex(
             'audio-chunks',
             'by-session',
             session.id
@@ -392,12 +411,12 @@ export class OfflineAudioService {
 
           // Mark as synced
           session.status = 'synced';
-          await this.db!.put('offline-sessions', session);
+          await this.getDb().put('offline-sessions', session);
 
           // Mark chunks as uploaded
           for (const chunk of chunks) {
             chunk.status = 'uploaded';
-            await this.db!.put('audio-chunks', chunk);
+            await this.getDb().put('audio-chunks', chunk);
           }
 
           synced++;
@@ -411,12 +430,16 @@ export class OfflineAudioService {
         } catch (error) {
           session.status = 'completed'; // Reset to completed for retry
           session.error = error instanceof Error ? error.message : String(error);
-          await this.db!.put('offline-sessions', session);
+          await this.getDb().put('offline-sessions', session);
 
-          auditLogger.error('OFFLINE_SESSION_SYNC_FAILED', error instanceof Error ? error : new Error('Sync failed'), {
-            sessionId: session.id,
-            attempt: session.syncAttempts,
-          });
+          auditLogger.error(
+            'OFFLINE_SESSION_SYNC_FAILED',
+            error instanceof Error ? error : new Error('Sync failed'),
+            {
+              sessionId: session.id,
+              attempt: session.syncAttempts,
+            }
+          );
         }
       }
     } finally {
@@ -472,16 +495,18 @@ export class OfflineAudioService {
     // }
 
     // Simulate upload delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise<void>((resolve) => setTimeout(resolve, 1000));
   }
 
   /**
    * Start automatic sync interval
    */
   private startAutoSync(): void {
-    setInterval(() => {
+    if (this.autoSyncTimerId !== null) return;
+
+    this.autoSyncTimerId = window.setInterval(() => {
       if (this.connectionStatus.online && !this.syncInProgress) {
-        this.syncPendingSessions();
+        void this.syncPendingSessions();
       }
     }, 60000); // Check every minute
   }
@@ -498,8 +523,8 @@ export class OfflineAudioService {
   }> {
     await this.initialize();
 
-    const chunks = await this.db!.getAll('audio-chunks');
-    const sessions = await this.db!.getAll('offline-sessions');
+    const chunks = await this.getDb().getAll('audio-chunks');
+    const sessions = await this.getDb().getAll('offline-sessions');
 
     const totalBytes = chunks.reduce((sum, chunk) => sum + chunk.data.byteLength, 0);
     const usedMB = totalBytes / (1024 * 1024);
@@ -519,24 +544,24 @@ export class OfflineAudioService {
   async cleanupOldData(olderThanDays: number = 7): Promise<number> {
     await this.initialize();
 
-    const cutoffTime = Date.now() - (olderThanDays * 24 * 60 * 60 * 1000);
+    const cutoffTime = Date.now() - olderThanDays * 24 * 60 * 60 * 1000;
     let deletedCount = 0;
 
     // Delete old chunks
-    const chunks = await this.db!.getAllFromIndex('audio-chunks', 'by-status', 'uploaded');
+    const chunks = await this.getDb().getAllFromIndex('audio-chunks', 'by-status', 'uploaded');
     for (const chunk of chunks) {
       if (chunk.timestamp < cutoffTime) {
-        await this.db!.delete('audio-chunks', chunk.id);
+        await this.getDb().delete('audio-chunks', chunk.id);
         deletedCount++;
       }
     }
 
     // Delete old synced sessions
-    const sessions = await this.db!.getAllFromIndex('offline-sessions', 'by-status', 'synced');
+    const sessions = await this.getDb().getAllFromIndex('offline-sessions', 'by-status', 'synced');
     for (const session of sessions) {
       const sessionTime = new Date(session.startedAt).getTime();
       if (sessionTime < cutoffTime) {
-        await this.db!.delete('offline-sessions', session.id);
+        await this.getDb().delete('offline-sessions', session.id);
         deletedCount++;
       }
     }
@@ -554,7 +579,7 @@ export class OfflineAudioService {
    */
   async getPendingSessionsCount(): Promise<number> {
     await this.initialize();
-    const sessions = await this.db!.getAllFromIndex('offline-sessions', 'by-status', 'completed');
+    const sessions = await this.getDb().getAllFromIndex('offline-sessions', 'by-status', 'completed');
     return sessions.length;
   }
 
@@ -581,7 +606,7 @@ export class OfflineAudioService {
     if (!this.listeners.has(event)) {
       this.listeners.set(event, new Set());
     }
-    this.listeners.get(event)!.add(callback);
+    this.listeners.get(event)?.add(callback);
   }
 
   off(event: string, callback: (data: unknown) => void): void {
@@ -589,13 +614,15 @@ export class OfflineAudioService {
   }
 
   private emit(event: string, data: unknown): void {
-    this.listeners.get(event)?.forEach(callback => {
+    this.listeners.get(event)?.forEach((callback) => {
       try {
         callback(data);
       } catch (error) {
-        auditLogger.error('OFFLINE_EVENT_HANDLER_ERROR', error instanceof Error ? error : new Error('Event handler error'), {
-          event,
-        });
+        auditLogger.error(
+          'OFFLINE_EVENT_HANDLER_ERROR',
+          error instanceof Error ? error : new Error('Event handler error'),
+          { event }
+        );
       }
     });
   }
@@ -609,12 +636,12 @@ export class OfflineAudioService {
   }> {
     await this.initialize();
 
-    const session = await this.db!.get('offline-sessions', sessionId);
-    const chunks = await this.db!.getAllFromIndex('audio-chunks', 'by-session', sessionId);
+    const session = await this.getDb().get('offline-sessions', sessionId);
+    const chunks = await this.getDb().getAllFromIndex('audio-chunks', 'by-session', sessionId);
 
     return {
       session,
-      chunks: chunks.map(c => ({ ...c, data: new ArrayBuffer(0) })), // Don't export actual audio data
+      chunks: chunks.map((c) => ({ ...c, data: new ArrayBuffer(0) })), // Don't export actual audio data
     };
   }
 }

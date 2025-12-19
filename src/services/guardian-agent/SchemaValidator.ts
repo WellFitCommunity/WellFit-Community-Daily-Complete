@@ -7,7 +7,6 @@
  */
 
 import { z } from 'zod';
-import { DetectedIssue, HealingAction, HealingResult } from './types';
 
 /**
  * Schema Registry - Stores all validated schemas
@@ -273,12 +272,14 @@ export class SchemaValidator {
           reference: z.string(),
         }),
         effectiveDateTime: z.string().optional(),
-        valueQuantity: z.object({
-          value: z.number(),
-          unit: z.string(),
-          system: z.string().optional(),
-          code: z.string().optional(),
-        }).optional(),
+        valueQuantity: z
+          .object({
+            value: z.number(),
+            unit: z.string(),
+            system: z.string().optional(),
+            code: z.string().optional(),
+          })
+          .optional(),
       })
     );
 
@@ -289,13 +290,15 @@ export class SchemaValidator {
         resourceType: z.literal('Patient'),
         id: z.string().optional(),
         active: z.boolean().optional(),
-        name: z.array(
-          z.object({
-            use: z.enum(['official', 'usual', 'nickname', 'anonymous']).optional(),
-            family: z.string().optional(),
-            given: z.array(z.string()).optional(),
-          })
-        ).optional(),
+        name: z
+          .array(
+            z.object({
+              use: z.enum(['official', 'usual', 'nickname', 'anonymous']).optional(),
+              family: z.string().optional(),
+              given: z.array(z.string()).optional(),
+            })
+          )
+          .optional(),
         gender: z.enum(['male', 'female', 'other', 'unknown']).optional(),
         birthDate: z.string().optional(),
       })
@@ -307,14 +310,16 @@ export class SchemaValidator {
       z.object({
         resourceType: z.literal('Condition'),
         id: z.string().optional(),
-        clinicalStatus: z.object({
-          coding: z.array(
-            z.object({
-              system: z.string(),
-              code: z.string(),
-            })
-          ),
-        }).optional(),
+        clinicalStatus: z
+          .object({
+            coding: z.array(
+              z.object({
+                system: z.string(),
+                code: z.string(),
+              })
+            ),
+          })
+          .optional(),
         code: z.object({
           coding: z.array(
             z.object({
@@ -366,10 +371,7 @@ export class SchemaLockedTool<TInput, TOutput> {
     errors?: string[];
   }> {
     // Validate input
-    const inputValidation = this.validator.validateInput<TInput>(
-      this.inputSchemaName,
-      input
-    );
+    const inputValidation = this.validator.validateInput<TInput>(this.inputSchemaName, input);
 
     if (!inputValidation.valid || !inputValidation.data) {
       // Schema validation failed - errors logged to audit system
@@ -384,10 +386,7 @@ export class SchemaLockedTool<TInput, TOutput> {
       const output = await executor(inputValidation.data);
 
       // Validate output
-      const outputValidation = this.validator.validateOutput<TOutput>(
-        this.outputSchemaName,
-        output
-      );
+      const outputValidation = this.validator.validateOutput<TOutput>(this.outputSchemaName, output);
 
       if (!outputValidation.valid) {
         // Output validation failed - errors logged to audit system
@@ -401,8 +400,7 @@ export class SchemaLockedTool<TInput, TOutput> {
         success: true,
         output: outputValidation.data,
       };
-    } catch (error) {
-
+    } catch (error: unknown) {
       return {
         success: false,
         errors: [error instanceof Error ? error.message : String(error)],
@@ -432,12 +430,7 @@ export function createSchemaLockedTool<TInput, TOutput>(
   outputSchemaName: string
 ): SchemaLockedTool<TInput, TOutput> {
   const validator = getSchemaValidator();
-  return new SchemaLockedTool<TInput, TOutput>(
-    validator,
-    toolName,
-    inputSchemaName,
-    outputSchemaName
-  );
+  return new SchemaLockedTool<TInput, TOutput>(validator, toolName, inputSchemaName, outputSchemaName);
 }
 
 /**

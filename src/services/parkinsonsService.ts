@@ -39,6 +39,20 @@ export interface ParkinsonsApiResponse<T> {
 }
 
 /**
+ * Normalize unknown errors into a safe message string.
+ * Avoids `any` in catch blocks while preserving existing behavior.
+ */
+function normalizeErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return 'Unknown error';
+  }
+}
+
+/**
  * Parkinson's Disease Management Service - Main API
  */
 export class ParkinsonsService {
@@ -82,8 +96,8 @@ export class ParkinsonsService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: normalizeErrorMessage(error) };
     }
   }
 
@@ -96,18 +110,20 @@ export class ParkinsonsService {
     try {
       const { data, error } = await supabase
         .from('parkinsons_patient_registry')
-        .select(`
+        .select(
+          `
           *,
           profile:profiles(first_name, last_name, phone)
-        `)
+        `
+        )
         .eq('user_id', userId)
         .maybeSingle();
 
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: normalizeErrorMessage(error) };
     }
   }
 
@@ -120,17 +136,19 @@ export class ParkinsonsService {
     try {
       const query = supabase
         .from('parkinsons_patient_registry')
-        .select(`
+        .select(
+          `
           *,
           profile:profiles(first_name, last_name, phone)
-        `)
+        `
+        )
         .eq('neurologist_id', providerId)
         .order('updated_at', { ascending: false });
 
       const data = await applyLimit<ParkinsonsPatient>(query, PAGINATION_LIMITS.PATIENTS);
       return { success: true, data };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: normalizeErrorMessage(error) };
     }
   }
 
@@ -152,8 +170,8 @@ export class ParkinsonsService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: normalizeErrorMessage(error) };
     }
   }
 
@@ -186,8 +204,8 @@ export class ParkinsonsService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: normalizeErrorMessage(error) };
     }
   }
 
@@ -208,8 +226,8 @@ export class ParkinsonsService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: normalizeErrorMessage(error) };
     }
   }
 
@@ -234,8 +252,8 @@ export class ParkinsonsService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: normalizeErrorMessage(error) };
     }
   }
 
@@ -265,8 +283,8 @@ export class ParkinsonsService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: normalizeErrorMessage(error) };
     }
   }
 
@@ -283,10 +301,12 @@ export class ParkinsonsService {
 
       const { data, error } = await supabase
         .from('parkinsons_medication_log')
-        .select(`
+        .select(
+          `
           *,
           medication:parkinsons_medications!inner(patient_id, medication_name)
-        `)
+        `
+        )
         .eq('medication.patient_id', patientId)
         .gte('taken_at', startDate.toISOString())
         .order('taken_at', { ascending: false })
@@ -295,8 +315,8 @@ export class ParkinsonsService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: normalizeErrorMessage(error) };
     }
   }
 
@@ -314,10 +334,6 @@ export class ParkinsonsService {
         throw new Error('Could not fetch medications');
       }
 
-      // Calculate expected doses based on frequency
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - daysBack);
-
       // Get actual doses logged
       const logResult = await this.getMedicationLog(patientId, daysBack);
       if (!logResult.success) {
@@ -329,13 +345,12 @@ export class ParkinsonsService {
       // Estimate expected doses (simplified: assume 3 doses/day per med)
       const expectedDoses = medsResult.data.length * daysBack * 3;
 
-      const adherenceRate = expectedDoses > 0
-        ? Math.min(100, (actualDoses / expectedDoses) * 100)
-        : 0;
+      const adherenceRate =
+        expectedDoses > 0 ? Math.min(100, (actualDoses / expectedDoses) * 100) : 0;
 
       return { success: true, data: Math.round(adherenceRate) };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: normalizeErrorMessage(error) };
     }
   }
 
@@ -372,8 +387,8 @@ export class ParkinsonsService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: normalizeErrorMessage(error) };
     }
   }
 
@@ -399,8 +414,8 @@ export class ParkinsonsService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: normalizeErrorMessage(error) };
     }
   }
 
@@ -445,8 +460,8 @@ export class ParkinsonsService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: normalizeErrorMessage(error) };
     }
   }
 
@@ -459,17 +474,19 @@ export class ParkinsonsService {
     try {
       const query = supabase
         .from('parkinsons_updrs')
-        .select(`
+        .select(
+          `
           *,
           assessor:profiles!parkinsons_updrs_assessor_id_fkey(first_name, last_name)
-        `)
+        `
+        )
         .eq('patient_id', patientId)
         .order('assessment_date', { ascending: false });
 
       const data = await applyLimit<ParkinsonsUPDRSAssessment>(query, PAGINATION_LIMITS.ASSESSMENTS);
       return { success: true, data };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: normalizeErrorMessage(error) };
     }
   }
 
@@ -491,8 +508,8 @@ export class ParkinsonsService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: normalizeErrorMessage(error) };
     }
   }
 
@@ -524,8 +541,8 @@ export class ParkinsonsService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: normalizeErrorMessage(error) };
     }
   }
 
@@ -544,8 +561,8 @@ export class ParkinsonsService {
 
       const data = await applyLimit<ParkinsonsDBSSession>(query, PAGINATION_LIMITS.ASSESSMENTS);
       return { success: true, data };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: normalizeErrorMessage(error) };
     }
   }
 
@@ -574,8 +591,8 @@ export class ParkinsonsService {
       if (error) throw error;
 
       return { success: true, data: result };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: normalizeErrorMessage(error) };
     }
   }
 
@@ -601,8 +618,8 @@ export class ParkinsonsService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: normalizeErrorMessage(error) };
     }
   }
 
@@ -629,8 +646,8 @@ export class ParkinsonsService {
       if (error) throw error;
 
       return { success: true, data: result };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: normalizeErrorMessage(error) };
     }
   }
 
@@ -649,8 +666,8 @@ export class ParkinsonsService {
 
       const data = await applyLimit<ParkinsonsFORBESTracking>(query, PAGINATION_LIMITS.ASSESSMENTS);
       return { success: true, data };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: normalizeErrorMessage(error) };
     }
   }
 
@@ -679,12 +696,12 @@ export class ParkinsonsService {
       if (patientsError) throw patientsError;
 
       const totalPatients = count || 0;
-      const patientsOnDBS = patients?.filter(p => p.dbs_implant).length || 0;
+      const patientsOnDBS = patients?.filter((p) => p.dbs_implant).length || 0;
 
       // Count high-risk patients (Hoehn & Yahr 3+)
-      const highRiskPatients = patients?.filter(p =>
-        p.hoehn_yahr_stage && parseFloat(p.hoehn_yahr_stage) >= 3
-      ).length || 0;
+      const highRiskPatients =
+        patients?.filter((p) => p.hoehn_yahr_stage && parseFloat(p.hoehn_yahr_stage) >= 3).length ||
+        0;
 
       // Get average UPDRS score (last 30 days)
       const thirtyDaysAgo = new Date();
@@ -698,13 +715,10 @@ export class ParkinsonsService {
 
       if (updrsError) throw updrsError;
 
-      const avgUPDRS = updrsData && updrsData.length > 0
-        ? updrsData.reduce((sum, a) => sum + (a.total_score || 0), 0) / updrsData.length
-        : 0;
-
-      // Get assessments due this week
-      const weekFromNow = new Date();
-      weekFromNow.setDate(weekFromNow.getDate() + 7);
+      const avgUPDRS =
+        updrsData && updrsData.length > 0
+          ? updrsData.reduce((sum, a) => sum + (a.total_score || 0), 0) / updrsData.length
+          : 0;
 
       // Patients who haven't had UPDRS in 90 days are due
       const ninetyDaysAgo = new Date();
@@ -727,8 +741,8 @@ export class ParkinsonsService {
       };
 
       return { success: true, data: metrics };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: normalizeErrorMessage(error) };
     }
   }
 
@@ -741,14 +755,16 @@ export class ParkinsonsService {
     try {
       let query = supabase
         .from('parkinsons_patient_registry')
-        .select(`
+        .select(
+          `
           id,
           user_id,
           hoehn_yahr_stage,
           dbs_implant,
           updated_at,
           profile:profiles(first_name, last_name)
-        `)
+        `
+        )
         .order('updated_at', { ascending: false })
         .limit(50);
 
@@ -765,7 +781,7 @@ export class ParkinsonsService {
       }
 
       // Get latest UPDRS for each patient
-      const patientIds = patients.map(p => p.id);
+      const patientIds = patients.map((p) => p.id);
       const { data: updrsData } = await supabase
         .from('parkinsons_updrs')
         .select('patient_id, total_score, assessment_date')
@@ -787,19 +803,22 @@ export class ParkinsonsService {
         .order('recorded_at', { ascending: false });
 
       // Build summaries
-      const summaries: ParkinsonsPatientSummary[] = patients.map(patient => {
+      const summaries: ParkinsonsPatientSummary[] = patients.map((patient) => {
         const profile = patient.profile as { first_name?: string; last_name?: string } | null;
         const patientName = profile
           ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
           : 'Unknown';
 
-        const latestUPDRS = updrsData?.find(u => u.patient_id === patient.id);
-        const medCount = medCounts?.filter(m => m.patient_id === patient.id).length || 0;
-        const latestSymptom = symptomData?.find(s => s.patient_id === patient.id);
+        const latestUPDRS = updrsData?.find((u) => u.patient_id === patient.id);
+        const medCount = medCounts?.filter((m) => m.patient_id === patient.id).length || 0;
+        const latestSymptom = symptomData?.find((s) => s.patient_id === patient.id);
 
         // Calculate days since last assessment
         const daysSinceAssessment = latestUPDRS?.assessment_date
-          ? Math.floor((Date.now() - new Date(latestUPDRS.assessment_date).getTime()) / (1000 * 60 * 60 * 24))
+          ? Math.floor(
+              (Date.now() - new Date(latestUPDRS.assessment_date).getTime()) /
+                (1000 * 60 * 60 * 24)
+            )
           : 999;
 
         // Determine risk level
@@ -826,25 +845,27 @@ export class ParkinsonsService {
       });
 
       return { success: true, data: summaries };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: normalizeErrorMessage(error) };
     }
   }
 
   /**
    * Get patients needing UPDRS assessment (overdue by 90+ days)
    */
-  static async getPatientsNeedingAssessment(): Promise<ParkinsonsApiResponse<ParkinsonsPatientSummary[]>> {
+  static async getPatientsNeedingAssessment(): Promise<
+    ParkinsonsApiResponse<ParkinsonsPatientSummary[]>
+  > {
     try {
       const result = await this.getPatientSummaries();
       if (!result.success || !result.data) {
         return result;
       }
 
-      const needingAssessment = result.data.filter(p => p.days_since_assessment >= 90);
+      const needingAssessment = result.data.filter((p) => p.days_since_assessment >= 90);
       return { success: true, data: needingAssessment };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: normalizeErrorMessage(error) };
     }
   }
 
@@ -858,10 +879,10 @@ export class ParkinsonsService {
         return result;
       }
 
-      const highRisk = result.data.filter(p => p.risk_level === 'high');
+      const highRisk = result.data.filter((p) => p.risk_level === 'high');
       return { success: true, data: highRisk };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: normalizeErrorMessage(error) };
     }
   }
 }

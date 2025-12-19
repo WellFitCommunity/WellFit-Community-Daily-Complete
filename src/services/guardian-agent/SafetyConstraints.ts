@@ -40,7 +40,7 @@ export const PROTECTED_RESOURCES = {
 
   // Security-critical files
   securityCritical: [
-    'src/services/guardian-agent/',  // Don't let agent modify itself
+    'src/services/guardian-agent/', // Don't let agent modify itself
     'src/components/auth/',
     'src/middleware/',
   ],
@@ -64,11 +64,11 @@ export const ALLOWED_AUTONOMOUS_ACTIONS = [
  * Actions Requiring Human Approval
  */
 export const APPROVAL_REQUIRED_ACTIONS = [
-  'auto_patch',              // Code changes need review
-  'configuration_reset',     // Config changes need review
-  'data_reconciliation',     // Data changes need review
-  'security_lockdown',       // Security actions need review
-  'emergency_shutdown',      // Critical actions need review
+  'auto_patch', // Code changes need review
+  'configuration_reset', // Config changes need review
+  'data_reconciliation', // Data changes need review
+  'security_lockdown', // Security actions need review
+  'emergency_shutdown', // Critical actions need review
 ];
 
 /**
@@ -78,7 +78,7 @@ export class SafetyValidator {
   /**
    * Validates if a healing action is safe to execute autonomously
    */
-  static canExecuteAutonomously(action: HealingAction, issue: DetectedIssue): {
+  static canExecuteAutonomously(action: HealingAction, _issue: DetectedIssue): {
     allowed: boolean;
     reason: string;
     requiresApproval: boolean;
@@ -114,7 +114,8 @@ export class SafetyValidator {
     }
 
     // Check severity - critical issues need approval
-    if (issue.severity === 'critical' && issue.signature.estimatedImpact.dataIntegrity) {
+    // NOTE: this uses _issue (renamed from issue) to satisfy lint while keeping behavior.
+    if (_issue.severity === 'critical' && _issue.signature.estimatedImpact.dataIntegrity) {
       return {
         allowed: false,
         reason: 'Critical issue affecting data integrity requires approval',
@@ -231,13 +232,24 @@ export class SafetyValidator {
 /**
  * Sandbox Environment for Testing Fixes
  */
+
+/**
+ * Minimal safe type for pending fix records (replaces `any`)
+ */
+type PendingFixRecord = Readonly<{
+  action: HealingAction;
+  issue: DetectedIssue;
+  timestamp: Date;
+  status: 'pending_review';
+}>;
+
 export class SandboxEnvironment {
-  private sandboxedFixes: Map<string, any> = new Map();
+  private sandboxedFixes: Map<string, PendingFixRecord> = new Map();
 
   /**
    * Test a fix in sandbox before applying
    */
-  async testFix(action: HealingAction, issue: DetectedIssue): Promise<{
+  async testFix(action: HealingAction, _issue: DetectedIssue): Promise<{
     success: boolean;
     errors: string[];
     sideEffects: string[];
@@ -263,7 +275,7 @@ export class SandboxEnvironment {
         errors,
         sideEffects,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         success: false,
         errors: [error instanceof Error ? error.message : String(error)],
@@ -287,7 +299,7 @@ export class SandboxEnvironment {
   /**
    * Get all pending fixes for review
    */
-  getPendingFixes(): any[] {
+  getPendingFixes(): PendingFixRecord[] {
     return Array.from(this.sandboxedFixes.values());
   }
 }

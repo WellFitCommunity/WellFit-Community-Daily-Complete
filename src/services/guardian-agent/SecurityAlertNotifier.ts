@@ -132,7 +132,7 @@ export class SecurityAlertNotifier {
             results[channelName] = { success: true };
             break;
         }
-      } catch (error) {
+      } catch (error: unknown) {
         results[channelName] = {
           success: false,
           error: error instanceof Error ? error.message : 'Unknown error',
@@ -189,8 +189,8 @@ export class SecurityAlertNotifier {
         recipients: (recipientEmails as string[]).length,
       });
 
-      return { success: true, messageId: data?.messageId };
-    } catch (error) {
+      return { success: true, messageId: (data as { messageId?: string } | null)?.messageId };
+    } catch (error: unknown) {
       const errorMsg = error instanceof Error ? error.message : 'Email send failed';
       auditLogger.error('Email notification exception', errorMsg, {
         alertId: notification.alertId,
@@ -241,12 +241,16 @@ export class SecurityAlertNotifier {
             <div class="label">Description</div>
             <div>${notification.description}</div>
           </div>
-          ${notification.affectedResource ? `
+          ${
+            notification.affectedResource
+              ? `
           <div class="field">
             <div class="label">Affected Resource</div>
             <div>${notification.affectedResource}</div>
           </div>
-          ` : ''}
+          `
+              : ''
+          }
           <div class="field">
             <div class="label">Timestamp</div>
             <div>${new Date(notification.timestamp).toLocaleString()}</div>
@@ -280,7 +284,10 @@ export class SecurityAlertNotifier {
       }
 
       // SMS message (limited to 160 characters for single segment)
-      const smsMessage = `[${notification.severity.toUpperCase()}] ${notification.title.substring(0, 100)}. Alert ID: ${notification.alertId.substring(0, 8)}`;
+      const smsMessage = `[${notification.severity.toUpperCase()}] ${notification.title.substring(
+        0,
+        100
+      )}. Alert ID: ${notification.alertId.substring(0, 8)}`;
 
       // Call send-sms edge function
       const { data, error } = await supabase.functions.invoke('send-sms', {
@@ -303,8 +310,11 @@ export class SecurityAlertNotifier {
         recipients: (recipientPhones as string[]).length,
       });
 
-      return { success: true, messageId: data?.results?.[0]?.sid };
-    } catch (error) {
+      const messageId =
+        (data as { results?: Array<{ sid?: string }> } | null)?.results?.[0]?.sid;
+
+      return { success: true, messageId };
+    } catch (error: unknown) {
       const errorMsg = error instanceof Error ? error.message : 'SMS send failed';
       auditLogger.error('SMS notification exception', errorMsg, {
         alertId: notification.alertId,
@@ -333,9 +343,13 @@ export class SecurityAlertNotifier {
           updated_at: new Date().toISOString(),
         })
         .eq('id', notification.alertId);
-
-    } catch (error) {
-
+    } catch (_error: unknown) {
+      // Don't throw from notifier logging, but DO leave an audit trail
+      auditLogger.error(
+        'Failed to log security alert notification attempt',
+        _error instanceof Error ? _error.message : String(_error),
+        { alertId: notification.alertId }
+      );
     }
   }
 

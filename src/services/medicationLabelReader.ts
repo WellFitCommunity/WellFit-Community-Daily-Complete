@@ -66,7 +66,7 @@ export interface LabelExtractionResult {
   error?: string;
   processingTimeMs: number;
   modelUsed: string;
-  rawResponse?: any;
+  rawResponse?: unknown;
 }
 
 export interface ImageValidation {
@@ -76,6 +76,45 @@ export interface ImageValidation {
   fileType?: string;
   dimensions?: { width: number; height: number };
 }
+
+// ============================================================================
+// MINIMAL CLAUDE SDK TYPES (STRUCTURAL TYPING)
+// ============================================================================
+
+type AllowedClaudeImageType = 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';
+
+type ClaudeMessageContent =
+  | { type: 'text'; text: string }
+  | { type: string; [key: string]: unknown };
+
+interface ClaudeMessagesCreateResponse {
+  content: ClaudeMessageContent[];
+  [key: string]: unknown;
+}
+
+interface ClaudeClient {
+  messages: {
+    create(args: {
+      model: string;
+      max_tokens: number;
+      messages: Array<{
+        role: 'user' | 'assistant';
+        content: Array<
+          | {
+              type: 'image';
+              source: { type: 'base64'; media_type: AllowedClaudeImageType; data: string };
+            }
+          | { type: 'text'; text: string }
+        >;
+      }>;
+    }): Promise<ClaudeMessagesCreateResponse>;
+  };
+}
+
+type AnthropicConstructor = new (args: {
+  apiKey: string;
+  dangerouslyAllowBrowser?: boolean;
+}) => ClaudeClient;
 
 // ============================================================================
 // CONFIGURATION
@@ -89,7 +128,7 @@ const CONFIG = {
 
   // Image constraints
   MAX_IMAGE_SIZE: 10 * 1024 * 1024, // 10MB
-  ALLOWED_MIME_TYPES: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
+  ALLOWED_MIME_TYPES: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'] as const,
   MIN_CONFIDENCE_THRESHOLD: 0.7,
 
   // Retry configuration
@@ -98,23 +137,63 @@ const CONFIG = {
 };
 
 // ============================================================================
+// HELPERS
+// ============================================================================
+
+function normalizeErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return 'Unknown error';
+  }
+}
+
+function isAllowedClaudeImageType(mime: string): mime is AllowedClaudeImageType {
+  return (
+    mime === 'image/jpeg' ||
+    mime === 'image/png' ||
+    mime === 'image/webp' ||
+    mime === 'image/gif'
+  );
+}
+
+function isClaudeTextContent(content: ClaudeMessageContent | undefined): content is { type: 'text'; text: string } {
+  return !!content && content.type === 'text' && typeof (content as { text?: unknown }).text === 'string';
+}
+
+function isAnthropicConstructor(x: unknown): x is AnthropicConstructor {
+  return typeof x === 'function';
+}
+
+// ============================================================================
 // MEDICATION LABEL READER SERVICE
 // ============================================================================
 
 export class MedicationLabelReaderService {
-  private anthropic: any = null;
+  private anthropic: ClaudeClient | null = null;
   private apiKey: string | null = null;
 
   constructor(apiKey?: string) {
     this.apiKey = apiKey || import.meta.env.VITE_ANTHROPIC_API_KEY || null;
 
     if (this.apiKey) {
-      loadAnthropicSDK().then((Anthropic: any) => {
-        this.anthropic = new Anthropic({
-          apiKey: this.apiKey,
-          dangerouslyAllowBrowser: true // For client-side usage
+      loadAnthropicSDK()
+        .then((AnthropicSdk: unknown) => {
+          if (!isAnthropicConstructor(AnthropicSdk)) {
+            throw new Error('Anthropic SDK did not load a valid constructor');
+          }
+
+          this.anthropic = new AnthropicSdk({
+            apiKey: this.apiKey as string,
+            dangerouslyAllowBrowser: true, // For client-side usage
+          });
+        })
+        .catch((_err: unknown) => {
+          // Fail closed: keep anthropic as null so extractFromImage returns a clean error
+          this.anthropic = null;
         });
-      });
     }
   }
 
@@ -126,24 +205,26 @@ export class MedicationLabelReaderService {
     if (file.size > CONFIG.MAX_IMAGE_SIZE) {
       return {
         isValid: false,
-        error: `Image size (${(file.size / 1024 / 1024).toFixed(2)}MB) exceeds maximum allowed size of ${CONFIG.MAX_IMAGE_SIZE / 1024 / 1024}MB`,
-        fileSize: file.size
+        error: `Image size (${(file.size / 1024 / 1024).toFixed(2)}MB) exceeds maximum allowed size of ${
+          CONFIG.MAX_IMAGE_SIZE / 1024 / 1024
+        }MB`,
+        fileSize: file.size,
       };
     }
 
     // Check file type
-    if (!CONFIG.ALLOWED_MIME_TYPES.includes(file.type)) {
+    if (!CONFIG.ALLOWED_MIME_TYPES.includes(file.type as (typeof CONFIG.ALLOWED_MIME_TYPES)[number])) {
       return {
         isValid: false,
         error: `Invalid file type: ${file.type}. Allowed types: ${CONFIG.ALLOWED_MIME_TYPES.join(', ')}`,
-        fileType: file.type
+        fileType: file.type,
       };
     }
 
     return {
       isValid: true,
       fileSize: file.size,
-      fileType: file.type
+      fileType: file.type,
     };
   }
 
@@ -156,9 +237,12 @@ export class MedicationLabelReaderService {
 
       reader.onload = () => {
         const base64 = reader.result as string;
-        // Remove data URL prefix (e.g., "data:image/jpeg;base64,")
-        const base64Data = base64.split(',')[1];
-        resolve(base64Data);
+        const parts = base64.split(',');
+        if (parts.length < 2 || !parts[1]) {
+          reject(new Error('Failed to parse base64 image data'));
+          return;
+        }
+        resolve(parts[1]);
       };
 
       reader.onerror = () => {
@@ -176,13 +260,14 @@ export class MedicationLabelReaderService {
     const startTime = Date.now();
 
     try {
-      // Validate API key
+      // Validate API key / SDK
       if (!this.anthropic || !this.apiKey) {
         return {
           success: false,
-          error: 'Anthropic API key not configured. Please set VITE_ANTHROPIC_API_KEY in your environment.',
+          error:
+            'Anthropic API key not configured. Please set VITE_ANTHROPIC_API_KEY in your environment.',
           processingTimeMs: Date.now() - startTime,
-          modelUsed: CONFIG.MODEL
+          modelUsed: CONFIG.MODEL,
         };
       }
 
@@ -193,7 +278,16 @@ export class MedicationLabelReaderService {
           success: false,
           error: validation.error,
           processingTimeMs: Date.now() - startTime,
-          modelUsed: CONFIG.MODEL
+          modelUsed: CONFIG.MODEL,
+        };
+      }
+
+      if (!isAllowedClaudeImageType(imageFile.type)) {
+        return {
+          success: false,
+          error: `Unsupported media type for Claude: ${imageFile.type}`,
+          processingTimeMs: Date.now() - startTime,
+          modelUsed: CONFIG.MODEL,
         };
       }
 
@@ -208,6 +302,8 @@ export class MedicationLabelReaderService {
 
       for (let attempt = 1; attempt <= CONFIG.MAX_RETRY_ATTEMPTS; attempt++) {
         try {
+          // Note: if you later implement an AbortController timeout,
+          // keep it here (not doing it now to avoid changing behavior).
           const response = await this.anthropic.messages.create({
             model: CONFIG.MODEL,
             max_tokens: CONFIG.MAX_TOKENS,
@@ -219,40 +315,40 @@ export class MedicationLabelReaderService {
                     type: 'image',
                     source: {
                       type: 'base64',
-                      media_type: imageFile.type as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif',
-                      data: base64Image
-                    }
+                      media_type: imageFile.type,
+                      data: base64Image,
+                    },
                   },
                   {
                     type: 'text',
-                    text: prompt
-                  }
-                ]
-              }
-            ]
+                    text: prompt,
+                  },
+                ],
+              },
+            ],
           });
 
           // Parse the response
-          const content = response.content[0];
-          if (content.type === 'text') {
-            const medicationInfo = this.parseClaudeResponse(content.text);
+          const first = response.content?.[0];
+          if (isClaudeTextContent(first)) {
+            const medicationInfo = this.parseClaudeResponse(first.text);
 
             return {
               success: true,
               medication: medicationInfo,
               processingTimeMs: Date.now() - startTime,
               modelUsed: CONFIG.MODEL,
-              rawResponse: response
+              rawResponse: response,
             };
-          } else {
-            throw new Error('Unexpected response format from Claude API');
           }
 
-        } catch (error) {
-          lastError = error as Error;
+          throw new Error('Unexpected response format from Claude API');
+        } catch (error: unknown) {
+          const msg = normalizeErrorMessage(error);
+          lastError = error instanceof Error ? error : new Error(msg);
 
           // If it's a rate limit error, wait and retry
-          if (error instanceof Error && error.message.includes('rate_limit')) {
+          if (msg.toLowerCase().includes('rate_limit') || msg.toLowerCase().includes('rate limit')) {
             await this.delay(CONFIG.RETRY_DELAY_MS * attempt);
             continue;
           }
@@ -267,15 +363,14 @@ export class MedicationLabelReaderService {
         success: false,
         error: `Failed after ${CONFIG.MAX_RETRY_ATTEMPTS} attempts: ${lastError?.message || 'Unknown error'}`,
         processingTimeMs: Date.now() - startTime,
-        modelUsed: CONFIG.MODEL
+        modelUsed: CONFIG.MODEL,
       };
-
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred',
+        error: normalizeErrorMessage(error),
         processingTimeMs: Date.now() - startTime,
-        modelUsed: CONFIG.MODEL
+        modelUsed: CONFIG.MODEL,
       };
     }
   }
@@ -346,58 +441,86 @@ Now analyze the medication label image and return the JSON:`;
       let jsonText = responseText.trim();
       jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
 
-      // Parse JSON
-      const parsed = JSON.parse(jsonText);
+      const parsed: unknown = JSON.parse(jsonText);
 
-      // Validate required fields
-      if (!parsed.medicationName) {
+      if (typeof parsed !== 'object' || parsed === null) {
+        throw new Error('Claude response JSON was not an object');
+      }
+
+      const obj = parsed as Record<string, unknown>;
+
+      const medicationName = typeof obj.medicationName === 'string' ? obj.medicationName : '';
+      if (!medicationName) {
         throw new Error('Medication name is required but was not extracted');
       }
 
       // Ensure confidence is a number between 0 and 1
-      const confidence = typeof parsed.confidence === 'number'
-        ? Math.max(0, Math.min(1, parsed.confidence))
-        : 0.5;
+      const confidenceRaw = obj.confidence;
+      const confidence =
+        typeof confidenceRaw === 'number'
+          ? Math.max(0, Math.min(1, confidenceRaw))
+          : 0.5;
 
-      // Build MedicationInfo object with defaults
       const medicationInfo: MedicationInfo = {
-        medicationName: parsed.medicationName,
-        genericName: parsed.genericName || undefined,
-        brandName: parsed.brandName || undefined,
-        dosage: parsed.dosage || undefined,
-        dosageForm: parsed.dosageForm || undefined,
-        strength: parsed.strength || undefined,
-        instructions: parsed.instructions || undefined,
-        frequency: parsed.frequency || undefined,
-        route: parsed.route || undefined,
-        prescribedBy: parsed.prescribedBy || undefined,
-        prescribedDate: parsed.prescribedDate || undefined,
-        prescriptionNumber: parsed.prescriptionNumber || undefined,
-        pharmacyName: parsed.pharmacyName || undefined,
-        pharmacyPhone: parsed.pharmacyPhone || undefined,
-        quantity: parsed.quantity || undefined,
-        refillsRemaining: parsed.refillsRemaining || undefined,
-        lastRefillDate: parsed.lastRefillDate || undefined,
-        nextRefillDate: parsed.nextRefillDate || undefined,
-        ndcCode: parsed.ndcCode || undefined,
-        purpose: parsed.purpose || undefined,
-        sideEffects: Array.isArray(parsed.sideEffects) ? parsed.sideEffects : undefined,
-        warnings: Array.isArray(parsed.warnings) ? parsed.warnings : undefined,
-        interactions: Array.isArray(parsed.interactions) ? parsed.interactions : undefined,
+        medicationName,
+
+        genericName: typeof obj.genericName === 'string' ? obj.genericName : undefined,
+        brandName: typeof obj.brandName === 'string' ? obj.brandName : undefined,
+
+        dosage: typeof obj.dosage === 'string' ? obj.dosage : undefined,
+        dosageForm: typeof obj.dosageForm === 'string' ? obj.dosageForm : undefined,
+        strength: typeof obj.strength === 'string' ? obj.strength : undefined,
+
+        instructions: typeof obj.instructions === 'string' ? obj.instructions : undefined,
+        frequency: typeof obj.frequency === 'string' ? obj.frequency : undefined,
+        route: typeof obj.route === 'string' ? obj.route : undefined,
+
+        prescribedBy: typeof obj.prescribedBy === 'string' ? obj.prescribedBy : undefined,
+        prescribedDate: typeof obj.prescribedDate === 'string' ? obj.prescribedDate : undefined,
+        prescriptionNumber:
+          typeof obj.prescriptionNumber === 'string' ? obj.prescriptionNumber : undefined,
+
+        pharmacyName: typeof obj.pharmacyName === 'string' ? obj.pharmacyName : undefined,
+        pharmacyPhone: typeof obj.pharmacyPhone === 'string' ? obj.pharmacyPhone : undefined,
+
+        quantity: typeof obj.quantity === 'number' ? obj.quantity : undefined,
+        refillsRemaining:
+          typeof obj.refillsRemaining === 'number' ? obj.refillsRemaining : undefined,
+        lastRefillDate:
+          typeof obj.lastRefillDate === 'string' ? obj.lastRefillDate : undefined,
+        nextRefillDate:
+          typeof obj.nextRefillDate === 'string' ? obj.nextRefillDate : undefined,
+
+        ndcCode: typeof obj.ndcCode === 'string' ? obj.ndcCode : undefined,
+
+        purpose: typeof obj.purpose === 'string' ? obj.purpose : undefined,
+        sideEffects: Array.isArray(obj.sideEffects)
+          ? obj.sideEffects.filter((v): v is string => typeof v === 'string')
+          : undefined,
+        warnings: Array.isArray(obj.warnings)
+          ? obj.warnings.filter((v): v is string => typeof v === 'string')
+          : undefined,
+        interactions: Array.isArray(obj.interactions)
+          ? obj.interactions.filter((v): v is string => typeof v === 'string')
+          : undefined,
+
         confidence,
-        extractionNotes: parsed.extractionNotes || undefined,
-        needsReview: parsed.needsReview || confidence < CONFIG.MIN_CONFIDENCE_THRESHOLD
+
+        extractionNotes:
+          typeof obj.extractionNotes === 'string' ? obj.extractionNotes : undefined,
+        needsReview:
+          typeof obj.needsReview === 'boolean'
+            ? obj.needsReview
+            : confidence < CONFIG.MIN_CONFIDENCE_THRESHOLD,
       };
 
       return medicationInfo;
-
-    } catch (error) {
-      // If parsing fails, return a low-confidence result
+    } catch (error: unknown) {
       return {
         medicationName: 'Unable to extract medication name',
         confidence: 0.0,
-        extractionNotes: `Parsing error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        needsReview: true
+        extractionNotes: `Parsing error: ${normalizeErrorMessage(error)}`,
+        needsReview: true,
       };
     }
   }
@@ -406,7 +529,7 @@ Now analyze the medication label image and return the JSON:`;
    * Delay helper for retry logic
    */
   private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**
@@ -438,12 +561,13 @@ Now analyze the medication label image and return the JSON:`;
     const result = await this.extractFromImage(originalImage);
 
     if (result.success && result.medication) {
-      // Merge user corrections with AI extraction
       result.medication = {
         ...result.medication,
         ...userCorrections,
-        extractionNotes: `${result.medication.extractionNotes || ''}\nUser corrections applied: ${Object.keys(userCorrections).join(', ')}`,
-        needsReview: false // User has reviewed it
+        extractionNotes: `${result.medication.extractionNotes || ''}\nUser corrections applied: ${Object.keys(
+          userCorrections
+        ).join(', ')}`,
+        needsReview: false,
       };
     }
 
@@ -505,15 +629,15 @@ export function validateMedicationInfo(med: MedicationInfo): {
   missingFields: string[];
   criticalMissing: boolean;
 } {
-  const requiredFields = ['medicationName', 'dosage', 'instructions'];
-  const criticalFields = ['medicationName', 'dosage'];
+  const requiredFields: Array<keyof MedicationInfo> = ['medicationName', 'dosage', 'instructions'];
+  const criticalFields: Array<keyof MedicationInfo> = ['medicationName', 'dosage'];
 
   const missingFields: string[] = [];
   let criticalMissing = false;
 
   for (const field of requiredFields) {
-    if (!med[field as keyof MedicationInfo]) {
-      missingFields.push(field);
+    if (!med[field]) {
+      missingFields.push(String(field));
       if (criticalFields.includes(field)) {
         criticalMissing = true;
       }
@@ -523,7 +647,7 @@ export function validateMedicationInfo(med: MedicationInfo): {
   return {
     isComplete: missingFields.length === 0,
     missingFields,
-    criticalMissing
+    criticalMissing,
   };
 }
 

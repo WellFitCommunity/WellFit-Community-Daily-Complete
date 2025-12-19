@@ -2,10 +2,9 @@
 // Service layer for secure patient transfers between healthcare facilities
 
 import { supabase } from '../lib/supabaseClient';
-import { PAGINATION_LIMITS, applyLimit } from '../utils/pagination';
+import { applyLimit } from '../utils/pagination';
 import type {
   HandoffPacket,
-  // HandoffSection - unused type
   HandoffAttachment,
   HandoffLog,
   CreateHandoffPacketRequest,
@@ -17,6 +16,20 @@ import type {
   TokenValidationResult,
   AttachmentUpload,
 } from '../types/handoff';
+
+/**
+ * Convert unknown errors into a safe message string.
+ * Keeps lint happy and avoids assuming `error` is an object with `.message`.
+ */
+function toErrorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (typeof err === 'string') return err;
+  try {
+    return JSON.stringify(err);
+  } catch {
+    return 'Unknown error';
+  }
+}
 
 /**
  * Patient Handoff Service
@@ -64,6 +77,9 @@ export class HandoffService {
         .single();
 
       if (error) throw error;
+      if (!packet) {
+        throw new Error('Failed to create handoff packet: missing packet data');
+      }
 
       // Log packet creation
       await this.logEvent(packet.id, 'created', 'Handoff packet created');
@@ -75,9 +91,8 @@ export class HandoffService {
         packet,
         access_url: accessUrl,
       };
-    } catch (error: any) {
-
-      throw new Error(`Failed to create handoff packet: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`Failed to create handoff packet: ${toErrorMessage(error)}`);
     }
   }
 
@@ -93,13 +108,16 @@ export class HandoffService {
         .single();
 
       if (error) throw error;
+      if (!data) {
+        throw new Error('Handoff packet not found');
+      }
 
       // Log the view
       await this.logEvent(packetId, 'viewed', 'Packet viewed');
 
-      return data;
-    } catch (error: any) {
-      throw new Error(`Failed to get handoff packet: ${error.message}`);
+      return data as HandoffPacket;
+    } catch (error: unknown) {
+      throw new Error(`Failed to get handoff packet: ${toErrorMessage(error)}`);
     }
   }
 
@@ -114,14 +132,17 @@ export class HandoffService {
 
       if (error) throw error;
 
-      if (!data || data.length === 0) {
+      if (!data || !Array.isArray(data) || data.length === 0) {
         return {
           isValid: false,
           error: 'Invalid access token',
         };
       }
 
-      const tokenInfo = data[0];
+      const tokenInfo = data[0] as {
+        packet_id: string;
+        is_expired: boolean;
+      };
 
       if (tokenInfo.is_expired) {
         return {
@@ -143,10 +164,10 @@ export class HandoffService {
         isValid: true,
         packet,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         isValid: false,
-        error: error.message,
+        error: toErrorMessage(error),
       };
     }
   }
@@ -166,7 +187,9 @@ export class HandoffService {
       .single();
 
     if (error) throw error;
-    return data;
+    if (!data) throw new Error('Handoff packet not found');
+
+    return data as HandoffPacket;
   }
 
   /**
@@ -215,9 +238,9 @@ export class HandoffService {
 
       if (error) throw error;
 
-      return data || [];
-    } catch (error: any) {
-      throw new Error(`Failed to list handoff packets: ${error.message}`);
+      return (data || []) as HandoffPacket[];
+    } catch (error: unknown) {
+      throw new Error(`Failed to list handoff packets: ${toErrorMessage(error)}`);
     }
   }
 
@@ -238,6 +261,7 @@ export class HandoffService {
         .single();
 
       if (error) throw error;
+      if (!data) throw new Error('Handoff packet not found or not in draft status');
 
       await this.logEvent(request.packet_id, 'sent', 'Packet sent to receiving facility');
 
@@ -247,20 +271,29 @@ export class HandoffService {
           const { HandoffNotificationService } = await import('./handoffNotificationService');
 
           // Build recipient list from packet data
-          const recipients = [];
+          const recipients: Array<{
+            name: string;
+            email?: string;
+            phone?: string;
+            role: 'physician';
+          }> = [];
+
           if (data.receiver_contact_email || data.receiver_contact_phone) {
             recipients.push({
-              name: data.receiver_contact_name || data.receiving_facility || 'Receiving Facility',
-              email: request.send_confirmation_email ? data.receiver_contact_email : undefined,
-              phone: request.send_confirmation_sms ? data.receiver_contact_phone : undefined,
-              role: 'physician' as const
+              name:
+                data.receiver_contact_name ||
+                data.receiving_facility ||
+                'Receiving Facility',
+              email: request.send_confirmation_email ? data.receiver_contact_email ?? undefined : undefined,
+              phone: request.send_confirmation_sms ? data.receiver_contact_phone ?? undefined : undefined,
+              role: 'physician',
             });
           }
 
           if (recipients.length > 0) {
-            await HandoffNotificationService.notifyPacketSent(data, recipients);
+            await HandoffNotificationService.notifyPacketSent(data as HandoffPacket, recipients);
 
-            // Update notification tracking
+            // Update notification tracking (best-effort)
             await supabase
               .from('handoff_packets')
               .update({
@@ -270,20 +303,19 @@ export class HandoffService {
                   email_sent: request.send_confirmation_email || false,
                   sms_sent: request.send_confirmation_sms || false,
                   email_sent_at: request.send_confirmation_email ? new Date().toISOString() : null,
-                  sms_sent_at: request.send_confirmation_sms ? new Date().toISOString() : null
-                }
+                  sms_sent_at: request.send_confirmation_sms ? new Date().toISOString() : null,
+                },
               })
               .eq('id', request.packet_id);
           }
-        } catch (notifyError) {
-
+        } catch (_notifyError: unknown) {
           // Don't fail the entire operation if notification fails
         }
       }
 
-      return data;
-    } catch (error: any) {
-      throw new Error(`Failed to send handoff packet: ${error.message}`);
+      return data as HandoffPacket;
+    } catch (error: unknown) {
+      throw new Error(`Failed to send handoff packet: ${toErrorMessage(error)}`);
     }
   }
 
@@ -302,8 +334,8 @@ export class HandoffService {
         throw new Error('Must be authenticated to acknowledge packet');
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { data, error } = await supabase.rpc('acknowledge_handoff_packet', {
+      // Keep RPC result for future use (audit/telemetry) without triggering unused-vars lint.
+      const { data: _rpcData, error } = await supabase.rpc('acknowledge_handoff_packet', {
         packet_id: request.packet_id,
         acknowledger_id: user.id,
         notes: request.acknowledgement_notes || null,
@@ -313,8 +345,8 @@ export class HandoffService {
 
       // Fetch updated packet
       return await this.getPacket(request.packet_id);
-    } catch (error: any) {
-      throw new Error(`Failed to acknowledge handoff packet: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`Failed to acknowledge handoff packet: ${toErrorMessage(error)}`);
     }
   }
 
@@ -326,7 +358,7 @@ export class HandoffService {
     updates: Partial<CreateHandoffPacketRequest>
   ): Promise<HandoffPacket> {
     try {
-      const updateData: any = {};
+      const updateData: Record<string, unknown> = {};
 
       if (updates.patient_name) {
         updateData.patient_name_encrypted = await this.encryptPHI(updates.patient_name);
@@ -337,18 +369,13 @@ export class HandoffService {
       if (updates.patient_mrn !== undefined) updateData.patient_mrn = updates.patient_mrn;
       if (updates.patient_gender) updateData.patient_gender = updates.patient_gender;
       if (updates.sending_facility) updateData.sending_facility = updates.sending_facility;
-      if (updates.receiving_facility)
-        updateData.receiving_facility = updates.receiving_facility;
+      if (updates.receiving_facility) updateData.receiving_facility = updates.receiving_facility;
       if (updates.urgency_level) updateData.urgency_level = updates.urgency_level;
-      if (updates.reason_for_transfer)
-        updateData.reason_for_transfer = updates.reason_for_transfer;
+      if (updates.reason_for_transfer) updateData.reason_for_transfer = updates.reason_for_transfer;
       if (updates.clinical_data) updateData.clinical_data = updates.clinical_data;
-      if (updates.sender_provider_name)
-        updateData.sender_provider_name = updates.sender_provider_name;
-      if (updates.sender_callback_number)
-        updateData.sender_callback_number = updates.sender_callback_number;
-      if (updates.sender_notes !== undefined)
-        updateData.sender_notes = updates.sender_notes;
+      if (updates.sender_provider_name) updateData.sender_provider_name = updates.sender_provider_name;
+      if (updates.sender_callback_number) updateData.sender_callback_number = updates.sender_callback_number;
+      if (updates.sender_notes !== undefined) updateData.sender_notes = updates.sender_notes;
 
       const { data, error } = await supabase
         .from('handoff_packets')
@@ -359,12 +386,13 @@ export class HandoffService {
         .single();
 
       if (error) throw error;
+      if (!data) throw new Error('Handoff packet not found or not in draft status');
 
       await this.logEvent(packetId, 'updated', 'Packet updated');
 
-      return data;
-    } catch (error: any) {
-      throw new Error(`Failed to update handoff packet: ${error.message}`);
+      return data as HandoffPacket;
+    } catch (error: unknown) {
+      throw new Error(`Failed to update handoff packet: ${toErrorMessage(error)}`);
     }
   }
 
@@ -381,8 +409,8 @@ export class HandoffService {
       if (error) throw error;
 
       await this.logEvent(packetId, 'cancelled', 'Packet cancelled');
-    } catch (error: any) {
-      throw new Error(`Failed to cancel handoff packet: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`Failed to cancel handoff packet: ${toErrorMessage(error)}`);
     }
   }
 
@@ -416,6 +444,7 @@ export class HandoffService {
         });
 
       if (uploadError) throw uploadError;
+      if (!uploadData?.path) throw new Error('Attachment upload failed: missing storage path');
 
       // Create attachment record
       const {
@@ -439,6 +468,7 @@ export class HandoffService {
         .single();
 
       if (attachmentError) throw attachmentError;
+      if (!attachment) throw new Error('Failed to create attachment record');
 
       await this.logEvent(
         handoff_packet_id,
@@ -446,9 +476,9 @@ export class HandoffService {
         `Attachment uploaded: ${file.name}`
       );
 
-      return attachment;
-    } catch (error: any) {
-      throw new Error(`Failed to upload attachment: ${error.message}`);
+      return attachment as HandoffAttachment;
+    } catch (error: unknown) {
+      throw new Error(`Failed to upload attachment: ${toErrorMessage(error)}`);
     }
   }
 
@@ -465,8 +495,8 @@ export class HandoffService {
         .order('created_at', { ascending: true });
 
       return applyLimit<HandoffAttachment>(query, 100);
-    } catch (error: any) {
-      throw new Error(`Failed to get attachments: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`Failed to get attachments: ${toErrorMessage(error)}`);
     }
   }
 
@@ -480,6 +510,7 @@ export class HandoffService {
         .createSignedUrl(attachment.storage_path, 3600); // 1 hour expiry
 
       if (error) throw error;
+      if (!data?.signedUrl) throw new Error('Failed to create signed URL');
 
       await this.logEvent(
         attachment.handoff_packet_id,
@@ -488,8 +519,8 @@ export class HandoffService {
       );
 
       return data.signedUrl;
-    } catch (error: any) {
-      throw new Error(`Failed to get attachment URL: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`Failed to get attachment URL: ${toErrorMessage(error)}`);
     }
   }
 
@@ -506,6 +537,7 @@ export class HandoffService {
         .single();
 
       if (fetchError) throw fetchError;
+      if (!attachment) throw new Error('Attachment not found');
 
       // Delete from storage
       const { error: storageError } = await supabase.storage
@@ -521,8 +553,8 @@ export class HandoffService {
         .eq('id', attachmentId);
 
       if (deleteError) throw deleteError;
-    } catch (error: any) {
-      throw new Error(`Failed to delete attachment: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`Failed to delete attachment: ${toErrorMessage(error)}`);
     }
   }
 
@@ -543,8 +575,8 @@ export class HandoffService {
         .order('timestamp', { ascending: false });
 
       return applyLimit<HandoffLog>(query, 100);
-    } catch (error: any) {
-      throw new Error(`Failed to get audit logs: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`Failed to get audit logs: ${toErrorMessage(error)}`);
     }
   }
 
@@ -555,7 +587,7 @@ export class HandoffService {
     packetId: string,
     eventType: string,
     description: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ): Promise<void> {
     try {
       const {
@@ -572,7 +604,6 @@ export class HandoffService {
       });
     } catch {
       // Don't throw - logging errors shouldn't break main flow
-
     }
   }
 
@@ -624,8 +655,8 @@ export class HandoffService {
       }
 
       return stats;
-    } catch (error: any) {
-      throw new Error(`Failed to get statistics: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`Failed to get statistics: ${toErrorMessage(error)}`);
     }
   }
 
@@ -635,9 +666,13 @@ export class HandoffService {
 
   /**
    * Generate access URL from token
+   * Note: window usage is fine in-browser; guarded for test/SSR environments.
    */
   private static generateAccessUrl(token: string): string {
-    const baseUrl = window.location.origin;
+    const baseUrl =
+      typeof window !== 'undefined' && window.location?.origin
+        ? window.location.origin
+        : '';
     return `${baseUrl}/handoff/receive/${token}`;
   }
 
@@ -648,14 +683,13 @@ export class HandoffService {
   private static async encryptPHI(data: string): Promise<string> {
     try {
       const { data: encrypted, error } = await supabase.rpc('encrypt_phi_text', {
-        data: data,
+        data,
         encryption_key: null, // Uses session key from app.phi_encryption_key
       });
 
       if (error) throw error;
-      return encrypted || data; // Fallback to plaintext if encryption fails (logged in DB)
+      return (encrypted as string) || data; // Fallback to plaintext if encryption fails (logged in DB)
     } catch {
-
       // In production, you may want to throw instead of fallback
       return data;
     }
@@ -673,9 +707,8 @@ export class HandoffService {
       });
 
       if (error) throw error;
-      return decrypted || encryptedData; // Fallback to showing encrypted if decryption fails
+      return (decrypted as string) || encryptedData; // Fallback to showing encrypted if decryption fails
     } catch {
-
       return encryptedData;
     }
   }
