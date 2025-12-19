@@ -78,7 +78,7 @@ describe('WellFitCodeTemplate', () => {
       const transformerClass = template.generateTransformerClass(mockMapping);
 
       expect(transformerClass).toContain('export class WellFitDataTransformer');
-      expect(transformerClass).toContain('async transformAndSync(sourceData: any): Promise<FHIRBundle>');
+      expect(transformerClass).toContain('async transformAndSync(sourceData: unknown): Promise<FHIRBundle>');
       expect(transformerClass).toContain('// Transform Patient data');
       expect(transformerClass).toContain('// Transform vitals.bloodPressure to Observation');
       expect(transformerClass).toContain('// Transform vitals.heartRate to Observation');
@@ -89,7 +89,7 @@ describe('WellFitCodeTemplate', () => {
     it('should include validation methods when validation rules exist', () => {
       const transformerClass = template.generateTransformerClass(mockMapping);
 
-      expect(transformerClass).toContain('validateData(data: any): { isValid: boolean; errors: string[] }');
+      expect(transformerClass).toContain('validateData(data: unknown): { isValid: boolean; errors: string[] }');
       expect(transformerClass).toContain('// Validate vitals.bloodPressure: Format: XXX/XX');
     });
 

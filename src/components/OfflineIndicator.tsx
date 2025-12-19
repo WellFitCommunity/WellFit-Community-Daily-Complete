@@ -1,16 +1,19 @@
 // src/components/OfflineIndicator.tsx - Shows offline status and pending syncs
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { WifiOff, Wifi, Cloud, CloudOff, RefreshCw } from 'lucide-react';
 import { offlineStorage, isOnline } from '../utils/offlineStorage';
-import { useUser } from '../contexts/AuthContext';
+import { useUser, useSupabaseClient } from '../contexts/AuthContext';
+import { auditLogger } from '../services/auditLogger';
 
 const OfflineIndicator: React.FC = () => {
   const user = useUser();
+  const supabase = useSupabaseClient();
   const [online, setOnline] = useState(isOnline());
   const [pendingCount, setPendingCount] = useState(0);
   const [syncing, setSyncing] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  const [lastSyncResult, setLastSyncResult] = useState<{ success: number; failed: number } | null>(null);
 
   // Check online status
   useEffect(() => {
@@ -64,25 +67,69 @@ const OfflineIndicator: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [online, pendingCount]);
 
+  /**
+   * Sync callback that inserts a single report into self_reports table
+   */
+  const syncReportToSupabase = useCallback(async (reportData: Record<string, unknown>): Promise<boolean> => {
+    try {
+      // Add metadata to track this was an offline sync
+      const dataWithMeta = {
+        ...reportData,
+        metadata: {
+          ...(typeof reportData.metadata === 'object' ? reportData.metadata : {}),
+          source: 'offline_sync',
+          synced_at: new Date().toISOString(),
+        },
+      };
+
+      const { error } = await supabase.from('self_reports').insert([dataWithMeta]);
+
+      if (error) {
+        auditLogger.warn('Offline sync failed for report', {
+          error: error.message,
+          userId: reportData.user_id,
+        });
+        return false;
+      }
+
+      auditLogger.info('Offline report synced successfully', {
+        userId: reportData.user_id,
+      });
+      return true;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      auditLogger.error('Exception during offline sync', message);
+      return false;
+    }
+  }, [supabase]);
+
   const handleSync = async () => {
     if (!user?.id || syncing) return;
 
     setSyncing(true);
+    setLastSyncResult(null);
 
     try {
-      // Import supabase client dynamically to avoid circular dependencies
-      const { offlineStorage } = await import('../utils/offlineStorage');
+      // Actually sync pending reports to Supabase
+      const result = await offlineStorage.syncPendingReports(user.id, syncReportToSupabase);
 
-      // Note: The actual sync function would be provided by the component using this
-      // For now, we just update the UI
+      setLastSyncResult(result);
 
-      // Update pending count after sync attempt
-      setTimeout(async () => {
-        const count = await offlineStorage.getPendingCount(user.id);
-        setPendingCount(count);
-        setSyncing(false);
-      }, 2000);
-    } catch (error) {
+      // Update pending count after sync
+      const count = await offlineStorage.getPendingCount(user.id);
+      setPendingCount(count);
+
+      if (result.success > 0) {
+        auditLogger.info('Offline sync completed', {
+          userId: user.id,
+          success: result.success,
+          failed: result.failed,
+        });
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      auditLogger.error('Offline sync error', message, { userId: user.id });
+    } finally {
       setSyncing(false);
     }
   };
@@ -160,6 +207,20 @@ const OfflineIndicator: React.FC = () => {
                     )}
                   </button>
                 </>
+              )}
+              {lastSyncResult && (
+                <div className={`mt-3 p-2 rounded-lg text-sm ${
+                  lastSyncResult.failed === 0
+                    ? 'bg-green-50 text-green-700 border border-green-200'
+                    : 'bg-yellow-50 text-yellow-700 border border-yellow-200'
+                }`}>
+                  {lastSyncResult.success > 0 && (
+                    <p>✅ {lastSyncResult.success} report{lastSyncResult.success !== 1 ? 's' : ''} synced successfully</p>
+                  )}
+                  {lastSyncResult.failed > 0 && (
+                    <p>⚠️ {lastSyncResult.failed} report{lastSyncResult.failed !== 1 ? 's' : ''} failed to sync</p>
+                  )}
+                </div>
               )}
             </div>
           ) : (
