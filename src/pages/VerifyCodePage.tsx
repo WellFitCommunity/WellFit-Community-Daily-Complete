@@ -100,6 +100,17 @@ export default function VerifyCodePage() {
         throw new Error('Invalid or expired code.');
       }
 
+      // Set the session tokens returned from the edge function
+      // This establishes the user's login on the client side
+      if (data?.access_token && data?.refresh_token) {
+        await supabase.auth.setSession({
+          access_token: data.access_token,
+          refresh_token: data.refresh_token,
+        });
+      }
+      // Note: User data (first_name, last_name) is available via profile lookup
+      // Do NOT store PHI in localStorage per HIPAA §164.312
+
       // Post-verify flow you specified:
       navigate('/demographics', { replace: true });
     } catch (e: any) {
