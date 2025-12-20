@@ -249,6 +249,29 @@ serve(async (req) => {
     });
     const emailResults = await Promise.all(emailPromises);
 
+    // Send push notification to all registered devices for real-time alerts
+    logger.info('Sending emergency push notification');
+    try {
+      await supabaseClient.functions.invoke('send-push-notification', {
+        body: {
+          title: `Emergency Alert: ${userName}`,
+          body: `${alert_type} - Please check immediately`,
+          priority: 'high',
+          data: {
+            type: 'emergency',
+            user_id: user_id,
+            alert_type: alert_type,
+            timestamp: checkin_timestamp || new Date().toISOString()
+          }
+        }
+      });
+      logger.info('Emergency push notification sent successfully');
+    } catch (pushError: unknown) {
+      const errMsg = pushError instanceof Error ? pushError.message : String(pushError);
+      logger.error('Failed to send push notification', { error: errMsg });
+      // Don't fail the whole request if push fails - emails are still sent
+    }
+
     // Process results
     const adminResult = emailResults[0];
     const caregiverResult = caregiverEmail ? emailResults[1] : null;

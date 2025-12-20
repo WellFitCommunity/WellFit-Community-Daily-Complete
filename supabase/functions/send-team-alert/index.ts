@@ -116,6 +116,28 @@ Please check on this user as soon as possible.
       }
     }
 
+    // Send push notification for all alerts (especially high priority)
+    logger.info('Sending push notification for team alert', { priority });
+    try {
+      await supabaseClient.functions.invoke('send-push-notification', {
+        body: {
+          title: `WellFit Alert: ${userName}`,
+          body: `${alert_type} - ${description}`,
+          priority: priority === 'high' ? 'high' : 'normal',
+          data: {
+            type: 'team_alert',
+            user_id,
+            alert_type,
+            priority
+          }
+        }
+      });
+      logger.info('Push notification sent successfully');
+    } catch (pushError: unknown) {
+      const errMsg = pushError instanceof Error ? pushError.message : String(pushError);
+      logger.error('Failed to send push notification', { error: errMsg });
+    }
+
     // Send SMS to caregiver if high priority
     if (priority === 'high' && profile?.caregiver_phone) {
       logger.info('Sending high priority SMS alert', {
