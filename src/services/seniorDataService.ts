@@ -463,6 +463,11 @@ export function mapFormDataToSeniorProfile(
     education_level?: string;
     income_range?: string;
     insurance_type?: string;
+    // Language & Accessibility
+    preferred_language?: string;
+    requires_interpreter?: boolean;
+    // Veteran Status
+    veteran_status?: boolean;
     // Emergency contact
     emergency_contact_name?: string;
     emergency_contact_phone?: string;
@@ -524,6 +529,9 @@ export function mapFormDataToSeniorProfile(
     marital_status: formData.marital_status as SeniorDemographics['marital_status'],
     living_situation: formData.living_situation as SeniorDemographics['living_situation'],
     education_level: formData.education_level,
+    preferred_language: formData.preferred_language || 'en',
+    requires_interpreter: formData.requires_interpreter || false,
+    veteran_status: formData.veteran_status || false,
   };
 
   // Build health

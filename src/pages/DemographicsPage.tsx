@@ -29,6 +29,13 @@ interface DemographicsData {
   emergency_contact_phone: string;
   emergency_contact_relationship: string;
 
+  // Language & Accessibility
+  preferred_language: string;
+  requires_interpreter: boolean;
+
+  // Veteran Status
+  veteran_status: boolean;
+
   // Health Demographics
   health_conditions: string[];
   medications: string;
@@ -81,6 +88,9 @@ const DemographicsPage: React.FC = () => {
     emergency_contact_name: '',
     emergency_contact_phone: '',
     emergency_contact_relationship: '',
+    preferred_language: 'en',
+    requires_interpreter: false,
+    veteran_status: false,
     health_conditions: [],
     medications: '',
     mobility_level: '',
@@ -148,9 +158,13 @@ const DemographicsPage: React.FC = () => {
 
           // Map senior table data back to form fields
           const seniorData = {
+            dob: '',
             marital_status: '',
             living_situation: '',
             education_level: '',
+            preferred_language: 'en',
+            requires_interpreter: false,
+            veteran_status: false,
             health_conditions: [] as string[],
             medications: '',
             mobility_level: '',
@@ -171,9 +185,13 @@ const DemographicsPage: React.FC = () => {
             const { demographics, health, sdoh, emergency_contacts } = seniorProfileResult.data;
 
             // Map demographics
+            seniorData.dob = demographics.date_of_birth || '';
             seniorData.marital_status = demographics.marital_status || '';
             seniorData.living_situation = demographics.living_situation || '';
             seniorData.education_level = demographics.education_level || '';
+            seniorData.preferred_language = demographics.preferred_language || 'en';
+            seniorData.requires_interpreter = demographics.requires_interpreter || false;
+            seniorData.veteran_status = demographics.veteran_status || false;
 
             // Map health
             seniorData.health_conditions = health.chronic_conditions || [];
@@ -233,7 +251,7 @@ const DemographicsPage: React.FC = () => {
             first_name: data.first_name || '',
             last_name: data.last_name || '',
             phone: data.phone || '',
-            dob: data.dob || '',
+            dob: seniorData.dob || data.dob || '',
             address: data.address || '',
             emergency_contact_name: seniorData.emergency_contact_name || data.emergency_contact_name || '',
             emergency_contact_phone: seniorData.emergency_contact_phone || data.emergency_contact_phone || '',
@@ -245,6 +263,9 @@ const DemographicsPage: React.FC = () => {
             education_level: seniorData.education_level || data.education_level || '',
             income_range: data.income_range || '',
             insurance_type: data.insurance_type || '',
+            preferred_language: seniorData.preferred_language || 'en',
+            requires_interpreter: seniorData.requires_interpreter || false,
+            veteran_status: seniorData.veteran_status || false,
             health_conditions: seniorData.health_conditions.length > 0 ? seniorData.health_conditions : (data.health_conditions || []),
             medications: seniorData.medications || data.medications || '',
             mobility_level: seniorData.mobility_level || data.mobility_level || '',
@@ -493,6 +514,21 @@ const DemographicsPage: React.FC = () => {
             <div className="space-y-6">
               <h2 className="text-xl font-semibold mb-4">Basic Information</h2>
 
+              {/* Date of Birth - Important for senior services */}
+              <div>
+                <label className="block text-lg font-medium text-gray-700 mb-2">
+                  Date of Birth
+                </label>
+                <input
+                  type="date"
+                  value={formData.dob}
+                  onChange={(e) => handleInputChange('dob', e.target.value)}
+                  className="w-full p-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  max={new Date().toISOString().split('T')[0]}
+                />
+                <p className="text-sm text-gray-500 mt-1">This helps us provide age-appropriate services</p>
+              </div>
+
               <div>
                 <label className="block text-lg font-medium text-gray-700 mb-2">
                   How do you identify your gender?
@@ -549,6 +585,70 @@ const DemographicsPage: React.FC = () => {
                   <option value="separated">Separated</option>
                   <option value="domestic-partner">Domestic Partner</option>
                 </select>
+              </div>
+
+              {/* Language & Accessibility Section */}
+              <div className="pt-4 border-t border-gray-200">
+                <h3 className="text-lg font-medium text-gray-800 mb-4">Language & Communication</h3>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-lg font-medium text-gray-700 mb-2">
+                      What language do you prefer?
+                    </label>
+                    <select
+                      value={formData.preferred_language}
+                      onChange={(e) => handleInputChange('preferred_language', e.target.value)}
+                      className="w-full p-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    >
+                      <option value="en">English</option>
+                      <option value="es">Spanish / Español</option>
+                      <option value="zh">Chinese / 中文</option>
+                      <option value="vi">Vietnamese / Tiếng Việt</option>
+                      <option value="ko">Korean / 한국어</option>
+                      <option value="tl">Tagalog</option>
+                      <option value="ru">Russian / Русский</option>
+                      <option value="ar">Arabic / العربية</option>
+                      <option value="fr">French / Français</option>
+                      <option value="de">German / Deutsch</option>
+                      <option value="pt">Portuguese / Português</option>
+                      <option value="ja">Japanese / 日本語</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+
+                  <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg">
+                    <input
+                      type="checkbox"
+                      id="requires_interpreter"
+                      checked={formData.requires_interpreter}
+                      onChange={(e) => handleInputChange('requires_interpreter', e.target.checked)}
+                      className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <label htmlFor="requires_interpreter" className="text-base text-gray-700">
+                      I need an interpreter for medical appointments
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Veteran Status */}
+              <div className="pt-4 border-t border-gray-200">
+                <div className="flex items-center gap-3 p-4 bg-green-50 rounded-lg">
+                  <input
+                    type="checkbox"
+                    id="veteran_status"
+                    checked={formData.veteran_status}
+                    onChange={(e) => handleInputChange('veteran_status', e.target.checked)}
+                    className="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                  />
+                  <div>
+                    <label htmlFor="veteran_status" className="text-base font-medium text-gray-700">
+                      I am a U.S. Military Veteran
+                    </label>
+                    <p className="text-sm text-gray-500">Veterans may qualify for additional benefits and services</p>
+                  </div>
+                </div>
               </div>
             </div>
           )}

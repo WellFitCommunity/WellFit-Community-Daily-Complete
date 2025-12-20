@@ -383,39 +383,50 @@ const RegisterPage: React.FC = () => {
           <p className="text-xs text-gray-500 mt-1">Admins/moderators are created internally only.</p>
         </div>
 
-        {/* Terms and Privacy - View Buttons */}
-        <div className="flex gap-2">
-          <a
-            href="/terms"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 py-2 px-4 text-center text-sm font-medium border-2 border-blue-600 text-blue-600 rounded hover:bg-blue-50 transition-colors"
-          >
-            View Terms of Service
-          </a>
-          <a
-            href="/privacy-policy"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 py-2 px-4 text-center text-sm font-medium border-2 border-blue-600 text-blue-600 rounded hover:bg-blue-50 transition-colors"
-          >
-            View Privacy Policy
-          </a>
-        </div>
+        {/* Terms, Privacy & Consent Agreement Section */}
+        <div className="space-y-3 p-4 border-2 border-blue-200 rounded-lg bg-blue-50">
+          <h3 className="font-semibold text-gray-800">Important Agreements</h3>
 
-        {/* Terms and Privacy Agreement Checkbox */}
-        <div className="flex items-start gap-2 p-3 border border-gray-300 rounded bg-gray-50">
-          <input
-            type="checkbox"
-            id="agreedToTerms"
-            checked={agreedToTerms}
-            onChange={(e) => setAgreedToTerms(e.target.checked)}
-            className="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-            aria-describedby="terms-text"
-          />
-          <label htmlFor="agreedToTerms" id="terms-text" className="text-sm text-gray-700">
-            I have read and agree to the Terms of Service and Privacy Policy
-          </label>
+          {/* View Documents Buttons */}
+          <div className="flex gap-2">
+            <a
+              href="/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 py-2 px-3 text-center text-sm font-medium border-2 border-blue-600 text-blue-600 rounded hover:bg-white transition-colors"
+            >
+              View Terms
+            </a>
+            <a
+              href="/privacy-policy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 py-2 px-3 text-center text-sm font-medium border-2 border-blue-600 text-blue-600 rounded hover:bg-white transition-colors"
+            >
+              View Privacy Policy
+            </a>
+          </div>
+
+          {/* Agreement Checkbox */}
+          <div className="flex items-start gap-3 p-3 bg-white rounded border border-gray-200">
+            <input
+              type="checkbox"
+              id="agreedToTerms"
+              checked={agreedToTerms}
+              onChange={(e) => setAgreedToTerms(e.target.checked)}
+              className="mt-0.5 w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+              aria-describedby="terms-text"
+            />
+            <label htmlFor="agreedToTerms" id="terms-text" className="text-sm text-gray-700 leading-relaxed">
+              <span className="font-medium">I acknowledge and agree to the following:</span>
+              <ul className="mt-1 ml-4 list-disc text-gray-600 space-y-1">
+                <li>I have read and accept the <strong>Terms of Service</strong></li>
+                <li>I have read and accept the <strong>Privacy Policy</strong></li>
+                <li>I consent to use this application for health and wellness services</li>
+                <li>I understand I will be asked to provide additional consent for photo sharing and data use after registration</li>
+              </ul>
+            </label>
+          </div>
         </div>
 
         <HCaptchaWidget
