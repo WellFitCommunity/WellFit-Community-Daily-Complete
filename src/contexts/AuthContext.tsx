@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import type { Session, User, AuthChangeEvent } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabaseClient';
 import { auditLogger } from '../services/auditLogger';
+import { resetAuthFailureFlag } from '../lib/authAwareFetch';
 
 type AuthContextValue = {
   supabase: typeof supabase;
@@ -212,7 +213,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const m = metaIsAdmin(u);
         setMetaAdmin(m);
         refreshDbRoles(u);
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') setError(null);
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          setError(null);
+          // Reset auth failure flag so future failures can be handled
+          resetAuthFailureFlag();
+        }
       }
     );
 
