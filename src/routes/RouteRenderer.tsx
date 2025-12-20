@@ -109,12 +109,7 @@ export const CoordinatedResponseDashboardWrapper: React.FC = () => {
   );
 };
 
-/**
- * Guardian placeholder (moved to Edge Functions)
- */
-const GuardianPlaceholder: React.FC = () => (
-  <div>Guardian Agent moved to Edge Functions</div>
-);
+// GuardianAgentDashboard is now loaded from lazyComponents.tsx
 
 /**
  * Wrapper for ReceivingDashboard to provide facility name from user's tenant
@@ -197,7 +192,6 @@ const wrapperComponentMap: Record<string, React.FC> = {
   MemoryClinicDashboardWrapper,
   CoordinatedResponseDashboardWrapper,
   ReceivingDashboardWrapper,
-  GuardianPlaceholder,
 };
 
 /**

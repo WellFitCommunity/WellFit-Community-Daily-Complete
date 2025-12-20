@@ -14,6 +14,7 @@
 import { supabase } from '../../lib/supabaseClient';
 import { mcpOptimizer } from '../mcp/mcpCostOptimizer';
 import type { MCPCostOptimizer } from '../mcp/mcpCostOptimizer';
+import { FeeScheduleService } from '../feeScheduleService';
 
 // =====================================================
 // TYPES
@@ -102,24 +103,25 @@ class CCMValidator {
 }
 
 // =====================================================
-// CCM REIMBURSEMENT RATES (CMS 2025)
+// CCM REIMBURSEMENT RATES (Fallback - CMS 2025)
+// These are used only if database rates aren't available
 // =====================================================
 
-const CCM_REIMBURSEMENT = {
+const CCM_REIMBURSEMENT_FALLBACK = {
   basic: {
     cptCode: '99490',
     description: 'CCM services, at least 20 minutes',
-    monthlyRate: 53.50 // 2025 national average
+    monthlyRate: 64.72 // 2025 Medicare national average
   },
   complex: {
     cptCode: '99487',
     description: 'Complex CCM, first 60 minutes',
-    monthlyRate: 105.00
+    monthlyRate: 145.60
   },
   additional: {
     cptCode: '99489',
     description: 'Complex CCM, each additional 30 minutes',
-    monthlyRate: 45.00
+    monthlyRate: 69.72
   },
   principal_care: {
     cptCode: '99424',
@@ -128,15 +130,66 @@ const CCM_REIMBURSEMENT = {
   }
 };
 
+// Type for CCM rate lookup
+interface CCMRateLookup {
+  basic: number;
+  complex: number;
+  additional: number;
+  principal_care: number;
+}
+
 // =====================================================
 // CCM ELIGIBILITY SCORER SERVICE
 // =====================================================
 
 export class CCMEligibilityScorer {
   private optimizer: MCPCostOptimizer;
+  private cachedRates: CCMRateLookup | null = null;
 
   constructor(optimizer?: MCPCostOptimizer) {
     this.optimizer = optimizer || mcpOptimizer;
+  }
+
+  /**
+   * Get CCM reimbursement rates from database (with fallback to hardcoded)
+   * Uses FeeScheduleService to fetch current Medicare rates
+   */
+  async getCCMRates(): Promise<CCMRateLookup> {
+    // Return cached rates if available
+    if (this.cachedRates) {
+      return this.cachedRates;
+    }
+
+    try {
+      // Fetch rates from database
+      const ratesMap = await FeeScheduleService.getCCMRates('medicare');
+
+      const rates: CCMRateLookup = {
+        basic: ratesMap.get('99490')?.rate ?? CCM_REIMBURSEMENT_FALLBACK.basic.monthlyRate,
+        complex: ratesMap.get('99487')?.rate ?? CCM_REIMBURSEMENT_FALLBACK.complex.monthlyRate,
+        additional: ratesMap.get('99489')?.rate ?? CCM_REIMBURSEMENT_FALLBACK.additional.monthlyRate,
+        principal_care: ratesMap.get('99424')?.rate ?? CCM_REIMBURSEMENT_FALLBACK.principal_care.monthlyRate,
+      };
+
+      // Cache for subsequent calls
+      this.cachedRates = rates;
+      return rates;
+    } catch {
+      // Fallback to hardcoded rates if database unavailable
+      return {
+        basic: CCM_REIMBURSEMENT_FALLBACK.basic.monthlyRate,
+        complex: CCM_REIMBURSEMENT_FALLBACK.complex.monthlyRate,
+        additional: CCM_REIMBURSEMENT_FALLBACK.additional.monthlyRate,
+        principal_care: CCM_REIMBURSEMENT_FALLBACK.principal_care.monthlyRate,
+      };
+    }
+  }
+
+  /**
+   * Clear cached rates (useful for testing or rate updates)
+   */
+  clearRateCache(): void {
+    this.cachedRates = null;
   }
 
   /**
@@ -293,10 +346,13 @@ export class CCMEligibilityScorer {
     engagementMetrics: EngagementMetrics,
     config: any
   ): Promise<CCMEligibilityResult> {
+    // Fetch current CCM rates from database
+    const rates = await this.getCCMRates();
+
     // Build assessment prompt
     const prompt = this.buildAssessmentPrompt(patientData, engagementMetrics);
 
-    // System prompt for CCM eligibility
+    // System prompt for CCM eligibility with dynamic rates
     const systemPrompt = `You are an expert healthcare billing specialist assessing patient eligibility for Chronic Care Management (CCM) services.
 
 CCM ELIGIBILITY CRITERIA (CMS):
@@ -305,10 +361,11 @@ CCM ELIGIBILITY CRITERIA (CMS):
 - Patient must consent to CCM services
 - Minimum 20 minutes per month care coordination
 
-CCM REIMBURSEMENT:
-- Basic CCM (99490): $53.50/month for 20+ minutes
-- Complex CCM (99487): $105/month for 60+ minutes (3+ conditions, moderate/high complexity)
-- Additional time (99489): $45 per additional 30 minutes
+CCM REIMBURSEMENT (Current Medicare Rates):
+- Basic CCM (99490): $${rates.basic.toFixed(2)}/month for 20+ minutes
+- Complex CCM (99487): $${rates.complex.toFixed(2)}/month for 60+ minutes (3+ conditions, moderate/high complexity)
+- Additional time (99489): $${rates.additional.toFixed(2)} per additional 30 minutes
+- Principal Care Management (99424): $${rates.principal_care.toFixed(2)}/month
 
 ASSESSMENT FACTORS:
 - Number and severity of chronic conditions
@@ -320,7 +377,7 @@ Return response as strict JSON:
 {
   "overallEligibilityScore": 0.85,
   "eligibilityCategory": "eligible_high",
-  "predictedMonthlyReimbursement": 105.00,
+  "predictedMonthlyReimbursement": ${rates.complex.toFixed(2)},
   "reimbursementTier": "complex",
   "recommendedCPTCodes": ["99487"],
   "enrollmentRecommendation": "strongly_recommend",

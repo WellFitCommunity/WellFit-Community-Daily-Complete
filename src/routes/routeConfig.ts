@@ -185,13 +185,7 @@ export const adminRoutes: RouteConfig[] = [
     category: 'admin',
     featureFlag: 'adminReports',
   },
-  {
-    path: '/admin/guardian',
-    component: 'GuardianPlaceholder',
-    auth: 'admin',
-    roles: ['super_admin', 'admin'],
-    category: 'admin',
-  },
+  // Guardian Agent Dashboard moved to superAdminRoutes for Envision-only access
   {
     path: '/admin/healthcare-algorithms',
     component: 'HealthcareAlgorithmsDashboard',
@@ -232,6 +226,8 @@ export const superAdminRoutes: RouteConfig[] = [
   { path: '/multi-tenant-monitor', component: 'MultiTenantMonitor', auth: 'superAdmin', category: 'superAdmin' },
   { path: '/soc-dashboard', component: 'SOCDashboard', auth: 'superAdmin', category: 'superAdmin' },
   { path: '/enterprise-migration', component: 'EnterpriseMigrationDashboard', auth: 'superAdmin', category: 'superAdmin' },
+  // Guardian Agent - Envision VirtualEdge Group only
+  { path: '/guardian/dashboard', component: 'GuardianAgentDashboard', auth: 'superAdmin', category: 'superAdmin', wrapper: 'darkWrapper' },
   { path: '/guardian/approvals', component: 'GuardianApprovalsList', auth: 'superAdmin', category: 'superAdmin' },
   { path: '/guardian/approval/:ticketId', component: 'GuardianApprovalForm', auth: 'superAdmin', category: 'superAdmin' },
 ];

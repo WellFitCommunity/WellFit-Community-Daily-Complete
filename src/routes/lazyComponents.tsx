@@ -107,6 +107,9 @@ export const FHIRConflictResolution = React.lazy(() =>
 export const TimeClockPage = React.lazy(() => import('../components/time-clock/TimeClockPage'));
 export const TimeClockAdmin = React.lazy(() => import('../components/admin/TimeClockAdmin'));
 
+// Guardian Agent
+export const GuardianAgentDashboard = React.lazy(() => import('../components/admin/GuardianAgentDashboard'));
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // SUPER ADMIN COMPONENTS
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -286,6 +289,7 @@ export const componentMap: Record<string, React.LazyExoticComponent<any>> = {
   FHIRConflictResolution,
   TimeClockPage,
   TimeClockAdmin,
+  GuardianAgentDashboard,
 
   // Super Admin
   SuperAdminDashboard,
