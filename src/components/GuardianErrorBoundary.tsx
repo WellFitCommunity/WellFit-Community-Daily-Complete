@@ -150,22 +150,22 @@ export class GuardianErrorBoundary extends Component<Props, State> {
         return fallback;
       }
 
-      // Show healing status
+      // Show healing status - generic messaging (no Guardian references for end users)
       if (isHealing) {
         return (
           <div className="flex items-center justify-center min-h-screen bg-gray-100">
             <div className="bg-white p-8 rounded-lg shadow-xl max-w-md text-center">
-              <div className="text-6xl mb-4 animate-pulse">🛡️</div>
+              <div className="text-6xl mb-4 animate-pulse">🔄</div>
               <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                Guardian Agent is Healing
+                Recovering...
               </h2>
               <p className="text-gray-600 mb-4">
-                Attempting to recover from error...
+                Please wait while we fix this issue.
               </p>
               <div className="flex items-center justify-center space-x-2">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
                 <span className="text-sm text-gray-500">
-                  Recovering...
+                  This should only take a moment
                 </span>
               </div>
             </div>
@@ -173,7 +173,7 @@ export class GuardianErrorBoundary extends Component<Props, State> {
         );
       }
 
-      // Show error with recovery option
+      // Show error with recovery option - generic messaging (no Guardian references)
       return (
         <div className="flex items-center justify-center min-h-screen bg-gray-100">
           <div className="bg-white p-8 rounded-lg shadow-xl max-w-2xl">
@@ -184,7 +184,7 @@ export class GuardianErrorBoundary extends Component<Props, State> {
                   Something went wrong
                 </h2>
                 <p className="text-gray-600 mb-4">
-                  The Guardian Agent attempted to heal this error automatically but was unable to recover.
+                  We attempted to recover automatically but were unable to. Please try again or reload the page.
                 </p>
 
                 <details className="mb-4">
