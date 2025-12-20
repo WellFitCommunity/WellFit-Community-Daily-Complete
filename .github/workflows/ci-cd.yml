@@ -126,7 +126,7 @@ jobs:
       - name: Run ${{ matrix.name }} tests
         id: unit-tests
         run: |
-         run: npm run test:unit:${{ matrix.shard }}
+         npm test:unit:${{ matrix.shard }}
  
         env:
           CI: true
