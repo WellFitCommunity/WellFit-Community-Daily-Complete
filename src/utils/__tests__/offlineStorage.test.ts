@@ -251,7 +251,12 @@ describe('offlineStorage', () => {
 
   describe('retry failed reports', () => {
     it('should reset permanently failed reports for retry', () => {
-      const report = {
+      const report: {
+        id: string;
+        attempts: number;
+        permanentlyFailed: boolean;
+        lastAttemptTime: number | undefined;
+      } = {
         id: 'test-retry',
         attempts: 5,
         permanentlyFailed: true,
