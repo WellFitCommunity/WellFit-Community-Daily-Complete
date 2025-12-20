@@ -2,23 +2,51 @@
 // Stores health reports locally when offline, syncs when online
 
 const DB_NAME = 'WellFitOfflineDB';
-const DB_VERSION = 1;
+const DB_VERSION = 2; // Bumped for new fields
 const REPORTS_STORE = 'pendingReports';
 const MEASUREMENTS_STORE = 'measurements';
+
+// Sync configuration
+const MAX_SYNC_ATTEMPTS = 5;
+const BASE_BACKOFF_MS = 1000; // 1 second base
+const MAX_BACKOFF_MS = 5 * 60 * 1000; // 5 minutes max
 
 interface PendingReport {
   id: string;
   timestamp: number;
   userId: string;
-  data: any;
+  data: Record<string, unknown>;
   synced: boolean;
   attempts: number;
+  lastAttemptTime?: number;
+  permanentlyFailed?: boolean;
 }
 
 
 class OfflineStorage {
   private db: IDBDatabase | null = null;
   private syncInProgress = false;
+
+  /**
+   * Calculate exponential backoff delay based on attempt count
+   * Uses exponential backoff: delay = base * 2^attempts, capped at MAX_BACKOFF_MS
+   */
+  private calculateBackoffDelay(attempts: number): number {
+    const delay = BASE_BACKOFF_MS * Math.pow(2, attempts);
+    return Math.min(delay, MAX_BACKOFF_MS);
+  }
+
+  /**
+   * Check if a report is ready to retry (backoff period has passed)
+   */
+  private isReadyToRetry(report: PendingReport): boolean {
+    if (!report.lastAttemptTime || report.attempts === 0) {
+      return true;
+    }
+    const backoffDelay = this.calculateBackoffDelay(report.attempts);
+    const timeSinceLastAttempt = Date.now() - report.lastAttemptTime;
+    return timeSinceLastAttempt >= backoffDelay;
+  }
 
   async initialize(): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -160,8 +188,8 @@ class OfflineStorage {
     });
   }
 
-  // Increment attempt count for a report
-  async incrementAttempts(reportId: string): Promise<void> {
+  // Increment attempt count for a report and track timing for backoff
+  async incrementAttempts(reportId: string): Promise<{ permanentlyFailed: boolean }> {
     if (!this.db) await this.initialize();
 
     return new Promise((resolve, reject) => {
@@ -171,14 +199,23 @@ class OfflineStorage {
       const getRequest = store.get(reportId);
 
       getRequest.onsuccess = () => {
-        const report = getRequest.result;
+        const report = getRequest.result as PendingReport | undefined;
         if (report) {
           report.attempts += 1;
+          report.lastAttemptTime = Date.now();
+
+          // Mark as permanently failed if max attempts exceeded
+          if (report.attempts >= MAX_SYNC_ATTEMPTS) {
+            report.permanentlyFailed = true;
+          }
+
           const updateRequest = store.put(report);
-          updateRequest.onsuccess = () => resolve();
+          updateRequest.onsuccess = () => resolve({
+            permanentlyFailed: report.permanentlyFailed || false
+          });
           updateRequest.onerror = () => reject(updateRequest.error);
         } else {
-          resolve();
+          resolve({ permanentlyFailed: false });
         }
       };
 
@@ -195,19 +232,32 @@ class OfflineStorage {
   // Sync all pending reports (call when online)
   async syncPendingReports(
     userId: string,
-    syncFunction: (reportData: any) => Promise<boolean>
-  ): Promise<{ success: number; failed: number }> {
+    syncFunction: (reportData: Record<string, unknown>) => Promise<boolean>
+  ): Promise<{ success: number; failed: number; skipped: number; permanentlyFailed: number }> {
     if (this.syncInProgress) {
-      return { success: 0, failed: 0 };
+      return { success: 0, failed: 0, skipped: 0, permanentlyFailed: 0 };
     }
 
     this.syncInProgress = true;
     const pending = await this.getPendingReports(userId);
     let success = 0;
     let failed = 0;
-
+    let skipped = 0;
+    let permanentlyFailedCount = 0;
 
     for (const report of pending) {
+      // Skip permanently failed reports
+      if (report.permanentlyFailed) {
+        permanentlyFailedCount++;
+        continue;
+      }
+
+      // Skip reports still in backoff period
+      if (!this.isReadyToRetry(report)) {
+        skipped++;
+        continue;
+      }
+
       try {
         // Attempt to sync
         const synced = await syncFunction(report.data);
@@ -216,18 +266,26 @@ class OfflineStorage {
           await this.deleteReport(report.id);
           success++;
         } else {
-          await this.incrementAttempts(report.id);
+          const result = await this.incrementAttempts(report.id);
+          if (result.permanentlyFailed) {
+            permanentlyFailedCount++;
+          } else {
+            failed++;
+          }
+        }
+      } catch (err: unknown) {
+        const result = await this.incrementAttempts(report.id);
+        if (result.permanentlyFailed) {
+          permanentlyFailedCount++;
+        } else {
           failed++;
         }
-      } catch (error) {
-        await this.incrementAttempts(report.id);
-        failed++;
       }
     }
 
     this.syncInProgress = false;
 
-    return { success, failed };
+    return { success, failed, skipped, permanentlyFailed: permanentlyFailedCount };
   }
 
   // Save a pulse oximeter measurement offline
@@ -276,6 +334,77 @@ class OfflineStorage {
 
       request.onerror = () => reject(request.error);
     });
+  }
+
+  // Get permanently failed reports for a user
+  async getPermanentlyFailedReports(userId?: string): Promise<PendingReport[]> {
+    if (!this.db) await this.initialize();
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction([REPORTS_STORE], 'readonly');
+      const store = transaction.objectStore(REPORTS_STORE);
+      const request = store.getAll();
+
+      request.onsuccess = () => {
+        let reports = request.result as PendingReport[];
+        reports = reports.filter(r => r.permanentlyFailed === true);
+
+        if (userId) {
+          reports = reports.filter(r => r.userId === userId);
+        }
+
+        resolve(reports);
+      };
+
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  // Get count of permanently failed reports
+  async getPermanentlyFailedCount(userId?: string): Promise<number> {
+    const reports = await this.getPermanentlyFailedReports(userId);
+    return reports.length;
+  }
+
+  // Retry a permanently failed report (reset attempts and remove failure flag)
+  async retryFailedReport(reportId: string): Promise<void> {
+    if (!this.db) await this.initialize();
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction([REPORTS_STORE], 'readwrite');
+      const store = transaction.objectStore(REPORTS_STORE);
+      const getRequest = store.get(reportId);
+
+      getRequest.onsuccess = () => {
+        const report = getRequest.result as PendingReport | undefined;
+        if (report) {
+          report.attempts = 0;
+          report.permanentlyFailed = false;
+          report.lastAttemptTime = undefined;
+
+          const updateRequest = store.put(report);
+          updateRequest.onsuccess = () => resolve();
+          updateRequest.onerror = () => reject(updateRequest.error);
+        } else {
+          resolve();
+        }
+      };
+
+      getRequest.onerror = () => reject(getRequest.error);
+    });
+  }
+
+  // Retry all permanently failed reports for a user
+  async retryAllFailedReports(userId: string): Promise<number> {
+    const failed = await this.getPermanentlyFailedReports(userId);
+    let count = 0;
+
+    for (const report of failed) {
+      await this.retryFailedReport(report.id);
+      count++;
+    }
+
+    return count;
   }
 
   // Clear all data (for testing or user logout)

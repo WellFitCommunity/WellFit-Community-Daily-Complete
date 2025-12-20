@@ -1,19 +1,27 @@
 // src/components/OfflineIndicator.tsx - Shows offline status and pending syncs
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { WifiOff, Wifi, Cloud, CloudOff, RefreshCw } from 'lucide-react';
+import { WifiOff, Wifi, Cloud, CloudOff, RefreshCw, AlertTriangle } from 'lucide-react';
 import { offlineStorage, isOnline } from '../utils/offlineStorage';
 import { useUser, useSupabaseClient } from '../contexts/AuthContext';
 import { auditLogger } from '../services/auditLogger';
+
+interface SyncResult {
+  success: number;
+  failed: number;
+  skipped: number;
+  permanentlyFailed: number;
+}
 
 const OfflineIndicator: React.FC = () => {
   const user = useUser();
   const supabase = useSupabaseClient();
   const [online, setOnline] = useState(isOnline());
   const [pendingCount, setPendingCount] = useState(0);
+  const [permanentlyFailedCount, setPermanentlyFailedCount] = useState(0);
   const [syncing, setSyncing] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
-  const [lastSyncResult, setLastSyncResult] = useState<{ success: number; failed: number } | null>(null);
+  const [lastSyncResult, setLastSyncResult] = useState<SyncResult | null>(null);
 
   // Check online status
   useEffect(() => {
@@ -34,14 +42,21 @@ const OfflineIndicator: React.FC = () => {
     };
   }, []);
 
-  // Check pending count
+  // Check pending count and permanently failed count
   useEffect(() => {
     const checkPending = async () => {
       if (user?.id) {
         try {
-          const count = await offlineStorage.getPendingCount(user.id);
-          setPendingCount(count);
-        } catch (error) {
+          const [pending, failed] = await Promise.all([
+            offlineStorage.getPendingCount(user.id),
+            offlineStorage.getPermanentlyFailedCount(user.id)
+          ]);
+          setPendingCount(pending);
+          setPermanentlyFailedCount(failed);
+        } catch (err: unknown) {
+          auditLogger.warn('Failed to check pending reports', {
+            error: err instanceof Error ? err.message : 'Unknown error'
+          });
         }
       }
     };
@@ -115,15 +130,21 @@ const OfflineIndicator: React.FC = () => {
 
       setLastSyncResult(result);
 
-      // Update pending count after sync
-      const count = await offlineStorage.getPendingCount(user.id);
-      setPendingCount(count);
+      // Update counts after sync
+      const [pending, failed] = await Promise.all([
+        offlineStorage.getPendingCount(user.id),
+        offlineStorage.getPermanentlyFailedCount(user.id)
+      ]);
+      setPendingCount(pending);
+      setPermanentlyFailedCount(failed);
 
-      if (result.success > 0) {
+      if (result.success > 0 || result.permanentlyFailed > 0) {
         auditLogger.info('Offline sync completed', {
           userId: user.id,
           success: result.success,
           failed: result.failed,
+          skipped: result.skipped,
+          permanentlyFailed: result.permanentlyFailed,
         });
       }
     } catch (err: unknown) {
@@ -134,8 +155,27 @@ const OfflineIndicator: React.FC = () => {
     }
   };
 
-  // Don't show if online and no pending reports
-  if (online && pendingCount === 0) {
+  const handleRetryFailed = async () => {
+    if (!user?.id || syncing) return;
+
+    try {
+      const count = await offlineStorage.retryAllFailedReports(user.id);
+      if (count > 0) {
+        auditLogger.info('Reset failed reports for retry', {
+          userId: user.id,
+          count,
+        });
+        // Trigger a sync after resetting
+        await handleSync();
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      auditLogger.error('Failed to retry failed reports', message, { userId: user.id });
+    }
+  };
+
+  // Don't show if online and no pending or failed reports
+  if (online && pendingCount === 0 && permanentlyFailedCount === 0) {
     return null;
   }
 
@@ -161,9 +201,11 @@ const OfflineIndicator: React.FC = () => {
           {syncing ? 'Syncing...' : online ? 'Online' : 'Offline Mode'}
         </span>
 
-        {pendingCount > 0 && (
-          <span className="bg-white text-red-600 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
-            {pendingCount}
+        {(pendingCount > 0 || permanentlyFailedCount > 0) && (
+          <span className={`bg-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold ${
+            permanentlyFailedCount > 0 ? 'text-red-600' : 'text-orange-600'
+          }`}>
+            {pendingCount + permanentlyFailedCount}
           </span>
         )}
       </button>
@@ -210,16 +252,43 @@ const OfflineIndicator: React.FC = () => {
               )}
               {lastSyncResult && (
                 <div className={`mt-3 p-2 rounded-lg text-sm ${
-                  lastSyncResult.failed === 0
+                  lastSyncResult.failed === 0 && lastSyncResult.permanentlyFailed === 0
                     ? 'bg-green-50 text-green-700 border border-green-200'
                     : 'bg-yellow-50 text-yellow-700 border border-yellow-200'
                 }`}>
                   {lastSyncResult.success > 0 && (
-                    <p>✅ {lastSyncResult.success} report{lastSyncResult.success !== 1 ? 's' : ''} synced successfully</p>
+                    <p>✅ {lastSyncResult.success} report{lastSyncResult.success !== 1 ? 's' : ''} synced</p>
+                  )}
+                  {lastSyncResult.skipped > 0 && (
+                    <p>⏳ {lastSyncResult.skipped} report{lastSyncResult.skipped !== 1 ? 's' : ''} waiting (backoff)</p>
                   )}
                   {lastSyncResult.failed > 0 && (
-                    <p>⚠️ {lastSyncResult.failed} report{lastSyncResult.failed !== 1 ? 's' : ''} failed to sync</p>
+                    <p>⚠️ {lastSyncResult.failed} report{lastSyncResult.failed !== 1 ? 's' : ''} will retry</p>
                   )}
+                  {lastSyncResult.permanentlyFailed > 0 && (
+                    <p>❌ {lastSyncResult.permanentlyFailed} report{lastSyncResult.permanentlyFailed !== 1 ? 's' : ''} failed permanently</p>
+                  )}
+                </div>
+              )}
+              {permanentlyFailedCount > 0 && (
+                <div className="mt-3 bg-red-50 border-2 border-red-200 rounded-lg p-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <AlertTriangle className="text-red-600" size={18} />
+                    <p className="font-medium text-red-900">
+                      {permanentlyFailedCount} report{permanentlyFailedCount !== 1 ? 's' : ''} failed after multiple attempts
+                    </p>
+                  </div>
+                  <p className="text-xs text-red-700 mb-2">
+                    These reports could not be synced. You can try again or contact support.
+                  </p>
+                  <button
+                    onClick={handleRetryFailed}
+                    disabled={syncing}
+                    className="w-full bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 disabled:opacity-50 transition-all duration-300 flex items-center justify-center gap-2"
+                  >
+                    <RefreshCw size={16} />
+                    Retry Failed Reports
+                  </button>
                 </div>
               )}
             </div>
