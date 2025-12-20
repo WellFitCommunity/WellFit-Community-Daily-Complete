@@ -106,39 +106,54 @@
     "start:cs": "vite --port 3100 --host",
     "build": "tsc && vite build",
     "preview": "vite preview",
+
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "test:smoke": "vitest run --testPathPattern=smoke",
-    "test:unit": "vitest run --testPathIgnorePatterns=\"integration|smoke\"",
-    "test:integration": "vitest run --testPathPattern=integration",
-    "test:security": "vitest run --testPathPattern=security",
+
+    "test:unit": "vitest run --exclude \"**/integration/**\" --exclude \"**/smoke/**\" --exclude \"**/security/**\"",
+    "test:unit:components": "vitest run --dir src/components --exclude \"**/integration/**\" --exclude \"**/smoke/**\" --exclude \"**/security/**\"",
+    "test:unit:services": "vitest run --dir src/services --exclude \"**/integration/**\" --exclude \"**/smoke/**\" --exclude \"**/security/**\"",
+    "test:unit:pages": "vitest run --dir src/pages --exclude \"**/integration/**\" --exclude \"**/smoke/**\" --exclude \"**/security/**\"",
+    "test:unit:other": "vitest run --dir src --exclude \"src/components/**\" --exclude \"src/services/**\" --exclude \"src/pages/**\" --exclude \"**/integration/**\" --exclude \"**/smoke/**\" --exclude \"**/security/**\"",
+
+    "test:integration": "vitest run --dir src/integration",
+    "test:smoke": "vitest run --dir src/smoke",
+    "test:security": "vitest run --dir src/security",
     "test:all": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "test:security:coverage": "vitest run --coverage --dir src/security",
+    "test:ci": "npm run test:unit && npm run test:integration",
+
     "db:migrate": "./scripts/migrate.sh local",
     "db:migrate:staging": "./scripts/migrate.sh staging",
     "db:migrate:production": "./scripts/migrate.sh production",
     "db:new-migration": "./scripts/create-migration.sh",
-    "test:security:coverage": "vitest run --coverage --testPathPattern=security",
-    "test:ci": "npm run test:unit && npm run test:integration",
+
     "typecheck": "tsc --noEmit",
     "serve:register": "npx supabase functions serve --env-file ./supabase/.env.local --no-verify-jwt",
     "deploy:register": "npx supabase functions deploy register",
+
     "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\"",
     "lint:fix": "eslint . --fix",
     "lint:security": "eslint --config .eslintrc.security.js --ext .js,.ts,.tsx src/ supabase/",
+
     "security:check": "./scripts/security-check.sh",
     "security:audit": "npm audit --audit-level=moderate",
     "security:fix": "npm audit fix",
+
     "sb:version": "npx -y supabase@latest --version",
     "sb:migrations": "npx -y supabase@latest migration list",
     "sb:start": "npx -y supabase@latest start -x edge-runtime",
     "sb:diff": "npx -y supabase@latest db diff -f rls-hardening --debug",
     "sb:stop": "npx -y supabase@latest stop",
+
     "serve:3100": "npx serve -s build -l 3100",
+
     "sbom:generate": "node scripts/generate-sbom.js",
     "deps:audit": "npm audit --audit-level=moderate && npm outdated",
     "deps:update": "npm update && npm run sbom:generate",
+
     "disaster-recovery:drill:weekly": "./scripts/disaster-recovery/execute-weekly-drill.sh",
     "disaster-recovery:drill:monthly": "./scripts/disaster-recovery/execute-monthly-drill.sh",
     "pentest:daily": "./scripts/penetration-testing/daily-scan.sh",

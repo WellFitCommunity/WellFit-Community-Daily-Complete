@@ -126,7 +126,8 @@ jobs:
       - name: Run ${{ matrix.name }} tests
         id: unit-tests
         run: |
-          npm run test:unit -- --testPathPattern="${{ matrix.pattern }}" --maxWorkers=2
+         run: npm run test:unit:${{ matrix.shard }}
+ 
         env:
           CI: true
           NODE_OPTIONS: "--max-old-space-size=4096"
