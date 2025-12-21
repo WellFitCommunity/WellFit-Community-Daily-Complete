@@ -34,7 +34,7 @@ const UpcomingAppointmentBanner: React.FC = () => {
             id,
             appointment_time,
             encounter_type,
-            provider:profiles!provider_id(
+            provider:profiles!telehealth_appointments_provider_id_fkey(
               full_name,
               first_name,
               last_name

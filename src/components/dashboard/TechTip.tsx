@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
-import { useSupabaseClient } from '../../contexts/AuthContext';
+import { useSupabaseClient, useUser } from '../../contexts/AuthContext';
 
 const techTips: string[] = [
   // Part 1 - Security & Scams
@@ -108,6 +108,7 @@ interface TipFeedback {
 
 const TechTip: React.FC = () => {
   const supabase = useSupabaseClient();
+  const user = useUser();
   const [feedback, setFeedback] = useState<TipFeedback | null>(null);
   const [showFeedback, setShowFeedback] = useState<boolean>(false);
 
@@ -133,26 +134,26 @@ const TechTip: React.FC = () => {
 
   // Track tech tip view for engagement reporting
   useEffect(() => {
+    // Wait for auth to be ready
+    if (!user?.id) return;
+
     const trackView = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          // Get user's tenant_id from profile
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('tenant_id')
-            .eq('user_id', user.id)
-            .single();
+        // Get user's tenant_id from profile
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('tenant_id')
+          .eq('user_id', user.id)
+          .single();
 
-          if (profile?.tenant_id) {
-            await supabase.from('feature_engagement').insert({
-              user_id: user.id,
-              tenant_id: profile.tenant_id,
-              feature_type: 'tech_tip_view',
-              feature_id: `tip-${todaysTipIndex}`,
-              metadata: { date: todaysDateString }
-            });
-          }
+        if (profile?.tenant_id) {
+          await supabase.from('feature_engagement').insert({
+            user_id: user.id,
+            tenant_id: profile.tenant_id,
+            feature_type: 'tech_tip_view',
+            feature_id: `tip-${todaysTipIndex}`,
+            metadata: { date: todaysDateString }
+          });
         }
       } catch {
         // Silently fail - engagement tracking is not critical
@@ -165,7 +166,7 @@ const TechTip: React.FC = () => {
       sessionStorage.setItem(viewKey, 'true');
       trackView();
     }
-  }, [supabase, todaysTipIndex, todaysDateString]);
+  }, [supabase, user?.id, todaysTipIndex, todaysDateString]);
 
   const handleFeedback = async (reaction: 'helpful' | 'not-helpful') => {
     const newFeedback: TipFeedback = {
@@ -182,8 +183,7 @@ const TechTip: React.FC = () => {
 
     // Log engagement to database for admin panel tracking
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
+      if (user?.id) {
         await supabase.from('user_engagements').insert({
           user_id: user.id,
           engagement_type: 'tech_tip_feedback',
@@ -195,8 +195,8 @@ const TechTip: React.FC = () => {
           }
         });
       }
-    } catch (error) {
-
+    } catch {
+      // Silently fail - engagement tracking is not critical
     }
 
     // Hide feedback message after 3 seconds
