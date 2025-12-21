@@ -24,6 +24,7 @@ import { Badge } from '../ui/badge';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { useSupabaseClient, useUser } from '../../contexts/AuthContext';
+import { usePatientContextSafe, SelectedPatient } from '../../contexts/PatientContext';
 import { auditLogger } from '../../services/auditLogger';
 import {
   Pill,
@@ -165,6 +166,11 @@ const MedicationManager: React.FC<MedicationManagerProps> = ({ tenantId }) => {
   const supabase = useSupabaseClient();
   const user = useUser();
 
+  // ATLUS Unity: Patient Context - persists selected patient across dashboards
+  const patientContext = usePatientContextSafe();
+  const contextPatient = patientContext?.selectedPatient;
+  const selectPatientFromContext = patientContext?.selectPatient;
+
   // State
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -187,6 +193,49 @@ const MedicationManager: React.FC<MedicationManagerProps> = ({ tenantId }) => {
   const [interactions, setInteractions] = useState<DrugInteraction[]>([]);
   const [reconciliationTasks, setReconciliationTasks] = useState<ReconciliationTask[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<PatientMedication | null>(null);
+
+  // ATLUS Unity: Sync local selection with global patient context
+  useEffect(() => {
+    if (contextPatient && patientMedications.length > 0) {
+      // Find the patient in our medication list that matches the global context
+      const matchingPatient = patientMedications.find(
+        p => p.patientId === contextPatient.id
+      );
+      if (matchingPatient) {
+        setSelectedPatient(matchingPatient);
+        // Auto-switch to patients tab when a patient is selected from banner
+        setActiveTab('patients');
+      }
+    }
+  }, [contextPatient, patientMedications]);
+
+  // ATLUS Unity: Update global patient context when selecting a patient locally
+  const handlePatientSelect = useCallback((patient: PatientMedication) => {
+    setSelectedPatient(patient);
+
+    // Sync to global PatientContext so other dashboards see this patient
+    if (selectPatientFromContext) {
+      const globalPatient: SelectedPatient = {
+        id: patient.patientId,
+        firstName: patient.patientName.split(' ')[0] || 'Patient',
+        lastName: patient.patientName.split(' ').slice(1).join(' ') || '',
+        riskLevel: patient.riskLevel === 'CRITICAL' ? 'critical' :
+                   patient.riskLevel === 'HIGH' ? 'high' :
+                   patient.riskLevel === 'MODERATE' ? 'medium' : 'low',
+        snapshot: {
+          primaryDiagnosis: `${patient.medicationCount} active medications`,
+          unit: 'Medication Manager',
+        },
+      };
+      selectPatientFromContext(globalPatient);
+    }
+
+    auditLogger.info('MEDICATION_PATIENT_SELECTED', {
+      userId: user?.id,
+      patientId: patient.patientId,
+      medicationCount: patient.medicationCount,
+    });
+  }, [selectPatientFromContext, user?.id]);
 
   // Permission check
   const canManageMedications = useMemo(() => {
@@ -340,16 +389,6 @@ const MedicationManager: React.FC<MedicationManagerProps> = ({ tenantId }) => {
       return matchesSearch && matchesRisk;
     });
   }, [patientMedications, searchTerm, filterRisk]);
-
-  // Handle patient selection
-  const handlePatientSelect = (patient: PatientMedication) => {
-    setSelectedPatient(patient);
-    auditLogger.info('MEDICATION_PATIENT_SELECTED', {
-      userId: user?.id,
-      patientId: patient.patientId,
-      medicationCount: patient.medicationCount
-    });
-  };
 
   // Handle reconciliation task action
   const handleReconciliationAction = async (taskId: string, action: 'start' | 'complete' | 'escalate') => {
