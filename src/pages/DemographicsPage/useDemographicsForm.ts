@@ -201,15 +201,14 @@ export function useDemographicsForm(): UseDemographicsFormReturn {
 
       const { error: profileError } = await supabase
         .from('profiles')
-        .upsert({
-          user_id: userId,
-          tenant_id: DEFAULT_TENANT_ID,
+        .update({
           gender: formData.gender,
           ethnicity: formData.ethnicity,
           demographics_step: currentStep,
           demographics_complete: false,
           onboarded: true // Allow dashboard access; demographics_step tracks resume point
-        }, { onConflict: 'user_id' });
+        })
+        .eq('user_id', userId);
 
       if (profileError) throw profileError;
 
@@ -236,13 +235,12 @@ export function useDemographicsForm(): UseDemographicsFormReturn {
     try {
       const { error: profileError } = await supabase
         .from('profiles')
-        .upsert({
-          user_id: userId,
-          tenant_id: DEFAULT_TENANT_ID,
+        .update({
           demographics_step: null,
           demographics_complete: true, // Skipping counts as completing this step
           onboarded: true // Allow proceeding to consent
-        }, { onConflict: 'user_id' });
+        })
+        .eq('user_id', userId);
 
       if (profileError) throw profileError;
       navigate('/consent-photo');
@@ -274,15 +272,14 @@ export function useDemographicsForm(): UseDemographicsFormReturn {
 
       const { error: profileError } = await supabase
         .from('profiles')
-        .upsert({
-          user_id: userId,
-          tenant_id: DEFAULT_TENANT_ID,
+        .update({
           gender: formData.gender,
           ethnicity: formData.ethnicity,
           demographics_complete: true,
           onboarded: true, // AuthGate checks this column for routing
           demographics_step: null
-        }, { onConflict: 'user_id' });
+        })
+        .eq('user_id', userId);
 
       if (profileError) throw profileError;
 
