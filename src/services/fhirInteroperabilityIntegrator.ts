@@ -629,18 +629,33 @@ export class FHIRInteroperabilityIntegrator {
 
     // Import observations as check-ins
     if (fhirData.observations && Array.isArray(fhirData.observations)) {
+      // Get tenant_id for check_ins (required NOT NULL field)
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('user_id', communityUserId)
+        .maybeSingle();
+
+      const tenantId = userProfile?.tenant_id;
+
       for (const entry of fhirData.observations) {
         const obs = entry.resource;
         if (!obs) continue;
 
-        const checkInData: any = {
+        const checkInData: Record<string, unknown> = {
           user_id: communityUserId,
+          tenant_id: tenantId,
+          label: 'FHIR Import',
+          source: 'fhir_import',
           created_at: obs.effectiveDateTime || obs.issued || new Date().toISOString(),
           is_emergency: false
         };
 
+        // Skip if no tenant_id (would fail insert anyway)
+        if (!tenantId) continue;
+
         // Map based on LOINC code
-        const loincCode = obs.code?.coding?.find((c: any) => c.system === 'http://loinc.org')?.code;
+        const loincCode = obs.code?.coding?.find((c: { system: string }) => c.system === 'http://loinc.org')?.code;
 
         switch (loincCode) {
           case '8867-4': // Heart rate
@@ -651,8 +666,10 @@ export class FHIRInteroperabilityIntegrator {
             break;
           case '85354-9': // Blood pressure panel
             if (obs.component) {
-              const systolic = obs.component.find((c: any) => c.code?.coding?.find((cc: any) => cc.code === '8480-6'));
-              const diastolic = obs.component.find((c: any) => c.code?.coding?.find((cc: any) => cc.code === '8462-4'));
+              const systolic = obs.component.find((c: { code?: { coding?: Array<{ code: string }> } }) =>
+                c.code?.coding?.find((cc) => cc.code === '8480-6'));
+              const diastolic = obs.component.find((c: { code?: { coding?: Array<{ code: string }> } }) =>
+                c.code?.coding?.find((cc) => cc.code === '8462-4'));
               checkInData.bp_systolic = systolic?.valueQuantity?.value;
               checkInData.bp_diastolic = diastolic?.valueQuantity?.value;
             }

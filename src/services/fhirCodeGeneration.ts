@@ -155,8 +155,25 @@ ${rules.map(rule => `      // ${rule.sourceField} -> ${rule.fhirPath}${rule.tran
 
   private async syncObservationToWellFit(observation: FHIRObservation): Promise<void> {
     try {
+      const userId = observation.subject.reference.replace('Patient/', '');
+
+      // Get tenant_id from user's profile (required for check_ins)
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (!profile?.tenant_id) {
+        throw new Error('User has no tenant_id, cannot sync observation');
+      }
+
       const checkInData: Record<string, unknown> = {
-        user_id: observation.subject.reference.replace('Patient/', ''),
+        user_id: userId,
+        tenant_id: profile.tenant_id,
+        label: 'FHIR Import',
+        is_emergency: false,
+        source: 'fhir_import',
         created_at: observation.effectiveDateTime,
       };
 
@@ -182,12 +199,10 @@ ${rules.map(rule => `      // ${rule.sourceField} -> ${rule.fhirPath}${rule.tran
 
       const { error } = await supabase.from('check_ins').insert(checkInData);
       if (error) {
-
-        throw new Error(\`Observation sync failed: \${error.message}\`);
+        throw new Error('Observation sync failed: ' + error.message);
       }
-    } catch {
-
-      throw error;
+    } catch (err: unknown) {
+      throw err;
     }
   }
 
