@@ -57,11 +57,12 @@ export function useThemeInit(): void {
             .from('admin_settings')
             .select('theme')
             .eq('user_id', session.user.id)
-            .single();
+            .maybeSingle();
 
           if (data?.theme) {
             applyTheme(data.theme as Theme);
           }
+          // If no row exists, fall back to localStorage/system default (already applied above)
         }
       } catch {
         // Fail silently - use localStorage or system default
