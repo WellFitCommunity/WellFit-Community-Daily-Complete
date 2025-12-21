@@ -331,6 +331,12 @@ const DemographicsPage: React.FC = () => {
 
   // Save progress without completing
   const saveProgress = async () => {
+    // Guard: user_id must be available before any database operations
+    if (!user?.id) {
+      setError('Your session is still loading. Please wait a moment and try again.');
+      return;
+    }
+
     setSaving(true);
     setError(null);
 
@@ -339,7 +345,7 @@ const DemographicsPage: React.FC = () => {
       const DEFAULT_TENANT_ID = '2b902657-6a20-4435-a78a-576f397517ca';
 
       // Save partial progress to dedicated senior tables
-      const seniorProfile = mapFormDataToSeniorProfile(user?.id || '', DEFAULT_TENANT_ID, formData);
+      const seniorProfile = mapFormDataToSeniorProfile(user.id, DEFAULT_TENANT_ID, formData);
       const seniorResult = await SeniorDataService.saveCompleteSeniorProfile(supabase, seniorProfile);
 
       if (!seniorResult.success) {
@@ -351,7 +357,7 @@ const DemographicsPage: React.FC = () => {
       const { error: profileError} = await supabase
         .from('profiles')
         .upsert({
-          user_id: user?.id,
+          user_id: user.id,
           tenant_id: DEFAULT_TENANT_ID,
           gender: formData.gender,
           ethnicity: formData.ethnicity,
@@ -361,7 +367,7 @@ const DemographicsPage: React.FC = () => {
 
       if (profileError) throw profileError;
 
-      auditLogger.info('Senior demographics progress saved', { userId: user?.id, step: currentStep });
+      auditLogger.info('Senior demographics progress saved', { userId: user.id, step: currentStep });
 
       // Navigate to dashboard with saved progress
       navigate('/dashboard');
@@ -375,6 +381,12 @@ const DemographicsPage: React.FC = () => {
 
   // Skip demographics and go straight to consent
   const skipToConsent = async () => {
+    // Guard: user_id must be available before any database operations
+    if (!user?.id) {
+      setError('Your session is still loading. Please wait a moment and try again.');
+      return;
+    }
+
     setSaving(true);
     setError(null);
 
@@ -387,7 +399,7 @@ const DemographicsPage: React.FC = () => {
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert({
-          user_id: user?.id,
+          user_id: user.id,
           tenant_id: DEFAULT_TENANT_ID,
           demographics_step: null,
           demographics_complete: false
@@ -406,6 +418,12 @@ const DemographicsPage: React.FC = () => {
   };
 
   const handleSubmit = async () => {
+    // Guard: user_id must be available before any database operations
+    if (!user?.id) {
+      setError('Your session is still loading. Please wait a moment and try again.');
+      return;
+    }
+
     setSubmitting(true);
     setError(null);
 
@@ -418,7 +436,7 @@ const DemographicsPage: React.FC = () => {
       const DEFAULT_TENANT_ID = '2b902657-6a20-4435-a78a-576f397517ca';
 
       // Save to dedicated senior tables (demographics, health, SDOH, emergency contacts)
-      const seniorProfile = mapFormDataToSeniorProfile(user?.id || '', DEFAULT_TENANT_ID, formData);
+      const seniorProfile = mapFormDataToSeniorProfile(user.id, DEFAULT_TENANT_ID, formData);
       const seniorResult = await SeniorDataService.saveCompleteSeniorProfile(supabase, seniorProfile);
 
       if (!seniorResult.success) {
@@ -431,7 +449,7 @@ const DemographicsPage: React.FC = () => {
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert({
-          user_id: user?.id,
+          user_id: user.id,
           tenant_id: DEFAULT_TENANT_ID,
           gender: formData.gender,
           ethnicity: formData.ethnicity,
@@ -441,7 +459,7 @@ const DemographicsPage: React.FC = () => {
 
       if (profileError) throw profileError;
 
-      auditLogger.info('Senior demographics completed', { userId: user?.id });
+      auditLogger.info('Senior demographics completed', { userId: user.id });
 
       // Navigate to consent forms after demographics completion
       navigate('/consent-photo');

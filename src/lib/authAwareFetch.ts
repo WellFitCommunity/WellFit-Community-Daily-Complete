@@ -70,8 +70,11 @@ export function createAuthAwareFetch(): typeof fetch {
 
     // Check for auth failures - 400 on token endpoint or 401 on any endpoint
     const isAuthEndpoint = url.includes('/auth/v1/token');
-    const isUnauthorized = response.status === 401;
-    const isBadRequest = response.status === 400;
+    const isRestEndpoint = url.includes('/rest/v1/');
+    const status = response.status;
+    const isUnauthorized = status === 401;
+    const isBadRequest = status === 400;
+    const method = (init?.method || 'GET').toUpperCase();
 
     if (isAuthEndpoint && isBadRequest && !authFailureHandled) {
       // Clone response to read body without consuming it
@@ -120,6 +123,57 @@ export function createAuthAwareFetch(): typeof fetch {
         authFailureHandled = true;
         handleAuthFailure('unauthorized_unparseable');
       }
+    }
+
+    // ==========================================
+    // REST 400/406: LOG (DON'T LOG OUT)
+    // ==========================================
+    // These are schema/payload/.single() issues, NOT auth failures.
+    // We log them for debugging but do NOT trigger logout.
+    if (isRestEndpoint && (status === 400 || status === 406)) {
+      const clonedResponse = response.clone();
+      let parsed: Record<string, unknown> | null = null;
+
+      try {
+        parsed = await clonedResponse.json();
+      } catch {
+        // non-json response; ignore
+      }
+
+      // Extract PostgREST error fields when present
+      const msg = (parsed?.message || parsed?.error || null) as string | null;
+      const details = (parsed?.details || null) as string | null;
+      const hint = (parsed?.hint || null) as string | null;
+      const code = (parsed?.code || parsed?.error_code || null) as string | null;
+
+      // Attempt to safely describe payload without storing sensitive PHI values
+      let payloadKeys: string[] | null = null;
+      try {
+        if (init?.body && typeof init.body === 'string') {
+          const maybeJson = JSON.parse(init.body) as Record<string, unknown> | Record<string, unknown>[];
+          if (maybeJson && typeof maybeJson === 'object') {
+            payloadKeys = Array.isArray(maybeJson)
+              ? Object.keys(maybeJson[0] || {})
+              : Object.keys(maybeJson);
+          }
+        }
+      } catch {
+        // ignore parse errors
+      }
+
+      // Log the REST error for debugging - this is NOT a logout trigger
+      // Using security() method with 'low' severity for schema/payload errors
+      auditLogger.security('REST_PAYLOAD_ERROR', 'low', {
+        source: 'authAwareFetch',
+        url,
+        method,
+        status,
+        message: msg,
+        details,
+        hint,
+        code,
+        payloadKeys,
+      });
     }
 
     return response;
