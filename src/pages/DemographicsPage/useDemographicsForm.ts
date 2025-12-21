@@ -207,7 +207,8 @@ export function useDemographicsForm(): UseDemographicsFormReturn {
           gender: formData.gender,
           ethnicity: formData.ethnicity,
           demographics_step: currentStep,
-          demographics_complete: false
+          demographics_complete: false,
+          onboarded: true // Allow dashboard access; demographics_step tracks resume point
         }, { onConflict: 'user_id' });
 
       if (profileError) throw profileError;
@@ -239,7 +240,8 @@ export function useDemographicsForm(): UseDemographicsFormReturn {
           user_id: userId,
           tenant_id: DEFAULT_TENANT_ID,
           demographics_step: null,
-          demographics_complete: false
+          demographics_complete: true, // Skipping counts as completing this step
+          onboarded: true // Allow proceeding to consent
         }, { onConflict: 'user_id' });
 
       if (profileError) throw profileError;
@@ -278,6 +280,7 @@ export function useDemographicsForm(): UseDemographicsFormReturn {
           gender: formData.gender,
           ethnicity: formData.ethnicity,
           demographics_complete: true,
+          onboarded: true, // AuthGate checks this column for routing
           demographics_step: null
         }, { onConflict: 'user_id' });
 

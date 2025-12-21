@@ -6,6 +6,7 @@ import { useSupabaseClient, useSession, useUser } from "./contexts/AuthContext";
 type ProfileRow = {
   force_password_change?: boolean | null;
   onboarded?: boolean | null;
+  demographics_complete?: boolean | null; // Also check this for backwards compatibility
   consent?: boolean | null;
   // role hints (no joins)
   is_admin?: boolean | null;
@@ -66,7 +67,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
       const { data, error } = await supabase
         .from("profiles")
         .select(
-          "force_password_change, onboarded, consent, is_admin, role, role_code, role_id",
+          "force_password_change, onboarded, demographics_complete, consent, is_admin, role, role_code, role_id",
         )
         .eq("user_id", user.id)
         .maybeSingle<ProfileRow>();
@@ -99,8 +100,10 @@ export default function AuthGate({ children }: { children: ReactNode }) {
         return; // continue
       }
 
-      // 3) Seniors must complete demographics first (check via onboarded flag)
-      const needsDemo = p.onboarded === false || p.onboarded == null;
+      // 3) Seniors must complete demographics first
+      // Check both onboarded AND demographics_complete for backwards compatibility
+      const hasCompletedDemographics = p.onboarded === true || p.demographics_complete === true;
+      const needsDemo = !hasCompletedDemographics;
 
       if (needsDemo) {
         if (!isGatePage && path !== "/demographics") {
@@ -112,7 +115,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
       // 4) After demographics, seniors must complete consent forms
       const needsConsent = p.consent === false || p.consent == null;
 
-      if (needsConsent && p.onboarded === true) {
+      if (needsConsent && hasCompletedDemographics) {
         if (
           !isGatePage &&
           path !== "/consent-photo" &&
