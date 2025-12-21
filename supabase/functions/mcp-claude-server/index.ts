@@ -11,7 +11,6 @@ import Anthropic from "npm:@anthropic-ai/sdk@0.63.1";
 import { checkMCPRateLimit, getRequestIdentifier, createRateLimitResponse, MCP_RATE_LIMITS } from "../_shared/mcpRateLimiter.ts";
 
 // Environment
-const SUPABASE_URL = SUPABASE_URL;
 const SERVICE_KEY = SB_SECRET_KEY;
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY") || Deno.env.get("CLAUDE_API_KEY");
 

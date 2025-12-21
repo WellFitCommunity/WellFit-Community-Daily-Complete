@@ -11,7 +11,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkMCPRateLimit, getRequestIdentifier, createRateLimitResponse, createRateLimitHeaders, MCP_RATE_LIMITS } from "../_shared/mcpRateLimiter.ts";
 
 // Environment
-const SUPABASE_URL = SUPABASE_URL;
 const SERVICE_KEY = SB_SECRET_KEY;
 
 if (!SUPABASE_URL || !SERVICE_KEY) throw new Error("Missing Supabase credentials");

@@ -6,8 +6,6 @@ import { cors } from "../_shared/cors.ts";
 import { verifyPin, generateSecureToken, isClientHashedPin } from "../_shared/crypto.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 
-const SUPABASE_URL = SUPABASE_URL;
-const SB_SECRET_KEY = Deno.env.get("SB_SECRET_KEY") ?? SB_SECRET_KEY;
 const ADMIN_SESSION_TTL_MIN = 30; // 30 minutes for enhanced security (B2B2C healthcare platform)
 
 // Rate limiting constants

@@ -6,7 +6,6 @@ import { verifyPin } from "../_shared/crypto.ts";
 
 import { handleOptions, withCors } from "../_shared/cors.ts";
 
-const SUPABASE_URL = SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY =
   Deno.env.get("SB_SECRET_KEY") ?? SB_SECRET_KEY;
 

@@ -10,7 +10,6 @@ import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Environment
-const SUPABASE_URL = SUPABASE_URL;
 const SERVICE_KEY = SB_SECRET_KEY;
 const ANON_KEY = SB_PUBLISHABLE_API_KEY;
 

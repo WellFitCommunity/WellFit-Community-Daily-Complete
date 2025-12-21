@@ -10,7 +10,6 @@ import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Environment
-const SUPABASE_URL = SUPABASE_URL;
 const SERVICE_KEY = SB_SECRET_KEY;
 
 if (!SUPABASE_URL || !SERVICE_KEY) throw new Error("Missing Supabase credentials");

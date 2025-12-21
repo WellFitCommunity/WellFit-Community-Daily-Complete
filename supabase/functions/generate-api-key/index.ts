@@ -5,7 +5,6 @@ import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supa
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 
 // ---- Env (supports Postgres 17 names w/ fallbacks) -------------------------
-const SUPABASE_URL = SUPABASE_URL;
 const SB_PUBLISHABLE_API_KEY =
   Deno.env.get("SB_PUBLISHABLE_API_KEY") ?? SB_PUBLISHABLE_API_KEY;
 const SB_SECRET_KEY =

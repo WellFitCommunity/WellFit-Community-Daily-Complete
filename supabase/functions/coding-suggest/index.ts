@@ -24,7 +24,6 @@ type CodingSuggestion = {
 };
 
 // ---------- Env ----------
-const SUPABASE_URL = SUPABASE_URL;
 const SERVICE_KEY = SB_SECRET_KEY;
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY") || Deno.env.get("CLAUDE_API_KEY");
 
