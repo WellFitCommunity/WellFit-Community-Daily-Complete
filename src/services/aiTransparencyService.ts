@@ -229,9 +229,9 @@ export const getVoiceProfile = async (): Promise<{
       throw new Error('User not authenticated');
     }
 
-    const { data, error } = await supabase.from('voice_profiles').select('*').eq('user_id', user.id).single();
+    const { data, error } = await supabase.from('voice_profiles').select('*').eq('user_id', user.id).maybeSingle();
 
-    if (error && error.code !== 'PGRST116') throw error;
+    if (error) throw error;
 
     return { success: true, profile: data || undefined };
   } catch (error: any) {

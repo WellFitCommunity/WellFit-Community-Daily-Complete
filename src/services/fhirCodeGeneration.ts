@@ -137,10 +137,12 @@ ${rules.map(rule => `      // ${rule.sourceField} -> ${rule.fhirPath}${rule.tran
         email: patient.telecom?.find(t => t.system === 'email')?.value || null,
         dob: patient.birthDate || null,
         address: patient.address?.[0] ?
-          \`\${patient.address[0].line?.join(' ')}, \${patient.address[0].city}, \${patient.address[0].state} \${patient.address[0].postalCode}\` : null
+          \`\${patient.address[0].line?.join(' ')}, \${patient.address[0].city}, \${patient.address[0].state} \${patient.address[0].postalCode}\` : null,
+        role_id: 19, // Default to patient role for FHIR-synced patients
+        tenant_id: '2b902657-6a20-4435-a78a-576f397517ca' // Default tenant
       };
 
-      const { error } = await supabase.from('profiles').upsert(profileData);
+      const { error } = await supabase.from('profiles').upsert(profileData, { onConflict: 'user_id' });
       if (error) {
 
         throw new Error(\`Patient sync failed: \${error.message}\`);
