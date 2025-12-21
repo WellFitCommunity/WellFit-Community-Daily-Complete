@@ -19,3 +19,12 @@ CREATE POLICY "Users can view own demographics" ON senior_demographics
 
 -- Note: Privacy consent is still enforced at the application layer for PHI access
 -- These tables need to be writable during the registration flow before consent is complete
+
+-- Fix profiles INSERT policy - remove complex tenant check that was blocking upserts
+DROP POLICY IF EXISTS "profiles_insert_own" ON profiles;
+CREATE POLICY "profiles_insert_own" ON profiles
+  FOR INSERT
+  WITH CHECK (user_id = auth.uid());
+
+-- Remove complex tenant UPDATE policy - keep simple profiles_update_own
+DROP POLICY IF EXISTS "profiles_tenant_update" ON profiles;
