@@ -338,7 +338,10 @@ const CommunityMoments: React.FC = () => {
     setUploading(true);
 
     try {
-      if (!userId) throw new Error('User not authenticated.');
+      // Use fresh session.user.id to match RLS auth.uid()
+      const { data: { session: freshSession } } = await supabase.auth.getSession();
+      const sessionUserId = freshSession?.user?.id;
+      if (!sessionUserId) throw new Error('User not authenticated.');
       if (!selectedFile) throw new Error('Please select a photo to upload.');
 
       const t = title.trim();
@@ -348,7 +351,7 @@ const CommunityMoments: React.FC = () => {
       const cleanTags = sanitizeTags(tags);
       const now = Date.now();
       const safeName = safeFilename(selectedFile.name);
-      const filePath = `${userId}/${now}_${safeName}`;
+      const filePath = `${sessionUserId}/${now}_${safeName}`;
 
       const { error: uploadError } = await supabase.storage
         .from(BUCKET)
@@ -366,7 +369,7 @@ const CommunityMoments: React.FC = () => {
       const { data: publicUrlData } = supabase.storage.from(BUCKET).getPublicUrl(filePath);
 
       const insertBody: any = {
-        user_id: userId,
+        user_id: sessionUserId,
         title: t,
         description: d,
         emoji,

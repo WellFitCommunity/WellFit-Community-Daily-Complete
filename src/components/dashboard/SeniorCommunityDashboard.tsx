@@ -289,22 +289,25 @@ const SeniorCommunityDashboard: React.FC = () => {
 
   const logCheckIn = async (_type: string, label: string, response: string, metadata?: any) => {
     try {
-      if (!user?.id) return;
+      // Use session.user.id to match RLS auth.uid()
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) return;
+      const sessionUserId = session.user.id;
 
       // Get user's tenant_id (required for check_ins)
       const { data: profile } = await supabase
         .from('profiles')
         .select('tenant_id')
-        .eq('user_id', user.id)
+        .eq('user_id', sessionUserId)
         .maybeSingle();
 
       if (!profile?.tenant_id) {
-        auditLogger.warn('CHECK_IN_SKIPPED', { userId: user.id, reason: 'No tenant_id' });
+        auditLogger.warn('CHECK_IN_SKIPPED', { userId: sessionUserId, reason: 'No tenant_id' });
         return;
       }
 
       await supabase.from('check_ins').insert({
-        user_id: user.id,
+        user_id: sessionUserId,
         tenant_id: profile.tenant_id,
         label,
         is_emergency: false,
@@ -313,7 +316,7 @@ const SeniorCommunityDashboard: React.FC = () => {
 
       // HIPAA Audit: Log patient check-in
       await auditLogger.clinical('CHECK_IN', true, {
-        userId: user.id,
+        userId: sessionUserId,
         label,
         hasMetadata: !!metadata
       });
@@ -328,9 +331,17 @@ const SeniorCommunityDashboard: React.FC = () => {
 
   const uploadCommunityPhoto = async (file: File) => {
     try {
+      // Use session.user.id to match RLS auth.uid()
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) {
+        alert('Please log in to upload photos.');
+        return;
+      }
+      const sessionUserId = session.user.id;
+
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user?.id}_${Date.now()}.${fileExt}`;
-      
+      const fileName = `${sessionUserId}_${Date.now()}.${fileExt}`;
+
       const { error: uploadError } = await supabase.storage
         .from('community-moments')
         .upload(fileName, file);
@@ -342,7 +353,7 @@ const SeniorCommunityDashboard: React.FC = () => {
         .getPublicUrl(fileName);
 
       await supabase.from('community_moments').insert({
-        user_id: user?.id,
+        user_id: sessionUserId,
         file_url: urlData.publicUrl,
         file_path: fileName,
         title: 'Community Photo',
@@ -354,7 +365,7 @@ const SeniorCommunityDashboard: React.FC = () => {
 
       // HIPAA Audit: Log photo upload (non-PHI)
       await auditLogger.info('COMMUNITY_PHOTO_UPLOADED', {
-        userId: user?.id,
+        userId: sessionUserId,
         fileName
       });
     } catch (error) {

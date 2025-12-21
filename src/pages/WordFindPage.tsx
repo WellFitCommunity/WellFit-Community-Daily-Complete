@@ -282,23 +282,28 @@ const WordFind: React.FC = () => {
                 }
               }
 
-              // ✅ SAVE TO DATABASE (the fix)
-              if (user?.id) {
-                saveWordGameResult(supabase, {
-                  user_id: user.id,
-                  started_at: new Date(startTime).toISOString(),
-                  completed_at: new Date().toISOString(),
-                  completion_time_seconds: timeInSeconds,
-                  words_found: updated.size,
-                  total_words: words.length,
-                  hints_used: hintsUsed,
-                  difficulty_level: themeData.theme || 'medium',
-                  completion_status: 'completed',
-                  puzzle_id: `${today}-${todayIndex}`
-                }).catch((error) => {
+              // ✅ SAVE TO DATABASE - use session.user.id to match RLS auth.uid()
+              (async () => {
+                try {
+                  const { data: { session } } = await supabase.auth.getSession();
+                  if (!session?.user?.id) return;
 
-                });
-              }
+                  await saveWordGameResult(supabase, {
+                    user_id: session.user.id,
+                    started_at: new Date(startTime).toISOString(),
+                    completed_at: new Date().toISOString(),
+                    completion_time_seconds: timeInSeconds,
+                    words_found: updated.size,
+                    total_words: words.length,
+                    hints_used: hintsUsed,
+                    difficulty_level: themeData.theme || 'medium',
+                    completion_status: 'completed',
+                    puzzle_id: `${today}-${todayIndex}`
+                  });
+                } catch {
+                  // Silently fail - engagement tracking is not critical
+                }
+              })();
             } catch (error) {
 
             }

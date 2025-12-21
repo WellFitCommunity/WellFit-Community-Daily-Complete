@@ -190,41 +190,53 @@ const MemoryLaneTriviaPage: React.FC = () => {
   };
 
   const saveProgress = async (progressData: TriviaProgress, completed: boolean) => {
-    if (!user?.id) return;
+    try {
+      // Use session.user.id to match RLS auth.uid()
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) return;
 
-    const today = new Date().toISOString().split('T')[0];
-    const upsertData = {
-      user_id: user.id,
-      play_date: today,
-      questions_attempted: progressData.questions_attempted,
-      correct_answers: progressData.correct_answers,
-      total_questions: 5,
-      perfect_score: progressData.perfect_score,
-      ...(completed && { completed_at: new Date().toISOString() })
-    };
+      const today = new Date().toISOString().split('T')[0];
+      const upsertData = {
+        user_id: session.user.id,
+        play_date: today,
+        questions_attempted: progressData.questions_attempted,
+        correct_answers: progressData.correct_answers,
+        total_questions: 5,
+        perfect_score: progressData.perfect_score,
+        ...(completed && { completed_at: new Date().toISOString() })
+      };
 
-    await supabase
-      .from('user_trivia_progress')
-      .upsert(upsertData, {
-        onConflict: 'user_id,play_date'
-      });
+      await supabase
+        .from('user_trivia_progress')
+        .upsert(upsertData, {
+          onConflict: 'user_id,play_date'
+        });
+    } catch {
+      // Silently fail - engagement tracking is not critical
+    }
   };
 
   const awardTrophy = async () => {
-    if (!user?.id) return;
+    try {
+      // Use session.user.id to match RLS auth.uid()
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) return;
 
-    const today = new Date().toISOString().split('T')[0];
-    await supabase
-      .from('user_trivia_trophies')
-      .upsert({
-        user_id: user.id,
-        earned_date: today,
-        trophy_type: 'perfect_score'
-      }, {
-        onConflict: 'user_id,earned_date'
-      });
+      const today = new Date().toISOString().split('T')[0];
+      await supabase
+        .from('user_trivia_trophies')
+        .upsert({
+          user_id: session.user.id,
+          earned_date: today,
+          trophy_type: 'perfect_score'
+        }, {
+          onConflict: 'user_id,earned_date'
+        });
 
-    await loadTrophies();
+      await loadTrophies();
+    } catch {
+      // Silently fail - engagement tracking is not critical
+    }
   };
 
   const shareScore = async () => {
@@ -234,16 +246,20 @@ const MemoryLaneTriviaPage: React.FC = () => {
       : `🧠 I answered ${progress.correct_answers} out of 5 Memory Lane trivia questions correctly today!`;
 
     try {
+      // Use session.user.id to match RLS auth.uid()
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) return;
+
       await supabase.from('community_moments').insert({
-        user_id: user?.id,
+        user_id: session.user.id,
         content: scoreText,
         moment_type: 'achievement',
         visibility: 'community'
       });
 
       alert('Score shared to Community Moments!');
-    } catch (error) {
-
+    } catch {
+      // Silently fail
     }
   };
 
