@@ -30,16 +30,7 @@ const UpcomingAppointmentBanner: React.FC = () => {
 
         const { data, error } = await supabase
           .from('telehealth_appointments')
-          .select(`
-            id,
-            appointment_time,
-            encounter_type,
-            provider:profiles!telehealth_appointments_provider_id_fkey(
-              full_name,
-              first_name,
-              last_name
-            )
-          `)
+          .select('id, appointment_time, encounter_type, provider_id')
           .eq('patient_id', user.id)
           .in('status', ['scheduled', 'confirmed'])
           .gte('appointment_time', now.toISOString())
@@ -48,25 +39,35 @@ const UpcomingAppointmentBanner: React.FC = () => {
           .limit(1)
           .maybeSingle();
 
-        if (error) {
-          // Query error - log but don't crash
+        if (error || !data) {
           return;
         }
 
-        if (data) {
-          const provider = Array.isArray(data.provider) ? data.provider[0] : data.provider;
-          setAppointment({
-            id: data.id,
-            appointment_time: data.appointment_time,
-            encounter_type: data.encounter_type,
-            provider_name:
-              provider?.full_name ||
-              `${provider?.first_name || ''} ${provider?.last_name || ''}`.trim() ||
-              'Your Doctor',
-          });
-        }
-      } catch (error) {
+        // Fetch provider info separately to avoid FK join issues
+        let providerName = 'Your Doctor';
+        if (data.provider_id) {
+          const { data: provider } = await supabase
+            .from('profiles')
+            .select('full_name, first_name, last_name')
+            .eq('user_id', data.provider_id)
+            .maybeSingle();
 
+          if (provider) {
+            providerName =
+              provider.full_name ||
+              `${provider.first_name || ''} ${provider.last_name || ''}`.trim() ||
+              'Your Doctor';
+          }
+        }
+
+        setAppointment({
+          id: data.id,
+          appointment_time: data.appointment_time,
+          encounter_type: data.encounter_type,
+          provider_name: providerName,
+        });
+      } catch {
+        // Silently fail - not critical
       }
     };
 

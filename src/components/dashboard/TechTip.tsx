@@ -139,12 +139,16 @@ const TechTip: React.FC = () => {
 
     const trackView = async () => {
       try {
+        // Verify session is active before making authenticated requests
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+
         // Get user's tenant_id from profile
         const { data: profile } = await supabase
           .from('profiles')
           .select('tenant_id')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
         if (profile?.tenant_id) {
           await supabase.from('feature_engagement').insert({
