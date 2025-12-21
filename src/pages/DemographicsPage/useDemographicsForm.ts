@@ -48,11 +48,22 @@ export function useDemographicsForm(): UseDemographicsFormReturn {
   // Patients: 4 steps (basic, health, emergency, social/SDOH)
   const totalSteps = userRole === 'senior' ? 5 : 4;
 
+  // ✅ Single guard used by all write actions - returns userId or null
+  const requireUserIdOrSetError = (): string | null => {
+    if (!user?.id) {
+      setError('Your session is still loading. Please wait a moment and try again.');
+      return null;
+    }
+    return user.id;
+  };
+
   // Load existing profile data
   useEffect(() => {
     const loadProfile = async () => {
+      // ✅ Do NOT redirect if user is undefined - auth context may still be booting
       if (!user?.id) {
-        navigate('/login');
+        setLoading(false);
+        setError('Your session is still loading. Please wait a moment and try again.');
         return;
       }
 
@@ -171,16 +182,17 @@ export function useDemographicsForm(): UseDemographicsFormReturn {
   }, [currentStep]);
 
   const saveProgress = useCallback(async () => {
-    if (!user?.id) {
-      setError('Your session is still loading. Please wait a moment and try again.');
-      return;
-    }
-
     setSaving(true);
     setError(null);
 
+    const userId = requireUserIdOrSetError();
+    if (!userId) {
+      setSaving(false);
+      return;
+    }
+
     try {
-      const seniorProfile = mapFormDataToSeniorProfile(user.id, DEFAULT_TENANT_ID, formData);
+      const seniorProfile = mapFormDataToSeniorProfile(userId, DEFAULT_TENANT_ID, formData);
       const seniorResult = await SeniorDataService.saveCompleteSeniorProfile(supabase, seniorProfile);
 
       if (!seniorResult.success) {
@@ -190,7 +202,7 @@ export function useDemographicsForm(): UseDemographicsFormReturn {
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert({
-          user_id: user.id,
+          user_id: userId,
           tenant_id: DEFAULT_TENANT_ID,
           gender: formData.gender,
           ethnicity: formData.ethnicity,
@@ -200,7 +212,7 @@ export function useDemographicsForm(): UseDemographicsFormReturn {
 
       if (profileError) throw profileError;
 
-      auditLogger.info('Senior demographics progress saved', { userId: user.id, step: currentStep });
+      auditLogger.info('Senior demographics progress saved', { userId, step: currentStep });
       navigate('/dashboard');
     } catch (err) {
       auditLogger.error('Failed to save demographics progress', String(err));
@@ -211,19 +223,20 @@ export function useDemographicsForm(): UseDemographicsFormReturn {
   }, [user, supabase, formData, currentStep, navigate]);
 
   const skipToConsent = useCallback(async () => {
-    if (!user?.id) {
-      setError('Your session is still loading. Please wait a moment and try again.');
-      return;
-    }
-
     setSaving(true);
     setError(null);
+
+    const userId = requireUserIdOrSetError();
+    if (!userId) {
+      setSaving(false);
+      return;
+    }
 
     try {
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert({
-          user_id: user.id,
+          user_id: userId,
           tenant_id: DEFAULT_TENANT_ID,
           demographics_step: null,
           demographics_complete: false
@@ -239,16 +252,17 @@ export function useDemographicsForm(): UseDemographicsFormReturn {
   }, [user, supabase, navigate]);
 
   const handleSubmit = useCallback(async () => {
-    if (!user?.id) {
-      setError('Your session is still loading. Please wait a moment and try again.');
-      return;
-    }
-
     setSubmitting(true);
     setError(null);
 
+    const userId = requireUserIdOrSetError();
+    if (!userId) {
+      setSubmitting(false);
+      return;
+    }
+
     try {
-      const seniorProfile = mapFormDataToSeniorProfile(user.id, DEFAULT_TENANT_ID, formData);
+      const seniorProfile = mapFormDataToSeniorProfile(userId, DEFAULT_TENANT_ID, formData);
       const seniorResult = await SeniorDataService.saveCompleteSeniorProfile(supabase, seniorProfile);
 
       if (!seniorResult.success) {
@@ -259,7 +273,7 @@ export function useDemographicsForm(): UseDemographicsFormReturn {
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert({
-          user_id: user.id,
+          user_id: userId,
           tenant_id: DEFAULT_TENANT_ID,
           gender: formData.gender,
           ethnicity: formData.ethnicity,
@@ -269,7 +283,7 @@ export function useDemographicsForm(): UseDemographicsFormReturn {
 
       if (profileError) throw profileError;
 
-      auditLogger.info('Senior demographics completed', { userId: user.id });
+      auditLogger.info('Senior demographics completed', { userId });
       navigate('/consent-photo');
     } catch (err) {
       auditLogger.error('Failed to save demographics', String(err));
