@@ -4,6 +4,7 @@
 // HIPAA Compliance: §164.312(b) - Audit Controls
 // =====================================================
 
+import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { cors } from '../_shared/cors.ts'
@@ -24,8 +25,8 @@ serve(async (req) => {
   try {
     // Create Supabase client
     const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      SUPABASE_URL ?? '',
+      SB_PUBLISHABLE_API_KEY ?? '',
       {
         global: {
           headers: { Authorization: req.headers.get('Authorization')! },

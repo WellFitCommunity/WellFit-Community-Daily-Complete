@@ -1,3 +1,4 @@
+import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 console.log("validate-api-key function initializing.");
@@ -23,8 +24,8 @@ function getCorsHeaders(origin: string | null) {
 // Initialize Supabase client with service role
 let supabaseAdminClient: SupabaseClient;
 try {
-  const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const supabaseUrl = SUPABASE_URL;
+  const serviceRoleKey = SB_SECRET_KEY;
 
   if (!supabaseUrl || !serviceRoleKey) {
     throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be defined in environment variables.");

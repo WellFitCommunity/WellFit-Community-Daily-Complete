@@ -1,6 +1,7 @@
 // supabase/functions/generate-837p/index.ts
 // Deno Edge Function — generates X12 and stores a claim row
 
+import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, type User } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
@@ -19,13 +20,13 @@ function preflight(req: Request): Response {
 
 // Admin: service role (bypasses RLS where needed)
 const adminClient = createClient(
-  Deno.env.get("SUPABASE_URL"),
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
+  SUPABASE_URL,
+  SB_SECRET_KEY);
 
 // Per-request user client (for resolving the calling user via JWT)
 function makeUserClient(req: Request) {
-  const anon = Deno.env.get("SUPABASE_ANON_KEY");
-  const url = Deno.env.get("SUPABASE_URL");
+  const anon = SB_PUBLISHABLE_API_KEY;
+  const url = SUPABASE_URL;
   const auth = req.headers.get("authorization") ?? "";
   return createClient(url, anon, { global: { headers: { Authorization: auth } } });
 }

@@ -1,3 +1,4 @@
+import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createAdminClient } from '../_shared/supabaseClient.ts'
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
@@ -228,8 +229,8 @@ Be helpful and precise - suggest the RIGHT codes, not just any codes. Quality ov
 
     // Log error for monitoring
     try {
-      const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
-      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      const supabaseUrl = SUPABASE_URL ?? ''
+      const supabaseKey = SB_SECRET_KEY ?? ''
       const supabase = createClient(supabaseUrl, supabaseKey)
 
       await supabase

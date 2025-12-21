@@ -11,6 +11,7 @@
  * @see /workspaces/WellFit-Community-Daily-Complete/supabase/migrations/20251021150001_automated_backup_verification.sql
  */
 
+import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
@@ -34,8 +35,8 @@ serve(async (req) => {
 
   try {
     // Initialize Supabase client with service role
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const supabaseUrl = SUPABASE_URL;
+    const supabaseServiceKey = SB_SECRET_KEY;
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey, {
       auth: {

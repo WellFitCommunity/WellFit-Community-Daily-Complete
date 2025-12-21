@@ -1,6 +1,7 @@
 // Enhanced SDOH-aware coding suggestion Edge Function
 // Integrates with Claude AI to analyze social determinants and suggest appropriate codes
 
+import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -27,8 +28,8 @@ serve(async (req) => {
   try {
     // Initialize Supabase client
     const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      SUPABASE_URL ?? '',
+      SB_SECRET_KEY ?? ''
     )
 
     // Get user for audit logging

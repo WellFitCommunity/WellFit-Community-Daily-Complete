@@ -1,4 +1,5 @@
 // supabase/functions/nightly-excel-backup/index.ts
+import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import * as XLSX from "https://esm.sh/xlsx@0.18.5";
@@ -40,8 +41,8 @@ class BackupService {
     validateEnvVars(["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "BACKUP_BUCKET", "BACKUP_PATH_PREFIX"]);
 
     this.supabase = createClient<DatabaseTypes>(
-      Deno.env.get("SUPABASE_URL"),
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
+      SUPABASE_URL,
+      SB_SECRET_KEY);
 
     this.backupBucket = Deno.env.get("BACKUP_BUCKET");
     this.backupPathPrefix = Deno.env.get("BACKUP_PATH_PREFIX");

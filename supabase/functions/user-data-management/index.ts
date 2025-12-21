@@ -2,6 +2,7 @@
 // Handles user requests for data access, export, and deletion
 // SECURITY: All operations are tenant-scoped
 
+import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
@@ -13,8 +14,8 @@ interface DataRequest {
 }
 
 const supabase = createClient(
-  Deno.env.get("SUPABASE_URL") ?? "",
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+  SUPABASE_URL ?? "",
+  SB_SECRET_KEY ?? ""
 );
 
 // Store tenant context for use in helper functions

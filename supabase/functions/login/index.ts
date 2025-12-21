@@ -1,5 +1,6 @@
 /// <reference types="jsr:@supabase/functions-js/edge-runtime" />
 
+import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.4?dts";
 import { z, type ZodIssue } from "https://deno.land/x/zod@v3.22.4/mod.ts";
@@ -37,18 +38,18 @@ serve(async (req: Request) => {
   try {
     const supabaseUrl =
       Deno.env.get("SB_URL") ??
-      Deno.env.get("SUPABASE_URL") ??
+      SUPABASE_URL ??
       "";
 
     const serviceRoleKey =
       Deno.env.get("SB_SECRET_KEY") ??
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
+      SB_SECRET_KEY ??
       Deno.env.get("SB_SERVICE_ROLE") ??
       "";
 
     const anonKey =
       Deno.env.get("SB_PUBLISHABLE_API_KEY") ??
-      Deno.env.get("SUPABASE_ANON_KEY") ??
+      SB_PUBLISHABLE_API_KEY ??
       Deno.env.get("SB_ANON_KEY") ??
       "";
 

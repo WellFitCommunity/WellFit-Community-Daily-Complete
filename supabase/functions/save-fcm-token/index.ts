@@ -1,4 +1,5 @@
 // supabase/functions/save-fcm-token/index.ts
+import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
@@ -25,8 +26,8 @@ async function getAuthenticatedUser(req: Request, supabaseClient: SupabaseClient
   }
   // Re-create client with the user's token to get their session
   const userSupabaseClient = createClient(
-    Deno.env.get('SUPABASE_URL'),
-    Deno.env.get('SUPABASE_ANON_KEY'),
+    SUPABASE_URL,
+    SB_PUBLISHABLE_API_KEY,
     { global: { headers: { Authorization: authHeader } } }
   );
   const { data: { user }, error } = await userSupabaseClient.auth.getUser();
@@ -62,8 +63,8 @@ serve(async (req) => {
 
     // Use service role client for database operations
     const serviceRoleClient = createClient(
-      Deno.env.get('SUPABASE_URL'),
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'));
+      SUPABASE_URL,
+      SB_SECRET_KEY);
 
     // Get authenticated user ID
     const user = await getAuthenticatedUser(req, serviceRoleClient);

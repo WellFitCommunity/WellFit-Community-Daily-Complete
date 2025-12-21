@@ -10,6 +10,7 @@
  * - checks: Database, API, Guardian
  */
 
+import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { cors } from '../_shared/cors.ts'
@@ -117,8 +118,8 @@ serve(async (req) => {
 async function checkDatabase(): Promise<HealthCheck> {
   const start = Date.now();
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY');
+    const supabaseUrl = SUPABASE_URL;
+    const supabaseKey = SB_PUBLISHABLE_API_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
       return {
@@ -176,7 +177,7 @@ async function checkDatabase(): Promise<HealthCheck> {
 async function checkAPI(): Promise<HealthCheck> {
   const start = Date.now();
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseUrl = SUPABASE_URL;
 
     if (!supabaseUrl) {
       return {
@@ -233,8 +234,8 @@ async function checkAPI(): Promise<HealthCheck> {
 async function checkGuardian(): Promise<HealthCheck> {
   const start = Date.now();
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY');
+    const supabaseUrl = SUPABASE_URL;
+    const supabaseKey = SB_PUBLISHABLE_API_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
       return {

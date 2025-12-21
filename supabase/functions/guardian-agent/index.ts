@@ -2,6 +2,7 @@
 // This is the backend service that monitors the system and creates security alerts
 // Guardian Eyes recording functionality is integrated here
 
+import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createAdminClient, batchQueries } from '../_shared/supabaseClient.ts'
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts'
@@ -205,8 +206,8 @@ async function runMonitoringChecks(supabase: any): Promise<SecurityAlert[]> {
 async function sendAlertEmail(supabase: any, alerts: SecurityAlert[]) {
   try {
     const adminEmail = Deno.env.get('ADMIN_EMAIL') || 'admin@wellfitcommunity.org';
-    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const SUPABASE_URL = SUPABASE_URL;
+    const SUPABASE_SERVICE_ROLE_KEY = SB_SECRET_KEY;
 
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
       console.error('[Guardian] Cannot send email: Missing Supabase credentials');

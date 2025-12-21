@@ -1,10 +1,11 @@
 // supabase/functions/passkey-auth-finish/index.ts
+import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.183.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.28.0";
 import { verifyAuthenticationResponse } from "https://deno.land/x/simplewebauthn@v10.0.1/deno/server.ts";
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const SUPABASE_SECRET_KEY = Deno.env.get("SB_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const SUPABASE_URL = SUPABASE_URL ?? "";
+const SUPABASE_SECRET_KEY = Deno.env.get("SB_SECRET_KEY") ?? SB_SECRET_KEY ?? "";
 
 if (!SUPABASE_URL || !SUPABASE_SECRET_KEY) {
   throw new Error("Missing SUPABASE_URL or SB_SECRET_KEY");

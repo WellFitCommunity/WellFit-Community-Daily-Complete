@@ -1,4 +1,5 @@
 // supabase/functions/notify-stale-checkins/index.ts
+import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.181.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.4";
 import {
@@ -19,8 +20,8 @@ const logger = createLogger("notify-stale-checkins");
 validateEnvVars(["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"]);
 
 const supabase = createClient<DatabaseTypes>(
-  Deno.env.get("SUPABASE_URL"),
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
+  SUPABASE_URL,
+  SB_SECRET_KEY);
 
 type StaleRow = { user_id: string; last_checkin: string | null };
 type Profile = { full_name: string | null; emergency_email: string | null };

@@ -1,4 +1,5 @@
 // supabase/functions/send-checkin-reminders/index.ts
+import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
@@ -19,8 +20,8 @@ const logger = createLogger("send-checkin-reminders");
 validateEnvVars(["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "FCM_SERVER_KEY"]);
 
 const supabase = createClient<DatabaseTypes>(
-  Deno.env.get("SUPABASE_URL"),
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
+  SUPABASE_URL,
+  SB_SECRET_KEY);
 
 const FCM_SERVER_KEY = Deno.env.get("FCM_SERVER_KEY");
 

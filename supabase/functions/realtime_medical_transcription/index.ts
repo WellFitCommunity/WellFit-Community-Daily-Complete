@@ -12,6 +12,7 @@
 // Client connects via:
 //   wss://<project>.supabase.co/functions/v1/realtime-medical-transcription?access_token=<JWT>
 
+import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createAdminClient } from '../_shared/supabaseClient.ts';
@@ -22,9 +23,9 @@ const DEEPGRAM_API_KEY = Deno.env.get("DEEPGRAM_API_KEY");
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 // Fallback API keys for resilience
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-const SB_URL = Deno.env.get("SB_URL") ?? Deno.env.get("SUPABASE_URL");
+const SB_URL = Deno.env.get("SB_URL") ?? SUPABASE_URL;
 const SB_SECRET_KEY =
-  Deno.env.get("SB_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  Deno.env.get("SB_SECRET_KEY") ?? SB_SECRET_KEY;
 
 const initLogger = createLogger('realtime_medical_transcription');
 if (!DEEPGRAM_API_KEY || !ANTHROPIC_API_KEY || !SB_URL || !SB_SECRET_KEY) {

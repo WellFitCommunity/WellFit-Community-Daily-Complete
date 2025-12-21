@@ -1,3 +1,4 @@
+import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { createLogger } from '../_shared/auditLogger.ts'
@@ -167,8 +168,8 @@ serve(async (req) => {
     }
     
     const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? '',
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ''
+      SUPABASE_URL ?? '',
+      SB_SECRET_KEY ?? ''
     );
 
     logger.info('Fetching user profile for emergency alert', { user_id });

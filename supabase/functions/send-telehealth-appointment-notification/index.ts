@@ -1,6 +1,7 @@
 // supabase/functions/send-telehealth-appointment-notification/index.ts
 // Sends SMS and push notifications when a telehealth appointment is scheduled
 
+import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4?dts";
 
@@ -9,8 +10,8 @@ const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN") || "";
 const TWILIO_MESSAGING_SERVICE_SID = Deno.env.get("TWILIO_MESSAGING_SERVICE_SID") || "";
 const TWILIO_FROM_NUMBER = Deno.env.get("TWILIO_FROM_NUMBER") || "";
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
-const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+const SUPABASE_URL = SUPABASE_URL || "";
+const SUPABASE_SERVICE_KEY = SB_SECRET_KEY || "";
 
 const FIREBASE_SERVER_KEY = Deno.env.get("FIREBASE_SERVER_KEY") || "";
 

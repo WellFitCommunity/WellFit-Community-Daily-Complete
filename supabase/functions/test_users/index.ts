@@ -1,6 +1,7 @@
 // supabase/functions/test-users/index.ts
 // Deno Edge Function (v2 runtime). Strict, no placeholders.
 
+import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient, type PostgrestError } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
@@ -8,7 +9,7 @@ import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 // Environment (set in Supabase dashboard -> Functions)
 const SERVICE_URL = Deno.env.get("SERVICE_URL");
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY");
-const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
+const SUPABASE_ANON_KEY = SB_PUBLISHABLE_API_KEY;
 
 type CreateBody = {
   email?: string;

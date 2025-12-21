@@ -2,6 +2,7 @@
 // Creates HIPAA-compliant Daily.co video rooms for telehealth
 // Integrates with WellFit encounter tracking
 
+import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -9,8 +10,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const DAILY_API_KEY = Deno.env.get("DAILY_API_KEY");
 const DAILY_API_URL = "https://api.daily.co/v1";
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+const SUPABASE_URL = SUPABASE_URL;
+const SERVICE_KEY = SB_SECRET_KEY;
 
 if (!DAILY_API_KEY) {
   throw new Error("DAILY_API_KEY not configured. Please add to Supabase secrets.");

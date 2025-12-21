@@ -1,4 +1,5 @@
 // supabase/functions/sms-verify-code/index.ts
+import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { parsePhoneNumber, isValidPhoneNumber } from "https://esm.sh/libphonenumber-js@1.12.9";
 import { cors } from "../_shared/cors.ts";
@@ -168,8 +169,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // Success — now complete the registration
     try {
       const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.45.4?dts");
-      const SB_URL = Deno.env.get("SUPABASE_URL") || Deno.env.get("SB_URL") || "";
-      const SB_SECRET_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("SB_SECRET_KEY") || "";
+      const SB_URL = SUPABASE_URL || Deno.env.get("SB_URL") || "";
+      const SB_SECRET_KEY = SB_SECRET_KEY || Deno.env.get("SB_SECRET_KEY") || "";
 
       if (!SB_URL || !SB_SECRET_KEY) {
         logger.error("Missing Supabase configuration", {

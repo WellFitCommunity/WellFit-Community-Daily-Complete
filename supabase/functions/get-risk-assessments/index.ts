@@ -1,5 +1,6 @@
 // supabase/functions/get-risk-assessments/index.ts
 // SECURITY: Requires authentication and tenant-scoped access
+import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
@@ -34,8 +35,8 @@ serve(async (req: Request) => {
 
   try {
     // Required env vars
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-    const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const SUPABASE_URL = SUPABASE_URL;
+    const SERVICE_ROLE = SB_SECRET_KEY;
     const PHI_KEY = Deno.env.get("PHI_ENCRYPTION_KEY");
     if (!SUPABASE_URL || !SERVICE_ROLE || !PHI_KEY) {
       return new Response(

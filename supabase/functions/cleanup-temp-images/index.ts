@@ -2,6 +2,7 @@
 // Scheduled cleanup job for expired temp vital images
 // Run hourly via Supabase scheduler or external cron
 
+import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
@@ -34,8 +35,8 @@ serve(async (req: Request) => {
 
   try {
     // Get service role key for admin operations
-    const SB_URL = Deno.env.get("SB_URL") || Deno.env.get("SUPABASE_URL");
-    const SB_SERVICE_KEY = Deno.env.get("SB_SERVICE_KEY") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const SB_URL = Deno.env.get("SB_URL") || SUPABASE_URL;
+    const SB_SERVICE_KEY = Deno.env.get("SB_SERVICE_KEY") || SB_SECRET_KEY;
 
     if (!SB_URL || !SB_SERVICE_KEY) {
       throw new Error("Missing Supabase service configuration");

@@ -7,6 +7,7 @@
  * HIPAA Compliant - All events logged to audit tables
  */
 
+import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
 
@@ -34,8 +35,8 @@ Deno.serve(async (req) => {
     // Get Supabase client with user context
     const authHeader = req.headers.get('Authorization');
     const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      SUPABASE_URL ?? '',
+      SB_PUBLISHABLE_API_KEY ?? '',
       { global: { headers: { Authorization: authHeader } } }
     );
 

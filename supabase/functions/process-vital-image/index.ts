@@ -2,6 +2,7 @@
 // OCR processing for photo-captured vital signs
 // Uses Tesseract.js for digit recognition from BP cuffs, glucometers, etc.
 
+import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
@@ -303,9 +304,9 @@ serve(async (req: Request) => {
     }
 
     // Initialize Supabase client
-    const SB_URL = Deno.env.get("SB_URL") || Deno.env.get("SUPABASE_URL");
-    const SB_KEY = Deno.env.get("SB_ANON_KEY") || Deno.env.get("SUPABASE_ANON_KEY");
-    const SB_SERVICE_KEY = Deno.env.get("SB_SERVICE_KEY") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const SB_URL = Deno.env.get("SB_URL") || SUPABASE_URL;
+    const SB_KEY = Deno.env.get("SB_ANON_KEY") || SB_PUBLISHABLE_API_KEY;
+    const SB_SERVICE_KEY = Deno.env.get("SB_SERVICE_KEY") || SB_SECRET_KEY;
 
     if (!SB_URL || !SB_KEY) {
       throw new Error("Missing Supabase configuration");

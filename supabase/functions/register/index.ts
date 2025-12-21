@@ -1,5 +1,6 @@
 
 // supabase/functions/register/index.ts
+import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4?dts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
@@ -11,9 +12,9 @@ import { hashPassword } from "../_shared/crypto.ts";
 const ALLOWED_COUNTRIES = ['US', 'CA', 'GB', 'AU'] as const;
 
 // ---------- ENV ----------
-const SB_URL = Deno.env.get("SUPABASE_URL") || Deno.env.get("SB_URL") || "";
-const SB_SECRET_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("SB_SECRET_KEY") || "";
-const SB_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SB_PUBLISHABLE_API_KEY") || "";
+const SB_URL = SUPABASE_URL || Deno.env.get("SB_URL") || "";
+const SB_SECRET_KEY = SB_SECRET_KEY || Deno.env.get("SB_SECRET_KEY") || "";
+const SB_ANON_KEY = SB_PUBLISHABLE_API_KEY || Deno.env.get("SB_PUBLISHABLE_API_KEY") || "";
 const HCAPTCHA_SECRET = Deno.env.get("HCAPTCHA_SECRET") || "";
 
 function getCorsHeaders(origin: string | null) {

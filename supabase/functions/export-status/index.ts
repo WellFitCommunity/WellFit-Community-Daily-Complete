@@ -1,6 +1,7 @@
 // Export Status Edge Function
 // Returns status of a bulk export job
 
+import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 import { createLogger } from '../_shared/auditLogger.ts';
@@ -23,8 +24,8 @@ serve(async (req) => {
   try {
     // Create Supabase client with service role
     const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      SUPABASE_URL ?? '',
+      SB_SECRET_KEY ?? '',
       {
         auth: {
           autoRefreshToken: false,
