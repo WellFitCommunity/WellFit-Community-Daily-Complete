@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
-import { useSupabaseClient, useUser } from '../../contexts/AuthContext';
+import { useSupabaseClient } from '../../contexts/AuthContext';
 
 const techTips: string[] = [
   // Part 1 - Security & Scams
@@ -108,7 +108,6 @@ interface TipFeedback {
 
 const TechTip: React.FC = () => {
   const supabase = useSupabaseClient();
-  const user = useUser();
   const [feedback, setFeedback] = useState<TipFeedback | null>(null);
   const [showFeedback, setShowFeedback] = useState<boolean>(false);
 
@@ -134,25 +133,25 @@ const TechTip: React.FC = () => {
 
   // Track tech tip view for engagement reporting
   useEffect(() => {
-    // Wait for auth to be ready
-    if (!user?.id) return;
-
     const trackView = async () => {
       try {
-        // Verify session is active before making authenticated requests
+        // Get the active session - this is the source of truth for auth.uid() on the server
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session) return;
+        if (!session?.user?.id) return;
+
+        // Use session.user.id to ensure it matches auth.uid() in RLS policies
+        const userId = session.user.id;
 
         // Get user's tenant_id from profile
         const { data: profile } = await supabase
           .from('profiles')
           .select('tenant_id')
-          .eq('user_id', user.id)
+          .eq('user_id', userId)
           .maybeSingle();
 
         if (profile?.tenant_id) {
           await supabase.from('feature_engagement').insert({
-            user_id: user.id,
+            user_id: userId,
             tenant_id: profile.tenant_id,
             feature_type: 'tech_tip_view',
             feature_id: `tip-${todaysTipIndex}`,
@@ -170,7 +169,7 @@ const TechTip: React.FC = () => {
       sessionStorage.setItem(viewKey, 'true');
       trackView();
     }
-  }, [supabase, user?.id, todaysTipIndex, todaysDateString]);
+  }, [supabase, todaysTipIndex, todaysDateString]);
 
   const handleFeedback = async (reaction: 'helpful' | 'not-helpful') => {
     const newFeedback: TipFeedback = {
@@ -187,9 +186,11 @@ const TechTip: React.FC = () => {
 
     // Log engagement to database for admin panel tracking
     try {
-      if (user?.id) {
+      // Get session to ensure user_id matches auth.uid() for RLS
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.id) {
         await supabase.from('user_engagements').insert({
-          user_id: user.id,
+          user_id: session.user.id,
           engagement_type: 'tech_tip_feedback',
           content_id: `tip-${todaysTipIndex}`,
           metadata: {

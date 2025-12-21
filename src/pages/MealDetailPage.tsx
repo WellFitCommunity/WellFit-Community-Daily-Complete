@@ -153,19 +153,25 @@ export default function MealDetailPage() {
   // Track meal view for engagement reporting
   useEffect(() => {
     const trackMealView = async () => {
-      if (!recipe?.id || !user?.id) return;
+      if (!recipe?.id) return;
 
       try {
+        // Get session to ensure user_id matches auth.uid() for RLS
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user?.id) return;
+
+        const userId = session.user.id;
+
         // Get user's tenant_id from profile
         const { data: profile } = await supabase
           .from('profiles')
           .select('tenant_id')
-          .eq('user_id', user.id)
+          .eq('user_id', userId)
           .single();
 
         if (profile?.tenant_id) {
           await supabase.from('feature_engagement').insert({
-            user_id: user.id,
+            user_id: userId,
             tenant_id: profile.tenant_id,
             feature_type: 'meal_view',
             feature_id: recipe.id,
@@ -179,11 +185,11 @@ export default function MealDetailPage() {
 
     // Only track once per session per meal
     const viewKey = `meal-viewed-${id}`;
-    if (recipe && user && !sessionStorage.getItem(viewKey)) {
+    if (recipe && !sessionStorage.getItem(viewKey)) {
       sessionStorage.setItem(viewKey, 'true');
       trackMealView();
     }
-  }, [recipe, user, supabase, id]);
+  }, [recipe, supabase, id]);
 
   // Check if user already interacted with this meal
   useEffect(() => {
