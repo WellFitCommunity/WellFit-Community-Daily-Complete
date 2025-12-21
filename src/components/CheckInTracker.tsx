@@ -7,6 +7,7 @@ import { useBranding } from '../BrandingContext';
 import { ArrowLeft, Mic, MicOff, Heart } from 'lucide-react';
 import HealthInsightsWidget from './HealthInsightsWidget';
 import PulseOximeter from './PulseOximeter';
+import { WellnessSuggestions } from './wellness/WellnessSuggestions';
 import { offlineStorage, isOnline } from '../utils/offlineStorage';
 
 const ENABLE_LOCAL_HISTORY = false; // HIPAA: keep PHI out of localStorage
@@ -533,6 +534,13 @@ export default function CheckInTracker({ showBackButton = false }: CheckInTracke
                   ))}
                 </select>
               </div>
+
+              {/* Wellness Suggestions - Shows when mood indicates feeling down */}
+              {mood && (
+                <div className="mt-4">
+                  <WellnessSuggestions mood={mood} />
+                </div>
+              )}
             </div>
 
             {/* Health Metrics Section */}

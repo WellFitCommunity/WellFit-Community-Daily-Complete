@@ -86,6 +86,9 @@ export const BulkExportPanel = React.lazy(() => import('../components/admin/Bulk
 export const PhotoApprovalPage = React.lazy(() => import('../pages/PhotoApprovalPage'));
 export const ApiKeyManager = React.lazy(() => import('../components/admin/ApiKeyManager'));
 export const ReportsPrintPage = React.lazy(() => import('../pages/ReportsPrintPage'));
+export const TemplateMaker = React.lazy(() =>
+  import('../components/admin/TemplateMaker').then(m => ({ default: m.TemplateMaker }))
+);
 
 // Billing & Finance
 export const BillingDashboard = React.lazy(() => import('../components/admin/BillingDashboard'));

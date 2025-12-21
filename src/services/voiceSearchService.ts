@@ -5,6 +5,7 @@
  * Searches patients, beds, providers, and other entities by natural language.
  *
  * ATLUS: Intuitive Technology - Natural language entity search
+ * ATLUS: Unity - Shares VoiceLearningService with SmartScribe/Compass Riley
  *
  * Copyright © 2025 Envision VirtualEdge Group LLC. All rights reserved.
  */
@@ -12,6 +13,7 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { ParsedEntity, SearchResult } from '../contexts/VoiceActionContext';
 import { auditLogger } from './auditLogger';
+import { VoiceLearningService } from './voiceLearningService';
 
 // ============================================================================
 // TYPES
@@ -150,6 +152,43 @@ function getRiskLabel(score?: number): string {
   if (score >= 60) return 'HIGH';
   if (score >= 40) return 'MEDIUM';
   return 'LOW';
+}
+
+// ============================================================================
+// VOICE LEARNING INTEGRATION
+// ============================================================================
+
+/**
+ * Apply learned voice corrections to a search query
+ * Uses the same VoiceLearningService as SmartScribe/Compass Riley (Unity)
+ */
+async function applyVoiceCorrections(query: string, userId?: string): Promise<string> {
+  if (!userId || !query) return query;
+
+  try {
+    const profile = await VoiceLearningService.loadVoiceProfile(userId);
+    if (!profile?.corrections?.length) return query;
+
+    let correctedQuery = query;
+    for (const correction of profile.corrections) {
+      // Apply corrections (case-insensitive replacement)
+      const regex = new RegExp(correction.heard, 'gi');
+      correctedQuery = correctedQuery.replace(regex, correction.correct);
+    }
+
+    if (correctedQuery !== query) {
+      auditLogger.info('VOICE_SEARCH_CORRECTION_APPLIED', {
+        original: query,
+        corrected: correctedQuery,
+        userId,
+      });
+    }
+
+    return correctedQuery;
+  } catch {
+    // If voice learning fails, just use original query
+    return query;
+  }
 }
 
 // ============================================================================
@@ -477,26 +516,46 @@ export async function searchByRoom(
 }
 
 /**
- * Universal search - routes to appropriate search function based on entity type
+ * Main voice search function (Universal search - routes to appropriate search function)
+ * @param supabase - Supabase client
+ * @param entity - Parsed entity from voice command
+ * @param userId - Optional user ID for applying learned voice corrections (Unity)
  */
 export async function voiceSearch(
   supabase: SupabaseClient,
-  entity: ParsedEntity
+  entity: ParsedEntity,
+  userId?: string
 ): Promise<SearchResult[]> {
-  switch (entity.type) {
+  // Apply learned voice corrections from SmartScribe/Compass Riley (Unity)
+  let correctedEntity = entity;
+  if (userId && entity.query) {
+    const correctedQuery = await applyVoiceCorrections(entity.query, userId);
+    if (correctedQuery !== entity.query) {
+      correctedEntity = {
+        ...entity,
+        query: correctedQuery,
+        filters: {
+          ...entity.filters,
+          name: entity.filters.name ? await applyVoiceCorrections(entity.filters.name, userId) : undefined,
+        },
+      };
+    }
+  }
+
+  switch (correctedEntity.type) {
     case 'patient':
-      return searchPatients(supabase, entity);
+      return searchPatients(supabase, correctedEntity);
     case 'bed':
-      return searchBeds(supabase, entity);
+      return searchBeds(supabase, correctedEntity);
     case 'room':
       // Room search returns both bed and patient results
-      const bedResults = await searchBeds(supabase, entity);
-      const patientResults = await searchPatients(supabase, entity);
+      const bedResults = await searchBeds(supabase, correctedEntity);
+      const patientResults = await searchPatients(supabase, correctedEntity);
       return [...bedResults, ...patientResults].sort((a, b) => b.matchScore - a.matchScore);
     case 'provider':
-      return searchProviders(supabase, entity);
+      return searchProviders(supabase, correctedEntity);
     default:
-      auditLogger.warn('VOICE_SEARCH_UNKNOWN_TYPE', { entityType: entity.type });
+      auditLogger.warn('VOICE_SEARCH_UNKNOWN_TYPE', { entityType: correctedEntity.type });
       return [];
   }
 }

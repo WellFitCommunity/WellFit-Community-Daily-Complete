@@ -1,5 +1,7 @@
 // src/components/smart/RealTimeSmartScribe.tsx
-// Compass Riley - AI-Powered Medical Scribe & Billing Assistant
+// SmartScribe (nurses) & Compass Riley (physicians) - Voice Documentation System
+// SmartScribe: Simple transcription for burnout reduction (no billing)
+// Compass Riley: Full AI scribe with billing intelligence
 // Redesigned with Envision Atlus design system for clinical clarity
 // Refactored: Split into memoized child components for performance (2025-12-13)
 
@@ -19,13 +21,25 @@ import { BillingCodesList } from './BillingCodesList';
 import { SOAPNote } from './SOAPNote';
 import { VoiceCorrectionModal } from './VoiceCorrectionModal';
 
+/**
+ * Scribe Mode:
+ * - 'smartscribe': For nurses - simple transcription, NO billing codes, burnout reduction
+ * - 'compass-riley': For physicians/NPs/PAs - full AI scribe with billing intelligence
+ */
+export type ScribeMode = 'smartscribe' | 'compass-riley';
+
 interface RealTimeSmartScribeProps {
   selectedPatientId?: string;
   selectedPatientName?: string;
   onSessionComplete?: (sessionId: string) => void;
+  /** Scribe mode - 'smartscribe' for nurses, 'compass-riley' for physicians (default) */
+  mode?: ScribeMode;
 }
 
 const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = (props) => {
+  const { mode = 'compass-riley' } = props;
+  const isSmartScribeMode = mode === 'smartscribe';
+
   // Check if demo mode is enabled globally (from DemoPage or elsewhere)
   const { isDemo: globalDemoMode, enableDemo, disableDemo } = useDemoMode();
 
@@ -107,9 +121,10 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = (props) => {
         isRecording={isRecording}
         status={status}
         elapsedSeconds={elapsedSeconds}
-        suggestedCodesCount={suggestedCodes.length}
+        suggestedCodesCount={isSmartScribeMode ? 0 : suggestedCodes.length}
         onEnableDemo={handleEnableDemo}
         onDisableDemo={disableDemo}
+        mode={mode}
       />
 
       {/* Assistance Level Control */}
@@ -174,15 +189,34 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = (props) => {
         onOpenCorrectionModal={handleOpenCorrectionModal}
       />
 
-      {/* Billing Codes */}
-      <BillingCodesList
-        codes={suggestedCodes}
-        showReasoningDetails={assistanceSettings.showReasoningDetails}
-      />
+      {/* Billing Codes - Only for Compass Riley (physicians), NOT for SmartScribe (nurses) */}
+      {!isSmartScribeMode && (
+        <BillingCodesList
+          codes={suggestedCodes}
+          showReasoningDetails={assistanceSettings.showReasoningDetails}
+        />
+      )}
 
-      {/* SOAP Note */}
-      {soapNote && (
+      {/* SOAP Note - Only for Compass Riley (physicians) */}
+      {!isSmartScribeMode && soapNote && (
         <SOAPNote soapNote={soapNote} />
+      )}
+
+      {/* Nursing Note Template - Only for SmartScribe (nurses) */}
+      {isSmartScribeMode && transcript && (
+        <EACard>
+          <EACardHeader icon={<span className="text-blue-400">📋</span>}>
+            <h3 className="text-sm font-medium text-white">Nursing Documentation</h3>
+          </EACardHeader>
+          <EACardContent className="py-3">
+            <div className="prose prose-sm prose-invert max-w-none">
+              <p className="text-slate-300 whitespace-pre-wrap">{transcript}</p>
+            </div>
+            <p className="text-xs text-slate-500 mt-3">
+              📝 Copy to your chart • Voice corrections improve accuracy over time
+            </p>
+          </EACardContent>
+        </EACard>
       )}
 
       {/* Privacy Notice */}

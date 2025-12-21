@@ -471,12 +471,13 @@ const NursePanel: React.FC = () => {
               <div className="space-y-6">
                 <div>
                   <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                    <span>🎤</span> Smart Medical Scribe
+                    <span>🎤</span> SmartScribe - Voice Documentation
                   </h2>
                   {selectedPatient ? (
                     <SmartScribe
                       selectedPatientId={selectedPatient.user_id}
                       selectedPatientName={`${selectedPatient.first_name} ${selectedPatient.last_name}`}
+                      mode="smartscribe"
                       onSessionComplete={(sessionId) => {
                         auditLogger.clinical('NURSE_SCRIBE_SESSION_COMPLETED', true, {
                           sessionId,

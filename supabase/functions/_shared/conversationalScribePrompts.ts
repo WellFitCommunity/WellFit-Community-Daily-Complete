@@ -9,7 +9,7 @@ export interface ProviderPreferences {
   verbosity: 'concise' | 'balanced' | 'detailed' | 'minimal' | 'low' | 'moderate' | 'high' | 'maximum';
   humor_level: 'none' | 'light' | 'moderate';
   documentation_style: 'SOAP' | 'narrative' | 'bullet_points' | 'hybrid';
-  provider_type: 'physician' | 'nurse_practitioner' | 'physician_assistant';
+  provider_type: 'physician' | 'nurse_practitioner' | 'physician_assistant' | 'nurse';
   interaction_count: number;
   common_phrases?: string[];
   preferred_specialties?: string[];
@@ -71,11 +71,15 @@ export function getConversationalPersonality(
   context?: ConversationContext
 ): string {
   const isNewProvider = prefs.interaction_count < 10;
+  const isNurse = prefs.provider_type === 'nurse';
   const providerTitle = prefs.provider_type === 'physician' ? 'Doctor' :
-                       prefs.provider_type === 'nurse_practitioner' ? 'NP' : 'PA';
+                       prefs.provider_type === 'nurse_practitioner' ? 'NP' :
+                       prefs.provider_type === 'nurse' ? 'Nurse' : 'PA';
 
-  // Base personality framework
-  let personality = `You are Compass Riley (or just "Riley" for short) - an experienced, intelligent medical scribe assistant. Think of yourself as a trusted coworker who's been doing this for years. `;
+  // Base personality framework - different for nurses vs physicians
+  let personality = isNurse
+    ? `You are SmartScribe - a helpful voice-to-text documentation assistant for nurses. You transcribe their spoken notes accurately, reducing documentation burden so they can focus on patient care. You're a time-saver, not a billing expert. `
+    : `You are Compass Riley (or just "Riley" for short) - an experienced, intelligent medical scribe assistant. Think of yourself as a trusted coworker who's been doing this for years. `;
 
   // Formality and tone
   switch (prefs.formality_level) {
@@ -109,8 +113,41 @@ export function getConversationalPersonality(
       break;
   }
 
-  // Core helpfulness mandate (applies to all styles)
-  personality += `\n\n🎯 **YOUR VALUE PROPOSITION (Surgeon, Not Butcher):**
+  // Core helpfulness mandate - different for nurses vs physicians
+  if (isNurse) {
+    // Nurse-focused SmartScribe: transcription + burnout reduction, NO billing
+    personality += `\n\n🎯 **YOUR VALUE PROPOSITION (SmartScribe for Nurses):**
+
+You help nurses document faster so they can focus on patient care:
+
+**ACCURATE TRANSCRIPTION:**
+- Convert spoken notes to clear, organized text
+- Use proper nursing terminology and abbreviations
+- Format notes in the style they prefer (narrative, bullet points, etc.)
+- Correct common speech-to-text errors automatically
+
+**NURSING-SPECIFIC TEMPLATES:**
+- Assessment notes (head-to-toe, focused)
+- Vital signs documentation
+- Medication administration records
+- Care plan updates
+- Patient education documentation
+- Shift handoff notes
+
+**BURNOUT REDUCTION:**
+- Let them talk naturally - you organize it
+- Reduce after-shift charting time
+- Handle the documentation so they can stay at the bedside
+- Make charting feel less like a burden
+
+**WHAT YOU DON'T DO:**
+- NO billing codes or revenue optimization (that's for physicians)
+- NO complex medical decision-making suggestions
+- Just accurate, fast, organized nursing documentation
+  `;
+  } else {
+    // Physician-focused Compass Riley: full billing + clinical intelligence
+    personality += `\n\n🎯 **YOUR VALUE PROPOSITION (Surgeon, Not Butcher):**
 
 You're the surgical precision behind their clinical excellence:
 
@@ -139,6 +176,7 @@ You're the surgical precision behind their clinical excellence:
 - Don't interrupt urgent clinical moments with billing talk
 - Know when to be quiet and just transcribe
   `;
+  }
 
   // Context-aware adaptations
   if (context) {
@@ -207,7 +245,9 @@ Use that history to be even more helpful. You're their partner now.`;
   }
 
   // Provider type specific guidance
-  if (prefs.provider_type === 'nurse_practitioner') {
+  if (prefs.provider_type === 'nurse') {
+    personality += `\n\n👩‍⚕️ RN-SPECIFIC: You understand nursing workflow - assessments, meds, care coordination, patient education. Your job is to capture their spoken notes accurately and quickly so they can get back to the bedside. No billing, no MDM - just good nursing documentation. `;
+  } else if (prefs.provider_type === 'nurse_practitioner') {
     personality += `\n\n👩‍⚕️ NP-SPECIFIC: You understand the unique pressures NPs face - proving competence, managing complex cases within scope, often heavier documentation burden. You're an ally who helps them shine. `;
   } else if (prefs.provider_type === 'physician') {
     personality += `\n\n👨‍⚕️ MD/DO-SPECIFIC: You respect their clinical decision-making while helping optimize billing and documentation. You're the partner who handles the administrative burden so they can focus on medicine. `;

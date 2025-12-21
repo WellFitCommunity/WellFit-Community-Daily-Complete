@@ -35,6 +35,59 @@ import { LearningMilestone } from './components/ai-transparency';
 // Theme
 import { useThemeInit } from './hooks/useTheme';
 
+// Clinical Mode - separates Envision Atlus (clinical) from WellFit (community)
+import { useClinicalMode } from './hooks/useClinicalMode';
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CLINICAL MODE WRAPPER
+// Only renders Envision Atlus components for clinical users (physicians, nurses, admin, etc.)
+// WellFit community users (seniors, patients, caregivers) see simplified interface
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function ClinicalModeComponents() {
+  const { isClinical, loading } = useClinicalMode();
+
+  // Don't render clinical components while loading or for non-clinical users
+  if (loading || !isClinical) {
+    return null;
+  }
+
+  return (
+    <>
+      {/* Global Voice Command Bar - compact mic icon that expands when clicked */}
+      <VoiceCommandBar />
+
+      {/* Global Search Bar - keyboard-accessible search (Ctrl+/) (ATLUS: Intuitive) */}
+      <div className="fixed top-4 right-4 z-50">
+        <GlobalSearchBar />
+      </div>
+
+      {/* Voice Search Overlay - Shows search results from smart voice commands (ATLUS: Intuitive) */}
+      <VoiceSearchOverlay />
+
+      {/* Session Resume Prompt - Shows when user returns and has previous session (ATLUS: Unity) */}
+      <EASessionResume />
+
+      {/* Real-Time Alert Notifications - Push-based critical alerts (ATLUS: Leading) */}
+      <EARealtimeAlertNotifications />
+    </>
+  );
+}
+
+/**
+ * Clinical Patient Banner Wrapper
+ * Only shows patient banner for clinical users (outside AuthGate for layout purposes)
+ */
+function ClinicalPatientBanner({ className }: { className?: string }) {
+  const { isClinical, loading } = useClinicalMode();
+
+  if (loading || !isClinical) {
+    return null;
+  }
+
+  return <EAPatientBanner className={className} />;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // SHELL COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -97,7 +150,8 @@ function Shell() {
       <AppHeader />
 
       {/* Patient Banner - Shows currently selected patient (ATLUS: Unity) */}
-      <EAPatientBanner className="sticky top-0 z-40" />
+      {/* Only visible to clinical users (physicians, nurses, admin, etc.) */}
+      <ClinicalPatientBanner className="sticky top-0 z-40" />
 
       <AuthGate>
         <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
@@ -109,22 +163,10 @@ function Shell() {
         {/* Offline indicator for all users */}
         <OfflineIndicator />
 
-        {/* Global Voice Command Bar - compact mic icon that expands when clicked */}
-        <VoiceCommandBar />
-
-        {/* Global Search Bar - keyboard-accessible search (Ctrl+/) (ATLUS: Intuitive) */}
-        <div className="fixed top-4 right-4 z-50">
-          <GlobalSearchBar />
-        </div>
-
-        {/* Voice Search Overlay - Shows search results from smart voice commands (ATLUS: Intuitive) */}
-        <VoiceSearchOverlay />
-
-        {/* Session Resume Prompt - Shows when user returns and has previous session (ATLUS: Unity) */}
-        <EASessionResume />
-
-        {/* Real-Time Alert Notifications - Push-based critical alerts (ATLUS: Leading) */}
-        <EARealtimeAlertNotifications />
+        {/* Envision Atlus Clinical Components - Hidden from WellFit community users */}
+        {/* Clinical users see: VoiceCommandBar, GlobalSearchBar, VoiceSearchOverlay, EASessionResume, EARealtimeAlertNotifications */}
+        {/* Community users (seniors, patients, caregivers) see simplified WellFit interface */}
+        <ClinicalModeComponents />
       </AuthGate>
     </AppProviders>
   );
