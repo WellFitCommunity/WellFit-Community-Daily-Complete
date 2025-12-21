@@ -409,11 +409,11 @@ export class AISystemRecorder {
     this.snapshotBuffer = [];
 
     try {
-      await supabase.from('system_recordings').insert({
+      await supabase.from('system_recordings').upsert({
         session_id: this.currentSession?.session_id,
         snapshots: snapshots,
         recorded_at: new Date().toISOString(),
-      });
+      }, { onConflict: 'session_id' });
     } catch {
       // Snapshots will be retried on next flush
     }
