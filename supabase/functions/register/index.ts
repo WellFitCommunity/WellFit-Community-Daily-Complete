@@ -197,6 +197,44 @@ resource_type: 'auth_event',
     // Enforce safe public role (defaults to senior)
     const enforced = effectiveRole(payload.role_code);
 
+    // CHECK IF USER ALREADY REGISTERED (exists in auth.users)
+    // If so, direct them to login instead of making them re-register
+    const { data: existingUsers } = await supabase
+      .from("profiles")
+      .select("user_id, first_name, last_name")
+      .eq("phone", phoneNumber)
+      .limit(1);
+
+    if (existingUsers && existingUsers.length > 0) {
+      // User already exists - tell them to log in
+      const existingUser = existingUsers[0];
+
+      // HIPAA AUDIT LOGGING: Log registration attempt for existing user
+      try {
+        await supabase.from('audit_logs').insert({
+          event_type: 'USER_REGISTER_EXISTS',
+          event_category: 'AUTHENTICATION',
+          actor_user_id: existingUser.user_id,
+          actor_ip_address: clientIp,
+          actor_user_agent: req.headers.get('user-agent'),
+          operation: 'REGISTER',
+          resource_type: 'auth_event',
+          success: false,
+          error_code: 'USER_ALREADY_EXISTS',
+          error_message: 'Registration attempted for existing user',
+          metadata: { phone: phoneNumber }
+        });
+      } catch (logError) {
+        console.error('[Audit Log Error]:', logError);
+      }
+
+      return jsonResponse({
+        error: "already_registered",
+        message: `An account with this phone number already exists. Please log in instead.`,
+        redirect: "/login"
+      }, 409, origin); // 409 Conflict
+    }
+
     // SHARED PHONE SUPPORT: Allow multiple users to share the same phone number
     // This is critical for low-income communities where spouses share phones
     // The sms-verify-code function handles creating unique auth identifiers

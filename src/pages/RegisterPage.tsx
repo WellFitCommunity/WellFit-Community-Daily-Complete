@@ -231,7 +231,19 @@ const RegisterPage: React.FC = () => {
       const data = await res.json().catch(() => ({} as any));
 
       if (!res.ok || data?.error) {
-        const msg = data?.details || data?.error || `Registration failed (${res.status})`;
+        // Handle "already registered" case - redirect to login
+        if (data?.error === 'already_registered' || res.status === 409) {
+          completedRef.current = true;
+          navigate('/login', {
+            state: {
+              message: data?.message || 'An account with this phone number already exists. Please log in.',
+              phone: normalizedPhone
+            },
+            replace: true
+          });
+          return;
+        }
+        const msg = data?.details || data?.message || data?.error || `Registration failed (${res.status})`;
         throw new Error(String(msg));
       }
 

@@ -3,7 +3,7 @@
 // SOC2 CC6.1: Includes rate limiting and account lockout protection
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useSupabaseClient } from '../contexts/AuthContext';
 // Branding config replaces hardcoded WELLFIT_COLORS and APP_INFO
 import HCaptchaWidget, { HCaptchaRef } from '../components/HCaptchaWidget';
@@ -22,16 +22,22 @@ const isPhone = (val: string) => /^\d{10,15}$/.test(val.replace(/[^\d]/g, ''));
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const supabase = useSupabaseClient();
   const { branding } = useBranding();
 
-  // Default to admin mode for easier staff access
-  const [mode, setMode] = useState<Mode>('admin');
+  // Check for redirect message from registration
+  const locationState = location.state as { message?: string; phone?: string } | null;
+  const redirectMessage = locationState?.message;
+  const prefillPhone = locationState?.phone;
+
+  // Default to admin mode for easier staff access, but switch to senior if coming from register
+  const [mode, setMode] = useState<Mode>(prefillPhone ? 'senior' : 'admin');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
 
-  // senior fields
-  const [phone, setPhone] = useState('+1 ');
+  // senior fields - prefill phone if coming from register redirect
+  const [phone, setPhone] = useState(prefillPhone || '+1 ');
   const [seniorPassword, setSeniorPassword] = useState('');
 
   // admin fields
@@ -557,6 +563,13 @@ const LoginPage: React.FC = () => {
       </div>
 
       {/* Forms */}
+      {/* Show redirect message from registration */}
+      {redirectMessage && (
+        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-blue-800 text-center font-medium">{redirectMessage}</p>
+        </div>
+      )}
+
       {(mode === 'senior' || mode === 'patient') ? (
         <form onSubmit={handleSeniorLogin} className="space-y-4" noValidate>
           <div>
