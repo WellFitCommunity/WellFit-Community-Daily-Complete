@@ -50,12 +50,20 @@ export function createAuthAwareFetch(): typeof fetch {
     input: RequestInfo | URL,
     init?: RequestInit
   ): Promise<Response> {
-    const response = await originalFetch(input, init);
-
-    // Only check auth endpoints and API calls to Supabase
+    // Get URL before fetch for error handling
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
     const isSupabaseCall = url.includes('.supabase.co') || url.includes('.supabase.com');
 
+    let response: Response;
+    try {
+      response = await originalFetch(input, init);
+    } catch (networkError) {
+      // Network errors (ERR_ADDRESS_UNREACHABLE, etc.) - just rethrow
+      // These are connectivity issues, not auth issues
+      throw networkError;
+    }
+
+    // Only process Supabase calls for auth error detection
     if (!isSupabaseCall) {
       return response;
     }

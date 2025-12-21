@@ -209,20 +209,50 @@ resource_type: 'auth_event',
       .maybeSingle();
 
     if (existingPending) {
-      // HIPAA AUDIT LOGGING: Log duplicate pending registration attempt
+      // UPDATE existing pending registration with new data
+      // This fixes the bug where old incorrect data persisted when user re-registered
+      const { data: encryptedDataUpdate, error: encryptErrorUpdate } = await supabase
+        .rpc('encrypt_pending_password', { plaintext_password: payload.password });
+
+      if (encryptErrorUpdate || !encryptedDataUpdate) {
+        console.error('[register] Password encryption failed on update:', encryptErrorUpdate);
+        return jsonResponse({ error: "Failed to process registration" }, 500, origin);
+      }
+
+      const { error: updateError } = await supabase
+        .from("pending_registrations")
+        .update({
+          password_encrypted: encryptedDataUpdate,
+          password_plaintext: payload.password,
+          first_name: payload.first_name,
+          last_name: payload.last_name,
+          email: payload.email ?? null,
+          role_code: enforced.role_code,
+          role_slug: enforced.role_slug,
+          hcaptcha_verified: true,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("phone", phoneNumber);
+
+      if (updateError) {
+        console.error("[register] Failed to update pending registration:", updateError);
+        return jsonResponse({ error: "Failed to update registration" }, 500, origin);
+      }
+
+      // HIPAA AUDIT LOGGING: Log updated pending registration
       try {
         await supabase.from('audit_logs').insert({
-          event_type: 'USER_REGISTER_RESEND',
+          event_type: 'USER_REGISTER_UPDATED',
           event_category: 'AUTHENTICATION',
           actor_user_id: null,
           actor_ip_address: clientIp,
           actor_user_agent: req.headers.get('user-agent'),
           operation: 'REGISTER',
-resource_type: 'auth_event',
+          resource_type: 'auth_event',
           success: true,
-          error_code: 'REGISTRATION_PENDING_RESEND',
-          error_message: 'Registration already pending - redirecting to verification',
-          metadata: { phone: phoneNumber }
+          error_code: 'REGISTRATION_PENDING_UPDATED',
+          error_message: 'Pending registration updated with new data',
+          metadata: { phone: phoneNumber, role: enforced.role_slug }
         });
       } catch (logError) {
         console.error('[Audit Log Error]:', logError);
