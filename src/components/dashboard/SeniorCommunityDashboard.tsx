@@ -289,23 +289,37 @@ const SeniorCommunityDashboard: React.FC = () => {
 
   const logCheckIn = async (_type: string, label: string, response: string, metadata?: any) => {
     try {
+      if (!user?.id) return;
+
+      // Get user's tenant_id (required for check_ins)
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (!profile?.tenant_id) {
+        auditLogger.warn('CHECK_IN_SKIPPED', { userId: user.id, reason: 'No tenant_id' });
+        return;
+      }
+
       await supabase.from('check_ins').insert({
-        user_id: user?.id,
+        user_id: user.id,
+        tenant_id: profile.tenant_id,
         label,
-        notes: response,
-        metadata: metadata || {},
-        created_at: new Date().toISOString()
+        is_emergency: false,
+        metadata: { ...metadata, response }
       });
 
       // HIPAA Audit: Log patient check-in
       await auditLogger.clinical('CHECK_IN', true, {
-        userId: user?.id,
+        userId: user.id,
         label,
         hasMetadata: !!metadata
       });
-    } catch (error) {
+    } catch (err: unknown) {
       // HIPAA Audit: Log check-in failure
-      await auditLogger.error('CHECK_IN_FAILED', error instanceof Error ? error : new Error('Unknown error'), {
+      await auditLogger.error('CHECK_IN_FAILED', err instanceof Error ? err : new Error('Unknown error'), {
         userId: user?.id,
         label
       });
