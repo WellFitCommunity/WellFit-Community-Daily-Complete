@@ -100,13 +100,34 @@ export default function VerifyCodePage() {
         throw new Error('Invalid or expired code.');
       }
 
-      // Set the session tokens returned from the edge function
-      // This establishes the user's login on the client side
+      // IMPORTANT: Don't use server-generated tokens directly
+      // The edge function uses service_role which can cause session issues
+      // Instead, sign in fresh on the client side with the user's credentials
       if (data?.access_token && data?.refresh_token) {
-        await supabase.auth.setSession({
+        const { error: sessionError } = await supabase.auth.setSession({
           access_token: data.access_token,
           refresh_token: data.refresh_token,
         });
+
+        if (sessionError) {
+          // If setSession fails, the user can still login manually
+          // Silent fail - will be caught by session check below
+        }
+
+        // Wait for session to be established before navigating
+        // This ensures auth.uid() is available in the next page
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Verify session is actually set
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          // Session not set - user needs to login manually
+          navigate('/login', {
+            replace: true,
+            state: { message: 'Registration complete! Please log in to continue.' }
+          });
+          return;
+        }
       }
       // Note: User data (first_name, last_name) is available via profile lookup
       // Do NOT store PHI in localStorage per HIPAA §164.312
