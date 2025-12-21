@@ -7,6 +7,7 @@
  */
 
 import { supabase } from '../lib/supabaseClient';
+import { auditLogger } from './auditLogger';
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -474,24 +475,21 @@ export class SecureFHIROperations {
       }
 
       if (errors.length > 0) {
-        await AuditLogger.logFHIROperation(
-          'FHIR_IMPORT_FAILED',
-          'FHIR_BUNDLE',
-          false,
-          { connection_id: connectionId, error_count: errors.length },
-          errors.join(', ')
-        );
+        await auditLogger.clinical('FHIR_IMPORT_FAILED', false, {
+          resource_type: 'FHIR_BUNDLE',
+          connection_id: connectionId,
+          error_count: errors.length,
+          error_message: errors.join(', ')
+        });
         return { success: false, errors };
       }
 
       // Log PHI access
-      await AuditLogger.logPHIAccess(
-        'FHIR_BUNDLE',
-        connectionId,
-        'WRITE',
-        userId,
-        { resources_count: Object.keys(fhirData).length }
-      );
+      await auditLogger.phi('WRITE', connectionId, {
+        resource_type: 'FHIR_BUNDLE',
+        user_id: userId,
+        resources_count: Object.keys(fhirData).length
+      });
 
       // Sanitize input
       const sanitizedData = FHIRValidator.sanitizeInput(fhirData);
@@ -499,12 +497,11 @@ export class SecureFHIROperations {
       // Import data (actual implementation in fhirInteroperabilityIntegrator.ts)
       // This is just a security wrapper
 
-      await AuditLogger.logFHIROperation(
-        'FHIR_IMPORT_COMPLETED',
-        'FHIR_BUNDLE',
-        true,
-        { connection_id: connectionId, user_id: userId }
-      );
+      await auditLogger.clinical('FHIR_IMPORT_COMPLETED', true, {
+        resource_type: 'FHIR_BUNDLE',
+        connection_id: connectionId,
+        user_id: userId
+      });
 
       return { success: true, errors: [] };
     } catch (error) {
@@ -526,13 +523,11 @@ export class SecureFHIROperations {
       await RateLimiter.enforce('FHIR_EXPORT', 10, 60);
 
       // Log PHI export
-      await AuditLogger.logPHIAccess(
-        'FHIR_BUNDLE',
-        userId,
-        'EXPORT',
-        userId,
-        options
-      );
+      await auditLogger.phi('EXPORT', userId, {
+        resource_type: 'FHIR_BUNDLE',
+        user_id: userId,
+        ...options
+      });
 
       // Check for mass export (security concern)
       if (options?.includeAllPatients) {
@@ -548,24 +543,20 @@ export class SecureFHIROperations {
       // Actual export implementation would go here
       // This is just a security wrapper
 
-      await AuditLogger.logFHIROperation(
-        'FHIR_EXPORT_COMPLETED',
-        'FHIR_BUNDLE',
-        true,
-        { user_id: userId }
-      );
+      await auditLogger.clinical('FHIR_EXPORT_COMPLETED', true, {
+        resource_type: 'FHIR_BUNDLE',
+        user_id: userId
+      });
 
       return { bundle: {} }; // Placeholder
     } catch (error) {
       const sanitizedError = ErrorSanitizer.sanitize(error);
       await ErrorSanitizer.logError(error, { user_id: userId });
-      await AuditLogger.logFHIROperation(
-        'FHIR_EXPORT_FAILED',
-        'FHIR_BUNDLE',
-        false,
-        { user_id: userId },
-        sanitizedError
-      );
+      await auditLogger.clinical('FHIR_EXPORT_FAILED', false, {
+        resource_type: 'FHIR_BUNDLE',
+        user_id: userId,
+        error_message: sanitizedError
+      });
       return { bundle: {}, error: sanitizedError };
     }
   }
