@@ -53,7 +53,7 @@ const SeniorCommunityDashboard: React.FC = () => {
           .select('file_url, file_path')
           .order('created_at', { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
 
         if (data?.file_url) {
           setRecentCommunityPhoto(data.file_url);
@@ -70,8 +70,8 @@ const SeniorCommunityDashboard: React.FC = () => {
           const { data } = await supabase
             .from('profiles')
             .select('caregiver_phone')
-            .eq('id', user.id)
-            .single();
+            .eq('user_id', user.id)
+            .maybeSingle();
 
           if (data?.caregiver_phone) {
             setCaregiverPhone(data.caregiver_phone);

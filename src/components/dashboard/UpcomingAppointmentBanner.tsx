@@ -46,10 +46,10 @@ const UpcomingAppointmentBanner: React.FC = () => {
           .lte('appointment_time', tomorrow.toISOString())
           .order('appointment_time', { ascending: true })
           .limit(1)
-          .single();
+          .maybeSingle();
 
         if (error) {
-          // No appointment found - that's okay
+          // Query error - log but don't crash
           return;
         }
 
