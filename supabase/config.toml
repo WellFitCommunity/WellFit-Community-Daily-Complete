@@ -15,3 +15,27 @@ verify_jwt = false
 
 [functions.system-status]
 verify_jwt = false
+
+# Login security - called before authentication
+[functions.login-security]
+verify_jwt = false
+
+# Envision login functions - some called before/during authentication
+[functions.envision-login]
+verify_jwt = false
+
+[functions.envision-verify-pin]
+verify_jwt = false
+
+[functions.envision-request-reset]
+verify_jwt = false
+
+[functions.envision-complete-reset]
+verify_jwt = false
+
+# Admin login and PIN functions
+[functions.admin-login]
+verify_jwt = false
+
+[functions.verify-admin-pin]
+verify_jwt = false

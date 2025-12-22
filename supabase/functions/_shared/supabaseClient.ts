@@ -61,9 +61,11 @@ export function createSupabaseClient(
   options: SupabaseClientOptions = {}
 ): SupabaseClient {
   const supabaseUrl = Deno.env.get('SUPABASE_URL') || Deno.env.get('SB_URL');
+  // For user-context operations, prefer SB_ANON_KEY (JWT format) which works with Supabase auth
+  // The sb_publishable_* format is not yet fully supported for auth
   const supabaseKey = options.useServiceRole
     ? (Deno.env.get('SB_SECRET_KEY') || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'))
-    : (Deno.env.get('SB_PUBLISHABLE_API_KEY') || Deno.env.get('SUPABASE_ANON_KEY'));
+    : (Deno.env.get('SB_ANON_KEY') || Deno.env.get('SUPABASE_ANON_KEY') || Deno.env.get('SB_PUBLISHABLE_API_KEY'));
 
   if (!supabaseUrl) {
     throw new Error('SUPABASE_URL or SB_URL environment variable is required');

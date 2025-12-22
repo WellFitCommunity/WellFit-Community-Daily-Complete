@@ -18,8 +18,10 @@ export const SUPABASE_URL: string =
 export const SB_SECRET_KEY: string =
   envGet("SB_SECRET_KEY") || envGet("SUPABASE_SERVICE_ROLE_KEY");
 
+// For auth operations, prefer SB_ANON_KEY (JWT format) which works with Supabase auth
+// The sb_publishable_* format is not yet fully supported for auth
 export const SB_PUBLISHABLE_API_KEY: string =
-  envGet("SB_PUBLISHABLE_API_KEY") || envGet("SUPABASE_ANON_KEY");
+  envGet("SB_ANON_KEY") || envGet("SUPABASE_ANON_KEY") || envGet("SB_PUBLISHABLE_API_KEY");
 
 // ---- hCaptcha ----
 export const HCAPTCHA_SECRET: string =

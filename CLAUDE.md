@@ -237,13 +237,39 @@ npx supabase db push
 | Variable | Purpose |
 |----------|---------|
 | `VITE_SUPABASE_URL` | Supabase project URL |
-| `VITE_SUPABASE_ANON_KEY` | Supabase publishable/anon key |
+| `VITE_SUPABASE_ANON_KEY` | Supabase JWT anon key (required for auth) |
 | `VITE_HCAPTCHA_SITE_KEY` | hCaptcha site key for bot protection |
 | `VITE_ANTHROPIC_API_KEY` | Claude AI API key |
 
-**Supabase Key Naming:**
-- `SB_PUBLISHABLE_KEY` (anon) - Client-side, safe to expose
-- `SB_SECRET_KEY` (service_role) - Server-side only, NEVER expose
+### Supabase Key Migration (December 2025)
+
+**Database:** Fully migrated to **PostgreSQL 17** via Supabase.
+
+**Key Naming Convention (Current):**
+
+| Key Name | Format | Usage |
+|----------|--------|-------|
+| `SB_PUBLISHABLE_API_KEY` | `sb_publishable_*` | New publishable key format |
+| `SB_SECRET_KEY` | `sb_secret_*` | New secret key format (server-side only) |
+| `SB_ANON_KEY` | JWT (`eyJhbGci...`) | Legacy JWT anon key |
+| `SUPABASE_ANON_KEY` | JWT (`eyJhbGci...`) | Legacy JWT anon key (alias) |
+| `SUPABASE_SERVICE_ROLE_KEY` | JWT | Legacy service role key (alias) |
+
+**IMPORTANT - Key Format Compatibility:**
+- **Client-side auth REQUIRES the JWT format** (`VITE_SUPABASE_ANON_KEY` or `SB_ANON_KEY`)
+- The new `sb_publishable_*` format is NOT yet supported by Supabase JS client for authentication
+- Edge Functions should prefer `SB_ANON_KEY` (JWT) for user token validation
+- Service role operations use `SB_SECRET_KEY` (new format works)
+- Legacy JWT keys remain functional until fully deprecated by Supabase
+
+**Order of Preference in Edge Functions:**
+```typescript
+// For user-context operations:
+getEnv("SB_ANON_KEY", "SUPABASE_ANON_KEY", "SB_PUBLISHABLE_API_KEY")
+
+// For service role operations:
+getEnv("SB_SECRET_KEY", "SUPABASE_SERVICE_ROLE_KEY")
+```
 
 ---
 
@@ -411,7 +437,8 @@ VITE_FEATURE_NEURO_SUITE=true
 ## Current Status
 - **Architecture**: White-label multi-tenant SaaS
 - **CORS**: Fully white-label ready (any HTTPS origin allowed)
-- **Database**: PostgreSQL 17 via Supabase with RLS
+- **Database**: PostgreSQL 17 via Supabase with RLS (fully migrated December 2025)
+- **Authentication**: JWT anon keys + new sb_publishable/sb_secret key format (hybrid until Supabase SDK full support)
 - **UI**: Envision Atlus design system migration in progress
 - **Build**: Vite + React 19 (migrated December 2025)
 - **Tests**: 1,200+ tests across 71 suites (100% pass rate)
