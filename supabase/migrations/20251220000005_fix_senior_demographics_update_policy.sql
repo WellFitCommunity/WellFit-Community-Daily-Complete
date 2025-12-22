@@ -8,6 +8,7 @@ DROP POLICY IF EXISTS "Users can update own demographics with consent" ON senior
 
 -- Create a simpler policy that allows users to update their own demographics
 -- The consent check was too restrictive since demographics is filled out BEFORE consent
+DROP POLICY IF EXISTS "Users can update own demographics" ON senior_demographics;
 CREATE POLICY "Users can update own demographics" ON senior_demographics
   FOR UPDATE
   USING (user_id = auth.uid())
@@ -15,6 +16,7 @@ CREATE POLICY "Users can update own demographics" ON senior_demographics
 
 -- Also fix senior_health table if it has similar policy
 DROP POLICY IF EXISTS "Users can update own health with consent" ON senior_health;
+DROP POLICY IF EXISTS "Users can update own health" ON senior_health;
 
 CREATE POLICY "Users can update own health" ON senior_health
   FOR UPDATE
@@ -23,6 +25,7 @@ CREATE POLICY "Users can update own health" ON senior_health
 
 -- Fix senior_sdoh table if it has similar policy
 DROP POLICY IF EXISTS "Users can update own sdoh with consent" ON senior_sdoh;
+DROP POLICY IF EXISTS "Users can update own sdoh" ON senior_sdoh;
 
 CREATE POLICY "Users can update own sdoh" ON senior_sdoh
   FOR UPDATE
@@ -31,6 +34,7 @@ CREATE POLICY "Users can update own sdoh" ON senior_sdoh
 
 -- Fix senior_emergency_contacts table if it has similar policy
 DROP POLICY IF EXISTS "Users can update own emergency contacts with consent" ON senior_emergency_contacts;
+DROP POLICY IF EXISTS "Users can update own emergency contacts" ON senior_emergency_contacts;
 
 CREATE POLICY "Users can update own emergency contacts" ON senior_emergency_contacts
   FOR UPDATE

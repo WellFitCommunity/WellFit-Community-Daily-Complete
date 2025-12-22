@@ -33,19 +33,5 @@ verify_jwt = false
 [functions.envision-complete-reset]
 verify_jwt = false
 
-# Admin login and PIN functions
-[functions.admin-login]
-verify_jwt = false
-
-[functions.verify-admin-pin]
-verify_jwt = false
-
-# WellFit admin login functions (no JWT required)
-[functions.wellfit-admin-login]
-verify_jwt = false
-
-[functions.wellfit-verify-pin]
-verify_jwt = false
-
-[functions.setup-admin-credentials]
-verify_jwt = false
+# Note: admin-login, wellfit-admin-login, wellfit-verify-pin were deleted
+# Use standard Supabase auth + envision-login + envision-verify-pin instead
