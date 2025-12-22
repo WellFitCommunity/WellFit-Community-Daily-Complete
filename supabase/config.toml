@@ -39,3 +39,13 @@ verify_jwt = false
 
 [functions.verify-admin-pin]
 verify_jwt = false
+
+# WellFit admin login functions (no JWT required)
+[functions.wellfit-admin-login]
+verify_jwt = false
+
+[functions.wellfit-verify-pin]
+verify_jwt = false
+
+[functions.setup-admin-credentials]
+verify_jwt = false

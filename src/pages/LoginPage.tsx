@@ -418,46 +418,72 @@ const LoginPage: React.FC = () => {
         // Ignore audit logging errors
       }
 
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email: emailTrimmed,
-        password: adminPassword,
-        options: { captchaToken: token },
+      // Use wellfit-admin-login Edge Function (server-side auth, no JWT dependency)
+      const { data: loginData, error: loginError } = await supabase.functions.invoke('wellfit-admin-login', {
+        body: {
+          email: emailTrimmed,
+          password: adminPassword
+        }
       });
 
-      // SOC2 CC6.1: Record login attempt via Edge Function (works for both success/failure)
+      // SOC2 CC6.1: Record login attempt via Edge Function
       recordLoginAttempt({
         identifier: emailTrimmed,
         attemptType: 'password',
-        success: !signInError,
-        userId: data?.user?.id,
-        errorMessage: signInError?.message,
+        success: !loginError && loginData?.success,
+        userId: loginData?.user?.user_id,
+        errorMessage: loginError?.message || loginData?.error,
       });
 
-      if (signInError) {
-        const msg = (signInError.message || '').toLowerCase();
-
-        // Check for invalid credentials FIRST (most common case)
-        if (msg.includes('invalid login credentials') || msg.includes('invalid password')) {
-          setError('Admin login failed. Check your email and password.');
-        } else if (msg.includes('captcha verification') || msg.includes('captcha token')) {
-          // Only treat as captcha error if explicitly about captcha verification
-          refreshCaptcha();
-          setError('Captcha failed. Please try again.');
-        } else if (msg.includes('confirm')) {
-          setError('Email not confirmed. Please check your inbox.');
-        } else {
-          setError('An error occurred during admin login. Please try again.');
-        }
+      if (loginError) {
+        setError(loginError.message || 'Login failed. Please try again.');
+        refreshCaptcha();
         return;
       }
 
-      auditLogger.auth('LOGIN', true, { method: 'email_password', userType: 'admin' });
-      const route = await nextRouteForUser();
-      auditLogger.info('ADMIN_LOGIN_NAVIGATION', { route });
-      navigate(route, { replace: true });
-    } catch (err: any) {
-      auditLogger.auth('LOGIN_FAILED', false, { method: 'email_password', userType: 'admin', error: err?.message });
-      setError(err?.message || 'Unexpected error during admin login.');
+      if (loginData?.error) {
+        setError(loginData.error);
+        if (loginData.warning) {
+          // Show warning about remaining attempts
+          setError(`${loginData.error} ${loginData.warning}`);
+        }
+        refreshCaptcha();
+        return;
+      }
+
+      if (!loginData?.success || !loginData?.session_token) {
+        setError('Login failed. Please try again.');
+        refreshCaptcha();
+        return;
+      }
+
+      // Store WellFit admin session
+      localStorage.setItem('wellfit_admin_session', loginData.session_token);
+      localStorage.setItem('wellfit_admin_user', JSON.stringify(loginData.user));
+
+      auditLogger.auth('LOGIN', true, { method: 'wellfit_edge_function', userType: 'admin' });
+
+      // Check if PIN is required
+      if (loginData.requires_pin) {
+        // Navigate to admin-login for PIN entry
+        auditLogger.info('ADMIN_LOGIN_REQUIRES_PIN', { email: emailTrimmed });
+        navigate('/admin-login', {
+          replace: true,
+          state: {
+            session_token: loginData.session_token,
+            user: loginData.user,
+            from_wellfit_login: true
+          }
+        });
+      } else {
+        // No PIN required, go directly to admin dashboard
+        auditLogger.info('ADMIN_LOGIN_NAVIGATION', { route: '/admin' });
+        navigate('/admin', { replace: true });
+      }
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Unexpected error during admin login.';
+      auditLogger.auth('LOGIN_FAILED', false, { method: 'email_password', userType: 'admin', error: errMsg });
+      setError(errMsg);
     } finally {
       setLoading(false);
     }
