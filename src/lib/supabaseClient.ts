@@ -46,8 +46,8 @@ export const supabase = createClient(url as string, key as string, {
     detectSessionInUrl: true,
     // Use sessionStorage instead of localStorage for HIPAA compliance
     storage: hipaaCompliantStorage,
-    // Storage key prefix for Supabase auth
-    storageKey: 'sb-auth',
+    // Let Supabase use its default storage key format (sb-<project-ref>-auth-token)
+    // Do not override storageKey as it must match what the SDK expects
   },
   global: {
     // Auth-aware fetch intercepts invalid refresh token errors at the transport layer
