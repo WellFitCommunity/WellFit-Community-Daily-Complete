@@ -74,7 +74,10 @@ export const EnvisionLoginPage: React.FC = () => {
     // even if they're already logged into WellFit Community.
   }, []);
 
-  // Step 1: Login with Supabase auth
+  // Session token from envision-login Edge Function (used for 2FA step)
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
+
+  // Step 1: Login via envision-login Edge Function (server-side auth, no JWT dependency)
   const handleCredentials = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -90,65 +93,81 @@ export const EnvisionLoginPage: React.FC = () => {
         return;
       }
 
-      // Use Supabase's built-in signInWithPassword with captcha
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password: password,
-        options: { captchaToken }
+      // Call envision-login Edge Function (uses service role key, not JWT)
+      const { data: loginData, error: loginError } = await supabase.functions.invoke('envision-login', {
+        body: {
+          email: email.trim(),
+          password: password
+        }
       });
 
-      if (authError) {
-        setError(authError.message || 'Invalid email or password');
+      if (loginError) {
+        setError(loginError.message || 'Login failed. Please try again.');
+        captchaRef.current?.reset();
+        setCaptchaToken(null);
         return;
       }
 
-      if (!authData.user) {
+      if (loginData?.error) {
+        setError(loginData.error);
+        if (loginData.warning) {
+          setWarning(loginData.warning);
+        }
+        captchaRef.current?.reset();
+        setCaptchaToken(null);
+        return;
+      }
+
+      // Check if user needs to use Supabase auth instead
+      if (loginData?.use_supabase_auth) {
+        setError('This account uses standard login. Please use the main login page.');
+        return;
+      }
+
+      if (!loginData?.success || !loginData?.session_token) {
         setError('Login failed. Please try again.');
         return;
       }
 
       setPassword(''); // Clear password from memory
-
-      // Now check if this user is a super admin
-      const { data: checkData, error: checkError } = await supabase.functions.invoke('envision-check-super-admin', {
-        headers: {
-          Authorization: `Bearer ${authData.session?.access_token}`
-        }
-      });
-
-      if (checkError) {
-        // Sign out since they're not authorized
-        await supabase.auth.signOut();
-        setError('Failed to verify authorization');
-        return;
-      }
-
-      if (!checkData?.is_super_admin) {
-        // Not a super admin - sign them out
-        await supabase.auth.signOut();
-        setError('This account does not have Envision portal access.');
-        return;
-      }
-
-      if (!checkData?.is_active) {
-        await supabase.auth.signOut();
-        setError('Your Envision account has been deactivated.');
-        return;
-      }
+      setSessionToken(loginData.session_token);
 
       // Store super admin data
-      setSuperAdminData(checkData.user);
+      const userData = {
+        id: '',
+        email: email.trim(),
+        full_name: '',
+        role: 'super_admin',
+        permissions: []
+      };
+      setSuperAdminData(userData);
 
-      // Check if TOTP verification is required
-      if (checkData.requires_totp) {
-        setSuccessMsg('Password verified. Please enter your authenticator code.');
+      // Determine next step based on 2FA status
+      if (loginData.totp_enabled) {
+        setSuccessMsg(loginData.message || 'Password verified. Please enter your authenticator code.');
         setStep('totp');
-      } else {
-        // No TOTP required, go directly to portal
+      } else if (loginData.pin_configured) {
+        setSuccessMsg(loginData.message || 'Password verified. Please enter your PIN.');
+        setStep('totp'); // Using same step for PIN entry
+      } else if (loginData.requires_2fa_setup) {
+        // No 2FA configured - store session and allow access
+        localStorage.setItem('envision_session', loginData.session_token);
+        localStorage.setItem('envision_user', JSON.stringify(userData));
+
         await auditLogger.info('ENVISION_LOGIN_SUCCESS', {
-          superAdminId: checkData.user.id,
-          role: checkData.user.role,
-          method: 'supabase_auth'
+          email: email.trim(),
+          method: 'password_only',
+          note: '2FA not configured'
+        });
+        navigate('/super-admin');
+      } else {
+        // No 2FA required - store session and go directly to portal
+        localStorage.setItem('envision_session', loginData.session_token);
+        localStorage.setItem('envision_user', JSON.stringify(userData));
+
+        await auditLogger.info('ENVISION_LOGIN_SUCCESS', {
+          email: email.trim(),
+          method: 'envision_edge_function'
         });
         navigate('/super-admin');
       }

@@ -1,12 +1,17 @@
 // src/components/auth/RequireSuperAdmin.tsx
 // SECURITY: Route guard for super-admin only routes
 // This component ensures only platform-level super-admins can access protected routes
+// Supports both Supabase auth (legacy JWT) and Envision standalone auth
 
 import { ReactNode, useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth, useUser } from '../../contexts/AuthContext';
 import { SuperAdminService } from '../../services/superAdminService';
 import { auditLogger } from '../../services/auditLogger';
+
+// Envision auth storage keys (must match EnvisionAuthContext)
+const ENVISION_SESSION_KEY = 'envision_session';
+const ENVISION_USER_KEY = 'envision_user';
 
 interface RequireSuperAdminProps {
   children: ReactNode;
@@ -21,6 +26,18 @@ export default function RequireSuperAdmin({ children }: RequireSuperAdminProps) 
 
   useEffect(() => {
     const checkSuperAdmin = async () => {
+      // Check for Envision standalone session first (bypasses Supabase JWT requirement)
+      const envisionSession = localStorage.getItem(ENVISION_SESSION_KEY);
+      const envisionUser = localStorage.getItem(ENVISION_USER_KEY);
+
+      if (envisionSession && envisionUser) {
+        // User has Envision session - they're authenticated via Edge Function
+        setIsSuperAdmin(true);
+        setIsChecking(false);
+        return;
+      }
+
+      // Fall back to Supabase auth check
       if (!user) {
         setIsSuperAdmin(false);
         setIsChecking(false);
@@ -49,10 +66,8 @@ export default function RequireSuperAdmin({ children }: RequireSuperAdminProps) 
       }
     };
 
-    if (!authLoading && user) {
+    if (!authLoading) {
       checkSuperAdmin();
-    } else if (!authLoading && !user) {
-      setIsChecking(false);
     }
   }, [user, authLoading, location.pathname]);
 
@@ -68,12 +83,15 @@ export default function RequireSuperAdmin({ children }: RequireSuperAdminProps) 
     );
   }
 
-  // Not signed in → send to login
-  if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+  // Check for Envision session OR Supabase user
+  const hasEnvisionSession = localStorage.getItem(ENVISION_SESSION_KEY) && localStorage.getItem(ENVISION_USER_KEY);
+
+  // Not signed in via either method → send to Envision login
+  if (!user && !hasEnvisionSession) {
+    return <Navigate to="/envision" state={{ from: location }} replace />;
   }
 
-  // Signed in but not a super admin → send to unauthorized page
+  // Has some auth but not a super admin → send to unauthorized page
   if (!isSuperAdmin) {
     return <Navigate to="/unauthorized" state={{ from: location }} replace />;
   }
