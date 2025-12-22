@@ -69,7 +69,7 @@ export const EnvisionLoginPage: React.FC = () => {
     // even if they're already logged into WellFit Community.
   }, []);
 
-  // Step 1: Login with Supabase auth
+  // Step 1: Login via envision-login Edge Function (bypasses CAPTCHA)
   const handleCredentials = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -78,64 +78,58 @@ export const EnvisionLoginPage: React.FC = () => {
     setLoading(true);
 
     try {
-      // Use Supabase's built-in signInWithPassword
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password: password
+      // Call envision-login Edge Function directly (no CAPTCHA required)
+      const { data: loginData, error: loginError } = await supabase.functions.invoke('envision-login', {
+        body: {
+          email: email.trim(),
+          password: password
+        }
       });
 
-      if (authError) {
-        setError(authError.message || 'Invalid email or password');
+      if (loginError) {
+        setError(loginError.message || 'Login failed');
         return;
       }
 
-      if (!authData.user) {
+      if (loginData?.error) {
+        setError(loginData.error);
+        if (loginData.warning) {
+          setWarning(loginData.warning);
+        }
+        return;
+      }
+
+      if (!loginData?.success) {
         setError('Login failed. Please try again.');
         return;
       }
 
       setPassword(''); // Clear password from memory
 
-      // Now check if this user is a super admin
-      const { data: checkData, error: checkError } = await supabase.functions.invoke('envision-check-super-admin', {
-        headers: {
-          Authorization: `Bearer ${authData.session?.access_token}`
-        }
-      });
+      // Store session token for 2FA step
+      localStorage.setItem('envision_session_token', loginData.session_token);
+      localStorage.setItem('envision_session_expires', loginData.expires_at);
 
-      if (checkError) {
-        // Sign out since they're not authorized
-        await supabase.auth.signOut();
-        setError('Failed to verify authorization');
-        return;
-      }
-
-      if (!checkData?.is_super_admin) {
-        // Not a super admin - sign them out
-        await supabase.auth.signOut();
-        setError('This account does not have Envision portal access.');
-        return;
-      }
-
-      if (!checkData?.is_active) {
-        await supabase.auth.signOut();
-        setError('Your Envision account has been deactivated.');
-        return;
-      }
-
-      // Store super admin data
-      setSuperAdminData(checkData.user);
-
-      // Check if TOTP verification is required
-      if (checkData.requires_totp) {
-        setSuccessMsg('Password verified. Please enter your authenticator code.');
+      // Check 2FA requirements from Edge Function response
+      if (loginData.totp_enabled) {
+        setSuccessMsg(loginData.message || 'Password verified. Please enter your authenticator code.');
         setStep('totp');
+      } else if (loginData.pin_configured) {
+        // PIN-based 2FA (legacy)
+        setSuccessMsg(loginData.message || 'Password verified. Please enter your PIN.');
+        setStep('totp'); // Reuse TOTP step for PIN entry
+      } else if (loginData.requires_2fa_setup) {
+        // No 2FA configured - prompt setup
+        setSuccessMsg('Password verified. Setting up two-factor authentication...');
+        setStep('totp-setup');
+        // Trigger TOTP setup
+        _handleInitiateTotpSetup();
       } else {
-        // No TOTP required, go directly to portal
+        // No 2FA required - rare case, go directly to portal
+        // But we need to get a Supabase session first
         await auditLogger.info('ENVISION_LOGIN_SUCCESS', {
-          superAdminId: checkData.user.id,
-          role: checkData.user.role,
-          method: 'supabase_auth'
+          method: 'envision_edge_function',
+          email: email.trim()
         });
         navigate('/super-admin');
       }

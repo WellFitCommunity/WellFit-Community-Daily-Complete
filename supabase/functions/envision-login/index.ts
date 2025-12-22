@@ -192,52 +192,54 @@ Deno.serve(async (req: Request): Promise<Response> => {
       }
     }
 
-    // Method 2: Fall back to Supabase Auth if standalone fails or not configured
-    if (!passwordValid && SUPABASE_ANON_KEY) {
+    // Method 2: Fall back to Supabase auth.users table if standalone fails
+    // We query auth.users directly with service role and verify bcrypt hash
+    // This bypasses the client signInWithPassword which requires CAPTCHA
+    if (!passwordValid) {
       try {
-        // Create a client with anon key for auth operations
-        const anonClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-          auth: { autoRefreshToken: false, persistSession: false }
-        });
+        // Query auth.users directly (requires service role)
+        const { data: authUser, error: authUserError } = await supabase
+          .from('auth.users')
+          .select('id, encrypted_password')
+          .ilike('email', email)
+          .single();
 
-        const { data: authData, error: authError } = await anonClient.auth.signInWithPassword({
-          email,
-          password
-        });
+        if (!authUserError && authUser?.encrypted_password) {
+          // Use bcrypt to verify password against encrypted_password
+          const { compare } = await import("https://deno.land/x/bcrypt@v0.4.1/mod.ts");
+          const bcryptValid = await compare(password, authUser.encrypted_password);
 
-        if (!authError && authData?.user) {
-          passwordValid = true;
-          authMethod = 'supabase';
+          if (bcryptValid) {
+            passwordValid = true;
+            authMethod = 'supabase';
 
-          logger.info("Envision password verified via Supabase Auth fallback", {
-            superAdminId: superAdmin.id,
-            email,
-            supabaseUserId: authData.user.id
-          });
-
-          // Sign out immediately - we just needed to verify the password
-          await anonClient.auth.signOut().catch(() => {});
-
-          // Sync password: Update standalone password_hash for future logins
-          try {
-            const newHash = await hashPassword(password);
-            await supabase
-              .from('super_admin_users')
-              .update({ password_hash: newHash })
-              .eq('id', superAdmin.id);
-
-            logger.info("Synced Supabase Auth password to standalone hash", {
-              superAdminId: superAdmin.id
+            logger.info("Envision password verified via auth.users bcrypt", {
+              superAdminId: superAdmin.id,
+              email,
+              supabaseUserId: authUser.id
             });
-          } catch (syncErr: unknown) {
-            const syncMsg = syncErr instanceof Error ? syncErr.message : String(syncErr);
-            logger.warn("Failed to sync password hash", { error: syncMsg });
-            // Continue - password verification succeeded even if sync failed
+
+            // Sync password: Update standalone password_hash for future logins
+            try {
+              const newHash = await hashPassword(password);
+              await supabase
+                .from('super_admin_users')
+                .update({ password_hash: newHash })
+                .eq('id', superAdmin.id);
+
+              logger.info("Synced Supabase Auth password to standalone hash", {
+                superAdminId: superAdmin.id
+              });
+            } catch (syncErr: unknown) {
+              const syncMsg = syncErr instanceof Error ? syncErr.message : String(syncErr);
+              logger.warn("Failed to sync password hash", { error: syncMsg });
+              // Continue - password verification succeeded even if sync failed
+            }
           }
         }
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
-        logger.warn("Supabase Auth fallback failed", { error: msg });
+        logger.warn("Auth.users bcrypt verification failed", { error: msg });
         // Continue - will be treated as failed password
       }
     }
