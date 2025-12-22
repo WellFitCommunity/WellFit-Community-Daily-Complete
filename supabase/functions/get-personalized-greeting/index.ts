@@ -133,9 +133,9 @@ serve(async (req) => {
         .select('*')
         .eq('is_active', true)
 
-      // Filter by role if available
+      // Filter by role if available - check for 'all' OR the user's specific role
       if (profile?.role) {
-        quoteQuery = quoteQuery.or(`role_specific.cs.{all,${profile.role}}`)
+        quoteQuery = quoteQuery.or(`role_specific.cs.{all},role_specific.cs.{${profile.role}}`)
       }
 
       // Filter by specialty if available
