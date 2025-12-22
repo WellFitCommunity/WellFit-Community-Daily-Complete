@@ -5,12 +5,16 @@
  * Validates email + password and returns a session token for PIN verification.
  *
  * Flow:
- * 1. Accept email and password (client pre-hashed with SHA-256)
+ * 1. Accept email and password
  * 2. Look up super_admin_users by email
  * 3. Check rate limit (5 failures = 15 min lockout)
- * 4. Verify password against PBKDF2 hash
+ * 4. Verify password: Try standalone hash first, then Supabase Auth as fallback
  * 5. Create pending session (awaiting PIN verification)
  * 6. Return session token for step 2
+ *
+ * IMPORTANT: Super admins can use their WellFit/Supabase Auth credentials.
+ * The function will try standalone password_hash first, then fall back to
+ * Supabase Auth if standalone verification fails.
  *
  * Copyright © 2025 Envision VirtualEdge Group LLC. All rights reserved.
  */
@@ -19,7 +23,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
-import { verifyPin, generateSecureToken, isClientHashedPin } from "../_shared/crypto.ts";
+import { verifyPin, generateSecureToken, hashPassword } from "../_shared/crypto.ts";
 
 // Rate limiting constants
 const MAX_FAILED_ATTEMPTS = 5;
@@ -55,6 +59,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   // Environment variables
   const SUPABASE_URL = getEnv("SUPABASE_URL");
   const SUPABASE_SERVICE_ROLE_KEY = getEnv("SB_SECRET_KEY", "SB_SERVICE_ROLE_KEY", "SUPABASE_SERVICE_ROLE_KEY");
+  const SUPABASE_ANON_KEY = getEnv("SB_ANON_KEY", "SUPABASE_ANON_KEY", "SB_PUBLISHABLE_API_KEY");
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     logger.error("Missing Supabase environment variables");
@@ -134,23 +139,6 @@ Deno.serve(async (req: Request): Promise<Response> => {
       return genericErrorResponse;
     }
 
-    // Check if standalone auth is configured (has password_hash)
-    if (!superAdmin.password_hash) {
-      logger.warn("Envision login attempt for user without standalone auth", {
-        superAdminId: superAdmin.id,
-        email,
-        clientIp
-      });
-
-      return new Response(
-        JSON.stringify({
-          error: "This account uses Supabase authentication. Please use the standard login flow.",
-          use_supabase_auth: true
-        }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     // Check rate limiting
     const { data: lockoutData, error: lockoutError } = await supabase
       .rpc('check_envision_lockout', {
@@ -187,8 +175,72 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     const failedCount = lockoutData?.[0]?.failed_count ?? 0;
 
-    // Verify password
-    const passwordValid = await verifyPin(password, superAdmin.password_hash);
+    // ═══════════════════════════════════════════════════════════════
+    // PASSWORD VERIFICATION - Try standalone hash first, then Supabase Auth
+    // ═══════════════════════════════════════════════════════════════
+    let passwordValid = false;
+    let authMethod: 'standalone' | 'supabase' = 'standalone';
+
+    // Method 1: Try standalone password_hash if configured
+    if (superAdmin.password_hash) {
+      passwordValid = await verifyPin(password, superAdmin.password_hash);
+      if (passwordValid) {
+        logger.info("Envision password verified via standalone hash", {
+          superAdminId: superAdmin.id,
+          email
+        });
+      }
+    }
+
+    // Method 2: Fall back to Supabase Auth if standalone fails or not configured
+    if (!passwordValid && SUPABASE_ANON_KEY) {
+      try {
+        // Create a client with anon key for auth operations
+        const anonClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+          auth: { autoRefreshToken: false, persistSession: false }
+        });
+
+        const { data: authData, error: authError } = await anonClient.auth.signInWithPassword({
+          email,
+          password
+        });
+
+        if (!authError && authData?.user) {
+          passwordValid = true;
+          authMethod = 'supabase';
+
+          logger.info("Envision password verified via Supabase Auth fallback", {
+            superAdminId: superAdmin.id,
+            email,
+            supabaseUserId: authData.user.id
+          });
+
+          // Sign out immediately - we just needed to verify the password
+          await anonClient.auth.signOut().catch(() => {});
+
+          // Sync password: Update standalone password_hash for future logins
+          try {
+            const newHash = await hashPassword(password);
+            await supabase
+              .from('super_admin_users')
+              .update({ password_hash: newHash })
+              .eq('id', superAdmin.id);
+
+            logger.info("Synced Supabase Auth password to standalone hash", {
+              superAdminId: superAdmin.id
+            });
+          } catch (syncErr: unknown) {
+            const syncMsg = syncErr instanceof Error ? syncErr.message : String(syncErr);
+            logger.warn("Failed to sync password hash", { error: syncMsg });
+            // Continue - password verification succeeded even if sync failed
+          }
+        }
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        logger.warn("Supabase Auth fallback failed", { error: msg });
+        // Continue - will be treated as failed password
+      }
+    }
 
     if (!passwordValid) {
       // Record failed attempt (fire and forget - don't let RPC errors block login flow)
@@ -262,6 +314,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
       logger.error("Failed to record successful Envision auth attempt", { error: err.message });
     });
 
+    logger.info("Envision password verification successful", {
+      superAdminId: superAdmin.id,
+      email,
+      authMethod
+    });
+
     // Create pending session (awaiting PIN verification)
     const sessionToken = generateSecureToken();
     const expiresAt = new Date(Date.now() + SESSION_TTL_MINUTES * 60 * 1000).toISOString();
@@ -306,7 +364,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
       metadata: {
         email,
         client_ip: clientIp,
-        session_expires: expiresAt
+        session_expires: expiresAt,
+        auth_method: authMethod
       }
     }).catch(() => {});
 
