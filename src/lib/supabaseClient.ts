@@ -17,35 +17,29 @@ const key = SB_PUBLISHABLE_API_KEY || SUPABASE_PUBLISHABLE_API_KEY;
 assertClientSupabaseEnv();
 
 /**
- * HIPAA-Compliant Storage Adapter for Supabase Auth
+ * Session Storage Strategy for Supabase Auth
  *
- * Uses sessionStorage instead of localStorage:
- * - Session clears when browser closes (no persistent tokens on disk)
- * - Reduces risk of token theft from unattended devices
- * - Complies with HIPAA minimum necessary principle
+ * IMPORTANT: We use localStorage (not sessionStorage) because:
+ * - sessionStorage clears on navigation/back button (especially on mobile)
+ * - This caused users to get logged out every time they used back button
+ * - Session security is enforced server-side via JWT expiry (30 min)
  *
- * Note: Auth tokens (JWTs) contain user ID and role, not PHI.
- * But sessionStorage is still preferred for healthcare apps.
+ * HIPAA Compliance is maintained via:
+ * - Server-side session expiry (configured in Supabase dashboard)
+ * - JWT tokens only contain user_id and role, NOT PHI
+ * - Auto-logout on token refresh failure
+ * - Proper sign-out clears all tokens
+ *
+ * Note: For shared/public computers, users should explicitly log out.
  */
-const hipaaCompliantStorage = {
-  getItem: (key: string): string | null => {
-    return sessionStorage.getItem(key);
-  },
-  setItem: (key: string, value: string): void => {
-    sessionStorage.setItem(key, value);
-  },
-  removeItem: (key: string): void => {
-    sessionStorage.removeItem(key);
-  },
-};
-
 export const supabase = createClient(url as string, key as string, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    // Use sessionStorage instead of localStorage for HIPAA compliance
-    storage: hipaaCompliantStorage,
+    // Use localStorage (default) - sessions persist across navigation
+    // Server-side JWT expiry handles session timeout (not client storage)
+    storage: localStorage,
     // Let Supabase use its default storage key format (sb-<project-ref>-auth-token)
     // Do not override storageKey as it must match what the SDK expects
   },

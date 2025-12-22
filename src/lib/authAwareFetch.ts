@@ -11,23 +11,13 @@ const SUPABASE_AUTH_KEY_PATTERN = /^sb-.*$/;
  * Clears all Supabase auth tokens from storage and redirects to login.
  * Called when we detect an unrecoverable auth failure.
  *
- * HIPAA: We use sessionStorage (not localStorage) for auth tokens.
- * This ensures tokens are cleared when browser closes.
+ * Note: We use localStorage for session persistence (survives navigation).
+ * Server-side JWT expiry handles session timeout.
  */
 function handleAuthFailure(reason: string): void {
   auditLogger.auth('LOGOUT', true, { reason, source: 'authAwareFetch' });
 
-  // Clear all Supabase auth tokens from sessionStorage (HIPAA-compliant storage)
-  const keysToRemove: string[] = [];
-  for (let i = 0; i < sessionStorage.length; i++) {
-    const key = sessionStorage.key(i);
-    if (key && SUPABASE_AUTH_KEY_PATTERN.test(key)) {
-      keysToRemove.push(key);
-    }
-  }
-  keysToRemove.forEach(key => sessionStorage.removeItem(key));
-
-  // Also clear any legacy localStorage keys (from before HIPAA fix)
+  // Clear all Supabase auth tokens from localStorage (primary storage)
   const localKeysToRemove: string[] = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
@@ -36,6 +26,16 @@ function handleAuthFailure(reason: string): void {
     }
   }
   localKeysToRemove.forEach(key => localStorage.removeItem(key));
+
+  // Also clear any legacy sessionStorage keys (from previous HIPAA config)
+  const sessionKeysToRemove: string[] = [];
+  for (let i = 0; i < sessionStorage.length; i++) {
+    const key = sessionStorage.key(i);
+    if (key && SUPABASE_AUTH_KEY_PATTERN.test(key)) {
+      sessionKeysToRemove.push(key);
+    }
+  }
+  sessionKeysToRemove.forEach(key => sessionStorage.removeItem(key));
 
   // Redirect to login if not already there
   const currentPath = window.location.pathname;
