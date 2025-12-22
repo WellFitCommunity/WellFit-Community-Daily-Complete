@@ -1,7 +1,7 @@
 // supabase/functions/sms-verify-code/index.ts
 import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { parsePhoneNumber, isValidPhoneNumber } from "https://esm.sh/libphonenumber-js@1.12.9";
+import { parsePhoneNumber, isValidPhoneNumber } from "https://esm.sh/libphonenumber-js@1.12.9?target=deno";
 import { cors } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 

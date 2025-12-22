@@ -1,6 +1,6 @@
 // supabase/functions/sms-send-code/index.ts
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { parsePhoneNumber, isValidPhoneNumber } from "https://esm.sh/libphonenumber-js@1.12.9";
+import { parsePhoneNumber, isValidPhoneNumber } from "https://esm.sh/libphonenumber-js@1.12.9?target=deno";
 import { cors } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 

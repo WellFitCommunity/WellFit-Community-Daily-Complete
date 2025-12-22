@@ -474,6 +474,16 @@ export default function AdminLoginPage() {
           {/* === UNLOCK MODE === */}
           {mode === 'unlock' && (
             <form onSubmit={handleUnlock} className="space-y-4">
+              {/* Hidden username for accessibility - password managers need this */}
+              <input
+                type="text"
+                autoComplete="username"
+                value={userLabel}
+                readOnly
+                className="sr-only"
+                aria-hidden="true"
+                tabIndex={-1}
+              />
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Enter PIN
@@ -522,6 +532,16 @@ export default function AdminLoginPage() {
           {/* === SET PIN MODE === */}
           {mode === 'setpin' && (
             <form onSubmit={handleSetPin} className="space-y-4">
+              {/* Hidden username for accessibility */}
+              <input
+                type="text"
+                autoComplete="username"
+                value={userLabel}
+                readOnly
+                className="sr-only"
+                aria-hidden="true"
+                tabIndex={-1}
+              />
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">New PIN</label>
                 <input
@@ -662,6 +682,16 @@ export default function AdminLoginPage() {
           {/* === RESET PIN MODE === */}
           {mode === 'reset' && (
             <form onSubmit={handleResetPin} className="space-y-4">
+              {/* Hidden username for accessibility */}
+              <input
+                type="text"
+                autoComplete="username"
+                value={userLabel}
+                readOnly
+                className="sr-only"
+                aria-hidden="true"
+                tabIndex={-1}
+              />
               <div className="text-center mb-4 p-3 bg-green-50 rounded-lg">
                 <p className="text-sm text-green-700 font-medium">Code verified! Set your new PIN.</p>
               </div>

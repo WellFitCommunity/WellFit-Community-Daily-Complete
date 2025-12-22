@@ -5,28 +5,37 @@
 import { auditLogger } from '../services/auditLogger';
 
 // Storage key pattern for Supabase auth tokens
-const SUPABASE_AUTH_KEY_PATTERN = /^sb-.*-auth-token$/;
+const SUPABASE_AUTH_KEY_PATTERN = /^sb-.*$/;
 
 /**
  * Clears all Supabase auth tokens from storage and redirects to login.
  * Called when we detect an unrecoverable auth failure.
+ *
+ * HIPAA: We use sessionStorage (not localStorage) for auth tokens.
+ * This ensures tokens are cleared when browser closes.
  */
 function handleAuthFailure(reason: string): void {
   auditLogger.auth('LOGOUT', true, { reason, source: 'authAwareFetch' });
 
-  // Clear all Supabase auth tokens from localStorage
+  // Clear all Supabase auth tokens from sessionStorage (HIPAA-compliant storage)
   const keysToRemove: string[] = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
+  for (let i = 0; i < sessionStorage.length; i++) {
+    const key = sessionStorage.key(i);
     if (key && SUPABASE_AUTH_KEY_PATTERN.test(key)) {
       keysToRemove.push(key);
     }
   }
-  keysToRemove.forEach(key => localStorage.removeItem(key));
+  keysToRemove.forEach(key => sessionStorage.removeItem(key));
 
-  // Also clear legacy keys
-  localStorage.removeItem('supabase.auth.token');
-  sessionStorage.removeItem('supabase.auth.token');
+  // Also clear any legacy localStorage keys (from before HIPAA fix)
+  const localKeysToRemove: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && SUPABASE_AUTH_KEY_PATTERN.test(key)) {
+      localKeysToRemove.push(key);
+    }
+  }
+  localKeysToRemove.forEach(key => localStorage.removeItem(key));
 
   // Redirect to login if not already there
   const currentPath = window.location.pathname;
@@ -107,16 +116,18 @@ export function createAuthAwareFetch(): typeof fetch {
       const clonedResponse = response.clone();
       try {
         const body = await clonedResponse.json();
-        const errorMessage = body?.message || body?.error || '';
+        const errorMessage = (body?.message || body?.error || '').toLowerCase();
 
-        // JWT expired or invalid
+        // JWT expired or invalid (case-insensitive check)
         if (
-          errorMessage.includes('JWT') ||
+          errorMessage.includes('jwt') ||
           errorMessage.includes('token') ||
-          errorMessage.includes('unauthorized')
+          errorMessage.includes('unauthorized') ||
+          errorMessage.includes('invalid') ||
+          errorMessage.includes('expired')
         ) {
           authFailureHandled = true;
-          handleAuthFailure(`jwt_invalid: ${errorMessage}`);
+          handleAuthFailure(`jwt_invalid: ${body?.message || body?.error || 'unknown'}`);
         }
       } catch {
         // Unparseable 401 - still an auth failure

@@ -45,7 +45,7 @@ const localStorageMock = (() => {
 
 Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 
-// Mock sessionStorage
+// Mock sessionStorage (matches localStorage mock structure for iteration)
 const sessionStorageMock = (() => {
   let store: Record<string, string> = {};
   return {
@@ -53,6 +53,8 @@ const sessionStorageMock = (() => {
     setItem: vi.fn((key: string, value: string) => { store[key] = value; }),
     removeItem: vi.fn((key: string) => { delete store[key]; }),
     clear: vi.fn(() => { store = {}; }),
+    key: vi.fn((index: number) => Object.keys(store)[index] || null),
+    get length() { return Object.keys(store).length; },
   };
 })();
 
@@ -170,6 +172,21 @@ describe('authAwareFetch', () => {
 
       const authFetch = createAuthAwareFetch();
       await authFetch('https://xkybsjnvuohpqpbkikyn.supabase.co/rest/v1/profiles');
+
+      expect(auditLogger.auth).toHaveBeenCalledWith('LOGOUT', true, expect.objectContaining({
+        reason: expect.stringContaining('jwt_invalid'),
+      }));
+    });
+
+    it('should trigger logout on "Unauthorized" 401 errors (case-insensitive)', async () => {
+      // Edge functions return "Unauthorized" with capital U
+      const errorBody = { error: 'Unauthorized' };
+      const mockResponse = new Response(JSON.stringify(errorBody), { status: 401 });
+      mockFetch.mockResolvedValue(mockResponse);
+
+      resetAuthFailureFlag();
+      const authFetch = createAuthAwareFetch();
+      await authFetch('https://xkybsjnvuohpqpbkikyn.supabase.co/functions/v1/verify-admin-pin');
 
       expect(auditLogger.auth).toHaveBeenCalledWith('LOGOUT', true, expect.objectContaining({
         reason: expect.stringContaining('jwt_invalid'),

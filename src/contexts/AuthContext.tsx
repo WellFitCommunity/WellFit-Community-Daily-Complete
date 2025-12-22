@@ -67,9 +67,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setDbAdmin(null);
       setError(null);
 
-      // Clear any stored tokens
-      localStorage.removeItem('supabase.auth.token');
-      sessionStorage.removeItem('supabase.auth.token');
+      // Clear auth tokens from sessionStorage (HIPAA-compliant storage)
+      // Note: We use sessionStorage, not localStorage, for auth tokens
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const key = sessionStorage.key(i);
+        if (key && key.startsWith('sb-')) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(key => sessionStorage.removeItem(key));
 
       // Sign out cleanly from Supabase
       await supabase.auth.signOut({ scope: 'local' });
