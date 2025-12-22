@@ -24,7 +24,7 @@ const TWILIO_FROM_NUMBER = getEnv("TWILIO_FROM_NUMBER");
 const TWILIO_STATUS_CALLBACK_URL = getEnv("TWILIO_STATUS_CALLBACK_URL"); // optional delivery receipts
 
 const SUPABASE_URL = getEnv("SUPABASE_URL");
-const SUPABASE_SERVICE_KEY = getEnv("SUPABASE_SERVICE_ROLE_KEY", "SB_SECRET_KEY");
+const SUPABASE_SERVICE_KEY = getEnv("SB_SECRET_KEY", "SUPABASE_SERVICE_ROLE_KEY");
 
 // Create lazily inside handler only if we have creds
 const makeSupabase = () => createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, { auth: { persistSession: false } });

@@ -128,23 +128,6 @@ serve(async (req) => {
   if (req.method !== "POST") return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers });
 
   try {
-    const token = req.headers.get("Authorization")?.replace(/^Bearer /, "") || "";
-    if (!token) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
-
-    const { data: u } = await supabase.auth.getUser(token);
-    const user_id = u?.user?.id;
-    if (!user_id) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("is_admin, phone")
-      .eq("user_id", user_id)
-      .single();
-
-    if (!profile?.is_admin) {
-      return new Response(JSON.stringify({ error: "Admin required" }), { status: 403, headers });
-    }
-
     const body = await req.json();
     const parsed = schema.safeParse(body);
     if (!parsed.success) {
@@ -152,6 +135,70 @@ serve(async (req) => {
     }
 
     const { pin, role, old_pin, otp_token } = parsed.data;
+
+    let user_id: string | undefined;
+    let profile: { is_admin: boolean; phone: string | null } | null = null;
+    let authenticatedViaOtp = false; // Track if we used OTP for auth (skip second validation)
+
+    // Try Bearer token authentication first
+    const token = req.headers.get("Authorization")?.replace(/^Bearer /, "") || "";
+    if (token) {
+      const { data: u } = await supabase.auth.getUser(token);
+      user_id = u?.user?.id;
+
+      if (user_id) {
+        const { data: p } = await supabase
+          .from("profiles")
+          .select("is_admin, phone")
+          .eq("user_id", user_id)
+          .single();
+        profile = p;
+      }
+    }
+
+    // If no valid Bearer token but OTP token provided, authenticate via OTP
+    // This supports the "forgot PIN" flow where user may not have an active session
+    if (!user_id && otp_token) {
+      const tokenHash = await hashToken(otp_token);
+
+      const { data: tokenRecord, error: tokenError } = await supabase
+        .from('staff_pin_reset_tokens')
+        .select('id, user_id, expires_at, used_at')
+        .eq('token_hash', tokenHash)
+        .is('used_at', null)
+        .gt('expires_at', new Date().toISOString())
+        .single();
+
+      if (!tokenError && tokenRecord) {
+        user_id = tokenRecord.user_id;
+        authenticatedViaOtp = true; // We validated OTP here, skip later check
+
+        // Get profile for this user
+        const { data: p } = await supabase
+          .from("profiles")
+          .select("is_admin, phone")
+          .eq("user_id", user_id)
+          .single();
+        profile = p;
+
+        // Mark token as used immediately for OTP-only auth
+        await supabase
+          .from('staff_pin_reset_tokens')
+          .update({ used_at: new Date().toISOString() })
+          .eq('id', tokenRecord.id);
+
+        logger.info("Authenticated via OTP token for PIN reset", { userId: user_id });
+      }
+    }
+
+    // Must have valid auth via one method
+    if (!user_id) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
+    }
+
+    if (!profile?.is_admin) {
+      return new Response(JSON.stringify({ error: "Admin required" }), { status: 403, headers });
+    }
 
     // Check if user already has a PIN set for this role
     const { data: existingPin, error: pinCheckError } = await supabase
@@ -166,8 +213,13 @@ serve(async (req) => {
 
     // If PIN already exists, require either old_pin or otp_token
     if (hasExistingPin) {
-      if (otp_token) {
-        // Validate OTP token from SMS reset flow
+      if (authenticatedViaOtp) {
+        // Already validated and consumed OTP token during authentication
+        authMethod = 'otp_token';
+        logger.info("PIN change authorized via OTP token (used for auth)", { userId: user_id, role });
+
+      } else if (otp_token) {
+        // Validate OTP token from SMS reset flow (user has valid Bearer token but using OTP to bypass old_pin)
         const tokenHash = await hashToken(otp_token);
 
         const { data: tokenRecord, error: tokenError } = await supabase
