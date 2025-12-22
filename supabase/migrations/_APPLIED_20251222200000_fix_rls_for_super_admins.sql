@@ -25,6 +25,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
 -- ============================================================================
 -- Drop problematic tenant policy and replace with admin-aware version
 DROP POLICY IF EXISTS "claude_admin_task_templates_tenant" ON claude_admin_task_templates;
+DROP POLICY IF EXISTS "claude_admin_task_templates_admin_access" ON claude_admin_task_templates;
 
 CREATE POLICY "claude_admin_task_templates_admin_access" ON claude_admin_task_templates
   FOR ALL
@@ -36,6 +37,7 @@ CREATE POLICY "claude_admin_task_templates_admin_access" ON claude_admin_task_te
 -- FIX: claude_usage_logs
 -- ============================================================================
 DROP POLICY IF EXISTS "claude_usage_logs_tenant" ON claude_usage_logs;
+DROP POLICY IF EXISTS "claude_usage_logs_admin_access" ON claude_usage_logs;
 
 CREATE POLICY "claude_usage_logs_admin_access" ON claude_usage_logs
   FOR ALL
@@ -73,6 +75,7 @@ CREATE POLICY "Nurses can update handoff scores" ON shift_handoff_risk_scores
   );
 
 -- Add tenant policy that allows admin bypass
+DROP POLICY IF EXISTS "shift_handoff_risk_scores_admin_access" ON shift_handoff_risk_scores;
 CREATE POLICY "shift_handoff_risk_scores_admin_access" ON shift_handoff_risk_scores
   FOR ALL
   USING (

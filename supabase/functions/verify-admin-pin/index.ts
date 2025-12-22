@@ -2,7 +2,7 @@ import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/
 import { serve } from "https://deno.land/std@0.183.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=deno";
 import { z } from "https://esm.sh/zod@3.23.8?target=deno";
-import { cors } from "../_shared/cors.ts";
+import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { verifyPin, generateSecureToken, isClientHashedPin } from "../_shared/crypto.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 
@@ -43,20 +43,11 @@ const schema = z.object({
 serve(async (req: Request) => {
   const logger = createLogger('verify-admin-pin', req);
 
-  const origin = req.headers.get("origin");
-  const { headers, allowed } = cors(origin, {
-    methods: ["POST", "OPTIONS"],
-    allowHeaders: [
-      "authorization",
-      "content-type",
-      "x-client-info",
-      "apikey",
-      "x-supabase-api-version"
-    ]
-  });
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") return handleOptions(req);
 
-  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers });
-  if (!allowed) return new Response(JSON.stringify({ error: "Origin not allowed" }), { status: 403, headers });
+  const { headers } = corsFromRequest(req);
+
   if (req.method !== "POST") return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers });
 
   try {

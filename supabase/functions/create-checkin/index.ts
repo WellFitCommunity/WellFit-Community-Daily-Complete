@@ -1,32 +1,14 @@
 // supabase/functions/create-checkin/index.ts
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-// CORS Configuration - Explicit allowlist for security
-const ALLOWED_ORIGINS = [
-  "https://thewellfitcommunity.org",
-  "https://wellfitcommunity.live",
-  "http://localhost:3100",
-  "https://localhost:3100"
-];
-
-function cors(origin: string | null): Headers {
-  const allowOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : null;
-  const h = new Headers();
-  h.set("Access-Control-Allow-Origin", allowOrigin || "null");
-  h.set("Vary", "Origin");
-  h.set("Access-Control-Allow-Methods", "POST, OPTIONS");
-  h.set("Access-Control-Allow-Headers", "authorization, x-client-info, apikey, content-type");
-  h.set("Access-Control-Allow-Credentials", "true");
-  h.set("Content-Type", "application/json");
-  return h;
-}
+import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 
 serve(async (req: Request) => {
-  const origin = req.headers.get("origin");
-  const headers = cors(origin);
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") return handleOptions(req);
 
-  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers });
+  const { headers } = corsFromRequest(req);
+
   if (req.method !== "POST") {
     return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers });
   }

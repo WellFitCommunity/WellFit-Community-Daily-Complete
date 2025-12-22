@@ -6,7 +6,7 @@
 import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { cors } from '../_shared/cors.ts'
+import { corsFromRequest, handleOptions } from '../_shared/cors.ts'
 
 interface VoiceProfileUpdate {
   user_id: string
@@ -22,15 +22,12 @@ interface VoiceProfileUpdate {
 }
 
 serve(async (req) => {
-  const origin = req.headers.get('origin');
-  const { headers, allowed } = cors(origin, {
-    methods: ['POST', 'OPTIONS']
-  });
-
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers, status: allowed ? 204 : 403 })
+    return handleOptions(req);
   }
+
+  const { headers } = corsFromRequest(req);
 
   try {
     // Create Supabase client

@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createUserClient, batchQueries } from '../_shared/supabaseClient.ts'
-import { cors } from "../_shared/cors.ts"
+import { corsFromRequest, handleOptions } from "../_shared/cors.ts"
 import { createLogger } from '../_shared/auditLogger.ts'
 
 // ❌ REMOVED WILDCARD CORS - Using secure cors() function instead
@@ -70,22 +70,12 @@ interface SyncRequest {
 serve(async (req: Request) => {
   const logger = createLogger('mobile-sync', req);
 
-  // Handle CORS with secure origin validation
-  const origin = req.headers.get('origin');
-  const { headers: corsHeaders, allowed } = cors(origin, {
-    methods: ['POST', 'OPTIONS']
-  });
-
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return handleOptions(req);
   }
 
-  if (!allowed) {
-    return new Response(
-      JSON.stringify({ error: 'Origin not allowed' }),
-      { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  }
+  const { headers: corsHeaders } = corsFromRequest(req);
 
   try {
     // Get auth header

@@ -5,7 +5,7 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4?dts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { parsePhoneNumber, isValidPhoneNumber } from "https://esm.sh/libphonenumber-js@1.12.9?target=deno";
-import { cors } from "../_shared/cors.ts";
+import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { hashPassword } from "../_shared/crypto.ts";
 
 // Allowed country codes for phone numbers
@@ -13,16 +13,9 @@ const ALLOWED_COUNTRIES = ['US', 'CA', 'GB', 'AU'] as const;
 
 // ---------- ENV ----------
 const SB_URL = SUPABASE_URL || Deno.env.get("SB_URL") || "";
-const SB_SECRET_KEY = SB_SECRET_KEY || Deno.env.get("SB_SECRET_KEY") || "";
+const SERVICE_KEY = SB_SECRET_KEY || Deno.env.get("SB_SECRET_KEY") || "";
 const SB_ANON_KEY = SB_PUBLISHABLE_API_KEY || Deno.env.get("SB_PUBLISHABLE_API_KEY") || "";
 const HCAPTCHA_SECRET = Deno.env.get("HCAPTCHA_SECRET") || "";
-
-function getCorsHeaders(origin: string | null) {
-  const { headers } = cors(origin, {
-    methods: ["POST", "OPTIONS"]
-  });
-  return headers;
-}
 
 // ---------- VALIDATION ----------
 const RegisterBase = z.object({
@@ -58,8 +51,11 @@ const RegisterSchema = RegisterBase.refine(
 );
 
 // ---------- HELPERS ----------
-function jsonResponse(body: unknown, status: number, origin: string | null = null) {
-  return new Response(JSON.stringify(body), { status, headers: getCorsHeaders(origin) });
+// CORS headers are now set per-request in the serve handler
+let currentCorsHeaders: Headers = new Headers();
+
+function jsonResponse(body: unknown, status: number) {
+  return new Response(JSON.stringify(body), { status, headers: currentCorsHeaders });
 }
 
 /**
@@ -132,14 +128,18 @@ function effectiveRole(requested?: number): { role_code: number; role_slug: stri
 
 // ---------- HANDLER ----------
 serve(async (req: Request) => {
-  const origin = req.headers.get("origin");
-  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: getCorsHeaders(origin) });
-  if (req.method !== "POST") return jsonResponse({ error: "Method not allowed" }, 405, origin);
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") return handleOptions(req);
+
+  const { headers } = corsFromRequest(req);
+  currentCorsHeaders = headers;
+
+  if (req.method !== "POST") return jsonResponse({ error: "Method not allowed" }, 405);
 
   try {
-    if (!SB_URL || !SB_SECRET_KEY || !HCAPTCHA_SECRET) {
-      console.error("[register] misconfig env", { hasUrl: !!SB_URL, hasKey: !!SB_SECRET_KEY, hasHC: !!HCAPTCHA_SECRET });
-      return jsonResponse({ error: "Server misconfigured" }, 500, origin);
+    if (!SB_URL || !SERVICE_KEY || !HCAPTCHA_SECRET) {
+      console.error("[register] misconfig env", { hasUrl: !!SB_URL, hasKey: !!SERVICE_KEY, hasHC: !!HCAPTCHA_SECRET });
+      return jsonResponse({ error: "Server misconfigured" }, 500);
     }
 
     // Parse JSON safely
@@ -147,12 +147,12 @@ serve(async (req: Request) => {
     try {
       body = await req.json();
     } catch {
-      return jsonResponse({ error: "Invalid JSON" }, 400, origin);
+      return jsonResponse({ error: "Invalid JSON" }, 400);
     }
 
     const parsed = RegisterSchema.safeParse(body);
     if (!parsed.success) {
-      return jsonResponse({ error: "Invalid data", details: parsed.error.errors }, 400, origin);
+      return jsonResponse({ error: "Invalid data", details: parsed.error.errors }, 400);
     }
 
     const payload: RegisterInput = parsed.data;
@@ -190,7 +190,7 @@ resource_type: 'auth_event',
         console.error('[Audit Log Error]:', logError);
       }
 
-      return jsonResponse({ error: "Captcha verification failed. Please try again." }, 401, origin);
+      return jsonResponse({ error: "Captcha verification failed. Please try again." }, 401);
     }
 
     const supabase = createClient(SB_URL, SB_SECRET_KEY);
@@ -233,7 +233,7 @@ resource_type: 'auth_event',
         error: "already_registered",
         message: `An account with this phone number already exists. Please log in instead.`,
         redirect: "/login"
-      }, 409, origin); // 409 Conflict
+      }, 409); // 409 Conflict
     }
 
     // SHARED PHONE SUPPORT: Allow multiple users to share the same phone number
@@ -255,7 +255,7 @@ resource_type: 'auth_event',
 
       if (encryptErrorUpdate || !encryptedDataUpdate) {
         console.error('[register] Password encryption failed on update:', encryptErrorUpdate);
-        return jsonResponse({ error: "Failed to process registration" }, 500, origin);
+        return jsonResponse({ error: "Failed to process registration" }, 500);
       }
 
       const { error: updateError } = await supabase
@@ -275,7 +275,7 @@ resource_type: 'auth_event',
 
       if (updateError) {
         console.error("[register] Failed to update pending registration:", updateError);
-        return jsonResponse({ error: "Failed to update registration" }, 500, origin);
+        return jsonResponse({ error: "Failed to update registration" }, 500);
       }
 
       // HIPAA AUDIT LOGGING: Log updated pending registration
@@ -368,7 +368,7 @@ resource_type: 'auth_event',
         phone: phoneNumber,
         sms_sent: smsSent,
         ...(resendErrorDetails && !smsSent ? { sms_error: resendErrorDetails } : {})
-      }, 200, origin);
+      }, 200);
     }
 
     // Encrypt password for temporary storage (service-role only, expires 1h)
@@ -382,7 +382,7 @@ resource_type: 'auth_event',
 
     if (encryptError || !encryptedData) {
       console.error('[register] Password encryption failed:', encryptError);
-      return jsonResponse({ error: "Failed to process registration" }, 500, origin);
+      return jsonResponse({ error: "Failed to process registration" }, 500);
     }
 
     // Store registration data in pending table with encrypted password
@@ -423,7 +423,7 @@ resource_type: 'auth_event',
         console.error('[Audit Log Error]:', logError);
       }
 
-      return jsonResponse({ error: "Failed to process registration" }, 500, origin);
+      return jsonResponse({ error: "Failed to process registration" }, 500);
     }
 
     // Send SMS verification code via Twilio with timeout
@@ -576,10 +576,10 @@ resource_type: 'auth_event',
       phone: phoneNumber,
       sms_sent: smsSent,
       ...(smsErrorDetails && !smsSent ? { sms_error: smsErrorDetails } : {})
-    }, 201, origin);
+    }, 201);
 
   } catch (e) {
     console.error("[register] Unhandled error:", e instanceof Error ? e.name : "Unknown");
-    return jsonResponse({ error: "Internal server error" }, 500, origin);
+    return jsonResponse({ error: "Internal server error" }, 500);
   }
 });
