@@ -7,6 +7,7 @@
 
 import { supabase } from '../lib/supabaseClient';
 import { getRandomSuggestions, MOOD_TO_CATEGORY } from '../data/moodSuggestions';
+import { auditLogger } from './auditLogger';
 
 export interface SmartSuggestion {
   id?: string;
@@ -64,9 +65,13 @@ export async function getSmartSuggestions(
     // If no suggestions returned, fall back to local
     throw new Error('No suggestions returned from Edge Function');
 
-  } catch {
-    // Edge Function failed - fall back to local random selection silently
-    // This is expected when offline or during high load
+  } catch (err: unknown) {
+    // Edge Function failed - fall back to local random selection
+    auditLogger.warn('SMART_SUGGESTIONS_FALLBACK', {
+      mood,
+      reason: err instanceof Error ? err.message : 'Unknown error',
+    });
+
     const localSuggestions = getRandomSuggestions(mood, 3);
 
     return {
