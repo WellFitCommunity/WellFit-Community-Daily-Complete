@@ -708,13 +708,10 @@ const SeniorCommunityDashboard: React.FC = () => {
 
                 <button
                   onClick={() => {
-                    // Get today's meal and navigate to it
-                    const today = new Date();
-                    const dayOfYear = Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
-                    const { allRecipes } = require('../../data/allRecipes');
-                    const mealIndex = dayOfYear % allRecipes.length;
-                    const todaysMeal = allRecipes[mealIndex];
-                    navigate(`/meals/${todaysMeal.id}`);
+                    // Navigate to today's meal (already loaded in state)
+                    if (todaysMeal?.id) {
+                      navigate(`/meals/${todaysMeal.id}`);
+                    }
                   }}
                   aria-label="View today's meal recipe"
                   className="w-full p-3 bg-[#8cc63f] text-white rounded-lg hover:bg-[#003865] transition"
