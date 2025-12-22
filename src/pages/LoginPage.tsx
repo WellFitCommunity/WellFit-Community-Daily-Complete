@@ -526,38 +526,38 @@ const LoginPage: React.FC = () => {
           {branding.appName}
         </h1>
 
-      {/* Mode Toggle */}
-      <div className="flex justify-center gap-2 mb-6 flex-wrap">
+      {/* Mode Toggle - Mobile-optimized with larger tap targets */}
+      <div className="grid grid-cols-2 gap-2 mb-6 sm:flex sm:justify-center sm:flex-wrap">
         <button
           type="button"
           onClick={() => { setMode('patient'); setError(''); }}
-          className={`px-3 py-1 rounded ${mode === 'patient' ? 'bg-gray-900 text-white' : 'bg-gray-200'}`}
+          className={`px-3 py-2 min-h-[44px] rounded text-sm font-medium ${mode === 'patient' ? 'bg-gray-900 text-white' : 'bg-gray-200'}`}
           aria-pressed={mode === 'patient'}
         >
-          Patient Login (Phone)
+          Patient (Phone)
         </button>
         <button
           type="button"
           onClick={() => { setMode('senior'); setError(''); }}
-          className={`px-3 py-1 rounded ${mode === 'senior' ? 'bg-gray-900 text-white' : 'bg-gray-200'}`}
+          className={`px-3 py-2 min-h-[44px] rounded text-sm font-medium ${mode === 'senior' ? 'bg-gray-900 text-white' : 'bg-gray-200'}`}
           aria-pressed={mode === 'senior'}
         >
-          Senior Login (Phone)
+          Senior (Phone)
         </button>
         <button
           type="button"
           onClick={() => { setMode('admin'); setError(''); }}
-          className={`px-3 py-1 rounded ${mode === 'admin' ? 'bg-gray-900 text-white' : 'bg-gray-200'}`}
+          className={`px-3 py-2 min-h-[44px] rounded text-sm font-medium ${mode === 'admin' ? 'bg-gray-900 text-white' : 'bg-gray-200'}`}
           aria-pressed={mode === 'admin'}
         >
-          Admin Login (Email)
+          Admin (Email)
         </button>
         <button
           type="button"
           onClick={() => navigate('/caregiver-access')}
-          className="px-3 py-1 rounded bg-green-600 text-white hover:bg-green-700 transition-colors"
+          className="px-3 py-2 min-h-[44px] rounded text-sm font-medium bg-green-600 text-white hover:bg-green-700 transition-colors"
         >
-          Caregiver Access
+          Caregiver
         </button>
       </div>
 
@@ -636,14 +636,14 @@ const LoginPage: React.FC = () => {
 
           <button
             type="submit"
-            className="w-full py-3 font-semibold rounded hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-offset-2 text-white"
+            className="w-full py-4 min-h-[56px] font-semibold text-lg rounded hover:opacity-90 active:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-offset-2 text-white"
             style={{ backgroundColor: primary }}
             disabled={loading}
           >
             {loading ? 'Logging In...' : 'Log In'}
           </button>
 
-          {/* Passkey Login Button */}
+          {/* Passkey/Biometric Login Button - Always show on mobile for better UX */}
           {passkeySupported && (
             <>
               <div className="relative my-4">
@@ -659,18 +659,18 @@ const LoginPage: React.FC = () => {
                 type="button"
                 onClick={handlePasskeyLogin}
                 disabled={passkeyLoading || loading}
-                className="w-full py-3 font-semibold rounded border-2 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                className="w-full py-4 min-h-[56px] font-semibold text-lg rounded border-2 hover:bg-gray-50 active:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
                 style={{ borderColor: accent, color: primary }}
               >
                 {passkeyLoading ? (
                   <>
-                    <span className="animate-spin mr-2">⏳</span>
-                    Authenticating...
+                    <span className="animate-spin text-xl">⏳</span>
+                    <span>Authenticating...</span>
                   </>
                 ) : (
                   <>
-                    <span className="mr-2">🔐</span>
-                    Login with Biometrics
+                    <span className="text-2xl">🔐</span>
+                    <span>Login with Face ID / Fingerprint</span>
                   </>
                 )}
               </button>
@@ -782,15 +782,15 @@ const LoginPage: React.FC = () => {
 
           <button
             type="submit"
-            className="w-full py-3 font-semibold rounded hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-offset-2 text-white"
+            className="w-full py-4 min-h-[56px] font-semibold text-lg rounded hover:opacity-90 active:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-offset-2 text-white"
             style={{ backgroundColor: primary }}
             disabled={loading}
           >
             {loading ? 'Logging In...' : 'Log In as Admin'}
           </button>
 
-          <div className="mt-2 text-center">
-            <p className="text-xs text-gray-600">
+          <div className="mt-3 text-center">
+            <p className="text-sm text-gray-600">
               After email login, you'll need to enter your admin PIN
             </p>
           </div>
