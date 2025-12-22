@@ -12,6 +12,7 @@ import { useBranding } from '../BrandingContext';
 import {
   isAccountLocked,
   formatLockoutMessage,
+  recordLoginAttempt,
 } from '../services/loginSecurityService';
 import { auditLogger } from '../services/auditLogger';
 
@@ -298,17 +299,12 @@ const LoginPage: React.FC = () => {
       const e164 = normalizeToE164(phone);
 
       // SOC2 CC6.1: Check if account is locked before attempting login
-      // Note: This requires server-side implementation for proper security
-      // For now, gracefully skip if not authenticated (pre-login check)
-      try {
-        const lockoutInfo = await isAccountLocked(e164);
-        if (lockoutInfo.isLocked) {
-          setError(formatLockoutMessage(lockoutInfo));
-          setLoading(false);
-          return;
-        }
-      } catch {
-        // Skip lockout check if RPC fails (no auth yet) - server will enforce
+      // Uses Edge Function for server-side check (no JWT required)
+      const lockoutInfo = await isAccountLocked(e164);
+      if (lockoutInfo.isLocked) {
+        setError(formatLockoutMessage(lockoutInfo));
+        setLoading(false);
+        return;
       }
 
       // SOC2 CC6.1: Require valid captcha before allowing login attempt
@@ -339,6 +335,15 @@ const LoginPage: React.FC = () => {
         options: { captchaToken: token },
       });
 
+      // SOC2 CC6.1: Record login attempt via Edge Function (works for both success/failure)
+      recordLoginAttempt({
+        identifier: e164,
+        attemptType: 'password',
+        success: !signInError,
+        userId: data?.user?.id,
+        errorMessage: signInError?.message,
+      });
+
       if (signInError) {
         const msg = (signInError.message || '').toLowerCase();
 
@@ -352,8 +357,6 @@ const LoginPage: React.FC = () => {
         } else if (msg.includes('confirm')) {
           setError('Account not confirmed. Please complete verification.');
         } else {
-          // Log unhandled auth error for audit trail
-          auditLogger.auth('LOGIN_FAILED', false, { method: 'phone_password', error: signInError.message });
           setError('An error occurred during login. Please try again.');
         }
         return;
@@ -385,17 +388,12 @@ const LoginPage: React.FC = () => {
       const emailTrimmed = adminEmail.trim();
 
       // SOC2 CC6.1: Check if account is locked before attempting login
-      // Note: This requires server-side implementation for proper security
-      // For now, gracefully skip if not authenticated (pre-login check)
-      try {
-        const lockoutInfo = await isAccountLocked(emailTrimmed);
-        if (lockoutInfo.isLocked) {
-          setError(formatLockoutMessage(lockoutInfo));
-          setLoading(false);
-          return;
-        }
-      } catch {
-        // Skip lockout check if RPC fails (no auth yet) - server will enforce
+      // Uses Edge Function for server-side check (no JWT required)
+      const lockoutInfo = await isAccountLocked(emailTrimmed);
+      if (lockoutInfo.isLocked) {
+        setError(formatLockoutMessage(lockoutInfo));
+        setLoading(false);
+        return;
       }
 
       // SOC2 CC6.1: Require valid captcha before allowing login attempt
@@ -426,6 +424,15 @@ const LoginPage: React.FC = () => {
         options: { captchaToken: token },
       });
 
+      // SOC2 CC6.1: Record login attempt via Edge Function (works for both success/failure)
+      recordLoginAttempt({
+        identifier: emailTrimmed,
+        attemptType: 'password',
+        success: !signInError,
+        userId: data?.user?.id,
+        errorMessage: signInError?.message,
+      });
+
       if (signInError) {
         const msg = (signInError.message || '').toLowerCase();
 
@@ -439,8 +446,6 @@ const LoginPage: React.FC = () => {
         } else if (msg.includes('confirm')) {
           setError('Email not confirmed. Please check your inbox.');
         } else {
-          // Log unhandled admin auth error for audit trail
-          auditLogger.auth('LOGIN_FAILED', false, { method: 'email_password', userType: 'admin', error: signInError.message });
           setError('An error occurred during admin login. Please try again.');
         }
         return;
