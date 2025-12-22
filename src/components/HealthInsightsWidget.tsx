@@ -1,6 +1,7 @@
-// Health Insights Widget - Powered by Claude AI
+// Health Insights Widget - Powered by Claude AI + Smart Suggestions
 import React, { useState, useEffect } from 'react';
 import claudeService from '../services/claudeService';
+import { getSmartSuggestions, getLocalSuggestions, SmartSuggestion } from '../services/smartSuggestionsService';
 
 interface HealthInsightsProps {
   healthData: {
@@ -20,12 +21,12 @@ interface HealthInsightsProps {
 const HealthInsightsWidget: React.FC<HealthInsightsProps> = ({ healthData, onClose }) => {
   const [insights, setInsights] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [suggestions, setSuggestions] = useState<SmartSuggestion[]>([]);
+  const [suggestionSource, setSuggestionSource] = useState<'haiku' | 'fallback' | 'local'>('local');
 
   useEffect(() => {
     if (hasHealthData(healthData)) {
-      generateInsights().catch(err => {
-
+      generateInsights().catch(() => {
         setInsights('Unable to generate insights at this time. Please try again later.');
       });
     }
@@ -39,28 +40,53 @@ const HealthInsightsWidget: React.FC<HealthInsightsProps> = ({ healthData, onClo
   const generateInsights = async () => {
     setIsLoading(true);
     try {
-      // Check if Claude service is initialized
-      const serviceStatus = claudeService.getServiceStatus?.();
-      if (serviceStatus && !serviceStatus.isHealthy) {
-        throw new Error('Claude AI service not available');
+      // Generate health insights (existing logic)
+      let interpretation = '';
+      try {
+        const serviceStatus = claudeService.getServiceStatus?.();
+        if (serviceStatus && !serviceStatus.isHealthy) {
+          throw new Error('Claude AI service not available');
+        }
+        interpretation = await claudeService.interpretHealthData(healthData);
+      } catch {
+        interpretation = generateFallbackInsights(healthData);
       }
-
-      const interpretation = await claudeService.interpretHealthData(healthData);
       setInsights(interpretation);
 
-      // Generate health suggestions
-      const healthSuggestions = await claudeService.generateHealthSuggestions({}, {
-        mood: healthData.mood,
-        lastActivity: healthData.physical_activity,
-        checkInCount: 1
-      });
-      setSuggestions(healthSuggestions.slice(0, 3));
+      // Get SMART suggestions using Haiku (new hybrid approach)
+      if (healthData.mood) {
+        try {
+          const smartResponse = await getSmartSuggestions(healthData.mood, {
+            symptoms: healthData.symptoms || undefined,
+            notes: healthData.physical_activity || undefined,
+          });
+          setSuggestions(smartResponse.suggestions);
+          setSuggestionSource(smartResponse.source);
+        } catch {
+          // Fall back to local suggestions if Edge Function fails
+          const localSuggestions = getLocalSuggestions(healthData.mood, 3);
+          setSuggestions(localSuggestions);
+          setSuggestionSource('local');
+        }
+      } else {
+        // No mood selected, use generic suggestions
+        setSuggestions([
+          { text: 'Keep tracking your health daily', type: 'practical' },
+          { text: 'Stay hydrated throughout the day', type: 'practical' },
+          { text: 'Get adequate rest tonight', type: 'comfort' },
+        ]);
+        setSuggestionSource('local');
+      }
 
-    } catch (error) {
-
+    } catch {
       // Use fallback insights when AI is unavailable
       setInsights(generateFallbackInsights(healthData));
-      setSuggestions(['Keep tracking your health daily', 'Stay hydrated', 'Get adequate rest']);
+      setSuggestions([
+        { text: 'Keep tracking your health daily', type: 'practical' },
+        { text: 'Stay hydrated', type: 'practical' },
+        { text: 'Get adequate rest', type: 'comfort' },
+      ]);
+      setSuggestionSource('local');
     } finally {
       setIsLoading(false);
     }
@@ -105,15 +131,17 @@ const HealthInsightsWidget: React.FC<HealthInsightsProps> = ({ healthData, onClo
   }
 
   return (
-    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
-      <div className="flex justify-between items-start mb-3">
-        <h3 className="text-lg font-semibold text-blue-800 flex items-center">
-          🤖 Health Insights
+    <div className="bg-gradient-to-br from-blue-50 to-green-50 border-2 border-blue-200 rounded-2xl p-5 mt-6 shadow-lg">
+      <div className="flex justify-between items-start mb-4">
+        <h3 className="text-xl font-bold text-blue-800 flex items-center">
+          <span className="text-2xl mr-2">🤖</span>
+          Your Health Insights
         </h3>
         {onClose && (
           <button
             onClick={onClose}
-            className="text-blue-600 hover:text-blue-800 text-xl"
+            className="text-blue-600 hover:text-blue-800 text-2xl p-1 hover:bg-blue-100 rounded-full transition-colors"
+            aria-label="Close health insights"
           >
             ×
           </button>
@@ -121,33 +149,52 @@ const HealthInsightsWidget: React.FC<HealthInsightsProps> = ({ healthData, onClo
       </div>
 
       {isLoading ? (
-        <div className="flex items-center space-x-2">
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-          <span className="text-blue-700">Analyzing your health data...</span>
+        <div className="flex items-center space-x-3 py-4">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+          <span className="text-blue-700 text-lg">Looking at your health data...</span>
         </div>
       ) : (
         <>
-          <p className="text-blue-800 mb-3 leading-relaxed">
+          <p className="text-gray-800 text-base mb-4 leading-relaxed bg-white/50 rounded-lg p-3">
             {insights}
           </p>
 
           {suggestions.length > 0 && (
-            <div className="mt-3">
-              <h4 className="font-medium text-blue-800 mb-2">💡 Suggestions for you:</h4>
-              <ul className="space-y-1">
+            <div className="mt-4">
+              <h4 className="text-lg font-semibold text-blue-800 mb-3 flex items-center">
+                <span className="text-2xl mr-2">💡</span>
+                Things that might help you today:
+              </h4>
+              <ul className="space-y-3">
                 {suggestions.map((suggestion, index) => (
-                  <li key={index} className="text-blue-700 text-sm flex items-start">
-                    <span className="text-blue-500 mr-2">•</span>
-                    {suggestion}
+                  <li
+                    key={suggestion.id || index}
+                    className="flex items-start bg-gradient-to-r from-blue-50 to-green-50 rounded-xl p-4 border border-blue-100 shadow-sm hover:shadow-md transition-shadow"
+                  >
+                    <span className="text-3xl mr-3 flex-shrink-0">
+                      {suggestion.type === 'breathing' && '🌬️'}
+                      {suggestion.type === 'physical' && '🚶'}
+                      {suggestion.type === 'social' && '👥'}
+                      {suggestion.type === 'mindfulness' && '🧘'}
+                      {suggestion.type === 'practical' && '✅'}
+                      {suggestion.type === 'comfort' && '💚'}
+                      {suggestion.type === 'gratitude' && '🙏'}
+                      {suggestion.type === 'creative' && '🎨'}
+                      {!suggestion.type && '💫'}
+                    </span>
+                    <span className="text-gray-800 text-base leading-relaxed">
+                      {suggestion.text}
+                    </span>
                   </li>
                 ))}
               </ul>
             </div>
           )}
 
-          <div className="mt-3 pt-3 border-t border-blue-200">
-            <p className="text-xs text-blue-600">
-              💡 This is AI-generated guidance. Always consult your healthcare provider for medical advice.
+          <div className="mt-4 pt-3 border-t border-blue-200">
+            <p className="text-sm text-gray-600 flex items-center">
+              <span className="mr-2">ℹ️</span>
+              These are helpful tips, not medical advice. Talk to your doctor about any health concerns.
             </p>
           </div>
         </>
