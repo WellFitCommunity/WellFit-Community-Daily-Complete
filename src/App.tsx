@@ -31,6 +31,7 @@ import { EAPatientBanner } from './components/envision-atlus/EAPatientBanner';
 import { EASessionResume } from './components/envision-atlus/EASessionResume';
 import { EARealtimeAlertNotifications } from './components/envision-atlus/EARealtimeAlertNotifications';
 import { LearningMilestone } from './components/ai-transparency';
+import { IdleTimeoutProvider } from './components/IdleTimeoutProvider';
 
 // Theme
 import { useThemeInit } from './hooks/useTheme';
@@ -154,19 +155,22 @@ function Shell() {
       <ClinicalPatientBanner className="sticky top-0 z-40" />
 
       <AuthGate>
-        <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
-          <RouteRenderer />
-        </Suspense>
+        {/* Idle Timeout Provider - Auto-logout after 15 min inactivity (HIPAA compliance) */}
+        <IdleTimeoutProvider timeoutMinutes={15} warningMinutes={2}>
+          <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading...</div>}>
+            <RouteRenderer />
+          </Suspense>
 
-        <Footer />
+          <Footer />
 
-        {/* Offline indicator for all users */}
-        <OfflineIndicator />
+          {/* Offline indicator for all users */}
+          <OfflineIndicator />
 
-        {/* Envision Atlus Clinical Components - Hidden from WellFit community users */}
-        {/* Clinical users see: VoiceCommandBar, GlobalSearchBar, VoiceSearchOverlay, EASessionResume, EARealtimeAlertNotifications */}
-        {/* Community users (seniors, patients, caregivers) see simplified WellFit interface */}
-        <ClinicalModeComponents />
+          {/* Envision Atlus Clinical Components - Hidden from WellFit community users */}
+          {/* Clinical users see: VoiceCommandBar, GlobalSearchBar, VoiceSearchOverlay, EASessionResume, EARealtimeAlertNotifications */}
+          {/* Community users (seniors, patients, caregivers) see simplified WellFit interface */}
+          <ClinicalModeComponents />
+        </IdleTimeoutProvider>
       </AuthGate>
     </AppProviders>
   );
