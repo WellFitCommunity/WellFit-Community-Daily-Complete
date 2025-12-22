@@ -78,7 +78,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   // Environment variables
   const SUPABASE_URL = getEnv("SUPABASE_URL");
-  const SUPABASE_SERVICE_ROLE_KEY = getEnv("SB_SECRET_KEY", "SUPABASE_SERVICE_ROLE_KEY");
+  const SUPABASE_SERVICE_ROLE_KEY = getEnv("SB_SECRET_KEY", "SB_SERVICE_ROLE_KEY", "SUPABASE_SERVICE_ROLE_KEY");
   const TWILIO_ACCOUNT_SID = getEnv("TWILIO_ACCOUNT_SID");
   const TWILIO_AUTH_TOKEN = getEnv("TWILIO_AUTH_TOKEN");
   const VERIFY_SID = getEnv("TWILIO_VERIFY_SERVICE_SID");

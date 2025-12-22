@@ -54,7 +54,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   // Environment variables
   const SUPABASE_URL = getEnv("SUPABASE_URL");
-  const SUPABASE_SERVICE_ROLE_KEY = getEnv("SB_SECRET_KEY", "SUPABASE_SERVICE_ROLE_KEY");
+  const SUPABASE_SERVICE_ROLE_KEY = getEnv("SB_SECRET_KEY", "SB_SERVICE_ROLE_KEY", "SUPABASE_SERVICE_ROLE_KEY");
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     logger.error("Missing Supabase environment variables");
@@ -103,11 +103,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
       auth: { autoRefreshToken: false, persistSession: false }
     });
 
-    // Look up super admin by email (include TOTP and PIN status)
+    // Look up super admin by email (case-insensitive)
     const { data: superAdmin, error: lookupError } = await supabase
       .from('super_admin_users')
       .select('id, email, full_name, role, password_hash, pin_hash, is_active, totp_enabled, totp_secret')
-      .eq('email', email)
+      .ilike('email', email)
       .single();
 
     // Generic error message to prevent email enumeration
@@ -191,16 +191,19 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const passwordValid = await verifyPin(password, superAdmin.password_hash);
 
     if (!passwordValid) {
-      // Record failed attempt
-      await supabase.rpc('record_envision_attempt', {
-        p_super_admin_id: superAdmin.id,
-        p_attempt_type: 'password',
-        p_success: false,
-        p_client_ip: clientIp,
-        p_user_agent: userAgent
-      }).catch((err: Error) => {
-        logger.error("Failed to record Envision auth attempt", { error: err.message });
-      });
+      // Record failed attempt (fire and forget - don't let RPC errors block login flow)
+      try {
+        await supabase.rpc('record_envision_attempt', {
+          p_super_admin_id: superAdmin.id,
+          p_attempt_type: 'password',
+          p_success: false,
+          p_client_ip: clientIp,
+          p_user_agent: userAgent
+        });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        logger.error("Failed to record Envision auth attempt", { error: msg });
+      }
 
       const newFailedCount = failedCount + 1;
       const remainingAttempts = Math.max(0, MAX_FAILED_ATTEMPTS - newFailedCount);
@@ -213,19 +216,21 @@ Deno.serve(async (req: Request): Promise<Response> => {
         remainingAttempts
       });
 
-      // Audit log
-      await supabase.from('audit_logs').insert({
-        user_id: null,
-        action: 'ENVISION_PASSWORD_FAILED',
-        resource_type: 'envision_auth',
-        resource_id: superAdmin.id,
-        metadata: {
-          email,
-          client_ip: clientIp,
-          failed_attempts: newFailedCount,
-          remaining_attempts: remainingAttempts
-        }
-      }).catch(() => {});
+      // Audit log (fire and forget)
+      try {
+        await supabase.from('audit_logs').insert({
+          user_id: null,
+          action: 'ENVISION_PASSWORD_FAILED',
+          resource_type: 'envision_auth',
+          resource_id: superAdmin.id,
+          metadata: {
+            email,
+            client_ip: clientIp,
+            failed_attempts: newFailedCount,
+            remaining_attempts: remainingAttempts
+          }
+        });
+      } catch { /* ignore audit log failures */ }
 
       // Build error response with remaining attempts info
       const errorResponse: Record<string, unknown> = {
@@ -333,9 +338,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    logger.error("Fatal error in envision-login", { error: msg });
+    const stack = e instanceof Error ? e.stack : undefined;
+    logger.error("Fatal error in envision-login", { error: msg, stack });
     return new Response(
-      JSON.stringify({ error: "Internal server error" }),
+      JSON.stringify({ error: "Internal server error", debug: msg }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

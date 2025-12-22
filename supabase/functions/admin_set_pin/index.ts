@@ -29,7 +29,7 @@ const getEnv = (...keys: string[]): string => {
 };
 
 const SUPABASE_URL = getEnv("SUPABASE_URL");
-const SB_SECRET_KEY = getEnv("SB_SECRET_KEY", "SUPABASE_SERVICE_ROLE_KEY");
+const SB_SECRET_KEY = getEnv("SB_SECRET_KEY", "SB_SERVICE_ROLE_KEY", "SUPABASE_SERVICE_ROLE_KEY");
 const TWILIO_ACCOUNT_SID = getEnv("TWILIO_ACCOUNT_SID");
 const TWILIO_AUTH_TOKEN = getEnv("TWILIO_AUTH_TOKEN");
 const TWILIO_FROM_NUMBER = getEnv("TWILIO_FROM_NUMBER");
