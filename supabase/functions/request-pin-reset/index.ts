@@ -137,17 +137,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     // Look up admin user by phone
     // Check profiles table for is_admin = true and matching phone
-    // Try multiple phone formats since DB may store differently
+    // Phone numbers in DB may have various formats: 832-576-3448, (832) 576-3448, etc.
     const phoneDigits = normalizedPhone.replace(/\D/g, ''); // e.g., "15551234567"
-    const phoneWithoutCountry = phoneDigits.startsWith('1') ? phoneDigits.slice(1) : phoneDigits; // e.g., "5551234567"
+    const phoneWithoutCountry = phoneDigits.startsWith('1') ? phoneDigits.slice(1) : phoneDigits; // e.g., "8325763448"
 
-    // Search with LIKE to handle any format that contains these digits
+    // Use database function for reliable phone matching
+    // This function strips non-digits from stored phones and compares
     const { data: profiles, error: profileError } = await supabase
-      .from('profiles')
-      .select('id, user_id, phone, is_admin, tenant_id')
-      .eq('is_admin', true)
-      .like('phone', `%${phoneWithoutCountry}%`)
-      .limit(1);
+      .rpc('find_admin_by_phone', { phone_digits: phoneWithoutCountry });
 
     const profile = profiles?.[0] || null;
 
@@ -270,7 +267,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       user_id: profile.user_id,
       action: 'PIN_RESET_REQUESTED',
       resource_type: 'staff_pin',
-      resource_id: profile.id,
+      resource_id: profile.user_id,
       metadata: {
         phoneLastFour: normalizedPhone.slice(-4),
         tenantId: profile.tenant_id
