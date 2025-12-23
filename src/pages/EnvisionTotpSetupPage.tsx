@@ -449,7 +449,7 @@ export const EnvisionTotpSetupPage: React.FC = () => {
 
                 <button
                   type="submit"
-                  disabled={!canSubmit || submitting || !savedBackupCodes}
+                  disabled={!canSubmit || submitting || (backupCodes.length > 0 && !savedBackupCodes)}
                   className="w-full py-3 px-4 bg-[#00857a] hover:bg-[#006d64] text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#00857a] focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {submitting ? (
@@ -465,7 +465,7 @@ export const EnvisionTotpSetupPage: React.FC = () => {
                   )}
                 </button>
 
-                {!savedBackupCodes && (
+                {backupCodes.length > 0 && !savedBackupCodes && (
                   <p className="text-xs text-yellow-300 text-center">
                     Please confirm you've saved your backup codes before continuing
                   </p>
