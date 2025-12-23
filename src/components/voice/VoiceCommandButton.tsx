@@ -8,7 +8,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { voiceCommandService, VoiceCommand, VoiceState } from '../../services/voiceCommandService';
+import { voiceCommandService, VoiceCommand, VoiceState, PauseDuration } from '../../services/voiceCommandService';
 
 interface VoiceCommandButtonProps {
   onScribeStart?: () => void;
@@ -28,6 +28,15 @@ export const VoiceCommandButton: React.FC<VoiceCommandButtonProps> = ({
   const [showHelp, setShowHelp] = useState(false);
   const [patientResults, setPatientResults] = useState<{ id: string; name: string; mrn?: string }[]>([]);
   const [isSupported] = useState(voiceCommandService.isSupported());
+  const [pauseRemaining, setPauseRemaining] = useState(0);
+  const [showPauseMenu, setShowPauseMenu] = useState(false);
+
+  // Format seconds to MM:SS
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   // Handle commands
   const handleCommand = useCallback(async (cmd: VoiceCommand) => {
@@ -113,6 +122,20 @@ export const VoiceCommandButton: React.FC<VoiceCommandButtonProps> = ({
         setFeedback(null);
         break;
 
+      case 'pause_listening': {
+        const minutes = parseInt(cmd.entities.pauseMinutes || '10', 10) as PauseDuration;
+        setFeedback(`Pausing Vision for ${minutes} minutes...`);
+        voiceCommandService.pauseFor(minutes);
+        setTimeout(() => setFeedback(null), 2000);
+        break;
+      }
+
+      case 'resume_listening':
+        setFeedback('Resuming Vision...');
+        voiceCommandService.resumeFromPause();
+        setTimeout(() => setFeedback(null), 1500);
+        break;
+
       case 'unknown':
         setFeedback(`I didn't understand "${cmd.rawText}". Say "help" for commands.`);
         setTimeout(() => setFeedback(null), 4000);
@@ -129,6 +152,9 @@ export const VoiceCommandButton: React.FC<VoiceCommandButtonProps> = ({
     voiceCommandService.onTranscript((text, isFinal) => {
       if (!isFinal) setTranscript(text);
     });
+    voiceCommandService.onPauseChange((_isPaused, remaining) => {
+      setPauseRemaining(remaining);
+    });
 
     return () => {
       voiceCommandService.stop();
@@ -137,11 +163,23 @@ export const VoiceCommandButton: React.FC<VoiceCommandButtonProps> = ({
 
   // Toggle listening
   const toggleListening = () => {
-    if (state === 'idle') {
+    if (state === 'paused') {
+      // Resume from pause
+      voiceCommandService.resumeFromPause();
+      setShowPauseMenu(false);
+    } else if (state === 'idle') {
       voiceCommandService.start();
     } else {
       voiceCommandService.stop();
     }
+  };
+
+  // Handle pause duration selection
+  const handlePause = (minutes: PauseDuration) => {
+    voiceCommandService.pauseFor(minutes);
+    setShowPauseMenu(false);
+    setFeedback(`Pausing for ${minutes} minutes...`);
+    setTimeout(() => setFeedback(null), 2000);
   };
 
   // Select patient from results
@@ -165,6 +203,8 @@ export const VoiceCommandButton: React.FC<VoiceCommandButtonProps> = ({
         return 'bg-green-500 hover:bg-green-600 ring-4 ring-green-300';
       case 'processing':
         return 'bg-purple-500 hover:bg-purple-600';
+      case 'paused':
+        return 'bg-amber-500 hover:bg-amber-600';
       default:
         return 'bg-gray-600 hover:bg-gray-700';
     }
@@ -178,6 +218,8 @@ export const VoiceCommandButton: React.FC<VoiceCommandButtonProps> = ({
         return '👂';
       case 'processing':
         return '⏳';
+      case 'paused':
+        return '⏸️';
       default:
         return '🎙️';
     }
@@ -191,6 +233,8 @@ export const VoiceCommandButton: React.FC<VoiceCommandButtonProps> = ({
         return 'Listening for command...';
       case 'processing':
         return 'Processing...';
+      case 'paused':
+        return `Paused (${formatTime(pauseRemaining)})`;
       default:
         return 'Voice Commands';
     }
@@ -235,6 +279,28 @@ export const VoiceCommandButton: React.FC<VoiceCommandButtonProps> = ({
           </div>
         )}
 
+        {/* Pause Menu */}
+        {showPauseMenu && state !== 'paused' && (
+          <div className="bg-white rounded-lg shadow-xl border border-gray-200 p-2 animate-fadeIn">
+            <p className="text-xs text-gray-500 mb-2 px-2">Pause Vision for:</p>
+            {([5, 10, 20, 30] as PauseDuration[]).map((mins) => (
+              <button
+                key={mins}
+                onClick={() => handlePause(mins)}
+                className="w-full text-left px-3 py-2 hover:bg-amber-50 rounded-lg transition-colors text-sm"
+              >
+                {mins} minutes
+              </button>
+            ))}
+            <button
+              onClick={() => setShowPauseMenu(false)}
+              className="w-full text-center text-xs text-gray-400 mt-1 hover:text-gray-600"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+
         {/* State Label */}
         {state !== 'idle' && (
           <div className="bg-gray-900 text-white text-xs px-3 py-1 rounded-full">
@@ -242,14 +308,39 @@ export const VoiceCommandButton: React.FC<VoiceCommandButtonProps> = ({
           </div>
         )}
 
-        {/* Main Button */}
-        <button
-          onClick={toggleListening}
-          className={`w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-white text-2xl transition-all ${getButtonStyle()}`}
-          title={state === 'idle' ? 'Start voice commands' : 'Stop listening'}
-        >
-          {getStateIcon()}
-        </button>
+        {/* Button Row */}
+        <div className="flex items-center gap-2">
+          {/* Pause Button - Only show when listening */}
+          {(state === 'listening' || state === 'awake') && (
+            <button
+              onClick={() => setShowPauseMenu(!showPauseMenu)}
+              className="w-10 h-10 rounded-full shadow-md flex items-center justify-center text-white text-lg bg-amber-500 hover:bg-amber-600 transition-all"
+              title="Pause listening"
+            >
+              ⏸️
+            </button>
+          )}
+
+          {/* Resume Button - Only show when paused */}
+          {state === 'paused' && (
+            <button
+              onClick={() => voiceCommandService.resumeFromPause()}
+              className="w-10 h-10 rounded-full shadow-md flex items-center justify-center text-white text-lg bg-green-500 hover:bg-green-600 transition-all"
+              title="Resume listening"
+            >
+              ▶️
+            </button>
+          )}
+
+          {/* Main Button */}
+          <button
+            onClick={toggleListening}
+            className={`w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-white text-2xl transition-all ${getButtonStyle()}`}
+            title={state === 'idle' ? 'Start voice commands' : state === 'paused' ? 'Resume listening' : 'Stop listening'}
+          >
+            {getStateIcon()}
+          </button>
+        </div>
       </div>
 
       {/* Help Modal */}

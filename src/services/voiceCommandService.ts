@@ -1,9 +1,11 @@
 // ============================================================================
-// Voice Command Service - "Hey Riley" Voice-First Navigation
+// Voice Command Service - "Hey Vision" Voice-First Navigation
 // ============================================================================
 // Purpose: Let doctors/nurses speak commands instead of clicking
 // Commands: "Find patient Smith", "Open my schedule", "Start recording", etc.
 // Design: Always listening for wake word, then processes command
+// Features: Pause timer for private discussions (5/10/20/30 min auto-resume)
+// Tagline: "Always listening, always learning" - Envision Atlus
 // ============================================================================
 
 import { supabase } from '../lib/supabaseClient';
@@ -26,7 +28,12 @@ export type CommandIntent =
   | 'show_tasks'         // View task list
   | 'check_messages'     // View messages
   | 'help'               // Show help
+  | 'pause_listening'    // Pause Vision for X minutes
+  | 'resume_listening'   // Resume Vision early
   | 'unknown';           // Couldn't understand
+
+// Valid pause durations in minutes
+export type PauseDuration = 5 | 10 | 20 | 30;
 
 // Navigation routes
 const NAVIGATION_MAP: Record<string, string> = {
@@ -98,6 +105,25 @@ const COMMAND_PATTERNS: { pattern: RegExp; intent: CommandIntent; entityExtracto
     pattern: /(?:help|what can you do|commands)/i,
     intent: 'help',
   },
+  // Pause listening - "pause for 5/10/20/30 minutes", "pause 10 minutes", "mute for 5 minutes"
+  {
+    pattern: /(?:pause|mute|stop listening|quiet|privacy)\s+(?:for\s+)?(\d+)\s*(?:minutes?|mins?)/i,
+    intent: 'pause_listening',
+    entityExtractor: (match) => {
+      const mins = parseInt(match[1], 10);
+      // Snap to valid durations: 5, 10, 20, 30
+      const validDurations = [5, 10, 20, 30];
+      const nearest = validDurations.reduce((prev, curr) =>
+        Math.abs(curr - mins) < Math.abs(prev - mins) ? curr : prev
+      );
+      return { pauseMinutes: String(nearest) };
+    },
+  },
+  // Resume listening - "resume", "unpause", "start listening"
+  {
+    pattern: /(?:resume|unpause|start listening|listen again|wake up|i'm back)/i,
+    intent: 'resume_listening',
+  },
 ];
 
 export class VoiceCommandService {
@@ -108,6 +134,13 @@ export class VoiceCommandService {
   private onCommandCallback: ((cmd: VoiceCommand) => void) | null = null;
   private onStateChangeCallback: ((state: VoiceState) => void) | null = null;
   private onTranscriptCallback: ((text: string, isFinal: boolean) => void) | null = null;
+  private onPauseChangeCallback: ((isPaused: boolean, remainingSeconds: number) => void) | null = null;
+
+  // Pause timer state
+  private isPaused: boolean = false;
+  private pauseTimer: NodeJS.Timeout | null = null;
+  private pauseEndTime: number = 0;
+  private pauseCountdownInterval: NodeJS.Timeout | null = null;
 
   // Wake words - what activates command mode
   // Named "Vision" to align with Envision branding (Riley is the Smart Scribe)
@@ -332,6 +365,83 @@ export class VoiceCommandService {
     this.onTranscriptCallback = callback;
   }
 
+  onPauseChange(callback: (isPaused: boolean, remainingSeconds: number) => void): void {
+    this.onPauseChangeCallback = callback;
+  }
+
+  // Pause Vision for a specified duration (5, 10, 20, or 30 minutes)
+  pauseFor(minutes: PauseDuration): void {
+    // Clear any existing pause
+    this.clearPause();
+
+    // Stop listening
+    if (this.recognition && this.isListening) {
+      this.recognition.stop();
+    }
+
+    this.isPaused = true;
+    this.pauseEndTime = Date.now() + (minutes * 60 * 1000);
+    this.onStateChangeCallback?.('paused');
+
+    auditLogger.info('VOICE_COMMAND_PAUSED', { durationMinutes: minutes });
+
+    // Start countdown updates every second
+    this.pauseCountdownInterval = setInterval(() => {
+      const remaining = Math.max(0, Math.ceil((this.pauseEndTime - Date.now()) / 1000));
+      this.onPauseChangeCallback?.(true, remaining);
+      if (remaining <= 0) {
+        this.resumeFromPause();
+      }
+    }, 1000);
+
+    // Auto-resume after duration
+    this.pauseTimer = setTimeout(() => {
+      this.resumeFromPause();
+    }, minutes * 60 * 1000);
+
+    // Notify immediately
+    this.onPauseChangeCallback?.(true, minutes * 60);
+  }
+
+  // Resume listening (can be called early or automatically)
+  resumeFromPause(): void {
+    this.clearPause();
+    this.isPaused = false;
+    this.onPauseChangeCallback?.(false, 0);
+
+    // Restart listening
+    if (!this.isListening) {
+      this.start();
+    } else {
+      this.onStateChangeCallback?.('listening');
+    }
+
+    auditLogger.info('VOICE_COMMAND_RESUMED', {});
+  }
+
+  // Clear pause timers
+  private clearPause(): void {
+    if (this.pauseTimer) {
+      clearTimeout(this.pauseTimer);
+      this.pauseTimer = null;
+    }
+    if (this.pauseCountdownInterval) {
+      clearInterval(this.pauseCountdownInterval);
+      this.pauseCountdownInterval = null;
+    }
+  }
+
+  // Check if currently paused
+  getIsPaused(): boolean {
+    return this.isPaused;
+  }
+
+  // Get remaining pause time in seconds
+  getPauseRemaining(): number {
+    if (!this.isPaused) return 0;
+    return Math.max(0, Math.ceil((this.pauseEndTime - Date.now()) / 1000));
+  }
+
   // Get available commands for help
   getAvailableCommands(): { category: string; examples: string[] }[] {
     return [
@@ -368,11 +478,20 @@ export class VoiceCommandService {
           '"Open peer support"',
         ],
       },
+      {
+        category: 'Privacy/Pause',
+        examples: [
+          '"Pause for 5 minutes"',
+          '"Mute for 10 minutes"',
+          '"Privacy for 20 minutes"',
+          '"Resume listening"',
+        ],
+      },
     ];
   }
 }
 
-export type VoiceState = 'idle' | 'listening' | 'awake' | 'processing';
+export type VoiceState = 'idle' | 'listening' | 'awake' | 'processing' | 'paused';
 
 // Singleton instance
 export const voiceCommandService = new VoiceCommandService();

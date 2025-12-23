@@ -52,6 +52,20 @@ Add commands to `VOICE_COMMANDS` array in `src/services/workflowPreferences.ts`:
 | "Care coordination" | Navigate to `/care-coordination` |
 | "Refresh beds" | Reload bed board data |
 
+## Privacy/Pause Commands
+
+Vision supports a **pause timer** for private discussions. Say "Hey Vision" followed by:
+
+| Command | Action |
+|---------|--------|
+| "Pause for 5 minutes" | Stop listening for 5 min, then auto-resume |
+| "Mute for 10 minutes" | Stop listening for 10 min, then auto-resume |
+| "Privacy for 20 minutes" | Stop listening for 20 min, then auto-resume |
+| "Pause 30 minutes" | Stop listening for 30 min, then auto-resume |
+| "Resume" / "Unpause" | Resume listening early |
+
+**Note:** Compass Riley (Smart Scribe) does NOT have pause - it uses explicit start/stop for patient encounters.
+
 ## Voice in Specific Dashboards
 
 Some dashboards have **local voice commands** for context-specific actions:
