@@ -50,9 +50,9 @@
 
 | # | Skill | Status | Model | Target Location | Description |
 |---|-------|--------|-------|-----------------|-------------|
-| 18 | SOAP Note Auto-Generator | 📋 | Sonnet 4.5 | `src/services/soapNoteService.ts` | Generate from encounter summaries |
+| 18 | SOAP Note Auto-Generator | ✅ | Sonnet 4.5 | `src/services/ai/soapNoteAIService.ts` | Generate from encounter summaries |
 | 19 | Discharge Summary Generator | 📋 | Sonnet 4.5 | `src/services/dischargePlanningService.ts` | Auto-generate with med reconciliation |
-| 20 | Care Plan Auto-Generator | 📋 | Sonnet 4.5 | `src/services/careCoordinationService.ts` | Evidence-based from diagnosis + SDOH |
+| 20 | Care Plan Auto-Generator | ✅ | Sonnet 4.5 | `src/services/ai/carePlanAIService.ts` | Evidence-based from diagnosis + SDOH |
 | 21 | Progress Note Synthesizer | 📋 | Haiku 4.5 | New service | Summarize across check-ins |
 | 22 | Referral Letter Generator | 📋 | Haiku 4.5 | New service | Specialist referral letters |
 
@@ -62,7 +62,7 @@
 
 | # | Skill | Status | Model | Target Location | Description |
 |---|-------|--------|-------|-----------------|-------------|
-| 23 | Treatment Pathway Recommender | 📋 | Sonnet 4.5 | `supabase/functions/ai-treatment-pathway/` | Evidence-based treatment suggestions |
+| 23 | Treatment Pathway Recommender | ✅ | Sonnet 4.5 | `supabase/functions/ai-treatment-pathway/` | Evidence-based treatment suggestions |
 | 24 | Clinical Guideline Matcher | 📋 | Sonnet 4.5 | New service | Smart guideline recommendations |
 | 25 | Contraindication Detector | 📋 | Sonnet 4.5 | Extend drug interactions | Patient-specific risk detection |
 | 26 | Medication Reconciliation AI | 📋 | Sonnet 4.5 | `medicationReconciliationService.ts` | Discrepancy explanation |
@@ -158,7 +158,7 @@
 
 | # | Skill | Status | Model | Target Location | Description |
 |---|-------|--------|-------|-----------------|-------------|
-| 56 | Patient Q&A Bot | 📋 | Sonnet 4.5 | `supabase/functions/ai-patient-qa-bot/` | Health question answering |
+| 56 | Patient Q&A Bot | ✅ | Sonnet 4.5 | `supabase/functions/ai-patient-qa-bot/` | Health question answering |
 | 57 | Provider Assistant | 📋 | Sonnet 4.5 | Extend Riley | Role-adaptive for all staff |
 | 58 | Care Team Chat Summarizer | 📋 | Haiku 4.5 | New service | Team communication summaries |
 | 59 | Admin Chat Assistant | 📋 | Haiku 4.5 | `IntelligentAdminPanel.tsx` | Conversational admin help |
@@ -187,8 +187,8 @@
 |----------|----------|---------|---------|-------|
 | Core Skills | 11 | 1 | 0 | 12 |
 | Quick Wins | 5 | 0 | 0 | 5 |
-| Clinical Docs | 0 | 0 | 5 | 5 |
-| Decision Support | 0 | 0 | 4 | 4 |
+| Clinical Docs | 2 | 0 | 3 | 5 |
+| Decision Support | 1 | 0 | 3 | 4 |
 | Patient Engagement | 0 | 0 | 3 | 3 |
 | Risk Prediction | 0 | 0 | 5 | 5 |
 | Admin Automation | 0 | 0 | 4 | 4 |
@@ -197,8 +197,8 @@
 | Specialty | 0 | 0 | 5 | 5 |
 | Interoperability | 0 | 0 | 3 | 3 |
 | Security | 0 | 0 | 3 | 3 |
-| Conversational | 0 | 0 | 4 | 4 |
-| **TOTAL** | **16** | **1** | **42** | **59** |
+| Conversational | 1 | 0 | 3 | 4 |
+| **TOTAL** | **20** | **1** | **38** | **59** |
 
 ---
 
@@ -211,12 +211,16 @@
 4. [x] Dashboard Anomaly Detection
 5. [x] Caregiver Briefing Generator
 6. [x] Riley Smart Scribe (verified production-ready)
+7. [x] SOAP Note Auto-Generator
+8. [x] Patient Q&A Bot
+9. [x] Care Plan Auto-Generator
+10. [x] Treatment Pathway Recommender
 
 ### Next Sprint
-- SOAP Note Auto-Generator
-- Care Plan Auto-Generator
-- Treatment Pathway Recommender
-- Patient Q&A Bot
+- Discharge Summary Generator
+- Progress Note Synthesizer
+- Fall Risk Predictor
+- Clinical Guideline Matcher
 
 ---
 
@@ -224,6 +228,10 @@
 
 | Date | Change |
 |------|--------|
+| 2025-12-23 | Added Treatment Pathway Recommender (#23) - Evidence-based clinical decision support with allergy/contraindication checking |
+| 2025-12-23 | Added Care Plan Auto-Generator (#20) - Evidence-based care plans with safety guardrails |
+| 2025-12-23 | Added SOAP Note Auto-Generator (#18) - AI-powered SOAP note generation using Sonnet 4.5 |
+| 2025-12-23 | Added Patient Q&A Bot (#56) - Health question answering with safety guardrails |
 | 2025-12-23 | Verified Riley Smart Scribe is production-ready (was incorrectly marked as demo-only) |
 | 2025-12-23 | Completed 5 Quick Win skills: Check-In Questions, Patient Education, Drug Interactions, Dashboard Anomaly, Caregiver Briefing |
 | 2025-12-23 | Initial roadmap created with 59 skills tracked |

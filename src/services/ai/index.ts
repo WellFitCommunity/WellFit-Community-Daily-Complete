@@ -69,3 +69,48 @@ export {
   type BatchConfig,
   type QueueStats
 } from './batchInference';
+
+// SOAP Note AI Generation (Skill #18)
+export {
+  SOAPNoteAIService,
+  type SOAPNoteSection,
+  type CodeSuggestion,
+  type GeneratedSOAPNote,
+  type SOAPNoteGenerationRequest,
+  type SOAPNoteGenerationResponse
+} from './soapNoteAIService';
+
+// Patient Q&A Bot (Skill #56)
+export {
+  PatientQAService,
+  type SafetyCheck,
+  type QAResponse,
+  type ConversationMessage,
+  type AskQuestionRequest
+} from './patientQAService';
+
+// Care Plan AI Generation (Skill #20)
+export {
+  CarePlanAIService,
+  type CarePlanGoal,
+  type CarePlanIntervention,
+  type CarePlanBarrier,
+  type CarePlanActivity,
+  type GeneratedCarePlan,
+  type CarePlanGenerationRequest,
+  type CarePlanGenerationResponse
+} from './carePlanAIService';
+
+// Treatment Pathway Recommender (Skill #23)
+export {
+  TreatmentPathwayService,
+  type TreatmentStep,
+  type MedicationRecommendation,
+  type LifestyleRecommendation,
+  type ReferralRecommendation,
+  type MonitoringParameter,
+  type GuidelineSummary,
+  type TreatmentPathway,
+  type TreatmentPathwayRequest,
+  type TreatmentPathwayResponse
+} from './treatmentPathwayService';
