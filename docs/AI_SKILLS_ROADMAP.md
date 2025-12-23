@@ -51,7 +51,7 @@
 | # | Skill | Status | Model | Target Location | Description |
 |---|-------|--------|-------|-----------------|-------------|
 | 18 | SOAP Note Auto-Generator | ✅ | Sonnet 4.5 | `src/services/ai/soapNoteAIService.ts` | Generate from encounter summaries |
-| 19 | Discharge Summary Generator | 📋 | Sonnet 4.5 | `src/services/dischargePlanningService.ts` | Auto-generate with med reconciliation |
+| 19 | Discharge Summary Generator | ✅ | Sonnet 4.5 | `src/services/ai/dischargeSummaryService.ts` | Auto-generate with med reconciliation |
 | 20 | Care Plan Auto-Generator | ✅ | Sonnet 4.5 | `src/services/ai/carePlanAIService.ts` | Evidence-based from diagnosis + SDOH |
 | 21 | Progress Note Synthesizer | 📋 | Haiku 4.5 | New service | Summarize across check-ins |
 | 22 | Referral Letter Generator | 📋 | Haiku 4.5 | New service | Specialist referral letters |
@@ -187,7 +187,7 @@
 |----------|----------|---------|---------|-------|
 | Core Skills | 11 | 1 | 0 | 12 |
 | Quick Wins | 5 | 0 | 0 | 5 |
-| Clinical Docs | 2 | 0 | 3 | 5 |
+| Clinical Docs | 3 | 0 | 2 | 5 |
 | Decision Support | 1 | 0 | 3 | 4 |
 | Patient Engagement | 0 | 0 | 3 | 3 |
 | Risk Prediction | 0 | 0 | 5 | 5 |
@@ -198,7 +198,7 @@
 | Interoperability | 0 | 0 | 3 | 3 |
 | Security | 0 | 0 | 3 | 3 |
 | Conversational | 1 | 0 | 3 | 4 |
-| **TOTAL** | **20** | **1** | **38** | **59** |
+| **TOTAL** | **21** | **1** | **37** | **59** |
 
 ---
 
@@ -215,12 +215,13 @@
 8. [x] Patient Q&A Bot
 9. [x] Care Plan Auto-Generator
 10. [x] Treatment Pathway Recommender
+11. [x] Discharge Summary Generator
 
 ### Next Sprint
-- Discharge Summary Generator
 - Progress Note Synthesizer
 - Fall Risk Predictor
 - Clinical Guideline Matcher
+- Referral Letter Generator
 
 ---
 
@@ -228,6 +229,7 @@
 
 | Date | Change |
 |------|--------|
+| 2025-12-23 | Added Discharge Summary Generator (#19) - Comprehensive summaries with medication reconciliation |
 | 2025-12-23 | Added Treatment Pathway Recommender (#23) - Evidence-based clinical decision support with allergy/contraindication checking |
 | 2025-12-23 | Added Care Plan Auto-Generator (#20) - Evidence-based care plans with safety guardrails |
 | 2025-12-23 | Added SOAP Note Auto-Generator (#18) - AI-powered SOAP note generation using Sonnet 4.5 |

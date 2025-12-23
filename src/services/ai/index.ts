@@ -114,3 +114,19 @@ export {
   type TreatmentPathwayRequest,
   type TreatmentPathwayResponse
 } from './treatmentPathwayService';
+
+// Discharge Summary Generator (Skill #19)
+export {
+  DischargeSummaryService,
+  type MedicationEntry,
+  type MedicationChange,
+  type MedicationReconciliation,
+  type DischargeDiagnosis,
+  type ProcedurePerformed,
+  type FollowUpAppointment,
+  type PatientInstruction,
+  type WarningSign,
+  type DischargeSummary,
+  type DischargeSummaryRequest,
+  type DischargeSummaryResponse
+} from './dischargeSummaryService';
