@@ -53,7 +53,7 @@
 | 18 | SOAP Note Auto-Generator | ✅ | Sonnet 4.5 | `src/services/ai/soapNoteAIService.ts` | Generate from encounter summaries |
 | 19 | Discharge Summary Generator | ✅ | Sonnet 4.5 | `src/services/ai/dischargeSummaryService.ts` | Auto-generate with med reconciliation |
 | 20 | Care Plan Auto-Generator | ✅ | Sonnet 4.5 | `src/services/ai/carePlanAIService.ts` | Evidence-based from diagnosis + SDOH |
-| 21 | Progress Note Synthesizer | 📋 | Haiku 4.5 | New service | Summarize across check-ins |
+| 21 | Progress Note Synthesizer | ✅ | Haiku 4.5 | `src/services/ai/progressNoteSynthesizerService.ts` | Vitals trends, mood, adherence synthesis |
 | 22 | Referral Letter Generator | 📋 | Haiku 4.5 | New service | Specialist referral letters |
 
 ---
@@ -187,7 +187,7 @@
 |----------|----------|---------|---------|-------|
 | Core Skills | 11 | 1 | 0 | 12 |
 | Quick Wins | 5 | 0 | 0 | 5 |
-| Clinical Docs | 3 | 0 | 2 | 5 |
+| Clinical Docs | 4 | 0 | 1 | 5 |
 | Decision Support | 1 | 0 | 3 | 4 |
 | Patient Engagement | 0 | 0 | 3 | 3 |
 | Risk Prediction | 0 | 0 | 5 | 5 |
@@ -198,7 +198,7 @@
 | Interoperability | 0 | 0 | 3 | 3 |
 | Security | 0 | 0 | 3 | 3 |
 | Conversational | 1 | 0 | 3 | 4 |
-| **TOTAL** | **21** | **1** | **37** | **59** |
+| **TOTAL** | **22** | **1** | **36** | **59** |
 
 ---
 
@@ -216,12 +216,13 @@
 9. [x] Care Plan Auto-Generator
 10. [x] Treatment Pathway Recommender
 11. [x] Discharge Summary Generator
+12. [x] Progress Note Synthesizer
 
 ### Next Sprint
-- Progress Note Synthesizer
 - Fall Risk Predictor
 - Clinical Guideline Matcher
 - Referral Letter Generator
+- Appointment Prep Instructions
 
 ---
 
@@ -229,6 +230,7 @@
 
 | Date | Change |
 |------|--------|
+| 2025-12-23 | Added Progress Note Synthesizer (#21) - Vitals trends, mood, adherence synthesis across check-ins |
 | 2025-12-23 | Added Discharge Summary Generator (#19) - Comprehensive summaries with medication reconciliation |
 | 2025-12-23 | Added Treatment Pathway Recommender (#23) - Evidence-based clinical decision support with allergy/contraindication checking |
 | 2025-12-23 | Added Care Plan Auto-Generator (#20) - Evidence-based care plans with safety guardrails |

@@ -130,3 +130,18 @@ export {
   type DischargeSummaryRequest,
   type DischargeSummaryResponse
 } from './dischargeSummaryService';
+
+// Progress Note Synthesizer (Skill #21)
+export {
+  ProgressNoteSynthesizerService,
+  progressNoteSynthesizerService,
+  type VitalsTrend,
+  type MoodSummary,
+  type ActivitySummary,
+  type ConcernFlag,
+  type ProgressNoteSummary,
+  type GeneratedProgressNote,
+  type ProgressNoteGenerationRequest,
+  type ProgressNoteGenerationResponse,
+  type SavedProgressNote
+} from './progressNoteSynthesizerService';
