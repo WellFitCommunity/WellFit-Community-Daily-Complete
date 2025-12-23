@@ -115,7 +115,11 @@ export type ServiceErrorCode =
   // Medication Reconciliation AI errors
   | 'MEDICATION_RECONCILIATION_FAILED'
   | 'RECONCILIATION_SAVE_FAILED'
-  | 'RECONCILIATION_REVIEW_FAILED';
+  | 'RECONCILIATION_REVIEW_FAILED'
+  // Appointment Prep Instructions AI errors
+  | 'APPOINTMENT_PREP_GENERATION_FAILED'
+  | 'APPOINTMENT_PREP_SAVE_FAILED'
+  | 'APPOINTMENT_PREP_UPDATE_FAILED';
 
 /**
  * Structured error information

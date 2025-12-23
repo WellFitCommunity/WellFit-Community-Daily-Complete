@@ -213,3 +213,16 @@ export {
   type MedicationReconciliationResponse,
   type SavedReconciliation
 } from './medicationReconciliationAIService';
+
+// Appointment Prep Instructions (Skill #27)
+export {
+  AppointmentPrepInstructionsService,
+  type AppointmentType,
+  type AppointmentDetails,
+  type PatientPrepContext,
+  type PrepInstructionItem,
+  type AppointmentPrepResult,
+  type AppointmentPrepRequest,
+  type AppointmentPrepResponse,
+  type SavedAppointmentPrep
+} from './appointmentPrepInstructionsService';
