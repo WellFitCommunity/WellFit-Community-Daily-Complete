@@ -204,11 +204,10 @@ class EmergencyAccessIntelligenceService {
 
     // Get all seniors enrolled in emergency access program
     const { data: seniors } = await this.supabase
-      .from('auth.users')
-      .select('id, raw_user_meta_data')
-      .eq('raw_user_meta_data->>tenant_id', request.tenantId)
-      .eq('raw_user_meta_data->>role', 'senior')
-      .eq('raw_user_meta_data->>emergency_intel_enrolled', 'true');
+      .from('profiles')
+      .select('user_id, first_name, last_name, email, phone, address, city, state, zip_code')
+      .eq('tenant_id', request.tenantId)
+      .eq('role', 'senior');
 
     if (!seniors || seniors.length === 0) {
       return { generated: 0, updated: 0, totalCost: 0 };
@@ -436,9 +435,9 @@ class EmergencyAccessIntelligenceService {
   private async gatherEmergencyData(tenantId: string, seniorId: string): Promise<any> {
     // Get user profile
     const { data: user } = await this.supabase
-      .from('auth.users')
-      .select('raw_user_meta_data')
-      .eq('id', seniorId)
+      .from('profiles')
+      .select('first_name, last_name, email, phone, address, city, state, zip_code, dob, gender')
+      .eq('user_id', seniorId)
       .single();
 
     // Get emergency contacts

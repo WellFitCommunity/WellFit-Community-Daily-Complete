@@ -551,7 +551,7 @@ export async function getWorkflowPreferences(
       .from('user_workflow_preferences')
       .select('*')
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
 
     if (data && !error) {
       const prefs: WorkflowPreferences = {
