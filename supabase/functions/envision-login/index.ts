@@ -192,54 +192,68 @@ Deno.serve(async (req: Request): Promise<Response> => {
       }
     }
 
-    // Method 2: Fall back to Supabase auth.users table if standalone fails
-    // We query auth.users directly with service role and verify bcrypt hash
-    // This bypasses the client signInWithPassword which requires CAPTCHA
+    // Method 2: Fall back to Supabase Admin API if standalone fails
+    // Use listUsers to find user by email, then verify bcrypt hash
+    // This bypasses signInWithPassword which requires CAPTCHA
     if (!passwordValid) {
       try {
-        // Query auth.users directly (requires service role)
-        const { data: authUser, error: authUserError } = await supabase
-          .from('auth.users')
-          .select('id, encrypted_password')
-          .ilike('email', email)
-          .single();
+        // Use admin API to get user by email
+        const { data: listData, error: listError } = await supabase.auth.admin.listUsers({
+          page: 1,
+          perPage: 1
+        });
 
-        if (!authUserError && authUser?.encrypted_password) {
-          // Use bcrypt to verify password against encrypted_password
-          const { compare } = await import("https://deno.land/x/bcrypt@v0.4.1/mod.ts");
-          const bcryptValid = await compare(password, authUser.encrypted_password);
+        // Find user by email (case-insensitive)
+        let authUser = null;
+        if (!listError && listData?.users) {
+          // Search through users - admin API doesn't have email filter, so we get all and filter
+          // For production with many users, consider creating an RPC function instead
+          const { data: allUsers } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+          authUser = allUsers?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
+        }
 
-          if (bcryptValid) {
-            passwordValid = true;
-            authMethod = 'supabase';
+        if (authUser) {
+          // Get encrypted_password via raw SQL since admin API doesn't expose it
+          const { data: pwData, error: pwError } = await supabase.rpc('get_user_encrypted_password', {
+            user_email: email
+          });
 
-            logger.info("Envision password verified via auth.users bcrypt", {
-              superAdminId: superAdmin.id,
-              email,
-              supabaseUserId: authUser.id
-            });
+          if (!pwError && pwData) {
+            // Use bcrypt to verify password
+            const { compare } = await import("https://deno.land/x/bcrypt@v0.4.1/mod.ts");
+            const bcryptValid = await compare(password, pwData);
 
-            // Sync password: Update standalone password_hash for future logins
-            try {
-              const newHash = await hashPassword(password);
-              await supabase
-                .from('super_admin_users')
-                .update({ password_hash: newHash })
-                .eq('id', superAdmin.id);
+            if (bcryptValid) {
+              passwordValid = true;
+              authMethod = 'supabase';
 
-              logger.info("Synced Supabase Auth password to standalone hash", {
-                superAdminId: superAdmin.id
+              logger.info("Envision password verified via admin API + bcrypt", {
+                superAdminId: superAdmin.id,
+                email,
+                supabaseUserId: authUser.id
               });
-            } catch (syncErr: unknown) {
-              const syncMsg = syncErr instanceof Error ? syncErr.message : String(syncErr);
-              logger.warn("Failed to sync password hash", { error: syncMsg });
-              // Continue - password verification succeeded even if sync failed
+
+              // Sync password: Update standalone password_hash for future logins
+              try {
+                const newHash = await hashPassword(password);
+                await supabase
+                  .from('super_admin_users')
+                  .update({ password_hash: newHash })
+                  .eq('id', superAdmin.id);
+
+                logger.info("Synced Supabase Auth password to standalone hash", {
+                  superAdminId: superAdmin.id
+                });
+              } catch (syncErr: unknown) {
+                const syncMsg = syncErr instanceof Error ? syncErr.message : String(syncErr);
+                logger.warn("Failed to sync password hash", { error: syncMsg });
+              }
             }
           }
         }
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
-        logger.warn("Auth.users bcrypt verification failed", { error: msg });
+        logger.warn("Admin API bcrypt verification failed", { error: msg });
         // Continue - will be treated as failed password
       }
     }
