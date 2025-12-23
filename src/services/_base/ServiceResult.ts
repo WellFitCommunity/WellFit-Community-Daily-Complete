@@ -53,7 +53,13 @@ export type ServiceErrorCode =
   | 'RATE_LIMITED'
   // External service errors
   | 'EXTERNAL_SERVICE_ERROR'
-  | 'API_ERROR';
+  | 'API_ERROR'
+  // AI service errors
+  | 'AI_SERVICE_ERROR'
+  | 'EDUCATION_GENERATION_FAILED'
+  | 'BRIEFING_GENERATION_FAILED'
+  | 'ANOMALY_DETECTION_FAILED'
+  | 'QUESTION_GENERATION_FAILED';
 
 /**
  * Structured error information

@@ -51,11 +51,13 @@ export interface OutreachCampaign {
 export class PatientOutreachService {
   /**
    * Send daily check-in to a patient via SMS or app
+   * Uses AI-powered personalized questions when available
    */
   static async sendDailyCheckIn(
     patientId: string,
     method: 'sms' | 'app' = 'sms',
-    customQuestions?: CheckInQuestion[]
+    customQuestions?: CheckInQuestion[],
+    useAI: boolean = true
   ): Promise<DailyCheckIn> {
     try {
       // Get patient profile
@@ -77,8 +79,15 @@ export class PatientOutreachService {
 
       const activePlan = carePlans.data?.[0];
 
-      // Generate check-in questions
-      const questions = customQuestions || this.generateDefaultQuestions(activePlan);
+      // Generate check-in questions - use AI if enabled and no custom questions
+      let questions: CheckInQuestion[];
+      if (customQuestions) {
+        questions = customQuestions;
+      } else if (useAI) {
+        questions = await this.generateSmartQuestions(patientId, activePlan?.id);
+      } else {
+        questions = this.generateDefaultQuestions(activePlan);
+      }
 
       // Create check-in record
       const checkIn: DailyCheckIn = {
@@ -427,7 +436,48 @@ Provide a 2-3 sentence clinical summary suitable for the care team. Focus on wha
   }
 
   /**
-   * Generate default check-in questions
+   * Generate AI-powered personalized check-in questions
+   * Falls back to default questions if AI service unavailable
+   */
+  static async generateSmartQuestions(
+    patientId: string,
+    carePlanId?: string,
+    questionCount: number = 5,
+    focusAreas?: string[]
+  ): Promise<CheckInQuestion[]> {
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-check-in-questions', {
+        body: {
+          patientId,
+          carePlanId,
+          questionCount,
+          focusAreas
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.questions && Array.isArray(data.questions)) {
+        // Map AI-generated questions to our interface
+        return data.questions.map((q: any) => ({
+          question: q.question,
+          type: q.type,
+          scale: q.scale,
+          choices: q.choices,
+          required: q.required ?? true
+        }));
+      }
+    } catch (err: unknown) {
+      // AI service unavailable, fall back to defaults
+      // Silently fall back - audit logged on edge function side
+    }
+
+    // Fallback to default questions
+    return this.generateDefaultQuestions();
+  }
+
+  /**
+   * Generate default check-in questions (fallback)
    */
   private static generateDefaultQuestions(carePlan?: any): CheckInQuestion[] {
     const defaultQuestions: CheckInQuestion[] = [
