@@ -159,3 +159,17 @@ export {
   type FallRiskAssessmentResponse,
   type SavedFallRiskAssessment
 } from './fallRiskPredictorService';
+
+// Clinical Guideline Matcher (Skill #24)
+export {
+  ClinicalGuidelineMatcherService,
+  clinicalGuidelineMatcherService,
+  type ClinicalGuideline,
+  type GuidelineRecommendation,
+  type AdherenceGap,
+  type PreventiveScreening,
+  type GuidelineMatchResult,
+  type GuidelineMatchRequest,
+  type GuidelineMatchResponse,
+  type SavedGuidelineMatch
+} from './clinicalGuidelineMatcherService';

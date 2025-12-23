@@ -63,7 +63,7 @@
 | # | Skill | Status | Model | Target Location | Description |
 |---|-------|--------|-------|-----------------|-------------|
 | 23 | Treatment Pathway Recommender | ✅ | Sonnet 4.5 | `supabase/functions/ai-treatment-pathway/` | Evidence-based treatment suggestions |
-| 24 | Clinical Guideline Matcher | 📋 | Sonnet 4.5 | New service | Smart guideline recommendations |
+| 24 | Clinical Guideline Matcher | ✅ | Sonnet 4.5 | `supabase/functions/ai-clinical-guideline-matcher/` | Smart guideline recommendations |
 | 25 | Contraindication Detector | 📋 | Sonnet 4.5 | Extend drug interactions | Patient-specific risk detection |
 | 26 | Medication Reconciliation AI | 📋 | Sonnet 4.5 | `medicationReconciliationService.ts` | Discrepancy explanation |
 
@@ -188,7 +188,7 @@
 | Core Skills | 11 | 1 | 0 | 12 |
 | Quick Wins | 5 | 0 | 0 | 5 |
 | Clinical Docs | 4 | 0 | 1 | 5 |
-| Decision Support | 1 | 0 | 3 | 4 |
+| Decision Support | 2 | 0 | 2 | 4 |
 | Patient Engagement | 0 | 0 | 3 | 3 |
 | Risk Prediction | 1 | 0 | 4 | 5 |
 | Admin Automation | 0 | 0 | 4 | 4 |
@@ -198,7 +198,7 @@
 | Interoperability | 0 | 0 | 3 | 3 |
 | Security | 0 | 0 | 3 | 3 |
 | Conversational | 1 | 0 | 3 | 4 |
-| **TOTAL** | **23** | **1** | **35** | **59** |
+| **TOTAL** | **24** | **1** | **34** | **59** |
 
 ---
 
@@ -218,12 +218,13 @@
 11. [x] Discharge Summary Generator
 12. [x] Progress Note Synthesizer
 13. [x] Fall Risk Predictor
+14. [x] Clinical Guideline Matcher
 
 ### Next Sprint
-- Clinical Guideline Matcher
 - Referral Letter Generator
 - Medication Adherence Predictor
 - Appointment Prep Instructions
+- Contraindication Detector
 
 ---
 
@@ -231,6 +232,7 @@
 
 | Date | Change |
 |------|--------|
+| 2025-12-23 | Added Clinical Guideline Matcher (#24) - Smart guideline recommendations with adherence gap detection |
 | 2025-12-23 | Added Fall Risk Predictor (#30) - Morse Scale + evidence-based clinical risk assessment |
 | 2025-12-23 | Added Progress Note Synthesizer (#21) - Vitals trends, mood, adherence synthesis across check-ins |
 | 2025-12-23 | Added Discharge Summary Generator (#19) - Comprehensive summaries with medication reconciliation |

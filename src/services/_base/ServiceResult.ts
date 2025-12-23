@@ -96,7 +96,12 @@ export type ServiceErrorCode =
   // Fall Risk Predictor AI errors
   | 'FALL_RISK_ASSESSMENT_FAILED'
   | 'FALL_RISK_SAVE_FAILED'
-  | 'FALL_RISK_APPROVAL_FAILED';
+  | 'FALL_RISK_APPROVAL_FAILED'
+  // Clinical Guideline Matcher AI errors
+  | 'GUIDELINE_MATCH_FAILED'
+  | 'GUIDELINE_MATCH_SAVE_FAILED'
+  | 'GUIDELINE_MATCH_REVIEW_FAILED'
+  | 'GUIDELINE_MATCH_FETCH_FAILED';
 
 /**
  * Structured error information
