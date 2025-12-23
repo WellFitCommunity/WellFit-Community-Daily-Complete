@@ -192,68 +192,45 @@ Deno.serve(async (req: Request): Promise<Response> => {
       }
     }
 
-    // Method 2: Fall back to Supabase Admin API if standalone fails
-    // Use listUsers to find user by email, then verify bcrypt hash
+    // Method 2: Fall back to database-side bcrypt verification
+    // Use RPC function to verify password directly in PostgreSQL (pgcrypto)
     // This bypasses signInWithPassword which requires CAPTCHA
     if (!passwordValid) {
       try {
-        // Use admin API to get user by email
-        const { data: listData, error: listError } = await supabase.auth.admin.listUsers({
-          page: 1,
-          perPage: 1
+        // Verify password using PostgreSQL's crypt() function (pgcrypto)
+        const { data: verifyResult, error: verifyError } = await supabase.rpc('verify_user_password', {
+          user_email: email,
+          input_password: password
         });
 
-        // Find user by email (case-insensitive)
-        let authUser = null;
-        if (!listError && listData?.users) {
-          // Search through users - admin API doesn't have email filter, so we get all and filter
-          // For production with many users, consider creating an RPC function instead
-          const { data: allUsers } = await supabase.auth.admin.listUsers({ perPage: 1000 });
-          authUser = allUsers?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
-        }
+        if (!verifyError && verifyResult === true) {
+          passwordValid = true;
+          authMethod = 'supabase';
 
-        if (authUser) {
-          // Get encrypted_password via raw SQL since admin API doesn't expose it
-          const { data: pwData, error: pwError } = await supabase.rpc('get_user_encrypted_password', {
-            user_email: email
+          logger.info("Envision password verified via PostgreSQL pgcrypto", {
+            superAdminId: superAdmin.id,
+            email
           });
 
-          if (!pwError && pwData) {
-            // Use bcrypt to verify password
-            const { compare } = await import("https://deno.land/x/bcrypt@v0.4.1/mod.ts");
-            const bcryptValid = await compare(password, pwData);
+          // Sync password: Update standalone password_hash for future logins
+          try {
+            const newHash = await hashPassword(password);
+            await supabase
+              .from('super_admin_users')
+              .update({ password_hash: newHash })
+              .eq('id', superAdmin.id);
 
-            if (bcryptValid) {
-              passwordValid = true;
-              authMethod = 'supabase';
-
-              logger.info("Envision password verified via admin API + bcrypt", {
-                superAdminId: superAdmin.id,
-                email,
-                supabaseUserId: authUser.id
-              });
-
-              // Sync password: Update standalone password_hash for future logins
-              try {
-                const newHash = await hashPassword(password);
-                await supabase
-                  .from('super_admin_users')
-                  .update({ password_hash: newHash })
-                  .eq('id', superAdmin.id);
-
-                logger.info("Synced Supabase Auth password to standalone hash", {
-                  superAdminId: superAdmin.id
-                });
-              } catch (syncErr: unknown) {
-                const syncMsg = syncErr instanceof Error ? syncErr.message : String(syncErr);
-                logger.warn("Failed to sync password hash", { error: syncMsg });
-              }
-            }
+            logger.info("Synced Supabase Auth password to standalone hash", {
+              superAdminId: superAdmin.id
+            });
+          } catch (syncErr: unknown) {
+            const syncMsg = syncErr instanceof Error ? syncErr.message : String(syncErr);
+            logger.warn("Failed to sync password hash", { error: syncMsg });
           }
         }
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
-        logger.warn("Admin API bcrypt verification failed", { error: msg });
+        logger.warn("PostgreSQL password verification failed", { error: msg });
         // Continue - will be treated as failed password
       }
     }
