@@ -1,28 +1,22 @@
 /**
- * Envision TOTP Setup Edge Function
+ * Envision TOTP Setup (Enrollment) - NO NPM PACKAGES
  *
- * Handles TOTP enrollment for Envision super admins.
- * Supports two actions:
- *   - begin: Generate TOTP secret, store temporarily, return QR URI
- *   - confirm: Verify first 6-digit code, persist TOTP to super_admin_users
+ * - action="begin": generate secret, store pending, return otpauth:// URI
+ * - action="confirm": verify 6-digit code, persist totp_secret, enable totp, mark session verified
  *
- * Flow:
- * 1. Client calls with action='begin' -> gets otpauth URI for QR code
- * 2. User scans QR with authenticator app
- * 3. Client calls with action='confirm' + code -> TOTP is enabled
- *
- * Copyright © 2025 Envision VirtualEdge Group LLC. All rights reserved.
+ * No SMS. No email. No notifications. Codes are generated on the user's phone after QR scan.
  */
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
-import { generateTotpSecret, generateTotpUri, verifyTotpCode, generateBackupCodes, hashBackupCode } from "../_shared/crypto.ts";
 
 const PENDING_TOTP_TTL_MINUTES = 10;
 
-/** Prefer robust, side-effect-free env reads */
+// ─────────────────────────────────────────────────────────────
+// Env helper
+// ─────────────────────────────────────────────────────────────
 const getEnv = (...keys: string[]): string => {
   for (const k of keys) {
     const v = Deno.env.get(k);
@@ -31,312 +25,283 @@ const getEnv = (...keys: string[]): string => {
   return "";
 };
 
-/** Normalize TOTP code to digits only */
-const normalizeCode = (raw: unknown): string => {
-  return String(raw ?? "").replace(/[^\d]/g, "");
+const json = (corsHeaders: HeadersInit, status: number, body: unknown) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
+// ─────────────────────────────────────────────────────────────
+// Base32 (RFC 4648) encode/decode (no padding used in secrets)
+// ─────────────────────────────────────────────────────────────
+const B32_ALPH = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+
+const base32Encode = (bytes: Uint8Array): string => {
+  let bits = 0;
+  let value = 0;
+  let output = "";
+
+  for (let i = 0; i < bytes.length; i++) {
+    value = (value << 8) | bytes[i];
+    bits += 8;
+    while (bits >= 5) {
+      output += B32_ALPH[(value >>> (bits - 5)) & 31];
+      bits -= 5;
+    }
+  }
+  if (bits > 0) {
+    output += B32_ALPH[(value << (5 - bits)) & 31];
+  }
+  return output;
 };
 
-Deno.serve(async (req: Request): Promise<Response> => {
-  const logger = createLogger('envision-totp-setup', req);
+const base32Decode = (b32: string): Uint8Array => {
+  const cleaned = (b32 || "")
+    .toUpperCase()
+    .replace(/=+$/g, "")
+    .replace(/[^A-Z2-7]/g, "");
 
-  // Handle CORS
-  if (req.method === "OPTIONS") {
-    return handleOptions(req);
+  let bits = 0;
+  let value = 0;
+  const out: number[] = [];
+
+  for (let i = 0; i < cleaned.length; i++) {
+    const idx = B32_ALPH.indexOf(cleaned[i]);
+    if (idx === -1) continue;
+    value = (value << 5) | idx;
+    bits += 5;
+
+    if (bits >= 8) {
+      out.push((value >>> (bits - 8)) & 255);
+      bits -= 8;
+    }
   }
+  return new Uint8Array(out);
+};
+
+// ─────────────────────────────────────────────────────────────
+// TOTP (RFC 6238) using WebCrypto (HMAC-SHA1), 6 digits, 30 sec
+// window=1 allows +/- 30 seconds drift
+// ─────────────────────────────────────────────────────────────
+const toBigEndian8 = (counter: number): Uint8Array => {
+  const buf = new Uint8Array(8);
+  let x = Math.floor(counter);
+  for (let i = 7; i >= 0; i--) {
+    buf[i] = x & 0xff;
+    x = Math.floor(x / 256);
+  }
+  return buf;
+};
+
+const hmacSha1 = async (keyBytes: Uint8Array, msg: Uint8Array): Promise<Uint8Array> => {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    keyBytes,
+    { name: "HMAC", hash: "SHA-1" },
+    false,
+    ["sign"]
+  );
+  const sig = await crypto.subtle.sign("HMAC", key, msg);
+  return new Uint8Array(sig);
+};
+
+const hotp = async (secretBytes: Uint8Array, counter: number): Promise<string> => {
+  const msg = toBigEndian8(counter);
+  const mac = await hmacSha1(secretBytes, msg);
+  const offset = mac[mac.length - 1] & 0x0f;
+
+  const binCode =
+    ((mac[offset] & 0x7f) << 24) |
+    ((mac[offset + 1] & 0xff) << 16) |
+    ((mac[offset + 2] & 0xff) << 8) |
+    (mac[offset + 3] & 0xff);
+
+  const otp = (binCode % 1_000_000).toString().padStart(6, "0");
+  return otp;
+};
+
+const totpValidate = async (
+  secretBytes: Uint8Array,
+  token: string,
+  window = 1,
+  period = 30
+): Promise<boolean> => {
+  const clean = String(token || "").replace(/[^\d]/g, "");
+  if (clean.length !== 6) return false;
+
+  const nowCounter = Math.floor(Date.now() / 1000 / period);
+
+  for (let w = -window; w <= window; w++) {
+    const code = await hotp(secretBytes, nowCounter + w);
+    if (code === clean) return true;
+  }
+  return false;
+};
+
+// ─────────────────────────────────────────────────────────────
+// URI builder
+// otpauth://totp/{issuer}:{label}?secret=BASE32&issuer=Issuer&algorithm=SHA1&digits=6&period=30
+// ─────────────────────────────────────────────────────────────
+const buildOtpAuthUri = (issuer: string, label: string, base32Secret: string): string => {
+  const encIssuer = encodeURIComponent(issuer);
+  const encLabel = encodeURIComponent(label);
+  const encPath = `${encIssuer}:${encLabel}`;
+  const qs =
+    `secret=${encodeURIComponent(base32Secret)}` +
+    `&issuer=${encIssuer}` +
+    `&algorithm=SHA1&digits=6&period=30`;
+  return `otpauth://totp/${encPath}?${qs}`;
+};
+
+// ─────────────────────────────────────────────────────────────
+// Main
+// ─────────────────────────────────────────────────────────────
+Deno.serve(async (req: Request): Promise<Response> => {
+  const logger = createLogger("envision-totp-setup", req);
+
+  if (req.method === "OPTIONS") return handleOptions(req);
 
   const { headers: corsHeaders } = corsFromRequest(req);
 
   if (req.method !== "POST") {
-    return new Response(
-      JSON.stringify({ error: "Method not allowed" }),
-      { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return json(corsHeaders, 405, { error: "Method not allowed" });
   }
 
-  // Environment variables
-  const SUPABASE_URL = getEnv("SB_URL", "SUPABASE_URL");
+  const SUPABASE_URL = getEnv("SB_URL", "SUPABASE_URL", "SB_PROJECT_URL");
   const SUPABASE_SERVICE_ROLE_KEY = getEnv("SB_SECRET_KEY", "SB_SERVICE_ROLE_KEY", "SUPABASE_SERVICE_ROLE_KEY");
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     logger.error("Missing Supabase environment variables");
-    return new Response(
-      JSON.stringify({ error: "Server configuration error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return json(corsHeaders, 500, { error: "Server configuration error" });
   }
 
-  // Create Supabase client with service role
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-    auth: { autoRefreshToken: false, persistSession: false }
+    auth: { autoRefreshToken: false, persistSession: false },
   });
 
   try {
     const body = await req.json().catch(() => ({}));
-    const action = String(body?.action ?? "begin").toLowerCase(); // "begin" | "confirm"
+    const action = String(body?.action ?? "").toLowerCase(); // "begin" | "confirm"
     const sessionToken = String(body?.session_token ?? "").trim();
 
-    // Validate session token
-    if (!sessionToken) {
-      return new Response(
-        JSON.stringify({ error: "Session token is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (!sessionToken) return json(corsHeaders, 400, { error: "session_token is required" });
+
+    // Validate Envision session exists and not expired
+    const { data: sessionRow, error: sessionErr } = await supabase
+      .from("envision_sessions")
+      .select("super_admin_id, expires_at")
+      .eq("session_token", sessionToken)
+      .maybeSingle();
+
+    if (sessionErr || !sessionRow) return json(corsHeaders, 401, { error: "Invalid session" });
+
+    const expiresAtMs = new Date(sessionRow.expires_at as string).getTime();
+    if (!Number.isFinite(expiresAtMs) || expiresAtMs <= Date.now()) {
+      return json(corsHeaders, 401, { error: "Session expired. Please log in again." });
     }
 
-    // Validate session (must have password verified, but PIN/TOTP not yet required for setup)
-    const { data: session, error: sessionError } = await supabase
-      .from('envision_sessions')
-      .select('id, super_admin_id, password_verified_at, pin_verified_at, expires_at, session_token')
-      .eq('session_token', sessionToken)
-      .gt('expires_at', new Date().toISOString())
-      .single();
+    const superAdminId = String(sessionRow.super_admin_id);
 
-    if (sessionError || !session) {
-      logger.warn("Invalid or expired session for TOTP setup", { sessionToken: sessionToken.slice(0, 8) + '...' });
-      return new Response(
-        JSON.stringify({ error: "Invalid or expired session" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    // Load super admin
+    const { data: superAdmin, error: saErr } = await supabase
+      .from("super_admin_users")
+      .select("id, email, is_active, totp_enabled, totp_secret, pin_hash")
+      .eq("id", superAdminId)
+      .maybeSingle();
 
-    // Check if password was verified
-    if (!session.password_verified_at) {
-      return new Response(
-        JSON.stringify({ error: "Password verification required before TOTP setup" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    if (saErr || !superAdmin || !superAdmin.is_active) return json(corsHeaders, 401, { error: "Unauthorized" });
 
-    const superAdminId = session.super_admin_id as string;
+    const issuer = "Envision VirtualEdge";
+    const label = String(superAdmin.email || "admin").toLowerCase();
 
-    // Get super admin details
-    const { data: superAdmin, error: adminError } = await supabase
-      .from('super_admin_users')
-      .select('id, email, full_name, totp_enabled, totp_secret, is_active')
-      .eq('id', superAdminId)
-      .single();
-
-    if (adminError || !superAdmin) {
-      logger.error("Super admin not found for TOTP setup", { superAdminId });
-      return new Response(
-        JSON.stringify({ error: "Account not found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    if (!superAdmin.is_active) {
-      return new Response(
-        JSON.stringify({ error: "Account is not active" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // ─────────────────────────────────────────────────────────────
-    // BEGIN: Generate secret + return otpauth URI
-    // ─────────────────────────────────────────────────────────────
     if (action === "begin") {
-      // Check if TOTP is already enabled
-      if (superAdmin.totp_enabled && superAdmin.totp_secret) {
-        return new Response(
-          JSON.stringify({
-            error: "TOTP is already enabled",
-            hint: "To reset TOTP, disable it first or use a backup code"
-          }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
+      // Generate random secret (20 bytes)
+      const bytes = new Uint8Array(20);
+      crypto.getRandomValues(bytes);
+      const base32Secret = base32Encode(bytes);
 
-      // Generate new TOTP secret
-      const totpSecret = generateTotpSecret();
-      const totpUri = generateTotpUri(totpSecret, superAdmin.email, 'Envision VirtualEdge');
+      const otpauthUri = buildOtpAuthUri(issuer, label, base32Secret);
+      const pendingExpiresAt = new Date(Date.now() + PENDING_TOTP_TTL_MINUTES * 60 * 1000).toISOString();
 
-      // Generate backup codes
-      const backupCodes = generateBackupCodes(10);
-
-      // Delete any existing pending TOTP setup for this user
-      await supabase
-        .from('envision_totp_setup')
-        .delete()
-        .eq('super_admin_id', superAdmin.id)
-        .eq('verified', false);
-
-      // Store temp secret (expires in 10 minutes)
-      const expiresAt = new Date(Date.now() + PENDING_TOTP_TTL_MINUTES * 60 * 1000).toISOString();
-      const { error: insertError } = await supabase
-        .from('envision_totp_setup')
-        .insert({
-          super_admin_id: superAdmin.id,
-          temp_secret: totpSecret,
-          expires_at: expiresAt,
-          verified: false
+      const { error: upErr } = await supabase
+        .from("envision_totp_pending")
+        .upsert({
+          session_token: sessionToken,
+          super_admin_id: superAdminId,
+          totp_secret: base32Secret,
+          expires_at: pendingExpiresAt,
         });
 
-      if (insertError) {
-        logger.error("Failed to create TOTP setup record", {
-          superAdminId: superAdmin.id,
-          error: insertError.message
-        });
-        return new Response(
-          JSON.stringify({ error: "Failed to initiate TOTP setup" }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+      if (upErr) {
+        logger.error("Failed to store pending TOTP secret", { error: upErr.message });
+        return json(corsHeaders, 500, { error: "Failed to start authenticator setup" });
       }
 
-      logger.info("TOTP setup initiated", {
-        superAdminId: superAdmin.id,
-        email: superAdmin.email,
-        expiresAt
+      return json(corsHeaders, 200, {
+        success: true,
+        issuer,
+        account: label,
+        otpauth_uri: otpauthUri,
+        expires_at: pendingExpiresAt,
+        message: "Scan the QR code with your authenticator app, then enter the 6-digit code to confirm.",
       });
-
-      // Audit log
-      await supabase.from('audit_logs').insert({
-        user_id: null,
-        action: 'ENVISION_TOTP_SETUP_INITIATED',
-        resource_type: 'envision_auth',
-        resource_id: superAdmin.id,
-        metadata: {
-          email: superAdmin.email,
-          expiresAt
-        }
-      }).catch(() => {});
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          otpauth_uri: totpUri,
-          secret: totpSecret, // For manual entry if QR scan fails
-          backup_codes: backupCodes, // PLAIN TEXT - user must save these NOW
-          expires_at: expiresAt,
-          message: "Scan the QR code with your authenticator app, then enter the 6-digit code to confirm setup."
-        }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // CONFIRM: Verify code and persist TOTP to super_admin_users
-    // ─────────────────────────────────────────────────────────────
     if (action === "confirm") {
-      const code = normalizeCode(body?.code);
+      const token = String(body?.code ?? "").replace(/[^\d]/g, "");
+      if (token.length !== 6) return json(corsHeaders, 400, { error: "A 6-digit code is required" });
 
-      if (code.length !== 6) {
-        return new Response(
-          JSON.stringify({ error: "A 6-digit code is required" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      // Find pending TOTP setup for this user
-      const { data: pending, error: pendingError } = await supabase
-        .from('envision_totp_setup')
-        .select('id, temp_secret, expires_at, super_admin_id')
-        .eq('super_admin_id', superAdmin.id)
-        .eq('verified', false)
-        .gt('expires_at', new Date().toISOString())
-        .order('created_at', { ascending: false })
-        .limit(1)
+      const { data: pending, error: pendErr } = await supabase
+        .from("envision_totp_pending")
+        .select("totp_secret, expires_at, super_admin_id")
+        .eq("session_token", sessionToken)
         .maybeSingle();
 
-      if (pendingError || !pending) {
-        return new Response(
-          JSON.stringify({ error: "No pending TOTP setup found. Please start setup again." }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+      if (pendErr || !pending) return json(corsHeaders, 400, { error: "Setup not started. Please scan QR first." });
+
+      const pendExp = new Date(pending.expires_at as string).getTime();
+      if (!Number.isFinite(pendExp) || pendExp <= Date.now()) {
+        await supabase.from("envision_totp_pending").delete().eq("session_token", sessionToken);
+        return json(corsHeaders, 400, { error: "Setup expired. Please start again." });
       }
 
-      // Verify the TOTP code against the temp secret
-      const isValid = await verifyTotpCode(pending.temp_secret, code);
+      if (String(pending.super_admin_id) !== superAdminId) return json(corsHeaders, 401, { error: "Unauthorized" });
 
-      if (!isValid) {
-        logger.warn("Invalid TOTP code during setup confirmation", { superAdminId: superAdmin.id });
-        return new Response(
-          JSON.stringify({ error: "Invalid code. Please enter the current 6-digit code from your authenticator app." }),
-          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
+      const secretBytes = base32Decode(String(pending.totp_secret));
+      const ok = await totpValidate(secretBytes, token, 1, 30);
 
-      // Generate and hash backup codes for permanent storage
-      const backupCodes = generateBackupCodes(10);
-      const hashedBackupCodes: string[] = [];
-      for (const code of backupCodes) {
-        hashedBackupCodes.push(await hashBackupCode(code));
-      }
+      if (!ok) return json(corsHeaders, 401, { error: "Invalid code. Use the CURRENT 6-digit code." });
 
-      // Persist TOTP to super_admin_users - enable TOTP, clear PIN
-      const { error: updateError } = await supabase
-        .from('super_admin_users')
+      // Persist: enable totp, store secret, and remove PIN so the system stops "asking for PIN"
+      const { error: updErr } = await supabase
+        .from("super_admin_users")
         .update({
           totp_enabled: true,
-          totp_secret: pending.temp_secret,
-          totp_backup_codes: hashedBackupCodes,
-          totp_setup_at: new Date().toISOString(),
-          totp_backup_codes_generated_at: new Date().toISOString(),
-          pin_hash: null // Remove PIN - TOTP is now the only 2FA method
+          totp_secret: String(pending.totp_secret),
+          pin_hash: null,
         })
-        .eq('id', superAdmin.id);
+        .eq("id", superAdminId);
 
-      if (updateError) {
-        logger.error("Failed to enable TOTP on super admin", {
-          superAdminId: superAdmin.id,
-          error: updateError.message
-        });
-        return new Response(
-          JSON.stringify({ error: "Failed to complete TOTP setup" }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+      if (updErr) {
+        logger.error("Failed to enable TOTP on super admin", { error: updErr.message });
+        return json(corsHeaders, 500, { error: "Failed to enable authenticator" });
       }
 
-      // Mark setup as verified
+      // Mark session verified (re-using pin_verified_at as "2FA complete")
       await supabase
-        .from('envision_totp_setup')
-        .update({ verified: true })
-        .eq('id', pending.id);
-
-      // Mark the session as 2FA complete
-      await supabase
-        .from('envision_sessions')
+        .from("envision_sessions")
         .update({ pin_verified_at: new Date().toISOString() })
-        .eq('session_token', sessionToken);
+        .eq("session_token", sessionToken);
 
-      logger.info("TOTP setup completed", {
-        superAdminId: superAdmin.id,
-        email: superAdmin.email
-      });
+      await supabase.from("envision_totp_pending").delete().eq("session_token", sessionToken);
 
-      // Audit log
-      await supabase.from('audit_logs').insert({
-        user_id: null,
-        action: 'ENVISION_TOTP_SETUP_COMPLETED',
-        resource_type: 'envision_auth',
-        resource_id: superAdmin.id,
-        metadata: {
-          email: superAdmin.email
-        }
-      }).catch(() => {});
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          session_token: sessionToken,
-          backup_codes: backupCodes, // Show backup codes one final time
-          message: "Authenticator setup complete. Save your backup codes securely - they will not be shown again!"
-        }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return json(corsHeaders, 200, { success: true, message: "Authenticator setup complete." });
     }
 
-    // Invalid action
-    return new Response(
-      JSON.stringify({ error: "Invalid action. Use 'begin' or 'confirm'." }),
-      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-
+    return json(corsHeaders, 400, { error: "Invalid action. Use action='begin' or action='confirm'." });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
     logger.error("Fatal error in envision-totp-setup", { error: msg });
-    return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return json(corsHeaders, 500, { error: "Internal server error" });
   }
 });
