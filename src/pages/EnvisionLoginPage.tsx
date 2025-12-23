@@ -176,7 +176,7 @@ export const EnvisionLoginPage: React.FC = () => {
     }
   };
 
-  // Verify TOTP code during login (Supabase auth version)
+  // Verify TOTP code during login (uses session_token from Step 1)
   const handleTotpVerification = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -184,16 +184,28 @@ export const EnvisionLoginPage: React.FC = () => {
     setLoading(true);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      // Get the session token from Step 1
+      const sessionToken = localStorage.getItem('envision_session_token');
+      if (!sessionToken) {
         setError('Session expired. Please log in again.');
         setStep('credentials');
         setLoading(false);
         return;
       }
 
-      const { data, error: fnError } = await supabase.functions.invoke('envision-totp-verify-supabase', {
-        body: { code: totpCode }
+      // Check if session has expired
+      const expiresAt = localStorage.getItem('envision_session_expires');
+      if (expiresAt && new Date(expiresAt) < new Date()) {
+        localStorage.removeItem('envision_session_token');
+        localStorage.removeItem('envision_session_expires');
+        setError('Session expired. Please log in again.');
+        setStep('credentials');
+        setLoading(false);
+        return;
+      }
+
+      const { data, error: fnError } = await supabase.functions.invoke('envision-totp-verify', {
+        body: { session_token: sessionToken, code: totpCode }
       });
 
       if (fnError) {
@@ -210,13 +222,15 @@ export const EnvisionLoginPage: React.FC = () => {
       }
 
       if (data?.success && data?.user) {
-        // Full 2FA complete! Mark TOTP as verified and redirect
-        localStorage.setItem('envision_totp_verified', session.user.id);
+        // Full 2FA complete! Update session token with new one and redirect
+        localStorage.setItem('envision_session_token', data.session_token);
+        localStorage.setItem('envision_session_expires', data.expires_at);
+        localStorage.setItem('envision_totp_verified', data.user.id);
 
         await auditLogger.info('ENVISION_LOGIN_SUCCESS', {
           superAdminId: data.user.id,
           role: data.user.role,
-          method: 'totp_supabase'
+          method: 'totp'
         });
 
         navigate('/super-admin');
@@ -230,7 +244,7 @@ export const EnvisionLoginPage: React.FC = () => {
     }
   };
 
-  // Use backup code (Supabase auth version)
+  // Use backup code (uses session_token from Step 1)
   const handleBackupCodeVerification = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -238,8 +252,20 @@ export const EnvisionLoginPage: React.FC = () => {
     setLoading(true);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      // Get the session token from Step 1
+      const sessionToken = localStorage.getItem('envision_session_token');
+      if (!sessionToken) {
+        setError('Session expired. Please log in again.');
+        setStep('credentials');
+        setLoading(false);
+        return;
+      }
+
+      // Check if session has expired
+      const expiresAt = localStorage.getItem('envision_session_expires');
+      if (expiresAt && new Date(expiresAt) < new Date()) {
+        localStorage.removeItem('envision_session_token');
+        localStorage.removeItem('envision_session_expires');
         setError('Session expired. Please log in again.');
         setStep('credentials');
         setLoading(false);
@@ -247,7 +273,7 @@ export const EnvisionLoginPage: React.FC = () => {
       }
 
       const { data, error: fnError } = await supabase.functions.invoke('envision-totp-use-backup', {
-        body: { backup_code: backupCode }
+        body: { session_token: sessionToken, backup_code: backupCode }
       });
 
       if (fnError) {
@@ -261,8 +287,10 @@ export const EnvisionLoginPage: React.FC = () => {
       }
 
       if (data?.success && data?.user) {
-        // Mark TOTP as verified and redirect
-        localStorage.setItem('envision_totp_verified', session.user.id);
+        // Update session token with new one and redirect
+        localStorage.setItem('envision_session_token', data.session_token);
+        localStorage.setItem('envision_session_expires', data.expires_at);
+        localStorage.setItem('envision_totp_verified', data.user.id);
 
         if (data.warning) {
           await auditLogger.warn('ENVISION_LOW_BACKUP_CODES', {
@@ -274,7 +302,7 @@ export const EnvisionLoginPage: React.FC = () => {
         await auditLogger.info('ENVISION_LOGIN_SUCCESS', {
           superAdminId: data.user.id,
           role: data.user.role,
-          method: 'backup_code_supabase'
+          method: 'backup_code'
         });
 
         navigate('/super-admin');
