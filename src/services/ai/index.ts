@@ -145,3 +145,17 @@ export {
   type ProgressNoteGenerationResponse,
   type SavedProgressNote
 } from './progressNoteSynthesizerService';
+
+// Fall Risk Predictor (Skill #30)
+export {
+  FallRiskPredictorService,
+  fallRiskPredictorService,
+  type RiskFactor,
+  type ProtectiveFactor,
+  type FallRiskIntervention,
+  type CategoryScores,
+  type FallRiskAssessment,
+  type FallRiskAssessmentRequest,
+  type FallRiskAssessmentResponse,
+  type SavedFallRiskAssessment
+} from './fallRiskPredictorService';

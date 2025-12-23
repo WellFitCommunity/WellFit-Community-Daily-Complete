@@ -83,7 +83,7 @@
 
 | # | Skill | Status | Model | Target Location | Description |
 |---|-------|--------|-------|-----------------|-------------|
-| 30 | Fall Risk Predictor | 📋 | Sonnet 4.5 | `supabase/functions/ai-fall-risk-predictor/` | ML-powered from patient history |
+| 30 | Fall Risk Predictor | ✅ | Sonnet 4.5 | `src/services/ai/fallRiskPredictorService.ts` | Morse Scale + evidence-based assessment |
 | 31 | Medication Adherence Predictor | 📋 | Sonnet 4.5 | `medicationReconciliationService.ts` | Predictive adherence scoring |
 | 32 | Care Escalation Scorer | 📋 | Sonnet 4.5 | `shiftHandoffService.ts` | Confidence-level escalation |
 | 33 | Infection Risk Predictor (HAI) | 📋 | Sonnet 4.5 | New edge function | Hospital-acquired infection |
@@ -190,7 +190,7 @@
 | Clinical Docs | 4 | 0 | 1 | 5 |
 | Decision Support | 1 | 0 | 3 | 4 |
 | Patient Engagement | 0 | 0 | 3 | 3 |
-| Risk Prediction | 0 | 0 | 5 | 5 |
+| Risk Prediction | 1 | 0 | 4 | 5 |
 | Admin Automation | 0 | 0 | 4 | 4 |
 | Analytics | 0 | 0 | 3 | 3 |
 | Voice/NLP | 0 | 0 | 3 | 3 |
@@ -198,7 +198,7 @@
 | Interoperability | 0 | 0 | 3 | 3 |
 | Security | 0 | 0 | 3 | 3 |
 | Conversational | 1 | 0 | 3 | 4 |
-| **TOTAL** | **22** | **1** | **36** | **59** |
+| **TOTAL** | **23** | **1** | **35** | **59** |
 
 ---
 
@@ -217,11 +217,12 @@
 10. [x] Treatment Pathway Recommender
 11. [x] Discharge Summary Generator
 12. [x] Progress Note Synthesizer
+13. [x] Fall Risk Predictor
 
 ### Next Sprint
-- Fall Risk Predictor
 - Clinical Guideline Matcher
 - Referral Letter Generator
+- Medication Adherence Predictor
 - Appointment Prep Instructions
 
 ---
@@ -230,6 +231,7 @@
 
 | Date | Change |
 |------|--------|
+| 2025-12-23 | Added Fall Risk Predictor (#30) - Morse Scale + evidence-based clinical risk assessment |
 | 2025-12-23 | Added Progress Note Synthesizer (#21) - Vitals trends, mood, adherence synthesis across check-ins |
 | 2025-12-23 | Added Discharge Summary Generator (#19) - Comprehensive summaries with medication reconciliation |
 | 2025-12-23 | Added Treatment Pathway Recommender (#23) - Evidence-based clinical decision support with allergy/contraindication checking |
