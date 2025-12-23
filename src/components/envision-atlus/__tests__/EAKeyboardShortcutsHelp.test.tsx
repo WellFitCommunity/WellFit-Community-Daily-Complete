@@ -150,7 +150,7 @@ describe('EAKeyboardShortcutsHelp', () => {
 
     it('should mention voice commands', () => {
       render(<EAKeyboardShortcutsHelp {...defaultProps} />);
-      expect(screen.getByText(/Hey Riley/i)).toBeInTheDocument();
+      expect(screen.getByText(/Hey Vision/i)).toBeInTheDocument();
     });
   });
 

@@ -7,16 +7,16 @@ The application includes **continuous global voice recognition** for healthcare 
 | Component | Location | Purpose |
 |-----------|----------|---------|
 | `VoiceCommandBar` | `src/components/admin/VoiceCommandBar.tsx` | Global floating voice UI (rendered in App.tsx) |
-| `VoiceCommandButton` | `src/components/voice/VoiceCommandButton.tsx` | Standalone floating "Hey Riley" button |
+| `VoiceCommandButton` | `src/components/voice/VoiceCommandButton.tsx` | Standalone floating "Hey Vision" button |
 | `useVoiceCommand` | `src/hooks/useVoiceCommand.ts` | React hook for voice recognition |
-| `voiceCommandService` | `src/services/voiceCommandService.ts` | "Hey Riley" wake word service |
+| `voiceCommandService` | `src/services/voiceCommandService.ts` | "Hey Vision" wake word service |
 | `workflowPreferences` | `src/services/workflowPreferences.ts` | Voice command registry (VOICE_COMMANDS array) |
 
 ## How Voice Works
 
 1. **Global Availability**: `VoiceCommandBar` is rendered in `App.tsx` - available on ALL pages
 2. **Keyboard Shortcut**: `Ctrl+Shift+V` toggles listening
-3. **Wake Word**: Say "Hey Riley" to activate the VoiceCommandButton
+3. **Wake Word**: Say "Hey Vision" to activate the VoiceCommandButton
 4. **Command Matching**: Spoken phrases matched against `VOICE_COMMANDS` in `workflowPreferences.ts`
 
 ## Adding New Voice Commands

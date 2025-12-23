@@ -1,8 +1,9 @@
 // ============================================================================
-// Voice Command Button - Floating "Hey Riley" Assistant
+// Voice Command Button - Floating "Hey Vision" Assistant
 // ============================================================================
 // Purpose: Always-available voice interface for hands-free operation
 // Design: Floating button, visual feedback, executes voice commands
+// Tagline: "Always listening, always learning" - Envision Atlus
 // ============================================================================
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -185,7 +186,7 @@ export const VoiceCommandButton: React.FC<VoiceCommandButtonProps> = ({
   const getStateLabel = () => {
     switch (state) {
       case 'listening':
-        return 'Say "Hey Riley"...';
+        return 'Say "Hey Vision"...';
       case 'awake':
         return 'Listening for command...';
       case 'processing':
@@ -259,7 +260,7 @@ export const VoiceCommandButton: React.FC<VoiceCommandButtonProps> = ({
               <h2 className="text-2xl font-bold flex items-center gap-2">
                 <span>🎤</span> Voice Commands
               </h2>
-              <p className="text-blue-100 mt-1">Say "Hey Riley" followed by a command</p>
+              <p className="text-blue-100 mt-1">Say "Hey Vision" followed by a command</p>
             </div>
 
             <div className="p-6 overflow-y-auto max-h-96">

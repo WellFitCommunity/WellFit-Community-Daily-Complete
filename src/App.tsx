@@ -25,6 +25,7 @@ import Footer from './components/layout/Footer';
 // Global UI Components
 import OfflineIndicator from './components/OfflineIndicator';
 import { VoiceCommandBar } from './components/admin/VoiceCommandBar';
+import { VoiceCommandButton } from './components/voice/VoiceCommandButton';
 import { VoiceSearchOverlay } from './components/voice/VoiceSearchOverlay';
 import { GlobalSearchBar } from './components/search/GlobalSearchBar';
 import { EAPatientBanner } from './components/envision-atlus/EAPatientBanner';
@@ -57,6 +58,10 @@ function ClinicalModeComponents() {
     <>
       {/* Global Voice Command Bar - compact mic icon that expands when clicked */}
       <VoiceCommandBar />
+
+      {/* "Hey Vision" Wake Word Assistant - always listening, hands-free navigation */}
+      {/* "Always listening, always learning" - Envision Atlus */}
+      <VoiceCommandButton />
 
       {/* Global Search Bar - keyboard-accessible search (Ctrl+/) (ATLUS: Intuitive) */}
       <div className="fixed top-4 right-4 z-50">

@@ -157,7 +157,7 @@ export const EAKeyboardShortcutsHelp: React.FC<EAKeyboardShortcutsHelpProps> = (
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-teal-400 mt-0.5">•</span>
-                <span>Voice commands also work - say &quot;Hey Riley&quot; to activate</span>
+                <span>Voice commands also work - say &quot;Hey Vision&quot; to activate</span>
               </li>
             </ul>
           </div>

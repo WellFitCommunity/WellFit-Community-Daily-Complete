@@ -110,7 +110,8 @@ export class VoiceCommandService {
   private onTranscriptCallback: ((text: string, isFinal: boolean) => void) | null = null;
 
   // Wake words - what activates command mode
-  private wakeWords = ['hey riley', 'hi riley', 'okay riley', 'riley'];
+  // Named "Vision" to align with Envision branding (Riley is the Smart Scribe)
+  private wakeWords = ['hey vision', 'hi vision', 'okay vision', 'vision'];
 
   constructor() {
     this.initRecognition();
