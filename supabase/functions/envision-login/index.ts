@@ -57,7 +57,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
 
   // Environment variables
-  const SUPABASE_URL = getEnv("SUPABASE_URL");
+  const SUPABASE_URL = getEnv("SB_URL", "SUPABASE_URL", "SB_PROJECT_URL");
   const SUPABASE_SERVICE_ROLE_KEY = getEnv("SB_SECRET_KEY", "SB_SERVICE_ROLE_KEY", "SUPABASE_SERVICE_ROLE_KEY");
   const SUPABASE_ANON_KEY = getEnv("SB_ANON_KEY", "SUPABASE_ANON_KEY", "SB_PUBLISHABLE_API_KEY");
 
