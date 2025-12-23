@@ -173,3 +173,43 @@ export {
   type GuidelineMatchResponse,
   type SavedGuidelineMatch
 } from './clinicalGuidelineMatcherService';
+
+// Referral Letter Generator (Skill #22)
+export {
+  ReferralLetterService,
+  type ReferralLetterRequest,
+  type ReferringProvider,
+  type RecipientProvider,
+  type ReferralLetter,
+  type ReferralLetterMetadata,
+  type ReferralLetterResponse,
+  type SavedReferralLetter
+} from './referralLetterService';
+
+// Contraindication Detector (Skill #25)
+export {
+  ContraindicationDetectorService,
+  type ContraindicationType,
+  type ContraindicationSeverity,
+  type ContraindicationCheckRequest,
+  type ContraindicationFinding,
+  type PatientContext,
+  type ContraindicationCheckResult,
+  type ContraindicationCheckResponse,
+  type SavedContraindicationCheck
+} from './contraindicationDetectorService';
+
+// Medication Reconciliation AI (Skill #26)
+export {
+  MedicationReconciliationAIService,
+  type MedicationEntry as ReconciliationMedicationEntry,
+  type MedicationSource,
+  type DiscrepancyAnalysis,
+  type DeprescribingCandidate,
+  type PatientCounselingPoint,
+  type ReconciliationSummary,
+  type MedicationReconciliationAIResult,
+  type MedicationReconciliationRequest,
+  type MedicationReconciliationResponse,
+  type SavedReconciliation
+} from './medicationReconciliationAIService';

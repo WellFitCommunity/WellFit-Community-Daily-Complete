@@ -53,7 +53,7 @@
 | 19 | Discharge Summary Generator | ✅ | Sonnet 4.5 | `src/services/ai/dischargeSummaryService.ts` | Auto-generate with med reconciliation |
 | 20 | Care Plan Auto-Generator | ✅ | Sonnet 4.5 | `src/services/ai/carePlanAIService.ts` | Evidence-based from diagnosis + SDOH |
 | 21 | Progress Note Synthesizer | ✅ | Haiku 4.5 | `src/services/ai/progressNoteSynthesizerService.ts` | Vitals trends, mood, adherence synthesis |
-| 22 | Referral Letter Generator | 📋 | Haiku 4.5 | New service | Specialist referral letters |
+| 22 | Referral Letter Generator | ✅ | Haiku 4.5 | `src/services/ai/referralLetterService.ts` | Specialist referral letters with urgency levels |
 
 ---
 
@@ -63,8 +63,8 @@
 |---|-------|--------|-------|-----------------|-------------|
 | 23 | Treatment Pathway Recommender | ✅ | Sonnet 4.5 | `supabase/functions/ai-treatment-pathway/` | Evidence-based treatment suggestions |
 | 24 | Clinical Guideline Matcher | ✅ | Sonnet 4.5 | `supabase/functions/ai-clinical-guideline-matcher/` | Smart guideline recommendations |
-| 25 | Contraindication Detector | 📋 | Sonnet 4.5 | Extend drug interactions | Patient-specific risk detection |
-| 26 | Medication Reconciliation AI | 📋 | Sonnet 4.5 | `medicationReconciliationService.ts` | Discrepancy explanation |
+| 25 | Contraindication Detector | ✅ | Sonnet 4.5 | `src/services/ai/contraindicationDetectorService.ts` | Patient-specific risk detection with multi-factor analysis |
+| 26 | Medication Reconciliation AI | ✅ | Sonnet 4.5 | `src/services/ai/medicationReconciliationAIService.ts` | Clinical reasoning, deprescribing, counseling |
 
 ---
 
@@ -186,8 +186,8 @@
 |----------|----------|---------|---------|-------|
 | Core Skills | 12 | 0 | 0 | 12 |
 | Quick Wins | 5 | 0 | 0 | 5 |
-| Clinical Docs | 4 | 0 | 1 | 5 |
-| Decision Support | 2 | 0 | 2 | 4 |
+| Clinical Docs | 5 | 0 | 0 | 5 |
+| Decision Support | 4 | 0 | 0 | 4 |
 | Patient Engagement | 0 | 0 | 3 | 3 |
 | Risk Prediction | 1 | 0 | 4 | 5 |
 | Admin Automation | 0 | 0 | 4 | 4 |
@@ -197,7 +197,7 @@
 | Interoperability | 0 | 0 | 3 | 3 |
 | Security | 0 | 0 | 3 | 3 |
 | Conversational | 1 | 0 | 3 | 4 |
-| **TOTAL** | **25** | **0** | **34** | **59** |
+| **TOTAL** | **28** | **0** | **31** | **59** |
 
 ---
 
@@ -218,12 +218,15 @@
 12. [x] Progress Note Synthesizer
 13. [x] Fall Risk Predictor
 14. [x] Clinical Guideline Matcher
+15. [x] Referral Letter Generator
+16. [x] Contraindication Detector
+17. [x] Medication Reconciliation AI
 
 ### Next Sprint
-- Referral Letter Generator
-- Medication Adherence Predictor
-- Appointment Prep Instructions
-- Contraindication Detector
+- Appointment Prep Instructions (#27)
+- Missed Check-In Escalation (#28)
+- Medication Adherence Predictor (#31)
+- Medication Instructions Generator (#29)
 
 ---
 
@@ -231,6 +234,9 @@
 
 | Date | Change |
 |------|--------|
+| 2025-12-23 | Completed Medication Reconciliation AI (#26) - AI-enhanced reconciliation with clinical reasoning for discrepancies, deprescribing opportunities, patient counseling points, and pharmacy verification checklists |
+| 2025-12-23 | Completed Contraindication Detector (#25) - Multi-factor patient safety analysis including disease-drug, allergy cross-reactivity, lab values, age, pregnancy, and organ impairment checks |
+| 2025-12-23 | Completed Referral Letter Generator (#22) - Professional referral letters with urgency levels, safety guardrails, and physician review workflow |
 | 2025-12-23 | Completed Mood Suggestions (#12) - Enhanced from selection-only to AI-powered personalized generation with history context |
 | 2025-12-23 | Added Clinical Guideline Matcher (#24) - Smart guideline recommendations with adherence gap detection |
 | 2025-12-23 | Added Fall Risk Predictor (#30) - Morse Scale + evidence-based clinical risk assessment |
