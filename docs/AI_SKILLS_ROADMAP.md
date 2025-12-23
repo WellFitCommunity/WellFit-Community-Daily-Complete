@@ -11,7 +11,6 @@
 | ✅ | Complete - Production ready |
 | 🔨 | In Progress - Being implemented |
 | 📋 | Planned - In backlog |
-| 🔨 | Partial - Needs completion |
 
 ---
 
@@ -30,7 +29,7 @@
 | 9 | Drug Interaction Checker | ✅ | RxNorm API | `supabase/functions/check-drug-interactions/` | Free NLM API |
 | 10 | Patient Form Extraction | ✅ | Vision | `supabase/functions/extract-patient-form/` | Handwriting OCR |
 | 11 | Riley Smart Scribe | ✅ | Deepgram + Sonnet | `supabase/functions/realtime_medical_transcription/` | Production-ready (set DEEPGRAM_API_KEY) |
-| 12 | Mood Suggestions | 🔨 | Haiku 4.5 | `supabase/functions/smart-mood-suggestions/` | Selection only, not generation |
+| 12 | Mood Suggestions | ✅ | Haiku 4.5 | `supabase/functions/smart-mood-suggestions/` | AI-powered personalized generation |
 
 ---
 
@@ -185,7 +184,7 @@
 
 | Category | Complete | Partial | Planned | Total |
 |----------|----------|---------|---------|-------|
-| Core Skills | 11 | 1 | 0 | 12 |
+| Core Skills | 12 | 0 | 0 | 12 |
 | Quick Wins | 5 | 0 | 0 | 5 |
 | Clinical Docs | 4 | 0 | 1 | 5 |
 | Decision Support | 2 | 0 | 2 | 4 |
@@ -198,7 +197,7 @@
 | Interoperability | 0 | 0 | 3 | 3 |
 | Security | 0 | 0 | 3 | 3 |
 | Conversational | 1 | 0 | 3 | 4 |
-| **TOTAL** | **24** | **1** | **34** | **59** |
+| **TOTAL** | **25** | **0** | **34** | **59** |
 
 ---
 
@@ -232,6 +231,7 @@
 
 | Date | Change |
 |------|--------|
+| 2025-12-23 | Completed Mood Suggestions (#12) - Enhanced from selection-only to AI-powered personalized generation with history context |
 | 2025-12-23 | Added Clinical Guideline Matcher (#24) - Smart guideline recommendations with adherence gap detection |
 | 2025-12-23 | Added Fall Risk Predictor (#30) - Morse Scale + evidence-based clinical risk assessment |
 | 2025-12-23 | Added Progress Note Synthesizer (#21) - Vitals trends, mood, adherence synthesis across check-ins |

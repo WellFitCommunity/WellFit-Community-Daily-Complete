@@ -1,25 +1,71 @@
 /**
  * Smart Mood Suggestions Edge Function
  *
- * Uses Claude Haiku to select the most appropriate wellness suggestions
- * based on user's mood, symptoms, and context.
+ * Skill #12: AI-Powered Mood Suggestions
  *
- * Cost: ~$0.00025 per call (Haiku is very cheap)
+ * Uses Claude Haiku to GENERATE personalized wellness suggestions
+ * based on user's mood, symptoms, context, and recent history.
+ *
+ * Two modes:
+ * 1. GENERATE (default): AI creates personalized suggestions
+ * 2. SELECT (fallback): AI picks from predefined pool if generation fails
+ *
+ * Cost: ~$0.0003-0.0005 per call (Haiku is very cheap)
+ *
+ * @module smart-mood-suggestions
  */
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
+import { SUPABASE_URL, SB_SECRET_KEY } from '../_shared/env.ts';
+
+const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+const HAIKU_MODEL = 'claude-3-5-haiku-20241022';
 
 // ═══════════════════════════════════════════════════════════════
-// SUGGESTION POOL (embedded for Edge Function)
+// TYPES
 // ═══════════════════════════════════════════════════════════════
 
-interface MoodSuggestion {
+interface MoodSuggestionRequest {
+  userId?: string;
+  mood: string;
+  moodScore?: number; // 1-5 scale
+  symptoms?: string[];
+  notes?: string;
+  timeOfDay?: 'morning' | 'afternoon' | 'evening' | 'night';
+  /** Use selection mode instead of generation */
+  useSelectionMode?: boolean;
+  /** Include recent check-in context */
+  includeHistory?: boolean;
+}
+
+interface GeneratedSuggestion {
   id: string;
   text: string;
-  category: string;
-  type: string;
+  type: 'breathing' | 'physical' | 'social' | 'practical' | 'mindfulness' | 'comfort' | 'gratitude';
+  reasoning?: string;
+  personalized: boolean;
 }
+
+interface MoodSuggestionResponse {
+  mood: string;
+  category: string;
+  suggestions: GeneratedSuggestion[];
+  source: 'generated' | 'selected' | 'fallback';
+  personalizationContext?: string;
+}
+
+interface RecentCheckIn {
+  mood: string;
+  moodScore: number;
+  checkedInAt: string;
+  notes?: string;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MOOD CATEGORIES & FALLBACK POOL
+// ═══════════════════════════════════════════════════════════════
 
 const MOOD_TO_CATEGORY: Record<string, string> = {
   'Great': 'positive',
@@ -30,9 +76,22 @@ const MOOD_TO_CATEGORY: Record<string, string> = {
   'Anxious': 'anxious',
   'Tired': 'tired',
   'Stressed': 'stressed',
+  'Overwhelmed': 'stressed',
+  'Lonely': 'sad',
+  'Frustrated': 'stressed',
+  'Happy': 'positive',
+  'Calm': 'positive',
+  'Worried': 'anxious',
 };
 
-const suggestions: MoodSuggestion[] = [
+interface FallbackSuggestion {
+  id: string;
+  text: string;
+  category: string;
+  type: GeneratedSuggestion['type'];
+}
+
+const FALLBACK_SUGGESTIONS: FallbackSuggestion[] = [
   // ANXIOUS
   { id: 'anx-1', text: 'Try the 4-7-8 breathing technique: breathe in for 4 seconds, hold for 7, exhale for 8. Repeat 3 times.', category: 'anxious', type: 'breathing' },
   { id: 'anx-2', text: 'Ground yourself: Name 5 things you can see, 4 you can touch, 3 you can hear, 2 you can smell, 1 you can taste.', category: 'anxious', type: 'mindfulness' },
@@ -74,28 +133,14 @@ const suggestions: MoodSuggestion[] = [
   { id: 'neu-3', text: 'Drink a glass of water and eat a healthy snack. Taking care of basics helps us feel our best.', category: 'neutral', type: 'practical' },
   { id: 'neu-4', text: 'Go for a short walk if you can. Movement is good for both body and mind.', category: 'neutral', type: 'physical' },
   { id: 'neu-5', text: 'Call or text someone to say hello. Social connection is important for wellbeing.', category: 'neutral', type: 'social' },
-
-  // OVERWHELMED (maps to stressed)
-  { id: 'ovr-1', text: 'When everything feels like too much, focus on just one thing. What\'s the smallest next step?', category: 'stressed', type: 'practical' },
-  { id: 'ovr-2', text: 'It\'s okay to ask for help. Is there someone who could assist with what you\'re facing?', category: 'stressed', type: 'social' },
-  { id: 'ovr-3', text: 'Take a 2-minute pause. Close your eyes, breathe, and remind yourself: you\'re doing your best.', category: 'stressed', type: 'breathing' },
 ];
 
 // ═══════════════════════════════════════════════════════════════
 // HAIKU API
 // ═══════════════════════════════════════════════════════════════
 
-interface HaikuRequest {
-  mood: string;
-  symptoms?: string;
-  notes?: string;
-  timeOfDay?: string;
-}
-
-async function callHaiku(prompt: string): Promise<string> {
-  const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
-
-  if (!apiKey) {
+async function callHaiku(systemPrompt: string, userPrompt: string): Promise<string> {
+  if (!ANTHROPIC_API_KEY) {
     throw new Error('ANTHROPIC_API_KEY not configured');
   }
 
@@ -103,13 +148,14 @@ async function callHaiku(prompt: string): Promise<string> {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': apiKey,
+      'x-api-key': ANTHROPIC_API_KEY,
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model: 'claude-3-haiku-20240307',
-      max_tokens: 200,
-      messages: [{ role: 'user', content: prompt }],
+      model: HAIKU_MODEL,
+      max_tokens: 500,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }],
     }),
   });
 
@@ -123,11 +169,200 @@ async function callHaiku(prompt: string): Promise<string> {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// CONTEXT GATHERING
+// ═══════════════════════════════════════════════════════════════
+
+async function getRecentCheckIns(userId: string): Promise<RecentCheckIn[]> {
+  try {
+    const supabase = createClient(SUPABASE_URL, SB_SECRET_KEY);
+
+    const { data, error } = await supabase
+      .from('daily_check_ins')
+      .select('mood, mood_score, checked_in_at, notes')
+      .eq('user_id', userId)
+      .order('checked_in_at', { ascending: false })
+      .limit(7);
+
+    if (error || !data) return [];
+
+    return data.map((row: Record<string, unknown>) => ({
+      mood: row.mood as string,
+      moodScore: row.mood_score as number,
+      checkedInAt: row.checked_in_at as string,
+      notes: row.notes as string | undefined,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+function getTimeContext(timeOfDay?: string): string {
+  if (timeOfDay) return timeOfDay;
+
+  const hour = new Date().getHours();
+  if (hour < 12) return 'morning';
+  if (hour < 17) return 'afternoon';
+  if (hour < 21) return 'evening';
+  return 'night';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AI-POWERED GENERATION
+// ═══════════════════════════════════════════════════════════════
+
+async function generatePersonalizedSuggestions(
+  mood: string,
+  category: string,
+  symptoms: string[],
+  notes: string | undefined,
+  timeOfDay: string,
+  recentHistory: RecentCheckIn[]
+): Promise<GeneratedSuggestion[]> {
+  const systemPrompt = `You are a compassionate wellness assistant helping seniors maintain their mental and physical wellbeing. Generate personalized, actionable wellness suggestions.
+
+GUIDELINES:
+- Be warm, supportive, and encouraging
+- Use simple, clear language appropriate for seniors
+- Suggestions should be achievable and practical
+- Consider physical limitations common in seniors
+- Never give medical advice - only general wellness tips
+- Each suggestion should be 1-2 sentences max
+- Vary the types: breathing, physical, social, practical, mindfulness, comfort, gratitude
+
+OUTPUT FORMAT: Return exactly 3 suggestions as a JSON array:
+[
+  {"text": "suggestion text", "type": "breathing|physical|social|practical|mindfulness|comfort|gratitude", "reasoning": "why this helps"}
+]`;
+
+  // Build context
+  const contextParts = [
+    `Current mood: ${mood} (category: ${category})`,
+    `Time of day: ${timeOfDay}`,
+  ];
+
+  if (symptoms.length > 0) {
+    contextParts.push(`Symptoms mentioned: ${symptoms.join(', ')}`);
+  }
+
+  if (notes) {
+    contextParts.push(`User notes: "${notes}"`);
+  }
+
+  if (recentHistory.length > 0) {
+    const historyText = recentHistory
+      .slice(0, 5)
+      .map((h) => `- ${new Date(h.checkedInAt).toLocaleDateString()}: ${h.mood} (${h.moodScore}/5)`)
+      .join('\n');
+    contextParts.push(`Recent mood history:\n${historyText}`);
+
+    // Detect patterns
+    const avgScore = recentHistory.reduce((sum, h) => sum + h.moodScore, 0) / recentHistory.length;
+    if (avgScore < 2.5) {
+      contextParts.push('Pattern: User has been feeling low recently - be especially supportive');
+    } else if (avgScore > 3.5) {
+      contextParts.push('Pattern: User has been feeling good recently - help maintain momentum');
+    }
+  }
+
+  const userPrompt = `Generate 3 personalized wellness suggestions for this user:
+
+${contextParts.join('\n')}
+
+Remember:
+- Make suggestions specific to their current mood and time of day
+- If they mentioned symptoms, address those
+- If they've been feeling low, be extra gentle and encouraging
+- Vary the types of suggestions (don't give 3 breathing exercises)
+
+Return ONLY the JSON array, no other text.`;
+
+  const response = await callHaiku(systemPrompt, userPrompt);
+
+  // Parse JSON response
+  const jsonMatch = response.match(/\[[\s\S]*\]/);
+  if (!jsonMatch) {
+    throw new Error('Invalid AI response format');
+  }
+
+  const parsed = JSON.parse(jsonMatch[0]);
+
+  return parsed.map((s: { text: string; type: string; reasoning?: string }, i: number) => ({
+    id: `gen-${Date.now()}-${i}`,
+    text: s.text,
+    type: s.type as GeneratedSuggestion['type'],
+    reasoning: s.reasoning,
+    personalized: true,
+  }));
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SELECTION MODE (FALLBACK)
+// ═══════════════════════════════════════════════════════════════
+
+async function selectFromPool(
+  category: string,
+  symptoms: string[],
+  notes: string | undefined,
+  timeOfDay: string
+): Promise<GeneratedSuggestion[]> {
+  const categorySuggestions = FALLBACK_SUGGESTIONS.filter((s) => s.category === category);
+
+  if (categorySuggestions.length === 0) {
+    // Use neutral if no matching category
+    return FALLBACK_SUGGESTIONS
+      .filter((s) => s.category === 'neutral')
+      .slice(0, 3)
+      .map((s) => ({ ...s, personalized: false, reasoning: undefined }));
+  }
+
+  // Build context for selection
+  const contextParts = [
+    `Category: ${category}`,
+    `Time: ${timeOfDay}`,
+  ];
+  if (symptoms.length > 0) contextParts.push(`Symptoms: ${symptoms.join(', ')}`);
+  if (notes) contextParts.push(`Notes: ${notes}`);
+
+  const suggestionList = categorySuggestions
+    .map((s, i) => `${i + 1}. [${s.id}] (${s.type}) ${s.text}`)
+    .join('\n');
+
+  try {
+    const prompt = `Select the 3 MOST appropriate suggestions for this user from the list below.
+
+USER CONTEXT:
+${contextParts.join('\n')}
+
+AVAILABLE SUGGESTIONS:
+${suggestionList}
+
+Reply with ONLY the IDs separated by commas (e.g., "anx-1, anx-3, anx-5").
+Choose varied types (breathing, physical, social, etc.) when possible.`;
+
+    const response = await callHaiku('You are a wellness assistant. Select the best suggestions.', prompt);
+
+    const idMatches = response.match(/[a-z]{3}-\d/g);
+    if (idMatches && idMatches.length >= 3) {
+      const selectedIds = idMatches.slice(0, 3);
+      return selectedIds
+        .map((id) => FALLBACK_SUGGESTIONS.find((s) => s.id === id))
+        .filter(Boolean)
+        .map((s) => ({ ...s!, personalized: false, reasoning: undefined }));
+    }
+  } catch {
+    // Fall through to random selection
+  }
+
+  // Random fallback
+  const shuffled = [...categorySuggestions].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, 3).map((s) => ({ ...s, personalized: false, reasoning: undefined }));
+}
+
+// ═══════════════════════════════════════════════════════════════
 // MAIN HANDLER
 // ═══════════════════════════════════════════════════════════════
 
 serve(async (req) => {
-  // Handle CORS
   if (req.method === 'OPTIONS') {
     return handleOptions(req);
   }
@@ -135,8 +370,17 @@ serve(async (req) => {
   const { headers: corsHeaders } = corsFromRequest(req);
 
   try {
-    const body: HaikuRequest = await req.json();
-    const { mood, symptoms, notes, timeOfDay } = body;
+    const body: MoodSuggestionRequest = await req.json();
+    const {
+      userId,
+      mood,
+      moodScore,
+      symptoms = [],
+      notes,
+      timeOfDay,
+      useSelectionMode = false,
+      includeHistory = true,
+    } = body;
 
     if (!mood) {
       return new Response(
@@ -145,100 +389,76 @@ serve(async (req) => {
       );
     }
 
-    // Get category for this mood
+    // Get category and time context
     const category = MOOD_TO_CATEGORY[mood] || 'neutral';
+    const timeContext = getTimeContext(timeOfDay);
 
-    // Get all suggestions for this category
-    const categorySuggestions = suggestions.filter(s => s.category === category);
-
-    // Build context for Haiku
-    const userContext = [
-      `Mood: ${mood}`,
-      symptoms ? `Symptoms: ${symptoms}` : null,
-      notes ? `Notes: ${notes}` : null,
-      timeOfDay ? `Time of day: ${timeOfDay}` : null,
-    ].filter(Boolean).join('\n');
-
-    // Format suggestions for Haiku to choose from
-    const suggestionList = categorySuggestions
-      .map((s, i) => `${i + 1}. [${s.id}] ${s.text}`)
-      .join('\n');
-
-    const prompt = `You are a wellness assistant for seniors. Based on the user's context, select the 3 MOST appropriate and helpful suggestions from the list below.
-
-USER CONTEXT:
-${userContext}
-
-AVAILABLE SUGGESTIONS:
-${suggestionList}
-
-Reply with ONLY the IDs of your top 3 picks, separated by commas (e.g., "anx-1, anx-3, anx-5"). Choose suggestions that:
-1. Are most relevant to any specific symptoms or notes mentioned
-2. Offer variety (different types: breathing, physical, social, practical)
-3. Are appropriate for the time of day if specified
-
-Your picks:`;
-
-    let selectedIds: string[] = [];
-
-    try {
-      const haikuResponse = await callHaiku(prompt);
-
-      // Parse the response to get IDs
-      const idMatches = haikuResponse.match(/[a-z]{3}-\d/g);
-      if (idMatches) {
-        selectedIds = idMatches.slice(0, 3);
-      }
-    } catch (haikuError) {
-      // If Haiku fails, fall back to random selection
-      console.error('Haiku selection failed, using random:', haikuError);
+    // Get recent history if available
+    let recentHistory: RecentCheckIn[] = [];
+    if (userId && includeHistory) {
+      recentHistory = await getRecentCheckIns(userId);
     }
 
-    // If we didn't get enough from Haiku, fill with random
-    if (selectedIds.length < 3) {
-      const shuffled = [...categorySuggestions].sort(() => Math.random() - 0.5);
-      const randomIds = shuffled.slice(0, 3).map(s => s.id);
+    let suggestions: GeneratedSuggestion[];
+    let source: 'generated' | 'selected' | 'fallback';
 
-      // Merge, avoiding duplicates
-      for (const id of randomIds) {
-        if (selectedIds.length < 3 && !selectedIds.includes(id)) {
-          selectedIds.push(id);
-        }
+    if (useSelectionMode) {
+      // Use selection mode explicitly
+      suggestions = await selectFromPool(category, symptoms, notes, timeContext);
+      source = 'selected';
+    } else {
+      // Try generation first
+      try {
+        suggestions = await generatePersonalizedSuggestions(
+          mood,
+          category,
+          symptoms,
+          notes,
+          timeContext,
+          recentHistory
+        );
+        source = 'generated';
+      } catch (genError) {
+        // Fall back to selection
+        console.error('Generation failed, falling back to selection:', genError);
+        suggestions = await selectFromPool(category, symptoms, notes, timeContext);
+        source = 'selected';
       }
     }
 
-    // Get the full suggestion objects
-    const selectedSuggestions = selectedIds
-      .map(id => suggestions.find(s => s.id === id))
-      .filter(Boolean) as MoodSuggestion[];
+    // Build response
+    const response: MoodSuggestionResponse = {
+      mood,
+      category,
+      suggestions,
+      source,
+    };
 
-    return new Response(
-      JSON.stringify({
-        mood,
-        category,
-        suggestions: selectedSuggestions.map(s => ({
-          id: s.id,
-          text: s.text,
-          type: s.type,
-        })),
-        source: selectedIds.length === 3 ? 'haiku' : 'fallback',
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    // Add personalization context summary if we used history
+    if (recentHistory.length > 0 && source === 'generated') {
+      const avgScore = recentHistory.reduce((sum, h) => sum + h.moodScore, 0) / recentHistory.length;
+      response.personalizationContext = `Based on ${recentHistory.length} recent check-ins (avg mood: ${avgScore.toFixed(1)}/5)`;
+    }
 
+    return new Response(JSON.stringify(response), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   } catch (error) {
     console.error('Smart suggestions error:', error);
 
+    // Ultimate fallback
     return new Response(
       JSON.stringify({
-        error: 'Failed to generate suggestions',
-        fallback: [
-          { text: 'Take a few deep breaths and be gentle with yourself today.', type: 'breathing' },
-          { text: 'Consider reaching out to someone you trust.', type: 'social' },
-          { text: 'Stay hydrated and take care of your basic needs.', type: 'practical' },
+        mood: 'unknown',
+        category: 'neutral',
+        suggestions: [
+          { id: 'fb-1', text: 'Take a few deep breaths and be gentle with yourself today.', type: 'breathing', personalized: false },
+          { id: 'fb-2', text: 'Consider reaching out to someone you trust.', type: 'social', personalized: false },
+          { id: 'fb-3', text: 'Stay hydrated and take care of your basic needs.', type: 'practical', personalized: false },
         ],
+        source: 'fallback',
       }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
