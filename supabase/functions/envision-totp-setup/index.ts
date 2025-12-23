@@ -215,6 +215,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const label = String(superAdmin.email || "admin").toLowerCase();
 
     if (action === "begin") {
+      // Fix B: If already configured, do NOT generate a new secret/QR
+      if (superAdmin.totp_enabled && superAdmin.totp_secret) {
+        return json(corsHeaders, 200, {
+          success: true,
+          already_configured: true,
+          message: "Authenticator is already set up.",
+        });
+      }
+
       // Generate random secret (20 bytes)
       const bytes = new Uint8Array(20);
       crypto.getRandomValues(bytes);

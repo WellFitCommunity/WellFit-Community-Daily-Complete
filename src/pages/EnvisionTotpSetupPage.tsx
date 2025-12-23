@@ -42,12 +42,15 @@ export const EnvisionTotpSetupPage: React.FC = () => {
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
   const [qrDataUrl, setQrDataUrl] = useState('');
 
-  // Form state
+  // Form state - store digits only
   const [code, setCode] = useState('');
   const [showSecret, setShowSecret] = useState(false);
   const [copiedSecret, setCopiedSecret] = useState(false);
   const [copiedBackups, setCopiedBackups] = useState(false);
   const [savedBackupCodes, setSavedBackupCodes] = useState(false);
+
+  // Fix A: Stricter canSubmit - code is already digits-only
+  const canSubmit = useMemo(() => code.length === 6, [code]);
 
   // Begin TOTP setup on mount
   useEffect(() => {
@@ -55,6 +58,12 @@ export const EnvisionTotpSetupPage: React.FC = () => {
 
     const beginSetup = async () => {
       try {
+        // Fix C: Don't re-run begin if we already have a QR
+        if (otpauthUri) {
+          setLoading(false);
+          return;
+        }
+
         setError('');
 
         if (!sessionToken) {
@@ -78,6 +87,12 @@ export const EnvisionTotpSetupPage: React.FC = () => {
 
         if (data?.error) {
           throw new Error(data.error);
+        }
+
+        // Fix B: Handle already_configured - redirect back to login
+        if (data?.already_configured) {
+          navigate('/envision', { replace: true });
+          return;
         }
 
         const uri = String(data?.otpauth_uri || '');
@@ -115,10 +130,7 @@ export const EnvisionTotpSetupPage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [sessionToken, supabase.functions]);
-
-  // Can submit when code is 6 digits
-  const canSubmit = useMemo(() => code.replace(/[^\d]/g, '').length === 6, [code]);
+  }, [sessionToken, supabase.functions, otpauthUri, navigate]);
 
   // Copy secret to clipboard
   const handleCopySecret = useCallback(async () => {
@@ -166,10 +178,9 @@ export const EnvisionTotpSetupPage: React.FC = () => {
     setSubmitting(true);
 
     try {
-      const cleanCode = code.replace(/[^\d]/g, '');
-
+      // Code is already digits-only from the input handler
       const { data, error: fnErr } = await supabase.functions.invoke('envision-totp-setup', {
-        body: { action: 'confirm', session_token: sessionToken, code: cleanCode }
+        body: { action: 'confirm', session_token: sessionToken, code }
       });
 
       if (fnErr) {
@@ -427,7 +438,11 @@ export const EnvisionTotpSetupPage: React.FC = () => {
                   <input
                     type="text"
                     value={code}
-                    onChange={(e) => setCode(e.target.value.replace(/[^\d]/g, '').slice(0, 6))}
+                    onChange={(e) => {
+                      // Fix A: Always store digits-only, max 6
+                      const digits = e.target.value.replace(/[^\d]/g, '').slice(0, 6);
+                      setCode(digits);
+                    }}
                     required
                     autoComplete="one-time-code"
                     inputMode="numeric"
