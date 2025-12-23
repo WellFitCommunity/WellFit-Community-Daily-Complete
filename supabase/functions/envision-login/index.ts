@@ -41,6 +41,8 @@ const getEnv = (...keys: string[]): string => {
 
 Deno.serve(async (req: Request): Promise<Response> => {
   const logger = createLogger("envision-login", req);
+  logger.info("ENVISION_LOGIN_TATTOO_v25", { now: new Date().toISOString() });
+
 
   // Handle CORS
   if (req.method === "OPTIONS") {
