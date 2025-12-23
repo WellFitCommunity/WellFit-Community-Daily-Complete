@@ -119,11 +119,13 @@ export const EnvisionLoginPage: React.FC = () => {
         setSuccessMsg(loginData.message || 'Password verified. Please enter your PIN.');
         setStep('totp'); // Reuse TOTP step for PIN entry
       } else if (loginData.requires_2fa_setup) {
-        // No 2FA configured - prompt setup
-        setSuccessMsg('Password verified. Setting up two-factor authentication...');
-        setStep('totp-setup');
-        // Trigger TOTP setup
-        _handleInitiateTotpSetup();
+        // No 2FA configured - redirect to dedicated setup page
+        setSuccessMsg('Password verified. Redirecting to authenticator setup...');
+        navigate('/envision-2fa-setup', {
+          state: { session_token: loginData.session_token },
+          replace: true
+        });
+        return;
       } else {
         // No 2FA required - rare case, go directly to portal
         // But we need to get a Supabase session first

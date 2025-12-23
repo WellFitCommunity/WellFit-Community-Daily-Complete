@@ -11,6 +11,7 @@ export const VerifyCodePage = React.lazy(() => import('../pages/VerifyCodePage')
 export const LoginPage = React.lazy(() => import('../pages/LoginPage'));
 export const AdminLoginPage = React.lazy(() => import('../pages/AdminLoginPage'));
 export const EnvisionLoginPage = React.lazy(() => import('../pages/EnvisionLoginPage'));
+export const EnvisionTotpSetupPage = React.lazy(() => import('../pages/EnvisionTotpSetupPage'));
 export const MetricsPage = React.lazy(() => import('../pages/MetricsPage'));
 export const DemoPage = React.lazy(() => import('../pages/DemoPage'));
 
@@ -223,6 +224,7 @@ export const componentMap: Record<string, React.LazyExoticComponent<any>> = {
   LoginPage,
   AdminLoginPage,
   EnvisionLoginPage,
+  EnvisionTotpSetupPage,
   MetricsPage,
   DemoPage,
   PrivacyPolicy,

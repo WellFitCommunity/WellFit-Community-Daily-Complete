@@ -36,6 +36,7 @@ export const publicRoutes: RouteConfig[] = [
   { path: '/admin-login', component: 'AdminLoginPage', auth: 'none', category: 'public' },
   { path: '/envision', component: 'EnvisionLoginPage', auth: 'none', category: 'public' },
   { path: '/envision/login', component: 'EnvisionLoginPage', auth: 'none', category: 'public' },
+  { path: '/envision-2fa-setup', component: 'EnvisionTotpSetupPage', auth: 'none', category: 'public' },
   { path: '/login', component: 'LoginPage', auth: 'none', category: 'public' },
   { path: '/metrics', component: 'MetricsPage', auth: 'none', category: 'public' },
   { path: '/home', component: 'Home', auth: 'none', category: 'public' },
