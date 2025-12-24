@@ -119,27 +119,12 @@ export const EnvisionTotpSetupPage: React.FC = () => {
     navigate('/envision', { replace: true });
   }, [navigate]);
 
-  const getAccessToken = useCallback(async (): Promise<string> => {
-    const { data, error: sessionErr } = await supabase.auth.getSession();
-    if (sessionErr) {
-      await auditLogger.warn('ENVISION_TOTP_GET_SESSION_FAILED', { error: sessionErr.message });
-      return '';
-    }
-    return data?.session?.access_token || '';
-  }, [supabase]);
-
   const invokeTotpSetup = useCallback(
     async <T,>(body: Record<string, unknown>): Promise<{ data: T | null; status: number; message: string }> => {
-      const accessToken = await getAccessToken();
-      if (!accessToken) {
-        return { data: null, status: 401, message: 'Missing or expired session. Please log in again.' };
-      }
-
+      // Edge function has verify_jwt=false and uses session_token for auth
+      // No Supabase access token required - the apikey header is added automatically
       const { data, error: fnErr } = await supabase.functions.invoke<T>('envision-totp-setup', {
         body,
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
       });
 
       if (fnErr) {
@@ -150,7 +135,7 @@ export const EnvisionTotpSetupPage: React.FC = () => {
 
       return { data: (data ?? null) as T | null, status: 200, message: 'ok' };
     },
-    [getAccessToken, supabase.functions]
+    [supabase.functions]
   );
 
   // Begin TOTP setup on mount

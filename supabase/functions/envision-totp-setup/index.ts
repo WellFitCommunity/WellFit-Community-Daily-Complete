@@ -12,7 +12,7 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 
-const PENDING_TOTP_TTL_MINUTES = 10;
+const PENDING_TOTP_TTL_MINUTES = 15;
 
 const getEnv = (...keys: string[]): string => {
   for (const k of keys) {
