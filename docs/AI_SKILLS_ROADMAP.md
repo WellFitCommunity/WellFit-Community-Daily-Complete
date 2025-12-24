@@ -158,7 +158,7 @@
 | # | Skill | Status | Model | Target Location | Description |
 |---|-------|--------|-------|-----------------|-------------|
 | 56 | Patient Q&A Bot | ✅ | Sonnet 4.5 | `supabase/functions/ai-patient-qa-bot/` | Health question answering |
-| 57 | Provider Assistant | 📋 | Sonnet 4.5 | Extend Riley | Role-adaptive for all staff |
+| 57 | Provider Assistant | ✅ | Sonnet 4.5 | `src/services/ai/providerAssistantService.ts` | Role-adaptive for all staff |
 | 58 | Care Team Chat Summarizer | 📋 | Haiku 4.5 | New service | Team communication summaries |
 | 59 | Admin Chat Assistant | 📋 | Haiku 4.5 | `IntelligentAdminPanel.tsx` | Conversational admin help |
 
@@ -196,8 +196,8 @@
 | Specialty | 0 | 0 | 5 | 5 |
 | Interoperability | 0 | 0 | 3 | 3 |
 | Security | 0 | 0 | 3 | 3 |
-| Conversational | 1 | 0 | 3 | 4 |
-| **TOTAL** | **33** | **0** | **26** | **59** |
+| Conversational | 2 | 0 | 2 | 4 |
+| **TOTAL** | **34** | **0** | **25** | **59** |
 
 ---
 
@@ -235,6 +235,7 @@
 
 | Date | Change |
 |------|--------|
+| 2025-12-24 | Completed Provider Assistant (#57) - Role-adaptive conversational AI for physicians, nurses, care coordinators, pharmacists, and admin staff |
 | 2025-12-24 | Completed Medication Adherence Predictor (#31) - Barrier identification, regimen complexity analysis, historical patterns, intervention recommendations |
 | 2025-12-24 | Completed Care Escalation Scorer (#32) - Confidence-level escalation with clinical indicators for shift handoff |
 | 2025-12-24 | Completed Infection Risk Predictor (#33) - CLABSI, CAUTI, SSI, VAP, C. diff with prevention bundles |
