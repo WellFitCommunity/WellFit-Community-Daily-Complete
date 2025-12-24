@@ -84,8 +84,8 @@
 |---|-------|--------|-------|-----------------|-------------|
 | 30 | Fall Risk Predictor | ✅ | Sonnet 4.5 | `src/services/ai/fallRiskPredictorService.ts` | Morse Scale + evidence-based assessment |
 | 31 | Medication Adherence Predictor | 📋 | Sonnet 4.5 | `medicationReconciliationService.ts` | Predictive adherence scoring |
-| 32 | Care Escalation Scorer | 📋 | Sonnet 4.5 | `shiftHandoffService.ts` | Confidence-level escalation |
-| 33 | Infection Risk Predictor (HAI) | 📋 | Sonnet 4.5 | New edge function | Hospital-acquired infection |
+| 32 | Care Escalation Scorer | ✅ | Sonnet 4.5 | `src/services/ai/careEscalationScorerService.ts` | Confidence-level escalation with clinical indicators |
+| 33 | Infection Risk Predictor (HAI) | ✅ | Sonnet 4.5 | `src/services/ai/infectionRiskPredictorService.ts` | CLABSI, CAUTI, SSI, VAP, C. diff prediction |
 | 34 | Extended Readmission (1-Year) | 📋 | Sonnet 4.5 | Extend existing | 1-year + seasonal patterns |
 
 ---
