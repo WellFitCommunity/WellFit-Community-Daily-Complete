@@ -83,7 +83,7 @@
 | # | Skill | Status | Model | Target Location | Description |
 |---|-------|--------|-------|-----------------|-------------|
 | 30 | Fall Risk Predictor | ✅ | Sonnet 4.5 | `src/services/ai/fallRiskPredictorService.ts` | Morse Scale + evidence-based assessment |
-| 31 | Medication Adherence Predictor | 📋 | Sonnet 4.5 | `medicationReconciliationService.ts` | Predictive adherence scoring |
+| 31 | Medication Adherence Predictor | ✅ | Sonnet 4.5 | `src/services/ai/medicationAdherencePredictorService.ts` | Barrier identification, intervention recommendations |
 | 32 | Care Escalation Scorer | ✅ | Sonnet 4.5 | `src/services/ai/careEscalationScorerService.ts` | Confidence-level escalation with clinical indicators |
 | 33 | Infection Risk Predictor (HAI) | ✅ | Sonnet 4.5 | `src/services/ai/infectionRiskPredictorService.ts` | CLABSI, CAUTI, SSI, VAP, C. diff prediction |
 | 34 | Extended Readmission (1-Year) | 📋 | Sonnet 4.5 | Extend existing | 1-year + seasonal patterns |
@@ -189,7 +189,7 @@
 | Clinical Docs | 5 | 0 | 0 | 5 |
 | Decision Support | 4 | 0 | 0 | 4 |
 | Patient Engagement | 2 | 0 | 1 | 3 |
-| Risk Prediction | 1 | 0 | 4 | 5 |
+| Risk Prediction | 4 | 0 | 1 | 5 |
 | Admin Automation | 0 | 0 | 4 | 4 |
 | Analytics | 0 | 0 | 3 | 3 |
 | Voice/NLP | 0 | 0 | 3 | 3 |
@@ -197,7 +197,7 @@
 | Interoperability | 0 | 0 | 3 | 3 |
 | Security | 0 | 0 | 3 | 3 |
 | Conversational | 1 | 0 | 3 | 4 |
-| **TOTAL** | **30** | **0** | **29** | **59** |
+| **TOTAL** | **33** | **0** | **26** | **59** |
 
 ---
 
@@ -235,6 +235,9 @@
 
 | Date | Change |
 |------|--------|
+| 2025-12-24 | Completed Medication Adherence Predictor (#31) - Barrier identification, regimen complexity analysis, historical patterns, intervention recommendations |
+| 2025-12-24 | Completed Care Escalation Scorer (#32) - Confidence-level escalation with clinical indicators for shift handoff |
+| 2025-12-24 | Completed Infection Risk Predictor (#33) - CLABSI, CAUTI, SSI, VAP, C. diff with prevention bundles |
 | 2025-12-24 | Completed Missed Check-In Escalation (#28) - AI-powered escalation with risk factor analysis, caregiver notification, and welfare check recommendations |
 | 2025-12-23 | Completed Appointment Prep Instructions (#27) - Personalized condition-specific preparation with fasting, medication holds, checklists, and multi-format delivery (SMS, email, print) |
 | 2025-12-23 | Completed Medication Reconciliation AI (#26) - AI-enhanced reconciliation with clinical reasoning for discrepancies, deprescribing opportunities, patient counseling points, and pharmacy verification checklists |
