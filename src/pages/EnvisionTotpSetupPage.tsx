@@ -13,12 +13,62 @@
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import QRCode from 'qrcode';
-import { Shield, Smartphone, Key, Copy, Check, AlertCircle, CheckCircle, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import {
+  Shield,
+  Smartphone,
+  Key,
+  Copy,
+  Check,
+  AlertCircle,
+  CheckCircle,
+  ArrowLeft,
+  Eye,
+  EyeOff
+} from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { auditLogger } from '../services/auditLogger';
 
 interface LocationState {
   session_token?: string;
+}
+
+type BeginResponse = {
+  already_configured?: boolean;
+  // support both variants
+  otpauth_uri?: string;
+  otpauth_url?: string;
+  otpauthUri?: string;
+  otpauthUrl?: string;
+
+  secret?: string;
+  secret_base32?: string;
+  secretBase32?: string;
+
+  backup_codes?: string[];
+  backupCodes?: string[];
+
+  error?: string;
+};
+
+type ConfirmResponse = {
+  success?: boolean;
+  backup_codes?: string[];
+  backupCodes?: string[];
+  error?: string;
+};
+
+function pickString(...candidates: Array<unknown>): string {
+  for (const c of candidates) {
+    if (typeof c === 'string' && c.trim().length > 0) return c;
+  }
+  return '';
+}
+
+function pickStringArray(...candidates: Array<unknown>): string[] {
+  for (const c of candidates) {
+    if (Array.isArray(c) && c.every(x => typeof x === 'string')) return c as string[];
+  }
+  return [];
 }
 
 export const EnvisionTotpSetupPage: React.FC = () => {
@@ -30,7 +80,7 @@ export const EnvisionTotpSetupPage: React.FC = () => {
   const state = (location.state || {}) as LocationState;
   const sessionToken = state.session_token || localStorage.getItem('envision_session_token') || '';
 
-  // IMPORTANT: dev-safe guard to prevent React StrictMode double-effect from generating 2 secrets
+  // Prevent React StrictMode double-effect from generating 2 secrets
   const beginOnceRef = useRef(false);
 
   // Setup state
@@ -54,6 +104,54 @@ export const EnvisionTotpSetupPage: React.FC = () => {
 
   // Code is digits-only; enable submit at 6 digits
   const canSubmit = useMemo(() => code.length === 6, [code]);
+
+  const routeToLoginCleanly = useCallback(async (reason: string) => {
+    try {
+      await auditLogger.warn('ENVISION_TOTP_SETUP_SESSION_INVALID', { reason });
+    } catch {
+      // auditLogger is the only logging path; ignore failures silently
+    }
+
+    // Clear only the session_token we created for this flow
+    localStorage.removeItem('envision_session_token');
+    localStorage.removeItem('envision_session_expires');
+
+    navigate('/envision', { replace: true });
+  }, [navigate]);
+
+  const getAccessToken = useCallback(async (): Promise<string> => {
+    const { data, error: sessionErr } = await supabase.auth.getSession();
+    if (sessionErr) {
+      await auditLogger.warn('ENVISION_TOTP_GET_SESSION_FAILED', { error: sessionErr.message });
+      return '';
+    }
+    return data?.session?.access_token || '';
+  }, [supabase]);
+
+  const invokeTotpSetup = useCallback(
+    async <T,>(body: Record<string, unknown>): Promise<{ data: T | null; status: number; message: string }> => {
+      const accessToken = await getAccessToken();
+      if (!accessToken) {
+        return { data: null, status: 401, message: 'Missing or expired session. Please log in again.' };
+      }
+
+      const { data, error: fnErr } = await supabase.functions.invoke<T>('envision-totp-setup', {
+        body,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (fnErr) {
+        const status = (fnErr as any)?.status || 0;
+        const msg = fnErr.message || 'Edge Function call failed.';
+        return { data: null, status, message: msg };
+      }
+
+      return { data: (data ?? null) as T | null, status: 200, message: 'ok' };
+    },
+    [getAccessToken, supabase.functions]
+  );
 
   // Begin TOTP setup on mount
   useEffect(() => {
@@ -85,36 +183,53 @@ export const EnvisionTotpSetupPage: React.FC = () => {
         }
         beginOnceRef.current = true;
 
-        const { data, error: fnErr } = await supabase.functions.invoke('envision-totp-setup', {
-          body: { action: 'begin', session_token: sessionToken }
+        const res = await invokeTotpSetup<BeginResponse>({
+          action: 'begin',
+          session_token: sessionToken,
         });
 
         if (cancelled) return;
 
-        if (fnErr) {
-          const msg = fnErr.message || 'Failed to start authenticator setup.';
-          await auditLogger.warn('ENVISION_TOTP_SETUP_BEGIN_FAILED', { error: msg });
-          throw new Error(msg);
-        }
-
-        if (data?.error) {
-          throw new Error(data.error);
-        }
-
-        // If already configured, don't show QR again
-        if (data?.already_configured) {
-          navigate('/envision', { replace: true });
+        if (res.status === 401) {
+          // Important: this is a session/auth failure, not “begin failed”
+          await routeToLoginCleanly('401 from begin (missing/expired access token)');
           return;
         }
 
-        const uri = String(data?.otpauth_uri || '');
-        if (!uri.startsWith('otpauth://')) {
-          throw new Error('Setup did not return a valid QR payload. Please try again.');
+        if (!res.data) {
+          await auditLogger.warn('ENVISION_TOTP_SETUP_BEGIN_FAILED', { error: res.message, status: res.status });
+          throw new Error(res.message || 'Failed to start authenticator setup.');
         }
 
+        if (res.data?.error) {
+          throw new Error(String(res.data.error));
+        }
+
+        // If already configured, don't show QR again
+        if (res.data?.already_configured) {
+          navigate('/super-admin', { replace: true });
+          return;
+        }
+
+        const uri = pickString(
+          res.data.otpauth_uri,
+          res.data.otpauth_url,
+          res.data.otpauthUri,
+          res.data.otpauthUrl
+        );
+
+        if (!uri.startsWith('otpauth://')) {
+          // Reset begin guard so user can retry after a real failure
+          beginOnceRef.current = false;
+          throw new Error('Setup did not return a valid QR payload. Please log in again and retry.');
+        }
+
+        const sec = pickString(res.data.secret, res.data.secret_base32, res.data.secretBase32);
+        const backups = pickStringArray(res.data.backup_codes, res.data.backupCodes);
+
         setOtpauthUri(uri);
-        setSecret(String(data?.secret || ''));
-        setBackupCodes(Array.isArray(data?.backup_codes) ? data.backup_codes : []);
+        setSecret(sec);
+        setBackupCodes(backups);
 
         const qrUrl = await QRCode.toDataURL(uri, {
           margin: 2,
@@ -137,7 +252,10 @@ export const EnvisionTotpSetupPage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [sessionToken, supabase.functions, otpauthUri, qrDataUrl, navigate]);
+
+    // IMPORTANT: do NOT depend on otpauthUri/qrDataUrl, or it re-runs after setting them.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionToken, invokeTotpSetup, navigate, routeToLoginCleanly]);
 
   // Copy secret to clipboard
   const handleCopySecret = useCallback(async () => {
@@ -145,7 +263,7 @@ export const EnvisionTotpSetupPage: React.FC = () => {
       await navigator.clipboard.writeText(secret);
       setCopiedSecret(true);
       setTimeout(() => setCopiedSecret(false), 2000);
-    } catch (err: unknown) {
+    } catch {
       const textArea = document.createElement('textarea');
       textArea.value = secret;
       document.body.appendChild(textArea);
@@ -164,7 +282,7 @@ export const EnvisionTotpSetupPage: React.FC = () => {
       await navigator.clipboard.writeText(text);
       setCopiedBackups(true);
       setTimeout(() => setCopiedBackups(false), 2000);
-    } catch (err: unknown) {
+    } catch {
       const textArea = document.createElement('textarea');
       textArea.value = backupCodes.join('\n');
       document.body.appendChild(textArea);
@@ -183,32 +301,47 @@ export const EnvisionTotpSetupPage: React.FC = () => {
     setSubmitting(true);
 
     try {
-      const { data, error: fnErr } = await supabase.functions.invoke('envision-totp-setup', {
-        body: { action: 'confirm', session_token: sessionToken, code }
+      if (!sessionToken || sessionToken.trim().length < 10) {
+        await routeToLoginCleanly('Missing/invalid session_token during confirm');
+        return;
+      }
+
+      const res = await invokeTotpSetup<ConfirmResponse>({
+        action: 'confirm',
+        session_token: sessionToken,
+        code,
       });
 
-      if (fnErr) {
-        const msg = fnErr.message || 'Authenticator confirmation failed.';
-        await auditLogger.warn('ENVISION_TOTP_SETUP_CONFIRM_FAILED', { error: msg });
-        throw new Error(msg);
+      if (res.status === 401) {
+        await routeToLoginCleanly('401 from confirm (missing/expired access token)');
+        return;
       }
 
-      if (data?.error) {
-        throw new Error(data.error);
+      if (!res.data) {
+        await auditLogger.warn('ENVISION_TOTP_SETUP_CONFIRM_FAILED', { error: res.message, status: res.status });
+        throw new Error(res.message || 'Authenticator confirmation failed.');
       }
 
-      if (!data?.success) {
+      if (res.data?.error) {
+        throw new Error(String(res.data.error));
+      }
+
+      if (!res.data?.success) {
         throw new Error('Authenticator confirmation failed.');
       }
 
       // Optional backup codes (if server ever returns them)
-      if (Array.isArray(data?.backup_codes)) {
-        setBackupCodes(data.backup_codes);
+      const newBackups = pickStringArray(res.data.backup_codes, res.data.backupCodes);
+      if (newBackups.length > 0) {
+        setBackupCodes(newBackups);
       }
 
       await auditLogger.info('ENVISION_TOTP_SETUP_COMPLETE', {});
 
       setSuccessMsg('Authenticator setup complete! You can now log in with your authenticator app.');
+
+      // Clear the session token for safety
+      localStorage.removeItem('envision_session_token');
 
       // Hard-stop re-begin behavior if user ever returns here
       setOtpauthUri('');
@@ -220,14 +353,14 @@ export const EnvisionTotpSetupPage: React.FC = () => {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Authenticator confirmation failed.';
       setError(msg);
-      // If confirm failed, allow retry without forcing a new begin in dev
+      // Confirm failed should NOT trigger a new begin; keep beginOnceRef true
       beginOnceRef.current = true;
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Go back to login
+  // Go back
   const handleBack = () => {
     localStorage.removeItem('envision_session_token');
     localStorage.removeItem('envision_session_expires');

@@ -60,7 +60,13 @@ export function createAuthAwareFetch(): typeof fetch {
     init?: RequestInit
   ): Promise<Response> {
     // Get URL before fetch for error handling
-    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    const url =
+      typeof input === 'string'
+        ? input
+        : input instanceof URL
+          ? input.href
+          : input.url;
+
     const isSupabaseCall = url.includes('.supabase.co') || url.includes('.supabase.com');
 
     let response: Response;
@@ -77,16 +83,22 @@ export function createAuthAwareFetch(): typeof fetch {
       return response;
     }
 
-    // Check for auth failures - 400 on token endpoint or 401 on any endpoint
+    // Endpoint classification
     const isAuthEndpoint = url.includes('/auth/v1/token');
     const isRestEndpoint = url.includes('/rest/v1/');
+    const isFunctionsEndpoint = url.includes('/functions/v1/');
+
     const status = response.status;
     const isUnauthorized = status === 401;
     const isBadRequest = status === 400;
+
     const method = (init?.method || 'GET').toUpperCase();
 
+    // ============================================================
+    // AUTH TOKEN ENDPOINT 400: INVALID REFRESH TOKEN -> LOG OUT
+    // ============================================================
+    // This is the clean/authoritative signal that the refresh token is busted.
     if (isAuthEndpoint && isBadRequest && !authFailureHandled) {
-      // Clone response to read body without consuming it
       const clonedResponse = response.clone();
       try {
         const body = await clonedResponse.json();
@@ -104,33 +116,55 @@ export function createAuthAwareFetch(): typeof fetch {
         }
       } catch {
         // If we can't parse the body, check status alone for auth endpoint
-        if (isAuthEndpoint && isBadRequest) {
-          authFailureHandled = true;
-          handleAuthFailure('refresh_token_error_unparseable');
-        }
+        authFailureHandled = true;
+        handleAuthFailure('refresh_token_error_unparseable');
       }
     }
 
-    // Also handle 401 on API calls - means token is completely invalid
+    // ============================================================
+    // 401 HANDLING: DO NOT AUTO-LOGOUT ON EDGE FUNCTIONS
+    // ============================================================
+    // Edge Functions can legitimately return 401 for app-level authorization
+    // (e.g., missing session_token, already-configured flow, custom gates, etc.)
+    // Those must be handled by the calling feature/page, not by transport.
     if (!isAuthEndpoint && isUnauthorized && !authFailureHandled) {
+      if (isFunctionsEndpoint) {
+        // Record for diagnostics but do NOT destroy the user's session here.
+        auditLogger.security('EDGE_FUNCTION_401', 'low', {
+          source: 'authAwareFetch',
+          url,
+          method,
+          status,
+          note: '401 from /functions/v1/ is not treated as global auth failure',
+        });
+
+        return response;
+      }
+
       const clonedResponse = response.clone();
       try {
         const body = await clonedResponse.json();
-        const errorMessage = (body?.message || body?.error || '').toLowerCase();
+        const rawMessage = (body?.message || body?.error || '') as string;
+        const errorMessage = rawMessage.toLowerCase();
 
-        // JWT expired or invalid (case-insensitive check)
-        if (
-          errorMessage.includes('jwt') ||
-          errorMessage.includes('token') ||
-          errorMessage.includes('unauthorized') ||
-          errorMessage.includes('invalid') ||
-          errorMessage.includes('expired')
-        ) {
+        // Tightened: only trigger logout on strong “JWT is invalid/expired” signals
+        // Avoid nuking sessions on generic "Unauthorized" that could be an RLS gate, etc.
+        const isStrongJwtSignal =
+          errorMessage.includes('invalid jwt') ||
+          errorMessage.includes('jwt expired') ||
+          errorMessage.includes('expired jwt') ||
+          errorMessage.includes('signature') ||
+          errorMessage.includes('token is expired') ||
+          errorMessage.includes('invalid token') ||
+          errorMessage.includes('bad jwt');
+
+        if (isStrongJwtSignal) {
           authFailureHandled = true;
-          handleAuthFailure(`jwt_invalid: ${body?.message || body?.error || 'unknown'}`);
+          handleAuthFailure(`jwt_invalid: ${rawMessage || 'unknown'}`);
         }
       } catch {
-        // Unparseable 401 - still an auth failure
+        // Unparseable 401: only treat as auth failure if it's NOT functions
+        // and we have no JSON body to inspect.
         authFailureHandled = true;
         handleAuthFailure('unauthorized_unparseable');
       }
@@ -161,7 +195,9 @@ export function createAuthAwareFetch(): typeof fetch {
       let payloadKeys: string[] | null = null;
       try {
         if (init?.body && typeof init.body === 'string') {
-          const maybeJson = JSON.parse(init.body) as Record<string, unknown> | Record<string, unknown>[];
+          const maybeJson = JSON.parse(init.body) as
+            | Record<string, unknown>
+            | Record<string, unknown>[];
           if (maybeJson && typeof maybeJson === 'object') {
             payloadKeys = Array.isArray(maybeJson)
               ? Object.keys(maybeJson[0] || {})
@@ -173,7 +209,6 @@ export function createAuthAwareFetch(): typeof fetch {
       }
 
       // Log the REST error for debugging - this is NOT a logout trigger
-      // Using security() method with 'low' severity for schema/payload errors
       auditLogger.security('REST_PAYLOAD_ERROR', 'low', {
         source: 'authAwareFetch',
         url,
