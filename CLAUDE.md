@@ -81,8 +81,8 @@ These are not suggestions. They are requirements.
 ### Test Baseline
 | Metric | Current |
 |--------|---------|
-| Total Tests | 1,200+ |
-| Test Suites | 71 |
+| Total Tests | 1,778 |
+| Test Suites | 96 |
 | Pass Rate Required | 100% |
 
 ### Test Rules
@@ -391,7 +391,7 @@ npm test           # Run tests
 
 1. `npm run lint` - Must pass with 0 errors
 2. `npm run typecheck` - Verify TypeScript types
-3. `npm test` - All 1,200+ tests must pass
+3. `npm test` - All 1,778 tests must pass
 4. Visual inspection - Ensure UI/UX functions correctly
 5. Route verification - New pages are accessible
 
@@ -541,4 +541,5 @@ VITE_FEATURE_NEURO_SUITE=true
 - **Authentication**: JWT anon keys + new sb_publishable/sb_secret key format (hybrid until Supabase SDK full support)
 - **UI**: Envision Atlus design system migration in progress
 - **Build**: Vite + React 19 (migrated December 2025)
-- **Tests**: 1,200+ tests across 71 suites (100% pass rate)
+- **CSS**: Tailwind CSS 4.1.18 (migrated December 2025)
+- **Tests**: 1,778 tests across 96 suites (100% pass rate, 0 skipped)

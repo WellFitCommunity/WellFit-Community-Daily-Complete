@@ -198,8 +198,9 @@ export class SpecialistWorkflowEngine {
     data: Record<string, any>
   ): ConditionEvaluation {
     try {
-      // Parse condition like "BP_SYSTOLIC > 180"
-      const match = condition.match(/^(\w+)\s*(>|<|>=|<=|==|!=)\s*(.+)$/);
+      // Parse condition like "vitals.systolic > 180" or "BP_SYSTOLIC > 180"
+      // Supports dotted paths: [\w.]+ matches "vitals.systolic" or "sdoh_prapare.food_insecurity"
+      const match = condition.match(/^([\w.]+)\s*(>|<|>=|<=|==|!=)\s*(.+)$/);
 
       if (!match) {
         return { condition, result: false, error: 'Invalid condition format' };
@@ -229,10 +230,29 @@ export class SpecialistWorkflowEngine {
           result = parseFloat(value) <= thresholdNum;
           break;
         case '==':
-          result = value === threshold.replace(/['"]/g, '');
+          // Handle boolean, number, and string comparisons
+          const cleanThreshold = threshold.replace(/['"]/g, '');
+          if (cleanThreshold === 'true') {
+            result = value === true;
+          } else if (cleanThreshold === 'false') {
+            result = value === false;
+          } else if (!isNaN(Number(cleanThreshold))) {
+            result = Number(value) === Number(cleanThreshold);
+          } else {
+            result = String(value) === cleanThreshold;
+          }
           break;
         case '!=':
-          result = value !== threshold.replace(/['"]/g, '');
+          const cleanThresholdNe = threshold.replace(/['"]/g, '');
+          if (cleanThresholdNe === 'true') {
+            result = value !== true;
+          } else if (cleanThresholdNe === 'false') {
+            result = value !== false;
+          } else if (!isNaN(Number(cleanThresholdNe))) {
+            result = Number(value) !== Number(cleanThresholdNe);
+          } else {
+            result = String(value) !== cleanThresholdNe;
+          }
           break;
       }
 

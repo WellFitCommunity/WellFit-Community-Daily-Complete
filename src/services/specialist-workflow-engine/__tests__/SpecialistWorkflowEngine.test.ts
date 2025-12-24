@@ -32,7 +32,7 @@ vi.mock('../../phiAccessLogger', () => ({
   logPhiAccess: vi.fn()
 }));
 
-describe.skip('SpecialistWorkflowEngine - TODO: Fix alert evaluation', () => {
+describe('SpecialistWorkflowEngine', () => {
   let engine: SpecialistWorkflowEngine;
 
   beforeEach(() => {
