@@ -305,7 +305,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     if (action === "confirm") {
       const token = String(body?.code ?? "").replace(/[^\d]/g, "");
-      if (token.length !== 6) return json(corsHeaders, 400, { error: "A 6-digit code is required" });
+      if (token.length !== 6) {
+        logger.warn("TOTP confirm failed: invalid code length", { codeLength: token.length });
+        return json(corsHeaders, 400, { error: "A 6-digit code is required" });
+      }
 
       const { data: pending, error: pendErr } = await supabase
         .from("envision_totp_pending")
@@ -313,20 +316,57 @@ Deno.serve(async (req: Request): Promise<Response> => {
         .eq("session_token", sessionToken)
         .maybeSingle();
 
-      if (pendErr || !pending) return json(corsHeaders, 400, { error: "Setup not started. Please scan QR first." });
+      if (pendErr || !pending) {
+        logger.warn("TOTP confirm failed: no pending setup", { tokenPreview, dbError: pendErr?.message });
+        return json(corsHeaders, 400, { error: "Setup not started. Please scan QR first.", debug: { tokenPreview } });
+      }
 
       const pendExp = new Date(pending.expires_at as string).getTime();
       if (!Number.isFinite(pendExp) || pendExp <= Date.now()) {
+        logger.warn("TOTP confirm failed: pending expired", { expiresAt: pending.expires_at });
         await supabase.from("envision_totp_pending").delete().eq("session_token", sessionToken);
         return json(corsHeaders, 400, { error: "Setup expired. Please start again." });
       }
 
-      if (String(pending.super_admin_id) !== superAdminId) return json(corsHeaders, 401, { error: "Unauthorized" });
+      if (String(pending.super_admin_id) !== superAdminId) {
+        logger.warn("TOTP confirm failed: super admin mismatch");
+        return json(corsHeaders, 401, { error: "Unauthorized" });
+      }
 
       const secretBytes = base32Decode(String(pending.totp_secret));
-      const ok = await totpValidate(secretBytes, token, 1, 30);
 
-      if (!ok) return json(corsHeaders, 401, { error: "Invalid code. Use the CURRENT 6-digit code." });
+      // Debug: Calculate what codes the server expects (for time sync diagnosis)
+      const serverTime = Date.now();
+      const serverCounter = Math.floor(serverTime / 1000 / 30);
+      const expectedCodes: string[] = [];
+      for (let w = -2; w <= 2; w++) {
+        expectedCodes.push(await hotp(secretBytes, serverCounter + w));
+      }
+
+      logger.info("TOTP validation attempt", {
+        codeReceived: token,
+        serverTimeUTC: new Date(serverTime).toISOString(),
+        serverCounter,
+        expectedCodesWindow: expectedCodes.join(", ")
+      });
+
+      // Increased window to 2 (±60 seconds) for clock drift tolerance
+      const ok = await totpValidate(secretBytes, token, 2, 30);
+
+      if (!ok) {
+        logger.warn("TOTP confirm failed: code mismatch", {
+          codeReceived: token,
+          serverTimeUTC: new Date().toISOString(),
+          hint: "Check if phone time is set to automatic"
+        });
+        return json(corsHeaders, 401, {
+          error: "Invalid code. Use the CURRENT 6-digit code.",
+          debug: {
+            serverTimeUTC: new Date().toISOString(),
+            hint: "Ensure your phone's time is set to 'Automatic'. Codes change every 30 seconds."
+          }
+        });
+      }
 
       // Persist: enable totp, store secret, and remove PIN so the system stops asking for PIN
       const { error: updErr } = await supabase
