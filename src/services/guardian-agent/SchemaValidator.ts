@@ -81,7 +81,7 @@ export class SchemaValidator {
     } else {
       return {
         valid: false,
-        errors: result.error.errors.map((err) => `${err.path.join('.')}: ${err.message}`),
+        errors: result.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`),
       };
     }
   }
@@ -163,7 +163,7 @@ export class SchemaValidator {
           z.object({
             action: z.string(),
             target: z.string(),
-            parameters: z.record(z.any()),
+            parameters: z.record(z.string(), z.any()),
             timeout: z.number(),
           })
         ),
@@ -171,7 +171,7 @@ export class SchemaValidator {
           z.object({
             action: z.string(),
             target: z.string(),
-            parameters: z.record(z.any()),
+            parameters: z.record(z.string(), z.any()),
           })
         ),
         estimatedTime: z.number(),
@@ -205,7 +205,7 @@ export class SchemaValidator {
       z.object({
         status: z.number(),
         data: z.any(),
-        headers: z.record(z.string()).optional(),
+        headers: z.record(z.string(), z.string()).optional(),
         error: z.string().optional(),
       })
     );
@@ -214,7 +214,7 @@ export class SchemaValidator {
     this.registry.register(
       'DatabaseQueryResult',
       z.object({
-        rows: z.array(z.record(z.any())),
+        rows: z.array(z.record(z.string(), z.any())),
         count: z.number(),
         error: z.string().optional(),
       })
