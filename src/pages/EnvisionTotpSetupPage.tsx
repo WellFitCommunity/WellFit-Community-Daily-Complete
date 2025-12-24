@@ -63,9 +63,9 @@ export const EnvisionTotpSetupPage: React.FC = () => {
       try {
         setError('');
 
-        if (!sessionToken) {
+        if (!sessionToken || sessionToken.trim().length < 10) {
           setLoading(false);
-          setError('Missing session. Please log in again.');
+          setError('Missing or invalid session token. Please log in again.');
           return;
         }
 

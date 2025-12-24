@@ -28,7 +28,7 @@ import { verifyPin, generateSecureToken, hashPassword } from "../_shared/crypto.
 // Rate limiting constants
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MINUTES = 15;
-const SESSION_TTL_MINUTES = 5; // Pending session valid for 5 minutes before PIN required
+const SESSION_TTL_MINUTES = 30; // Pending session valid for 30 minutes (allows time for TOTP setup)
 
 /** Prefer robust, side-effect-free env reads */
 const getEnv = (...keys: string[]): string => {
