@@ -73,10 +73,15 @@ export const PersonalizedGreeting: React.FC = () => {
     if (!user) return;
 
     try {
+      // Get client's timezone and current hour to ensure server uses correct local time
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const hour = new Date().getHours();
+
       const { data, error } = await supabase.functions.invoke('get-personalized-greeting', {
         headers: {
           Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
         },
+        body: { timezone, hour },
       });
 
       if (error) throw error;

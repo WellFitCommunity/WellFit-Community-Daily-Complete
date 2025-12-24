@@ -95,8 +95,50 @@ serve(async (req) => {
       )
     }
 
-    // Determine time of day
-    const hour = new Date().getHours()
+    // Determine time of day using client's timezone if provided
+    // Parse request body for timezone info (POST) or use query param (GET)
+    let clientTimezone: string | null = null;
+    let clientHour: number | null = null;
+
+    try {
+      if (req.method === 'POST') {
+        const body = await req.json().catch(() => ({}));
+        clientTimezone = body.timezone || null;
+        clientHour = typeof body.hour === 'number' ? body.hour : null;
+      } else {
+        const url = new URL(req.url);
+        clientTimezone = url.searchParams.get('timezone');
+        const hourParam = url.searchParams.get('hour');
+        clientHour = hourParam ? parseInt(hourParam, 10) : null;
+      }
+    } catch {
+      // Ignore parse errors, will fallback to UTC
+    }
+
+    // Determine hour to use for greeting
+    let hour: number;
+    if (clientHour !== null && clientHour >= 0 && clientHour <= 23) {
+      // Use explicitly provided hour from client
+      hour = clientHour;
+    } else if (clientTimezone) {
+      // Use timezone to calculate local hour
+      try {
+        const now = new Date();
+        const formatter = new Intl.DateTimeFormat('en-US', {
+          timeZone: clientTimezone,
+          hour: 'numeric',
+          hour12: false,
+        });
+        hour = parseInt(formatter.format(now), 10);
+      } catch {
+        // Invalid timezone, fallback to UTC
+        hour = new Date().getUTCHours();
+      }
+    } else {
+      // Fallback to UTC (not ideal, but safe)
+      hour = new Date().getUTCHours();
+    }
+
     let timeGreeting = 'Good morning'
     if (hour >= 12 && hour < 17) {
       timeGreeting = 'Good afternoon'

@@ -165,8 +165,9 @@ describe('authAwareFetch', () => {
       }));
     });
 
-    it('should trigger logout on "unauthorized" 401 errors', async () => {
-      const errorBody = { error: 'unauthorized access' };
+    it('should trigger logout on "invalid jwt" 401 errors', async () => {
+      // Only strong JWT signals trigger logout (not generic "unauthorized")
+      const errorBody = { error: 'invalid jwt: signature verification failed' };
       const mockResponse = new Response(JSON.stringify(errorBody), { status: 401 });
       mockFetch.mockResolvedValue(mockResponse);
 
@@ -178,8 +179,9 @@ describe('authAwareFetch', () => {
       }));
     });
 
-    it('should trigger logout on "Unauthorized" 401 errors (case-insensitive)', async () => {
-      // Edge functions return "Unauthorized" with capital U
+    it('should NOT trigger logout on generic "Unauthorized" from edge functions', async () => {
+      // Edge functions can return 401 for app-level authorization (not JWT issues)
+      // These should NOT trigger global logout - they're handled by the calling feature
       const errorBody = { error: 'Unauthorized' };
       const mockResponse = new Response(JSON.stringify(errorBody), { status: 401 });
       mockFetch.mockResolvedValue(mockResponse);
@@ -188,9 +190,11 @@ describe('authAwareFetch', () => {
       const authFetch = createAuthAwareFetch();
       await authFetch('https://xkybsjnvuohpqpbkikyn.supabase.co/functions/v1/verify-admin-pin');
 
-      expect(auditLogger.auth).toHaveBeenCalledWith('LOGOUT', true, expect.objectContaining({
-        reason: expect.stringContaining('jwt_invalid'),
+      // Should log as security event, NOT trigger auth logout
+      expect(auditLogger.security).toHaveBeenCalledWith('EDGE_FUNCTION_401', 'low', expect.objectContaining({
+        note: '401 from /functions/v1/ is not treated as global auth failure',
       }));
+      expect(auditLogger.auth).not.toHaveBeenCalled();
     });
   });
 
