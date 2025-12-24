@@ -94,7 +94,7 @@
 
 | # | Skill | Status | Model | Target Location | Description |
 |---|-------|--------|-------|-----------------|-------------|
-| 35 | Schedule Optimizer | 📋 | Haiku 4.5 | New edge function | Shift scheduling optimization |
+| 35 | Schedule Optimizer | ✅ | Haiku 4.5 | `src/services/ai/scheduleOptimizerService.ts` | Shift scheduling with coverage & fairness |
 | 36 | Audit Report Generator | 📋 | Haiku 4.5 | `SOC2AuditDashboard.tsx` | Compliance report generation |
 | 37 | Performance Summary Generator | 📋 | Haiku 4.5 | `StaffFinancialSavingsTracker.tsx` | Staff summaries |
 | 38 | Billing Optimization Engine | 📋 | Sonnet 4.5 | `BillingDashboard.tsx` | Advanced coding optimization |
@@ -190,14 +190,14 @@
 | Decision Support | 4 | 0 | 0 | 4 |
 | Patient Engagement | 2 | 0 | 1 | 3 |
 | Risk Prediction | 4 | 0 | 1 | 5 |
-| Admin Automation | 0 | 0 | 4 | 4 |
+| Admin Automation | 1 | 0 | 3 | 4 |
 | Analytics | 0 | 0 | 3 | 3 |
 | Voice/NLP | 0 | 0 | 3 | 3 |
 | Specialty | 0 | 0 | 5 | 5 |
 | Interoperability | 0 | 0 | 3 | 3 |
 | Security | 0 | 0 | 3 | 3 |
 | Conversational | 2 | 0 | 2 | 4 |
-| **TOTAL** | **34** | **0** | **25** | **59** |
+| **TOTAL** | **35** | **0** | **24** | **59** |
 
 ---
 
@@ -235,6 +235,7 @@
 
 | Date | Change |
 |------|--------|
+| 2025-12-24 | Completed Schedule Optimizer (#35) - Staff shift scheduling with coverage, fairness, and cost optimization |
 | 2025-12-24 | Completed Provider Assistant (#57) - Role-adaptive conversational AI for physicians, nurses, care coordinators, pharmacists, and admin staff |
 | 2025-12-24 | Completed Medication Adherence Predictor (#31) - Barrier identification, regimen complexity analysis, historical patterns, intervention recommendations |
 | 2025-12-24 | Completed Care Escalation Scorer (#32) - Confidence-level escalation with clinical indicators for shift handoff |
