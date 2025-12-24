@@ -22,6 +22,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabaseClient';
+import NurseQuestionManager from '../components/admin/NurseQuestionManager';
+import RiskAssessmentManager from '../components/admin/RiskAssessmentManager';
 
 interface CHWStats {
   totalVisitsToday: number;
@@ -371,6 +373,28 @@ const CHWDashboardPage: React.FC = () => {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* AI Patient Questions Manager - CHWs respond to member questions */}
+        <div className="bg-slate-800 rounded-xl border border-slate-700 p-6">
+          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <span>🤖</span> AI Patient Questions Manager
+          </h2>
+          <p className="text-slate-400 text-sm mb-4">
+            Respond to community member questions with AI-assisted suggestions
+          </p>
+          <NurseQuestionManager />
+        </div>
+
+        {/* Risk Assessment Manager */}
+        <div className="bg-slate-800 rounded-xl border border-slate-700 p-6">
+          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <span>📋</span> Risk Assessment
+          </h2>
+          <p className="text-slate-400 text-sm mb-4">
+            Complete and review patient risk assessments for care planning
+          </p>
+          <RiskAssessmentManager />
         </div>
 
         {/* Connection to WellFit */}
