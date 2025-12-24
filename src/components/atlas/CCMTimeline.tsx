@@ -216,21 +216,7 @@ export const CCMTimeline: React.FC = () => {
         </div>
       )}
 
-      {/* Revenue Breakdown */}
-      {revenue.breakdown.length > 0 && (
-        <div className="mt-6 p-4 bg-gray-50 rounded-xl">
-          <h3 className="font-semibold text-gray-900 mb-3">Revenue Breakdown</h3>
-          <div className="grid grid-cols-2 gap-4">
-            {revenue.breakdown.map((item) => (
-              <div key={item.code} className="p-3 bg-white rounded-lg shadow">
-                <div className="text-sm text-gray-600">{item.code}</div>
-                <div className="text-xl font-bold text-purple-600">${item.revenue.toFixed(2)}</div>
-                <div className="text-xs text-gray-500">{item.count} patients</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Revenue Breakdown removed - Finance department only; see Admin > Financial Reports */}
     </div>
   );
 };

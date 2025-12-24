@@ -79,11 +79,6 @@ const TaskTemplateSelector: React.FC<Props> = ({ role, templates, onSelect }) =>
                       {template.estimatedTokens && (
                         <span>~{template.estimatedTokens} tokens</span>
                       )}
-                      {template.preferredModel && (
-                        <span className="text-purple-600">
-                          Model: {template.preferredModel}
-                        </span>
-                      )}
                     </div>
                   </div>
 

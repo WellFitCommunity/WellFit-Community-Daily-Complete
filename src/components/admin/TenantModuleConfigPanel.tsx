@@ -135,10 +135,15 @@ export function TenantModuleConfigPanel() {
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
     core: true,
     clinical: true,
+    dental: false,
     communication: true,
     integration: false,
     advanced: false,
     nurseos: false,
+    population_health: false,
+    workflow: true,
+    emergency: false,
+    public_safety: false,
     billing: false,
     security: true,
   });
@@ -247,10 +252,15 @@ export function TenantModuleConfigPanel() {
   const categoryLabels: Record<string, string> = {
     core: 'Core Platform',
     clinical: 'Clinical Modules',
+    dental: 'Dental Suite',
     communication: 'Communication',
     integration: 'Integrations',
     advanced: 'Advanced Features',
     nurseos: 'NurseOS',
+    population_health: 'Population Health',
+    workflow: 'Workflow',
+    emergency: 'Emergency Services',
+    public_safety: 'Public Safety',
     billing: 'Billing & Revenue',
     security: 'Security & Compliance',
   };
