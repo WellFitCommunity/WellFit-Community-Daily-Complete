@@ -118,15 +118,15 @@ export const DocumentationDebtVisualizer: React.FC<DocumentationDebtVisualizerPr
   if (loading) {
     return (
       <div className="bg-white rounded-xl p-4 border border-gray-200 animate-pulse">
-        <div className="h-6 bg-gray-200 rounded w-32 mb-4"></div>
-        <div className="h-20 bg-gray-200 rounded"></div>
+        <div className="h-6 bg-gray-200 rounded-sm w-32 mb-4"></div>
+        <div className="h-20 bg-gray-200 rounded-sm"></div>
       </div>
     );
   }
 
   if (!stats || stats.totalScribeSessions === 0) {
     return (
-      <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-4 border border-purple-200">
+      <div className="bg-linear-to-br from-purple-50 to-indigo-50 rounded-xl p-4 border border-purple-200">
         <div className="flex items-center gap-3">
           <span className="text-3xl">📊</span>
           <div>
@@ -146,7 +146,7 @@ export const DocumentationDebtVisualizer: React.FC<DocumentationDebtVisualizerPr
   );
 
   return (
-    <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-4 border border-purple-200">
+    <div className="bg-linear-to-br from-purple-50 to-indigo-50 rounded-xl p-4 border border-purple-200">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <span className="text-2xl">📊</span>
@@ -156,7 +156,7 @@ export const DocumentationDebtVisualizer: React.FC<DocumentationDebtVisualizerPr
           <select
             value={timeframe}
             onChange={(e) => setTimeframe(e.target.value as 'week' | 'month' | 'all')}
-            className="text-xs border border-gray-300 rounded px-2 py-1"
+            className="text-xs border border-gray-300 rounded-sm px-2 py-1"
           >
             <option value="week">This Week</option>
             <option value="month">This Month</option>
@@ -183,7 +183,7 @@ export const DocumentationDebtVisualizer: React.FC<DocumentationDebtVisualizerPr
           </div>
           <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-green-400 to-emerald-500 rounded-full transition-all duration-500"
+              className="h-full bg-linear-to-r from-green-400 to-emerald-500 rounded-full transition-all duration-500"
               style={{ width: `${(stats.weeklyAvgWithRileyMinutes / stats.weeklyAvgBeforeMinutes) * 100}%` }}
             ></div>
           </div>

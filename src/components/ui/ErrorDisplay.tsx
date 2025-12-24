@@ -41,7 +41,7 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
       aria-live="assertive"
     >
       <div className="flex items-start gap-3">
-        <div className="text-2xl flex-shrink-0" aria-hidden="true">
+        <div className="text-2xl shrink-0" aria-hidden="true">
           {iconMap[details.severity]}
         </div>
         <div className="flex-1">
@@ -65,12 +65,12 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
             <div className="mt-4">
               <button
                 onClick={() => setShowDetails(!showDetails)}
-                className="text-sm font-medium underline hover:no-underline focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-current rounded"
+                className="text-sm font-medium underline hover:no-underline focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-current rounded-sm"
               >
                 {showDetails ? 'Hide' : 'Show'} technical details
               </button>
               {showDetails && (
-                <pre className="mt-2 p-3 bg-white bg-opacity-50 rounded text-xs overflow-auto max-h-40">
+                <pre className="mt-2 p-3 bg-white bg-opacity-50 rounded-sm text-xs overflow-auto max-h-40">
                   {details.technicalDetails}
                 </pre>
               )}
@@ -87,7 +87,7 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
                     : details.severity === 'warning'
                     ? 'bg-yellow-600 text-white hover:bg-yellow-700'
                     : 'bg-blue-600 text-white hover:bg-blue-700'
-                } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-current`}
+                } focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-current`}
               >
                 Try Again
               </button>
@@ -95,7 +95,7 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
             {onDismiss && (
               <button
                 onClick={onDismiss}
-                className="px-4 py-2 border border-current rounded-md font-medium hover:bg-white hover:bg-opacity-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-current"
+                className="px-4 py-2 border border-current rounded-md font-medium hover:bg-white hover:bg-opacity-50 transition-colors focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-current"
               >
                 Dismiss
               </button>

@@ -157,7 +157,7 @@ const DemoPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-900 text-white">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#00857a] to-[#006d64] py-8 px-6">
+      <div className="bg-linear-to-r from-[#00857a] to-[#006d64] py-8 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between">
             <div>
@@ -190,7 +190,7 @@ const DemoPage: React.FC = () => {
                     <select
                       value={demoDuration}
                       onChange={(e) => setDemoDuration(Number(e.target.value))}
-                      className="bg-slate-700 text-white px-2 py-1 rounded text-sm"
+                      className="bg-slate-700 text-white px-2 py-1 rounded-sm text-sm"
                     >
                       <option value={15}>15 min</option>
                       <option value={30}>30 min</option>

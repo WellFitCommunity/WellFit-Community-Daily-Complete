@@ -586,7 +586,7 @@ const AdminTransferLogs: React.FC<AdminTransferLogsProps> = ({
                             <span className="truncate max-w-[120px]" title={packet.sending_facility}>
                               {packet.sending_facility}
                             </span>
-                            <ArrowRight className="w-3 h-3 text-slate-500 flex-shrink-0" />
+                            <ArrowRight className="w-3 h-3 text-slate-500 shrink-0" />
                             <span className="truncate max-w-[120px]" title={packet.receiving_facility}>
                               {packet.receiving_facility}
                             </span>

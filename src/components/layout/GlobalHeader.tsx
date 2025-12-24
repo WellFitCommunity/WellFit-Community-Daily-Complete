@@ -142,10 +142,10 @@ export default function GlobalHeader() {
   }, [location.pathname]);
 
   return (
-    <header className="shadow-md relative z-30 backdrop-blur" style={{ background: headerBackground, color: textHex }}>
+    <header className="shadow-md relative z-30 backdrop-blur-sm" style={{ background: headerBackground, color: textHex }}>
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 bg-white text-[#003865] px-3 py-1 rounded"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 bg-white text-[#003865] px-3 py-1 rounded-sm"
       >
         Skip to content
       </a>
@@ -179,7 +179,7 @@ export default function GlobalHeader() {
                   setGamesOpen(false);
                   setMoreOpen(false);
                 }}
-                className={`flex items-center px-3 py-2 rounded-lg ${textColor} hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white font-medium`}
+                className={`flex items-center px-3 py-2 rounded-lg ${textColor} hover:bg-white/10 focus:outline-hidden focus:ring-2 focus:ring-white font-medium`}
               >
                 <Heart className="w-4 h-4 mr-1.5" />
                 My Health
@@ -244,7 +244,7 @@ export default function GlobalHeader() {
                   setHealthOpen(false);
                   setMoreOpen(false);
                 }}
-                className={`flex items-center px-3 py-2 rounded-lg ${textColor} hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white font-medium`}
+                className={`flex items-center px-3 py-2 rounded-lg ${textColor} hover:bg-white/10 focus:outline-hidden focus:ring-2 focus:ring-white font-medium`}
               >
                 <Gamepad2 className="w-4 h-4 mr-1.5" />
                 Games
@@ -291,7 +291,7 @@ export default function GlobalHeader() {
                   setHealthOpen(false);
                   setGamesOpen(false);
                 }}
-                className={`flex items-center px-3 py-2 rounded-lg ${textColor} hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white font-medium`}
+                className={`flex items-center px-3 py-2 rounded-lg ${textColor} hover:bg-white/10 focus:outline-hidden focus:ring-2 focus:ring-white font-medium`}
               >
                 {t.nav.more}
                 <ChevronDown className={`w-4 h-4 ml-1 transition-transform ${moreOpen ? 'rotate-180' : ''}`} />
@@ -372,7 +372,7 @@ export default function GlobalHeader() {
           {/* Mobile Menu Toggle */}
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className={`md:hidden ${textColor} focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white p-2`}
+            className={`md:hidden ${textColor} focus:outline-hidden focus:ring-2 focus:ring-inset focus:ring-white p-2`}
             aria-label="Toggle menu"
             aria-expanded={menuOpen}
           >

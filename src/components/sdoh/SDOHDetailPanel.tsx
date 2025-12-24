@@ -195,7 +195,7 @@ export const SDOHDetailPanel: React.FC<SDOHDetailPanelProps> = ({
                     <span className="text-xs text-gray-500">ICD-10 Z-Codes:</span>
                     <div className="flex flex-wrap gap-2 mt-1">
                       {factor.zCodes.map(code => (
-                        <span key={code} className="px-2 py-1 bg-white border border-gray-200 rounded text-xs font-mono">
+                        <span key={code} className="px-2 py-1 bg-white border border-gray-200 rounded-sm text-xs font-mono">
                           {code}
                         </span>
                       ))}
@@ -268,7 +268,7 @@ export const SDOHDetailPanel: React.FC<SDOHDetailPanelProps> = ({
                           <p className="text-xs text-gray-600 mt-1">{resource.description}</p>
                         )}
                       </div>
-                      <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs">
+                      <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded-sm text-xs">
                         {resource.type}
                       </span>
                     </div>

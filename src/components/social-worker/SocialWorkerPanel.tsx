@@ -60,7 +60,7 @@ const SocialWorkerPanel: React.FC = () => {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
           {/* Hero Header */}
-          <div className="bg-gradient-to-r from-pink-600 to-purple-600 rounded-2xl shadow-2xl p-8 text-white">
+          <div className="bg-linear-to-r from-pink-600 to-purple-600 rounded-2xl shadow-2xl p-8 text-white">
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-4xl font-bold mb-2 flex items-center gap-3">
@@ -107,11 +107,11 @@ const SocialWorkerPanel: React.FC = () => {
                 patient populations. Collaborate with medical and nursing teams.
               </p>
               <div className="mt-2 flex gap-2 flex-wrap">
-                <span className="text-xs bg-pink-600 text-white px-2 py-1 rounded">Psychosocial Assessment</span>
-                <span className="text-xs bg-pink-600 text-white px-2 py-1 rounded">Crisis Intervention</span>
-                <span className="text-xs bg-pink-600 text-white px-2 py-1 rounded">Safety Plans</span>
-                <span className="text-xs bg-pink-600 text-white px-2 py-1 rounded">Benefits Applications</span>
-                <span className="text-xs bg-pink-600 text-white px-2 py-1 rounded">Translation (50+ Languages)</span>
+                <span className="text-xs bg-pink-600 text-white px-2 py-1 rounded-sm">Psychosocial Assessment</span>
+                <span className="text-xs bg-pink-600 text-white px-2 py-1 rounded-sm">Crisis Intervention</span>
+                <span className="text-xs bg-pink-600 text-white px-2 py-1 rounded-sm">Safety Plans</span>
+                <span className="text-xs bg-pink-600 text-white px-2 py-1 rounded-sm">Benefits Applications</span>
+                <span className="text-xs bg-pink-600 text-white px-2 py-1 rounded-sm">Translation (50+ Languages)</span>
               </div>
             </div>
             <ClaudeCareAssistantPanel

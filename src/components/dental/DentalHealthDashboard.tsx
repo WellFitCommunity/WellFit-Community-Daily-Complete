@@ -96,7 +96,7 @@ export const DentalHealthDashboard: React.FC = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center p-6">
+      <div className="min-h-screen bg-linear-to-br from-slate-900 to-slate-800 flex items-center justify-center p-6">
         <EAAlert variant="critical">
           <AlertCircle className="h-5 w-5" />
           <div>
@@ -114,7 +114,7 @@ export const DentalHealthDashboard: React.FC = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center p-6">
+      <div className="min-h-screen bg-linear-to-br from-slate-900 to-slate-800 flex items-center justify-center p-6">
         <EACard className="max-w-md">
           <EACardContent className="p-6 text-center">
             <div className="w-16 h-16 mx-auto bg-red-500/20 rounded-full flex items-center justify-center mb-4">
@@ -476,7 +476,7 @@ const DailyTrackingForm: React.FC<{ onSave: () => void }> = React.memo(({ onSave
                   type="checkbox"
                   checked={formData.tooth_pain || false}
                   onChange={e => handleCheckboxChange('tooth_pain', e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-[#00857a] focus:ring-[#00857a]"
+                  className="w-4 h-4 rounded-sm border-slate-600 bg-slate-700 text-[#00857a] focus:ring-[#00857a]"
                 />
                 <span className="text-sm text-white">Tooth pain</span>
               </label>
@@ -485,7 +485,7 @@ const DailyTrackingForm: React.FC<{ onSave: () => void }> = React.memo(({ onSave
                   type="checkbox"
                   checked={formData.gum_bleeding || false}
                   onChange={e => handleCheckboxChange('gum_bleeding', e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-[#00857a] focus:ring-[#00857a]"
+                  className="w-4 h-4 rounded-sm border-slate-600 bg-slate-700 text-[#00857a] focus:ring-[#00857a]"
                 />
                 <span className="text-sm text-white">Bleeding gums</span>
               </label>
@@ -494,7 +494,7 @@ const DailyTrackingForm: React.FC<{ onSave: () => void }> = React.memo(({ onSave
                   type="checkbox"
                   checked={formData.dry_mouth || false}
                   onChange={e => handleCheckboxChange('dry_mouth', e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-[#00857a] focus:ring-[#00857a]"
+                  className="w-4 h-4 rounded-sm border-slate-600 bg-slate-700 text-[#00857a] focus:ring-[#00857a]"
                 />
                 <span className="text-sm text-white">Dry mouth</span>
               </label>
@@ -529,7 +529,7 @@ const DailyTrackingForm: React.FC<{ onSave: () => void }> = React.memo(({ onSave
                   type="checkbox"
                   checked={formData.brushed_today || false}
                   onChange={e => handleCheckboxChange('brushed_today', e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-[#00857a] focus:ring-[#00857a]"
+                  className="w-4 h-4 rounded-sm border-slate-600 bg-slate-700 text-[#00857a] focus:ring-[#00857a]"
                 />
                 <span className="text-sm text-white">Brushed teeth</span>
               </label>
@@ -538,7 +538,7 @@ const DailyTrackingForm: React.FC<{ onSave: () => void }> = React.memo(({ onSave
                   type="checkbox"
                   checked={formData.flossed_today || false}
                   onChange={e => handleCheckboxChange('flossed_today', e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-[#00857a] focus:ring-[#00857a]"
+                  className="w-4 h-4 rounded-sm border-slate-600 bg-slate-700 text-[#00857a] focus:ring-[#00857a]"
                 />
                 <span className="text-sm text-white">Flossed</span>
               </label>
@@ -547,7 +547,7 @@ const DailyTrackingForm: React.FC<{ onSave: () => void }> = React.memo(({ onSave
                   type="checkbox"
                   checked={formData.used_mouthwash || false}
                   onChange={e => handleCheckboxChange('used_mouthwash', e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-[#00857a] focus:ring-[#00857a]"
+                  className="w-4 h-4 rounded-sm border-slate-600 bg-slate-700 text-[#00857a] focus:ring-[#00857a]"
                 />
                 <span className="text-sm text-white">Used mouthwash</span>
               </label>
@@ -619,30 +619,30 @@ const TrackingHistory: React.FC<{ reports: PatientDentalHealthTracking[] }> = Re
             </div>
             <div className="space-y-2">
               {report.tooth_pain && (
-                <div className="flex items-center gap-2 text-sm p-2 bg-red-500/10 rounded">
+                <div className="flex items-center gap-2 text-sm p-2 bg-red-500/10 rounded-sm">
                   <AlertCircle className="h-4 w-4 text-red-400" />
                   <span className="text-red-300">Tooth pain (severity: {report.tooth_pain_severity}/10)</span>
                 </div>
               )}
               {report.gum_bleeding && (
-                <div className="flex items-center gap-2 text-sm p-2 bg-amber-500/10 rounded">
+                <div className="flex items-center gap-2 text-sm p-2 bg-amber-500/10 rounded-sm">
                   <AlertCircle className="h-4 w-4 text-amber-400" />
                   <span className="text-amber-300">Bleeding gums</span>
                 </div>
               )}
               <div className="flex gap-3 mt-3 pt-3 border-t border-slate-700">
-                <span className={`text-xs px-2 py-1 rounded ${report.brushed_today ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-500'}`}>
+                <span className={`text-xs px-2 py-1 rounded-sm ${report.brushed_today ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-500'}`}>
                   {report.brushed_today ? '✓' : '✗'} Brushed
                 </span>
-                <span className={`text-xs px-2 py-1 rounded ${report.flossed_today ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-500'}`}>
+                <span className={`text-xs px-2 py-1 rounded-sm ${report.flossed_today ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-500'}`}>
                   {report.flossed_today ? '✓' : '✗'} Flossed
                 </span>
-                <span className={`text-xs px-2 py-1 rounded ${report.used_mouthwash ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-500'}`}>
+                <span className={`text-xs px-2 py-1 rounded-sm ${report.used_mouthwash ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-500'}`}>
                   {report.used_mouthwash ? '✓' : '✗'} Mouthwash
                 </span>
               </div>
               {report.additional_concerns && (
-                <p className="text-sm italic text-slate-400 mt-2 p-2 bg-slate-800/50 rounded">
+                <p className="text-sm italic text-slate-400 mt-2 p-2 bg-slate-800/50 rounded-sm">
                   "{report.additional_concerns}"
                 </p>
               )}
@@ -758,7 +758,7 @@ const EducationalContent: React.FC = React.memo(() => {
  */
 const DashboardSkeleton: React.FC = React.memo(() => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-8">
+    <div className="min-h-screen bg-linear-to-br from-slate-900 to-slate-800 p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="h-12 w-64 bg-slate-800 rounded-lg animate-pulse" />
         <div className="grid gap-6 md:grid-cols-3">

@@ -353,7 +353,7 @@ export const GlobalSearchBar: React.FC = () => {
       >
         <Search className="w-4 h-4" />
         <span className="hidden sm:inline">Search...</span>
-        <kbd className="hidden md:flex items-center gap-0.5 px-1.5 py-0.5 text-xs bg-slate-700 rounded">
+        <kbd className="hidden md:flex items-center gap-0.5 px-1.5 py-0.5 text-xs bg-slate-700 rounded-sm">
           <Command className="w-3 h-3" />
           <span>/</span>
         </kbd>
@@ -364,7 +364,7 @@ export const GlobalSearchBar: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh]">
           {/* Backdrop */}
           <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/60 backdrop-blur-xs"
             onClick={handleClose}
           />
 
@@ -379,7 +379,7 @@ export const GlobalSearchBar: React.FC = () => {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={`Try: "${SEARCH_EXAMPLES[exampleIndex]}"`}
-                className="flex-1 bg-transparent text-white placeholder-slate-500 outline-none text-lg"
+                className="flex-1 bg-transparent text-white placeholder-slate-500 outline-hidden text-lg"
                 autoComplete="off"
                 spellCheck={false}
               />
@@ -397,7 +397,7 @@ export const GlobalSearchBar: React.FC = () => {
             {/* Parsed Entity Indicator */}
             {parsedEntity && (
               <div className="px-4 py-2 bg-slate-900/50 border-b border-slate-700 flex items-center gap-2 text-sm">
-                <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded ${ENTITY_COLORS[parsedEntity.type]}`}>
+                <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded-sm ${ENTITY_COLORS[parsedEntity.type]}`}>
                   {ENTITY_ICONS[parsedEntity.type]}
                   <span>{ENTITY_LABELS[parsedEntity.type]}</span>
                 </span>
@@ -470,11 +470,11 @@ export const GlobalSearchBar: React.FC = () => {
                           <span className="text-white font-medium truncate">
                             {result.primaryText}
                           </span>
-                          <span className={`text-xs px-1.5 py-0.5 rounded ${ENTITY_COLORS[result.type]}`}>
+                          <span className={`text-xs px-1.5 py-0.5 rounded-sm ${ENTITY_COLORS[result.type]}`}>
                             {ENTITY_LABELS[result.type]}
                           </span>
                           {result.matchScore >= 90 && (
-                            <span className="px-1.5 py-0.5 bg-green-500/20 text-green-400 rounded text-xs">
+                            <span className="px-1.5 py-0.5 bg-green-500/20 text-green-400 rounded-sm text-xs">
                               Best
                             </span>
                           )}
@@ -533,15 +533,15 @@ export const GlobalSearchBar: React.FC = () => {
             <div className="px-4 py-2 bg-slate-900/50 border-t border-slate-700 flex items-center justify-between text-xs text-slate-500">
               <div className="flex items-center gap-4">
                 <span className="flex items-center gap-1">
-                  <kbd className="px-1.5 py-0.5 bg-slate-700 rounded">↑↓</kbd>
+                  <kbd className="px-1.5 py-0.5 bg-slate-700 rounded-sm">↑↓</kbd>
                   Navigate
                 </span>
                 <span className="flex items-center gap-1">
-                  <kbd className="px-1.5 py-0.5 bg-slate-700 rounded">Enter</kbd>
+                  <kbd className="px-1.5 py-0.5 bg-slate-700 rounded-sm">Enter</kbd>
                   Select
                 </span>
                 <span className="flex items-center gap-1">
-                  <kbd className="px-1.5 py-0.5 bg-slate-700 rounded">Esc</kbd>
+                  <kbd className="px-1.5 py-0.5 bg-slate-700 rounded-sm">Esc</kbd>
                   Close
                 </span>
               </div>

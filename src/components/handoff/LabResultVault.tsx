@@ -112,7 +112,7 @@ const LabResultVault: React.FC<LabResultVaultProps> = ({ packet }) => {
                 {labTrends.map((trend, idx) => (
                   <div
                     key={idx}
-                    className="flex items-start gap-3 p-3 bg-orange-50 rounded border border-orange-200"
+                    className="flex items-start gap-3 p-3 bg-orange-50 rounded-sm border border-orange-200"
                   >
                     <span className="text-2xl">{getTrendArrow(trend.trend_direction)}</span>
                     <div className="flex-1">
@@ -128,7 +128,7 @@ const LabResultVault: React.FC<LabResultVaultProps> = ({ packet }) => {
                         ))}
                       </p>
                       {trend.clinical_significance && (
-                        <div className="mt-2 p-2 bg-red-50 border border-red-300 rounded">
+                        <div className="mt-2 p-2 bg-red-50 border border-red-300 rounded-sm">
                           <p className="text-xs text-red-900">{trend.clinical_significance}</p>
                         </div>
                       )}
@@ -146,7 +146,7 @@ const LabResultVault: React.FC<LabResultVaultProps> = ({ packet }) => {
                 <h4 className="font-semibold text-gray-900">
                   Extracted Lab Values ({parsedLabs.length})
                 </h4>
-                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-sm">
                   AI-Extracted • No Manual Entry Required
                 </span>
               </div>
@@ -178,11 +178,11 @@ const LabResultVault: React.FC<LabResultVaultProps> = ({ packet }) => {
                         <td className="p-2 text-gray-600 text-xs">{lab.reference_range || '-'}</td>
                         <td className="p-2">
                           {lab.abnormal ? (
-                            <span className="px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded">
+                            <span className="px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-sm">
                               ABNORMAL
                             </span>
                           ) : (
-                            <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded">
+                            <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-sm">
                               Normal
                             </span>
                           )}

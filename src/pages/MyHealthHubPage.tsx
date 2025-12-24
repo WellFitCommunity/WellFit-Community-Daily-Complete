@@ -101,7 +101,7 @@ const MyHealthHubPage: React.FC = () => {
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4 drop-shadow-lg">
             My Health Records
           </h1>
-          <p className="text-xl sm:text-2xl text-white/90 max-w-2xl mx-auto drop-shadow">
+          <p className="text-xl sm:text-2xl text-white/90 max-w-2xl mx-auto drop-shadow-sm">
             Access your complete health information in one place
           </p>
         </div>
@@ -198,25 +198,25 @@ const MyHealthHubPage: React.FC = () => {
         </div>
 
         {/* Quick Tips Section */}
-        <div className="mt-12 bg-white/95 backdrop-blur rounded-2xl shadow-xl p-6 sm:p-8" role="complementary" aria-label="Health tips">
+        <div className="mt-12 bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 sm:p-8" role="complementary" aria-label="Health tips">
           <h3 className="text-2xl sm:text-3xl font-bold mb-4" style={{ color: branding.primaryColor }}>
             <span aria-hidden="true">💡</span> Quick Tips
           </h3>
           <ul className="space-y-3 text-lg sm:text-xl text-gray-700">
             <li className="flex items-start gap-3">
-              <span className="text-2xl flex-shrink-0" aria-hidden="true">✅</span>
+              <span className="text-2xl shrink-0" aria-hidden="true">✅</span>
               <span>Keep your health records up to date for better care coordination</span>
             </li>
             <li className="flex items-start gap-3">
-              <span className="text-2xl flex-shrink-0" aria-hidden="true">📱</span>
+              <span className="text-2xl shrink-0" aria-hidden="true">📱</span>
               <span>Share your vaccine records with your healthcare providers</span>
             </li>
             <li className="flex items-start gap-3">
-              <span className="text-2xl flex-shrink-0" aria-hidden="true">🔔</span>
+              <span className="text-2xl shrink-0" aria-hidden="true">🔔</span>
               <span>Check for vaccine care gaps to stay protected</span>
             </li>
             <li className="flex items-start gap-3">
-              <span className="text-2xl flex-shrink-0" aria-hidden="true">💪</span>
+              <span className="text-2xl shrink-0" aria-hidden="true">💪</span>
               <span>Track your vitals regularly to monitor your health trends</span>
             </li>
           </ul>

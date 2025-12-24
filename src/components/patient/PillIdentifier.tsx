@@ -185,7 +185,7 @@ export function PillIdentifier({
       {/* Safety Notice */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
         <div className="flex items-start gap-3">
-          <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+          <Info className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
           <div className="text-sm text-blue-800">
             <p className="font-semibold mb-1">Safety Tips:</p>
             <ul className="list-disc list-inside space-y-1">
@@ -215,7 +215,7 @@ export function PillIdentifier({
           />
           <label
             htmlFor="pill-image"
-            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl cursor-pointer inline-flex items-center gap-2 hover:shadow-lg transition-all transform hover:scale-105"
+            className="bg-linear-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl cursor-pointer inline-flex items-center gap-2 hover:shadow-lg transition-all transform hover:scale-105"
           >
             <Camera className="w-5 h-5" />
             Take Photo
@@ -252,7 +252,7 @@ export function PillIdentifier({
               </h3>
               <div className="w-full max-w-md mx-auto bg-gray-200 rounded-full h-3 overflow-hidden mb-2">
                 <div
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 h-full transition-all duration-300"
+                  className="bg-linear-to-r from-blue-600 to-purple-600 h-full transition-all duration-300"
                   style={{ width: `${uploadProgress}%` }}
                 />
               </div>
@@ -263,7 +263,7 @@ export function PillIdentifier({
               {mode === 'identify' ? (
                 <button
                   onClick={handleIdentifyPill}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2 text-lg font-semibold"
+                  className="w-full bg-linear-to-r from-blue-600 to-purple-600 text-white py-4 rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2 text-lg font-semibold"
                 >
                   <Search className="w-6 h-6" />
                   Identify This Pill
@@ -273,7 +273,7 @@ export function PillIdentifier({
                   {selectedMedication ? (
                     <button
                       onClick={() => handleVerifyPill(selectedMedication.id)}
-                      className="w-full bg-gradient-to-r from-green-600 to-blue-600 text-white py-4 rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2 text-lg font-semibold"
+                      className="w-full bg-linear-to-r from-green-600 to-blue-600 text-white py-4 rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2 text-lg font-semibold"
                     >
                       <Shield className="w-6 h-6" />
                       Verify Against: {selectedMedication.medication_name}
@@ -412,7 +412,7 @@ function IdentificationResults({
         </h4>
         <p className="text-gray-700">{formatPillDescription(identification.characteristics)}</p>
         {identification.characteristics.imprint && (
-          <div className="mt-3 p-3 bg-white rounded border border-gray-200">
+          <div className="mt-3 p-3 bg-white rounded-sm border border-gray-200">
             <span className="text-sm text-gray-600">Imprint Code:</span>
             <p className="font-mono font-bold text-lg text-gray-900">
               {identification.characteristics.imprint}
@@ -427,7 +427,7 @@ function IdentificationResults({
           <h4 className="font-semibold text-blue-900 mb-3">Other Possible Matches:</h4>
           <div className="space-y-2">
             {identification.alternativeMatches.map((match, idx) => (
-              <div key={idx} className="bg-white rounded p-3 border border-blue-100">
+              <div key={idx} className="bg-white rounded-sm p-3 border border-blue-100">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium text-gray-900">{match.medicationName}</p>
@@ -449,7 +449,7 @@ function IdentificationResults({
       {identification.warnings && identification.warnings.length > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <div className="flex items-start gap-2">
-            <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+            <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 shrink-0" />
             <div className="space-y-1">
               {identification.warnings.map((warning, idx) => (
                 <p key={idx} className="text-sm text-red-800">{warning}</p>
@@ -499,9 +499,9 @@ function ComparisonResults({
       <div className={`bg-${matchColor}-50 border-2 border-${matchColor}-300 rounded-xl p-6`}>
         <div className="flex items-start gap-4">
           {comparison.match ? (
-            <CheckCircle className={`w-12 h-12 text-${matchColor}-600 flex-shrink-0`} />
+            <CheckCircle className={`w-12 h-12 text-${matchColor}-600 shrink-0`} />
           ) : (
-            <XCircle className={`w-12 h-12 text-${matchColor}-600 flex-shrink-0`} />
+            <XCircle className={`w-12 h-12 text-${matchColor}-600 shrink-0`} />
           )}
           <div className="flex-1">
             <h3 className={`text-2xl font-bold text-${matchColor}-900 mb-2`}>
@@ -539,7 +539,7 @@ function ComparisonResults({
             {comparison.discrepancies.map((disc, idx) => (
               <div
                 key={idx}
-                className={`border-l-4 border-${getSeverityColor(disc.severity)}-500 bg-${getSeverityColor(disc.severity)}-50 p-4 rounded`}
+                className={`border-l-4 border-${getSeverityColor(disc.severity)}-500 bg-${getSeverityColor(disc.severity)}-50 p-4 rounded-sm`}
               >
                 <p className="font-semibold text-gray-900 mb-1">
                   {disc.field.replace(/([A-Z])/g, ' $1').trim()}
@@ -564,7 +564,7 @@ function ComparisonResults({
       {comparison.requiresPharmacistReview && (
         <div className="bg-red-50 border-2 border-red-300 rounded-lg p-6">
           <div className="flex items-start gap-3">
-            <Shield className="w-8 h-8 text-red-600 flex-shrink-0" />
+            <Shield className="w-8 h-8 text-red-600 shrink-0" />
             <div>
               <p className="font-bold text-red-900 text-lg mb-2">
                 Pharmacist Review Required

@@ -147,7 +147,7 @@ export const LearningMilestone: React.FC<LearningMilestoneProps> = ({ onAcknowle
           <div
             className={`
               bg-white rounded-2xl shadow-2xl border-2 border-transparent
-              bg-gradient-to-br ${getMilestoneGradient(currentMilestone.milestone_type)}
+              bg-linear-to-br ${getMilestoneGradient(currentMilestone.milestone_type)}
               p-1 max-w-md
             `}
           >
@@ -156,7 +156,7 @@ export const LearningMilestone: React.FC<LearningMilestoneProps> = ({ onAcknowle
                 <motion.div
                   animate={{ scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] }}
                   transition={{ duration: 0.6, repeat: Infinity, repeatDelay: 2 }}
-                  className="text-5xl flex-shrink-0"
+                  className="text-5xl shrink-0"
                 >
                   {currentMilestone.badge_icon}
                 </motion.div>
@@ -192,7 +192,7 @@ export const LearningMilestone: React.FC<LearningMilestoneProps> = ({ onAcknowle
         >
           <div
             className={`
-              bg-gradient-to-br ${getMilestoneGradient(currentMilestone.milestone_type)}
+              bg-linear-to-br ${getMilestoneGradient(currentMilestone.milestone_type)}
               rounded-full p-6 shadow-2xl border-4 border-white
               cursor-pointer hover:scale-110 transition-transform
             `}
@@ -230,7 +230,7 @@ export const LearningMilestone: React.FC<LearningMilestoneProps> = ({ onAcknowle
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs"
           onClick={() => acknowledgeMilestone(currentMilestone.id)}
         >
           <motion.div
@@ -245,7 +245,7 @@ export const LearningMilestone: React.FC<LearningMilestoneProps> = ({ onAcknowle
               className={`
                 bg-white rounded-3xl shadow-2xl overflow-hidden
                 border-4 border-transparent
-                bg-gradient-to-br ${getMilestoneGradient(currentMilestone.milestone_type)}
+                bg-linear-to-br ${getMilestoneGradient(currentMilestone.milestone_type)}
                 p-1
               `}
             >
@@ -260,7 +260,7 @@ export const LearningMilestone: React.FC<LearningMilestoneProps> = ({ onAcknowle
                   <div
                     className={`
                       w-32 h-32 rounded-full
-                      bg-gradient-to-br ${getMilestoneGradient(currentMilestone.milestone_type)}
+                      bg-linear-to-br ${getMilestoneGradient(currentMilestone.milestone_type)}
                       flex items-center justify-center
                       shadow-2xl
                     `}
@@ -289,7 +289,7 @@ export const LearningMilestone: React.FC<LearningMilestoneProps> = ({ onAcknowle
                   transition={{ delay: 0.3 }}
                   className={`
                     text-3xl font-bold text-center mb-4
-                    bg-gradient-to-r ${getMilestoneGradient(currentMilestone.milestone_type)}
+                    bg-linear-to-r ${getMilestoneGradient(currentMilestone.milestone_type)}
                     bg-clip-text text-transparent
                   `}
                 >
@@ -326,7 +326,7 @@ export const LearningMilestone: React.FC<LearningMilestoneProps> = ({ onAcknowle
                   onClick={() => acknowledgeMilestone(currentMilestone.id)}
                   className={`
                     w-full py-4 rounded-xl font-bold text-white text-lg
-                    bg-gradient-to-r ${getMilestoneGradient(currentMilestone.milestone_type)}
+                    bg-linear-to-r ${getMilestoneGradient(currentMilestone.milestone_type)}
                     shadow-lg hover:shadow-2xl transition-all
                   `}
                 >

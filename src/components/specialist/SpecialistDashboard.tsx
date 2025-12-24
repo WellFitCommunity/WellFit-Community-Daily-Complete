@@ -107,7 +107,7 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white rounded-lg shadow-sm p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <span className="text-4xl">{workflow?.icon || '🏥'}</span>
@@ -141,7 +141,7 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
       </div>
 
       {/* Today's Schedule */}
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-white rounded-lg shadow-sm">
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-900">Today's Visits</h2>
           <p className="text-gray-600 text-sm">{todaysVisits.length} visits scheduled</p>
@@ -228,7 +228,7 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
 
       {/* Upcoming Visits */}
       {upcomingVisits.length > 0 && (
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-white rounded-lg shadow-sm">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-xl font-semibold text-gray-900">Upcoming Visits</h2>
             <p className="text-gray-600 text-sm">{upcomingVisits.length} visits scheduled</p>
@@ -262,7 +262,7 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-lg shadow-sm p-6">
           <div className="text-sm text-gray-600">Today's Visits</div>
           <div className="text-3xl font-bold text-gray-900 mt-2">{todaysVisits.length}</div>
           <div className="text-sm text-green-600 mt-1">
@@ -270,7 +270,7 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-lg shadow-sm p-6">
           <div className="text-sm text-gray-600">Pending Sync</div>
           <div className="text-3xl font-bold text-gray-900 mt-2">
             {syncStatus ? syncStatus.pending.visits + syncStatus.pending.assessments : 0}
@@ -278,7 +278,7 @@ export const SpecialistDashboard: React.FC<SpecialistDashboardProps> = ({
           <div className="text-sm text-gray-600 mt-1">items</div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-lg shadow-sm p-6">
           <div className="text-sm text-gray-600">This Week</div>
           <div className="text-3xl font-bold text-gray-900 mt-2">{upcomingVisits.length}</div>
           <div className="text-sm text-gray-600 mt-1">upcoming visits</div>

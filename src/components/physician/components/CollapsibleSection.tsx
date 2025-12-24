@@ -39,10 +39,10 @@ export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
   };
 
   const categoryColorsBranded = {
-    medical: 'border-l-4 border-l-[#1BA39C] bg-gradient-to-r from-[#E0F7F6] to-white',
-    administrative: 'border-l-4 border-l-[#C8E63D] bg-gradient-to-r from-[#F4FADC] to-white',
-    clinical: 'border-l-4 border-l-[#158A84] bg-gradient-to-r from-[#E0F7F6] to-white',
-    revenue: 'border-l-4 border-l-[#C8E63D] bg-gradient-to-r from-[#F4FADC] to-white'
+    medical: 'border-l-4 border-l-[#1BA39C] bg-linear-to-r from-[#E0F7F6] to-white',
+    administrative: 'border-l-4 border-l-[#C8E63D] bg-linear-to-r from-[#F4FADC] to-white',
+    clinical: 'border-l-4 border-l-[#158A84] bg-linear-to-r from-[#E0F7F6] to-white',
+    revenue: 'border-l-4 border-l-[#C8E63D] bg-linear-to-r from-[#F4FADC] to-white'
   };
 
   const badgeColorsBranded = {
@@ -62,7 +62,7 @@ export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
           <span className="text-2xl">{icon}</span>
           <h2 className="text-xl font-bold text-black">{title}</h2>
           {badge !== undefined && (
-            <span className={`px-2 py-1 text-xs font-bold rounded-full shadow-sm border border-black ${badgeColorsBranded[category]}`}>
+            <span className={`px-2 py-1 text-xs font-bold rounded-full shadow-xs border border-black ${badgeColorsBranded[category]}`}>
               {badge}
             </span>
           )}

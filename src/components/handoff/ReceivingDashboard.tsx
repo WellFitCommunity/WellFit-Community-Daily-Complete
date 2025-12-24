@@ -281,7 +281,7 @@ const PacketCard: React.FC<{
         </div>
       </div>
 
-      <div className="bg-gray-50 p-2 rounded text-sm">
+      <div className="bg-gray-50 p-2 rounded-sm text-sm">
         <span className="text-gray-600">Reason:</span>
         <p className="text-gray-800">{packet.reason_for_transfer}</p>
       </div>
@@ -469,7 +469,7 @@ const PacketViewer: React.FC<{
 
         {/* Medications Given During Visit */}
         {medicationsGiven.length > 0 && (
-          <div className="mb-3 bg-blue-50 p-2 rounded border border-blue-200">
+          <div className="mb-3 bg-blue-50 p-2 rounded-sm border border-blue-200">
             <p className="text-sm font-medium text-blue-800 mb-2">💉 Medications Given During Visit:</p>
             <ul className="list-disc list-inside text-sm space-y-1">
               {medicationsGiven.map((med, idx) => (
@@ -485,7 +485,7 @@ const PacketViewer: React.FC<{
 
         {/* Currently Prescribed Medications */}
         {medicationsPrescribed.length > 0 && (
-          <div className="mb-3 bg-purple-50 p-2 rounded border border-purple-200">
+          <div className="mb-3 bg-purple-50 p-2 rounded-sm border border-purple-200">
             <p className="text-sm font-medium text-purple-800 mb-2">📋 Currently Prescribed Medications:</p>
             <ul className="list-disc list-inside text-sm space-y-1">
               {medicationsPrescribed.map((med, idx) => (
@@ -501,7 +501,7 @@ const PacketViewer: React.FC<{
 
         {/* Currently Taking (Including OTC) */}
         {medicationsCurrent.length > 0 && (
-          <div className="mb-3 bg-green-100 p-2 rounded border border-green-300">
+          <div className="mb-3 bg-green-100 p-2 rounded-sm border border-green-300">
             <p className="text-sm font-medium text-green-800 mb-2">💊 Currently Taking (Including OTC):</p>
             <ul className="list-disc list-inside text-sm space-y-1">
               {medicationsCurrent.map((med, idx) => (
@@ -517,7 +517,7 @@ const PacketViewer: React.FC<{
 
         {/* Lab Results */}
         {labs.length > 0 && (
-          <div className="mb-3 bg-yellow-50 p-2 rounded border border-yellow-200">
+          <div className="mb-3 bg-yellow-50 p-2 rounded-sm border border-yellow-200">
             <p className="text-sm font-medium text-yellow-800 mb-2">🔬 Lab Results:</p>
             <ul className="list-disc list-inside text-sm space-y-1">
               {labs.map((lab, idx) => (

@@ -311,7 +311,7 @@ const UserManagementPanel: React.FC = () => {
                   </div>
                 </td>
                 <td className="px-4 py-3">
-                  <span className="px-2 py-1 bg-[#E8F8F7] text-[#1BA39C] font-bold rounded border border-[#1BA39C]">
+                  <span className="px-2 py-1 bg-[#E8F8F7] text-[#1BA39C] font-bold rounded-sm border border-[#1BA39C]">
                     {user.role}
                   </span>
                 </td>
@@ -540,18 +540,18 @@ const APIKeyManagementPanel: React.FC = () => {
                     <StatusBadge status={key.status} size="sm" />
                   </div>
                   <div className="flex items-center gap-2 mt-1">
-                    <code className="px-2 py-1 bg-gray-100 rounded text-sm font-mono">
+                    <code className="px-2 py-1 bg-gray-100 rounded-sm text-sm font-mono">
                       {showKey === key.id ? `${key.key_prefix}••••••••••••••••` : '••••••••••••••••••••'}
                     </code>
                     <button
                       onClick={() => setShowKey(showKey === key.id ? null : key.id)}
-                      className="p-1 hover:bg-gray-200 rounded transition-all"
+                      className="p-1 hover:bg-gray-200 rounded-sm transition-all"
                     >
                       {showKey === key.id ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                     <button
                       onClick={() => handleCopyKey(key.key_prefix)}
-                      className="p-1 hover:bg-gray-200 rounded transition-all"
+                      className="p-1 hover:bg-gray-200 rounded-sm transition-all"
                     >
                       <Copy className="w-4 h-4" />
                     </button>
@@ -578,7 +578,7 @@ const APIKeyManagementPanel: React.FC = () => {
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
               {key.permissions.map(perm => (
-                <span key={perm} className="px-2 py-1 bg-[#E8F8F7] text-[#1BA39C] text-xs font-bold rounded border border-[#1BA39C]">
+                <span key={perm} className="px-2 py-1 bg-[#E8F8F7] text-[#1BA39C] text-xs font-bold rounded-sm border border-[#1BA39C]">
                   {perm}
                 </span>
               ))}
@@ -699,7 +699,7 @@ const AuditLogPanel: React.FC = () => {
                 </td>
                 <td className="px-4 py-3 font-medium">{log.user_email}</td>
                 <td className="px-4 py-3">
-                  <span className="px-2 py-1 bg-purple-100 text-purple-800 font-bold rounded text-sm">
+                  <span className="px-2 py-1 bg-purple-100 text-purple-800 font-bold rounded-sm text-sm">
                     {log.action}
                   </span>
                 </td>
@@ -757,7 +757,7 @@ const SystemHealthPanel: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Overall Status */}
-      <div className="bg-gradient-to-r from-green-500 to-[#1BA39C] p-6 rounded-xl border-2 border-black text-white">
+      <div className="bg-linear-to-r from-green-500 to-[#1BA39C] p-6 rounded-xl border-2 border-black text-white">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-2xl font-bold">System Status: Operational</h3>
@@ -928,22 +928,22 @@ const OverviewDashboard: React.FC = () => {
     <div className="space-y-6">
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-br from-[#1BA39C] to-[#158A84] p-6 rounded-xl border-2 border-black text-white">
+        <div className="bg-linear-to-br from-[#1BA39C] to-[#158A84] p-6 rounded-xl border-2 border-black text-white">
           <Users className="w-8 h-8 mb-2 text-[#C8E63D]" />
           <p className="text-3xl font-bold">127</p>
           <p className="text-white/80">Total Users</p>
         </div>
-        <div className="bg-gradient-to-br from-[#C8E63D] to-[#a8c633] p-6 rounded-xl border-2 border-black text-black">
+        <div className="bg-linear-to-br from-[#C8E63D] to-[#a8c633] p-6 rounded-xl border-2 border-black text-black">
           <Activity className="w-8 h-8 mb-2" />
           <p className="text-3xl font-bold">23</p>
           <p className="text-black/70">Active Sessions</p>
         </div>
-        <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-xl border-2 border-black text-white">
+        <div className="bg-linear-to-br from-purple-500 to-purple-600 p-6 rounded-xl border-2 border-black text-white">
           <Key className="w-8 h-8 mb-2 text-purple-200" />
           <p className="text-3xl font-bold">5</p>
           <p className="text-white/80">Active API Keys</p>
         </div>
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-xl border-2 border-black text-white">
+        <div className="bg-linear-to-br from-blue-500 to-blue-600 p-6 rounded-xl border-2 border-black text-white">
           <Shield className="w-8 h-8 mb-2 text-blue-200" />
           <p className="text-3xl font-bold">98%</p>
           <p className="text-white/80">Security Score</p>
@@ -1045,7 +1045,7 @@ const TenantITDashboard: React.FC = () => {
           </div>
 
           {/* Page Header */}
-          <div className="bg-gradient-to-r from-[#1BA39C] to-[#158A84] rounded-2xl shadow-2xl p-8 border-2 border-black">
+          <div className="bg-linear-to-r from-[#1BA39C] to-[#158A84] rounded-2xl shadow-2xl p-8 border-2 border-black">
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-white flex items-center gap-3">

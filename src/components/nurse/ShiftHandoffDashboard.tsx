@@ -362,10 +362,10 @@ export const ShiftHandoffDashboard: React.FC = () => {
   if (loading && !handoffSummary.length) {
     return (
       <div className="shift-handoff-dashboard p-6 animate-pulse">
-        <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
+        <div className="h-8 bg-gray-200 rounded-sm w-1/3 mb-4"></div>
         <div className="space-y-4">
           {[1, 2, 3].map(i => (
-            <div key={i} className="h-32 bg-gray-200 rounded"></div>
+            <div key={i} className="h-32 bg-gray-200 rounded-sm"></div>
           ))}
         </div>
       </div>
@@ -456,7 +456,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
           {/* Accept Handoff Button (BIG AND PROMINENT) */}
           <button
             onClick={handleAcceptHandoff}
-            className="mx-4 px-8 py-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl hover:from-green-600 hover:to-green-700 transition-all transform hover:scale-105 flex items-center gap-2"
+            className="mx-4 px-8 py-4 bg-linear-to-r from-green-500 to-green-600 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl hover:from-green-600 hover:to-green-700 transition-all transform hover:scale-105 flex items-center gap-2"
           >
             <span className="text-2xl">🎉</span>
             Accept Handoff
@@ -504,12 +504,12 @@ export const ShiftHandoffDashboard: React.FC = () => {
               <div className="text-2xl font-bold text-purple-700">{metrics.nurse_adjusted_count}</div>
               <div className="text-xs text-purple-700">Nurse Adjusted</div>
             </div>
-            <div className="bg-gradient-to-br from-[#E0F7F6] to-white border-2 border-[#1BA39C] rounded-lg p-3 shadow-md">
+            <div className="bg-linear-to-br from-[#E0F7F6] to-white border-2 border-[#1BA39C] rounded-lg p-3 shadow-md">
               <div className="text-2xl font-bold text-blue-700">{metrics.avg_auto_score}</div>
               <div className="text-xs text-blue-700">Avg Auto Score</div>
             </div>
             {/* Time Savings Badge */}
-            <div className="bg-gradient-to-br from-emerald-100 to-teal-50 border-2 border-emerald-500 rounded-lg p-3 shadow-md">
+            <div className="bg-linear-to-br from-emerald-100 to-teal-50 border-2 border-emerald-500 rounded-lg p-3 shadow-md">
               <div className="text-2xl font-bold text-emerald-700">⚡ 80%</div>
               <div className="text-xs text-emerald-600 font-medium">Faster than Average</div>
             </div>
@@ -518,7 +518,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
 
         {/* Bulk actions */}
         {selectedPatients.size > 0 && (
-          <div className="bg-gradient-to-r from-[#E0F7F6] to-[#F4FADC] border-2 border-[#1BA39C] rounded-lg p-4 mb-4 shadow-lg">
+          <div className="bg-linear-to-r from-[#E0F7F6] to-[#F4FADC] border-2 border-[#1BA39C] rounded-lg p-4 mb-4 shadow-lg">
             <div className="flex items-center justify-between">
               <div className="text-blue-900 font-medium">
                 {selectedPatients.size} patient{selectedPatients.size !== 1 ? 's' : ''} selected
@@ -569,7 +569,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
             return (
               <div className="high-acuity-section">
                 {/* Sticky Header - HIGH ACUITY */}
-                <div className="sticky top-0 z-20 bg-gradient-to-r from-red-600 via-red-500 to-orange-500 text-white rounded-t-xl p-4 shadow-lg border-b-4 border-red-700">
+                <div className="sticky top-0 z-20 bg-linear-to-r from-red-600 via-red-500 to-orange-500 text-white rounded-t-xl p-4 shadow-lg border-b-4 border-red-700">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-2">
@@ -581,7 +581,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
                         <p className="text-red-100 text-sm font-medium">Critical and High-risk patients requiring immediate attention</p>
                       </div>
                     </div>
-                    <div className="bg-white/20 backdrop-blur-sm rounded-xl px-5 py-3 border-2 border-white/30">
+                    <div className="bg-white/20 backdrop-blur-xs rounded-xl px-5 py-3 border-2 border-white/30">
                       <div className="text-center">
                         <span className="text-3xl font-black">{highAcuityPatients.length}</span>
                         <div className="text-xs font-medium text-red-100">PATIENTS</div>
@@ -605,15 +605,15 @@ export const ShiftHandoffDashboard: React.FC = () => {
                       {/* Patient Header */}
                       <div className={`p-4 flex items-center justify-between ${
                         patient.final_risk_level === 'CRITICAL'
-                          ? 'bg-gradient-to-r from-red-100 to-red-50'
-                          : 'bg-gradient-to-r from-orange-100 to-orange-50'
+                          ? 'bg-linear-to-r from-red-100 to-red-50'
+                          : 'bg-linear-to-r from-orange-100 to-orange-50'
                       }`}>
                         <div className="flex items-center gap-4">
                           <input
                             type="checkbox"
                             checked={selectedPatients.has(patient.patient_id)}
                             onChange={() => toggleSelection(patient.patient_id)}
-                            className="w-6 h-6 rounded border-2 border-gray-400"
+                            className="w-6 h-6 rounded-sm border-2 border-gray-400"
                           />
 
                           {/* BIG Priority Badge */}
@@ -626,7 +626,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
                           </div>
 
                           {/* Patient Avatar Thumbnail */}
-                          <div className="flex-shrink-0 transform scale-50 origin-center -my-6">
+                          <div className="shrink-0 transform scale-50 origin-center -my-6">
                             <AvatarThumbnail
                               patientId={patient.patient_id}
                               patientName={patient.patient_name}
@@ -749,7 +749,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
             return (
               <div className="standard-acuity-section">
                 {/* Header - Standard Acuity */}
-                <div className="bg-gradient-to-r from-slate-600 to-slate-500 text-white rounded-t-xl p-3 shadow-md">
+                <div className="bg-linear-to-r from-slate-600 to-slate-500 text-white rounded-t-xl p-3 shadow-md">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">📋</span>
@@ -794,7 +794,7 @@ export const ShiftHandoffDashboard: React.FC = () => {
                           </div>
 
                           {/* Patient Avatar Thumbnail */}
-                          <div className="flex-shrink-0 transform scale-[0.35] origin-center -my-8 -mx-4">
+                          <div className="shrink-0 transform scale-[0.35] origin-center -my-8 -mx-4">
                             <AvatarThumbnail
                               patientId={patient.patient_id}
                               patientName={patient.patient_name}
@@ -814,12 +814,12 @@ export const ShiftHandoffDashboard: React.FC = () => {
                             <div className="text-xs text-gray-500">{patient.clinical_snapshot.diagnosis || 'No diagnosis'}</div>
                           </div>
 
-                          <span className={`px-2 py-1 rounded text-xs font-bold ${RISK_LEVEL_COLORS[patient.final_risk_level]}`}>
+                          <span className={`px-2 py-1 rounded-sm text-xs font-bold ${RISK_LEVEL_COLORS[patient.final_risk_level]}`}>
                             {RISK_LEVEL_ICONS[patient.final_risk_level]} {patient.final_risk_level}
                           </span>
 
                           {!patient.nurse_reviewed && (
-                            <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs font-medium">
+                            <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-sm text-xs font-medium">
                               Needs Review
                             </span>
                           )}
@@ -828,19 +828,19 @@ export const ShiftHandoffDashboard: React.FC = () => {
                         <div className="flex gap-1">
                           <button
                             onClick={() => handleConfirm(patient.risk_score_id, patient.patient_id)}
-                            className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-sm font-medium"
+                            className="px-3 py-1 bg-green-600 text-white rounded-sm hover:bg-green-700 text-sm font-medium"
                           >
                             ✓
                           </button>
                           <button
                             onClick={() => handleEscalate(patient.risk_score_id, patient.patient_id)}
-                            className="px-3 py-1 bg-orange-500 text-white rounded hover:bg-orange-600 text-sm font-medium"
+                            className="px-3 py-1 bg-orange-500 text-white rounded-sm hover:bg-orange-600 text-sm font-medium"
                           >
                             ⬆
                           </button>
                           <button
                             onClick={() => handleDeEscalate(patient.risk_score_id, patient.patient_id)}
-                            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm font-medium"
+                            className="px-3 py-1 bg-blue-500 text-white rounded-sm hover:bg-blue-600 text-sm font-medium"
                           >
                             ⬇
                           </button>

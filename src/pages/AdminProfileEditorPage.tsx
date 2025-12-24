@@ -172,7 +172,7 @@ const AdminProfileEditor: React.FC = () => {
     <div className="max-w-4xl mx-auto p-4">
       <button
         onClick={() => navigate('/admin')}
-        className="inline-flex items-center px-4 py-2 mb-4 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+        className="inline-flex items-center px-4 py-2 mb-4 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
       >
         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -192,7 +192,7 @@ const AdminProfileEditor: React.FC = () => {
           value={selectedId}
           onChange={(e) => setSelectedId(e.target.value)}
           aria-required="true"
-          className="w-full p-2 border border-gray-300 rounded-md shadow-sm mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          className="w-full p-2 border border-gray-300 rounded-md shadow-xs mb-4 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
         >
           <option value="">Select a Senior...</option>
           {profiles.map((p) => (
@@ -203,7 +203,7 @@ const AdminProfileEditor: React.FC = () => {
         </select>
 
         {selectedProfile && (
-          <div className="bg-gray-100 p-4 rounded shadow">
+          <div className="bg-gray-100 p-4 rounded-sm shadow-sm">
             <h3 className="font-semibold text-lg">
               {selectedProfile.first_name} {selectedProfile.last_name}
             </h3>
@@ -232,7 +232,7 @@ const AdminProfileEditor: React.FC = () => {
           )}
 
           {notes.map((note) => (
-            <div key={note.id} className="border p-2 rounded my-2 bg-white">
+            <div key={note.id} className="border p-2 rounded-sm my-2 bg-white">
               {editingNoteId === note.id ? (
                 <div>
                   <label htmlFor={`edit-note-textarea-${note.id}`} className="sr-only">
@@ -242,13 +242,13 @@ const AdminProfileEditor: React.FC = () => {
                     id={`edit-note-textarea-${note.id}`}
                     value={editingNoteText}
                     onChange={(e) => setEditingNoteText(e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full p-2 border border-gray-300 rounded-md shadow-xs focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     rows={3}
                     aria-required="true"
                   />
                   <button
                     onClick={() => handleEditNote(note.id, editingNoteText)}
-                    className="mt-2 bg-blue-600 text-white px-4 py-1 rounded-md shadow-sm hover:bg-blue-700 disabled:bg-blue-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="mt-2 bg-blue-600 text-white px-4 py-1 rounded-md shadow-xs hover:bg-blue-700 disabled:bg-blue-300 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                     disabled={isLoadingEditNote}
                   >
                     {isLoadingEditNote ? 'Saving…' : 'Save'}
@@ -259,7 +259,7 @@ const AdminProfileEditor: React.FC = () => {
                       setEditingNoteText('');
                       setEditNoteMessage({});
                     }}
-                    className="mt-2 ml-2 text-gray-600 px-4 py-1 rounded-md border border-gray-300 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400"
+                    className="mt-2 ml-2 text-gray-600 px-4 py-1 rounded-md border border-gray-300 hover:bg-gray-100 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-gray-400"
                     disabled={isLoadingEditNote}
                   >
                     Cancel
@@ -278,7 +278,7 @@ const AdminProfileEditor: React.FC = () => {
                       setEditingNoteId(note.id);
                       setEditNoteMessage({});
                     }}
-                    className="text-sm text-blue-500 mt-1 hover:underline disabled:text-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="text-sm text-blue-500 mt-1 hover:underline disabled:text-gray-400 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
                     disabled={isLoadingEditNote || isLoadingAddNote}
                   >
                     Edit
@@ -297,7 +297,7 @@ const AdminProfileEditor: React.FC = () => {
               placeholder="Type your note here…"
               value={newNote}
               onChange={(e) => setNewNote(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full p-2 border border-gray-300 rounded-md shadow-xs focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               rows={3}
               aria-required="true"
               disabled={isLoadingAddNote}
@@ -316,7 +316,7 @@ const AdminProfileEditor: React.FC = () => {
             )}
             <button
               onClick={handleAddNote}
-              className="mt-2 bg-green-600 text-white px-4 py-2 rounded-md shadow-sm hover:bg-green-700 disabled:bg-green-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              className="mt-2 bg-green-600 text-white px-4 py-2 rounded-md shadow-xs hover:bg-green-700 disabled:bg-green-300 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
               disabled={isLoadingAddNote || !!editingNoteId || !selectedId || !userId || !newNote.trim()}
             >
               {isLoadingAddNote ? 'Adding Note…' : 'Add Note'}

@@ -436,7 +436,7 @@ export const SuperAdminTenantModuleConfig: React.FC<SuperAdminTenantModuleConfig
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="text-xl font-bold">Module Entitlements</h2>
-                  <span className="px-2 py-0.5 bg-white/20 rounded text-xs font-medium">
+                  <span className="px-2 py-0.5 bg-white/20 rounded-sm text-xs font-medium">
                     Envision Atlus
                   </span>
                 </div>
@@ -464,7 +464,7 @@ export const SuperAdminTenantModuleConfig: React.FC<SuperAdminTenantModuleConfig
 
         {/* Info Banner */}
         <div className="mx-6 mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-3">
-          <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+          <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
           <div className="text-sm text-blue-800">
             <p className="font-medium">Two-Tier Control Model</p>
             <p className="mt-1">
@@ -538,7 +538,7 @@ export const SuperAdminTenantModuleConfig: React.FC<SuperAdminTenantModuleConfig
             const activeCount = modules.filter(m => getActiveValue(m)).length;
 
             return (
-              <div key={category} className="border rounded-lg overflow-hidden shadow-sm">
+              <div key={category} className="border rounded-lg overflow-hidden shadow-xs">
                 <button
                   onClick={() => toggleCategory(category)}
                   className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
@@ -592,7 +592,7 @@ export const SuperAdminTenantModuleConfig: React.FC<SuperAdminTenantModuleConfig
                                 {metadata.requiredTier} tier
                               </span>
                               {hasChange && (
-                                <span className="px-2 py-0.5 text-xs bg-yellow-200 text-yellow-800 rounded font-medium">
+                                <span className="px-2 py-0.5 text-xs bg-yellow-200 text-yellow-800 rounded-sm font-medium">
                                   Modified
                                 </span>
                               )}

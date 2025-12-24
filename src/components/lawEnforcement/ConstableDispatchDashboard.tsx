@@ -84,11 +84,11 @@ export const ConstableDispatchDashboard: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-900 to-slate-800">
+    <div className="flex h-screen bg-linear-to-br from-slate-900 to-slate-800">
       {/* Left Panel - Alerts List */}
       <div className="w-[380px] bg-slate-900/50 border-r border-slate-700 overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-slate-900/90 backdrop-blur-sm border-b border-slate-700 p-4 z-10">
+        <div className="sticky top-0 bg-slate-900/90 backdrop-blur-xs border-b border-slate-700 p-4 z-10">
           <div className="flex items-center gap-3 mb-3">
             <div className="p-2 bg-[#00857a]/20 rounded-lg">
               <Shield className="h-6 w-6 text-[#00857a]" />
@@ -160,8 +160,8 @@ export const ConstableDispatchDashboard: React.FC = () => {
 
                 {/* Special Needs */}
                 {alert.specialNeeds && (
-                  <div className="flex items-center text-xs text-amber-400 mb-2 bg-amber-500/10 rounded px-2 py-1">
-                    <AlertTriangle className="h-3 w-3 mr-1.5 flex-shrink-0" />
+                  <div className="flex items-center text-xs text-amber-400 mb-2 bg-amber-500/10 rounded-sm px-2 py-1">
+                    <AlertTriangle className="h-3 w-3 mr-1.5 shrink-0" />
                     <span className="truncate">{alert.specialNeeds}</span>
                   </div>
                 )}
@@ -186,7 +186,7 @@ export const ConstableDispatchDashboard: React.FC = () => {
               <EACardContent className="p-6">
                 <div className="flex justify-between items-start mb-6">
                   <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#00857a] to-[#33bfb7] flex items-center justify-center">
+                    <div className="w-16 h-16 rounded-full bg-linear-to-br from-[#00857a] to-[#33bfb7] flex items-center justify-center">
                       <User className="h-8 w-8 text-white" />
                     </div>
                     <div>

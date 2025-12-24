@@ -157,7 +157,7 @@ export const PasskeySetup: React.FC<PasskeySetupProps> = ({
   }
 
   return (
-    <div className={`bg-white border border-gray-200 rounded-lg shadow-sm ${className}`}>
+    <div className={`bg-white border border-gray-200 rounded-lg shadow-xs ${className}`}>
       {/* Header */}
       <div className="px-6 py-4 border-b border-gray-200">
         <h3 className="text-lg font-semibold text-gray-900 flex items-center">

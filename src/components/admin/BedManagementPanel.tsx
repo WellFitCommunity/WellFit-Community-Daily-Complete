@@ -616,7 +616,7 @@ const BedManagementPanel: React.FC = () => {
     return (
       <div className="space-y-6">
         <div className="animate-pulse">
-          <div className="h-8 bg-slate-700 rounded w-1/3 mb-4"></div>
+          <div className="h-8 bg-slate-700 rounded-sm w-1/3 mb-4"></div>
           <div className="grid grid-cols-4 gap-4 mb-6">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="h-24 bg-slate-700 rounded-lg"></div>
@@ -977,7 +977,7 @@ const BedManagementPanel: React.FC = () => {
                                 e.stopPropagation();
                                 handleUpdateStatus(bed.bed_id, 'cleaning');
                               }}
-                              className="mt-2 w-full text-xs bg-orange-500 text-white py-1 rounded hover:bg-orange-600 transition-colors"
+                              className="mt-2 w-full text-xs bg-orange-500 text-white py-1 rounded-sm hover:bg-orange-600 transition-colors"
                             >
                               Start Cleaning
                             </button>
@@ -988,7 +988,7 @@ const BedManagementPanel: React.FC = () => {
                                 e.stopPropagation();
                                 handleUpdateStatus(bed.bed_id, 'available');
                               }}
-                              className="mt-2 w-full text-xs bg-green-500 text-white py-1 rounded hover:bg-green-600 transition-colors"
+                              className="mt-2 w-full text-xs bg-green-500 text-white py-1 rounded-sm hover:bg-green-600 transition-colors"
                             >
                               Mark Ready
                             </button>
@@ -1118,7 +1118,7 @@ const BedManagementPanel: React.FC = () => {
                           </p>
                         </div>
                         {forecast.confidence_level && (
-                          <span className="px-2 py-1 bg-teal-500/20 text-teal-400 rounded text-sm">
+                          <span className="px-2 py-1 bg-teal-500/20 text-teal-400 rounded-sm text-sm">
                             {Math.round((forecast.confidence_level ?? 0) * 100)}% confidence
                           </span>
                         )}
@@ -1673,7 +1673,7 @@ const BedManagementPanel: React.FC = () => {
                                 {unit.bottlenecks.length > 0 ? (
                                   <div className="flex flex-wrap gap-1">
                                     {unit.bottlenecks.map((b, j) => (
-                                      <span key={j} className="px-1.5 py-0.5 bg-red-500/20 text-red-400 rounded text-xs">
+                                      <span key={j} className="px-1.5 py-0.5 bg-red-500/20 text-red-400 rounded-sm text-xs">
                                         {b}
                                       </span>
                                     ))}
@@ -1686,7 +1686,7 @@ const BedManagementPanel: React.FC = () => {
                                 {unit.opportunities.length > 0 ? (
                                   <div className="flex flex-wrap gap-1">
                                     {unit.opportunities.map((o, j) => (
-                                      <span key={j} className="px-1.5 py-0.5 bg-green-500/20 text-green-400 rounded text-xs">
+                                      <span key={j} className="px-1.5 py-0.5 bg-green-500/20 text-green-400 rounded-sm text-xs">
                                         {o}
                                       </span>
                                     ))}
@@ -1834,17 +1834,17 @@ const BedManagementPanel: React.FC = () => {
                 <p className="text-sm text-slate-400 mb-2">Capabilities</p>
                 <div className="flex flex-wrap gap-2">
                   {selectedBed.has_telemetry && (
-                    <span className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded text-sm">
+                    <span className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded-sm text-sm">
                       Telemetry
                     </span>
                   )}
                   {selectedBed.has_isolation_capability && (
-                    <span className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded text-sm">
+                    <span className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded-sm text-sm">
                       Isolation
                     </span>
                   )}
                   {selectedBed.has_negative_pressure && (
-                    <span className="px-2 py-1 bg-red-500/20 text-red-400 rounded text-sm">
+                    <span className="px-2 py-1 bg-red-500/20 text-red-400 rounded-sm text-sm">
                       Negative Pressure
                     </span>
                   )}

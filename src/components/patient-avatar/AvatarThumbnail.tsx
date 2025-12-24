@@ -208,7 +208,7 @@ export const AvatarThumbnail: React.FC<AvatarThumbnailProps> = React.memo(({
 
         {/* More markers indicator */}
         {frontMarkers.length > 10 && (
-          <div className="absolute bottom-2 right-2 text-xs bg-slate-900/80 text-slate-300 px-1.5 py-0.5 rounded">
+          <div className="absolute bottom-2 right-2 text-xs bg-slate-900/80 text-slate-300 px-1.5 py-0.5 rounded-sm">
             +{frontMarkers.length - 10}
           </div>
         )}

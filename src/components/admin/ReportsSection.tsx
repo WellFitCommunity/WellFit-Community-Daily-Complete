@@ -508,7 +508,7 @@ const ReportsSection: React.FC = () => {
     return (
       <>
         <ToastContainer toasts={toasts} onDismiss={dismissToast} />
-        <div className="bg-white rounded-xl shadow p-6 space-y-4 text-center">
+        <div className="bg-white rounded-xl shadow-sm p-6 space-y-4 text-center">
           <LoadingSpinner size="lg" />
           <p className="text-gray-500">Loading engagement reports...</p>
         </div>
@@ -520,7 +520,7 @@ const ReportsSection: React.FC = () => {
     <>
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
 
-      <div className="bg-white rounded-xl shadow p-6 space-y-6">
+      <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
           <div>
@@ -677,7 +677,7 @@ const ReportsSection: React.FC = () => {
             <h4 className="text-lg font-semibold text-gray-900 mb-4">Quick Insights</h4>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg">
+              <div className="bg-linear-to-r from-blue-50 to-blue-100 p-4 rounded-lg">
                 <div className="flex items-center space-x-2 mb-2">
                   <span className="text-blue-600">📊</span>
                   <span className="font-medium text-blue-900">Activity Level</span>
@@ -691,7 +691,7 @@ const ReportsSection: React.FC = () => {
                 </p>
               </div>
 
-              <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-lg">
+              <div className="bg-linear-to-r from-green-50 to-green-100 p-4 rounded-lg">
                 <div className="flex items-center space-x-2 mb-2">
                   <span className="text-green-600">✅</span>
                   <span className="font-medium text-green-900">Check-in Rate</span>
@@ -703,7 +703,7 @@ const ReportsSection: React.FC = () => {
                 </p>
               </div>
 
-              <div className="bg-gradient-to-r from-red-50 to-red-100 p-4 rounded-lg">
+              <div className="bg-linear-to-r from-red-50 to-red-100 p-4 rounded-lg">
                 <div className="flex items-center space-x-2 mb-2">
                   <span className="text-red-600">🚨</span>
                   <span className="font-medium text-red-900">Emergency Rate</span>

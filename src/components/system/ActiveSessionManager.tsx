@@ -237,7 +237,7 @@ const ActiveSessionManager: React.FC = () => {
               type="checkbox"
               checked={autoRefresh}
               onChange={(e) => setAutoRefresh(e.target.checked)}
-              className="rounded border-gray-300"
+              className="rounded-sm border-gray-300"
             />
             Auto-refresh (30s)
           </label>
@@ -374,7 +374,7 @@ const ActiveSessionManager: React.FC = () => {
                       <button
                         onClick={() => revokeSession(session.id, user.email)}
                         disabled={actionLoading === session.id}
-                        className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-700 text-sm font-semibold rounded border border-red-300 transition-all disabled:opacity-50 flex items-center gap-2"
+                        className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-700 text-sm font-semibold rounded-sm border border-red-300 transition-all disabled:opacity-50 flex items-center gap-2"
                       >
                         <Power className="w-3 h-3" />
                         {actionLoading === session.id ? 'Revoking...' : 'Revoke'}

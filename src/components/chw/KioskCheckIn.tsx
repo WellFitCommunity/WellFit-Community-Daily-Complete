@@ -416,7 +416,7 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
   // Language Selection
   if (step === 'language') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center p-8">
+      <div className="min-h-screen bg-linear-to-br from-blue-50 to-green-50 flex items-center justify-center p-8">
         <NotificationBanner />
         <div className="bg-white rounded-3xl shadow-2xl p-12 max-w-2xl w-full text-center">
           <h1 className="text-5xl font-bold text-gray-800 mb-12">{t.welcome}</h1>
@@ -456,7 +456,7 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
   // Patient Lookup
   if (step === 'lookup') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center p-8">
+      <div className="min-h-screen bg-linear-to-br from-blue-50 to-green-50 flex items-center justify-center p-8">
         <NotificationBanner />
         <div className="bg-white rounded-3xl shadow-2xl p-12 max-w-3xl w-full">
           <h2 className="text-4xl font-bold text-gray-800 mb-8 text-center">{t.patientLookup}</h2>
@@ -471,7 +471,7 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
                 type="text"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                className="w-full text-2xl px-6 py-4 border-4 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 outline-none"
+                className="w-full text-2xl px-6 py-4 border-4 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 outline-hidden"
                 autoComplete="off"
               />
             </div>
@@ -485,7 +485,7 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
                 type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                className="w-full text-2xl px-6 py-4 border-4 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 outline-none"
+                className="w-full text-2xl px-6 py-4 border-4 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 outline-hidden"
                 autoComplete="off"
               />
             </div>
@@ -500,7 +500,7 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
                 value={dob}
                 onChange={(e) => setDob(e.target.value)}
                 placeholder="YYYY-MM-DD"
-                className="w-full text-2xl px-6 py-4 border-4 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 outline-none"
+                className="w-full text-2xl px-6 py-4 border-4 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 outline-hidden"
               />
             </div>
 
@@ -514,7 +514,7 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
                 value={lastFourSSN}
                 onChange={(e) => setLastFourSSN(e.target.value.slice(0, 4))}
                 maxLength={4}
-                className="w-full text-2xl px-6 py-4 border-4 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 outline-none"
+                className="w-full text-2xl px-6 py-4 border-4 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 outline-hidden"
                 placeholder="1234"
               />
             </div>
@@ -529,7 +529,7 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
                 value={pin}
                 onChange={(e) => setPin(e.target.value.slice(0, 6))}
                 maxLength={6}
-                className="w-full text-2xl px-6 py-4 border-4 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 outline-none"
+                className="w-full text-2xl px-6 py-4 border-4 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 outline-hidden"
                 placeholder="Optional"
               />
             </div>
@@ -564,7 +564,7 @@ export const KioskCheckIn: React.FC<KioskCheckInProps> = ({
 
   // Privacy Consent
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center p-8">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 to-green-50 flex items-center justify-center p-8">
       <NotificationBanner />
       <div className="bg-white rounded-3xl shadow-2xl p-12 max-w-3xl w-full">
         <h2 className="text-4xl font-bold text-gray-800 mb-8 text-center">{t.privacy}</h2>

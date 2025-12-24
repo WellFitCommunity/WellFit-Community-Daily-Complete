@@ -66,7 +66,7 @@ export const BillingCodesList: React.FC<BillingCodesListProps> = React.memo(({
 
                   {/* Reasoning - shown based on assistance level */}
                   {showReasoningDetails && code.reasoning && (
-                    <div className="mt-2 p-2 bg-slate-800 rounded border-l-2 border-[#00857a]">
+                    <div className="mt-2 p-2 bg-slate-800 rounded-sm border-l-2 border-[#00857a]">
                       <p className="text-xs text-slate-400">
                         <span className="text-[#33bfb7] font-medium">Why: </span>
                         {code.reasoning}
@@ -76,7 +76,7 @@ export const BillingCodesList: React.FC<BillingCodesListProps> = React.memo(({
 
                   {/* Missing documentation hint */}
                   {showReasoningDetails && code.missingDocumentation && (
-                    <div className="mt-2 p-2 bg-amber-900/20 rounded border-l-2 border-amber-500">
+                    <div className="mt-2 p-2 bg-amber-900/20 rounded-sm border-l-2 border-amber-500">
                       <p className="text-xs text-amber-300">
                         <span className="font-medium">To strengthen: </span>
                         {code.missingDocumentation}

@@ -270,7 +270,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
           className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full"
         >
           {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-5">
+          <div className="bg-linear-to-r from-blue-600 to-purple-600 px-6 py-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <span className="text-4xl" role="img" aria-label="Sparkles">✨</span>
@@ -282,7 +282,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
               <button
                 ref={closeButtonRef}
                 onClick={() => handleClose(false)}
-                className="text-white hover:text-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-600 rounded-lg p-1"
+                className="text-white hover:text-gray-200 transition-colors focus:outline-hidden focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-600 rounded-lg p-1"
                 aria-label="Close what's new modal"
                 type="button"
               >
@@ -297,7 +297,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
               </button>
             </div>
             {error && (
-              <div className="mt-3 bg-red-500 text-white px-4 py-2 rounded text-sm" role="alert">
+              <div className="mt-3 bg-red-500 text-white px-4 py-2 rounded-sm text-sm" role="alert">
                 {error}
               </div>
             )}
@@ -326,8 +326,8 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
                   aria-label={feature.link ? `${feature.title} - Click to view` : feature.title}
                 >
                   <div className="flex items-start space-x-3">
-                    <span className="text-3xl flex-shrink-0">{feature.icon}</span>
-                    <div className="flex-grow">
+                    <span className="text-3xl shrink-0">{feature.icon}</span>
+                    <div className="grow">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <h4 className="text-lg font-semibold text-gray-900">{feature.title}</h4>
@@ -382,7 +382,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
               </div>
               <button
                 onClick={() => handleClose(false)}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors font-medium"
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors font-medium"
                 type="button"
               >
                 Got it!
@@ -396,7 +396,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
                   type="checkbox"
                   checked={dontShowAgain}
                   onChange={(e) => setDontShowAgain(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 cursor-pointer"
+                  className="w-4 h-4 text-blue-600 border-gray-300 rounded-sm focus:ring-blue-500 focus:ring-2 cursor-pointer"
                   aria-label="Don't show What's New automatically anymore"
                 />
                 <span className="ml-2 text-sm text-gray-600 group-hover:text-gray-800">
@@ -406,7 +406,7 @@ const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose }) => {
               {dontShowAgain && (
                 <button
                   onClick={() => handleClose(true)}
-                  className="px-4 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 transition-colors"
+                  className="px-4 py-1 text-sm bg-gray-200 text-gray-700 rounded-sm hover:bg-gray-300 focus:outline-hidden focus:ring-2 focus:ring-gray-400 transition-colors"
                   type="button"
                   aria-label="Confirm don't show again and close"
                 >

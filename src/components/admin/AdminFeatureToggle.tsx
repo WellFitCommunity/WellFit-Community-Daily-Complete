@@ -119,7 +119,7 @@ const AdminFeatureToggle: React.FC<Props> = ({
       ${sizeClasses[size]} 
       rounded-lg font-semibold 
       transition-all duration-200 
-      focus:outline-none focus:ring-2 focus:ring-offset-2
+      focus:outline-hidden focus:ring-2 focus:ring-offset-2
       disabled:cursor-not-allowed disabled:opacity-50
     `.trim().replace(/\s+/g, ' ');
 
@@ -134,8 +134,8 @@ const AdminFeatureToggle: React.FC<Props> = ({
     // Default variant
     return `${baseClasses} ${
       isFeatured
-        ? 'bg-[#8cc63f] text-white hover:bg-[#7db335] focus:ring-[#8cc63f] shadow-sm'
-        : 'bg-white text-[#003865] border border-[#003865] hover:bg-[#8cc63f] hover:text-white hover:border-[#8cc63f] focus:ring-[#003865] shadow-sm'
+        ? 'bg-[#8cc63f] text-white hover:bg-[#7db335] focus:ring-[#8cc63f] shadow-xs'
+        : 'bg-white text-[#003865] border border-[#003865] hover:bg-[#8cc63f] hover:text-white hover:border-[#8cc63f] focus:ring-[#003865] shadow-xs'
     }`;
   };
 

@@ -207,7 +207,7 @@ const HospitalPatientEnrollment: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl p-6 text-white border-4 border-blue-800">
+      <div className="bg-linear-to-r from-blue-600 to-indigo-700 rounded-xl p-6 text-white border-4 border-blue-800">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
             <Hospital className="w-10 h-10" />

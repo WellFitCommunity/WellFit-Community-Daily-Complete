@@ -88,7 +88,7 @@ export const CacheMonitoringDashboard: React.FC = () => {
 
       {/* Connection Pool Health */}
       {connectionMetrics && (
-        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow">
+        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Connection Pool Health</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <MetricCard
@@ -114,7 +114,7 @@ export const CacheMonitoringDashboard: React.FC = () => {
           </div>
 
           {connectionMetrics.peakUtilizationPercent > 80 && (
-            <div className="mt-4 p-4 bg-red-50 border-l-4 border-red-400 rounded">
+            <div className="mt-4 p-4 bg-red-50 border-l-4 border-red-400 rounded-sm">
               <p className="text-sm text-red-800">
                 ⚠️ <strong>Warning:</strong> Connection pool utilization is high. Consider increasing
                 max_connections or optimizing queries.
@@ -126,7 +126,7 @@ export const CacheMonitoringDashboard: React.FC = () => {
 
       {/* Memory Cache Stats */}
       {memoryCacheStats && (
-        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow">
+        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Memory Cache (L1)</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <MetricCard
@@ -149,7 +149,7 @@ export const CacheMonitoringDashboard: React.FC = () => {
       )}
 
       {/* Cache Statistics by Namespace */}
-      <div className="bg-white p-6 rounded-lg border border-gray-200 shadow">
+      <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
         <h2 className="text-xl font-bold text-gray-900 mb-4">Cache Statistics (L2 - PostgreSQL)</h2>
 
         {cacheStats.length === 0 ? (
@@ -210,7 +210,7 @@ export const CacheMonitoringDashboard: React.FC = () => {
 
       {/* Subscription Health */}
       {subscriptionHealth && subscriptionHealth.length > 0 && (
-        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow">
+        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Real-time Subscription Health</h2>
 
           <div className="overflow-x-auto">
@@ -263,7 +263,7 @@ export const CacheMonitoringDashboard: React.FC = () => {
           </div>
 
           {subscriptionHealth.some(h => h.stale_subscriptions > 0) && (
-            <div className="mt-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
+            <div className="mt-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-sm">
               <p className="text-sm text-yellow-800">
                 ⚠️ <strong>Notice:</strong> Some subscriptions are stale (no heartbeat in 5+ minutes).
                 These will be automatically cleaned up.

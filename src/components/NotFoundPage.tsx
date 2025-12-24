@@ -28,12 +28,12 @@ const NotFoundPage: React.FC = () => {
         </p>
         {isAdminAuthenticated && isAdminRoute && (
           <p className="text-sm text-gray-600 mb-4">
-            Attempted route: <code className="bg-gray-100 px-2 py-1 rounded">{location.pathname}</code>
+            Attempted route: <code className="bg-gray-100 px-2 py-1 rounded-sm">{location.pathname}</code>
           </p>
         )}
         <Link
           to={redirectPath}
-          className="mt-4 px-6 py-3 font-semibold rounded-xl shadow-md transition bg-[#8cc63f] hover:bg-[#003865] text-white focus:outline-none focus:ring-2 focus:ring-[#003865]"
+          className="mt-4 px-6 py-3 font-semibold rounded-xl shadow-md transition bg-[#8cc63f] hover:bg-[#003865] text-white focus:outline-hidden focus:ring-2 focus:ring-[#003865]"
         >
           {redirectLabel}
         </Link>

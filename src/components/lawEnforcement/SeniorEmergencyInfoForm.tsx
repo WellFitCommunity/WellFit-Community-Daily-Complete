@@ -214,7 +214,7 @@ export const SeniorEmergencyInfoForm: React.FC<SeniorEmergencyInfoFormProps> = (
               value={formData.mobilityNotes || ''}
               onChange={(e) => updateField('mobilityNotes', e.target.value)}
               disabled={readOnly}
-              className="w-full p-2 border border-gray-300 rounded"
+              className="w-full p-2 border border-gray-300 rounded-sm"
               rows={2}
               placeholder="e.g., Limited mobility on stairs, uses scooter outdoors"
             />
@@ -247,7 +247,7 @@ export const SeniorEmergencyInfoForm: React.FC<SeniorEmergencyInfoFormProps> = (
                 value={formData.oxygenTankLocation || ''}
                 onChange={(e) => updateField('oxygenTankLocation', e.target.value)}
                 disabled={readOnly}
-                className="w-full p-2 border border-gray-300 rounded"
+                className="w-full p-2 border border-gray-300 rounded-sm"
                 placeholder="e.g., Bedroom nightstand, portable with patient"
               />
             </div>
@@ -274,7 +274,7 @@ export const SeniorEmergencyInfoForm: React.FC<SeniorEmergencyInfoFormProps> = (
                 value={formData.dialysisSchedule || ''}
                 onChange={(e) => updateField('dialysisSchedule', e.target.value)}
                 disabled={readOnly}
-                className="w-full p-2 border border-gray-300 rounded"
+                className="w-full p-2 border border-gray-300 rounded-sm"
                 placeholder="e.g., Monday/Wednesday/Friday 8am-12pm at DaVita"
               />
             </div>
@@ -304,7 +304,7 @@ export const SeniorEmergencyInfoForm: React.FC<SeniorEmergencyInfoFormProps> = (
                 value={formData.hearingImpairedNotes || ''}
                 onChange={(e) => updateField('hearingImpairedNotes', e.target.value)}
                 disabled={readOnly}
-                className="w-full p-2 border border-gray-300 rounded"
+                className="w-full p-2 border border-gray-300 rounded-sm"
                 placeholder="e.g., Knock loudly, doorbell doesn't work, wears hearing aids"
               />
             </div>
@@ -328,14 +328,14 @@ export const SeniorEmergencyInfoForm: React.FC<SeniorEmergencyInfoFormProps> = (
                 value={formData.cognitiveImpairmentType || ''}
                 onChange={(e) => updateField('cognitiveImpairmentType', e.target.value)}
                 disabled={readOnly}
-                className="w-full p-2 border border-gray-300 rounded"
+                className="w-full p-2 border border-gray-300 rounded-sm"
                 placeholder="e.g., Alzheimer's, Dementia, TBI"
               />
               <textarea
                 value={formData.cognitiveImpairmentNotes || ''}
                 onChange={(e) => updateField('cognitiveImpairmentNotes', e.target.value)}
                 disabled={readOnly}
-                className="w-full p-2 border border-gray-300 rounded"
+                className="w-full p-2 border border-gray-300 rounded-sm"
                 rows={2}
                 placeholder="Special instructions for interacting with senior"
               />
@@ -356,7 +356,7 @@ export const SeniorEmergencyInfoForm: React.FC<SeniorEmergencyInfoFormProps> = (
               value={formData.buildingType || ''}
               onChange={(e) => updateField('buildingType', e.target.value)}
               disabled={readOnly}
-              className="w-full p-2 border border-gray-300 rounded"
+              className="w-full p-2 border border-gray-300 rounded-sm"
             >
               <option value="">Select...</option>
               <option value="Single Family Home">Single Family Home</option>
@@ -379,7 +379,7 @@ export const SeniorEmergencyInfoForm: React.FC<SeniorEmergencyInfoFormProps> = (
               value={formData.floorNumber || ''}
               onChange={(e) => updateField('floorNumber', e.target.value)}
               disabled={readOnly}
-              className="w-full p-2 border border-gray-300 rounded"
+              className="w-full p-2 border border-gray-300 rounded-sm"
               placeholder="e.g., Ground, 3, Top Floor, Basement"
             />
           </div>
@@ -393,7 +393,7 @@ export const SeniorEmergencyInfoForm: React.FC<SeniorEmergencyInfoFormProps> = (
               value={formData.buildingQuadrant || ''}
               onChange={(e) => updateField('buildingQuadrant', e.target.value)}
               disabled={readOnly}
-              className="w-full p-2 border border-gray-300 rounded"
+              className="w-full p-2 border border-gray-300 rounded-sm"
               placeholder="e.g., Northeast corner, Right side facing street, Back of building"
             />
           </div>
@@ -419,7 +419,7 @@ export const SeniorEmergencyInfoForm: React.FC<SeniorEmergencyInfoFormProps> = (
                 value={formData.elevatorAccessCode || ''}
                 onChange={(e) => updateField('elevatorAccessCode', e.target.value)}
                 disabled={readOnly}
-                className="w-full p-2 border border-gray-300 rounded"
+                className="w-full p-2 border border-gray-300 rounded-sm"
                 placeholder="e.g., Code 4567, Key required, Ask front desk"
               />
             </div>
@@ -435,7 +435,7 @@ export const SeniorEmergencyInfoForm: React.FC<SeniorEmergencyInfoFormProps> = (
               value={formData.stairsToUnit || ''}
               onChange={(e) => updateField('stairsToUnit', parseInt(e.target.value) || 0)}
               disabled={readOnly}
-              className="w-full p-2 border border-gray-300 rounded"
+              className="w-full p-2 border border-gray-300 rounded-sm"
               placeholder="0"
             />
           </div>
@@ -448,7 +448,7 @@ export const SeniorEmergencyInfoForm: React.FC<SeniorEmergencyInfoFormProps> = (
               value={formData.parkingInstructions || ''}
               onChange={(e) => updateField('parkingInstructions', e.target.value)}
               disabled={readOnly}
-              className="w-full p-2 border border-gray-300 rounded"
+              className="w-full p-2 border border-gray-300 rounded-sm"
               rows={2}
               placeholder="e.g., Visitor parking Lot B, Street parking only, Loading zone in front"
             />
@@ -469,7 +469,7 @@ export const SeniorEmergencyInfoForm: React.FC<SeniorEmergencyInfoFormProps> = (
               value={formData.keyLocation || ''}
               onChange={(e) => updateField('keyLocation', e.target.value)}
               disabled={readOnly}
-              className="w-full p-2 border border-gray-300 rounded"
+              className="w-full p-2 border border-gray-300 rounded-sm"
               placeholder="e.g., With neighbor Apt 4A, lockbox code 1234, under flower pot"
             />
           </div>
@@ -482,7 +482,7 @@ export const SeniorEmergencyInfoForm: React.FC<SeniorEmergencyInfoFormProps> = (
               value={formData.accessInstructions || ''}
               onChange={(e) => updateField('accessInstructions', e.target.value)}
               disabled={readOnly}
-              className="w-full p-2 border border-gray-300 rounded"
+              className="w-full p-2 border border-gray-300 rounded-sm"
               rows={3}
               placeholder="Detailed instructions for officers on how to enter home if no response..."
             />
@@ -508,7 +508,7 @@ export const SeniorEmergencyInfoForm: React.FC<SeniorEmergencyInfoFormProps> = (
               value={formData.petsInHome || ''}
               onChange={(e) => updateField('petsInHome', e.target.value)}
               disabled={readOnly}
-              className="w-full p-2 border border-gray-300 rounded"
+              className="w-full p-2 border border-gray-300 rounded-sm"
               placeholder="e.g., 2 dogs - friendly, 1 cat - hides under bed"
             />
           </div>
@@ -522,7 +522,7 @@ export const SeniorEmergencyInfoForm: React.FC<SeniorEmergencyInfoFormProps> = (
               value={formData.gatedCommunityCode || ''}
               onChange={(e) => updateField('gatedCommunityCode', e.target.value)}
               disabled={readOnly}
-              className="w-full p-2 border border-gray-300 rounded"
+              className="w-full p-2 border border-gray-300 rounded-sm"
               placeholder="e.g., #5678, Call box code A123"
             />
           </div>
@@ -535,7 +535,7 @@ export const SeniorEmergencyInfoForm: React.FC<SeniorEmergencyInfoFormProps> = (
               value={formData.lobbyAccessInstructions || ''}
               onChange={(e) => updateField('lobbyAccessInstructions', e.target.value)}
               disabled={readOnly}
-              className="w-full p-2 border border-gray-300 rounded"
+              className="w-full p-2 border border-gray-300 rounded-sm"
               rows={2}
               placeholder="e.g., Lobby open 6am-10pm, After hours use code 9876, Ring buzzer for manager"
             />
@@ -549,7 +549,7 @@ export const SeniorEmergencyInfoForm: React.FC<SeniorEmergencyInfoFormProps> = (
               value={formData.bestEntrance || ''}
               onChange={(e) => updateField('bestEntrance', e.target.value)}
               disabled={readOnly}
-              className="w-full p-2 border border-gray-300 rounded"
+              className="w-full p-2 border border-gray-300 rounded-sm"
             >
               <option value="">Select...</option>
               <option value="Front">Front entrance</option>
@@ -569,7 +569,7 @@ export const SeniorEmergencyInfoForm: React.FC<SeniorEmergencyInfoFormProps> = (
               value={formData.intercomInstructions || ''}
               onChange={(e) => updateField('intercomInstructions', e.target.value)}
               disabled={readOnly}
-              className="w-full p-2 border border-gray-300 rounded"
+              className="w-full p-2 border border-gray-300 rounded-sm"
               placeholder="e.g., Buzzer #302, Ring 3 times, Press * for manager"
             />
           </div>
@@ -588,7 +588,7 @@ export const SeniorEmergencyInfoForm: React.FC<SeniorEmergencyInfoFormProps> = (
               value={formData.responsePriority}
               onChange={(e) => updateField('responsePriority', e.target.value as ResponsePriority)}
               disabled={readOnly}
-              className="w-full p-2 border border-gray-300 rounded"
+              className="w-full p-2 border border-gray-300 rounded-sm"
             >
               <option value="standard">Standard (6+ hours)</option>
               <option value="high">High (4 hours)</option>
@@ -607,7 +607,7 @@ export const SeniorEmergencyInfoForm: React.FC<SeniorEmergencyInfoFormProps> = (
               value={formData.specialInstructions || ''}
               onChange={(e) => updateField('specialInstructions', e.target.value)}
               disabled={readOnly}
-              className="w-full p-2 border border-gray-300 rounded"
+              className="w-full p-2 border border-gray-300 rounded-sm"
               rows={3}
               placeholder="Any other important information for responding officers..."
             />

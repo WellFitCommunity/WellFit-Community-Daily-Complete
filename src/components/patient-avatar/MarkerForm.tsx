@@ -218,13 +218,13 @@ export const MarkerForm: React.FC<MarkerFormProps> = ({
         <EACardContent className="flex-1 overflow-y-auto">
           <div className="flex gap-6">
             {/* Left side - Avatar with position picker */}
-            <div className="flex-shrink-0 w-48">
+            <div className="shrink-0 w-48">
               <FormSection title="Position">
                 {/* View toggle */}
                 <div className="flex gap-1 mb-2">
                   <button
                     className={cn(
-                      'flex-1 px-2 py-1 text-xs rounded',
+                      'flex-1 px-2 py-1 text-xs rounded-sm',
                       bodyView === 'front'
                         ? 'bg-[#00857a] text-white'
                         : 'bg-slate-700 text-slate-300'
@@ -235,7 +235,7 @@ export const MarkerForm: React.FC<MarkerFormProps> = ({
                   </button>
                   <button
                     className={cn(
-                      'flex-1 px-2 py-1 text-xs rounded',
+                      'flex-1 px-2 py-1 text-xs rounded-sm',
                       bodyView === 'back'
                         ? 'bg-[#00857a] text-white'
                         : 'bg-slate-700 text-slate-300'
@@ -296,7 +296,7 @@ export const MarkerForm: React.FC<MarkerFormProps> = ({
                     <button
                       key={cat}
                       className={cn(
-                        'flex items-center gap-2 p-2 rounded border text-left text-sm',
+                        'flex items-center gap-2 p-2 rounded-sm border text-left text-sm',
                         category === cat
                           ? 'bg-slate-700 border-[#00857a]'
                           : 'bg-slate-800 border-slate-700 hover:border-slate-600'
@@ -325,7 +325,7 @@ export const MarkerForm: React.FC<MarkerFormProps> = ({
                     'w-full px-3 py-2 rounded-lg',
                     'bg-slate-800 border border-slate-700',
                     'text-white text-sm',
-                    'focus:outline-none focus:ring-2 focus:ring-[#00857a]/50'
+                    'focus:outline-hidden focus:ring-2 focus:ring-[#00857a]/50'
                   )}
                 >
                   <option value="">Select a type...</option>
@@ -354,7 +354,7 @@ export const MarkerForm: React.FC<MarkerFormProps> = ({
                     'w-full px-3 py-2 rounded-lg',
                     'bg-slate-800 border border-slate-700',
                     'text-white text-sm placeholder:text-slate-500',
-                    'focus:outline-none focus:ring-2 focus:ring-[#00857a]/50'
+                    'focus:outline-hidden focus:ring-2 focus:ring-[#00857a]/50'
                   )}
                 />
               </FormSection>
@@ -369,7 +369,7 @@ export const MarkerForm: React.FC<MarkerFormProps> = ({
                     'w-full px-3 py-2 rounded-lg',
                     'bg-slate-800 border border-slate-700',
                     'text-white text-sm',
-                    'focus:outline-none focus:ring-2 focus:ring-[#00857a]/50'
+                    'focus:outline-hidden focus:ring-2 focus:ring-[#00857a]/50'
                   )}
                 />
               </FormSection>
@@ -386,7 +386,7 @@ export const MarkerForm: React.FC<MarkerFormProps> = ({
                       'w-full px-3 py-2 rounded-lg',
                       'bg-slate-800 border border-slate-700',
                       'text-white text-sm placeholder:text-slate-500',
-                      'focus:outline-none focus:ring-2 focus:ring-[#00857a]/50'
+                      'focus:outline-hidden focus:ring-2 focus:ring-[#00857a]/50'
                     )}
                   />
                 </FormSection>
@@ -403,7 +403,7 @@ export const MarkerForm: React.FC<MarkerFormProps> = ({
                     'w-full px-3 py-2 rounded-lg resize-none',
                     'bg-slate-800 border border-slate-700',
                     'text-white text-sm placeholder:text-slate-500',
-                    'focus:outline-none focus:ring-2 focus:ring-[#00857a]/50'
+                    'focus:outline-hidden focus:ring-2 focus:ring-[#00857a]/50'
                   )}
                 />
               </FormSection>
@@ -419,7 +419,7 @@ export const MarkerForm: React.FC<MarkerFormProps> = ({
                     'w-full px-3 py-2 rounded-lg resize-none',
                     'bg-slate-800 border border-slate-700',
                     'text-white text-sm placeholder:text-slate-500',
-                    'focus:outline-none focus:ring-2 focus:ring-[#00857a]/50'
+                    'focus:outline-hidden focus:ring-2 focus:ring-[#00857a]/50'
                   )}
                 />
               </FormSection>
@@ -430,7 +430,7 @@ export const MarkerForm: React.FC<MarkerFormProps> = ({
                   type="checkbox"
                   checked={requiresAttention}
                   onChange={(e) => setRequiresAttention(e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-[#00857a] focus:ring-[#00857a]/50"
+                  className="w-4 h-4 rounded-sm border-slate-600 bg-slate-800 text-[#00857a] focus:ring-[#00857a]/50"
                 />
                 <span className="text-sm text-slate-300">
                   Requires attention (will pulse on avatar)

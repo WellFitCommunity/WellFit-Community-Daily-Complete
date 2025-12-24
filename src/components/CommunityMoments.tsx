@@ -476,7 +476,7 @@ const CommunityMoments: React.FC = () => {
             loading="lazy"
           />
         ) : (
-          <div className="w-full max-w-md h-80 bg-gradient-to-br from-gray-100 to-gray-200 animate-pulse rounded-xl mb-4 flex items-center justify-center" aria-label="loading image">
+          <div className="w-full max-w-md h-80 bg-linear-to-br from-gray-100 to-gray-200 animate-pulse rounded-xl mb-4 flex items-center justify-center" aria-label="loading image">
             <span className="text-6xl">📸</span>
           </div>
         )}
@@ -544,7 +544,7 @@ const CommunityMoments: React.FC = () => {
         {/* Personalized Greeting */}
         {userFirstName && (
           <motion.div
-            className="bg-white/30 backdrop-blur-sm px-8 py-4 rounded-2xl mb-4"
+            className="bg-white/30 backdrop-blur-xs px-8 py-4 rounded-2xl mb-4"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
@@ -577,7 +577,7 @@ const CommunityMoments: React.FC = () => {
 
         {affirmation && (
           <motion.div
-            className="bg-white/20 backdrop-blur-sm text-white rounded-2xl p-6 shadow-xl mb-6 w-full max-w-2xl text-center border-2 border-white/30"
+            className="bg-white/20 backdrop-blur-xs text-white rounded-2xl p-6 shadow-xl mb-6 w-full max-w-2xl text-center border-2 border-white/30"
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.2 }}
@@ -674,7 +674,7 @@ const CommunityMoments: React.FC = () => {
               accept="image/*"
               ref={fileInputRef}
               onChange={handleFileChange}
-              className="w-full text-xl p-4 bg-white rounded-xl border-4 border-gray-300 focus:outline-none cursor-pointer file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-xl file:font-bold file:text-white file:cursor-pointer"
+              className="w-full text-xl p-4 bg-white rounded-xl border-4 border-gray-300 focus:outline-hidden cursor-pointer file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-xl file:font-bold file:text-white file:cursor-pointer"
               onFocus={(e) => e.currentTarget.style.borderColor = branding.secondaryColor}
               onBlur={(e) => e.currentTarget.style.borderColor = '#d1d5db'}
               aria-required
@@ -702,7 +702,7 @@ const CommunityMoments: React.FC = () => {
             </label>
             <input
               id="cm-title"
-              className="w-full border-4 border-gray-300 rounded-xl p-4 text-2xl focus:outline-none"
+              className="w-full border-4 border-gray-300 rounded-xl p-4 text-2xl focus:outline-hidden"
               onFocus={(e) => e.currentTarget.style.borderColor = branding.secondaryColor}
               onBlur={(e) => e.currentTarget.style.borderColor = '#d1d5db'}
               value={title}
@@ -720,7 +720,7 @@ const CommunityMoments: React.FC = () => {
             </label>
             <textarea
               id="cm-desc"
-              className="w-full border-4 border-gray-300 rounded-xl p-4 text-2xl focus:outline-none"
+              className="w-full border-4 border-gray-300 rounded-xl p-4 text-2xl focus:outline-hidden"
               onFocus={(e) => e.currentTarget.style.borderColor = branding.secondaryColor}
               onBlur={(e) => e.currentTarget.style.borderColor = '#d1d5db'}
               placeholder="Share the memory behind this photo..."
@@ -798,7 +798,7 @@ const CommunityMoments: React.FC = () => {
             </label>
             <input
               id="cm-tags"
-              className="w-full border-4 border-gray-300 rounded-xl p-4 text-2xl focus:outline-none"
+              className="w-full border-4 border-gray-300 rounded-xl p-4 text-2xl focus:outline-hidden"
               onFocus={(e) => e.currentTarget.style.borderColor = branding.secondaryColor}
               onBlur={(e) => e.currentTarget.style.borderColor = '#d1d5db'}
               value={tags}
@@ -853,7 +853,7 @@ const CommunityMoments: React.FC = () => {
         <div className="grid gap-6 md:grid-cols-2" role="status" aria-label="Loading community moments">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="bg-white rounded-2xl shadow-xl p-6" aria-hidden="true">
-              <div className="w-full h-80 bg-gradient-to-br from-gray-100 to-gray-200 animate-pulse rounded-xl mb-4" />
+              <div className="w-full h-80 bg-linear-to-br from-gray-100 to-gray-200 animate-pulse rounded-xl mb-4" />
               <div className="h-8 bg-gray-200 animate-pulse rounded-xl mb-3" />
               <div className="h-6 bg-gray-200 animate-pulse rounded-xl mb-2" />
               <div className="h-6 bg-gray-200 animate-pulse rounded-xl w-2/3" />

@@ -133,7 +133,7 @@ export function SDOHCoderAssist({ encounterId, patientId, onSaved }: Props) {
       {codes.length > 0 ? (
         <div className="space-y-3">
           {codes.map((code, idx) => (
-            <div key={`${type}-${idx}`} className="p-3 rounded border bg-gray-50">
+            <div key={`${type}-${idx}`} className="p-3 rounded-sm border bg-gray-50">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="font-mono font-semibold text-lg">{sanitizeMedicalCode(code.code)}</div>
@@ -142,13 +142,13 @@ export function SDOHCoderAssist({ encounterId, patientId, onSaved }: Props) {
                   )}
                   {code.category === 'sdoh' && (
                     <div className="mt-2">
-                      <span className="inline-block px-2 py-1 text-xs bg-green-100 text-green-800 rounded">
+                      <span className="inline-block px-2 py-1 text-xs bg-green-100 text-green-800 rounded-sm">
                         SDOH Code
                       </span>
                     </div>
                   )}
                   {code.principal && (
-                    <span className="inline-block px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded ml-2">
+                    <span className="inline-block px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-sm ml-2">
                       Principal
                     </span>
                   )}
@@ -218,7 +218,7 @@ export function SDOHCoderAssist({ encounterId, patientId, onSaved }: Props) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {factors.map(factor => (
-            <div key={factor.key} className="border rounded p-3">
+            <div key={factor.key} className="border rounded-sm p-3">
               <div className="font-medium text-sm mb-2">{factor.label}</div>
               {factor.value ? (
                 <div className="space-y-1">
@@ -283,12 +283,12 @@ export function SDOHCoderAssist({ encounterId, patientId, onSaved }: Props) {
         </div>
       </div>
 
-      <div className="border rounded p-4">
+      <div className="border rounded-sm p-4">
         <h5 className="font-medium mb-2">Required Documentation</h5>
         <ul className="text-sm space-y-1">
           {recommendation.requiredDocumentation.map((req: string, idx: number) => (
             <li key={idx} className="flex items-center">
-              <div className="w-4 h-4 border rounded mr-2"></div>
+              <div className="w-4 h-4 border rounded-sm mr-2"></div>
               {req}
             </li>
           ))}
@@ -296,10 +296,10 @@ export function SDOHCoderAssist({ encounterId, patientId, onSaved }: Props) {
       </div>
 
       {recommendation.eligible && (
-        <div className="bg-blue-50 p-4 rounded space-y-4">
+        <div className="bg-blue-50 p-4 rounded-sm space-y-4">
           <button
             onClick={startCCMTimeTracking}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="px-4 py-2 bg-blue-600 text-white rounded-sm hover:bg-blue-700"
           >
             Start CCM Time Tracking
           </button>
@@ -326,7 +326,7 @@ export function SDOHCoderAssist({ encounterId, patientId, onSaved }: Props) {
                 <div className="space-y-2">
                   <div className="text-sm font-medium text-gray-700 mb-2">Activities:</div>
                   {ccmTimeTracking.activities.map((activity, idx) => (
-                    <div key={idx} className="flex justify-between items-center py-2 px-3 bg-gray-50 rounded text-sm">
+                    <div key={idx} className="flex justify-between items-center py-2 px-3 bg-gray-50 rounded-sm text-sm">
                       <div>
                         <div className="font-medium">{activity.type}</div>
                         {activity.description && (
@@ -388,11 +388,11 @@ export function SDOHCoderAssist({ encounterId, patientId, onSaved }: Props) {
       </div>
 
       {validation.errors.length > 0 && (
-        <div className="border border-red-200 rounded p-4">
+        <div className="border border-red-200 rounded-sm p-4">
           <h5 className="font-medium text-red-800 mb-2">Errors ({validation.errors.length})</h5>
           <div className="space-y-2">
             {validation.errors.map((error, idx) => (
-              <div key={idx} className="p-2 bg-red-50 rounded text-sm">
+              <div key={idx} className="p-2 bg-red-50 rounded-sm text-sm">
                 <div className="font-medium text-red-800">{error.code}</div>
                 <div className="text-red-700">{error.message}</div>
                 <div className="text-xs text-red-600 mt-1">Field: {error.field}</div>
@@ -403,11 +403,11 @@ export function SDOHCoderAssist({ encounterId, patientId, onSaved }: Props) {
       )}
 
       {validation.warnings.length > 0 && (
-        <div className="border border-yellow-200 rounded p-4">
+        <div className="border border-yellow-200 rounded-sm p-4">
           <h5 className="font-medium text-yellow-800 mb-2">Warnings ({validation.warnings.length})</h5>
           <div className="space-y-2">
             {validation.warnings.map((warning, idx) => (
-              <div key={idx} className="p-2 bg-yellow-50 rounded text-sm">
+              <div key={idx} className="p-2 bg-yellow-50 rounded-sm text-sm">
                 <div className="font-medium text-yellow-800">{warning.code}</div>
                 <div className="text-yellow-700">{warning.message}</div>
                 <div className="text-xs text-yellow-600 mt-1">{warning.recommendation}</div>
@@ -418,11 +418,11 @@ export function SDOHCoderAssist({ encounterId, patientId, onSaved }: Props) {
       )}
 
       {validation.auditFlags.length > 0 && (
-        <div className="border border-orange-200 rounded p-4">
+        <div className="border border-orange-200 rounded-sm p-4">
           <h5 className="font-medium text-orange-800 mb-2">Audit Flags ({validation.auditFlags.length})</h5>
           <div className="space-y-2">
             {validation.auditFlags.map((flag, idx) => (
-              <div key={idx} className="p-2 bg-orange-50 rounded text-sm">
+              <div key={idx} className="p-2 bg-orange-50 rounded-sm text-sm">
                 <div className="flex items-center justify-between">
                   <div className="font-medium text-orange-800">{flag.type}</div>
                   <span className={`px-2 py-1 text-xs rounded ${
@@ -446,7 +446,7 @@ export function SDOHCoderAssist({ encounterId, patientId, onSaved }: Props) {
   );
 
   return (
-    <div className="w-full rounded-xl border bg-white shadow-sm">
+    <div className="w-full rounded-xl border bg-white shadow-xs">
       {/* Header */}
       <div className="p-6 border-b">
         <div className="flex items-center justify-between mb-4">
@@ -460,14 +460,14 @@ export function SDOHCoderAssist({ encounterId, patientId, onSaved }: Props) {
             <button
               onClick={fetchEnhancedSuggestions}
               disabled={disabled}
-              className="px-4 py-2 rounded bg-green-600 text-white disabled:opacity-50 hover:bg-green-700"
+              className="px-4 py-2 rounded-sm bg-green-600 text-white disabled:opacity-50 hover:bg-green-700"
             >
               {loading ? 'Analyzing…' : 'Analyze Encounter'}
             </button>
             <button
               onClick={saveSuggestion}
               disabled={!suggestion || !validation || saving}
-              className="px-4 py-2 rounded bg-blue-600 text-white disabled:opacity-50 hover:bg-blue-700"
+              className="px-4 py-2 rounded-sm bg-blue-600 text-white disabled:opacity-50 hover:bg-blue-700"
             >
               {saving ? 'Saving…' : 'Accept & Save'}
             </button>

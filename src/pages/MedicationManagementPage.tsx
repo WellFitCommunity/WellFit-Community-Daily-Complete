@@ -58,7 +58,7 @@ const MedicationManagementPage: React.FC = () => {
         </button>
 
         {/* Header */}
-        <div className="bg-gradient-to-r from-teal-900/50 to-cyan-900/50 rounded-xl border border-teal-700 p-6 mb-6">
+        <div className="bg-linear-to-r from-teal-900/50 to-cyan-900/50 rounded-xl border border-teal-700 p-6 mb-6">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-teal-600 rounded-lg">
               <Pill className="w-8 h-8 text-white" />

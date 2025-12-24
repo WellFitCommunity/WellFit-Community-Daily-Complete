@@ -62,7 +62,7 @@ export const AvatarSettingsForm: React.FC<AvatarSettingsFormProps> = ({
                   disabled={disabled}
                   className={cn(
                     'relative w-12 h-12 rounded-full transition-all duration-200',
-                    'border-2 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#00857a]',
+                    'border-2 hover:scale-110 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-[#00857a]',
                     currentSkinTone === tone
                       ? 'border-[#00857a] ring-2 ring-[#00857a]/50 scale-110'
                       : 'border-slate-600 hover:border-slate-400',
@@ -112,7 +112,7 @@ export const AvatarSettingsForm: React.FC<AvatarSettingsFormProps> = ({
                   disabled={disabled}
                   className={cn(
                     'flex-1 py-3 px-4 rounded-lg transition-all duration-200',
-                    'border-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#00857a]',
+                    'border-2 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-[#00857a]',
                     currentGender === option.value
                       ? 'bg-[#00857a]/20 border-[#00857a] text-[#33bfb7]'
                       : 'bg-slate-800 border-slate-600 text-slate-400 hover:border-slate-400 hover:text-slate-300',
@@ -130,7 +130,7 @@ export const AvatarSettingsForm: React.FC<AvatarSettingsFormProps> = ({
 
         {/* Live Preview */}
         {showPreview && (
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             <label className="block text-sm font-medium text-slate-300 mb-3 text-center">
               Preview
             </label>
@@ -141,7 +141,7 @@ export const AvatarSettingsForm: React.FC<AvatarSettingsFormProps> = ({
                   type="button"
                   onClick={() => setPreviewView('front')}
                   className={cn(
-                    'px-2 py-1 text-xs rounded transition-colors',
+                    'px-2 py-1 text-xs rounded-sm transition-colors',
                     previewView === 'front'
                       ? 'bg-[#00857a] text-white'
                       : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
@@ -153,7 +153,7 @@ export const AvatarSettingsForm: React.FC<AvatarSettingsFormProps> = ({
                   type="button"
                   onClick={() => setPreviewView('back')}
                   className={cn(
-                    'px-2 py-1 text-xs rounded transition-colors',
+                    'px-2 py-1 text-xs rounded-sm transition-colors',
                     previewView === 'back'
                       ? 'bg-[#00857a] text-white'
                       : 'bg-slate-700 text-slate-400 hover:bg-slate-600'

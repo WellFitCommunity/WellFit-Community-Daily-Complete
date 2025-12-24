@@ -597,7 +597,7 @@ const ApiKeyManager: React.FC = () => {
         <form onSubmit={handleGenerateKey} className="bg-gray-50 p-4 rounded-lg mb-6">
           <h3 className="text-lg font-medium mb-3">Generate New API Key</h3>
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-            <div className="flex-grow">
+            <div className="grow">
               <div className="flex justify-between items-center mb-1">
                 <label htmlFor="orgName" className="text-sm font-medium text-gray-700">
                   Organization Name *
@@ -647,7 +647,7 @@ const ApiKeyManager: React.FC = () => {
             <div className="flex items-center space-x-2 mb-2">
               <span className="text-green-700 font-medium">🎉 New API Key Generated!</span>
             </div>
-            <div className="bg-white p-3 rounded border font-mono text-sm break-all select-all">
+            <div className="bg-white p-3 rounded-sm border font-mono text-sm break-all select-all">
               {keyMasked ? '••••••••••••••••••••••••••••••••••••••••' : generatedKey}
             </div>
             <div className="flex justify-between items-center mt-3">
@@ -680,7 +680,7 @@ const ApiKeyManager: React.FC = () => {
 
         {/* Search and Filter Controls */}
         <div className="mb-4 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
-          <div className="flex-grow">
+          <div className="grow">
             <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">
               Search API Keys
             </label>

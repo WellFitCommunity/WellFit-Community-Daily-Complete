@@ -232,7 +232,7 @@ const AdminTaskModule: React.FC<Props> = ({
                 <p className="text-sm text-gray-600 mt-1">{selectedTemplate.description}</p>
               )}
             </div>
-            <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
+            <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-sm">
               {selectedTemplate.outputFormat}
             </span>
           </div>

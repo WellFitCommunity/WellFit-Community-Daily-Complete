@@ -313,7 +313,7 @@ const PaperFormScanner: React.FC = () => {
       {/* Instructions */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <div className="flex items-start gap-3">
-          <FileText className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+          <FileText className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
           <div className="flex-1">
             <h4 className="font-semibold text-blue-900">Paper Form Scanner</h4>
             <p className="text-sm text-blue-800 mt-1">
@@ -448,14 +448,14 @@ const PaperFormScanner: React.FC = () => {
                   <p className="text-xs text-gray-600 truncate">{form.file.name}</p>
 
                   {form.error && (
-                    <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-800">
+                    <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-sm text-xs text-red-800">
                       {form.error}
                     </div>
                   )}
 
                   {form.status === 'success' && form.extractedData && (
                     <>
-                      <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-xs">
+                      <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-sm text-xs">
                         <p className="font-semibold text-green-900">
                           {form.extractedData.firstName} {form.extractedData.lastName}
                         </p>
@@ -476,7 +476,7 @@ const PaperFormScanner: React.FC = () => {
                   )}
 
                   {form.status === 'enrolled' && (
-                    <div className="mt-2 p-2 bg-purple-50 border border-purple-200 rounded text-xs text-purple-800">
+                    <div className="mt-2 p-2 bg-purple-50 border border-purple-200 rounded-sm text-xs text-purple-800">
                       Patient enrolled successfully
                     </div>
                   )}

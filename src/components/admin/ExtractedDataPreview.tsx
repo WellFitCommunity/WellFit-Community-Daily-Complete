@@ -106,21 +106,21 @@ const ExtractedDataPreview: React.FC<ExtractedDataPreviewProps> = ({
     switch (confidence) {
       case 'high':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">
+          <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-sm">
             <CheckCircle className="w-3 h-3" />
             High Confidence
           </span>
         );
       case 'medium':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded">
+          <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-sm">
             <AlertTriangle className="w-3 h-3" />
             Medium Confidence
           </span>
         );
       case 'low':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded">
+          <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-sm">
             <AlertTriangle className="w-3 h-3" />
             Low Confidence
           </span>
@@ -379,7 +379,7 @@ const ExtractedDataPreview: React.FC<ExtractedDataPreviewProps> = ({
                     type="checkbox"
                     checked={editedData.nkda || false}
                     onChange={(e) => handleFieldChange('nkda', e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded-sm focus:ring-blue-500"
                   />
                   <span className="text-sm font-medium text-gray-700">
                     No Known Drug Allergies (NKDA)

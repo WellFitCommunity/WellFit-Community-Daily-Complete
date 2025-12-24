@@ -56,7 +56,7 @@ const HealthScoreDisplay: React.FC<{ score: number; riskLevel: string }> = ({ sc
   };
 
   return (
-    <Card className="bg-gradient-to-br from-blue-50 to-indigo-50">
+    <Card className="bg-linear-to-br from-blue-50 to-indigo-50">
       <CardHeader className="text-center">
         <CardTitle className="text-lg">Your Health Score</CardTitle>
       </CardHeader>
@@ -240,7 +240,7 @@ const EncouragementCard: React.FC<{
   };
 
   return (
-    <Card className="bg-gradient-to-br from-green-50 to-emerald-50">
+    <Card className="bg-linear-to-br from-green-50 to-emerald-50">
       <CardContent className="p-6">
         <div className="text-center">
           <div className="text-3xl mb-3">{getEncouragementEmoji(adherenceScore)}</div>
@@ -438,7 +438,7 @@ const FhirAiPatientDashboard: React.FC<PatientDashboardProps> = ({ supabaseUrl, 
   if (!insights) {
     return (
       <div className="space-y-6 max-w-4xl mx-auto p-4">
-        <Card className="bg-gradient-to-br from-blue-50 to-indigo-50">
+        <Card className="bg-linear-to-br from-blue-50 to-indigo-50">
           <CardContent className="p-8 text-center">
             <div className="text-6xl mb-4">🏥</div>
             <h2 className="text-2xl font-bold text-gray-900 mb-3">

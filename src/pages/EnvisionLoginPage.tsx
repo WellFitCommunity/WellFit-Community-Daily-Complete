@@ -415,7 +415,7 @@ export const EnvisionLoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
       {/* Background pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0" style={{
@@ -462,7 +462,7 @@ export const EnvisionLoginPage: React.FC = () => {
                   required
                   autoComplete="email"
                   disabled={loading}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-blue-300/50 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
                   placeholder="you@envisionvirtualedge.com"
                 />
               </div>
@@ -480,14 +480,14 @@ export const EnvisionLoginPage: React.FC = () => {
                     required
                     autoComplete="current-password"
                     disabled={loading}
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 pr-12"
+                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-blue-300/50 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 pr-12"
                     placeholder="Enter password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     disabled={loading}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-300 hover:text-blue-100 focus:outline-none disabled:opacity-50"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-300 hover:text-blue-100 focus:outline-hidden disabled:opacity-50"
                   >
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
@@ -497,19 +497,19 @@ export const EnvisionLoginPage: React.FC = () => {
               {/* Messages */}
               {error && (
                 <div className="flex items-center gap-2 p-4 bg-red-500/20 border border-red-500/50 rounded-lg">
-                  <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                  <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
                   <p className="text-sm text-red-200">{error}</p>
                 </div>
               )}
               {warning && (
                 <div className="flex items-center gap-2 p-3 bg-yellow-500/20 border border-yellow-500/50 rounded-lg">
-                  <AlertCircle className="w-5 h-5 text-yellow-400 flex-shrink-0" />
+                  <AlertCircle className="w-5 h-5 text-yellow-400 shrink-0" />
                   <p className="text-sm text-yellow-200">{warning}</p>
                 </div>
               )}
               {successMsg && (
                 <div className="flex items-center gap-2 p-4 bg-green-500/20 border border-green-500/50 rounded-lg">
-                  <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
+                  <CheckCircle className="w-5 h-5 text-green-400 shrink-0" />
                   <p className="text-sm text-green-200">{successMsg}</p>
                 </div>
               )}
@@ -517,7 +517,7 @@ export const EnvisionLoginPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading || !email || !password}
-                className="w-full py-3 px-4 bg-[#00857a] hover:bg-[#006d64] text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#00857a] focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-3 px-4 bg-[#00857a] hover:bg-[#006d64] text-white font-medium rounded-lg transition-colors focus:outline-hidden focus:ring-2 focus:ring-[#00857a] focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
@@ -577,7 +577,7 @@ export const EnvisionLoginPage: React.FC = () => {
                   disabled={loading}
                   inputMode="numeric"
                   pattern="\d{6}"
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 text-center text-2xl tracking-[0.5em] font-mono"
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-blue-300/50 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 text-center text-2xl tracking-[0.5em] font-mono"
                   placeholder="000000"
                   autoFocus
                 />
@@ -586,19 +586,19 @@ export const EnvisionLoginPage: React.FC = () => {
               {/* Messages */}
               {error && (
                 <div className="flex items-center gap-2 p-4 bg-red-500/20 border border-red-500/50 rounded-lg">
-                  <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                  <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
                   <p className="text-sm text-red-200">{error}</p>
                 </div>
               )}
               {warning && (
                 <div className="flex items-center gap-2 p-3 bg-yellow-500/20 border border-yellow-500/50 rounded-lg">
-                  <AlertCircle className="w-5 h-5 text-yellow-400 flex-shrink-0" />
+                  <AlertCircle className="w-5 h-5 text-yellow-400 shrink-0" />
                   <p className="text-sm text-yellow-200">{warning}</p>
                 </div>
               )}
               {successMsg && (
                 <div className="flex items-center gap-2 p-3 bg-green-500/20 border border-green-500/50 rounded-lg">
-                  <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
+                  <CheckCircle className="w-5 h-5 text-green-400 shrink-0" />
                   <p className="text-sm text-green-200">{successMsg}</p>
                 </div>
               )}
@@ -606,7 +606,7 @@ export const EnvisionLoginPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading || totpCode.length !== 6}
-                className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
@@ -679,7 +679,7 @@ export const EnvisionLoginPage: React.FC = () => {
                   }}
                   required
                   disabled={loading}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 text-center text-xl tracking-widest font-mono uppercase"
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-blue-300/50 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 text-center text-xl tracking-widest font-mono uppercase"
                   placeholder="XXXX-XXXX"
                   autoFocus
                 />
@@ -688,7 +688,7 @@ export const EnvisionLoginPage: React.FC = () => {
               {/* Messages */}
               {error && (
                 <div className="flex items-center gap-2 p-4 bg-red-500/20 border border-red-500/50 rounded-lg">
-                  <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                  <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
                   <p className="text-sm text-red-200">{error}</p>
                 </div>
               )}
@@ -696,7 +696,7 @@ export const EnvisionLoginPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading || backupCode.replace(/-/g, '').length !== 8}
-                className="w-full py-3 px-4 bg-yellow-600 hover:bg-yellow-700 text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-3 px-4 bg-yellow-600 hover:bg-yellow-700 text-white font-medium rounded-lg transition-colors focus:outline-hidden focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
@@ -750,13 +750,13 @@ export const EnvisionLoginPage: React.FC = () => {
                     <div className="text-sm text-gray-600 mb-2">
                       Scan this QR code with your authenticator app:
                     </div>
-                    <div className="font-mono text-xs break-all text-gray-800 p-2 bg-gray-100 rounded">
+                    <div className="font-mono text-xs break-all text-gray-800 p-2 bg-gray-100 rounded-sm">
                       {totpSetupData.uri}
                     </div>
                     <div className="mt-3 text-sm text-gray-600">
                       Or enter this secret manually:
                     </div>
-                    <div className="font-mono text-lg tracking-widest text-gray-800 p-2 bg-gray-100 rounded mt-1">
+                    <div className="font-mono text-lg tracking-widest text-gray-800 p-2 bg-gray-100 rounded-sm mt-1">
                       {totpSetupData.secret}
                     </div>
                   </div>
@@ -771,7 +771,7 @@ export const EnvisionLoginPage: React.FC = () => {
                     </p>
                     <div className="grid grid-cols-2 gap-2 font-mono text-sm">
                       {totpSetupData.backupCodes.map((code, i) => (
-                        <div key={i} className="bg-yellow-500/10 px-2 py-1 rounded text-yellow-200 text-center">
+                        <div key={i} className="bg-yellow-500/10 px-2 py-1 rounded-sm text-yellow-200 text-center">
                           {code}
                         </div>
                       ))}
@@ -793,14 +793,14 @@ export const EnvisionLoginPage: React.FC = () => {
                         inputMode="numeric"
                         pattern="\d{6}"
                         disabled={loading}
-                        className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 text-center text-2xl tracking-[0.5em] font-mono"
+                        className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-blue-300/50 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 text-center text-2xl tracking-[0.5em] font-mono"
                         placeholder="000000"
                       />
                     </div>
 
                     {error && (
                       <div className="flex items-center gap-2 p-3 bg-red-500/20 border border-red-500/50 rounded-lg">
-                        <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                        <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
                         <p className="text-sm text-red-200">{error}</p>
                       </div>
                     )}
@@ -808,7 +808,7 @@ export const EnvisionLoginPage: React.FC = () => {
                     <button
                       type="submit"
                       disabled={loading || totpCode.length !== 6}
-                      className="w-full py-3 px-4 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      className="w-full py-3 px-4 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                       {loading ? (
                         <>
@@ -871,7 +871,7 @@ export const EnvisionLoginPage: React.FC = () => {
                   required
                   autoComplete="email"
                   disabled={loading}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-blue-300/50 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
                   placeholder="you@envisionvirtualedge.com"
                   autoFocus
                 />
@@ -879,7 +879,7 @@ export const EnvisionLoginPage: React.FC = () => {
 
               {error && (
                 <div className="flex items-center gap-2 p-4 bg-red-500/20 border border-red-500/50 rounded-lg">
-                  <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                  <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
                   <p className="text-sm text-red-200">{error}</p>
                 </div>
               )}
@@ -887,7 +887,7 @@ export const EnvisionLoginPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading || !email}
-                className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors focus:outline-hidden focus:ring-2 focus:ring-blue-500 disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
@@ -937,7 +937,7 @@ export const EnvisionLoginPage: React.FC = () => {
 
               {successMsg && (
                 <div className="flex items-center gap-2 p-4 bg-blue-500/20 border border-blue-500/30 rounded-lg">
-                  <Mail className="w-5 h-5 text-blue-400 flex-shrink-0" />
+                  <Mail className="w-5 h-5 text-blue-400 shrink-0" />
                   <p className="text-sm text-blue-200">{successMsg}</p>
                 </div>
               )}
@@ -949,7 +949,7 @@ export const EnvisionLoginPage: React.FC = () => {
                   setError(null);
                   setSuccessMsg(null);
                 }}
-                className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center gap-2"
+                className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors focus:outline-hidden focus:ring-2 focus:ring-blue-500 flex items-center justify-center gap-2"
               >
                 <ArrowLeft className="w-5 h-5" />
                 Return to Login

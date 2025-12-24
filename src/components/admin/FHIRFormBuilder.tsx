@@ -144,7 +144,7 @@ RESPOND WITH ONLY JSON - NO OTHER TEXT:`
             {question.text}
             {question.required && <span className="text-red-500 ml-1">*</span>}
           </label>
-          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-sm">
             {question.type}
           </span>
         </div>
@@ -152,7 +152,7 @@ RESPOND WITH ONLY JSON - NO OTHER TEXT:`
         {question.type === 'string' && (
           <input
             type="text"
-            className="w-full p-2 border border-gray-300 rounded"
+            className="w-full p-2 border border-gray-300 rounded-sm"
             placeholder="Text input"
             disabled
           />
@@ -161,7 +161,7 @@ RESPOND WITH ONLY JSON - NO OTHER TEXT:`
         {question.type === 'integer' && (
           <input
             type="number"
-            className="w-full p-2 border border-gray-300 rounded"
+            className="w-full p-2 border border-gray-300 rounded-sm"
             placeholder="Number input"
             disabled
           />
@@ -197,7 +197,7 @@ RESPOND WITH ONLY JSON - NO OTHER TEXT:`
         {question.type === 'date' && (
           <input
             type="date"
-            className="p-2 border border-gray-300 rounded"
+            className="p-2 border border-gray-300 rounded-sm"
             disabled
           />
         )}

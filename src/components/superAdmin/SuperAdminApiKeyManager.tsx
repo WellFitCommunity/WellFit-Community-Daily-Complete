@@ -414,7 +414,7 @@ const SuperAdminApiKeyManager: React.FC = () => {
               value={newOrgName}
               onChange={e => setNewOrgName(e.target.value)}
               placeholder="Organization name"
-              className="flex-grow border rounded-lg px-3 py-2"
+              className="grow border rounded-lg px-3 py-2"
               disabled={loading}
               maxLength={100}
             />
@@ -433,7 +433,7 @@ const SuperAdminApiKeyManager: React.FC = () => {
         {generatedKey && (
           <div ref={generatedKeyRef} className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
             <div className="font-medium text-green-700 mb-2">🎉 New Platform API Key Generated!</div>
-            <div className="bg-white p-3 rounded border font-mono text-sm break-all">
+            <div className="bg-white p-3 rounded-sm border font-mono text-sm break-all">
               {keyMasked ? '••••••••••••••••••••••••••••••••' : generatedKey}
             </div>
             <div className="flex justify-between items-center mt-3">
@@ -459,7 +459,7 @@ const SuperAdminApiKeyManager: React.FC = () => {
             placeholder="Search by org, ID, or tenant..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            className="flex-grow border rounded-lg px-3 py-2"
+            className="grow border rounded-lg px-3 py-2"
           />
           <select
             value={filterStatus}
@@ -523,7 +523,7 @@ const SuperAdminApiKeyManager: React.FC = () => {
                         <button
                           onClick={() => handleRevokeKey(key.id, key.org_name)}
                           disabled={loading}
-                          className="px-3 py-1 bg-red-100 text-red-800 rounded text-xs hover:bg-red-200"
+                          className="px-3 py-1 bg-red-100 text-red-800 rounded-sm text-xs hover:bg-red-200"
                         >
                           🗑️ Revoke
                         </button>

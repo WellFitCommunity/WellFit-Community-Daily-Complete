@@ -18,7 +18,7 @@ export default function AdminQuestionsPage() {
         </div>
 
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div className="bg-white rounded-lg shadow-xs p-6 mb-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">
             Nurse Dashboard
           </h1>
@@ -65,7 +65,7 @@ export default function AdminQuestionsPage() {
         {activeTab === 'questions' && <NurseQuestionManager />}
         {activeTab === 'assessment' && <RiskAssessmentManager />}
         {activeTab === 'scribe' && (
-          <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="bg-white rounded-lg shadow-xs p-6">
             <div className="mb-4">
               <h2 className="text-lg font-semibold text-gray-900 mb-2">AI-Powered Medical Scribe</h2>
               <p className="text-sm text-gray-600">

@@ -624,7 +624,7 @@ const FhirAiDashboard: React.FC<DashboardProps> = ({ supabaseUrl, supabaseKey })
           </div>
 
           {/* Alert Configuration */}
-          <Card className="bg-gradient-to-br from-purple-50 to-blue-50 border-purple-200">
+          <Card className="bg-linear-to-br from-purple-50 to-blue-50 border-purple-200">
             <CardHeader>
               <CardTitle className="flex items-center">
                 <span className="mr-2">🔔</span>
@@ -644,7 +644,7 @@ const FhirAiDashboard: React.FC<DashboardProps> = ({ supabaseUrl, supabaseKey })
                     onChange={(e) => setAlertConfig(prev => ({ ...prev, enableRealTime: e.target.checked }))}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-hidden peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                 </label>
               </div>
 
@@ -680,7 +680,7 @@ const FhirAiDashboard: React.FC<DashboardProps> = ({ supabaseUrl, supabaseKey })
                     { value: 'sms', label: 'SMS Notifications', icon: '📱' },
                     { value: 'webhook', label: 'Webhook Integration', icon: '🔗' }
                   ].map(method => (
-                    <label key={method.value} className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                    <label key={method.value} className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded-sm cursor-pointer">
                       <input
                         type="checkbox"
                         checked={alertConfig.notificationMethods.includes(method.value)}
@@ -690,7 +690,7 @@ const FhirAiDashboard: React.FC<DashboardProps> = ({ supabaseUrl, supabaseKey })
                             : alertConfig.notificationMethods.filter(m => m !== method.value);
                           setAlertConfig(prev => ({ ...prev, notificationMethods: methods }));
                         }}
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded-sm focus:ring-blue-500"
                       />
                       <span className="text-lg">{method.icon}</span>
                       <span className="text-sm font-medium text-gray-900">{method.label}</span>
@@ -779,7 +779,7 @@ const FhirAiDashboard: React.FC<DashboardProps> = ({ supabaseUrl, supabaseKey })
             <CardContent>
               <div className="space-y-2">
                 {state.populationDashboard?.overview?.trendingConcerns?.map((concern: string, index: number) => (
-                  <div key={index} className="flex items-center justify-between p-2 border rounded">
+                  <div key={index} className="flex items-center justify-between p-2 border rounded-sm">
                     <span>{concern}</span>
                     <Badge variant="secondary">Trending</Badge>
                   </div>
@@ -795,7 +795,7 @@ const FhirAiDashboard: React.FC<DashboardProps> = ({ supabaseUrl, supabaseKey })
             <CardContent>
               <div className="space-y-4">
                 {state.populationDashboard?.resourceAllocation?.map((rec: any, index: number) => (
-                  <div key={index} className="border rounded p-4">
+                  <div key={index} className="border rounded-sm p-4">
                     <div className="flex items-start justify-between mb-2">
                       <h4 className="font-medium">{rec.recommendation}</h4>
                       <Badge variant="outline">Priority {rec.priority}</Badge>
@@ -823,7 +823,7 @@ const FhirAiDashboard: React.FC<DashboardProps> = ({ supabaseUrl, supabaseKey })
               <CardContent>
                 <div className="space-y-2">
                   {state.qualityMetrics.dataQuality.issues.map((issue: any, index: number) => (
-                    <div key={index} className="flex items-center justify-between p-2 border rounded">
+                    <div key={index} className="flex items-center justify-between p-2 border rounded-sm">
                       <div>
                         <div className="font-medium">{issue.type}</div>
                         <div className="text-sm text-gray-600">{issue.description}</div>

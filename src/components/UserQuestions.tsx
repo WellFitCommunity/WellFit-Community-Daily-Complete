@@ -184,17 +184,17 @@ export default function UserQuestions({
 
       {/* Submit New Question (Users Only) */}
       {!isAdmin && (
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <h3 className="text-lg font-semibold mb-4">Ask Your Care Team</h3>
           
           {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-sm mb-4">
               {error}
             </div>
           )}
           
           {success && (
-            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-sm mb-4">
               {success}
             </div>
           )}
@@ -236,7 +236,7 @@ export default function UserQuestions({
             <button
               onClick={submitQuestion}
               disabled={submitting || !newQuestion.trim()}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+              className="bg-blue-600 text-white px-4 py-2 rounded-sm hover:bg-blue-700 disabled:opacity-50"
             >
               {submitting ? 'Submitting...' : 'Submit Question'}
             </button>
@@ -245,7 +245,7 @@ export default function UserQuestions({
       )}
 
       {/* Questions List */}
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-white rounded-lg shadow-sm">
         <div className="p-4 border-b flex justify-between items-center">
           <h3 className="text-lg font-semibold">
             {isAdmin ? 'Pending Questions' : 'Your Questions'}
@@ -322,7 +322,7 @@ export default function UserQuestions({
                           <button
                             onClick={() => submitResponse(question.id)}
                             disabled={submitting || !responseText.trim()}
-                            className="bg-green-600 text-white px-3 py-1 text-sm rounded hover:bg-green-700 disabled:opacity-50"
+                            className="bg-green-600 text-white px-3 py-1 text-sm rounded-sm hover:bg-green-700 disabled:opacity-50"
                           >
                             {submitting ? 'Sending...' : 'Send Response'}
                           </button>
@@ -331,7 +331,7 @@ export default function UserQuestions({
                               setRespondingTo(null);
                               setResponseText('');
                             }}
-                            className="bg-gray-600 text-white px-3 py-1 text-sm rounded hover:bg-gray-700"
+                            className="bg-gray-600 text-white px-3 py-1 text-sm rounded-sm hover:bg-gray-700"
                           >
                             Cancel
                           </button>
@@ -340,7 +340,7 @@ export default function UserQuestions({
                     ) : (
                       <button
                         onClick={() => setRespondingTo(question.id)}
-                        className="bg-blue-600 text-white px-3 py-1 text-sm rounded hover:bg-blue-700"
+                        className="bg-blue-600 text-white px-3 py-1 text-sm rounded-sm hover:bg-blue-700"
                       >
                         Respond
                       </button>

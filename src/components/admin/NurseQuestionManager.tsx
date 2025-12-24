@@ -397,7 +397,7 @@ Format your response as a clear, professional message that can be sent to the pa
       </div>
 
       {/* Filters and Search */}
-      <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
+      <div className="bg-white rounded-lg shadow-xs border p-4 mb-6">
         <div className="flex flex-wrap gap-4 items-center">
           <button
             onClick={async () => {
@@ -499,7 +499,7 @@ Format your response as a clear, professional message that can be sent to the pa
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Questions List */}
-        <div className="bg-white rounded-lg shadow-sm border">
+        <div className="bg-white rounded-lg shadow-xs border">
           <div className="p-4 border-b">
             <h2 className="text-lg font-semibold">Patient Questions</h2>
           </div>
@@ -554,7 +554,7 @@ Format your response as a clear, professional message that can be sent to the pa
         </div>
 
         {/* Response Panel */}
-        <div className="bg-white rounded-lg shadow-sm border">
+        <div className="bg-white rounded-lg shadow-xs border">
           {selectedQuestion ? (
             <div className="p-4">
               <div className="border-b pb-4 mb-4">
@@ -635,7 +635,7 @@ Format your response as a clear, professional message that can be sent to the pa
                     ) : aiSuggestion ? (
                       <div>
                         <h4 className="font-medium text-purple-900 mb-2">AI Response Suggestion:</h4>
-                        <div className="bg-white p-3 rounded border mb-3">
+                        <div className="bg-white p-3 rounded-sm border mb-3">
                           <p className="text-gray-800 text-sm mb-2">{aiSuggestion.response}</p>
                           <div className="text-xs text-gray-600">
                             <span className="font-medium">Confidence:</span> {(aiSuggestion.confidence * 100).toFixed(0)}%
@@ -654,7 +654,7 @@ Format your response as a clear, professional message that can be sent to the pa
 
                         <button
                           onClick={() => setResponseText(aiSuggestion.response)}
-                          className="text-xs px-2 py-1 bg-purple-200 text-purple-800 rounded hover:bg-purple-300"
+                          className="text-xs px-2 py-1 bg-purple-200 text-purple-800 rounded-sm hover:bg-purple-300"
                         >
                           Use This Response
                         </button>

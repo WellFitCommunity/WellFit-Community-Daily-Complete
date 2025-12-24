@@ -182,7 +182,7 @@ const DemographicsPage: React.FC = () => {
             {currentStep > 1 && (
               <button
                 onClick={prevStep}
-                className="px-6 py-3 text-lg font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                className="px-6 py-3 text-lg font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 focus:outline-hidden focus:ring-2 focus:ring-gray-500"
               >
                 Previous
               </button>
@@ -194,7 +194,7 @@ const DemographicsPage: React.FC = () => {
                 <button
                   onClick={skipToConsent}
                   disabled={saving}
-                  className="px-6 py-3 text-lg font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50"
+                  className="px-6 py-3 text-lg font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 focus:outline-hidden focus:ring-2 focus:ring-gray-500 disabled:opacity-50"
                 >
                   {saving ? 'Skipping...' : 'Skip to Consent'}
                 </button>
@@ -204,7 +204,7 @@ const DemographicsPage: React.FC = () => {
               <button
                 onClick={saveProgress}
                 disabled={saving}
-                className="px-6 py-3 text-lg font-medium text-blue-700 bg-blue-100 rounded-lg hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                className="px-6 py-3 text-lg font-medium text-blue-700 bg-blue-100 rounded-lg hover:bg-blue-200 focus:outline-hidden focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
               >
                 {saving ? 'Saving...' : 'Save for Later'}
               </button>
@@ -213,7 +213,7 @@ const DemographicsPage: React.FC = () => {
               {currentStep < totalSteps ? (
                 <button
                   onClick={nextStep}
-                  className="px-6 py-3 text-lg font-medium text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="px-6 py-3 text-lg font-medium text-white rounded-lg focus:outline-hidden focus:ring-2 focus:ring-green-500"
                   style={{ backgroundColor: WELLFIT_COLORS.green }}
                 >
                   Next
@@ -222,7 +222,7 @@ const DemographicsPage: React.FC = () => {
                 <button
                   onClick={handleSubmit}
                   disabled={submitting}
-                  className="px-8 py-3 text-lg font-medium text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
+                  className="px-8 py-3 text-lg font-medium text-white rounded-lg focus:outline-hidden focus:ring-2 focus:ring-green-500 disabled:opacity-50"
                   style={{ backgroundColor: WELLFIT_COLORS.green }}
                 >
                   {submitting ? 'Saving...' : 'Continue to Consent'}

@@ -129,12 +129,12 @@ const FeatureFlagControlPanel: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow">
+      <div className="bg-white p-6 rounded-lg shadow-sm">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+          <div className="h-8 bg-gray-200 rounded-sm w-1/3"></div>
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-20 bg-gray-200 rounded"></div>
+              <div key={i} className="h-20 bg-gray-200 rounded-sm"></div>
             ))}
           </div>
         </div>
@@ -144,14 +144,14 @@ const FeatureFlagControlPanel: React.FC = () => {
 
   if (error) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow">
+      <div className="bg-white p-6 rounded-lg shadow-sm">
         <div className="flex items-center gap-3 text-red-600">
           <AlertTriangle className="w-6 h-6" />
           <p>{error}</p>
         </div>
         <button
           onClick={loadData}
-          className="mt-4 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors shadow-sm"
+          className="mt-4 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors shadow-xs"
         >
           Retry
         </button>
@@ -162,7 +162,7 @@ const FeatureFlagControlPanel: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white p-6 rounded-lg shadow">
+      <div className="bg-white p-6 rounded-lg shadow-sm">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-xl font-bold text-gray-900">Feature Flag Control</h2>
@@ -172,7 +172,7 @@ const FeatureFlagControlPanel: React.FC = () => {
           </div>
           <button
             onClick={loadData}
-            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors shadow-sm"
+            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors shadow-xs"
           >
             Refresh
           </button>
@@ -185,7 +185,7 @@ const FeatureFlagControlPanel: React.FC = () => {
             <button
               key={cat}
               onClick={() => setFilterCategory(cat)}
-              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors shadow-sm ${
+              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors shadow-xs ${
                 filterCategory === cat
                   ? 'bg-purple-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -250,7 +250,7 @@ const FeatureFlagControlPanel: React.FC = () => {
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="text-lg font-bold text-gray-900">{feature.featureName}</h3>
-                      <span className={`px-2 py-1 rounded text-xs font-medium bg-${color}-100 text-${color}-800 capitalize`}>
+                      <span className={`px-2 py-1 rounded-sm text-xs font-medium bg-${color}-100 text-${color}-800 capitalize`}>
                         {category.replace('_', ' ')}
                       </span>
                     </div>

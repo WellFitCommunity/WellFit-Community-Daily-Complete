@@ -79,12 +79,12 @@ const AuditLogViewer: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow">
+      <div className="bg-white p-6 rounded-lg shadow-sm">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+          <div className="h-8 bg-gray-200 rounded-sm w-1/3"></div>
           <div className="space-y-3">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-20 bg-gray-200 rounded"></div>
+              <div key={i} className="h-20 bg-gray-200 rounded-sm"></div>
             ))}
           </div>
         </div>
@@ -95,7 +95,7 @@ const AuditLogViewer: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white p-6 rounded-lg shadow">
+      <div className="bg-white p-6 rounded-lg shadow-sm">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-xl font-bold text-gray-900">Master Admin Audit Logs</h2>
@@ -106,7 +106,7 @@ const AuditLogViewer: React.FC = () => {
           <button
             onClick={loadAuditLogs}
             disabled={loading}
-            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2 transition-colors shadow-sm"
+            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2 transition-colors shadow-xs"
           >
             <Activity className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -132,7 +132,7 @@ const AuditLogViewer: React.FC = () => {
             <button
               key={severity}
               onClick={() => setFilterSeverity(severity as typeof filterSeverity)}
-              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors shadow-sm ${
+              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors shadow-xs ${
                 filterSeverity === severity
                   ? 'bg-red-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -147,7 +147,7 @@ const AuditLogViewer: React.FC = () => {
                 type="checkbox"
                 checked={showCriticalOnly}
                 onChange={(e) => setShowCriticalOnly(e.target.checked)}
-                className="rounded border-gray-300"
+                className="rounded-sm border-gray-300"
               />
               Show critical events only
             </label>
@@ -196,7 +196,7 @@ const AuditLogViewer: React.FC = () => {
       </div>
 
       {/* Audit Log List */}
-      <div className="bg-white p-6 rounded-lg shadow">
+      <div className="bg-white p-6 rounded-lg shadow-sm">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           Recent Activity ({filteredLogs.length} events)
         </h3>
@@ -233,13 +233,13 @@ const AuditLogViewer: React.FC = () => {
                           <span className={`px-3 py-1 rounded-full text-xs font-medium ${getActionColor(log.action)}`}>
                             {log.action}
                           </span>
-                          <span className={`px-2 py-1 rounded text-xs font-medium bg-${color}-100 text-${color}-800`}>
+                          <span className={`px-2 py-1 rounded-sm text-xs font-medium bg-${color}-100 text-${color}-800`}>
                             {log.severity}
                           </span>
                         </div>
                         <p className="text-gray-900 font-medium mb-1">{log.description}</p>
                         {log.details && Object.keys(log.details).length > 0 && (
-                          <div className="bg-white p-3 rounded mt-2 border border-gray-200">
+                          <div className="bg-white p-3 rounded-sm mt-2 border border-gray-200">
                             <div className="text-xs font-medium text-gray-700 mb-2">Details:</div>
                             <div className="space-y-1">
                               {Object.entries(log.details).map(([key, value]) => (

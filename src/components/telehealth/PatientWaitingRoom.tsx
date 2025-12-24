@@ -220,7 +220,7 @@ const PatientWaitingRoomInner: React.FC<PatientWaitingRoomProps> = ({
   // Loading state
   if (roomState.isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="flex items-center justify-center h-screen bg-linear-to-br from-blue-50 to-indigo-100">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4" />
           <p className="text-lg text-gray-700">Connecting to your provider...</p>
@@ -232,7 +232,7 @@ const PatientWaitingRoomInner: React.FC<PatientWaitingRoomProps> = ({
   // Error state
   if (roomState.error) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-red-50 to-pink-100">
+      <div className="flex items-center justify-center h-screen bg-linear-to-br from-red-50 to-pink-100">
         <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md">
           <div className="text-center mb-6">
             <div className="text-6xl mb-4">⚠️</div>
@@ -253,7 +253,7 @@ const PatientWaitingRoomInner: React.FC<PatientWaitingRoomProps> = ({
   // Waiting room
   if (roomState.isWaiting) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="flex items-center justify-center h-screen bg-linear-to-br from-blue-50 to-indigo-100">
         <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md text-center">
           <div className="mb-6">
             <div className="text-6xl mb-4">👨‍⚕️</div>

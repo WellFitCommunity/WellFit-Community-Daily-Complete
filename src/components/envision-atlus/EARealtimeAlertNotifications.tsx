@@ -64,7 +64,7 @@ const AlertToast: React.FC<AlertToastProps> = ({ alert, onDismiss, onNavigate })
       aria-live={alert.severity === 'emergency' ? 'assertive' : 'polite'}
     >
       <div className="flex items-start gap-3">
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           {getSeverityIcon(alert.severity)}
         </div>
         <div className="flex-1 min-w-0">

@@ -248,7 +248,7 @@ export const SecurityPanel: React.FC = () => {
                 <div className="flex gap-4">
                   <div>
                     <label className="text-sm text-gray-600">Severity</label>
-                    <p className={`inline-block px-2 py-1 rounded text-xs ${getSeverityColor(selectedAlert.severity)}`}>
+                    <p className={`inline-block px-2 py-1 rounded-sm text-xs ${getSeverityColor(selectedAlert.severity)}`}>
                       {selectedAlert.severity.toUpperCase()}
                     </p>
                   </div>
@@ -266,7 +266,7 @@ export const SecurityPanel: React.FC = () => {
                 {selectedAlert.metadata && (
                   <div>
                     <label className="text-sm text-gray-600">Additional Details</label>
-                    <pre className="mt-1 p-2 bg-gray-50 rounded text-xs overflow-auto">
+                    <pre className="mt-1 p-2 bg-gray-50 rounded-sm text-xs overflow-auto">
                       {JSON.stringify(selectedAlert.metadata, null, 2)}
                     </pre>
                   </div>

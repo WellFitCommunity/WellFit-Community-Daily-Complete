@@ -55,7 +55,7 @@ const ClaudeCareAssistantPanel: React.FC<Props> = ({ userRole, patientId, userId
 
   if (!moduleConfig) {
     return (
-      <div className="p-4 bg-yellow-50 border border-yellow-200 rounded">
+      <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-sm">
         <p className="text-yellow-800">
           Claude Care Assistant is not configured for role: {userRole}
         </p>
@@ -92,7 +92,7 @@ const ClaudeCareAssistantPanel: React.FC<Props> = ({ userRole, patientId, userId
   return (
     <div className="bg-white shadow-lg rounded-lg overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
+      <div className="bg-linear-to-r from-blue-600 to-purple-600 text-white p-6">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold">Claude Care Assistant</h2>

@@ -398,7 +398,7 @@ const SelfReportingPage: React.FC = () => {
           <div className="p-4 sm:p-6 border-b border-gray-200">
             <button
               onClick={() => navigate('/dashboard')}
-              className="flex items-center mb-4 px-3 py-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200"
+              className="flex items-center mb-4 px-3 py-2 bg-white rounded-lg shadow-xs hover:shadow-md transition-shadow border border-gray-200"
               style={{ color: branding.primaryColor }}
             >
               <ArrowLeft size={20} className="mr-2" />
@@ -431,7 +431,7 @@ const SelfReportingPage: React.FC = () => {
                   onChange={(e) => setMood(e.target.value)}
                   disabled={isLoading}
                   aria-required="true"
-                  className="mt-1 block w-full py-3 px-4 text-lg border-2 border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 text-gray-900 placeholder-gray-400"
+                  className="mt-1 block w-full py-3 px-4 text-lg border-2 border-gray-300 bg-white rounded-lg shadow-xs focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 text-gray-900 placeholder-gray-400"
                   style={{ minHeight: '48px', fontSize: '16px' }}
                 >
                   <option value="" disabled className="text-gray-500 bg-gray-50">
@@ -515,7 +515,7 @@ const SelfReportingPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setShowPulseOximeter(true)}
-                    className="px-4 py-3 bg-gradient-to-r from-red-500 to-pink-500 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2 whitespace-nowrap"
+                    className="px-4 py-3 bg-linear-to-r from-red-500 to-pink-500 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2 whitespace-nowrap"
                     title="Measure with your camera"
                   >
                     <Heart size={20} />
@@ -565,7 +565,7 @@ const SelfReportingPage: React.FC = () => {
                 <select
                   value={physicalActivity}
                   onChange={(e) => setPhysicalActivity(e.target.value)}
-                  className="w-full py-3 px-4 text-lg border-2 border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 placeholder-gray-400"
+                  className="w-full py-3 px-4 text-lg border-2 border-gray-300 bg-white rounded-lg shadow-xs focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 placeholder-gray-400"
                   style={{ minHeight: '48px', fontSize: '16px' }}
                 >
                   <option value="" className="text-gray-500 bg-gray-50">
@@ -587,7 +587,7 @@ const SelfReportingPage: React.FC = () => {
                 <select
                   value={socialEngagement}
                   onChange={(e) => setSocialEngagement(e.target.value)}
-                  className="w-full py-3 px-4 text-lg border-2 border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 placeholder-gray-400"
+                  className="w-full py-3 px-4 text-lg border-2 border-gray-300 bg-white rounded-lg shadow-xs focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 placeholder-gray-400"
                   style={{ minHeight: '48px', fontSize: '16px' }}
                 >
                   <option value="" className="text-gray-500 bg-gray-50">
@@ -617,7 +617,7 @@ const SelfReportingPage: React.FC = () => {
                     onChange={(e) => setSymptoms(e.target.value)}
                     rows={3}
                     disabled={isLoading}
-                    className="w-full py-3 px-4 text-lg border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 disabled:bg-gray-50 pr-14 text-gray-900 placeholder-gray-400"
+                    className="w-full py-3 px-4 text-lg border border-gray-300 bg-white rounded-lg shadow-xs focus:outline-hidden focus:ring-green-500 focus:border-green-500 disabled:bg-gray-50 pr-14 text-gray-900 placeholder-gray-400"
                     placeholder="e.g., headache, fatigue, feeling dizzy..."
                     maxLength={500}
                   />
@@ -656,7 +656,7 @@ const SelfReportingPage: React.FC = () => {
                     onChange={(e) => setActivity(e.target.value)}
                     rows={3}
                     disabled={isLoading}
-                    className="w-full py-3 px-4 text-lg border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 disabled:bg-gray-50 pr-14 text-gray-900 placeholder-gray-400"
+                    className="w-full py-3 px-4 text-lg border border-gray-300 bg-white rounded-lg shadow-xs focus:outline-hidden focus:ring-green-500 focus:border-green-500 disabled:bg-gray-50 pr-14 text-gray-900 placeholder-gray-400"
                     placeholder="Tell us about your day, any concerns, or how you're feeling..."
                     maxLength={500}
                   />
@@ -706,7 +706,7 @@ const SelfReportingPage: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading || !currentUser || !mood}
-              className="w-full text-white font-bold py-4 px-6 rounded-lg text-2xl shadow-lg transition-all duration-300 disabled:opacity-50 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-white hover:shadow-xl"
+              className="w-full text-white font-bold py-4 px-6 rounded-lg text-2xl shadow-lg transition-all duration-300 disabled:opacity-50 focus:outline-hidden focus:ring-4 focus:ring-offset-2 focus:ring-white hover:shadow-xl"
               style={{
                 background:
                   branding.gradient ||
@@ -759,7 +759,7 @@ const SelfReportingPage: React.FC = () => {
                   marginBottom: '8px',
                   background: '#fff',
                 }}
-                className="rounded-md shadow-sm"
+                className="rounded-md shadow-xs"
               >
                 <strong>{new Date(log.created_at).toLocaleString()}</strong>
                 <span

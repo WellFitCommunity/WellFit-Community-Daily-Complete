@@ -246,7 +246,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto p-6 space-y-6">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
+        <div className="bg-white rounded-lg shadow-xs border border-gray-200 p-6 text-center">
           <p className="text-gray-600">Loading settings...</p>
         </div>
       </div>
@@ -256,7 +256,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-white rounded-lg shadow-xs border border-gray-200 p-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Admin Settings</h1>
@@ -286,7 +286,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
       </div>
 
       {/* Theme Settings */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-white rounded-lg shadow-xs border border-gray-200 p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
           <span className="mr-2">🎨</span>
           Appearance
@@ -317,7 +317,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
                 type="checkbox"
                 checked={settings.display.compactMode}
                 onChange={(e) => updateSetting('display', 'compactMode', e.target.checked)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500"
               />
               <span className="ml-2 text-sm text-gray-700">Compact mode</span>
             </label>
@@ -327,7 +327,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
                 type="checkbox"
                 checked={settings.display.showAdvancedMetrics}
                 onChange={(e) => updateSetting('display', 'showAdvancedMetrics', e.target.checked)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500"
               />
               <span className="ml-2 text-sm text-gray-700">Show advanced metrics</span>
             </label>
@@ -349,7 +349,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
       </div>
 
       {/* Notifications */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-white rounded-lg shadow-xs border border-gray-200 p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
           <span className="mr-2">🔔</span>
           Notifications
@@ -364,7 +364,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
               type="checkbox"
               checked={settings.notifications.email}
               onChange={(e) => updateSetting('notifications', 'email', e.target.checked)}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500"
             />
           </label>
 
@@ -377,7 +377,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
               type="checkbox"
               checked={settings.notifications.browser}
               onChange={(e) => updateSetting('notifications', 'browser', e.target.checked)}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500"
             />
           </label>
 
@@ -390,7 +390,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
               type="checkbox"
               checked={settings.notifications.emergencyAlerts}
               onChange={(e) => updateSetting('notifications', 'emergencyAlerts', e.target.checked)}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500"
               disabled
             />
           </label>
@@ -398,7 +398,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
       </div>
 
       {/* Security */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-white rounded-lg shadow-xs border border-gray-200 p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
           <span className="mr-2">🔒</span>
           Security
@@ -429,7 +429,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
               type="checkbox"
               checked={settings.security.requirePinForSensitive}
               onChange={(e) => updateSetting('security', 'requirePinForSensitive', e.target.checked)}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500"
             />
           </label>
 
@@ -442,7 +442,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
               type="checkbox"
               checked={settings.security.enableAuditLogging}
               onChange={(e) => updateSetting('security', 'enableAuditLogging', e.target.checked)}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500"
             />
           </label>
         </div>
@@ -450,7 +450,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
 
       {/* System Settings (Super Admin Only) */}
       {adminRole === 'super_admin' && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-lg shadow-xs border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
             <span className="mr-2">⚙️</span>
             System Settings
@@ -466,7 +466,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
                 type="checkbox"
                 checked={settings.system.autoBackup}
                 onChange={(e) => updateSetting('system', 'autoBackup', e.target.checked)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500"
               />
             </label>
 
@@ -496,7 +496,7 @@ const AdminSettingsPanel: React.FC = memo(() => {
                 type="checkbox"
                 checked={settings.system.enableBetaFeatures}
                 onChange={(e) => updateSetting('system', 'enableBetaFeatures', e.target.checked)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500"
               />
             </label>
           </div>

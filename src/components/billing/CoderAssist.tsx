@@ -90,7 +90,7 @@ export function CoderAssist({ encounterId, patientId, onSaved }: Props) {
   }
 
   function Pill({ label }: { label: string }) {
-    return <span className="inline-block text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded">{label}</span>;
+    return <span className="inline-block text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-sm">{label}</span>;
   }
 
   function Section({ title, count, children }: { title: string; count?: number; children: React.ReactNode }) {
@@ -108,7 +108,7 @@ export function CoderAssist({ encounterId, patientId, onSaved }: Props) {
   }
 
   return (
-    <div className="w-full rounded-xl border bg-white p-4 md:p-6 shadow-sm">
+    <div className="w-full rounded-xl border bg-white p-4 md:p-6 shadow-xs">
       <div className="flex items-center justify-between gap-3 mb-4">
         <div>
           <h3 className="text-lg font-semibold">Coder Assist</h3>
@@ -121,14 +121,14 @@ export function CoderAssist({ encounterId, patientId, onSaved }: Props) {
           <button
             onClick={fetchSuggestions}
             disabled={disabled}
-            className="px-3 py-2 rounded bg-green-600 text-white disabled:opacity-50"
+            className="px-3 py-2 rounded-sm bg-green-600 text-white disabled:opacity-50"
           >
             {loading ? 'Analyzing…' : 'Get Codes'}
           </button>
           <button
             onClick={saveSuggestion}
             disabled={!suggestion || saving}
-            className="px-3 py-2 rounded bg-blue-600 text-white disabled:opacity-50"
+            className="px-3 py-2 rounded-sm bg-blue-600 text-white disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Accept & Save'}
           </button>
@@ -155,7 +155,7 @@ export function CoderAssist({ encounterId, patientId, onSaved }: Props) {
             {suggestion.cpt?.length ? (
               <div className="space-y-2">
                 {suggestion.cpt.map((c, idx) => (
-                  <div key={`cpt-${idx}`} className="p-2 rounded border bg-gray-50">
+                  <div key={`cpt-${idx}`} className="p-2 rounded-sm border bg-gray-50">
                     <div className="flex items-center justify-between">
                       <div className="font-mono font-semibold">{c.code}</div>
                       {c.modifiers?.length ? (
@@ -176,7 +176,7 @@ export function CoderAssist({ encounterId, patientId, onSaved }: Props) {
             {suggestion.hcpcs?.length ? (
               <div className="space-y-2">
                 {suggestion.hcpcs.map((h, idx) => (
-                  <div key={`hcpcs-${idx}`} className="p-2 rounded border bg-gray-50">
+                  <div key={`hcpcs-${idx}`} className="p-2 rounded-sm border bg-gray-50">
                     <div className="flex items-center justify-between">
                       <div className="font-mono font-semibold">{h.code}</div>
                       {h.modifiers?.length ? (
@@ -197,10 +197,10 @@ export function CoderAssist({ encounterId, patientId, onSaved }: Props) {
             {suggestion.icd10?.length ? (
               <div className="space-y-2">
                 {suggestion.icd10.map((d, idx) => (
-                  <div key={`icd-${idx}`} className="p-2 rounded border bg-gray-50">
+                  <div key={`icd-${idx}`} className="p-2 rounded-sm border bg-gray-50">
                     <div className="flex items-center justify-between">
                       <div className="font-mono font-semibold">{d.code}</div>
-                      {d.principal && <span className="text-xs px-2 py-0.5 bg-purple-50 text-purple-700 rounded">Principal</span>}
+                      {d.principal && <span className="text-xs px-2 py-0.5 bg-purple-50 text-purple-700 rounded-sm">Principal</span>}
                     </div>
                     {d.rationale && <div className="text-xs text-gray-700 mt-1">{d.rationale}</div>}
                   </div>

@@ -672,10 +672,10 @@ export const MigrationSurvey: React.FC<MigrationSurveyProps> = ({
   const progress = ((currentStep + 1) / SURVEY_QUESTIONS.length) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-linear-to-br from-slate-900 to-slate-800 flex items-center justify-center p-6">
       <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full overflow-hidden">
         {/* Header - Envision Atlus branding */}
-        <div className="bg-gradient-to-r from-teal-600 to-teal-700 px-8 py-6 text-white">
+        <div className="bg-linear-to-r from-teal-600 to-teal-700 px-8 py-6 text-white">
           <h1 className="text-2xl font-bold">Help Us Improve</h1>
           <p className="text-teal-100 mt-1">Your feedback makes our migration tool smarter</p>
 

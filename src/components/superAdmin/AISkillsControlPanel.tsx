@@ -271,12 +271,12 @@ const AISkillsControlPanel: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow">
+      <div className="bg-white p-6 rounded-lg shadow-sm">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+          <div className="h-8 bg-gray-200 rounded-sm w-1/3"></div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-24 bg-gray-200 rounded"></div>
+              <div key={i} className="h-24 bg-gray-200 rounded-sm"></div>
             ))}
           </div>
         </div>
@@ -286,7 +286,7 @@ const AISkillsControlPanel: React.FC = () => {
 
   if (error) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow">
+      <div className="bg-white p-6 rounded-lg shadow-sm">
         <div className="flex items-center gap-3 text-red-600">
           <AlertTriangle className="w-6 h-6" />
           <p>{error}</p>
@@ -298,7 +298,7 @@ const AISkillsControlPanel: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white p-6 rounded-lg shadow">
+      <div className="bg-white p-6 rounded-lg shadow-sm">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
@@ -347,7 +347,7 @@ const AISkillsControlPanel: React.FC = () => {
       </div>
 
       {/* Filter */}
-      <div className="bg-white p-4 rounded-lg shadow flex items-center gap-4">
+      <div className="bg-white p-4 rounded-lg shadow-sm flex items-center gap-4">
         <span className="text-sm font-medium text-gray-700">Filter:</span>
         <div className="flex gap-2">
           {(['all', 'enabled', 'disabled'] as const).map((filter) => (
@@ -372,7 +372,7 @@ const AISkillsControlPanel: React.FC = () => {
           const config = tenantConfigs.find(c => c.tenant_id === tenantStat.tenant_id);
 
           return (
-            <div key={tenantStat.tenant_id} className="bg-white p-6 rounded-lg shadow">
+            <div key={tenantStat.tenant_id} className="bg-white p-6 rounded-lg shadow-sm">
               {/* Tenant Header */}
               <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
                 <div>

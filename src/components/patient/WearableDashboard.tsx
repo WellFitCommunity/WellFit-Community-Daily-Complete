@@ -347,7 +347,7 @@ export const WearableDashboard: React.FC = () => {
             <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-6">
               <h2 className="text-xl font-bold mb-4 text-yellow-900">Recent Fall Alerts</h2>
               {falls.slice(0, 3).map((fall) => (
-                <div key={fall.id} className="mb-4 p-4 bg-white rounded border border-yellow-300">
+                <div key={fall.id} className="mb-4 p-4 bg-white rounded-sm border border-yellow-300">
                   <div className="flex justify-between items-center">
                     <div>
                       <div className="font-semibold">
@@ -381,7 +381,7 @@ export const WearableDashboard: React.FC = () => {
             {vitals.length > 0 ? (
               <div className="space-y-2">
                 {vitals.map((vital) => (
-                  <div key={vital.id} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                  <div key={vital.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-sm">
                     <span className="text-sm text-gray-600">
                       {new Date(vital.measured_at).toLocaleString()}
                     </span>

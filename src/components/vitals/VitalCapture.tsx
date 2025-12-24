@@ -686,7 +686,7 @@ export const VitalCapture: React.FC<VitalCaptureProps> = ({
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-3/4 h-1/2 border-2 border-teal-400 rounded-lg">
             <div className="w-full h-full flex items-center justify-center">
-              <p className="text-teal-400 text-sm bg-slate-900/80 px-3 py-1 rounded">
+              <p className="text-teal-400 text-sm bg-slate-900/80 px-3 py-1 rounded-sm">
                 Position numbers here
               </p>
             </div>
@@ -885,7 +885,7 @@ export const VitalCapture: React.FC<VitalCaptureProps> = ({
         {/* Error display */}
         {error && method !== 'ble' && !pendingReading && (
           <div className="mb-6 bg-red-900/30 border border-red-500/50 rounded-lg p-4 text-red-400 flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+            <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
             <div>
               <p>{error}</p>
               <button

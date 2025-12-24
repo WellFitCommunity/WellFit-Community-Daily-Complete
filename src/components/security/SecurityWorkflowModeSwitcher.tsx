@@ -179,7 +179,7 @@ export const SecurityWorkflowModeSwitcher: React.FC<SecurityWorkflowModeSwitcher
                 relative p-4 rounded-lg transition-all text-left
                 ${
                   isActive
-                    ? `bg-gradient-to-br ${mode.gradient} text-white shadow-lg border-2 border-white`
+                    ? `bg-linear-to-br ${mode.gradient} text-white shadow-lg border-2 border-white`
                     : 'bg-gray-50 hover:bg-gray-100 border-2 border-gray-200'
                 }
               `}
@@ -230,7 +230,7 @@ export const SecurityWorkflowModeSwitcher: React.FC<SecurityWorkflowModeSwitcher
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mt-4 p-3 bg-gradient-to-r from-red-50 to-orange-50 rounded-lg border border-red-200"
+          className="mt-4 p-3 bg-linear-to-r from-red-50 to-orange-50 rounded-lg border border-red-200"
         >
           <div className="flex items-start gap-2">
             <Activity className="w-4 h-4 text-red-600 mt-0.5" />

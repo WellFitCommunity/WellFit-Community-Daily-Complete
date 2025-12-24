@@ -131,7 +131,7 @@ const HealthInsightsWidget: React.FC<HealthInsightsProps> = ({ healthData, onClo
   }
 
   return (
-    <div className="bg-gradient-to-br from-blue-50 to-green-50 border-2 border-blue-200 rounded-2xl p-5 mt-6 shadow-lg">
+    <div className="bg-linear-to-br from-blue-50 to-green-50 border-2 border-blue-200 rounded-2xl p-5 mt-6 shadow-lg">
       <div className="flex justify-between items-start mb-4">
         <h3 className="text-xl font-bold text-blue-800 flex items-center">
           <span className="text-2xl mr-2">🤖</span>
@@ -169,9 +169,9 @@ const HealthInsightsWidget: React.FC<HealthInsightsProps> = ({ healthData, onClo
                 {suggestions.map((suggestion, index) => (
                   <li
                     key={suggestion.id || index}
-                    className="flex items-start bg-gradient-to-r from-blue-50 to-green-50 rounded-xl p-4 border border-blue-100 shadow-sm hover:shadow-md transition-shadow"
+                    className="flex items-start bg-linear-to-r from-blue-50 to-green-50 rounded-xl p-4 border border-blue-100 shadow-xs hover:shadow-md transition-shadow"
                   >
-                    <span className="text-3xl mr-3 flex-shrink-0">
+                    <span className="text-3xl mr-3 shrink-0">
                       {suggestion.type === 'breathing' && '🌬️'}
                       {suggestion.type === 'physical' && '🚶'}
                       {suggestion.type === 'social' && '👥'}

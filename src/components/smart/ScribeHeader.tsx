@@ -50,8 +50,8 @@ export const ScribeHeader: React.FC<ScribeHeaderProps> = React.memo(({
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
               isSmartScribe
-                ? 'bg-gradient-to-br from-blue-500 to-blue-600'
-                : 'bg-gradient-to-br from-[#00857a] to-[#006d64]'
+                ? 'bg-linear-to-br from-blue-500 to-blue-600'
+                : 'bg-linear-to-br from-[#00857a] to-[#006d64]'
             }`}>
               {isSmartScribe ? (
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

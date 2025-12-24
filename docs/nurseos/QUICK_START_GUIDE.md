@@ -281,14 +281,14 @@ export function DailyCheckinForm({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-4 bg-white rounded-lg shadow">
+    <form onSubmit={handleSubmit} className="space-y-4 p-4 bg-white rounded-lg shadow-sm">
       <h3 className="text-lg font-semibold">Daily Check-In</h3>
 
       {/* Work Setting */}
       <div>
         <label className="block text-sm font-medium mb-1">Work Setting</label>
         <select
-          className="w-full border rounded px-3 py-2"
+          className="w-full border rounded-sm px-3 py-2"
           value={formData.work_setting}
           onChange={(e) => setFormData({ ...formData, work_setting: e.target.value as WorkSetting })}
         >
@@ -351,7 +351,7 @@ export function DailyCheckinForm({ onClose }: { onClose: () => void }) {
           type="number"
           min="0"
           placeholder="Optional"
-          className="w-full border rounded px-3 py-2"
+          className="w-full border rounded-sm px-3 py-2"
           onChange={(e) => setFormData({
             ...formData,
             patients_contacted_today: e.target.value ? parseInt(e.target.value) : undefined
@@ -360,7 +360,7 @@ export function DailyCheckinForm({ onClose }: { onClose: () => void }) {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-sm">
           {error}
         </div>
       )}
@@ -369,14 +369,14 @@ export function DailyCheckinForm({ onClose }: { onClose: () => void }) {
         <button
           type="submit"
           disabled={loading}
-          className="flex-1 bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700 disabled:opacity-50"
+          className="flex-1 bg-teal-600 text-white px-4 py-2 rounded-sm hover:bg-teal-700 disabled:opacity-50"
         >
           {loading ? 'Saving...' : 'Submit Check-In'}
         </button>
         <button
           type="button"
           onClick={onClose}
-          className="px-4 py-2 border rounded hover:bg-gray-50"
+          className="px-4 py-2 border rounded-sm hover:bg-gray-50"
         >
           Cancel
         </button>
@@ -422,7 +422,7 @@ export function ResilienceHubDashboard() {
       <h2 className="text-2xl font-bold">Emotional Resilience Hub</h2>
 
       {/* Burnout Risk Badge */}
-      <div className="bg-white rounded-lg shadow p-4">
+      <div className="bg-white rounded-lg shadow-sm p-4">
         <h3 className="text-sm font-medium text-gray-500 mb-2">Your Burnout Risk</h3>
         <div className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
           burnoutRisk === 'critical' ? 'bg-red-100 text-red-800' :
@@ -440,7 +440,7 @@ export function ResilienceHubDashboard() {
           <p className="text-blue-800 mb-2">You haven't checked in today. How are you feeling?</p>
           <button
             onClick={() => setShowCheckinForm(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            className="bg-blue-600 text-white px-4 py-2 rounded-sm hover:bg-blue-700"
           >
             Quick Check-In (2 min)
           </button>
@@ -460,11 +460,11 @@ export function ResilienceHubDashboard() {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-white rounded-lg shadow p-4">
+        <div className="bg-white rounded-lg shadow-sm p-4">
           <h4 className="text-sm text-gray-500">Check-In Streak</h4>
           <p className="text-2xl font-bold">7 days</p>
         </div>
-        <div className="bg-white rounded-lg shadow p-4">
+        <div className="bg-white rounded-lg shadow-sm p-4">
           <h4 className="text-sm text-gray-500">Modules Completed</h4>
           <p className="text-2xl font-bold">3</p>
         </div>

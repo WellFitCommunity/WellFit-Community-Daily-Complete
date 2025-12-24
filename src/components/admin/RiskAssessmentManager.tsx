@@ -253,7 +253,7 @@ const RiskAssessmentManager: React.FC = () => {
                               <Badge variant={getRiskLevelColor(latestAssessment.risk_level)}>
                                 {latestAssessment.risk_level}
                               </Badge>
-                              <span className={`px-2 py-1 text-xs rounded ${getPriorityColor(latestAssessment.priority)}`}>
+                              <span className={`px-2 py-1 text-xs rounded-sm ${getPriorityColor(latestAssessment.priority)}`}>
                                 {latestAssessment.priority}
                               </span>
                               {isOverdue && (
@@ -335,7 +335,7 @@ const RiskAssessmentManager: React.FC = () => {
                     {assessment.risk_factors && assessment.risk_factors.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {assessment.risk_factors.map(factor => (
-                          <span key={factor} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
+                          <span key={factor} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-sm">
                             {factor}
                           </span>
                         ))}

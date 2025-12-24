@@ -61,7 +61,7 @@ const PractitionerProfile: React.FC<PractitionerProfileProps> = ({
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
       {/* Header with Photo and Name */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-6 text-white">
+      <div className="bg-linear-to-r from-blue-600 to-blue-800 p-6 text-white">
         <div className="flex items-start gap-4">
           {practitioner.photo_url ? (
             <img

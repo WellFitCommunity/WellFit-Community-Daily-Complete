@@ -34,7 +34,7 @@ export const EABadge = React.forwardRef<HTMLSpanElement, EABadgeProps>(
       <span
         ref={ref}
         className={cn(
-          'inline-flex items-center gap-1.5 font-medium rounded border',
+          'inline-flex items-center gap-1.5 font-medium rounded-sm border',
           variants[variant],
           sizes[size],
           className

@@ -98,7 +98,7 @@ const MedicationReconciliationAlert: React.FC<MedicationReconciliationAlertProps
     };
 
     return (
-      <span className={`px-2 py-1 text-xs font-semibold rounded border ${colors[severity]}`}>
+      <span className={`px-2 py-1 text-xs font-semibold rounded-sm border ${colors[severity]}`}>
         {severity.toUpperCase()}
       </span>
     );
@@ -189,17 +189,17 @@ const MedicationReconciliationAlert: React.FC<MedicationReconciliationAlertProps
                     <div className="flex items-start gap-2">
                       <span className="font-semibold min-w-[60px]">Lists:</span>
                       <p>
-                        <span className="font-mono text-xs bg-white px-2 py-1 rounded">
+                        <span className="font-mono text-xs bg-white px-2 py-1 rounded-sm">
                           {disc.source_list}
                         </span>
                         {' → '}
-                        <span className="font-mono text-xs bg-white px-2 py-1 rounded">
+                        <span className="font-mono text-xs bg-white px-2 py-1 rounded-sm">
                           {disc.target_list}
                         </span>
                       </p>
                     </div>
 
-                    <div className="bg-blue-50 border border-blue-200 rounded p-2 mt-2">
+                    <div className="bg-blue-50 border border-blue-200 rounded-sm p-2 mt-2">
                       <p className="text-xs font-semibold text-blue-900 mb-1">
                         📋 Recommended Action:
                       </p>

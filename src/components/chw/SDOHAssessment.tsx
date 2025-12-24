@@ -223,7 +223,7 @@ export const SDOHAssessment: React.FC<SDOHAssessmentProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 p-8">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 to-green-50 p-8">
       <div className="max-w-5xl mx-auto">
         <div className="bg-white rounded-3xl shadow-2xl p-12">
           <h2 className="text-5xl font-bold text-gray-800 mb-6 text-center">{t.title}</h2>
@@ -366,7 +366,7 @@ export const SDOHAssessment: React.FC<SDOHAssessmentProps> = ({
                 id="sdoh-notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className="w-full text-xl px-6 py-4 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 outline-none"
+                className="w-full text-xl px-6 py-4 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 outline-hidden"
                 placeholder={t.notesPlaceholder}
                 rows={4}
               />

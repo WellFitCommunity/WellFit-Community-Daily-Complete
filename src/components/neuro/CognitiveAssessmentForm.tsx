@@ -139,7 +139,7 @@ export const CognitiveAssessmentForm: React.FC<CognitiveAssessmentFormProps> = (
       </div>
 
       {/* Assessment Tool Selector */}
-      <div className="bg-blue-50 p-4 rounded">
+      <div className="bg-blue-50 p-4 rounded-sm">
         <label className="block font-medium mb-2">Select Assessment Tool</label>
         <div className="flex space-x-4">
           <button
@@ -171,13 +171,13 @@ export const CognitiveAssessmentForm: React.FC<CognitiveAssessmentFormProps> = (
 
       {/* Education Level (for MoCA adjustment) */}
       {assessmentTool === 'MoCA' && (
-        <div className="bg-yellow-50 p-4 rounded">
+        <div className="bg-yellow-50 p-4 rounded-sm">
           <label className="block font-medium mb-2">Years of Education</label>
           <input
             type="number"
             value={formData.years_education || ''}
             onChange={(e) => handleInputChange('years_education', parseInt(e.target.value))}
-            className="w-32 border rounded p-2"
+            className="w-32 border rounded-sm p-2"
             placeholder="12"
           />
           <p className="text-sm text-gray-600 mt-2">
@@ -188,7 +188,7 @@ export const CognitiveAssessmentForm: React.FC<CognitiveAssessmentFormProps> = (
 
       {/* MoCA Scoring */}
       {assessmentTool === 'MoCA' && (
-        <div className="space-y-4 bg-gray-50 p-4 rounded">
+        <div className="space-y-4 bg-gray-50 p-4 rounded-sm">
           <h2 className="text-xl font-bold">MoCA Scoring (Total: 30 points)</h2>
 
           <div className="border-b pb-3">
@@ -200,7 +200,7 @@ export const CognitiveAssessmentForm: React.FC<CognitiveAssessmentFormProps> = (
               max="5"
               value={formData.moca_visuospatial || ''}
               onChange={(e) => handleInputChange('moca_visuospatial', parseInt(e.target.value) || 0)}
-              className="w-20 border rounded p-2"
+              className="w-20 border rounded-sm p-2"
             />
           </div>
 
@@ -213,7 +213,7 @@ export const CognitiveAssessmentForm: React.FC<CognitiveAssessmentFormProps> = (
               max="3"
               value={formData.moca_naming || ''}
               onChange={(e) => handleInputChange('moca_naming', parseInt(e.target.value) || 0)}
-              className="w-20 border rounded p-2"
+              className="w-20 border rounded-sm p-2"
             />
           </div>
 
@@ -226,7 +226,7 @@ export const CognitiveAssessmentForm: React.FC<CognitiveAssessmentFormProps> = (
               max="6"
               value={formData.moca_attention || ''}
               onChange={(e) => handleInputChange('moca_attention', parseInt(e.target.value) || 0)}
-              className="w-20 border rounded p-2"
+              className="w-20 border rounded-sm p-2"
             />
           </div>
 
@@ -239,7 +239,7 @@ export const CognitiveAssessmentForm: React.FC<CognitiveAssessmentFormProps> = (
               max="3"
               value={formData.moca_language || ''}
               onChange={(e) => handleInputChange('moca_language', parseInt(e.target.value) || 0)}
-              className="w-20 border rounded p-2"
+              className="w-20 border rounded-sm p-2"
             />
           </div>
 
@@ -252,7 +252,7 @@ export const CognitiveAssessmentForm: React.FC<CognitiveAssessmentFormProps> = (
               max="2"
               value={formData.moca_abstraction || ''}
               onChange={(e) => handleInputChange('moca_abstraction', parseInt(e.target.value) || 0)}
-              className="w-20 border rounded p-2"
+              className="w-20 border rounded-sm p-2"
             />
           </div>
 
@@ -267,7 +267,7 @@ export const CognitiveAssessmentForm: React.FC<CognitiveAssessmentFormProps> = (
               max="5"
               value={formData.moca_delayed_recall || ''}
               onChange={(e) => handleInputChange('moca_delayed_recall', parseInt(e.target.value) || 0)}
-              className="w-20 border rounded p-2"
+              className="w-20 border rounded-sm p-2"
             />
           </div>
 
@@ -280,7 +280,7 @@ export const CognitiveAssessmentForm: React.FC<CognitiveAssessmentFormProps> = (
               max="6"
               value={formData.moca_orientation || ''}
               onChange={(e) => handleInputChange('moca_orientation', parseInt(e.target.value) || 0)}
-              className="w-20 border rounded p-2"
+              className="w-20 border rounded-sm p-2"
             />
           </div>
         </div>
@@ -288,7 +288,7 @@ export const CognitiveAssessmentForm: React.FC<CognitiveAssessmentFormProps> = (
 
       {/* MMSE Scoring */}
       {assessmentTool === 'MMSE' && (
-        <div className="space-y-4 bg-gray-50 p-4 rounded">
+        <div className="space-y-4 bg-gray-50 p-4 rounded-sm">
           <h2 className="text-xl font-bold">MMSE Scoring (Total: 30 points)</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -300,7 +300,7 @@ export const CognitiveAssessmentForm: React.FC<CognitiveAssessmentFormProps> = (
                 max="5"
                 value={formData.mmse_orientation_time || ''}
                 onChange={(e) => handleInputChange('mmse_orientation_time', parseInt(e.target.value) || 0)}
-                className="w-20 border rounded p-2"
+                className="w-20 border rounded-sm p-2"
               />
             </div>
 
@@ -312,7 +312,7 @@ export const CognitiveAssessmentForm: React.FC<CognitiveAssessmentFormProps> = (
                 max="5"
                 value={formData.mmse_orientation_place || ''}
                 onChange={(e) => handleInputChange('mmse_orientation_place', parseInt(e.target.value) || 0)}
-                className="w-20 border rounded p-2"
+                className="w-20 border rounded-sm p-2"
               />
             </div>
 
@@ -324,7 +324,7 @@ export const CognitiveAssessmentForm: React.FC<CognitiveAssessmentFormProps> = (
                 max="3"
                 value={formData.mmse_registration || ''}
                 onChange={(e) => handleInputChange('mmse_registration', parseInt(e.target.value) || 0)}
-                className="w-20 border rounded p-2"
+                className="w-20 border rounded-sm p-2"
               />
             </div>
 
@@ -336,7 +336,7 @@ export const CognitiveAssessmentForm: React.FC<CognitiveAssessmentFormProps> = (
                 max="5"
                 value={formData.mmse_attention_calculation || ''}
                 onChange={(e) => handleInputChange('mmse_attention_calculation', parseInt(e.target.value) || 0)}
-                className="w-20 border rounded p-2"
+                className="w-20 border rounded-sm p-2"
               />
             </div>
 
@@ -348,7 +348,7 @@ export const CognitiveAssessmentForm: React.FC<CognitiveAssessmentFormProps> = (
                 max="3"
                 value={formData.mmse_recall || ''}
                 onChange={(e) => handleInputChange('mmse_recall', parseInt(e.target.value) || 0)}
-                className="w-20 border rounded p-2"
+                className="w-20 border rounded-sm p-2"
               />
             </div>
 
@@ -360,7 +360,7 @@ export const CognitiveAssessmentForm: React.FC<CognitiveAssessmentFormProps> = (
                 max="2"
                 value={formData.mmse_naming || ''}
                 onChange={(e) => handleInputChange('mmse_naming', parseInt(e.target.value) || 0)}
-                className="w-20 border rounded p-2"
+                className="w-20 border rounded-sm p-2"
               />
             </div>
 
@@ -372,7 +372,7 @@ export const CognitiveAssessmentForm: React.FC<CognitiveAssessmentFormProps> = (
                 max="1"
                 value={formData.mmse_repetition || ''}
                 onChange={(e) => handleInputChange('mmse_repetition', parseInt(e.target.value) || 0)}
-                className="w-20 border rounded p-2"
+                className="w-20 border rounded-sm p-2"
               />
             </div>
 
@@ -384,7 +384,7 @@ export const CognitiveAssessmentForm: React.FC<CognitiveAssessmentFormProps> = (
                 max="3"
                 value={formData.mmse_comprehension || ''}
                 onChange={(e) => handleInputChange('mmse_comprehension', parseInt(e.target.value) || 0)}
-                className="w-20 border rounded p-2"
+                className="w-20 border rounded-sm p-2"
               />
             </div>
 
@@ -396,7 +396,7 @@ export const CognitiveAssessmentForm: React.FC<CognitiveAssessmentFormProps> = (
                 max="1"
                 value={formData.mmse_reading || ''}
                 onChange={(e) => handleInputChange('mmse_reading', parseInt(e.target.value) || 0)}
-                className="w-20 border rounded p-2"
+                className="w-20 border rounded-sm p-2"
               />
             </div>
 
@@ -408,7 +408,7 @@ export const CognitiveAssessmentForm: React.FC<CognitiveAssessmentFormProps> = (
                 max="1"
                 value={formData.mmse_writing || ''}
                 onChange={(e) => handleInputChange('mmse_writing', parseInt(e.target.value) || 0)}
-                className="w-20 border rounded p-2"
+                className="w-20 border rounded-sm p-2"
               />
             </div>
 
@@ -420,7 +420,7 @@ export const CognitiveAssessmentForm: React.FC<CognitiveAssessmentFormProps> = (
                 max="1"
                 value={formData.mmse_drawing || ''}
                 onChange={(e) => handleInputChange('mmse_drawing', parseInt(e.target.value) || 0)}
-                className="w-20 border rounded p-2"
+                className="w-20 border rounded-sm p-2"
               />
             </div>
           </div>
@@ -452,7 +452,7 @@ export const CognitiveAssessmentForm: React.FC<CognitiveAssessmentFormProps> = (
           value={formData.behavioral_observations || ''}
           onChange={(e) => handleInputChange('behavioral_observations', e.target.value)}
           rows={3}
-          className="w-full border rounded p-2"
+          className="w-full border rounded-sm p-2"
           placeholder="Patient cooperation, anxiety level, attention span, fatigue..."
         />
       </div>
@@ -463,7 +463,7 @@ export const CognitiveAssessmentForm: React.FC<CognitiveAssessmentFormProps> = (
           value={formData.informant_report || ''}
           onChange={(e) => handleInputChange('informant_report', e.target.value)}
           rows={3}
-          className="w-full border rounded p-2"
+          className="w-full border rounded-sm p-2"
           placeholder="Family/caregiver observations about daily functioning, memory concerns..."
         />
       </div>
@@ -474,7 +474,7 @@ export const CognitiveAssessmentForm: React.FC<CognitiveAssessmentFormProps> = (
           <button
             type="button"
             onClick={onCancel}
-            className="px-6 py-2 border rounded hover:bg-gray-100"
+            className="px-6 py-2 border rounded-sm hover:bg-gray-100"
           >
             Cancel
           </button>
@@ -482,7 +482,7 @@ export const CognitiveAssessmentForm: React.FC<CognitiveAssessmentFormProps> = (
         <button
           type="submit"
           disabled={submitting}
-          className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
+          className="px-6 py-2 bg-blue-600 text-white rounded-sm hover:bg-blue-700 disabled:bg-gray-400"
         >
           {submitting ? 'Saving...' : 'Save Assessment'}
         </button>

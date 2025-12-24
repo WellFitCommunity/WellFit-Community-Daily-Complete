@@ -175,7 +175,7 @@ export const NurseWorkflowModeSwitcher: React.FC<NurseWorkflowModeSwitcherProps>
                 relative p-4 rounded-lg transition-all text-left
                 ${
                   isActive
-                    ? `bg-gradient-to-br ${mode.gradient} text-white shadow-lg border-2 border-white`
+                    ? `bg-linear-to-br ${mode.gradient} text-white shadow-lg border-2 border-white`
                     : 'bg-gray-50 hover:bg-gray-100 border-2 border-gray-200'
                 }
               `}
@@ -226,7 +226,7 @@ export const NurseWorkflowModeSwitcher: React.FC<NurseWorkflowModeSwitcherProps>
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg border border-blue-200"
+          className="mt-4 p-3 bg-linear-to-r from-blue-50 to-cyan-50 rounded-lg border border-blue-200"
         >
           <div className="flex items-start gap-2">
             <Activity className="w-4 h-4 text-blue-600 mt-0.5" />

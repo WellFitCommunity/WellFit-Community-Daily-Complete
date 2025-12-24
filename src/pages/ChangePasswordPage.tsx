@@ -147,7 +147,7 @@ if (q.type === 'recovery' && q.code) {
             placeholder="New password"
             value={pw1}
             onChange={(e) => setPw1(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded pr-12"
+            className="w-full p-3 border border-gray-300 rounded-sm pr-12"
             autoComplete="new-password"
             required
             minLength={8}
@@ -169,7 +169,7 @@ if (q.type === 'recovery' && q.code) {
             placeholder="Confirm new password"
             value={pw2}
             onChange={(e) => setPw2(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded pr-12"
+            className="w-full p-3 border border-gray-300 rounded-sm pr-12"
             autoComplete="new-password"
             required
             minLength={8}
@@ -199,7 +199,7 @@ if (q.type === 'recovery' && q.code) {
         <button
           type="submit"
           disabled={!ok || busy || !sessionReady}
-          className="w-full py-3 bg-black text-white rounded disabled:opacity-50"
+          className="w-full py-3 bg-black text-white rounded-sm disabled:opacity-50"
         >
           {busy ? 'Saving…' : 'Save New Password'}
         </button>

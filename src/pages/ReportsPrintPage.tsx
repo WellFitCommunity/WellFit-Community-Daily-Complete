@@ -330,41 +330,41 @@ const ReportsPrintPage: React.FC = () => {
         <div className="flex flex-wrap items-end gap-2">
           <div>
             <label className="block text-sm text-gray-700">From</label>
-            <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="border rounded px-2 py-1" />
+            <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="border rounded-sm px-2 py-1" />
           </div>
           <div>
             <label className="block text-sm text-gray-700">To</label>
-            <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="border rounded px-2 py-1" />
+            <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="border rounded-sm px-2 py-1" />
           </div>
-          <button onClick={() => fetchReports()} className="px-3 py-2 rounded bg-gray-100 border hover:bg-gray-200">Refresh</button>
-          <button onClick={handleExportCsv} disabled={exporting} className="px-3 py-2 rounded bg-[#003865] text-white disabled:opacity-60">{exporting ? 'Exporting…' : 'Export .csv'}</button>
-          <button onClick={handlePrint} className="px-3 py-2 rounded bg-[#8cc63f] text-white">Print</button>
+          <button onClick={() => fetchReports()} className="px-3 py-2 rounded-sm bg-gray-100 border hover:bg-gray-200">Refresh</button>
+          <button onClick={handleExportCsv} disabled={exporting} className="px-3 py-2 rounded-sm bg-[#003865] text-white disabled:opacity-60">{exporting ? 'Exporting…' : 'Export .csv'}</button>
+          <button onClick={handlePrint} className="px-3 py-2 rounded-sm bg-[#8cc63f] text-white">Print</button>
         </div>
       </div>
 
       {/* Error */}
-      {error && <div className="no-print mb-3 p-2 rounded bg-red-100 text-red-700">{error}</div>}
+      {error && <div className="no-print mb-3 p-2 rounded-sm bg-red-100 text-red-700">{error}</div>}
 
       {/* Engagement Summary */}
-      <div className="print-card bg-white rounded-xl shadow p-4 mb-4">
+      <div className="print-card bg-white rounded-xl shadow-sm p-4 mb-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold" style={{ color: branding.primaryColor }}>Engagement Summary</h2>
           <div className="text-sm text-gray-500">Range: {from} → {to}</div>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center mt-3">
-          <div className="p-3 border rounded">
+          <div className="p-3 border rounded-sm">
             <div className="text-sm text-gray-500">Total Check-Ins</div>
             <div className="text-2xl font-bold">{stats.totalCheckIns}</div>
           </div>
-          <div className="p-3 border rounded">
+          <div className="p-3 border rounded-sm">
             <div className="text-sm text-gray-500">Meals Prepared</div>
             <div className="text-2xl font-bold">{stats.mealsPrepared}</div>
           </div>
-          <div className="p-3 border rounded">
+          <div className="p-3 border rounded-sm">
             <div className="text-sm text-gray-500">Tech Tips Viewed</div>
             <div className="text-2xl font-bold">{stats.techTipsViewed}</div>
           </div>
-          <div className="p-3 border rounded">
+          <div className="p-3 border rounded-sm">
             <div className="text-sm text-gray-500">Registered Users</div>
             <div className="text-2xl font-bold">{stats.activeUsers}</div>
           </div>
@@ -395,7 +395,7 @@ const ReportsPrintPage: React.FC = () => {
       </div>
 
       {/* Self Reports Table */}
-      <div className="print-card bg-white rounded-xl shadow p-4">
+      <div className="print-card bg-white rounded-xl shadow-sm p-4">
         <h2 className="text-xl font-semibold mb-2" style={{ color: branding.primaryColor }}>Self Reports</h2>
         {loading ? (
           <div className="text-gray-500">Loading…</div>

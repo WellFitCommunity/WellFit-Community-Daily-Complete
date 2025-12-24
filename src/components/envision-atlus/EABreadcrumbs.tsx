@@ -195,7 +195,7 @@ export const EABreadcrumbs: React.FC<EABreadcrumbsProps> = ({
       {/* Patient context indicator */}
       {showPatient && patientContext?.hasPatient && (
         <>
-          <div className="flex items-center gap-1 px-2 py-0.5 bg-teal-500/20 border border-teal-500/30 rounded text-teal-300">
+          <div className="flex items-center gap-1 px-2 py-0.5 bg-teal-500/20 border border-teal-500/30 rounded-sm text-teal-300">
             <User className={iconSize} />
             <span className="font-medium truncate max-w-[150px]">
               {patientContext.getPatientDisplayName()}
@@ -211,7 +211,7 @@ export const EABreadcrumbs: React.FC<EABreadcrumbsProps> = ({
       {displayItems.map((item, index) => (
         <React.Fragment key={item.path || `ellipsis-${index}`}>
           {index > 0 && (
-            <ChevronRight className={`${iconSize} text-slate-600 flex-shrink-0`} />
+            <ChevronRight className={`${iconSize} text-slate-600 shrink-0`} />
           )}
 
           {item.path && !item.isCurrentPage ? (

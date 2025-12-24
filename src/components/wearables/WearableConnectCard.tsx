@@ -138,27 +138,27 @@ export const WearableConnectCard: React.FC<WearableConnectCardProps> = ({
                 <p className="text-xs font-medium text-gray-700 mb-2">Tracks:</p>
                 <div className="flex flex-wrap gap-1">
                   {adapter.capabilities.heartRate && (
-                    <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">
+                    <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-sm">
                       ❤️ Heart Rate
                     </span>
                   )}
                   {adapter.capabilities.steps && (
-                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-sm">
                       👣 Steps
                     </span>
                   )}
                   {adapter.capabilities.sleep && (
-                    <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
+                    <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-sm">
                       😴 Sleep
                     </span>
                   )}
                   {adapter.capabilities.bloodOxygen && (
-                    <span className="text-xs bg-cyan-100 text-cyan-800 px-2 py-1 rounded">
+                    <span className="text-xs bg-cyan-100 text-cyan-800 px-2 py-1 rounded-sm">
                       🫁 SpO2
                     </span>
                   )}
                   {adapter.capabilities.ecg && (
-                    <span className="text-xs bg-pink-100 text-pink-800 px-2 py-1 rounded">
+                    <span className="text-xs bg-pink-100 text-pink-800 px-2 py-1 rounded-sm">
                       📈 ECG
                     </span>
                   )}

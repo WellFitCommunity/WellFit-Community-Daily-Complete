@@ -91,10 +91,10 @@ export const SOC2ExecutiveDashboard: React.FC = () => {
     return (
       <div className="space-y-4">
         <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
+          <div className="h-8 bg-gray-200 rounded-sm w-1/3 mb-6"></div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="h-64 bg-gray-200 rounded"></div>
-            <div className="h-64 bg-gray-200 rounded"></div>
+            <div className="h-64 bg-gray-200 rounded-sm"></div>
+            <div className="h-64 bg-gray-200 rounded-sm"></div>
           </div>
         </div>
       </div>
@@ -137,7 +137,7 @@ export const SOC2ExecutiveDashboard: React.FC = () => {
       {summary && (
         <>
           {/* Hero Compliance Score */}
-          <Card className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-xl">
+          <Card className="bg-linear-to-br from-blue-600 to-indigo-700 text-white shadow-xl">
             <CardContent className="pt-8 pb-8">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="text-center">
@@ -253,7 +253,7 @@ export const SOC2ExecutiveDashboard: React.FC = () => {
                       <div key={index} className="border-l-4 border-green-500 pl-3 py-2">
                         <div className="font-semibold text-gray-900">
                           {control.control_area}
-                          <span className="ml-2 text-xs font-mono text-gray-600 bg-gray-100 px-2 py-0.5 rounded">
+                          <span className="ml-2 text-xs font-mono text-gray-600 bg-gray-100 px-2 py-0.5 rounded-sm">
                             {control.soc2_criterion}
                           </span>
                         </div>
@@ -293,7 +293,7 @@ export const SOC2ExecutiveDashboard: React.FC = () => {
                       >
                         <div className="font-semibold text-gray-900">
                           {control.control_area}
-                          <span className="ml-2 text-xs font-mono text-gray-600 bg-gray-100 px-2 py-0.5 rounded">
+                          <span className="ml-2 text-xs font-mono text-gray-600 bg-gray-100 px-2 py-0.5 rounded-sm">
                             {control.soc2_criterion}
                           </span>
                         </div>
@@ -324,7 +324,7 @@ export const SOC2ExecutiveDashboard: React.FC = () => {
           </div>
 
           {/* Executive Summary Text */}
-          <Card className="bg-gradient-to-br from-gray-50 to-gray-100">
+          <Card className="bg-linear-to-br from-gray-50 to-gray-100">
             <CardHeader>
               <CardTitle className="text-xl">Executive Summary</CardTitle>
             </CardHeader>

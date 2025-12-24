@@ -284,7 +284,7 @@ export const CHWVitalsCapture: React.FC<CHWVitalsCaptureProps> = ({
   const isSubmitDisabled = loading || !vitals.systolic || !vitals.diastolic;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 p-8">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 to-green-50 p-8">
       <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-3xl shadow-2xl p-12">
           <h2 className="text-5xl font-bold text-gray-800 mb-12 text-center">{t.title}</h2>
@@ -330,7 +330,7 @@ export const CHWVitalsCapture: React.FC<CHWVitalsCaptureProps> = ({
                     onBlur={() => handleBlur('systolic')}
                     disabled={bluetoothConnected}
                     aria-label="Systolic blood pressure"
-                    className={`w-full text-4xl px-8 py-6 border-4 rounded-2xl focus:ring-4 focus:ring-blue-200 outline-none text-center font-bold ${getStatusColor(bpStatus)} disabled:opacity-50`}
+                    className={`w-full text-4xl px-8 py-6 border-4 rounded-2xl focus:ring-4 focus:ring-blue-200 outline-hidden text-center font-bold ${getStatusColor(bpStatus)} disabled:opacity-50`}
                     placeholder="120"
                     min="0"
                     max="300"
@@ -350,7 +350,7 @@ export const CHWVitalsCapture: React.FC<CHWVitalsCaptureProps> = ({
                     onChange={(e) => handleChange('diastolic', e.target.value)}
                     disabled={bluetoothConnected}
                     aria-label="Diastolic blood pressure"
-                    className={`w-full text-4xl px-8 py-6 border-4 rounded-2xl focus:ring-4 focus:ring-blue-200 outline-none text-center font-bold ${getStatusColor(bpStatus)} disabled:opacity-50`}
+                    className={`w-full text-4xl px-8 py-6 border-4 rounded-2xl focus:ring-4 focus:ring-blue-200 outline-hidden text-center font-bold ${getStatusColor(bpStatus)} disabled:opacity-50`}
                     placeholder="80"
                     min="0"
                     max="200"
@@ -377,7 +377,7 @@ export const CHWVitalsCapture: React.FC<CHWVitalsCaptureProps> = ({
                 onChange={(e) => handleChange('heart_rate', e.target.value)}
                 disabled={bluetoothConnected}
                 aria-label="Heart rate"
-                className={`w-full text-4xl px-8 py-6 border-4 rounded-2xl focus:ring-4 focus:ring-blue-200 outline-none text-center font-bold ${getStatusColor(hrStatus)} disabled:opacity-50`}
+                className={`w-full text-4xl px-8 py-6 border-4 rounded-2xl focus:ring-4 focus:ring-blue-200 outline-hidden text-center font-bold ${getStatusColor(hrStatus)} disabled:opacity-50`}
                 placeholder="72"
                 min="0"
                 max="250"
@@ -398,7 +398,7 @@ export const CHWVitalsCapture: React.FC<CHWVitalsCaptureProps> = ({
                 onBlur={() => handleBlur('oxygen_saturation')}
                 disabled={bluetoothConnected}
                 aria-label="Oxygen saturation"
-                className={`w-full text-4xl px-8 py-6 border-4 rounded-2xl focus:ring-4 focus:ring-blue-200 outline-none text-center font-bold ${getStatusColor(o2Status)} disabled:opacity-50`}
+                className={`w-full text-4xl px-8 py-6 border-4 rounded-2xl focus:ring-4 focus:ring-blue-200 outline-hidden text-center font-bold ${getStatusColor(o2Status)} disabled:opacity-50`}
                 placeholder="98"
                 min="0"
                 max="100"
@@ -427,7 +427,7 @@ export const CHWVitalsCapture: React.FC<CHWVitalsCaptureProps> = ({
                 onChange={(e) => handleChange('temperature', e.target.value)}
                 disabled={bluetoothConnected}
                 aria-label="Temperature"
-                className={`w-full text-4xl px-8 py-6 border-4 rounded-2xl focus:ring-4 focus:ring-blue-200 outline-none text-center font-bold ${getStatusColor(tempStatus)} disabled:opacity-50`}
+                className={`w-full text-4xl px-8 py-6 border-4 rounded-2xl focus:ring-4 focus:ring-blue-200 outline-hidden text-center font-bold ${getStatusColor(tempStatus)} disabled:opacity-50`}
                 placeholder="98.6"
                 min="90"
                 max="110"
@@ -446,7 +446,7 @@ export const CHWVitalsCapture: React.FC<CHWVitalsCaptureProps> = ({
                 onChange={(e) => handleChange('weight', e.target.value)}
                 disabled={bluetoothConnected}
                 aria-label="Weight"
-                className="w-full text-4xl px-8 py-6 border-4 border-gray-300 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 outline-none text-center font-bold bg-white disabled:opacity-50"
+                className="w-full text-4xl px-8 py-6 border-4 border-gray-300 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 outline-hidden text-center font-bold bg-white disabled:opacity-50"
                 placeholder="150"
                 min="0"
                 max="1000"

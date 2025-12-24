@@ -56,7 +56,7 @@ const VaccineGapsWidget: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-white rounded-lg shadow-xs border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900">⚠️ Vaccine Care Gaps</h3>
         </div>
@@ -68,7 +68,7 @@ const VaccineGapsWidget: React.FC = () => {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div className="bg-white rounded-lg shadow-xs border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900">⚠️ Vaccine Care Gaps</h3>
         {gaps.length > 0 && (
@@ -101,7 +101,7 @@ const VaccineGapsWidget: React.FC = () => {
               onClick={() => navigate('/immunizations')}
             >
               <div className="flex items-start gap-3">
-                <span className="text-2xl flex-shrink-0">{getVaccineIcon(gap.vaccine_name)}</span>
+                <span className="text-2xl shrink-0">{getVaccineIcon(gap.vaccine_name)}</span>
                 <div className="flex-1 min-w-0">
                   <h4 className="text-sm font-semibold text-gray-900 truncate">
                     {gap.vaccine_name}

@@ -356,7 +356,7 @@ const SeniorViewPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header Bar */}
-      <div className="bg-white shadow-sm border-b sticky top-0 z-10">
+      <div className="bg-white shadow-xs border-b sticky top-0 z-10">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -402,24 +402,24 @@ const SeniorViewPage: React.FC = () => {
       <div className="container mx-auto px-4 py-6 max-w-4xl">
         {/* Quick Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-xl shadow p-4 text-center">
+          <div className="bg-white rounded-xl shadow-sm p-4 text-center">
             <div className="text-3xl mb-1">📊</div>
             <div className="text-2xl font-bold text-gray-800">{checkIns.length}</div>
             <div className="text-sm text-gray-500">Check-ins (30 days)</div>
           </div>
-          <div className="bg-white rounded-xl shadow p-4 text-center">
+          <div className="bg-white rounded-xl shadow-sm p-4 text-center">
             <div className="text-3xl mb-1">
               {moodTrend.trend === 'up' ? '📈' : moodTrend.trend === 'down' ? '📉' : '➡️'}
             </div>
             <div className="text-lg font-bold text-gray-800 capitalize">{moodTrend.trend}</div>
             <div className="text-sm text-gray-500">Mood Trend</div>
           </div>
-          <div className="bg-white rounded-xl shadow p-4 text-center">
+          <div className="bg-white rounded-xl shadow-sm p-4 text-center">
             <div className="text-3xl mb-1">💊</div>
             <div className="text-2xl font-bold text-gray-800">{medications.length}</div>
             <div className="text-sm text-gray-500">Active Medications</div>
           </div>
-          <div className="bg-white rounded-xl shadow p-4 text-center">
+          <div className="bg-white rounded-xl shadow-sm p-4 text-center">
             <div className="text-3xl mb-1">
               {checkIns[0] ? getMoodEmoji(checkIns[0].label) : '❓'}
             </div>
@@ -432,7 +432,7 @@ const SeniorViewPage: React.FC = () => {
 
         <div className="grid md:grid-cols-2 gap-6">
           {/* Recent Check-ins */}
-          <div className="bg-white rounded-xl shadow p-6">
+          <div className="bg-white rounded-xl shadow-sm p-6">
             <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
               <span className="mr-2">📝</span> Recent Check-ins
             </h2>
@@ -456,7 +456,7 @@ const SeniorViewPage: React.FC = () => {
                       </div>
                     </div>
                     {checkIn.notes && (
-                      <p className="mt-2 text-sm text-gray-600 bg-gray-50 rounded p-2">
+                      <p className="mt-2 text-sm text-gray-600 bg-gray-50 rounded-sm p-2">
                         {checkIn.notes}
                       </p>
                     )}
@@ -464,22 +464,22 @@ const SeniorViewPage: React.FC = () => {
                     {(checkIn.heart_rate || checkIn.bp_systolic) && (
                       <div className="mt-2 flex flex-wrap gap-2 text-xs">
                         {checkIn.heart_rate && (
-                          <span className="bg-red-100 text-red-700 px-2 py-1 rounded">
+                          <span className="bg-red-100 text-red-700 px-2 py-1 rounded-sm">
                             ❤️ {checkIn.heart_rate} bpm
                           </span>
                         )}
                         {checkIn.bp_systolic && checkIn.bp_diastolic && (
-                          <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                          <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-sm">
                             🩺 {checkIn.bp_systolic}/{checkIn.bp_diastolic}
                           </span>
                         )}
                         {checkIn.pulse_oximeter && (
-                          <span className="bg-green-100 text-green-700 px-2 py-1 rounded">
+                          <span className="bg-green-100 text-green-700 px-2 py-1 rounded-sm">
                             🫁 {checkIn.pulse_oximeter}%
                           </span>
                         )}
                         {checkIn.glucose_mg_dl && (
-                          <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded">
+                          <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded-sm">
                             🩸 {checkIn.glucose_mg_dl} mg/dL
                           </span>
                         )}
@@ -494,7 +494,7 @@ const SeniorViewPage: React.FC = () => {
           {/* Right Column */}
           <div className="space-y-6">
             {/* Mood Summary */}
-            <div className="bg-white rounded-xl shadow p-6">
+            <div className="bg-white rounded-xl shadow-sm p-6">
               <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
                 <span className="mr-2">💭</span> Mood Summary
               </h2>
@@ -549,7 +549,7 @@ const SeniorViewPage: React.FC = () => {
             </div>
 
             {/* Medications */}
-            <div className="bg-white rounded-xl shadow p-6">
+            <div className="bg-white rounded-xl shadow-sm p-6">
               <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
                 <span className="mr-2">💊</span> Medication Reminders
               </h2>
@@ -565,7 +565,7 @@ const SeniorViewPage: React.FC = () => {
                       {med.time_of_day?.length > 0 && (
                         <div className="mt-1 flex flex-wrap gap-1">
                           {med.time_of_day.map((time, i) => (
-                            <span key={i} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                            <span key={i} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-sm">
                               {time}
                             </span>
                           ))}
@@ -579,7 +579,7 @@ const SeniorViewPage: React.FC = () => {
 
             {/* Emergency Contact */}
             {seniorProfile && (
-              <div className="bg-white rounded-xl shadow p-6">
+              <div className="bg-white rounded-xl shadow-sm p-6">
                 <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
                   <span className="mr-2">📞</span> Emergency Contact
                 </h2>

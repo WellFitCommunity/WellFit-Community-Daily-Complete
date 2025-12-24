@@ -31,7 +31,7 @@ const SystemMetrics: React.FC<SystemMetricsProps> = ({ overview }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {[1, 2, 3, 4].map((i) => (
           <div key={i} className="bg-slate-800 p-6 rounded-lg border border-slate-700 animate-pulse">
-            <div className="h-12 bg-slate-700 rounded"></div>
+            <div className="h-12 bg-slate-700 rounded-sm"></div>
           </div>
         ))}
       </div>
@@ -175,7 +175,7 @@ const SuperAdminDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-slate-900 to-slate-800 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00857a] mx-auto mb-4"></div>
           <p className="text-slate-300 font-medium">Loading Envision Master Admin Panel...</p>
@@ -213,9 +213,9 @@ const SuperAdminDashboard: React.FC = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
+      <div className="min-h-screen bg-linear-to-br from-slate-900 to-slate-800">
         {/* Header */}
-        <header className="bg-gradient-to-r from-[#00857a] to-[#006d64] border-b border-[#00554e] shadow-xl">
+        <header className="bg-linear-to-r from-[#00857a] to-[#006d64] border-b border-[#00554e] shadow-xl">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div className="flex items-center justify-between">
               <div>
@@ -244,7 +244,7 @@ const SuperAdminDashboard: React.FC = () => {
                   )}
                   <span>WellFit Admin</span>
                 </button>
-                <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm border border-white/30 px-4 py-2 rounded-lg">
+                <div className="flex items-center gap-2 bg-white/20 backdrop-blur-xs border border-white/30 px-4 py-2 rounded-lg">
                   <Shield className="w-5 h-5 text-white" />
                   <span className="text-sm font-medium text-white">Master Admin</span>
                 </div>

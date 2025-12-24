@@ -479,7 +479,7 @@ const UsersList: React.FC = () => {
     return (
       <>
         <ToastContainer toasts={toasts} onDismiss={dismissToast} />
-        <div className="bg-white rounded-xl shadow p-6 space-y-4 text-center">
+        <div className="bg-white rounded-xl shadow-sm p-6 space-y-4 text-center">
           <LoadingSpinner size="lg" />
           <p className="text-gray-500">Loading users...</p>
         </div>
@@ -491,7 +491,7 @@ const UsersList: React.FC = () => {
     <>
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
       
-      <div className="bg-white rounded-xl shadow p-6 space-y-6">
+      <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
         {/* Header */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
           <div>

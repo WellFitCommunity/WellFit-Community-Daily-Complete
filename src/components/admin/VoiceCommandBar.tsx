@@ -121,7 +121,7 @@ export const VoiceCommandBar: React.FC<VoiceCommandBarProps> = ({
         {state.isListening && (
           <div className="mb-3">
             {/* Transcript Display */}
-            <div className="min-h-[2.5rem] bg-slate-900 rounded-lg p-2 mb-2">
+            <div className="min-h-10 bg-slate-900 rounded-lg p-2 mb-2">
               <div className="flex items-center gap-2 mb-1">
                 <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
                 <span className="text-slate-400 text-xs">Listening...</span>
@@ -165,7 +165,7 @@ export const VoiceCommandBar: React.FC<VoiceCommandBarProps> = ({
                 'NeuroSuite',
                 'Care Coordination',
               ].map((tip) => (
-                <span key={tip} className="px-2 py-0.5 bg-slate-700 rounded text-xs text-slate-300">
+                <span key={tip} className="px-2 py-0.5 bg-slate-700 rounded-sm text-xs text-slate-300">
                   "{tip}"
                 </span>
               ))}

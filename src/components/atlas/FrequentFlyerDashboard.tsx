@@ -204,7 +204,7 @@ export const FrequentFlyerDashboard: React.FC = () => {
 
       {/* Active Alerts Section */}
       {alerts.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-lg shadow-xs border border-gray-200 p-6">
           <h2 className="text-lg font-semibold mb-4 flex items-center">
             <AlertTriangle className="mr-2 text-yellow-600" size={20} />
             Active Alerts ({alerts.length})
@@ -229,13 +229,13 @@ export const FrequentFlyerDashboard: React.FC = () => {
                         <Calendar size={12} className="mr-1" />
                         {new Date(alert.created_at).toLocaleDateString()}
                       </span>
-                      <span className="px-2 py-1 bg-white rounded text-xs font-medium">
+                      <span className="px-2 py-1 bg-white rounded-sm text-xs font-medium">
                         {alert.alert_type?.replace(/_/g, ' ').toUpperCase()}
                       </span>
                     </div>
                   </div>
                   <button
-                    className="ml-4 px-3 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50"
+                    className="ml-4 px-3 py-1 text-sm bg-white border border-gray-300 rounded-sm hover:bg-gray-50"
                     onClick={() => {
                       // Handle alert assignment/resolution
                     }}
@@ -251,7 +251,7 @@ export const FrequentFlyerDashboard: React.FC = () => {
 
       {/* High Utilizer Metrics Summary */}
       {utilizerMetrics.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-lg shadow-xs border border-gray-200 p-6">
           <h2 className="text-lg font-semibold mb-4 flex items-center">
             <TrendingUp className="mr-2 text-blue-600" size={20} />
             High Utilizer Breakdown
@@ -298,7 +298,7 @@ export const FrequentFlyerDashboard: React.FC = () => {
                 .sort((a, b) => b.total_visits - a.total_visits)
                 .slice(0, 5)
                 .map((utilizer, index) => (
-                  <div key={utilizer.patient_id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                  <div key={utilizer.patient_id} className="flex items-center justify-between p-2 bg-gray-50 rounded-sm">
                     <div className="flex items-center">
                       <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-medium mr-2">
                         {index + 1}
@@ -326,7 +326,7 @@ export const FrequentFlyerDashboard: React.FC = () => {
       )}
 
       {/* High Risk Patients Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div className="bg-white rounded-lg shadow-xs border border-gray-200">
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-lg font-semibold">High-Risk Patients</h2>
           <p className="text-sm text-gray-600 mt-1">
@@ -376,9 +376,9 @@ export const FrequentFlyerDashboard: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {patient.has_active_care_plan ? (
-                      <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">Active</span>
+                      <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-sm">Active</span>
                     ) : (
-                      <span className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded">None</span>
+                      <span className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-sm">None</span>
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -433,7 +433,7 @@ interface MetricCardProps {
 
 const MetricCard: React.FC<MetricCardProps> = ({ title, value, icon, trend, alert }) => {
   return (
-    <div className={`bg-white rounded-lg shadow-sm border p-4 ${alert ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}>
+    <div className={`bg-white rounded-lg shadow-xs border p-4 ${alert ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}>
       <div className="flex items-center justify-between">
         <div className="flex-1">
           <p className="text-sm text-gray-600">{title}</p>

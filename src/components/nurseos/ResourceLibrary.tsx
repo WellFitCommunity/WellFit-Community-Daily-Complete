@@ -118,8 +118,8 @@ export const ResourceLibrary: React.FC<ResourceLibraryProps> = ({ onClose, userR
       <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-xl max-w-5xl w-full p-6">
           <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-            <div className="h-64 bg-gray-200 rounded"></div>
+            <div className="h-8 bg-gray-200 rounded-sm w-1/3"></div>
+            <div className="h-64 bg-gray-200 rounded-sm"></div>
           </div>
         </div>
       </div>
@@ -379,7 +379,7 @@ const ResourceCard: React.FC<ResourceCardProps> = ({ resource, onClick }) => {
           </span>
         </div>
         {resource.is_evidence_based && (
-          <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded font-medium">
+          <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-sm font-medium">
             🔬 Evidence-Based
           </span>
         )}
@@ -395,13 +395,13 @@ const ResourceCard: React.FC<ResourceCardProps> = ({ resource, onClick }) => {
           {resource.tags.slice(0, 3).map((tag) => (
             <span
               key={tag}
-              className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs"
+              className="px-2 py-1 bg-gray-100 text-gray-600 rounded-sm text-xs"
             >
               {tag}
             </span>
           ))}
           {resource.tags.length > 3 && (
-            <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
+            <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-sm text-xs">
               +{resource.tags.length - 3} more
             </span>
           )}

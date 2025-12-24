@@ -353,7 +353,7 @@ export const EnvisionTotpSetupPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
       <div className="absolute inset-0 opacity-5">
         <div
           className="absolute inset-0"
@@ -385,7 +385,7 @@ export const EnvisionTotpSetupPage: React.FC = () => {
           ) : error && !qrDataUrl && !successMsg ? (
             <div className="space-y-6">
               <div className="flex items-center gap-2 p-4 bg-red-500/20 border border-red-500/50 rounded-lg">
-                <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
                 <p className="text-sm text-red-200">{error}</p>
               </div>
               <button
@@ -400,7 +400,7 @@ export const EnvisionTotpSetupPage: React.FC = () => {
           ) : successMsg ? (
             <div className="space-y-6">
               <div className="flex items-center gap-2 p-4 bg-green-500/20 border border-green-500/50 rounded-lg">
-                <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
+                <CheckCircle className="w-5 h-5 text-green-400 shrink-0" />
                 <p className="text-sm text-green-200">{successMsg}</p>
               </div>
               <p className="text-center text-blue-300 text-sm">Redirecting to portal...</p>
@@ -436,7 +436,7 @@ export const EnvisionTotpSetupPage: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <code
                         className={`flex-1 text-sm bg-slate-800 px-3 py-2 rounded font-mono text-white break-all ${
-                          !showSecret ? 'blur-sm select-none' : ''
+                          !showSecret ? 'blur-xs select-none' : ''
                         }`}
                       >
                         {secret || '—'}
@@ -485,7 +485,7 @@ export const EnvisionTotpSetupPage: React.FC = () => {
                   <p className="text-xs text-yellow-300/70 mb-3">Save these codes securely. Each code can only be used once.</p>
                   <div className="grid grid-cols-2 gap-2 font-mono text-sm">
                     {backupCodes.map((backupCode, i) => (
-                      <div key={i} className="bg-yellow-500/10 px-2 py-1 rounded text-yellow-200 text-center">
+                      <div key={i} className="bg-yellow-500/10 px-2 py-1 rounded-sm text-yellow-200 text-center">
                         {backupCode}
                       </div>
                     ))}
@@ -495,7 +495,7 @@ export const EnvisionTotpSetupPage: React.FC = () => {
                       type="checkbox"
                       checked={savedBackupCodes}
                       onChange={(e) => setSavedBackupCodes(e.target.checked)}
-                      className="w-4 h-4 rounded border-yellow-500/50 bg-transparent text-yellow-500 focus:ring-yellow-500"
+                      className="w-4 h-4 rounded-sm border-yellow-500/50 bg-transparent text-yellow-500 focus:ring-yellow-500"
                     />
                     <span className="text-xs text-yellow-200">I have saved my backup codes securely</span>
                   </label>
@@ -524,7 +524,7 @@ export const EnvisionTotpSetupPage: React.FC = () => {
                     inputMode="numeric"
                     pattern="\d{6}"
                     disabled={submitting}
-                    className="w-full px-4 py-4 bg-white/10 border border-white/20 rounded-lg text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:opacity-50 text-center text-3xl tracking-[0.5em] font-mono"
+                    className="w-full px-4 py-4 bg-white/10 border border-white/20 rounded-lg text-white placeholder-blue-300/50 focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:opacity-50 text-center text-3xl tracking-[0.5em] font-mono"
                     placeholder="000000"
                     autoFocus
                   />
@@ -532,7 +532,7 @@ export const EnvisionTotpSetupPage: React.FC = () => {
 
                 {error && (
                   <div className="flex items-center gap-2 p-3 bg-red-500/20 border border-red-500/50 rounded-lg">
-                    <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                    <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
                     <p className="text-sm text-red-200">{error}</p>
                   </div>
                 )}
@@ -540,7 +540,7 @@ export const EnvisionTotpSetupPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={!canSubmit || submitting || (backupCodes.length > 0 && !savedBackupCodes)}
-                  className="w-full py-3 px-4 bg-[#00857a] hover:bg-[#006d64] text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#00857a] focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full py-3 px-4 bg-[#00857a] hover:bg-[#006d64] text-white font-medium rounded-lg transition-colors focus:outline-hidden focus:ring-2 focus:ring-[#00857a] focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {submitting ? (
                     <>

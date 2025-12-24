@@ -293,7 +293,7 @@ export const CelebrationMoments: React.FC<CelebrationMomentsProps> = ({
         </div>
       )}
 
-      <div className="bg-gradient-to-br from-yellow-50 via-amber-50 to-orange-50 rounded-2xl p-8 max-w-md mx-4 shadow-2xl border-2 border-yellow-300 text-center transform animate-bounce-once">
+      <div className="bg-linear-to-br from-yellow-50 via-amber-50 to-orange-50 rounded-2xl p-8 max-w-md mx-4 shadow-2xl border-2 border-yellow-300 text-center transform animate-bounce-once">
         {/* Milestone emoji */}
         <div className="text-7xl mb-4 animate-pulse">{milestone.emoji}</div>
 

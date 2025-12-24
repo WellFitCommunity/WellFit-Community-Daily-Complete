@@ -345,7 +345,7 @@ const ExportCheckIns: React.FC = () => {
     <>
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
 
-      <div className="bg-white border rounded-lg shadow-sm p-6">
+      <div className="bg-white border rounded-lg shadow-xs p-6">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-gray-900">Export Check-In Data</h2>
           {isFiltered && (
@@ -470,7 +470,7 @@ const ExportCheckIns: React.FC = () => {
           <button
             onClick={handleExport}
             disabled={loading}
-            className="inline-flex items-center px-6 py-3 bg-wellfit-green text-white font-medium rounded-lg shadow hover:bg-wellfit-blue focus:ring-2 focus:ring-wellfit-green focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            className="inline-flex items-center px-6 py-3 bg-wellfit-green text-white font-medium rounded-lg shadow-sm hover:bg-wellfit-blue focus:ring-2 focus:ring-wellfit-green focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             aria-label={`Export check-in data as ${exportFormat.toUpperCase()}`}
           >
             {loading ? (

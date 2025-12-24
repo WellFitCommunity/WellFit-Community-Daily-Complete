@@ -49,7 +49,7 @@ Think: **Headspace meets Apple Health meets Duolingo** - but for comprehensive h
 ```css
 --bg-primary: #FAFBFC (soft off-white with warm undertone)
 --bg-secondary: linear-gradient(180deg, #F8F9FA 0%, #FFFFFF 100%)
---bg-card: #FFFFFF with soft drop-shadow (0 4px 20px rgba(0,0,0,0.04))
+--bg-card: #FFFFFF with soft drop-shadow-sm (0 4px 20px rgba(0,0,0,0.04))
 --bg-glass: rgba(255, 255, 255, 0.8) backdrop-blur(10px) /* Frosted glass effect */
 ```
 

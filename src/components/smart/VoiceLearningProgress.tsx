@@ -53,7 +53,7 @@ export const VoiceLearningProgress: React.FC<VoiceLearningProgressProps> = ({
     if (compact) return null;
 
     return (
-      <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-4 border border-purple-200">
+      <div className="bg-linear-to-r from-purple-50 to-indigo-50 rounded-lg p-4 border border-purple-200">
         <div className="flex items-center gap-3">
           <span className="text-2xl">🎓</span>
           <div>
@@ -152,7 +152,7 @@ export const VoiceLearningProgress: React.FC<VoiceLearningProgressProps> = ({
           <h5 className="text-xs font-medium text-gray-500 mb-2">Top Corrections Learned:</h5>
           <div className="space-y-1">
             {topCorrections.map((c, idx) => (
-              <div key={idx} className="flex items-center text-xs bg-white rounded px-2 py-1">
+              <div key={idx} className="flex items-center text-xs bg-white rounded-sm px-2 py-1">
                 <span className="text-red-400 line-through mr-2">{c.heard}</span>
                 <span className="text-gray-400 mr-2">→</span>
                 <span className="text-green-600 font-medium">{c.correct}</span>

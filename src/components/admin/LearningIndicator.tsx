@@ -93,7 +93,7 @@ export const LearningIndicator: React.FC<LearningIndicatorProps> = ({
             initial={{ width: 0 }}
             animate={{ width: `${learningScore}%` }}
             transition={{ duration: 0.5, ease: 'easeOut' }}
-            className="h-full bg-gradient-to-r from-purple-500 to-blue-500 rounded-full"
+            className="h-full bg-linear-to-r from-purple-500 to-blue-500 rounded-full"
           />
         </div>
         <div className="text-xs text-gray-600 mt-1 text-right">{learningScore}% learned</div>
@@ -221,7 +221,7 @@ export const SmartSuggestionCard: React.FC<SmartSuggestionCardProps> = ({
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       whileHover={{ scale: 1.02 }}
-      className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-4 cursor-pointer"
+      className="bg-linear-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-4 cursor-pointer"
       onClick={onAction}
     >
       <div className="flex items-start gap-3">
@@ -280,7 +280,7 @@ export const MilestoneCelebration: React.FC<MilestoneCelebrationProps> = ({
               duration: 0.5,
               repeat: 2
             }}
-            className="bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-2xl shadow-2xl p-8 pointer-events-auto max-w-md"
+            className="bg-linear-to-r from-purple-600 to-blue-600 text-white rounded-2xl shadow-2xl p-8 pointer-events-auto max-w-md"
           >
             <div className="text-center">
               <motion.div

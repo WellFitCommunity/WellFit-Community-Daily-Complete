@@ -23,8 +23,8 @@ export default function TermsOfService({ lastUpdated = 'August 24, 2025' }: Term
         }
       `}</style>
 
-      <div className="p-[1px] rounded-2xl" style={{ background: GRADIENT }}>
-        <div className="bg-white rounded-[1rem] p-6 sm:p-8 shadow-md card">
+      <div className="p-px rounded-2xl" style={{ background: GRADIENT }}>
+        <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-md card">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h1 className="text-3xl font-extrabold mb-2" style={{ color: WELLFIT_BLUE }}>
@@ -35,7 +35,7 @@ export default function TermsOfService({ lastUpdated = 'August 24, 2025' }: Term
             <button
               type="button"
               onClick={() => window.print()}
-              className="no-print text-sm px-3 py-2 rounded bg-gray-100 border hover:bg-gray-200"
+              className="no-print text-sm px-3 py-2 rounded-sm bg-gray-100 border hover:bg-gray-200"
               aria-label="Print Terms of Service"
               title="Print"
             >

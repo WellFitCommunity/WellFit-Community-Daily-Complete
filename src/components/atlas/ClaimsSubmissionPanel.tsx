@@ -402,7 +402,7 @@ export const ClaimsSubmissionPanel: React.FC = () => {
                 {result.message}
               </p>
               {result.success && result.claimId && (
-                <div className="mt-3 p-3 bg-white rounded border border-green-200">
+                <div className="mt-3 p-3 bg-white rounded-sm border border-green-200">
                   <p className="text-xs text-gray-600">Claim ID:</p>
                   <code className="text-sm font-mono text-blue-600">{result.claimId}</code>
                 </div>
@@ -414,7 +414,7 @@ export const ClaimsSubmissionPanel: React.FC = () => {
 
       {/* Workflow Insights - Show what UnifiedBillingService found */}
       {workflowResult && workflowResult.success && (
-        <div className="mt-6 p-6 bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-xl">
+        <div className="mt-6 p-6 bg-linear-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-xl">
           <h3 className="text-lg font-bold text-purple-900 mb-4 flex items-center">
             <span className="mr-2">🤖</span>
             Smart Billing Workflow Insights
@@ -422,13 +422,13 @@ export const ClaimsSubmissionPanel: React.FC = () => {
 
           {/* Financial Summary */}
           <div className="grid grid-cols-2 gap-4 mb-4">
-            <div className="p-4 bg-white rounded-lg shadow">
+            <div className="p-4 bg-white rounded-lg shadow-sm">
               <div className="text-xs text-gray-600 mb-1">Total Charges</div>
               <div className="text-2xl font-bold text-gray-900">
                 ${workflowResult.totalCharges.toFixed(2)}
               </div>
             </div>
-            <div className="p-4 bg-white rounded-lg shadow">
+            <div className="p-4 bg-white rounded-lg shadow-sm">
               <div className="text-xs text-gray-600 mb-1">Est. Reimbursement</div>
               <div className="text-2xl font-bold text-green-600">
                 ${workflowResult.estimatedReimbursement.toFixed(2)}
@@ -460,7 +460,7 @@ export const ClaimsSubmissionPanel: React.FC = () => {
 
           {/* Warnings */}
           {workflowResult.warnings.length > 0 && (
-            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
+            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-sm">
               <div className="text-sm font-semibold text-yellow-900 mb-2">
                 ⚠️ Coding Optimizations ({workflowResult.warnings.length})
               </div>
@@ -476,7 +476,7 @@ export const ClaimsSubmissionPanel: React.FC = () => {
 
           {/* Recommended Actions */}
           {workflowResult.recommendedActions.length > 0 && (
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded">
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-sm">
               <div className="text-sm font-semibold text-blue-900 mb-2">
                 💡 Recommended Actions
               </div>
@@ -492,7 +492,7 @@ export const ClaimsSubmissionPanel: React.FC = () => {
 
           {/* Manual Review Flag */}
           {workflowResult.requiresManualReview && (
-            <div className="mt-4 p-3 bg-red-50 border-2 border-red-300 rounded">
+            <div className="mt-4 p-3 bg-red-50 border-2 border-red-300 rounded-sm">
               <div className="text-sm font-bold text-red-900 mb-1">
                 🚨 Manual Review Required
               </div>
@@ -536,13 +536,13 @@ export const ClaimsSubmissionPanel: React.FC = () => {
               <span className="text-xs text-gray-400">{x12Content.length} characters</span>
             </div>
             <div className="p-4 overflow-x-auto">
-              <pre className="text-xs font-mono text-gray-800 whitespace-pre-wrap break-words">
+              <pre className="text-xs font-mono text-gray-800 whitespace-pre-wrap wrap-break-word">
                 {x12Content}
               </pre>
             </div>
           </div>
 
-          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-sm">
             <p className="text-sm text-blue-800">
               <strong>Next Steps:</strong> Download this X12 file and submit it to your clearinghouse for processing.
               The file is formatted according to HIPAA 837P standards.
@@ -564,7 +564,7 @@ export const ClaimsSubmissionPanel: React.FC = () => {
           <li>837P X12 file generated with compliance validation</li>
           <li>Monitor claim status in Revenue Dashboard</li>
         </ol>
-        <div className="mt-3 p-3 bg-purple-50 border border-purple-200 rounded">
+        <div className="mt-3 p-3 bg-purple-50 border border-purple-200 rounded-sm">
           <p className="text-xs text-purple-900 font-semibold">
             🤖 NEW: This panel now uses UnifiedBillingService - the complete integration of SmartScribe AI coding,
             SDOH assessment, CCM time tracking, and Atlus revenue optimization.

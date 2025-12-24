@@ -314,7 +314,7 @@ export const AvatarFullBody: React.FC<AvatarFullBodyProps> = ({
                       <div className="flex items-center gap-2">
                         <span
                           className={cn(
-                            'w-2.5 h-2.5 rounded-full flex-shrink-0',
+                            'w-2.5 h-2.5 rounded-full shrink-0',
                             CATEGORY_COLORS[marker.category].bg
                           )}
                         />

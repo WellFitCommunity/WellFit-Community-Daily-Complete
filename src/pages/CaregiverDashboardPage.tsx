@@ -310,7 +310,7 @@ const CaregiverDashboardPage: React.FC = () => {
             <button
               type="submit"
               disabled={loading || seniorPhone.replace(/\D/g, '').length < 10 || seniorPin.length !== 4}
-              className="w-full py-4 text-xl font-semibold bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full py-4 text-xl font-semibold bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? 'Verifying...' : 'Access Senior Information'}
             </button>

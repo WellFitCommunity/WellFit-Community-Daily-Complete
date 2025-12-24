@@ -246,7 +246,7 @@ export const AdminBurnoutRadar: React.FC<AdminBurnoutRadarProps> = ({
   if (loading) {
     return (
       <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200 animate-pulse">
-        <div className="h-8 bg-gray-200 rounded w-64 mb-6"></div>
+        <div className="h-8 bg-gray-200 rounded-sm w-64 mb-6"></div>
         <div className="grid grid-cols-3 gap-4">
           <div className="h-24 bg-gray-200 rounded-xl"></div>
           <div className="h-24 bg-gray-200 rounded-xl"></div>
@@ -269,7 +269,7 @@ export const AdminBurnoutRadar: React.FC<AdminBurnoutRadarProps> = ({
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white">
+      <div className="bg-linear-to-r from-indigo-600 to-purple-600 p-6 text-white">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold flex items-center gap-2">
@@ -437,7 +437,7 @@ export const AdminBurnoutRadar: React.FC<AdminBurnoutRadarProps> = ({
           <div className="flex gap-2 h-8">
             {stats.riskDistribution.low > 0 && (
               <div
-                className="bg-green-500 rounded flex items-center justify-center text-white text-xs font-medium"
+                className="bg-green-500 rounded-sm flex items-center justify-center text-white text-xs font-medium"
                 style={{ width: `${(stats.riskDistribution.low / stats.totalStaff) * 100}%` }}
                 title={`Low: ${stats.riskDistribution.low}`}
               >
@@ -446,7 +446,7 @@ export const AdminBurnoutRadar: React.FC<AdminBurnoutRadarProps> = ({
             )}
             {stats.riskDistribution.moderate > 0 && (
               <div
-                className="bg-yellow-500 rounded flex items-center justify-center text-white text-xs font-medium"
+                className="bg-yellow-500 rounded-sm flex items-center justify-center text-white text-xs font-medium"
                 style={{ width: `${(stats.riskDistribution.moderate / stats.totalStaff) * 100}%` }}
                 title={`Moderate: ${stats.riskDistribution.moderate}`}
               >
@@ -455,7 +455,7 @@ export const AdminBurnoutRadar: React.FC<AdminBurnoutRadarProps> = ({
             )}
             {stats.riskDistribution.high > 0 && (
               <div
-                className="bg-orange-500 rounded flex items-center justify-center text-white text-xs font-medium"
+                className="bg-orange-500 rounded-sm flex items-center justify-center text-white text-xs font-medium"
                 style={{ width: `${(stats.riskDistribution.high / stats.totalStaff) * 100}%` }}
                 title={`High: ${stats.riskDistribution.high}`}
               >
@@ -464,7 +464,7 @@ export const AdminBurnoutRadar: React.FC<AdminBurnoutRadarProps> = ({
             )}
             {stats.riskDistribution.critical > 0 && (
               <div
-                className="bg-red-500 rounded flex items-center justify-center text-white text-xs font-medium animate-pulse"
+                className="bg-red-500 rounded-sm flex items-center justify-center text-white text-xs font-medium animate-pulse"
                 style={{ width: `${(stats.riskDistribution.critical / stats.totalStaff) * 100}%` }}
                 title={`Critical: ${stats.riskDistribution.critical}`}
               >
@@ -473,7 +473,7 @@ export const AdminBurnoutRadar: React.FC<AdminBurnoutRadarProps> = ({
             )}
             {stats.riskDistribution.unknown > 0 && (
               <div
-                className="bg-gray-400 rounded flex items-center justify-center text-white text-xs font-medium"
+                className="bg-gray-400 rounded-sm flex items-center justify-center text-white text-xs font-medium"
                 style={{ width: `${(stats.riskDistribution.unknown / stats.totalStaff) * 100}%` }}
                 title={`No assessment: ${stats.riskDistribution.unknown}`}
               >
@@ -484,11 +484,11 @@ export const AdminBurnoutRadar: React.FC<AdminBurnoutRadarProps> = ({
 
           {showDetails && (
             <div className="mt-3 flex gap-4 text-xs">
-              <span className="flex items-center gap-1"><span className="w-3 h-3 bg-green-500 rounded"></span> Low ({stats.riskDistribution.low})</span>
-              <span className="flex items-center gap-1"><span className="w-3 h-3 bg-yellow-500 rounded"></span> Moderate ({stats.riskDistribution.moderate})</span>
-              <span className="flex items-center gap-1"><span className="w-3 h-3 bg-orange-500 rounded"></span> High ({stats.riskDistribution.high})</span>
-              <span className="flex items-center gap-1"><span className="w-3 h-3 bg-red-500 rounded"></span> Critical ({stats.riskDistribution.critical})</span>
-              <span className="flex items-center gap-1"><span className="w-3 h-3 bg-gray-400 rounded"></span> No assessment ({stats.riskDistribution.unknown})</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-3 bg-green-500 rounded-sm"></span> Low ({stats.riskDistribution.low})</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-3 bg-yellow-500 rounded-sm"></span> Moderate ({stats.riskDistribution.moderate})</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-3 bg-orange-500 rounded-sm"></span> High ({stats.riskDistribution.high})</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-3 bg-red-500 rounded-sm"></span> Critical ({stats.riskDistribution.critical})</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-3 bg-gray-400 rounded-sm"></span> No assessment ({stats.riskDistribution.unknown})</span>
             </div>
           )}
         </div>

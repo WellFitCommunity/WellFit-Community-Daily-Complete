@@ -96,7 +96,7 @@ const ResourceCard: React.FC<ResourceCardProps> = ({ resource, categoryConfig, o
       )}
 
       {resource.is_evidence_based && (
-        <span className="inline-block text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+        <span className="inline-block text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-sm">
           Evidence-Based
         </span>
       )}
@@ -104,7 +104,7 @@ const ResourceCard: React.FC<ResourceCardProps> = ({ resource, categoryConfig, o
       {resource.tags && resource.tags.length > 0 && (
         <div className="flex flex-wrap gap-1 mt-2">
           {resource.tags.slice(0, 3).map((tag, idx) => (
-            <span key={idx} className="text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded">
+            <span key={idx} className="text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded-sm">
               {tag}
             </span>
           ))}

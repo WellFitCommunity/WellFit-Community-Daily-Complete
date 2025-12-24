@@ -187,9 +187,9 @@ const CHWDashboardPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Header */}
-      <div className="bg-gradient-to-r from-teal-800 via-teal-700 to-cyan-800 border-b border-teal-600">
+      <div className="bg-linear-to-r from-teal-800 via-teal-700 to-cyan-800 border-b border-teal-600">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -302,7 +302,7 @@ const CHWDashboardPage: React.FC = () => {
         </div>
 
         {/* Impact Metrics - Shows value to Methodist */}
-        <div className="bg-gradient-to-r from-teal-900/50 to-cyan-900/50 rounded-xl border border-teal-700 p-6">
+        <div className="bg-linear-to-r from-teal-900/50 to-cyan-900/50 rounded-xl border border-teal-700 p-6">
           <h2 className="text-lg font-semibold text-white mb-2 flex items-center gap-2">
             <span>📈</span> Community-to-Clinical Impact
           </h2>
@@ -398,7 +398,7 @@ const CHWDashboardPage: React.FC = () => {
         </div>
 
         {/* Connection to WellFit */}
-        <div className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 rounded-xl border border-purple-600/30 p-6">
+        <div className="bg-linear-to-r from-purple-900/30 to-pink-900/30 rounded-xl border border-purple-600/30 p-6">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-semibold text-white flex items-center gap-2">

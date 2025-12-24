@@ -215,7 +215,7 @@ const TechTip: React.FC = () => {
   return (
     <section className="bg-white border-2 border-wellfit-green p-6 rounded-xl shadow-md relative overflow-hidden">
       {/* Animated glow effect */}
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-400/10 via-green-400/10 to-blue-400/10 animate-pulse pointer-events-none"></div>
+      <div className="absolute inset-0 bg-linear-to-r from-blue-400/10 via-green-400/10 to-blue-400/10 animate-pulse pointer-events-none"></div>
 
       {/* Content */}
       <div className="relative z-10">
@@ -236,7 +236,7 @@ const TechTip: React.FC = () => {
       </div>
 
       {/* Tip Content with enhanced glow */}
-      <div className="bg-gradient-to-r from-blue-50 to-green-50 p-5 rounded-lg mb-5 border-l-4 border-wellfit-blue shadow-lg ring-2 ring-blue-200/50 hover:ring-blue-300/70 transition-all duration-300">
+      <div className="bg-linear-to-r from-blue-50 to-green-50 p-5 rounded-lg mb-5 border-l-4 border-wellfit-blue shadow-lg ring-2 ring-blue-200/50 hover:ring-blue-300/70 transition-all duration-300">
         <p className="text-gray-800 text-lg leading-relaxed">{todaysTip}</p>
       </div>
 
@@ -250,7 +250,7 @@ const TechTip: React.FC = () => {
           <div className="flex justify-center space-x-3">
             <button
               onClick={() => handleFeedback('helpful')}
-              className="flex items-center space-x-2 px-6 py-3 bg-white border-2 border-green-300 rounded-lg hover:bg-green-50 hover:border-green-400 transition-all duration-200 shadow-sm"
+              className="flex items-center space-x-2 px-6 py-3 bg-white border-2 border-green-300 rounded-lg hover:bg-green-50 hover:border-green-400 transition-all duration-200 shadow-xs"
             >
               <span className="text-2xl">👍</span>
               <span className="font-medium text-green-700">Helpful</span>
@@ -258,7 +258,7 @@ const TechTip: React.FC = () => {
 
             <button
               onClick={() => handleFeedback('not-helpful')}
-              className="flex items-center space-x-2 px-6 py-3 bg-white border-2 border-red-300 rounded-lg hover:bg-red-50 hover:border-red-400 transition-all duration-200 shadow-sm"
+              className="flex items-center space-x-2 px-6 py-3 bg-white border-2 border-red-300 rounded-lg hover:bg-red-50 hover:border-red-400 transition-all duration-200 shadow-xs"
             >
               <span className="text-2xl">👎</span>
               <span className="font-medium text-red-700">Not helpful</span>

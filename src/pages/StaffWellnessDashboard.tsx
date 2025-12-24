@@ -201,9 +201,9 @@ const StaffWellnessDashboard: React.FC = () => {
   const criticalStaff = staffMembers.filter(s => s.burnoutRisk === 'critical' || s.burnoutRisk === 'high');
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Header */}
-      <header className="bg-gradient-to-r from-purple-800 via-purple-700 to-indigo-800 text-white shadow-xl border-b border-purple-600">
+      <header className="bg-linear-to-r from-purple-800 via-purple-700 to-indigo-800 text-white shadow-xl border-b border-purple-600">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -238,7 +238,7 @@ const StaffWellnessDashboard: React.FC = () => {
 
       {/* Alert Banner for Critical Staff */}
       {criticalStaff.length > 0 && (
-        <div className="bg-gradient-to-r from-red-600 to-orange-600 text-white py-3 px-4">
+        <div className="bg-linear-to-r from-red-600 to-orange-600 text-white py-3 px-4">
           <div className="max-w-7xl mx-auto flex items-center gap-3">
             <AlertTriangle className="h-5 w-5" />
             <span className="font-semibold">{criticalStaff.length} staff member(s) at elevated burnout risk</span>
@@ -395,7 +395,7 @@ const StaffWellnessDashboard: React.FC = () => {
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-gradient-to-br from-green-800/30 to-green-900/30 rounded-xl border border-green-600/30 p-6">
+          <div className="bg-linear-to-br from-green-800/30 to-green-900/30 rounded-xl border border-green-600/30 p-6">
             <div className="flex items-center gap-3 mb-3">
               <Coffee className="h-6 w-6 text-green-400" />
               <h3 className="font-semibold text-white">Smart Break Scheduler</h3>
@@ -406,7 +406,7 @@ const StaffWellnessDashboard: React.FC = () => {
             </button>
           </div>
 
-          <div className="bg-gradient-to-br from-blue-800/30 to-blue-900/30 rounded-xl border border-blue-600/30 p-6">
+          <div className="bg-linear-to-br from-blue-800/30 to-blue-900/30 rounded-xl border border-blue-600/30 p-6">
             <div className="flex items-center gap-3 mb-3">
               <Users className="h-6 w-6 text-blue-400" />
               <h3 className="font-semibold text-white">Peer Support Circles</h3>
@@ -417,7 +417,7 @@ const StaffWellnessDashboard: React.FC = () => {
             </button>
           </div>
 
-          <div className="bg-gradient-to-br from-purple-800/30 to-purple-900/30 rounded-xl border border-purple-600/30 p-6">
+          <div className="bg-linear-to-br from-purple-800/30 to-purple-900/30 rounded-xl border border-purple-600/30 p-6">
             <div className="flex items-center gap-3 mb-3">
               <Brain className="h-6 w-6 text-purple-400" />
               <h3 className="font-semibold text-white">Wellness Resources</h3>
@@ -467,8 +467,8 @@ const StaffWellnessDashboard: React.FC = () => {
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="px-2 py-1 bg-slate-800 rounded text-xs">HIPAA Compliant</span>
-              <span className="px-2 py-1 bg-slate-800 rounded text-xs">Staff Confidential</span>
+              <span className="px-2 py-1 bg-slate-800 rounded-sm text-xs">HIPAA Compliant</span>
+              <span className="px-2 py-1 bg-slate-800 rounded-sm text-xs">Staff Confidential</span>
             </div>
           </div>
         </div>

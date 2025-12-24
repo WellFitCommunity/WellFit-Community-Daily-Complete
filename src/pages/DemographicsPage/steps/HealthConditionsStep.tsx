@@ -51,7 +51,7 @@ export const HealthConditionsStep: React.FC<StepProps> = ({
                 type="checkbox"
                 checked={formData.health_conditions.includes(condition)}
                 onChange={() => onHealthConditionToggle?.(condition)}
-                className="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                className="w-5 h-5 text-green-600 border-gray-300 rounded-sm focus:ring-green-500"
               />
               <span className="text-base">{condition}</span>
             </label>

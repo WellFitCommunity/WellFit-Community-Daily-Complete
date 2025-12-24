@@ -420,7 +420,7 @@ const MemoryClinicDashboard: React.FC<MemoryClinicDashboardProps> = ({ patientId
 
             {/* Score Card */}
             <div className="space-y-6">
-              <div className={`bg-gradient-to-br from-purple-500 to-purple-700 text-white rounded-lg shadow-lg p-6`}>
+              <div className={`bg-linear-to-br from-purple-500 to-purple-700 text-white rounded-lg shadow-lg p-6`}>
                 <div className="text-center">
                   <div className="text-sm font-medium uppercase tracking-wide mb-2">MoCA Score</div>
                   <div className="text-6xl font-bold mb-2">{mocaAdjusted}</div>
@@ -531,7 +531,7 @@ const MemoryClinicDashboard: React.FC<MemoryClinicDashboardProps> = ({ patientId
             </div>
 
             <div>
-              <div className="bg-gradient-to-br from-indigo-500 to-indigo-700 text-white rounded-lg shadow-lg p-6">
+              <div className="bg-linear-to-br from-indigo-500 to-indigo-700 text-white rounded-lg shadow-lg p-6">
                 <div className="text-center">
                   <div className="text-sm font-medium uppercase tracking-wide mb-2">CDR Global</div>
                   <div className="text-6xl font-bold mb-4">{cdrGlobal}</div>
@@ -617,7 +617,7 @@ const MemoryClinicDashboard: React.FC<MemoryClinicDashboardProps> = ({ patientId
             </div>
 
             <div className="space-y-6">
-              <div className={`rounded-lg shadow-lg p-6 ${zbiTotal > 40 ? 'bg-gradient-to-br from-red-500 to-red-700' : zbiTotal > 20 ? 'bg-gradient-to-br from-yellow-500 to-yellow-700' : 'bg-gradient-to-br from-green-500 to-green-700'} text-white`}>
+              <div className={`rounded-lg shadow-lg p-6 ${zbiTotal > 40 ? 'bg-linear-to-br from-red-500 to-red-700' : zbiTotal > 20 ? 'bg-linear-to-br from-yellow-500 to-yellow-700' : 'bg-linear-to-br from-green-500 to-green-700'} text-white`}>
                 <div className="text-center">
                   <div className="text-sm font-medium uppercase tracking-wide mb-2">Zarit Burden Score</div>
                   <div className="text-6xl font-bold mb-2">{zbiTotal}</div>
@@ -631,7 +631,7 @@ const MemoryClinicDashboard: React.FC<MemoryClinicDashboardProps> = ({ patientId
               {zbiTotal > 20 && (
                 <div className="bg-white rounded-lg shadow-md p-6">
                   <div className="flex items-start gap-3">
-                    <AlertTriangle className="w-6 h-6 text-orange-600 flex-shrink-0 mt-1" />
+                    <AlertTriangle className="w-6 h-6 text-orange-600 shrink-0 mt-1" />
                     <div>
                       <h3 className="font-bold text-gray-900 mb-2">Intervention Recommended</h3>
                       <ul className="text-sm text-gray-700 space-y-2">

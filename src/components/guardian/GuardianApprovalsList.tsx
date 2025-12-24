@@ -117,7 +117,7 @@ const TicketRow: React.FC<TicketRowProps> = ({ ticket, onClick }) => {
         </div>
       </td>
       <td className="py-4 px-4">
-        <span className={`${statusConfig.bgColor} ${statusConfig.color} px-2 py-1 rounded text-xs`}>
+        <span className={`${statusConfig.bgColor} ${statusConfig.color} px-2 py-1 rounded-sm text-xs`}>
           {statusConfig.icon} {statusConfig.label}
         </span>
       </td>

@@ -125,7 +125,7 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
       {/* Header with Gradient */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-lg p-8 mb-6 text-white">
+      <div className="bg-linear-to-r from-blue-600 to-indigo-600 rounded-xl shadow-lg p-8 mb-6 text-white">
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-3xl font-bold mb-2">📋 Care Plans</h1>
@@ -143,19 +143,19 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+          <div className="bg-white/10 backdrop-blur-xs rounded-lg p-4">
             <div className="text-2xl font-bold">{totalPlans}</div>
             <div className="text-sm text-blue-100">Total Plans</div>
           </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+          <div className="bg-white/10 backdrop-blur-xs rounded-lg p-4">
             <div className="text-2xl font-bold">{activePlansCount}</div>
             <div className="text-sm text-blue-100">Active</div>
           </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+          <div className="bg-white/10 backdrop-blur-xs rounded-lg p-4">
             <div className="text-2xl font-bold">{completedPlans}</div>
             <div className="text-sm text-blue-100">Completed</div>
           </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+          <div className="bg-white/10 backdrop-blur-xs rounded-lg p-4">
             <div className="text-2xl font-bold">{onHoldPlans}</div>
             <div className="text-sm text-blue-100">On Hold</div>
           </div>
@@ -164,7 +164,7 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
 
       {/* Current Active Plan Highlight */}
       {currentPlan && (
-        <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl p-6 mb-6 shadow-lg">
+        <div className="bg-linear-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl p-6 mb-6 shadow-lg">
           <div className="flex items-start justify-between mb-4">
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -226,7 +226,7 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
       )}
 
       {/* Tabs */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+      <div className="bg-white rounded-lg shadow-xs border border-gray-200 mb-6">
         <div className="flex border-b border-gray-200">
           <button
             onClick={() => setActiveTab('all')}
@@ -347,7 +347,7 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div
-                        className="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all duration-500"
+                        className="bg-linear-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all duration-500"
                         style={{ width: `${progress.percentage}%` }}
                       />
                     </div>
@@ -363,7 +363,7 @@ const CarePlanDashboard: React.FC<CarePlanDashboardProps> = ({ userId, readOnly 
       {selectedPlan && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-t-xl">
+            <div className="sticky top-0 bg-linear-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-t-xl">
               <div className="flex justify-between items-start">
                 <div>
                   <h2 className="text-2xl font-bold mb-1">{selectedPlan.title || 'Untitled Care Plan'}</h2>

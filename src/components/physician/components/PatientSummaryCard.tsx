@@ -17,8 +17,8 @@ export const PatientSummaryCard: React.FC<PatientSummaryCardProps> = ({ summary,
     return (
       <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
         <div className="animate-pulse space-y-4">
-          <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+          <div className="h-6 bg-gray-200 rounded-sm w-3/4"></div>
+          <div className="h-4 bg-gray-200 rounded-sm w-1/2"></div>
         </div>
       </div>
     );
@@ -37,7 +37,7 @@ export const PatientSummaryCard: React.FC<PatientSummaryCardProps> = ({ summary,
   const { demographics, vitals, activeConditions, activeMedications, sdohComplexity, ccmEligible } = summary;
 
   return (
-    <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl shadow-xl p-6 text-white">
+    <div className="bg-linear-to-br from-blue-600 to-indigo-700 rounded-xl shadow-xl p-6 text-white">
       <div className="flex items-start justify-between mb-4">
         <div>
           <h2 className="text-2xl font-bold">
@@ -76,15 +76,15 @@ export const PatientSummaryCard: React.FC<PatientSummaryCardProps> = ({ summary,
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-        <div className="bg-white bg-opacity-10 rounded p-2 text-center">
+        <div className="bg-white bg-opacity-10 rounded-sm p-2 text-center">
           <div className="text-xs text-blue-100">Active Conditions</div>
           <div className="text-xl font-bold">{activeConditions}</div>
         </div>
-        <div className="bg-white bg-opacity-10 rounded p-2 text-center">
+        <div className="bg-white bg-opacity-10 rounded-sm p-2 text-center">
           <div className="text-xs text-blue-100">Active Medications</div>
           <div className="text-xl font-bold">{activeMedications}</div>
         </div>
-        <div className="bg-white bg-opacity-10 rounded p-2 text-center">
+        <div className="bg-white bg-opacity-10 rounded-sm p-2 text-center">
           <div className="text-xs text-blue-100">SDOH Complexity</div>
           <div className="text-xl font-bold">{sdohComplexity}/10</div>
         </div>

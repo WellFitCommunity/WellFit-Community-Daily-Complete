@@ -200,7 +200,7 @@ export function GuardianDebugPanel() {
         </div>
         <button
           onClick={refresh}
-          className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-white"
+          className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded-sm text-white"
         >
           Refresh
         </button>
@@ -421,34 +421,34 @@ export function GuardianAgentTestPanel() {
       <div className="space-y-2">
         <button
           onClick={simulateTypeError}
-          className="block w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          className="block w-full px-4 py-2 bg-blue-500 text-white rounded-sm hover:bg-blue-600"
         >
           Simulate Type Error
         </button>
 
         <button
           onClick={simulateAPIError}
-          className="block w-full px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+          className="block w-full px-4 py-2 bg-yellow-500 text-white rounded-sm hover:bg-yellow-600"
         >
           Simulate API Error
         </button>
 
         <button
           onClick={simulateSecurityIssue}
-          className="block w-full px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+          className="block w-full px-4 py-2 bg-red-500 text-white rounded-sm hover:bg-red-600"
         >
           Simulate Security Issue
         </button>
 
         <button
           onClick={simulateMemoryLeak}
-          className="block w-full px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600"
+          className="block w-full px-4 py-2 bg-purple-500 text-white rounded-sm hover:bg-purple-600"
         >
           Simulate Memory Leak
         </button>
       </div>
 
-      <div className="mt-4 p-4 bg-gray-100 rounded">
+      <div className="mt-4 p-4 bg-gray-100 rounded-sm">
         <p className="text-sm text-gray-600">
           After clicking a button, check the browser console and navigate to{' '}
           <code>/admin/guardian</code> to see the Guardian Agent in action.

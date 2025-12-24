@@ -222,9 +222,9 @@ export const PeerCircleWarmHandoff: React.FC<PeerCircleWarmHandoffProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 animate-fadeIn p-4">
-      <div className="bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 rounded-2xl max-w-lg w-full shadow-2xl border-2 border-teal-300 overflow-hidden">
+      <div className="bg-linear-to-br from-teal-50 via-cyan-50 to-blue-50 rounded-2xl max-w-lg w-full shadow-2xl border-2 border-teal-300 overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-teal-600 to-cyan-600 p-6 text-white">
+        <div className="bg-linear-to-r from-teal-600 to-cyan-600 p-6 text-white">
           <div className="text-4xl mb-2">{header.emoji}</div>
           <h2 className="text-2xl font-bold">{header.title}</h2>
           <p className="text-teal-100 mt-1">{header.subtitle}</p>
@@ -242,7 +242,7 @@ export const PeerCircleWarmHandoff: React.FC<PeerCircleWarmHandoffProps> = ({
                 <p className="text-sm text-gray-600">
                   {topCircle.memberCount} members · Meets {topCircle.meeting_frequency}
                 </p>
-                <div className="mt-2 text-xs text-teal-700 bg-teal-50 px-2 py-1 rounded inline-block">
+                <div className="mt-2 text-xs text-teal-700 bg-teal-50 px-2 py-1 rounded-sm inline-block">
                   {topCircle.matchReason}
                 </div>
               </div>

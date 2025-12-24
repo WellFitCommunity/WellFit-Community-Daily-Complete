@@ -318,7 +318,7 @@ const TelehealthCall: React.FC<TelehealthConsultationProps> = ({
 
   if (!callState.isInCall && !callState.isJoining) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="flex items-center justify-center h-screen bg-linear-to-br from-blue-50 to-indigo-100">
         <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Start Telehealth Visit</h2>
           <div className="mb-6">
@@ -343,7 +343,7 @@ const TelehealthCall: React.FC<TelehealthConsultationProps> = ({
           )}
 
           {callState.error && (
-            <div className="mb-4 p-4 bg-red-50 border-l-4 border-red-500 rounded">
+            <div className="mb-4 p-4 bg-red-50 border-l-4 border-red-500 rounded-sm">
               <p className="text-sm text-red-800">{callState.error}</p>
             </div>
           )}
@@ -351,7 +351,7 @@ const TelehealthCall: React.FC<TelehealthConsultationProps> = ({
           <button
             onClick={createDailyRoom}
             disabled={callState.isJoining}
-            className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-bold text-lg hover:from-green-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
+            className="w-full py-4 bg-linear-to-r from-green-500 to-emerald-600 text-white rounded-xl font-bold text-lg hover:from-green-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
           >
             {callState.isJoining ? 'Connecting...' : 'Start Video Call'}
           </button>

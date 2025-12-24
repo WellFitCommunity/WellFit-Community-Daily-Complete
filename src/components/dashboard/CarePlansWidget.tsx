@@ -88,7 +88,7 @@ const CarePlansWidget: React.FC = () => {
           <>
             {/* Current Active Plan */}
             {currentPlan && (
-              <div className="mb-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-lg">
+              <div className="mb-4 p-4 bg-linear-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-lg">
                 <div className="flex items-start gap-2 mb-2">
                   <span className="text-xl">⭐</span>
                   <div className="text-left flex-1">

@@ -120,12 +120,12 @@ export const WellnessSuggestions: React.FC<WellnessSuggestionsProps> = ({
 
   return (
     <div
-      className={`bg-gradient-to-br from-blue-50 to-green-50 rounded-xl border-2 border-blue-200 shadow-lg overflow-hidden ${className}`}
+      className={`bg-linear-to-br from-blue-50 to-green-50 rounded-xl border-2 border-blue-200 shadow-lg overflow-hidden ${className}`}
       role="region"
       aria-label="Wellness suggestions"
     >
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#003865] to-[#0056a4] p-4 text-white">
+      <div className="bg-linear-to-r from-[#003865] to-[#0056a4] p-4 text-white">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <span className="text-3xl" aria-hidden="true">💙</span>
@@ -167,7 +167,7 @@ export const WellnessSuggestions: React.FC<WellnessSuggestionsProps> = ({
               aria-label={suggestion.title}
             >
               <div className="flex items-start gap-4">
-                <div className={`flex-shrink-0 p-2 rounded-lg ${
+                <div className={`shrink-0 p-2 rounded-lg ${
                   selectedSuggestion === suggestion.id
                     ? 'bg-white/20'
                     : 'bg-[#003865] text-white'

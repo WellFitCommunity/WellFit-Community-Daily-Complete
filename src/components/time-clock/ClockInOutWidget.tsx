@@ -232,8 +232,8 @@ export const ClockInOutWidget: React.FC<ClockInOutWidgetProps> = ({
                 w-48 h-48 rounded-full flex flex-col items-center justify-center
                 transition-all duration-300 shadow-lg
                 ${isClockedIn
-                  ? 'bg-gradient-to-br from-red-500 to-red-600 hover:from-red-400 hover:to-red-500'
-                  : 'bg-gradient-to-br from-teal-500 to-teal-600 hover:from-teal-400 hover:to-teal-500'
+                  ? 'bg-linear-to-br from-red-500 to-red-600 hover:from-red-400 hover:to-red-500'
+                  : 'bg-linear-to-br from-teal-500 to-teal-600 hover:from-teal-400 hover:to-teal-500'
                 }
                 ${processing ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}
                 border-4 border-white/10
@@ -314,7 +314,7 @@ export const ClockInOutWidget: React.FC<ClockInOutWidgetProps> = ({
 
           {/* Streak & Stats */}
           {streak && streak.current_streak > 0 && (
-            <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-lg p-4">
+            <div className="bg-linear-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Zap className="h-5 w-5 text-amber-400" />

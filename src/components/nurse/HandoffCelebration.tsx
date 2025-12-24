@@ -61,7 +61,7 @@ export const HandoffCelebration: React.FC<HandoffCelebrationProps> = ({
   }, [onClose, dancers.length]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-xs">
       {/* Confetti Rain */}
       {showConfetti && (
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -91,7 +91,7 @@ export const HandoffCelebration: React.FC<HandoffCelebrationProps> = ({
       {/* Celebration Card */}
       <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl mx-4 text-center relative overflow-hidden animate-scale-in">
         {/* Gradient background shimmer */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 opacity-50"></div>
+        <div className="absolute inset-0 bg-linear-to-br from-blue-50 via-purple-50 to-pink-50 opacity-50"></div>
 
         {/* Content */}
         <div className="relative z-10">
@@ -181,7 +181,7 @@ export const HandoffCelebration: React.FC<HandoffCelebrationProps> = ({
 
           {/* Time Savings - THE KEY METRIC */}
           {timeSavedMinutes !== undefined && timeSavedMinutes > 0 && (
-            <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-500 rounded-lg p-4 mb-4">
+            <div className="bg-linear-to-r from-emerald-50 to-teal-50 border-2 border-emerald-500 rounded-lg p-4 mb-4">
               <div className="flex items-center justify-center gap-3">
                 <span className="text-3xl">⚡</span>
                 <div className="text-center">

@@ -87,13 +87,13 @@ export const DischargedPatientDashboard: React.FC<DischargedPatientDashboardProp
   if (loading && !metrics) {
     return (
       <div className="p-8 animate-pulse">
-        <div className="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
+        <div className="h-8 bg-gray-200 rounded-sm w-1/3 mb-6"></div>
         <div className="grid grid-cols-4 gap-4 mb-6">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-24 bg-gray-200 rounded"></div>
+            <div key={i} className="h-24 bg-gray-200 rounded-sm"></div>
           ))}
         </div>
-        <div className="h-96 bg-gray-200 rounded"></div>
+        <div className="h-96 bg-gray-200 rounded-sm"></div>
       </div>
     );
   }
@@ -175,7 +175,7 @@ export const DischargedPatientDashboard: React.FC<DischargedPatientDashboardProp
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6 shadow">
+      <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6 shadow-sm">
         <div className="flex items-center gap-4">
           <span className="text-sm font-medium text-gray-700">Filter by:</span>
           <label className="flex items-center gap-2 cursor-pointer">
@@ -183,7 +183,7 @@ export const DischargedPatientDashboard: React.FC<DischargedPatientDashboardProp
               type="checkbox"
               checked={filterNeedsAttention}
               onChange={(e) => setFilterNeedsAttention(e.target.checked)}
-              className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
+              className="w-4 h-4 text-red-600 border-gray-300 rounded-sm focus:ring-red-500"
             />
             <span className="text-sm text-gray-700">Needs Attention Only</span>
           </label>
@@ -192,7 +192,7 @@ export const DischargedPatientDashboard: React.FC<DischargedPatientDashboardProp
               type="checkbox"
               checked={filterHighRisk}
               onChange={(e) => setFilterHighRisk(e.target.checked)}
-              className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+              className="w-4 h-4 text-orange-600 border-gray-300 rounded-sm focus:ring-orange-500"
             />
             <span className="text-sm text-gray-700">High Risk Only</span>
           </label>
@@ -201,7 +201,7 @@ export const DischargedPatientDashboard: React.FC<DischargedPatientDashboardProp
 
       {/* Patient List */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-md">
-        <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-[#E0F7F6] to-white">
+        <div className="p-4 border-b border-gray-200 bg-linear-to-r from-[#E0F7F6] to-white">
           <h2 className="text-xl font-bold text-gray-800">
             Patients ({metrics.patients_list.length})
           </h2>
@@ -303,7 +303,7 @@ export const DischargedPatientDashboard: React.FC<DischargedPatientDashboardProp
                     <td className="px-4 py-3">
                       {patient.needs_attention ? (
                         <div>
-                          <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-semibold">
+                          <span className="px-2 py-1 bg-red-100 text-red-700 rounded-sm text-xs font-semibold">
                             ⚠️ NEEDS ATTENTION
                           </span>
                           <div className="text-xs text-gray-600 mt-1">
@@ -339,7 +339,7 @@ export const DischargedPatientDashboard: React.FC<DischargedPatientDashboardProp
       {selectedPatient && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-[#E0F7F6] to-white">
+            <div className="p-6 border-b border-gray-200 bg-linear-to-r from-[#E0F7F6] to-white">
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold text-gray-800">{selectedPatient.patient_name}</h2>
                 <button

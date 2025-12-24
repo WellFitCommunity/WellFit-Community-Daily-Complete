@@ -284,11 +284,11 @@ export default function MealDetailPage() {
 
       {loading ? (
         <div role="status" aria-live="polite" className="animate-pulse space-y-4">
-          <div className="h-6 bg-gray-200 rounded w-2/3 mx-auto" />
+          <div className="h-6 bg-gray-200 rounded-sm w-2/3 mx-auto" />
           <div className="w-full h-64 bg-gray-200 rounded-lg" />
-          <div className="h-4 bg-gray-200 rounded w-1/3" />
-          <div className="h-4 bg-gray-200 rounded w-1/2" />
-          <div className="h-4 bg-gray-200 rounded w-1/4" />
+          <div className="h-4 bg-gray-200 rounded-sm w-1/3" />
+          <div className="h-4 bg-gray-200 rounded-sm w-1/2" />
+          <div className="h-4 bg-gray-200 rounded-sm w-1/4" />
         </div>
       ) : !recipe ? (
         <div className="text-center space-y-3" aria-live="polite">
@@ -356,7 +356,7 @@ export default function MealDetailPage() {
 
           {/* Meal Interaction Prompt */}
           {showInteractionPrompt && user && (
-            <div className="mt-6 p-6 bg-gradient-to-r from-blue-50 to-green-50 border-2 border-[#8cc63f] rounded-xl shadow-lg relative z-10">
+            <div className="mt-6 p-6 bg-linear-to-r from-blue-50 to-green-50 border-2 border-[#8cc63f] rounded-xl shadow-lg relative z-10">
               <h3 className="text-xl font-bold text-[#003865] mb-4 text-center">
                 🍽️ Will you be making this meal?
               </h3>

@@ -132,8 +132,8 @@ export const SOC2IncidentResponseDashboard: React.FC = () => {
     return (
       <div className="space-y-4">
         <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-          <div className="h-64 bg-gray-200 rounded"></div>
+          <div className="h-8 bg-gray-200 rounded-sm w-1/4 mb-4"></div>
+          <div className="h-64 bg-gray-200 rounded-sm"></div>
         </div>
       </div>
     );
@@ -309,7 +309,7 @@ export const SOC2IncidentResponseDashboard: React.FC = () => {
                       <td className="px-4 py-3 text-sm text-gray-900 max-w-md">
                         {incident.description}
                         {incident.auto_blocked && (
-                          <span className="ml-2 px-2 py-0.5 text-xs bg-red-100 text-red-800 rounded">
+                          <span className="ml-2 px-2 py-0.5 text-xs bg-red-100 text-red-800 rounded-sm">
                             AUTO-BLOCKED
                           </span>
                         )}
@@ -326,14 +326,14 @@ export const SOC2IncidentResponseDashboard: React.FC = () => {
                         {!incident.investigated ? (
                           <button
                             onClick={() => setSelectedIncident(incident)}
-                            className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                            className="px-3 py-1 bg-blue-600 text-white rounded-sm hover:bg-blue-700"
                           >
                             Investigate
                           </button>
                         ) : (
                           <button
                             onClick={() => setSelectedIncident(incident)}
-                            className="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                            className="px-3 py-1 bg-gray-200 text-gray-700 rounded-sm hover:bg-gray-300"
                           >
                             View
                           </button>
@@ -411,7 +411,7 @@ export const SOC2IncidentResponseDashboard: React.FC = () => {
               {selectedIncident.metadata && Object.keys(selectedIncident.metadata).length > 0 && (
                 <div>
                   <label className="text-sm font-medium text-gray-600">Additional Details</label>
-                  <pre className="mt-1 p-3 bg-gray-50 rounded text-xs overflow-auto">
+                  <pre className="mt-1 p-3 bg-gray-50 rounded-sm text-xs overflow-auto">
                     {JSON.stringify(selectedIncident.metadata, null, 2)}
                   </pre>
                 </div>
@@ -419,7 +419,7 @@ export const SOC2IncidentResponseDashboard: React.FC = () => {
 
               {selectedIncident.investigated ? (
                 <div className="border-t pt-4">
-                  <div className="bg-green-50 border border-green-200 rounded p-4">
+                  <div className="bg-green-50 border border-green-200 rounded-sm p-4">
                     <h4 className="text-sm font-semibold text-green-900 mb-2">Resolved</h4>
                     <p className="text-sm text-gray-700 mb-2">
                       <strong>Investigated by:</strong> {selectedIncident.investigated_by || 'Unknown'}

@@ -224,9 +224,9 @@ const HospitalTransferPortal: React.FC = () => {
   const statTransfers = transfers.filter(t => t.urgency === 'stat' && t.status === 'in_transit');
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Header */}
-      <header className="bg-gradient-to-r from-blue-800 via-blue-700 to-indigo-800 text-white shadow-xl border-b border-blue-600">
+      <header className="bg-linear-to-r from-blue-800 via-blue-700 to-indigo-800 text-white shadow-xl border-b border-blue-600">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -260,7 +260,7 @@ const HospitalTransferPortal: React.FC = () => {
 
       {/* STAT Alert Banner */}
       {statTransfers.length > 0 && (
-        <div className="bg-gradient-to-r from-red-600 to-red-700 text-white py-3 px-4 animate-pulse">
+        <div className="bg-linear-to-r from-red-600 to-red-700 text-white py-3 px-4 animate-pulse">
           <div className="max-w-7xl mx-auto flex items-center gap-3">
             <AlertTriangle className="h-5 w-5" />
             <span className="font-bold">STAT TRANSFER IN PROGRESS:</span>
@@ -482,9 +482,9 @@ const HospitalTransferPortal: React.FC = () => {
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="px-2 py-1 bg-slate-800 rounded text-xs">HIPAA Compliant</span>
-              <span className="px-2 py-1 bg-slate-800 rounded text-xs">HL7 FHIR Ready</span>
-              <span className="px-2 py-1 bg-slate-800 rounded text-xs">Joint Commission</span>
+              <span className="px-2 py-1 bg-slate-800 rounded-sm text-xs">HIPAA Compliant</span>
+              <span className="px-2 py-1 bg-slate-800 rounded-sm text-xs">HL7 FHIR Ready</span>
+              <span className="px-2 py-1 bg-slate-800 rounded-sm text-xs">Joint Commission</span>
             </div>
           </div>
         </div>

@@ -27,7 +27,7 @@ export const ClockOutConfirmDialog: React.FC<ClockOutConfirmDialogProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
       <EACard className="max-w-md w-full animate-in fade-in zoom-in duration-200">
         <EACardContent className="p-6">
           {/* Header */}
@@ -40,7 +40,7 @@ export const ClockOutConfirmDialog: React.FC<ClockOutConfirmDialogProps> = ({
             </div>
             <button
               onClick={onCancel}
-              className="p-1 text-slate-400 hover:text-white transition-colors rounded"
+              className="p-1 text-slate-400 hover:text-white transition-colors rounded-sm"
               aria-label="Close"
             >
               <X className="h-5 w-5" />

@@ -80,7 +80,7 @@ export const CompassionBattery: React.FC<CompassionBatteryProps> = ({
   ];
 
   return (
-    <div className="bg-gradient-to-br from-pink-50 to-rose-50 rounded-xl p-4 border border-pink-200">
+    <div className="bg-linear-to-br from-pink-50 to-rose-50 rounded-xl p-4 border border-pink-200">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <span className="text-2xl">{getEmoji()}</span>
@@ -93,7 +93,7 @@ export const CompassionBattery: React.FC<CompassionBatteryProps> = ({
       <div className="relative mb-3">
         <div className="h-8 bg-gray-200 rounded-lg overflow-hidden border-2 border-gray-300">
           <div
-            className={`h-full bg-gradient-to-r ${getBatteryColor()} transition-all duration-500 rounded-lg`}
+            className={`h-full bg-linear-to-r ${getBatteryColor()} transition-all duration-500 rounded-lg`}
             style={{ width: `${percentage}%` }}
           >
             {/* Battery segments */}
@@ -101,7 +101,7 @@ export const CompassionBattery: React.FC<CompassionBatteryProps> = ({
               {[...Array(10)].map((_, i) => (
                 <div
                   key={i}
-                  className={`flex-1 rounded-sm ${
+                  className={`flex-1 rounded-xs ${
                     i < level ? 'bg-white/30' : 'bg-transparent'
                   }`}
                 />

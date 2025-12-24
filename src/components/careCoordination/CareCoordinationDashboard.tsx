@@ -277,7 +277,7 @@ export const CareCoordinationDashboard: React.FC = () => {
                         </div>
                         <p className="text-sm text-slate-400 mt-1">{alert.description}</p>
                         <div className="flex items-center space-x-4 mt-2 text-xs text-slate-500">
-                          <span className="px-2 py-1 bg-slate-700 rounded text-xs font-medium text-slate-300">
+                          <span className="px-2 py-1 bg-slate-700 rounded-sm text-xs font-medium text-slate-300">
                             {alert.alert_type?.replace(/_/g, ' ').toUpperCase()}
                           </span>
                           <span>{alert.priority} priority</span>
@@ -580,7 +580,7 @@ const PlanDetailModal: React.FC<PlanDetailModalProps> = ({ plan, onClose, onUpda
                 {plan.barriers.map((barrier, idx) => (
                   <div key={idx} className="bg-slate-700/50 p-4 rounded-lg">
                     <div className="flex items-start space-x-3">
-                      <XCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
+                      <XCircle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
                       <div>
                         <p className="font-medium text-white">{barrier.barrier}</p>
                         <p className="text-sm text-green-400 mt-1">Solution: {barrier.solution}</p>

@@ -222,11 +222,11 @@ const ComplianceDashboard: React.FC = () => {
 
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-slate-700/50 p-3 rounded border border-slate-600">
+                <div className="bg-slate-700/50 p-3 rounded-sm border border-slate-600">
                   <p className="text-sm text-slate-400">Total Backups (30d)</p>
                   <p className="text-2xl font-bold text-white">{backupCompliance.total_backups_30d}</p>
                 </div>
-                <div className="bg-slate-700/50 p-3 rounded border border-slate-600">
+                <div className="bg-slate-700/50 p-3 rounded-sm border border-slate-600">
                   <p className="text-sm text-slate-400">Failed Backups</p>
                   <p className="text-2xl font-bold text-white">{backupCompliance.failed_backups_30d}</p>
                 </div>
@@ -238,7 +238,7 @@ const ComplianceDashboard: React.FC = () => {
                   <ul className="space-y-2">
                     {backupCompliance.issues.map((issue, index) => (
                       <li key={index} className="flex items-start">
-                        <AlertTriangle className="w-4 h-4 text-yellow-400 mr-2 mt-0.5 flex-shrink-0" />
+                        <AlertTriangle className="w-4 h-4 text-yellow-400 mr-2 mt-0.5 shrink-0" />
                         <span className="text-sm text-slate-300">{issue}</span>
                       </li>
                     ))}
@@ -270,11 +270,11 @@ const ComplianceDashboard: React.FC = () => {
 
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-slate-700/50 p-3 rounded border border-slate-600">
+                <div className="bg-slate-700/50 p-3 rounded-sm border border-slate-600">
                   <p className="text-sm text-slate-400">Drills Completed (30d)</p>
                   <p className="text-2xl font-bold text-white">{drillCompliance.drills_30d}</p>
                 </div>
-                <div className="bg-slate-700/50 p-3 rounded border border-slate-600">
+                <div className="bg-slate-700/50 p-3 rounded-sm border border-slate-600">
                   <p className="text-sm text-slate-400">Drills Passed</p>
                   <p className="text-2xl font-bold text-white">{drillCompliance.drills_passed_30d}</p>
                 </div>
@@ -310,7 +310,7 @@ const ComplianceDashboard: React.FC = () => {
                   <ul className="space-y-2">
                     {drillCompliance.issues.map((issue, index) => (
                       <li key={index} className="flex items-start">
-                        <AlertTriangle className="w-4 h-4 text-yellow-400 mr-2 mt-0.5 flex-shrink-0" />
+                        <AlertTriangle className="w-4 h-4 text-yellow-400 mr-2 mt-0.5 shrink-0" />
                         <span className="text-sm text-slate-300">{issue}</span>
                       </li>
                     ))}
@@ -341,27 +341,27 @@ const ComplianceDashboard: React.FC = () => {
             </h3>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className={`p-4 rounded border-2 ${vulnerabilities.open_critical > 0 ? 'border-red-500/50 bg-red-500/10' : 'border-slate-600 bg-slate-700/50'}`}>
+              <div className={`p-4 rounded-sm border-2 ${vulnerabilities.open_critical > 0 ? 'border-red-500/50 bg-red-500/10' : 'border-slate-600 bg-slate-700/50'}`}>
                 <p className="text-sm text-slate-400 mb-1">Critical Open</p>
                 <p className={`text-3xl font-bold ${vulnerabilities.open_critical > 0 ? 'text-red-400' : 'text-white'}`}>{vulnerabilities.open_critical}</p>
               </div>
-              <div className={`p-4 rounded border-2 ${vulnerabilities.open_high > 0 ? 'border-orange-500/50 bg-orange-500/10' : 'border-slate-600 bg-slate-700/50'}`}>
+              <div className={`p-4 rounded-sm border-2 ${vulnerabilities.open_high > 0 ? 'border-orange-500/50 bg-orange-500/10' : 'border-slate-600 bg-slate-700/50'}`}>
                 <p className="text-sm text-slate-400 mb-1">High Open</p>
                 <p className={`text-3xl font-bold ${vulnerabilities.open_high > 0 ? 'text-orange-400' : 'text-white'}`}>{vulnerabilities.open_high}</p>
               </div>
-              <div className={`p-4 rounded border-2 ${vulnerabilities.total_overdue > 0 ? 'border-yellow-500/50 bg-yellow-500/10' : 'border-slate-600 bg-slate-700/50'}`}>
+              <div className={`p-4 rounded-sm border-2 ${vulnerabilities.total_overdue > 0 ? 'border-yellow-500/50 bg-yellow-500/10' : 'border-slate-600 bg-slate-700/50'}`}>
                 <p className="text-sm text-slate-400 mb-1">Overdue</p>
                 <p className={`text-3xl font-bold ${vulnerabilities.total_overdue > 0 ? 'text-yellow-400' : 'text-white'}`}>{vulnerabilities.total_overdue}</p>
               </div>
-              <div className="p-4 rounded border-2 border-slate-600 bg-slate-700/50">
+              <div className="p-4 rounded-sm border-2 border-slate-600 bg-slate-700/50">
                 <p className="text-sm text-slate-400 mb-1">Avg Remediation</p>
                 <p className="text-3xl font-bold text-white">{vulnerabilities.avg_remediation_days || 0}<span className="text-sm ml-1">days</span></p>
               </div>
             </div>
 
-            <div className="mt-6 p-4 bg-[#00857a]/10 border border-[#00857a]/30 rounded">
+            <div className="mt-6 p-4 bg-[#00857a]/10 border border-[#00857a]/30 rounded-sm">
               <div className="flex items-start">
-                <FileText className="w-5 h-5 text-[#00857a] mr-3 mt-0.5 flex-shrink-0" />
+                <FileText className="w-5 h-5 text-[#00857a] mr-3 mt-0.5 shrink-0" />
                 <div>
                   <h4 className="font-semibold text-[#33bfb7] mb-1">Penetration Testing Schedule</h4>
                   <ul className="text-sm text-slate-300 space-y-1">
@@ -409,7 +409,7 @@ const ComplianceDashboard: React.FC = () => {
       {/* Compliance Footer */}
       <div className="mt-8 p-4 bg-slate-800 border border-slate-700 rounded-lg">
         <div className="flex items-start">
-          <Shield className="w-5 h-5 text-[#00857a] mr-3 mt-0.5 flex-shrink-0" />
+          <Shield className="w-5 h-5 text-[#00857a] mr-3 mt-0.5 shrink-0" />
           <div className="text-sm text-slate-400">
             <p className="font-semibold mb-1 text-slate-300">Compliance Standards</p>
             <p>This dashboard monitors compliance with HIPAA Security Rule (§164.308), SOC2 Trust Service Criteria (CC7.1), and industry best practices for healthcare data protection.</p>

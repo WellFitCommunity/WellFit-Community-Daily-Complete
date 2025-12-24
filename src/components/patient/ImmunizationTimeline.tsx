@@ -109,7 +109,7 @@ const ImmunizationTimeline: React.FC<ImmunizationTimelineProps> = ({ userId, onB
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl shadow-lg p-8 mb-6 text-white">
+      <div className="bg-linear-to-r from-purple-600 to-indigo-600 rounded-xl shadow-lg p-8 mb-6 text-white">
         <div className="flex justify-between items-start">
           <div>
             <button
@@ -147,7 +147,7 @@ const ImmunizationTimeline: React.FC<ImmunizationTimelineProps> = ({ userId, onB
       </div>
 
       {/* Vaccine Type Filter */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+      <div className="bg-white rounded-lg shadow-xs border border-gray-200 p-6 mb-6">
         <h3 className="text-sm font-semibold text-gray-700 mb-3">Filter by Vaccine Type</h3>
         <div className="flex flex-wrap gap-2">
           <button
@@ -181,7 +181,7 @@ const ImmunizationTimeline: React.FC<ImmunizationTimelineProps> = ({ userId, onB
       </div>
 
       {/* Timeline View */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-white rounded-lg shadow-xs border border-gray-200 p-6">
         {filteredEvents.length === 0 ? (
           <div className="text-center py-12">
             <span className="text-6xl mb-4 block">📅</span>
@@ -200,18 +200,18 @@ const ImmunizationTimeline: React.FC<ImmunizationTimelineProps> = ({ userId, onB
               <div key={eventIndex} className="relative">
                 {/* Timeline Line */}
                 {eventIndex < filteredEvents.length - 1 && (
-                  <div className="absolute left-6 top-12 bottom-0 w-0.5 bg-gradient-to-b from-purple-400 to-purple-200" />
+                  <div className="absolute left-6 top-12 bottom-0 w-0.5 bg-linear-to-b from-purple-400 to-purple-200" />
                 )}
 
                 {/* Date Circle */}
                 <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center text-white font-bold shadow-lg z-10">
+                  <div className="shrink-0 w-12 h-12 rounded-full bg-linear-to-br from-purple-600 to-indigo-600 flex items-center justify-center text-white font-bold shadow-lg z-10">
                     {new Date(event.date).getDate()}
                   </div>
 
                   {/* Event Content */}
                   <div className="flex-1 pb-6">
-                    <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-4 border border-purple-200">
+                    <div className="bg-linear-to-r from-purple-50 to-indigo-50 rounded-lg p-4 border border-purple-200">
                       <h3 className="font-semibold text-gray-900 mb-1">
                         {formatDate(event.date)}
                       </h3>
@@ -287,7 +287,7 @@ const ImmunizationTimeline: React.FC<ImmunizationTimelineProps> = ({ userId, onB
 
       {/* Vaccine History Table */}
       {selectedVaccine && vaccineGroups[selectedVaccine] && (
-        <div className="mt-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="mt-6 bg-white rounded-lg shadow-xs border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
             {getVaccineIcon(selectedVaccine)} {VACCINE_NAMES[selectedVaccine] || selectedVaccine} History
           </h3>
@@ -340,19 +340,19 @@ const ImmunizationTimeline: React.FC<ImmunizationTimelineProps> = ({ userId, onB
 
       {/* Summary Stats */}
       <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-200 rounded-lg p-6">
+        <div className="bg-linear-to-br from-purple-50 to-indigo-50 border border-purple-200 rounded-lg p-6">
           <div className="text-3xl font-bold text-purple-900 mb-1">
             {Object.keys(vaccineGroups).length}
           </div>
           <div className="text-sm text-purple-700">Different Vaccine Types</div>
         </div>
-        <div className="bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200 rounded-lg p-6">
+        <div className="bg-linear-to-br from-blue-50 to-cyan-50 border border-blue-200 rounded-lg p-6">
           <div className="text-3xl font-bold text-blue-900 mb-1">
             {immunizations.length}
           </div>
           <div className="text-sm text-blue-700">Total Doses Administered</div>
         </div>
-        <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-lg p-6">
+        <div className="bg-linear-to-br from-green-50 to-emerald-50 border border-green-200 rounded-lg p-6">
           <div className="text-3xl font-bold text-green-900 mb-1">
             {immunizations.filter(i => {
               if (!i.occurrence_datetime) return false;

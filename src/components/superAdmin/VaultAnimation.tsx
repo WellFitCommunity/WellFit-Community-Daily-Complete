@@ -129,7 +129,7 @@ export const VaultAnimation: React.FC<VaultAnimationProps> = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center"
+        className="fixed inset-0 z-50 bg-linear-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center"
         onClick={handleSkip}
       >
         {/* Background grid pattern */}
@@ -264,7 +264,7 @@ export const VaultAnimation: React.FC<VaultAnimationProps> = ({
                 initial={{ x: 0 }}
                 animate={{ x: '-50vw' }}
                 transition={{ duration: 1.2, ease: [0.43, 0.13, 0.23, 0.96] }}
-                className="absolute left-0 top-0 w-1/2 h-full bg-gradient-to-r from-slate-800 to-slate-700 border-r-4 border-blue-500"
+                className="absolute left-0 top-0 w-1/2 h-full bg-linear-to-r from-slate-800 to-slate-700 border-r-4 border-blue-500"
                 style={{
                   boxShadow: '0 0 50px rgba(59, 130, 246, 0.5)'
                 }}
@@ -279,7 +279,7 @@ export const VaultAnimation: React.FC<VaultAnimationProps> = ({
                 initial={{ x: 0 }}
                 animate={{ x: '50vw' }}
                 transition={{ duration: 1.2, ease: [0.43, 0.13, 0.23, 0.96] }}
-                className="absolute right-0 top-0 w-1/2 h-full bg-gradient-to-l from-slate-800 to-slate-700 border-l-4 border-blue-500"
+                className="absolute right-0 top-0 w-1/2 h-full bg-linear-to-l from-slate-800 to-slate-700 border-l-4 border-blue-500"
                 style={{
                   boxShadow: '0 0 50px rgba(59, 130, 246, 0.5)'
                 }}

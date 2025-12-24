@@ -45,7 +45,7 @@ export const EASwitch = React.forwardRef<HTMLButtonElement, EASwitchProps>(
         className={cn(
           'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full',
           'transition-colors duration-200 ease-in-out',
-          'focus:outline-none focus:ring-2 focus:ring-[#00857a]/50 focus:ring-offset-2 focus:ring-offset-slate-900',
+          'focus:outline-hidden focus:ring-2 focus:ring-[#00857a]/50 focus:ring-offset-2 focus:ring-offset-slate-900',
           'disabled:cursor-not-allowed disabled:opacity-50',
           checked
             ? 'bg-[#00857a]'

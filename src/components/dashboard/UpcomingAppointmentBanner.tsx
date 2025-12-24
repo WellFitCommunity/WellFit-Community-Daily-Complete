@@ -144,10 +144,10 @@ const UpcomingAppointmentBanner: React.FC = () => {
     <div
       className={`relative mb-6 rounded-xl shadow-xl overflow-hidden ${
         isEmergency
-          ? 'bg-gradient-to-r from-red-500 to-red-600'
+          ? 'bg-linear-to-r from-red-500 to-red-600'
           : joinable
-          ? 'bg-gradient-to-r from-green-500 to-emerald-600 animate-pulse'
-          : 'bg-gradient-to-r from-blue-500 to-indigo-600'
+          ? 'bg-linear-to-r from-green-500 to-emerald-600 animate-pulse'
+          : 'bg-linear-to-r from-blue-500 to-indigo-600'
       }`}
       role="alert"
       aria-live="polite"
@@ -204,7 +204,7 @@ const UpcomingAppointmentBanner: React.FC = () => {
               ) : (
                 <button
                   onClick={() => navigate('/telehealth-appointments')}
-                  className="px-6 py-3 bg-white/20 backdrop-blur text-white border-2 border-white rounded-lg font-semibold hover:bg-white/30 transition"
+                  className="px-6 py-3 bg-white/20 backdrop-blur-sm text-white border-2 border-white rounded-lg font-semibold hover:bg-white/30 transition"
                   aria-label="View appointment details"
                 >
                   View Details

@@ -16,7 +16,7 @@ export const EACard = React.forwardRef<HTMLDivElement, EACardProps>(
     const variants = {
       default: 'bg-slate-800 border-slate-700',
       elevated: 'bg-slate-800 border-slate-600 shadow-lg shadow-black/20',
-      highlight: 'bg-gradient-to-br from-[#00857a]/10 to-slate-800 border-[#00857a]/30',
+      highlight: 'bg-linear-to-br from-[#00857a]/10 to-slate-800 border-[#00857a]/30',
     };
 
     return (

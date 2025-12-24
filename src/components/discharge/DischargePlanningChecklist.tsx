@@ -118,7 +118,7 @@ export const DischargePlanningChecklist: React.FC<DischargePlanningChecklistProp
 
   if (!dischargePlan) {
     return (
-      <div className="p-6 bg-white rounded-lg shadow">
+      <div className="p-6 bg-white rounded-lg shadow-sm">
         <div className="text-center">
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
             No Discharge Plan Yet
@@ -140,7 +140,7 @@ export const DischargePlanningChecklist: React.FC<DischargePlanningChecklistProp
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white rounded-lg shadow-sm p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">
@@ -201,7 +201,7 @@ export const DischargePlanningChecklist: React.FC<DischargePlanningChecklistProp
       )}
 
       {/* Tabs */}
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-white rounded-lg shadow-sm">
         <div className="border-b border-gray-200">
           <nav className="flex -mb-px">
             {[
@@ -427,7 +427,7 @@ export const DischargePlanningChecklist: React.FC<DischargePlanningChecklistProp
                       <div className="text-sm">{dischargePlan.post_acute_facility_phone}</div>
                     )}
                     {dischargePlan.post_acute_bed_confirmed && (
-                      <div className="mt-2 inline-block px-2 py-1 bg-green-600 text-white text-sm rounded">
+                      <div className="mt-2 inline-block px-2 py-1 bg-green-600 text-white text-sm rounded-sm">
                         ✓ Bed Confirmed
                       </div>
                     )}
@@ -440,7 +440,7 @@ export const DischargePlanningChecklist: React.FC<DischargePlanningChecklistProp
       </div>
 
       {/* Action Buttons */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white rounded-lg shadow-sm p-6">
         <div className="flex gap-4">
           {dischargePlan.status === 'draft' || dischargePlan.status === 'pending_items' ? (
             <button
@@ -501,12 +501,12 @@ interface ChecklistItemProps {
 
 const ChecklistItem: React.FC<ChecklistItemProps> = ({ label, checked, onChange, required }) => {
   return (
-    <label className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
+    <label className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-sm cursor-pointer">
       <input
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+        className="w-5 h-5 text-blue-600 border-gray-300 rounded-sm focus:ring-blue-500"
       />
       <span className="text-gray-700">
         {label}

@@ -181,7 +181,7 @@ const SystemConfigurationPanel: React.FC = () => {
       )}
 
       {/* Critical System Settings */}
-      <div className="bg-gradient-to-r from-red-50 to-orange-50 rounded-lg p-6 border-2 border-red-300">
+      <div className="bg-linear-to-r from-red-50 to-orange-50 rounded-lg p-6 border-2 border-red-300">
         <h3 className="text-lg font-bold text-red-900 mb-4 flex items-center gap-2">
           <AlertTriangle className="w-5 h-5" />
           Critical System Settings

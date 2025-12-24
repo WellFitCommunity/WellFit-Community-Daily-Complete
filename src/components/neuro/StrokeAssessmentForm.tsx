@@ -142,14 +142,14 @@ export const StrokeAssessmentForm: React.FC<StrokeAssessmentFormProps> = ({
       </div>
 
       {/* Time-Critical Information */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-blue-50 p-4 rounded">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-blue-50 p-4 rounded-sm">
         <div>
           <label className="block text-sm font-medium mb-1">Last Known Well</label>
           <input
             type="datetime-local"
             value={formData.last_known_well?.slice(0, 16) || ''}
             onChange={(e) => handleInputChange('last_known_well', e.target.value)}
-            className="w-full border rounded p-2"
+            className="w-full border rounded-sm p-2"
           />
         </div>
         <div>
@@ -158,7 +158,7 @@ export const StrokeAssessmentForm: React.FC<StrokeAssessmentFormProps> = ({
             type="datetime-local"
             value={formData.symptom_onset?.slice(0, 16) || ''}
             onChange={(e) => handleInputChange('symptom_onset', e.target.value)}
-            className="w-full border rounded p-2"
+            className="w-full border rounded-sm p-2"
           />
         </div>
         <div>
@@ -167,7 +167,7 @@ export const StrokeAssessmentForm: React.FC<StrokeAssessmentFormProps> = ({
             type="datetime-local"
             value={formData.arrival_time?.slice(0, 16) || ''}
             onChange={(e) => handleInputChange('arrival_time', e.target.value)}
-            className="w-full border rounded p-2"
+            className="w-full border rounded-sm p-2"
           />
         </div>
         <div>
@@ -176,14 +176,14 @@ export const StrokeAssessmentForm: React.FC<StrokeAssessmentFormProps> = ({
             type="datetime-local"
             value={formData.ct_time?.slice(0, 16) || ''}
             onChange={(e) => handleInputChange('ct_time', e.target.value)}
-            className="w-full border rounded p-2"
+            className="w-full border rounded-sm p-2"
           />
         </div>
       </div>
 
       {/* tPA Eligibility Alert */}
       {timeWarning && (
-        <div className={`p-4 rounded ${tpaEligible ? 'bg-yellow-100 border-yellow-400' : 'bg-red-100 border-red-400'} border-2`}>
+        <div className={`p-4 rounded-sm ${tpaEligible ? 'bg-yellow-100 border-yellow-400' : 'bg-red-100 border-red-400'} border-2`}>
           <div className="font-bold text-lg">{timeWarning}</div>
           {tpaEligible && <div className="text-sm">Patient may be eligible for tPA</div>}
         </div>
@@ -195,7 +195,7 @@ export const StrokeAssessmentForm: React.FC<StrokeAssessmentFormProps> = ({
         <select
           value={formData.stroke_type || ''}
           onChange={(e) => handleInputChange('stroke_type', e.target.value as StrokeType)}
-          className="w-full border rounded p-2"
+          className="w-full border rounded-sm p-2"
         >
           <option value="">Select stroke type...</option>
           <option value="ischemic_large_vessel">Ischemic - Large Vessel</option>
@@ -209,7 +209,7 @@ export const StrokeAssessmentForm: React.FC<StrokeAssessmentFormProps> = ({
       </div>
 
       {/* NIHSS Items */}
-      <div className="space-y-4 bg-gray-50 p-4 rounded">
+      <div className="space-y-4 bg-gray-50 p-4 rounded-sm">
         <h2 className="text-xl font-bold">NIHSS Scoring (0-42 total)</h2>
 
         {/* 1a. Level of Consciousness */}
@@ -366,7 +366,7 @@ export const StrokeAssessmentForm: React.FC<StrokeAssessmentFormProps> = ({
             <select
               value={formData.left_arm_motor_score || 0}
               onChange={(e) => handleInputChange('left_arm_motor_score', parseInt(e.target.value))}
-              className="w-full border rounded p-2"
+              className="w-full border rounded-sm p-2"
             >
               <option value={0}>0 = No drift</option>
               <option value={1}>1 = Drift</option>
@@ -380,7 +380,7 @@ export const StrokeAssessmentForm: React.FC<StrokeAssessmentFormProps> = ({
             <select
               value={formData.right_arm_motor_score || 0}
               onChange={(e) => handleInputChange('right_arm_motor_score', parseInt(e.target.value))}
-              className="w-full border rounded p-2"
+              className="w-full border rounded-sm p-2"
             >
               <option value={0}>0 = No drift</option>
               <option value={1}>1 = Drift</option>
@@ -398,7 +398,7 @@ export const StrokeAssessmentForm: React.FC<StrokeAssessmentFormProps> = ({
             <select
               value={formData.left_leg_motor_score || 0}
               onChange={(e) => handleInputChange('left_leg_motor_score', parseInt(e.target.value))}
-              className="w-full border rounded p-2"
+              className="w-full border rounded-sm p-2"
             >
               <option value={0}>0 = No drift</option>
               <option value={1}>1 = Drift</option>
@@ -412,7 +412,7 @@ export const StrokeAssessmentForm: React.FC<StrokeAssessmentFormProps> = ({
             <select
               value={formData.right_leg_motor_score || 0}
               onChange={(e) => handleInputChange('right_leg_motor_score', parseInt(e.target.value))}
-              className="w-full border rounded p-2"
+              className="w-full border rounded-sm p-2"
             >
               <option value={0}>0 = No drift</option>
               <option value={1}>1 = Drift</option>
@@ -429,7 +429,7 @@ export const StrokeAssessmentForm: React.FC<StrokeAssessmentFormProps> = ({
           <select
             value={formData.limb_ataxia_score || 0}
             onChange={(e) => handleInputChange('limb_ataxia_score', parseInt(e.target.value))}
-            className="w-full border rounded p-2"
+            className="w-full border rounded-sm p-2"
           >
             <option value={0}>0 = Absent</option>
             <option value={1}>1 = Present in one limb</option>
@@ -442,7 +442,7 @@ export const StrokeAssessmentForm: React.FC<StrokeAssessmentFormProps> = ({
           <select
             value={formData.sensory_score || 0}
             onChange={(e) => handleInputChange('sensory_score', parseInt(e.target.value))}
-            className="w-full border rounded p-2"
+            className="w-full border rounded-sm p-2"
           >
             <option value={0}>0 = Normal</option>
             <option value={1}>1 = Mild-moderate loss</option>
@@ -455,7 +455,7 @@ export const StrokeAssessmentForm: React.FC<StrokeAssessmentFormProps> = ({
           <select
             value={formData.best_language_score || 0}
             onChange={(e) => handleInputChange('best_language_score', parseInt(e.target.value))}
-            className="w-full border rounded p-2"
+            className="w-full border rounded-sm p-2"
           >
             <option value={0}>0 = No aphasia</option>
             <option value={1}>1 = Mild-moderate aphasia</option>
@@ -469,7 +469,7 @@ export const StrokeAssessmentForm: React.FC<StrokeAssessmentFormProps> = ({
           <select
             value={formData.dysarthria_score || 0}
             onChange={(e) => handleInputChange('dysarthria_score', parseInt(e.target.value))}
-            className="w-full border rounded p-2"
+            className="w-full border rounded-sm p-2"
           >
             <option value={0}>0 = Normal</option>
             <option value={1}>1 = Mild-moderate</option>
@@ -482,7 +482,7 @@ export const StrokeAssessmentForm: React.FC<StrokeAssessmentFormProps> = ({
           <select
             value={formData.extinction_inattention_score || 0}
             onChange={(e) => handleInputChange('extinction_inattention_score', parseInt(e.target.value))}
-            className="w-full border rounded p-2"
+            className="w-full border rounded-sm p-2"
           >
             <option value={0}>0 = No abnormality</option>
             <option value={1}>1 = Inattention to one modality</option>
@@ -498,7 +498,7 @@ export const StrokeAssessmentForm: React.FC<StrokeAssessmentFormProps> = ({
           <div className="text-5xl font-bold mb-2">{nihssTotal}</div>
           <div className="text-xl">{severity}</div>
           {tpaEligible && (
-            <div className="mt-4 bg-yellow-500 text-black px-4 py-2 rounded inline-block font-bold">
+            <div className="mt-4 bg-yellow-500 text-black px-4 py-2 rounded-sm inline-block font-bold">
               ✓ tPA ELIGIBLE
             </div>
           )}
@@ -523,7 +523,7 @@ export const StrokeAssessmentForm: React.FC<StrokeAssessmentFormProps> = ({
               placeholder="tPA Bolus Time"
               value={formData.tpa_bolus_time?.slice(0, 16) || ''}
               onChange={(e) => handleInputChange('tpa_bolus_time', e.target.value)}
-              className="mt-2 w-full border rounded p-2"
+              className="mt-2 w-full border rounded-sm p-2"
             />
           )}
         </div>
@@ -547,7 +547,7 @@ export const StrokeAssessmentForm: React.FC<StrokeAssessmentFormProps> = ({
           value={formData.clinical_notes || ''}
           onChange={(e) => handleInputChange('clinical_notes', e.target.value)}
           rows={4}
-          className="w-full border rounded p-2"
+          className="w-full border rounded-sm p-2"
           placeholder="Additional clinical observations, complications, concerns..."
         />
       </div>
@@ -558,7 +558,7 @@ export const StrokeAssessmentForm: React.FC<StrokeAssessmentFormProps> = ({
           <button
             type="button"
             onClick={onCancel}
-            className="px-6 py-2 border rounded hover:bg-gray-100"
+            className="px-6 py-2 border rounded-sm hover:bg-gray-100"
           >
             Cancel
           </button>
@@ -566,7 +566,7 @@ export const StrokeAssessmentForm: React.FC<StrokeAssessmentFormProps> = ({
         <button
           type="submit"
           disabled={submitting}
-          className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
+          className="px-6 py-2 bg-blue-600 text-white rounded-sm hover:bg-blue-700 disabled:bg-gray-400"
         >
           {submitting ? 'Saving...' : 'Save Assessment'}
         </button>

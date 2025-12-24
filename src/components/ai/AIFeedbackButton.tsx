@@ -317,7 +317,7 @@ export const AIFeedbackButton: React.FC<AIFeedbackButtonProps> = ({
             </h3>
             <button
               onClick={handleCloseModal}
-              className="p-1 hover:bg-slate-700 rounded"
+              className="p-1 hover:bg-slate-700 rounded-sm"
             >
               <X className="h-5 w-5 text-slate-400" />
             </button>
@@ -331,7 +331,7 @@ export const AIFeedbackButton: React.FC<AIFeedbackButtonProps> = ({
                 ? 'Please describe what could have caused patient harm...'
                 : 'Optional: Add details to help improve AI accuracy...'
             }
-            className="w-full h-24 px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
+            className="w-full h-24 px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-hidden focus:ring-2 focus:ring-teal-500 resize-none"
             autoFocus
           />
 
@@ -385,7 +385,7 @@ export const AIFeedbackButton: React.FC<AIFeedbackButtonProps> = ({
 
   const buttonBaseClasses = cn(
     'rounded-md border border-slate-600 hover:border-slate-500 transition-all',
-    'focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-1 focus:ring-offset-slate-900',
+    'focus:outline-hidden focus:ring-2 focus:ring-teal-500 focus:ring-offset-1 focus:ring-offset-slate-900',
     disabled && 'opacity-50 cursor-not-allowed',
     sizes.button
   );

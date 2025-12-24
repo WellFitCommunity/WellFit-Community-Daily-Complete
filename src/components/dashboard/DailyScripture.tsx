@@ -93,7 +93,7 @@ const DailyScripture: React.FC = () => {
     <section className="bg-white border-2 border-wellfit-green p-6 rounded-xl shadow-md">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-xl font-semibold text-wellfit-blue">Daily Scripture</h2>
-        <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
+        <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-sm">
           {today} of {scriptures.length}
         </span>
       </div>

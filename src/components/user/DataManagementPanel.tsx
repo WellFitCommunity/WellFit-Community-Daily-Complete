@@ -212,7 +212,7 @@ export default function DataManagementPanel() {
                   type="text"
                   value={deleteConfirmText}
                   onChange={(e) => setDeleteConfirmText(e.target.value)}
-                  className="w-full p-2 border border-red-300 rounded focus:ring-red-500 focus:border-red-500"
+                  className="w-full p-2 border border-red-300 rounded-sm focus:ring-red-500 focus:border-red-500"
                   placeholder="DELETE MY ACCOUNT"
                 />
               </div>

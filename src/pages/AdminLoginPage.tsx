@@ -416,7 +416,7 @@ export default function AdminLoginPage() {
   // === RENDER ===
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-slate-100 to-slate-200 p-4">
       <div className="w-full max-w-md">
         {/* Header */}
         <div
@@ -448,7 +448,7 @@ export default function AdminLoginPage() {
               )}
             </div>
             {userTenantCode && (
-              <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded">
+              <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-sm">
                 {userTenantCode}
               </span>
             )}

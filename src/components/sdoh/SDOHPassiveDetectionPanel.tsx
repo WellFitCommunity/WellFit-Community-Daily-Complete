@@ -98,7 +98,7 @@ export const SDOHPassiveDetectionPanel: React.FC<SDOHPassiveDetectionPanelProps>
 
   if (loading && detections.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white rounded-lg shadow-sm p-6">
         <div className="flex items-center justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           <span className="ml-3 text-gray-600">Loading passive detections...</span>
@@ -108,7 +108,7 @@ export const SDOHPassiveDetectionPanel: React.FC<SDOHPassiveDetectionPanelProps>
   }
 
   return (
-    <div className="bg-white rounded-lg shadow">
+    <div className="bg-white rounded-lg shadow-sm">
       {/* Header */}
       <div className="px-6 py-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
@@ -151,10 +151,10 @@ export const SDOHPassiveDetectionPanel: React.FC<SDOHPassiveDetectionPanelProps>
                       category={detection.category}
                       riskLevel={detection.riskLevel}
                     />
-                    <span className={`px-2 py-1 text-xs font-medium rounded ${getRiskBadgeColor(detection.riskLevel)}`}>
+                    <span className={`px-2 py-1 text-xs font-medium rounded-sm ${getRiskBadgeColor(detection.riskLevel)}`}>
                       {detection.riskLevel.toUpperCase()}
                     </span>
-                    <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded">
+                    <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-sm">
                       {detection.confidence}% confidence
                     </span>
                     <span className="text-xs text-gray-500">
@@ -174,7 +174,7 @@ export const SDOHPassiveDetectionPanel: React.FC<SDOHPassiveDetectionPanelProps>
                   <div className="mb-3">
                     <button
                       onClick={() => setExpandedId(expandedId === `${detection.sourceId}-${index}` ? null : `${detection.sourceId}-${index}`)}
-                      className="text-sm text-gray-700 bg-gray-50 px-3 py-2 rounded border border-gray-200 hover:bg-gray-100 transition-colors w-full text-left"
+                      className="text-sm text-gray-700 bg-gray-50 px-3 py-2 rounded-sm border border-gray-200 hover:bg-gray-100 transition-colors w-full text-left"
                     >
                       <span className="font-medium">Context: </span>
                       {expandedId === `${detection.sourceId}-${index}` ? (
@@ -196,14 +196,14 @@ export const SDOHPassiveDetectionPanel: React.FC<SDOHPassiveDetectionPanelProps>
                   <button
                     onClick={() => handleReview(`${detection.sourceId}-${index}`, true, 'Confirmed via passive detection')}
                     disabled={reviewingId !== null}
-                    className="px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+                    className="px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded-sm hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
                   >
                     Confirm & Add to Chart
                   </button>
                   <button
                     onClick={() => handleReview(`${detection.sourceId}-${index}`, false, 'Dismissed - not clinically relevant')}
                     disabled={reviewingId !== null}
-                    className="px-3 py-1.5 bg-gray-200 text-gray-700 text-xs font-medium rounded hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+                    className="px-3 py-1.5 bg-gray-200 text-gray-700 text-xs font-medium rounded-sm hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
                   >
                     Dismiss
                   </button>

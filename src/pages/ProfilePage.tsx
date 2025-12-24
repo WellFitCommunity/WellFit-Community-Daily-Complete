@@ -208,7 +208,7 @@ const ProfilePage: React.FC = () => {
         <div className="bg-white rounded-2xl shadow-2xl p-8 mb-6">
           <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
             {/* Profile Photo */}
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               <div className="relative">
                 {profile.avatar_url ? (
                   <img

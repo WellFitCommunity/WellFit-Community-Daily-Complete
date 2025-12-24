@@ -226,7 +226,7 @@ export const PatientRiskStrip: React.FC<PatientRiskStripProps> = ({
         <span className="text-xs text-slate-400">Risk data unavailable</span>
         <button
           onClick={handleRefresh}
-          className="ml-auto p-1 hover:bg-slate-700 rounded"
+          className="ml-auto p-1 hover:bg-slate-700 rounded-sm"
           title="Retry"
         >
           <RefreshCw className="h-3 w-3 text-slate-400" />
@@ -268,7 +268,7 @@ export const PatientRiskStrip: React.FC<PatientRiskStripProps> = ({
         {riskData.readmission && (
           <button
             onClick={() => handleRiskClick('readmission')}
-            className="flex items-center gap-2 hover:bg-slate-700/50 px-2 py-1 rounded transition-colors"
+            className="flex items-center gap-2 hover:bg-slate-700/50 px-2 py-1 rounded-sm transition-colors"
             title={`Readmission Risk: ${riskData.readmission.score}%${riskData.readmission.topFactor ? ` - ${riskData.readmission.topFactor}` : ''}`}
           >
             <TrendingUp className="h-4 w-4 text-slate-400" />
@@ -286,7 +286,7 @@ export const PatientRiskStrip: React.FC<PatientRiskStripProps> = ({
         {riskData.deterioration && (
           <button
             onClick={() => handleRiskClick('deterioration')}
-            className="flex items-center gap-2 hover:bg-slate-700/50 px-2 py-1 rounded transition-colors"
+            className="flex items-center gap-2 hover:bg-slate-700/50 px-2 py-1 rounded-sm transition-colors"
             title={`Deterioration Risk: ${riskData.deterioration.score} - Reassess in ${riskData.deterioration.hoursToReassess}h`}
           >
             <AlertTriangle className="h-4 w-4 text-slate-400" />
@@ -304,7 +304,7 @@ export const PatientRiskStrip: React.FC<PatientRiskStripProps> = ({
         {riskData.noShow && (
           <button
             onClick={() => handleRiskClick('noShow')}
-            className="flex items-center gap-2 hover:bg-slate-700/50 px-2 py-1 rounded transition-colors"
+            className="flex items-center gap-2 hover:bg-slate-700/50 px-2 py-1 rounded-sm transition-colors"
             title={`No-Show Risk: ${riskData.noShow.score}%`}
           >
             <Calendar className="h-4 w-4 text-slate-400" />
@@ -321,7 +321,7 @@ export const PatientRiskStrip: React.FC<PatientRiskStripProps> = ({
         {/* Expand Button */}
         <button
           onClick={() => setExpanded(!expanded)}
-          className="ml-auto p-1 hover:bg-slate-700 rounded"
+          className="ml-auto p-1 hover:bg-slate-700 rounded-sm"
           title={expanded ? 'Collapse' : 'Expand details'}
         >
           {expanded ? (
@@ -335,7 +335,7 @@ export const PatientRiskStrip: React.FC<PatientRiskStripProps> = ({
         <button
           onClick={handleRefresh}
           className={cn(
-            'p-1 hover:bg-slate-700 rounded',
+            'p-1 hover:bg-slate-700 rounded-sm',
             refreshing && 'animate-spin'
           )}
           title="Refresh risk data"
@@ -363,7 +363,7 @@ export const PatientRiskStrip: React.FC<PatientRiskStripProps> = ({
           <span className="text-sm font-medium text-slate-200">Risk Assessment</span>
           {riskData.dataQuality && (
             <span className={cn(
-              'text-xs px-2 py-0.5 rounded',
+              'text-xs px-2 py-0.5 rounded-sm',
               riskData.dataQuality === 'complete' ? 'bg-green-900/30 text-green-400' :
               riskData.dataQuality === 'partial' ? 'bg-yellow-900/30 text-yellow-400' :
               'bg-slate-700 text-slate-400'
@@ -381,7 +381,7 @@ export const PatientRiskStrip: React.FC<PatientRiskStripProps> = ({
           <button
             onClick={handleRefresh}
             className={cn(
-              'p-1 hover:bg-slate-700 rounded',
+              'p-1 hover:bg-slate-700 rounded-sm',
               refreshing && 'animate-spin'
             )}
             disabled={refreshing}
@@ -435,7 +435,7 @@ export const PatientRiskStrip: React.FC<PatientRiskStripProps> = ({
         {riskData.readmission?.plainLanguageExplanation && (
           <div className="col-span-3 p-3 rounded-lg bg-teal-900/20 border border-teal-800/50">
             <div className="flex items-start gap-2">
-              <Info className="h-4 w-4 text-teal-400 mt-0.5 flex-shrink-0" />
+              <Info className="h-4 w-4 text-teal-400 mt-0.5 shrink-0" />
               <div>
                 <p className="text-xs font-medium text-teal-300 mb-1">
                   In Simple Terms

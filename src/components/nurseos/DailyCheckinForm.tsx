@@ -142,7 +142,7 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
               max="10"
               value={formData.stress_level}
               onChange={(e) => handleSliderChange('stress_level', Number(e.target.value))}
-              className="flex-1 h-2 bg-gradient-to-r from-green-400 via-yellow-400 to-red-500 rounded-lg appearance-none cursor-pointer"
+              className="flex-1 h-2 bg-linear-to-r from-green-400 via-yellow-400 to-red-500 rounded-lg appearance-none cursor-pointer"
               style={{
                 accentColor: formData.stress_level >= 7 ? '#ef4444' : formData.stress_level >= 5 ? '#f59e0b' : '#10b981'
               }}
@@ -165,7 +165,7 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
               max="10"
               value={formData.energy_level}
               onChange={(e) => handleSliderChange('energy_level', Number(e.target.value))}
-              className="flex-1 h-2 bg-gradient-to-r from-red-400 via-yellow-400 to-green-500 rounded-lg appearance-none cursor-pointer"
+              className="flex-1 h-2 bg-linear-to-r from-red-400 via-yellow-400 to-green-500 rounded-lg appearance-none cursor-pointer"
             />
             <span className="text-sm text-gray-600 min-w-[120px] text-right">⚡ Energized (10)</span>
             <span className="text-lg font-bold text-gray-800 min-w-[30px] text-center">{formData.energy_level}</span>
@@ -185,7 +185,7 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
               max="10"
               value={formData.mood_rating}
               onChange={(e) => handleSliderChange('mood_rating', Number(e.target.value))}
-              className="flex-1 h-2 bg-gradient-to-r from-red-400 via-yellow-400 to-green-500 rounded-lg appearance-none cursor-pointer"
+              className="flex-1 h-2 bg-linear-to-r from-red-400 via-yellow-400 to-green-500 rounded-lg appearance-none cursor-pointer"
             />
             <span className="text-sm text-gray-600 min-w-[120px] text-right">😊 Excellent (10)</span>
             <span className="text-lg font-bold text-gray-800 min-w-[30px] text-center">{formData.mood_rating}</span>
@@ -273,7 +273,7 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
                 name="felt_overwhelmed"
                 checked={formData.felt_overwhelmed || false}
                 onChange={handleChange}
-                className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                className="w-5 h-5 text-blue-600 border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500"
               />
               <span className="text-gray-700">I felt overwhelmed today</span>
             </label>
@@ -284,7 +284,7 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
                 name="missed_break"
                 checked={formData.missed_break || false}
                 onChange={handleChange}
-                className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                className="w-5 h-5 text-blue-600 border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500"
               />
               <span className="text-gray-700">I skipped lunch or breaks</span>
             </label>
@@ -295,7 +295,7 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
                 name="felt_supported_by_team"
                 checked={formData.felt_supported_by_team || false}
                 onChange={handleChange}
-                className="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                className="w-5 h-5 text-green-600 border-gray-300 rounded-sm focus:ring-2 focus:ring-green-500"
               />
               <span className="text-gray-700">I felt supported by my team</span>
             </label>
@@ -306,7 +306,7 @@ export const DailyCheckinForm: React.FC<DailyCheckinFormProps> = ({
                 name="after_hours_work"
                 checked={formData.after_hours_work || false}
                 onChange={handleChange}
-                className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                className="w-5 h-5 text-blue-600 border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500"
               />
               <span className="text-gray-700">I worked after hours (charting, calls, etc.)</span>
             </label>

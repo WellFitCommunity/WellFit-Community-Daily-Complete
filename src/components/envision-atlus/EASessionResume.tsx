@@ -169,7 +169,7 @@ export const EASessionResume: React.FC<EASessionResumeProps> = ({
           </div>
           <button
             onClick={handleDismiss}
-            className="p-1 rounded hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition-colors"
+            className="p-1 rounded-sm hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition-colors"
             title="Dismiss"
           >
             <X className="w-4 h-4" />
@@ -182,7 +182,7 @@ export const EASessionResume: React.FC<EASessionResumeProps> = ({
             You were last working on:
           </p>
           <div className="flex items-center gap-2 px-3 py-2 bg-slate-700/50 rounded-lg mb-3">
-            <ArrowRight className="w-4 h-4 text-teal-400 flex-shrink-0" />
+            <ArrowRight className="w-4 h-4 text-teal-400 shrink-0" />
             <span className="text-sm text-slate-100 truncate">
               {formatRouteName(lastRoute)}
             </span>
@@ -196,13 +196,13 @@ export const EASessionResume: React.FC<EASessionResumeProps> = ({
         <div className="flex items-center gap-2 px-4 py-3 bg-slate-900/50 border-t border-slate-700">
           <button
             onClick={handleStartFresh}
-            className="flex-1 px-3 py-2 text-sm text-slate-400 hover:text-slate-200 hover:bg-slate-700 rounded transition-colors"
+            className="flex-1 px-3 py-2 text-sm text-slate-400 hover:text-slate-200 hover:bg-slate-700 rounded-sm transition-colors"
           >
             Start Fresh
           </button>
           <button
             onClick={handleResume}
-            className="flex-1 px-3 py-2 text-sm font-medium text-white bg-teal-600 hover:bg-teal-500 rounded transition-colors"
+            className="flex-1 px-3 py-2 text-sm font-medium text-white bg-teal-600 hover:bg-teal-500 rounded-sm transition-colors"
           >
             Resume
           </button>

@@ -204,7 +204,7 @@ export const TenantSecurityDashboard: React.FC = () => {
         {metrics.map((metric, index) => {
           const Icon = metric.icon;
           return (
-            <div key={index} className="bg-white p-6 rounded-lg shadow border border-gray-200">
+            <div key={index} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
               <div className="flex items-center justify-between mb-4">
                 <div className={`p-3 rounded-lg ${metric.bgColor}`}>
                   <Icon className={`w-6 h-6 ${metric.color}`} />
@@ -220,7 +220,7 @@ export const TenantSecurityDashboard: React.FC = () => {
       </div>
 
       {/* Recent PHI Access */}
-      <div className="bg-white rounded-lg shadow border border-gray-200">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="p-6 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
             <Eye className="w-5 h-5 text-purple-600" />
@@ -254,7 +254,7 @@ export const TenantSecurityDashboard: React.FC = () => {
       </div>
 
       {/* Security Alerts */}
-      <div className="bg-white rounded-lg shadow border border-gray-200">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="p-6 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
             <AlertTriangle className="w-5 h-5 text-red-600" />

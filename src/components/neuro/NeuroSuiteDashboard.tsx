@@ -188,7 +188,7 @@ export const NeuroSuiteDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
+      <div className="min-h-screen bg-linear-to-br from-slate-900 to-slate-800">
         <AdminHeader title="NeuroSuite" />
         <div className="flex items-center justify-center h-96">
           <div className="text-xl text-slate-300">Loading NeuroSuite dashboard...</div>
@@ -200,7 +200,7 @@ export const NeuroSuiteDashboard: React.FC = () => {
   const metrics = calculateStrokeQualityMetrics();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
+    <div className="min-h-screen bg-linear-to-br from-slate-900 to-slate-800">
       <AdminHeader title="NeuroSuite" />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
@@ -497,7 +497,7 @@ export const NeuroSuiteDashboard: React.FC = () => {
 
               {/* ROBERT & FORBES Framework Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <EACard className="bg-gradient-to-br from-[#00857a]/20 to-slate-800 border-[#00857a]/30">
+                <EACard className="bg-linear-to-br from-[#00857a]/20 to-slate-800 border-[#00857a]/30">
                   <EACardContent>
                     <h3 className="text-lg font-bold text-[#33bfb7] mb-3">ROBERT Framework</h3>
                     <ul className="text-sm space-y-2 text-slate-300">
@@ -510,7 +510,7 @@ export const NeuroSuiteDashboard: React.FC = () => {
                     </ul>
                   </EACardContent>
                 </EACard>
-                <EACard className="bg-gradient-to-br from-blue-500/20 to-slate-800 border-blue-500/30">
+                <EACard className="bg-linear-to-br from-blue-500/20 to-slate-800 border-blue-500/30">
                   <EACardContent>
                     <h3 className="text-lg font-bold text-blue-400 mb-3">FORBES Framework</h3>
                     <ul className="text-sm space-y-2 text-slate-300">
@@ -600,7 +600,7 @@ export const NeuroSuiteDashboard: React.FC = () => {
         </EATabs>
 
         {/* Quick Actions */}
-        <EACard className="bg-gradient-to-r from-[#00857a] to-[#006d64] border-none">
+        <EACard className="bg-linear-to-r from-[#00857a] to-[#006d64] border-none">
           <EACardContent>
             <h2 className="text-xl font-bold text-white mb-4">Quick Actions</h2>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">

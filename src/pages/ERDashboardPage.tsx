@@ -98,7 +98,7 @@ const ERDashboardPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg">
+      <header className="bg-linear-to-r from-red-600 to-red-700 text-white shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -176,7 +176,7 @@ const ERDashboardPage: React.FC = () => {
 
       {/* Provider Sign-off Alert Banner */}
       {stats.awaitingSignoff > 0 && (
-        <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 px-4">
+        <div className="bg-linear-to-r from-orange-500 to-red-500 text-white py-3 px-4">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
               <span className="text-2xl">⚠️</span>
@@ -192,7 +192,7 @@ const ERDashboardPage: React.FC = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Instructions Card */}
-        <div className="mb-6 bg-blue-50 border-2 border-blue-200 rounded-xl p-6 shadow-sm">
+        <div className="mb-6 bg-blue-50 border-2 border-blue-200 rounded-xl p-6 shadow-xs">
           <div className="flex items-start gap-4">
             <div className="text-3xl">ℹ️</div>
             <div className="flex-1">
@@ -244,10 +244,10 @@ const ERDashboardPage: React.FC = () => {
               <span>📡 Real-time updates via WebSocket</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-mono bg-gray-100 px-2 py-1 rounded">
+              <span className="text-xs font-mono bg-gray-100 px-2 py-1 rounded-sm">
                 SOC2 Compliant
               </span>
-              <span className="text-xs font-mono bg-gray-100 px-2 py-1 rounded">
+              <span className="text-xs font-mono bg-gray-100 px-2 py-1 rounded-sm">
                 HIPAA Secure
               </span>
             </div>

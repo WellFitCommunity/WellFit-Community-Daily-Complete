@@ -244,7 +244,7 @@ const SetCaregiverPinPage: React.FC = () => {
           <button
             type="submit"
             disabled={loading || pin.length !== 4 || confirmPin.length !== 4}
-            className="w-full py-4 text-xl font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full py-4 text-xl font-semibold rounded-lg shadow-md focus:outline-hidden focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             style={{
               backgroundColor: branding.primaryColor,
               color: 'white',

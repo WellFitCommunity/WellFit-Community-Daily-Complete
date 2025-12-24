@@ -102,9 +102,9 @@ export const ResilienceHubDashboard: React.FC = () => {
   if (loading) {
     return (
       <div className="resilience-hub-dashboard p-6 animate-pulse">
-        <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
-        <div className="h-32 bg-gray-200 rounded mb-4"></div>
-        <div className="h-48 bg-gray-200 rounded"></div>
+        <div className="h-8 bg-gray-200 rounded-sm w-1/3 mb-4"></div>
+        <div className="h-32 bg-gray-200 rounded-sm mb-4"></div>
+        <div className="h-48 bg-gray-200 rounded-sm"></div>
       </div>
     );
   }
@@ -145,14 +145,14 @@ export const ResilienceHubDashboard: React.FC = () => {
             <h2 className="text-2xl font-bold text-gray-800 mb-1">{t.title} 🧘</h2>
             <p className="text-gray-600">{t.subtitle}</p>
           </div>
-          <LanguageSwitcher className="flex-shrink-0 ml-4" />
+          <LanguageSwitcher className="shrink-0 ml-4" />
         </div>
       </div>
 
       {/* Burnout Risk Badge */}
       <div className="mb-6">
         <div className="flex items-center gap-4">
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             <span className={`inline-block px-6 py-3 rounded-full text-lg font-bold uppercase tracking-wide ${getRiskBadgeColor(stats.current_burnout_risk)}`}>
               {t.riskBadge[stats.current_burnout_risk as keyof typeof t.riskBadge] || t.riskBadge.unknown}
             </span>
@@ -177,7 +177,7 @@ export const ResilienceHubDashboard: React.FC = () => {
       {stats.intervention_needed && (
         <div className="mb-6 bg-orange-50 border-l-4 border-orange-500 p-4 rounded-r-lg">
           <div className="flex items-start">
-            <div className="flex-shrink-0 text-2xl mr-3">⚠️</div>
+            <div className="shrink-0 text-2xl mr-3">⚠️</div>
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-orange-900 mb-1">{t.interventionAlert.title}</h3>
               <p className="text-orange-800 mb-3">

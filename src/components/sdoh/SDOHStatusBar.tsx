@@ -191,19 +191,19 @@ export const SDOHStatusBar: React.FC<SDOHStatusBarProps> = ({
         <div className="px-3 pb-3 pt-2 border-t border-gray-100">
           <div className="flex items-center gap-3 text-xs text-gray-500">
             <span className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded border-2 border-red-500" />
+              <span className="w-3 h-3 rounded-sm border-2 border-red-500" />
               Critical
             </span>
             <span className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded border-2 border-orange-400" />
+              <span className="w-3 h-3 rounded-sm border-2 border-orange-400" />
               High
             </span>
             <span className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded border border-yellow-400" />
+              <span className="w-3 h-3 rounded-sm border border-yellow-400" />
               Moderate
             </span>
             <span className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded border border-green-400" />
+              <span className="w-3 h-3 rounded-sm border border-green-400" />
               Low
             </span>
           </div>

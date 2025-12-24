@@ -191,7 +191,7 @@ export const SystemAdminDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-8">
+      <div className="min-h-screen bg-linear-to-br from-slate-900 to-slate-800 p-8">
         <div className="animate-pulse space-y-6">
           <div className="h-24 bg-slate-800 rounded-xl"></div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -207,9 +207,9 @@ export const SystemAdminDashboard: React.FC = () => {
   const healthStatus = getHealthStatus();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-8 space-y-6">
+    <div className="min-h-screen bg-linear-to-br from-slate-900 to-slate-800 p-8 space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700">
+      <div className="flex justify-between items-center bg-slate-800/50 backdrop-blur-xs rounded-xl p-6 border border-slate-700">
         <div className="flex items-center gap-4">
           <div className="p-3 bg-[#00857a]/20 rounded-lg">
             <Settings className="h-8 w-8 text-[#00857a]" />
@@ -478,7 +478,7 @@ export const SystemAdminDashboard: React.FC = () => {
                 <AlertTriangle className="h-4 w-4" />
                 <span>
                   <strong>Pending Migrations:</strong> There are {metrics.pending_migrations} database migrations waiting to be applied.
-                  Run <code className="bg-slate-700 px-1 rounded">npx supabase db push</code> to apply them.
+                  Run <code className="bg-slate-700 px-1 rounded-sm">npx supabase db push</code> to apply them.
                 </span>
               </EAAlert>
             )}

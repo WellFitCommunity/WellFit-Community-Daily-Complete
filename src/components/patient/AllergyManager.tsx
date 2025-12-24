@@ -120,7 +120,7 @@ const AllergyManager: React.FC<AllergyManagerProps> = ({ userId, readOnly = fals
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div className="bg-white rounded-lg shadow-xs border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-xl font-bold text-gray-900">Allergy & Intolerance Management</h2>
@@ -129,7 +129,7 @@ const AllergyManager: React.FC<AllergyManagerProps> = ({ userId, readOnly = fals
         {!readOnly && (
           <button
             onClick={() => setShowAddForm(!showAddForm)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium"
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-blue-500 text-sm font-medium"
           >
             {showAddForm ? 'Cancel' : '+ Add Allergy'}
           </button>
@@ -239,7 +239,7 @@ const AllergyManager: React.FC<AllergyManagerProps> = ({ userId, readOnly = fals
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-blue-500 text-sm font-medium"
             >
               {editingId ? 'Update' : 'Add'} Allergy
             </button>
@@ -302,7 +302,7 @@ const AllergyManager: React.FC<AllergyManagerProps> = ({ userId, readOnly = fals
                   <div className="flex space-x-2 ml-4">
                     <button
                       onClick={() => handleEdit(allergy)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded"
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-sm"
                       title="Edit"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -316,7 +316,7 @@ const AllergyManager: React.FC<AllergyManagerProps> = ({ userId, readOnly = fals
                     </button>
                     <button
                       onClick={() => handleDelete(allergy.id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded"
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-sm"
                       title="Delete"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

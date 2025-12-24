@@ -430,7 +430,7 @@ const SettingsPage: React.FC = () => {
                             setSettings({ ...settings, daily_reminder_time: e.target.value });
                           }}
                           onClick={(e) => e.stopPropagation()}
-                          className="w-full p-3 text-lg border-2 border-gray-300 rounded-lg focus:border-[#8cc63f] focus:outline-none"
+                          className="w-full p-3 text-lg border-2 border-gray-300 rounded-lg focus:border-[#8cc63f] focus:outline-hidden"
                         />
                       </div>
                     </div>
@@ -451,7 +451,7 @@ const SettingsPage: React.FC = () => {
                             setSettings({ ...settings, emergency_contact_name: e.target.value });
                           }}
                           onClick={(e) => e.stopPropagation()}
-                          className="w-full p-3 text-lg border-2 border-gray-300 rounded-lg focus:border-[#8cc63f] focus:outline-none"
+                          className="w-full p-3 text-lg border-2 border-gray-300 rounded-lg focus:border-[#8cc63f] focus:outline-hidden"
                           placeholder="Full name of your emergency contact"
                         />
                       </div>
@@ -468,7 +468,7 @@ const SettingsPage: React.FC = () => {
                             setSettings({ ...settings, emergency_contact_phone: e.target.value });
                           }}
                           onClick={(e) => e.stopPropagation()}
-                          className="w-full p-3 text-lg border-2 border-gray-300 rounded-lg focus:border-[#8cc63f] focus:outline-none"
+                          className="w-full p-3 text-lg border-2 border-gray-300 rounded-lg focus:border-[#8cc63f] focus:outline-hidden"
                           placeholder="(555) 123-4567"
                         />
                       </div>
@@ -490,7 +490,7 @@ const SettingsPage: React.FC = () => {
                             setSettings({ ...settings, preferred_name: e.target.value });
                           }}
                           onClick={(e) => e.stopPropagation()}
-                          className="w-full p-3 text-lg border-2 border-gray-300 rounded-lg focus:border-[#8cc63f] focus:outline-none"
+                          className="w-full p-3 text-lg border-2 border-gray-300 rounded-lg focus:border-[#8cc63f] focus:outline-hidden"
                           placeholder="Your preferred name"
                         />
                       </div>
@@ -506,7 +506,7 @@ const SettingsPage: React.FC = () => {
                             setSettings({ ...settings, timezone: e.target.value });
                           }}
                           onClick={(e) => e.stopPropagation()}
-                          className="w-full p-3 text-lg border-2 border-gray-300 rounded-lg focus:border-[#8cc63f] focus:outline-none"
+                          className="w-full p-3 text-lg border-2 border-gray-300 rounded-lg focus:border-[#8cc63f] focus:outline-hidden"
                         >
                           <option value="America/New_York">Eastern Time</option>
                           <option value="America/Chicago">Central Time</option>

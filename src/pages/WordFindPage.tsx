@@ -348,7 +348,7 @@ const WordFind: React.FC = () => {
       <div className="flex flex-col lg:flex-row gap-6 items-center lg:items-start justify-center">
 
         {/* LEFT SIDE: The Puzzle Grid - Responsive sizing */}
-        <div className="flex-shrink-0 w-full max-w-md lg:max-w-none flex justify-center">
+        <div className="shrink-0 w-full max-w-md lg:max-w-none flex justify-center">
           <div
             className="inline-grid gap-1 sm:gap-2 select-none"
             role="grid"
@@ -392,7 +392,7 @@ const WordFind: React.FC = () => {
         </div>
 
         {/* RIGHT SIDE: Word List Panel - ALWAYS VISIBLE! Responsive width */}
-        <div className="w-full lg:w-auto flex-shrink-0 rounded-xl p-4 sm:p-6 shadow-lg border-2"
+        <div className="w-full lg:w-auto shrink-0 rounded-xl p-4 sm:p-6 shadow-lg border-2"
           role="complementary"
           aria-label="Words to find"
           style={{

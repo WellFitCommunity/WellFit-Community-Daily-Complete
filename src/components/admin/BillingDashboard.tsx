@@ -56,10 +56,10 @@ const BillingDashboard: React.FC<BillingDashboardProps> = ({ className = '' }) =
     return (
       <div className={`${className} animate-pulse`}>
         <div className="space-y-4">
-          <div className="h-6 bg-gray-200 rounded w-1/3"></div>
+          <div className="h-6 bg-gray-200 rounded-sm w-1/3"></div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[1, 2, 3].map(i => (
-              <div key={i} className="h-24 bg-gray-200 rounded"></div>
+              <div key={i} className="h-24 bg-gray-200 rounded-sm"></div>
             ))}
           </div>
         </div>
@@ -106,7 +106,7 @@ const BillingDashboard: React.FC<BillingDashboardProps> = ({ className = '' }) =
                 {formatCurrency(metrics?.totalAmount || 0)}
               </p>
             </div>
-            <div className="h-12 w-12 bg-gradient-to-br from-[#F4FADC] to-[#C8E63D] rounded-lg flex items-center justify-center shadow-md">
+            <div className="h-12 w-12 bg-linear-to-br from-[#F4FADC] to-[#C8E63D] rounded-lg flex items-center justify-center shadow-md">
               <span className="text-black text-xl font-bold">💰</span>
             </div>
           </div>
@@ -118,7 +118,7 @@ const BillingDashboard: React.FC<BillingDashboardProps> = ({ className = '' }) =
               <p className="text-sm font-bold text-[#6B7280]">Active Providers</p>
               <p className="text-2xl font-bold text-black">{providers.length}</p>
             </div>
-            <div className="h-12 w-12 bg-gradient-to-br from-purple-100 to-purple-400 rounded-lg flex items-center justify-center shadow-md">
+            <div className="h-12 w-12 bg-linear-to-br from-purple-100 to-purple-400 rounded-lg flex items-center justify-center shadow-md">
               <span className="text-white text-xl">🏥</span>
             </div>
           </div>
@@ -147,7 +147,7 @@ const BillingDashboard: React.FC<BillingDashboardProps> = ({ className = '' }) =
 
       {/* Recent Claims - Enhanced Table */}
       <div className="bg-white border border-black hover:border-[#1BA39C] rounded-lg shadow-xl overflow-hidden mb-6 transition-all">
-        <div className="px-6 py-4 border-b-2 border-[#E8EAED] bg-gradient-to-r from-[#E0F7F6] to-white">
+        <div className="px-6 py-4 border-b-2 border-[#E8EAED] bg-linear-to-r from-[#E0F7F6] to-white">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-bold text-black flex items-center gap-2">
               <span className="text-[#1BA39C]">📋</span>
@@ -192,7 +192,7 @@ const BillingDashboard: React.FC<BillingDashboardProps> = ({ className = '' }) =
                   <tr key={claim.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="flex-shrink-0 h-8 w-8 flex items-center justify-center bg-blue-100 rounded-full">
+                        <div className="shrink-0 h-8 w-8 flex items-center justify-center bg-blue-100 rounded-full">
                           <span className="text-blue-600 text-xs font-medium">
                             {claim.control_number ? claim.control_number.slice(0, 2) : 'CL'}
                           </span>
@@ -249,7 +249,7 @@ const BillingDashboard: React.FC<BillingDashboardProps> = ({ className = '' }) =
             Quick Actions
           </h3>
           <div className="space-y-3">
-            <button className="w-full text-left px-4 py-3 bg-gradient-to-r from-[#E0F7F6] to-white hover:from-[#1BA39C] hover:to-[#158A84] hover:text-white rounded-lg transition-all shadow-md hover:shadow-lg border border-black hover:border-[#C8E63D] group">
+            <button className="w-full text-left px-4 py-3 bg-linear-to-r from-[#E0F7F6] to-white hover:from-[#1BA39C] hover:to-[#158A84] hover:text-white rounded-lg transition-all shadow-md hover:shadow-lg border border-black hover:border-[#C8E63D] group">
               <div className="flex items-center">
                 <span className="mr-3 text-xl">➕</span>
                 <div>
@@ -259,7 +259,7 @@ const BillingDashboard: React.FC<BillingDashboardProps> = ({ className = '' }) =
               </div>
             </button>
 
-            <button className="w-full text-left px-4 py-3 bg-gradient-to-r from-[#F4FADC] to-white hover:from-[#C8E63D] hover:to-[#A8C230] rounded-lg transition-all shadow-md hover:shadow-lg border border-black hover:border-[#1BA39C] group">
+            <button className="w-full text-left px-4 py-3 bg-linear-to-r from-[#F4FADC] to-white hover:from-[#C8E63D] hover:to-[#A8C230] rounded-lg transition-all shadow-md hover:shadow-lg border border-black hover:border-[#1BA39C] group">
               <div className="flex items-center">
                 <span className="mr-3 text-xl">🔄</span>
                 <div>
@@ -269,7 +269,7 @@ const BillingDashboard: React.FC<BillingDashboardProps> = ({ className = '' }) =
               </div>
             </button>
 
-            <button className="w-full text-left px-4 py-3 bg-gradient-to-r from-purple-50 to-white hover:from-purple-400 hover:to-purple-600 hover:text-white rounded-lg transition-all shadow-md hover:shadow-lg border border-black hover:border-[#1BA39C] group">
+            <button className="w-full text-left px-4 py-3 bg-linear-to-r from-purple-50 to-white hover:from-purple-400 hover:to-purple-600 hover:text-white rounded-lg transition-all shadow-md hover:shadow-lg border border-black hover:border-[#1BA39C] group">
               <div className="flex items-center">
                 <span className="mr-3 text-xl">📊</span>
                 <div>
@@ -289,21 +289,21 @@ const BillingDashboard: React.FC<BillingDashboardProps> = ({ className = '' }) =
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm font-bold text-black">Billing Service</span>
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-[#F4FADC] to-[#C8E63D] text-black shadow-md">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-linear-to-r from-[#F4FADC] to-[#C8E63D] text-black shadow-md">
                 ✅ Online
               </span>
             </div>
 
             <div className="flex items-center justify-between">
               <span className="text-sm font-bold text-black">X12 Generation</span>
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-[#E0F7F6] to-[#1BA39C] text-white shadow-md">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-linear-to-r from-[#E0F7F6] to-[#1BA39C] text-white shadow-md">
                 ✅ Ready
               </span>
             </div>
 
             <div className="flex items-center justify-between">
               <span className="text-sm font-bold text-black">Coding AI</span>
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-[#F4FADC] to-[#C8E63D] text-black shadow-md">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-linear-to-r from-[#F4FADC] to-[#C8E63D] text-black shadow-md">
                 ✅ Active
               </span>
             </div>

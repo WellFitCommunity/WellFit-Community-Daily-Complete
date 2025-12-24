@@ -150,17 +150,17 @@ export const VoiceSearchOverlay: React.FC = () => {
             <span className="text-slate-400">Query:</span>
             <span className="text-white font-medium">{entity.query}</span>
             {entity.filters.dateOfBirth && (
-              <span className="px-2 py-0.5 bg-slate-700 rounded text-xs text-slate-300">
+              <span className="px-2 py-0.5 bg-slate-700 rounded-sm text-xs text-slate-300">
                 DOB: {new Date(entity.filters.dateOfBirth).toLocaleDateString()}
               </span>
             )}
             {entity.filters.mrn && (
-              <span className="px-2 py-0.5 bg-slate-700 rounded text-xs text-slate-300">
+              <span className="px-2 py-0.5 bg-slate-700 rounded-sm text-xs text-slate-300">
                 MRN: {entity.filters.mrn}
               </span>
             )}
             {entity.filters.roomNumber && (
-              <span className="px-2 py-0.5 bg-slate-700 rounded text-xs text-slate-300">
+              <span className="px-2 py-0.5 bg-slate-700 rounded-sm text-xs text-slate-300">
                 Room: {entity.filters.roomNumber}
               </span>
             )}
@@ -215,7 +215,7 @@ export const VoiceSearchOverlay: React.FC = () => {
                         {result.primaryText}
                       </span>
                       {result.matchScore >= 90 && (
-                        <span className="px-1.5 py-0.5 bg-green-500/20 text-green-400 rounded text-xs">
+                        <span className="px-1.5 py-0.5 bg-green-500/20 text-green-400 rounded-sm text-xs">
                           Best Match
                         </span>
                       )}
@@ -260,15 +260,15 @@ export const VoiceSearchOverlay: React.FC = () => {
           <div className="px-4 py-2 bg-slate-900/50 border-t border-slate-700 flex items-center justify-between text-xs text-slate-500">
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 bg-slate-700 rounded">Arrow</kbd>
+                <kbd className="px-1.5 py-0.5 bg-slate-700 rounded-sm">Arrow</kbd>
                 Navigate
               </span>
               <span className="flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 bg-slate-700 rounded">Enter</kbd>
+                <kbd className="px-1.5 py-0.5 bg-slate-700 rounded-sm">Enter</kbd>
                 Select
               </span>
               <span className="flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 bg-slate-700 rounded">Esc</kbd>
+                <kbd className="px-1.5 py-0.5 bg-slate-700 rounded-sm">Esc</kbd>
                 Close
               </span>
             </div>

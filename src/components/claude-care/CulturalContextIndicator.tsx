@@ -30,7 +30,7 @@ const CulturalContextIndicator: React.FC<Props> = ({ culturalContext }) => {
   };
 
   return (
-    <div className="bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4 space-y-4">
+    <div className="bg-linear-to-br from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4 space-y-4">
       <div className="flex items-center space-x-2">
         <span className="text-2xl">🌍</span>
         <h3 className="text-lg font-semibold text-gray-900">Cultural Context</h3>
@@ -38,7 +38,7 @@ const CulturalContextIndicator: React.FC<Props> = ({ culturalContext }) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Primary Language */}
-        <div className="bg-white rounded-md p-3 shadow-sm">
+        <div className="bg-white rounded-md p-3 shadow-xs">
           <div className="flex items-center space-x-2 mb-1">
             <span className="text-lg">🗣️</span>
             <span className="text-xs font-semibold text-gray-600 uppercase">Language</span>
@@ -50,7 +50,7 @@ const CulturalContextIndicator: React.FC<Props> = ({ culturalContext }) => {
 
         {/* Communication Style */}
         {culturalContext.preferredCommunicationStyle && (
-          <div className="bg-white rounded-md p-3 shadow-sm">
+          <div className="bg-white rounded-md p-3 shadow-xs">
             <div className="flex items-center space-x-2 mb-1">
               <span className="text-lg">
                 {getCommunicationStyleIcon(culturalContext.preferredCommunicationStyle)}
@@ -67,7 +67,7 @@ const CulturalContextIndicator: React.FC<Props> = ({ culturalContext }) => {
 
         {/* Health Literacy */}
         {culturalContext.healthLiteracyLevel && (
-          <div className="bg-white rounded-md p-3 shadow-sm">
+          <div className="bg-white rounded-md p-3 shadow-xs">
             <div className="flex items-center space-x-2 mb-1">
               <span className="text-lg">📚</span>
               <span className="text-xs font-semibold text-gray-600 uppercase">
@@ -86,7 +86,7 @@ const CulturalContextIndicator: React.FC<Props> = ({ culturalContext }) => {
 
         {/* Cultural Background */}
         {culturalContext.culturalBackground && (
-          <div className="bg-white rounded-md p-3 shadow-sm">
+          <div className="bg-white rounded-md p-3 shadow-xs">
             <div className="flex items-center space-x-2 mb-1">
               <span className="text-lg">🎭</span>
               <span className="text-xs font-semibold text-gray-600 uppercase">Background</span>
@@ -101,7 +101,7 @@ const CulturalContextIndicator: React.FC<Props> = ({ culturalContext }) => {
       {/* Religious/Cultural Considerations */}
       {culturalContext.religiousCulturalConsiderations &&
         culturalContext.religiousCulturalConsiderations.length > 0 && (
-          <div className="bg-white rounded-md p-3 shadow-sm">
+          <div className="bg-white rounded-md p-3 shadow-xs">
             <div className="flex items-center space-x-2 mb-2">
               <span className="text-lg">🙏</span>
               <span className="text-xs font-semibold text-gray-600 uppercase">
@@ -125,7 +125,7 @@ const CulturalContextIndicator: React.FC<Props> = ({ culturalContext }) => {
       <div className="text-xs text-gray-600 bg-white rounded-md p-3">
         <p className="flex items-start">
           <svg
-            className="h-4 w-4 text-blue-500 mr-2 flex-shrink-0 mt-0.5"
+            className="h-4 w-4 text-blue-500 mr-2 shrink-0 mt-0.5"
             fill="currentColor"
             viewBox="0 0 20 20"
           >

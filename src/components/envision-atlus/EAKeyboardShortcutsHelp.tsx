@@ -64,7 +64,7 @@ export const EAKeyboardShortcutsHelp: React.FC<EAKeyboardShortcutsHelpProps> = (
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+        className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -130,7 +130,7 @@ export const EAKeyboardShortcutsHelp: React.FC<EAKeyboardShortcutsHelpProps> = (
                         <span className="text-sm text-slate-300">
                           {shortcut.description}
                         </span>
-                        <kbd className="px-2 py-1 text-xs font-mono bg-slate-900 border border-slate-600 rounded text-slate-200 shadow-sm">
+                        <kbd className="px-2 py-1 text-xs font-mono bg-slate-900 border border-slate-600 rounded-sm text-slate-200 shadow-xs">
                           {formatKeyCombo(shortcut.key)}
                         </kbd>
                       </div>
@@ -149,11 +149,11 @@ export const EAKeyboardShortcutsHelp: React.FC<EAKeyboardShortcutsHelpProps> = (
             <ul className="text-sm text-slate-300 space-y-1">
               <li className="flex items-start gap-2">
                 <span className="text-teal-400 mt-0.5">•</span>
-                <span>Press <kbd className="px-1 py-0.5 text-xs font-mono bg-slate-800 rounded">?</kbd> anytime to show this help</span>
+                <span>Press <kbd className="px-1 py-0.5 text-xs font-mono bg-slate-800 rounded-sm">?</kbd> anytime to show this help</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-teal-400 mt-0.5">•</span>
-                <span>Use <kbd className="px-1 py-0.5 text-xs font-mono bg-slate-800 rounded">Ctrl+K</kbd> for quick search</span>
+                <span>Use <kbd className="px-1 py-0.5 text-xs font-mono bg-slate-800 rounded-sm">Ctrl+K</kbd> for quick search</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-teal-400 mt-0.5">•</span>
@@ -166,7 +166,7 @@ export const EAKeyboardShortcutsHelp: React.FC<EAKeyboardShortcutsHelpProps> = (
         {/* Footer */}
         <div className="px-6 py-3 border-t border-slate-700 bg-slate-900/50">
           <p className="text-xs text-slate-500 text-center">
-            Press <kbd className="px-1 py-0.5 text-xs font-mono bg-slate-800 rounded">Esc</kbd> to close
+            Press <kbd className="px-1 py-0.5 text-xs font-mono bg-slate-800 rounded-sm">Esc</kbd> to close
           </p>
         </div>
       </div>

@@ -345,7 +345,7 @@ const FacilityManagementPanel: React.FC = () => {
             type="checkbox"
             checked={showInactive}
             onChange={(e) => setShowInactive(e.target.checked)}
-            className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+            className="rounded-sm border-gray-300 text-teal-600 focus:ring-teal-500"
           />
           Show inactive
         </label>
@@ -685,7 +685,7 @@ const FacilityManagementPanel: React.FC = () => {
                       type="checkbox"
                       checked={formData.is_primary}
                       onChange={(e) => setFormData({ ...formData, is_primary: e.target.checked })}
-                      className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                      className="rounded-sm border-gray-300 text-teal-600 focus:ring-teal-500"
                     />
                     <span className="text-sm text-gray-700">Primary facility</span>
                   </label>
@@ -695,7 +695,7 @@ const FacilityManagementPanel: React.FC = () => {
                       type="number"
                       value={formData.bed_count}
                       onChange={(e) => setFormData({ ...formData, bed_count: e.target.value })}
-                      className="w-20 px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500"
+                      className="w-20 px-2 py-1 border border-gray-300 rounded-sm focus:ring-2 focus:ring-teal-500"
                       min="0"
                     />
                   </div>

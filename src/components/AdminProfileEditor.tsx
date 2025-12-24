@@ -123,7 +123,7 @@ const AdminProfileEditor: React.FC = () => {
 
       <h2 className="text-xl font-bold mb-4">Admin Profile Editor</h2>
 
-      <select value={selectedId} onChange={(e) => setSelectedId(e.target.value)} className="w-full p-2 border rounded mb-4">
+      <select value={selectedId} onChange={(e) => setSelectedId(e.target.value)} className="w-full p-2 border rounded-sm mb-4">
         <option value="">Select a Senior</option>
         {profiles.map((profile) => (
           <option key={profile.id} value={profile.id}>
@@ -133,7 +133,7 @@ const AdminProfileEditor: React.FC = () => {
       </select>
 
       {selectedProfile && (
-        <div className="bg-gray-100 p-4 rounded shadow">
+        <div className="bg-gray-100 p-4 rounded-sm shadow-sm">
           <h3 className="font-semibold text-lg">{selectedProfile.full_name}</h3>
           <p>Role: {selectedProfile.role}</p>
           <p>Date of Birth: {selectedProfile.dob}</p>
@@ -145,15 +145,15 @@ const AdminProfileEditor: React.FC = () => {
       <div className="mt-6">
         <h4 className="text-lg font-bold">Admin Notes</h4>
         {notes.map((note) => (
-          <div key={note.id} className="border p-2 rounded my-2 bg-white">
+          <div key={note.id} className="border p-2 rounded-sm my-2 bg-white">
             {editingNoteId === note.id ? (
               <div>
                 <textarea
                   value={newNote}
                   onChange={(e) => setNewNote(e.target.value)}
-                  className="w-full p-2 border rounded"
+                  className="w-full p-2 border rounded-sm"
                 />
-                <button onClick={() => handleEditNote(note.id, newNote)} className="mt-2 bg-blue-600 text-white px-4 py-1 rounded">
+                <button onClick={() => handleEditNote(note.id, newNote)} className="mt-2 bg-blue-600 text-white px-4 py-1 rounded-sm">
                   Save
                 </button>
               </div>
@@ -183,9 +183,9 @@ const AdminProfileEditor: React.FC = () => {
             placeholder="Add a new note..."
             value={newNote}
             onChange={(e) => setNewNote(e.target.value)}
-            className="w-full p-2 border rounded"
+            className="w-full p-2 border rounded-sm"
           />
-          <button onClick={handleAddNote} className="mt-2 bg-green-600 text-white px-4 py-1 rounded">
+          <button onClick={handleAddNote} className="mt-2 bg-green-600 text-white px-4 py-1 rounded-sm">
             Add Note
           </button>
         </div>

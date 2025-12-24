@@ -152,7 +152,7 @@ const WhatsNewSeniorModal: React.FC<WhatsNewSeniorModalProps> = ({ isOpen, onClo
               <button
                 ref={closeButtonRef}
                 onClick={() => handleClose(false)}
-                className="text-white hover:bg-white hover:bg-opacity-20 transition-colors rounded-full p-3 focus:outline-none focus:ring-4 focus:ring-white"
+                className="text-white hover:bg-white hover:bg-opacity-20 transition-colors rounded-full p-3 focus:outline-hidden focus:ring-4 focus:ring-white"
                 aria-label="Close what's new"
                 type="button"
               >
@@ -190,8 +190,8 @@ const WhatsNewSeniorModal: React.FC<WhatsNewSeniorModalProps> = ({ isOpen, onClo
                   aria-label={feature.link ? `${feature.title} - Tap to try it` : feature.title}
                 >
                   <div className="flex items-start gap-4">
-                    <span className="text-5xl flex-shrink-0">{feature.icon}</span>
-                    <div className="flex-grow">
+                    <span className="text-5xl shrink-0">{feature.icon}</span>
+                    <div className="grow">
                       <div className="flex items-center gap-2 mb-3">
                         <h3 className="text-2xl font-bold" style={{ color: '#003865' }}>
                           {feature.title}
@@ -225,7 +225,7 @@ const WhatsNewSeniorModal: React.FC<WhatsNewSeniorModalProps> = ({ isOpen, onClo
               </div>
               <button
                 onClick={() => handleClose(false)}
-                className="px-8 py-4 text-white rounded-xl font-bold text-xl shadow-lg hover:scale-105 transition-transform focus:outline-none focus:ring-4"
+                className="px-8 py-4 text-white rounded-xl font-bold text-xl shadow-lg hover:scale-105 transition-transform focus:outline-hidden focus:ring-4"
                 style={{ backgroundColor: '#8cc63f', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' }}
                 type="button"
               >
@@ -240,7 +240,7 @@ const WhatsNewSeniorModal: React.FC<WhatsNewSeniorModalProps> = ({ isOpen, onClo
                   type="checkbox"
                   checked={dontShowAgain}
                   onChange={(e) => setDontShowAgain(e.target.checked)}
-                  className="w-6 h-6 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-4 cursor-pointer"
+                  className="w-6 h-6 text-blue-600 border-gray-300 rounded-sm focus:ring-blue-500 focus:ring-4 cursor-pointer"
                   aria-label="Don't show What's New automatically anymore"
                 />
                 <span className="ml-3 text-lg font-semibold group-hover:underline" style={{ color: '#003865' }}>
@@ -250,7 +250,7 @@ const WhatsNewSeniorModal: React.FC<WhatsNewSeniorModalProps> = ({ isOpen, onClo
               {dontShowAgain && (
                 <button
                   onClick={() => handleClose(true)}
-                  className="w-full px-6 py-3 text-white rounded-xl font-bold text-lg shadow-md hover:scale-105 transition-transform focus:outline-none focus:ring-4"
+                  className="w-full px-6 py-3 text-white rounded-xl font-bold text-lg shadow-md hover:scale-105 transition-transform focus:outline-hidden focus:ring-4"
                   style={{ backgroundColor: '#003865' }}
                   type="button"
                   aria-label="Confirm don't show again and close"

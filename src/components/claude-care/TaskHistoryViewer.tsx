@@ -97,7 +97,7 @@ const TaskHistoryViewer: React.FC<Props> = ({ userId, history, limit = 20 }) => 
                 </p>
               </div>
 
-              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-sm">
                 {task.role}
               </span>
             </div>

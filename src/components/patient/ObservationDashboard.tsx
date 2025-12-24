@@ -85,7 +85,7 @@ const ObservationDashboard: React.FC<ObservationDashboardProps> = ({ userId, rea
     }
 
     return (
-      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${color}`}>
+      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-xs font-medium ${color}`}>
         {icon && <span>{icon}</span>}
         {interpretation[0]}
       </span>
@@ -128,7 +128,7 @@ const ObservationDashboard: React.FC<ObservationDashboardProps> = ({ userId, rea
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12">
+      <div className="bg-white rounded-lg shadow-xs border border-gray-200 p-12">
         <div className="flex flex-col items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           <p className="mt-4 text-gray-600">Loading observations...</p>
@@ -140,7 +140,7 @@ const ObservationDashboard: React.FC<ObservationDashboardProps> = ({ userId, rea
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-lg shadow-lg p-6 text-white">
+      <div className="bg-linear-to-r from-blue-600 to-indigo-700 rounded-lg shadow-lg p-6 text-white">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Health Observations</h1>
@@ -149,7 +149,7 @@ const ObservationDashboard: React.FC<ObservationDashboardProps> = ({ userId, rea
           {!readOnly && (
             <button
               onClick={() => setShowAddForm(!showAddForm)}
-              className="px-6 py-3 bg-white text-blue-600 rounded-lg hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-600 font-semibold shadow-md transition-all transform hover:scale-105"
+              className="px-6 py-3 bg-white text-blue-600 rounded-lg hover:bg-blue-50 focus:outline-hidden focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-600 font-semibold shadow-md transition-all transform hover:scale-105"
             >
               {showAddForm ? '✕ Close' : '+ Add Observation'}
             </button>
@@ -158,19 +158,19 @@ const ObservationDashboard: React.FC<ObservationDashboardProps> = ({ userId, rea
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-          <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4">
+          <div className="bg-white bg-opacity-20 backdrop-blur-xs rounded-lg p-4">
             <div className="text-blue-100 text-sm font-medium">Total Observations</div>
             <div className="text-3xl font-bold mt-1">{observations.length}</div>
           </div>
-          <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4">
+          <div className="bg-white bg-opacity-20 backdrop-blur-xs rounded-lg p-4">
             <div className="text-blue-100 text-sm font-medium">Vital Signs</div>
             <div className="text-3xl font-bold mt-1">{getObservationCount('vital-signs')}</div>
           </div>
-          <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4">
+          <div className="bg-white bg-opacity-20 backdrop-blur-xs rounded-lg p-4">
             <div className="text-blue-100 text-sm font-medium">Lab Results</div>
             <div className="text-3xl font-bold mt-1">{getObservationCount('laboratory')}</div>
           </div>
-          <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4">
+          <div className="bg-white bg-opacity-20 backdrop-blur-xs rounded-lg p-4">
             <div className="text-blue-100 text-sm font-medium">Social History</div>
             <div className="text-3xl font-bold mt-1">{getObservationCount('social-history')}</div>
           </div>
@@ -187,7 +187,7 @@ const ObservationDashboard: React.FC<ObservationDashboardProps> = ({ userId, rea
       )}
 
       {/* Tabs */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div className="bg-white rounded-lg shadow-xs border border-gray-200">
         <div className="border-b border-gray-200">
           <nav className="flex -mb-px">
             {[
@@ -226,7 +226,7 @@ const ObservationDashboard: React.FC<ObservationDashboardProps> = ({ userId, rea
               {!readOnly && (
                 <button
                   onClick={() => setShowAddForm(true)}
-                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium"
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-blue-500 text-sm font-medium"
                 >
                   + Add Your First Observation
                 </button>
@@ -246,7 +246,7 @@ const ObservationDashboard: React.FC<ObservationDashboardProps> = ({ userId, rea
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="font-semibold text-gray-900">{obs.code_display}</h3>
-                          <span className={`px-2 py-0.5 rounded text-xs font-medium border ${getStatusColor(obs.status)}`}>
+                          <span className={`px-2 py-0.5 rounded-sm text-xs font-medium border ${getStatusColor(obs.status)}`}>
                             {obs.status}
                           </span>
                           {getInterpretationBadge(obs.interpretation_display)}
@@ -254,7 +254,7 @@ const ObservationDashboard: React.FC<ObservationDashboardProps> = ({ userId, rea
                         <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
                           <span>{formatDate(obs.effective_datetime)}</span>
                           {obs.code && (
-                            <span className="text-xs bg-gray-100 px-2 py-0.5 rounded">
+                            <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-sm">
                               Code: {obs.code}
                             </span>
                           )}
@@ -323,7 +323,7 @@ const ObservationDashboard: React.FC<ObservationDashboardProps> = ({ userId, rea
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <div className="text-sm text-gray-600 mb-1">Status</div>
-                  <span className={`inline-block px-3 py-1 rounded text-sm font-medium border ${getStatusColor(selectedObservation.status)}`}>
+                  <span className={`inline-block px-3 py-1 rounded-sm text-sm font-medium border ${getStatusColor(selectedObservation.status)}`}>
                     {selectedObservation.status}
                   </span>
                 </div>
@@ -368,7 +368,7 @@ const ObservationDashboard: React.FC<ObservationDashboardProps> = ({ userId, rea
               {selectedObservation.note && (
                 <div>
                   <div className="text-sm text-gray-600 mb-1">Notes</div>
-                  <div className="text-sm bg-gray-50 p-3 rounded">{selectedObservation.note}</div>
+                  <div className="text-sm bg-gray-50 p-3 rounded-sm">{selectedObservation.note}</div>
                 </div>
               )}
 

@@ -209,7 +209,7 @@ export const FHIRConflictResolution: React.FC = () => {
       </div>
 
       {/* Filters and Stats */}
-      <div className="bg-white rounded-lg shadow mb-6 p-4">
+      <div className="bg-white rounded-lg shadow-sm mb-6 p-4">
         <div className="flex items-center justify-between">
           <div className="flex gap-4">
             <button
@@ -247,7 +247,7 @@ export const FHIRConflictResolution: React.FC = () => {
       {/* Conflicts List */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Panel: Conflict List */}
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-white rounded-lg shadow-sm">
           <div className="p-4 border-b border-gray-200">
             <h2 className="text-xl font-semibold">Conflicts</h2>
           </div>
@@ -308,7 +308,7 @@ export const FHIRConflictResolution: React.FC = () => {
         </div>
 
         {/* Right Panel: Conflict Details & Resolution */}
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-white rounded-lg shadow-sm">
           {selectedConflict ? (
             <>
               <div className="p-4 border-b border-gray-200">

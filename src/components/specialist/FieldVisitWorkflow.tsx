@@ -145,7 +145,7 @@ export const FieldVisitWorkflow: React.FC<FieldVisitWorkflowProps> = ({ visitId 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       {/* Progress Header */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white rounded-lg shadow-sm p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
@@ -198,7 +198,7 @@ export const FieldVisitWorkflow: React.FC<FieldVisitWorkflowProps> = ({ visitId 
       </div>
 
       {/* Current Step */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white rounded-lg shadow-sm p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">

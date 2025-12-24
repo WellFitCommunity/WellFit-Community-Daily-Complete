@@ -14,7 +14,7 @@ const PageLayout = ({ children }: { children: ReactNode }) => {
     >
       {/* Header */}
       <div
-        className="w-full py-6 px-4 mb-6 flex items-center justify-center gap-4 shadow"
+        className="w-full py-6 px-4 mb-6 flex items-center justify-center gap-4 shadow-sm"
         style={{
           background: branding.gradient ?? "linear-gradient(to right, #003865, #8cc63f)",
           color: branding.textColor || "#ffffff",

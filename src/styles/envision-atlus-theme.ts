@@ -143,7 +143,7 @@ export const envisionAtlusComponents = {
   // Input styles
   input: {
     base: 'bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded-md',
-    focus: 'focus:border-[#00857a] focus:ring-2 focus:ring-[#00857a]/20 focus:outline-none',
+    focus: 'focus:border-[#00857a] focus:ring-2 focus:ring-[#00857a]/20 focus:outline-hidden',
     disabled: 'opacity-50 cursor-not-allowed',
   },
 
@@ -193,7 +193,7 @@ export const envisionAtlusTypography = {
 
 export const envisionAtlusLayout = {
   // Page container
-  page: 'min-h-screen bg-gradient-to-br from-slate-900 to-slate-800',
+  page: 'min-h-screen bg-linear-to-br from-slate-900 to-slate-800',
 
   // Content containers
   container: 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8',
@@ -276,19 +276,19 @@ export const envisionAtlusCSSVars = {
 
 export const envisionAtlusGradients = {
   // Primary header gradient
-  header: 'bg-gradient-to-r from-[#00857a] to-[#006d64]',
+  header: 'bg-linear-to-r from-[#00857a] to-[#006d64]',
 
   // Page background
-  pageBg: 'bg-gradient-to-br from-slate-900 to-slate-800',
+  pageBg: 'bg-linear-to-br from-slate-900 to-slate-800',
 
   // Card highlight gradient
-  cardHighlight: 'bg-gradient-to-br from-[#00857a]/10 to-transparent',
+  cardHighlight: 'bg-linear-to-br from-[#00857a]/10 to-transparent',
 
   // Accent gradient for CTAs
-  accent: 'bg-gradient-to-r from-[#FF6B35] to-[#ff8c5a]',
+  accent: 'bg-linear-to-r from-[#FF6B35] to-[#ff8c5a]',
 
   // Text gradient for headings
-  textTeal: 'bg-gradient-to-r from-[#33bfb7] to-[#00857a] bg-clip-text text-transparent',
+  textTeal: 'bg-linear-to-r from-[#33bfb7] to-[#00857a] bg-clip-text text-transparent',
 } as const;
 
 // =====================================================

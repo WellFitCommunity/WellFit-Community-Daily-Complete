@@ -127,7 +127,7 @@ export const RevenueDashboard: React.FC = () => {
           {/* Key Metrics Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             {/* Total Revenue */}
-            <div className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-lg border-2 border-blue-200">
+            <div className="p-6 bg-linear-to-br from-blue-50 to-blue-100 rounded-xl shadow-lg border-2 border-blue-200">
               <div className="text-sm font-medium text-blue-900 mb-1">Total Revenue</div>
               <div className="text-3xl font-bold text-blue-600">
                 {formatCurrency(metrics.totalRevenue)}
@@ -136,7 +136,7 @@ export const RevenueDashboard: React.FC = () => {
             </div>
 
             {/* Paid Revenue */}
-            <div className="p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-lg border-2 border-green-200">
+            <div className="p-6 bg-linear-to-br from-green-50 to-green-100 rounded-xl shadow-lg border-2 border-green-200">
               <div className="text-sm font-medium text-green-900 mb-1">Paid</div>
               <div className="text-3xl font-bold text-green-600">
                 {formatCurrency(metrics.paidRevenue)}
@@ -147,7 +147,7 @@ export const RevenueDashboard: React.FC = () => {
             </div>
 
             {/* Pending Revenue */}
-            <div className="p-6 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl shadow-lg border-2 border-yellow-200">
+            <div className="p-6 bg-linear-to-br from-yellow-50 to-yellow-100 rounded-xl shadow-lg border-2 border-yellow-200">
               <div className="text-sm font-medium text-yellow-900 mb-1">Pending</div>
               <div className="text-3xl font-bold text-yellow-600">
                 {formatCurrency(metrics.pendingRevenue)}
@@ -160,7 +160,7 @@ export const RevenueDashboard: React.FC = () => {
             </div>
 
             {/* Revenue Leakage */}
-            <div className="p-6 bg-gradient-to-br from-red-50 to-red-100 rounded-xl shadow-lg border-2 border-red-200">
+            <div className="p-6 bg-linear-to-br from-red-50 to-red-100 rounded-xl shadow-lg border-2 border-red-200">
               <div className="text-sm font-medium text-red-900 mb-1">Revenue Leakage</div>
               <div className="text-3xl font-bold text-red-600">
                 {formatCurrency(metrics.leakageAmount)}
@@ -176,7 +176,7 @@ export const RevenueDashboard: React.FC = () => {
             <div className="mb-8">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-bold text-gray-900">💡 Revenue Opportunities</h3>
-                <div className="px-4 py-2 bg-gradient-to-r from-green-400 to-emerald-500 rounded-lg shadow-lg">
+                <div className="px-4 py-2 bg-linear-to-r from-green-400 to-emerald-500 rounded-lg shadow-lg">
                   <div className="text-white font-bold">
                     +{formatCurrency(totalOpportunityRevenue)} potential
                   </div>
@@ -187,7 +187,7 @@ export const RevenueDashboard: React.FC = () => {
                 {opportunities.map((opp, idx) => (
                   <div
                     key={idx}
-                    className="p-5 bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200 rounded-xl shadow-lg hover:shadow-xl transition-shadow"
+                    className="p-5 bg-linear-to-br from-amber-50 to-orange-50 border-2 border-amber-200 rounded-xl shadow-lg hover:shadow-xl transition-shadow"
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -231,7 +231,7 @@ export const RevenueDashboard: React.FC = () => {
             <h3 className="text-lg font-bold text-gray-900 mb-4">Claim Status Breakdown</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
               {Object.entries(metrics.byStatus).map(([status, data]) => (
-                <div key={status} className="p-4 bg-white rounded-lg shadow">
+                <div key={status} className="p-4 bg-white rounded-lg shadow-sm">
                   <div className="text-xs text-gray-600 uppercase mb-1">{status}</div>
                   <div className="text-xl font-bold text-gray-900">
                     {formatCurrency(data.amount)}

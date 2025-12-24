@@ -61,7 +61,7 @@ const CaseManagerPanel: React.FC = () => {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
           {/* Hero Header */}
-          <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl shadow-2xl p-8 text-white">
+          <div className="bg-linear-to-r from-purple-600 to-blue-600 rounded-2xl shadow-2xl p-8 text-white">
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-4xl font-bold mb-2 flex items-center gap-3">
@@ -111,11 +111,11 @@ const CaseManagerPanel: React.FC = () => {
                 nurses, physicians, and social workers in real-time.
               </p>
               <div className="mt-2 flex gap-2 flex-wrap">
-                <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">Discharge Planning</span>
-                <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">Insurance Verification</span>
-                <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">LOS Justification</span>
-                <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">Resource Coordination</span>
-                <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">Team Collaboration</span>
+                <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded-sm">Discharge Planning</span>
+                <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded-sm">Insurance Verification</span>
+                <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded-sm">LOS Justification</span>
+                <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded-sm">Resource Coordination</span>
+                <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded-sm">Team Collaboration</span>
               </div>
             </div>
             <ClaudeCareAssistantPanel

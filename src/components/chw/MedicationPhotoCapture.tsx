@@ -176,7 +176,7 @@ export const MedicationPhotoCapture: React.FC<MedicationPhotoCaptureProps> = ({
   // Photo preview mode
   if (currentPhoto) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 p-8">
+      <div className="min-h-screen bg-linear-to-br from-blue-50 to-green-50 p-8">
         <div className="max-w-4xl mx-auto">
           <div className="bg-white rounded-3xl shadow-2xl p-12">
             <h2 className="text-4xl font-bold text-gray-800 mb-8 text-center">{t.title}</h2>
@@ -247,7 +247,7 @@ export const MedicationPhotoCapture: React.FC<MedicationPhotoCaptureProps> = ({
 
   // Main photo list mode
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 p-8">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 to-green-50 p-8">
       <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-3xl shadow-2xl p-12">
           <h2 className="text-5xl font-bold text-gray-800 mb-8 text-center">{t.title}</h2>

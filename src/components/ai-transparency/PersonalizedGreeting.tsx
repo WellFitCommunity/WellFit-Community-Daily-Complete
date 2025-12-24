@@ -96,8 +96,8 @@ export const PersonalizedGreeting: React.FC = () => {
   if (loading) {
     return (
       <div className="mb-6 animate-pulse">
-        <div className="h-8 bg-gradient-to-r from-purple-100 to-pink-100 rounded-lg w-64"></div>
-        <div className="h-4 bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg w-96 mt-2"></div>
+        <div className="h-8 bg-linear-to-r from-purple-100 to-pink-100 rounded-lg w-64"></div>
+        <div className="h-4 bg-linear-to-r from-blue-100 to-purple-100 rounded-lg w-96 mt-2"></div>
       </div>
     );
   }
@@ -148,7 +148,7 @@ export const PersonalizedGreeting: React.FC = () => {
         className="relative"
       >
         <h1
-          className={`text-3xl font-bold bg-gradient-to-r ${getGradientByTimeOfDay(
+          className={`text-3xl font-bold bg-linear-to-r ${getGradientByTimeOfDay(
             displayTimeOfDay
           )} bg-clip-text text-transparent`}
         >
@@ -165,43 +165,43 @@ export const PersonalizedGreeting: React.FC = () => {
           className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4"
         >
           {roleStats.patientCount !== undefined && (
-            <div className="bg-white rounded-lg shadow-sm p-4 border border-blue-100">
+            <div className="bg-white rounded-lg shadow-xs p-4 border border-blue-100">
               <div className="text-sm text-gray-600 font-medium">Patients</div>
               <div className="text-2xl font-bold text-blue-600 mt-1">{roleStats.patientCount}</div>
             </div>
           )}
           {roleStats.pendingAlerts !== undefined && (
-            <div className="bg-white rounded-lg shadow-sm p-4 border border-yellow-100">
+            <div className="bg-white rounded-lg shadow-xs p-4 border border-yellow-100">
               <div className="text-sm text-gray-600 font-medium">Pending Alerts</div>
               <div className="text-2xl font-bold text-yellow-600 mt-1">{roleStats.pendingAlerts}</div>
             </div>
           )}
           {roleStats.activePatients !== undefined && (
-            <div className="bg-white rounded-lg shadow-sm p-4 border border-green-100">
+            <div className="bg-white rounded-lg shadow-xs p-4 border border-green-100">
               <div className="text-sm text-gray-600 font-medium">Active Patients</div>
               <div className="text-2xl font-bold text-green-600 mt-1">{roleStats.activePatients}</div>
             </div>
           )}
           {roleStats.vitalsDueToday !== undefined && (
-            <div className="bg-white rounded-lg shadow-sm p-4 border border-purple-100">
+            <div className="bg-white rounded-lg shadow-xs p-4 border border-purple-100">
               <div className="text-sm text-gray-600 font-medium">Vitals Due Today</div>
               <div className="text-2xl font-bold text-purple-600 mt-1">{roleStats.vitalsDueToday}</div>
             </div>
           )}
           {roleStats.totalUsers !== undefined && (
-            <div className="bg-white rounded-lg shadow-sm p-4 border border-indigo-100">
+            <div className="bg-white rounded-lg shadow-xs p-4 border border-indigo-100">
               <div className="text-sm text-gray-600 font-medium">Total Users</div>
               <div className="text-2xl font-bold text-indigo-600 mt-1">{roleStats.totalUsers}</div>
             </div>
           )}
           {roleStats.pendingApprovals !== undefined && (
-            <div className="bg-white rounded-lg shadow-sm p-4 border border-orange-100">
+            <div className="bg-white rounded-lg shadow-xs p-4 border border-orange-100">
               <div className="text-sm text-gray-600 font-medium">Pending Approvals</div>
               <div className="text-2xl font-bold text-orange-600 mt-1">{roleStats.pendingApprovals}</div>
             </div>
           )}
           {roleStats.criticalAlerts !== undefined && roleStats.criticalAlerts > 0 && (
-            <div className="bg-white rounded-lg shadow-sm p-4 border border-red-100">
+            <div className="bg-white rounded-lg shadow-xs p-4 border border-red-100">
               <div className="text-sm text-gray-600 font-medium">Critical Alerts</div>
               <div className="text-2xl font-bold text-red-600 mt-1">{roleStats.criticalAlerts}</div>
             </div>
@@ -222,9 +222,9 @@ export const PersonalizedGreeting: React.FC = () => {
             <div
               className={`
                 relative overflow-hidden rounded-2xl p-6
-                bg-gradient-to-br ${getGradientByTimeOfDay(displayTimeOfDay)}
+                bg-linear-to-br ${getGradientByTimeOfDay(displayTimeOfDay)}
                 shadow-lg hover:shadow-2xl transition-all duration-300
-                border border-white/20 backdrop-blur-sm
+                border border-white/20 backdrop-blur-xs
               `}
               style={{
                 background: `linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)`,
@@ -235,7 +235,7 @@ export const PersonalizedGreeting: React.FC = () => {
               <div
                 className={`
                   absolute inset-0 opacity-10
-                  bg-gradient-to-br ${getGradientByTimeOfDay(displayTimeOfDay)}
+                  bg-linear-to-br ${getGradientByTimeOfDay(displayTimeOfDay)}
                 `}
               ></div>
 
@@ -251,7 +251,7 @@ export const PersonalizedGreeting: React.FC = () => {
                     repeat: Infinity,
                     repeatDelay: 3,
                   }}
-                  className="text-4xl flex-shrink-0"
+                  className="text-4xl shrink-0"
                 >
                   {getThemeIcon(greetingData.quote.theme)}
                 </motion.div>
@@ -271,7 +271,7 @@ export const PersonalizedGreeting: React.FC = () => {
               <div
                 className="
                   absolute inset-0 opacity-0 group-hover:opacity-20
-                  bg-gradient-to-r from-transparent via-white to-transparent
+                  bg-linear-to-r from-transparent via-white to-transparent
                   transform -skew-x-12 -translate-x-full group-hover:translate-x-full
                   transition-all duration-1000
                 "

@@ -453,21 +453,21 @@ export const TemplateMaker: React.FC<TemplateMakerProps> = ({
           placeholder="Field Label"
           value={field.label}
           onChange={(e) => handleUpdateField(index, { label: e.target.value }, isRequired)}
-          className="px-3 py-2 bg-slate-600 border border-slate-500 rounded text-white placeholder-slate-400 text-sm"
+          className="px-3 py-2 bg-slate-600 border border-slate-500 rounded-sm text-white placeholder-slate-400 text-sm"
         />
         <input
           type="text"
           placeholder="field_name"
           value={field.name}
           onChange={(e) => handleUpdateField(index, { name: e.target.value }, isRequired)}
-          className="px-3 py-2 bg-slate-600 border border-slate-500 rounded text-white placeholder-slate-400 text-sm font-mono"
+          className="px-3 py-2 bg-slate-600 border border-slate-500 rounded-sm text-white placeholder-slate-400 text-sm font-mono"
         />
         <select
           value={field.type}
           onChange={(e) =>
             handleUpdateField(index, { type: e.target.value as TemplateField['type'] }, isRequired)
           }
-          className="px-3 py-2 bg-slate-600 border border-slate-500 rounded text-white text-sm"
+          className="px-3 py-2 bg-slate-600 border border-slate-500 rounded-sm text-white text-sm"
         >
           <option value="text">Text</option>
           <option value="textarea">Text Area</option>
@@ -479,7 +479,7 @@ export const TemplateMaker: React.FC<TemplateMakerProps> = ({
       </div>
       <button
         onClick={() => handleRemoveField(index, isRequired)}
-        className="p-2 text-red-400 hover:text-red-300 hover:bg-red-900/30 rounded"
+        className="p-2 text-red-400 hover:text-red-300 hover:bg-red-900/30 rounded-sm"
         title="Remove field"
       >
         <X size={16} />
@@ -511,14 +511,14 @@ export const TemplateMaker: React.FC<TemplateMakerProps> = ({
       {/* Messages */}
       {error && (
         <div className="p-4 bg-red-900/30 border border-red-500 rounded-lg flex items-center gap-3">
-          <AlertCircle className="text-red-400 flex-shrink-0" />
+          <AlertCircle className="text-red-400 shrink-0" />
           <span className="text-red-200">{error}</span>
         </div>
       )}
 
       {success && (
         <div className="p-4 bg-green-900/30 border border-green-500 rounded-lg flex items-center gap-3">
-          <CheckCircle className="text-green-400 flex-shrink-0" />
+          <CheckCircle className="text-green-400 shrink-0" />
           <span className="text-green-200">{success}</span>
         </div>
       )}
@@ -748,7 +748,7 @@ Notes:
                       }
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-slate-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#00857a] rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#00857a]"></div>
+                    <div className="w-11 h-6 bg-slate-600 peer-focus:outline-hidden peer-focus:ring-2 peer-focus:ring-[#00857a] rounded-full peer peer-checked:after:translate-x-full peer-checked:rtl:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#00857a]"></div>
                   </label>
                 </div>
 
@@ -790,7 +790,7 @@ Notes:
                     onChange={(e) =>
                       setEditingTemplate({ ...editingTemplate, is_active: e.target.checked })
                     }
-                    className="w-5 h-5 rounded border-slate-500 bg-slate-600 text-[#00857a]"
+                    className="w-5 h-5 rounded-sm border-slate-500 bg-slate-600 text-[#00857a]"
                   />
                   <span className="text-slate-300">Active</span>
                 </label>
@@ -802,7 +802,7 @@ Notes:
                     onChange={(e) =>
                       setEditingTemplate({ ...editingTemplate, is_shared: e.target.checked })
                     }
-                    className="w-5 h-5 rounded border-slate-500 bg-slate-600 text-[#00857a]"
+                    className="w-5 h-5 rounded-sm border-slate-500 bg-slate-600 text-[#00857a]"
                   />
                   <span className="text-slate-300">Shared (visible to all users with this role)</span>
                 </label>
@@ -880,7 +880,7 @@ Notes:
                 type="checkbox"
                 checked={showActiveOnly}
                 onChange={(e) => setShowActiveOnly(e.target.checked)}
-                className="w-4 h-4 rounded border-slate-500 bg-slate-600 text-[#00857a]"
+                className="w-4 h-4 rounded-sm border-slate-500 bg-slate-600 text-[#00857a]"
               />
               <span className="text-slate-300 text-sm">Active only</span>
             </label>
@@ -939,10 +939,10 @@ Notes:
                       <p className="text-sm text-slate-400 mb-2">{template.description}</p>
                     )}
                     <div className="flex flex-wrap gap-2 text-xs text-slate-500">
-                      <span className="bg-slate-700 px-2 py-1 rounded">
+                      <span className="bg-slate-700 px-2 py-1 rounded-sm">
                         {TEMPLATE_ROLES.find((r) => r.value === template.role)?.label || template.role}
                       </span>
-                      <span className="bg-slate-700 px-2 py-1 rounded">
+                      <span className="bg-slate-700 px-2 py-1 rounded-sm">
                         {TEMPLATE_CATEGORIES.find((c) => c.value === template.category)?.label || template.category}
                       </span>
                       <span>
@@ -955,21 +955,21 @@ Notes:
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => handleEditTemplate(template)}
-                      className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded"
+                      className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-sm"
                       title="Edit"
                     >
                       <Edit2 size={16} />
                     </button>
                     <button
                       onClick={() => handleDuplicateTemplate(template)}
-                      className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded"
+                      className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-sm"
                       title="Duplicate"
                     >
                       <Copy size={16} />
                     </button>
                     <button
                       onClick={() => handleDeleteTemplate(template)}
-                      className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-900/30 rounded"
+                      className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-900/30 rounded-sm"
                       title="Delete"
                     >
                       <Trash2 size={16} />

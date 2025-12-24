@@ -427,7 +427,7 @@ const AIHelpPage: React.FC = () => {
                 placeholder="Type your question in plain English..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full p-4 text-lg border-2 border-[#8cc63f] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#003865]"
+                className="w-full p-4 text-lg border-2 border-[#8cc63f] rounded-lg focus:outline-hidden focus:ring-2 focus:ring-[#003865]"
                 onKeyPress={(e) => e.key === 'Enter' && searchTerm && sendChatMessage(searchTerm)}
               />
               {searchTerm && (
@@ -517,7 +517,7 @@ const AIHelpPage: React.FC = () => {
                 </div>
                 <button
                   onClick={() => setShowChat(false)}
-                  className="text-2xl hover:bg-white hover:bg-opacity-20 rounded p-1"
+                  className="text-2xl hover:bg-white hover:bg-opacity-20 rounded-sm p-1"
                 >
                   ✕
                 </button>
@@ -553,7 +553,7 @@ const AIHelpPage: React.FC = () => {
                           <button
                             key={index}
                             onClick={() => sendChatMessage(suggestion)}
-                            className="block bg-blue-50 text-blue-700 px-3 py-1 rounded text-sm hover:bg-blue-100 transition"
+                            className="block bg-blue-50 text-blue-700 px-3 py-1 rounded-sm text-sm hover:bg-blue-100 transition"
                           >
                             {suggestion}
                           </button>
@@ -587,7 +587,7 @@ const AIHelpPage: React.FC = () => {
                     onChange={(e) => setChatInput(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && sendChatMessage()}
                     placeholder="Type your question..."
-                    className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8cc63f] text-lg"
+                    className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-[#8cc63f] text-lg"
                   />
                   <button
                     onClick={() => sendChatMessage()}

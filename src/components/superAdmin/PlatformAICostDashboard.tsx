@@ -151,12 +151,12 @@ const PlatformAICostDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow">
+      <div className="bg-white p-6 rounded-lg shadow-sm">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+          <div className="h-8 bg-gray-200 rounded-sm w-1/3"></div>
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-24 bg-gray-200 rounded"></div>
+              <div key={i} className="h-24 bg-gray-200 rounded-sm"></div>
             ))}
           </div>
         </div>
@@ -166,14 +166,14 @@ const PlatformAICostDashboard: React.FC = () => {
 
   if (error) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow">
+      <div className="bg-white p-6 rounded-lg shadow-sm">
         <div className="flex items-center gap-3 text-red-600">
           <AlertCircle className="w-6 h-6" />
           <p>{error}</p>
         </div>
         <button
           onClick={loadAICosts}
-          className="mt-4 bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors shadow-sm"
+          className="mt-4 bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors shadow-xs"
         >
           Retry
         </button>
@@ -184,7 +184,7 @@ const PlatformAICostDashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white p-6 rounded-lg shadow">
+      <div className="bg-white p-6 rounded-lg shadow-sm">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-xl font-bold text-gray-900">Platform AI Cost & Usage</h2>
@@ -211,7 +211,7 @@ const PlatformAICostDashboard: React.FC = () => {
             <button
               onClick={loadAICosts}
               disabled={loading}
-              className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 disabled:opacity-50 flex items-center gap-2 transition-colors shadow-sm"
+              className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 disabled:opacity-50 flex items-center gap-2 transition-colors shadow-xs"
             >
               <Activity className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               Refresh
@@ -278,7 +278,7 @@ const PlatformAICostDashboard: React.FC = () => {
       </div>
 
       {/* Tenant Cost Breakdown */}
-      <div className="bg-white p-6 rounded-lg shadow">
+      <div className="bg-white p-6 rounded-lg shadow-sm">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           Tenant AI Cost Breakdown
         </h3>
@@ -304,7 +304,7 @@ const PlatformAICostDashboard: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-gray-900">{tenant.tenantName}</span>
                         {tenant.tenantCode && (
-                          <span className="px-2 py-0.5 bg-gray-100 rounded text-xs font-mono text-gray-700">
+                          <span className="px-2 py-0.5 bg-gray-100 rounded-sm text-xs font-mono text-gray-700">
                             {tenant.tenantCode}
                           </span>
                         )}

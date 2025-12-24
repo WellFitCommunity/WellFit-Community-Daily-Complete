@@ -90,7 +90,7 @@ export const EAPatientBanner: React.FC<EAPatientBannerProps> = ({
   return (
     <div
       className={cn(
-        'flex items-center gap-3 bg-slate-800/90 border-b border-slate-700 backdrop-blur-sm',
+        'flex items-center gap-3 bg-slate-800/90 border-b border-slate-700 backdrop-blur-xs',
         padding,
         className
       )}
@@ -154,7 +154,7 @@ export const EAPatientBanner: React.FC<EAPatientBannerProps> = ({
           <button
             onClick={() => setShowDropdown(!showDropdown)}
             className={cn(
-              'flex items-center gap-1 px-2 py-1 rounded hover:bg-slate-700 transition-colors',
+              'flex items-center gap-1 px-2 py-1 rounded-sm hover:bg-slate-700 transition-colors',
               textSize,
               'text-slate-400 hover:text-slate-200'
             )}
@@ -188,7 +188,7 @@ export const EAPatientBanner: React.FC<EAPatientBannerProps> = ({
                         patient.id === selectedPatient.id && 'bg-teal-900/30'
                       )}
                     >
-                      <User className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                      <User className="w-4 h-4 text-slate-400 shrink-0" />
                       <div className="min-w-0 flex-1">
                         <div className="text-sm text-slate-200 truncate">
                           {patient.lastName}, {patient.firstName}
@@ -200,7 +200,7 @@ export const EAPatientBanner: React.FC<EAPatientBannerProps> = ({
                       {patient.riskLevel && (
                         <span
                           className={cn(
-                            'px-1.5 py-0.5 rounded text-xs font-medium',
+                            'px-1.5 py-0.5 rounded-sm text-xs font-medium',
                             riskColors[patient.riskLevel]
                           )}
                         >

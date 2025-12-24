@@ -133,8 +133,8 @@ const HealthHistory: React.FC = () => {
     return (
       <div className="text-center p-4">
         <div className="animate-pulse">
-          <div className="h-4 bg-gray-300 rounded w-3/4 mx-auto mb-2"></div>
-          <div className="h-4 bg-gray-300 rounded w-1/2 mx-auto"></div>
+          <div className="h-4 bg-gray-300 rounded-sm w-3/4 mx-auto mb-2"></div>
+          <div className="h-4 bg-gray-300 rounded-sm w-1/2 mx-auto"></div>
         </div>
         <p className="text-gray-600 mt-2">Loading your health history...</p>
       </div>
@@ -202,7 +202,7 @@ const HealthHistory: React.FC = () => {
                   {isCheckIn && checkIn.is_emergency && '🚨 '}
                   {isCheckIn ? checkIn.label : selfReport.label}
                   {!isCheckIn && (
-                    <span className="ml-2 text-xs bg-purple-200 px-2 py-1 rounded">
+                    <span className="ml-2 text-xs bg-purple-200 px-2 py-1 rounded-sm">
                       Self-Report
                     </span>
                   )}
@@ -221,37 +221,37 @@ const HealthHistory: React.FC = () => {
               {/* Vitals Display */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
                 {(isCheckIn ? checkIn.heart_rate : null) && (
-                  <div className="bg-white bg-opacity-50 p-2 rounded">
+                  <div className="bg-white bg-opacity-50 p-2 rounded-sm">
                     <div className="font-medium">❤️ Heart Rate</div>
                     <div>{checkIn.heart_rate} BPM</div>
                   </div>
                 )}
                 {entry.pulse_oximeter && (
-                  <div className="bg-white bg-opacity-50 p-2 rounded">
+                  <div className="bg-white bg-opacity-50 p-2 rounded-sm">
                     <div className="font-medium">🫁 Oxygen</div>
                     <div>{entry.pulse_oximeter}%</div>
                   </div>
                 )}
                 {entry.bp_systolic && entry.bp_diastolic && (
-                  <div className="bg-white bg-opacity-50 p-2 rounded">
+                  <div className="bg-white bg-opacity-50 p-2 rounded-sm">
                     <div className="font-medium">🩺 Blood Pressure</div>
                     <div>{entry.bp_systolic}/{entry.bp_diastolic}</div>
                   </div>
                 )}
                 {entry.glucose_mg_dl && (
-                  <div className="bg-white bg-opacity-50 p-2 rounded">
+                  <div className="bg-white bg-opacity-50 p-2 rounded-sm">
                     <div className="font-medium">🍯 Glucose</div>
                     <div>{entry.glucose_mg_dl} mg/dL</div>
                   </div>
                 )}
                 {!isCheckIn && selfReport.weight && (
-                  <div className="bg-white bg-opacity-50 p-2 rounded">
+                  <div className="bg-white bg-opacity-50 p-2 rounded-sm">
                     <div className="font-medium">⚖️ Weight</div>
                     <div>{selfReport.weight} lbs</div>
                   </div>
                 )}
                 {!isCheckIn && selfReport.physical_activity && (
-                  <div className="bg-white bg-opacity-50 p-2 rounded col-span-2">
+                  <div className="bg-white bg-opacity-50 p-2 rounded-sm col-span-2">
                     <div className="font-medium">🏃‍♀️ Activity</div>
                     <div>{selfReport.physical_activity}</div>
                   </div>

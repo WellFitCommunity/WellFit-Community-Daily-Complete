@@ -27,7 +27,7 @@ type GridSize = 1 | 2 | 3 | 4;
 
 // Loading skeleton component
 const PhotoSkeleton: React.FC = () => (
-  <div className="bg-gray-200 animate-pulse rounded overflow-hidden">
+  <div className="bg-gray-200 animate-pulse rounded-sm overflow-hidden">
     <div className="w-full h-64 bg-gray-300"></div>
   </div>
 );
@@ -103,7 +103,7 @@ const PhotoLightbox: React.FC<{
         />
         
         {photo.caption && (
-          <div className="mt-4 px-4 py-2 bg-black bg-opacity-50 text-white text-center rounded max-w-md">
+          <div className="mt-4 px-4 py-2 bg-black bg-opacity-50 text-white text-center rounded-sm max-w-md">
             <p className="text-sm">{photo.caption}</p>
           </div>
         )}
@@ -389,7 +389,7 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
           {urls.map(({ url, name }, index) => (
             <div
               key={name}
-              className={`rounded overflow-hidden shadow-sm transition-transform hover:scale-105 ${
+              className={`rounded overflow-hidden shadow-xs transition-transform hover:scale-105 ${
                 enableLightbox ? 'cursor-pointer' : ''
               }`}
               onClick={() => openLightbox({ url, name }, index)}

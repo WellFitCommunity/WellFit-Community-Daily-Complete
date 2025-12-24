@@ -187,7 +187,7 @@ const EnrollSeniorPage: React.FC = () => {
           {/* Back Button */}
           <button
             onClick={() => navigate('/admin')}
-            className="inline-flex items-center px-4 py-2 mb-6 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+            className="inline-flex items-center px-4 py-2 mb-6 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
           >
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -196,7 +196,7 @@ const EnrollSeniorPage: React.FC = () => {
           </button>
 
           {/* Header Card */}
-          <div className="bg-gradient-to-r from-green-600 to-emerald-700 rounded-xl p-6 mb-6 text-white border-4 border-green-800">
+          <div className="bg-linear-to-r from-green-600 to-emerald-700 rounded-xl p-6 mb-6 text-white border-4 border-green-800">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-3">
                 <span className="text-5xl">🏘️</span>
@@ -273,7 +273,7 @@ const EnrollSeniorPage: React.FC = () => {
           )}
 
           {/* Enrollment Form */}
-          <form onSubmit={handleEnroll} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <form onSubmit={handleEnroll} className="bg-white rounded-lg shadow-xs border border-gray-200 p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Patient Information</h2>
 
             {/* Required Fields */}
@@ -414,7 +414,7 @@ const EnrollSeniorPage: React.FC = () => {
                   id="isTestPatient"
                   checked={isTestPatient}
                   onChange={(e) => setIsTestPatient(e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-sm"
                 />
                 <label htmlFor="isTestPatient" className="ml-2 block text-sm font-medium text-gray-700">
                   Mark as Test Patient (can be easily deleted later)

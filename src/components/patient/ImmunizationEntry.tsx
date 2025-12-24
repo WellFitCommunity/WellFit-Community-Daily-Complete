@@ -215,7 +215,7 @@ const ImmunizationEntry: React.FC<ImmunizationEntryProps> = ({ userId, onSave, o
     <div className="max-w-4xl mx-auto px-4 py-6">
       <div className="bg-white rounded-xl shadow-lg border border-gray-200">
         {/* Header */}
-        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-6 rounded-t-xl">
+        <div className="bg-linear-to-r from-purple-600 to-indigo-600 text-white p-6 rounded-t-xl">
           <div className="flex justify-between items-center">
             <div>
               <h2 className="text-2xl font-bold mb-1">💉 Record Immunization</h2>
@@ -561,7 +561,7 @@ const ImmunizationEntry: React.FC<ImmunizationEntryProps> = ({ userId, onSave, o
                     type="checkbox"
                     checked={formData.primarySource}
                     onChange={(e) => handleInputChange('primarySource', e.target.checked)}
-                    className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                    className="w-4 h-4 text-purple-600 border-gray-300 rounded-sm focus:ring-purple-500"
                   />
                   <span className="text-sm font-medium text-gray-700">
                     Primary source (vaccine was directly observed)

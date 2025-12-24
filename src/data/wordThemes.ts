@@ -7,7 +7,7 @@ export const dailyThemes = [
   { theme: "Healthy Eating", words: ["fruit", "veggie", "fiber", "salmon", "grains", "avocado", "protein", "snack", "water", "portion"] },
   { theme: "Active Living", words: ["walk", "dance", "move", "stretch", "yoga", "balance", "run", "swim", "breathe", "motion"] },
   { theme: "Diabetes Care", words: ["insulin", "sugar", "meter", "diet", "blood", "glucose", "check", "carbs", "level", "foot"] },
-  { theme: "Vision & Eyes", words: ["focus", "light", "lens", "sight", "retina", "optic", "glass", "checkup", "blur", "pupil"] },
+  { theme: "Vision & Eyes", words: ["focus", "light", "lens", "sight", "retina", "optic", "glass", "checkup", "blur-sm", "pupil"] },
   { theme: "Hearing Health", words: ["sound", "ear", "listen", "volume", "tone", "audiology", "ringing", "quiet", "noise", "aid"] },
   { theme: "Hydration", words: ["drink", "water", "fluid", "bottle", "sip", "thirst", "glass", "refill", "hydrated", "ice"] },
   { theme: "Sleep & Rest", words: ["sleep", "rest", "nap", "pillow", "dream", "relax", "routine", "snore", "quiet", "blanket"] },

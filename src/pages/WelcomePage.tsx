@@ -103,7 +103,7 @@ const WelcomePage: React.FC = () => {
       className="flex flex-col min-h-screen items-center justify-center"
       style={{ background: `linear-gradient(to bottom, ${WELLFIT_BLUE}, ${WELLFIT_GREEN})` }}
     >
-      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-white rounded px-3 py-2 shadow">
+      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-white rounded-sm px-3 py-2 shadow-sm">
         Skip to content
       </a>
 
@@ -115,7 +115,7 @@ const WelcomePage: React.FC = () => {
           loading="lazy"
           decoding="async"
           referrerPolicy="no-referrer"
-          className="w-28 h-28 mb-4 rounded-full shadow"
+          className="w-28 h-28 mb-4 rounded-full shadow-sm"
         />
 
         {/* App Name */}
@@ -135,7 +135,7 @@ const WelcomePage: React.FC = () => {
           onClick={handleContinue}
           aria-label="Continue to Registration"
           aria-describedby="welcome-copy"
-          className="w-full py-3 rounded-2xl text-white text-lg font-bold transition duration-200 focus:outline-none focus:ring-2 focus:ring-[#003865]"
+          className="w-full py-3 rounded-2xl text-white text-lg font-bold transition duration-200 focus:outline-hidden focus:ring-2 focus:ring-[#003865]"
           style={{ backgroundColor: WELLFIT_BLUE }}
           onMouseDown={(e) => e.currentTarget.blur()} // keeps focus ring tidy after click
         >

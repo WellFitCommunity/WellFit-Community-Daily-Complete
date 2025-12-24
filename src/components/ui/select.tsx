@@ -58,7 +58,7 @@ export const SelectTrigger: React.FC<SelectTriggerProps> = ({ className, childre
       onClick={() => setOpen(!open)}
       className={cn(
         'flex h-10 w-full items-center justify-between rounded-md border px-3 py-2 text-sm',
-        'focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2',
+        'focus:outline-hidden focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2',
         className
       )}
     >

@@ -167,12 +167,12 @@ const PlatformSOC2Dashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow">
+      <div className="bg-white p-6 rounded-lg shadow-sm">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+          <div className="h-8 bg-gray-200 rounded-sm w-1/3"></div>
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-24 bg-gray-200 rounded"></div>
+              <div key={i} className="h-24 bg-gray-200 rounded-sm"></div>
             ))}
           </div>
         </div>
@@ -182,14 +182,14 @@ const PlatformSOC2Dashboard: React.FC = () => {
 
   if (error) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow">
+      <div className="bg-white p-6 rounded-lg shadow-sm">
         <div className="flex items-center gap-3 text-red-600">
           <AlertTriangle className="w-6 h-6" />
           <p>{error}</p>
         </div>
         <button
           onClick={loadPlatformCompliance}
-          className="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors shadow-sm"
+          className="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors shadow-xs"
         >
           Retry
         </button>
@@ -200,7 +200,7 @@ const PlatformSOC2Dashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white p-6 rounded-lg shadow">
+      <div className="bg-white p-6 rounded-lg shadow-sm">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-xl font-bold text-gray-900">Platform SOC2 Compliance</h2>
@@ -211,7 +211,7 @@ const PlatformSOC2Dashboard: React.FC = () => {
           <button
             onClick={loadPlatformCompliance}
             disabled={loading}
-            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2 transition-colors shadow-sm"
+            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2 transition-colors shadow-xs"
           >
             <Activity className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -277,7 +277,7 @@ const PlatformSOC2Dashboard: React.FC = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-4 rounded-lg shadow">
+      <div className="bg-white p-4 rounded-lg shadow-sm">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-gray-700">Filter:</span>
           {[
@@ -288,7 +288,7 @@ const PlatformSOC2Dashboard: React.FC = () => {
             <button
               key={filter.id}
               onClick={() => setFilterStatus(filter.id as typeof filterStatus)}
-              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors shadow-sm ${
+              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors shadow-xs ${
                 filterStatus === filter.id
                   ? 'bg-red-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -301,7 +301,7 @@ const PlatformSOC2Dashboard: React.FC = () => {
       </div>
 
       {/* Tenant Compliance List */}
-      <div className="bg-white p-6 rounded-lg shadow">
+      <div className="bg-white p-6 rounded-lg shadow-sm">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           Tenant Compliance ({filteredTenants.length})
         </h3>
@@ -325,7 +325,7 @@ const PlatformSOC2Dashboard: React.FC = () => {
                       <div className="flex items-center gap-2 mb-2">
                         <h4 className="font-semibold text-gray-900">{tenant.tenantName}</h4>
                         {tenant.tenantCode && (
-                          <span className="px-2 py-1 bg-white rounded text-xs font-mono font-medium text-blue-700">
+                          <span className="px-2 py-1 bg-white rounded-sm text-xs font-mono font-medium text-blue-700">
                             {tenant.tenantCode}
                           </span>
                         )}
@@ -395,12 +395,12 @@ const PlatformSOC2Dashboard: React.FC = () => {
                       </div>
                       <div className="text-xs text-gray-600 mt-1">Compliance Score</div>
                       {tenant.criticalIssues > 0 && (
-                        <div className="mt-2 px-2 py-1 bg-red-600 text-white rounded text-xs font-medium">
+                        <div className="mt-2 px-2 py-1 bg-red-600 text-white rounded-sm text-xs font-medium">
                           {tenant.criticalIssues} Critical
                         </div>
                       )}
                       {tenant.warnings > 0 && tenant.criticalIssues === 0 && (
-                        <div className="mt-2 px-2 py-1 bg-yellow-600 text-white rounded text-xs font-medium">
+                        <div className="mt-2 px-2 py-1 bg-yellow-600 text-white rounded-sm text-xs font-medium">
                           {tenant.warnings} Warnings
                         </div>
                       )}

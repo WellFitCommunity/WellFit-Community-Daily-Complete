@@ -553,7 +553,7 @@ const IntelligentAdminPanel: React.FC = () => {
           <WhatsNewModal isOpen={showWhatsNew} onClose={() => setShowWhatsNew(false)} />
 
           {/* Quick Actions Bar */}
-          <div className="bg-gradient-to-r from-indigo-600 to-blue-700 rounded-xl shadow-lg p-6">
+          <div className="bg-linear-to-r from-indigo-600 to-blue-700 rounded-xl shadow-lg p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-white text-xl font-bold">Quick Actions</h2>
               <button
@@ -614,7 +614,7 @@ const IntelligentAdminPanel: React.FC = () => {
 
           {/* Role Panel Navigation - Super Admin Only */}
           {adminRole === 'super_admin' && (
-            <div className="bg-gradient-to-r from-teal-600 to-cyan-700 rounded-xl shadow-lg p-6">
+            <div className="bg-linear-to-r from-teal-600 to-cyan-700 rounded-xl shadow-lg p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-white text-xl font-bold">🏥 View Role Dashboards</h2>
               </div>

@@ -261,7 +261,7 @@ const BulkExportPanel: React.FC = () => {
       {/* Back Button */}
       <button
         onClick={() => navigate('/admin')}
-        className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+        className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
       >
         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -270,7 +270,7 @@ const BulkExportPanel: React.FC = () => {
       </button>
 
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-white rounded-lg shadow-xs border border-gray-200 p-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 flex items-center">
@@ -296,7 +296,7 @@ const BulkExportPanel: React.FC = () => {
       </div>
 
       {/* Export Filters */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-white rounded-lg shadow-xs border border-gray-200 p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Export Filters</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
@@ -335,7 +335,7 @@ const BulkExportPanel: React.FC = () => {
                 type="checkbox"
                 checked={filters.compression}
                 onChange={(e) => setFilters(prev => ({ ...prev, compression: e.target.checked }))}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500"
               />
               <span className="ml-2 text-sm text-gray-700">Compress</span>
             </label>
@@ -344,7 +344,7 @@ const BulkExportPanel: React.FC = () => {
                 type="checkbox"
                 checked={filters.includeArchived}
                 onChange={(e) => setFilters(prev => ({ ...prev, includeArchived: e.target.checked }))}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500"
               />
               <span className="ml-2 text-sm text-gray-700">Archived</span>
             </label>
@@ -355,7 +355,7 @@ const BulkExportPanel: React.FC = () => {
       {/* Export Types */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {availableExports.map((exportType) => (
-          <div key={exportType.key} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div key={exportType.key} className="bg-white rounded-lg shadow-xs border border-gray-200 p-6">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center">
                 <span className="text-2xl mr-3">{exportType.icon}</span>
@@ -375,7 +375,7 @@ const BulkExportPanel: React.FC = () => {
 
             <button
               onClick={() => startExport(exportType.key)}
-              className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-sm font-medium"
+              className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-sm font-medium"
             >
               Start Export
             </button>
@@ -385,7 +385,7 @@ const BulkExportPanel: React.FC = () => {
 
       {/* Active Jobs */}
       {activeJobs.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-lg shadow-xs border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Export Jobs</h2>
           <div className="space-y-4">
             {activeJobs.map((job) => (
@@ -406,7 +406,7 @@ const BulkExportPanel: React.FC = () => {
                     {job.status === 'completed' && job.downloadUrl && (
                       <button
                         onClick={() => downloadExport(job)}
-                        className="px-3 py-1 bg-green-600 text-white rounded text-xs font-medium hover:bg-green-700"
+                        className="px-3 py-1 bg-green-600 text-white rounded-sm text-xs font-medium hover:bg-green-700"
                       >
                         Download
                       </button>
@@ -430,7 +430,7 @@ const BulkExportPanel: React.FC = () => {
                 )}
 
                 {job.error && (
-                  <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+                  <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-sm text-sm text-red-700">
                     {job.error}
                   </div>
                 )}

@@ -81,7 +81,7 @@ export const HandoffBypassModal: React.FC<HandoffBypassModalProps> = ({
   const bypassNumber = currentBypassCount + 1;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-xs">
       <div className="bg-white rounded-xl shadow-2xl p-8 max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
         {/* Warning Header */}
         <div className="bg-orange-100 border-2 border-orange-500 rounded-lg p-4 mb-6">
@@ -152,7 +152,7 @@ export const HandoffBypassModal: React.FC<HandoffBypassModalProps> = ({
             <select
               value={formData.override_reason}
               onChange={(e) => setFormData({ ...formData, override_reason: e.target.value as any })}
-              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-hidden"
               required
             >
               {Object.entries(reasonLabels).map(([value, label]) => (
@@ -173,7 +173,7 @@ export const HandoffBypassModal: React.FC<HandoffBypassModalProps> = ({
               onChange={(e) => setFormData({ ...formData, override_explanation: e.target.value })}
               placeholder="Example: I reviewed Room 311 three times and clicked Confirm, but the system keeps showing it as unreviewed. I verified the patient's status and confirmed safe handoff."
               rows={4}
-              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none resize-none"
+              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-hidden resize-none"
               required
               minLength={10}
             />
@@ -192,7 +192,7 @@ export const HandoffBypassModal: React.FC<HandoffBypassModalProps> = ({
               value={formData.nurse_signature}
               onChange={(e) => setFormData({ ...formData, nurse_signature: e.target.value })}
               placeholder="Type your full name"
-              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-hidden"
               required
             />
             <div className="text-xs text-gray-600 mt-1">

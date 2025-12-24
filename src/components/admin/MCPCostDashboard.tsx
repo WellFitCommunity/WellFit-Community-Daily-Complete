@@ -72,7 +72,7 @@ export const MCPCostDashboard: React.FC = () => {
   if (loading) {
     return (
       <div className="animate-pulse space-y-4">
-        <div className="h-32 bg-gradient-to-r from-green-100 to-emerald-100 rounded-xl"></div>
+        <div className="h-32 bg-linear-to-r from-green-100 to-emerald-100 rounded-xl"></div>
         <div className="grid grid-cols-3 gap-4">
           <div className="h-24 bg-gray-200 rounded-lg"></div>
           <div className="h-24 bg-gray-200 rounded-lg"></div>
@@ -84,7 +84,7 @@ export const MCPCostDashboard: React.FC = () => {
 
   if (!metrics || metrics.total_calls === 0) {
     return (
-      <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-6 border border-blue-200">
+      <div className="bg-linear-to-br from-blue-50 to-cyan-50 rounded-xl p-6 border border-blue-200">
         <div className="flex items-center space-x-3">
           <Zap className="w-8 h-8 text-blue-600" />
           <div>
@@ -108,7 +108,7 @@ export const MCPCostDashboard: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-br from-green-400 via-emerald-500 to-teal-600 rounded-2xl p-8 text-white shadow-2xl"
+        className="bg-linear-to-br from-green-400 via-emerald-500 to-teal-600 rounded-2xl p-8 text-white shadow-2xl"
       >
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -129,7 +129,7 @@ export const MCPCostDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="mt-6 bg-white/20 backdrop-blur-sm rounded-xl p-4">
+        <div className="mt-6 bg-white/20 backdrop-blur-xs rounded-xl p-4">
           <div className="flex justify-between items-center">
             <span className="text-sm">Without MCP:</span>
             <span className="font-bold">${(totalPotentialCost ?? 0).toFixed(2)}</span>
@@ -148,7 +148,7 @@ export const MCPCostDashboard: React.FC = () => {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.1 }}
-          className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-6 border border-blue-200 hover:shadow-lg transition-shadow"
+          className="bg-linear-to-br from-blue-50 to-cyan-50 rounded-xl p-6 border border-blue-200 hover:shadow-lg transition-shadow"
         >
           <div className="flex items-center justify-between mb-3">
             <Target className="w-8 h-8 text-blue-600" />
@@ -167,7 +167,7 @@ export const MCPCostDashboard: React.FC = () => {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2 }}
-          className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-200 hover:shadow-lg transition-shadow"
+          className="bg-linear-to-br from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-200 hover:shadow-lg transition-shadow"
         >
           <div className="flex items-center justify-between mb-3">
             <Activity className="w-8 h-8 text-purple-600" />
@@ -190,7 +190,7 @@ export const MCPCostDashboard: React.FC = () => {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.3 }}
-          className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-6 border border-amber-200 hover:shadow-lg transition-shadow"
+          className="bg-linear-to-br from-amber-50 to-orange-50 rounded-xl p-6 border border-amber-200 hover:shadow-lg transition-shadow"
         >
           <div className="flex items-center justify-between mb-3">
             <Award className="w-8 h-8 text-amber-600" />
@@ -241,7 +241,7 @@ export const MCPCostDashboard: React.FC = () => {
                         initial={{ width: 0 }}
                         animate={{ width: `${day.efficiency_score}%` }}
                         transition={{ duration: 0.8, delay: index * 0.1 }}
-                        className="h-full bg-gradient-to-r from-green-400 to-emerald-500 rounded-full"
+                        className="h-full bg-linear-to-r from-green-400 to-emerald-500 rounded-full"
                       ></motion.div>
                     </div>
                     <span className="text-xs font-bold text-gray-700 w-12 text-right">
@@ -267,7 +267,7 @@ export const MCPCostDashboard: React.FC = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
-        className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 border border-indigo-200"
+        className="bg-linear-to-r from-indigo-50 to-purple-50 rounded-xl p-6 border border-indigo-200"
       >
         <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
           <Zap className="w-5 h-5 text-indigo-600" />

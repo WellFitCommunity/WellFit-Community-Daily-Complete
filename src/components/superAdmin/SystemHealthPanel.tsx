@@ -83,12 +83,12 @@ const SystemHealthPanel: React.FC = () => {
 
   if (loading && healthChecks.length === 0) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow">
+      <div className="bg-white p-6 rounded-lg shadow-sm">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+          <div className="h-8 bg-gray-200 rounded-sm w-1/3"></div>
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-24 bg-gray-200 rounded"></div>
+              <div key={i} className="h-24 bg-gray-200 rounded-sm"></div>
             ))}
           </div>
         </div>
@@ -99,7 +99,7 @@ const SystemHealthPanel: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Overall Health Status */}
-      <div className="bg-white p-6 rounded-lg shadow">
+      <div className="bg-white p-6 rounded-lg shadow-sm">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-xl font-bold text-gray-900">System Health Monitor</h2>
@@ -110,7 +110,7 @@ const SystemHealthPanel: React.FC = () => {
           <button
             onClick={loadHealthData}
             disabled={loading}
-            className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2 transition-colors shadow-sm"
+            className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2 transition-colors shadow-xs"
           >
             <Activity className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -174,7 +174,7 @@ const SystemHealthPanel: React.FC = () => {
       </div>
 
       {/* Component Health Status */}
-      <div className="bg-white p-6 rounded-lg shadow">
+      <div className="bg-white p-6 rounded-lg shadow-sm">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Component Status</h3>
 
         {components.length === 0 ? (
@@ -183,7 +183,7 @@ const SystemHealthPanel: React.FC = () => {
             <p>No health check data available</p>
             <button
               onClick={loadHealthData}
-              className="mt-4 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
+              className="mt-4 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors shadow-xs"
             >
               Load Health Checks
             </button>
@@ -215,7 +215,7 @@ const SystemHealthPanel: React.FC = () => {
                         {check.metrics && Object.keys(check.metrics).length > 0 && (
                           <div className="flex flex-wrap gap-3 mt-3">
                             {Object.entries(check.metrics).map(([key, value]) => (
-                              <div key={key} className="bg-gray-50 px-3 py-1 rounded">
+                              <div key={key} className="bg-gray-50 px-3 py-1 rounded-sm">
                                 <span className="text-xs text-gray-600">{key}: </span>
                                 <span className="text-sm font-medium text-gray-900">
                                   {typeof value === 'number' ? value.toLocaleString() : String(value)}

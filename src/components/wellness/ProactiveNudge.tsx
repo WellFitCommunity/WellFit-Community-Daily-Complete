@@ -34,7 +34,7 @@ export const ProactiveNudge: React.FC<ProactiveNudgeProps> = ({
   if (type === 'break') {
     return (
       <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 animate-fadeIn">
-        <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-6 max-w-md mx-4 shadow-2xl border-2 border-blue-300">
+        <div className="bg-linear-to-br from-blue-50 to-cyan-50 rounded-2xl p-6 max-w-md mx-4 shadow-2xl border-2 border-blue-300">
           <div className="text-center mb-4">
             <div className="text-5xl mb-3">☕</div>
             <h3 className="text-xl font-bold text-gray-900">Time for a Quick Break</h3>
@@ -94,7 +94,7 @@ export const ProactiveNudge: React.FC<ProactiveNudgeProps> = ({
   if (type === 'stress') {
     return (
       <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 animate-fadeIn">
-        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-6 max-w-md mx-4 shadow-2xl border-2 border-amber-300">
+        <div className="bg-linear-to-br from-amber-50 to-orange-50 rounded-2xl p-6 max-w-md mx-4 shadow-2xl border-2 border-amber-300">
           <div className="text-center mb-4">
             <div className="text-5xl mb-3">💛</div>
             <h3 className="text-xl font-bold text-gray-900">Checking In</h3>
@@ -144,7 +144,7 @@ export const ProactiveNudge: React.FC<ProactiveNudgeProps> = ({
   if (type === 'intervention') {
     return (
       <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 animate-fadeIn">
-        <div className="bg-gradient-to-br from-red-50 to-pink-50 rounded-2xl p-6 max-w-md mx-4 shadow-2xl border-2 border-red-300">
+        <div className="bg-linear-to-br from-red-50 to-pink-50 rounded-2xl p-6 max-w-md mx-4 shadow-2xl border-2 border-red-300">
           <div className="text-center mb-4">
             <div className="text-5xl mb-3">❤️</div>
             <h3 className="text-xl font-bold text-gray-900">We're Here For You</h3>

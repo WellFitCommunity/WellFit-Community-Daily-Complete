@@ -7,7 +7,7 @@ interface SkeletonProps {
 
 export const Skeleton: React.FC<SkeletonProps> = ({ className = '', children }) => {
   return (
-    <div className={`animate-pulse bg-gray-200 rounded ${className}`}>
+    <div className={`animate-pulse bg-gray-200 rounded-sm ${className}`}>
       {children}
     </div>
   );
@@ -96,7 +96,7 @@ export const DashboardSkeleton: React.FC = () => {
       {/* Stats Cards Skeleton */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         {Array.from({ length: 5 }).map((_, index) => (
-          <div key={index} className="bg-white rounded-lg shadow p-4 border-l-4 border-gray-300">
+          <div key={index} className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-gray-300">
             <Skeleton className="h-4 w-20 mb-2" />
             <Skeleton className="h-8 w-16" />
           </div>
@@ -104,7 +104,7 @@ export const DashboardSkeleton: React.FC = () => {
       </div>
 
       {/* Filters Skeleton */}
-      <div className="bg-white rounded-lg shadow p-4">
+      <div className="bg-white rounded-lg shadow-sm p-4">
         <div className="flex flex-wrap gap-4">
           <div className="space-y-2">
             <Skeleton className="h-4 w-16" />
@@ -124,7 +124,7 @@ export const DashboardSkeleton: React.FC = () => {
       </div>
 
       {/* Table Skeleton */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -181,7 +181,7 @@ export const ApiKeyManagerSkeleton: React.FC = () => {
       <div className="bg-gray-50 p-4 rounded-lg">
         <Skeleton className="h-6 w-48 mb-3" />
         <div className="flex space-x-2">
-          <Skeleton className="h-10 flex-grow" />
+          <Skeleton className="h-10 grow" />
           <Skeleton className="h-10 w-32" />
         </div>
       </div>
@@ -226,9 +226,9 @@ export const TransferPacketSkeleton: React.FC = () => {
 
       {/* Packet Cards */}
       {Array.from({ length: 3 }).map((_, index) => (
-        <div key={index} className="bg-white rounded-lg shadow p-6 border-l-4 border-gray-300">
+        <div key={index} className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-gray-300">
           <div className="flex justify-between items-start mb-4">
-            <div className="space-y-2 flex-grow">
+            <div className="space-y-2 grow">
               <Skeleton className="h-6 w-48" />
               <Skeleton className="h-4 w-32" />
             </div>

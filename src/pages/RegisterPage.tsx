@@ -274,7 +274,7 @@ const RegisterPage: React.FC = () => {
             placeholder="First Name"
             value={formData.firstName}
             onChange={(e) => setFormData((s) => ({ ...s, firstName: e.target.value }))}
-            className="p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+            className="p-3 border border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500"
             required
             aria-label="First Name"
             autoComplete="given-name"
@@ -284,7 +284,7 @@ const RegisterPage: React.FC = () => {
             placeholder="Last Name"
             value={formData.lastName}
             onChange={(e) => setFormData((s) => ({ ...s, lastName: e.target.value }))}
-            className="p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+            className="p-3 border border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500"
             required
             aria-label="Last Name"
             autoComplete="family-name"
@@ -299,7 +299,7 @@ const RegisterPage: React.FC = () => {
             placeholder="+1 555-555-5555"
             value={formData.phone}
             onChange={handlePhoneChange}
-            className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+            className="w-full p-3 border border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500"
             required
             aria-label="Phone Number"
             autoComplete="tel"
@@ -313,7 +313,7 @@ const RegisterPage: React.FC = () => {
           placeholder={formData.roleLabel === 'Caregiver' ? 'Email (Required for emergency notifications)' : 'Email (Optional)'}
           value={formData.email}
           onChange={(e) => setFormData((s) => ({ ...s, email: e.target.value }))}
-          className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+          className="w-full p-3 border border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500"
           aria-label={formData.roleLabel === 'Caregiver' ? 'Email (Required)' : 'Email (Optional)'}
           autoComplete="email"
           required={formData.roleLabel === 'Caregiver'}
@@ -325,7 +325,7 @@ const RegisterPage: React.FC = () => {
             placeholder="Password"
             value={formData.password}
             onChange={(e) => setFormData((s) => ({ ...s, password: e.target.value }))}
-            className="w-full p-3 pr-12 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+            className="w-full p-3 pr-12 border border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500"
             required
             aria-label="Password"
             autoComplete="new-password"
@@ -355,7 +355,7 @@ const RegisterPage: React.FC = () => {
             placeholder="Confirm Password"
             value={formData.confirmPassword}
             onChange={(e) => setFormData((s) => ({ ...s, confirmPassword: e.target.value }))}
-            className="w-full p-3 pr-12 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+            className="w-full p-3 pr-12 border border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500"
             required
             aria-label="Confirm Password"
             autoComplete="new-password"
@@ -385,7 +385,7 @@ const RegisterPage: React.FC = () => {
             id="role"
             value={formData.roleLabel}
             onChange={(e) => setFormData((s) => ({ ...s, roleLabel: e.target.value }))}
-            className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+            className="w-full p-3 border border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500"
             aria-label="Role"
           >
             {PUBLIC_ROLES.map((label) => (
@@ -405,7 +405,7 @@ const RegisterPage: React.FC = () => {
               href="/terms"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 py-2 px-3 text-center text-sm font-medium border-2 border-blue-600 text-blue-600 rounded hover:bg-white transition-colors"
+              className="flex-1 py-2 px-3 text-center text-sm font-medium border-2 border-blue-600 text-blue-600 rounded-sm hover:bg-white transition-colors"
             >
               View Terms
             </a>
@@ -413,20 +413,20 @@ const RegisterPage: React.FC = () => {
               href="/privacy-policy"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 py-2 px-3 text-center text-sm font-medium border-2 border-blue-600 text-blue-600 rounded hover:bg-white transition-colors"
+              className="flex-1 py-2 px-3 text-center text-sm font-medium border-2 border-blue-600 text-blue-600 rounded-sm hover:bg-white transition-colors"
             >
               View Privacy Policy
             </a>
           </div>
 
           {/* Agreement Checkbox */}
-          <div className="flex items-start gap-3 p-3 bg-white rounded border border-gray-200">
+          <div className="flex items-start gap-3 p-3 bg-white rounded-sm border border-gray-200">
             <input
               type="checkbox"
               id="agreedToTerms"
               checked={agreedToTerms}
               onChange={(e) => setAgreedToTerms(e.target.checked)}
-              className="mt-0.5 w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+              className="mt-0.5 w-5 h-5 text-blue-600 border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500"
               aria-describedby="terms-text"
             />
             <label htmlFor="agreedToTerms" id="terms-text" className="text-sm text-gray-700 leading-relaxed">
@@ -466,7 +466,7 @@ const RegisterPage: React.FC = () => {
         />
 
         {error && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded" role="alert">
+          <div className="p-3 bg-red-50 border border-red-200 rounded-sm" role="alert">
             <p className="text-red-600 text-sm">{error}</p>
           </div>
         )}
@@ -474,7 +474,7 @@ const RegisterPage: React.FC = () => {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 text-white rounded disabled:opacity-50 hover:opacity-90 transition-opacity"
+          className="w-full py-3 text-white rounded-sm disabled:opacity-50 hover:opacity-90 transition-opacity"
           style={{ backgroundColor: branding.primaryColor }}
         >
           {loading ? 'Creating Account...' : 'Create Account'}

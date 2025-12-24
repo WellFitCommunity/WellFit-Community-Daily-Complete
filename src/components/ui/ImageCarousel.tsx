@@ -19,7 +19,7 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ images, altText = "Meal I
 
   return (
     <div
-      className="relative w-full max-w-xl mx-auto mt-4 outline-none"
+      className="relative w-full max-w-xl mx-auto mt-4 outline-hidden"
       tabIndex={0}
       aria-label="Image Carousel"
       onKeyDown={handleKeyDown}
@@ -35,14 +35,14 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ images, altText = "Meal I
           <button
             aria-label="Previous image"
             onClick={goToPrevious}
-            className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-white bg-opacity-80 px-3 py-2 rounded-full text-xl font-bold shadow focus:outline-none"
+            className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-white bg-opacity-80 px-3 py-2 rounded-full text-xl font-bold shadow-sm focus:outline-hidden"
           >
             ◀
           </button>
           <button
             aria-label="Next image"
             onClick={goToNext}
-            className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-white bg-opacity-80 px-3 py-2 rounded-full text-xl font-bold shadow focus:outline-none"
+            className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-white bg-opacity-80 px-3 py-2 rounded-full text-xl font-bold shadow-sm focus:outline-hidden"
           >
             ▶
           </button>

@@ -185,8 +185,8 @@ const OfflineIndicator: React.FC = () => {
         onClick={() => setShowDetails(!showDetails)}
         className={`flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg font-medium text-white transition-all duration-300 ${
           online
-            ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'
-            : 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 animate-pulse'
+            ? 'bg-linear-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'
+            : 'bg-linear-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 animate-pulse'
         }`}
       >
         {syncing ? (

@@ -204,7 +204,7 @@ const AuditLogsPage: React.FC = () => {
           </div>
 
           {/* Page Header */}
-          <div className="bg-gradient-to-r from-[#2D3339] to-[#1F2326] rounded-2xl shadow-2xl p-8 border-2 border-black">
+          <div className="bg-linear-to-r from-[#2D3339] to-[#1F2326] rounded-2xl shadow-2xl p-8 border-2 border-black">
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-white flex items-center gap-3">
@@ -354,7 +354,7 @@ const AuditLogsPage: React.FC = () => {
                             {log.user_email || log.user_id}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 py-1 text-xs font-semibold rounded ${getActionColor(log.action)}`}>
+                            <span className={`px-2 py-1 text-xs font-semibold rounded-sm ${getActionColor(log.action)}`}>
                               {log.action}
                             </span>
                           </td>

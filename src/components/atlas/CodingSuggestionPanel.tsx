@@ -166,11 +166,11 @@ export const CodingSuggestionPanel: React.FC<CodingSuggestionPanelProps> = ({
 
       {/* Sidebar with coding suggestions */}
       {encounterId && (
-        <div className="w-96 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl shadow-xl p-6 border-2 border-green-200">
+        <div className="w-96 bg-linear-to-br from-green-50 to-emerald-50 rounded-xl shadow-xl p-6 border-2 border-green-200">
           <div className="mb-6">
             <h3 className="text-xl font-bold text-gray-900 mb-2">💰 Revenue Optimizer</h3>
             {totalRevenue > 0 && (
-              <div className="p-4 bg-gradient-to-r from-green-400 to-emerald-500 rounded-lg shadow-lg">
+              <div className="p-4 bg-linear-to-r from-green-400 to-emerald-500 rounded-lg shadow-lg">
                 <div className="text-white text-center">
                   <div className="text-xs font-medium">Projected Revenue</div>
                   <div className="text-3xl font-bold">${totalRevenue.toFixed(2)}</div>
@@ -204,12 +204,12 @@ export const CodingSuggestionPanel: React.FC<CodingSuggestionPanelProps> = ({
                 {cptSuggestions.map((sug, idx) => (
                   <div
                     key={idx}
-                    className="p-4 bg-white rounded-lg shadow border border-green-200 hover:shadow-md transition-shadow"
+                    className="p-4 bg-white rounded-lg shadow-sm border border-green-200 hover:shadow-md transition-shadow"
                   >
                     <div className="flex justify-between items-start mb-2">
                       <div>
                         <span className="text-lg font-bold text-green-900">{sug.code}</span>
-                        <span className="ml-2 px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded">
+                        <span className="ml-2 px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded-sm">
                           {sug.type}
                         </span>
                       </div>
@@ -240,7 +240,7 @@ export const CodingSuggestionPanel: React.FC<CodingSuggestionPanelProps> = ({
                 {icd10Suggestions.map((sug, idx) => (
                   <div
                     key={idx}
-                    className="p-3 bg-white rounded-lg shadow-sm border border-blue-200"
+                    className="p-3 bg-white rounded-lg shadow-xs border border-blue-200"
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-blue-900">{sug.code}</span>

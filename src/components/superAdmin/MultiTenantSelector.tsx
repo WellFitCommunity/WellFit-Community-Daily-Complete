@@ -100,7 +100,7 @@ const MultiTenantSelector: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-teal-50 to-blue-50 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-teal-50 to-blue-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
           <p className="text-teal-900 font-medium">Loading tenant assignments...</p>
@@ -111,7 +111,7 @@ const MultiTenantSelector: React.FC = () => {
 
   if (error && !profile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-teal-50 to-blue-50 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-teal-50 to-blue-50 flex items-center justify-center">
         <div className="bg-white p-8 rounded-lg shadow-xl max-w-md border-2 border-red-200">
           <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-gray-900 mb-2 text-center">Error</h2>
@@ -128,9 +128,9 @@ const MultiTenantSelector: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-50 to-blue-50">
+    <div className="min-h-screen bg-linear-to-br from-teal-50 to-blue-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-teal-600 to-teal-700 shadow-lg">
+      <div className="bg-linear-to-r from-teal-600 to-teal-700 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
@@ -138,11 +138,11 @@ const MultiTenantSelector: React.FC = () => {
               <p className="text-sm text-teal-100 mt-1">Multi-Tenant Monitoring Dashboard</p>
             </div>
             <div className="flex items-center gap-3">
-              <div className="bg-white/20 backdrop-blur-sm border border-white/30 px-4 py-2 rounded-lg">
+              <div className="bg-white/20 backdrop-blur-xs border border-white/30 px-4 py-2 rounded-lg">
                 <span className="text-sm font-medium text-white">{profile?.email}</span>
               </div>
               {profile?.isSuperAdmin && (
-                <div className="bg-white/20 backdrop-blur-sm border border-white/30 px-3 py-2 rounded-lg">
+                <div className="bg-white/20 backdrop-blur-xs border border-white/30 px-3 py-2 rounded-lg">
                   <div className="flex items-center gap-2">
                     <Shield className="w-4 h-4 text-white" />
                     <span className="text-xs font-medium text-white">Master Admin</span>
@@ -170,7 +170,7 @@ const MultiTenantSelector: React.FC = () => {
               </span>
               <button
                 onClick={handleOpenSelected}
-                className="ml-auto bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors flex items-center gap-2 shadow-sm"
+                className="ml-auto bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors flex items-center gap-2 shadow-xs"
               >
                 <Grid3x3 className="w-4 h-4" />
                 Open Multi-View
@@ -194,7 +194,7 @@ const MultiTenantSelector: React.FC = () => {
             <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Master Control</h3>
             <button
               onClick={handleOpenMasterPanel}
-              className="w-full md:w-auto group relative overflow-hidden bg-gradient-to-r from-red-500 to-red-600 text-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+              className="w-full md:w-auto group relative overflow-hidden bg-linear-to-r from-red-500 to-red-600 text-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
             >
               <div className="flex items-center gap-4">
                 <div className="p-4 bg-white/20 rounded-lg">
@@ -217,7 +217,7 @@ const MultiTenantSelector: React.FC = () => {
           </h3>
 
           {allTenants.length === 0 ? (
-            <div className="bg-white p-12 rounded-lg shadow text-center">
+            <div className="bg-white p-12 rounded-lg shadow-sm text-center">
               <Building2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">No Tenants Assigned</h3>
               <p className="text-gray-600">

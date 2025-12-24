@@ -122,14 +122,14 @@ const FacilitySelector: React.FC<FacilitySelectorProps> = ({
         `}
       >
         <div className="flex items-center gap-2 min-w-0">
-          <Building2 className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          <Building2 className="w-4 h-4 text-gray-400 shrink-0" />
           {selectedFacility ? (
             <span className="truncate text-gray-900">{selectedFacility.name}</span>
           ) : (
             <span className="text-gray-500">{placeholder}</span>
           )}
         </div>
-        <div className="flex items-center gap-1 flex-shrink-0">
+        <div className="flex items-center gap-1 shrink-0">
           {showClear && selectedFacility && !disabled && (
             <button
               type="button"
@@ -158,7 +158,7 @@ const FacilitySelector: React.FC<FacilitySelectorProps> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search facilities..."
-                className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 rounded focus:ring-2 focus:ring-teal-200 focus:border-teal-500"
+                className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 rounded-sm focus:ring-2 focus:ring-teal-200 focus:border-teal-500"
                 autoFocus
               />
             </div>
@@ -182,7 +182,7 @@ const FacilitySelector: React.FC<FacilitySelectorProps> = ({
                   `}
                 >
                   <Building2
-                    className={`w-4 h-4 mt-0.5 flex-shrink-0 ${
+                    className={`w-4 h-4 mt-0.5 shrink-0 ${
                       facility.is_primary ? 'text-teal-600' : 'text-gray-400'
                     }`}
                   />
@@ -190,7 +190,7 @@ const FacilitySelector: React.FC<FacilitySelectorProps> = ({
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-gray-900 truncate">{facility.name}</span>
                       {facility.is_primary && (
-                        <span className="px-1.5 py-0.5 bg-teal-100 text-teal-700 text-xs rounded">
+                        <span className="px-1.5 py-0.5 bg-teal-100 text-teal-700 text-xs rounded-sm">
                           Primary
                         </span>
                       )}

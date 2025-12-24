@@ -99,10 +99,10 @@ export const SOC2AuditDashboard: React.FC = () => {
     return (
       <div className="space-y-4">
         <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+          <div className="h-8 bg-gray-200 rounded-sm w-1/4 mb-4"></div>
           <div className="grid grid-cols-1 gap-4">
-            <div className="h-64 bg-gray-200 rounded"></div>
-            <div className="h-64 bg-gray-200 rounded"></div>
+            <div className="h-64 bg-gray-200 rounded-sm"></div>
+            <div className="h-64 bg-gray-200 rounded-sm"></div>
           </div>
         </div>
       </div>
@@ -134,7 +134,7 @@ export const SOC2AuditDashboard: React.FC = () => {
       )}
 
       {/* Compliance Score Card */}
-      <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200">
+      <Card className="bg-linear-to-br from-blue-50 to-indigo-50 border-2 border-blue-200">
         <CardHeader>
           <CardTitle className="text-xl">SOC 2 Compliance Score</CardTitle>
         </CardHeader>

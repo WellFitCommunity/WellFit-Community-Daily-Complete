@@ -42,7 +42,7 @@ export const IdleTimeoutWarning: React.FC<IdleTimeoutWarningProps> = ({
       aria-describedby="idle-timeout-description"
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-xs" />
 
       {/* Modal */}
       <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
@@ -97,13 +97,13 @@ export const IdleTimeoutWarning: React.FC<IdleTimeoutWarningProps> = ({
         <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={onStayLoggedIn}
-            className="flex-1 py-3 px-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            className="flex-1 py-3 px-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
             Stay Logged In
           </button>
           <button
             onClick={onLogout}
-            className="flex-1 py-3 px-4 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 active:bg-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+            className="flex-1 py-3 px-4 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 active:bg-gray-400 transition-colors focus:outline-hidden focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
           >
             Logout Now
           </button>

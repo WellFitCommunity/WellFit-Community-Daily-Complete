@@ -1,6 +1,62 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@config '../tailwind.config.cjs';
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+/* Extra helper utilities (no collisions, purged correctly) */
+@utility form-field-enhanced {
+  /* Form field focus enhancement */
+  &:focus {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+  }
+  &:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+  } /* Chrome/Safari */
+}
+@utility btn-hover-lift {
+  /* Button hover lift */
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease;
+  will-change: transform;
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  } /* Chrome/Safari */
+}
+@utility toast-container {
+  /* Toast stacking improvements */
+  max-height: 80vh;
+  overflow-y: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+  &::-webkit-scrollbar {
+    display: none;
+  } /* Chrome/Safari */
+}
 
 /* Base resets (safe with Tailwind’s layering) */
 @layer base {
@@ -12,39 +68,6 @@
     @apply bg-white text-gray-800 antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-}
-
-/* Extra helper utilities (no collisions, purged correctly) */
-@layer utilities {
-  /* Form field focus enhancement */
-  .form-field-enhanced:focus,
-  .form-field-enhanced:focus-visible {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
-  }
-
-  /* Button hover lift */
-  .btn-hover-lift {
-    transition: transform 150ms ease, box-shadow 150ms ease;
-    will-change: transform;
-  }
-  .btn-hover-lift:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  }
-  .btn-hover-lift:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.10);
-  }
-
-  /* Toast stacking improvements */
-  .toast-container {
-    max-height: 80vh;
-    overflow-y: auto;
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* IE/Edge */
-  }
-  .toast-container::-webkit-scrollbar { display: none; } /* Chrome/Safari */
 }
 
 /* Respect reduced motion */

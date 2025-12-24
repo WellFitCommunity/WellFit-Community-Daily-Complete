@@ -16,9 +16,9 @@ export const LawEnforcementLandingPage: React.FC = () => {
   const { branding } = useBranding();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
+    <div className="min-h-screen bg-linear-to-br from-slate-900 to-slate-800">
       {/* Header */}
-      <header className="bg-slate-900/50 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-50">
+      <header className="bg-slate-900/50 backdrop-blur-xs border-b border-slate-700 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -59,7 +59,7 @@ export const LawEnforcementLandingPage: React.FC = () => {
       {/* Hero Section */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center mb-16">
-          <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-[#00857a] to-[#33bfb7] rounded-2xl mb-8 shadow-lg shadow-[#00857a]/20">
+          <div className="inline-flex items-center justify-center w-24 h-24 bg-linear-to-br from-[#00857a] to-[#33bfb7] rounded-2xl mb-8 shadow-lg shadow-[#00857a]/20">
             <Shield className="w-14 h-14 text-white" />
           </div>
           <h1 className="text-5xl font-bold text-white mb-6">
@@ -74,7 +74,7 @@ export const LawEnforcementLandingPage: React.FC = () => {
         {/* Feature Grid */}
         <div className="grid md:grid-cols-3 gap-6 mb-16">
           {/* Daily Check-Ins */}
-          <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-8 border border-slate-700 hover:border-[#00857a]/50 transition-colors group">
+          <div className="bg-slate-800/50 backdrop-blur-xs rounded-xl p-8 border border-slate-700 hover:border-[#00857a]/50 transition-colors group">
             <div className="w-14 h-14 bg-[#00857a]/20 rounded-xl flex items-center justify-center mb-6 group-hover:bg-[#00857a]/30 transition-colors">
               <CheckCircle className="w-7 h-7 text-[#00857a]" />
             </div>
@@ -86,7 +86,7 @@ export const LawEnforcementLandingPage: React.FC = () => {
           </div>
 
           {/* Dispatch Dashboard */}
-          <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-8 border border-slate-700 hover:border-[#00857a]/50 transition-colors group">
+          <div className="bg-slate-800/50 backdrop-blur-xs rounded-xl p-8 border border-slate-700 hover:border-[#00857a]/50 transition-colors group">
             <div className="w-14 h-14 bg-amber-500/20 rounded-xl flex items-center justify-center mb-6 group-hover:bg-amber-500/30 transition-colors">
               <LayoutDashboard className="w-7 h-7 text-amber-400" />
             </div>
@@ -98,7 +98,7 @@ export const LawEnforcementLandingPage: React.FC = () => {
           </div>
 
           {/* Emergency Info */}
-          <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-8 border border-slate-700 hover:border-[#00857a]/50 transition-colors group">
+          <div className="bg-slate-800/50 backdrop-blur-xs rounded-xl p-8 border border-slate-700 hover:border-[#00857a]/50 transition-colors group">
             <div className="w-14 h-14 bg-red-500/20 rounded-xl flex items-center justify-center mb-6 group-hover:bg-red-500/30 transition-colors">
               <AlertTriangle className="w-7 h-7 text-red-400" />
             </div>
@@ -111,41 +111,41 @@ export const LawEnforcementLandingPage: React.FC = () => {
         </div>
 
         {/* How It Works */}
-        <div className="bg-slate-800/30 backdrop-blur-sm rounded-2xl p-12 border border-slate-700 mb-16">
+        <div className="bg-slate-800/30 backdrop-blur-xs rounded-2xl p-12 border border-slate-700 mb-16">
           <h2 className="text-3xl font-bold text-white mb-10 text-center">How It Works</h2>
           <div className="grid md:grid-cols-4 gap-8">
             <div className="text-center relative">
-              <div className="w-14 h-14 bg-gradient-to-br from-[#00857a] to-[#33bfb7] rounded-xl flex items-center justify-center text-white text-xl font-bold mx-auto mb-4 shadow-lg shadow-[#00857a]/20">
+              <div className="w-14 h-14 bg-linear-to-br from-[#00857a] to-[#33bfb7] rounded-xl flex items-center justify-center text-white text-xl font-bold mx-auto mb-4 shadow-lg shadow-[#00857a]/20">
                 1
               </div>
               <h4 className="font-semibold text-white mb-2">Senior Enrollment</h4>
               <p className="text-slate-400 text-sm">
                 Senior signs up and provides emergency access information
               </p>
-              <div className="hidden md:block absolute top-7 left-[60%] w-[80%] h-0.5 bg-gradient-to-r from-[#00857a] to-transparent" />
+              <div className="hidden md:block absolute top-7 left-[60%] w-[80%] h-0.5 bg-linear-to-r from-[#00857a] to-transparent" />
             </div>
             <div className="text-center relative">
-              <div className="w-14 h-14 bg-gradient-to-br from-[#00857a] to-[#33bfb7] rounded-xl flex items-center justify-center text-white text-xl font-bold mx-auto mb-4 shadow-lg shadow-[#00857a]/20">
+              <div className="w-14 h-14 bg-linear-to-br from-[#00857a] to-[#33bfb7] rounded-xl flex items-center justify-center text-white text-xl font-bold mx-auto mb-4 shadow-lg shadow-[#00857a]/20">
                 2
               </div>
               <h4 className="font-semibold text-white mb-2">Daily Check-In</h4>
               <p className="text-slate-400 text-sm">
                 Senior completes daily check-in via phone or web app
               </p>
-              <div className="hidden md:block absolute top-7 left-[60%] w-[80%] h-0.5 bg-gradient-to-r from-[#00857a] to-transparent" />
+              <div className="hidden md:block absolute top-7 left-[60%] w-[80%] h-0.5 bg-linear-to-r from-[#00857a] to-transparent" />
             </div>
             <div className="text-center relative">
-              <div className="w-14 h-14 bg-gradient-to-br from-amber-500 to-amber-400 rounded-xl flex items-center justify-center text-white text-xl font-bold mx-auto mb-4 shadow-lg shadow-amber-500/20">
+              <div className="w-14 h-14 bg-linear-to-br from-amber-500 to-amber-400 rounded-xl flex items-center justify-center text-white text-xl font-bold mx-auto mb-4 shadow-lg shadow-amber-500/20">
                 3
               </div>
               <h4 className="font-semibold text-white mb-2">Alert Generated</h4>
               <p className="text-slate-400 text-sm">
                 If check-in missed, system alerts dispatch dashboard
               </p>
-              <div className="hidden md:block absolute top-7 left-[60%] w-[80%] h-0.5 bg-gradient-to-r from-amber-500 to-transparent" />
+              <div className="hidden md:block absolute top-7 left-[60%] w-[80%] h-0.5 bg-linear-to-r from-amber-500 to-transparent" />
             </div>
             <div className="text-center">
-              <div className="w-14 h-14 bg-gradient-to-br from-red-500 to-red-400 rounded-xl flex items-center justify-center text-white text-xl font-bold mx-auto mb-4 shadow-lg shadow-red-500/20">
+              <div className="w-14 h-14 bg-linear-to-br from-red-500 to-red-400 rounded-xl flex items-center justify-center text-white text-xl font-bold mx-auto mb-4 shadow-lg shadow-red-500/20">
                 4
               </div>
               <h4 className="font-semibold text-white mb-2">Welfare Check</h4>
@@ -173,7 +173,7 @@ export const LawEnforcementLandingPage: React.FC = () => {
         </div>
 
         {/* Call to Action */}
-        <div className="text-center bg-gradient-to-r from-[#00857a]/20 via-slate-800/50 to-[#00857a]/20 rounded-2xl p-12 border border-[#00857a]/30">
+        <div className="text-center bg-linear-to-r from-[#00857a]/20 via-slate-800/50 to-[#00857a]/20 rounded-2xl p-12 border border-[#00857a]/30">
           <h2 className="text-3xl font-bold text-white mb-6">Get Started Today</h2>
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
             <button
@@ -202,7 +202,7 @@ export const LawEnforcementLandingPage: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-slate-900/50 backdrop-blur-sm border-t border-slate-800 mt-16">
+      <footer className="bg-slate-900/50 backdrop-blur-xs border-t border-slate-800 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
             <p className="text-slate-500 text-sm">

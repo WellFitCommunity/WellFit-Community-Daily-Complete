@@ -727,7 +727,7 @@ const SeniorCommunityDashboard: React.FC = () => {
             </div>
 
             {/* My Health Records Hub - Large, Easy-to-See Button */}
-            <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl shadow-lg p-8 text-center transform hover:scale-105 transition-all duration-300 hover:shadow-2xl">
+            <div className="bg-linear-to-br from-blue-500 to-purple-600 rounded-xl shadow-lg p-8 text-center transform hover:scale-105 transition-all duration-300 hover:shadow-2xl">
               <div className="text-5xl mb-4" aria-hidden="true">🏥</div>
               <h3 id="health-records-heading" className="text-2xl font-bold text-white mb-3 drop-shadow-lg">
                 My Health Records

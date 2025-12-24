@@ -124,10 +124,10 @@ const getRiskColor = (category: string): string => {
 };
 
 const getRiskBgColor = (score: number): string => {
-  if (score >= 80) return 'bg-gradient-to-r from-red-600 to-red-500';
-  if (score >= 60) return 'bg-gradient-to-r from-orange-600 to-orange-500';
-  if (score >= 40) return 'bg-gradient-to-r from-yellow-600 to-yellow-500';
-  return 'bg-gradient-to-r from-green-600 to-green-500';
+  if (score >= 80) return 'bg-linear-to-r from-red-600 to-red-500';
+  if (score >= 60) return 'bg-linear-to-r from-orange-600 to-orange-500';
+  if (score >= 40) return 'bg-linear-to-r from-yellow-600 to-yellow-500';
+  return 'bg-linear-to-r from-green-600 to-green-500';
 };
 
 export const CommunityReadmissionDashboard: React.FC = () => {
@@ -463,14 +463,14 @@ export const CommunityReadmissionDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-900 text-white">
       {/* Header - Methodist Hospital Integration */}
-      <div className="bg-gradient-to-r from-[#003087] via-slate-800 to-slate-900 border-b border-slate-700 px-6 py-4">
+      <div className="bg-linear-to-r from-[#003087] via-slate-800 to-slate-900 border-b border-slate-700 px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="px-2 py-0.5 bg-[#003087] text-white text-xs rounded border border-blue-400/50 font-medium">
+              <span className="px-2 py-0.5 bg-[#003087] text-white text-xs rounded-sm border border-blue-400/50 font-medium">
                 Houston Methodist Hospital System
               </span>
-              <span className="px-2 py-0.5 bg-slate-700 text-slate-300 text-xs rounded border border-slate-600">
+              <span className="px-2 py-0.5 bg-slate-700 text-slate-300 text-xs rounded-sm border border-slate-600">
                 Tenant: MH-0001
               </span>
             </div>
@@ -528,9 +528,9 @@ export const CommunityReadmissionDashboard: React.FC = () => {
       <div className="p-6 space-y-6">
         {/* Critical Alerts Banner */}
         {alerts.filter(a => a.severity === 'critical' && a.status === 'active').length > 0 && (
-          <div className="bg-gradient-to-r from-red-600/20 to-red-500/10 border border-red-500/50 rounded-xl p-4">
+          <div className="bg-linear-to-r from-red-600/20 to-red-500/10 border border-red-500/50 rounded-xl p-4">
             <div className="flex items-start gap-4">
-              <AlertTriangle className="text-red-400 mt-1 flex-shrink-0" size={24} />
+              <AlertTriangle className="text-red-400 mt-1 shrink-0" size={24} />
               <div className="flex-1">
                 <h3 className="font-bold text-red-400 mb-2">
                   {alerts.filter(a => a.severity === 'critical' && a.status === 'active').length} Critical Alerts Require Immediate Attention
@@ -542,7 +542,7 @@ export const CommunityReadmissionDashboard: React.FC = () => {
                         <span className="font-medium text-white">{alert.member_name}</span>
                         <span className="text-red-300 ml-2">- {alert.title}</span>
                       </div>
-                      <button className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-sm">
+                      <button className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-sm text-sm">
                         Take Action
                       </button>
                     </div>
@@ -562,7 +562,7 @@ export const CommunityReadmissionDashboard: React.FC = () => {
               icon={<Users className="text-orange-400" />}
               change={-3}
               changeLabel="vs last month"
-              bgColor="bg-gradient-to-br from-orange-500/20 to-slate-800"
+              bgColor="bg-linear-to-br from-orange-500/20 to-slate-800"
             />
             <MetricCard
               title="30-Day Readmissions"
@@ -571,14 +571,14 @@ export const CommunityReadmissionDashboard: React.FC = () => {
               change={-12}
               changeLabel="vs last month"
               alert={metrics.total_readmissions_30d > 5}
-              bgColor="bg-gradient-to-br from-red-500/20 to-slate-800"
+              bgColor="bg-linear-to-br from-red-500/20 to-slate-800"
             />
             <MetricCard
               title="CMS Penalty Risk"
               value={metrics.cms_penalty_risk_count}
               icon={<AlertTriangle className="text-yellow-400" />}
               subtitle="members at risk"
-              bgColor="bg-gradient-to-br from-yellow-500/20 to-slate-800"
+              bgColor="bg-linear-to-br from-yellow-500/20 to-slate-800"
             />
             <MetricCard
               title="Prevented Readmissions"
@@ -586,14 +586,14 @@ export const CommunityReadmissionDashboard: React.FC = () => {
               icon={<Shield className="text-green-400" />}
               change={15}
               changeLabel="this quarter"
-              bgColor="bg-gradient-to-br from-green-500/20 to-slate-800"
+              bgColor="bg-linear-to-br from-green-500/20 to-slate-800"
             />
             <MetricCard
               title="Est. Cost Savings"
               value={`$${(metrics.cost_savings_estimate / 1000).toFixed(0)}K`}
               icon={<DollarSign className="text-emerald-400" />}
               subtitle="this quarter"
-              bgColor="bg-gradient-to-br from-emerald-500/20 to-slate-800"
+              bgColor="bg-linear-to-br from-emerald-500/20 to-slate-800"
             />
           </div>
         )}
@@ -940,7 +940,7 @@ export const CommunityReadmissionDashboard: React.FC = () => {
                       .map((member) => (
                         <div key={member.id} className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-white font-bold">
+                            <div className="w-10 h-10 rounded-full bg-linear-to-br from-green-500 to-emerald-600 flex items-center justify-center text-white font-bold">
                               {member.first_name[0]}{member.last_name[0]}
                             </div>
                             <div>
@@ -971,7 +971,7 @@ export const CommunityReadmissionDashboard: React.FC = () => {
                       .map((member) => (
                         <div key={member.id} className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border-l-4 border-red-500">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-orange-600 flex items-center justify-center text-white font-bold">
+                            <div className="w-10 h-10 rounded-full bg-linear-to-br from-red-500 to-orange-600 flex items-center justify-center text-white font-bold">
                               {member.first_name[0]}{member.last_name[0]}
                             </div>
                             <div>
@@ -979,7 +979,7 @@ export const CommunityReadmissionDashboard: React.FC = () => {
                               <p className="text-sm text-red-400">{member.missed_check_ins_7d} missed this week</p>
                             </div>
                           </div>
-                          <button className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded text-sm flex items-center gap-1">
+                          <button className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-sm text-sm flex items-center gap-1">
                             <Phone size={14} />
                             Call
                           </button>
@@ -1166,12 +1166,12 @@ const MemberRow: React.FC<MemberRowProps> = ({ member, onSelect }) => (
       {member.sdoh_risk_factors.length > 0 ? (
         <div className="flex flex-wrap gap-1">
           {member.sdoh_risk_factors.slice(0, 2).map((factor) => (
-            <span key={factor} className="px-2 py-0.5 bg-purple-500/20 text-purple-300 text-xs rounded">
+            <span key={factor} className="px-2 py-0.5 bg-purple-500/20 text-purple-300 text-xs rounded-sm">
               {factor}
             </span>
           ))}
           {member.sdoh_risk_factors.length > 2 && (
-            <span className="px-2 py-0.5 bg-slate-600 text-slate-300 text-xs rounded">
+            <span className="px-2 py-0.5 bg-slate-600 text-slate-300 text-xs rounded-sm">
               +{member.sdoh_risk_factors.length - 2}
             </span>
           )}
@@ -1221,7 +1221,7 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert }) => {
           <h4 className="font-medium text-white">{alert.title}</h4>
           <p className="text-sm text-slate-400 mt-1">{alert.description}</p>
           {alert.recommended_action && (
-            <div className="mt-2 p-2 bg-slate-800/50 rounded text-sm">
+            <div className="mt-2 p-2 bg-slate-800/50 rounded-sm text-sm">
               <span className="text-slate-400">Recommended: </span>
               <span className="text-white">{alert.recommended_action}</span>
             </div>
@@ -1231,10 +1231,10 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert }) => {
           </p>
         </div>
         <div className="flex gap-2 ml-4">
-          <button className="px-3 py-1.5 bg-[#00857a] hover:bg-[#006d64] text-white rounded text-sm">
+          <button className="px-3 py-1.5 bg-[#00857a] hover:bg-[#006d64] text-white rounded-sm text-sm">
             Take Action
           </button>
-          <button className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded text-sm">
+          <button className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded-sm text-sm">
             Dismiss
           </button>
         </div>
@@ -1254,7 +1254,7 @@ const ImpactRow: React.FC<ImpactRowProps> = ({ label, reduction }) => (
     <div className="flex items-center gap-2">
       <div className="w-24 h-2 bg-slate-700 rounded-full overflow-hidden">
         <div
-          className="h-full bg-gradient-to-r from-[#00857a] to-emerald-500 rounded-full"
+          className="h-full bg-linear-to-r from-[#00857a] to-emerald-500 rounded-full"
           style={{ width: `${reduction}%` }}
         />
       </div>

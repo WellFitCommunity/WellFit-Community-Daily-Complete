@@ -347,7 +347,7 @@ export const VoiceCommandButton: React.FC<VoiceCommandButtonProps> = ({
       {showHelp && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[80vh] overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white">
+            <div className="bg-linear-to-r from-blue-600 to-indigo-600 p-6 text-white">
               <h2 className="text-2xl font-bold flex items-center gap-2">
                 <span>🎤</span> Voice Commands
               </h2>
@@ -360,7 +360,7 @@ export const VoiceCommandButton: React.FC<VoiceCommandButtonProps> = ({
                   <h3 className="font-semibold text-gray-900 mb-2">{category.category}</h3>
                   <ul className="space-y-1">
                     {category.examples.map((ex, i) => (
-                      <li key={i} className="text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded">
+                      <li key={i} className="text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded-sm">
                         {ex}
                       </li>
                     ))}

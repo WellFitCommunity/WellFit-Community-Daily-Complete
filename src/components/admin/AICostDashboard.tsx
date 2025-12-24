@@ -369,15 +369,15 @@ const AICostDashboard: React.FC = () => {
     return (
       <div className="min-h-screen bg-slate-900 p-6">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-slate-800 rounded w-64" />
+          <div className="h-8 bg-slate-800 rounded-sm w-64" />
           <div className="grid grid-cols-4 gap-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-24 bg-slate-800 rounded" />
+              <div key={i} className="h-24 bg-slate-800 rounded-sm" />
             ))}
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div className="h-64 bg-slate-800 rounded" />
-            <div className="h-64 bg-slate-800 rounded" />
+            <div className="h-64 bg-slate-800 rounded-sm" />
+            <div className="h-64 bg-slate-800 rounded-sm" />
           </div>
         </div>
       </div>
@@ -412,7 +412,7 @@ const AICostDashboard: React.FC = () => {
               type="checkbox"
               checked={autoRefresh}
               onChange={(e) => setAutoRefresh(e.target.checked)}
-              className="rounded border-slate-600"
+              className="rounded-sm border-slate-600"
             />
             Auto-refresh
           </label>

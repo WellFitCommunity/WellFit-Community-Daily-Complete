@@ -366,7 +366,7 @@ const PhysicianPanel: React.FC = () => {
           />
 
           {/* Hero Header - SILVER STATEMENT */}
-          <div className="bg-gradient-to-r from-[#C0C5CB] to-[#A8ADB3] rounded-2xl shadow-2xl p-8 text-black border-2 border-black">
+          <div className="bg-linear-to-r from-[#C0C5CB] to-[#A8ADB3] rounded-2xl shadow-2xl p-8 text-black border-2 border-black">
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-4xl font-bold mb-2 flex items-center gap-3">
@@ -434,7 +434,7 @@ const PhysicianPanel: React.FC = () => {
               <VoiceProfileMaturity variant="compact" showDetails={false} />
             </div>
 
-            <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-lg p-4 mb-4">
+            <div className="bg-linear-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-lg p-4 mb-4">
               <div className="flex items-start gap-3">
                 <Brain className="w-6 h-6 text-amber-600 mt-1" />
                 <div>
@@ -444,11 +444,11 @@ const PhysicianPanel: React.FC = () => {
                     Revenue opportunities are highlighted instantly with estimated reimbursement amounts.
                   </p>
                   <div className="mt-2 flex gap-2 flex-wrap">
-                    <span className="text-xs bg-amber-600 text-white px-2 py-1 rounded">CPT Codes</span>
-                    <span className="text-xs bg-amber-600 text-white px-2 py-1 rounded">ICD-10 Diagnoses</span>
-                    <span className="text-xs bg-amber-600 text-white px-2 py-1 rounded">SDOH Z-Codes</span>
-                    <span className="text-xs bg-amber-600 text-white px-2 py-1 rounded">CCM 99490/99487</span>
-                    <span className="text-xs bg-amber-600 text-white px-2 py-1 rounded">HCPCS Codes</span>
+                    <span className="text-xs bg-amber-600 text-white px-2 py-1 rounded-sm">CPT Codes</span>
+                    <span className="text-xs bg-amber-600 text-white px-2 py-1 rounded-sm">ICD-10 Diagnoses</span>
+                    <span className="text-xs bg-amber-600 text-white px-2 py-1 rounded-sm">SDOH Z-Codes</span>
+                    <span className="text-xs bg-amber-600 text-white px-2 py-1 rounded-sm">CCM 99490/99487</span>
+                    <span className="text-xs bg-amber-600 text-white px-2 py-1 rounded-sm">HCPCS Codes</span>
                   </div>
                 </div>
               </div>
@@ -483,7 +483,7 @@ const PhysicianPanel: React.FC = () => {
             category="clinical"
             badge="Schedule"
           >
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 mb-4">
+            <div className="bg-linear-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 mb-4">
               <div className="flex items-start gap-3">
                 <Video className="w-6 h-6 text-blue-600 mt-1" />
                 <div>
@@ -506,7 +506,7 @@ const PhysicianPanel: React.FC = () => {
             category="administrative"
             badge="AI-Powered"
           >
-            <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4 mb-4">
+            <div className="bg-linear-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4 mb-4">
               <div className="flex items-start gap-3">
                 <Brain className="w-6 h-6 text-purple-600 mt-1" />
                 <div>
@@ -516,11 +516,11 @@ const PhysicianPanel: React.FC = () => {
                     Translate patient communications in 50+ languages with cultural context. Save hours every day.
                   </p>
                   <div className="mt-2 flex gap-2 flex-wrap">
-                    <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">Prior Auth</span>
-                    <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">Insurance Appeals</span>
-                    <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">Translation (50+ Languages)</span>
-                    <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">Voice Input</span>
-                    <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">Team Collaboration</span>
+                    <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded-sm">Prior Auth</span>
+                    <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded-sm">Insurance Appeals</span>
+                    <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded-sm">Translation (50+ Languages)</span>
+                    <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded-sm">Voice Input</span>
+                    <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded-sm">Team Collaboration</span>
                   </div>
                 </div>
               </div>

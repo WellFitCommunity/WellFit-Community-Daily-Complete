@@ -148,7 +148,7 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
       )}
 
       {/* Header with Gradient */}
-      <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl shadow-lg p-8 mb-6 text-white">
+      <div className="bg-linear-to-r from-purple-600 to-indigo-600 rounded-xl shadow-lg p-8 mb-6 text-white">
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-3xl font-bold mb-2">💉 Immunization Records</h1>
@@ -158,7 +158,7 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
             <div className="flex gap-2">
               <button
                 onClick={() => setShowTimeline(true)}
-                className="px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg transition-all duration-200 font-medium"
+                className="px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-xs rounded-lg transition-all duration-200 font-medium"
               >
                 📊 Timeline
               </button>
@@ -174,19 +174,19 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+          <div className="bg-white/10 backdrop-blur-xs rounded-lg p-4">
             <div className="text-2xl font-bold">{totalImmunizations}</div>
             <div className="text-sm text-purple-100">Total Records</div>
           </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+          <div className="bg-white/10 backdrop-blur-xs rounded-lg p-4">
             <div className="text-2xl font-bold">{completedCount}</div>
             <div className="text-sm text-purple-100">Completed</div>
           </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+          <div className="bg-white/10 backdrop-blur-xs rounded-lg p-4">
             <div className="text-2xl font-bold">{recentCount}</div>
             <div className="text-sm text-purple-100">Last 12 Months</div>
           </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+          <div className="bg-white/10 backdrop-blur-xs rounded-lg p-4">
             <div className="text-2xl font-bold text-yellow-300">{gapsCount}</div>
             <div className="text-sm text-purple-100">Care Gaps</div>
           </div>
@@ -217,7 +217,7 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
       )}
 
       {/* Tabs */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+      <div className="bg-white rounded-lg shadow-xs border border-gray-200 mb-6">
         <div className="flex border-b border-gray-200">
           <button
             onClick={() => setActiveTab('all')}
@@ -405,7 +405,7 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
       {selectedImmunization && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-6 rounded-t-xl">
+            <div className="sticky top-0 bg-linear-to-r from-purple-600 to-indigo-600 text-white p-6 rounded-t-xl">
               <div className="flex justify-between items-start">
                 <div>
                   <h2 className="text-2xl font-bold mb-1">{selectedImmunization.vaccine_display}</h2>

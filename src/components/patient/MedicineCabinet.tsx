@@ -119,7 +119,7 @@ export function MedicineCabinet() {
     : 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-6">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-purple-50 p-6">
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-8">
         <div className="flex items-center justify-between">
@@ -133,7 +133,7 @@ export function MedicineCabinet() {
 
           <button
             onClick={() => setShowScanner(true)}
-            className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl hover:shadow-lg transition-all transform hover:scale-105"
+            className="flex items-center gap-2 bg-linear-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl hover:shadow-lg transition-all transform hover:scale-105"
           >
             <Camera className="w-5 h-5" />
             Scan Label
@@ -204,7 +204,7 @@ export function MedicineCabinet() {
               onClick={() => setActiveTab(tab.id as any)}
               className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all whitespace-nowrap ${
                 activeTab === tab.id
-                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md'
+                  ? 'bg-linear-to-r from-blue-600 to-purple-600 text-white shadow-md'
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
@@ -225,7 +225,7 @@ export function MedicineCabinet() {
               : 'bg-yellow-50 border-yellow-300'
           }`}>
             <div className="flex items-start gap-4">
-              <div className={`flex-shrink-0 ${
+              <div className={`shrink-0 ${
                 psychAlerts[0].severity === 'critical' ? 'text-red-600' : 'text-yellow-600'
               }`}>
                 <AlertTriangle className="w-10 h-10" />
@@ -263,7 +263,7 @@ export function MedicineCabinet() {
                     <ul className="space-y-1">
                       {psychMedAlert.warnings.map((warning, idx) => (
                         <li key={idx} className="text-sm text-gray-800 flex items-start gap-2">
-                          <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                          <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
                           {warning}
                         </li>
                       ))}
@@ -450,7 +450,7 @@ function MedicationCard({
   return (
     <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all border border-gray-200 overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white p-4">
+      <div className="bg-linear-to-r from-blue-500 to-purple-500 text-white p-4">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <h3 className="font-bold text-lg">{medication.medication_name}</h3>
@@ -612,7 +612,7 @@ function ScannerModal({ onClose, onScan, processing, uploadProgress }: any) {
             <p className="text-center text-gray-700 mb-4">AI is reading the label...</p>
             <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
               <div
-                className="bg-gradient-to-r from-blue-600 to-purple-600 h-full transition-all duration-300"
+                className="bg-linear-to-r from-blue-600 to-purple-600 h-full transition-all duration-300"
                 style={{ width: `${uploadProgress}%` }}
               />
             </div>
@@ -657,7 +657,7 @@ function ScannerView({ processing, uploadProgress, scannedData, onScan, onConfir
               />
               <label
                 htmlFor="scan-image"
-                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl cursor-pointer inline-block hover:shadow-lg transition-all transform hover:scale-105"
+                className="bg-linear-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl cursor-pointer inline-block hover:shadow-lg transition-all transform hover:scale-105"
               >
                 <Camera className="w-5 h-5 inline mr-2" />
                 Take Photo
@@ -673,7 +673,7 @@ function ScannerView({ processing, uploadProgress, scannedData, onScan, onConfir
               </h3>
               <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden mb-2">
                 <div
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 h-full transition-all duration-300"
+                  className="bg-linear-to-r from-blue-600 to-purple-600 h-full transition-all duration-300"
                   style={{ width: `${uploadProgress}%` }}
                 />
               </div>
@@ -719,7 +719,7 @@ function ScannerView({ processing, uploadProgress, scannedData, onScan, onConfir
 
           <button
             onClick={() => onConfirm(scannedData.medication)}
-            className="w-full bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2"
+            className="w-full bg-linear-to-r from-green-600 to-blue-600 text-white py-3 rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2"
           >
             <CheckCircle className="w-5 h-5" />
             Confirm & Add to Cabinet

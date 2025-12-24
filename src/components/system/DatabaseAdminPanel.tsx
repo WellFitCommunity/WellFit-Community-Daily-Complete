@@ -234,7 +234,7 @@ const DatabaseAdminPanel: React.FC = () => {
         </h3>
         <div className="space-y-2 text-sm text-yellow-800">
           <p className="font-semibold">For advanced database operations, use the Supabase CLI:</p>
-          <div className="bg-yellow-100 rounded p-3 font-mono text-xs space-y-1">
+          <div className="bg-yellow-100 rounded-sm p-3 font-mono text-xs space-y-1">
             <p># Create a backup</p>
             <p>npx supabase db dump {">"} backup.sql</p>
             <br />

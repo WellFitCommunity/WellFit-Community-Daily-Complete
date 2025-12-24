@@ -247,7 +247,7 @@ export const StaffFinancialSavingsTracker: React.FC = () => {
   // Loading state
   if (loading && staffSavings.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-8">
+      <div className="min-h-screen bg-linear-to-br from-slate-900 to-slate-800 p-8">
         <div className="animate-pulse space-y-6">
           <div className="h-24 bg-slate-800 rounded-xl"></div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -262,9 +262,9 @@ export const StaffFinancialSavingsTracker: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-8 space-y-6">
+    <div className="min-h-screen bg-linear-to-br from-slate-900 to-slate-800 p-8 space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-800/50 backdrop-blur-xs rounded-xl p-6 border border-slate-700">
         <div className="flex items-center gap-4">
           <div className="p-3 bg-emerald-500/20 rounded-lg">
             <DollarSign className="h-8 w-8 text-emerald-400" />

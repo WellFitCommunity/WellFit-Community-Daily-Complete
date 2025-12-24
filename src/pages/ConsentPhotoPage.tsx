@@ -115,7 +115,7 @@ const ConsentPhotoPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-xl mx-auto p-6 bg-white rounded shadow text-black">
+    <div className="max-w-xl mx-auto p-6 bg-white rounded-sm shadow-sm text-black">
       <h2 className="text-2xl font-bold text-center text-[#003865] mb-4">Privacy & Participation Agreement</h2>
 
       <p className="mb-4 text-sm">
@@ -136,7 +136,7 @@ const ConsentPhotoPage: React.FC = () => {
         type="text"
         value={firstName}
         onChange={e => setFirstName(e.target.value)}
-        className="w-full p-2 border border-gray-400 rounded mb-4"
+        className="w-full p-2 border border-gray-400 rounded-sm mb-4"
         autoComplete="given-name"
       />
 
@@ -146,12 +146,12 @@ const ConsentPhotoPage: React.FC = () => {
         type="text"
         value={lastName}
         onChange={e => setLastName(e.target.value)}
-        className="w-full p-2 border border-gray-400 rounded mb-4"
+        className="w-full p-2 border border-gray-400 rounded-sm mb-4"
         autoComplete="family-name"
       />
 
       <label className="block font-semibold mb-2" htmlFor="signature">Signature</label>
-      <div className="border border-gray-500 rounded mb-4" id="signature">
+      <div className="border border-gray-500 rounded-sm mb-4" id="signature">
         <SignatureCanvas
           penColor="black"
           canvasProps={{ width: 500, height: 200, className: 'bg-gray-100 w-full' }}
@@ -162,7 +162,7 @@ const ConsentPhotoPage: React.FC = () => {
       <div className="flex justify-between mb-4">
         <button
           onClick={handleClear}
-          className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500"
+          className="px-4 py-2 bg-gray-400 text-white rounded-sm hover:bg-gray-500"
           type="button"
           disabled={submitting}
         >
@@ -170,7 +170,7 @@ const ConsentPhotoPage: React.FC = () => {
         </button>
         <button
           onClick={handleSubmit}
-          className="px-4 py-2 bg-[#003865] text-white rounded hover:bg-[#8cc63f] disabled:opacity-60"
+          className="px-4 py-2 bg-[#003865] text-white rounded-sm hover:bg-[#8cc63f] disabled:opacity-60"
           disabled={submitting}
           type="button"
           aria-busy={submitting}

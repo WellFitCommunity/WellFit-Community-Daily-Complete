@@ -239,7 +239,7 @@ const StatusBadge: React.FC<{
         'border-2 border-slate-800 shadow-md',
         'transition-all duration-200',
         'hover:scale-125 hover:z-20 hover:shadow-lg',
-        'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900',
+        'focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900',
         sizeClasses[size],
         onClick && 'cursor-pointer'
       )}
@@ -338,7 +338,7 @@ export const BadgeLegend: React.FC<{
                   return (
                     <div key={badgeKey} className="flex items-start gap-2">
                       <div
-                        className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+                        className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5"
                         style={{ backgroundColor: info.color }}
                       >
                         <Icon className="w-2.5 h-2.5 text-white" strokeWidth={2.5} />

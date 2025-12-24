@@ -163,8 +163,8 @@ export const ResilienceLibrary: React.FC<ResilienceLibraryProps> = ({ onClose })
       <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full p-6">
           <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-            <div className="h-64 bg-gray-200 rounded"></div>
+            <div className="h-8 bg-gray-200 rounded-sm w-1/3"></div>
+            <div className="h-64 bg-gray-200 rounded-sm"></div>
           </div>
         </div>
       </div>
@@ -609,21 +609,21 @@ const BoundariesArticleContent: React.FC = () => {
       <div className="space-y-3">
         <div>
           <p className="font-medium">1. When asked to take on extra patients:</p>
-          <p className="text-sm bg-white p-3 rounded border border-gray-200 italic">
+          <p className="text-sm bg-white p-3 rounded-sm border border-gray-200 italic">
             "I appreciate you thinking of me, but I'm at capacity right now. Taking on more would compromise the quality of care I can provide. Can we discuss redistributing the panel?"
           </p>
         </div>
 
         <div>
           <p className="font-medium">2. When interrupted during documentation time:</p>
-          <p className="text-sm bg-white p-3 rounded border border-gray-200 italic">
+          <p className="text-sm bg-white p-3 rounded-sm border border-gray-200 italic">
             "I need to finish this documentation to avoid errors. Can I connect with you in 15 minutes?"
           </p>
         </div>
 
         <div>
           <p className="font-medium">3. When asked to work on your day off:</p>
-          <p className="text-sm bg-white p-3 rounded border border-gray-200 italic">
+          <p className="text-sm bg-white p-3 rounded-sm border border-gray-200 italic">
             "I'm unavailable that day. I need my scheduled time off to recharge and provide my best care. Let's look at other coverage options."
           </p>
         </div>
@@ -644,21 +644,21 @@ const CommunicationScriptsContent: React.FC = () => {
       <div className="space-y-3">
         <div>
           <p className="font-medium text-red-700">Reporting Unsafe Staffing:</p>
-          <p className="text-sm bg-white p-3 rounded border border-gray-200">
+          <p className="text-sm bg-white p-3 rounded-sm border border-gray-200">
             "I need to document a safety concern. Our current nurse-to-patient ratio is [X:Y], which exceeds safe limits. This creates risk for both patients and staff. What steps can we take to address this immediately?"
           </p>
         </div>
 
         <div>
           <p className="font-medium text-orange-700">Addressing Lateral Violence:</p>
-          <p className="text-sm bg-white p-3 rounded border border-gray-200">
+          <p className="text-sm bg-white p-3 rounded-sm border border-gray-200">
             "When you [specific behavior], I felt [emotion]. I value our working relationship and would appreciate if we could [desired outcome]. Can we talk about this?"
           </p>
         </div>
 
         <div>
           <p className="font-medium text-blue-700">Requesting Support:</p>
-          <p className="text-sm bg-white p-3 rounded border border-gray-200">
+          <p className="text-sm bg-white p-3 rounded-sm border border-gray-200">
             "I'm managing a challenging patient situation and could use a second opinion. Do you have 5 minutes to help me think through this?"
           </p>
         </div>

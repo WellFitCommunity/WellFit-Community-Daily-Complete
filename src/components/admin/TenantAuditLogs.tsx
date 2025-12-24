@@ -192,7 +192,7 @@ export const TenantAuditLogs: React.FC = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow border border-gray-200 p-4">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Search */}
           <div className="relative">
@@ -249,7 +249,7 @@ export const TenantAuditLogs: React.FC = () => {
       </div>
 
       {/* Logs Table */}
-      <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
@@ -297,7 +297,7 @@ export const TenantAuditLogs: React.FC = () => {
                       {log.action_category}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs font-semibold rounded border ${getSeverityColor(log.severity)}`}>
+                      <span className={`px-2 py-1 text-xs font-semibold rounded-sm border ${getSeverityColor(log.severity)}`}>
                         {log.severity}
                       </span>
                     </td>

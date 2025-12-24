@@ -69,7 +69,7 @@ export const CelebrationModal: React.FC<CelebrationModalProps> = ({
   }, []);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 z-[100] flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-60 z-100 flex items-center justify-center p-4">
       {/* Confetti */}
       {showConfetti && (
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -92,7 +92,7 @@ export const CelebrationModal: React.FC<CelebrationModalProps> = ({
 
       {/* Main celebration card */}
       <div
-        className={`bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl shadow-2xl max-w-2xl w-full p-8 relative transform transition-all duration-500 ${
+        className={`bg-linear-to-br from-purple-50 to-blue-50 rounded-2xl shadow-2xl max-w-2xl w-full p-8 relative transform transition-all duration-500 ${
           animationPhase === 'entrance' ? 'scale-75 opacity-0' : 'scale-100 opacity-100'
         }`}
       >
@@ -112,7 +112,7 @@ export const CelebrationModal: React.FC<CelebrationModalProps> = ({
           </div>
 
           {/* Celebration text */}
-          <h2 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600 mb-2">
+          <h2 className="text-4xl font-bold text-transparent bg-clip-text bg-linear-to-r from-purple-600 to-blue-600 mb-2">
             {celebration.text}
           </h2>
 
@@ -162,22 +162,22 @@ export const CelebrationModal: React.FC<CelebrationModalProps> = ({
 
         {/* Stats/badges */}
         <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="bg-white rounded-lg p-4 text-center shadow-sm">
+          <div className="bg-white rounded-lg p-4 text-center shadow-xs">
             <div className="text-3xl mb-1">🏆</div>
             <div className="text-xs text-gray-600">Growth</div>
           </div>
-          <div className="bg-white rounded-lg p-4 text-center shadow-sm">
+          <div className="bg-white rounded-lg p-4 text-center shadow-xs">
             <div className="text-3xl mb-1">💪</div>
             <div className="text-xs text-gray-600">Resilience</div>
           </div>
-          <div className="bg-white rounded-lg p-4 text-center shadow-sm">
+          <div className="bg-white rounded-lg p-4 text-center shadow-xs">
             <div className="text-3xl mb-1">✨</div>
             <div className="text-xs text-gray-600">Self-Care</div>
           </div>
         </div>
 
         {/* Encouragement message */}
-        <div className="bg-gradient-to-r from-purple-100 to-blue-100 rounded-lg p-4 mb-6">
+        <div className="bg-linear-to-r from-purple-100 to-blue-100 rounded-lg p-4 mb-6">
           <p className="text-center text-gray-800 font-medium">
             {wasHelpful ? (
               <>
@@ -201,7 +201,7 @@ export const CelebrationModal: React.FC<CelebrationModalProps> = ({
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-medium hover:from-purple-700 hover:to-blue-700 transition-all transform hover:scale-105"
+            className="flex-1 px-6 py-3 bg-linear-to-r from-purple-600 to-blue-600 text-white rounded-lg font-medium hover:from-purple-700 hover:to-blue-700 transition-all transform hover:scale-105"
           >
             Keep Going! 🚀
           </button>

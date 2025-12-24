@@ -400,14 +400,14 @@ const AlertListItem: React.FC<AlertListItemProps> = ({
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-lg">{severityConfig.icon}</span>
-            <span className={`text-xs px-2 py-0.5 rounded ${severityConfig.bgColor} ${severityConfig.color}`}>
+            <span className={`text-xs px-2 py-0.5 rounded-sm ${severityConfig.bgColor} ${severityConfig.color}`}>
               {severityConfig.label}
             </span>
-            <span className={`text-xs px-2 py-0.5 rounded ${statusConfig.bgColor} ${statusConfig.color}`}>
+            <span className={`text-xs px-2 py-0.5 rounded-sm ${statusConfig.bgColor} ${statusConfig.color}`}>
               {statusConfig.label}
             </span>
             {alert.escalated && (
-              <span className="text-xs px-2 py-0.5 rounded bg-red-500/20 text-red-400">
+              <span className="text-xs px-2 py-0.5 rounded-sm bg-red-500/20 text-red-400">
                 ESCALATED
               </span>
             )}

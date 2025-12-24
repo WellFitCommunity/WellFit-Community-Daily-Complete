@@ -147,7 +147,7 @@ export const PresenceIndicator: React.FC<PresenceIndicatorProps> = ({ operators 
                         </p>
                       </div>
                       {op.current_alert_id && (
-                        <span className="text-xs px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded">
+                        <span className="text-xs px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded-sm">
                           On Alert
                         </span>
                       )}

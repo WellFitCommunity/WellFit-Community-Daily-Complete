@@ -416,7 +416,7 @@ const PulseOximeter: React.FC<PulseOximeterProps> = ({ onMeasurementComplete, on
 
             <button
               onClick={startMeasurement}
-              className="w-full bg-gradient-to-r from-red-500 to-pink-500 text-white font-bold py-4 px-6 rounded-lg text-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-3"
+              className="w-full bg-linear-to-r from-red-500 to-pink-500 text-white font-bold py-4 px-6 rounded-lg text-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-3"
             >
               <Activity size={24} />
               Start Measurement
@@ -468,7 +468,7 @@ const PulseOximeter: React.FC<PulseOximeterProps> = ({ onMeasurementComplete, on
             {/* Flashlight Error Message */}
             {flashlightError && (
               <div className="bg-orange-50 border-2 border-orange-300 rounded-lg p-3 flex items-start gap-2">
-                <AlertCircle className="text-orange-600 flex-shrink-0 mt-0.5" size={18} />
+                <AlertCircle className="text-orange-600 shrink-0 mt-0.5" size={18} />
                 <p className="text-sm text-orange-800">{flashlightError}</p>
               </div>
             )}
@@ -487,7 +487,7 @@ const PulseOximeter: React.FC<PulseOximeterProps> = ({ onMeasurementComplete, on
 
                   <div className="relative h-8 bg-gray-300 rounded-full overflow-hidden mb-2">
                     <div
-                      className="absolute top-0 left-0 h-full bg-gradient-to-r from-green-400 to-green-600 transition-all duration-300"
+                      className="absolute top-0 left-0 h-full bg-linear-to-r from-green-400 to-green-600 transition-all duration-300"
                       style={{ width: `${progress}%` }}
                     />
                   </div>
@@ -517,7 +517,7 @@ const PulseOximeter: React.FC<PulseOximeterProps> = ({ onMeasurementComplete, on
               <p className="text-lg font-medium text-gray-800 mb-4">{instruction}</p>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white rounded-lg p-4 shadow-sm">
+                <div className="bg-white rounded-lg p-4 shadow-xs">
                   <div className="flex items-center justify-center gap-2 mb-2">
                     <Heart className="text-red-500" size={24} />
                     <span className="text-sm text-gray-600">Heart Rate</span>
@@ -529,7 +529,7 @@ const PulseOximeter: React.FC<PulseOximeterProps> = ({ onMeasurementComplete, on
                   </p>
                 </div>
 
-                <div className="bg-white rounded-lg p-4 shadow-sm">
+                <div className="bg-white rounded-lg p-4 shadow-xs">
                   <div className="flex items-center justify-center gap-2 mb-2">
                     <Activity className="text-blue-500" size={24} />
                     <span className="text-sm text-gray-600">Blood Oxygen</span>

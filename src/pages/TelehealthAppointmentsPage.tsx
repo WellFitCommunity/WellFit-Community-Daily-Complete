@@ -332,7 +332,7 @@ const TelehealthAppointmentsPage: React.FC = () => {
                   {canJoin ? (
                     <button
                       onClick={() => handleJoinAppointment(appointment)}
-                      className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-bold text-lg hover:from-green-600 hover:to-emerald-700 transition-all shadow-lg flex items-center justify-center gap-3"
+                      className="w-full py-4 bg-linear-to-r from-green-500 to-emerald-600 text-white rounded-xl font-bold text-lg hover:from-green-600 hover:to-emerald-700 transition-all shadow-lg flex items-center justify-center gap-3"
                     >
                       <span className="text-2xl" aria-hidden="true">
                         📹

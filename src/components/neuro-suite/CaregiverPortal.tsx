@@ -78,7 +78,7 @@ const CaregiverPortal: React.FC<CaregiverPortalProps> = ({ patientId, caregiverI
         </div>
 
         {/* Emergency Contacts Card */}
-        <div className="bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-200 rounded-lg p-6 mb-6">
+        <div className="bg-linear-to-r from-red-50 to-orange-50 border-2 border-red-200 rounded-lg p-6 mb-6">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
               <Phone className="w-8 h-8 text-red-600" />
@@ -300,9 +300,9 @@ const CaregiverPortal: React.FC<CaregiverPortalProps> = ({ patientId, caregiverI
         </div>
 
         {/* Self-Care Reminder */}
-        <div className="mt-6 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-6">
+        <div className="mt-6 bg-linear-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-6">
           <div className="flex items-start gap-3">
-            <Heart className="w-8 h-8 text-purple-600 flex-shrink-0 mt-1" />
+            <Heart className="w-8 h-8 text-purple-600 shrink-0 mt-1" />
             <div>
               <h3 className="text-lg font-bold text-gray-900 mb-2">Remember: You Matter Too</h3>
               <p className="text-gray-700 mb-4">

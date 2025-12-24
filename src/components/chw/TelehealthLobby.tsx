@@ -152,7 +152,7 @@ export const TelehealthLobby: React.FC<TelehealthLobbyProps> = ({
   const allDevicesWorking = deviceCheck.camera && deviceCheck.microphone && deviceCheck.speakers;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-8">
+    <div className="min-h-screen bg-linear-to-br from-purple-50 to-blue-50 p-8">
       <div className="max-w-6xl mx-auto">
         <div className="bg-white rounded-3xl shadow-2xl p-12">
           <h2 className="text-5xl font-bold text-gray-800 mb-4 text-center">{t.title}</h2>

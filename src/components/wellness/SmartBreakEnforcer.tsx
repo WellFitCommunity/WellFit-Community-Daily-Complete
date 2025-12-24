@@ -209,7 +209,7 @@ export const SmartBreakEnforcer: React.FC<SmartBreakEnforcerProps> = ({
   if (!showFullReminder) {
     return (
       <div
-        className={`fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-80 bg-gradient-to-r ${styles.bg} rounded-lg shadow-lg border ${styles.border} p-3 cursor-pointer hover:shadow-xl transition-all z-40`}
+        className={`fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-80 bg-linear-to-r ${styles.bg} rounded-lg shadow-lg border ${styles.border} p-3 cursor-pointer hover:shadow-xl transition-all z-40`}
         onClick={() => setShowFullReminder(true)}
       >
         <div className="flex items-center gap-3">
@@ -230,7 +230,7 @@ export const SmartBreakEnforcer: React.FC<SmartBreakEnforcerProps> = ({
   // Full reminder modal
   return (
     <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-      <div className={`bg-gradient-to-br ${styles.bg} rounded-2xl p-6 max-w-md mx-4 shadow-2xl border-2 ${styles.border}`}>
+      <div className={`bg-linear-to-br ${styles.bg} rounded-2xl p-6 max-w-md mx-4 shadow-2xl border-2 ${styles.border}`}>
         <div className="text-center mb-4">
           <div className="text-5xl mb-3">
             {breakState.reminderLevel === 'urgent' ? '⚠️' : '☕'}

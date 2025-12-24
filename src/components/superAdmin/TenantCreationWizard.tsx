@@ -327,7 +327,7 @@ const TenantCreationWizard: React.FC<TenantCreationWizardProps> = ({ onClose, on
                     value={formData.name}
                     onChange={(e) => updateFormData({ name: e.target.value })}
                     placeholder="Houston Community Hospital"
-                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:border-[#00857a] focus:ring-2 focus:ring-[#00857a]/20 focus:outline-none"
+                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:border-[#00857a] focus:ring-2 focus:ring-[#00857a]/20 focus:outline-hidden"
                   />
                 </div>
 
@@ -342,7 +342,7 @@ const TenantCreationWizard: React.FC<TenantCreationWizardProps> = ({ onClose, on
                       onChange={(e) => updateFormData({ orgPrefix: e.target.value.toUpperCase().slice(0, 4) })}
                       placeholder="HCH"
                       maxLength={4}
-                      className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:border-[#00857a] focus:ring-2 focus:ring-[#00857a]/20 focus:outline-none font-mono uppercase"
+                      className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:border-[#00857a] focus:ring-2 focus:ring-[#00857a]/20 focus:outline-hidden font-mono uppercase"
                     />
                     <p className="mt-1 text-xs text-slate-500">Used in tenant code (e.g., HCH-0001)</p>
                   </div>
@@ -357,7 +357,7 @@ const TenantCreationWizard: React.FC<TenantCreationWizardProps> = ({ onClose, on
                         value={formData.subdomain}
                         onChange={(e) => updateFormData({ subdomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
                         placeholder="houston-hospital"
-                        className="flex-1 px-4 py-3 bg-slate-700 border border-slate-600 rounded-l-lg text-white placeholder-slate-400 focus:border-[#00857a] focus:ring-2 focus:ring-[#00857a]/20 focus:outline-none"
+                        className="flex-1 px-4 py-3 bg-slate-700 border border-slate-600 rounded-l-lg text-white placeholder-slate-400 focus:border-[#00857a] focus:ring-2 focus:ring-[#00857a]/20 focus:outline-hidden"
                       />
                       <span className="px-3 py-3 bg-slate-600 border border-l-0 border-slate-600 rounded-r-lg text-slate-400 text-sm">
                         .wellfit.com
@@ -461,7 +461,7 @@ const TenantCreationWizard: React.FC<TenantCreationWizardProps> = ({ onClose, on
 
                 {/* Both Products Badge */}
                 {formData.products.includes('wellfit') && formData.products.includes('atlus') && (
-                  <div className="p-4 bg-gradient-to-r from-[#00857a]/20 to-[#FF6B35]/20 rounded-lg border border-[#00857a]/30 flex items-center gap-3">
+                  <div className="p-4 bg-linear-to-r from-[#00857a]/20 to-[#FF6B35]/20 rounded-lg border border-[#00857a]/30 flex items-center gap-3">
                     <Layers className="w-6 h-6 text-[#00857a]" />
                     <div>
                       <p className="font-medium text-white">Full Platform Access</p>
@@ -533,7 +533,7 @@ const TenantCreationWizard: React.FC<TenantCreationWizardProps> = ({ onClose, on
                       value={formData.maxUsers}
                       onChange={(e) => updateFormData({ maxUsers: parseInt(e.target.value) || 0 })}
                       min={1}
-                      className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:border-[#00857a] focus:ring-2 focus:ring-[#00857a]/20 focus:outline-none"
+                      className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:border-[#00857a] focus:ring-2 focus:ring-[#00857a]/20 focus:outline-hidden"
                     />
                   </div>
 
@@ -546,7 +546,7 @@ const TenantCreationWizard: React.FC<TenantCreationWizardProps> = ({ onClose, on
                       value={formData.maxPatients}
                       onChange={(e) => updateFormData({ maxPatients: parseInt(e.target.value) || 0 })}
                       min={1}
-                      className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:border-[#00857a] focus:ring-2 focus:ring-[#00857a]/20 focus:outline-none"
+                      className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:border-[#00857a] focus:ring-2 focus:ring-[#00857a]/20 focus:outline-hidden"
                     />
                   </div>
 
@@ -559,7 +559,7 @@ const TenantCreationWizard: React.FC<TenantCreationWizardProps> = ({ onClose, on
                       value={formData.storageQuotaGb}
                       onChange={(e) => updateFormData({ storageQuotaGb: parseInt(e.target.value) || 0 })}
                       min={1}
-                      className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:border-[#00857a] focus:ring-2 focus:ring-[#00857a]/20 focus:outline-none"
+                      className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:border-[#00857a] focus:ring-2 focus:ring-[#00857a]/20 focus:outline-hidden"
                     />
                   </div>
                 </div>
@@ -578,7 +578,7 @@ const TenantCreationWizard: React.FC<TenantCreationWizardProps> = ({ onClose, on
                     value={formData.billingEmail}
                     onChange={(e) => updateFormData({ billingEmail: e.target.value })}
                     placeholder="billing@organization.com"
-                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:border-[#00857a] focus:ring-2 focus:ring-[#00857a]/20 focus:outline-none"
+                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:border-[#00857a] focus:ring-2 focus:ring-[#00857a]/20 focus:outline-hidden"
                   />
                 </div>
 
@@ -591,7 +591,7 @@ const TenantCreationWizard: React.FC<TenantCreationWizardProps> = ({ onClose, on
                     value={formData.billingContact}
                     onChange={(e) => updateFormData({ billingContact: e.target.value })}
                     placeholder="John Smith"
-                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:border-[#00857a] focus:ring-2 focus:ring-[#00857a]/20 focus:outline-none"
+                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:border-[#00857a] focus:ring-2 focus:ring-[#00857a]/20 focus:outline-hidden"
                   />
                 </div>
 
@@ -604,7 +604,7 @@ const TenantCreationWizard: React.FC<TenantCreationWizardProps> = ({ onClose, on
                     onChange={(e) => updateFormData({ notes: e.target.value })}
                     placeholder="Any internal notes about this tenant..."
                     rows={3}
-                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:border-[#00857a] focus:ring-2 focus:ring-[#00857a]/20 focus:outline-none resize-none"
+                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:border-[#00857a] focus:ring-2 focus:ring-[#00857a]/20 focus:outline-hidden resize-none"
                   />
                 </div>
               </div>
@@ -636,10 +636,10 @@ const TenantCreationWizard: React.FC<TenantCreationWizardProps> = ({ onClose, on
                       <p className="text-xs text-slate-500">Products</p>
                       <div className="flex gap-2 mt-1">
                         {formData.products.includes('wellfit') && (
-                          <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs rounded">WellFit</span>
+                          <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs rounded-sm">WellFit</span>
                         )}
                         {formData.products.includes('atlus') && (
-                          <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-xs rounded">Atlus</span>
+                          <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-xs rounded-sm">Atlus</span>
                         )}
                       </div>
                     </div>

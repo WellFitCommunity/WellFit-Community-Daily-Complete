@@ -117,10 +117,10 @@ export const AlertDetailPanel: React.FC<AlertDetailPanelProps> = ({
           <div>
             <div className="flex items-center gap-2 mb-2">
               <span className="text-2xl">{severityConfig.icon}</span>
-              <span className={`px-2 py-1 rounded text-sm ${severityConfig.bgColor} ${severityConfig.color}`}>
+              <span className={`px-2 py-1 rounded-sm text-sm ${severityConfig.bgColor} ${severityConfig.color}`}>
                 {severityConfig.label}
               </span>
-              <span className={`px-2 py-1 rounded text-sm ${statusConfig.bgColor} ${statusConfig.color}`}>
+              <span className={`px-2 py-1 rounded-sm text-sm ${statusConfig.bgColor} ${statusConfig.color}`}>
                 {statusConfig.label}
               </span>
               {alert.escalated && (
@@ -178,7 +178,7 @@ export const AlertDetailPanel: React.FC<AlertDetailPanelProps> = ({
         {alert.metadata && Object.keys(alert.metadata).length > 0 && (
           <div className="mt-4">
             <h3 className="text-xs text-slate-500 uppercase mb-1">Additional Details</h3>
-            <pre className="text-xs bg-slate-900 p-2 rounded overflow-x-auto text-slate-300">
+            <pre className="text-xs bg-slate-900 p-2 rounded-sm overflow-x-auto text-slate-300">
               {JSON.stringify(alert.metadata, null, 2)}
             </pre>
           </div>
@@ -193,7 +193,7 @@ export const AlertDetailPanel: React.FC<AlertDetailPanelProps> = ({
             variant="primary"
             size="sm"
             onClick={() => navigate(`/guardian/approval/${guardianTicketId}`)}
-            className="!bg-teal-600 hover:!bg-teal-500"
+            className="bg-teal-600! hover:bg-teal-500!"
           >
             🛡️ Review in Guardian
           </EAButton>
@@ -285,7 +285,7 @@ export const AlertDetailPanel: React.FC<AlertDetailPanelProps> = ({
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Type a message..."
-              className="flex-1 bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white placeholder-slate-400 focus:outline-none focus:border-teal-500"
+              className="flex-1 bg-slate-700 border border-slate-600 rounded-sm px-3 py-2 text-white placeholder-slate-400 focus:outline-hidden focus:border-teal-500"
               disabled={sending}
             />
             <EAButton
@@ -307,7 +307,7 @@ export const AlertDetailPanel: React.FC<AlertDetailPanelProps> = ({
             value={resolution}
             onChange={(e) => setResolution(e.target.value)}
             placeholder="Describe how the alert was resolved..."
-            className="w-full h-32 bg-slate-700 border border-slate-600 rounded p-3 text-white placeholder-slate-400 focus:outline-none focus:border-teal-500 mb-4"
+            className="w-full h-32 bg-slate-700 border border-slate-600 rounded-sm p-3 text-white placeholder-slate-400 focus:outline-hidden focus:border-teal-500 mb-4"
           />
           <div className="flex justify-end gap-2">
             <EAButton variant="secondary" onClick={() => setShowResolveModal(false)}>
@@ -340,7 +340,7 @@ export const AlertDetailPanel: React.FC<AlertDetailPanelProps> = ({
                   onAssign(op.user_id);
                   setShowAssignModal(false);
                 }}
-                className="w-full text-left px-4 py-3 rounded bg-slate-700 hover:bg-slate-600 flex items-center gap-3"
+                className="w-full text-left px-4 py-3 rounded-sm bg-slate-700 hover:bg-slate-600 flex items-center gap-3"
               >
                 <span className={`w-2 h-2 rounded-full ${
                   op.status === 'online' ? 'bg-green-500' :
@@ -374,7 +374,7 @@ export const AlertDetailPanel: React.FC<AlertDetailPanelProps> = ({
             value={falsePositiveReason}
             onChange={(e) => setFalsePositiveReason(e.target.value)}
             placeholder="Explain why this is a false positive..."
-            className="w-full h-32 bg-slate-700 border border-slate-600 rounded p-3 text-white placeholder-slate-400 focus:outline-none focus:border-teal-500 mb-4"
+            className="w-full h-32 bg-slate-700 border border-slate-600 rounded-sm p-3 text-white placeholder-slate-400 focus:outline-hidden focus:border-teal-500 mb-4"
           />
           <div className="flex justify-end gap-2">
             <EAButton variant="secondary" onClick={() => setShowFalsePositiveModal(false)}>
@@ -411,7 +411,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   if (isSystem) {
     return (
       <div className="text-center text-xs text-slate-500 py-1">
-        <span className="bg-slate-700 px-3 py-1 rounded">
+        <span className="bg-slate-700 px-3 py-1 rounded-sm">
           {message.content}
         </span>
         <span className="ml-2">

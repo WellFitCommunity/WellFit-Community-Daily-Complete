@@ -62,7 +62,7 @@ export const VoiceCorrectionModal: React.FC<VoiceCorrectionModalProps> = React.m
                 type="text"
                 value={correctionHeard}
                 onChange={(e) => onHeardChange(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#00857a] focus:border-transparent"
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-hidden focus:ring-2 focus:ring-[#00857a] focus:border-transparent"
                 placeholder="e.g., hyper blue semen"
               />
             </div>
@@ -75,7 +75,7 @@ export const VoiceCorrectionModal: React.FC<VoiceCorrectionModalProps> = React.m
                 type="text"
                 value={correctionCorrect}
                 onChange={(e) => onCorrectChange(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#00857a] focus:border-transparent"
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-hidden focus:ring-2 focus:ring-[#00857a] focus:border-transparent"
                 placeholder="e.g., hyperglycemia"
               />
             </div>

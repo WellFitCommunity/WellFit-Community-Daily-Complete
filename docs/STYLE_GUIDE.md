@@ -27,8 +27,8 @@ Font sizes aim for readability, especially for seniors. Responsive sizes are use
 ### Primary Action Button
 *   **Description**: Used for the main call to action on a page or form.
 *   **Styling**: Typically full-width, prominent background color (often `branding.primaryColor`), white or contrasting text.
-*   **Tailwind Classes (Example from `LoginPage.tsx`)**: `w-full py-3 font-semibold rounded hover:opacity-90 transition-opacity ${primaryButtonTextColor} focus:outline-none focus:ring-2 focus:ring-offset-2` (background color set via style attribute).
-*   **Example (Submit Report on `SelfReportingPage.tsx`)**: `w-full text-white font-semibold py-3 px-6 rounded-lg text-xl shadow-md transition-opacity duration-300 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white` (background via style).
+*   **Tailwind Classes (Example from `LoginPage.tsx`)**: `w-full py-3 font-semibold rounded-sm hover:opacity-90 transition-opacity ${primaryButtonTextColor} focus:outline-hidden focus:ring-2 focus:ring-offset-2` (background color set via style attribute).
+*   **Example (Submit Report on `SelfReportingPage.tsx`)**: `w-full text-white font-semibold py-3 px-6 rounded-lg text-xl shadow-md transition-opacity duration-300 disabled:opacity-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-white` (background via style).
 
 ### Secondary/Utility Buttons
 *   **Description**: Used for less prominent actions, navigation, or alternative choices.
@@ -46,16 +46,16 @@ Font sizes aim for readability, especially for seniors. Responsive sizes are use
 
 ### Input Fields (text, tel, password, number)
 *   **Styling**: Full-width, clear border, adequate padding.
-*   **Tailwind Classes (Example from `LoginPage.tsx`)**: `w-full p-3 border border-gray-300 rounded focus:ring-2 focus:outline-none` (specific border/ring colors often from branding).
-*   **Example (from `SelfReportingPage.tsx`)**: `mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:bg-gray-50` (Note: `sm:text-sm` here might be an area for future review if `text-base` is preferred globally for inputs).
+*   **Tailwind Classes (Example from `LoginPage.tsx`)**: `w-full p-3 border border-gray-300 rounded-sm focus:ring-2 focus:outline-hidden` (specific border/ring colors often from branding).
+*   **Example (from `SelfReportingPage.tsx`)**: `mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-xs focus:outline-hidden focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:bg-gray-50` (Note: `sm:text-sm` here might be an area for future review if `text-base` is preferred globally for inputs).
 
 ### Select Dropdowns
 *   **Styling**: Similar to input fields.
-*   **Tailwind Classes (Example from `SelfReportingPage.tsx`)**: `mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:bg-gray-50`
+*   **Tailwind Classes (Example from `SelfReportingPage.tsx`)**: `mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-xs focus:outline-hidden focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:bg-gray-50`
 
 ### Textareas
 *   **Styling**: Similar to input fields, with multiple rows.
-*   **Tailwind Classes (Example from `SelfReportingPage.tsx`)**: `mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:bg-gray-50`
+*   **Tailwind Classes (Example from `SelfReportingPage.tsx`)**: `mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-xs focus:outline-hidden focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:bg-gray-50`
 
 ## 5. Cards
 *   **Description**: Common container for content blocks.

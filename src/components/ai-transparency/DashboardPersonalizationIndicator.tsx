@@ -98,14 +98,14 @@ export const DashboardPersonalizationIndicator: React.FC<DashboardPersonalizatio
   if (loading) {
     return (
       <div className="animate-pulse">
-        <div className="h-16 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-xl"></div>
+        <div className="h-16 bg-linear-to-r from-indigo-100 to-purple-100 rounded-xl"></div>
       </div>
     );
   }
 
   if (!metrics || metrics.total_interactions === 0) {
     return (
-      <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-4 border border-indigo-200">
+      <div className="bg-linear-to-br from-indigo-50 to-purple-50 rounded-xl p-4 border border-indigo-200">
         <div className="flex items-center space-x-3">
           <div className="text-3xl">🤖</div>
           <div>
@@ -165,7 +165,7 @@ export const DashboardPersonalizationIndicator: React.FC<DashboardPersonalizatio
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3 }}
         className={`
-          bg-gradient-to-br ${config.bgGradient}
+          bg-linear-to-br ${config.bgGradient}
           rounded-xl p-4 border ${config.borderColor}
           shadow-md hover:shadow-lg transition-all duration-300
           cursor-pointer
@@ -258,7 +258,7 @@ export const DashboardPersonalizationIndicator: React.FC<DashboardPersonalizatio
                   {metrics.most_used_features.slice(0, 3).map((feature, idx) => (
                     <span
                       key={idx}
-                      className={`text-xs px-2 py-1 rounded-full bg-gradient-to-r ${config.gradient} text-white`}
+                      className={`text-xs px-2 py-1 rounded-full bg-linear-to-r ${config.gradient} text-white`}
                     >
                       {feature}
                     </span>
@@ -278,7 +278,7 @@ export const DashboardPersonalizationIndicator: React.FC<DashboardPersonalizatio
 
   // Detailed variant
   return (
-    <div className={`bg-gradient-to-br ${config.bgGradient} rounded-2xl p-6 border ${config.borderColor} shadow-xl`}>
+    <div className={`bg-linear-to-br ${config.bgGradient} rounded-2xl p-6 border ${config.borderColor} shadow-xl`}>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-4">
           <motion.div
@@ -302,7 +302,7 @@ export const DashboardPersonalizationIndicator: React.FC<DashboardPersonalizatio
         </div>
 
         <div className="text-center">
-          <p className={`text-4xl font-bold bg-gradient-to-r ${config.gradient} bg-clip-text text-transparent`}>
+          <p className={`text-4xl font-bold bg-linear-to-r ${config.gradient} bg-clip-text text-transparent`}>
             {metrics.adaptation_score}%
           </p>
           <p className="text-xs text-gray-600">Adaptation Score</p>
@@ -316,7 +316,7 @@ export const DashboardPersonalizationIndicator: React.FC<DashboardPersonalizatio
             initial={{ width: 0 }}
             animate={{ width: `${metrics.adaptation_score}%` }}
             transition={{ duration: 1.5, ease: 'easeOut' }}
-            className={`h-full bg-gradient-to-r ${config.gradient}`}
+            className={`h-full bg-linear-to-r ${config.gradient}`}
           ></motion.div>
         </div>
         <div className="flex justify-between text-xs text-gray-500 mt-1">
@@ -328,11 +328,11 @@ export const DashboardPersonalizationIndicator: React.FC<DashboardPersonalizatio
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 text-center">
+        <div className="bg-white/70 backdrop-blur-xs rounded-xl p-4 text-center">
           <p className="text-3xl font-bold text-gray-800">{metrics.total_interactions}</p>
           <p className="text-sm text-gray-600 mt-1">Total Interactions</p>
         </div>
-        <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 text-center">
+        <div className="bg-white/70 backdrop-blur-xs rounded-xl p-4 text-center">
           <p className="text-3xl font-bold text-gray-800">{metrics.workflow_patterns_detected}</p>
           <p className="text-sm text-gray-600 mt-1">Patterns Detected</p>
         </div>
@@ -340,7 +340,7 @@ export const DashboardPersonalizationIndicator: React.FC<DashboardPersonalizatio
 
       {/* Most Used Features */}
       {metrics.most_used_features.length > 0 && (
-        <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 mb-4">
+        <div className="bg-white/70 backdrop-blur-xs rounded-xl p-4 mb-4">
           <p className="font-semibold text-gray-800 mb-3">Your Most Used Features:</p>
           <div className="space-y-2">
             {metrics.most_used_features.map((feature, idx) => (
@@ -352,7 +352,7 @@ export const DashboardPersonalizationIndicator: React.FC<DashboardPersonalizatio
                       initial={{ width: 0 }}
                       animate={{ width: `${100 - idx * 20}%` }}
                       transition={{ delay: idx * 0.1, duration: 0.8 }}
-                      className={`h-full bg-gradient-to-r ${config.gradient}`}
+                      className={`h-full bg-linear-to-r ${config.gradient}`}
                     ></motion.div>
                   </div>
                 </div>
@@ -364,7 +364,7 @@ export const DashboardPersonalizationIndicator: React.FC<DashboardPersonalizatio
 
       {/* Recommendation */}
       {level === 'learning' && (
-        <div className="bg-purple-100 border-l-4 border-purple-500 p-3 rounded">
+        <div className="bg-purple-100 border-l-4 border-purple-500 p-3 rounded-sm">
           <p className="text-sm text-purple-800">
             <span className="font-semibold">🧠 Keep Using:</span> The more you use WellFit, the better it adapts to
             your workflow!
@@ -373,7 +373,7 @@ export const DashboardPersonalizationIndicator: React.FC<DashboardPersonalizatio
       )}
 
       {level === 'adapting' && (
-        <div className="bg-blue-100 border-l-4 border-blue-500 p-3 rounded">
+        <div className="bg-blue-100 border-l-4 border-blue-500 p-3 rounded-sm">
           <p className="text-sm text-blue-800">
             <span className="font-semibold">🔄 Almost There:</span> Your dashboard is learning your patterns. Keep
             going!
@@ -382,7 +382,7 @@ export const DashboardPersonalizationIndicator: React.FC<DashboardPersonalizatio
       )}
 
       {level === 'personalized' && (
-        <div className="bg-green-100 border-l-4 border-green-500 p-3 rounded">
+        <div className="bg-green-100 border-l-4 border-green-500 p-3 rounded-sm">
           <p className="text-sm text-green-800">
             <span className="font-semibold">⚡ Fully Personalized:</span> Your dashboard is optimized for your unique
             workflow!

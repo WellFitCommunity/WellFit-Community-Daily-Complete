@@ -68,7 +68,7 @@ export const CCMTimeline: React.FC = () => {
 
         {/* Revenue Counter */}
         {revenue.total > 0 && (
-          <div className="px-6 py-4 bg-gradient-to-r from-purple-400 to-indigo-500 rounded-lg shadow-lg">
+          <div className="px-6 py-4 bg-linear-to-r from-purple-400 to-indigo-500 rounded-lg shadow-lg">
             <div className="text-white text-center">
               <div className="text-xs font-medium">Monthly CCM Revenue</div>
               <div className="text-3xl font-bold">${revenue.total.toFixed(2)}</div>
@@ -145,7 +145,7 @@ export const CCMTimeline: React.FC = () => {
           {patients.map((patient) => (
             <div
               key={patient.patient_id}
-              className="p-5 bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-xl shadow-lg hover:shadow-xl transition-shadow"
+              className="p-5 bg-linear-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-xl shadow-lg hover:shadow-xl transition-shadow"
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
@@ -188,7 +188,7 @@ export const CCMTimeline: React.FC = () => {
                 <div className="space-y-2">
                   {patient.activities.slice(0, 5).map((activity, idx) => (
                     <div key={idx} className="flex items-center gap-3 text-sm">
-                      <span className="text-xs px-2 py-1 bg-white rounded font-medium text-gray-700">
+                      <span className="text-xs px-2 py-1 bg-white rounded-sm font-medium text-gray-700">
                         {activity.type === 'check_in' ? '✓ Check-in' : '📝 Scribe Session'}
                       </span>
                       <span className="text-gray-600">{formatDate(activity.timestamp)}</span>

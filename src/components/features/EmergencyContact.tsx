@@ -143,7 +143,7 @@ const EmergencyContact: React.FC = () => {
         </h2>
         <button
           onClick={() => setExpanded(!expanded)}
-          className="text-2xl leading-none text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 rounded-sm"
+          className="text-2xl leading-none text-gray-500 hover:text-gray-700 focus:outline-hidden focus:ring-2 focus:ring-gray-400 rounded-xs"
           aria-label={expanded ? 'Collapse contact form' : 'Expand contact form'}
           aria-expanded={expanded}
         >
@@ -177,7 +177,7 @@ const EmergencyContact: React.FC = () => {
                   id="ec-firstName"
                   value={contact.firstName}
                   onChange={(e) => setContact({ ...contact, firstName: e.target.value })}
-                  className="mt-1 w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+                  className="mt-1 w-full p-2 border border-gray-300 rounded-md shadow-xs focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
                   disabled={isSaving}
                   aria-required="true"
                 />
@@ -190,7 +190,7 @@ const EmergencyContact: React.FC = () => {
                   id="ec-lastName"
                   value={contact.lastName}
                   onChange={(e) => setContact({ ...contact, lastName: e.target.value })}
-                  className="mt-1 w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+                  className="mt-1 w-full p-2 border border-gray-300 rounded-md shadow-xs focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
                   disabled={isSaving}
                   aria-required="true"
                 />
@@ -204,7 +204,7 @@ const EmergencyContact: React.FC = () => {
                   placeholder="000-000-0000"
                   value={contact.phone}
                   onChange={(e) => setContact({ ...contact, phone: e.target.value })}
-                  className="mt-1 w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+                  className="mt-1 w-full p-2 border border-gray-300 rounded-md shadow-xs focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
                   disabled={isSaving}
                   aria-required="true"
                 />
@@ -218,7 +218,7 @@ const EmergencyContact: React.FC = () => {
                   placeholder="name@example.com"
                   value={contact.email || ''}
                   onChange={(e) => setContact({ ...contact, email: e.target.value })}
-                  className="mt-1 w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+                  className="mt-1 w-full p-2 border border-gray-300 rounded-md shadow-xs focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
                   disabled={isSaving}
                 />
               </div>
@@ -231,7 +231,7 @@ const EmergencyContact: React.FC = () => {
                   placeholder="son, daughter, spouse, etc."
                   value={contact.relationship}
                   onChange={(e) => setContact({ ...contact, relationship: e.target.value })}
-                  className="mt-1 w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+                  className="mt-1 w-full p-2 border border-gray-300 rounded-md shadow-xs focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
                   disabled={isSaving}
                   aria-required="true"
                 />
@@ -240,7 +240,7 @@ const EmergencyContact: React.FC = () => {
               <button
                 onClick={handleSave}
                 disabled={isSaving || !userId}
-                className="w-full py-2 bg-wellfit-blue text-white font-semibold rounded-md shadow-sm hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-wellfit-blue disabled:bg-gray-400"
+                className="w-full py-2 bg-wellfit-blue text-white font-semibold rounded-md shadow-xs hover:bg-opacity-90 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-wellfit-blue disabled:bg-gray-400"
               >
                 {isSaving ? 'Saving...' : 'Save Next of Kin'}
               </button>
@@ -271,13 +271,13 @@ const EmergencyContact: React.FC = () => {
                 <button
                   onClick={() => { setEditing(true); setMessage(null); }}
                   disabled={!userId || isLoadingData}
-                  className="flex-1 py-2 bg-wellfit-green text-white font-semibold rounded-md shadow-sm hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-wellfit-green disabled:bg-gray-400"
+                  className="flex-1 py-2 bg-wellfit-green text-white font-semibold rounded-md shadow-xs hover:bg-opacity-90 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-wellfit-green disabled:bg-gray-400"
                 >
                   {contact.firstName || contact.lastName ? 'Edit' : 'Add Contact'}
                 </button>
                 <button
                   onClick={handle911}
-                  className="flex-1 py-2 bg-red-600 text-white font-semibold rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-600"
+                  className="flex-1 py-2 bg-red-600 text-white font-semibold rounded-md shadow-xs hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-600"
                 >
                   Call 911
                 </button>

@@ -381,7 +381,7 @@ const EnhancedQuestionsPage: React.FC = () => {
                     <button
                       key={index}
                       onClick={() => selectSuggestion(suggestion)}
-                      className="text-left p-3 bg-white rounded-lg shadow-sm hover:shadow-md hover:bg-blue-50 transition text-base border border-gray-200"
+                      className="text-left p-3 bg-white rounded-lg shadow-xs hover:shadow-md hover:bg-blue-50 transition text-base border border-gray-200"
                     >
                       <span className="text-blue-600 font-medium">❓</span> {suggestion}
                     </button>

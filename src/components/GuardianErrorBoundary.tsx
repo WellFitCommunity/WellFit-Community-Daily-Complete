@@ -191,7 +191,7 @@ export class GuardianErrorBoundary extends Component<Props, State> {
                   <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700">
                     Show error details
                   </summary>
-                  <div className="mt-2 p-4 bg-gray-50 rounded border border-gray-200">
+                  <div className="mt-2 p-4 bg-gray-50 rounded-sm border border-gray-200">
                     <p className="text-sm font-mono text-red-600 mb-2">
                       {error.toString()}
                     </p>
@@ -206,13 +206,13 @@ export class GuardianErrorBoundary extends Component<Props, State> {
                 <div className="flex space-x-4">
                   <button
                     onClick={this.handleReset}
-                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                    className="px-4 py-2 bg-blue-500 text-white rounded-sm hover:bg-blue-600 transition-colors"
                   >
                     Try Again
                   </button>
                   <button
                     onClick={() => window.location.reload()}
-                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors"
+                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded-sm hover:bg-gray-400 transition-colors"
                   >
                     Reload Page
                   </button>

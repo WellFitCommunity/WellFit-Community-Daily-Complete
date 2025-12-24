@@ -310,7 +310,7 @@ export const MappingReviewUI: React.FC<MappingReviewProps> = ({
       </div>
 
       {/* Accuracy Indicator */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+      <div className="bg-white rounded-xl shadow-xs border border-gray-200 p-6 mb-6">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">
@@ -413,7 +413,7 @@ export const MappingReviewUI: React.FC<MappingReviewProps> = ({
       </div>
 
       {/* Bulk Actions */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+      <div className="bg-white rounded-xl shadow-xs border border-gray-200 p-4 mb-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <span className="text-sm font-medium text-gray-700">Bulk Actions:</span>
@@ -436,7 +436,7 @@ export const MappingReviewUI: React.FC<MappingReviewProps> = ({
                 type="checkbox"
                 checked={showOnlyProblems}
                 onChange={(e) => setShowOnlyProblems(e.target.checked)}
-                className="rounded border-gray-300"
+                className="rounded-sm border-gray-300"
               />
               Show only problems
             </label>
@@ -465,7 +465,7 @@ export const MappingReviewUI: React.FC<MappingReviewProps> = ({
       </div>
 
       {/* Mapping Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-xs border border-gray-200 overflow-hidden">
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>

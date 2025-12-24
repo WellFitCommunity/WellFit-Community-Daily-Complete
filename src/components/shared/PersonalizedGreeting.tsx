@@ -358,15 +358,15 @@ export const PersonalizedGreeting: React.FC<PersonalizedGreetingProps> = ({
   // Show loading skeleton while fetching profile
   if (loading) {
     return (
-      <div className="bg-gradient-to-r from-[#E0F7F6] via-[#F4FADC] to-[#E0F7F6] border-2 border-[#1BA39C] rounded-xl p-6 mb-6 shadow-xl animate-pulse">
-        <div className="h-8 bg-[#1BA39C]/20 rounded w-64 mb-4"></div>
-        <div className="h-4 bg-[#1BA39C]/20 rounded w-48"></div>
+      <div className="bg-linear-to-r from-[#E0F7F6] via-[#F4FADC] to-[#E0F7F6] border-2 border-[#1BA39C] rounded-xl p-6 mb-6 shadow-xl animate-pulse">
+        <div className="h-8 bg-[#1BA39C]/20 rounded-sm w-64 mb-4"></div>
+        <div className="h-4 bg-[#1BA39C]/20 rounded-sm w-48"></div>
       </div>
     );
   }
 
   return (
-    <div className="bg-gradient-to-r from-[#E0F7F6] via-[#F4FADC] to-[#E0F7F6] border-2 border-[#1BA39C] rounded-xl p-6 mb-6 shadow-xl">
+    <div className="bg-linear-to-r from-[#E0F7F6] via-[#F4FADC] to-[#E0F7F6] border-2 border-[#1BA39C] rounded-xl p-6 mb-6 shadow-xl">
       {/* Main Greeting */}
       <div className="mb-4">
         <h2 className="text-3xl font-bold text-[#2D3339] mb-2">

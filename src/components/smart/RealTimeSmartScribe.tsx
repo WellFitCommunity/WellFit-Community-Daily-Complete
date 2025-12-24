@@ -149,7 +149,7 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = (props) => {
         <EACard variant="highlight">
           <EACardContent className="py-3">
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-full bg-[#00857a] flex items-center justify-center flex-shrink-0">
+              <div className="w-8 h-8 rounded-full bg-[#00857a] flex items-center justify-center shrink-0">
                 <span className="text-white text-xs font-bold">R</span>
               </div>
               <div className="flex-1 space-y-2">

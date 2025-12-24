@@ -52,7 +52,7 @@ This plan migrates all clinical/admin components from legacy white/light theming
 - Dropdown has white/light theme
 
 **Changes:**
-1. Use EA gradient: `bg-gradient-to-r from-[#00857a] to-[#006d64]`
+1. Use EA gradient: `bg-linear-to-r from-[#00857a] to-[#006d64]`
 2. Replace silver buttons with `EAButton` component (ghost variant for nav)
 3. Make title dynamic from branding context OR passed prop
 4. Style dropdown with dark theme (slate-800 bg)

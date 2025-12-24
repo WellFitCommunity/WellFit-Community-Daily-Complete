@@ -166,7 +166,7 @@ const TranslationModule: React.FC<Props> = ({ userRole }) => {
           <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center justify-between">
             <span>Translation</span>
             {cached && (
-              <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+              <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-sm">
                 Cached
               </span>
             )}
@@ -222,7 +222,7 @@ const TranslationModule: React.FC<Props> = ({ userRole }) => {
             {culturalNotes.map((note, index) => (
               <li key={index} className="flex items-start">
                 <svg
-                  className="w-5 h-5 text-blue-600 mr-2 mt-0.5 flex-shrink-0"
+                  className="w-5 h-5 text-blue-600 mr-2 mt-0.5 shrink-0"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >

@@ -227,7 +227,7 @@ export function CCMTimeTracker({ onSave, onCancel, initialData }: Props) {
                     ...prev,
                     type: e.target.value as CCMActivity['type']
                   }))}
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full border rounded-sm px-3 py-2"
                 >
                   {ACTIVITY_TYPES.map(type => (
                     <option key={type.value} value={type.value}>
@@ -246,7 +246,7 @@ export function CCMTimeTracker({ onSave, onCancel, initialData }: Props) {
                     ...prev,
                     provider: e.target.value
                   }))}
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full border rounded-sm px-3 py-2"
                   placeholder="Provider name"
                 />
               </div>
@@ -260,7 +260,7 @@ export function CCMTimeTracker({ onSave, onCancel, initialData }: Props) {
                   ...prev,
                   description: e.target.value
                 }))}
-                className="w-full border rounded px-3 py-2"
+                className="w-full border rounded-sm px-3 py-2"
                 rows={2}
                 placeholder="Detailed description of activity performed..."
               />
@@ -276,21 +276,21 @@ export function CCMTimeTracker({ onSave, onCancel, initialData }: Props) {
                   {!timer.isRunning ? (
                     <button
                       onClick={startTimer}
-                      className="px-3 py-1 bg-green-600 text-white rounded text-sm"
+                      className="px-3 py-1 bg-green-600 text-white rounded-sm text-sm"
                     >
                       Start
                     </button>
                   ) : (
                     <button
                       onClick={stopTimer}
-                      className="px-3 py-1 bg-red-600 text-white rounded text-sm"
+                      className="px-3 py-1 bg-red-600 text-white rounded-sm text-sm"
                     >
                       Stop
                     </button>
                   )}
                   <button
                     onClick={resetTimer}
-                    className="px-3 py-1 bg-gray-600 text-white rounded text-sm"
+                    className="px-3 py-1 bg-gray-600 text-white rounded-sm text-sm"
                   >
                     Reset
                   </button>
@@ -308,7 +308,7 @@ export function CCMTimeTracker({ onSave, onCancel, initialData }: Props) {
                     ...prev,
                     duration: parseInt(e.target.value) || 0
                   }))}
-                  className="w-20 border rounded px-2 py-1 text-sm"
+                  className="w-20 border rounded-sm px-2 py-1 text-sm"
                   placeholder="min"
                   min="0"
                 />
@@ -331,7 +331,7 @@ export function CCMTimeTracker({ onSave, onCancel, initialData }: Props) {
 
               <button
                 onClick={addActivity}
-                className="px-4 py-2 bg-blue-600 text-white rounded"
+                className="px-4 py-2 bg-blue-600 text-white rounded-sm"
               >
                 Add Activity
               </button>
@@ -349,7 +349,7 @@ export function CCMTimeTracker({ onSave, onCancel, initialData }: Props) {
             ) : (
               <div className="space-y-3">
                 {activities.map((activity, index) => (
-                  <div key={index} className="border rounded p-3 bg-gray-50">
+                  <div key={index} className="border rounded-sm p-3 bg-gray-50">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
@@ -360,7 +360,7 @@ export function CCMTimeTracker({ onSave, onCancel, initialData }: Props) {
                             • {formatMinutes(activity.duration)}
                           </span>
                           {activity.billable && (
-                            <span className="px-2 py-0.5 text-xs bg-green-100 text-green-800 rounded">
+                            <span className="px-2 py-0.5 text-xs bg-green-100 text-green-800 rounded-sm">
                               Billable
                             </span>
                           )}
@@ -418,7 +418,7 @@ export function CCMTimeTracker({ onSave, onCancel, initialData }: Props) {
                   {suggestedCodes.map((code, index) => (
                     <span
                       key={index}
-                      className="px-3 py-1 bg-green-100 text-green-800 rounded font-mono text-sm"
+                      className="px-3 py-1 bg-green-100 text-green-800 rounded-sm font-mono text-sm"
                     >
                       {code}
                     </span>
@@ -454,14 +454,14 @@ export function CCMTimeTracker({ onSave, onCancel, initialData }: Props) {
         <div className="p-6 border-t bg-gray-50 flex justify-between">
           <button
             onClick={onCancel}
-            className="px-4 py-2 border rounded text-gray-700 hover:bg-gray-100"
+            className="px-4 py-2 border rounded-sm text-gray-700 hover:bg-gray-100"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={activities.length === 0}
-            className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50 hover:bg-blue-700"
+            className="px-4 py-2 bg-blue-600 text-white rounded-sm disabled:opacity-50 hover:bg-blue-700"
           >
             Save Time Tracking
           </button>

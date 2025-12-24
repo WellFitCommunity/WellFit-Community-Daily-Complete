@@ -127,7 +127,7 @@ const SystemAdministrationPage: React.FC = () => {
           </div>
 
           {/* Page Header */}
-          <div className="bg-gradient-to-r from-[#2D3339] to-[#1F2326] rounded-2xl shadow-2xl p-8 border-2 border-black">
+          <div className="bg-linear-to-r from-[#2D3339] to-[#1F2326] rounded-2xl shadow-2xl p-8 border-2 border-black">
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-white flex items-center gap-3">

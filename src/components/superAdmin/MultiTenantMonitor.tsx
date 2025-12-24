@@ -147,7 +147,7 @@ const MultiTenantMonitor: React.FC = () => {
   return (
     <div className="h-screen flex flex-col bg-gray-900">
       {/* Header */}
-      <div className="bg-gradient-to-r from-teal-600 to-teal-700 shadow-lg flex-shrink-0">
+      <div className="bg-linear-to-r from-teal-600 to-teal-700 shadow-lg shrink-0">
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
@@ -195,12 +195,12 @@ const MultiTenantMonitor: React.FC = () => {
               className="relative bg-white rounded-lg shadow-xl overflow-hidden flex flex-col"
             >
               {/* Tenant Header */}
-              <div className={`bg-${color}-500 text-white px-4 py-2 flex items-center justify-between flex-shrink-0`}>
+              <div className={`bg-${color}-500 text-white px-4 py-2 flex items-center justify-between shrink-0`}>
                 <div className="flex items-center gap-2">
                   <Building2 className="w-4 h-4" />
                   <span className="font-semibold text-sm">{tenant.tenantName}</span>
                   {tenant.tenantCode && (
-                    <span className="px-2 py-0.5 bg-white/20 rounded text-xs font-mono">
+                    <span className="px-2 py-0.5 bg-white/20 rounded-sm text-xs font-mono">
                       {tenant.tenantCode}
                     </span>
                   )}
@@ -209,7 +209,7 @@ const MultiTenantMonitor: React.FC = () => {
                   {!fullscreenTenant && tenants.length > 1 && (
                     <button
                       onClick={() => toggleFullscreen(tenant.tenantId)}
-                      className="p-1 hover:bg-white/20 rounded transition-colors"
+                      className="p-1 hover:bg-white/20 rounded-sm transition-colors"
                       title="Maximize"
                     >
                       <Maximize2 className="w-4 h-4" />
@@ -218,7 +218,7 @@ const MultiTenantMonitor: React.FC = () => {
                   {fullscreenTenant && (
                     <button
                       onClick={() => setFullscreenTenant(null)}
-                      className="p-1 hover:bg-white/20 rounded transition-colors"
+                      className="p-1 hover:bg-white/20 rounded-sm transition-colors"
                       title="Restore"
                     >
                       <Minimize2 className="w-4 h-4" />
@@ -226,7 +226,7 @@ const MultiTenantMonitor: React.FC = () => {
                   )}
                   <button
                     onClick={() => handleRemoveTenant(tenant.tenantId)}
-                    className="p-1 hover:bg-white/20 rounded transition-colors"
+                    className="p-1 hover:bg-white/20 rounded-sm transition-colors"
                     title="Close"
                   >
                     <X className="w-4 h-4" />
@@ -238,7 +238,7 @@ const MultiTenantMonitor: React.FC = () => {
               <div className="flex-1 p-6 bg-gray-50 overflow-auto">
                 <div className="space-y-4">
                   {/* System Status */}
-                  <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <div className="bg-white p-4 rounded-lg shadow-xs">
                     <h3 className="text-sm font-semibold text-gray-700 mb-3">System Status</h3>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
@@ -256,7 +256,7 @@ const MultiTenantMonitor: React.FC = () => {
                   </div>
 
                   {/* Aggregate Counts (NO IDENTITIES) */}
-                  <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <div className="bg-white p-4 rounded-lg shadow-xs">
                     <h3 className="text-sm font-semibold text-gray-700 mb-3">Usage Metrics</h3>
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
@@ -275,7 +275,7 @@ const MultiTenantMonitor: React.FC = () => {
                   </div>
 
                   {/* System Health */}
-                  <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <div className="bg-white p-4 rounded-lg shadow-xs">
                     <h3 className="text-sm font-semibold text-gray-700 mb-3">System Health</h3>
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
@@ -294,7 +294,7 @@ const MultiTenantMonitor: React.FC = () => {
                   </div>
 
                   {/* Compliance */}
-                  <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <div className="bg-white p-4 rounded-lg shadow-xs">
                     <h3 className="text-sm font-semibold text-gray-700 mb-3">Compliance</h3>
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-gray-600">SOC2 Score</span>

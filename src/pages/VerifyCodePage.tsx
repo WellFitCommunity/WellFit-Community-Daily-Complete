@@ -189,7 +189,7 @@ export default function VerifyCodePage() {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             required
-            className="w-full p-3 border-2 rounded text-lg"
+            className="w-full p-3 border-2 rounded-sm text-lg"
             style={{ borderColor: WELLFIT_BLUE }}
             placeholder="+15551234567"
             inputMode="tel"
@@ -223,7 +223,7 @@ export default function VerifyCodePage() {
               setCode(normalizeCode(text));
             }}
             required
-            className="w-full p-3 border-2 rounded text-lg tracking-widest"
+            className="w-full p-3 border-2 rounded-sm text-lg tracking-widest"
             style={{ borderColor: WELLFIT_BLUE }}
             autoComplete="one-time-code"
             inputMode="numeric"
@@ -247,7 +247,7 @@ export default function VerifyCodePage() {
         <button
           type="submit"
           disabled={loading || !phoneIsValid || code.length !== 6}
-          className="w-full font-bold px-6 py-3 rounded shadow transition disabled:opacity-50"
+          className="w-full font-bold px-6 py-3 rounded-sm shadow-sm transition disabled:opacity-50"
           style={{ backgroundColor: loading ? '#7aa7c4' : WELLFIT_BLUE, color: '#fff' }}
         >
           {loading ? 'Verifying…' : 'Verify'}
@@ -258,7 +258,7 @@ export default function VerifyCodePage() {
             type="button"
             onClick={handleResend}
             disabled={cooldown > 0 || !phoneIsValid}
-            className="px-4 py-2 rounded font-medium transition disabled:opacity-50"
+            className="px-4 py-2 rounded-sm font-medium transition disabled:opacity-50"
             style={{
               backgroundColor: cooldown > 0 || !phoneIsValid ? '#d1d5db' : WELLFIT_GREEN,
               color: cooldown > 0 || !phoneIsValid ? '#6b7280' : '#fff',

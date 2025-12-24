@@ -13,7 +13,7 @@ export default function DemoBanner() {
 
   return (
     <div
-      className="bg-yellow-300 text-black p-2 text-center font-bold shadow"
+      className="bg-yellow-300 text-black p-2 text-center font-bold shadow-sm"
       role="alert"
       aria-live="polite"
     >
@@ -22,7 +22,7 @@ export default function DemoBanner() {
       </span>
       <button
         onClick={endDemo}
-        className="ml-4 px-3 py-1 bg-black text-yellow-200 rounded hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+        className="ml-4 px-3 py-1 bg-black text-yellow-200 rounded-sm hover:bg-gray-800 focus:outline-hidden focus:ring-2 focus:ring-yellow-500"
       >
         End Demo
       </button>

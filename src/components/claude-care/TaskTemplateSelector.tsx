@@ -38,7 +38,7 @@ const TaskTemplateSelector: React.FC<Props> = ({ role, templates, onSelect }) =>
     };
 
     return (
-      <span className={`text-xs px-2 py-1 rounded ${colors[format] || 'bg-gray-100 text-gray-800'}`}>
+      <span className={`text-xs px-2 py-1 rounded-sm ${colors[format] || 'bg-gray-100 text-gray-800'}`}>
         {format}
       </span>
     );
@@ -83,7 +83,7 @@ const TaskTemplateSelector: React.FC<Props> = ({ role, templates, onSelect }) =>
                   </div>
 
                   <svg
-                    className="h-5 w-5 text-gray-400 group-hover:text-blue-600 ml-4 flex-shrink-0"
+                    className="h-5 w-5 text-gray-400 group-hover:text-blue-600 ml-4 shrink-0"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"

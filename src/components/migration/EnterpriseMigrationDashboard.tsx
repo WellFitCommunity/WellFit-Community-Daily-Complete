@@ -684,13 +684,13 @@ export const EnterpriseMigrationDashboard: React.FC = () => {
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div className="bg-slate-800 rounded p-3">
+                    <div className="bg-slate-800 rounded-sm p-3">
                       <h4 className="text-sm text-slate-400 mb-2">Record A</h4>
                       <pre className="text-xs text-slate-300 overflow-auto max-h-32">
                         {JSON.stringify(dup.recordAData, null, 2)}
                       </pre>
                     </div>
-                    <div className="bg-slate-800 rounded p-3">
+                    <div className="bg-slate-800 rounded-sm p-3">
                       <h4 className="text-sm text-slate-400 mb-2">Record B</h4>
                       <pre className="text-xs text-slate-300 overflow-auto max-h-32">
                         {JSON.stringify(dup.recordBData, null, 2)}

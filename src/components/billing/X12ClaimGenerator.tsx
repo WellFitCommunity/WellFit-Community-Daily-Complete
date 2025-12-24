@@ -113,17 +113,17 @@ export const X12ClaimGenerator: React.FC<X12ClaimGeneratorProps> = ({
           <button
             onClick={generateClaim}
             disabled={isGenerating}
-            className="bg-green-600 text-white px-4 py-2 rounded disabled:bg-gray-400"
+            className="bg-green-600 text-white px-4 py-2 rounded-sm disabled:bg-gray-400"
           >
             {isGenerating ? 'Generating…' : 'Generate 837P Claim'}
           </button>
 
           {x12Content && (
             <>
-              <button onClick={downloadX12} className="bg-blue-600 text-white px-4 py-2 rounded">
+              <button onClick={downloadX12} className="bg-blue-600 text-white px-4 py-2 rounded-sm">
                 Download X12 File
               </button>
-              <button onClick={copyToClipboard} className="bg-gray-700 text-white px-4 py-2 rounded">
+              <button onClick={copyToClipboard} className="bg-gray-700 text-white px-4 py-2 rounded-sm">
                 Copy X12
               </button>
             </>
@@ -149,7 +149,7 @@ export const X12ClaimGenerator: React.FC<X12ClaimGeneratorProps> = ({
       {x12Content && (
         <div className="mt-4">
           <h4 className="font-medium mb-2">Generated X12 Content:</h4>
-          <pre className="bg-gray-100 p-4 rounded text-xs overflow-auto max-h-96 whitespace-pre-wrap">
+          <pre className="bg-gray-100 p-4 rounded-sm text-xs overflow-auto max-h-96 whitespace-pre-wrap">
 {`${x12Content}`}
           </pre>
         </div>

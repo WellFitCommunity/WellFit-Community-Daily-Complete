@@ -32,7 +32,7 @@ const DashMealOfTheDay: React.FC = () => {
   return (
     <div className="text-center relative">
       {/* Animated glow effect */}
-      <div className="absolute inset-0 bg-gradient-to-br from-orange-400/10 via-green-400/10 to-yellow-400/10 animate-pulse pointer-events-none rounded-lg"></div>
+      <div className="absolute inset-0 bg-linear-to-br from-orange-400/10 via-green-400/10 to-yellow-400/10 animate-pulse pointer-events-none rounded-lg"></div>
 
       {/* Content */}
       <div className="relative z-10">

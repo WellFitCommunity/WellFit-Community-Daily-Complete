@@ -119,7 +119,7 @@ export const BasicDemographicsStep: React.FC<StepProps> = ({ formData, onInputCh
               id="requires_interpreter"
               checked={formData.requires_interpreter}
               onChange={(e) => onInputChange('requires_interpreter', e.target.checked)}
-              className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              className="w-5 h-5 text-blue-600 border-gray-300 rounded-sm focus:ring-blue-500"
             />
             <label htmlFor="requires_interpreter" className="text-base text-gray-700">
               I need an interpreter for medical appointments
@@ -136,7 +136,7 @@ export const BasicDemographicsStep: React.FC<StepProps> = ({ formData, onInputCh
             id="veteran_status"
             checked={formData.veteran_status}
             onChange={(e) => onInputChange('veteran_status', e.target.checked)}
-            className="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
+            className="w-5 h-5 text-green-600 border-gray-300 rounded-sm focus:ring-green-500"
           />
           <div>
             <label htmlFor="veteran_status" className="text-base font-medium text-gray-700">

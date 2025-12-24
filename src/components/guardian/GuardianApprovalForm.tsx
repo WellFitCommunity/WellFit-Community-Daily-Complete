@@ -187,7 +187,7 @@ export const GuardianApprovalForm: React.FC = () => {
             </button>
             <h1 className="text-2xl font-bold text-white flex items-center gap-3">
               Guardian Approval Review
-              <span className={`text-sm px-3 py-1 rounded ${statusConfig.bgColor} ${statusConfig.color}`}>
+              <span className={`text-sm px-3 py-1 rounded-sm ${statusConfig.bgColor} ${statusConfig.color}`}>
                 {statusConfig.icon} {statusConfig.label}
               </span>
             </h1>
@@ -234,7 +234,7 @@ export const GuardianApprovalForm: React.FC = () => {
                   {ticket.affected_component && (
                     <div>
                       <label className="text-xs text-slate-400 uppercase">Affected Component</label>
-                      <p className="text-white font-mono text-sm mt-1 bg-slate-800 px-3 py-2 rounded">
+                      <p className="text-white font-mono text-sm mt-1 bg-slate-800 px-3 py-2 rounded-sm">
                         {ticket.affected_component}
                       </p>
                     </div>
@@ -245,7 +245,7 @@ export const GuardianApprovalForm: React.FC = () => {
                       <label className="text-xs text-slate-400 uppercase">Affected Resources</label>
                       <ul className="mt-1 space-y-1">
                         {ticket.affected_resources.map((resource, idx) => (
-                          <li key={idx} className="text-white font-mono text-sm bg-slate-800 px-3 py-1 rounded">
+                          <li key={idx} className="text-white font-mono text-sm bg-slate-800 px-3 py-1 rounded-sm">
                             {resource}
                           </li>
                         ))}
@@ -256,7 +256,7 @@ export const GuardianApprovalForm: React.FC = () => {
                   {ticket.stack_trace && (
                     <div>
                       <label className="text-xs text-slate-400 uppercase">Stack Trace</label>
-                      <pre className="mt-1 text-xs text-slate-300 bg-slate-800 p-3 rounded overflow-x-auto max-h-40">
+                      <pre className="mt-1 text-xs text-slate-300 bg-slate-800 p-3 rounded-sm overflow-x-auto max-h-40">
                         {ticket.stack_trace}
                       </pre>
                     </div>
@@ -283,19 +283,19 @@ export const GuardianApprovalForm: React.FC = () => {
                     {ticket.sandbox_test_results && (
                       <>
                         <div className="grid grid-cols-3 gap-4 text-center">
-                          <div className="bg-slate-800 rounded p-3">
+                          <div className="bg-slate-800 rounded-sm p-3">
                             <p className="text-2xl font-bold text-white">
                               {ticket.sandbox_test_results.tests_run || 0}
                             </p>
                             <p className="text-xs text-slate-400">Tests Run</p>
                           </div>
-                          <div className="bg-slate-800 rounded p-3">
+                          <div className="bg-slate-800 rounded-sm p-3">
                             <p className="text-2xl font-bold text-green-400">
                               {ticket.sandbox_test_results.tests_passed || 0}
                             </p>
                             <p className="text-xs text-slate-400">Passed</p>
                           </div>
-                          <div className="bg-slate-800 rounded p-3">
+                          <div className="bg-slate-800 rounded-sm p-3">
                             <p className="text-2xl font-bold text-red-400">
                               {ticket.sandbox_test_results.tests_failed || 0}
                             </p>
@@ -304,7 +304,7 @@ export const GuardianApprovalForm: React.FC = () => {
                         </div>
 
                         {ticket.sandbox_test_results.error_message && (
-                          <div className="bg-red-500/20 border border-red-500 rounded p-3">
+                          <div className="bg-red-500/20 border border-red-500 rounded-sm p-3">
                             <p className="text-sm text-red-300">{ticket.sandbox_test_results.error_message}</p>
                           </div>
                         )}
@@ -358,7 +358,7 @@ export const GuardianApprovalForm: React.FC = () => {
                       <label className="text-xs text-slate-400 uppercase">Healing Steps</label>
                       <div className="mt-2 space-y-2">
                         {ticket.healing_steps.map((step, idx) => (
-                          <div key={step.id || idx} className="bg-slate-800 rounded p-3">
+                          <div key={step.id || idx} className="bg-slate-800 rounded-sm p-3">
                             <div className="flex items-center gap-2 mb-1">
                               <span className="text-teal-400 font-mono text-sm">Step {step.order || idx + 1}</span>
                               <span className="text-white">{step.action}</span>
@@ -379,7 +379,7 @@ export const GuardianApprovalForm: React.FC = () => {
                   {ticket.rollback_plan && ticket.rollback_plan.length > 0 && (
                     <div>
                       <label className="text-xs text-slate-400 uppercase">Rollback Plan</label>
-                      <div className="mt-2 bg-orange-500/10 border border-orange-500/30 rounded p-3">
+                      <div className="mt-2 bg-orange-500/10 border border-orange-500/30 rounded-sm p-3">
                         <ul className="list-disc list-inside text-sm text-orange-300 space-y-1">
                           {ticket.rollback_plan.map((step, idx) => (
                             <li key={idx}>{step.action} on {step.target}</li>
@@ -407,7 +407,7 @@ export const GuardianApprovalForm: React.FC = () => {
                           type="checkbox"
                           checked={formData.code_reviewed}
                           onChange={(e) => setFormData({ ...formData, code_reviewed: e.target.checked })}
-                          className="mt-1 w-5 h-5 rounded border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500"
+                          className="mt-1 w-5 h-5 rounded-sm border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500"
                         />
                         <div>
                           <span className="text-white group-hover:text-teal-400">
@@ -424,7 +424,7 @@ export const GuardianApprovalForm: React.FC = () => {
                           type="checkbox"
                           checked={formData.impact_understood}
                           onChange={(e) => setFormData({ ...formData, impact_understood: e.target.checked })}
-                          className="mt-1 w-5 h-5 rounded border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500"
+                          className="mt-1 w-5 h-5 rounded-sm border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500"
                         />
                         <div>
                           <span className="text-white group-hover:text-teal-400">
@@ -441,7 +441,7 @@ export const GuardianApprovalForm: React.FC = () => {
                           type="checkbox"
                           checked={formData.rollback_understood}
                           onChange={(e) => setFormData({ ...formData, rollback_understood: e.target.checked })}
-                          className="mt-1 w-5 h-5 rounded border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500"
+                          className="mt-1 w-5 h-5 rounded-sm border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500"
                         />
                         <div>
                           <span className="text-white group-hover:text-teal-400">
@@ -463,7 +463,7 @@ export const GuardianApprovalForm: React.FC = () => {
                         value={formData.review_notes}
                         onChange={(e) => setFormData({ ...formData, review_notes: e.target.value })}
                         placeholder="Explain what you reviewed and why you are approving/rejecting..."
-                        className="w-full h-32 bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:border-teal-500 focus:outline-none resize-none"
+                        className="w-full h-32 bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:border-teal-500 focus:outline-hidden resize-none"
                       />
                       <p className="text-xs text-slate-500 mt-1">
                         Required for both approval and rejection. This prevents rubber-stamping.
@@ -484,7 +484,7 @@ export const GuardianApprovalForm: React.FC = () => {
                         variant="secondary"
                         onClick={handleReject}
                         disabled={submitting}
-                        className="flex-1 !bg-red-500/20 !text-red-400 hover:!bg-red-500/30"
+                        className="flex-1 bg-red-500/20! text-red-400! hover:bg-red-500/30!"
                       >
                         Reject
                       </EAButton>
@@ -510,7 +510,7 @@ export const GuardianApprovalForm: React.FC = () => {
                       )}
                     </p>
                     {ticket.review_notes && (
-                      <div className="mt-4 bg-slate-800 rounded p-3 text-left">
+                      <div className="mt-4 bg-slate-800 rounded-sm p-3 text-left">
                         <label className="text-xs text-slate-400 uppercase">Review Notes</label>
                         <p className="text-slate-300 mt-1">{ticket.review_notes}</p>
                       </div>

@@ -214,7 +214,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/50 backdrop-blur-xs"
         onClick={() => setIsOpen(false)}
       >
         <motion.div
@@ -234,16 +234,16 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search commands... (Cmd+K)"
-              className="w-full pl-12 pr-4 py-4 text-lg focus:outline-none"
+              className="w-full pl-12 pr-4 py-4 text-lg focus:outline-hidden"
             />
             <div className="absolute right-4 top-4 flex items-center gap-2">
-              <kbd className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded border border-gray-300">
+              <kbd className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-sm border border-gray-300">
                 ↑↓
               </kbd>
-              <kbd className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded border border-gray-300">
+              <kbd className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-sm border border-gray-300">
                 Enter
               </kbd>
-              <kbd className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded border border-gray-300">
+              <kbd className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-sm border border-gray-300">
                 Esc
               </kbd>
             </div>
@@ -350,7 +350,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           </div>
 
           {/* Footer */}
-          <div className="border-t border-gray-200 px-4 py-3 bg-gradient-to-r from-blue-50 to-cyan-50">
+          <div className="border-t border-gray-200 px-4 py-3 bg-linear-to-r from-blue-50 to-cyan-50">
             <div className="flex items-center justify-between text-xs text-gray-600">
               <span>
                 Showing {displayActions.length} of {actions.length} commands
@@ -392,7 +392,7 @@ const CommandItem: React.FC<CommandItemProps> = ({
       whileHover={{ x: 4 }}
       className={`
         px-4 py-3 cursor-pointer transition-all
-        ${isSelected ? `bg-gradient-to-r ${action.gradient} text-white` : 'hover:bg-gray-50'}
+        ${isSelected ? `bg-linear-to-r ${action.gradient} text-white` : 'hover:bg-gray-50'}
       `}
       onClick={onClick}
     >
@@ -400,7 +400,7 @@ const CommandItem: React.FC<CommandItemProps> = ({
         <div
           className={`
           w-10 h-10 rounded-lg flex items-center justify-center
-          ${isSelected ? 'bg-white/20' : `bg-gradient-to-br ${action.gradient}`}
+          ${isSelected ? 'bg-white/20' : `bg-linear-to-br ${action.gradient}`}
         `}
         >
           <Icon className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-white'}`} />

@@ -487,7 +487,7 @@ export default function CheckInTracker({ showBackButton = false }: CheckInTracke
             {showBackButton && (
               <button
                 onClick={() => navigate('/dashboard')}
-                className="flex items-center mb-4 px-3 py-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200"
+                className="flex items-center mb-4 px-3 py-2 bg-white rounded-lg shadow-xs hover:shadow-md transition-shadow border border-gray-200"
                 style={{ color: branding.primaryColor || '#003865' }}
                 aria-label="Go back"
               >
@@ -521,7 +521,7 @@ export default function CheckInTracker({ showBackButton = false }: CheckInTracke
                   onChange={(e) => setMood(e.target.value)}
                   disabled={isSubmitting}
                   aria-required="true"
-                  className="mt-1 block w-full py-3 px-4 text-lg border-2 border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 text-gray-900"
+                  className="mt-1 block w-full py-3 px-4 text-lg border-2 border-gray-300 bg-white rounded-lg shadow-xs focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 text-gray-900"
                   style={{ minHeight: '48px', fontSize: '16px' }}
                 >
                   <option value="" disabled className="text-gray-500 bg-gray-50">
@@ -617,7 +617,7 @@ export default function CheckInTracker({ showBackButton = false }: CheckInTracke
                     <button
                       type="button"
                       onClick={() => setShowPulseOximeter(true)}
-                      className="px-3 py-3 bg-gradient-to-r from-red-500 to-pink-500 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-1 whitespace-nowrap"
+                      className="px-3 py-3 bg-linear-to-r from-red-500 to-pink-500 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-1 whitespace-nowrap"
                       title="Measure with your camera"
                     >
                       <Heart size={18} />
@@ -684,7 +684,7 @@ export default function CheckInTracker({ showBackButton = false }: CheckInTracke
                     value={physicalActivity}
                     onChange={(e) => setPhysicalActivity(e.target.value)}
                     disabled={isSubmitting}
-                    className="w-full py-3 px-4 text-lg border-2 border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 disabled:bg-gray-100"
+                    className="w-full py-3 px-4 text-lg border-2 border-gray-300 bg-white rounded-lg shadow-xs focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 disabled:bg-gray-100"
                     style={{ minHeight: '48px', fontSize: '16px' }}
                   >
                     <option value="" className="text-gray-500 bg-gray-50">
@@ -706,7 +706,7 @@ export default function CheckInTracker({ showBackButton = false }: CheckInTracke
                     value={socialEngagement}
                     onChange={(e) => setSocialEngagement(e.target.value)}
                     disabled={isSubmitting}
-                    className="w-full py-3 px-4 text-lg border-2 border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 disabled:bg-gray-100"
+                    className="w-full py-3 px-4 text-lg border-2 border-gray-300 bg-white rounded-lg shadow-xs focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 disabled:bg-gray-100"
                     style={{ minHeight: '48px', fontSize: '16px' }}
                   >
                     <option value="" className="text-gray-500 bg-gray-50">
@@ -737,7 +737,7 @@ export default function CheckInTracker({ showBackButton = false }: CheckInTracke
                     onChange={(e) => setSymptoms(e.target.value)}
                     rows={3}
                     disabled={isSubmitting}
-                    className="w-full py-3 px-4 text-lg border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 disabled:bg-gray-50 pr-14 text-gray-900 placeholder-gray-400"
+                    className="w-full py-3 px-4 text-lg border border-gray-300 bg-white rounded-lg shadow-xs focus:outline-hidden focus:ring-green-500 focus:border-green-500 disabled:bg-gray-50 pr-14 text-gray-900 placeholder-gray-400"
                     placeholder="e.g., headache, fatigue, feeling dizzy..."
                     maxLength={500}
                   />
@@ -776,7 +776,7 @@ export default function CheckInTracker({ showBackButton = false }: CheckInTracke
                     onChange={(e) => setActivityNotes(e.target.value)}
                     rows={3}
                     disabled={isSubmitting}
-                    className="w-full py-3 px-4 text-lg border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 disabled:bg-gray-50 pr-14 text-gray-900 placeholder-gray-400"
+                    className="w-full py-3 px-4 text-lg border border-gray-300 bg-white rounded-lg shadow-xs focus:outline-hidden focus:ring-green-500 focus:border-green-500 disabled:bg-gray-50 pr-14 text-gray-900 placeholder-gray-400"
                     placeholder="Tell us about your day, any concerns, or how you're feeling..."
                     maxLength={500}
                   />
@@ -808,7 +808,7 @@ export default function CheckInTracker({ showBackButton = false }: CheckInTracke
             {/* Submit detailed check-in */}
             <button
               onClick={() => handleCheckIn('Daily Self-Report', false)}
-              className="w-full text-white font-bold py-4 px-6 rounded-lg text-xl shadow-lg transition-all duration-300 disabled:opacity-50 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-white hover:shadow-xl"
+              className="w-full text-white font-bold py-4 px-6 rounded-lg text-xl shadow-lg transition-all duration-300 disabled:opacity-50 focus:outline-hidden focus:ring-4 focus:ring-offset-2 focus:ring-white hover:shadow-xl"
               style={{
                 background:
                   branding.gradient ||
@@ -833,7 +833,7 @@ export default function CheckInTracker({ showBackButton = false }: CheckInTracke
                   <button
                     key={label}
                     onClick={() => handleCheckIn(label, true)}
-                    className="w-full py-3 px-4 bg-[#8cc63f] border-2 border-[#003865] text-white font-semibold rounded-lg shadow-md hover:bg-[#77aa36] transition disabled:bg-gray-400 disabled:opacity-70 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8cc63f]"
+                    className="w-full py-3 px-4 bg-[#8cc63f] border-2 border-[#003865] text-white font-semibold rounded-lg shadow-md hover:bg-[#77aa36] transition disabled:bg-gray-400 disabled:opacity-70 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-[#8cc63f]"
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? 'Processing…' : label}

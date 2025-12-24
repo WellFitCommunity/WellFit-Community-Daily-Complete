@@ -74,7 +74,7 @@ export const PatientSelector: React.FC<PatientSelectorProps> = ({ onSelectPatien
               onClick={() => onSelectPatient(patient)}
               className={`w-full text-left px-3 py-2 rounded border transition-all ${
                 selectedPatient?.user_id === patient.user_id
-                  ? 'bg-blue-100 border-blue-600 shadow-sm'
+                  ? 'bg-blue-100 border-blue-600 shadow-xs'
                   : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
               }`}
             >

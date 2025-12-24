@@ -38,7 +38,7 @@ export const GuardianAgentDashboard: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 text-white p-6">
+    <div className="min-h-screen bg-linear-to-br from-gray-900 via-blue-900 to-gray-900 text-white p-6">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between">
@@ -283,12 +283,12 @@ const IssueCard: React.FC<{ issue: DetectedIssue }> = ({ issue }) => {
   };
 
   return (
-    <div className={`border-l-4 ${severityColors[issue.severity]} p-4 rounded`}>
+    <div className={`border-l-4 ${severityColors[issue.severity]} p-4 rounded-sm`}>
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center space-x-2 mb-2">
             <span className="font-semibold text-lg">{issue.signature.category.replace(/_/g, ' ')}</span>
-            <span className="text-xs bg-gray-700 px-2 py-1 rounded">{issue.severity}</span>
+            <span className="text-xs bg-gray-700 px-2 py-1 rounded-sm">{issue.severity}</span>
           </div>
           <p className="text-gray-300 text-sm mb-2">{issue.signature.description}</p>
           <div className="flex items-center space-x-4 text-xs text-gray-400">
@@ -305,7 +305,7 @@ const IssueCard: React.FC<{ issue: DetectedIssue }> = ({ issue }) => {
 };
 
 const HealingCard: React.FC<{ action: any }> = ({ action }) => (
-  <div className="bg-blue-900/20 border-l-4 border-blue-500 p-4 rounded">
+  <div className="bg-blue-900/20 border-l-4 border-blue-500 p-4 rounded-sm">
     <div className="flex items-center space-x-2 mb-2">
       <div className="animate-spin">⚙️</div>
       <span className="font-semibold">{action.strategy.replace(/_/g, ' ')}</span>
@@ -360,7 +360,7 @@ const HealingResultCard: React.FC<{ result: HealingResult }> = ({ result }) => (
 );
 
 const KnowledgeCard: React.FC<{ knowledge: any }> = ({ knowledge }) => (
-  <div className="bg-purple-900/20 border border-purple-500/30 p-4 rounded">
+  <div className="bg-purple-900/20 border border-purple-500/30 p-4 rounded-sm">
     <div className="text-sm font-semibold mb-2 truncate">{knowledge.pattern}</div>
     <div className="space-y-1 text-xs text-gray-400">
       <div className="flex justify-between">

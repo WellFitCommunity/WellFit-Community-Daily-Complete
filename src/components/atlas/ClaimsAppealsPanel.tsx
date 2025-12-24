@@ -134,7 +134,7 @@ Generated: ${new Date().toISOString()}
 
       {/* Summary Banner */}
       {rejectedClaims.length > 0 && (
-        <div className="mb-6 p-6 bg-gradient-to-r from-red-50 to-orange-50 rounded-xl border-2 border-red-200">
+        <div className="mb-6 p-6 bg-linear-to-r from-red-50 to-orange-50 rounded-xl border-2 border-red-200">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-bold text-red-900">
@@ -211,14 +211,14 @@ Generated: ${new Date().toISOString()}
                     <div className="text-lg font-bold text-red-600">
                       {formatCurrency(claim.total_charge || 0)}
                     </div>
-                    <span className="px-2 py-1 text-xs font-semibold bg-red-100 text-red-800 rounded">
+                    <span className="px-2 py-1 text-xs font-semibold bg-red-100 text-red-800 rounded-sm">
                       REJECTED
                     </span>
                   </div>
                 </div>
 
                 {claim.response_payload && (
-                  <div className="mt-2 p-2 bg-red-50 rounded text-xs text-red-700">
+                  <div className="mt-2 p-2 bg-red-50 rounded-sm text-xs text-red-700">
                     <strong>Reason:</strong> {claim.response_payload.slice(0, 100)}...
                   </div>
                 )}
@@ -230,7 +230,7 @@ Generated: ${new Date().toISOString()}
                       setSelectedClaim(claim);
                       generateAppealLetter(claim);
                     }}
-                    className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded"
+                    className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-sm"
                   >
                     Generate Appeal
                   </button>
@@ -239,7 +239,7 @@ Generated: ${new Date().toISOString()}
                       e.stopPropagation();
                       handleResubmit(claim.id);
                     }}
-                    className="px-3 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded"
+                    className="px-3 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded-sm"
                   >
                     Resubmit
                   </button>

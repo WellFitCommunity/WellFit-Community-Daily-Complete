@@ -164,7 +164,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
                   <img
                     src={branding.logoUrl}
                     alt="Logo"
-                    className="h-8 w-auto mr-3 rounded"
+                    className="h-8 w-auto mr-3 rounded-sm"
                   />
                 )}
                 <div>
@@ -317,7 +317,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
         {/* Mobile Navigation */}
         {showMobileMenu && (
           <div
-            className="lg:hidden border-t backdrop-blur"
+            className="lg:hidden border-t backdrop-blur-sm"
             style={{
               borderColor: branding?.primaryColor || '#002a4d',
               backgroundColor: `${branding?.primaryColor || '#003865'}cc` // 80% opacity

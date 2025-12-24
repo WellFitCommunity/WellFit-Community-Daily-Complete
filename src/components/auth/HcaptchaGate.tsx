@@ -36,7 +36,7 @@ export default function HcaptchaGate({ onVerified }: Props) {
       <button
         type="submit"
         disabled={submitting}
-        className="px-4 py-2 rounded bg-blue-600 text-white disabled:opacity-50"
+        className="px-4 py-2 rounded-sm bg-blue-600 text-white disabled:opacity-50"
       >
         {submitting ? 'Verifying…' : 'Submit'}
       </button>

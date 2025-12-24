@@ -56,14 +56,14 @@ export const VoiceProfileMaturity: React.FC<VoiceProfileMaturityProps> = ({
   if (loading) {
     return (
       <div className="animate-pulse">
-        <div className="h-20 bg-gradient-to-r from-purple-100 to-pink-100 rounded-xl"></div>
+        <div className="h-20 bg-linear-to-r from-purple-100 to-pink-100 rounded-xl"></div>
       </div>
     );
   }
 
   if (!profile) {
     return (
-      <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-200">
+      <div className="bg-linear-to-br from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-200">
         <div className="flex items-center space-x-3">
           <div className="text-3xl">🎤</div>
           <div>
@@ -120,7 +120,7 @@ export const VoiceProfileMaturity: React.FC<VoiceProfileMaturityProps> = ({
           initial={{ width: 0 }}
           animate={{ width: `${score}%` }}
           transition={{ duration: 1, ease: 'easeOut' }}
-          className={`h-full bg-gradient-to-r ${color}`}
+          className={`h-full bg-linear-to-r ${color}`}
         ></motion.div>
       </div>
     </div>
@@ -133,7 +133,7 @@ export const VoiceProfileMaturity: React.FC<VoiceProfileMaturityProps> = ({
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3 }}
         className={`
-          bg-gradient-to-br ${statusConfig.bgGradient}
+          bg-linear-to-br ${statusConfig.bgGradient}
           rounded-xl p-4 border ${statusConfig.borderColor}
           shadow-lg hover:shadow-xl transition-all duration-300
           cursor-pointer
@@ -238,7 +238,7 @@ export const VoiceProfileMaturity: React.FC<VoiceProfileMaturityProps> = ({
 
   // Detailed variant
   return (
-    <div className={`bg-gradient-to-br ${statusConfig.bgGradient} rounded-2xl p-6 border ${statusConfig.borderColor} shadow-xl`}>
+    <div className={`bg-linear-to-br ${statusConfig.bgGradient} rounded-2xl p-6 border ${statusConfig.borderColor} shadow-xl`}>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-4">
           <motion.div
@@ -261,7 +261,7 @@ export const VoiceProfileMaturity: React.FC<VoiceProfileMaturityProps> = ({
         </div>
 
         <div className="text-center">
-          <p className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+          <p className="text-4xl font-bold bg-linear-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
             {profile.maturity_score}%
           </p>
           <p className="text-xs text-gray-600">Overall Maturity</p>
@@ -275,15 +275,15 @@ export const VoiceProfileMaturity: React.FC<VoiceProfileMaturityProps> = ({
       </div>
 
       <div className="grid grid-cols-3 gap-4 mt-6">
-        <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 text-center">
+        <div className="bg-white/70 backdrop-blur-xs rounded-xl p-4 text-center">
           <p className="text-3xl font-bold text-gray-800">{profile.total_sessions}</p>
           <p className="text-sm text-gray-600 mt-1">Total Sessions</p>
         </div>
-        <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 text-center">
+        <div className="bg-white/70 backdrop-blur-xs rounded-xl p-4 text-center">
           <p className="text-3xl font-bold text-gray-800">{profile.total_corrections}</p>
           <p className="text-sm text-gray-600 mt-1">Corrections Made</p>
         </div>
-        <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 text-center">
+        <div className="bg-white/70 backdrop-blur-xs rounded-xl p-4 text-center">
           <p className="text-3xl font-bold text-gray-800">
             {Math.floor(profile.total_transcription_time_seconds / 3600)}h
           </p>
@@ -292,7 +292,7 @@ export const VoiceProfileMaturity: React.FC<VoiceProfileMaturityProps> = ({
       </div>
 
       {profile.fully_adapted_at && (
-        <div className="mt-6 bg-gradient-to-r from-green-400 to-emerald-500 rounded-xl p-4 text-center">
+        <div className="mt-6 bg-linear-to-r from-green-400 to-emerald-500 rounded-xl p-4 text-center">
           <p className="text-white font-bold">
             🎉 Fully adapted on {new Date(profile.fully_adapted_at).toLocaleDateString()}!
           </p>

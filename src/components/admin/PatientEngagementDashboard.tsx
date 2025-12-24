@@ -155,7 +155,7 @@ const PatientEngagementDashboard: React.FC = () => {
         <p className="text-red-600">{error}</p>
         <button
           onClick={loadEngagementData}
-          className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          className="mt-4 px-4 py-2 bg-red-600 text-white rounded-sm hover:bg-red-700"
         >
           Retry
         </button>
@@ -177,29 +177,29 @@ const PatientEngagementDashboard: React.FC = () => {
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
+        <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-blue-500">
           <div className="text-sm text-gray-600">Total Patients</div>
           <div className="text-2xl font-bold text-gray-800">{engagementData.length}</div>
         </div>
-        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
+        <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-green-500">
           <div className="text-sm text-gray-600">High Engagement</div>
           <div className="text-2xl font-bold text-green-600">
             {engagementData.filter(d => getEngagementLevel(d.engagement_score) === 'high').length}
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-yellow-500">
+        <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-yellow-500">
           <div className="text-sm text-gray-600">Medium Engagement</div>
           <div className="text-2xl font-bold text-yellow-600">
             {engagementData.filter(d => getEngagementLevel(d.engagement_score) === 'medium').length}
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-orange-500">
+        <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-orange-500">
           <div className="text-sm text-gray-600">High Risk</div>
           <div className="text-2xl font-bold text-orange-600">
             {engagementData.filter(d => getEngagementLevel(d.engagement_score) === 'low').length}
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-red-600 animate-pulse">
+        <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-red-600 animate-pulse">
           <div className="text-sm text-gray-600 font-bold">🚨 CRITICAL</div>
           <div className="text-2xl font-bold text-red-600">
             {engagementData.filter(d => getEngagementLevel(d.engagement_score) === 'critical').length}
@@ -208,7 +208,7 @@ const PatientEngagementDashboard: React.FC = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-4">
+      <div className="bg-white rounded-lg shadow-sm p-4">
         <div className="flex flex-wrap gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
@@ -270,7 +270,7 @@ const PatientEngagementDashboard: React.FC = () => {
       )}
 
       {/* Engagement Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -468,14 +468,14 @@ const PatientEngagementDashboard: React.FC = () => {
           <div>
             <span className="font-medium text-orange-700">Low (20-39):</span> Limited activity, <strong>HIGH RISK</strong> 🟠
           </div>
-          <div className="bg-red-100 px-2 py-1 rounded border border-red-300">
+          <div className="bg-red-100 px-2 py-1 rounded-sm border border-red-300">
             <span className="font-bold text-red-800">🚨 CRITICAL (0-19):</span> <strong>IMMEDIATE INTERVENTION REQUIRED</strong>
           </div>
         </div>
         <div className="mt-3 text-xs text-blue-700">
           <strong>⭐ Current Scoring:</strong> Check-ins (2 pts) + Self-reports (3 pts) + Questions (2 pts) - Last 30 days
         </div>
-        <div className="mt-2 text-xs text-blue-600 bg-white p-2 rounded">
+        <div className="mt-2 text-xs text-blue-600 bg-white p-2 rounded-sm">
           <strong>Mood Indicators:</strong> Avg Mood Score (1-5 scale), Latest Mood, Negative Moods Count, Symptom Reports - helps identify patients needing intervention
         </div>
       </div>

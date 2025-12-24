@@ -279,10 +279,10 @@ export const atlasClasses = {
   hoverBgLimeDark: 'hover:bg-[#A8C230]',
 
   // === GRADIENTS ===
-  gradientTealHero: 'bg-gradient-to-br from-[#1BA39C] to-[#158A84]',
-  gradientTealSubtle: 'bg-gradient-to-br from-[#E8F8F7] to-[#D1F2F0]',
-  gradientSilverHero: 'bg-gradient-to-br from-[#C0C5CB] to-[#A8ADB3]',
-  gradientSilverSheen: 'bg-gradient-to-br from-[#E8EAED] via-[#C0C5CB] to-[#D8DCE0]',
+  gradientTealHero: 'bg-linear-to-br from-[#1BA39C] to-[#158A84]',
+  gradientTealSubtle: 'bg-linear-to-br from-[#E8F8F7] to-[#D1F2F0]',
+  gradientSilverHero: 'bg-linear-to-br from-[#C0C5CB] to-[#A8ADB3]',
+  gradientSilverSheen: 'bg-linear-to-br from-[#E8EAED] via-[#C0C5CB] to-[#D8DCE0]',
 
   // === BUTTON PRESETS ===
   // Primary CTA - Lime accent with black border
@@ -305,11 +305,11 @@ export const atlasClasses = {
   cardTeal: 'bg-[#E8F8F7] rounded-xl shadow-md border border-black hover:border-2 hover:border-[#1BA39C] transition-all',
 
   // Silver statement card
-  cardSilver: 'bg-gradient-to-br from-[#C0C5CB] to-[#A8ADB3] rounded-xl shadow-lg border-2 border-black text-black',
+  cardSilver: 'bg-linear-to-br from-[#C0C5CB] to-[#A8ADB3] rounded-xl shadow-lg border-2 border-black text-black',
 
   // === SECTION HEADERS ===
   // Silver hero header - Statement piece
-  headerHero: 'bg-gradient-to-r from-[#C0C5CB] to-[#A8ADB3] text-black px-6 py-4 rounded-t-xl border-2 border-black font-bold text-xl',
+  headerHero: 'bg-linear-to-r from-[#C0C5CB] to-[#A8ADB3] text-black px-6 py-4 rounded-t-xl border-2 border-black font-bold text-xl',
 
   // Teal section header - Dominant use
   headerSection: 'bg-[#E8F8F7] text-[#1A1A1A] px-6 py-3 rounded-t-xl border border-black border-b-0 font-semibold',

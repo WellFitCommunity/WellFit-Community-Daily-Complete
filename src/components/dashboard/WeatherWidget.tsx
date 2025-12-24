@@ -60,15 +60,15 @@ const WeatherWidget: React.FC = () => {
   };
 
   return (
-    <section className="bg-white border-2 border-wellfitGreen p-4 rounded-xl shadow-md w-full max-w-sm text-sm text-[#003865]">
-      <h2 className="text-lg font-semibold text-wellfitBlue mb-2">Current Weather</h2>
+    <section className="bg-white border-2 border-wellfit-green p-4 rounded-xl shadow-md w-full max-w-sm text-sm text-[#003865]">
+      <h2 className="text-lg font-semibold text-wellfit-blue mb-2">Current Weather</h2>
 
       {error && !useManual && (
         <div className="space-y-2">
           <p className="text-orange-600">{error}</p>
           <button
             onClick={() => setUseManual(true)}
-            className="py-2 px-4 bg-wellfitBlue text-white rounded-lg hover:bg-wellfitGreen"
+            className="py-2 px-4 bg-wellfit-blue text-white rounded-lg hover:bg-wellfit-green"
           >
             Enter city manually
           </button>
@@ -82,11 +82,11 @@ const WeatherWidget: React.FC = () => {
             placeholder="City name or ZIP"
             value={city}
             onChange={e => setCity(e.target.value)}
-            className="w-full p-2 border border-wellfitGreen rounded"
+            className="w-full p-2 border border-wellfit-green rounded-sm"
           />
           <button
             onClick={handleManual}
-            className="py-2 px-4 bg-wellfitGreen text-white rounded hover:bg-wellfitBlue"
+            className="py-2 px-4 bg-wellfit-green text-white rounded-sm hover:bg-wellfit-blue"
           >
             Get Weather
           </button>

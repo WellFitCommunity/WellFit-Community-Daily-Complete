@@ -158,8 +158,8 @@ export const WellnessCommandCenter: React.FC<WellnessCommandCenterProps> = ({
 
   if (loading) {
     return (
-      <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-2xl p-6 shadow-lg border-2 border-blue-200 animate-pulse">
-        <div className="h-8 bg-blue-200 rounded w-48 mb-4"></div>
+      <div className="bg-linear-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-2xl p-6 shadow-lg border-2 border-blue-200 animate-pulse">
+        <div className="h-8 bg-blue-200 rounded-sm w-48 mb-4"></div>
         <div className="grid grid-cols-3 gap-4">
           <div className="h-24 bg-blue-200 rounded-xl"></div>
           <div className="h-24 bg-blue-200 rounded-xl"></div>
@@ -172,7 +172,7 @@ export const WellnessCommandCenter: React.FC<WellnessCommandCenterProps> = ({
   // Compact view for sidebar/widget
   if (showCompact) {
     return (
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 shadow-md border border-blue-200">
+      <div className="bg-linear-to-br from-blue-50 to-indigo-50 rounded-xl p-4 shadow-md border border-blue-200">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-bold text-gray-900">Your Wellness</h3>
           {stats && (
@@ -205,7 +205,7 @@ export const WellnessCommandCenter: React.FC<WellnessCommandCenterProps> = ({
   }
 
   return (
-    <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-2xl p-6 shadow-xl border-2 border-blue-200">
+    <div className="bg-linear-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-2xl p-6 shadow-xl border-2 border-blue-200">
       {/* Proactive Nudge Modal */}
       {showNudge && nudgeType && (
         <ProactiveNudge
@@ -254,7 +254,7 @@ export const WellnessCommandCenter: React.FC<WellnessCommandCenterProps> = ({
 
       {/* Today's Emotional State */}
       {todayCheckin ? (
-        <div className="bg-white rounded-xl p-5 mb-6 border border-gray-200 shadow-sm">
+        <div className="bg-white rounded-xl p-5 mb-6 border border-gray-200 shadow-xs">
           <div className="grid grid-cols-3 gap-6">
             {/* Mood */}
             <div className="text-center">
@@ -271,7 +271,7 @@ export const WellnessCommandCenter: React.FC<WellnessCommandCenterProps> = ({
                 {[...Array(10)].map((_, i) => (
                   <div
                     key={i}
-                    className={`w-2 h-4 rounded-sm ${
+                    className={`w-2 h-4 rounded-xs ${
                       i < todayCheckin.energy_level ? getEnergyColor(todayCheckin.energy_level) : 'bg-gray-200'
                     }`}
                   />

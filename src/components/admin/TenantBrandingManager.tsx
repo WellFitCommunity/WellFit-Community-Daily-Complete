@@ -244,7 +244,7 @@ const TenantBrandingManager: React.FC = () => {
               type="file"
               accept="image/png,image/jpeg,image/svg+xml"
               onChange={handleLogoChange}
-              className="w-full px-4 py-2 border border-slate-600 rounded-lg bg-slate-700 text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-[#00857a] file:text-white file:cursor-pointer"
+              className="w-full px-4 py-2 border border-slate-600 rounded-lg bg-slate-700 text-white file:mr-4 file:py-2 file:px-4 file:rounded-sm file:border-0 file:bg-[#00857a] file:text-white file:cursor-pointer"
             />
             <p className="text-xs text-slate-500 mt-1">
               PNG, JPG, or SVG. Max 5MB.
@@ -262,7 +262,7 @@ const TenantBrandingManager: React.FC = () => {
                   type="color"
                   value={primaryColor}
                   onChange={(e) => setPrimaryColor(e.target.value)}
-                  className="h-10 w-20 border border-slate-600 rounded cursor-pointer"
+                  className="h-10 w-20 border border-slate-600 rounded-sm cursor-pointer"
                 />
                 <input
                   type="text"
@@ -283,7 +283,7 @@ const TenantBrandingManager: React.FC = () => {
                   type="color"
                   value={secondaryColor}
                   onChange={(e) => setSecondaryColor(e.target.value)}
-                  className="h-10 w-20 border border-slate-600 rounded cursor-pointer"
+                  className="h-10 w-20 border border-slate-600 rounded-sm cursor-pointer"
                 />
                 <input
                   type="text"
@@ -304,7 +304,7 @@ const TenantBrandingManager: React.FC = () => {
                   type="color"
                   value={accentColor || '#FF6B35'}
                   onChange={(e) => setAccentColor(e.target.value)}
-                  className="h-10 w-20 border border-slate-600 rounded cursor-pointer"
+                  className="h-10 w-20 border border-slate-600 rounded-sm cursor-pointer"
                 />
                 <input
                   type="text"
@@ -325,7 +325,7 @@ const TenantBrandingManager: React.FC = () => {
                   type="color"
                   value={textColor}
                   onChange={(e) => setTextColor(e.target.value)}
-                  className="h-10 w-20 border border-slate-600 rounded cursor-pointer"
+                  className="h-10 w-20 border border-slate-600 rounded-sm cursor-pointer"
                 />
                 <input
                   type="text"

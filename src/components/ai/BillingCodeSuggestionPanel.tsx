@@ -192,7 +192,7 @@ export const BillingCodeSuggestionPanel: React.FC<BillingCodeSuggestionPanelProp
 
   return (
     <Card className="border-2 border-blue-200">
-      <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">
+      <CardHeader className="bg-linear-to-r from-blue-50 to-indigo-50">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-blue-600" />
@@ -268,7 +268,7 @@ export const BillingCodeSuggestionPanel: React.FC<BillingCodeSuggestionPanelProp
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <code className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
+                        <code className="text-sm font-mono bg-gray-100 px-2 py-1 rounded-sm">
                           {code.code}
                         </code>
                         <Badge
@@ -301,7 +301,7 @@ export const BillingCodeSuggestionPanel: React.FC<BillingCodeSuggestionPanelProp
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <code className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
+                        <code className="text-sm font-mono bg-gray-100 px-2 py-1 rounded-sm">
                           {code.code}
                         </code>
                         <Badge
@@ -334,7 +334,7 @@ export const BillingCodeSuggestionPanel: React.FC<BillingCodeSuggestionPanelProp
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <code className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
+                        <code className="text-sm font-mono bg-gray-100 px-2 py-1 rounded-sm">
                           {code.code}
                         </code>
                         <Badge

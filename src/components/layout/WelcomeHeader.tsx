@@ -23,7 +23,7 @@ export default function WelcomeHeader() {
             href="https://www.TheWellFitCommunity.org"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow hover:shadow-md transition focus:outline-none focus:ring-2 focus:ring-offset-2"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium shadow-sm hover:shadow-md transition focus:outline-hidden focus:ring-2 focus:ring-offset-2"
             style={{ backgroundColor: WELLFIT_GREEN, color: '#fff' }}
           >
             Visit Website

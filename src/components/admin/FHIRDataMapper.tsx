@@ -150,7 +150,7 @@ PID|0001||PATID1234^5^M11^ADT1^MR^UNIVERSITY HOSPITAL~123456789^^^USSSA^SS||EVER
                   <label className="font-medium">Source Data Type:</label>
                   <select
                     {...register('sourceType', { required: 'Source type is required' })}
-                    className="p-2 border border-gray-300 rounded"
+                    className="p-2 border border-gray-300 rounded-sm"
                   >
                     <option value="JSON">JSON</option>
                     <option value="CSV">CSV</option>
@@ -209,7 +209,7 @@ PID|0001||PATID1234^5^M11^ADT1^MR^UNIVERSITY HOSPITAL~123456789^^^USSSA^SS||EVER
                   <button
                     key={type}
                     onClick={() => loadSampleData(type)}
-                    className="w-full text-left p-3 border border-gray-200 rounded hover:bg-gray-50"
+                    className="w-full text-left p-3 border border-gray-200 rounded-sm hover:bg-gray-50"
                   >
                     <div className="font-medium">{type}</div>
                     <div className="text-xs text-gray-500 truncate">
@@ -390,7 +390,7 @@ PID|0001||PATID1234^5^M11^ADT1^MR^UNIVERSITY HOSPITAL~123456789^^^USSSA^SS||EVER
                             <div className="text-xs text-gray-500">{rule.sourceType}</div>
                           </td>
                           <td className="border border-gray-300 px-4 py-2">
-                            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
+                            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-sm text-xs">
                               {rule.fhirResource}
                             </span>
                           </td>
@@ -401,7 +401,7 @@ PID|0001||PATID1234^5^M11^ADT1^MR^UNIVERSITY HOSPITAL~123456789^^^USSSA^SS||EVER
                             {rule.transformation || 'Direct mapping'}
                           </td>
                           <td className="border border-gray-300 px-4 py-2 text-center">
-                            <span className={`px-2 py-1 rounded text-xs ${getConfidenceColor(rule.confidence)}`}>
+                            <span className={`px-2 py-1 rounded-sm text-xs ${getConfidenceColor(rule.confidence)}`}>
                               {rule.confidence}%
                             </span>
                           </td>
@@ -470,7 +470,7 @@ PID|0001||PATID1234^5^M11^ADT1^MR^UNIVERSITY HOSPITAL~123456789^^^USSSA^SS||EVER
                         📋 Copy Code
                       </Button>
                     </div>
-                    <pre className="text-xs overflow-auto max-h-96 bg-white p-3 rounded border">
+                    <pre className="text-xs overflow-auto max-h-96 bg-white p-3 rounded-sm border">
                       {generateTransformCode()}
                     </pre>
                   </div>

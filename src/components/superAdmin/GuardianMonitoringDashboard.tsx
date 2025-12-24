@@ -187,12 +187,12 @@ const GuardianMonitoringDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow">
+      <div className="bg-white p-6 rounded-lg shadow-sm">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+          <div className="h-8 bg-gray-200 rounded-sm w-1/3"></div>
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-24 bg-gray-200 rounded"></div>
+              <div key={i} className="h-24 bg-gray-200 rounded-sm"></div>
             ))}
           </div>
         </div>
@@ -203,7 +203,7 @@ const GuardianMonitoringDashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white p-6 rounded-lg shadow">
+      <div className="bg-white p-6 rounded-lg shadow-sm">
         <div className="flex items-center justify-between mb-6">
           <div>
             <div className="flex items-center gap-3">
@@ -235,7 +235,7 @@ const GuardianMonitoringDashboard: React.FC = () => {
             <button
               onClick={runHealthCheck}
               disabled={healthCheckRunning}
-              className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2 transition-colors shadow-sm"
+              className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2 transition-colors shadow-xs"
             >
               <Activity className={`w-4 h-4 ${healthCheckRunning ? 'animate-spin' : ''}`} />
               Run Health Check
@@ -321,7 +321,7 @@ const GuardianMonitoringDashboard: React.FC = () => {
       </div>
 
       {/* Recent Alerts */}
-      <div className="bg-white p-6 rounded-lg shadow">
+      <div className="bg-white p-6 rounded-lg shadow-sm">
         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
           <AlertTriangle className="w-5 h-5 text-red-600" />
           Recent Guardian Alerts
@@ -345,14 +345,14 @@ const GuardianMonitoringDashboard: React.FC = () => {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${colors.text}`}>
+                        <span className={`px-2 py-1 rounded-sm text-xs font-bold uppercase ${colors.text}`}>
                           {alert.severity}
                         </span>
                         <span className="text-xs text-gray-600">
                           {new Date(alert.created_at).toLocaleString()}
                         </span>
                         {alert.resolved && (
-                          <span className="px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">
+                          <span className="px-2 py-1 rounded-sm text-xs font-medium bg-green-100 text-green-800">
                             Resolved
                           </span>
                         )}
@@ -378,7 +378,7 @@ const GuardianMonitoringDashboard: React.FC = () => {
       </div>
 
       {/* Cron Execution History */}
-      <div className="bg-white p-6 rounded-lg shadow">
+      <div className="bg-white p-6 rounded-lg shadow-sm">
         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
           <Clock className="w-5 h-5 text-purple-600" />
           Automated Monitoring Schedule

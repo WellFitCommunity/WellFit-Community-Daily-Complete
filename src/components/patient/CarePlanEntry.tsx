@@ -180,7 +180,7 @@ const CarePlanEntry: React.FC<CarePlanEntryProps> = ({ userId, onSave, onCancel 
     <div className="max-w-5xl mx-auto px-4 py-6">
       <div className="bg-white rounded-xl shadow-lg border border-gray-200">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-t-xl">
+        <div className="bg-linear-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-t-xl">
           <div className="flex justify-between items-center">
             <div>
               <h2 className="text-2xl font-bold mb-1">📋 Create Care Plan</h2>
@@ -286,7 +286,7 @@ const CarePlanEntry: React.FC<CarePlanEntryProps> = ({ userId, onSave, onCancel 
                       type="checkbox"
                       checked={formData.category.includes(key)}
                       onChange={() => handleCategoryToggle(key)}
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded-sm focus:ring-blue-500"
                     />
                     <span className="text-sm text-gray-900">{label}</span>
                   </label>
@@ -457,7 +457,7 @@ const CarePlanEntry: React.FC<CarePlanEntryProps> = ({ userId, onSave, onCancel 
                     <button
                       type="button"
                       onClick={() => removeActivity(index)}
-                      className="text-red-600 hover:bg-red-50 rounded px-2 py-1 text-sm"
+                      className="text-red-600 hover:bg-red-50 rounded-sm px-2 py-1 text-sm"
                     >
                       Remove
                     </button>

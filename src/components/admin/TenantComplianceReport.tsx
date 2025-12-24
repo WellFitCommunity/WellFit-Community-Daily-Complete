@@ -228,7 +228,7 @@ export const TenantComplianceReport: React.FC = () => {
       </div>
 
       {/* Compliance Score */}
-      <div className="bg-white rounded-lg shadow border border-gray-200 p-8">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
         <div className="flex items-center justify-between">
           <div className="flex-1">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Overall Compliance Score</h3>
@@ -243,7 +243,7 @@ export const TenantComplianceReport: React.FC = () => {
               )}
             </div>
           </div>
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             {complianceScore >= 90 ? (
               <CheckCircle className="w-32 h-32 text-green-500" />
             ) : (
@@ -267,7 +267,7 @@ export const TenantComplianceReport: React.FC = () => {
       </div>
 
       {/* Compliance Metrics */}
-      <div className="bg-white rounded-lg shadow border border-gray-200">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="p-6 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">HIPAA Security Requirements</h3>
           <p className="text-sm text-gray-600 mt-1">Individual compliance checks</p>
@@ -306,7 +306,7 @@ export const TenantComplianceReport: React.FC = () => {
       </div>
 
       {/* Recent Events */}
-      <div className="bg-white rounded-lg shadow border border-gray-200">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="p-6 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
             <FileText className="w-5 h-5 text-blue-600" />

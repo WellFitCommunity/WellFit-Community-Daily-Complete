@@ -147,7 +147,7 @@ const PasswordGenerator: React.FC<PasswordGeneratorProps> = ({
             value={generatedPassword}
             readOnly
             placeholder="Click Generate to create password"
-            className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md bg-gray-50 text-gray-900 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md bg-gray-50 text-gray-900 font-mono text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500"
           />
           {generatedPassword && (
             <button

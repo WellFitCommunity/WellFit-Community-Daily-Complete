@@ -131,7 +131,7 @@ export const EAAffirmationToast: React.FC<EAAffirmationToastProps> = ({
         `}
       >
         {/* Icon */}
-        <div className="flex-shrink-0 mt-0.5">
+        <div className="shrink-0 mt-0.5">
           {styles.icon}
         </div>
 
@@ -146,7 +146,7 @@ export const EAAffirmationToast: React.FC<EAAffirmationToastProps> = ({
         {onDismiss && (
           <button
             onClick={handleDismiss}
-            className="flex-shrink-0 text-slate-400 hover:text-white transition-colors"
+            className="shrink-0 text-slate-400 hover:text-white transition-colors"
             aria-label="Dismiss"
           >
             <X className="w-4 h-4" />

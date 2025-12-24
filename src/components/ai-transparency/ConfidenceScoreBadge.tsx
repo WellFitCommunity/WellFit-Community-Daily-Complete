@@ -199,7 +199,7 @@ export const ConfidenceScoreBadge: React.FC<ConfidenceScoreBadgeProps> = ({
     <div className={`rounded-2xl ${config.bgColor} border-2 ${config.borderColor} p-6 shadow-lg`}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-3">
-          <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${config.gradient} flex items-center justify-center text-white text-2xl font-bold`}>
+          <div className={`w-12 h-12 rounded-full bg-linear-to-br ${config.gradient} flex items-center justify-center text-white text-2xl font-bold`}>
             {config.icon}
           </div>
           <div>
@@ -209,7 +209,7 @@ export const ConfidenceScoreBadge: React.FC<ConfidenceScoreBadgeProps> = ({
         </div>
 
         <div className="text-center">
-          <p className={`text-5xl font-bold bg-gradient-to-r ${config.gradient} bg-clip-text text-transparent`}>{score}%</p>
+          <p className={`text-5xl font-bold bg-linear-to-r ${config.gradient} bg-clip-text text-transparent`}>{score}%</p>
         </div>
       </div>
 
@@ -220,7 +220,7 @@ export const ConfidenceScoreBadge: React.FC<ConfidenceScoreBadgeProps> = ({
             initial={{ width: 0 }}
             animate={{ width: `${score}%` }}
             transition={{ duration: 1, ease: 'easeOut' }}
-            className={`h-full bg-gradient-to-r ${config.gradient}`}
+            className={`h-full bg-linear-to-r ${config.gradient}`}
           ></motion.div>
         </div>
         <div className="flex justify-between text-xs text-gray-500 mt-1">
@@ -233,7 +233,7 @@ export const ConfidenceScoreBadge: React.FC<ConfidenceScoreBadgeProps> = ({
 
       {/* Explanation */}
       {explanation && (
-        <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 mb-4">
+        <div className="bg-white/70 backdrop-blur-xs rounded-xl p-4 mb-4">
           <p className="font-semibold text-gray-800 mb-2">AI Reasoning:</p>
           <p className="text-sm text-gray-700">{explanation}</p>
         </div>
@@ -241,7 +241,7 @@ export const ConfidenceScoreBadge: React.FC<ConfidenceScoreBadgeProps> = ({
 
       {/* Supporting Evidence */}
       {supportingEvidence && Object.keys(supportingEvidence).length > 0 && (
-        <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 mb-4">
+        <div className="bg-white/70 backdrop-blur-xs rounded-xl p-4 mb-4">
           <p className="font-semibold text-gray-800 mb-2">Supporting Evidence:</p>
           <div className="space-y-2">
             {Object.entries(supportingEvidence).map(([key, value]) => (
@@ -261,7 +261,7 @@ export const ConfidenceScoreBadge: React.FC<ConfidenceScoreBadgeProps> = ({
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => handleValidation(true)}
-            className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all"
+            className="flex-1 bg-linear-to-r from-green-500 to-emerald-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all"
           >
             ✓ Accept Suggestion
           </motion.button>
@@ -269,7 +269,7 @@ export const ConfidenceScoreBadge: React.FC<ConfidenceScoreBadgeProps> = ({
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => handleValidation(false)}
-            className="flex-1 bg-gradient-to-r from-red-500 to-rose-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all"
+            className="flex-1 bg-linear-to-r from-red-500 to-rose-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all"
           >
             ✗ Reject & Modify
           </motion.button>
@@ -291,7 +291,7 @@ export const ConfidenceScoreBadge: React.FC<ConfidenceScoreBadgeProps> = ({
 
       {/* Recommendation based on confidence */}
       {level === 'medium' && (
-        <div className="mt-4 bg-yellow-100 border-l-4 border-yellow-500 p-3 rounded">
+        <div className="mt-4 bg-yellow-100 border-l-4 border-yellow-500 p-3 rounded-sm">
           <p className="text-sm text-yellow-800">
             <span className="font-semibold">⚠ Review Recommended:</span> Please verify this suggestion with clinical judgment.
           </p>
@@ -299,7 +299,7 @@ export const ConfidenceScoreBadge: React.FC<ConfidenceScoreBadgeProps> = ({
       )}
 
       {level === 'low' && (
-        <div className="mt-4 bg-red-100 border-l-4 border-red-500 p-3 rounded">
+        <div className="mt-4 bg-red-100 border-l-4 border-red-500 p-3 rounded-sm">
           <p className="text-sm text-red-800">
             <span className="font-semibold">! Manual Review Required:</span> Low confidence. Strongly recommend manual verification.
           </p>

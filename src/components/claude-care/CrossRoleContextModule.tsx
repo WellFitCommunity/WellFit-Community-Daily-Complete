@@ -228,10 +228,10 @@ const CrossRoleContextModule: React.FC<Props> = ({ userRole, patientId, userId }
                   <span className="text-2xl">{getContextTypeIcon(entry.contextType)}</span>
                   <div>
                     <div className="flex items-center space-x-2">
-                      <span className={`text-xs px-2 py-1 rounded ${getRoleBadgeColor(entry.contributedByRole)}`}>
+                      <span className={`text-xs px-2 py-1 rounded-sm ${getRoleBadgeColor(entry.contributedByRole)}`}>
                         {entry.contributedByRole.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
                       </span>
-                      <span className={`text-xs px-2 py-1 rounded ${getContextTypeColor(entry.contextType)}`}>
+                      <span className={`text-xs px-2 py-1 rounded-sm ${getContextTypeColor(entry.contextType)}`}>
                         {entry.contextType}
                       </span>
                     </div>
@@ -256,7 +256,7 @@ const CrossRoleContextModule: React.FC<Props> = ({ userRole, patientId, userId }
                     <summary className="text-sm text-blue-600 cursor-pointer hover:text-blue-800">
                       View Details
                     </summary>
-                    <pre className="mt-2 text-xs bg-gray-50 p-2 rounded border border-gray-200 overflow-x-auto">
+                    <pre className="mt-2 text-xs bg-gray-50 p-2 rounded-sm border border-gray-200 overflow-x-auto">
                       {JSON.stringify(entry.contextData, null, 2)}
                     </pre>
                   </details>

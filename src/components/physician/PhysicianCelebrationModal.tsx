@@ -162,7 +162,7 @@ export const PhysicianCelebrationModal: React.FC<PhysicianCelebrationModalProps>
   }, []);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 z-[100] flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-60 z-100 flex items-center justify-center p-4">
       {/* Medical Confetti */}
       {showConfetti && (
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -192,7 +192,7 @@ export const PhysicianCelebrationModal: React.FC<PhysicianCelebrationModalProps>
 
       {/* Main celebration card */}
       <div
-        className={`bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl shadow-2xl max-w-2xl w-full p-8 relative transform transition-all duration-500 ${
+        className={`bg-linear-to-br from-blue-50 to-indigo-50 rounded-2xl shadow-2xl max-w-2xl w-full p-8 relative transform transition-all duration-500 ${
           animationPhase === 'entrance' ? 'scale-75 opacity-0' : 'scale-100 opacity-100'
         }`}
       >
@@ -212,7 +212,7 @@ export const PhysicianCelebrationModal: React.FC<PhysicianCelebrationModalProps>
           </div>
 
           {/* Celebration text */}
-          <h2 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-2">
+          <h2 className="text-4xl font-bold text-transparent bg-clip-text bg-linear-to-r from-blue-600 to-indigo-600 mb-2">
             {celebration.text}
           </h2>
 
@@ -223,7 +223,7 @@ export const PhysicianCelebrationModal: React.FC<PhysicianCelebrationModalProps>
           )}
 
           {metricValue !== undefined && (
-            <div className="mt-4 inline-block px-6 py-3 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-full">
+            <div className="mt-4 inline-block px-6 py-3 bg-linear-to-r from-blue-100 to-indigo-100 rounded-full">
               <span className="text-3xl font-bold text-blue-700">{metricValue}</span>
               <span className="text-sm text-gray-600 ml-2">
                 {achievementType === 'revenue' && '💰'}
@@ -275,22 +275,22 @@ export const PhysicianCelebrationModal: React.FC<PhysicianCelebrationModalProps>
 
         {/* Achievement badges */}
         <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="bg-white rounded-lg p-4 text-center shadow-sm">
+          <div className="bg-white rounded-lg p-4 text-center shadow-xs">
             <div className="text-3xl mb-1">🏆</div>
             <div className="text-xs text-gray-600">Excellence</div>
           </div>
-          <div className="bg-white rounded-lg p-4 text-center shadow-sm">
+          <div className="bg-white rounded-lg p-4 text-center shadow-xs">
             <div className="text-3xl mb-1">💪</div>
             <div className="text-xs text-gray-600">Commitment</div>
           </div>
-          <div className="bg-white rounded-lg p-4 text-center shadow-sm">
+          <div className="bg-white rounded-lg p-4 text-center shadow-xs">
             <div className="text-3xl mb-1">✨</div>
             <div className="text-xs text-gray-600">Impact</div>
           </div>
         </div>
 
         {/* Encouragement message */}
-        <div className="bg-gradient-to-r from-blue-100 to-indigo-100 rounded-lg p-4 mb-6">
+        <div className="bg-linear-to-r from-blue-100 to-indigo-100 rounded-lg p-4 mb-6">
           <p className="text-center text-gray-800 font-medium">
             {achievementType === 'wellness_module' && (
               <>
@@ -355,7 +355,7 @@ export const PhysicianCelebrationModal: React.FC<PhysicianCelebrationModalProps>
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 transition-all transform hover:scale-105"
+            className="flex-1 px-6 py-3 bg-linear-to-r from-blue-600 to-indigo-600 text-white rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 transition-all transform hover:scale-105"
           >
             Keep Going, Doc! 🚀
           </button>

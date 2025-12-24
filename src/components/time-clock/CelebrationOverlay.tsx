@@ -93,7 +93,7 @@ export const CelebrationOverlay: React.FC<CelebrationOverlayProps> = ({
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.5, opacity: 0 }}
             transition={{ type: 'spring', damping: 15, stiffness: 300 }}
-            className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl shadow-2xl p-8 mx-4 max-w-md text-center border border-teal-500/30"
+            className="bg-linear-to-br from-slate-800 to-slate-900 rounded-2xl shadow-2xl p-8 mx-4 max-w-md text-center border border-teal-500/30"
             data-testid="celebration-message"
           >
             <motion.div

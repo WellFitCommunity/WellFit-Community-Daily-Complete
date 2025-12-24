@@ -384,7 +384,7 @@ const UserRoleManager: React.FC = () => {
                                 key={role}
                                 onClick={() => revokeRole(user.id, user.email, role)}
                                 disabled={actionLoading}
-                                className="inline-flex items-center gap-1 px-3 py-1 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold rounded border border-red-300 transition-all disabled:opacity-50"
+                                className="inline-flex items-center gap-1 px-3 py-1 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold rounded-sm border border-red-300 transition-all disabled:opacity-50"
                               >
                                 <UserMinus className="w-3 h-3" />
                                 Revoke {STAFF_ROLES.find(r => r.value === role)?.label || role}

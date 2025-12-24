@@ -9,8 +9,8 @@ const LAST_UPDATED = 'September 2, 2025';
 export default function PrivacyPolicy() {
   return (
     <main className="max-w-3xl mx-auto p-4 sm:p-6">
-      <div className="p-[1px] rounded-2xl" style={{ background: GRADIENT }}>
-        <div className="bg-white rounded-[1rem] p-6 sm:p-8 shadow-md">
+      <div className="p-px rounded-2xl" style={{ background: GRADIENT }}>
+        <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-md">
           <h1 className="text-3xl font-extrabold mb-2" style={{ color: WELLFIT_BLUE }}>
             Privacy Policy
           </h1>

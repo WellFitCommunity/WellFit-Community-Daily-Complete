@@ -172,7 +172,7 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ context, recordId, onSuccess 
           </label>
           <input
             id="photo-caption"
-            className="border p-2 rounded w-full"
+            className="border p-2 rounded-sm w-full"
             placeholder="Say something about your photo"
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
@@ -191,7 +191,7 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ context, recordId, onSuccess 
         accept="image/*"
         disabled={uploading}
         onChange={handleFileChange}
-        className="block w-full text-base text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600"
+        className="block w-full text-base text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-600"
       />
 
       {uploading && uploadProgress && (

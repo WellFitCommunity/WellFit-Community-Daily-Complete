@@ -91,7 +91,7 @@ const ObservationTimeline: React.FC<ObservationTimelineProps> = ({ observations 
   const selectedType = observationTypes.find(t => t.code === selectedCode);
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div className="bg-white rounded-lg shadow-xs border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-xl font-bold text-gray-900">Observation Trends</h2>
@@ -128,7 +128,7 @@ const ObservationTimeline: React.FC<ObservationTimelineProps> = ({ observations 
       {selectedCode && trendData.length > 0 && chartData && (
         <div className="space-y-4">
           {/* Chart Container */}
-          <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-lg p-6 border border-gray-200">
+          <div className="bg-linear-to-br from-gray-50 to-blue-50 rounded-lg p-6 border border-gray-200">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-gray-900">{selectedType?.display} Trend</h3>
               <div className="flex items-center gap-4 text-xs">
@@ -290,7 +290,7 @@ const ObservationTimeline: React.FC<ObservationTimelineProps> = ({ observations 
                     <td className="px-4 py-3 whitespace-nowrap text-sm">
                       {point.interpretation && (
                         <span
-                          className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                          className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium"
                           style={{
                             backgroundColor: `${getPointColor(point.interpretation)}20`,
                             color: getPointColor(point.interpretation)

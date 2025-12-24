@@ -200,7 +200,7 @@ export function StrokeAssessmentDashboard({
             <select
               value={assessmentType}
               onChange={(e) => setAssessmentType(e.target.value as StrokeAssessmentType)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500"
             >
               <option value="baseline">Baseline (ED)</option>
               <option value="24_hour">24 Hour Post-tPA</option>
@@ -216,7 +216,7 @@ export function StrokeAssessmentDashboard({
             <select
               value={strokeType}
               onChange={(e) => setStrokeType(e.target.value as StrokeType)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Select type...</option>
               <option value="ischemic_large_vessel">Ischemic - Large Vessel</option>
@@ -235,7 +235,7 @@ export function StrokeAssessmentDashboard({
               type="datetime-local"
               value={symptomOnset}
               onChange={(e) => setSymptomOnset(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
@@ -247,7 +247,7 @@ export function StrokeAssessmentDashboard({
               type="datetime-local"
               value={arrivalTime}
               onChange={(e) => setArrivalTime(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500"
             />
           </div>
         </div>
@@ -418,7 +418,7 @@ export function StrokeAssessmentDashboard({
                   type="datetime-local"
                   value={tpaBolusTime}
                   onChange={(e) => setTpaBolusTime(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             )}
@@ -434,7 +434,7 @@ export function StrokeAssessmentDashboard({
             value={clinicalNotes}
             onChange={(e) => setClinicalNotes(e.target.value)}
             rows={4}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500"
             placeholder="Additional observations, contraindications, treatment decisions..."
           />
         </div>
@@ -510,7 +510,7 @@ function ScoreInput({ label, value, onChange, max, description }: ScoreInputProp
       <select
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500"
       >
         {Array.from({ length: max + 1 }, (_, i) => (
           <option key={i} value={i}>

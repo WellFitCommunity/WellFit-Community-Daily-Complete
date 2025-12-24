@@ -442,7 +442,7 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
                           : [...currentFactors, factor];
                         setFormData(prev => ({ ...prev, fall_risk_factors: newFactors }));
                       }}
-                      className="rounded border-gray-300"
+                      className="rounded-sm border-gray-300"
                     />
                     <span className="text-sm">{factor}</span>
                   </label>
@@ -475,7 +475,7 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
                       onChange={(e) => handleScoreChange(field, parseInt(e.target.value))}
                       className="flex-1"
                     />
-                    <span className="text-lg font-bold min-w-[2rem] text-center">
+                    <span className="text-lg font-bold min-w-8 text-center">
                       {formData[field as keyof RiskAssessment] as number || 1}
                     </span>
                   </div>
@@ -561,7 +561,7 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
                         <span className="text-sm font-medium text-gray-700 block mb-1">
                           Clinical Notes:
                         </span>
-                        <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
+                        <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-sm">
                           {aiAnalysis.clinicalNotes}
                         </p>
                       </div>
@@ -596,7 +596,7 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
                     type="checkbox"
                     checked={formData.risk_factors?.includes(factor) || false}
                     onChange={() => handleArrayFieldToggle('risk_factors', factor)}
-                    className="rounded border-gray-300"
+                    className="rounded-sm border-gray-300"
                   />
                   <span className="text-sm">{factor}</span>
                 </label>
@@ -614,7 +614,7 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
                     type="checkbox"
                     checked={formData.recommended_actions?.includes(action) || false}
                     onChange={() => handleArrayFieldToggle('recommended_actions', action)}
-                    className="rounded border-gray-300"
+                    className="rounded-sm border-gray-300"
                   />
                   <span className="text-sm">{action}</span>
                 </label>

@@ -490,7 +490,7 @@ const LoginPage: React.FC = () => {
             <button
               type="button"
               onClick={handleContinueAsLoggedIn}
-              className="w-full py-3 font-semibold rounded hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-offset-2 text-white"
+              className="w-full py-3 font-semibold rounded-sm hover:opacity-90 transition-opacity focus:outline-hidden focus:ring-2 focus:ring-offset-2 text-white"
               style={{ backgroundColor: primary }}
             >
               Continue to Dashboard
@@ -499,7 +499,7 @@ const LoginPage: React.FC = () => {
             <button
               type="button"
               onClick={handleLogout}
-              className="w-full py-3 font-semibold rounded border-2 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+              className="w-full py-3 font-semibold rounded-sm border-2 hover:bg-gray-50 transition-colors focus:outline-hidden focus:ring-2 focus:ring-offset-2"
               style={{ borderColor: accent, color: primary }}
             >
               Logout and Login as Different User
@@ -531,7 +531,7 @@ const LoginPage: React.FC = () => {
         <button
           type="button"
           onClick={() => { setMode('patient'); setError(''); }}
-          className={`px-3 py-2 min-h-[44px] rounded text-sm font-medium ${mode === 'patient' ? 'bg-gray-900 text-white' : 'bg-gray-200'}`}
+          className={`px-3 py-2 min-h-[44px] rounded-sm text-sm font-medium ${mode === 'patient' ? 'bg-gray-900 text-white' : 'bg-gray-200'}`}
           aria-pressed={mode === 'patient'}
         >
           Patient (Phone)
@@ -539,7 +539,7 @@ const LoginPage: React.FC = () => {
         <button
           type="button"
           onClick={() => { setMode('senior'); setError(''); }}
-          className={`px-3 py-2 min-h-[44px] rounded text-sm font-medium ${mode === 'senior' ? 'bg-gray-900 text-white' : 'bg-gray-200'}`}
+          className={`px-3 py-2 min-h-[44px] rounded-sm text-sm font-medium ${mode === 'senior' ? 'bg-gray-900 text-white' : 'bg-gray-200'}`}
           aria-pressed={mode === 'senior'}
         >
           Senior (Phone)
@@ -547,7 +547,7 @@ const LoginPage: React.FC = () => {
         <button
           type="button"
           onClick={() => { setMode('admin'); setError(''); }}
-          className={`px-3 py-2 min-h-[44px] rounded text-sm font-medium ${mode === 'admin' ? 'bg-gray-900 text-white' : 'bg-gray-200'}`}
+          className={`px-3 py-2 min-h-[44px] rounded-sm text-sm font-medium ${mode === 'admin' ? 'bg-gray-900 text-white' : 'bg-gray-200'}`}
           aria-pressed={mode === 'admin'}
         >
           Admin (Email)
@@ -555,7 +555,7 @@ const LoginPage: React.FC = () => {
         <button
           type="button"
           onClick={() => navigate('/caregiver-access')}
-          className="px-3 py-2 min-h-[44px] rounded text-sm font-medium bg-green-600 text-white hover:bg-green-700 transition-colors"
+          className="px-3 py-2 min-h-[44px] rounded-sm text-sm font-medium bg-green-600 text-white hover:bg-green-700 transition-colors"
         >
           Caregiver
         </button>
@@ -584,7 +584,7 @@ const LoginPage: React.FC = () => {
               required
               aria-required="true"
               aria-invalid={Boolean(error && phone.trim() === '')}
-              className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:outline-none"
+              className="w-full p-3 border border-gray-300 rounded-sm focus:ring-2 focus:outline-hidden"
               style={{ borderColor: accent, outlineColor: primary } as React.CSSProperties}
               autoComplete="tel"
               inputMode="tel"
@@ -608,7 +608,7 @@ const LoginPage: React.FC = () => {
                 required
                 aria-required="true"
                 aria-invalid={Boolean(error && seniorPassword.trim() === '')}
-                className="w-full p-3 pr-12 border border-gray-300 rounded focus:ring-2 focus:outline-none"
+                className="w-full p-3 pr-12 border border-gray-300 rounded-sm focus:ring-2 focus:outline-hidden"
                 style={{ borderColor: accent, outlineColor: primary } as React.CSSProperties}
                 autoComplete="current-password"
               />
@@ -636,7 +636,7 @@ const LoginPage: React.FC = () => {
 
           <button
             type="submit"
-            className="w-full py-4 min-h-[56px] font-semibold text-lg rounded hover:opacity-90 active:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-offset-2 text-white"
+            className="w-full py-4 min-h-[56px] font-semibold text-lg rounded-sm hover:opacity-90 active:opacity-80 transition-opacity focus:outline-hidden focus:ring-2 focus:ring-offset-2 text-white"
             style={{ backgroundColor: primary }}
             disabled={loading}
           >
@@ -659,7 +659,7 @@ const LoginPage: React.FC = () => {
                 type="button"
                 onClick={handlePasskeyLogin}
                 disabled={passkeyLoading || loading}
-                className="w-full py-4 min-h-[56px] font-semibold text-lg rounded border-2 hover:bg-gray-50 active:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+                className="w-full py-4 min-h-[56px] font-semibold text-lg rounded-sm border-2 hover:bg-gray-50 active:bg-gray-100 transition-colors focus:outline-hidden focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
                 style={{ borderColor: accent, color: primary }}
               >
                 {passkeyLoading ? (
@@ -727,7 +727,7 @@ const LoginPage: React.FC = () => {
               required
               aria-required="true"
               aria-invalid={Boolean(error && adminEmail.trim() === '')}
-              className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:outline-none"
+              className="w-full p-3 border border-gray-300 rounded-sm focus:ring-2 focus:outline-hidden"
               style={{ borderColor: accent, outlineColor: primary } as React.CSSProperties}
               autoComplete="email"
               inputMode="email"
@@ -748,7 +748,7 @@ const LoginPage: React.FC = () => {
                 required
                 aria-required="true"
                 aria-invalid={Boolean(error && adminPassword.trim() === '')}
-                className="w-full p-3 pr-12 border border-gray-300 rounded focus:ring-2 focus:outline-none"
+                className="w-full p-3 pr-12 border border-gray-300 rounded-sm focus:ring-2 focus:outline-hidden"
                 style={{ borderColor: accent, outlineColor: primary } as React.CSSProperties}
                 autoComplete="current-password"
               />
@@ -782,7 +782,7 @@ const LoginPage: React.FC = () => {
 
           <button
             type="submit"
-            className="w-full py-4 min-h-[56px] font-semibold text-lg rounded hover:opacity-90 active:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-offset-2 text-white"
+            className="w-full py-4 min-h-[56px] font-semibold text-lg rounded-sm hover:opacity-90 active:opacity-80 transition-opacity focus:outline-hidden focus:ring-2 focus:ring-offset-2 text-white"
             style={{ backgroundColor: primary }}
             disabled={loading}
           >

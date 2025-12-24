@@ -122,7 +122,7 @@ const SmartCallbackPage: React.FC = () => {
                   <p className="font-medium">{message}</p>
                   <button
                     onClick={() => navigate('/dashboard')}
-                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-sm hover:bg-blue-700"
                   >
                     Continue to Dashboard
                   </button>

@@ -96,7 +96,7 @@ input[type="date"] {
 
 /* Flexbox bugs */
 .flex-container {
-  /* Safari needs flex-shrink: 0 in some cases */
+  /* Safari needs shrink: 0 in some cases */
 }
 
 /* Transform flickering */

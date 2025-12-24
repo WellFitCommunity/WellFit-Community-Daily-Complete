@@ -263,7 +263,7 @@ export default function MobileMonitoringDashboard() {
         ) : (
           <div className="space-y-3">
             {geofenceAlerts.map(alert => (
-              <div key={alert.id} className="border-l-4 border-l-red-600 bg-red-50 p-4 rounded">
+              <div key={alert.id} className="border-l-4 border-l-red-600 bg-red-50 p-4 rounded-sm">
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="font-bold text-lg">{alert.patient_name}</h3>
@@ -278,10 +278,10 @@ export default function MobileMonitoringDashboard() {
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    <button className="px-4 py-2 bg-blue-600 text-white rounded-sm hover:bg-blue-700">
                       View Map
                     </button>
-                    <button className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                    <button className="px-4 py-2 bg-green-600 text-white rounded-sm hover:bg-green-700">
                       Call Patient
                     </button>
                   </div>
@@ -342,11 +342,11 @@ export default function MobileMonitoringDashboard() {
                       <>
                         <button
                           onClick={() => acknowledgeFall(event.id)}
-                          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                          className="px-4 py-2 bg-blue-600 text-white rounded-sm hover:bg-blue-700"
                         >
                           Acknowledge
                         </button>
-                        <button className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
+                        <button className="px-4 py-2 bg-red-600 text-white rounded-sm hover:bg-red-700">
                           Call 911
                         </button>
                       </>
@@ -362,7 +362,7 @@ export default function MobileMonitoringDashboard() {
       {/* Location Map */}
       <section className="bg-white rounded-xl shadow-lg p-6">
         <h2 className="text-2xl font-bold mb-4">📍 Real-Time Patient Locations</h2>
-        <div className="h-96 bg-gray-100 rounded flex items-center justify-center">
+        <div className="h-96 bg-gray-100 rounded-sm flex items-center justify-center">
           <p className="text-gray-500">
             Map view with all patient locations + geofence zones
             <br />

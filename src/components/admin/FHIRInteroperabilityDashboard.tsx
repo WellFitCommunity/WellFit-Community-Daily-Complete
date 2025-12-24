@@ -97,7 +97,7 @@ export const FHIRInteroperabilityDashboard: React.FC = () => {
     <div className="min-h-screen bg-gray-50 p-6">
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-8">
-        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+        <div className="bg-white rounded-lg shadow-xs p-6 border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
@@ -121,7 +121,7 @@ export const FHIRInteroperabilityDashboard: React.FC = () => {
 
       {/* Tabs */}
       <div className="max-w-7xl mx-auto mb-6">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-white rounded-lg shadow-xs border border-gray-200">
           <div className="flex border-b border-gray-200">
             {[
               { id: 'overview', label: 'Overview', icon: Activity },
@@ -154,7 +154,7 @@ export const FHIRInteroperabilityDashboard: React.FC = () => {
       {error && (
         <div className="max-w-7xl mx-auto mb-6">
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
             <div>
               <h3 className="font-semibold text-red-900">Error</h3>
               <p className="text-red-700">{error}</p>
@@ -259,7 +259,7 @@ const OverviewTab: React.FC<{
     <div className="space-y-6">
       {/* Connection Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+        <div className="bg-white rounded-lg shadow-xs p-6 border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-600 text-sm">Active Connections</p>
@@ -269,7 +269,7 @@ const OverviewTab: React.FC<{
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+        <div className="bg-white rounded-lg shadow-xs p-6 border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-600 text-sm">Recent Syncs</p>
@@ -280,7 +280,7 @@ const OverviewTab: React.FC<{
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+        <div className="bg-white rounded-lg shadow-xs p-6 border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-600 text-sm">Mapped Patients</p>
@@ -290,7 +290,7 @@ const OverviewTab: React.FC<{
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+        <div className="bg-white rounded-lg shadow-xs p-6 border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-600 text-sm">Compliance Score</p>
@@ -304,7 +304,7 @@ const OverviewTab: React.FC<{
       {/* Connection Health */}
       {errorConnections > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+          <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
           <div>
             <h3 className="font-semibold text-red-900">Connection Issues</h3>
             <p className="text-red-700">{errorConnections} connection(s) have errors that need attention.</p>
@@ -313,7 +313,7 @@ const OverviewTab: React.FC<{
       )}
 
       {/* Quick Actions */}
-      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+      <div className="bg-white rounded-lg shadow-xs p-6 border border-gray-200">
         <h3 className="font-semibold text-gray-900 mb-4">Quick Actions</h3>
         <div className="flex flex-wrap gap-3">
           <button className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition flex items-center gap-2">
@@ -340,7 +340,7 @@ const ConnectionsTab: React.FC<{
   if (loading) return <div className="text-center py-12">Loading...</div>;
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div className="bg-white rounded-lg shadow-xs border border-gray-200">
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
@@ -422,7 +422,7 @@ const SyncTab: React.FC<{
   return (
     <div className="space-y-6">
       {/* Auto-Sync Configuration */}
-      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+      <div className="bg-white rounded-lg shadow-xs p-6 border border-gray-200">
         <h2 className="text-xl font-bold mb-4">Auto-Sync Configuration</h2>
         <p className="text-gray-600 mb-4">Configure automatic synchronization frequency for this connection.</p>
         <div className="flex flex-wrap gap-3">
@@ -455,7 +455,7 @@ const SyncTab: React.FC<{
       </div>
 
       {/* Manual Sync Controls */}
-      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+      <div className="bg-white rounded-lg shadow-xs p-6 border border-gray-200">
         <h2 className="text-xl font-bold mb-4">Manual Sync Controls</h2>
         <div className="flex gap-4">
           <button
@@ -487,7 +487,7 @@ const SyncTab: React.FC<{
 
       {/* Sync Stats */}
       {syncStats && (
-        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+        <div className="bg-white rounded-lg shadow-xs p-6 border border-gray-200">
           <h2 className="text-xl font-bold mb-4">Statistics (Last {syncStats.period})</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
@@ -511,11 +511,11 @@ const SyncTab: React.FC<{
       )}
 
       {/* Sync History */}
-      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+      <div className="bg-white rounded-lg shadow-xs p-6 border border-gray-200">
         <h2 className="text-xl font-bold mb-4">Recent Sync History</h2>
         <div className="space-y-2">
           {syncHistory.map((log: any) => (
-            <div key={log.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+            <div key={log.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-sm">
               <div>
                 <p className="font-medium">{log.sync_type} - {log.direction}</p>
                 <p className="text-sm text-gray-600">
@@ -541,7 +541,7 @@ const MappingsTab: React.FC<any> = ({ connection, mappings, loading }) => {
   if (loading) return <div className="text-center py-12">Loading...</div>;
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div className="bg-white rounded-lg shadow-xs border border-gray-200">
       <div className="p-6 border-b border-gray-200">
         <h2 className="text-xl font-bold">Patient Mappings for {connection.name}</h2>
         <p className="text-gray-600 mt-1">{mappings.length} patients mapped</p>
@@ -601,7 +601,7 @@ const AnalyticsTab: React.FC<{
   return (
     <div className="space-y-6">
       {/* Compliance Overview */}
-      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+      <div className="bg-white rounded-lg shadow-xs p-6 border border-gray-200">
         <h2 className="text-xl font-bold mb-4">FHIR Compliance Overview</h2>
         {complianceMetrics && (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -634,7 +634,7 @@ const AnalyticsTab: React.FC<{
       </div>
 
       {/* Aggregate Sync Statistics */}
-      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+      <div className="bg-white rounded-lg shadow-xs p-6 border border-gray-200">
         <h2 className="text-xl font-bold mb-4">Aggregate Sync Statistics</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="p-4 bg-gray-50 rounded-lg">
@@ -657,7 +657,7 @@ const AnalyticsTab: React.FC<{
       </div>
 
       {/* Per-Connection Stats */}
-      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+      <div className="bg-white rounded-lg shadow-xs p-6 border border-gray-200">
         <h2 className="text-xl font-bold mb-4">Connection Performance</h2>
         <div className="overflow-x-auto">
           <table className="w-full">

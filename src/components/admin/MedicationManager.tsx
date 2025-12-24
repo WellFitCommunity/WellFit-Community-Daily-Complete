@@ -678,7 +678,7 @@ const MedicationManager: React.FC<MedicationManagerProps> = ({ tenantId }) => {
                         </div>
                       </div>
                       <div className="flex flex-col items-end gap-2">
-                        <span className={`px-2 py-1 text-xs rounded ${getPriorityColor(task.priority)}`}>
+                        <span className={`px-2 py-1 text-xs rounded-sm ${getPriorityColor(task.priority)}`}>
                           {task.priority}
                         </span>
                         <Badge variant={task.status === 'completed' ? 'default' : 'secondary'}>

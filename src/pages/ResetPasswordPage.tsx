@@ -111,7 +111,7 @@ const ResetPasswordPage: React.FC = () => {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full p-3 border border-gray-300 rounded-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             placeholder="you@example.com"
             autoComplete="email"
             required
@@ -122,20 +122,20 @@ const ResetPasswordPage: React.FC = () => {
         </div>
 
         {err && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded" role="alert" aria-live="assertive">
+          <div className="p-3 bg-red-50 border border-red-200 rounded-sm" role="alert" aria-live="assertive">
             <p className="text-red-600 text-sm">{err}</p>
           </div>
         )}
 
         {msg && (
-          <div className="p-3 bg-green-50 border border-green-200 rounded" role="status" aria-live="polite">
+          <div className="p-3 bg-green-50 border border-green-200 rounded-sm" role="status" aria-live="polite">
             <p className="text-green-700 text-sm">{msg}</p>
           </div>
         )}
 
         <button
           type="submit"
-          className="w-full py-3 bg-blue-600 text-white rounded disabled:opacity-50 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 font-medium"
+          className="w-full py-3 bg-blue-600 text-white rounded-sm disabled:opacity-50 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 font-medium"
           disabled={busy || !email.trim()}
         >
           {busy ? 'Sending Reset Link…' : 'Send Reset Link'}
@@ -160,7 +160,7 @@ const ResetPasswordPage: React.FC = () => {
       </form>
 
       {msg && (
-        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded text-sm">
+        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-sm text-sm">
           <p className="text-blue-800">
             <strong>Next steps:</strong>
           </p>

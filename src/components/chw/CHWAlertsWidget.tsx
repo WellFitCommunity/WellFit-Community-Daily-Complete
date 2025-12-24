@@ -163,7 +163,7 @@ export const CHWAlertsWidget: React.FC<CHWAlertsWidgetProps> = ({
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white rounded-lg shadow-sm p-6">
         <div className="flex items-center space-x-2 mb-4">
           <Bell className="w-6 h-6 text-green-600" />
           <h2 className="text-xl font-bold">CHW Field Alerts</h2>
@@ -174,7 +174,7 @@ export const CHWAlertsWidget: React.FC<CHWAlertsWidgetProps> = ({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow">
+    <div className="bg-white rounded-lg shadow-sm">
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-2">
@@ -243,7 +243,7 @@ export const CHWAlertsWidget: React.FC<CHWAlertsWidgetProps> = ({
                       <span className="font-semibold text-gray-900">
                         {alert.patient_name}
                       </span>
-                      <span className="text-xs bg-gray-200 px-2 py-0.5 rounded uppercase font-medium">
+                      <span className="text-xs bg-gray-200 px-2 py-0.5 rounded-sm uppercase font-medium">
                         {alert.severity}
                       </span>
                       <span className="text-xs text-gray-500 flex items-center">
@@ -256,14 +256,14 @@ export const CHWAlertsWidget: React.FC<CHWAlertsWidgetProps> = ({
                       {!alert.acknowledged && (
                         <button
                           onClick={() => acknowledgeAlert(alert.id)}
-                          className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+                          className="text-xs bg-blue-600 text-white px-3 py-1 rounded-sm hover:bg-blue-700"
                         >
                           Acknowledge
                         </button>
                       )}
                       <button
                         onClick={() => resolveAlert(alert.id)}
-                        className="text-xs bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                        className="text-xs bg-green-600 text-white px-3 py-1 rounded-sm hover:bg-green-700"
                       >
                         Resolve
                       </button>

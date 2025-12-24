@@ -109,7 +109,7 @@ const CaregiverAccessHistory: React.FC<CaregiverAccessHistoryProps> = ({ userId 
       <div className="p-4 bg-gray-50 rounded-lg">
         <div className="animate-pulse flex items-center">
           <div className="h-4 w-4 bg-gray-300 rounded-full mr-2"></div>
-          <div className="h-4 w-32 bg-gray-300 rounded"></div>
+          <div className="h-4 w-32 bg-gray-300 rounded-sm"></div>
         </div>
       </div>
     );
