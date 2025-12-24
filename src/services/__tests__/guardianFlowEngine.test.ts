@@ -357,13 +357,13 @@ describe('GuardianFlowEngine Integration Tests', () => {
     });
 
     it('should weight red crowding at 30 points', () => {
-      const currentCrowding = 'red';
+      const currentCrowding: string = 'red';
       const capacityWeight = currentCrowding === 'red' ? 30 : currentCrowding === 'orange' ? 20 : 10;
       expect(capacityWeight).toBe(30);
     });
 
     it('should weight orange crowding at 20 points', () => {
-      const currentCrowding = 'orange';
+      const currentCrowding: string = 'orange';
       const capacityWeight = currentCrowding === 'red' ? 30 : currentCrowding === 'orange' ? 20 : 10;
       expect(capacityWeight).toBe(20);
     });
@@ -371,7 +371,7 @@ describe('GuardianFlowEngine Integration Tests', () => {
 
   describe('diversion recommendations', () => {
     it('should recommend hard_divert for red crowding with high impact and aggressive policy', () => {
-      const currentCrowding = 'red';
+      const currentCrowding: string = 'red';
       const capacityImpact = 65;
       const policy = 'aggressive';
 
@@ -383,7 +383,7 @@ describe('GuardianFlowEngine Integration Tests', () => {
     });
 
     it('should recommend soft_divert for orange crowding with high impact', () => {
-      const currentCrowding = 'orange';
+      const currentCrowding: string = 'orange';
       const capacityImpact = 75;
 
       let recommendation = 'accept';
@@ -394,7 +394,7 @@ describe('GuardianFlowEngine Integration Tests', () => {
     });
 
     it('should recommend accept for green crowding', () => {
-      const currentCrowding = 'green';
+      const currentCrowding: string = 'green';
       const capacityImpact = 50;
 
       let recommendation = 'accept';

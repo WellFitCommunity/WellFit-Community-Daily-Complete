@@ -73,7 +73,7 @@
 | # | Skill | Status | Model | Target Location | Description |
 |---|-------|--------|-------|-----------------|-------------|
 | 27 | Appointment Prep Instructions | ✅ | Haiku 4.5 | `src/services/ai/appointmentPrepInstructionsService.ts` | Condition-specific prep with multi-format delivery |
-| 28 | Missed Check-In Escalation | 📋 | Haiku 4.5 | `notify-family-missed-check-in/` | AI-powered escalation reasoning |
+| 28 | Missed Check-In Escalation | ✅ | Haiku 4.5 | `supabase/functions/ai-missed-checkin-escalation/` | AI-powered escalation with risk analysis |
 | 29 | Medication Instructions Generator | 📋 | Haiku 4.5 | New service | Personalized with visual aids |
 
 ---
@@ -188,7 +188,7 @@
 | Quick Wins | 5 | 0 | 0 | 5 |
 | Clinical Docs | 5 | 0 | 0 | 5 |
 | Decision Support | 4 | 0 | 0 | 4 |
-| Patient Engagement | 1 | 0 | 2 | 3 |
+| Patient Engagement | 2 | 0 | 1 | 3 |
 | Risk Prediction | 1 | 0 | 4 | 5 |
 | Admin Automation | 0 | 0 | 4 | 4 |
 | Analytics | 0 | 0 | 3 | 3 |
@@ -197,7 +197,7 @@
 | Interoperability | 0 | 0 | 3 | 3 |
 | Security | 0 | 0 | 3 | 3 |
 | Conversational | 1 | 0 | 3 | 4 |
-| **TOTAL** | **29** | **0** | **30** | **59** |
+| **TOTAL** | **30** | **0** | **29** | **59** |
 
 ---
 
@@ -224,10 +224,10 @@
 18. [x] Appointment Prep Instructions
 
 ### Next Sprint
-- Missed Check-In Escalation (#28)
 - Medication Instructions Generator (#29)
 - Medication Adherence Predictor (#31)
 - Care Escalation Scorer (#32)
+- Infection Risk Predictor (#33)
 
 ---
 
@@ -235,6 +235,7 @@
 
 | Date | Change |
 |------|--------|
+| 2025-12-24 | Completed Missed Check-In Escalation (#28) - AI-powered escalation with risk factor analysis, caregiver notification, and welfare check recommendations |
 | 2025-12-23 | Completed Appointment Prep Instructions (#27) - Personalized condition-specific preparation with fasting, medication holds, checklists, and multi-format delivery (SMS, email, print) |
 | 2025-12-23 | Completed Medication Reconciliation AI (#26) - AI-enhanced reconciliation with clinical reasoning for discrepancies, deprescribing opportunities, patient counseling points, and pharmacy verification checklists |
 | 2025-12-23 | Completed Contraindication Detector (#25) - Multi-factor patient safety analysis including disease-drug, allergy cross-reactivity, lab values, age, pregnancy, and organ impairment checks |
