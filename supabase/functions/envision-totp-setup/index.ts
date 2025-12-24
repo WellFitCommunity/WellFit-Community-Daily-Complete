@@ -1,7 +1,7 @@
 /**
  * Envision TOTP Setup (Enrollment) - NO NPM PACKAGES
  *
- * - action="begin": generate secret, store pending, return otpauth:// URI
+ * - action="begin": generate secret (or reuse existing pending), store pending, return otpauth:// URI + secret
  * - action="confirm": verify 6-digit code, persist totp_secret, enable totp, mark session verified
  *
  * No SMS. No email. No notifications. Codes are generated on the user's phone after QR scan.
@@ -14,9 +14,6 @@ import { createLogger } from "../_shared/auditLogger.ts";
 
 const PENDING_TOTP_TTL_MINUTES = 10;
 
-// ─────────────────────────────────────────────────────────────
-// Env helper
-// ─────────────────────────────────────────────────────────────
 const getEnv = (...keys: string[]): string => {
   for (const k of keys) {
     const v = Deno.env.get(k);
@@ -49,9 +46,7 @@ const base32Encode = (bytes: Uint8Array): string => {
       bits -= 5;
     }
   }
-  if (bits > 0) {
-    output += B32_ALPH[(value << (5 - bits)) & 31];
-  }
+  if (bits > 0) output += B32_ALPH[(value << (5 - bits)) & 31];
   return output;
 };
 
@@ -116,8 +111,7 @@ const hotp = async (secretBytes: Uint8Array, counter: number): Promise<string> =
     ((mac[offset + 2] & 0xff) << 8) |
     (mac[offset + 3] & 0xff);
 
-  const otp = (binCode % 1_000_000).toString().padStart(6, "0");
-  return otp;
+  return (binCode % 1_000_000).toString().padStart(6, "0");
 };
 
 const totpValidate = async (
@@ -140,7 +134,6 @@ const totpValidate = async (
 
 // ─────────────────────────────────────────────────────────────
 // URI builder
-// otpauth://totp/{issuer}:{label}?secret=BASE32&issuer=Issuer&algorithm=SHA1&digits=6&period=30
 // ─────────────────────────────────────────────────────────────
 const buildOtpAuthUri = (issuer: string, label: string, base32Secret: string): string => {
   const encIssuer = encodeURIComponent(issuer);
@@ -153,9 +146,6 @@ const buildOtpAuthUri = (issuer: string, label: string, base32Secret: string): s
   return `otpauth://totp/${encPath}?${qs}`;
 };
 
-// ─────────────────────────────────────────────────────────────
-// Main
-// ─────────────────────────────────────────────────────────────
 Deno.serve(async (req: Request): Promise<Response> => {
   const logger = createLogger("envision-totp-setup", req);
 
@@ -181,12 +171,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const action = String(body?.action ?? "").toLowerCase(); // "begin" | "confirm"
+    const action = String(body?.action ?? "").toLowerCase();
     const sessionToken = String(body?.session_token ?? "").trim();
 
     if (!sessionToken) return json(corsHeaders, 400, { error: "session_token is required" });
 
-    // Validate Envision session exists and not expired
+    // Validate session exists and not expired
     const { data: sessionRow, error: sessionErr } = await supabase
       .from("envision_sessions")
       .select("super_admin_id, expires_at")
@@ -215,13 +205,37 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const label = String(superAdmin.email || "admin").toLowerCase();
 
     if (action === "begin") {
-      // Fix B: If already configured, do NOT generate a new secret/QR
+      // If already configured, don't generate new QR
       if (superAdmin.totp_enabled && superAdmin.totp_secret) {
         return json(corsHeaders, 200, {
           success: true,
           already_configured: true,
           message: "Authenticator is already set up.",
         });
+      }
+
+      // Idempotent behavior: if a pending secret already exists for this session and isn't expired, reuse it.
+      const { data: existingPending } = await supabase
+        .from("envision_totp_pending")
+        .select("totp_secret, expires_at")
+        .eq("session_token", sessionToken)
+        .maybeSingle();
+
+      if (existingPending?.totp_secret && existingPending?.expires_at) {
+        const pendingExp = new Date(existingPending.expires_at as string).getTime();
+        if (Number.isFinite(pendingExp) && pendingExp > Date.now()) {
+          const base32Secret = String(existingPending.totp_secret);
+          const otpauthUri = buildOtpAuthUri(issuer, label, base32Secret);
+          return json(corsHeaders, 200, {
+            success: true,
+            issuer,
+            account: label,
+            secret: base32Secret,
+            otpauth_uri: otpauthUri,
+            expires_at: existingPending.expires_at,
+            message: "Scan the QR code with your authenticator app, then enter the 6-digit code to confirm.",
+          });
+        }
       }
 
       // Generate random secret (20 bytes)
@@ -250,6 +264,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         success: true,
         issuer,
         account: label,
+        secret: base32Secret,
         otpauth_uri: otpauthUri,
         expires_at: pendingExpiresAt,
         message: "Scan the QR code with your authenticator app, then enter the 6-digit code to confirm.",
@@ -281,7 +296,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
       if (!ok) return json(corsHeaders, 401, { error: "Invalid code. Use the CURRENT 6-digit code." });
 
-      // Persist: enable totp, store secret, and remove PIN so the system stops "asking for PIN"
+      // Persist: enable totp, store secret, and remove PIN so the system stops asking for PIN
       const { error: updErr } = await supabase
         .from("super_admin_users")
         .update({
