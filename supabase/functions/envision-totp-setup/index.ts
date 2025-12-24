@@ -174,7 +174,18 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const action = String(body?.action ?? "").toLowerCase();
     const sessionToken = String(body?.session_token ?? "").trim();
 
-    if (!sessionToken) return json(corsHeaders, 400, { error: "session_token is required" });
+    // Diagnostic: log incoming request (no sensitive data)
+    const tokenPreview = sessionToken ? `${sessionToken.substring(0, 8)}...${sessionToken.substring(sessionToken.length - 4)}` : "(empty)";
+    logger.info("TOTP setup request received", {
+      action,
+      tokenPreview,
+      tokenLength: sessionToken.length
+    });
+
+    if (!sessionToken) {
+      logger.warn("TOTP setup failed: missing session_token");
+      return json(corsHeaders, 400, { error: "session_token is required" });
+    }
 
     // Validate session exists and not expired
     const { data: sessionRow, error: sessionErr } = await supabase
@@ -183,14 +194,27 @@ Deno.serve(async (req: Request): Promise<Response> => {
       .eq("session_token", sessionToken)
       .maybeSingle();
 
-    if (sessionErr || !sessionRow) return json(corsHeaders, 401, { error: "Invalid session" });
+    if (sessionErr || !sessionRow) {
+      logger.warn("TOTP setup failed: invalid session", {
+        tokenPreview,
+        dbError: sessionErr?.message || null,
+        rowFound: !!sessionRow
+      });
+      return json(corsHeaders, 401, { error: "Invalid session", debug: { tokenPreview, hint: "Session not found in database" } });
+    }
 
     const expiresAtMs = new Date(sessionRow.expires_at as string).getTime();
     if (!Number.isFinite(expiresAtMs) || expiresAtMs <= Date.now()) {
-      return json(corsHeaders, 401, { error: "Session expired. Please log in again." });
+      logger.warn("TOTP setup failed: session expired", {
+        tokenPreview,
+        expiresAt: sessionRow.expires_at,
+        now: new Date().toISOString()
+      });
+      return json(corsHeaders, 401, { error: "Session expired. Please log in again.", debug: { expiresAt: sessionRow.expires_at } });
     }
 
     const superAdminId = String(sessionRow.super_admin_id);
+    logger.info("Session validated", { superAdminId, tokenPreview });
 
     // Load super admin
     const { data: superAdmin, error: saErr } = await supabase
@@ -199,7 +223,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
       .eq("id", superAdminId)
       .maybeSingle();
 
-    if (saErr || !superAdmin || !superAdmin.is_active) return json(corsHeaders, 401, { error: "Unauthorized" });
+    if (saErr || !superAdmin || !superAdmin.is_active) {
+      logger.warn("TOTP setup failed: super admin unauthorized", {
+        superAdminId,
+        dbError: saErr?.message || null,
+        found: !!superAdmin,
+        isActive: superAdmin?.is_active ?? null
+      });
+      return json(corsHeaders, 401, { error: "Unauthorized", debug: { superAdminId, found: !!superAdmin } });
+    }
 
     const issuer = "Envision VirtualEdge";
     const label = String(superAdmin.email || "admin").toLowerCase();
