@@ -433,16 +433,30 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div
-          className="text-white text-center py-8 px-6 rounded-t-2xl"
+          className="text-white py-8 px-6 rounded-t-2xl relative"
           style={{ background: branding.gradient || 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)' }}
         >
-          <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          {/* Back Button */}
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard')}
+            className="absolute top-4 left-4 p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+            aria-label="Back to Dashboard"
+          >
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
+          </button>
+
+          <div className="text-center">
+            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <h1 className="text-2xl font-bold">Admin Access</h1>
+            <p className="text-blue-100 text-sm mt-1">{branding.appName || 'WellFit'}</p>
           </div>
-          <h1 className="text-2xl font-bold">Admin Access</h1>
-          <p className="text-blue-100 text-sm mt-1">{branding.appName || 'WellFit'}</p>
         </div>
 
         {/* Card */}
