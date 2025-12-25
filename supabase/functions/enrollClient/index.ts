@@ -5,18 +5,13 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.28.0";
 import { z } from "https://esm.sh/zod@3.21.4";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 
-// ─── ENV (new names with legacy fallbacks) ───────────────────────────────────
-const SUPABASE_URL = SUPABASE_URL ?? "";
-const SUPABASE_SECRET_KEY =
-  Deno.env.get("SB_SECRET_KEY") ?? SB_SECRET_KEY ?? "";
-const SUPABASE_PUBLISHABLE_API_KEY =
-  Deno.env.get("SB_PUBLISHABLE_API_KEY") ?? SB_PUBLISHABLE_API_KEY ?? "";
-
-if (!SUPABASE_URL || !SUPABASE_SECRET_KEY || !SUPABASE_PUBLISHABLE_API_KEY) {
-  throw new Error("Missing SUPABASE_URL, SB_SECRET_KEY/SUPABASE_SERVICE_ROLE_KEY, or SB_PUBLISHABLE_API_KEY/SUPABASE_ANON_KEY");
+// ─── ENV (uses shared env with correct key order) ───────────────────────────
+// SB_SECRET_KEY from shared env already prefers SB_SERVICE_ROLE_KEY (legacy JWT) for RLS bypass
+if (!SUPABASE_URL || !SB_SECRET_KEY || !SB_PUBLISHABLE_API_KEY) {
+  throw new Error("Missing SUPABASE_URL, SB_SERVICE_ROLE_KEY, or SB_ANON_KEY");
 }
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_SECRET_KEY, { auth: { persistSession: false } });
+const supabase = createClient(SUPABASE_URL, SB_SECRET_KEY, { auth: { persistSession: false } });
 
 // ─── Input schema ────────────────────────────────────────────────────────────
 // UPDATED: 2025-10-03 - Added fields from EnrollSeniorPage.tsx

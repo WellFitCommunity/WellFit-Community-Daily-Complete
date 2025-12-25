@@ -12,16 +12,19 @@ const envGet = (name: string): string => {
 };
 
 // ---- Supabase ----
+// Prefer SB_URL (modern naming) with SUPABASE_URL as fallback
 export const SUPABASE_URL: string =
-  envGet("SUPABASE_URL") || envGet("SB_URL");
+  envGet("SB_URL") || envGet("SUPABASE_URL");
 
+// CRITICAL: SB_SERVICE_ROLE_KEY (legacy JWT format) must be preferred for RLS bypass
+// The sb_secret_* format does NOT work with Supabase JS client for RLS bypass
 export const SB_SECRET_KEY: string =
-  envGet("SB_SECRET_KEY") || envGet("SB_SERVICE_ROLE_KEY") || envGet("SUPABASE_SERVICE_ROLE_KEY");
+  envGet("SB_SERVICE_ROLE_KEY") || envGet("SB_SECRET_KEY");
 
-// For auth operations, prefer SB_ANON_KEY (JWT format) which works with Supabase auth
+// For auth operations, prefer SB_ANON_KEY (legacy JWT format) which works with Supabase auth
 // The sb_publishable_* format is not yet fully supported for auth
 export const SB_PUBLISHABLE_API_KEY: string =
-  envGet("SB_ANON_KEY") || envGet("SUPABASE_ANON_KEY") || envGet("SB_PUBLISHABLE_API_KEY");
+  envGet("SB_ANON_KEY") || envGet("SB_PUBLISHABLE_API_KEY");
 
 // ---- hCaptcha ----
 export const HCAPTCHA_SECRET: string =

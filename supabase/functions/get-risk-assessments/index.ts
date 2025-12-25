@@ -40,7 +40,7 @@ serve(async (req: Request) => {
     const PHI_KEY = Deno.env.get("PHI_ENCRYPTION_KEY");
     if (!SUPABASE_URL || !SERVICE_ROLE || !PHI_KEY) {
       return new Response(
-        "Missing env: SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY / PHI_ENCRYPTION_KEY",
+        "Missing env: SUPABASE_URL / SB_SERVICE_ROLE_KEY / PHI_ENCRYPTION_KEY",
         { status: 500, headers },
       );
     }

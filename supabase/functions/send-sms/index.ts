@@ -111,7 +111,7 @@ serve(async (req) => {
       }
 
       // Add status callback for delivery tracking (optional)
-      // formData.set("StatusCallback", `${Deno.env.get("SUPABASE_URL")}/functions/v1/sms-status-callback`);
+      // formData.set("StatusCallback", `${Deno.env.get("SB_URL") || Deno.env.get("SUPABASE_URL")}/functions/v1/sms-status-callback`);
 
       try {
         const response = await fetch(twilioUrl, {

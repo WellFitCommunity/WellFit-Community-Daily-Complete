@@ -640,7 +640,7 @@ serve(async (req) => {
     // Store mapping (optional)
     try {
       const supabaseUrl = getEnv('SUPABASE_URL', 'SB_URL');
-      const supabaseKey = getEnv('SB_SERVICE_ROLE_KEY', 'SUPABASE_SERVICE_ROLE_KEY');
+      const supabaseKey = getEnv('SB_SERVICE_ROLE_KEY', 'SB_SECRET_KEY');
       const supabase = createClient(supabaseUrl, supabaseKey);
 
       await supabase.from('ai_fhir_mappings').insert({

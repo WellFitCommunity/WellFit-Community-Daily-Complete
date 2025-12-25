@@ -38,7 +38,7 @@ class BackupService {
   constructor() {
     this.logger = createLogger("nightly-excel-backup");
 
-    validateEnvVars(["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "BACKUP_BUCKET", "BACKUP_PATH_PREFIX"]);
+    validateEnvVars(["SB_URL", "SB_SERVICE_ROLE_KEY", "BACKUP_BUCKET", "BACKUP_PATH_PREFIX"]);
 
     this.supabase = createClient<DatabaseTypes>(
       SUPABASE_URL,

@@ -60,19 +60,22 @@ interface SupabaseClientOptions {
 export function createSupabaseClient(
   options: SupabaseClientOptions = {}
 ): SupabaseClient {
-  const supabaseUrl = Deno.env.get('SUPABASE_URL') || Deno.env.get('SB_URL');
+  // Prefer SB_URL (modern naming) with SUPABASE_URL as fallback
+  const supabaseUrl = Deno.env.get('SB_URL') || Deno.env.get('SUPABASE_URL');
   // For user-context operations, prefer SB_ANON_KEY (JWT format) which works with Supabase auth
   // The sb_publishable_* format is not yet fully supported for auth
+  // CRITICAL: SB_SERVICE_ROLE_KEY (legacy JWT format) must be preferred for RLS bypass
+  // The sb_secret_* format does NOT work with Supabase JS client for RLS bypass
   const supabaseKey = options.useServiceRole
-    ? (Deno.env.get('SB_SECRET_KEY') || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'))
-    : (Deno.env.get('SB_ANON_KEY') || Deno.env.get('SUPABASE_ANON_KEY') || Deno.env.get('SB_PUBLISHABLE_API_KEY'));
+    ? (Deno.env.get('SB_SERVICE_ROLE_KEY') || Deno.env.get('SB_SECRET_KEY'))
+    : (Deno.env.get('SB_ANON_KEY') || Deno.env.get('SB_PUBLISHABLE_API_KEY'));
 
   if (!supabaseUrl) {
-    throw new Error('SUPABASE_URL or SB_URL environment variable is required');
+    throw new Error('SB_URL environment variable is required');
   }
 
   if (!supabaseKey) {
-    const keyType = options.useServiceRole ? 'SB_SECRET_KEY/SUPABASE_SERVICE_ROLE_KEY' : 'SB_PUBLISHABLE_API_KEY/SUPABASE_ANON_KEY';
+    const keyType = options.useServiceRole ? 'SB_SERVICE_ROLE_KEY/SB_SECRET_KEY' : 'SB_ANON_KEY/SB_PUBLISHABLE_API_KEY';
     throw new Error(`${keyType} environment variable is required`);
   }
 

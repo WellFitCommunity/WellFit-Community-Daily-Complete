@@ -5,8 +5,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { handleOptions, withCors } from "../_shared/cors.ts";
 
-const SUPABASE_SERVICE_ROLE_KEY =
-  Deno.env.get("SB_SECRET_KEY") ?? SB_SECRET_KEY;
+// Use shared env which has correct key order (SB_SERVICE_ROLE_KEY first for RLS bypass)
+const SUPABASE_SERVICE_ROLE_KEY = SB_SECRET_KEY;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 

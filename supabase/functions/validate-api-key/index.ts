@@ -28,7 +28,7 @@ try {
   const serviceRoleKey = SB_SECRET_KEY;
 
   if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be defined in environment variables.");
+    throw new Error("SUPABASE_URL and SB_SERVICE_ROLE_KEY must be defined in environment variables.");
   }
   supabaseAdminClient = createClient(supabaseUrl, serviceRoleKey);
   console.log("Supabase admin client initialized successfully.");

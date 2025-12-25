@@ -25,11 +25,12 @@ class InactivityReminderService {
   constructor() {
     this.logger = createLogger("weekly-inactivity-reminders");
 
-    validateEnvVars(["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "FCM_SERVER_KEY"]);
+    validateEnvVars(["SB_URL", "SB_SERVICE_ROLE_KEY", "FCM_SERVER_KEY"]);
 
+    // CRITICAL: SB_SERVICE_ROLE_KEY (legacy JWT) must be preferred for RLS bypass
     this.supabase = createClient<DatabaseTypes>(
-      Deno.env.get("SUPABASE_URL"),
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
+      Deno.env.get("SB_URL") || Deno.env.get("SUPABASE_URL"),
+      Deno.env.get("SB_SERVICE_ROLE_KEY") || Deno.env.get("SB_SECRET_KEY"));
 
     this.fcmServerKey = Deno.env.get("FCM_SERVER_KEY");
   }

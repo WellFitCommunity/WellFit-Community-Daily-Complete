@@ -27,7 +27,7 @@ type CodingSuggestion = {
 const SERVICE_KEY = SB_SECRET_KEY;
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY") || Deno.env.get("CLAUDE_API_KEY");
 
-if (!SUPABASE_URL || !SERVICE_KEY) throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
+if (!SUPABASE_URL || !SERVICE_KEY) throw new Error("Missing SUPABASE_URL or SB_SERVICE_ROLE_KEY");
 if (!ANTHROPIC_API_KEY) throw new Error("Missing ANTHROPIC_API_KEY (or CLAUDE_API_KEY)");
 
 // Clients
