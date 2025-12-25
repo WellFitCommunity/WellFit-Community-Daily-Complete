@@ -15,6 +15,15 @@ const SUPABASE_AUTH_KEY_PATTERN = /^sb-.*$/;
  * Server-side JWT expiry handles session timeout.
  */
 function handleAuthFailure(reason: string): void {
+  // Check if we're still in cooldown from a recent auth failure
+  const now = Date.now();
+  if (authFailureHandled && now - authFailureTimestamp < AUTH_FAILURE_COOLDOWN) {
+    auditLogger.debug('AUTH_FAILURE_COOLDOWN', { reason, timeSinceLastMs: now - authFailureTimestamp });
+    return;
+  }
+
+  authFailureHandled = true;
+  authFailureTimestamp = now;
   auditLogger.auth('LOGOUT', true, { reason, source: 'authAwareFetch' });
 
   // Clear all Supabase auth tokens from localStorage (primary storage)
@@ -46,6 +55,10 @@ function handleAuthFailure(reason: string): void {
 
 // Track if we've already triggered auth failure handling to prevent multiple redirects
 let authFailureHandled = false;
+// Timestamp of when auth failure was last handled to allow re-handling after a delay
+let authFailureTimestamp = 0;
+// Minimum time (ms) before we can handle another auth failure (prevents rapid-fire handling)
+const AUTH_FAILURE_COOLDOWN = 2000;
 
 /**
  * Creates an auth-aware fetch wrapper for Supabase.
@@ -98,7 +111,11 @@ export function createAuthAwareFetch(): typeof fetch {
     // AUTH TOKEN ENDPOINT 400: INVALID REFRESH TOKEN -> LOG OUT
     // ============================================================
     // This is the clean/authoritative signal that the refresh token is busted.
-    if (isAuthEndpoint && isBadRequest && !authFailureHandled) {
+    // Check cooldown: don't process if we recently handled an auth failure
+    const now = Date.now();
+    const inCooldown = authFailureHandled && (now - authFailureTimestamp < AUTH_FAILURE_COOLDOWN);
+
+    if (isAuthEndpoint && isBadRequest && !inCooldown) {
       const clonedResponse = response.clone();
       try {
         const body = await clonedResponse.json();
@@ -111,12 +128,10 @@ export function createAuthAwareFetch(): typeof fetch {
           errorMessage.includes('Token has expired') ||
           errorMessage.includes('Invalid token')
         ) {
-          authFailureHandled = true;
           handleAuthFailure(`refresh_token_invalid: ${errorMessage}`);
         }
       } catch {
         // If we can't parse the body, check status alone for auth endpoint
-        authFailureHandled = true;
         handleAuthFailure('refresh_token_error_unparseable');
       }
     }
@@ -127,7 +142,7 @@ export function createAuthAwareFetch(): typeof fetch {
     // Edge Functions can legitimately return 401 for app-level authorization
     // (e.g., missing session_token, already-configured flow, custom gates, etc.)
     // Those must be handled by the calling feature/page, not by transport.
-    if (!isAuthEndpoint && isUnauthorized && !authFailureHandled) {
+    if (!isAuthEndpoint && isUnauthorized && !inCooldown) {
       if (isFunctionsEndpoint) {
         // Record for diagnostics but do NOT destroy the user's session here.
         auditLogger.security('EDGE_FUNCTION_401', 'low', {
@@ -147,7 +162,7 @@ export function createAuthAwareFetch(): typeof fetch {
         const rawMessage = (body?.message || body?.error || '') as string;
         const errorMessage = rawMessage.toLowerCase();
 
-        // Tightened: only trigger logout on strong “JWT is invalid/expired” signals
+        // Tightened: only trigger logout on strong "JWT is invalid/expired" signals
         // Avoid nuking sessions on generic "Unauthorized" that could be an RLS gate, etc.
         const isStrongJwtSignal =
           errorMessage.includes('invalid jwt') ||
@@ -159,13 +174,11 @@ export function createAuthAwareFetch(): typeof fetch {
           errorMessage.includes('bad jwt');
 
         if (isStrongJwtSignal) {
-          authFailureHandled = true;
           handleAuthFailure(`jwt_invalid: ${rawMessage || 'unknown'}`);
         }
       } catch {
         // Unparseable 401: only treat as auth failure if it's NOT functions
         // and we have no JSON body to inspect.
-        authFailureHandled = true;
         handleAuthFailure('unauthorized_unparseable');
       }
     }

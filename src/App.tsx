@@ -40,6 +40,9 @@ import { useThemeInit } from './hooks/useTheme';
 // Clinical Mode - separates Envision Atlus (clinical) from WellFit (community)
 import { useClinicalMode } from './hooks/useClinicalMode';
 
+// Browser History Protection - prevents back button from navigating to login when authenticated
+import { useBrowserHistoryProtection } from './hooks/useBrowserHistoryProtection';
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // CLINICAL MODE WRAPPER
 // Only renders Envision Atlus components for clinical users (physicians, nurses, admin, etc.)
@@ -105,6 +108,10 @@ function Shell() {
 
   // Initialize theme from database/localStorage
   useThemeInit();
+
+  // Protect against browser back button navigating to auth routes when authenticated
+  // This prevents race conditions with session management and stale token errors
+  useBrowserHistoryProtection();
 
   // Initialize performance monitoring
   useEffect(() => {

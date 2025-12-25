@@ -215,18 +215,51 @@ const LoginPage: React.FC = () => {
   // Check if already logged in - show message instead of auto-redirecting (prevents loop)
   const [alreadyLoggedIn, setAlreadyLoggedIn] = useState(false);
   const [existingUserEmail, setExistingUserEmail] = useState('');
+  const [sessionCheckComplete, setSessionCheckComplete] = useState(false);
 
   useEffect(() => {
     let cancel = false;
-    (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!cancel && session) {
-        auditLogger.info('USER_ALREADY_LOGGED_IN', { userId: session.user?.id });
-        setAlreadyLoggedIn(true);
-        setExistingUserEmail(session.user?.email || session.user?.phone || 'current user');
+
+    // Small delay to let auth state settle if arriving via browser back button
+    // This prevents race conditions with session refresh
+    const checkSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+
+        if (cancel) return;
+
+        // If there's an error (like invalid refresh token), don't set as logged in
+        // The authAwareFetch will handle cleanup
+        if (error) {
+          auditLogger.debug('LOGIN_PAGE_SESSION_CHECK_ERROR', { error: error.message });
+          setSessionCheckComplete(true);
+          return;
+        }
+
+        if (session) {
+          auditLogger.info('USER_ALREADY_LOGGED_IN', { userId: session.user?.id });
+          setAlreadyLoggedIn(true);
+          setExistingUserEmail(session.user?.email || session.user?.phone || 'current user');
+        }
+        setSessionCheckComplete(true);
+      } catch (err: unknown) {
+        // Catch any errors during session check to prevent console errors
+        if (!cancel) {
+          auditLogger.debug('LOGIN_PAGE_SESSION_CHECK_EXCEPTION', {
+            error: err instanceof Error ? err.message : String(err)
+          });
+          setSessionCheckComplete(true);
+        }
       }
-    })();
-    return () => { cancel = true; };
+    };
+
+    // Delay the check slightly to allow any in-flight auth operations to complete
+    const timeoutId = setTimeout(checkSession, 50);
+
+    return () => {
+      cancel = true;
+      clearTimeout(timeoutId);
+    };
   }, [supabase.auth]);
 
   const handleLogout = async () => {
@@ -463,6 +496,18 @@ const LoginPage: React.FC = () => {
       setLoading(false);
     }
   };
+
+  // Show loading while checking session to prevent flash of login form
+  if (!sessionCheckComplete) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: branding.gradient }}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4" />
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   // If already logged in, show message with options
   if (alreadyLoggedIn) {
