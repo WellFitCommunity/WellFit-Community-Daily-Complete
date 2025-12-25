@@ -30,7 +30,7 @@ import { VoiceSearchOverlay } from './components/voice/VoiceSearchOverlay';
 import { GlobalSearchBar } from './components/search/GlobalSearchBar';
 import { EAPatientBanner } from './components/envision-atlus/EAPatientBanner';
 import { EASessionResume } from './components/envision-atlus/EASessionResume';
-import { EARealtimeAlertNotifications } from './components/envision-atlus/EARealtimeAlertNotifications';
+import { EANotificationDock } from './components/envision-atlus/EANotificationDock';
 import { LearningMilestone } from './components/ai-transparency';
 import { IdleTimeoutProvider } from './components/IdleTimeoutProvider';
 
@@ -74,8 +74,8 @@ function ClinicalModeComponents() {
       {/* Session Resume Prompt - Shows when user returns and has previous session (ATLUS: Unity) */}
       <EASessionResume />
 
-      {/* Real-Time Alert Notifications - Push-based critical alerts (ATLUS: Leading) */}
-      <EARealtimeAlertNotifications />
+      {/* Notification Dock - Consolidates all floating notifications (ATLUS: Leading) */}
+      <EANotificationDock />
     </>
   );
 }
