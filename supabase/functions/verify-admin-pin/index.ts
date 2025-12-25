@@ -6,7 +6,7 @@ import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { verifyPin, generateSecureToken, isClientHashedPin } from "../_shared/crypto.ts";
 import { createLogger } from "../_shared/auditLogger.ts";
 
-const ADMIN_SESSION_TTL_MIN = 30; // 30 minutes for enhanced security (B2B2C healthcare platform)
+const ADMIN_SESSION_TTL_MIN = 30; // 30 minutes for enhanced security (B2B2C healthcare platform) - rebuilt 2025-12-25
 
 // Rate limiting constants
 const MAX_FAILED_ATTEMPTS = 5;
