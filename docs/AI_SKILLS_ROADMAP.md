@@ -137,7 +137,7 @@
 
 | # | Skill | Status | Model | Target Location | Description |
 |---|-------|--------|-------|-----------------|-------------|
-| 50 | FHIR Semantic Mapper | 📋 | Sonnet 4.5 | `src/services/fhir/` | AI-powered mapping |
+| 50 | FHIR Semantic Mapper | ✅ | Sonnet 4.5 | `src/services/ai/fhirSemanticMapperService.ts` | R4/R5 mapping, AI suggestions |
 | 51 | HL7 v2 Interpreter | 📋 | Sonnet 4.5 | `HL7ToFHIRTranslator.ts` | Ambiguous message handling |
 | 52 | EDI Claims Validator | 📋 | Haiku 4.5 | `mcpHL7X12Client.ts` | Intelligent validation |
 
@@ -194,10 +194,10 @@
 | Analytics | 0 | 0 | 3 | 3 |
 | Voice/NLP | 0 | 0 | 3 | 3 |
 | Specialty | 0 | 0 | 5 | 5 |
-| Interoperability | 0 | 0 | 3 | 3 |
+| Interoperability | 1 | 0 | 2 | 3 |
 | Security | 0 | 0 | 3 | 3 |
 | Conversational | 2 | 0 | 2 | 4 |
-| **TOTAL** | **35** | **0** | **24** | **59** |
+| **TOTAL** | **36** | **0** | **23** | **59** |
 
 ---
 
