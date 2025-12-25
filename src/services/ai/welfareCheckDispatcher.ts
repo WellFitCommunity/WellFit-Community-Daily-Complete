@@ -627,5 +627,23 @@ Provide risk assessment.`;
 // EXPORTS
 // ============================================================================
 
-export const welfareCheckDispatcher = new WelfareCheckDispatcherService();
+// Lazy initialization to prevent errors on module import
+// This service requires VITE_ANTHROPIC_API_KEY which should only be used server-side
+let _instance: WelfareCheckDispatcherService | null = null;
+
+export function getWelfareCheckDispatcher(): WelfareCheckDispatcherService {
+  if (!_instance) {
+    _instance = new WelfareCheckDispatcherService();
+  }
+  return _instance;
+}
+
+// For backwards compatibility - but will throw if API key not configured
+// Use getWelfareCheckDispatcher() for lazy initialization
+export const welfareCheckDispatcher = {
+  get instance() {
+    return getWelfareCheckDispatcher();
+  }
+};
+
 export default welfareCheckDispatcher;

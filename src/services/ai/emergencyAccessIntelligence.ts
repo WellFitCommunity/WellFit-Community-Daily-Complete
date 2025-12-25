@@ -625,5 +625,22 @@ Provide complete emergency response briefing.`;
 // EXPORTS
 // ============================================================================
 
-export const emergencyAccessIntelligence = new EmergencyAccessIntelligenceService();
+// Lazy initialization to prevent errors on module import
+// This service requires VITE_ANTHROPIC_API_KEY which should only be used server-side
+let _instance: EmergencyAccessIntelligenceService | null = null;
+
+export function getEmergencyAccessIntelligence(): EmergencyAccessIntelligenceService {
+  if (!_instance) {
+    _instance = new EmergencyAccessIntelligenceService();
+  }
+  return _instance;
+}
+
+// For backwards compatibility - but will throw if API key not configured
+export const emergencyAccessIntelligence = {
+  get instance() {
+    return getEmergencyAccessIntelligence();
+  }
+};
+
 export default emergencyAccessIntelligence;
