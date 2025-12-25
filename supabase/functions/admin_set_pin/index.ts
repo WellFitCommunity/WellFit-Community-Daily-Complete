@@ -328,14 +328,28 @@ serve(async (req) => {
     // Hash the PIN (or client-hash) with PBKDF2 for storage
     const pin_hash = await hashPin(pinToHash);
 
-    const { error } = await supabase.from("staff_pins").upsert({
-      user_id,
-      role,
-      pin_hash,
-      updated_at: new Date().toISOString(),
-    });
+    const { error } = await supabase.from("staff_pins").upsert(
+      {
+        user_id,
+        role,
+        pin_hash,
+        updated_at: new Date().toISOString(),
+      },
+      {
+        onConflict: 'user_id,role',
+        ignoreDuplicates: false
+      }
+    );
 
-    if (error) throw error;
+    if (error) {
+      logger.error("Failed to upsert staff_pins", {
+        error: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
+      throw error;
+    }
 
     // Audit log the successful PIN change
     await supabase.from('audit_logs').insert({
