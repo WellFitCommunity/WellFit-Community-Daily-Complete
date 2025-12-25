@@ -44,5 +44,9 @@ verify_jwt = false
 [functions.verify-pin-reset]
 verify_jwt = false
 
+# Admin PIN management - handles auth internally via Bearer token
+[functions.admin_set_pin]
+verify_jwt = false
+
 # Note: admin-login, wellfit-admin-login, wellfit-verify-pin were deleted
 # Use standard Supabase auth + envision-login + envision-verify-pin instead

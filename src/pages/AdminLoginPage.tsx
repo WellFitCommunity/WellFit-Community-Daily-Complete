@@ -76,6 +76,7 @@ export default function AdminLoginPage() {
   const [detectedRole, setDetectedRole] = useState<StaffRole | null>(null);
   const [pin, setPin] = useState('');
   const [pin2, setPin2] = useState('');
+  const [oldPin, setOldPin] = useState('');
   const [localErr, setLocalErr] = useState<string | null>(state.message || null);
   const [busy, setBusy] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -261,35 +262,47 @@ export default function AdminLoginPage() {
   async function handleSetPin(e?: React.FormEvent) {
     e?.preventDefault();
     clearMessages();
+    const currentPin = cleanPin(oldPin);
     const p1 = cleanPin(pin);
     const p2 = cleanPin(pin2);
 
+    // Current PIN is required when changing an existing PIN
+    if (!currentPin || !/^\d{4,8}$/.test(currentPin)) {
+      setLocalErr('Enter your current PIN (4-8 digits).');
+      return;
+    }
     if (!/^\d{4,8}$/.test(p1)) {
-      setLocalErr('PIN must be 4-8 digits.');
+      setLocalErr('New PIN must be 4-8 digits.');
       return;
     }
     if (p1 !== p2) {
-      setLocalErr('PINs do not match.');
+      setLocalErr('New PINs do not match.');
+      return;
+    }
+    if (currentPin === p1) {
+      setLocalErr('New PIN must be different from current PIN.');
       return;
     }
 
     setBusy(true);
     try {
       const hashedPin = await hashPinForTransmission(p1);
+      const hashedOldPin = await hashPinForTransmission(currentPin);
       const { error: fnErr } = await supabase.functions.invoke('admin_set_pin', {
-        body: { pin: hashedPin, role }
+        body: { pin: hashedPin, old_pin: hashedOldPin, role }
       });
 
       if (fnErr) {
-        setLocalErr(fnErr.message || 'Could not set PIN.');
+        setLocalErr(fnErr.message || 'Could not change PIN.');
         return;
       }
-      setSuccessMsg('PIN saved successfully.');
+      setSuccessMsg('PIN changed successfully.');
       setMode('unlock');
+      setOldPin('');
       setPin('');
       setPin2('');
     } catch (e: any) {
-      setLocalErr(e?.message || 'Could not set PIN.');
+      setLocalErr(e?.message || 'Could not change PIN.');
     } finally {
       setBusy(false);
     }
@@ -510,7 +523,7 @@ export default function AdminLoginPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => { clearMessages(); setMode('setpin'); setPin(''); }}
+                  onClick={() => { clearMessages(); setMode('setpin'); setOldPin(''); setPin(''); setPin2(''); }}
                   className="text-gray-600 hover:text-gray-800"
                 >
                   Set/Change PIN
@@ -522,6 +535,25 @@ export default function AdminLoginPage() {
           {/* === SET PIN MODE === */}
           {mode === 'setpin' && (
             <form onSubmit={handleSetPin} className="space-y-4" autoComplete="off">
+              <p className="text-sm text-gray-600 mb-2">
+                Enter your current PIN to verify your identity, then set a new PIN.
+              </p>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Current PIN</label>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-center text-xl tracking-[0.3em] font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="••••"
+                  value={oldPin}
+                  onChange={(e) => setOldPin(cleanPin(e.target.value))}
+                  onKeyDown={handleKeyDown}
+                  maxLength={8}
+                  autoFocus
+                />
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">New PIN</label>
                 <input
@@ -533,12 +565,11 @@ export default function AdminLoginPage() {
                   onChange={(e) => setPin(cleanPin(e.target.value))}
                   onKeyDown={handleKeyDown}
                   maxLength={8}
-                  autoFocus
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Confirm PIN</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Confirm New PIN</label>
                 <input
                   type="password"
                   inputMode="numeric"
@@ -553,15 +584,15 @@ export default function AdminLoginPage() {
 
               <button
                 type="submit"
-                disabled={busy || !pin.trim() || !pin2.trim()}
+                disabled={busy || !oldPin.trim() || !pin.trim() || !pin2.trim()}
                 className="w-full py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {busy ? 'Saving...' : 'Save PIN'}
+                {busy ? 'Changing PIN...' : 'Change PIN'}
               </button>
 
               <button
                 type="button"
-                onClick={() => { clearMessages(); setMode('unlock'); setPin(''); setPin2(''); }}
+                onClick={() => { clearMessages(); setMode('unlock'); setOldPin(''); setPin(''); setPin2(''); }}
                 className="w-full py-2 text-gray-600 hover:text-gray-800 text-sm"
               >
                 Back to Unlock
