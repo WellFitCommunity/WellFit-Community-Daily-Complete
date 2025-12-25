@@ -8,7 +8,7 @@ import { parsePhoneNumber, isValidPhoneNumber } from "https://esm.sh/libphonenum
 const ALLOWED_COUNTRIES = ['US', 'CA', 'GB', 'AU'] as const;
 
 const SB_URL = SUPABASE_URL || Deno.env.get("SB_URL") || "";
-const SB_SECRET_KEY = SB_SECRET_KEY || Deno.env.get("SB_SECRET_KEY") || "";
+const SERVICE_KEY = SB_SECRET_KEY || Deno.env.get("SB_SECRET_KEY") || "";
 const ADMIN_REGISTER_SECRET = Deno.env.get("ADMIN_REGISTER_SECRET") || "";
 
 const ALLOWED_ORIGINS = [
@@ -90,10 +90,10 @@ serve(async (req: Request) => {
   if (req.method !== "POST") return jsonResponse({ error: "Method not allowed" }, 405, origin);
 
   try {
-    if (!SB_URL || !SB_SECRET_KEY) return jsonResponse({ error: "Server misconfigured" }, 500, origin);
+    if (!SB_URL || !SERVICE_KEY) return jsonResponse({ error: "Server misconfigured" }, 500, origin);
 
     // Gate: require either a valid admin session OR the secret header
-    const supabase = createClient(SB_URL, SB_SECRET_KEY);
+    const supabase = createClient(SB_URL, SERVICE_KEY);
     const auth = req.headers.get("authorization");
     const bearer = auth?.toLowerCase().startsWith("bearer ") ? auth.split(" ")[1] : null;
     let isAdminSession = false;

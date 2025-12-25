@@ -170,17 +170,17 @@ Deno.serve(async (req: Request): Promise<Response> => {
     try {
       const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.45.4?dts");
       const SB_URL = SUPABASE_URL || Deno.env.get("SB_URL") || "";
-      const SB_SECRET_KEY = SB_SECRET_KEY || Deno.env.get("SB_SECRET_KEY") || "";
+      const SERVICE_KEY = SB_SECRET_KEY || Deno.env.get("SB_SECRET_KEY") || "";
 
-      if (!SB_URL || !SB_SECRET_KEY) {
+      if (!SB_URL || !SERVICE_KEY) {
         logger.error("Missing Supabase configuration", {
           hasUrl: Boolean(SB_URL),
-          hasKey: Boolean(SB_SECRET_KEY)
+          hasKey: Boolean(SERVICE_KEY)
         });
         return new Response(JSON.stringify({ error: "Server configuration error" }), { status: 500, headers });
       }
 
-      const supabase = createClient(SB_URL, SB_SECRET_KEY);
+      const supabase = createClient(SB_URL, SERVICE_KEY);
 
       // Get pending registration using normalized phone number
       logger.info("Looking up pending registration", {
