@@ -1,11 +1,13 @@
 // Health Insights Page - AI-powered personalized health dashboard
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useBranding } from '../BrandingContext';
 import { useAuth } from '../contexts/AuthContext';
 import { fetchMyProfile } from '../data/profile';
 import FhirAiDashboardRouter from '../components/FhirAiDashboardRouter';
 
 const HealthInsightsPage: React.FC = () => {
+  const navigate = useNavigate();
   const { branding } = useBranding();
   const { user } = useAuth();
   const [loading, setLoading] = React.useState(true);
@@ -47,6 +49,18 @@ const HealthInsightsPage: React.FC = () => {
       style={{ background: branding.gradient }}
     >
       <div className="container mx-auto px-4 py-6">
+        {/* Back Button */}
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="mb-4 inline-flex items-center gap-2 text-white hover:text-gray-200 transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          <span className="text-sm font-medium">Back</span>
+        </button>
+
         {/* Page Header */}
         <div className="mb-8 text-center">
           <h1

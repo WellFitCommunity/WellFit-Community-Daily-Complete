@@ -1,5 +1,6 @@
 // src/pages/PrivacyPolicy.tsx
 import * as React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const WELLFIT_BLUE = '#003865';
 const WELLFIT_GREEN = '#8cc63f';
@@ -7,8 +8,22 @@ const GRADIENT = `linear-gradient(180deg, ${WELLFIT_GREEN} 0%, ${WELLFIT_BLUE} 1
 const LAST_UPDATED = 'September 2, 2025';
 
 export default function PrivacyPolicy() {
+  const navigate = useNavigate();
+
   return (
     <main className="max-w-3xl mx-auto p-4 sm:p-6">
+      {/* Back Button */}
+      <button
+        type="button"
+        onClick={() => navigate(-1)}
+        className="mb-4 inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        <span className="text-sm font-medium">Back</span>
+      </button>
+
       <div className="p-px rounded-2xl" style={{ background: GRADIENT }}>
         <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-md">
           <h1 className="text-3xl font-extrabold mb-2" style={{ color: WELLFIT_BLUE }}>

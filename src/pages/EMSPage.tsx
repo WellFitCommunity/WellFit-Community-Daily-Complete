@@ -3,10 +3,12 @@
 // Two views: Paramedic form (mobile) and ER dashboard (desktop)
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ParamedicHandoffForm from '../components/ems/ParamedicHandoffForm';
 import ERIncomingPatientBoard from '../components/ems/ERIncomingPatientBoard';
 
 const EMSPage: React.FC = () => {
+  const navigate = useNavigate();
   const [view, setView] = useState<'paramedic' | 'er'>('er');
 
   return (
@@ -16,6 +18,29 @@ const EMSPage: React.FC = () => {
       padding: '1rem',
       fontFamily: 'system-ui, -apple-system, sans-serif'
     }}>
+      {/* Back Button */}
+      <button
+        type="button"
+        onClick={() => navigate(-1)}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          color: '#4b5563',
+          marginBottom: '1rem',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          fontSize: '0.875rem',
+          fontWeight: 500
+        }}
+      >
+        <svg style={{ width: '1.25rem', height: '1.25rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        Back
+      </button>
+
       {/* Header with View Toggle */}
       <div style={{
         maxWidth: '1200px',

@@ -1,6 +1,6 @@
 // src/pages/TermsOfService.tsx
 import * as React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const WELLFIT_BLUE = '#003865';
 const WELLFIT_GREEN = '#8cc63f';
@@ -11,8 +11,22 @@ type TermsProps = {
 };
 
 export default function TermsOfService({ lastUpdated = 'August 24, 2025' }: TermsProps) {
+  const navigate = useNavigate();
+
   return (
     <main className="max-w-3xl mx-auto p-4 sm:p-6">
+      {/* Back Button */}
+      <button
+        type="button"
+        onClick={() => navigate(-1)}
+        className="mb-4 inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors no-print"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        <span className="text-sm font-medium">Back</span>
+      </button>
+
       {/* Print styles */}
       <style>{`
         @page { size: auto; margin: 12mm; }

@@ -1,8 +1,8 @@
 // Professional Medical Dashboard for Healthcare Providers
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useSupabaseClient, useUser } from '../contexts/AuthContext';
 import { useBranding } from '../BrandingContext';
-import { Link } from 'react-router-dom';
 // Optimized imports for tree-shaking (saves ~15KB)
 import Activity from 'lucide-react/dist/esm/icons/activity';
 import Heart from 'lucide-react/dist/esm/icons/heart';
@@ -201,6 +201,7 @@ const StatsCard: React.FC<{
 };
 
 const DoctorsView: React.FC = () => {
+  const navigate = useNavigate();
   const { branding } = useBranding();
   const supabase = useSupabaseClient();
   const user = useUser();
@@ -506,6 +507,18 @@ const DoctorsView: React.FC = () => {
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-purple-50">
       <div className="container mx-auto px-4 py-8">
+        {/* Back Button */}
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="mb-4 inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          <span className="text-sm font-medium">Back</span>
+        </button>
+
         <div className="max-w-7xl mx-auto space-y-6">
 
           {/* Header */}

@@ -1,5 +1,6 @@
 // src/components/WordFind.tsx
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Confetti from 'react-confetti';
 import { dailyThemes } from '../data/wordThemes';
 import { useSupabaseClient, useUser } from '../contexts/AuthContext';
@@ -23,6 +24,7 @@ function dirFromTo(a: Point, b: Point): Point {
 function toKey(p: Point) { return `${p.r},${p.c}`; }
 
 const WordFind: React.FC = () => {
+  const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
   const supabase = useSupabaseClient();
   const user = useUser();
@@ -321,6 +323,18 @@ const WordFind: React.FC = () => {
       background: branding.gradient
     }}>
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
+        {/* Back Button */}
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="mb-4 inline-flex items-center gap-2 text-white hover:text-gray-200 transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          <span className="text-sm font-medium">Back</span>
+        </button>
+
         <div className="bg-white rounded-xl shadow-lg p-4 sm:p-8 max-w-6xl mx-auto">
           <div ref={containerRef} className="text-center">
       <h2 className="text-3xl sm:text-4xl font-bold mb-3" style={{ color: branding.primaryColor }}>{themeData.theme} Word Find</h2>
