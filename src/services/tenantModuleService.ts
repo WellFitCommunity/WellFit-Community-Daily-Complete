@@ -103,9 +103,30 @@ export async function getEnabledModules(
  */
 export const getTenantModuleConfigResult = withServiceWrapper(
   async (): Promise<TenantModuleConfig | null> => {
+    // First, get the current user's tenant_id from their profile
+    // This is necessary because super_admins can see ALL tenant configs via RLS
+    // but we want to return only THEIR tenant's config
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('tenant_id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (profileError || !profile?.tenant_id) {
+      // User has no profile or no tenant - return null
+      return null;
+    }
+
+    // Now fetch the config for THIS user's tenant specifically
     const { data, error } = await supabase
       .from('tenant_module_config')
       .select('*')
+      .eq('tenant_id', profile.tenant_id)
       .single();
 
     if (error) {
