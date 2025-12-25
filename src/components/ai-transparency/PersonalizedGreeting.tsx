@@ -39,12 +39,12 @@ export const PersonalizedGreeting: React.FC = () => {
       if (greetingContext) {
         setLocalGreetingContext(greetingContext);
 
-        // Fetch role-specific stats
+        // Fetch role-specific stats - use maybeSingle to avoid 406 errors
         const { data: profile } = await supabase
           .from('profiles')
           .select('role, tenant_id')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
         if (profile) {
           const stats = await getRoleSpecificStats(
@@ -77,9 +77,19 @@ export const PersonalizedGreeting: React.FC = () => {
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const hour = new Date().getHours();
 
+      // Get the session token - skip edge function if not available
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+
+      if (!accessToken) {
+        // No valid session - skip edge function call, use local greeting only
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke('get-personalized-greeting', {
         headers: {
-          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          Authorization: `Bearer ${accessToken}`,
         },
         body: { timezone, hour },
       });
@@ -87,7 +97,7 @@ export const PersonalizedGreeting: React.FC = () => {
       if (error) throw error;
       setGreetingData(data);
     } catch (error) {
-      // Error handled silently - greeting will not display on failure
+      // Error handled silently - greeting will fall back to local greeting
     } finally {
       setLoading(false);
     }

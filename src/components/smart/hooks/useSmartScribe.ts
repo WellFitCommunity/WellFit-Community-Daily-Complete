@@ -311,7 +311,7 @@ export function useSmartScribe(props: UseSmartScribeProps) {
           .from('provider_scribe_preferences')
           .select('verbosity')
           .eq('provider_id', user.id)
-          .single();
+          .maybeSingle();
 
         if (prefs && !error && prefs.verbosity !== null) {
           setAssistanceLevel(verbosityToLevel(prefs.verbosity));

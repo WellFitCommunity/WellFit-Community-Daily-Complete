@@ -85,7 +85,7 @@ export class VoiceLearningService {
         .from('provider_voice_profiles')
         .select('*')
         .eq('provider_id', providerId)
-        .single();
+        .maybeSingle();
 
       if (error || !data) {
         auditLogger.info('VOICE_PROFILE_NOT_FOUND', { providerId });

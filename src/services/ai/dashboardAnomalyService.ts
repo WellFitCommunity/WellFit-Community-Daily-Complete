@@ -132,7 +132,7 @@ export class DashboardAnomalyService {
       // Then, get AI-powered insights
       const { data, error } = await supabase.functions.invoke('claude-personalization', {
         body: {
-          model: 'claude-haiku-4-5-20250919',
+          model: 'claude-3-5-haiku-20241022',
           prompt: buildAnalysisPrompt(request, localAnomalies),
           userId: request.tenantId || 'system',
           requestType: 'dashboard_anomaly_detection',
@@ -174,7 +174,7 @@ export class DashboardAnomalyService {
         metadata: {
           analyzed_at: new Date().toISOString(),
           metrics_count: request.metrics.length,
-          model: 'claude-haiku-4-5-20250919',
+          model: 'claude-3-5-haiku-20241022',
         },
       });
     } catch (err: unknown) {
