@@ -7,6 +7,7 @@ import DailyIframe, { DailyCall, DailyEvent, DailyEventObject } from '@daily-co/
 import { useDaily, DailyProvider } from '@daily-co/daily-react';
 import { supabase } from '../../lib/supabaseClient';
 import RealTimeSmartScribe from '../smart/RealTimeSmartScribe';
+import { TelehealthPatientSidebar } from './TelehealthPatientSidebar';
 
 interface TelehealthConsultationProps {
   patientId: string;
@@ -78,6 +79,7 @@ const TelehealthCall: React.FC<TelehealthConsultationProps> = ({
     encounterId: null,
   });
   const [showScribe, setShowScribe] = useState(false);
+  const [showPatientInfo, setShowPatientInfo] = useState(true); // Patient sidebar visible by default
   const [participants, setParticipants] = useState<string[]>([]);
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
@@ -218,6 +220,11 @@ const TelehealthCall: React.FC<TelehealthConsultationProps> = ({
   const toggleScribe = useCallback(() => {
     setShowScribe(!showScribe);
   }, [showScribe]);
+
+  // Toggle Patient Info sidebar
+  const togglePatientInfo = useCallback(() => {
+    setShowPatientInfo(!showPatientInfo);
+  }, [showPatientInfo]);
 
   // End call
   const endCall = useCallback(async () => {
@@ -450,6 +457,20 @@ const TelehealthCall: React.FC<TelehealthConsultationProps> = ({
             </button>
 
             <button
+              onClick={togglePatientInfo}
+              className={`p-4 rounded-full transition-all ${
+                showPatientInfo
+                  ? 'bg-blue-600 hover:bg-blue-700'
+                  : 'bg-gray-700 hover:bg-gray-600'
+              }`}
+              title="Toggle Patient Info"
+            >
+              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+              </svg>
+            </button>
+
+            <button
               onClick={toggleScribe}
               className={`p-4 rounded-full transition-all ${
                 showScribe
@@ -475,6 +496,14 @@ const TelehealthCall: React.FC<TelehealthConsultationProps> = ({
             </button>
           </div>
         </div>
+
+        {/* Patient Info sidebar - Avatar, Vitals, SDOH */}
+        <TelehealthPatientSidebar
+          patientId={patientId}
+          patientName={patientName}
+          isVisible={showPatientInfo}
+          onToggle={togglePatientInfo}
+        />
 
         {/* SmartScribe sidebar */}
         {showScribe && (
