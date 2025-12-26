@@ -17,7 +17,7 @@ const MAX_TOKENS_PER_BATCH = 500; // FCM legacy supports up to 1000, we keep a s
 
 // --- Setup ---
 const logger = createLogger("send-checkin-reminders");
-validateEnvVars(["SB_URL", "SB_SERVICE_ROLE_KEY", "FCM_SERVER_KEY"]);
+validateEnvVars(["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "FCM_SERVER_KEY"]);
 
 const supabase = createClient<DatabaseTypes>(
   SUPABASE_URL,

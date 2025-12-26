@@ -17,7 +17,7 @@ const RUN_HOUR_CT = 11; // 11:00–11:05 AM CT window
 const logger = createLogger("notify-stale-checkins");
 
 // Validate env upfront
-validateEnvVars(["SB_URL", "SB_SERVICE_ROLE_KEY"]);
+validateEnvVars(["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"]);
 
 const supabase = createClient<DatabaseTypes>(
   SUPABASE_URL,

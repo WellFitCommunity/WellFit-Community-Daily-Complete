@@ -37,8 +37,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
     );
   }
 
-  const SUPABASE_URL = getEnv("SB_URL", "SUPABASE_URL");
-  const SUPABASE_SERVICE_ROLE_KEY = getEnv("SB_SERVICE_ROLE_KEY", "SB_SECRET_KEY");
+  const SUPABASE_URL = getEnv("SUPABASE_URL");
+  const SUPABASE_SERVICE_ROLE_KEY = getEnv("SB_SECRET_KEY", "SB_SERVICE_ROLE_KEY", "SUPABASE_SERVICE_ROLE_KEY");
   const SETUP_SECRET = getEnv("ADMIN_SETUP_SECRET", "ADMIN_SECRET");
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {

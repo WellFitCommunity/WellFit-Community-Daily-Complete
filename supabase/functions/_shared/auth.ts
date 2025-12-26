@@ -5,10 +5,8 @@ import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supa
 import { corsFromRequest, handleOptions } from "./cors.ts";
 
 // ---- ENV ----
-// Prefer SB_URL (modern naming) with SUPABASE_URL as fallback
-const SUPABASE_URL  = Deno.env.get("SB_URL") ?? Deno.env.get("SUPABASE_URL") ?? "";
-// CRITICAL: SB_SERVICE_ROLE_KEY (legacy JWT format) must be preferred for RLS bypass
-const SB_SECRET_KEY = Deno.env.get("SB_SERVICE_ROLE_KEY") ?? Deno.env.get("SB_SECRET_KEY") ?? "";
+const SUPABASE_URL  = Deno.env.get("SUPABASE_URL")  ?? "";
+const SB_SECRET_KEY = Deno.env.get("SB_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const INTERNAL_SECRET = Deno.env.get("INTERNAL_SECRET") ?? ""; // for internal-only handlers
 
 // Admin client (bypasses RLS)

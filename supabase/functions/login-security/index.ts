@@ -26,8 +26,8 @@ const getEnv = (...keys: string[]): string => {
   return "";
 };
 
-const SUPABASE_URL = getEnv("SB_URL", "SUPABASE_URL");
-const SUPABASE_SERVICE_ROLE_KEY = getEnv("SB_SERVICE_ROLE_KEY", "SB_SECRET_KEY");
+const SUPABASE_URL = getEnv("SUPABASE_URL");
+const SUPABASE_SERVICE_ROLE_KEY = getEnv("SB_SECRET_KEY", "SB_SERVICE_ROLE_KEY", "SUPABASE_SERVICE_ROLE_KEY");
 
 interface CheckLockRequest {
   action: "check_lock";

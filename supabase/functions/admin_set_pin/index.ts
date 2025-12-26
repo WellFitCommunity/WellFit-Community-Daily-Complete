@@ -28,9 +28,9 @@ const getEnv = (...keys: string[]): string => {
   return "";
 };
 
-const SUPABASE_URL = getEnv("SB_URL", "SUPABASE_URL");
+const SUPABASE_URL = getEnv("SUPABASE_URL");
 // CRITICAL: Use legacy JWT format for RLS bypass - sb_secret_* format doesn't work with JS client
-const SB_SECRET_KEY = getEnv("SB_SERVICE_ROLE_KEY", "SB_SECRET_KEY");
+const SB_SECRET_KEY = getEnv("SB_SERVICE_ROLE_KEY", "SUPABASE_SERVICE_ROLE_KEY", "SB_SECRET_KEY");
 const TWILIO_ACCOUNT_SID = getEnv("TWILIO_ACCOUNT_SID");
 const TWILIO_AUTH_TOKEN = getEnv("TWILIO_AUTH_TOKEN");
 const TWILIO_FROM_NUMBER = getEnv("TWILIO_FROM_NUMBER");

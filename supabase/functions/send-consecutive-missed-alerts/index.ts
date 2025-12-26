@@ -32,7 +32,7 @@ const ALERT_COOLDOWN_HOURS = 23; // Don't send duplicate alerts within 23 hours
 const logger = createLogger("send-consecutive-missed-alerts");
 validateEnvVars([
   "SUPABASE_URL",
-  "SB_SERVICE_ROLE_KEY",
+  "SUPABASE_SERVICE_ROLE_KEY",
   "FCM_SERVER_KEY",
   "TWILIO_ACCOUNT_SID",
   "TWILIO_AUTH_TOKEN",

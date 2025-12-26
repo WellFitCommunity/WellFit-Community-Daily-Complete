@@ -9,7 +9,7 @@ const setupMockEnv = () => {
   Deno.env.set("TWILIO_AUTH_TOKEN", "test_auth_token");
   Deno.env.set("TWILIO_VERIFY_SERVICE_SID", "VAtest_verify_sid");
   Deno.env.set("SUPABASE_URL", "https://test.supabase.co");
-  Deno.env.set("SB_SERVICE_ROLE_KEY", "test_service_role_key");
+  Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", "test_service_role_key");
 };
 
 // Mock Twilio Verify Check API responses
@@ -177,12 +177,12 @@ Deno.test("SMS Verify Code Function - E2E Tests", async (t) => {
 
   await t.step("should handle missing Supabase configuration", async () => {
     // Store original values
-    const originalUrl = Deno.env.get("SB_URL") || Deno.env.get("SUPABASE_URL");
-    const originalKey = Deno.env.get("SB_SERVICE_ROLE_KEY");
+    const originalUrl = Deno.env.get("SUPABASE_URL");
+    const originalKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
     // Clear env vars
     Deno.env.delete("SUPABASE_URL");
-    Deno.env.delete("SB_SERVICE_ROLE_KEY");
+    Deno.env.delete("SUPABASE_SERVICE_ROLE_KEY");
 
     const request = new Request("http://localhost", {
       method: "POST",
@@ -194,7 +194,7 @@ Deno.test("SMS Verify Code Function - E2E Tests", async (t) => {
 
     // Restore original values
     if (originalUrl) Deno.env.set("SUPABASE_URL", originalUrl);
-    if (originalKey) Deno.env.set("SB_SERVICE_ROLE_KEY", originalKey);
+    if (originalKey) Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", originalKey);
   });
 
   await t.step("should handle approved verification code", async () => {

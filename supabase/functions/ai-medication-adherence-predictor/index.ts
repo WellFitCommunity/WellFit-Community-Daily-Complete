@@ -789,7 +789,7 @@ serve(async (req) => {
 
     // Initialize Supabase client
     const supabaseUrl = getEnv('SUPABASE_URL', 'SB_URL');
-    const supabaseKey = getEnv('SB_SERVICE_ROLE_KEY', 'SB_SECRET_KEY');
+    const supabaseKey = getEnv('SB_SERVICE_ROLE_KEY', 'SUPABASE_SERVICE_ROLE_KEY');
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Gather patient context
