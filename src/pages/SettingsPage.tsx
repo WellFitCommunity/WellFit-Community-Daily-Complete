@@ -171,6 +171,12 @@ const SettingsPage: React.FC = () => {
       title: t.settings.sections.account.title,
       icon: '🛡️',
       description: t.settings.sections.account.description
+    },
+    {
+      id: 'privacy',
+      title: 'Privacy & Data',
+      icon: '🔒',
+      description: 'Control who can access your health data and download your records'
     }
   ];
 
@@ -571,6 +577,55 @@ const SettingsPage: React.FC = () => {
                             📚 View Help Center
                           </button>
                         </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Privacy & Data */}
+                  {section.id === 'privacy' && (
+                    <div className="space-y-4">
+                      <div className="bg-blue-50 p-4 rounded-lg">
+                        <h3 className="font-semibold text-[#003865] mb-2">Consent Management</h3>
+                        <p className="text-gray-700 mb-4">
+                          Control who can access your health information. View connected apps,
+                          manage provider access, and see who has viewed your data.
+                        </p>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate('/consent-management');
+                          }}
+                          className="bg-[#003865] text-white px-6 py-3 rounded-lg hover:bg-[#8cc63f] transition font-semibold"
+                        >
+                          🔒 Manage Data Access
+                        </button>
+                      </div>
+
+                      <div className="bg-green-50 p-4 rounded-lg">
+                        <h3 className="font-semibold text-[#003865] mb-2">Download Your Data</h3>
+                        <p className="text-gray-700 mb-4">
+                          Download a complete copy of your health records in multiple formats
+                          including PDF, C-CDA, and JSON.
+                        </p>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate('/settings'); // DataManagementPanel is in settings
+                            // Scroll to data section or open modal
+                          }}
+                          className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition font-semibold"
+                        >
+                          📥 Download My Data
+                        </button>
+                      </div>
+
+                      <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                        <h3 className="font-semibold text-purple-800 mb-2">Your Data Rights</h3>
+                        <p className="text-purple-700 text-sm">
+                          Under the <strong>21st Century Cures Act</strong> and <strong>HIPAA Privacy Rule</strong>,
+                          you have the right to access all of your electronic health information
+                          without delay and at no charge.
+                        </p>
                       </div>
                     </div>
                   )}

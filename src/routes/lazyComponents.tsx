@@ -58,6 +58,7 @@ export const LogoutPage = React.lazy(() => import('../pages/LogoutPage'));
 // Consent
 export const ConsentPhotoPage = React.lazy(() => import('../pages/ConsentPhotoPage'));
 export const ConsentPrivacyPage = React.lazy(() => import('../pages/ConsentPrivacyPage'));
+export const ConsentManagementPage = React.lazy(() => import('../pages/ConsentManagementPage'));
 export const SelfReportingPage = React.lazy(() => import('../pages/SelfReportingPage'));
 export const DoctorsViewPage = React.lazy(() => import('../pages/DoctorsViewPage'));
 export const SmartCallbackPage = React.lazy(() => import('../pages/SmartCallbackPage'));
@@ -259,6 +260,7 @@ export const componentMap: Record<string, React.LazyExoticComponent<any>> = {
   LogoutPage,
   ConsentPhotoPage,
   ConsentPrivacyPage,
+  ConsentManagementPage,
   SelfReportingPage,
   DoctorsViewPage,
   SmartCallbackPage,

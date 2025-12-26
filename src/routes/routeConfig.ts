@@ -83,6 +83,7 @@ export const protectedRoutes: RouteConfig[] = [
   // Consent & Reporting
   { path: '/consent-photo', component: 'ConsentPhotoPage', auth: 'user', category: 'protected' },
   { path: '/consent-privacy', component: 'ConsentPrivacyPage', auth: 'user', category: 'protected' },
+  { path: '/consent-management', component: 'ConsentManagementPage', auth: 'user', category: 'protected' },
   { path: '/self-reporting', component: 'SelfReportingPage', auth: 'user', category: 'protected' },
   { path: '/doctors-view', component: 'DoctorsViewPage', auth: 'user', category: 'protected' },
 
