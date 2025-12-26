@@ -4,8 +4,11 @@
  * Supports manual entry and Bluetooth device integration
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { chwService, VitalsData } from '../../services/chwService';
+import { useBluetooth } from '../vitals/useBluetooth';
+import { VitalType, BloodPressureReading } from '../vitals/types';
+import { Bluetooth, BluetoothConnected, Loader2, Check, AlertCircle } from 'lucide-react';
 
 interface CHWVitalsCaptureProps {
   visitId?: string;
@@ -13,6 +16,21 @@ interface CHWVitalsCaptureProps {
   onComplete?: () => void;
   onBack?: () => void;
 }
+
+// Bluetooth vital type options for CHW
+type BluetoothVitalOption = {
+  type: VitalType;
+  label: string;
+  labelEs: string;
+  icon: string;
+};
+
+const BLUETOOTH_VITAL_OPTIONS: BluetoothVitalOption[] = [
+  { type: 'blood_pressure', label: 'Blood Pressure', labelEs: 'Presión Arterial', icon: '💓' },
+  { type: 'heart_rate', label: 'Heart Rate', labelEs: 'Frecuencia Cardíaca', icon: '❤️' },
+  { type: 'weight', label: 'Weight Scale', labelEs: 'Báscula', icon: '⚖️' },
+  { type: 'glucose', label: 'Glucose Meter', labelEs: 'Glucómetro', icon: '🩸' },
+];
 
 export const CHWVitalsCapture: React.FC<CHWVitalsCaptureProps> = ({
   visitId = 'demo-visit-001',
@@ -28,9 +46,12 @@ export const CHWVitalsCapture: React.FC<CHWVitalsCaptureProps> = ({
   const [error, setError] = useState('');
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [criticalAlerts, setCriticalAlerts] = useState<Record<string, string>>({});
-  const [bluetoothConnected, setBluetoothConnected] = useState(false);
-  const [bluetoothError, setBluetoothError] = useState('');
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [showBluetoothMenu, setShowBluetoothMenu] = useState(false);
+  const [lastBluetoothReading, setLastBluetoothReading] = useState<string | null>(null);
+
+  // Real Bluetooth hook
+  const bluetooth = useBluetooth();
 
   const translations = {
     en: {
@@ -51,7 +72,14 @@ export const CHWVitalsCapture: React.FC<CHWVitalsCaptureProps> = ({
       allRequired: 'Please enter at least Blood Pressure and Heart Rate',
       manualEntry: 'Manual Entry',
       bluetoothDevices: 'Bluetooth Devices',
-      connectDevice: 'Connect Device'
+      connectDevice: 'Connect Bluetooth Device',
+      selectDevice: 'Select Device Type',
+      connecting: 'Connecting...',
+      waitingForReading: 'Take a reading on your device',
+      readingReceived: 'Reading received!',
+      bluetoothNotSupported: 'Bluetooth not supported on this device. Use Chrome on Android or desktop.',
+      tryAgain: 'Try Again',
+      cancel: 'Cancel'
     },
     es: {
       title: 'Signos Vitales',
@@ -71,7 +99,14 @@ export const CHWVitalsCapture: React.FC<CHWVitalsCaptureProps> = ({
       allRequired: 'Por favor ingrese al menos Presión Arterial y Frecuencia Cardíaca',
       manualEntry: 'Entrada Manual',
       bluetoothDevices: 'Dispositivos Bluetooth',
-      connectDevice: 'Conectar Dispositivo'
+      connectDevice: 'Conectar Dispositivo Bluetooth',
+      selectDevice: 'Seleccionar Tipo de Dispositivo',
+      connecting: 'Conectando...',
+      waitingForReading: 'Tome una lectura en su dispositivo',
+      readingReceived: '¡Lectura recibida!',
+      bluetoothNotSupported: 'Bluetooth no soportado. Use Chrome en Android o escritorio.',
+      tryAgain: 'Intentar de Nuevo',
+      cancel: 'Cancelar'
     }
   };
 
@@ -176,22 +211,62 @@ export const CHWVitalsCapture: React.FC<CHWVitalsCaptureProps> = ({
     }
   };
 
-  const handleBluetoothConnect = async () => {
-    setBluetoothError('');
-    try {
-      // Simulated Bluetooth connection failure for testing
-      // In production, this would attempt actual Bluetooth connection
-      await new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Unable to connect to Bluetooth device')), 1000)
-      );
+  // Handle real Bluetooth connection for a specific vital type
+  const handleBluetoothConnect = useCallback(async (vitalType: VitalType) => {
+    setShowBluetoothMenu(false);
+    setLastBluetoothReading(null);
 
-      setBluetoothConnected(true);
-      setVitals(prev => ({ ...prev, device_type: 'bluetooth' }));
-    } catch (err) {
-      setBluetoothError('Unable to connect to Bluetooth device. Please try again or enter values manually.');
-      setBluetoothConnected(false);
+    const reading = await bluetooth.connect(vitalType);
+
+    if (reading) {
+      // Auto-populate form fields based on reading type
+      if (reading.type === 'blood_pressure') {
+        const bp = reading as BloodPressureReading;
+        setVitals(prev => ({
+          ...prev,
+          systolic: bp.systolic,
+          diastolic: bp.diastolic,
+          heart_rate: bp.pulse || prev.heart_rate,
+          device_type: 'bluetooth',
+          captured_at: new Date().toISOString(),
+        }));
+        setLastBluetoothReading(`BP: ${bp.systolic}/${bp.diastolic}${bp.pulse ? ` (pulse ${bp.pulse})` : ''}`);
+      } else if (reading.type === 'heart_rate' && reading.value) {
+        setVitals(prev => ({
+          ...prev,
+          heart_rate: reading.value,
+          device_type: 'bluetooth',
+          captured_at: new Date().toISOString(),
+        }));
+        setLastBluetoothReading(`Heart Rate: ${reading.value} bpm`);
+      } else if (reading.type === 'weight' && reading.value) {
+        setVitals(prev => ({
+          ...prev,
+          weight: reading.value,
+          device_type: 'bluetooth',
+          captured_at: new Date().toISOString(),
+        }));
+        setLastBluetoothReading(`Weight: ${reading.value} lbs`);
+      } else if (reading.type === 'glucose' && reading.value) {
+        setVitals(prev => ({
+          ...prev,
+          glucose: reading.value,
+          device_type: 'bluetooth',
+          captured_at: new Date().toISOString(),
+        }));
+        setLastBluetoothReading(`Glucose: ${reading.value} mg/dL`);
+      }
+
+      // Clear reading after 5 seconds
+      setTimeout(() => setLastBluetoothReading(null), 5000);
     }
-  };
+  }, [bluetooth]);
+
+  // Disconnect Bluetooth and reset
+  const handleBluetoothDisconnect = useCallback(() => {
+    bluetooth.disconnect();
+    setShowBluetoothMenu(false);
+  }, [bluetooth]);
 
   const validateVital = (type: 'bp' | 'hr' | 'o2' | 'temp', value?: number) => {
     if (!value) return null;
@@ -299,14 +374,112 @@ export const CHWVitalsCapture: React.FC<CHWVitalsCaptureProps> = ({
 
           {/* Bluetooth Device Section */}
           <div className="mb-8">
-            <button
-              onClick={handleBluetoothConnect}
-              className="w-full bg-blue-500 hover:bg-blue-600 text-white text-2xl font-bold py-6 px-8 rounded-2xl transition-all"
-            >
-              Connect Bluetooth Device
-            </button>
-            {bluetoothError && (
-              <div className="mt-4 text-red-600 text-xl">{bluetoothError}</div>
+            {/* Main Bluetooth Button */}
+            {!bluetooth.isSupported ? (
+              <div className="bg-gray-100 border-2 border-gray-300 text-gray-600 px-6 py-4 rounded-2xl text-xl flex items-center gap-4">
+                <AlertCircle className="w-8 h-8" />
+                <span>{t.bluetoothNotSupported}</span>
+              </div>
+            ) : bluetooth.state.isConnecting ? (
+              <div className="bg-blue-100 border-2 border-blue-400 text-blue-800 px-6 py-6 rounded-2xl text-xl">
+                <div className="flex items-center gap-4 mb-2">
+                  <Loader2 className="w-8 h-8 animate-spin" />
+                  <span className="font-bold">{t.connecting}</span>
+                </div>
+                {bluetooth.state.deviceName && (
+                  <p className="text-lg ml-12">{bluetooth.state.deviceName}</p>
+                )}
+                <p className="text-lg ml-12 mt-2">{t.waitingForReading}</p>
+                <button
+                  onClick={handleBluetoothDisconnect}
+                  className="mt-4 ml-12 text-blue-600 underline text-lg"
+                >
+                  {t.cancel}
+                </button>
+              </div>
+            ) : bluetooth.state.isConnected ? (
+              <div className="bg-green-100 border-2 border-green-400 text-green-800 px-6 py-4 rounded-2xl text-xl flex items-center gap-4">
+                <BluetoothConnected className="w-8 h-8" />
+                <div>
+                  <span className="font-bold">Connected: {bluetooth.state.deviceName}</span>
+                  {lastBluetoothReading && (
+                    <p className="text-lg flex items-center gap-2 mt-1">
+                      <Check className="w-5 h-5" />
+                      {lastBluetoothReading}
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={handleBluetoothDisconnect}
+                  className="ml-auto text-green-600 underline"
+                >
+                  Disconnect
+                </button>
+              </div>
+            ) : (
+              <div className="relative">
+                <button
+                  onClick={() => setShowBluetoothMenu(!showBluetoothMenu)}
+                  className="w-full bg-blue-500 hover:bg-blue-600 text-white text-2xl font-bold py-6 px-8 rounded-2xl transition-all flex items-center justify-center gap-4"
+                >
+                  <Bluetooth className="w-8 h-8" />
+                  {t.connectDevice}
+                </button>
+
+                {/* Device Type Selection Menu */}
+                {showBluetoothMenu && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-blue-300 rounded-2xl shadow-2xl z-10 overflow-hidden">
+                    <div className="p-4 bg-blue-50 border-b-2 border-blue-200">
+                      <p className="text-xl font-bold text-blue-800">{t.selectDevice}</p>
+                    </div>
+                    <div className="p-2">
+                      {BLUETOOTH_VITAL_OPTIONS.map((option) => (
+                        <button
+                          key={option.type}
+                          onClick={() => handleBluetoothConnect(option.type)}
+                          className="w-full text-left px-6 py-4 text-xl hover:bg-blue-50 rounded-xl transition-colors flex items-center gap-4"
+                        >
+                          <span className="text-3xl">{option.icon}</span>
+                          <span>{language === 'es' ? option.labelEs : option.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                    <div className="p-2 border-t border-gray-200">
+                      <button
+                        onClick={() => setShowBluetoothMenu(false)}
+                        className="w-full text-center px-6 py-3 text-lg text-gray-600 hover:bg-gray-50 rounded-xl"
+                      >
+                        {t.cancel}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Bluetooth Error */}
+            {bluetooth.state.error && (
+              <div className="mt-4 bg-red-100 border-2 border-red-400 text-red-800 px-6 py-4 rounded-xl text-xl flex items-center gap-4">
+                <AlertCircle className="w-6 h-6 shrink-0" />
+                <span>{bluetooth.state.error}</span>
+                <button
+                  onClick={() => setShowBluetoothMenu(true)}
+                  className="ml-auto text-red-600 underline font-bold"
+                >
+                  {t.tryAgain}
+                </button>
+              </div>
+            )}
+
+            {/* Success Reading Banner */}
+            {lastBluetoothReading && !bluetooth.state.isConnected && (
+              <div className="mt-4 bg-green-100 border-2 border-green-400 text-green-800 px-6 py-4 rounded-xl text-xl flex items-center gap-4">
+                <Check className="w-8 h-8" />
+                <div>
+                  <p className="font-bold">{t.readingReceived}</p>
+                  <p>{lastBluetoothReading}</p>
+                </div>
+              </div>
             )}
           </div>
 
@@ -328,7 +501,6 @@ export const CHWVitalsCapture: React.FC<CHWVitalsCaptureProps> = ({
                     value={vitals.systolic || ''}
                     onChange={(e) => handleChange('systolic', e.target.value)}
                     onBlur={() => handleBlur('systolic')}
-                    disabled={bluetoothConnected}
                     aria-label="Systolic blood pressure"
                     className={`w-full text-4xl px-8 py-6 border-4 rounded-2xl focus:ring-4 focus:ring-blue-200 outline-hidden text-center font-bold ${getStatusColor(bpStatus)} disabled:opacity-50`}
                     placeholder="120"
@@ -348,7 +520,6 @@ export const CHWVitalsCapture: React.FC<CHWVitalsCaptureProps> = ({
                     type="number"
                     value={vitals.diastolic || ''}
                     onChange={(e) => handleChange('diastolic', e.target.value)}
-                    disabled={bluetoothConnected}
                     aria-label="Diastolic blood pressure"
                     className={`w-full text-4xl px-8 py-6 border-4 rounded-2xl focus:ring-4 focus:ring-blue-200 outline-hidden text-center font-bold ${getStatusColor(bpStatus)} disabled:opacity-50`}
                     placeholder="80"
@@ -375,7 +546,6 @@ export const CHWVitalsCapture: React.FC<CHWVitalsCaptureProps> = ({
                 type="number"
                 value={vitals.heart_rate || ''}
                 onChange={(e) => handleChange('heart_rate', e.target.value)}
-                disabled={bluetoothConnected}
                 aria-label="Heart rate"
                 className={`w-full text-4xl px-8 py-6 border-4 rounded-2xl focus:ring-4 focus:ring-blue-200 outline-hidden text-center font-bold ${getStatusColor(hrStatus)} disabled:opacity-50`}
                 placeholder="72"
@@ -396,7 +566,6 @@ export const CHWVitalsCapture: React.FC<CHWVitalsCaptureProps> = ({
                 value={vitals.oxygen_saturation || ''}
                 onChange={(e) => handleChange('oxygen_saturation', e.target.value)}
                 onBlur={() => handleBlur('oxygen_saturation')}
-                disabled={bluetoothConnected}
                 aria-label="Oxygen saturation"
                 className={`w-full text-4xl px-8 py-6 border-4 rounded-2xl focus:ring-4 focus:ring-blue-200 outline-hidden text-center font-bold ${getStatusColor(o2Status)} disabled:opacity-50`}
                 placeholder="98"
@@ -425,7 +594,6 @@ export const CHWVitalsCapture: React.FC<CHWVitalsCaptureProps> = ({
                 step="0.1"
                 value={vitals.temperature || ''}
                 onChange={(e) => handleChange('temperature', e.target.value)}
-                disabled={bluetoothConnected}
                 aria-label="Temperature"
                 className={`w-full text-4xl px-8 py-6 border-4 rounded-2xl focus:ring-4 focus:ring-blue-200 outline-hidden text-center font-bold ${getStatusColor(tempStatus)} disabled:opacity-50`}
                 placeholder="98.6"
@@ -444,7 +612,6 @@ export const CHWVitalsCapture: React.FC<CHWVitalsCaptureProps> = ({
                 type="number"
                 value={vitals.weight || ''}
                 onChange={(e) => handleChange('weight', e.target.value)}
-                disabled={bluetoothConnected}
                 aria-label="Weight"
                 className="w-full text-4xl px-8 py-6 border-4 border-gray-300 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 outline-hidden text-center font-bold bg-white disabled:opacity-50"
                 placeholder="150"

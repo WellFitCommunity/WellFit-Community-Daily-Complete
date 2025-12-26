@@ -5,10 +5,37 @@
 
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { CHWVitalsCapture } from '../CHWVitalsCapture';
 import { chwService } from '../../../services/chwService';
 
 vi.mock('../../../services/chwService');
+
+// Mock useBluetooth hook
+const mockConnect = vi.fn();
+const mockDisconnect = vi.fn();
+const mockBluetoothState: {
+  isConnecting: boolean;
+  isConnected: boolean;
+  deviceName: string | null;
+  error: string | null;
+  lastReading: unknown;
+} = {
+  isConnecting: false,
+  isConnected: false,
+  deviceName: null,
+  error: null,
+  lastReading: null,
+};
+
+vi.mock('../../vitals/useBluetooth', () => ({
+  useBluetooth: () => ({
+    state: mockBluetoothState,
+    connect: mockConnect,
+    disconnect: mockDisconnect,
+    isSupported: true,
+  }),
+}));
 
 describe('CHWVitalsCapture - Error message handling', () => {
   const mockProps = {
@@ -20,6 +47,12 @@ describe('CHWVitalsCapture - Error message handling', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset Bluetooth state
+    mockBluetoothState.isConnecting = false;
+    mockBluetoothState.isConnected = false;
+    mockBluetoothState.deviceName = null;
+    mockBluetoothState.error = null;
+    mockBluetoothState.lastReading = null;
   });
 
   describe('Manual Vitals Entry', () => {
@@ -132,28 +165,65 @@ describe('CHWVitalsCapture - Error message handling', () => {
       expect(screen.getByText(/Connect Bluetooth Device/i)).toBeInTheDocument();
     });
 
-    it('should disable manual entry when Bluetooth is connected', async () => {
+    it('should show device type menu when button is clicked', async () => {
+      const user = userEvent.setup();
       render(<CHWVitalsCapture {...mockProps} />);
 
-      const connectButton = screen.getByText(/Connect Bluetooth Device/i);
-      fireEvent.click(connectButton);
+      const connectButton = screen.getByRole('button', { name: /Connect Bluetooth Device/i });
+      await user.click(connectButton);
 
-      // In our implementation, Bluetooth connection fails immediately (simulated)
-      // So inputs will NOT be disabled - instead we show an error
+      // Menu should appear with device type options
       await waitFor(() => {
-        expect(screen.getByText(/Unable to connect/i)).toBeInTheDocument();
-      }, { timeout: 2000 });
+        expect(screen.getByText('Select Device Type')).toBeInTheDocument();
+      });
+      expect(screen.getByRole('button', { name: /Blood Pressure/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Heart Rate/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Weight Scale/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Glucose Meter/i })).toBeInTheDocument();
+    });
+
+    it('should call connect with correct vital type when device selected', async () => {
+      const user = userEvent.setup();
+      render(<CHWVitalsCapture {...mockProps} />);
+
+      const connectButton = screen.getByRole('button', { name: /Connect Bluetooth Device/i });
+      await user.click(connectButton);
+
+      // Wait for menu to appear
+      await waitFor(() => {
+        expect(screen.getByText('Select Device Type')).toBeInTheDocument();
+      });
+
+      // Click on Blood Pressure option (use getByRole to be specific)
+      const bpButton = screen.getByRole('button', { name: /💓.*Blood Pressure/i });
+      await user.click(bpButton);
+
+      expect(mockConnect).toHaveBeenCalledWith('blood_pressure');
+    });
+
+    it('should show connected status when device is connected', () => {
+      mockBluetoothState.isConnected = true;
+      mockBluetoothState.deviceName = 'BP Monitor';
+
+      render(<CHWVitalsCapture {...mockProps} />);
+
+      expect(screen.getByText(/Connected.*BP Monitor/i)).toBeInTheDocument();
+    });
+
+    it('should show connecting state during connection', () => {
+      mockBluetoothState.isConnecting = true;
+
+      render(<CHWVitalsCapture {...mockProps} />);
+
+      expect(screen.getByText(/Connecting/i)).toBeInTheDocument();
     });
 
     it('should handle Bluetooth connection failure gracefully', async () => {
+      mockBluetoothState.error = 'Connection failed';
+
       render(<CHWVitalsCapture {...mockProps} />);
 
-      const connectButton = screen.getByText(/Connect Bluetooth Device/i);
-      fireEvent.click(connectButton);
-
-      await waitFor(() => {
-        expect(screen.getByText(/Unable to connect.*Bluetooth device/i)).toBeInTheDocument();
-      }, { timeout: 2000 });
+      expect(screen.getByText(/Connection failed/i)).toBeInTheDocument();
     });
   });
 
