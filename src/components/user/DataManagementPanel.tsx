@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
-import { Download, Trash2, Info, Shield } from 'lucide-react';
+import { Download, Trash2, Info, Shield, FileText, FileCode, Printer } from 'lucide-react';
 
 interface UserDataStatus {
   dataSummary: {
@@ -14,9 +14,12 @@ interface UserDataStatus {
   totalRecords: number;
 }
 
+type ExportType = 'json' | 'pdf' | 'ccda';
+
 export default function DataManagementPanel() {
   const [dataStatus, setDataStatus] = useState<UserDataStatus | null>(null);
   const [loading, setLoading] = useState(false);
+  const [exportingType, setExportingType] = useState<ExportType | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
@@ -36,8 +39,8 @@ export default function DataManagementPanel() {
     setLoading(false);
   };
 
-  const exportData = async () => {
-    setLoading(true);
+  const exportJSON = async () => {
+    setExportingType('json');
     try {
       const { data, error } = await supabase.functions.invoke('user-data-management', {
         body: { action: 'export' }
@@ -58,10 +61,69 @@ export default function DataManagementPanel() {
 
       alert('Your data has been downloaded successfully!');
     } catch (error) {
-
       alert('Failed to export data. Please try again.');
     }
-    setLoading(false);
+    setExportingType(null);
+  };
+
+  const exportPDF = async () => {
+    setExportingType('pdf');
+    try {
+      const { data, error } = await supabase.functions.invoke('pdf-health-summary', {});
+
+      if (error) throw error;
+
+      // Open the HTML in a new window for printing
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(data.html);
+        printWindow.document.close();
+        // Auto-trigger print dialog after content loads
+        printWindow.onload = () => {
+          printWindow.print();
+        };
+      } else {
+        // Fallback: download as HTML file
+        const blob = new Blob([data.html], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `my-health-summary-${new Date().toISOString().split('T')[0]}.html`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        alert('Health summary downloaded. Open the file and use your browser\'s print function to save as PDF.');
+      }
+    } catch (error) {
+      alert('Failed to generate PDF. Please try again.');
+    }
+    setExportingType(null);
+  };
+
+  const exportCCDA = async () => {
+    setExportingType('ccda');
+    try {
+      const { data, error } = await supabase.functions.invoke('ccda-export', {});
+
+      if (error) throw error;
+
+      // Download the C-CDA XML file
+      const blob = new Blob([data.xml], { type: 'application/xml' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `my-health-record-${new Date().toISOString().split('T')[0]}.xml`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      alert('Your C-CDA health record has been downloaded. This format can be imported into most healthcare systems.');
+    } catch (error) {
+      alert('Failed to export C-CDA. Please try again.');
+    }
+    setExportingType(null);
   };
 
   const deleteAccount = async () => {
@@ -153,17 +215,76 @@ export default function DataManagementPanel() {
             Download Your Data
           </h3>
           <p className="text-gray-600 mb-4">
-            Download a complete copy of all your data in JSON format. This includes your profile,
-            health check-ins, community posts, and all other information we have about you.
+            Download a complete copy of all your health data. Choose the format that works best for you:
           </p>
-          <button
-            onClick={exportData}
-            disabled={loading}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center"
-          >
-            <Download className="mr-2 w-4 h-4" />
-            {loading ? 'Preparing Download...' : 'Download My Data'}
-          </button>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* PDF Health Summary */}
+            <div className="border rounded-lg p-4 hover:border-blue-300 transition-colors">
+              <div className="flex items-center mb-2">
+                <Printer className="w-5 h-5 text-blue-600 mr-2" />
+                <h4 className="font-medium">PDF Summary</h4>
+              </div>
+              <p className="text-sm text-gray-600 mb-3">
+                Easy-to-read health summary. Print it or share with your doctor.
+              </p>
+              <button
+                onClick={exportPDF}
+                disabled={exportingType !== null}
+                className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center text-sm"
+              >
+                <Printer className="mr-2 w-4 h-4" />
+                {exportingType === 'pdf' ? 'Generating...' : 'Print/Save PDF'}
+              </button>
+            </div>
+
+            {/* C-CDA Export */}
+            <div className="border rounded-lg p-4 hover:border-green-300 transition-colors">
+              <div className="flex items-center mb-2">
+                <FileCode className="w-5 h-5 text-green-600 mr-2" />
+                <h4 className="font-medium">C-CDA Record</h4>
+              </div>
+              <p className="text-sm text-gray-600 mb-3">
+                Standard medical format. Import into Epic, Cerner, or other health systems.
+              </p>
+              <button
+                onClick={exportCCDA}
+                disabled={exportingType !== null}
+                className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center justify-center text-sm"
+              >
+                <FileCode className="mr-2 w-4 h-4" />
+                {exportingType === 'ccda' ? 'Generating...' : 'Download C-CDA'}
+              </button>
+            </div>
+
+            {/* JSON Data Export */}
+            <div className="border rounded-lg p-4 hover:border-purple-300 transition-colors">
+              <div className="flex items-center mb-2">
+                <FileText className="w-5 h-5 text-purple-600 mr-2" />
+                <h4 className="font-medium">JSON Data</h4>
+              </div>
+              <p className="text-sm text-gray-600 mb-3">
+                Complete data backup. For developers or personal backup.
+              </p>
+              <button
+                onClick={exportJSON}
+                disabled={exportingType !== null}
+                className="w-full bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50 flex items-center justify-center text-sm"
+              >
+                <FileText className="mr-2 w-4 h-4" />
+                {exportingType === 'json' ? 'Preparing...' : 'Download JSON'}
+              </button>
+            </div>
+          </div>
+
+          {/* 21st Century Cures Act Notice */}
+          <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-sm text-green-800">
+              <strong>Your Right to Your Data:</strong> Under the 21st Century Cures Act and HIPAA Privacy Rule,
+              you have the right to access all of your electronic health information without delay and at no charge.
+              These exports include all data we maintain about you.
+            </p>
+          </div>
         </div>
 
         {/* Account Deletion Section */}
