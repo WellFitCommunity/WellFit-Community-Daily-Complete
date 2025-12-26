@@ -19,29 +19,12 @@ This document assesses WellFit/Envision Atlus compliance with federal healthcare
 | Category | Status | Score |
 |----------|--------|-------|
 | Data Storage (USCDI) | Excellent | 95% |
-| Patient VIEW Access | Good | 75% |
-| Patient EXPORT Access | **CRITICAL GAP** | 10% |
-| Export Formats | Missing | 5% |
-| Information Blocking Prevention | Not Implemented | 5% |
+| Patient Access Portal | Partial | 60% |
+| Export Formats | Partial | 40% |
+| Information Blocking Prevention | Planning Only | 20% |
 | Consent Management | Not Implemented | 10% |
 
-**Overall Grant Readiness: ~25%**
-
-### Code-Verified Reality Check (Dec 26, 2025)
-
-**The export function (`supabase/functions/user-data-management/index.ts`) only exports 4 tables:**
-```
-profile, check_ins, community_moments, alerts
-```
-
-**It does NOT export:** medications, allergies, conditions, procedures, immunizations, labs, clinical notes, care plans, observations, diagnostic reports, encounters, or any other FHIR data.
-
-**The patient-facing UI components ARE implemented and work:**
-- `MedicineCabinet.tsx` (825 lines) - Full medication management
-- `AllergyManager.tsx` (343 lines) - Full allergy CRUD
-- `ConditionManager.tsx` (575 lines) - FHIR R4 compliant
-
-**The disconnect:** Patients can VIEW their data through the UI, but cannot EXPORT it per 21st Century Cures Act requirements.
+**Overall Grant Readiness: ~45%**
 
 ### Key Findings
 
