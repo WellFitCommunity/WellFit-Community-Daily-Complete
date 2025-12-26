@@ -97,7 +97,8 @@ export function createAuthAwareFetch(): typeof fetch {
     }
 
     // Endpoint classification
-    const isAuthEndpoint = url.includes('/auth/v1/token');
+    const isAuthTokenEndpoint = url.includes('/auth/v1/token');
+    const isAuthUserEndpoint = url.includes('/auth/v1/user'); // informational; do not auto-logout here
     const isRestEndpoint = url.includes('/rest/v1/');
     const isFunctionsEndpoint = url.includes('/functions/v1/');
 
@@ -115,7 +116,7 @@ export function createAuthAwareFetch(): typeof fetch {
     const now = Date.now();
     const inCooldown = authFailureHandled && (now - authFailureTimestamp < AUTH_FAILURE_COOLDOWN);
 
-    if (isAuthEndpoint && isBadRequest && !inCooldown) {
+    if (isAuthTokenEndpoint && isBadRequest && !inCooldown) {
       const clonedResponse = response.clone();
       try {
         const body = await clonedResponse.json();
@@ -131,20 +132,20 @@ export function createAuthAwareFetch(): typeof fetch {
           handleAuthFailure(`refresh_token_invalid: ${errorMessage}`);
         }
       } catch {
-        // If we can't parse the body, check status alone for auth endpoint
+        // If we can't parse the body, check status alone for auth token endpoint
         handleAuthFailure('refresh_token_error_unparseable');
       }
     }
 
     // ============================================================
-    // 401 HANDLING: DO NOT AUTO-LOGOUT ON EDGE FUNCTIONS
+    // 401 HANDLING: CAUTIOUS + NON-DESTRUCTIVE
     // ============================================================
-    // Edge Functions can legitimately return 401 for app-level authorization
-    // (e.g., missing session_token, already-configured flow, custom gates, etc.)
-    // Those must be handled by the calling feature/page, not by transport.
-    if (!isAuthEndpoint && isUnauthorized && !inCooldown) {
+    // We ONLY trigger logout on strong JWT invalid/expired signals.
+    // We do NOT logout on generic 401s (RLS gates, policy gates, app gates).
+    if (!isAuthTokenEndpoint && isUnauthorized && !inCooldown) {
+      // Edge Functions can legitimately return 401 for app-level authorization.
+      // Do NOT destroy the user's session here.
       if (isFunctionsEndpoint) {
-        // Record for diagnostics but do NOT destroy the user's session here.
         auditLogger.security('EDGE_FUNCTION_401', 'low', {
           source: 'authAwareFetch',
           url,
@@ -152,7 +153,19 @@ export function createAuthAwareFetch(): typeof fetch {
           status,
           note: '401 from /functions/v1/ is not treated as global auth failure',
         });
+        return response;
+      }
 
+      // /auth/v1/user can return non-actionable 401/403 depending on how it's called.
+      // Never nuke session based on that endpoint alone.
+      if (isAuthUserEndpoint) {
+        auditLogger.security('AUTH_USER_ENDPOINT_UNAUTHORIZED', 'low', {
+          source: 'authAwareFetch',
+          url,
+          method,
+          status,
+          note: 'Auth user endpoint unauthorized/forbidden - not treated as global auth failure',
+        });
         return response;
       }
 
@@ -162,8 +175,7 @@ export function createAuthAwareFetch(): typeof fetch {
         const rawMessage = (body?.message || body?.error || '') as string;
         const errorMessage = rawMessage.toLowerCase();
 
-        // Tightened: only trigger logout on strong "JWT is invalid/expired" signals
-        // Avoid nuking sessions on generic "Unauthorized" that could be an RLS gate, etc.
+        // Only trigger logout on strong "JWT is invalid/expired" signals
         const isStrongJwtSignal =
           errorMessage.includes('invalid jwt') ||
           errorMessage.includes('jwt expired') ||
@@ -175,11 +187,29 @@ export function createAuthAwareFetch(): typeof fetch {
 
         if (isStrongJwtSignal) {
           handleAuthFailure(`jwt_invalid: ${rawMessage || 'unknown'}`);
+        } else {
+          // Log for diagnostics, but do NOT logout
+          auditLogger.security('SUPABASE_401_NON_STRONG_SIGNAL', 'low', {
+            source: 'authAwareFetch',
+            url,
+            method,
+            status,
+            message: rawMessage || null,
+            note: isRestEndpoint
+              ? 'REST 401 (likely RLS/auth missing) - not treated as global auth failure'
+              : '401 without strong JWT signal - not treated as global auth failure',
+          });
         }
       } catch {
-        // Unparseable 401: only treat as auth failure if it's NOT functions
-        // and we have no JSON body to inspect.
-        handleAuthFailure('unauthorized_unparseable');
+        // CRITICAL CHANGE:
+        // Do NOT logout on unparseable 401. This was nuking sessions during legitimate gates.
+        auditLogger.security('SUPABASE_401_UNPARSEABLE', 'low', {
+          source: 'authAwareFetch',
+          url,
+          method,
+          status,
+          note: '401 body unparseable - not treated as global auth failure',
+        });
       }
     }
 
@@ -221,7 +251,6 @@ export function createAuthAwareFetch(): typeof fetch {
         // ignore parse errors
       }
 
-      // Log the REST error for debugging - this is NOT a logout trigger
       auditLogger.security('REST_PAYLOAD_ERROR', 'low', {
         source: 'authAwareFetch',
         url,
