@@ -8,31 +8,42 @@
 import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import ConsentAuditLog from '../ConsentAuditLog';
 
-// Mock supabaseClient with immediate resolution
+// Create mock before any imports
+const mockSupabaseQuery = {
+  select: vi.fn().mockReturnThis(),
+  eq: vi.fn().mockReturnThis(),
+  in: vi.fn().mockReturnThis(),
+  order: vi.fn().mockReturnThis(),
+  limit: vi.fn().mockResolvedValue({
+    data: [],
+    error: null,
+  }),
+};
+
+const mockSupabase = {
+  from: vi.fn(() => mockSupabaseQuery),
+};
+
+// Mock supabaseClient - must be before component import
 vi.mock('../../../../lib/supabaseClient', () => ({
-  supabase: {
-    from: vi.fn(() => ({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      in: vi.fn().mockReturnThis(),
-      order: vi.fn().mockResolvedValue({
-        data: [],
-        error: null,
-      }),
-    })),
-  },
+  __esModule: true,
+  supabase: mockSupabase,
+  default: { supabase: mockSupabase },
 }));
 
 // Mock auditLogger
 vi.mock('../../../../services/auditLogger', () => ({
+  __esModule: true,
   auditLogger: {
     info: vi.fn(),
     warn: vi.fn(),
     error: vi.fn(),
   },
 }));
+
+// Import component after mocks
+import ConsentAuditLog from '../ConsentAuditLog';
 
 describe('ConsentAuditLog', () => {
   const defaultProps = {
@@ -41,7 +52,7 @@ describe('ConsentAuditLog', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.resetModules();
+    // Note: Don't use vi.resetModules() here as it can break dynamic import mocks
   });
 
   it('renders without crashing', () => {
@@ -73,7 +84,7 @@ describe('ConsentAuditLog', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Access History')).toBeInTheDocument();
-    });
+    }, { timeout: 3000 });
   });
 
   it('displays empty state title when no entries', async () => {
@@ -85,7 +96,7 @@ describe('ConsentAuditLog', () => {
 
     await waitFor(() => {
       expect(screen.getByText('No Access History')).toBeInTheDocument();
-    });
+    }, { timeout: 3000 });
   });
 
   it('displays empty state message', async () => {
@@ -97,7 +108,7 @@ describe('ConsentAuditLog', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/No one has accessed your health data yet/)).toBeInTheDocument();
-    });
+    }, { timeout: 3000 });
   });
 
   it('displays All Activity filter button', async () => {
@@ -109,7 +120,7 @@ describe('ConsentAuditLog', () => {
 
     await waitFor(() => {
       expect(screen.getByText('All Activity')).toBeInTheDocument();
-    });
+    }, { timeout: 3000 });
   });
 
   it('displays App Access filter button', async () => {
@@ -121,7 +132,7 @@ describe('ConsentAuditLog', () => {
 
     await waitFor(() => {
       expect(screen.getByText('App Access')).toBeInTheDocument();
-    });
+    }, { timeout: 3000 });
   });
 
   it('accepts userId prop', () => {

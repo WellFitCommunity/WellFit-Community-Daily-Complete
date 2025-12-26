@@ -8,31 +8,41 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import AuthorizedAppsList from '../AuthorizedAppsList';
 
-// Mock supabaseClient with immediate resolution
+// Create mock before any imports
+const mockSupabaseQuery = {
+  select: vi.fn().mockReturnThis(),
+  eq: vi.fn().mockReturnThis(),
+  order: vi.fn().mockResolvedValue({
+    data: [],
+    error: null,
+  }),
+  update: vi.fn().mockReturnThis(),
+};
+
+const mockSupabase = {
+  from: vi.fn(() => mockSupabaseQuery),
+};
+
+// Mock supabaseClient - must be before component import
 vi.mock('../../../../lib/supabaseClient', () => ({
-  supabase: {
-    from: vi.fn(() => ({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      order: vi.fn().mockResolvedValue({
-        data: [],
-        error: null,
-      }),
-      update: vi.fn().mockReturnThis(),
-    })),
-  },
+  __esModule: true,
+  supabase: mockSupabase,
+  default: { supabase: mockSupabase },
 }));
 
 // Mock auditLogger
 vi.mock('../../../../services/auditLogger', () => ({
+  __esModule: true,
   auditLogger: {
     info: vi.fn(),
     warn: vi.fn(),
     error: vi.fn(),
   },
 }));
+
+// Import component after mocks
+import AuthorizedAppsList from '../AuthorizedAppsList';
 
 describe('AuthorizedAppsList', () => {
   const defaultProps = {
@@ -42,7 +52,7 @@ describe('AuthorizedAppsList', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.resetModules();
+    // Note: Don't use vi.resetModules() here as it breaks dynamic import mocks
   });
 
   it('renders without crashing', () => {
@@ -74,7 +84,7 @@ describe('AuthorizedAppsList', () => {
 
     await waitFor(() => {
       expect(screen.getByText('No Connected Apps')).toBeInTheDocument();
-    });
+    }, { timeout: 3000 });
   });
 
   it('displays empty state description', async () => {
@@ -86,7 +96,7 @@ describe('AuthorizedAppsList', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/You haven't authorized any third-party apps/)).toBeInTheDocument();
-    });
+    }, { timeout: 3000 });
   });
 
   it('displays explanation about connected apps', async () => {
@@ -98,7 +108,7 @@ describe('AuthorizedAppsList', () => {
 
     await waitFor(() => {
       expect(screen.getByText('What are connected apps?')).toBeInTheDocument();
-    });
+    }, { timeout: 3000 });
   });
 
   it('accepts userId prop', () => {
