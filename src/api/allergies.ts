@@ -4,6 +4,7 @@
  */
 
 import { supabase } from '../lib/supabaseClient';
+import { auditLogger } from '../services/auditLogger';
 
 export interface AllergyIntolerance {
   id: string;
@@ -44,8 +45,10 @@ export async function getAllergies(userId: string): Promise<ApiResponse<AllergyI
 
     if (error) throw error;
     return { success: true, data: data || [] };
-  } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : 'Failed to fetch allergies' };
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : 'Failed to fetch allergies';
+    auditLogger.error('Failed to fetch allergies', errorMessage, { userId });
+    return { success: false, error: errorMessage };
   }
 }
 
@@ -57,8 +60,10 @@ export async function getActiveAllergies(userId: string): Promise<ApiResponse<Al
 
     if (error) throw error;
     return { success: true, data: data || [] };
-  } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : 'Failed to fetch active allergies' };
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : 'Failed to fetch active allergies';
+    auditLogger.error('Failed to fetch active allergies', errorMessage, { userId });
+    return { success: false, error: errorMessage };
   }
 }
 
@@ -73,8 +78,10 @@ export async function addAllergy(allergy: Partial<AllergyIntolerance>): Promise<
 
     if (error) throw error;
     return { success: true, data, error: undefined };
-  } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : 'Failed to add allergy' };
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : 'Failed to add allergy';
+    auditLogger.error('Failed to add allergy', errorMessage, { allergen: allergy.allergen_name });
+    return { success: false, error: errorMessage };
   }
 }
 
@@ -90,8 +97,10 @@ export async function updateAllergy(id: string, updates: Partial<AllergyIntolera
 
     if (error) throw error;
     return { success: true, data };
-  } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : 'Failed to update allergy' };
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : 'Failed to update allergy';
+    auditLogger.error('Failed to update allergy', errorMessage, { allergyId: id });
+    return { success: false, error: errorMessage };
   }
 }
 
@@ -105,8 +114,10 @@ export async function deleteAllergy(id: string): Promise<ApiResponse> {
 
     if (error) throw error;
     return { success: true };
-  } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : 'Failed to delete allergy' };
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : 'Failed to delete allergy';
+    auditLogger.error('Failed to delete allergy', errorMessage, { allergyId: id });
+    return { success: false, error: errorMessage };
   }
 }
 
@@ -128,8 +139,10 @@ export async function checkMedicationAllergy(userId: string, medicationName: str
 
     if (error) throw error;
     return { success: true, data: data || [] };
-  } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : 'Failed to check allergy' };
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : 'Failed to check allergy';
+    auditLogger.error('Failed to check medication allergy', errorMessage, { userId, medicationName });
+    return { success: false, error: errorMessage };
   }
 }
 
