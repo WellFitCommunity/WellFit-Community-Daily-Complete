@@ -111,6 +111,8 @@ export class WearableService {
       samsung_health: 'Samsung Health',
       withings: 'Withings',
       empatica: 'Empatica',
+      ihealth: 'iHealth',
+      amazfit: 'Amazfit',
       other: 'Other',
     };
     return models[deviceType] || 'Unknown';
@@ -124,9 +126,11 @@ export class WearableService {
       apple_watch: ['heart_rate', 'steps', 'fall_detection', 'sleep', 'activity'],
       fitbit: ['heart_rate', 'steps', 'fall_detection', 'sleep', 'activity'],
       garmin: ['heart_rate', 'steps', 'activity', 'sleep'],
-      samsung_health: ['heart_rate', 'steps', 'activity'],
-      withings: ['heart_rate', 'blood_pressure', 'weight'],
+      samsung_health: ['heart_rate', 'steps', 'activity', 'blood_pressure', 'ecg'],
+      withings: ['heart_rate', 'blood_pressure', 'weight', 'sleep'],
       empatica: ['heart_rate', 'seizure_detection'],
+      ihealth: ['blood_pressure', 'weight', 'glucose', 'spo2', 'activity'],
+      amazfit: ['heart_rate', 'steps', 'activity', 'sleep', 'spo2'],
       other: ['heart_rate', 'activity'],
     };
     return permissions[deviceType] || ['heart_rate'];

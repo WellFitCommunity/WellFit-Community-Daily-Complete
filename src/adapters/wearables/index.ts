@@ -8,6 +8,7 @@ import { GarminAdapter } from './implementations/GarminAdapter';
 import { WithingsAdapter } from './implementations/WithingsAdapter';
 import { SamsungHealthAdapter } from './implementations/SamsungHealthAdapter';
 import { AmazfitAdapter } from './implementations/AmazfitAdapter';
+import { iHealthAdapter } from './implementations/iHealthAdapter';
 
 export * from './UniversalWearableRegistry';
 export { AppleHealthKitAdapter } from './implementations/AppleHealthKitAdapter';
@@ -16,6 +17,7 @@ export { GarminAdapter } from './implementations/GarminAdapter';
 export { WithingsAdapter } from './implementations/WithingsAdapter';
 export { SamsungHealthAdapter } from './implementations/SamsungHealthAdapter';
 export { AmazfitAdapter } from './implementations/AmazfitAdapter';
+export { iHealthAdapter } from './implementations/iHealthAdapter';
 
 /**
  * Register all available wearable adapters
@@ -42,7 +44,10 @@ export function registerAllWearableAdapters(): void {
   const amazfitAdapter = new AmazfitAdapter();
   wearableRegistry.registerAdapter(amazfitAdapter.metadata, AmazfitAdapter);
 
-  // All 6 wearable adapters registered successfully
+  const ihealthAdapter = new iHealthAdapter();
+  wearableRegistry.registerAdapter(ihealthAdapter.metadata, iHealthAdapter);
+
+  // All 7 wearable adapters registered successfully
 }
 
 // Export singleton registry

@@ -404,6 +404,8 @@ export type WearableDeviceType =
   | 'samsung_health'
   | 'withings'
   | 'empatica' // Seizure detection
+  | 'ihealth' // Blood pressure, scales, pulse ox, glucometer
+  | 'amazfit' // Smartwatches, fitness bands
   | 'other';
 
 export interface WearableConnection {

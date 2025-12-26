@@ -533,14 +533,14 @@ export const WearableDashboard: React.FC = () => {
           {/* Add New Device */}
           <div className="bg-blue-50 rounded-lg shadow-md p-6">
             <h2 className="text-2xl font-bold mb-4">Connect New Device</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
               <button
                 onClick={() => handleConnectDevice('apple_watch')}
                 className="p-6 bg-white border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:shadow-lg transition"
               >
                 <div className="text-4xl mb-2">⌚</div>
                 <div className="font-bold">Apple Watch</div>
-                <div className="text-sm text-gray-600">Fall detection, vitals</div>
+                <div className="text-sm text-gray-600">Fall detection, vitals, ECG</div>
               </button>
               <button
                 onClick={() => handleConnectDevice('fitbit')}
@@ -557,6 +557,38 @@ export const WearableDashboard: React.FC = () => {
                 <div className="text-4xl mb-2">🏃</div>
                 <div className="font-bold">Garmin</div>
                 <div className="text-sm text-gray-600">Activity, GPS, vitals</div>
+              </button>
+              <button
+                onClick={() => handleConnectDevice('samsung_health')}
+                className="p-6 bg-white border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:shadow-lg transition"
+              >
+                <div className="text-4xl mb-2">📱</div>
+                <div className="font-bold">Samsung Health</div>
+                <div className="text-sm text-gray-600">Galaxy Watch, BP, ECG</div>
+              </button>
+              <button
+                onClick={() => handleConnectDevice('withings')}
+                className="p-6 bg-white border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:shadow-lg transition"
+              >
+                <div className="text-4xl mb-2">⚖️</div>
+                <div className="font-bold">Withings</div>
+                <div className="text-sm text-gray-600">Scales, BP, sleep tracking</div>
+              </button>
+              <button
+                onClick={() => handleConnectDevice('amazfit')}
+                className="p-6 bg-white border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:shadow-lg transition"
+              >
+                <div className="text-4xl mb-2">⏱️</div>
+                <div className="font-bold">Amazfit</div>
+                <div className="text-sm text-gray-600">Activity, heart rate, SpO2</div>
+              </button>
+              <button
+                onClick={() => handleConnectDevice('ihealth')}
+                className="p-6 bg-white border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:shadow-lg transition"
+              >
+                <div className="text-4xl mb-2">🩺</div>
+                <div className="font-bold">iHealth</div>
+                <div className="text-sm text-gray-600">BP monitors, scales, glucose</div>
               </button>
             </div>
           </div>
