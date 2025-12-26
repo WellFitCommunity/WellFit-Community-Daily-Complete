@@ -119,7 +119,36 @@ export type ServiceErrorCode =
   // Appointment Prep Instructions AI errors
   | 'APPOINTMENT_PREP_GENERATION_FAILED'
   | 'APPOINTMENT_PREP_SAVE_FAILED'
-  | 'APPOINTMENT_PREP_UPDATE_FAILED';
+  | 'APPOINTMENT_PREP_UPDATE_FAILED'
+  // Medication Instructions AI errors
+  | 'MEDICATION_INSTRUCTIONS_GENERATION_FAILED'
+  | 'SAVE_INSTRUCTIONS_FAILED'
+  | 'UPDATE_INSTRUCTIONS_FAILED'
+  | 'FETCH_HISTORY_FAILED'
+  | 'BULK_GENERATION_FAILED'
+  // Extended Readmission Predictor AI errors
+  | 'PREDICTION_FAILED'
+  | 'SAVE_FAILED'
+  | 'FETCH_FAILED'
+  // Audit Report Generator AI errors
+  | 'REPORT_GENERATION_FAILED'
+  | 'UPDATE_FAILED'
+  // Population Health Insights AI errors
+  | 'INSIGHTS_GENERATION_FAILED'
+  // HL7 V2 Interpreter AI errors
+  | 'INTERPRETATION_FAILED'
+  | 'INVALID_MESSAGE'
+  | 'VALIDATION_FAILED'
+  | 'EXTRACTION_FAILED'
+  // Security Anomaly Detector AI errors
+  | 'ANALYSIS_FAILED'
+  | 'ASSESSMENT_FAILED'
+  // PHI Exposure Risk Scorer AI errors
+  | 'SCORING_FAILED'
+  // Care Team Chat Summarizer AI errors
+  | 'SUMMARIZATION_FAILED'
+  // Enhanced Voice Commands AI errors
+  | 'PROCESSING_FAILED';
 
 /**
  * Structured error information

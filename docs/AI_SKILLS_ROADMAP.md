@@ -74,7 +74,7 @@
 |---|-------|--------|-------|-----------------|-------------|
 | 27 | Appointment Prep Instructions | ✅ | Haiku 4.5 | `src/services/ai/appointmentPrepInstructionsService.ts` | Condition-specific prep with multi-format delivery |
 | 28 | Missed Check-In Escalation | ✅ | Haiku 4.5 | `supabase/functions/ai-missed-checkin-escalation/` | AI-powered escalation with risk analysis |
-| 29 | Medication Instructions Generator | 📋 | Haiku 4.5 | New service | Personalized with visual aids |
+| 29 | Medication Instructions Generator | ✅ | Haiku 4.5 | `src/services/ai/medicationInstructionsService.ts` | Personalized with visual aids, pill ID, multi-language |
 
 ---
 
@@ -86,7 +86,7 @@
 | 31 | Medication Adherence Predictor | ✅ | Sonnet 4.5 | `src/services/ai/medicationAdherencePredictorService.ts` | Barrier identification, intervention recommendations |
 | 32 | Care Escalation Scorer | ✅ | Sonnet 4.5 | `src/services/ai/careEscalationScorerService.ts` | Confidence-level escalation with clinical indicators |
 | 33 | Infection Risk Predictor (HAI) | ✅ | Sonnet 4.5 | `src/services/ai/infectionRiskPredictorService.ts` | CLABSI, CAUTI, SSI, VAP, C. diff prediction |
-| 34 | Extended Readmission (1-Year) | 📋 | Sonnet 4.5 | Extend existing | 1-year + seasonal patterns |
+| 34 | Extended Readmission (1-Year) | ✅ | Sonnet 4.5 | `src/services/ai/extendedReadmissionPredictorService.ts` | 1-year horizon with seasonal patterns & SDOH factors |
 
 ---
 
@@ -95,7 +95,7 @@
 | # | Skill | Status | Model | Target Location | Description |
 |---|-------|--------|-------|-----------------|-------------|
 | 35 | Schedule Optimizer | ✅ | Haiku 4.5 | `src/services/ai/scheduleOptimizerService.ts` | Shift scheduling with coverage & fairness |
-| 36 | Audit Report Generator | 📋 | Haiku 4.5 | `SOC2AuditDashboard.tsx` | Compliance report generation |
+| 36 | Audit Report Generator | ✅ | Haiku 4.5 | `src/services/ai/auditReportGeneratorService.ts` | SOC2, HIPAA compliance report generation |
 | 37 | Performance Summary Generator | 📋 | Haiku 4.5 | `StaffFinancialSavingsTracker.tsx` | Staff summaries |
 | 38 | Billing Optimization Engine | 📋 | Sonnet 4.5 | `BillingDashboard.tsx` | Advanced coding optimization |
 
@@ -105,7 +105,7 @@
 
 | # | Skill | Status | Model | Target Location | Description |
 |---|-------|--------|-------|-----------------|-------------|
-| 39 | Population Health Insights | 📋 | Sonnet 4.5 | New service | Cohort analysis + predictions |
+| 39 | Population Health Insights | ✅ | Sonnet 4.5 | `src/services/ai/populationHealthInsightsService.ts` | Cohort analysis, risk stratification, VBC analytics |
 | 40 | Predictive Cost Modeling | 📋 | Sonnet 4.5 | `AICostDashboard.tsx` | Cost projections |
 | 41 | Clinical Outcomes Prediction | 📋 | Sonnet 4.5 | New service | Mortality, LOS prediction |
 
@@ -115,7 +115,7 @@
 
 | # | Skill | Status | Model | Target Location | Description |
 |---|-------|--------|-------|-----------------|-------------|
-| 42 | Enhanced Voice Commands | 📋 | Haiku 4.5 | `voiceCommandService.ts` | Claude-powered intent recognition |
+| 42 | Enhanced Voice Commands | ✅ | Haiku 4.5 | `src/services/ai/enhancedVoiceCommandsService.ts` | Claude-powered NLU intent recognition |
 | 43 | Ambient Clinical Intelligence | 📋 | Sonnet 4.5 | `process-medical-transcript/` | Real-time suggestions |
 | 44 | Voice Emotion Detection | 📋 | Sonnet 4.5 | New service | Patient emotional state |
 
@@ -138,7 +138,7 @@
 | # | Skill | Status | Model | Target Location | Description |
 |---|-------|--------|-------|-----------------|-------------|
 | 50 | FHIR Semantic Mapper | ✅ | Sonnet 4.5 | `src/services/ai/fhirSemanticMapperService.ts` | R4/R5 mapping, AI suggestions |
-| 51 | HL7 v2 Interpreter | 📋 | Sonnet 4.5 | `HL7ToFHIRTranslator.ts` | Ambiguous message handling |
+| 51 | HL7 v2 Interpreter | ✅ | Sonnet 4.5 | `src/services/ai/hl7V2InterpreterService.ts` | Ambiguous message handling, segment parsing, validation |
 | 52 | EDI Claims Validator | 📋 | Haiku 4.5 | `mcpHL7X12Client.ts` | Intelligent validation |
 
 ---
@@ -147,9 +147,9 @@
 
 | # | Skill | Status | Model | Target Location | Description |
 |---|-------|--------|-------|-----------------|-------------|
-| 53 | Security Anomaly Detector | 📋 | Sonnet 4.5 | `RealtimeSecurityMonitor.ts` | ML behavior detection |
-| 54 | PHI Exposure Risk Scorer | 📋 | Sonnet 4.5 | `phiAccessLogger.ts` | Risk assessment |
-| 55 | HIPAA Violation Predictor | 📋 | Sonnet 4.5 | New service | Predictive compliance |
+| 53 | Security Anomaly Detector | ✅ | Sonnet 4.5 | `src/services/ai/securityAnomalyDetectorService.ts` | ML behavior detection, threat assessment |
+| 54 | PHI Exposure Risk Scorer | ✅ | Sonnet 4.5 | `src/services/ai/phiExposureRiskScorerService.ts` | Risk assessment, exposure analysis |
+| 55 | HIPAA Violation Predictor | ✅ | Sonnet 4.5 | `src/services/ai/hipaaViolationPredictorService.ts` | Predictive compliance, violation risk scoring |
 
 ---
 
@@ -159,7 +159,7 @@
 |---|-------|--------|-------|-----------------|-------------|
 | 56 | Patient Q&A Bot | ✅ | Sonnet 4.5 | `supabase/functions/ai-patient-qa-bot/` | Health question answering |
 | 57 | Provider Assistant | ✅ | Sonnet 4.5 | `src/services/ai/providerAssistantService.ts` | Role-adaptive for all staff |
-| 58 | Care Team Chat Summarizer | 📋 | Haiku 4.5 | New service | Team communication summaries |
+| 58 | Care Team Chat Summarizer | ✅ | Haiku 4.5 | `src/services/ai/careTeamChatSummarizerService.ts` | Team communication summaries, action item extraction |
 | 59 | Admin Chat Assistant | 📋 | Haiku 4.5 | `IntelligentAdminPanel.tsx` | Conversational admin help |
 
 ---
@@ -188,16 +188,16 @@
 | Quick Wins | 5 | 0 | 0 | 5 |
 | Clinical Docs | 5 | 0 | 0 | 5 |
 | Decision Support | 4 | 0 | 0 | 4 |
-| Patient Engagement | 2 | 0 | 1 | 3 |
-| Risk Prediction | 4 | 0 | 1 | 5 |
-| Admin Automation | 1 | 0 | 3 | 4 |
-| Analytics | 0 | 0 | 3 | 3 |
-| Voice/NLP | 0 | 0 | 3 | 3 |
+| Patient Engagement | 3 | 0 | 0 | 3 |
+| Risk Prediction | 5 | 0 | 0 | 5 |
+| Admin Automation | 2 | 0 | 2 | 4 |
+| Analytics | 1 | 0 | 2 | 3 |
+| Voice/NLP | 1 | 0 | 2 | 3 |
 | Specialty | 0 | 0 | 5 | 5 |
-| Interoperability | 1 | 0 | 2 | 3 |
-| Security | 0 | 0 | 3 | 3 |
-| Conversational | 2 | 0 | 2 | 4 |
-| **TOTAL** | **36** | **0** | **23** | **59** |
+| Interoperability | 2 | 0 | 1 | 3 |
+| Security | 3 | 0 | 0 | 3 |
+| Conversational | 3 | 0 | 1 | 4 |
+| **TOTAL** | **46** | **0** | **13** | **59** |
 
 ---
 
@@ -235,6 +235,16 @@
 
 | Date | Change |
 |------|--------|
+| 2025-12-26 | Completed Care Team Chat Summarizer (#58) - Team communication summaries with action item extraction |
+| 2025-12-26 | Completed HIPAA Violation Predictor (#55) - Predictive compliance with violation risk scoring |
+| 2025-12-26 | Completed PHI Exposure Risk Scorer (#54) - Risk assessment and exposure analysis |
+| 2025-12-26 | Completed Security Anomaly Detector (#53) - ML behavior detection with threat assessment |
+| 2025-12-26 | Completed HL7 v2 Interpreter (#51) - Ambiguous message handling, segment parsing, validation |
+| 2025-12-26 | Completed Population Health Insights (#39) - Cohort analysis, risk stratification, VBC analytics |
+| 2025-12-26 | Completed Audit Report Generator (#36) - SOC2, HIPAA compliance report generation |
+| 2025-12-26 | Completed Extended Readmission Predictor (#34) - 1-year horizon with seasonal patterns & SDOH factors |
+| 2025-12-26 | Completed Medication Instructions Generator (#29) - Personalized with visual aids, pill ID, multi-language |
+| 2025-12-26 | Completed Enhanced Voice Commands (#42) - Claude-powered NLU intent recognition |
 | 2025-12-24 | Completed Schedule Optimizer (#35) - Staff shift scheduling with coverage, fairness, and cost optimization |
 | 2025-12-24 | Completed Provider Assistant (#57) - Role-adaptive conversational AI for physicians, nurses, care coordinators, pharmacists, and admin staff |
 | 2025-12-24 | Completed Medication Adherence Predictor (#31) - Barrier identification, regimen complexity analysis, historical patterns, intervention recommendations |
