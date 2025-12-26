@@ -6,6 +6,38 @@
 
 ---
 
+## ACTUAL STATUS (Based on Code Review Dec 26, 2025)
+
+### What ACTUALLY Works (Verified in Code)
+- [x] Patient can VIEW medications (`MedicineCabinet.tsx` - 825 lines, full implementation)
+- [x] Patient can VIEW allergies (`AllergyManager.tsx` - 343 lines, full CRUD)
+- [x] Patient can VIEW conditions (`ConditionManager.tsx` - 575 lines, FHIR R4 compliant)
+- [x] FHIR services implemented (`src/services/fhir/` - 25 services with real database queries)
+- [x] Database tables exist for all USCDI data (60+ tables)
+
+### What's ACTUALLY Broken (Verified in Code)
+- [ ] **CRITICAL:** `user-data-management/index.ts` only exports 4 tables:
+  - `profile`
+  - `check_ins` (via check_ins_decrypted view)
+  - `community_moments`
+  - `alerts`
+- [ ] **MISSING FROM EXPORT:** medications, allergies, conditions, procedures, immunizations, labs, clinical notes, care plans, observations (56+ tables NOT exported)
+- [ ] No C-CDA export exists
+- [ ] No PDF export exists
+- [ ] No consent management UI exists
+
+### Honest Readiness Score
+
+| Category | Documented | Actual Code |
+|----------|------------|-------------|
+| Data Storage (USCDI) | 95% | 95% ✅ |
+| Patient VIEW Access | 60% | 75% ✅ |
+| Patient EXPORT Access | 40% | **10%** ❌ |
+| Information Blocking | 20% | **5%** ❌ |
+| Overall Grant Ready | 45% | **~25%** ❌ |
+
+---
+
 ## Progress Overview
 
 | Phase | Total Tasks | Completed | Progress |
@@ -16,7 +48,7 @@
 | Quick Wins | 8 | 0 | 0% |
 | **TOTAL** | **53** | **0** | **0%** |
 
-**Overall Grant Readiness: ~45% → ____%**
+**Overall Grant Readiness: ~25% → ____%**
 
 ---
 
