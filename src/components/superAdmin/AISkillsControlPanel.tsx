@@ -132,7 +132,7 @@ const AISkillsControlPanel: React.FC = () => {
             .rpc('get_tenant_ai_skills', { p_tenant_id: tenant.id });
 
           if (configError) {
-            auditLogger.error('TENANT_SKILLS_LOAD_FAILED', { tenantId: tenant.id, error: configError });
+            auditLogger.error('TENANT_SKILLS_LOAD_FAILED', configError.message || 'Unknown error', { tenantId: tenant.id });
             return {
               id: tenant.id,
               name: tenant.name,
