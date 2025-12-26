@@ -522,34 +522,37 @@ export function mapFormDataToSeniorProfile(
   };
 
   // Build demographics
+  // Empty strings must be converted to undefined to avoid CHECK constraint violations
   const demographics: SeniorDemographics = {
     user_id: userId,
     tenant_id: tenantId,
     date_of_birth: formData.dob || undefined,
-    marital_status: formData.marital_status as SeniorDemographics['marital_status'],
-    living_situation: formData.living_situation as SeniorDemographics['living_situation'],
-    education_level: formData.education_level,
+    marital_status: formData.marital_status ? formData.marital_status as SeniorDemographics['marital_status'] : undefined,
+    living_situation: formData.living_situation ? formData.living_situation as SeniorDemographics['living_situation'] : undefined,
+    education_level: formData.education_level || undefined,
     preferred_language: formData.preferred_language || 'en',
     requires_interpreter: formData.requires_interpreter || false,
     veteran_status: formData.veteran_status || false,
   };
 
   // Build health
+  // Empty strings must be converted to undefined to avoid CHECK constraint violations
   const health: SeniorHealth = {
     user_id: userId,
     tenant_id: tenantId,
     chronic_conditions: formData.health_conditions,
     current_medications: formData.medications ? [formData.medications] : undefined,
     mobility_level: formData.mobility_level ? mobilityMap[formData.mobility_level] : undefined,
-    hearing_status: formData.hearing_status as SeniorHealth['hearing_status'],
-    vision_status: formData.vision_status as SeniorHealth['vision_status'],
+    hearing_status: formData.hearing_status ? formData.hearing_status as SeniorHealth['hearing_status'] : undefined,
+    vision_status: formData.vision_status ? formData.vision_status as SeniorHealth['vision_status'] : undefined,
   };
 
   // Build SDOH
+  // Empty strings must be converted to undefined to avoid CHECK constraint violations
   const sdoh: SeniorSDOH = {
     user_id: userId,
     tenant_id: tenantId,
-    transportation_access: formData.transportation_access as SeniorSDOH['transportation_access'],
+    transportation_access: formData.transportation_access ? formData.transportation_access as SeniorSDOH['transportation_access'] : undefined,
     food_security: formData.food_security ? foodSecurityMap[formData.food_security] : undefined,
     social_isolation_risk: formData.social_support ? socialIsolationMap[formData.social_support] : undefined,
     has_smartphone: formData.has_smartphone,
