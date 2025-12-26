@@ -224,6 +224,14 @@ export const adminRoutes: RouteConfig[] = [
     category: 'admin',
     featureFlag: 'billingReview',
   },
+  // SMART on FHIR App Management
+  {
+    path: '/admin/smart-apps',
+    component: 'SmartAppManagementPanel',
+    auth: 'admin',
+    roles: ['admin', 'super_admin'],
+    category: 'admin',
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

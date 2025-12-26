@@ -115,6 +115,9 @@ export const TimeClockAdmin = React.lazy(() => import('../components/admin/TimeC
 // Guardian Agent
 export const GuardianAgentDashboard = React.lazy(() => import('../components/admin/GuardianAgentDashboard'));
 
+// SMART on FHIR
+export const SmartAppManagementPanel = React.lazy(() => import('../components/admin/SmartAppManagementPanel'));
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // SUPER ADMIN COMPONENTS
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -297,6 +300,7 @@ export const componentMap: Record<string, React.LazyExoticComponent<any>> = {
   TimeClockPage,
   TimeClockAdmin,
   GuardianAgentDashboard,
+  SmartAppManagementPanel,
 
   // Super Admin
   SuperAdminDashboard,
