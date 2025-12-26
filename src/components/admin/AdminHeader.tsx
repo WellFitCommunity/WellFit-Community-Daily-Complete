@@ -30,6 +30,7 @@ import {
   Menu,
   X,
   Heart,
+  Smartphone,
 } from 'lucide-react';
 
 interface AdminHeaderProps {
@@ -144,6 +145,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
     { label: 'Admin Settings', path: '/admin/settings', icon: Settings, show: true },
     { label: 'Audit Logs', path: '/admin/audit-logs', icon: FileText, show: true },
     { label: 'System Admin', path: '/admin/system', icon: Shield, show: adminRole === 'super_admin' },
+    { label: 'SMART Apps', path: '/admin/smart-apps', icon: Smartphone, show: adminRole === 'super_admin' },
   ];
 
   return (
