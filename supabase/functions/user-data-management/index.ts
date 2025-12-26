@@ -185,6 +185,11 @@ async function exportUserData(userId: string) {
 
   userData.profile = profile;
 
+  // =========================================================================
+  // USCDI DATA EXPORT - 21st Century Cures Act Compliance
+  // Export ALL patient health data per federal requirements
+  // =========================================================================
+
   // Get check-ins - scoped to user (which is already tenant-scoped via profile)
   const { data: checkIns } = await supabase
     .from('check_ins_decrypted')
@@ -192,7 +197,7 @@ async function exportUserData(userId: string) {
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
 
-  userData.checkIns = checkIns;
+  userData.checkIns = checkIns || [];
 
   // Get community moments - scoped to user
   const { data: moments } = await supabase
@@ -201,7 +206,7 @@ async function exportUserData(userId: string) {
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
 
-  userData.communityMoments = moments;
+  userData.communityMoments = moments || [];
 
   // Get alerts - scoped to user
   const { data: alerts } = await supabase
@@ -210,13 +215,187 @@ async function exportUserData(userId: string) {
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
 
-  userData.alerts = alerts;
+  userData.alerts = alerts || [];
+
+  // =========================================================================
+  // MEDICATIONS (USCDI Required)
+  // =========================================================================
+  const { data: medications } = await supabase
+    .from('medications')
+    .select('*')
+    .eq('user_id', userId)
+    .order('medication_name');
+
+  userData.medications = medications || [];
+
+  // FHIR Medication Requests
+  const { data: medicationRequests } = await supabase
+    .from('fhir_medication_requests')
+    .select('*')
+    .eq('patient_id', userId)
+    .order('authored_on', { ascending: false });
+
+  userData.medicationRequests = medicationRequests || [];
+
+  // =========================================================================
+  // ALLERGIES & INTOLERANCES (USCDI Required)
+  // =========================================================================
+  const { data: allergies } = await supabase
+    .from('allergy_intolerances')
+    .select('*')
+    .eq('user_id', userId)
+    .order('allergen_name');
+
+  userData.allergies = allergies || [];
+
+  // =========================================================================
+  // CONDITIONS / PROBLEMS (USCDI Required)
+  // =========================================================================
+  const { data: conditions } = await supabase
+    .from('fhir_conditions')
+    .select('*')
+    .eq('patient_id', userId)
+    .order('recorded_date', { ascending: false });
+
+  userData.conditions = conditions || [];
+
+  // =========================================================================
+  // PROCEDURES (USCDI Required)
+  // =========================================================================
+  const { data: procedures } = await supabase
+    .from('fhir_procedures')
+    .select('*')
+    .eq('patient_id', userId)
+    .order('performed_datetime', { ascending: false });
+
+  userData.procedures = procedures || [];
+
+  // =========================================================================
+  // IMMUNIZATIONS (USCDI Required)
+  // =========================================================================
+  const { data: immunizations } = await supabase
+    .from('fhir_immunizations')
+    .select('*')
+    .eq('patient_id', userId)
+    .order('occurrence_datetime', { ascending: false });
+
+  userData.immunizations = immunizations || [];
+
+  // =========================================================================
+  // OBSERVATIONS / VITAL SIGNS (USCDI Required)
+  // =========================================================================
+  const { data: observations } = await supabase
+    .from('fhir_observations')
+    .select('*')
+    .eq('patient_id', userId)
+    .order('effective_datetime', { ascending: false });
+
+  userData.observations = observations || [];
+
+  // =========================================================================
+  // LAB RESULTS (USCDI Required)
+  // =========================================================================
+  const { data: labResults } = await supabase
+    .from('lab_results')
+    .select('*')
+    .eq('patient_mrn', userId)
+    .order('extracted_at', { ascending: false });
+
+  userData.labResults = labResults || [];
+
+  // =========================================================================
+  // DIAGNOSTIC REPORTS (USCDI Required)
+  // =========================================================================
+  const { data: diagnosticReports } = await supabase
+    .from('fhir_diagnostic_reports')
+    .select('*')
+    .eq('patient_id', userId)
+    .order('issued', { ascending: false });
+
+  userData.diagnosticReports = diagnosticReports || [];
+
+  // =========================================================================
+  // CLINICAL NOTES (USCDI Required)
+  // =========================================================================
+  const { data: clinicalNotes } = await supabase
+    .from('clinical_notes')
+    .select('*')
+    .eq('author_id', userId)
+    .order('created_at', { ascending: false });
+
+  userData.clinicalNotes = clinicalNotes || [];
+
+  // =========================================================================
+  // CARE PLANS (USCDI Required)
+  // =========================================================================
+  const { data: carePlans } = await supabase
+    .from('fhir_care_plans')
+    .select('*')
+    .eq('patient_id', userId)
+    .order('created', { ascending: false });
+
+  userData.carePlans = carePlans || [];
+
+  // =========================================================================
+  // ENCOUNTERS (USCDI Required)
+  // =========================================================================
+  const { data: encounters } = await supabase
+    .from('encounters')
+    .select('*')
+    .eq('patient_id', userId)
+    .order('start_time', { ascending: false });
+
+  userData.encounters = encounters || [];
+
+  // =========================================================================
+  // CARE TEAM (USCDI Required)
+  // =========================================================================
+  const { data: careTeam } = await supabase
+    .from('fhir_care_teams')
+    .select('*')
+    .eq('patient_id', userId);
+
+  userData.careTeam = careTeam || [];
+
+  // =========================================================================
+  // GOALS (USCDI Required)
+  // =========================================================================
+  const { data: goals } = await supabase
+    .from('fhir_goals')
+    .select('*')
+    .eq('patient_id', userId)
+    .order('start_date', { ascending: false });
+
+  userData.goals = goals || [];
+
+  // =========================================================================
+  // SOCIAL DETERMINANTS OF HEALTH (USCDI v2+)
+  // =========================================================================
+  const { data: sdohAssessments } = await supabase
+    .from('sdoh_assessments')
+    .select('*')
+    .eq('patient_id', userId)
+    .order('assessment_date', { ascending: false });
+
+  userData.sdohAssessments = sdohAssessments || [];
+
+  // =========================================================================
+  // PROVENANCE (USCDI Required - Data Source Tracking)
+  // =========================================================================
+  const { data: provenance } = await supabase
+    .from('fhir_provenance')
+    .select('*')
+    .eq('target_patient_id', userId)
+    .order('recorded', { ascending: false });
+
+  userData.provenance = provenance || [];
 
   // Add metadata
   userData.exportInfo = {
     exportedAt: new Date().toISOString(),
     exportedBy: userId,
     tenantId: currentTenantId,
+    complianceNote: 'This export includes all Electronic Health Information (EHI) per 21st Century Cures Act requirements',
     dataTypes: Object.keys(userData).filter(key => key !== 'exportInfo'),
     totalRecords: Object.values(userData)
       .filter(v => Array.isArray(v))
@@ -377,17 +556,75 @@ async function getUserDataStatus(userId: string) {
     .select('*', { count: 'exact', head: true })
     .eq('user_id', userId);
 
+  // USCDI Data Counts
+  const { count: medicationsCount } = await supabase
+    .from('medications')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId);
+
+  const { count: allergiesCount } = await supabase
+    .from('allergy_intolerances')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId);
+
+  const { count: conditionsCount } = await supabase
+    .from('fhir_conditions')
+    .select('*', { count: 'exact', head: true })
+    .eq('patient_id', userId);
+
+  const { count: proceduresCount } = await supabase
+    .from('fhir_procedures')
+    .select('*', { count: 'exact', head: true })
+    .eq('patient_id', userId);
+
+  const { count: immunizationsCount } = await supabase
+    .from('fhir_immunizations')
+    .select('*', { count: 'exact', head: true })
+    .eq('patient_id', userId);
+
+  const { count: observationsCount } = await supabase
+    .from('fhir_observations')
+    .select('*', { count: 'exact', head: true })
+    .eq('patient_id', userId);
+
+  const { count: labResultsCount } = await supabase
+    .from('lab_results')
+    .select('*', { count: 'exact', head: true })
+    .eq('patient_mrn', userId);
+
+  const { count: clinicalNotesCount } = await supabase
+    .from('clinical_notes')
+    .select('*', { count: 'exact', head: true })
+    .eq('author_id', userId);
+
+  const { count: carePlansCount } = await supabase
+    .from('fhir_care_plans')
+    .select('*', { count: 'exact', head: true })
+    .eq('patient_id', userId);
+
   status.dataSummary = {
     checkIns: checkInsCount || 0,
     communityMoments: momentsCount || 0,
     alerts: alertsCount || 0,
+    medications: medicationsCount || 0,
+    allergies: allergiesCount || 0,
+    conditions: conditionsCount || 0,
+    procedures: proceduresCount || 0,
+    immunizations: immunizationsCount || 0,
+    observations: observationsCount || 0,
+    labResults: labResultsCount || 0,
+    clinicalNotes: clinicalNotesCount || 0,
+    carePlans: carePlansCount || 0,
     profileStatus: profile?.deleted_at ? 'deleted' : 'active',
     accountCreated: profile?.created_at,
     lastUpdated: profile?.updated_at,
     consentGiven: profile?.consent || false
   };
 
-  status.totalRecords = (checkInsCount || 0) + (momentsCount || 0) + (alertsCount || 0);
+  status.totalRecords = (checkInsCount || 0) + (momentsCount || 0) + (alertsCount || 0) +
+    (medicationsCount || 0) + (allergiesCount || 0) + (conditionsCount || 0) +
+    (proceduresCount || 0) + (immunizationsCount || 0) + (observationsCount || 0) +
+    (labResultsCount || 0) + (clinicalNotesCount || 0) + (carePlansCount || 0);
 
   return new Response(JSON.stringify(status, null, 2), {
     headers: { ...currentCorsHeaders, 'Content-Type': 'application/json' }
