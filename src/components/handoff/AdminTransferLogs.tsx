@@ -5,7 +5,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import * as XLSX from 'exceljs';
+// ExcelJS is lazy-loaded in exportToExcel() to reduce bundle size (~600KB)
+import type { Workbook } from 'exceljs';
 import {
   FileSpreadsheet,
   Search,
@@ -107,7 +108,9 @@ const AdminTransferLogs: React.FC<AdminTransferLogsProps> = ({
       setExporting(true);
       toast.info('Generating Excel export...');
 
-      const workbook = new XLSX.Workbook();
+      // Lazy-load exceljs only when needed (reduces main bundle by ~600KB)
+      const XLSX = await import('exceljs');
+      const workbook: Workbook = new XLSX.Workbook();
       const worksheet = workbook.addWorksheet('Patient Handoff Audit Trail');
 
       // Define columns
