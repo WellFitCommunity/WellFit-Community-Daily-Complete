@@ -156,12 +156,19 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       // This prevents plaintext PINs from appearing in logs, dev tools, or memory dumps
       const { hashedPin, tenantCode, format } = await prepareAdminPinForVerification(pin);
 
+      // Explicitly pass the access token to ensure it's attached
+      // (supabase.functions.invoke should auto-attach, but we force it for reliability)
+      const accessToken = session.access_token;
+
       const { data, error: fnErr } = await supabase.functions.invoke('verify-admin-pin', {
         body: {
           pin: hashedPin,
           role,
           tenantCode,
           pinFormat: format
+        },
+        headers: {
+          Authorization: `Bearer ${accessToken}`
         }
       });
 
