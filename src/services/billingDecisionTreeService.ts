@@ -3,6 +3,7 @@
 // Follows the 80/20 rule: handles common scenarios efficiently, routes complex cases to manual review
 
 import { supabase } from '../lib/supabaseClient';
+import { auditLogger } from './auditLogger';
 import { BillingService } from './billingService';
 import { SDOHBillingService } from './sdohBillingService';
 import type {
@@ -270,8 +271,9 @@ export class BillingDecisionTreeService {
         warnings,
         requiresManualReview
       };
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      auditLogger.error('Failed to process billing encounter', errorMessage, { patientId: input.patientId });
 
       return {
         success: false,
@@ -581,7 +583,9 @@ export class BillingDecisionTreeService {
           effectiveDate: new Date().toISOString().split('T')[0]
         }
       };
-    } catch (error) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Error checking eligibility';
+      auditLogger.error('Failed to validate eligibility', errorMessage, { patientId, payerId });
       return {
         eligible: false,
         authorized: false,
@@ -1046,7 +1050,9 @@ export class BillingDecisionTreeService {
         appliedRate,
         rateSource: 'chargemaster'
       };
-    } catch (error) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Fee lookup failed';
+      auditLogger.error('Failed to lookup fee', errorMessage, { cptCode, payerId });
       // Return default rate if lookup fails
       return {
         feeFound: false,
@@ -1101,7 +1107,9 @@ export class BillingDecisionTreeService {
         allowedAmount: appliedRate,
         rateSource: payerMultiplier === 1.0 ? 'medicare' : 'contracted'
       };
-    } catch (error) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'RBRVS calculation failed';
+      auditLogger.error('Failed to calculate RBRVS fee', errorMessage, { cptCode, payerId });
       return null;
     }
   }
@@ -1139,7 +1147,9 @@ export class BillingDecisionTreeService {
       );
 
       return PAYER_MULTIPLIERS[payerType || 'commercial'];
-    } catch (error) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Payer multiplier lookup failed';
+      auditLogger.error('Failed to get payer Medicare multiplier', errorMessage, { payerId });
       return 1.3; // Default to 130% of Medicare
     }
   }
@@ -1408,7 +1418,9 @@ export class BillingDecisionTreeService {
 
       // If no encounters in past 3 years, patient is new
       return !encounters || encounters.length === 0;
-    } catch (error) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'New patient check failed';
+      auditLogger.error('Failed to check if patient is new', errorMessage, { patientId, providerId });
       // Error checking - assume established to avoid overbilling
       return false;
     }
@@ -1474,7 +1486,9 @@ export class BillingDecisionTreeService {
       }
 
       return result;
-    } catch (error) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'SDOH enhancement failed';
+      auditLogger.error('Failed to enhance with SDOH', errorMessage, { patientId });
       // If SDOH enhancement fails, return original result
       return result;
     }

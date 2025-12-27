@@ -2,6 +2,7 @@
 // Tracks patient time from check-ins and scribe sessions
 
 import { supabase } from '../lib/supabaseClient';
+import { auditLogger } from './auditLogger';
 
 interface CCMEligiblePatient {
   patient_id: string;
@@ -115,9 +116,10 @@ export class CCMAutopilotService {
       eligiblePatients.sort((a, b) => b.total_minutes - a.total_minutes);
 
       return eligiblePatients;
-    } catch (error) {
-
-      throw error;
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to get eligible patients';
+      auditLogger.error('Failed to get CCM eligible patients', errorMessage, { month: targetMonth.toISOString() });
+      throw err;
     }
   }
 
@@ -199,8 +201,9 @@ export class CCMAutopilotService {
       }
 
       return false;
-    } catch (error) {
-
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to check CCM billing status';
+      auditLogger.error('Failed to check CCM billing status', errorMessage, { patientId });
       return false;
     }
   }

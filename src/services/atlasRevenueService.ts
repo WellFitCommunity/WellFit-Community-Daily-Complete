@@ -2,6 +2,7 @@
 // Project Atlus Pillar 3: Revenue optimization
 
 import { supabase } from '../lib/supabaseClient';
+import { auditLogger } from './auditLogger';
 import { BillingService } from './billingService';
 
 interface RevenueMetrics {
@@ -79,8 +80,10 @@ export class AtlusRevenueService {
         leakagePercent,
         byStatus,
       };
-    } catch (error) {
-      throw new Error(`Failed to get revenue metrics: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      auditLogger.error('Failed to get revenue metrics', errorMessage, { dateFrom, dateTo });
+      throw new Error(`Failed to get revenue metrics: ${errorMessage}`);
     }
   }
 
@@ -149,9 +152,10 @@ export class AtlusRevenueService {
       opportunities.sort((a, b) => b.additionalRevenue - a.additionalRevenue);
 
       return opportunities;
-    } catch (error) {
-      // Log to audit system instead of console
-      throw new Error(`Failed to find coding opportunities: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      auditLogger.error('Failed to find coding opportunities', errorMessage, { dateFrom, dateTo });
+      throw new Error(`Failed to find coding opportunities: ${errorMessage}`);
     }
   }
 
@@ -172,7 +176,9 @@ export class AtlusRevenueService {
 
       if (error) throw error;
       return (data?.length || 0) > 0;
-    } catch {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Check-ins lookup failed';
+      auditLogger.error('Failed to check patient check-ins', errorMessage, { dateFrom, dateTo });
       return false;
     }
   }
@@ -191,8 +197,10 @@ export class AtlusRevenueService {
 
       if (error) throw error;
       return data || [];
-    } catch (error) {
-      throw new Error(`Failed to get rejected claims: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      auditLogger.error('Failed to get rejected claims', errorMessage, { limit });
+      throw new Error(`Failed to get rejected claims: ${errorMessage}`);
     }
   }
 
@@ -229,8 +237,10 @@ export class AtlusRevenueService {
       });
 
       return projected;
-    } catch (error) {
-      throw new Error(`Failed to get projected revenue: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      auditLogger.error('Failed to get projected revenue', errorMessage, { encounterId });
+      throw new Error(`Failed to get projected revenue: ${errorMessage}`);
     }
   }
 
@@ -263,8 +273,10 @@ export class AtlusRevenueService {
       }
 
       return trends.reverse();
-    } catch (error) {
-      throw new Error(`Failed to get monthly trend: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      auditLogger.error('Failed to get monthly trend', errorMessage, { monthsBack });
+      throw new Error(`Failed to get monthly trend: ${errorMessage}`);
     }
   }
 }
