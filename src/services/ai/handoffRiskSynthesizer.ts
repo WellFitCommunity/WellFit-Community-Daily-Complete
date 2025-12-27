@@ -246,8 +246,8 @@ export class HandoffRiskSynthesizer {
       }
 
       return data;
-    } catch (error: unknown) {
-      throw new Error(`Failed to gather patient data: ${error.message}`);
+    } catch (err: unknown) {
+      throw new Error(`Failed to gather patient data: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   }
 
@@ -320,8 +320,8 @@ Return response as strict JSON with this structure:
         aiModel: aiResponse.model,
         aiCost: aiResponse.cost
       };
-    } catch (error: unknown) {
-      throw new Error(`AI handoff synthesis failed: ${error.message}`);
+    } catch (err: unknown) {
+      throw new Error(`AI handoff synthesis failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   }
 
@@ -415,8 +415,8 @@ Return response as strict JSON with this structure:
       }
 
       return JSON.parse(jsonMatch[0]);
-    } catch (error: unknown) {
-      throw new Error(`Failed to parse AI response: ${error.message}`);
+    } catch (err: unknown) {
+      throw new Error(`Failed to parse AI response: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   }
 
