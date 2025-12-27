@@ -8,9 +8,12 @@
  * - Automatic tests run on PR
  * - Schema validation before PR creation
  * - Rollback support (just close PR)
+ * - Full GitHub API integration
+ * - Audit logging for all operations
  */
 
-import { DetectedIssue, HealingAction, HealingResult } from './types';
+import { DetectedIssue, HealingAction } from './types';
+import { auditLogger } from '../auditLogger';
 
 /**
  * Code change proposal
@@ -111,7 +114,13 @@ export class ProposeWorkflow {
 
     this.proposals.set(proposalId, proposal);
 
-    // Changes: ${changes.length} file(s)
+    await auditLogger.info('PROPOSAL_CREATED', {
+      proposalId,
+      issueId: issue.id,
+      actionId: action.id,
+      changeCount: changes.length,
+      branchName,
+    });
 
     return proposal;
   }
@@ -152,6 +161,13 @@ export class ProposeWorkflow {
     proposal.status = 'proposed';
     this.proposals.set(proposalId, proposal);
 
+    await auditLogger.info('PROPOSAL_SUBMITTED', {
+      proposalId,
+      prNumber: proposal.prNumber,
+      prUrl: proposal.prUrl,
+      useGitHub: !!this.githubIntegration,
+    });
+
     // Run tests (real tests will run via GitHub Actions on PR creation)
     await this.runTests(proposalId);
 
@@ -179,7 +195,11 @@ export class ProposeWorkflow {
 
     this.proposals.set(proposalId, proposal);
 
-
+    await auditLogger.info('PROPOSAL_APPROVED', {
+      proposalId,
+      approvedBy,
+      prNumber: proposal.prNumber,
+    });
 
     return proposal;
   }
@@ -206,8 +226,12 @@ export class ProposeWorkflow {
 
     this.proposals.set(proposalId, proposal);
 
-
-
+    await auditLogger.info('PROPOSAL_REJECTED', {
+      proposalId,
+      rejectedBy,
+      reason,
+      prNumber: proposal.prNumber,
+    });
 
     return proposal;
   }
@@ -242,13 +266,19 @@ export class ProposeWorkflow {
 
     this.proposals.set(proposalId, proposal);
 
+    await auditLogger.info('PROPOSAL_MERGED', {
+      proposalId,
+      prNumber: proposal.prNumber,
+      mergedAt: proposal.mergedAt.toISOString(),
+    });
+
     return proposal;
   }
 
   /**
    * Close a proposal (rollback/cancel)
    */
-  async closeProposal(proposalId: string, _reason: string): Promise<CodeChangeProposal> {
+  async closeProposal(proposalId: string, reason: string): Promise<CodeChangeProposal> {
     const proposal = this.proposals.get(proposalId);
     if (!proposal) {
       throw new Error(`Proposal ${proposalId} not found`);
@@ -265,6 +295,13 @@ export class ProposeWorkflow {
     proposal.closedAt = new Date();
 
     this.proposals.set(proposalId, proposal);
+
+    await auditLogger.info('PROPOSAL_CLOSED', {
+      proposalId,
+      prNumber: proposal.prNumber,
+      reason,
+      closedAt: proposal.closedAt.toISOString(),
+    });
 
     return proposal;
   }
@@ -742,38 +779,57 @@ export class GitHubIntegration {
 }
 
 /**
- * Production TODO:
+ * Implementation Status:
  *
- * 1. Implement GitHub API integration:
- *    - Use Octokit (@octokit/rest)
+ * ✅ IMPLEMENTED:
+ * 1. GitHub API Integration:
  *    - Create branches via Git API
- *    - Create PRs with full metadata
- *    - Request reviews from teams
- *    - Add labels and assignees
+ *    - Commit file changes (create/update/delete)
+ *    - Create PRs with title, body, labels
+ *    - Request reviews from specified reviewers
+ *    - Get PR status (state, checks, reviews)
+ *    - Merge PRs with squash
+ *    - Close PRs
+ *    - Delete branches after merge/close
  *
- * 2. Add PR checks integration:
- *    - Wait for CI/CD checks to complete
- *    - Only allow merge if all checks pass
+ * 2. Proposal Workflow:
+ *    - Create proposals with code changes
+ *    - Submit proposals as PRs
+ *    - Approve/reject proposals
+ *    - Merge approved proposals
+ *    - Close/rollback proposals
+ *
+ * 3. Audit Logging:
+ *    - Log all proposal lifecycle events
+ *    - Track who approved/rejected
+ *    - Record merge/close timestamps
+ *
+ * 4. PR Templates:
+ *    - Auto-generated PR description
+ *    - Issue context and severity
+ *    - Step-by-step action plan
+ *    - Rollback plan included
+ *    - Testing and review checklists
+ *
+ * 🔲 TODO (Future Enhancements):
+ *
+ * 1. Enhanced CI/CD Integration:
+ *    - Wait for GitHub Actions to complete
  *    - Block merge on test failures
- *    - Require minimum number of approvals
+ *    - Require minimum approvals
  *
- * 3. Add automatic branch cleanup:
- *    - Delete branch after merge
- *    - Delete branch after close
- *    - Cleanup stale branches
- *
- * 4. Add PR templates:
- *    - Custom templates per proposal type
- *    - Checklist enforcement
- *    - Automated testing instructions
- *
- * 5. Add PR notifications:
- *    - Slack/Teams notifications
+ * 2. Notifications:
+ *    - Slack/Teams webhooks
  *    - Email notifications
- *    - Dashboard updates
+ *    - Dashboard real-time updates
  *
- * 6. Add proposal versioning:
+ * 3. Proposal Versioning:
  *    - Track proposal revisions
  *    - Show diff between revisions
  *    - Rollback to previous revision
+ *
+ * 4. GitHub App Authentication:
+ *    - Use GitHub App instead of PAT
+ *    - Better rate limits
+ *    - More secure authentication
  */

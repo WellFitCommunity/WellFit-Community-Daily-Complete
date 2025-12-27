@@ -8,11 +8,35 @@
  * - Resource access control
  * - Execution timeout enforcement
  * - Concurrent execution limits
+ * - Memory usage monitoring
+ * - Rate limiting per tool
+ * - Resource limit enforcement
  */
 
 import { ToolMetadata, ToolExecutionContext, ToolExecutionResult } from './ToolRegistry';
-import { TokenManager, TokenScope } from './TokenAuth';
+import { TokenManager } from './TokenAuth';
 import { SchemaValidator } from './SchemaValidator';
+import { auditLogger } from '../auditLogger';
+
+/**
+ * Resource limits for tool execution
+ */
+export interface ResourceLimits {
+  /** Maximum memory usage in bytes (0 = unlimited) */
+  maxMemoryBytes: number;
+
+  /** Maximum CPU time in ms per execution (0 = unlimited) */
+  maxCpuTimeMs: number;
+
+  /** Maximum executions per minute (rate limiting) */
+  maxExecutionsPerMinute: number;
+
+  /** Maximum payload size in bytes */
+  maxPayloadBytes: number;
+
+  /** Maximum response size in bytes */
+  maxResponseBytes: number;
+}
 
 /**
  * Execution policy for a tool
@@ -38,6 +62,9 @@ export interface ExecutionPolicy {
 
   /** File system isolation enabled */
   fileSystemIsolation: boolean;
+
+  /** Resource limits */
+  resourceLimits: ResourceLimits;
 }
 
 /**
@@ -65,6 +92,261 @@ export interface ResourceAccessLog {
 }
 
 /**
+ * Resource usage snapshot
+ */
+export interface ResourceUsage {
+  memoryUsedBytes: number;
+  cpuTimeMs: number;
+  executionCount: number;
+  timestamp: Date;
+}
+
+/**
+ * Rate limit violation
+ */
+export interface RateLimitViolation {
+  toolId: string;
+  timestamp: Date;
+  limit: number;
+  actual: number;
+  windowMs: number;
+}
+
+/**
+ * Resource Monitor - Tracks resource usage and enforces limits
+ */
+export class ResourceMonitor {
+  private executionHistory: Map<string, number[]> = new Map(); // toolId -> timestamps
+  private memorySnapshots: Map<string, number[]> = new Map(); // toolId -> memory readings
+  private violations: RateLimitViolation[] = [];
+  private readonly WINDOW_MS = 60000; // 1 minute window for rate limiting
+
+  /**
+   * Check if execution is allowed based on rate limits
+   */
+  checkRateLimit(toolId: string, maxPerMinute: number): {
+    allowed: boolean;
+    currentRate: number;
+    retryAfterMs?: number;
+  } {
+    if (maxPerMinute <= 0) {
+      return { allowed: true, currentRate: 0 };
+    }
+
+    const now = Date.now();
+    const history = this.executionHistory.get(toolId) || [];
+
+    // Clean up old entries outside the window
+    const recentExecutions = history.filter((ts) => now - ts < this.WINDOW_MS);
+    this.executionHistory.set(toolId, recentExecutions);
+
+    const currentRate = recentExecutions.length;
+
+    if (currentRate >= maxPerMinute) {
+      // Calculate when the oldest execution will expire
+      const oldestInWindow = Math.min(...recentExecutions);
+      const retryAfterMs = this.WINDOW_MS - (now - oldestInWindow);
+
+      this.recordViolation(toolId, maxPerMinute, currentRate);
+
+      return {
+        allowed: false,
+        currentRate,
+        retryAfterMs,
+      };
+    }
+
+    return { allowed: true, currentRate };
+  }
+
+  /**
+   * Record an execution for rate limiting
+   */
+  recordExecution(toolId: string): void {
+    const history = this.executionHistory.get(toolId) || [];
+    history.push(Date.now());
+    this.executionHistory.set(toolId, history);
+  }
+
+  /**
+   * Estimate memory usage of a value
+   * Note: This is a rough estimate, not precise measurement
+   */
+  estimateMemoryUsage(value: unknown): number {
+    const seen = new WeakSet();
+
+    const estimate = (val: unknown): number => {
+      if (val === null || val === undefined) return 8;
+      if (typeof val === 'boolean') return 4;
+      if (typeof val === 'number') return 8;
+      if (typeof val === 'string') return (val as string).length * 2 + 40; // UTF-16
+
+      if (typeof val === 'object') {
+        if (seen.has(val as object)) return 0; // Circular reference
+        seen.add(val as object);
+
+        if (Array.isArray(val)) {
+          return val.reduce((acc, item) => acc + estimate(item), 40);
+        }
+
+        // Object
+        let size = 40; // Object overhead
+        for (const key in val) {
+          if (Object.prototype.hasOwnProperty.call(val, key)) {
+            size += key.length * 2 + estimate((val as Record<string, unknown>)[key]);
+          }
+        }
+        return size;
+      }
+
+      return 8; // Default for functions, symbols, etc.
+    };
+
+    return estimate(value);
+  }
+
+  /**
+   * Check if payload size is within limits
+   */
+  checkPayloadSize(payload: unknown, maxBytes: number): {
+    allowed: boolean;
+    actualBytes: number;
+  } {
+    if (maxBytes <= 0) {
+      return { allowed: true, actualBytes: 0 };
+    }
+
+    const actualBytes = this.estimateMemoryUsage(payload);
+    return {
+      allowed: actualBytes <= maxBytes,
+      actualBytes,
+    };
+  }
+
+  /**
+   * Get current memory usage (if available)
+   */
+  getCurrentMemoryUsage(): {
+    available: boolean;
+    usedBytes?: number;
+    totalBytes?: number;
+  } {
+    // Check if we're in a browser with performance.memory
+    if (
+      typeof globalThis.performance !== 'undefined' &&
+      'memory' in globalThis.performance
+    ) {
+      const memory = (globalThis.performance as Performance & {
+        memory?: { usedJSHeapSize: number; totalJSHeapSize: number };
+      }).memory;
+
+      if (memory) {
+        return {
+          available: true,
+          usedBytes: memory.usedJSHeapSize,
+          totalBytes: memory.totalJSHeapSize,
+        };
+      }
+    }
+
+    // Node.js with process.memoryUsage
+    if (typeof process !== 'undefined' && process.memoryUsage) {
+      try {
+        const usage = process.memoryUsage();
+        return {
+          available: true,
+          usedBytes: usage.heapUsed,
+          totalBytes: usage.heapTotal,
+        };
+      } catch {
+        // May fail in some environments
+      }
+    }
+
+    return { available: false };
+  }
+
+  /**
+   * Record memory snapshot for a tool
+   */
+  recordMemorySnapshot(toolId: string, bytes: number): void {
+    const snapshots = this.memorySnapshots.get(toolId) || [];
+    snapshots.push(bytes);
+    // Keep only last 100 snapshots
+    if (snapshots.length > 100) {
+      snapshots.shift();
+    }
+    this.memorySnapshots.set(toolId, snapshots);
+  }
+
+  /**
+   * Get average memory usage for a tool
+   */
+  getAverageMemoryUsage(toolId: string): number | null {
+    const snapshots = this.memorySnapshots.get(toolId);
+    if (!snapshots || snapshots.length === 0) return null;
+    return snapshots.reduce((a, b) => a + b, 0) / snapshots.length;
+  }
+
+  /**
+   * Record a rate limit violation
+   */
+  private recordViolation(toolId: string, limit: number, actual: number): void {
+    this.violations.push({
+      toolId,
+      timestamp: new Date(),
+      limit,
+      actual,
+      windowMs: this.WINDOW_MS,
+    });
+
+    // Log the violation
+    void auditLogger.warn('RATE_LIMIT_EXCEEDED', {
+      toolId,
+      limit,
+      actual,
+      windowMs: this.WINDOW_MS,
+    });
+  }
+
+  /**
+   * Get rate limit violations
+   */
+  getViolations(): RateLimitViolation[] {
+    return [...this.violations];
+  }
+
+  /**
+   * Clear old violations
+   */
+  clearOldViolations(olderThanMs: number): void {
+    const cutoff = Date.now() - olderThanMs;
+    this.violations = this.violations.filter(
+      (v) => v.timestamp.getTime() > cutoff
+    );
+  }
+
+  /**
+   * Get resource usage summary for a tool
+   */
+  getResourceSummary(toolId: string): {
+    executionsInWindow: number;
+    averageMemoryBytes: number | null;
+    violations: number;
+  } {
+    const history = this.executionHistory.get(toolId) || [];
+    const now = Date.now();
+    const recentExecutions = history.filter((ts) => now - ts < this.WINDOW_MS);
+
+    return {
+      executionsInWindow: recentExecutions.length,
+      averageMemoryBytes: this.getAverageMemoryUsage(toolId),
+      violations: this.violations.filter((v) => v.toolId === toolId).length,
+    };
+  }
+}
+
+/**
  * Execution Sandbox - Secure tool execution environment
  */
 export class ExecutionSandbox {
@@ -74,10 +356,19 @@ export class ExecutionSandbox {
   private activeExecutions: Map<string, number> = new Map();
   private tokenManager: TokenManager;
   private schemaValidator: SchemaValidator;
+  private resourceMonitor: ResourceMonitor;
 
   constructor(tokenManager: TokenManager, schemaValidator: SchemaValidator) {
     this.tokenManager = tokenManager;
     this.schemaValidator = schemaValidator;
+    this.resourceMonitor = new ResourceMonitor();
+  }
+
+  /**
+   * Get the resource monitor for external access
+   */
+  getResourceMonitor(): ResourceMonitor {
+    return this.resourceMonitor;
   }
 
   /**
@@ -114,8 +405,42 @@ export class ExecutionSandbox {
         throw new Error(`No execution policy registered for tool ${tool.id}`);
       }
 
-      // 2. Validate token and scopes
-      const tokenValidation = this.tokenManager.validateToken(
+      // 2. Check rate limits
+      const rateCheck = this.resourceMonitor.checkRateLimit(
+        tool.id,
+        policy.resourceLimits.maxExecutionsPerMinute
+      );
+      if (!rateCheck.allowed) {
+        await auditLogger.warn('TOOL_RATE_LIMITED', {
+          toolId: tool.id,
+          currentRate: rateCheck.currentRate,
+          retryAfterMs: rateCheck.retryAfterMs,
+        });
+        throw new Error(
+          `Rate limit exceeded for tool ${tool.id}. Current: ${rateCheck.currentRate}/min. ` +
+          `Retry after ${Math.ceil((rateCheck.retryAfterMs || 0) / 1000)} seconds.`
+        );
+      }
+
+      // 3. Check payload size
+      const payloadCheck = this.resourceMonitor.checkPayloadSize(
+        input,
+        policy.resourceLimits.maxPayloadBytes
+      );
+      if (!payloadCheck.allowed) {
+        await auditLogger.warn('TOOL_PAYLOAD_TOO_LARGE', {
+          toolId: tool.id,
+          actualBytes: payloadCheck.actualBytes,
+          maxBytes: policy.resourceLimits.maxPayloadBytes,
+        });
+        throw new Error(
+          `Payload too large for tool ${tool.id}. ` +
+          `Size: ${payloadCheck.actualBytes} bytes, Max: ${policy.resourceLimits.maxPayloadBytes} bytes.`
+        );
+      }
+
+      // 4. Validate token and scopes
+      const tokenValidation = await this.tokenManager.validateToken(
         context.token,
         tool.requiredScopes
       );
@@ -124,7 +449,7 @@ export class ExecutionSandbox {
         throw new Error(`Token validation failed: ${tokenValidation.errorMessage}`);
       }
 
-      // 3. Check concurrency limits
+      // 5. Check concurrency limits
       const currentConcurrency = this.activeExecutions.get(tool.id) || 0;
       if (currentConcurrency >= policy.maxConcurrency) {
         throw new Error(
@@ -132,10 +457,16 @@ export class ExecutionSandbox {
         );
       }
 
-      // 4. Increment active executions
+      // 6. Record memory before execution
+      const memoryBefore = this.resourceMonitor.getCurrentMemoryUsage();
+
+      // 7. Increment active executions
       this.activeExecutions.set(tool.id, currentConcurrency + 1);
 
-      // 5. Create isolated execution context
+      // 8. Record execution for rate limiting
+      this.resourceMonitor.recordExecution(tool.id);
+
+      // 9. Create isolated execution context
       const isolatedExecutor = this.createIsolatedExecutor(
         tool,
         policy,
@@ -144,11 +475,37 @@ export class ExecutionSandbox {
         egressCalls
       );
 
-      // 6. Execute with timeout
+      // 10. Execute with timeout
       const timeout = context.timeout || policy.maxExecutionTime;
       const result = await this.executeWithTimeout(isolatedExecutor, input, timeout);
 
-      // 7. Update stats (success)
+      // 11. Check response size
+      const responseCheck = this.resourceMonitor.checkPayloadSize(
+        result,
+        policy.resourceLimits.maxResponseBytes
+      );
+      if (!responseCheck.allowed) {
+        await auditLogger.warn('TOOL_RESPONSE_TOO_LARGE', {
+          toolId: tool.id,
+          actualBytes: responseCheck.actualBytes,
+          maxBytes: policy.resourceLimits.maxResponseBytes,
+        });
+        throw new Error(
+          `Response too large from tool ${tool.id}. ` +
+          `Size: ${responseCheck.actualBytes} bytes, Max: ${policy.resourceLimits.maxResponseBytes} bytes.`
+        );
+      }
+
+      // 12. Record memory after execution
+      const memoryAfter = this.resourceMonitor.getCurrentMemoryUsage();
+      if (memoryBefore.available && memoryAfter.available) {
+        const memoryUsed = (memoryAfter.usedBytes || 0) - (memoryBefore.usedBytes || 0);
+        if (memoryUsed > 0) {
+          this.resourceMonitor.recordMemorySnapshot(tool.id, memoryUsed);
+        }
+      }
+
+      // 13. Update stats (success)
       this.updateStats(tool.id, Date.now() - startTime, true);
 
       return {
@@ -422,6 +779,44 @@ export class ExecutionSandbox {
 }
 
 /**
+ * Default resource limits for different tool types
+ */
+export const DEFAULT_RESOURCE_LIMITS: Record<string, ResourceLimits> = {
+  // Minimal limits for internal tools
+  minimal: {
+    maxMemoryBytes: 10 * 1024 * 1024, // 10 MB
+    maxCpuTimeMs: 5000, // 5 seconds
+    maxExecutionsPerMinute: 60,
+    maxPayloadBytes: 64 * 1024, // 64 KB
+    maxResponseBytes: 256 * 1024, // 256 KB
+  },
+  // Standard limits for most tools
+  standard: {
+    maxMemoryBytes: 50 * 1024 * 1024, // 50 MB
+    maxCpuTimeMs: 30000, // 30 seconds
+    maxExecutionsPerMinute: 30,
+    maxPayloadBytes: 1024 * 1024, // 1 MB
+    maxResponseBytes: 5 * 1024 * 1024, // 5 MB
+  },
+  // Extended limits for data-intensive tools
+  extended: {
+    maxMemoryBytes: 100 * 1024 * 1024, // 100 MB
+    maxCpuTimeMs: 60000, // 60 seconds
+    maxExecutionsPerMinute: 10,
+    maxPayloadBytes: 5 * 1024 * 1024, // 5 MB
+    maxResponseBytes: 20 * 1024 * 1024, // 20 MB
+  },
+  // Unlimited (use with caution)
+  unlimited: {
+    maxMemoryBytes: 0, // No limit
+    maxCpuTimeMs: 0, // No limit
+    maxExecutionsPerMinute: 0, // No limit
+    maxPayloadBytes: 0, // No limit
+    maxResponseBytes: 0, // No limit
+  },
+};
+
+/**
  * Default policies for built-in tools
  */
 export class DefaultPolicies {
@@ -437,9 +832,10 @@ export class DefaultPolicies {
       maxConcurrency: 10,
       networkIsolation: false,
       fileSystemIsolation: true,
+      resourceLimits: DEFAULT_RESOURCE_LIMITS.standard,
     });
 
-    // Circuit Breaker Tool - No external access
+    // Circuit Breaker Tool - No external access (minimal resources)
     policies.set('guardian.circuit-breaker', {
       allowedDomains: [],
       allowedTables: [],
@@ -448,6 +844,7 @@ export class DefaultPolicies {
       maxConcurrency: 1,
       networkIsolation: true,
       fileSystemIsolation: true,
+      resourceLimits: DEFAULT_RESOURCE_LIMITS.minimal,
     });
 
     // Cache Fallback Tool - No external access
@@ -459,6 +856,7 @@ export class DefaultPolicies {
       maxConcurrency: 20,
       networkIsolation: true,
       fileSystemIsolation: true,
+      resourceLimits: DEFAULT_RESOURCE_LIMITS.standard,
     });
 
     // State Rollback Tool - No external access
@@ -470,9 +868,10 @@ export class DefaultPolicies {
       maxConcurrency: 5,
       networkIsolation: true,
       fileSystemIsolation: true,
+      resourceLimits: DEFAULT_RESOURCE_LIMITS.standard,
     });
 
-    // Resource Cleanup Tool - No external access
+    // Resource Cleanup Tool - No external access (minimal resources)
     policies.set('guardian.resource-cleanup', {
       allowedDomains: [],
       allowedTables: [],
@@ -481,6 +880,7 @@ export class DefaultPolicies {
       maxConcurrency: 3,
       networkIsolation: true,
       fileSystemIsolation: true,
+      resourceLimits: DEFAULT_RESOURCE_LIMITS.minimal,
     });
 
     // Session Recovery Tool - Only our API
@@ -492,9 +892,10 @@ export class DefaultPolicies {
       maxConcurrency: 10,
       networkIsolation: true,
       fileSystemIsolation: true,
+      resourceLimits: DEFAULT_RESOURCE_LIMITS.standard,
     });
 
-    // FHIR Observation Read Tool
+    // FHIR Observation Read Tool (extended for large datasets)
     policies.set('fhir.read-observation', {
       allowedDomains: ['https://fhir.wellfit.community'],
       allowedTables: ['fhir_observations'],
@@ -503,9 +904,10 @@ export class DefaultPolicies {
       maxConcurrency: 20,
       networkIsolation: true,
       fileSystemIsolation: true,
+      resourceLimits: DEFAULT_RESOURCE_LIMITS.extended,
     });
 
-    // EHR Note Writer Tool
+    // EHR Note Writer Tool (standard limits)
     policies.set('ehr.write-note', {
       allowedDomains: ['https://ehr.wellfit.community'],
       allowedTables: ['clinical_notes', 'note_templates'],
@@ -514,6 +916,7 @@ export class DefaultPolicies {
       maxConcurrency: 10,
       networkIsolation: true,
       fileSystemIsolation: true,
+      resourceLimits: DEFAULT_RESOURCE_LIMITS.standard,
     });
 
     return policies;
@@ -521,30 +924,44 @@ export class DefaultPolicies {
 }
 
 /**
- * Production TODO:
+ * Implementation Status:
  *
- * 1. Implement actual network isolation:
- *    - Use VM or container isolation
- *    - Implement network proxy with allow-list
- *    - Block all unauthorized egress
+ * ✅ IMPLEMENTED:
+ * 1. Resource Limits:
+ *    - Memory usage estimation and tracking
+ *    - Payload/response size limits
+ *    - Rate limiting per tool (executions per minute)
+ *    - Default resource limit presets (minimal, standard, extended)
+ *    - Memory snapshots for monitoring
  *
- * 2. Implement file system isolation:
- *    - Use chroot or containers
+ * 2. Execution Monitoring:
+ *    - Real-time execution statistics
+ *    - Rate limit violation tracking
+ *    - Resource usage summaries per tool
+ *    - Audit logging for limit violations
+ *
+ * 3. Network Egress Control:
+ *    - Domain allow-lists per tool
+ *    - Fetch interception for egress enforcement
+ *    - Access logging for all network calls
+ *
+ * 🔲 TODO (Future Enhancements):
+ *
+ * 1. True process isolation:
+ *    - Use Web Workers for browser isolation
+ *    - Use child_process/vm for Node.js isolation
+ *    - Consider WASM sandboxing for untrusted code
+ *
+ * 2. Enhanced file system isolation:
  *    - Virtual file system for tools
  *    - Read-only mounts for sensitive paths
  *
- * 3. Add resource limits:
- *    - CPU limits per tool
- *    - Memory limits per tool
- *    - Disk I/O limits
+ * 3. CPU time enforcement:
+ *    - Use SharedArrayBuffer for time slicing (requires COOP/COEP)
+ *    - Implement preemptive termination
  *
- * 4. Add execution monitoring:
- *    - Real-time execution tracking
- *    - Alert on policy violations
- *    - Automatic tool suspension on abuse
- *
- * 5. Add security scanning:
- *    - Scan tool inputs for malicious payloads
+ * 4. Security scanning:
+ *    - Integrate with SchemaValidator PHI/SQL/XSS detection
  *    - Detect command injection attempts
- *    - Monitor for data exfiltration
+ *    - Monitor for data exfiltration patterns
  */
