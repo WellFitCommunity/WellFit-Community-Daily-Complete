@@ -31,10 +31,10 @@ export class DiagnosticReportService {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch diagnostic reports',
+        error: err instanceof Error ? err.message : 'Failed to fetch diagnostic reports',
       };
     }
   }
@@ -61,10 +61,10 @@ export class DiagnosticReportService {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch recent reports',
+        error: err instanceof Error ? err.message : 'Failed to fetch recent reports',
       };
     }
   }
@@ -92,10 +92,10 @@ export class DiagnosticReportService {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch lab reports',
+        error: err instanceof Error ? err.message : 'Failed to fetch lab reports',
       };
     }
   }
@@ -123,10 +123,10 @@ export class DiagnosticReportService {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch imaging reports',
+        error: err instanceof Error ? err.message : 'Failed to fetch imaging reports',
       };
     }
   }
@@ -150,10 +150,10 @@ export class DiagnosticReportService {
 
       if (error) throw error;
       return { success: true, data };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to create diagnostic report',
+        error: err instanceof Error ? err.message : 'Failed to create diagnostic report',
       };
     }
   }
@@ -184,10 +184,10 @@ export class DiagnosticReportService {
 
       if (error) throw error;
       return { success: true, data };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to update diagnostic report',
+        error: err instanceof Error ? err.message : 'Failed to update diagnostic report',
       };
     }
   }
@@ -208,10 +208,10 @@ export class DiagnosticReportService {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch pending reports',
+        error: err instanceof Error ? err.message : 'Failed to fetch pending reports',
       };
     }
   }

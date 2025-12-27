@@ -30,10 +30,10 @@ export class CarePlanService {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch care plans',
+        error: err instanceof Error ? err.message : 'Failed to fetch care plans',
       };
     }
   }
@@ -59,10 +59,10 @@ export class CarePlanService {
         throw error;
       }
       return { success: true, data };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch care plan',
+        error: err instanceof Error ? err.message : 'Failed to fetch care plan',
       };
     }
   }
@@ -84,10 +84,10 @@ export class CarePlanService {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch active care plans',
+        error: err instanceof Error ? err.message : 'Failed to fetch active care plans',
       };
     }
   }
@@ -109,10 +109,10 @@ export class CarePlanService {
 
       if (error) throw error;
       return { success: true, data: data && data.length > 0 ? data[0] : null };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch current care plan',
+        error: err instanceof Error ? err.message : 'Failed to fetch current care plan',
       };
     }
   }
@@ -139,10 +139,10 @@ export class CarePlanService {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch care plans by status',
+        error: err instanceof Error ? err.message : 'Failed to fetch care plans by status',
       };
     }
   }
@@ -169,10 +169,10 @@ export class CarePlanService {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch care plans by category',
+        error: err instanceof Error ? err.message : 'Failed to fetch care plans by category',
       };
     }
   }
@@ -224,10 +224,10 @@ export class CarePlanService {
 
       if (error) throw error;
       return { success: true, data };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to create care plan',
+        error: err instanceof Error ? err.message : 'Failed to create care plan',
       };
     }
   }
@@ -258,10 +258,10 @@ export class CarePlanService {
 
       if (error) throw error;
       return { success: true, data };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to update care plan',
+        error: err instanceof Error ? err.message : 'Failed to update care plan',
       };
     }
   }
@@ -281,10 +281,10 @@ export class CarePlanService {
 
       if (error) throw error;
       return { success: true };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to delete care plan',
+        error: err instanceof Error ? err.message : 'Failed to delete care plan',
       };
     }
   }
@@ -328,10 +328,10 @@ export class CarePlanService {
       const { data, error } = await query;
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to search care plans',
+        error: err instanceof Error ? err.message : 'Failed to search care plans',
       };
     }
   }

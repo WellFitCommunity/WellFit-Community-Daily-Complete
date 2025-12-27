@@ -22,10 +22,10 @@ export const LocationService = {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch locations',
+        error: err instanceof Error ? err.message : 'Failed to fetch locations',
       };
     }
   },
@@ -43,10 +43,10 @@ export const LocationService = {
 
       if (error) throw error;
       return { success: true, data };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch location',
+        error: err instanceof Error ? err.message : 'Failed to fetch location',
       };
     }
   },
@@ -65,10 +65,10 @@ export const LocationService = {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch locations by type',
+        error: err instanceof Error ? err.message : 'Failed to fetch locations by type',
       };
     }
   },
@@ -86,10 +86,10 @@ export const LocationService = {
 
       if (error) throw error;
       return { success: true, data };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to create location',
+        error: err instanceof Error ? err.message : 'Failed to create location',
       };
     }
   },
@@ -108,10 +108,10 @@ export const LocationService = {
 
       if (error) throw error;
       return { success: true, data };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to update location',
+        error: err instanceof Error ? err.message : 'Failed to update location',
       };
     }
   },

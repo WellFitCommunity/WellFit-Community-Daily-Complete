@@ -22,10 +22,10 @@ export const OrganizationService = {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch organizations',
+        error: err instanceof Error ? err.message : 'Failed to fetch organizations',
       };
     }
   },
@@ -43,10 +43,10 @@ export const OrganizationService = {
 
       if (error) throw error;
       return { success: true, data };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch organization',
+        error: err instanceof Error ? err.message : 'Failed to fetch organization',
       };
     }
   },
@@ -64,10 +64,10 @@ export const OrganizationService = {
 
       if (error) throw error;
       return { success: true, data };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch organization by NPI',
+        error: err instanceof Error ? err.message : 'Failed to fetch organization by NPI',
       };
     }
   },
@@ -86,10 +86,10 @@ export const OrganizationService = {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to search organizations',
+        error: err instanceof Error ? err.message : 'Failed to search organizations',
       };
     }
   },
@@ -107,10 +107,10 @@ export const OrganizationService = {
 
       if (error) throw error;
       return { success: true, data };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to create organization',
+        error: err instanceof Error ? err.message : 'Failed to create organization',
       };
     }
   },
@@ -129,10 +129,10 @@ export const OrganizationService = {
 
       if (error) throw error;
       return { success: true, data };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to update organization',
+        error: err instanceof Error ? err.message : 'Failed to update organization',
       };
     }
   },

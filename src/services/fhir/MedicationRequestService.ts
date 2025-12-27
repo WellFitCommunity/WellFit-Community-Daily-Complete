@@ -31,10 +31,10 @@ export class MedicationRequestService {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch medication requests',
+        error: err instanceof Error ? err.message : 'Failed to fetch medication requests',
       };
     }
   }
@@ -53,10 +53,10 @@ export class MedicationRequestService {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch active medications',
+        error: err instanceof Error ? err.message : 'Failed to fetch active medications',
       };
     }
   }
@@ -94,10 +94,10 @@ export class MedicationRequestService {
 
       if (error) throw error;
       return { success: true, data };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to create medication request',
+        error: err instanceof Error ? err.message : 'Failed to create medication request',
       };
     }
   }
@@ -128,10 +128,10 @@ export class MedicationRequestService {
 
       if (error) throw error;
       return { success: true, data };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to update medication request',
+        error: err instanceof Error ? err.message : 'Failed to update medication request',
       };
     }
   }
@@ -175,10 +175,10 @@ export class MedicationRequestService {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch medication history',
+        error: err instanceof Error ? err.message : 'Failed to fetch medication history',
       };
     }
   }

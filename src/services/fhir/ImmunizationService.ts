@@ -30,10 +30,10 @@ export class ImmunizationService {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch immunizations',
+        error: err instanceof Error ? err.message : 'Failed to fetch immunizations',
       };
     }
   }
@@ -59,10 +59,10 @@ export class ImmunizationService {
         throw error;
       }
       return { success: true, data };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch immunization',
+        error: err instanceof Error ? err.message : 'Failed to fetch immunization',
       };
     }
   }
@@ -86,10 +86,10 @@ export class ImmunizationService {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch completed immunizations',
+        error: err instanceof Error ? err.message : 'Failed to fetch completed immunizations',
       };
     }
   }
@@ -115,10 +115,10 @@ export class ImmunizationService {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch immunization history',
+        error: err instanceof Error ? err.message : 'Failed to fetch immunization history',
       };
     }
   }
@@ -145,11 +145,11 @@ export class ImmunizationService {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
         error:
-          error instanceof Error ? error.message : 'Failed to fetch immunizations by vaccine code',
+          err instanceof Error ? err.message : 'Failed to fetch immunizations by vaccine code',
       };
     }
   }
@@ -179,10 +179,10 @@ export class ImmunizationService {
 
       if (error) throw error;
       return { success: true, data: data || false };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to check vaccine due status',
+        error: err instanceof Error ? err.message : 'Failed to check vaccine due status',
       };
     }
   }
@@ -204,10 +204,10 @@ export class ImmunizationService {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch vaccine gaps',
+        error: err instanceof Error ? err.message : 'Failed to fetch vaccine gaps',
       };
     }
   }
@@ -233,10 +233,10 @@ export class ImmunizationService {
 
       if (error) throw error;
       return { success: true, data };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to create immunization',
+        error: err instanceof Error ? err.message : 'Failed to create immunization',
       };
     }
   }
@@ -267,10 +267,10 @@ export class ImmunizationService {
 
       if (error) throw error;
       return { success: true, data };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to update immunization',
+        error: err instanceof Error ? err.message : 'Failed to update immunization',
       };
     }
   }
@@ -290,10 +290,10 @@ export class ImmunizationService {
 
       if (error) throw error;
       return { success: true };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to delete immunization',
+        error: err instanceof Error ? err.message : 'Failed to delete immunization',
       };
     }
   }
@@ -338,10 +338,10 @@ export class ImmunizationService {
       const { data, error } = await query;
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to search immunizations',
+        error: err instanceof Error ? err.message : 'Failed to search immunizations',
       };
     }
   }

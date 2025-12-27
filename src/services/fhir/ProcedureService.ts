@@ -31,10 +31,10 @@ export class ProcedureService {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch procedures',
+        error: err instanceof Error ? err.message : 'Failed to fetch procedures',
       };
     }
   }
@@ -61,10 +61,10 @@ export class ProcedureService {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch recent procedures',
+        error: err instanceof Error ? err.message : 'Failed to fetch recent procedures',
       };
     }
   }
@@ -85,10 +85,10 @@ export class ProcedureService {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch encounter procedures',
+        error: err instanceof Error ? err.message : 'Failed to fetch encounter procedures',
       };
     }
   }
@@ -112,10 +112,10 @@ export class ProcedureService {
 
       if (error) throw error;
       return { success: true, data };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to create procedure',
+        error: err instanceof Error ? err.message : 'Failed to create procedure',
       };
     }
   }
@@ -143,10 +143,10 @@ export class ProcedureService {
 
       if (error) throw error;
       return { success: true, data };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to update procedure',
+        error: err instanceof Error ? err.message : 'Failed to update procedure',
       };
     }
   }
@@ -174,10 +174,10 @@ export class ProcedureService {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch billable procedures',
+        error: err instanceof Error ? err.message : 'Failed to fetch billable procedures',
       };
     }
   }

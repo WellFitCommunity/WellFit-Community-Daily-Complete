@@ -22,10 +22,10 @@ export const GoalService = {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch goals',
+        error: err instanceof Error ? err.message : 'Failed to fetch goals',
       };
     }
   },
@@ -45,10 +45,10 @@ export const GoalService = {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch active goals',
+        error: err instanceof Error ? err.message : 'Failed to fetch active goals',
       };
     }
   },
@@ -67,10 +67,10 @@ export const GoalService = {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch goals by category',
+        error: err instanceof Error ? err.message : 'Failed to fetch goals by category',
       };
     }
   },
@@ -88,10 +88,10 @@ export const GoalService = {
 
       if (error) throw error;
       return { success: true, data };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to create goal',
+        error: err instanceof Error ? err.message : 'Failed to create goal',
       };
     }
   },
@@ -110,10 +110,10 @@ export const GoalService = {
 
       if (error) throw error;
       return { success: true, data };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to update goal',
+        error: err instanceof Error ? err.message : 'Failed to update goal',
       };
     }
   },

@@ -32,10 +32,10 @@ export class CareTeamService {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch care teams',
+        error: err instanceof Error ? err.message : 'Failed to fetch care teams',
       };
     }
   }
@@ -62,10 +62,10 @@ export class CareTeamService {
         throw error;
       }
       return { success: true, data };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch care team',
+        error: err instanceof Error ? err.message : 'Failed to fetch care team',
       };
     }
   }
@@ -91,10 +91,10 @@ export class CareTeamService {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch active care teams',
+        error: err instanceof Error ? err.message : 'Failed to fetch active care teams',
       };
     }
   }
@@ -124,10 +124,10 @@ export class CareTeamService {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch care teams by status',
+        error: err instanceof Error ? err.message : 'Failed to fetch care teams by status',
       };
     }
   }
@@ -153,10 +153,10 @@ export class CareTeamService {
 
       if (error) throw error;
       return { success: true, data };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to create care team',
+        error: err instanceof Error ? err.message : 'Failed to create care team',
       };
     }
   }
@@ -188,10 +188,10 @@ export class CareTeamService {
 
       if (error) throw error;
       return { success: true, data };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to update care team',
+        error: err instanceof Error ? err.message : 'Failed to update care team',
       };
     }
   }
@@ -213,10 +213,10 @@ export class CareTeamService {
 
       if (error) throw error;
       return { success: true };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to delete care team',
+        error: err instanceof Error ? err.message : 'Failed to delete care team',
       };
     }
   }
@@ -293,10 +293,10 @@ export class CareTeamService {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch care team members',
+        error: err instanceof Error ? err.message : 'Failed to fetch care team members',
       };
     }
   }
@@ -323,10 +323,10 @@ export class CareTeamService {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch active care team members',
+        error: err instanceof Error ? err.message : 'Failed to fetch active care team members',
       };
     }
   }
@@ -359,10 +359,10 @@ export class CareTeamService {
         throw error;
       }
       return { success: true, data };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch primary contact',
+        error: err instanceof Error ? err.message : 'Failed to fetch primary contact',
       };
     }
   }
@@ -387,10 +387,10 @@ export class CareTeamService {
 
       if (error) throw error;
       return { success: true, data };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to add care team member',
+        error: err instanceof Error ? err.message : 'Failed to add care team member',
       };
     }
   }
@@ -421,10 +421,10 @@ export class CareTeamService {
 
       if (error) throw error;
       return { success: true, data };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to update care team member',
+        error: err instanceof Error ? err.message : 'Failed to update care team member',
       };
     }
   }
@@ -458,10 +458,10 @@ export class CareTeamService {
 
       if (error) throw error;
       return { success: true };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to delete care team member',
+        error: err instanceof Error ? err.message : 'Failed to delete care team member',
       };
     }
   }
@@ -491,10 +491,10 @@ export class CareTeamService {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch members by role',
+        error: err instanceof Error ? err.message : 'Failed to fetch members by role',
       };
     }
   }

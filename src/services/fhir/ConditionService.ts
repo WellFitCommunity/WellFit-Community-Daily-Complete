@@ -34,10 +34,10 @@ export class ConditionService {
       // Normalize for backwards compatibility
       const normalized = (data || []).map(normalizeCondition);
       return { success: true, data: normalized };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch conditions',
+        error: err instanceof Error ? err.message : 'Failed to fetch conditions',
       };
     }
   }
@@ -60,10 +60,10 @@ export class ConditionService {
       // Normalize for backwards compatibility
       const normalized = (data || []).map(normalizeCondition);
       return { success: true, data: normalized };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch active conditions',
+        error: err instanceof Error ? err.message : 'Failed to fetch active conditions',
       };
     }
   }
@@ -85,10 +85,10 @@ export class ConditionService {
       if (error) throw error;
       const normalized = (data || []).map(normalizeCondition);
       return { success: true, data: normalized };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch problem list',
+        error: err instanceof Error ? err.message : 'Failed to fetch problem list',
       };
     }
   }
@@ -110,10 +110,10 @@ export class ConditionService {
       if (error) throw error;
       const normalized = (data || []).map(normalizeCondition);
       return { success: true, data: normalized };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch encounter diagnoses',
+        error: err instanceof Error ? err.message : 'Failed to fetch encounter diagnoses',
       };
     }
   }
@@ -141,10 +141,10 @@ export class ConditionService {
       if (error) throw error;
       // Normalize for backwards compatibility
       return { success: true, data: normalizeCondition(data) };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to create condition',
+        error: err instanceof Error ? err.message : 'Failed to create condition',
       };
     }
   }
@@ -172,10 +172,10 @@ export class ConditionService {
 
       if (error) throw error;
       return { success: true, data };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to update condition',
+        error: err instanceof Error ? err.message : 'Failed to update condition',
       };
     }
   }
@@ -213,10 +213,10 @@ export class ConditionService {
       if (error) throw error;
       const normalized = (data || []).map(normalizeCondition);
       return { success: true, data: normalized };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch chronic conditions',
+        error: err instanceof Error ? err.message : 'Failed to fetch chronic conditions',
       };
     }
   }

@@ -22,10 +22,10 @@ export const MedicationService = {
 
       if (error) throw error;
       return { success: true, data };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch medication',
+        error: err instanceof Error ? err.message : 'Failed to fetch medication',
       };
     }
   },
@@ -44,10 +44,10 @@ export const MedicationService = {
 
       if (error) throw error;
       return { success: true, data };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch medication by RxNorm',
+        error: err instanceof Error ? err.message : 'Failed to fetch medication by RxNorm',
       };
     }
   },
@@ -65,10 +65,10 @@ export const MedicationService = {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to search medications',
+        error: err instanceof Error ? err.message : 'Failed to search medications',
       };
     }
   },
@@ -86,10 +86,10 @@ export const MedicationService = {
 
       if (error) throw error;
       return { success: true, data };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to create medication',
+        error: err instanceof Error ? err.message : 'Failed to create medication',
       };
     }
   },
@@ -108,10 +108,10 @@ export const MedicationService = {
 
       if (error) throw error;
       return { success: true, data };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to update medication',
+        error: err instanceof Error ? err.message : 'Failed to update medication',
       };
     }
   },

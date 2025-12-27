@@ -28,10 +28,10 @@ export const ProvenanceService = {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch provenance',
+        error: err instanceof Error ? err.message : 'Failed to fetch provenance',
       };
     }
   },
@@ -49,10 +49,10 @@ export const ProvenanceService = {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch provenance by agent',
+        error: err instanceof Error ? err.message : 'Failed to fetch provenance by agent',
       };
     }
   },
@@ -74,10 +74,10 @@ export const ProvenanceService = {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch audit trail',
+        error: err instanceof Error ? err.message : 'Failed to fetch audit trail',
       };
     }
   },
@@ -98,10 +98,10 @@ export const ProvenanceService = {
 
       if (error) throw error;
       return { success: true, data };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to create provenance',
+        error: err instanceof Error ? err.message : 'Failed to create provenance',
       };
     }
   },

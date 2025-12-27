@@ -31,10 +31,10 @@ export class ObservationService {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch observations',
+        error: err instanceof Error ? err.message : 'Failed to fetch observations',
       };
     }
   }
@@ -61,10 +61,10 @@ export class ObservationService {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch vital signs',
+        error: err instanceof Error ? err.message : 'Failed to fetch vital signs',
       };
     }
   }
@@ -91,10 +91,10 @@ export class ObservationService {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch lab results',
+        error: err instanceof Error ? err.message : 'Failed to fetch lab results',
       };
     }
   }
@@ -116,10 +116,10 @@ export class ObservationService {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch social history',
+        error: err instanceof Error ? err.message : 'Failed to fetch social history',
       };
     }
   }
@@ -149,10 +149,10 @@ export class ObservationService {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch observations by code',
+        error: err instanceof Error ? err.message : 'Failed to fetch observations by code',
       };
     }
   }
@@ -192,10 +192,10 @@ export class ObservationService {
 
       if (error) throw error;
       return { success: true, data: data || [] };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch observations by category',
+        error: err instanceof Error ? err.message : 'Failed to fetch observations by category',
       };
     }
   }
@@ -221,10 +221,10 @@ export class ObservationService {
 
       if (error) throw error;
       return { success: true, data };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to create observation',
+        error: err instanceof Error ? err.message : 'Failed to create observation',
       };
     }
   }
@@ -255,10 +255,10 @@ export class ObservationService {
 
       if (error) throw error;
       return { success: true, data };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to update observation',
+        error: err instanceof Error ? err.message : 'Failed to update observation',
       };
     }
   }
@@ -278,10 +278,10 @@ export class ObservationService {
 
       if (error) throw error;
       return { success: true };
-    } catch (error) {
+    } catch (err: unknown) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to delete observation',
+        error: err instanceof Error ? err.message : 'Failed to delete observation',
       };
     }
   }
