@@ -283,8 +283,8 @@ export class BedOptimizerService {
       await this.trackOptimizationReport(tenantId, report);
 
       return success(report);
-    } catch (error: unknown) {
-      return failure('OPERATION_FAILED', `Failed to generate optimization report: ${error.message}`, error);
+    } catch (err: unknown) {
+      return failure('OPERATION_FAILED', `Failed to generate optimization report: ${err instanceof Error ? err.message : 'Unknown error'}`, err);
     }
   }
 
@@ -741,8 +741,8 @@ Return JSON:
       await this.trackBedAssignment(tenantId, patient, recommendation);
 
       return success(recommendation);
-    } catch (error: unknown) {
-      return failure('OPERATION_FAILED', `Failed to recommend bed: ${error.message}`, error);
+    } catch (err: unknown) {
+      return failure('OPERATION_FAILED', `Failed to recommend bed: ${err instanceof Error ? err.message : 'Unknown error'}`, err);
     }
   }
 
