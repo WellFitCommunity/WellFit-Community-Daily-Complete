@@ -7,6 +7,7 @@
  */
 
 import { supabase } from '../lib/supabaseClient';
+import { getErrorMessage } from '../lib/getErrorMessage';
 import type {
   PTFunctionalAssessment,
   CreatePTAssessmentRequest,
@@ -104,9 +105,8 @@ export class PTAssessmentService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -126,9 +126,8 @@ export class PTAssessmentService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -148,9 +147,8 @@ export class PTAssessmentService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -172,9 +170,8 @@ export class PTAssessmentService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -192,9 +189,8 @@ export class PTAssessmentService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -217,9 +213,8 @@ export class PTAssessmentService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -242,9 +237,8 @@ export class PTAssessmentService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -271,9 +265,8 @@ export class PTAssessmentService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 }

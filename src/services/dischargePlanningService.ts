@@ -5,6 +5,7 @@
 
 import { supabase } from '../lib/supabaseClient';
 import { PAGINATION_LIMITS, applyLimit } from '../utils/pagination';
+import { getErrorMessage } from '../lib/getErrorMessage';
 import { claudeService } from './claudeService';
 import { UserRole, RequestType, ClaudeRequestContext } from '../types/claude';
 import { ReadmissionTrackingService } from './readmissionTrackingService';
@@ -84,9 +85,8 @@ export class DischargePlanningService {
       await this.generateDischargePlanRecommendations(plan.id, request.patient_id, request.encounter_id);
 
       return plan;
-    } catch (error: unknown) {
-
-      throw new Error(`Discharge plan creation failed: ${error.message}`);
+    } catch (err: unknown) {
+      throw new Error(`Discharge plan creation failed: ${getErrorMessage(err)}`);
     }
   }
 
@@ -144,8 +144,8 @@ export class DischargePlanningService {
       }
 
       return data;
-    } catch (error: unknown) {
-      throw new Error(`Failed to update discharge plan: ${error.message}`);
+    } catch (err: unknown) {
+      throw new Error(`Failed to update discharge plan: ${getErrorMessage(err)}`);
     }
   }
 
@@ -272,8 +272,7 @@ Format as JSON:
         if (jsonMatch) {
           recommendations = JSON.parse(jsonMatch[0]);
         }
-      } catch (parseError) {
-
+      } catch (err: unknown) {
         recommendations = this.getDefaultRecommendations();
       }
 
@@ -287,7 +286,7 @@ Format as JSON:
         })
         .eq('id', planId);
 
-    } catch (error) {
+    } catch (err: unknown) {
 
       // Don't throw - recommendations are nice-to-have
     }
@@ -352,9 +351,8 @@ Format as JSON:
         })
         .eq('id', planId);
 
-    } catch (error) {
-
-      throw error;
+    } catch (err: unknown) {
+      throw err;
     }
   }
 
@@ -420,8 +418,8 @@ Format as JSON:
       }
 
       return data;
-    } catch (error: unknown) {
-      throw new Error(`Failed to complete follow-up: ${error.message}`);
+    } catch (err: unknown) {
+      throw new Error(`Failed to complete follow-up: ${getErrorMessage(err)}`);
     }
   }
 
@@ -448,7 +446,7 @@ Format as JSON:
         },
         status: 'active'
       });
-    } catch (error) {
+    } catch (err: unknown) {
 
     }
   }

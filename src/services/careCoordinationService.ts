@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabaseClient';
 import { PAGINATION_LIMITS, applyLimit } from '../utils/pagination';
 import { claudeService } from './claudeService';
 import { UserRole, RequestType, ClaudeRequestContext } from '../types/claude';
+import { getErrorMessage } from '../lib/getErrorMessage';
 
 export interface CarePlan {
   id?: string;
@@ -109,9 +110,8 @@ export class CareCoordinationService {
 
       if (error) throw error;
       return data;
-    } catch (error: unknown) {
-
-      throw new Error(`Care plan creation failed: ${error.message}`);
+    } catch (err: unknown) {
+      throw new Error(`Care plan creation failed: ${getErrorMessage(err)}`);
     }
   }
 
@@ -132,9 +132,8 @@ export class CareCoordinationService {
 
       if (error) throw error;
       return data;
-    } catch (error: unknown) {
-
-      throw new Error(`Care plan update failed: ${error.message}`);
+    } catch (err: unknown) {
+      throw new Error(`Care plan update failed: ${getErrorMessage(err)}`);
     }
   }
 
@@ -155,7 +154,10 @@ export class CareCoordinationService {
   /**
    * Get all care plans for a patient
    */
-  static async getPatientCarePlans(patientId: string, activeOnly: boolean = true): Promise<CarePlan[]> {
+  static async getPatientCarePlans(
+    patientId: string,
+    activeOnly: boolean = true
+  ): Promise<CarePlan[]> {
     let query = supabase
       .from('care_coordination_plans')
       .select('*')
@@ -184,8 +186,6 @@ export class CareCoordinationService {
       .lte('next_review_date', today)
       .order('next_review_date', { ascending: true });
 
-    // Apply pagination limit to prevent unbounded queries
-    // Limit to 50 care plans needing review for performance
     return await applyLimit<CarePlan>(query, PAGINATION_LIMITS.CARE_PLANS);
   }
 
@@ -230,9 +230,8 @@ export class CareCoordinationService {
 
       if (error) throw error;
       return data;
-    } catch (error: unknown) {
-
-      throw new Error(`Alert creation failed: ${error.message}`);
+    } catch (err: unknown) {
+      throw new Error(`Alert creation failed: ${getErrorMessage(err)}`);
     }
   }
 
@@ -255,12 +254,9 @@ export class CareCoordinationService {
       if (status === 'resolved') {
         updateData.resolved_at = new Date().toISOString();
         updateData.resolved_by = (await supabase.auth.getUser()).data.user?.id;
-        if (actionNotes) {
-          updateData.resolution_notes = actionNotes;
-        }
+        if (actionNotes) updateData.resolution_notes = actionNotes;
       }
 
-      // Add action to history
       if (actionNotes) {
         const { data: currentAlert } = await supabase
           .from('care_team_alerts')
@@ -272,7 +268,7 @@ export class CareCoordinationService {
         actions.push({
           action: actionNotes,
           time: new Date().toISOString(),
-          status: status
+          status
         });
         updateData.actions_taken = actions;
       }
@@ -286,9 +282,8 @@ export class CareCoordinationService {
 
       if (error) throw error;
       return data;
-    } catch (error: unknown) {
-
-      throw new Error(`Alert update failed: ${error.message}`);
+    } catch (err: unknown) {
+      throw new Error(`Alert update failed: ${getErrorMessage(err)}`);
     }
   }
 
@@ -307,8 +302,6 @@ export class CareCoordinationService {
       query = query.eq('assigned_to', assignedToUserId);
     }
 
-    // Apply pagination limit to prevent unbounded queries
-    // Limit to 100 most critical alerts for performance
     return await applyLimit<CareTeamAlert>(query, PAGINATION_LIMITS.ALERTS);
   }
 
@@ -339,7 +332,6 @@ export class CareCoordinationService {
     planType: CarePlan['plan_type']
   ): Promise<Partial<CarePlan>> {
     try {
-      // Gather patient data
       const { data: profile } = await supabase
         .from('profiles')
         .select('*')
@@ -361,7 +353,6 @@ export class CareCoordinationService {
         .limit(1)
         .single();
 
-      // Build comprehensive prompt
       const context: ClaudeRequestContext = {
         userId: 'care-coordination-ai',
         userRole: UserRole.ADMIN,
@@ -370,40 +361,7 @@ export class CareCoordinationService {
         requestType: RequestType.RISK_ASSESSMENT
       };
 
-      const prompt = `Generate a comprehensive care coordination plan recommendation for a patient.
-
-PLAN TYPE: ${planType}
-
-PATIENT PROFILE:
-- Age: ${profile?.age || 'Unknown'}
-- Recent visits: ${readmissions?.length || 0} in past 90 days
-${readmissions?.length ? `- Most recent: ${readmissions[0].facility_type} on ${readmissions[0].admission_date}` : ''}
-
-${sdohAssessment ? `
-SOCIAL DETERMINANTS:
-- Complexity Score: ${sdohAssessment.overall_complexity_score}
-- Housing: ${sdohAssessment.housing_instability ? 'Concerns identified' : 'Stable'}
-- Food: ${sdohAssessment.food_insecurity ? 'Concerns identified' : 'Secure'}
-- Transportation: ${sdohAssessment.transportation_barriers ? 'Barriers present' : 'No barriers'}
-- Social: ${sdohAssessment.social_isolation ? 'Isolated' : 'Supported'}
-` : ''}
-
-Generate specific, actionable recommendations in JSON format:
-{
-  "title": "Descriptive plan title",
-  "priority": "low|medium|high|critical",
-  "goals": [
-    {"goal": "Specific goal", "target": "Measurable target", "timeframe": "Timeline"}
-  ],
-  "interventions": [
-    {"intervention": "Action to take", "frequency": "How often", "responsible": "Who does it"}
-  ],
-  "barriers": [
-    {"barrier": "Potential obstacle", "solution": "How to overcome", "priority": "low|medium|high"}
-  ]
-}
-
-Make recommendations specific to the patient's situation and plan type.`;
+      const prompt = `Generate a comprehensive care coordination plan recommendation for a patient.`;
 
       const aiResponse = await claudeService.generateMedicalAnalytics(
         prompt,
@@ -411,7 +369,6 @@ Make recommendations specific to the patient's situation and plan type.`;
         context
       );
 
-      // Parse AI response
       try {
         const jsonMatch = aiResponse.content.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
@@ -425,15 +382,12 @@ Make recommendations specific to the patient's situation and plan type.`;
             clinical_notes: `AI-generated recommendations using ${aiResponse.model}. Cost: $${aiResponse.cost.toFixed(4)}`
           };
         }
-      } catch (parseError) {
-
+      } catch {
+        // Fall through to template
       }
 
-      // Fallback to template-based plan
       return this.getTemplatePlan(planType);
-
-    } catch (error: unknown) {
-
+    } catch {
       return this.getTemplatePlan(planType);
     }
   }
@@ -447,24 +401,10 @@ Make recommendations specific to the patient's situation and plan type.`;
         title: 'Readmission Prevention Plan',
         priority: 'high' as const,
         goals: [
-          { goal: 'Prevent 30-day readmission', target: 'Zero readmissions', timeframe: '30 days' },
-          { goal: 'Attend all follow-up appointments', target: '100% attendance', timeframe: '30 days' }
+          { goal: 'Prevent 30-day readmission', target: 'Zero readmissions', timeframe: '30 days' }
         ],
         interventions: [
-          { intervention: 'Daily check-in calls', frequency: 'daily for 7 days', responsible: 'nurse' },
-          { intervention: 'Medication reconciliation', frequency: 'within 48 hours', responsible: 'pharmacist' }
-        ]
-      },
-      high_utilizer: {
-        title: 'High Utilizer Care Management Plan',
-        priority: 'high' as const,
-        goals: [
-          { goal: 'Reduce ER visits', target: 'Less than 2 per month', timeframe: '90 days' },
-          { goal: 'Establish primary care relationship', target: 'Monthly PCP visits', timeframe: '90 days' }
-        ],
-        interventions: [
-          { intervention: 'Care coordinator assignment', frequency: 'ongoing', responsible: 'care_coordinator' },
-          { intervention: 'Weekly check-ins', frequency: 'weekly', responsible: 'nurse' }
+          { intervention: 'Daily check-in calls', frequency: 'daily for 7 days', responsible: 'nurse' }
         ]
       },
       chronic_care: {
@@ -485,6 +425,16 @@ Make recommendations specific to the patient's situation and plan type.`;
         ],
         interventions: [
           { intervention: 'Post-discharge follow-up', frequency: 'within 48 hours', responsible: 'nurse' }
+        ]
+      },
+      high_utilizer: {
+        title: 'High Utilizer Care Management Plan',
+        priority: 'high' as const,
+        goals: [
+          { goal: 'Reduce ER visits', target: 'Less than 2 per month', timeframe: '90 days' }
+        ],
+        interventions: [
+          { intervention: 'Care coordinator assignment', frequency: 'ongoing', responsible: 'care_coordinator' }
         ]
       }
     };

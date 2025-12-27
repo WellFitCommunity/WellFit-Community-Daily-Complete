@@ -7,6 +7,7 @@
  */
 
 import { supabase } from '../lib/supabaseClient';
+import { getErrorMessage } from '../lib/getErrorMessage';
 
 // ─── Types ─────────────────────────────────────────────────────────
 
@@ -228,17 +229,17 @@ export async function completePasskeyRegistration(
     return data;
 
   } catch (error: unknown) {
+    const errorMessage = getErrorMessage(error);
 
-
-    if (error.name === 'NotAllowedError') {
+    if (errorMessage === 'NotAllowedError') {
       throw new Error('Registration was cancelled or timed out');
-    } else if (error.name === 'InvalidStateError') {
+    } else if (errorMessage === 'InvalidStateError') {
       throw new Error('This device is already registered');
-    } else if (error.name === 'NotSupportedError') {
+    } else if (errorMessage === 'NotSupportedError') {
       throw new Error('Passkeys are not supported on this device');
     }
 
-    throw error;
+    throw new Error(errorMessage);
   }
 }
 
@@ -323,15 +324,15 @@ export async function completePasskeyAuthentication(
     return data;
 
   } catch (error: unknown) {
+    const errorMessage = getErrorMessage(error);
 
-
-    if (error.name === 'NotAllowedError') {
+    if (errorMessage === 'NotAllowedError') {
       throw new Error('Authentication was cancelled or timed out');
-    } else if (error.name === 'InvalidStateError') {
+    } else if (errorMessage === 'InvalidStateError') {
       throw new Error('No passkey found for this account');
     }
 
-    throw error;
+    throw new Error(errorMessage);
   }
 }
 

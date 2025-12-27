@@ -7,6 +7,7 @@
  */
 
 import { supabase } from '../lib/supabaseClient';
+import { getErrorMessage } from '../lib/getErrorMessage';
 import type {
   PTTreatmentSession,
   RecordTreatmentSessionRequest,
@@ -97,9 +98,8 @@ export class PTSessionService {
       // if attendance_status is 'attended'
 
       return { success: true, data };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -137,9 +137,8 @@ export class PTSessionService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -159,9 +158,8 @@ export class PTSessionService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -181,9 +179,8 @@ export class PTSessionService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -205,9 +202,8 @@ export class PTSessionService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -235,9 +231,8 @@ export class PTSessionService {
       if (error) throw error;
 
       return { success: true };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -262,9 +257,8 @@ export class PTSessionService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -289,9 +283,8 @@ export class PTSessionService {
       );
 
       return { success: true, data: total };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -319,9 +312,8 @@ export class PTSessionService {
       );
 
       return { success: true, data: filtered };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 }

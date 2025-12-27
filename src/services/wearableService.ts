@@ -10,6 +10,7 @@ import { supabase } from '../lib/supabaseClient';
 import { logPhiAccess } from './phiAccessLogger';
 import { PAGINATION_LIMITS, applyLimit } from '../utils/pagination';
 import { wearableRegistry } from '../adapters/wearables';
+import { getErrorMessage } from '../lib/getErrorMessage';
 import type {
   WearableConnection,
   WearableVitalSign,
@@ -50,15 +51,16 @@ export class WearableService {
       if (!user) throw new Error('User not authenticated');
 
       // Check if device already connected
-      const { data: existing } = await supabase
+      const { data: existing, error: existingError } = await supabase
         .from('wearable_connections')
         .select('*')
         .eq('user_id', request.user_id)
         .eq('device_type', request.device_type)
         .maybeSingle();
 
+      if (existingError) throw new Error(existingError.message);
+
       if (existing) {
-        // Update existing connection
         const { data, error } = await supabase
           .from('wearable_connections')
           .update({
@@ -71,11 +73,10 @@ export class WearableService {
           .select()
           .single();
 
-        if (error) throw error;
+        if (error) throw new Error(error.message);
         return { success: true, data };
       }
 
-      // Create new connection
       const { data, error } = await supabase
         .from('wearable_connections')
         .insert({
@@ -91,12 +92,11 @@ export class WearableService {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) throw new Error(error.message);
 
       return { success: true, data };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -153,12 +153,11 @@ export class WearableService {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) throw new Error(error.message);
 
       return { success: true, data };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -175,12 +174,11 @@ export class WearableService {
         .eq('user_id', userId)
         .eq('connected', true);
 
-      if (error) throw error;
+      if (error) throw new Error(error.message);
 
       return { success: true, data: data || [] };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -194,14 +192,18 @@ export class WearableService {
   static async storeVitalSign(
     userId: string,
     deviceId: string,
-    vitalType: 'heart_rate' | 'blood_pressure' | 'oxygen_saturation' | 'temperature' | 'respiratory_rate',
+    vitalType:
+      | 'heart_rate'
+      | 'blood_pressure'
+      | 'oxygen_saturation'
+      | 'temperature'
+      | 'respiratory_rate',
     value: number,
     unit: string,
     measuredAt: string,
     activityState?: 'resting' | 'active' | 'sleeping'
   ): Promise<WearableApiResponse<WearableVitalSign>> {
     try {
-      // Detect abnormal values and trigger alerts
       const alertInfo = this.detectAbnormalVital(vitalType, value);
 
       const { data, error } = await supabase
@@ -221,17 +223,15 @@ export class WearableService {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) throw new Error(error.message);
 
-      // If alert triggered, notify care team
       if (alertInfo.alert) {
         await this.sendVitalAlert(userId, vitalType, value, alertInfo.alertType);
       }
 
       return { success: true, data };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -242,22 +242,21 @@ export class WearableService {
     vitalType: string,
     value: number
   ): { alert: boolean; alertType?: 'high' | 'low' | 'irregular' } {
-    // Clinical thresholds for alerts
     const thresholds: Record<string, { low?: number; high?: number }> = {
-      heart_rate: { low: 50, high: 120 }, // Resting HR
-      blood_pressure: { low: 90, high: 140 }, // Systolic BP
-      oxygen_saturation: { low: 90 }, // SpO2 %
-      temperature: { low: 95, high: 100.4 }, // Fahrenheit
+      heart_rate: { low: 50, high: 120 },
+      blood_pressure: { low: 90, high: 140 },
+      oxygen_saturation: { low: 90 },
+      temperature: { low: 95, high: 100.4 },
       respiratory_rate: { low: 12, high: 20 },
     };
 
     const threshold = thresholds[vitalType];
     if (!threshold) return { alert: false };
 
-    if (threshold.low && value < threshold.low) {
+    if (typeof threshold.low === 'number' && value < threshold.low) {
       return { alert: true, alertType: 'low' };
     }
-    if (threshold.high && value > threshold.high) {
+    if (typeof threshold.high === 'number' && value > threshold.high) {
       return { alert: true, alertType: 'high' };
     }
 
@@ -274,11 +273,6 @@ export class WearableService {
     _alertType?: 'high' | 'low' | 'irregular'
   ): Promise<void> {
     // TODO: Integrate with notification system
-
-    // In production, this would:
-    // 1. Send push notification to care team
-    // 2. Create alert in dashboard
-    // 3. If critical, call emergency contacts
   }
 
   /**
@@ -290,7 +284,6 @@ export class WearableService {
     days: number = 7
   ): Promise<WearableApiResponse<WearableVitalSign[]>> {
     try {
-      // HIPAA §164.312(b): Log PHI access
       await logPhiAccess({
         phiType: 'wearable_data',
         phiResourceId: `vitals_${userId}_${vitalType}`,
@@ -303,8 +296,6 @@ export class WearableService {
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - days);
 
-      // CRITICAL FIX: Wearable vitals can be 1 reading/min = 10,080 records/week
-      // Without limit, this was causing memory exhaustion and slow queries
       const query = supabase
         .from('wearable_vital_signs')
         .select('*')
@@ -313,12 +304,14 @@ export class WearableService {
         .gte('measured_at', startDate.toISOString())
         .order('measured_at', { ascending: true });
 
-      const data = await applyLimit<WearableVitalSign>(query, PAGINATION_LIMITS.WEARABLE_VITALS);
+      const data = await applyLimit<WearableVitalSign>(
+        query,
+        PAGINATION_LIMITS.WEARABLE_VITALS
+      );
 
       return { success: true, data };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -359,12 +352,11 @@ export class WearableService {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) throw new Error(error.message);
 
       return { success: true, data };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -377,7 +369,6 @@ export class WearableService {
     endDate: string
   ): Promise<WearableApiResponse<WearableActivityData[]>> {
     try {
-      // HIGH RISK: Activity summaries are daily, but unbounded date ranges can load years of data
       const query = supabase
         .from('wearable_activity_data')
         .select('*')
@@ -386,12 +377,14 @@ export class WearableService {
         .lte('date', endDate)
         .order('date', { ascending: true });
 
-      const data = await applyLimit<WearableActivityData>(query, PAGINATION_LIMITS.WEARABLE_ACTIVITIES);
+      const data = await applyLimit<WearableActivityData>(
+        query,
+        PAGINATION_LIMITS.WEARABLE_ACTIVITIES
+      );
 
       return { success: true, data };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -431,15 +424,13 @@ export class WearableService {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) throw new Error(error.message);
 
-      // Immediately send fall alert
       await this.sendFallAlert(userId, data.id, fallData);
 
       return { success: true, data };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -447,25 +438,15 @@ export class WearableService {
    * Send fall alert to emergency contacts
    */
   static async sendFallAlert(
-    userId: string,
-    fallId: string,
-    fallData: {
+    _userId: string,
+    _fallId: string,
+    _fallData: {
       detectedAt: string;
       latitude?: number;
       longitude?: number;
     }
   ): Promise<void> {
     // TODO: Integrate with emergency notification system
-
-    if (fallData.latitude && fallData.longitude) {
-
-    }
-
-    // In production, this would:
-    // 1. Send push notification to emergency contacts
-    // 2. Call emergency contacts if no response in 60 seconds
-    // 3. Dispatch EMS if severe fall and no response
-    // 4. Create incident report in system
   }
 
   /**
@@ -479,7 +460,6 @@ export class WearableService {
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - days);
 
-      // MEDIUM RISK: Fall detections are infrequent, but apply limit for safety
       const query = supabase
         .from('wearable_fall_detections')
         .select('*')
@@ -490,9 +470,8 @@ export class WearableService {
       const data = await applyLimit<WearableFallDetection>(query, 100);
 
       return { success: true, data };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -516,12 +495,11 @@ export class WearableService {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) throw new Error(error.message);
 
       return { success: true, data };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -543,17 +521,16 @@ export class WearableService {
         .gte('detected_at', startDate.toISOString())
         .order('detected_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) throw new Error(error.message);
 
       return { success: true, data: data || [] };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
   // ============================================================================
-  // GAIT ANALYSIS (Advanced - Parkinson's monitoring)
+  // GAIT ANALYSIS
   // ============================================================================
 
   /**
@@ -599,12 +576,11 @@ export class WearableService {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) throw new Error(error.message);
 
       return { success: true, data };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -622,7 +598,6 @@ export class WearableService {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      // Get wearable connection details
       const { data: connection, error: connError } = await supabase
         .from('wearable_connections')
         .select('*')
@@ -635,18 +610,15 @@ export class WearableService {
         throw new Error(`Device not connected: ${request.deviceType}`);
       }
 
-      // Get adapter from registry
       const adapter = wearableRegistry.getConnection(connection.connection_id);
 
       if (!adapter) {
         throw new Error(`No active adapter for ${request.deviceType}`);
       }
 
-
       let syncedCount = 0;
       let failedCount = 0;
 
-      // Sync vitals if requested
       if (request.dataTypes?.includes('vitals')) {
         try {
           const vitals = await adapter.fetchVitals({
@@ -660,11 +632,20 @@ export class WearableService {
               await this.storeVitalSign(
                 user.id,
                 connection.connection_id,
-                vital.type as 'heart_rate' | 'blood_pressure' | 'oxygen_saturation' | 'temperature' | 'respiratory_rate',
+                vital.type as
+                  | 'heart_rate'
+                  | 'blood_pressure'
+                  | 'oxygen_saturation'
+                  | 'temperature'
+                  | 'respiratory_rate',
                 typeof vital.value === 'object' ? vital.value.systolic : vital.value,
                 vital.unit,
                 vital.timestamp.toISOString(),
-                vital.metadata?.context as 'resting' | 'active' | 'sleeping' | undefined
+                vital.metadata?.context as
+                  | 'resting'
+                  | 'active'
+                  | 'sleeping'
+                  | undefined
               );
               syncedCount++;
             } catch {
@@ -676,15 +657,15 @@ export class WearableService {
         }
       }
 
-      // Sync activity if requested
       if (request.dataTypes?.includes('activity')) {
         try {
           const activities = await adapter.fetchActivity({
             userId: user.id,
-            startDate: request.startDate || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+            startDate:
+              request.startDate ||
+              new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
             endDate: request.endDate || new Date(),
           });
-
 
           for (const activity of activities) {
             try {
@@ -709,13 +690,11 @@ export class WearableService {
         }
       }
 
-      // Update last sync timestamp
       await supabase
         .from('wearable_connections')
         .update({ last_sync_at: new Date().toISOString() })
         .eq('connection_id', connection.connection_id);
 
-      // Log PHI access
       await logPhiAccess({
         phiType: 'wearable_data',
         phiResourceId: connection.connection_id,
@@ -725,13 +704,9 @@ export class WearableService {
         purpose: 'operations',
       });
 
-
-      return {
-        success: true,
-        data: { synced: syncedCount, failed: failedCount },
-      };
-    } catch (error: unknown) {
-      return { success: false, error: error.message };
+      return { success: true, data: { synced: syncedCount, failed: failedCount } };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -740,10 +715,10 @@ export class WearableService {
    */
   private static mapDeviceTypeToAdapter(deviceType: WearableDeviceType): string {
     const mapping: Record<string, string> = {
-      'apple_watch': 'apple-healthkit',
-      'fitbit': 'fitbit',
-      'garmin': 'garmin',
-      'withings': 'withings',
+      apple_watch: 'apple-healthkit',
+      fitbit: 'fitbit',
+      garmin: 'garmin',
+      withings: 'withings',
     };
 
     return mapping[deviceType] || 'generic';

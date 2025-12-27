@@ -3,6 +3,7 @@
 // White-label ready - supports Twilio for SMS, configurable for any provider
 
 import { supabase } from '../lib/supabaseClient';
+import { getErrorMessage } from '../lib/getErrorMessage';
 import { claudeService } from './claudeService';
 import { UserRole, RequestType, ClaudeRequestContext } from '../types/claude';
 import { CareCoordinationService } from './careCoordinationService';
@@ -120,8 +121,7 @@ export class PatientOutreachService {
       return savedCheckIn;
 
     } catch (error: unknown) {
-
-      throw new Error(`Check-in failed: ${error.message}`);
+      throw new Error(`Check-in failed: ${getErrorMessage(error)}`);
     }
   }
 
@@ -187,8 +187,7 @@ export class PatientOutreachService {
       return updatedCheckIn;
 
     } catch (error: unknown) {
-
-      throw new Error(`Response recording failed: ${error.message}`);
+      throw new Error(`Response recording failed: ${getErrorMessage(error)}`);
     }
   }
 
@@ -342,7 +341,6 @@ Provide a 2-3 sentence clinical summary suitable for the care team. Focus on wha
       const twilioConfigured = import.meta.env.VITE_TWILIO_ENABLED === 'true';
 
       if (!twilioConfigured) {
-
         return;
       }
 
@@ -357,10 +355,7 @@ Provide a 2-3 sentence clinical summary suitable for the care team. Focus on wha
 
       if (error) throw error;
 
-
-
     } catch (error: unknown) {
-
       // Don't throw - SMS failure shouldn't break the check-in creation
       // Log to monitoring system instead
     }
@@ -423,15 +418,14 @@ Provide a 2-3 sentence clinical summary suitable for the care team. Focus on wha
 
         } catch (error: unknown) {
           results.failed++;
-          results.errors.push({ patientId, error: error.message });
+          results.errors.push({ patientId, error: getErrorMessage(error) });
         }
       }
 
       return results;
 
     } catch (error: unknown) {
-
-      throw new Error(`Campaign failed: ${error.message}`);
+      throw new Error(`Campaign failed: ${getErrorMessage(error)}`);
     }
   }
 
@@ -550,7 +544,6 @@ Provide a 2-3 sentence clinical summary suitable for the care team. Focus on wha
         .in('priority', ['high', 'critical']);
 
       if (!activePlans || activePlans.length === 0) {
-
         return;
       }
 
@@ -571,12 +564,10 @@ Provide a 2-3 sentence clinical summary suitable for the care team. Focus on wha
         if (!existingCheckIn || existingCheckIn.length === 0) {
           // Send check-in
           await this.sendDailyCheckIn(plan.profiles.id, 'sms');
-
         }
       }
 
     } catch (error: unknown) {
-
     }
   }
 }

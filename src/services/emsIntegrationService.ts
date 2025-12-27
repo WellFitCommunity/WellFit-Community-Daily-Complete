@@ -3,6 +3,7 @@
 // Creates patient records, encounters, observations, and billing integration
 
 import { supabase } from '../lib/supabaseClient';
+import { getErrorMessage } from '../lib/getErrorMessage';
 import { auditLogger } from './auditLogger';
 import type { PrehospitalHandoff } from './emsService';
 
@@ -71,8 +72,9 @@ export async function integrateEMSHandoff(
       billingCodes,
     };
   } catch (err: unknown) {
-    auditLogger.error('EMS_INTEGRATION_FAILED', err, { handoffId });
-    return { success: false, error: err.message };
+    const errorMessage = getErrorMessage(err);
+    auditLogger.error('EMS_INTEGRATION_FAILED', new Error(errorMessage), { handoffId });
+    return { success: false, error: errorMessage };
   }
 }
 
@@ -144,7 +146,7 @@ async function createOrFindPatient(
 
     return { success: true, patientId: newUser.user.id };
   } catch (err: unknown) {
-    return { success: false, error: err.message };
+    return { success: false, error: getErrorMessage(err) };
   }
 }
 
@@ -193,7 +195,7 @@ async function createEREncounter(
 
     return { success: true, encounterId: encounter.id };
   } catch (err: unknown) {
-    return { success: false, error: err.message };
+    return { success: false, error: getErrorMessage(err) };
   }
 }
 

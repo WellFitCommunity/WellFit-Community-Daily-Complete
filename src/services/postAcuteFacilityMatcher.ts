@@ -3,6 +3,7 @@
 // Matches patients to SNFs, Rehabs, Home Health based on clinical needs
 
 import { supabase } from '../lib/supabaseClient';
+import { getErrorMessage } from '../lib/getErrorMessage';
 import { claudeService } from './claudeService';
 import { UserRole, RequestType, ClaudeRequestContext } from '../types/claude';
 import type { PostAcuteFacility } from './dischargePlanningService';
@@ -42,7 +43,12 @@ export interface PatientPostAcuteNeeds {
 }
 
 export interface PostAcuteRecommendation {
-  recommended_setting: 'home' | 'home_with_home_health' | 'skilled_nursing' | 'inpatient_rehab' | 'long_term_acute_care';
+  recommended_setting:
+    | 'home'
+    | 'home_with_home_health'
+    | 'skilled_nursing'
+    | 'inpatient_rehab'
+    | 'long_term_acute_care';
   confidence_score: number; // 0-100
   rationale: string;
   care_needs_summary: string;
@@ -71,9 +77,7 @@ export class PostAcuteFacilityMatcher {
   /**
    * Get AI-powered recommendation for post-acute placement
    */
-  static async recommendPostAcuteSetting(
-    needs: PatientPostAcuteNeeds
-  ): Promise<PostAcuteRecommendation> {
+  static async recommendPostAcuteSetting(needs: PatientPostAcuteNeeds): Promise<PostAcuteRecommendation> {
     try {
       // Get AI recommendation for setting
       const aiRecommendation = await this.getAIRecommendation(needs);
@@ -90,11 +94,10 @@ export class PostAcuteFacilityMatcher {
 
       return {
         ...aiRecommendation,
-        matched_facilities: matchedFacilities
+        matched_facilities: matchedFacilities,
       };
-    } catch (error: unknown) {
-
-      throw new Error(`Failed to generate recommendation: ${error.message}`);
+    } catch (err: unknown) {
+      throw new Error(`Failed to generate recommendation: ${getErrorMessage(err)}`);
     }
   }
 
@@ -110,7 +113,7 @@ export class PostAcuteFacilityMatcher {
         userRole: UserRole.ADMIN,
         requestId: `post-acute-${needs.patient_id}`,
         timestamp: new Date(),
-        requestType: RequestType.RISK_ASSESSMENT
+        requestType: RequestType.RISK_ASSESSMENT,
       };
 
       const prompt = `Analyze this patient's post-acute care needs and recommend the most appropriate care setting.
@@ -169,11 +172,7 @@ Provide your recommendation in this JSON format:
 
 Be evidence-based and follow Medicare/Medicaid eligibility criteria.`;
 
-      const aiResponse = await claudeService.generateMedicalAnalytics(
-        prompt,
-        [],
-        context
-      );
+      const aiResponse = await claudeService.generateMedicalAnalytics(prompt, [], context);
 
       // Parse AI response
       let recommendation;
@@ -184,14 +183,12 @@ Be evidence-based and follow Medicare/Medicaid eligibility criteria.`;
         } else {
           throw new Error('No JSON found in AI response');
         }
-      } catch (parseError) {
-
+      } catch (_parseError: unknown) {
         recommendation = this.getFallbackRecommendation(needs);
       }
 
       return recommendation;
-    } catch {
-
+    } catch (_err: unknown) {
       return this.getFallbackRecommendation(needs);
     }
   }
@@ -237,13 +234,13 @@ Be evidence-based and follow Medicare/Medicaid eligibility criteria.`;
       }
 
       // Score each facility
-      const matchedFacilities = facilities.map(facility => {
+      const matchedFacilities = facilities.map((facility) => {
         const matchResult = this.scoreFacilityMatch(facility, needs);
         return {
           facility,
           match_score: matchResult.score,
           match_reasons: matchResult.reasons,
-          concerns: matchResult.concerns
+          concerns: matchResult.concerns,
         };
       });
 
@@ -251,8 +248,7 @@ Be evidence-based and follow Medicare/Medicaid eligibility criteria.`;
       matchedFacilities.sort((a, b) => b.match_score - a.match_score);
 
       return matchedFacilities;
-    } catch {
-
+    } catch (_err: unknown) {
       return [];
     }
   }
@@ -313,13 +309,16 @@ Be evidence-based and follow Medicare/Medicaid eligibility criteria.`;
     // Specialty matching
     if (facility.specialties && facility.specialties.length > 0) {
       // Check if specialties match patient needs
-      const needsCardiacCare = needs.primary_diagnosis.toLowerCase().includes('cardiac') ||
-                               needs.primary_diagnosis.toLowerCase().includes('heart');
-      const needsOrthoCare = needs.primary_diagnosis.toLowerCase().includes('fracture') ||
-                            needs.primary_diagnosis.toLowerCase().includes('joint') ||
-                            needs.mobility_level === 'walker';
-      const needsStrokeCare = needs.primary_diagnosis.toLowerCase().includes('stroke') ||
-                             needs.primary_diagnosis.toLowerCase().includes('cva');
+      const needsCardiacCare =
+        needs.primary_diagnosis.toLowerCase().includes('cardiac') ||
+        needs.primary_diagnosis.toLowerCase().includes('heart');
+      const needsOrthoCare =
+        needs.primary_diagnosis.toLowerCase().includes('fracture') ||
+        needs.primary_diagnosis.toLowerCase().includes('joint') ||
+        needs.mobility_level === 'walker';
+      const needsStrokeCare =
+        needs.primary_diagnosis.toLowerCase().includes('stroke') ||
+        needs.primary_diagnosis.toLowerCase().includes('cva');
 
       if (needsCardiacCare && facility.specialties.includes('cardiac_care')) {
         score += 15;
@@ -344,9 +343,7 @@ Be evidence-based and follow Medicare/Medicaid eligibility criteria.`;
   /**
    * Map recommended setting to facility type
    */
-  private static mapSettingToFacilityType(
-    setting: string
-  ): PostAcuteFacility['facility_type'] | null {
+  private static mapSettingToFacilityType(setting: string): PostAcuteFacility['facility_type'] | null {
     switch (setting) {
       case 'skilled_nursing':
         return 'skilled_nursing';
@@ -364,9 +361,7 @@ Be evidence-based and follow Medicare/Medicaid eligibility criteria.`;
   /**
    * Fallback recommendation when AI fails (rules-based)
    */
-  private static getFallbackRecommendation(
-    needs: PatientPostAcuteNeeds
-  ): Omit<PostAcuteRecommendation, 'matched_facilities'> {
+  private static getFallbackRecommendation(needs: PatientPostAcuteNeeds): Omit<PostAcuteRecommendation, 'matched_facilities'> {
     // Rules-based logic
 
     // Long-term acute care criteria
@@ -376,7 +371,7 @@ Be evidence-based and follow Medicare/Medicaid eligibility criteria.`;
         confidence_score: 70,
         rationale: 'Patient requires hospital-level care with 24-hour monitoring and IV therapy.',
         care_needs_summary: 'Complex medical needs requiring LTAC facility',
-        estimated_length_of_stay_days: 30
+        estimated_length_of_stay_days: 30,
       };
     }
 
@@ -391,23 +386,18 @@ Be evidence-based and follow Medicare/Medicaid eligibility criteria.`;
         confidence_score: 75,
         rationale: 'Patient has rehabilitation potential and can tolerate intensive therapy.',
         care_needs_summary: 'Intensive rehabilitation therapy (3+ hours/day)',
-        estimated_length_of_stay_days: 21
+        estimated_length_of_stay_days: 21,
       };
     }
 
     // Skilled nursing criteria
-    if (
-      needs.adl_score < 70 ||
-      needs.requires_skilled_nursing ||
-      needs.requires_wound_care ||
-      !needs.has_caregiver_at_home
-    ) {
+    if (needs.adl_score < 70 || needs.requires_skilled_nursing || needs.requires_wound_care || !needs.has_caregiver_at_home) {
       return {
         recommended_setting: 'skilled_nursing',
         confidence_score: 80,
         rationale: 'Patient requires daily skilled nursing care and assistance with ADLs.',
         care_needs_summary: 'Skilled nursing and therapy services',
-        estimated_length_of_stay_days: 14
+        estimated_length_of_stay_days: 14,
       };
     }
 
@@ -421,7 +411,7 @@ Be evidence-based and follow Medicare/Medicaid eligibility criteria.`;
         recommended_setting: 'home_with_home_health',
         confidence_score: 85,
         rationale: 'Patient has support at home and can benefit from intermittent home health services.',
-        care_needs_summary: 'Home health nursing and therapy visits'
+        care_needs_summary: 'Home health nursing and therapy visits',
       };
     }
 
@@ -430,7 +420,7 @@ Be evidence-based and follow Medicare/Medicaid eligibility criteria.`;
       recommended_setting: 'home',
       confidence_score: 75,
       rationale: 'Patient is relatively independent and has adequate support at home.',
-      care_needs_summary: 'Outpatient follow-up care'
+      care_needs_summary: 'Outpatient follow-up care',
     };
   }
 
@@ -438,11 +428,7 @@ Be evidence-based and follow Medicare/Medicaid eligibility criteria.`;
    * Get detailed facility information
    */
   static async getFacilityDetails(facilityId: string): Promise<PostAcuteFacility> {
-    const { data, error } = await supabase
-      .from('post_acute_facilities')
-      .select('*')
-      .eq('id', facilityId)
-      .single();
+    const { data, error } = await supabase.from('post_acute_facilities').select('*').eq('id', facilityId).single();
 
     if (error) throw new Error(`Failed to get facility: ${error.message}`);
     return data;
@@ -451,15 +437,12 @@ Be evidence-based and follow Medicare/Medicaid eligibility criteria.`;
   /**
    * Update facility bed availability
    */
-  static async updateFacilityBeds(
-    facilityId: string,
-    availableBeds: number
-  ): Promise<void> {
+  static async updateFacilityBeds(facilityId: string, availableBeds: number): Promise<void> {
     const { error } = await supabase
       .from('post_acute_facilities')
       .update({
         available_beds: availableBeds,
-        last_bed_count_update: new Date().toISOString()
+        last_bed_count_update: new Date().toISOString(),
       })
       .eq('id', facilityId);
 

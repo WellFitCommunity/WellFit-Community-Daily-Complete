@@ -7,6 +7,7 @@
  */
 
 import { supabase } from '../lib/supabaseClient';
+import { getErrorMessage } from '../lib/getErrorMessage';
 import type {
   PTTreatmentPlan,
   CreateTreatmentPlanRequest,
@@ -67,9 +68,8 @@ export class PTTreatmentPlanService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -92,9 +92,8 @@ export class PTTreatmentPlanService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -114,9 +113,8 @@ export class PTTreatmentPlanService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -136,9 +134,8 @@ export class PTTreatmentPlanService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -184,9 +181,8 @@ export class PTTreatmentPlanService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -204,9 +200,8 @@ export class PTTreatmentPlanService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -240,9 +235,8 @@ export class PTTreatmentPlanService {
           sessions: sessions || [],
         },
       };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -260,9 +254,8 @@ export class PTTreatmentPlanService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -290,9 +283,8 @@ export class PTTreatmentPlanService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -314,9 +306,8 @@ export class PTTreatmentPlanService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 }

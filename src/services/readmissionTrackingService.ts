@@ -7,6 +7,7 @@ import { PAGINATION_LIMITS, applyLimit } from '../utils/pagination';
 import { claudeService } from './claudeService';
 import { UserRole, RequestType, ClaudeRequestContext } from '../types/claude';
 import { auditLogger } from './auditLogger';
+import { getErrorMessage } from '../lib/getErrorMessage';
 
 export interface ReadmissionEvent {
   id?: string;
@@ -82,14 +83,16 @@ export class ReadmissionTrackingService {
       if (error) throw error;
 
       // Trigger automated workflows if high risk
-      if (readmissionAnalysis.high_utilizer_flag || (readmissionAnalysis.risk_score !== undefined && readmissionAnalysis.risk_score >= 70)) {
+      if (
+        readmissionAnalysis.high_utilizer_flag ||
+        (readmissionAnalysis.risk_score !== undefined && readmissionAnalysis.risk_score >= 70)
+      ) {
         await this.triggerHighRiskWorkflow(data);
       }
 
       return data;
-    } catch (error: unknown) {
-
-      throw new Error(`Readmission logging failed: ${error.message}`);
+    } catch (err: unknown) {
+      throw new Error(`Readmission logging failed: ${getErrorMessage(err)}`);
     }
   }
 
@@ -198,9 +201,7 @@ export class ReadmissionTrackingService {
         // Auto-generate care plan using AI
         await this.generateAutomatedCarePlan(readmission);
       }
-
     } catch {
-
       // Don't throw - we don't want to fail the readmission logging
     }
   }
@@ -211,7 +212,7 @@ export class ReadmissionTrackingService {
   private static async generateAutomatedCarePlan(readmission: any): Promise<void> {
     try {
       // Get patient profile for context
-      const { data: profile } = await supabase
+      await supabase
         .from('profiles')
         .select('*')
         .eq('id', readmission.patient_id)
@@ -258,7 +259,6 @@ Format as JSON with this structure:
       // Parse AI response
       let planData;
       try {
-        // Try to extract JSON from response
         const jsonMatch = aiResponse.content.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           planData = JSON.parse(jsonMatch[0]);
@@ -266,7 +266,6 @@ Format as JSON with this structure:
           throw new Error('No JSON found in AI response');
         }
       } catch {
-        // Fallback to default plan
         planData = this.getDefaultCarePlan(readmission);
       }
 
@@ -281,14 +280,11 @@ Format as JSON with this structure:
         interventions: planData.interventions || [],
         barriers: planData.barriers || [],
         start_date: new Date().toISOString().split('T')[0],
-        next_review_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 days
+        next_review_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         success_metrics: planData.success_metrics || {},
         clinical_notes: `Automatically generated care plan based on ${readmission.is_readmission ? 'readmission' : 'ER visit'} on ${readmission.admission_date}. AI-assisted planning with ${aiResponse.model}.`
       });
-
     } catch {
-
-      // Create basic plan as fallback
       await supabase.from('care_coordination_plans').insert({
         patient_id: readmission.patient_id,
         plan_type: 'readmission_prevention',
@@ -315,18 +311,14 @@ Format as JSON with this structure:
         .split('T')[0];
       const endDate = new Date().toISOString().split('T')[0];
 
-      // Query all admissions in period with pagination limit
       const query = supabase
         .from('patient_readmissions')
         .select('*')
         .gte('admission_date', startDate)
         .lte('admission_date', endDate);
 
-      // Apply pagination limit to prevent unbounded queries
-      // Limit to recent encounters for performance
-      const admissions = await applyLimit<any>(query, PAGINATION_LIMITS.ENCOUNTERS * 10); // Higher limit for analysis
+      const admissions = await applyLimit<any>(query, PAGINATION_LIMITS.ENCOUNTERS * 10);
 
-      // Group by patient
       const patientMap = new Map<string, any[]>();
       admissions.forEach(admission => {
         const existing = patientMap.get(admission.patient_id) || [];
@@ -334,11 +326,10 @@ Format as JSON with this structure:
         patientMap.set(admission.patient_id, existing);
       });
 
-      // Calculate metrics for each patient
       const metrics: HighUtilizerMetrics[] = [];
 
       for (const [patientId, visits] of patientMap.entries()) {
-        if (visits.length >= 2) { // High utilizer threshold
+        if (visits.length >= 2) {
           const erVisits = visits.filter(v => v.facility_type === 'er').length;
           const hospitalAdmissions = visits.filter(v => v.facility_type === 'hospital').length;
           const readmissions = visits.filter(v => v.is_readmission).length;
@@ -358,12 +349,11 @@ Format as JSON with this structure:
             total_visits: visits.length,
             risk_score: riskScore,
             risk_category: riskCategory,
-            cms_penalty_risk: readmissions > 0 // CMS penalizes readmissions
+            cms_penalty_risk: readmissions > 0
           });
         }
       }
 
-      // Save analytics to database
       for (const metric of metrics) {
         await supabase.from('high_utilizer_analytics').upsert({
           patient_id: metric.patient_id,
@@ -381,9 +371,8 @@ Format as JSON with this structure:
       }
 
       return metrics;
-    } catch (error: unknown) {
-
-      throw new Error(`Failed to identify high utilizers: ${error.message}`);
+    } catch (err: unknown) {
+      throw new Error(`Failed to identify high utilizers: ${getErrorMessage(err)}`);
     }
   }
 
@@ -397,8 +386,6 @@ Format as JSON with this structure:
       .eq('patient_id', patientId)
       .order('admission_date', { ascending: false });
 
-    // Apply pagination limit to prevent unbounded queries
-    // Limit to 50 most recent readmission events per patient
     return await applyLimit<ReadmissionEvent>(query, PAGINATION_LIMITS.ENCOUNTERS);
   }
 
@@ -413,8 +400,6 @@ Format as JSON with this structure:
       .gte('admission_date', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString())
       .order('risk_score', { ascending: false });
 
-    // Apply pagination limit to prevent unbounded queries
-    // Limit to 100 highest-risk patients for performance
     return await applyLimit<any>(query, PAGINATION_LIMITS.ALERTS);
   }
 
@@ -429,18 +414,14 @@ Format as JSON with this structure:
   private static calculateUtilizationRiskScore(visits: any[]): number {
     let score = 0;
 
-    // Base score on number of visits
     score += Math.min(visits.length * 15, 40);
 
-    // Add points for ER visits (higher weight)
     const erVisits = visits.filter(v => v.facility_type === 'er').length;
     score += erVisits * 15;
 
-    // Add points for readmissions (highest weight)
     const readmissions = visits.filter(v => v.is_readmission).length;
     score += readmissions * 25;
 
-    // Add points for short-interval readmissions
     const sevenDayReadmissions = visits.filter(v => v.readmission_category === '7_day').length;
     score += sevenDayReadmissions * 15;
 
@@ -564,7 +545,6 @@ Format as JSON with this structure:
 
       if (error) throw error;
 
-      // Transform to visit history format
       return (data || []).map(visit => ({
         id: visit.id,
         visit_date: visit.admission_date,
@@ -582,14 +562,15 @@ Format as JSON with this structure:
         follow_up_completed: visit.follow_up_completed,
         created_at: visit.admission_date
       }));
-    } catch (error: unknown) {
-      auditLogger.error('READMISSION_VISIT_HISTORY_FAILED', error, {
+        } catch (err: unknown) {
+      auditLogger.error('READMISSION_VISIT_HISTORY_FAILED', new Error(getErrorMessage(err)), {
         patientId,
         days,
         context: 'patient_visit_history'
       });
       return [];
     }
+
   }
 }
 

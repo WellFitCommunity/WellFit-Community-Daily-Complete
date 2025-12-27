@@ -7,6 +7,7 @@
 // ============================================================================
 
 import { supabase } from '../lib/supabaseClient';
+import { getErrorMessage } from '../lib/getErrorMessage';
 import { claudeService } from './claudeService';
 import { CareCoordinationService } from './careCoordinationService';
 import { DischargePlanningService } from './dischargePlanningService';
@@ -142,9 +143,8 @@ export class DischargeToWellnessBridgeService {
       };
 
       return { success: true, data: response };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -200,9 +200,8 @@ Questions? Call your care coordinator anytime.`;
       }
 
       return { success: true, data: true };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -331,9 +330,8 @@ Questions? Call your care coordinator anytime.`;
       };
 
       return { success: true, data: result };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -480,9 +478,12 @@ Provide a 2-3 sentence clinical summary. Focus on:
 
       const aiResponse = await claudeService.generateMedicalAnalytics(prompt, [], context);
       return aiResponse.content;
-    } catch {
-
-      return `Patient check-in shows ${riskAnalysis.overall_risk_level} risk. ${riskAnalysis.warning_signs_detected.length > 0 ? `Concerns detected: ${riskAnalysis.warning_signs_detected.join(', ')}` : 'No major concerns detected.'}`;
+    } catch (err: unknown) {
+      return `Patient check-in shows ${riskAnalysis.overall_risk_level} risk. ${
+        riskAnalysis.warning_signs_detected.length > 0
+          ? `Concerns detected: ${riskAnalysis.warning_signs_detected.join(', ')}`
+          : 'No major concerns detected.'
+      }`;
     }
   }
 
@@ -501,7 +502,9 @@ Provide a 2-3 sentence clinical summary. Focus on:
         severity: riskAnalysis.overall_risk_level === 'critical' ? 'critical' : 'high',
         priority: riskAnalysis.overall_risk_level === 'critical' ? 'emergency' : 'urgent',
         title: `${riskAnalysis.overall_risk_level.toUpperCase()} Readmission Risk Detected`,
-        description: riskAnalysis.clinical_summary || `Patient check-in shows concerning patterns. Warning signs: ${riskAnalysis.warning_signs_detected.join(', ')}`,
+        description:
+          riskAnalysis.clinical_summary ||
+          `Patient check-in shows concerning patterns. Warning signs: ${riskAnalysis.warning_signs_detected.join(', ')}`,
         alert_data: {
           risk_score: riskAnalysis.risk_score,
           warning_signs: warningSignsDetected,
@@ -509,7 +512,7 @@ Provide a 2-3 sentence clinical summary. Focus on:
         },
         status: 'active',
       });
-    } catch {
+    } catch (err: unknown) {
 
     }
   }
@@ -605,8 +608,14 @@ Provide a 2-3 sentence clinical summary. Focus on:
         trigger_data: {
           consecutive_low_mood_days: consecutiveLowMoodDays,
           consecutive_high_stress_days: consecutiveHighStressDays,
-          avg_mood_score: moodScores.length > 0 ? moodScores.reduce((a: number, b: number) => a + b, 0) / moodScores.length : undefined,
-          avg_stress_score: stressScores.length > 0 ? stressScores.reduce((a: number, b: number) => a + b, 0) / stressScores.length : undefined,
+          avg_mood_score:
+            moodScores.length > 0
+              ? moodScores.reduce((a: number, b: number) => a + b, 0) / moodScores.length
+              : undefined,
+          avg_stress_score:
+            stressScores.length > 0
+              ? stressScores.reduce((a: number, b: number) => a + b, 0) / stressScores.length
+              : undefined,
         },
         screening_type: screeningType,
         priority: 'routine',
@@ -632,9 +641,8 @@ Provide a 2-3 sentence clinical summary. Focus on:
         .eq('id', trigger.id);
 
       return { success: true, data: null }; // Screening sent, no result yet
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -697,7 +705,7 @@ Takes only 2 minutes. Your responses help your care team support you better.`;
           body: { to: profile.phone, message },
         });
       }
-    } catch {
+    } catch (err: unknown) {
 
     }
   }
@@ -767,9 +775,8 @@ Takes only 2 minutes. Your responses help your care team support you better.`;
       };
 
       return { success: true, data: metrics };
-    } catch (error: unknown) {
-
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 }

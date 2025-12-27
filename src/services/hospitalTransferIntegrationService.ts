@@ -3,6 +3,7 @@
 // Mirrors emsIntegrationService.ts for consistency
 
 import { supabase } from '../lib/supabaseClient';
+import { getErrorMessage } from '../lib/getErrorMessage';
 import type { HandoffPacket } from '../types/handoff';
 
 export interface HospitalTransferIntegrationResult {
@@ -23,8 +24,6 @@ export async function integrateHospitalTransfer(
   packet: HandoffPacket
 ): Promise<HospitalTransferIntegrationResult> {
   try {
-
-
     // Get current user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
@@ -32,7 +31,6 @@ export async function integrateHospitalTransfer(
     }
 
     // Step 1: Create or find patient record
-
     const patientResult = await createOrFindPatient(packet, user.id);
     if (!patientResult.success || !patientResult.patientId) {
       return { success: false, error: `Failed to create patient: ${patientResult.error}` };
@@ -40,7 +38,6 @@ export async function integrateHospitalTransfer(
     const patientId = patientResult.patientId;
 
     // Step 2: Create hospital transfer encounter
-
     const encounterResult = await createTransferEncounter(packetId, patientId, packet, user.id);
     if (!encounterResult.success || !encounterResult.encounterId) {
       return {
@@ -52,17 +49,13 @@ export async function integrateHospitalTransfer(
     const encounterId = encounterResult.encounterId;
 
     // Step 3: Document vitals from transfer packet (if available)
-
     const vitalResults = await documentTransferVitals(encounterId, patientId, packet, user.id);
 
     // Step 4: Generate billing codes based on transfer urgency and clinical data
-
     const billingCodes = await generateBillingCodesFromTransfer(encounterId, packet, user.id);
 
     // Step 5: Link handoff packet to patient and encounter
-
     await linkHandoffToPatient(packetId, patientId, encounterId);
-
 
     return {
       success: true,
@@ -72,10 +65,9 @@ export async function integrateHospitalTransfer(
       billingCodes,
     };
   } catch (error: unknown) {
-
     return {
       success: false,
-      error: error.message || 'Unknown error during integration',
+      error: getErrorMessage(error) || 'Unknown error during integration',
     };
   }
 }
@@ -112,14 +104,16 @@ async function createOrFindPatient(
         .eq('role_code', 'patient')
         .limit(1);
 
-      if (existingPatients && existingPatients.length > 0) {
+      if (searchError) {
+        throw searchError;
+      }
 
+      if (existingPatients && existingPatients.length > 0) {
         return { success: true, patientId: existingPatients[0].id };
       }
     }
 
     // Create new patient profile
-
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .insert({
@@ -135,11 +129,9 @@ async function createOrFindPatient(
 
     if (profileError) throw profileError;
 
-
     return { success: true, patientId: profile.id };
   } catch (error: unknown) {
-
-    return { success: false, error: error.message };
+    return { success: false, error: getErrorMessage(error) };
   }
 }
 
@@ -176,11 +168,9 @@ async function createTransferEncounter(
 
     if (encounterError) throw encounterError;
 
-
     return { success: true, encounterId: encounter.id };
   } catch (error: unknown) {
-
-    return { success: false, error: error.message };
+    return { success: false, error: getErrorMessage(error) };
   }
 }
 
@@ -196,7 +186,6 @@ async function documentTransferVitals(
   const observationIds: string[] = [];
 
   if (!packet.clinical_data?.vitals) {
-
     return observationIds;
   }
 
@@ -312,11 +301,8 @@ async function documentTransferVitals(
       .insert(observations)
       .select('id');
 
-    if (error) {
-
-    } else if (data) {
+    if (!error && data) {
       observationIds.push(...data.map((obs) => obs.id));
-
     }
   }
 
@@ -389,12 +375,10 @@ async function generateBillingCodesFromTransfer(
     .select('code');
 
   if (error) {
-
     return [];
   }
 
   const codes = data?.map((bc) => bc.code) || [];
-
   return codes;
 }
 
@@ -416,11 +400,8 @@ async function linkHandoffToPatient(
     .eq('id', packetId);
 
   if (error) {
-
     throw error;
   }
-
-
 }
 
 export default {

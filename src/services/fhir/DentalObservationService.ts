@@ -9,6 +9,7 @@
  */
 
 import { supabase } from '../../lib/supabaseClient';
+import { getErrorMessage } from '../../lib/getErrorMessage';
 import type {
   DentalObservation,
   DentalAssessment,
@@ -310,8 +311,8 @@ export class DentalObservationService {
       }
 
       return { success: true, data: observations };
-    } catch (error: unknown) {
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -398,8 +399,8 @@ export class DentalObservationService {
       if (error) throw error;
 
       return { success: true, data: fhirProcedure };
-    } catch (error: unknown) {
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -479,8 +480,8 @@ export class DentalObservationService {
       }
 
       return { success: true, data: conditions };
-    } catch (error: unknown) {
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -539,8 +540,8 @@ export class DentalObservationService {
       }
 
       return { success: true, data: report };
-    } catch (error: unknown) {
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 
@@ -567,8 +568,8 @@ export class DentalObservationService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-    } catch (error: unknown) {
-      return { success: false, error: error.message };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err) };
     }
   }
 

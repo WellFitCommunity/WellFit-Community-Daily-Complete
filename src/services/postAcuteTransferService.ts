@@ -4,6 +4,7 @@
 // Creates clinical packets for post-acute placements
 
 import { supabase } from '../lib/supabaseClient';
+import { getErrorMessage } from '../lib/getErrorMessage';
 import { HandoffService } from './handoffService';
 import type { CreateHandoffPacketRequest } from '../types/handoff';
 import type { DischargePlan } from './dischargePlanningService';
@@ -39,9 +40,7 @@ export class PostAcuteTransferService {
    * Create post-acute transfer packet
    * This creates a handoff packet for Hospital → SNF/Rehab transfer
    */
-  static async createPostAcuteTransfer(
-    request: PostAcuteTransferRequest
-  ): Promise<PostAcuteTransferResult> {
+  static async createPostAcuteTransfer(request: PostAcuteTransferRequest): Promise<PostAcuteTransferResult> {
     try {
       // Get discharge plan
       const { data: dischargePlan, error: planError } = await supabase
@@ -53,7 +52,7 @@ export class PostAcuteTransferService {
       if (planError || !dischargePlan) {
         return {
           success: false,
-          error: 'Discharge plan not found'
+          error: 'Discharge plan not found',
         };
       }
 
@@ -67,7 +66,7 @@ export class PostAcuteTransferService {
       if (patientError || !patient) {
         return {
           success: false,
-          error: 'Patient profile not found'
+          error: 'Patient profile not found',
         };
       }
 
@@ -81,30 +80,24 @@ export class PostAcuteTransferService {
       if (encounterError || !encounter) {
         return {
           success: false,
-          error: 'Encounter not found'
+          error: 'Encounter not found',
         };
       }
 
       // Get current facility from user profile
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         return { success: false, error: 'User not authenticated' };
       }
 
-      const { data: userProfile } = await supabase
-        .from('profiles')
-        .select('facility_name, phone')
-        .eq('id', user.id)
-        .single();
+      const { data: userProfile } = await supabase.from('profiles').select('facility_name, phone').eq('id', user.id).single();
 
       const sendingFacility = userProfile?.facility_name || 'Hospital';
 
       // Gather clinical data for transfer
-      const clinicalData = await this.gatherClinicalDataForTransfer(
-        request.patient_id,
-        request.encounter_id,
-        dischargePlan
-      );
+      const clinicalData = await this.gatherClinicalDataForTransfer(request.patient_id, request.encounter_id, dischargePlan);
 
       // Create handoff packet (reusing existing handoff system)
       const handoffRequest: CreateHandoffPacketRequest = {
@@ -127,7 +120,7 @@ export class PostAcuteTransferService {
 
         receiver_contact_name: request.receiving_facility_contact_name,
         receiver_contact_email: request.receiving_facility_contact_email,
-        receiver_contact_phone: request.receiving_facility_phone
+        receiver_contact_phone: request.receiving_facility_phone,
       };
 
       // Create the handoff packet
@@ -141,12 +134,12 @@ export class PostAcuteTransferService {
           post_acute_facility_type: request.post_acute_facility_type,
           discharge_encounter_id: request.encounter_id,
           patient_id: request.patient_id,
-          encounter_id: request.encounter_id
+          encounter_id: request.encounter_id,
         })
         .eq('id', handoffResult.packet.id);
 
       if (updateError) {
-
+        // Intentionally left unchanged per locked protocol (no logging/behavior edits)
       }
 
       // Update discharge plan with handoff packet ID
@@ -155,20 +148,19 @@ export class PostAcuteTransferService {
         .update({
           post_acute_handoff_packet_id: handoffResult.packet.id,
           post_acute_facility_name: request.receiving_facility_name,
-          post_acute_facility_phone: request.receiving_facility_phone
+          post_acute_facility_phone: request.receiving_facility_phone,
         })
         .eq('id', request.discharge_plan_id);
 
       return {
         success: true,
         handoff_packet_id: handoffResult.packet.id,
-        access_url: handoffResult.access_url
+        access_url: handoffResult.access_url,
       };
     } catch (error: unknown) {
-
       return {
         success: false,
-        error: error.message || 'Unknown error'
+        error: getErrorMessage(error) || 'Unknown error',
       };
     }
   }
@@ -176,27 +168,23 @@ export class PostAcuteTransferService {
   /**
    * Send post-acute transfer packet to receiving facility
    */
-  static async sendPostAcuteTransfer(
-    handoffPacketId: string,
-    sendEmail: boolean = true
-  ): Promise<PostAcuteTransferResult> {
+  static async sendPostAcuteTransfer(handoffPacketId: string, sendEmail: boolean = true): Promise<PostAcuteTransferResult> {
     try {
       // Send the handoff packet
       await HandoffService.sendPacket({
         packet_id: handoffPacketId,
         send_confirmation_email: sendEmail,
-        send_confirmation_sms: false
+        send_confirmation_sms: false,
       });
 
       return {
         success: true,
-        handoff_packet_id: handoffPacketId
+        handoff_packet_id: handoffPacketId,
       };
     } catch (error: unknown) {
-
       return {
         success: false,
-        error: error.message
+        error: getErrorMessage(error),
       };
     }
   }
@@ -215,7 +203,7 @@ export class PostAcuteTransferService {
       allergies: [],
       vitals: {},
       diagnoses: [],
-      discharge_needs: {}
+      discharge_needs: {},
     };
 
     try {
@@ -226,26 +214,24 @@ export class PostAcuteTransferService {
         .eq('patient_id', patientId)
         .eq('status', 'active');
 
-      clinicalData.medications = medications?.map(med => ({
-        name: med.medication_name,
-        dose: med.dose,
-        frequency: med.frequency,
-        route: med.route,
-        instructions: med.instructions
-      })) || [];
+      clinicalData.medications =
+        medications?.map((med) => ({
+          name: med.medication_name,
+          dose: med.dose,
+          frequency: med.frequency,
+          route: med.route,
+          instructions: med.instructions,
+        })) || [];
 
       // Get allergies
-      const { data: allergies } = await supabase
-        .from('patient_allergies')
-        .select('*')
-        .eq('patient_id', patientId)
-        .eq('is_active', true);
+      const { data: allergies } = await supabase.from('patient_allergies').select('*').eq('patient_id', patientId).eq('is_active', true);
 
-      clinicalData.allergies = allergies?.map(allergy => ({
-        allergen: allergy.allergen,
-        reaction: allergy.reaction,
-        severity: allergy.severity
-      })) || [];
+      clinicalData.allergies =
+        allergies?.map((allergy) => ({
+          allergen: allergy.allergen,
+          reaction: allergy.reaction,
+          severity: allergy.severity,
+        })) || [];
 
       // Get latest vitals
       const { data: vitals } = await supabase
@@ -260,13 +246,13 @@ export class PostAcuteTransferService {
       if (vitals) {
         // Group vitals by type (latest of each)
         const vitalMap = new Map();
-        vitals.forEach(vital => {
+        vitals.forEach((vital) => {
           if (!vitalMap.has(vital.loinc_code)) {
             vitalMap.set(vital.loinc_code, {
               name: vital.display_name,
               value: vital.value_quantity,
               unit: vital.unit,
-              recorded: vital.effective_datetime
+              recorded: vital.effective_datetime,
             });
           }
         });
@@ -275,16 +261,14 @@ export class PostAcuteTransferService {
       }
 
       // Get diagnoses
-      const { data: diagnoses } = await supabase
-        .from('encounter_diagnoses')
-        .select('*')
-        .eq('encounter_id', encounterId);
+      const { data: diagnoses } = await supabase.from('encounter_diagnoses').select('*').eq('encounter_id', encounterId);
 
-      clinicalData.diagnoses = diagnoses?.map(dx => ({
-        code: dx.diagnosis_code,
-        description: dx.diagnosis_description,
-        type: dx.diagnosis_type
-      })) || [];
+      clinicalData.diagnoses =
+        diagnoses?.map((dx) => ({
+          code: dx.diagnosis_code,
+          description: dx.diagnosis_description,
+          type: dx.diagnosis_type,
+        })) || [];
 
       // Add discharge planning information
       clinicalData.discharge_needs = {
@@ -313,7 +297,7 @@ export class PostAcuteTransferService {
 
         // Risk factors and barriers
         risk_factors: dischargePlan.risk_factors || [],
-        barriers_to_discharge: dischargePlan.barriers_to_discharge || []
+        barriers_to_discharge: dischargePlan.barriers_to_discharge || [],
       };
 
       // Add functional status if available
@@ -330,12 +314,10 @@ export class PostAcuteTransferService {
           adl_score: functionalStatus.adl_score,
           mobility_level: functionalStatus.mobility_level,
           cognitive_status: functionalStatus.cognitive_status,
-          assessment_date: functionalStatus.assessment_date
+          assessment_date: functionalStatus.assessment_date,
         };
       }
-
-    } catch {
-
+    } catch (_err: unknown) {
       // Continue with partial data
     }
 
@@ -350,7 +332,7 @@ export class PostAcuteTransferService {
       skilled_nursing: 'Skilled Nursing Facility (SNF)',
       inpatient_rehab: 'Inpatient Rehabilitation Facility',
       long_term_acute_care: 'Long-Term Acute Care (LTAC)',
-      hospice: 'Hospice Care'
+      hospice: 'Hospice Care',
     };
     return descriptions[type] || 'Post-Acute Care';
   }
@@ -367,7 +349,6 @@ export class PostAcuteTransferService {
       .order('created_at', { ascending: false });
 
     if (error) {
-
       return [];
     }
 
@@ -379,25 +360,16 @@ export class PostAcuteTransferService {
    */
   static async getTransferByDischargePlan(dischargePlanId: string): Promise<any | null> {
     // Get discharge plan to find handoff packet ID
-    const { data: dischargePlan } = await supabase
-      .from('discharge_plans')
-      .select('post_acute_handoff_packet_id')
-      .eq('id', dischargePlanId)
-      .single();
+    const { data: dischargePlan } = await supabase.from('discharge_plans').select('post_acute_handoff_packet_id').eq('id', dischargePlanId).single();
 
     if (!dischargePlan?.post_acute_handoff_packet_id) {
       return null;
     }
 
     // Get handoff packet
-    const { data: packet, error } = await supabase
-      .from('handoff_packets')
-      .select('*')
-      .eq('id', dischargePlan.post_acute_handoff_packet_id)
-      .single();
+    const { data: packet, error } = await supabase.from('handoff_packets').select('*').eq('id', dischargePlan.post_acute_handoff_packet_id).single();
 
     if (error) {
-
       return null;
     }
 
@@ -409,11 +381,7 @@ export class PostAcuteTransferService {
    */
   static async generateTransferSummary(handoffPacketId: string): Promise<string> {
     try {
-      const { data: packet } = await supabase
-        .from('handoff_packets')
-        .select('*')
-        .eq('id', handoffPacketId)
-        .single();
+      const { data: packet } = await supabase.from('handoff_packets').select('*').eq('id', handoffPacketId).single();
 
       if (!packet) {
         return 'Transfer packet not found';
@@ -433,20 +401,32 @@ Urgency: ${packet.urgency_level.toUpperCase()}
 Reason: ${packet.reason_for_transfer}
 
 CLINICAL INFORMATION:
-${packet.clinical_data?.discharge_needs ? `
+${
+  packet.clinical_data?.discharge_needs
+    ? `
 Readmission Risk: ${packet.clinical_data.discharge_needs.readmission_risk_category || 'N/A'}
 Risk Score: ${packet.clinical_data.discharge_needs.readmission_risk_score || 'N/A'}/100
 
 Care Needs:
-- DME: ${packet.clinical_data.discharge_needs.dme_needed ? 'Yes - ' + (packet.clinical_data.discharge_needs.dme_items?.join(', ') || 'N/A') : 'No'}
+- DME: ${
+        packet.clinical_data.discharge_needs.dme_needed
+          ? 'Yes - ' + (packet.clinical_data.discharge_needs.dme_items?.join(', ') || 'N/A')
+          : 'No'
+      }
 - Home Health: ${packet.clinical_data.discharge_needs.home_health_needed ? 'Yes' : 'No'}
-- Caregiver: ${packet.clinical_data.discharge_needs.caregiver_identified ? 'Yes - ' + (packet.clinical_data.discharge_needs.caregiver_name || 'N/A') : 'No'}
+- Caregiver: ${
+        packet.clinical_data.discharge_needs.caregiver_identified
+          ? 'Yes - ' + (packet.clinical_data.discharge_needs.caregiver_name || 'N/A')
+          : 'No'
+      }
 
 Follow-up:
 - Appointment Scheduled: ${packet.clinical_data.discharge_needs.follow_up_appointment_scheduled ? 'Yes' : 'No'}
 ${packet.clinical_data.discharge_needs.follow_up_appointment_date ? `- Date: ${packet.clinical_data.discharge_needs.follow_up_appointment_date}` : ''}
 ${packet.clinical_data.discharge_needs.follow_up_appointment_provider ? `- Provider: ${packet.clinical_data.discharge_needs.follow_up_appointment_provider}` : ''}
-` : 'Clinical data not available'}
+`
+    : 'Clinical data not available'
+}
 
 MEDICATIONS: ${packet.clinical_data?.medications?.length || 0} active medications
 ALLERGIES: ${packet.clinical_data?.allergies?.length || 0} documented allergies
@@ -462,8 +442,7 @@ ${packet.sender_notes ? `\nNotes:\n${packet.sender_notes}` : ''}
       `.trim();
 
       return summary;
-    } catch {
-
+    } catch (_err: unknown) {
       return 'Error generating summary';
     }
   }
