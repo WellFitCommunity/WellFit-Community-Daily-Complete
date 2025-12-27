@@ -199,8 +199,8 @@ export class BatchInferenceService {
         requestId,
         position: this.getQueuePosition(requestId),
       });
-    } catch (error) {
-      return failure('OPERATION_FAILED', 'Failed to enqueue inference request', error);
+    } catch (err: unknown) {
+      return failure('OPERATION_FAILED', 'Failed to enqueue inference request', err);
     }
   }
 
@@ -226,8 +226,8 @@ export class BatchInferenceService {
       }
 
       return failure('NOT_FOUND', 'Request not found');
-    } catch (error) {
-      return failure('OPERATION_FAILED', 'Failed to get result', error);
+    } catch (err: unknown) {
+      return failure('OPERATION_FAILED', 'Failed to get result', err);
     }
   }
 
@@ -279,8 +279,8 @@ export class BatchInferenceService {
       }
 
       return success(deleted);
-    } catch (error) {
-      return failure('OPERATION_FAILED', 'Failed to cancel request', error);
+    } catch (err: unknown) {
+      return failure('OPERATION_FAILED', 'Failed to cancel request', err);
     }
   }
 
@@ -456,13 +456,13 @@ export class BatchInferenceService {
         averageProcessingTimeMs: (Date.now() - startTime) / requests.length,
         results,
       };
-    } catch (error) {
+    } catch (err: unknown) {
       // Mark all as failed
       for (const request of requests) {
         const inferenceResult: InferenceResult = {
           requestId: request.id,
           status: 'failed',
-          error: error instanceof Error ? error.message : 'Batch processing failed',
+          error: err instanceof Error ? err.message : 'Batch processing failed',
           cost: 0,
           model: '',
           fromCache: false,
@@ -568,7 +568,7 @@ export class BatchInferenceService {
         model: response.model,
         fromCache: response.fromCache,
       }));
-    } catch (error) {
+    } catch (err: unknown) {
       // Return error for all items if parsing fails
       return requests.map(() => ({
         success: false,

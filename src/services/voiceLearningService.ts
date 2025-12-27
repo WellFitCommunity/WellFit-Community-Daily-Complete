@@ -62,9 +62,9 @@ export class VoiceLearningService {
       });
 
       return this.db;
-    } catch (error) {
-      auditLogger.error('VOICE_LEARNING_DB_INIT_FAILED', error instanceof Error ? error : new Error('IndexedDB init failed'));
-      throw error;
+    } catch (err: unknown) {
+      auditLogger.error('VOICE_LEARNING_DB_INIT_FAILED', err instanceof Error ? err : new Error('IndexedDB init failed'));
+      throw err;
     }
   }
 
@@ -107,8 +107,8 @@ export class VoiceLearningService {
       auditLogger.info('VOICE_PROFILE_LOADED_DB', { providerId });
 
       return profile;
-    } catch (error) {
-      auditLogger.error('VOICE_PROFILE_LOAD_FAILED', error instanceof Error ? error : new Error('Load failed'), { providerId });
+    } catch (err: unknown) {
+      auditLogger.error('VOICE_PROFILE_LOAD_FAILED', err instanceof Error ? err : new Error('Load failed'), { providerId });
       return null;
     }
   }
@@ -144,11 +144,11 @@ export class VoiceLearningService {
             auditLogger.info('VOICE_PROFILE_SAVED', { providerId: profile.providerId });
           }
         });
-    } catch (error) {
-      auditLogger.error('VOICE_PROFILE_SAVE_EXCEPTION', error instanceof Error ? error : new Error('Save failed'), {
+    } catch (err: unknown) {
+      auditLogger.error('VOICE_PROFILE_SAVE_EXCEPTION', err instanceof Error ? err : new Error('Save failed'), {
         providerId: profile.providerId
       });
-      throw error;
+      throw err;
     }
   }
 
@@ -198,13 +198,13 @@ export class VoiceLearningService {
         medicalDomain,
         totalCorrections: profile.corrections.length
       });
-    } catch (error) {
-      auditLogger.error('VOICE_CORRECTION_ADD_FAILED', error instanceof Error ? error : new Error('Add failed'), {
+    } catch (err: unknown) {
+      auditLogger.error('VOICE_CORRECTION_ADD_FAILED', err instanceof Error ? err : new Error('Add failed'), {
         providerId,
         heard,
         correct
       });
-      throw error;
+      throw err;
     }
   }
 
@@ -316,8 +316,8 @@ export class VoiceLearningService {
       }
 
       return decayedCount;
-    } catch (error) {
-      auditLogger.error('VOICE_DECAY_FAILED', error instanceof Error ? error : new Error('Decay failed'));
+    } catch (err: unknown) {
+      auditLogger.error('VOICE_DECAY_FAILED', err instanceof Error ? err : new Error('Decay failed'));
       return 0;
     }
   }
@@ -376,8 +376,8 @@ export class VoiceLearningService {
         improvement: profile.accuracyCurrent - profile.accuracyBaseline,
         totalSessions: profile.totalSessions
       });
-    } catch (error) {
-      auditLogger.error('VOICE_ACCURACY_UPDATE_FAILED', error instanceof Error ? error : new Error('Update failed'), {
+    } catch (err: unknown) {
+      auditLogger.error('VOICE_ACCURACY_UPDATE_FAILED', err instanceof Error ? err : new Error('Update failed'), {
         providerId,
         sessionAccuracy
       });
@@ -398,8 +398,8 @@ export class VoiceLearningService {
 
       auditLogger.info('VOICE_PROFILE_EXPORTED', { providerId });
       return JSON.stringify(exportData, null, 2);
-    } catch (error) {
-      auditLogger.error('VOICE_PROFILE_EXPORT_FAILED', error instanceof Error ? error : new Error('Export failed'), {
+    } catch (err: unknown) {
+      auditLogger.error('VOICE_PROFILE_EXPORT_FAILED', err instanceof Error ? err : new Error('Export failed'), {
         providerId
       });
       return null;
@@ -423,8 +423,8 @@ export class VoiceLearningService {
       });
 
       return true;
-    } catch (error) {
-      auditLogger.error('VOICE_PROFILE_IMPORT_FAILED', error instanceof Error ? error : new Error('Import failed'), {
+    } catch (err: unknown) {
+      auditLogger.error('VOICE_PROFILE_IMPORT_FAILED', err instanceof Error ? err : new Error('Import failed'), {
         providerId
       });
       return false;
@@ -446,11 +446,11 @@ export class VoiceLearningService {
         .eq('provider_id', providerId);
 
       auditLogger.clinical('VOICE_PROFILE_DELETED', true, { providerId });
-    } catch (error) {
-      auditLogger.error('VOICE_PROFILE_DELETE_FAILED', error instanceof Error ? error : new Error('Delete failed'), {
+    } catch (err: unknown) {
+      auditLogger.error('VOICE_PROFILE_DELETE_FAILED', err instanceof Error ? err : new Error('Delete failed'), {
         providerId
       });
-      throw error;
+      throw err;
     }
   }
 
@@ -475,8 +475,8 @@ export class VoiceLearningService {
         totalSessions: profile.totalSessions,
         mostCommonCorrections: mostCommon
       };
-    } catch (error) {
-      auditLogger.error('VOICE_PROFILE_STATS_FAILED', error instanceof Error ? error : new Error('Stats failed'), {
+    } catch (err: unknown) {
+      auditLogger.error('VOICE_PROFILE_STATS_FAILED', err instanceof Error ? err : new Error('Stats failed'), {
         providerId
       });
       return null;

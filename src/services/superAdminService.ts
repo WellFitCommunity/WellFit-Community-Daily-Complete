@@ -166,9 +166,9 @@ export const SuperAdminService = {
         criticalHealthIssues: result.critical_health_issues || 0,
         criticalAuditEvents24h: result.critical_audit_events_24h || 0
       };
-    } catch (error) {
-      auditLogger.error('SUPER_ADMIN_OVERVIEW_FAILED', error instanceof Error ? error : new Error('Unknown error'), { category: 'ADMINISTRATIVE' });
-      throw new Error(`Failed to load system overview: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } catch (err: unknown) {
+      auditLogger.error('SUPER_ADMIN_OVERVIEW_FAILED', err instanceof Error ? err : new Error('Unknown error'), { category: 'ADMINISTRATIVE' });
+      throw new Error(`Failed to load system overview: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   },
 
@@ -230,9 +230,9 @@ export const SuperAdminService = {
         licenseEndDate: row.license_end_date,
         createdAt: row.created_at
       }));
-    } catch (error) {
-      auditLogger.error('SUPER_ADMIN_TENANTS_FAILED', error instanceof Error ? error : new Error('Unknown error'), { category: 'ADMINISTRATIVE' });
-      throw new Error(`Failed to load tenants: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } catch (err: unknown) {
+      auditLogger.error('SUPER_ADMIN_TENANTS_FAILED', err instanceof Error ? err : new Error('Unknown error'), { category: 'ADMINISTRATIVE' });
+      throw new Error(`Failed to load tenants: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   },
 
@@ -333,9 +333,9 @@ export const SuperAdminService = {
         newValue: { tenant_code: payload.tenantCode },
         severity: 'info'
       });
-    } catch (error) {
-      if (error instanceof Error) {
-        throw error;
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        throw err;
       }
       throw new Error('Failed to update tenant code');
     }

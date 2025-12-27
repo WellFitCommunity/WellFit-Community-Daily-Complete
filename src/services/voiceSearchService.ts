@@ -328,8 +328,8 @@ export async function searchPatients(
 
     // Sort by match score descending
     return results.sort((a, b) => b.matchScore - a.matchScore);
-  } catch (error) {
-    auditLogger.error('VOICE_SEARCH_PATIENTS_ERROR', error instanceof Error ? error : new Error('Unknown error'));
+  } catch (err: unknown) {
+    auditLogger.error('VOICE_SEARCH_PATIENTS_ERROR', err instanceof Error ? err : new Error('Unknown error'));
     return [];
   }
 }
@@ -420,8 +420,8 @@ export async function searchBeds(
     });
 
     return results.sort((a, b) => b.matchScore - a.matchScore);
-  } catch (error) {
-    auditLogger.error('VOICE_SEARCH_BEDS_ERROR', error instanceof Error ? error : new Error('Unknown error'));
+  } catch (err: unknown) {
+    auditLogger.error('VOICE_SEARCH_BEDS_ERROR', err instanceof Error ? err : new Error('Unknown error'));
     return [];
   }
 }
@@ -493,8 +493,8 @@ export async function searchProviders(
     });
 
     return results.sort((a, b) => b.matchScore - a.matchScore);
-  } catch (error) {
-    auditLogger.error('VOICE_SEARCH_PROVIDERS_ERROR', error instanceof Error ? error : new Error('Unknown error'));
+  } catch (err: unknown) {
+    auditLogger.error('VOICE_SEARCH_PROVIDERS_ERROR', err instanceof Error ? err : new Error('Unknown error'));
     return [];
   }
 }
