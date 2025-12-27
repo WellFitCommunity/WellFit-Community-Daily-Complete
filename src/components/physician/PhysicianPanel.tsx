@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 // Optimized imports for tree-shaking (saves ~18KB)
 import Activity from 'lucide-react/dist/esm/icons/activity';
@@ -25,7 +25,8 @@ import { usePatientContext, SelectedPatient } from '../../contexts/PatientContex
 import { FHIRService } from '../../services/fhirResourceService';
 import { SDOHBillingService } from '../../services/sdohBillingService';
 import { PhysicianWellnessHub } from './PhysicianWellnessHub';
-import TelehealthConsultation from '../telehealth/TelehealthConsultation';
+// Lazy-load TelehealthConsultation (313 kB) - only downloaded when physician starts a call
+const TelehealthConsultation = lazy(() => import('../telehealth/TelehealthConsultation'));
 import TelehealthScheduler from '../telehealth/TelehealthScheduler';
 import PhysicianClinicalResources from './PhysicianClinicalResources';
 import ClaudeCareAssistantPanel from '../claude-care/ClaudeCareAssistantPanel';
@@ -897,21 +898,32 @@ const PhysicianPanel: React.FC = () => {
         </div>
       </div>
 
-      {/* Telehealth Modal */}
+      {/* Telehealth Modal (lazy-loaded) */}
       {telehealthActive && selectedPatient && (
         <div className="fixed inset-0 z-50">
-          <TelehealthConsultation
-            patientId={selectedPatient.user_id}
-            patientName={`${selectedPatient.first_name} ${selectedPatient.last_name}`}
-            encounterType={telehealthEncounterType}
-            onEndCall={() => {
-              setTelehealthActive(false);
-              // Refresh patient summary after call ends
-              if (selectedPatient) {
-                handlePatientSelect(selectedPatient);
-              }
-            }}
-          />
+          <Suspense
+            fallback={
+              <div className="min-h-screen flex items-center justify-center bg-slate-900">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500 mx-auto mb-4"></div>
+                  <div className="text-lg text-white">Loading video call...</div>
+                </div>
+              </div>
+            }
+          >
+            <TelehealthConsultation
+              patientId={selectedPatient.user_id}
+              patientName={`${selectedPatient.first_name} ${selectedPatient.last_name}`}
+              encounterType={telehealthEncounterType}
+              onEndCall={() => {
+                setTelehealthActive(false);
+                // Refresh patient summary after call ends
+                if (selectedPatient) {
+                  handlePatientSelect(selectedPatient);
+                }
+              }}
+            />
+          </Suspense>
         </div>
       )}
     </div>

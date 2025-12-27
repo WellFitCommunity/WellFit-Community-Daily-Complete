@@ -1,11 +1,13 @@
 // src/pages/TelehealthAppointmentsPage.tsx
 // Patient-facing page to view and join telehealth appointments
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSupabaseClient, useUser } from '../contexts/AuthContext';
 import { useBranding } from '../BrandingContext';
-import TelehealthConsultation from '../components/telehealth/TelehealthConsultation';
+
+// Lazy-load TelehealthConsultation (313 kB) - only downloaded when user joins a call
+const TelehealthConsultation = lazy(() => import('../components/telehealth/TelehealthConsultation'));
 
 interface Appointment {
   id: string;
@@ -195,15 +197,26 @@ const TelehealthAppointmentsPage: React.FC = () => {
     return badges[encounterType] || badges.outpatient;
   };
 
-  // If in active call, show telehealth component
+  // If in active call, show telehealth component (lazy-loaded)
   if (activeAppointment) {
     return (
-      <TelehealthConsultation
-        patientId={user?.id || ''}
-        patientName={patientName}
-        encounterType={activeAppointment.encounter_type}
-        onEndCall={handleEndAppointment}
-      />
+      <Suspense
+        fallback={
+          <div className="min-h-screen flex items-center justify-center bg-slate-900">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500 mx-auto mb-4"></div>
+              <div className="text-lg text-white">Loading video call...</div>
+            </div>
+          </div>
+        }
+      >
+        <TelehealthConsultation
+          patientId={user?.id || ''}
+          patientName={patientName}
+          encounterType={activeAppointment.encounter_type}
+          onEndCall={handleEndAppointment}
+        />
+      </Suspense>
     );
   }
 

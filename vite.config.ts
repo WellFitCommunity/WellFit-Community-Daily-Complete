@@ -52,10 +52,54 @@ export default defineConfig({
     sourcemap: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          supabase: ['@supabase/supabase-js'],
-          ui: ['lucide-react', 'framer-motion', 'react-toastify'],
+        // Vendor splitting for optimal caching and reduced initial bundle
+        manualChunks(id: string) {
+          if (id.includes('node_modules')) {
+            // Core React - changes rarely, cache long-term
+            if (id.includes('react-dom') || id.includes('/react/')) {
+              return 'vendor-react';
+            }
+            // Router - separate from React core
+            if (id.includes('react-router')) {
+              return 'vendor-router';
+            }
+            // Supabase - backend client
+            if (id.includes('@supabase')) {
+              return 'vendor-supabase';
+            }
+            // TanStack Query - data fetching layer
+            if (id.includes('@tanstack')) {
+              return 'vendor-tanstack';
+            }
+            // Daily.co - telehealth video (large, only needed for video calls)
+            if (id.includes('@daily-co')) {
+              return 'vendor-daily';
+            }
+            // Form libraries - validation and form handling
+            if (id.includes('react-hook-form') || id.includes('@hookform') ||
+                id.includes('/zod/') || id.includes('/yup/') ||
+                id.includes('/ajv/') || id.includes('ajv-')) {
+              return 'vendor-forms';
+            }
+            // UI components - icons, animations, toasts
+            if (id.includes('lucide-react') || id.includes('framer-motion') ||
+                id.includes('react-toastify') || id.includes('react-confetti')) {
+              return 'vendor-ui';
+            }
+            // Utilities - commonly used across app
+            if (id.includes('clsx') || id.includes('tailwind-merge') ||
+                id.includes('dompurify') || id.includes('jose') ||
+                id.includes('libphonenumber')) {
+              return 'vendor-utils';
+            }
+            // Anthropic SDK - AI features
+            if (id.includes('@anthropic-ai')) {
+              return 'vendor-ai';
+            }
+            // Heavy libs that are lazy-loaded elsewhere (exceljs, emoji-picker, tesseract)
+            // Let Rollup handle these naturally since they're dynamically imported
+          }
+          return undefined;
         },
       },
     },
