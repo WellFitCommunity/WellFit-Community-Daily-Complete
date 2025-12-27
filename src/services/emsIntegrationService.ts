@@ -70,7 +70,7 @@ export async function integrateEMSHandoff(
       observationIds: vitalResults,
       billingCodes,
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
     auditLogger.error('EMS_INTEGRATION_FAILED', err, { handoffId });
     return { success: false, error: err.message };
   }
@@ -143,7 +143,7 @@ async function createOrFindPatient(
     });
 
     return { success: true, patientId: newUser.user.id };
-  } catch (err: any) {
+  } catch (err: unknown) {
     return { success: false, error: err.message };
   }
 }
@@ -192,7 +192,7 @@ async function createEREncounter(
     if (error) throw error;
 
     return { success: true, encounterId: encounter.id };
-  } catch (err: any) {
+  } catch (err: unknown) {
     return { success: false, error: err.message };
   }
 }

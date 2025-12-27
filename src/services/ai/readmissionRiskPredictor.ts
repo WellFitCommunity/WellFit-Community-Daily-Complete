@@ -507,7 +507,7 @@ export class ReadmissionRiskPredictor {
       }
 
       return data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw new Error(`Failed to gather patient data: ${error.message}`);
     }
   }
@@ -642,7 +642,7 @@ Return response as strict JSON with this structure:
         aiModel: aiResponse.model,
         aiCost: aiResponse.cost
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw new Error(`AI prediction generation failed: ${error.message}`);
     }
   }
@@ -911,7 +911,7 @@ Return response as strict JSON with this structure:
       }
 
       return parsed;
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw new Error(`Failed to parse AI prediction: ${error.message}`);
     }
   }

@@ -71,7 +71,7 @@ export async function integrateHospitalTransfer(
       observationIds: vitalResults,
       billingCodes,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
 
     return {
       success: false,
@@ -137,7 +137,7 @@ async function createOrFindPatient(
 
 
     return { success: true, patientId: profile.id };
-  } catch (error: any) {
+  } catch (error: unknown) {
 
     return { success: false, error: error.message };
   }
@@ -178,7 +178,7 @@ async function createTransferEncounter(
 
 
     return { success: true, encounterId: encounter.id };
-  } catch (error: any) {
+  } catch (error: unknown) {
 
     return { success: false, error: error.message };
   }

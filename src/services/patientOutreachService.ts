@@ -119,7 +119,7 @@ export class PatientOutreachService {
 
       return savedCheckIn;
 
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       throw new Error(`Check-in failed: ${error.message}`);
     }
@@ -186,7 +186,7 @@ export class PatientOutreachService {
 
       return updatedCheckIn;
 
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       throw new Error(`Response recording failed: ${error.message}`);
     }
@@ -359,7 +359,7 @@ Provide a 2-3 sentence clinical summary suitable for the care team. Focus on wha
 
 
 
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       // Don't throw - SMS failure shouldn't break the check-in creation
       // Log to monitoring system instead
@@ -421,7 +421,7 @@ Provide a 2-3 sentence clinical summary suitable for the care team. Focus on wha
 
           results.sent++;
 
-        } catch (error: any) {
+        } catch (error: unknown) {
           results.failed++;
           results.errors.push({ patientId, error: error.message });
         }
@@ -429,7 +429,7 @@ Provide a 2-3 sentence clinical summary suitable for the care team. Focus on wha
 
       return results;
 
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       throw new Error(`Campaign failed: ${error.message}`);
     }
@@ -575,7 +575,7 @@ Provide a 2-3 sentence clinical summary suitable for the care team. Focus on wha
         }
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
 
     }
   }

@@ -285,7 +285,7 @@ export async function getHandoffDashboardMetrics(
   let data;
   try {
     data = await applyLimit<any>(query, 100);
-  } catch (error: any) {
+  } catch (error: unknown) {
     await auditLogger.error('DASHBOARD_METRICS_FAILED', error, {
       shiftType,
       errorCode: error.code
@@ -373,7 +373,7 @@ async function getRecentEvents(patientId: string): Promise<ShiftHandoffEvent[]> 
 
   try {
     return await applyLimit<ShiftHandoffEvent>(query, 50);
-  } catch (error: any) {
+  } catch (error: unknown) {
     await auditLogger.warn('EVENTS_FETCH_FAILED', { patientId, error: error.message });
     return [];
   }

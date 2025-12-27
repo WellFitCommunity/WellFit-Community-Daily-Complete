@@ -109,7 +109,7 @@ export class CareCoordinationService {
 
       if (error) throw error;
       return data;
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       throw new Error(`Care plan creation failed: ${error.message}`);
     }
@@ -132,7 +132,7 @@ export class CareCoordinationService {
 
       if (error) throw error;
       return data;
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       throw new Error(`Care plan update failed: ${error.message}`);
     }
@@ -230,7 +230,7 @@ export class CareCoordinationService {
 
       if (error) throw error;
       return data;
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       throw new Error(`Alert creation failed: ${error.message}`);
     }
@@ -286,7 +286,7 @@ export class CareCoordinationService {
 
       if (error) throw error;
       return data;
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       throw new Error(`Alert update failed: ${error.message}`);
     }
@@ -432,7 +432,7 @@ Make recommendations specific to the patient's situation and plan type.`;
       // Fallback to template-based plan
       return this.getTemplatePlan(planType);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return this.getTemplatePlan(planType);
     }

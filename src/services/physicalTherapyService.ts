@@ -119,7 +119,7 @@ export class PhysicalTherapyService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -141,7 +141,7 @@ export class PhysicalTherapyService {
 
       const data = await applyLimit<PTFunctionalAssessment>(query, PAGINATION_LIMITS.ASSESSMENTS);
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -163,7 +163,7 @@ export class PhysicalTherapyService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -193,7 +193,7 @@ export class PhysicalTherapyService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -243,7 +243,7 @@ export class PhysicalTherapyService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -268,7 +268,7 @@ export class PhysicalTherapyService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -290,7 +290,7 @@ export class PhysicalTherapyService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -335,7 +335,7 @@ export class PhysicalTherapyService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -355,7 +355,7 @@ export class PhysicalTherapyService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -424,7 +424,7 @@ export class PhysicalTherapyService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -446,7 +446,7 @@ export class PhysicalTherapyService {
 
       const data = await applyLimit<PTTreatmentSession>(query, 50);
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -484,7 +484,7 @@ export class PhysicalTherapyService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -513,7 +513,7 @@ export class PhysicalTherapyService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -557,7 +557,7 @@ export class PhysicalTherapyService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -582,7 +582,7 @@ export class PhysicalTherapyService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -649,7 +649,7 @@ export class PhysicalTherapyService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -677,7 +677,7 @@ export class PhysicalTherapyService {
 
       const data = await applyLimit<PTOutcomeMeasure>(query, PAGINATION_LIMITS.ASSESSMENTS);
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -701,7 +701,7 @@ export class PhysicalTherapyService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -721,7 +721,7 @@ export class PhysicalTherapyService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }

@@ -87,7 +87,7 @@ export class ReadmissionTrackingService {
       }
 
       return data;
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       throw new Error(`Readmission logging failed: ${error.message}`);
     }
@@ -381,7 +381,7 @@ Format as JSON with this structure:
       }
 
       return metrics;
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       throw new Error(`Failed to identify high utilizers: ${error.message}`);
     }
@@ -582,7 +582,7 @@ Format as JSON with this structure:
         follow_up_completed: visit.follow_up_completed,
         created_at: visit.admission_date
       }));
-    } catch (error: any) {
+    } catch (error: unknown) {
       auditLogger.error('READMISSION_VISIT_HISTORY_FAILED', error, {
         patientId,
         days,

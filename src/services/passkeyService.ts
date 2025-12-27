@@ -227,7 +227,7 @@ export async function completePasskeyRegistration(
     if (error) throw new Error(error.message || 'Failed to save credential');
     return data;
 
-  } catch (error: any) {
+  } catch (error: unknown) {
 
 
     if (error.name === 'NotAllowedError') {
@@ -322,7 +322,7 @@ export async function completePasskeyAuthentication(
 
     return data;
 
-  } catch (error: any) {
+  } catch (error: unknown) {
 
 
     if (error.name === 'NotAllowedError') {

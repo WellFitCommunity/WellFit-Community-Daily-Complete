@@ -97,7 +97,7 @@ export class PTSessionService {
       // if attendance_status is 'attended'
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -137,7 +137,7 @@ export class PTSessionService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -159,7 +159,7 @@ export class PTSessionService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -181,7 +181,7 @@ export class PTSessionService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -205,7 +205,7 @@ export class PTSessionService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -235,7 +235,7 @@ export class PTSessionService {
       if (error) throw error;
 
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -262,7 +262,7 @@ export class PTSessionService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -289,7 +289,7 @@ export class PTSessionService {
       );
 
       return { success: true, data: total };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -319,7 +319,7 @@ export class PTSessionService {
       );
 
       return { success: true, data: filtered };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }

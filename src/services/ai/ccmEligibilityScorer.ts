@@ -308,7 +308,7 @@ export class CCMEligibilityScorer {
       }
 
       return data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw new Error(`Failed to gather patient data: ${error.message}`);
     }
   }
@@ -426,7 +426,7 @@ Return response as strict JSON:
         aiModel: aiResponse.model,
         aiCost: aiResponse.cost
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw new Error(`AI CCM assessment failed: ${error.message}`);
     }
   }
@@ -474,7 +474,7 @@ Return response as strict JSON:
       }
 
       return JSON.parse(jsonMatch[0]);
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw new Error(`Failed to parse AI response: ${error.message}`);
     }
   }

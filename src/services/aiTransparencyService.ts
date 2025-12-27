@@ -115,12 +115,12 @@ export const logConfidenceScore = async (logData: ConfidenceScoreLog): Promise<{
     if (error) throw error;
 
     return data;
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       success: false,
       log: null,
       confidence_level: 'low',
-      error: error.message || 'Failed to log confidence score',
+      error: (error instanceof Error ? error.message : null) || 'Failed to log confidence score',
     };
   }
 };
@@ -150,9 +150,9 @@ export const validateAISuggestion = async (
     if (error) throw error;
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Error silently handled
-    return { success: false, error: error.message || 'Failed to validate suggestion' };
+    return { success: false, error: (error instanceof Error ? error.message : null) || 'Failed to validate suggestion' };
   }
 };
 
@@ -171,7 +171,7 @@ export const getConfidenceScoreHistory = async (limit: number = 50) => {
     if (error) throw error;
 
     return { success: true, data };
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Error silently handled
     return { success: false, data: [], error: error.message };
   }
@@ -206,9 +206,9 @@ export const updateVoiceProfile = async (
     if (error) throw error;
 
     return { success: true, profile: data.profile };
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Error silently handled
-    return { success: false, error: error.message || 'Failed to update voice profile' };
+    return { success: false, error: (error instanceof Error ? error.message : null) || 'Failed to update voice profile' };
   }
 };
 
@@ -234,7 +234,7 @@ export const getVoiceProfile = async (): Promise<{
     if (error) throw error;
 
     return { success: true, profile: data || undefined };
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Error silently handled
     return { success: false, error: error.message };
   }
@@ -269,9 +269,9 @@ export const getPersonalizedGreeting = async (): Promise<{
     if (error) throw error;
 
     return { success: true, data };
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Error silently handled
-    return { success: false, error: error.message || 'Failed to fetch greeting' };
+    return { success: false, error: (error instanceof Error ? error.message : null) || 'Failed to fetch greeting' };
   }
 };
 
@@ -309,7 +309,7 @@ export const updateGreetingPreferences = async (
     if (error) throw error;
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Error silently handled
     return { success: false, error: error.message };
   }
@@ -346,7 +346,7 @@ export const logPersonalizationEvent = async (
     if (error) throw error;
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Error silently handled
     return { success: false, error: error.message };
   }
@@ -400,7 +400,7 @@ export const getPersonalizationMetrics = async () => {
         patterns_detected: patternsCount || 0,
       },
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Error silently handled
     return { success: false, error: error.message };
   }
@@ -437,7 +437,7 @@ export const getUnacknowledgedMilestones = async (): Promise<{
     if (error) throw error;
 
     return { success: true, milestones: data || [] };
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Error silently handled
     return { success: false, error: error.message };
   }
@@ -460,7 +460,7 @@ export const acknowledgeMilestone = async (milestoneId: string): Promise<{ succe
     if (error) throw error;
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Error silently handled
     return { success: false, error: error.message };
   }
@@ -494,7 +494,7 @@ export const getAllMilestones = async (
     if (error) throw error;
 
     return { success: true, milestones: data || [], total: count || 0 };
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Error silently handled
     return { success: false, error: error.message };
   }
@@ -568,7 +568,7 @@ export const getAITransparencyAnalytics = async () => {
         },
       },
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Error silently handled
     return { success: false, error: error.message };
   }

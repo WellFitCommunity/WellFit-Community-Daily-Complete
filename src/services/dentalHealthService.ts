@@ -69,13 +69,14 @@ export class DentalHealthService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
-      await auditLogger.error('DENTAL_ASSESSMENT_CREATE_FAILED', error, {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      await auditLogger.error('DENTAL_ASSESSMENT_CREATE_FAILED', errorMessage, {
         patientId: request.patient_id,
         resource_type: 'dental_assessment',
         operation: 'create'
       });
-      return { success: false, error: error.message };
+      return { success: false, error: errorMessage };
     }
   }
 
@@ -108,9 +109,10 @@ export class DentalHealthService {
       }
 
       return { success: true, data };
-    } catch (error: any) {
-      await auditLogger.error('DENTAL_ASSESSMENT_UPDATE_FAILED', error, { operation: 'update' });
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      await auditLogger.error('DENTAL_ASSESSMENT_UPDATE_FAILED', errorMessage, { operation: 'update' });
+      return { success: false, error: errorMessage };
     }
   }
 
@@ -128,13 +130,14 @@ export class DentalHealthService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
-      await auditLogger.error('DENTAL_ASSESSMENT_FETCH_FAILED', error, {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      await auditLogger.error('DENTAL_ASSESSMENT_FETCH_FAILED', errorMessage, {
         assessmentId: id,
         resource_type: 'dental_assessment',
         operation: 'read'
       });
-      return { success: false, error: error.message };
+      return { success: false, error: errorMessage };
     }
   }
 
@@ -156,9 +159,10 @@ export class DentalHealthService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-    } catch (error: any) {
-      await auditLogger.error('DENTAL_ASSESSMENTS_FETCH_FAILED', error, { patientId, operation: 'list' });
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      await auditLogger.error('DENTAL_ASSESSMENTS_FETCH_FAILED', errorMessage, { patientId, operation: 'list' });
+      return { success: false, error: errorMessage };
     }
   }
 
@@ -180,9 +184,10 @@ export class DentalHealthService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
-      await auditLogger.error('DENTAL_ASSESSMENT_LATEST_FETCH_FAILED', error, { patientId, operation: 'read_latest' });
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      await auditLogger.error('DENTAL_ASSESSMENT_LATEST_FETCH_FAILED', errorMessage, { patientId, operation: 'read_latest' });
+      return { success: false, error: errorMessage };
     }
   }
 
@@ -225,14 +230,15 @@ export class DentalHealthService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
-      await auditLogger.error('TOOTH_CHART_CREATE_FAILED', error, {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      await auditLogger.error('TOOTH_CHART_CREATE_FAILED', errorMessage, {
         patientId: request.patient_id,
         toothNumber: request.tooth_number,
         resource_type: 'tooth_chart',
         operation: 'create'
       });
-      return { success: false, error: error.message };
+      return { success: false, error: errorMessage };
     }
   }
 
@@ -252,9 +258,10 @@ export class DentalHealthService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-    } catch (error: any) {
-      await auditLogger.error('SERVICE_ERROR', error, { service: 'dental', operation: 'unknown' });
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      await auditLogger.error('SERVICE_ERROR', errorMessage, { service: 'dental', operation: 'unknown' });
+      return { success: false, error: errorMessage };
     }
   }
 
@@ -325,9 +332,10 @@ export class DentalHealthService {
       };
 
       return { success: true, data: summary };
-    } catch (error: any) {
-      await auditLogger.error('SERVICE_ERROR', error, { service: 'dental', operation: 'unknown' });
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      await auditLogger.error('SERVICE_ERROR', errorMessage, { service: 'dental', operation: 'unknown' });
+      return { success: false, error: errorMessage };
     }
   }
 
@@ -374,13 +382,14 @@ export class DentalHealthService {
       }
 
       return { success: true, data };
-    } catch (error: any) {
-      await auditLogger.error('DENTAL_PROCEDURE_CREATE_FAILED', error, {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      await auditLogger.error('DENTAL_PROCEDURE_CREATE_FAILED', errorMessage, {
         patientId: request.patient_id,
         resource_type: 'dental_procedure',
         operation: 'create'
       });
-      return { success: false, error: error.message };
+      return { success: false, error: errorMessage };
     }
   }
 
@@ -402,9 +411,10 @@ export class DentalHealthService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-    } catch (error: any) {
-      await auditLogger.error('SERVICE_ERROR', error, { service: 'dental', operation: 'unknown' });
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      await auditLogger.error('SERVICE_ERROR', errorMessage, { service: 'dental', operation: 'unknown' });
+      return { success: false, error: errorMessage };
     }
   }
 
@@ -458,9 +468,10 @@ export class DentalHealthService {
       };
 
       return { success: true, data: summary };
-    } catch (error: any) {
-      await auditLogger.error('SERVICE_ERROR', error, { service: 'dental', operation: 'unknown' });
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      await auditLogger.error('SERVICE_ERROR', errorMessage, { service: 'dental', operation: 'unknown' });
+      return { success: false, error: errorMessage };
     }
   }
 
@@ -500,14 +511,15 @@ export class DentalHealthService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
-      await auditLogger.error('TREATMENT_PLAN_CREATE_FAILED', error, {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      await auditLogger.error('TREATMENT_PLAN_CREATE_FAILED', errorMessage, {
         patientId: request.patient_id,
         planName: request.plan_name,
         resource_type: 'treatment_plan',
         operation: 'create'
       });
-      return { success: false, error: error.message };
+      return { success: false, error: errorMessage };
     }
   }
 
@@ -527,9 +539,10 @@ export class DentalHealthService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-    } catch (error: any) {
-      await auditLogger.error('SERVICE_ERROR', error, { service: 'dental', operation: 'unknown' });
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      await auditLogger.error('SERVICE_ERROR', errorMessage, { service: 'dental', operation: 'unknown' });
+      return { success: false, error: errorMessage };
     }
   }
 
@@ -562,12 +575,13 @@ export class DentalHealthService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
-      await auditLogger.error('PATIENT_TRACKING_CREATE_FAILED', error, {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      await auditLogger.error('PATIENT_TRACKING_CREATE_FAILED', errorMessage, {
         resource_type: 'patient_tracking',
         operation: 'create'
       });
-      return { success: false, error: error.message };
+      return { success: false, error: errorMessage };
     }
   }
 
@@ -592,9 +606,10 @@ export class DentalHealthService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-    } catch (error: any) {
-      await auditLogger.error('SERVICE_ERROR', error, { service: 'dental', operation: 'unknown' });
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      await auditLogger.error('SERVICE_ERROR', errorMessage, { service: 'dental', operation: 'unknown' });
+      return { success: false, error: errorMessage };
     }
   }
 
@@ -707,9 +722,10 @@ export class DentalHealthService {
       };
 
       return { success: true, data: summary };
-    } catch (error: any) {
-      await auditLogger.error('DENTAL_ASSESSMENT_LATEST_FETCH_FAILED', error, { patientId, operation: 'read_latest' });
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      await auditLogger.error('DENTAL_ASSESSMENT_LATEST_FETCH_FAILED', errorMessage, { patientId, operation: 'read_latest' });
+      return { success: false, error: errorMessage };
     }
   }
 
@@ -811,13 +827,14 @@ export class DentalHealthService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-    } catch (error: any) {
-      await auditLogger.error('CDT_CODE_SEARCH_FAILED', error, {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      await auditLogger.error('CDT_CODE_SEARCH_FAILED', errorMessage, {
         searchTerm,
         resource_type: 'cdt_code',
         operation: 'search'
       });
-      return { success: false, error: error.message };
+      return { success: false, error: errorMessage };
     }
   }
 
@@ -835,9 +852,10 @@ export class DentalHealthService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
-      await auditLogger.error('SERVICE_ERROR', error, { service: 'dental', operation: 'unknown' });
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      await auditLogger.error('SERVICE_ERROR', errorMessage, { service: 'dental', operation: 'unknown' });
+      return { success: false, error: errorMessage };
     }
   }
 
@@ -856,12 +874,13 @@ export class DentalHealthService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-    } catch (error: any) {
-      await auditLogger.error('PREVENTIVE_CDT_FETCH_FAILED', error, {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      await auditLogger.error('PREVENTIVE_CDT_FETCH_FAILED', errorMessage, {
         resource_type: 'cdt_code',
         operation: 'list_preventive'
       });
-      return { success: false, error: error.message };
+      return { success: false, error: errorMessage };
     }
   }
 }

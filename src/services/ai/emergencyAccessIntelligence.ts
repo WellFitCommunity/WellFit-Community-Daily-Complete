@@ -277,7 +277,7 @@ class EmergencyAccessIntelligenceService {
 
         totalCost += briefing.cost || 0;
 
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Error logged to database via audit trail
         // Continue with next senior
       }
@@ -568,7 +568,7 @@ Provide complete emergency response briefing.`;
         specialNeeds: result.special_needs,
         cost
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Fallback to structured data extraction
       return this.structuredDataExtraction(seniorData);
     }

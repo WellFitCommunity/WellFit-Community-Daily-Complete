@@ -310,7 +310,7 @@ export class DentalObservationService {
       }
 
       return { success: true, data: observations };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return { success: false, error: error.message };
     }
   }
@@ -398,7 +398,7 @@ export class DentalObservationService {
       if (error) throw error;
 
       return { success: true, data: fhirProcedure };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return { success: false, error: error.message };
     }
   }
@@ -479,7 +479,7 @@ export class DentalObservationService {
       }
 
       return { success: true, data: conditions };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return { success: false, error: error.message };
     }
   }
@@ -539,7 +539,7 @@ export class DentalObservationService {
       }
 
       return { success: true, data: report };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return { success: false, error: error.message };
     }
   }
@@ -567,7 +567,7 @@ export class DentalObservationService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return { success: false, error: error.message };
     }
   }

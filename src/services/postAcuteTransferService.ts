@@ -164,7 +164,7 @@ export class PostAcuteTransferService {
         handoff_packet_id: handoffResult.packet.id,
         access_url: handoffResult.access_url
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return {
         success: false,
@@ -192,7 +192,7 @@ export class PostAcuteTransferService {
         success: true,
         handoff_packet_id: handoffPacketId
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return {
         success: false,

@@ -243,7 +243,7 @@ class WelfareCheckDispatcherService {
             await this.createAutoDispatchAlert(request.tenantId, senior.id, assessment);
           }
 
-        } catch (error: any) {
+        } catch (error: unknown) {
           // Error logged to database via audit trail
           // Continue with next senior
         }
@@ -535,7 +535,7 @@ Provide risk assessment.`;
         notes: result.notes,
         cost
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Fallback to rule-based assessment
       return this.ruleBasedAssessment(seniorData);
     }

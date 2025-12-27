@@ -117,7 +117,7 @@ Respond in JSON format:
         needsMoreInfo: true,
         questions: ['Could you provide more details about your EHR system?']
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         message: `I encountered an error analyzing your hospital system. Please try again or configure manually. Error: ${error.message}`,
         confidence: 'low',
@@ -156,7 +156,7 @@ Provide actionable advice in 2-3 sentences.`;
       );
 
       return assistantMessage;
-    } catch (error: any) {
+    } catch (error: unknown) {
       return `I encountered an error: ${error.message}`;
     }
   }
@@ -209,7 +209,7 @@ Respond in JSON:
         isValid: false,
         warnings: ['Could not validate URL format']
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         isValid: false,
         warnings: [`Validation error: ${error.message}`]
@@ -265,7 +265,7 @@ Diagnose the issue and provide solutions in JSON format:
         solutions: ['Try manual configuration or contact support'],
         nextSteps: ['Review logs', 'Check credentials', 'Contact hospital IT']
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         diagnosis: `Troubleshooting failed: ${error.message}`,
         possibleCauses: ['AI assistant unavailable'],
@@ -328,7 +328,7 @@ Make it practical and hospital IT-friendly.`;
         estimatedTime: 'Unknown',
         prerequisites: ['Contact support for detailed guide']
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         title: 'Setup Guide Unavailable',
         steps: [],

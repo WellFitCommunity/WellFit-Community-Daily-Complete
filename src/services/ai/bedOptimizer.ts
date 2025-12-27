@@ -283,7 +283,7 @@ export class BedOptimizerService {
       await this.trackOptimizationReport(tenantId, report);
 
       return success(report);
-    } catch (error: any) {
+    } catch (error: unknown) {
       return failure('OPERATION_FAILED', `Failed to generate optimization report: ${error.message}`, error);
     }
   }
@@ -465,7 +465,7 @@ Return response as strict JSON:
       await this.trackForecast(tenantId, forecast);
 
       return forecast;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Return fallback forecast if AI fails
       return {
         forecastDate: forecastDate.toISOString(),
@@ -741,7 +741,7 @@ Return JSON:
       await this.trackBedAssignment(tenantId, patient, recommendation);
 
       return success(recommendation);
-    } catch (error: any) {
+    } catch (error: unknown) {
       return failure('OPERATION_FAILED', `Failed to recommend bed: ${error.message}`, error);
     }
   }

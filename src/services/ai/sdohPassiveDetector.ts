@@ -355,7 +355,7 @@ Return empty array [] if no SDOH concerns detected.`;
         ...detection,
         zCodeMapping: SDOH_PATTERNS[detection.category]?.zCode
       }));
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw new Error(`AI SDOH detection failed: ${error.message}`);
     }
   }
@@ -395,7 +395,7 @@ Return empty array [] if no SDOH concerns detected.`;
 
       const parsed = JSON.parse(jsonMatch[0]);
       return Array.isArray(parsed) ? parsed : [];
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw new Error(`Failed to parse AI response: ${error.message}`);
     }
   }

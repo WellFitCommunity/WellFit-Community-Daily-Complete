@@ -92,7 +92,7 @@ export class PostAcuteFacilityMatcher {
         ...aiRecommendation,
         matched_facilities: matchedFacilities
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       throw new Error(`Failed to generate recommendation: ${error.message}`);
     }

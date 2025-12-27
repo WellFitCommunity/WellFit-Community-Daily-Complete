@@ -288,7 +288,7 @@ Return response as strict JSON with this structure:
         aiCost: aiResponse.cost,
         aiModel: aiResponse.model
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw new Error(`AI billing code generation failed: ${error.message}`);
     }
   }
@@ -362,7 +362,7 @@ Return response as strict JSON with this structure:
         requiresReview: parsed.requiresReview || false,
         reviewReason: parsed.reviewReason
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw new Error(`Failed to parse AI response: ${error.message}`);
     }
   }

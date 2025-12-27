@@ -142,7 +142,7 @@ export class DischargeToWellnessBridgeService {
       };
 
       return { success: true, data: response };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -200,7 +200,7 @@ Questions? Call your care coordinator anytime.`;
       }
 
       return { success: true, data: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -331,7 +331,7 @@ Questions? Call your care coordinator anytime.`;
       };
 
       return { success: true, data: result };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -632,7 +632,7 @@ Provide a 2-3 sentence clinical summary. Focus on:
         .eq('id', trigger.id);
 
       return { success: true, data: null }; // Screening sent, no result yet
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -767,7 +767,7 @@ Takes only 2 minutes. Your responses help your care team support you better.`;
       };
 
       return { success: true, data: metrics };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }

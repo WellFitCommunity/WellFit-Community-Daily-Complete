@@ -84,7 +84,7 @@ export class DischargePlanningService {
       await this.generateDischargePlanRecommendations(plan.id, request.patient_id, request.encounter_id);
 
       return plan;
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       throw new Error(`Discharge plan creation failed: ${error.message}`);
     }
@@ -144,7 +144,7 @@ export class DischargePlanningService {
       }
 
       return data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw new Error(`Failed to update discharge plan: ${error.message}`);
     }
   }
@@ -420,7 +420,7 @@ Format as JSON:
       }
 
       return data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw new Error(`Failed to complete follow-up: ${error.message}`);
     }
   }

@@ -67,7 +67,7 @@ export class PTTreatmentPlanService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -92,7 +92,7 @@ export class PTTreatmentPlanService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -114,7 +114,7 @@ export class PTTreatmentPlanService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -136,7 +136,7 @@ export class PTTreatmentPlanService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -184,7 +184,7 @@ export class PTTreatmentPlanService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -204,7 +204,7 @@ export class PTTreatmentPlanService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -240,7 +240,7 @@ export class PTTreatmentPlanService {
           sessions: sessions || [],
         },
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -260,7 +260,7 @@ export class PTTreatmentPlanService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -290,7 +290,7 @@ export class PTTreatmentPlanService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -314,7 +314,7 @@ export class PTTreatmentPlanService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }

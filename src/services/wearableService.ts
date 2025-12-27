@@ -94,7 +94,7 @@ export class WearableService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -156,7 +156,7 @@ export class WearableService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -178,7 +178,7 @@ export class WearableService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -229,7 +229,7 @@ export class WearableService {
       }
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -316,7 +316,7 @@ export class WearableService {
       const data = await applyLimit<WearableVitalSign>(query, PAGINATION_LIMITS.WEARABLE_VITALS);
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -362,7 +362,7 @@ export class WearableService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -389,7 +389,7 @@ export class WearableService {
       const data = await applyLimit<WearableActivityData>(query, PAGINATION_LIMITS.WEARABLE_ACTIVITIES);
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -437,7 +437,7 @@ export class WearableService {
       await this.sendFallAlert(userId, data.id, fallData);
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -490,7 +490,7 @@ export class WearableService {
       const data = await applyLimit<WearableFallDetection>(query, 100);
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -519,7 +519,7 @@ export class WearableService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -546,7 +546,7 @@ export class WearableService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -602,7 +602,7 @@ export class WearableService {
       if (error) throw error;
 
       return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       return { success: false, error: error.message };
     }
@@ -730,7 +730,7 @@ export class WearableService {
         success: true,
         data: { synced: syncedCount, failed: failedCount },
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return { success: false, error: error.message };
     }
   }

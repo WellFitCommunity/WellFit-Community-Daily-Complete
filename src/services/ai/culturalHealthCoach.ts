@@ -490,7 +490,7 @@ class CulturalHealthCoachService {
         tokensUsed,
         cost
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw new Error(`Translation failed: ${error.message}`);
     }
   }

@@ -1,5 +1,6 @@
 // Enhanced Claude AI Service for WellFit Community - Production Ready Implementation
 import { loadAnthropicSDK } from './anthropicLoader';
+import { auditLogger } from './auditLogger';
 import { env, validateEnvironment } from '../config/environment';
 import {
   UserRole,
@@ -187,9 +188,9 @@ class CircuitBreaker {
       const result = await fn();
       this.onSuccess();
       return result;
-    } catch (error) {
-      this.onFailure(error);
-      throw error;
+    } catch (err: unknown) {
+      this.onFailure(err);
+      throw err;
     }
   }
 
@@ -314,8 +315,9 @@ class ClaudeService {
 
       this.isInitialized = true;
 
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown initialization error';
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown initialization error';
+      auditLogger.error('Failed to initialize Claude service', errorMessage);
 
       // Reset state on failure
       this.isInitialized = false;
@@ -323,7 +325,7 @@ class ClaudeService {
 
       throw new ClaudeInitializationError(
         `Failed to initialize Claude service: ${errorMessage}`,
-        error
+        err
       );
     }
   }
@@ -347,7 +349,9 @@ class ClaudeService {
       const isHealthy = response.content.length > 0 && response.content[0]?.type === 'text';
 
       return isHealthy;
-    } catch (error) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Health check failed';
+      auditLogger.error('Claude health check failed', errorMessage);
       return false;
     }
   }
@@ -484,7 +488,9 @@ class ClaudeService {
       const response = await this.generateSeniorHealthGuidance(message, context);
       return response.content;
 
-    } catch (error) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Chat request failed';
+      auditLogger.error('Chat with health assistant failed', errorMessage);
       return "I'm sorry, I'm having trouble connecting right now. Please try again in a moment.";
     }
   }
@@ -512,7 +518,9 @@ class ClaudeService {
 
       return response.content;
 
-    } catch (error) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Health data interpretation failed';
+      auditLogger.error('Failed to interpret health data', errorMessage);
       return "I'm having trouble reading your health data right now. Please try again later.";
     }
   }
@@ -547,7 +555,9 @@ class ClaudeService {
       const response = await this.generateResponse(prompt, context, criteria);
       return this.parseRiskAnalysis(response.content);
 
-    } catch (error) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Risk assessment analysis failed';
+      auditLogger.error('Failed to analyze risk assessment', errorMessage);
       return {
         suggestedRiskLevel: 'MODERATE',
         riskFactors: ['AI analysis failed'],
@@ -579,7 +589,9 @@ class ClaudeService {
       const response = await this.generateResponse(prompt, context, criteria);
       return response.content;
 
-    } catch (error) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Clinical notes generation failed';
+      auditLogger.error('Failed to generate clinical notes', errorMessage);
       return "Clinical notes generation failed. Please document assessment manually.";
     }
   }
@@ -610,7 +622,9 @@ class ClaudeService {
       return suggestions.length > 0 ? suggestions :
         ["Keep up your daily check-ins!", "Stay hydrated throughout the day."];
 
-    } catch (error) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Health suggestions generation failed';
+      auditLogger.error('Failed to generate health suggestions', errorMessage);
       return ["Keep up your daily check-ins!", "Stay hydrated throughout the day.", "Take a short walk if you feel up to it."];
     }
   }
@@ -710,12 +724,14 @@ class ClaudeService {
         requestId: context.requestId
       };
 
-    } catch (error) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'API request failed';
+      auditLogger.error('Failed to generate Claude API response', errorMessage, { requestId: context.requestId });
       throw new ClaudeServiceError(
         'Failed to generate response from Claude API',
         'API_REQUEST_FAILED',
         500,
-        error,
+        err,
         context.requestId
       );
     }
