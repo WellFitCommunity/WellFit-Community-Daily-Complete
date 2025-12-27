@@ -11,6 +11,8 @@ import { logPhiAccess } from './phiAccessLogger';
 import { PAGINATION_LIMITS, applyLimit } from '../utils/pagination';
 import { wearableRegistry } from '../adapters/wearables';
 import { getErrorMessage } from '../lib/getErrorMessage';
+import { getNotificationService } from './notificationService';
+import { auditLogger } from './auditLogger';
 import type {
   WearableConnection,
   WearableVitalSign,
@@ -267,12 +269,44 @@ export class WearableService {
    * Send vital sign alert to care team
    */
   static async sendVitalAlert(
-    _userId: string,
-    _vitalType: string,
-    _value: number,
-    _alertType?: 'high' | 'low' | 'irregular'
+    userId: string,
+    vitalType: string,
+    value: number,
+    alertType?: 'high' | 'low' | 'irregular'
   ): Promise<void> {
-    // TODO: Integrate with notification system
+    const notificationService = getNotificationService();
+
+    const alertTypeLabel = alertType
+      ? alertType === 'high'
+        ? 'High'
+        : alertType === 'low'
+          ? 'Low'
+          : 'Irregular'
+      : 'Abnormal';
+
+    const vitalTypeLabel = vitalType.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+
+    await notificationService.sendClinicalNotification(
+      { userId },
+      `${alertTypeLabel} ${vitalTypeLabel} Alert`,
+      `Patient vital sign alert: ${vitalTypeLabel} reading of ${value} detected as ${alertTypeLabel.toLowerCase()}.`,
+      {
+        data: {
+          vitalType,
+          value,
+          alertType,
+          detectedAt: new Date().toISOString(),
+        },
+        actionUrl: `/patients/${userId}/vitals`,
+      }
+    );
+
+    await auditLogger.warn('VITAL_ALERT_SENT', {
+      userId,
+      vitalType,
+      value,
+      alertType,
+    });
   }
 
   /**
@@ -438,15 +472,43 @@ export class WearableService {
    * Send fall alert to emergency contacts
    */
   static async sendFallAlert(
-    _userId: string,
-    _fallId: string,
-    _fallData: {
+    userId: string,
+    fallId: string,
+    fallData: {
       detectedAt: string;
       latitude?: number;
       longitude?: number;
     }
   ): Promise<void> {
-    // TODO: Integrate with emergency notification system
+    const notificationService = getNotificationService();
+
+    const locationInfo =
+      fallData.latitude && fallData.longitude
+        ? `Location: ${fallData.latitude.toFixed(6)}, ${fallData.longitude.toFixed(6)}`
+        : 'Location not available';
+
+    await notificationService.send({
+      title: 'FALL DETECTED - Immediate Attention Required',
+      body: `A fall has been detected for a patient. ${locationInfo}. Please check on the patient immediately.`,
+      category: 'alert',
+      priority: 'urgent',
+      target: { userId },
+      channels: ['in_app', 'push', 'email', 'slack'],
+      data: {
+        fallId,
+        detectedAt: fallData.detectedAt,
+        latitude: fallData.latitude,
+        longitude: fallData.longitude,
+      },
+      actionUrl: `/patients/${userId}/fall-history`,
+    });
+
+    await auditLogger.warn('FALL_ALERT_SENT', {
+      userId,
+      fallId,
+      detectedAt: fallData.detectedAt,
+      hasLocation: !!(fallData.latitude && fallData.longitude),
+    });
   }
 
   /**

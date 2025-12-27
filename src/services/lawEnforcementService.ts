@@ -6,6 +6,7 @@
  */
 
 import { supabase } from '../lib/supabaseClient';
+import { getEmailService } from './emailService';
 import type {
   EmergencyResponseInfo,
   EmergencyResponseFormData,
@@ -223,7 +224,22 @@ export const LawEnforcementService = {
         });
       }
 
-      // TODO: Send email reminder if email available
+      // Send email reminder if email available
+      if (patient.email) {
+        const emailService = getEmailService();
+        await emailService.send({
+          to: { email: patient.email, name: patient.full_name },
+          subject: 'Check-In Reminder - WellFit Community',
+          html: `
+            <h1>Check-In Reminder</h1>
+            <p>Hello ${patient.full_name},</p>
+            <p>This is a friendly reminder to complete your daily check-in.</p>
+            <p>Your wellness matters to us and your loved ones. Please take a moment to check in today.</p>
+            <p>Best regards,<br>The WellFit Community Team</p>
+          `,
+          tags: ['check-in', 'reminder'],
+        });
+      }
 
       return true;
     } catch {

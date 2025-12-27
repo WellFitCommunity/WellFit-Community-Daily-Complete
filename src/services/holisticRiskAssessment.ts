@@ -4,6 +4,7 @@
 
 import { SupabaseClient } from '@supabase/supabase-js';
 import { logPhiAccess } from './phiAccessLogger';
+import { getMedicationTrackingService } from './medicationTrackingService';
 
 /**
  * HOLISTIC RISK DIMENSIONS
@@ -480,17 +481,26 @@ export async function calculatePhysicalActivityRisk(
 
 /**
  * Calculate medication adherence risk
- * TODO: Integrate with medication tracking when available
+ * Integrated with medication tracking service
  */
 export async function calculateMedicationAdherenceRisk(
   supabase: SupabaseClient,
   userId: string
 ): Promise<{ score: number; dataPoints: number }> {
   try {
-    // Check for medication adherence data
-    // This will integrate with medication tracking system
-    // For now, check self-report symptoms for medication-related concerns
+    // Get adherence stats from medication tracking service
+    const medicationService = getMedicationTrackingService();
+    const adherenceResult = await medicationService.getOverallAdherenceRate(userId, 30);
 
+    if (adherenceResult.success && adherenceResult.data !== undefined) {
+      // Convert adherence rate (0-100) to risk score (0-10, inverted)
+      // 100% adherence = 0 risk, 0% adherence = 10 risk
+      const adherenceRate = adherenceResult.data;
+      const riskScore = 10 - (adherenceRate / 10);
+      return { score: Math.max(0, Math.min(10, riskScore)), dataPoints: 30 };
+    }
+
+    // Fallback: Check self-report symptoms for medication-related concerns
     const { data, error } = await supabase
       .from('self_reports')
       .select('symptoms, created_at')

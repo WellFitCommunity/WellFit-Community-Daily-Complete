@@ -14,6 +14,7 @@
 
 import { supabase } from '../../lib/supabaseClient';
 import { auditLogger } from '../auditLogger';
+import { getEmailService } from '../emailService';
 
 export type AlertSeverity = 'info' | 'warning' | 'critical' | 'emergency';
 export type AlertCategory =
@@ -206,41 +207,60 @@ export class GuardianAlertService {
 
       if (!securityTeam || securityTeam.length === 0) return;
 
-      // In production, integrate with email service (SendGrid, AWS SES, etc.)
-      // For now, log the email that would be sent
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const emailContent = {
-        to: securityTeam.map(u => u.email),
-        subject: `🚨 Guardian Alert: ${alert.title}`,
-        body: `
-Security Alert from Guardian Agent
+      const emailService = getEmailService();
+      const baseUrl = import.meta.env.VITE_BASE_URL || 'https://app.wellfitcommunity.com';
 
-Severity: ${alert.severity.toUpperCase()}
-Category: ${alert.category}
-Time: ${new Date(alert.timestamp).toLocaleString()}
-
-${alert.description}
-
-${alert.session_recording_url ? `View Recording: ${alert.session_recording_url}` : ''}
-
-${alert.generated_fix ? 'Generated Fix Available - Review in Security Panel' : ''}
-
-View Alert: ${import.meta.env.VITE_BASE_URL}/security/alerts/${alert.id}
-
----
-This is an automated alert from the WellFit Guardian Agent.
-        `,
+      const severityColors: Record<string, string> = {
+        info: '#17a2b8',
+        warning: '#ffc107',
+        critical: '#dc3545',
+        emergency: '#721c24',
       };
+
+      await emailService.send({
+        to: securityTeam.map((u) => ({
+          email: u.email,
+          name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || 'Security Admin',
+        })),
+        subject: `[${alert.severity.toUpperCase()}] Guardian Alert: ${alert.title}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background: ${severityColors[alert.severity]}; color: white; padding: 20px; text-align: center;">
+              <h1 style="margin: 0;">Security Alert</h1>
+              <p style="margin: 10px 0 0 0; font-size: 18px;">${alert.severity.toUpperCase()}</p>
+            </div>
+            <div style="padding: 20px; background: #f9f9f9;">
+              <h2 style="color: #333; margin-top: 0;">${alert.title}</h2>
+              <p><strong>Category:</strong> ${alert.category}</p>
+              <p><strong>Time:</strong> ${new Date(alert.timestamp).toLocaleString()}</p>
+              <p style="background: white; padding: 15px; border-left: 4px solid ${severityColors[alert.severity]};">
+                ${alert.description}
+              </p>
+              ${alert.session_recording_url ? `<p><a href="${alert.session_recording_url}" style="color: #007bff;">View Session Recording</a></p>` : ''}
+              ${alert.generated_fix ? '<p style="color: #28a745;"><strong>A fix has been generated - Review in Security Panel</strong></p>' : ''}
+              <p style="text-align: center; margin-top: 20px;">
+                <a href="${baseUrl}/security/alerts/${alert.id}" style="background: ${severityColors[alert.severity]}; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px;">
+                  View Alert Details
+                </a>
+              </p>
+            </div>
+            <div style="padding: 15px; text-align: center; font-size: 12px; color: #666;">
+              <p>This is an automated alert from the WellFit Guardian Agent.</p>
+            </div>
+          </div>
+        `,
+        tags: ['guardian', 'security', alert.severity],
+      });
 
       await auditLogger.info('GUARDIAN_EMAIL_SENT', {
         alertId: alert.id,
         recipients: securityTeam.length,
       });
-
-      // TODO: Integrate with actual email service
-      // await emailService.send(emailContent);
-    } catch (error) {
-
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      await auditLogger.error('GUARDIAN_EMAIL_FAILED', errorMessage, {
+        alertId: alert.id,
+      });
     }
   }
 

@@ -776,6 +776,382 @@ export class GitHubIntegration {
       // Branch may already be deleted
     }
   }
+
+  // ============================================================================
+  // CI/CD INTEGRATION - GitHub Actions Support
+  // ============================================================================
+
+  /**
+   * Check run status type
+   */
+  private mapCheckStatus(
+    status: string | null,
+    conclusion: string | null
+  ): 'queued' | 'in_progress' | 'success' | 'failure' | 'neutral' | 'skipped' {
+    if (status === 'queued') return 'queued';
+    if (status === 'in_progress') return 'in_progress';
+    if (conclusion === 'success') return 'success';
+    if (conclusion === 'failure' || conclusion === 'timed_out' || conclusion === 'cancelled') return 'failure';
+    if (conclusion === 'neutral') return 'neutral';
+    if (conclusion === 'skipped') return 'skipped';
+    return 'in_progress';
+  }
+
+  /**
+   * Get detailed check runs for a commit
+   */
+  async getCheckRuns(commitSha: string): Promise<{
+    total: number;
+    completed: number;
+    passed: number;
+    failed: number;
+    pending: number;
+    checks: Array<{
+      id: number;
+      name: string;
+      status: 'queued' | 'in_progress' | 'success' | 'failure' | 'neutral' | 'skipped';
+      conclusion: string | null;
+      startedAt: string | null;
+      completedAt: string | null;
+      detailsUrl: string | null;
+    }>;
+  }> {
+    const data = await this.githubRequest<{
+      total_count: number;
+      check_runs: Array<{
+        id: number;
+        name: string;
+        status: string;
+        conclusion: string | null;
+        started_at: string | null;
+        completed_at: string | null;
+        details_url: string | null;
+      }>;
+    }>(`/repos/${this.repoOwner}/${this.repoName}/commits/${commitSha}/check-runs`);
+
+    const checks = data.check_runs.map((run) => ({
+      id: run.id,
+      name: run.name,
+      status: this.mapCheckStatus(run.status, run.conclusion),
+      conclusion: run.conclusion,
+      startedAt: run.started_at,
+      completedAt: run.completed_at,
+      detailsUrl: run.details_url,
+    }));
+
+    const completed = checks.filter((c) => c.status !== 'queued' && c.status !== 'in_progress').length;
+    const passed = checks.filter((c) => c.status === 'success' || c.status === 'neutral' || c.status === 'skipped').length;
+    const failed = checks.filter((c) => c.status === 'failure').length;
+    const pending = checks.filter((c) => c.status === 'queued' || c.status === 'in_progress').length;
+
+    return {
+      total: data.total_count,
+      completed,
+      passed,
+      failed,
+      pending,
+      checks,
+    };
+  }
+
+  /**
+   * Wait for all GitHub Actions checks to complete
+   * @param prNumber - PR number to monitor
+   * @param options - Polling options
+   * @returns Final check status
+   */
+  async waitForChecks(
+    prNumber: number,
+    options: {
+      timeoutMs?: number;
+      pollIntervalMs?: number;
+      requiredChecks?: string[];
+      onProgress?: (status: { completed: number; total: number; failed: number }) => void;
+    } = {}
+  ): Promise<{
+    allPassed: boolean;
+    timedOut: boolean;
+    checks: Array<{ name: string; status: string; conclusion: string | null }>;
+  }> {
+    const timeoutMs = options.timeoutMs ?? 30 * 60 * 1000; // 30 minutes default
+    const pollIntervalMs = options.pollIntervalMs ?? 30 * 1000; // 30 seconds default
+    const startTime = Date.now();
+
+    // Get PR head SHA
+    const pr = await this.githubRequest<{ head: { sha: string } }>(
+      `/repos/${this.repoOwner}/${this.repoName}/pulls/${prNumber}`
+    );
+    const commitSha = pr.head.sha;
+
+    await auditLogger.info('GITHUB_CHECKS_WAIT_STARTED', {
+      prNumber,
+      commitSha,
+      timeoutMs,
+      requiredChecks: options.requiredChecks,
+    });
+
+    while (Date.now() - startTime < timeoutMs) {
+      const checkStatus = await this.getCheckRuns(commitSha);
+
+      // Call progress callback if provided
+      if (options.onProgress) {
+        options.onProgress({
+          completed: checkStatus.completed,
+          total: checkStatus.total,
+          failed: checkStatus.failed,
+        });
+      }
+
+      // Check if all required checks are complete
+      if (options.requiredChecks && options.requiredChecks.length > 0) {
+        const requiredResults = checkStatus.checks.filter((c) =>
+          options.requiredChecks!.includes(c.name)
+        );
+
+        const allRequiredComplete = requiredResults.every(
+          (c) => c.status !== 'queued' && c.status !== 'in_progress'
+        );
+
+        if (allRequiredComplete) {
+          const allPassed = requiredResults.every(
+            (c) => c.status === 'success' || c.status === 'neutral' || c.status === 'skipped'
+          );
+
+          await auditLogger.info('GITHUB_CHECKS_COMPLETED', {
+            prNumber,
+            allPassed,
+            checks: requiredResults.map((c) => ({ name: c.name, status: c.status })),
+          });
+
+          return {
+            allPassed,
+            timedOut: false,
+            checks: requiredResults,
+          };
+        }
+      } else {
+        // No specific required checks - wait for all
+        if (checkStatus.pending === 0 && checkStatus.total > 0) {
+          const allPassed = checkStatus.failed === 0;
+
+          await auditLogger.info('GITHUB_CHECKS_COMPLETED', {
+            prNumber,
+            allPassed,
+            total: checkStatus.total,
+            passed: checkStatus.passed,
+            failed: checkStatus.failed,
+          });
+
+          return {
+            allPassed,
+            timedOut: false,
+            checks: checkStatus.checks,
+          };
+        }
+      }
+
+      // Wait before next poll
+      await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
+    }
+
+    // Timeout reached
+    const finalStatus = await this.getCheckRuns(commitSha);
+
+    await auditLogger.warn('GITHUB_CHECKS_TIMEOUT', {
+      prNumber,
+      timeoutMs,
+      pendingChecks: finalStatus.checks
+        .filter((c) => c.status === 'queued' || c.status === 'in_progress')
+        .map((c) => c.name),
+    });
+
+    return {
+      allPassed: false,
+      timedOut: true,
+      checks: finalStatus.checks,
+    };
+  }
+
+  /**
+   * Check if PR meets merge requirements
+   * @param prNumber - PR number to check
+   * @param requirements - Merge requirements
+   */
+  async canMerge(
+    prNumber: number,
+    requirements: {
+      requiredApprovals?: number;
+      requireAllChecksPass?: boolean;
+      requiredChecks?: string[];
+      blockOnChangesRequested?: boolean;
+    } = {}
+  ): Promise<{
+    canMerge: boolean;
+    reasons: string[];
+    details: {
+      approvals: number;
+      changesRequested: boolean;
+      checksStatus: { passed: number; failed: number; pending: number };
+    };
+  }> {
+    const reasons: string[] = [];
+    const requiredApprovals = requirements.requiredApprovals ?? 1;
+    const requireAllChecksPass = requirements.requireAllChecksPass ?? true;
+    const blockOnChangesRequested = requirements.blockOnChangesRequested ?? true;
+
+    // Get PR status
+    const status = await this.getPRStatus(prNumber);
+
+    // Count approvals
+    const approvals = status.reviews.filter((r) => r.state === 'approved').length;
+    const changesRequested = status.reviews.some((r) => r.state === 'changes_requested');
+
+    // Check PR state
+    if (status.state !== 'open') {
+      reasons.push(`PR is ${status.state}, not open`);
+    }
+
+    // Check approvals
+    if (approvals < requiredApprovals) {
+      reasons.push(`Need ${requiredApprovals} approval(s), have ${approvals}`);
+    }
+
+    // Check for changes requested
+    if (blockOnChangesRequested && changesRequested) {
+      reasons.push('Changes have been requested');
+    }
+
+    // Get detailed check status
+    const pr = await this.githubRequest<{ head: { sha: string } }>(
+      `/repos/${this.repoOwner}/${this.repoName}/pulls/${prNumber}`
+    );
+    const checkStatus = await this.getCheckRuns(pr.head.sha);
+
+    // Check CI status
+    if (requireAllChecksPass) {
+      if (checkStatus.pending > 0) {
+        reasons.push(`${checkStatus.pending} check(s) still running`);
+      }
+      if (checkStatus.failed > 0) {
+        const failedNames = checkStatus.checks
+          .filter((c) => c.status === 'failure')
+          .map((c) => c.name)
+          .join(', ');
+        reasons.push(`${checkStatus.failed} check(s) failed: ${failedNames}`);
+      }
+    }
+
+    // Check required checks specifically
+    if (requirements.requiredChecks && requirements.requiredChecks.length > 0) {
+      for (const requiredCheck of requirements.requiredChecks) {
+        const check = checkStatus.checks.find((c) => c.name === requiredCheck);
+        if (!check) {
+          reasons.push(`Required check "${requiredCheck}" not found`);
+        } else if (check.status === 'failure') {
+          reasons.push(`Required check "${requiredCheck}" failed`);
+        } else if (check.status === 'queued' || check.status === 'in_progress') {
+          reasons.push(`Required check "${requiredCheck}" still running`);
+        }
+      }
+    }
+
+    return {
+      canMerge: reasons.length === 0,
+      reasons,
+      details: {
+        approvals,
+        changesRequested,
+        checksStatus: {
+          passed: checkStatus.passed,
+          failed: checkStatus.failed,
+          pending: checkStatus.pending,
+        },
+      },
+    };
+  }
+
+  /**
+   * Merge PR with safety checks
+   * Blocks merge if requirements are not met
+   */
+  async safeMergePR(
+    prNumber: number,
+    requirements?: {
+      requiredApprovals?: number;
+      requireAllChecksPass?: boolean;
+      requiredChecks?: string[];
+      blockOnChangesRequested?: boolean;
+      waitForChecks?: boolean;
+      waitTimeoutMs?: number;
+    }
+  ): Promise<{
+    merged: boolean;
+    reason?: string;
+    details?: {
+      approvals: number;
+      checksStatus: { passed: number; failed: number; pending: number };
+    };
+  }> {
+    const opts = requirements ?? {};
+
+    // Wait for checks if requested
+    if (opts.waitForChecks) {
+      const checkResult = await this.waitForChecks(prNumber, {
+        timeoutMs: opts.waitTimeoutMs,
+        requiredChecks: opts.requiredChecks,
+      });
+
+      if (checkResult.timedOut) {
+        await auditLogger.warn('GITHUB_MERGE_BLOCKED', {
+          prNumber,
+          reason: 'Checks timed out',
+        });
+        return { merged: false, reason: 'Checks timed out waiting for completion' };
+      }
+
+      if (!checkResult.allPassed) {
+        const failedChecks = checkResult.checks
+          .filter((c) => c.status === 'failure')
+          .map((c) => c.name)
+          .join(', ');
+        await auditLogger.warn('GITHUB_MERGE_BLOCKED', {
+          prNumber,
+          reason: 'Checks failed',
+          failedChecks,
+        });
+        return { merged: false, reason: `Checks failed: ${failedChecks}` };
+      }
+    }
+
+    // Check merge requirements
+    const mergeCheck = await this.canMerge(prNumber, opts);
+
+    if (!mergeCheck.canMerge) {
+      await auditLogger.warn('GITHUB_MERGE_BLOCKED', {
+        prNumber,
+        reasons: mergeCheck.reasons,
+      });
+      return {
+        merged: false,
+        reason: mergeCheck.reasons.join('; '),
+        details: mergeCheck.details,
+      };
+    }
+
+    // All checks passed - merge
+    await this.mergePR(prNumber);
+
+    await auditLogger.info('GITHUB_PR_MERGED', {
+      prNumber,
+      approvals: mergeCheck.details.approvals,
+      checksStatus: mergeCheck.details.checksStatus,
+    });
+
+    return {
+      merged: true,
+      details: mergeCheck.details,
+    };
+  }
 }
 
 /**
@@ -811,17 +1187,18 @@ export class GitHubIntegration {
  *    - Rollback plan included
  *    - Testing and review checklists
  *
+ * ✅ CI/CD Integration (IMPLEMENTED):
+ *    - waitForChecks() - Poll GitHub Actions until complete
+ *    - getCheckRuns() - Get detailed check status
+ *    - canMerge() - Verify merge requirements (approvals, checks)
+ *    - safeMergePR() - Merge with safety checks and blocking
+ *
+ * ✅ Notifications (IMPLEMENTED via NotificationService):
+ *    - Slack webhooks via NotificationService
+ *    - Email notifications via EmailService
+ *    - Dashboard updates via in-app notifications
+ *
  * 🔲 TODO (Future Enhancements):
- *
- * 1. Enhanced CI/CD Integration:
- *    - Wait for GitHub Actions to complete
- *    - Block merge on test failures
- *    - Require minimum approvals
- *
- * 2. Notifications:
- *    - Slack/Teams webhooks
- *    - Email notifications
- *    - Dashboard real-time updates
  *
  * 3. Proposal Versioning:
  *    - Track proposal revisions

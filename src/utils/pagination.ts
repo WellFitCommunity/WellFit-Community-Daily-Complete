@@ -9,6 +9,7 @@
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
+import { auditLogger } from '../services/auditLogger';
 
 /**
  * Standard pagination configuration for different data types
@@ -354,9 +355,17 @@ export async function applyPHIPagination<T>(
   },
   defaultPageSize: number = PAGINATION_LIMITS.DEFAULT
 ): Promise<PaginatedResult<T>> {
-  // TODO: Replace with proper audit logger from auditLogger.ts
-  // This is kept minimal for now - PHI access should be logged server-side
-  // using the auditLogger.phi() method
+  const { offset, page, pageSize } = calculatePagination(options, defaultPageSize);
+
+  // Log PHI access before query
+  await auditLogger.info('PHI_PAGINATED_ACCESS', {
+    userId: auditContext.userId,
+    resourceType: auditContext.resourceType,
+    action: auditContext.action,
+    page,
+    pageSize,
+    offset,
+  });
 
   // Apply standard pagination
   return applyPagination<T>(query, options, defaultPageSize);
