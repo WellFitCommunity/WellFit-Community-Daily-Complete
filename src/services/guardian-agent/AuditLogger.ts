@@ -278,9 +278,8 @@ export class AuditLogger {
    * Send telemetry to monitoring stack
    */
   private async sendToTelemetry(entry: AuditLogEntry): Promise<void> {
-    // Format for telemetry stack
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const telemetryEvent = {
+    // Format for internal telemetry system
+    const telemetryEvent = {
       timestamp: entry.timestamp.toISOString(),
       tenant: entry.tenant,
       module: entry.module,
@@ -297,10 +296,34 @@ export class AuditLogger {
       ...entry.metadata,
     };
 
-    // TODO: Send to actual telemetry endpoints:
-    // - Datadog, New Relic, Splunk, etc.
-    // - Your SIEM system
-    // - HIPAA audit log database
+    // Send to internal telemetry (HIPAA-compliant, no external services)
+    try {
+      // 1. Store in guardian_telemetry table for internal monitoring
+      await supabase.from('guardian_telemetry').insert({
+        event_type: 'audit_log',
+        event_data: telemetryEvent,
+        severity: entry.severity,
+        module: entry.module,
+        tenant_id: entry.tenant,
+        user_id: entry.userId,
+        created_at: entry.timestamp.toISOString(),
+      });
+
+      // 2. Log to system audit logger for HIPAA compliance
+      systemAuditLogger.info('GUARDIAN_TELEMETRY_EVENT', {
+        audit_id: entry.id,
+        action: entry.action,
+        module: entry.module,
+        severity: entry.severity,
+        validation_result: entry.validationResult,
+      });
+    } catch (error) {
+      // Telemetry failures should not block the main flow
+      systemAuditLogger.warn('GUARDIAN_TELEMETRY_FAILED', {
+        audit_id: entry.id,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
   }
 
   /**

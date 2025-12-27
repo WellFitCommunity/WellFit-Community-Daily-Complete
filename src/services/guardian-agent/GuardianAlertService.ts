@@ -23,7 +23,8 @@ export type AlertCategory =
   | 'memory_leak'
   | 'api_failure'
   | 'healing_generated'
-  | 'system_health';
+  | 'system_health'
+  | 'approval_required';
 
 export interface GuardianAlert {
   id: string;

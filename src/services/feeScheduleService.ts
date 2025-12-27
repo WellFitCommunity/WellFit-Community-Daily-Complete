@@ -171,12 +171,67 @@ export class FeeScheduleService {
       const baseRate = rate?.rate || 0;
       const units = item.units || 1;
 
-      // TODO: Apply modifier adjustments if needed
-      const subtotal = baseRate * units;
+      // Apply modifier adjustments based on Medicare/payer rules
+      let adjustedRate = baseRate;
+      if (item.modifiers && item.modifiers.length > 0) {
+        for (const modifier of item.modifiers) {
+          const mod = modifier.toUpperCase();
+          switch (mod) {
+            case '26': // Professional component only
+              adjustedRate *= 0.26;
+              break;
+            case 'TC': // Technical component only
+              adjustedRate *= 0.74;
+              break;
+            case '52': // Reduced services
+              adjustedRate *= 0.50;
+              break;
+            case '53': // Discontinued procedure
+              adjustedRate *= 0.50;
+              break;
+            case '22': // Increased procedural services (add 20-30%)
+              adjustedRate *= 1.25;
+              break;
+            case '50': // Bilateral procedure (150% of base)
+              adjustedRate *= 1.50;
+              break;
+            case '51': // Multiple procedures (50% reduction on 2nd+)
+              adjustedRate *= 0.50;
+              break;
+            case '80': // Assistant surgeon (16% of primary)
+              adjustedRate *= 0.16;
+              break;
+            case '81': // Minimum assistant surgeon
+              adjustedRate *= 0.10;
+              break;
+            case '82': // Assistant surgeon when qualified resident not available
+              adjustedRate *= 0.16;
+              break;
+            // Modifiers with no rate adjustment (informational only)
+            case '25': // Significant, separately identifiable E/M
+            case '59': // Distinct procedural service
+            case 'XE': // Separate encounter
+            case 'XP': // Separate practitioner
+            case 'XS': // Separate structure
+            case 'XU': // Unusual non-overlapping service
+            case 'GT': // Via interactive audio/video telecom
+            case '95': // Synchronous telemedicine
+            case 'GQ': // Store and forward telemedicine
+            case 'G0': // Telehealth for diagnosis/evaluation
+              // No rate adjustment for these modifiers
+              break;
+            default:
+              // Unknown modifier - no adjustment
+              break;
+          }
+        }
+      }
+
+      const subtotal = adjustedRate * units;
 
       return {
         code: item.code,
-        rate: baseRate,
+        rate: adjustedRate,
         units,
         subtotal
       };

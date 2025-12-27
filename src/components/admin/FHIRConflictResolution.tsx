@@ -141,33 +141,207 @@ export const FHIRConflictResolution: React.FC = () => {
     conflict: FHIRConflict,
     action: 'use_fhir' | 'use_community' | 'merge' | 'manual'
   ) => {
-    // Implementation depends on resource type
-    // This is a simplified version - you'd expand this based on resource types
+    const resourceTableMap: Record<string, string> = {
+      Patient: 'profiles',
+      Observation: 'patient_observations',
+      Condition: 'patient_conditions',
+      MedicationRequest: 'patient_medications',
+      AllergyIntolerance: 'patient_allergies',
+      Procedure: 'patient_procedures',
+      Immunization: 'patient_immunizations',
+      Encounter: 'patient_encounters',
+      DiagnosticReport: 'diagnostic_reports',
+      CarePlan: 'care_plans',
+    };
+
+    const tableName = resourceTableMap[conflict.resource_type];
 
     switch (action) {
       case 'use_fhir':
         // Update community data with FHIR data
+        if (tableName && conflict.fhir_data) {
+          // Map FHIR data to community schema based on resource type
+          const mappedData = mapFHIRToCommunitySchema(conflict.resource_type, conflict.fhir_data);
 
-        // TODO: Implement resource-specific update logic
+          if (mappedData) {
+            const { error } = await supabase
+              .from(tableName)
+              .upsert({
+                id: conflict.resource_id,
+                ...mappedData,
+                updated_at: new Date().toISOString(),
+                fhir_synced_at: new Date().toISOString(),
+              }, { onConflict: 'id' });
+
+            if (error) throw new Error(`Failed to apply FHIR data: ${error.message}`);
+          }
+        }
         break;
 
       case 'use_community':
-        // Keep community data, update sync log
-
-        // TODO: Update sync log
+        // Keep community data, update sync log to mark as manually resolved
+        await supabase.from('fhir_sync_log').insert({
+          connection_id: conflict.connection_id,
+          patient_id: conflict.patient_id,
+          resource_type: conflict.resource_type,
+          resource_id: conflict.resource_id,
+          sync_action: 'conflict_resolved_keep_local',
+          sync_status: 'success',
+          synced_at: new Date().toISOString(),
+          metadata: {
+            conflict_id: conflict.id,
+            resolution: 'use_community',
+            fhir_data_rejected: true,
+          },
+        });
         break;
 
       case 'merge':
-        // Merge both datasets
+        // Smart merge: combine non-conflicting fields, prefer FHIR for clinical data
+        if (tableName && conflict.fhir_data && conflict.community_data) {
+          const mergedData = smartMerge(
+            conflict.resource_type,
+            conflict.community_data,
+            conflict.fhir_data
+          );
 
-        // TODO: Implement smart merge logic
+          const { error } = await supabase
+            .from(tableName)
+            .update({
+              ...mergedData,
+              updated_at: new Date().toISOString(),
+              fhir_synced_at: new Date().toISOString(),
+              merge_source: 'conflict_resolution',
+            })
+            .eq('id', conflict.resource_id);
+
+          if (error) throw new Error(`Failed to merge data: ${error.message}`);
+
+          // Log the merge in sync log
+          await supabase.from('fhir_sync_log').insert({
+            connection_id: conflict.connection_id,
+            patient_id: conflict.patient_id,
+            resource_type: conflict.resource_type,
+            resource_id: conflict.resource_id,
+            sync_action: 'conflict_resolved_merge',
+            sync_status: 'success',
+            synced_at: new Date().toISOString(),
+            metadata: {
+              conflict_id: conflict.id,
+              merged_fields: Object.keys(mergedData),
+            },
+          });
+        }
         break;
 
       case 'manual':
-        // Do nothing - admin will manually fix
-
+        // Do nothing - admin will manually fix via other UI
+        // Just log that manual resolution was chosen
+        await supabase.from('fhir_sync_log').insert({
+          connection_id: conflict.connection_id,
+          patient_id: conflict.patient_id,
+          resource_type: conflict.resource_type,
+          resource_id: conflict.resource_id,
+          sync_action: 'conflict_deferred_manual',
+          sync_status: 'pending',
+          synced_at: new Date().toISOString(),
+          metadata: {
+            conflict_id: conflict.id,
+            resolution: 'manual',
+          },
+        });
         break;
     }
+  };
+
+  /**
+   * Map FHIR resource data to community database schema
+   */
+  const mapFHIRToCommunitySchema = (
+    resourceType: string,
+    fhirData: any
+  ): Record<string, any> | null => {
+    switch (resourceType) {
+      case 'Patient':
+        return {
+          first_name: fhirData.name?.[0]?.given?.[0],
+          last_name: fhirData.name?.[0]?.family,
+          date_of_birth: fhirData.birthDate,
+          gender: fhirData.gender,
+          phone: fhirData.telecom?.find((t: any) => t.system === 'phone')?.value,
+          email: fhirData.telecom?.find((t: any) => t.system === 'email')?.value,
+          address_line1: fhirData.address?.[0]?.line?.[0],
+          city: fhirData.address?.[0]?.city,
+          state: fhirData.address?.[0]?.state,
+          zip: fhirData.address?.[0]?.postalCode,
+        };
+      case 'Observation':
+        return {
+          code: fhirData.code?.coding?.[0]?.code,
+          display_name: fhirData.code?.coding?.[0]?.display,
+          value: fhirData.valueQuantity?.value,
+          unit: fhirData.valueQuantity?.unit,
+          effective_date: fhirData.effectiveDateTime,
+          status: fhirData.status,
+        };
+      case 'Condition':
+        return {
+          code: fhirData.code?.coding?.[0]?.code,
+          display_name: fhirData.code?.coding?.[0]?.display,
+          clinical_status: fhirData.clinicalStatus?.coding?.[0]?.code,
+          onset_date: fhirData.onsetDateTime,
+          recorded_date: fhirData.recordedDate,
+        };
+      case 'MedicationRequest':
+        return {
+          medication_code: fhirData.medicationCodeableConcept?.coding?.[0]?.code,
+          medication_name: fhirData.medicationCodeableConcept?.coding?.[0]?.display,
+          dosage_instruction: fhirData.dosageInstruction?.[0]?.text,
+          status: fhirData.status,
+          authored_on: fhirData.authoredOn,
+        };
+      default:
+        // For unsupported types, return the raw data for manual review
+        return null;
+    }
+  };
+
+  /**
+   * Smart merge: prefer FHIR for clinical fields, keep community for administrative
+   */
+  const smartMerge = (
+    resourceType: string,
+    communityData: any,
+    fhirData: any
+  ): Record<string, any> => {
+    const merged = { ...communityData };
+
+    // Clinical fields that FHIR should take precedence on
+    const clinicalFields: Record<string, string[]> = {
+      Patient: ['date_of_birth', 'gender'],
+      Observation: ['value', 'unit', 'effective_date', 'status'],
+      Condition: ['clinical_status', 'code', 'onset_date'],
+      MedicationRequest: ['dosage_instruction', 'status', 'medication_code'],
+    };
+
+    // Administrative fields that community data should keep
+    const adminFields = ['created_at', 'created_by', 'tenant_id', 'notes', 'custom_fields'];
+
+    const fhirMapped = mapFHIRToCommunitySchema(resourceType, fhirData) || {};
+    const preferFhirFields = clinicalFields[resourceType] || [];
+
+    // Merge: prefer FHIR for clinical fields, keep community for admin
+    for (const [key, value] of Object.entries(fhirMapped)) {
+      if (value !== null && value !== undefined) {
+        if (preferFhirFields.includes(key) || !adminFields.includes(key)) {
+          // FHIR takes precedence for clinical fields
+          merged[key] = value;
+        }
+        // Otherwise keep community value (already in merged)
+      }
+    }
+
+    return merged;
   };
 
   const getConflictIcon = (type: string) => {

@@ -261,7 +261,15 @@ export class SmartRecordingStrategy {
       }
 
       auditLogger.info('[SmartRecording] Manual recording kept', { tag: this.manualRecordingTag });
-      // TODO: Add tag to metadata
+
+      // Add tag to recording metadata via a final snapshot
+      aiSystemRecorder.captureUserAction('SmartRecording', 'manual_recording_tagged', {
+        tag: this.manualRecordingTag,
+        session_id: recording.session_id,
+        recording_type: 'manual',
+        snapshots_count: recording.snapshots?.length || 0,
+        events_count: recording.rrweb_events?.length || 0,
+      });
     }
 
     this.manualRecordingTag = null;

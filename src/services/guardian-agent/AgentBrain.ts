@@ -186,7 +186,15 @@ export class AgentBrain {
 
     // Critical issues need approval if configured
     if (issue.severity === 'critical' && this.config.requireApprovalForCritical) {
-      this.requestApproval(issue);
+      // Fire-and-forget: request approval but don't block the decision
+      this.requestApproval(issue).catch((err: unknown) => {
+        // Log error via AI System Recorder for audit trail
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        aiSystemRecorder.captureError('GuardianAgent', new Error(errorMessage), {
+          action: 'approval_request_failed',
+          issue_id: issue.id,
+        });
+      });
       return false;
     }
 
@@ -568,8 +576,57 @@ export class AgentBrain {
     return result.outcomeDescription || 'Unknown failure reason';
   }
 
-  private requestApproval(issue: DetectedIssue): void {
-    // TODO: Implement approval workflow - notify admins via audit logger
+  private async requestApproval(issue: DetectedIssue): Promise<void> {
+    // Send alert to Guardian Alert Service for admin notification
+    await GuardianAlertService.sendAlert({
+      severity: issue.severity === 'critical' ? 'critical' : 'warning',
+      category: 'approval_required',
+      title: `Approval Required: ${issue.signature.category} - ${issue.signature.description}`,
+      description: `Guardian Agent detected an issue requiring admin approval before proceeding.\n\n` +
+        `Issue ID: ${issue.id}\n` +
+        `Type: ${issue.signature.category}\n` +
+        `Severity: ${issue.severity}\n` +
+        `Affected: ${issue.affectedResources.join(', ') || 'Unknown'}\n` +
+        `Pattern: ${issue.signature.pattern}`,
+      actions: [
+        {
+          id: 'approve',
+          label: 'Approve Healing',
+          type: 'approve_fix',
+          url: `/security/issues/${issue.id}/approve`,
+        },
+        {
+          id: 'reject',
+          label: 'Reject',
+          type: 'dismiss',
+          url: `/security/issues/${issue.id}/reject`,
+        },
+        {
+          id: 'view_details',
+          label: 'View Details',
+          type: 'view_recording',
+          url: `/security/issues/${issue.id}`,
+        },
+      ],
+      metadata: {
+        auto_healable: issue.signature.healingStrategies && issue.signature.healingStrategies.length > 0,
+        requires_immediate_action: issue.severity === 'critical',
+        estimated_impact: `${issue.affectedResources.length} resources affected`,
+      },
+    });
+
+    // Record in AI System Recorder for full audit trail
+    aiSystemRecorder.captureUserAction('GuardianAgent', 'approval_requested', {
+      issue_id: issue.id,
+      issue_type: issue.signature.category,
+      severity: issue.severity,
+      affected_resources: issue.affectedResources,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Update issue metadata to track approval status
+    issue.metadata.approvalStatus = 'pending';
+    issue.metadata.approvalRequestedAt = new Date().toISOString();
   }
 
   private generateId(prefix: string): string {

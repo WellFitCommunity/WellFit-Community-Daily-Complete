@@ -373,36 +373,29 @@ export class BillingService {
     byStatus: Record<ClaimStatus, number>;
     totalAmount: number;
   }> {
-    // CRITICAL FIX: This was loading ALL claims system-wide (100K+ records)
-    // Now using database aggregation instead of client-side calculation
+    // Use PostgreSQL aggregate function for accurate metrics across all claims
+    // This replaces the previous client-side calculation which was limited by pagination
+    const { data, error } = await supabase.rpc('get_claim_metrics', {
+      p_provider_id: providerId || null,
+    });
 
-    let query = supabase.from('claims').select('status, total_charge');
-
-    if (providerId) {
-      query = query.eq('billing_provider_id', providerId);
+    if (error) {
+      throw new Error(`Failed to get claim metrics: ${error.message}`);
     }
 
-    // Apply limit to prevent loading entire claims table
-    // For real metrics, this should be replaced with a database view or aggregation query
-    const data = await applyLimit<{ status: string; total_charge: number }>(
-      query,
-      PAGINATION_LIMITS.CLAIMS
-    );
-
     const metrics = {
-      total: data.length,
+      total: 0,
       byStatus: {} as Record<ClaimStatus, number>,
       totalAmount: 0,
     };
 
-    data.forEach((claim) => {
-      const status = claim.status as ClaimStatus;
-      metrics.byStatus[status] = (metrics.byStatus[status] || 0) + 1;
-      metrics.totalAmount += Number(claim.total_charge || 0);
+    // Aggregate the results from the database function
+    (data || []).forEach((row: { status: string; count: number; total_amount: number }) => {
+      const status = row.status as ClaimStatus;
+      metrics.byStatus[status] = Number(row.count);
+      metrics.total += Number(row.count);
+      metrics.totalAmount += Number(row.total_amount || 0);
     });
-
-    // TODO: Replace with PostgreSQL aggregate query for accurate metrics:
-    // SELECT status, COUNT(*), SUM(total_charge) FROM claims GROUP BY status
 
     return metrics;
   }

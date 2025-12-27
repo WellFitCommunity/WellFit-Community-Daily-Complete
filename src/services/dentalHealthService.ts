@@ -715,7 +715,39 @@ export class DentalHealthService {
         pending_procedures_count: pendingProcedures,
         completed_procedures_this_year: completedThisYear,
         pending_referrals_count: pendingReferrals,
-        overdue_followups_count: 0, // TODO: Calculate based on follow-up dates
+        overdue_followups_count: (() => {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          let overdueCount = 0;
+
+          // Count treatment plan phases with past start dates still pending
+          activePlans.forEach((plan: any) => {
+            if (plan.phases) {
+              plan.phases.forEach((phase: any) => {
+                if (phase.status === 'pending' && phase.start_date) {
+                  const phaseDate = new Date(phase.start_date);
+                  if (phaseDate < today) overdueCount++;
+                }
+              });
+            }
+          });
+
+          // Count referrals with past scheduled appointments still pending
+          referrals?.forEach((referral: any) => {
+            if (referral.status === 'pending' && referral.appointment_scheduled_date) {
+              const apptDate = new Date(referral.appointment_scheduled_date);
+              if (apptDate < today) overdueCount++;
+            }
+          });
+
+          // Count overdue recommended visits (past due for check-up)
+          if (nextRecommendedVisit) {
+            const recommendedDate = new Date(nextRecommendedVisit);
+            if (recommendedDate < today) overdueCount++;
+          }
+
+          return overdueCount;
+        })(),
         recent_self_reports: recentReports,
         current_symptoms: currentSymptoms,
         risk_alerts: riskAlerts,

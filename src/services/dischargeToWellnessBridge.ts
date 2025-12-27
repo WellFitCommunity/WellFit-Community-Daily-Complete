@@ -770,7 +770,25 @@ Takes only 2 minutes. Your responses help your care team support you better.`;
         avg_readmission_risk_score: patients?.length
           ? Math.round(patients.reduce((sum: number, p: any) => sum + (p.readmission_risk_score || 0), 0) / patients.length)
           : 0,
-        mental_health_screenings_pending: 0, // TODO: Calculate
+        mental_health_screenings_pending: patients?.filter((p: any) => {
+          // A screening is pending if:
+          // 1. Patient is enrolled in wellness and has risk indicators but no recent screening
+          // 2. Patient has moderate/high mental health risk but missing PHQ-9/GAD-7 scores
+          // 3. Discharge diagnosis is mental health related and no screening completed
+          const isMentalHealthDiagnosis = p.discharge_diagnosis?.toLowerCase().includes('mental') ||
+            p.discharge_diagnosis?.toLowerCase().includes('depression') ||
+            p.discharge_diagnosis?.toLowerCase().includes('anxiety');
+          const hasMentalHealthRisk = p.mental_health_risk_level === 'moderate' ||
+            p.mental_health_risk_level === 'high';
+          const missingScreenings = p.phq9_score_latest === null && p.gad7_score_latest === null;
+          const needsFollowUpScreening = p.mood_trend === 'declining' || p.stress_trend === 'worsening';
+
+          return p.wellness_enrolled && (
+            (hasMentalHealthRisk && missingScreenings) ||
+            (isMentalHealthDiagnosis && missingScreenings) ||
+            needsFollowUpScreening
+          );
+        }).length || 0,
         patients_list: patients || [],
       };
 

@@ -1,4 +1,7 @@
 // Performance monitoring utilities for production
+import { supabase } from '../lib/supabaseClient';
+import { auditLogger } from '../services/auditLogger';
+
 export class PerformanceMonitor {
   private static instance: PerformanceMonitor;
   private metrics: Map<string, number[]> = new Map();
@@ -113,10 +116,36 @@ if (import.meta.env.MODE === 'production') {
   const monitor = PerformanceMonitor.getInstance();
   monitor.measureWebVitals();
 
-  // Send stats to monitoring service every 30 seconds
-  setInterval(() => {
+  // Send stats to internal monitoring service every 30 seconds
+  setInterval(async () => {
     const stats = monitor.getAllStats();
-    // TODO: Send stats to external monitoring service (Datadog, New Relic, etc.)
-    // This prevents PHI leakage via browser console
+
+    // Skip if no stats to report
+    if (Object.keys(stats).length === 0) return;
+
+    try {
+      // Send to internal telemetry table (HIPAA-compliant, no external services)
+      await supabase.from('performance_telemetry').insert({
+        event_type: 'performance_stats',
+        stats_data: stats,
+        user_agent: navigator.userAgent,
+        timestamp: new Date().toISOString(),
+      });
+
+      // Log summary to audit logger for compliance
+      const slowComponents = Object.entries(stats)
+        .filter(([, s]) => s.average > 100) // Components averaging >100ms
+        .map(([name]) => name);
+
+      if (slowComponents.length > 0) {
+        auditLogger.warn('PERFORMANCE_DEGRADATION', {
+          slow_components: slowComponents,
+          component_count: Object.keys(stats).length,
+        });
+      }
+    } catch {
+      // Performance monitoring failures should not impact user experience
+      // Silently fail - this is non-critical telemetry
+    }
   }, 30000);
 }

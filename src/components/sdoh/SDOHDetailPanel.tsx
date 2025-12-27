@@ -11,6 +11,8 @@ interface SDOHDetailPanelProps {
   onClose: () => void;
   patientId: string;
   className?: string;
+  onUpdateFactor?: (factor: SDOHFactor) => void;
+  onAddReferral?: (factor: SDOHFactor) => void;
 }
 
 /**
@@ -24,7 +26,9 @@ export const SDOHDetailPanel: React.FC<SDOHDetailPanelProps> = ({
   isOpen,
   onClose,
   patientId,
-  className = ''
+  className = '',
+  onUpdateFactor,
+  onAddReferral
 }) => {
   if (!isOpen) return null;
 
@@ -309,20 +313,16 @@ export const SDOHDetailPanel: React.FC<SDOHDetailPanelProps> = ({
         <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4">
           <div className="flex gap-3">
             <button
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              onClick={() => {
-                // TODO: Open update form
-                // Update factor handler
-              }}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => onUpdateFactor?.(factor)}
+              disabled={!onUpdateFactor}
             >
               Update Assessment
             </button>
             <button
-              className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-              onClick={() => {
-                // TODO: Open referral form
-                // Add referral handler
-              }}
+              className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => onAddReferral?.(factor)}
+              disabled={!onAddReferral}
             >
               Add Referral
             </button>
