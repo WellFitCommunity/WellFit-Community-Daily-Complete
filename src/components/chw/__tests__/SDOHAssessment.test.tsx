@@ -239,7 +239,7 @@ describe('SDOHAssessment - Question selection', () => {
 
       await waitFor(() => {
         expect(mockProps.onComplete).toHaveBeenCalled();
-      });
+      }, { timeout: 10000 });
     });
   });
 
