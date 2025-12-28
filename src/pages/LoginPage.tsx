@@ -63,7 +63,8 @@ const LoginPage: React.FC = () => {
   // Debug info (dev only)
   const debug = useMemo(() => {
     try {
-      const client: any = supabase as any;
+      // Access internal properties for debug display only - cast via unknown first
+      const client = supabase as unknown as { rest?: { url?: string }; auth?: unknown };
       return {
         url: client?.rest?.url ?? 'n/a',
         hasAuth: !!client?.auth,
@@ -139,12 +140,21 @@ const LoginPage: React.FC = () => {
       return '/dashboard';
     }
 
-    const forcePwd = (data as any)?.force_password_change ?? false;
-    const consent  = (data as any)?.consent ?? false;
-    const demoDone = (data as any)?.demographics_complete ?? false;
-    const onboard  = (data as any)?.onboarded ?? false;
-    const role = (data as any)?.role || '';
-    const roleCode = (data as any)?.role_code || 0;
+    // Type the profile data we fetched
+    const profileData = data as {
+      force_password_change?: boolean;
+      consent?: boolean;
+      demographics_complete?: boolean;
+      onboarded?: boolean;
+      role?: string;
+      role_code?: number;
+    };
+    const forcePwd = profileData.force_password_change ?? false;
+    const consent  = profileData.consent ?? false;
+    const demoDone = profileData.demographics_complete ?? false;
+    const onboard  = profileData.onboarded ?? false;
+    const role = profileData.role || '';
+    const roleCode = profileData.role_code || 0;
 
     auditLogger.debug('Login page profile data loaded', { forcePwd, consent, demoDone, onboard, role, roleCode });
 
@@ -306,9 +316,10 @@ const LoginPage: React.FC = () => {
       // Navigate to appropriate page
       const route = await nextRouteForUser();
       navigate(route, { replace: true });
-    } catch (err: any) {
-      auditLogger.auth('LOGIN_FAILED', false, { method: 'passkey', error: err.message });
-      setError(err.message || 'Biometric login failed. Please try password login instead.');
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Unknown error';
+      auditLogger.auth('LOGIN_FAILED', false, { method: 'passkey', error: errMsg });
+      setError(errMsg || 'Biometric login failed. Please try password login instead.');
     } finally {
       setPasskeyLoading(false);
     }
@@ -399,9 +410,10 @@ const LoginPage: React.FC = () => {
       const route = await nextRouteForUser();
       auditLogger.info('CARE_RECIPIENT_LOGIN_NAVIGATION', { route, mode });
       navigate(route, { replace: true });
-    } catch (err: any) {
-      auditLogger.auth('LOGIN_FAILED', false, { method: 'phone_password', error: err?.message });
-      setError(err?.message || 'Unexpected error during login.');
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Unexpected error during login.';
+      auditLogger.auth('LOGIN_FAILED', false, { method: 'phone_password', error: errMsg });
+      setError(errMsg);
     } finally {
       setLoading(false);
     }

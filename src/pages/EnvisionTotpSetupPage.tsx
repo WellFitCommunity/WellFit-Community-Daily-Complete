@@ -128,7 +128,7 @@ export const EnvisionTotpSetupPage: React.FC = () => {
       });
 
       if (fnErr) {
-        const status = (fnErr as any)?.status || 0;
+        const status = (fnErr as { status?: number })?.status || 0;
         const msg = fnErr.message || 'Edge Function call failed.';
         return { data: null, status, message: msg };
       }

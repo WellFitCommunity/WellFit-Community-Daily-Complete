@@ -56,7 +56,7 @@ interface VitalMetric {
   unit: string;
   status: 'normal' | 'warning' | 'critical';
   trend?: 'up' | 'down' | 'stable';
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
 }
 
 interface CareTeamReview {
@@ -174,7 +174,7 @@ const StatsCard: React.FC<{
   title: string;
   value: string | number;
   subtitle?: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   color: string;
   trend?: { value: string; positive: boolean };
 }> = ({ title, value, subtitle, icon: Icon, color, trend }) => {
@@ -314,16 +314,15 @@ const DoctorsView: React.FC = () => {
       let lastAttendedAt: string | null = null;
       let countLast30Days = 0;
       if (lastEventResult.status === 'fulfilled' && Array.isArray(lastEventResult.value.data)) {
-        const row = lastEventResult.value.data[0];
-        if (row) lastAttendedAt = row.created_at || (row as any).timestamp || null;
+        const row = lastEventResult.value.data[0] as { created_at?: string; timestamp?: string } | undefined;
+        if (row) lastAttendedAt = row.created_at || row.timestamp || null;
       }
       if (countResult.status === 'fulfilled' && typeof countResult.value.count === 'number') {
         countLast30Days = countResult.value.count;
       }
       setCommunityEngagement({ lastAttendedAt, countLast30Days });
 
-    } catch (e: any) {
-
+    } catch (_e: unknown) {
       setError('Failed to load data. Please refresh the page.');
     } finally {
       setLoading(false);

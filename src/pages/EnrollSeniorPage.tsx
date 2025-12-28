@@ -81,7 +81,7 @@ const EnrollSeniorPage: React.FC = () => {
     try {
       const tempPassword = generateSecurePassword();
 
-      const enrollmentBody: any = {
+      const enrollmentBody: Record<string, string | undefined> = {
         phone,
         password: tempPassword,
         first_name: firstName,
@@ -138,10 +138,11 @@ const EnrollSeniorPage: React.FC = () => {
 
       // Don't auto-clear form or password - let admin manually clear or enroll another
       // Password remains visible until page navigation or manual form reset
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : 'Unknown error';
       setMessage({
         type: 'error',
-        text: `✗ Enrollment failed: ${error.message || 'Unknown error'}`
+        text: `✗ Enrollment failed: ${errMsg}`
       });
     } finally {
       setLoading(false);

@@ -30,7 +30,7 @@ interface SuperAdminUser {
 
 export const EnvisionLoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const { supabase, user } = useAuth();
+  const { supabase } = useAuth();
 
   // Auth flow state
   const [step, setStep] = useState<AuthStep>('credentials');

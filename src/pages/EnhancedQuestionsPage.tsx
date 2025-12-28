@@ -118,8 +118,7 @@ const EnhancedQuestionsPage: React.FC = () => {
         setRecordingTimer(0);
       };
 
-      recognitionRef.current.onerror = (event) => {
-
+      recognitionRef.current.onerror = (_event) => {
         setIsListening(false);
         if (timerIntervalRef.current) {
           clearInterval(timerIntervalRef.current);
