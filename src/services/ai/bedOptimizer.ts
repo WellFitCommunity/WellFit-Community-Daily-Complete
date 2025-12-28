@@ -35,6 +35,45 @@ import type {
 } from '../../types/bed';
 
 // =====================================================
+// DATABASE RESULT TYPES
+// =====================================================
+
+/** Row from daily_census_snapshots table */
+interface HistoricalCensusSnapshot {
+  snapshot_date: string;
+  discharges_count?: number;
+  admissions_count?: number;
+  midnight_census?: number;
+  eod_census?: number;
+}
+
+/** Row from scheduled_arrivals table */
+interface ScheduledArrival {
+  scheduled_date: string;
+  status: string;
+}
+
+/** Row from los_benchmarks table */
+interface LOSBenchmark {
+  tenant_id?: string;
+  is_default?: boolean;
+  drg_code?: string;
+  expected_los?: number;
+}
+
+/** Available bed with joined hospital_units */
+interface AvailableBedWithUnit {
+  bed_label: string;
+  bed_type: string;
+  has_telemetry: boolean;
+  has_isolation_capability: boolean;
+  has_negative_pressure: boolean;
+  hospital_units: {
+    unit_name: string;
+  };
+}
+
+// =====================================================
 // TYPES
 // =====================================================
 
@@ -295,8 +334,8 @@ export class BedOptimizerService {
     tenantId: string,
     bedBoard: BedBoardEntry[],
     unitCapacity: UnitCapacity[],
-    historicalData: any[], // eslint-disable-line @typescript-eslint/no-explicit-any -- Database results
-    scheduledArrivals: any[] // eslint-disable-line @typescript-eslint/no-explicit-any -- Database results
+    historicalData: HistoricalCensusSnapshot[],
+    scheduledArrivals: ScheduledArrival[]
   ): Promise<CapacityForecast[]> {
     const now = new Date();
     const forecasts: CapacityForecast[] = [];
@@ -340,8 +379,8 @@ export class BedOptimizerService {
     shiftPeriod: 'day' | 'evening' | 'night',
     bedBoard: BedBoardEntry[],
     unitCapacity: UnitCapacity[],
-    historicalData: any[], // eslint-disable-line @typescript-eslint/no-explicit-any -- Database results
-    scheduledArrivals: any[] // eslint-disable-line @typescript-eslint/no-explicit-any -- Database results
+    historicalData: HistoricalCensusSnapshot[],
+    scheduledArrivals: ScheduledArrival[]
   ): Promise<CapacityForecast> {
     const totalBeds = unitCapacity.reduce((sum, u) => sum + u.total_beds, 0);
     const currentCensus = bedBoard.filter(b => b.status === 'occupied').length;
@@ -505,7 +544,7 @@ Return response as strict JSON:
     avgAdmissions: number,
     scheduledArrivals: number,
     dayOfWeek: string,
-    recentHistory: any[] // eslint-disable-line @typescript-eslint/no-explicit-any -- Database result types
+    recentHistory: HistoricalCensusSnapshot[]
   ): string {
     let prompt = `Predict hospital bed capacity for ${dayOfWeek} ${shiftPeriod} shift (${forecastDate.toLocaleDateString()}):\n\n`;
 
@@ -546,7 +585,7 @@ Return response as strict JSON:
   async generateDischargeRecommendations(
     tenantId: string,
     bedBoard: BedBoardEntry[],
-    _losBenchmarks: any[] // eslint-disable-line @typescript-eslint/no-explicit-any -- Database results
+    _losBenchmarks: LOSBenchmark[]
   ): Promise<DischargeRecommendation[]> {
     const occupiedBeds = bedBoard.filter(b => b.status === 'occupied' && b.patient_id);
 
@@ -608,7 +647,7 @@ Return JSON array of top 10 discharge candidates:
         }
       });
 
-      const parsed = this.parseJSONArray(aiResponse.response);
+      const parsed = this.parseJSONArray<DischargeRecommendation>(aiResponse.response);
       return parsed.slice(0, 10);
     } catch {
       return [];
@@ -618,8 +657,7 @@ Return JSON array of top 10 discharge candidates:
   /**
    * Build discharge analysis prompt
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Database results
-  private buildDischargePrompt(occupiedBeds: BedBoardEntry[], _losBenchmarks: any[]): string {
+  private buildDischargePrompt(occupiedBeds: BedBoardEntry[], _losBenchmarks: LOSBenchmark[]): string {
     let prompt = `Analyze these occupied beds for discharge prioritization:\n\n`;
 
     occupiedBeds.forEach((bed, i) => {
@@ -750,8 +788,7 @@ Return JSON:
   /**
    * Build bed matching prompt
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Database results
-  private buildBedMatchingPrompt(patient: IncomingPatient, availableBeds: any[]): string {
+  private buildBedMatchingPrompt(patient: IncomingPatient, availableBeds: AvailableBedWithUnit[]): string {
     let prompt = `Find optimal bed for incoming patient:\n\n`;
 
     prompt += `=== PATIENT REQUIREMENTS ===\n`;
@@ -783,7 +820,7 @@ Return JSON:
     tenantId: string,
     bedBoard: BedBoardEntry[],
     unitCapacity: UnitCapacity[],
-    _historicalData: any[] // eslint-disable-line @typescript-eslint/no-explicit-any -- Database results
+    _historicalData: HistoricalCensusSnapshot[]
   ): Promise<CapacityInsight[]> {
     const insights: CapacityInsight[] = [];
 
@@ -872,8 +909,7 @@ Return JSON:
     return data || [];
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Database results
-  private async getHistoricalCensusData(tenantId: string, days: number): Promise<any[]> {
+  private async getHistoricalCensusData(tenantId: string, days: number): Promise<HistoricalCensusSnapshot[]> {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
@@ -887,8 +923,7 @@ Return JSON:
     return data || [];
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Database results
-  private async getScheduledArrivals(tenantId: string, days: number): Promise<any[]> {
+  private async getScheduledArrivals(tenantId: string, days: number): Promise<ScheduledArrival[]> {
     const endDate = new Date();
     endDate.setDate(endDate.getDate() + days);
 
@@ -903,8 +938,7 @@ Return JSON:
     return data || [];
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Database results
-  private async getLOSBenchmarks(tenantId: string): Promise<any[]> {
+  private async getLOSBenchmarks(tenantId: string): Promise<LOSBenchmark[]> {
     const { data } = await supabase
       .from('los_benchmarks')
       .select('*')
@@ -914,8 +948,7 @@ Return JSON:
     return data || [];
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Database results
-  private calculateEfficiencyScore(unitCapacity: UnitCapacity[], _historicalData: any[]): number {
+  private calculateEfficiencyScore(unitCapacity: UnitCapacity[], _historicalData: HistoricalCensusSnapshot[]): number {
     // Calculate based on turnaround time, discharge timing, and occupancy optimization
     let score = 80; // Base score
 
@@ -976,12 +1009,11 @@ Return JSON:
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- AI response parsing
-  private parseJSONArray(response: string): any[] {
+  private parseJSONArray<T = Record<string, unknown>>(response: string): T[] {
     try {
       const jsonMatch = response.match(/\[[\s\S]*\]/);
       if (!jsonMatch) return [];
-      return JSON.parse(jsonMatch[0]);
+      return JSON.parse(jsonMatch[0]) as T[];
     } catch {
       return [];
     }
