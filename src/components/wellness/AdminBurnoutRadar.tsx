@@ -45,9 +45,9 @@ interface WellnessAlert {
 }
 
 export const AdminBurnoutRadar: React.FC<AdminBurnoutRadarProps> = ({
-  organizationId,
-  departmentFilter,
-  roleFilter,
+  organizationId: _organizationId,
+  departmentFilter: _departmentFilter,
+  roleFilter: _roleFilter,
 }) => {
   const [stats, setStats] = useState<TeamWellnessStats | null>(null);
   const [loading, setLoading] = useState(true);

@@ -27,7 +27,7 @@ type AuthContextValue = {
   isAdmin: boolean; // computed from metadata + DB user_roles
 
   // Error handling
-  handleAuthError: (error: any) => Promise<boolean>;
+  handleAuthError: (error: unknown) => Promise<boolean>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -35,8 +35,8 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 // ---- helpers ----
 function metaIsAdmin(u: User | null): boolean {
   if (!u) return false;
-  const app: any = u.app_metadata || {};
-  const usr: any = u.user_metadata || {};
+  const app = (u.app_metadata || {}) as Record<string, unknown>;
+  const usr = (u.user_metadata || {}) as Record<string, unknown>;
   return Boolean(
     app.role === 'admin' ||
     app.role === 'super_admin' ||
@@ -104,13 +104,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   // Global error handler for auth-related errors
-  const handleAuthError = React.useCallback(async (error: any) => {
-    const errorMessage = error?.message || '';
+  const handleAuthError = React.useCallback(async (error: unknown) => {
+    const err = error as { message?: string; status?: number } | null;
+    const errorMessage = err?.message || '';
 
     if (errorMessage.includes('Invalid Refresh Token') ||
         errorMessage.includes('Session Expired') ||
         errorMessage.includes('Revoked by Newer Login') ||
-        error?.status === 400) {
+        err?.status === 400) {
       await handleSessionExpiry();
       return true; // Handled
     }
@@ -144,18 +145,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      const roles = (data || []).map((r: any) => String(r.role));
+      const roles = (data || []).map((r: { role: string }) => String(r.role));
       const hasAdmin = roles.includes('admin') || roles.includes('super_admin');
       setDbAdmin(hasAdmin);
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const err = e as { message?: string } | null;
       // Check if this is a session expiry error
-      if (e.message?.includes('Invalid Refresh Token') ||
-          e.message?.includes('Session Expired')) {
+      if (err?.message?.includes('Invalid Refresh Token') ||
+          err?.message?.includes('Session Expired')) {
         await handleSessionExpiry();
         return;
       }
 
-      auditLogger.warn('REFRESH_DB_ROLES_EXCEPTION', { error: e.message });
+      auditLogger.warn('REFRESH_DB_ROLES_EXCEPTION', { error: err?.message });
       setDbAdmin(null);
     }
   }
@@ -191,15 +193,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const m = metaIsAdmin(u);
         setMetaAdmin(m);
         refreshDbRoles(u); // async, non-blocking
-      } catch (e: any) {
+      } catch (e: unknown) {
+        const err = e as { message?: string } | null;
         // Handle session expiry errors in catch block too
-        if (e.message?.includes('Invalid Refresh Token') ||
-            e.message?.includes('Session Expired')) {
+        if (err?.message?.includes('Invalid Refresh Token') ||
+            err?.message?.includes('Session Expired')) {
           if (!cancelled) await handleSessionExpiry();
           return;
         }
 
-        if (!cancelled) setError(e);
+        if (!cancelled) setError(e as Error);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -259,8 +262,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password,
       });
       if (error) throw error;
-    } catch (e: any) {
-      setError(e); throw e;
+    } catch (e: unknown) {
+      setError(e as Error); throw e;
     } finally { setLoading(false); }
   };
 
@@ -272,8 +275,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         options: { channel: 'sms', ...(captchaToken ? { captchaToken } : {}) },
       });
       if (error) throw error;
-    } catch (e: any) {
-      setError(e); throw e;
+    } catch (e: unknown) {
+      setError(e as Error); throw e;
     } finally { setLoading(false); }
   };
 
@@ -282,8 +285,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const { error } = await supabase.auth.verifyOtp({ phone, token, type: 'sms' });
       if (error) throw error;
-    } catch (e: any) {
-      setError(e); throw e;
+    } catch (e: unknown) {
+      setError(e as Error); throw e;
     } finally { setLoading(false); }
   };
 
@@ -315,8 +318,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         throw new Error('Provide (email+password) or (phone).');
       }
-    } catch (e: any) {
-      setError(e); throw e;
+    } catch (e: unknown) {
+      setError(e as Error); throw e;
     } finally { setLoading(false); }
   };
 
@@ -325,8 +328,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-    } catch (e: any) {
-      setError(e); throw e;
+    } catch (e: unknown) {
+      setError(e as Error); throw e;
     } finally { setLoading(false); }
   };
 
@@ -376,7 +379,7 @@ export function useAuth() {
 export function useAuthErrorHandler() {
   const { handleAuthError } = useAuth();
 
-  return React.useCallback(async (error: any) => {
+  return React.useCallback(async (error: unknown) => {
     const handled = await handleAuthError(error);
     if (!handled) {
       // If not an auth error, rethrow for normal error handling
@@ -386,21 +389,22 @@ export function useAuthErrorHandler() {
 }
 
 // Higher-order function to wrap API calls with auth error handling
-export function withAuthErrorHandling<T extends (...args: any[]) => Promise<any>>(fn: T): T {
-  return (async (...args: any[]) => {
+export function withAuthErrorHandling<T extends (...args: unknown[]) => Promise<unknown>>(fn: T): T {
+  return (async (...args: unknown[]) => {
     try {
       return await fn(...args);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { message?: string; status?: number } | null;
       // Check if this looks like an auth error
-      const errorMessage = error?.message || '';
+      const errorMessage = err?.message || '';
       if (errorMessage.includes('Invalid Refresh Token') ||
           errorMessage.includes('Session Expired') ||
           errorMessage.includes('Revoked by Newer Login') ||
-          error?.status === 400) {
+          err?.status === 400) {
 
         // Try to get auth context
         try {
-          const authContext = document.querySelector('[data-auth-provider]') as any;
+          const authContext = document.querySelector('[data-auth-provider]') as HTMLElement & { _authContext?: { handleAuthError?: (e: unknown) => Promise<boolean> } } | null;
           if (authContext?._authContext?.handleAuthError) {
             const handled = await authContext._authContext.handleAuthError(error);
             if (handled) return;

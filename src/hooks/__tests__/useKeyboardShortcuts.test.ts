@@ -4,7 +4,6 @@
  * ATLUS: Technology - Keyboard shortcut system tests
  */
 
-import { renderHook, act } from '@testing-library/react';
 import { formatKeyCombo, GLOBAL_SHORTCUTS } from '../useKeyboardShortcuts';
 
 // Mock react-router-dom

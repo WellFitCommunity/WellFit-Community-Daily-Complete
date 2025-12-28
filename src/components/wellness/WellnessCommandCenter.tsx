@@ -35,7 +35,7 @@ interface QuickAction {
 
 export const WellnessCommandCenter: React.FC<WellnessCommandCenterProps> = ({
   userName,
-  userRole,
+  userRole: _userRole,
   showCompact = false,
 }) => {
   const { user } = useAuth();

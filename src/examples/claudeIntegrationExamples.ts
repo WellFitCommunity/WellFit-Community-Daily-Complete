@@ -266,7 +266,7 @@ export async function runCompleteIntegrationTest() {
 
 
 
-    const totalCost = [
+    const _totalCost = [
       results.seniorPatient.cost,
       results.adminAnalytics.cost,
       results.healthDataInterpretation.cost

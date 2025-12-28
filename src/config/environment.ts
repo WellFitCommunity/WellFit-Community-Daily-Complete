@@ -43,7 +43,7 @@ function parseEnvironment() {
 export const env = parseEnvironment();
 
 // Validation function for runtime checks
-export function validateEnvironment(): { success: boolean; message: string; details?: any } {
+export function validateEnvironment(): { success: boolean; message: string; details?: Record<string, unknown> } {
   try {
     const validatedEnv = parseEnvironment();
 
