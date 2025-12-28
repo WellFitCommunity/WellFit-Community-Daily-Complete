@@ -26,10 +26,10 @@ import { ServiceResult, success, failure } from '../_base';
 import type {
   BedBoardEntry,
   UnitCapacity,
-  HospitalUnit,
-  Bed,
-  BedStatus,
-  BedType,
+  HospitalUnit as _HospitalUnit,
+  Bed as _Bed,
+  BedStatus as _BedStatus,
+  BedType as _BedType,
   AcuityLevel,
   UnitType
 } from '../../types/bed';
@@ -295,8 +295,8 @@ export class BedOptimizerService {
     tenantId: string,
     bedBoard: BedBoardEntry[],
     unitCapacity: UnitCapacity[],
-    historicalData: any[],
-    scheduledArrivals: any[]
+    historicalData: any[], // eslint-disable-line @typescript-eslint/no-explicit-any -- Database results
+    scheduledArrivals: any[] // eslint-disable-line @typescript-eslint/no-explicit-any -- Database results
   ): Promise<CapacityForecast[]> {
     const now = new Date();
     const forecasts: CapacityForecast[] = [];
@@ -340,8 +340,8 @@ export class BedOptimizerService {
     shiftPeriod: 'day' | 'evening' | 'night',
     bedBoard: BedBoardEntry[],
     unitCapacity: UnitCapacity[],
-    historicalData: any[],
-    scheduledArrivals: any[]
+    historicalData: any[], // eslint-disable-line @typescript-eslint/no-explicit-any -- Database results
+    scheduledArrivals: any[] // eslint-disable-line @typescript-eslint/no-explicit-any -- Database results
   ): Promise<CapacityForecast> {
     const totalBeds = unitCapacity.reduce((sum, u) => sum + u.total_beds, 0);
     const currentCensus = bedBoard.filter(b => b.status === 'occupied').length;
@@ -505,7 +505,7 @@ Return response as strict JSON:
     avgAdmissions: number,
     scheduledArrivals: number,
     dayOfWeek: string,
-    recentHistory: any[]
+    recentHistory: any[] // eslint-disable-line @typescript-eslint/no-explicit-any -- Database result types
   ): string {
     let prompt = `Predict hospital bed capacity for ${dayOfWeek} ${shiftPeriod} shift (${forecastDate.toLocaleDateString()}):\n\n`;
 
@@ -546,7 +546,7 @@ Return response as strict JSON:
   async generateDischargeRecommendations(
     tenantId: string,
     bedBoard: BedBoardEntry[],
-    losBenchmarks: any[]
+    _losBenchmarks: any[] // eslint-disable-line @typescript-eslint/no-explicit-any -- Database results
   ): Promise<DischargeRecommendation[]> {
     const occupiedBeds = bedBoard.filter(b => b.status === 'occupied' && b.patient_id);
 
@@ -555,7 +555,7 @@ Return response as strict JSON:
     }
 
     // Build prompt for discharge analysis
-    const prompt = this.buildDischargePrompt(occupiedBeds, losBenchmarks);
+    const prompt = this.buildDischargePrompt(occupiedBeds, _losBenchmarks);
 
     const systemPrompt = `You are an expert hospital discharge planner optimizing patient flow.
 Analyze occupied beds and recommend discharge priorities to optimize capacity.
@@ -618,7 +618,8 @@ Return JSON array of top 10 discharge candidates:
   /**
    * Build discharge analysis prompt
    */
-  private buildDischargePrompt(occupiedBeds: BedBoardEntry[], losBenchmarks: any[]): string {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Database results
+  private buildDischargePrompt(occupiedBeds: BedBoardEntry[], _losBenchmarks: any[]): string {
     let prompt = `Analyze these occupied beds for discharge prioritization:\n\n`;
 
     occupiedBeds.forEach((bed, i) => {
@@ -749,6 +750,7 @@ Return JSON:
   /**
    * Build bed matching prompt
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Database results
   private buildBedMatchingPrompt(patient: IncomingPatient, availableBeds: any[]): string {
     let prompt = `Find optimal bed for incoming patient:\n\n`;
 
@@ -781,7 +783,7 @@ Return JSON:
     tenantId: string,
     bedBoard: BedBoardEntry[],
     unitCapacity: UnitCapacity[],
-    historicalData: any[]
+    _historicalData: any[] // eslint-disable-line @typescript-eslint/no-explicit-any -- Database results
   ): Promise<CapacityInsight[]> {
     const insights: CapacityInsight[] = [];
 
@@ -870,6 +872,7 @@ Return JSON:
     return data || [];
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Database results
   private async getHistoricalCensusData(tenantId: string, days: number): Promise<any[]> {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
@@ -884,6 +887,7 @@ Return JSON:
     return data || [];
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Database results
   private async getScheduledArrivals(tenantId: string, days: number): Promise<any[]> {
     const endDate = new Date();
     endDate.setDate(endDate.getDate() + days);
@@ -899,6 +903,7 @@ Return JSON:
     return data || [];
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Database results
   private async getLOSBenchmarks(tenantId: string): Promise<any[]> {
     const { data } = await supabase
       .from('los_benchmarks')
@@ -909,7 +914,8 @@ Return JSON:
     return data || [];
   }
 
-  private calculateEfficiencyScore(unitCapacity: UnitCapacity[], historicalData: any[]): number {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Database results
+  private calculateEfficiencyScore(unitCapacity: UnitCapacity[], _historicalData: any[]): number {
     // Calculate based on turnaround time, discharge timing, and occupancy optimization
     let score = 80; // Base score
 
@@ -970,6 +976,7 @@ Return JSON:
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- AI response parsing
   private parseJSONArray(response: string): any[] {
     try {
       const jsonMatch = response.match(/\[[\s\S]*\]/);

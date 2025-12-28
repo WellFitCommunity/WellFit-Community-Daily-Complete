@@ -359,7 +359,7 @@ export class AppointmentPrepInstructionsService {
    */
   static getQuickPrepSummary(
     appointmentType: AppointmentType,
-    language: string = 'English'
+    _language: string = 'English'
   ): ServiceResult<string[]> {
     // Quick reference summaries for common appointments
     const quickSummaries: Record<AppointmentType, string[]> = {

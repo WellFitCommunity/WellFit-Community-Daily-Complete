@@ -25,7 +25,7 @@ import {
   categorizeCondition,
   categorizeDiagnosis,
   checkHighRiskDiagnosis,
-  getDaysAgo
+  getDaysAgo as _getDaysAgo
 } from './utils';
 
 // =====================================================

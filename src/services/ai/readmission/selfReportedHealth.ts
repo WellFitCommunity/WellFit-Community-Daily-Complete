@@ -36,7 +36,7 @@ import {
 function extractSymptoms(allCheckIns: Array<{ responses?: Record<string, unknown> }>) {
   const symptoms = allCheckIns
     .filter(c => c.responses?.symptoms)
-    .map(c => c.responses!.symptoms as string);
+    .map(c => (c.responses as Record<string, unknown>).symptoms as string);
 
   const redFlagSymptoms = symptoms.filter(s =>
     RED_FLAG_SYMPTOM_KEYWORDS.some(keyword => s.toLowerCase().includes(keyword))
@@ -53,7 +53,7 @@ function extractVitalTrends(allCheckIns: Array<{ responses?: Record<string, unkn
   const bpReadings = allCheckIns
     .filter(c => c.responses?.blood_pressure)
     .map(c => {
-      const bp = (c.responses!.blood_pressure as string).split('/');
+      const bp = ((c.responses as Record<string, unknown>).blood_pressure as string).split('/');
       return { systolic: parseInt(bp[0]), diastolic: parseInt(bp[1]) };
     });
 
@@ -67,7 +67,7 @@ function extractVitalTrends(allCheckIns: Array<{ responses?: Record<string, unkn
   // Blood sugar readings
   const bloodSugarReadings = allCheckIns
     .filter(c => c.responses?.blood_sugar)
-    .map(c => parseInt(c.responses!.blood_sugar as string));
+    .map(c => parseInt((c.responses as Record<string, unknown>).blood_sugar as string));
 
   // CRITICAL: Preserve exact thresholds - > 250, < 70
   const bsTrendConcerning = bloodSugarReadings.some(bs =>
@@ -78,7 +78,7 @@ function extractVitalTrends(allCheckIns: Array<{ responses?: Record<string, unkn
   // Weight readings
   const weightReadings = allCheckIns
     .filter(c => c.responses?.weight)
-    .map(c => parseFloat(c.responses!.weight as string));
+    .map(c => parseFloat((c.responses as Record<string, unknown>).weight as string));
 
   // CRITICAL: Preserve exact condition - length >= 2 && Math.abs comparison > 5%
   const weightChangeConcerning = weightReadings.length >= 2 &&
@@ -147,7 +147,7 @@ function extractMedicationAdherence(
 function extractSocialActivity(allCheckIns: Array<{ responses?: Record<string, unknown> }>) {
   const socialResponses = allCheckIns
     .filter(c => c.responses?.social_activity)
-    .map(c => c.responses!.social_activity as string);
+    .map(c => (c.responses as Record<string, unknown>).social_activity as string);
 
   const daysHomeAlone = socialResponses.filter(s =>
     HOME_ALONE_KEYWORDS.some(keyword => s.toLowerCase().includes(keyword))

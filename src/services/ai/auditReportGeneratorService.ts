@@ -211,7 +211,7 @@ export class AuditReportGeneratorService {
     reportId: string,
     findingId: string,
     status: FindingStatus,
-    notes?: string
+    _notes?: string
   ): Promise<ServiceResult<void>> {
     try {
       const { data: report, error: fetchError } = await supabase

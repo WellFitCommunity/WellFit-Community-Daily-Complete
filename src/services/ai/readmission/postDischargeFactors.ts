@@ -16,7 +16,7 @@ import { supabase } from '../../../lib/supabaseClient';
 import type { PostDischargeFactors } from '../../../types/readmissionRiskFeatures';
 import type { DischargeContext } from '../readmissionRiskPredictor';
 import { FOLLOW_UP_THRESHOLDS } from '../readmissionModelConfig';
-import { isRecord, daysBetween } from './utils';
+import { isRecord, daysBetween as _daysBetween } from './utils';
 
 // =====================================================
 // TYPES
