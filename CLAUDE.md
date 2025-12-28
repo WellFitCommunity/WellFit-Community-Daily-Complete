@@ -130,7 +130,43 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 4. If `any` is genuinely the only option, add a comment explaining why
 5. Ask Maria if unsure
 
-**Current lint warning count: 1,261** (down from 1,605) - mostly `any` types that must be eliminated.
+### Type Cast Boundaries - `as unknown as X`
+
+**The `as unknown as X` pattern is acceptable ONLY at system boundaries:**
+
+| Allowed (Edge) | Forbidden (Interior) |
+|----------------|----------------------|
+| SDK initialization | Business logic |
+| External API adapters | Domain transformations |
+| Database row transforms | Service-to-service calls |
+| Transport/serialization boundaries | Anywhere types should verify correctness |
+
+**Examples:**
+```typescript
+// ✅ GOOD - SDK initialization boundary
+this.client = new Anthropic(config) as unknown as AIClient;
+
+// ✅ GOOD - Database row transform at query boundary
+const patients = data as unknown as PatientRecord[];
+
+// ✅ GOOD - External callback adapter
+.on('postgres_changes', {}, (payload) =>
+  callback(payload as unknown as TypedPayload)
+)
+
+// ❌ BAD - Cast in business logic
+function calculateRisk(patient: unknown) {
+  const p = patient as unknown as Patient; // NO - fix the caller
+  return p.riskScore * 100;
+}
+
+// ❌ BAD - Cast to fix type errors in core code
+const result = processData(input as unknown as ExpectedType); // NO
+```
+
+**Rule: Casts must never move closer to business logic.** If you need a cast inside a function, the problem is upstream - fix the caller or the interface.
+
+**Current lint warning count: 1,102** (down from 1,605) - mostly `any` types that must be eliminated.
 
 ---
 
