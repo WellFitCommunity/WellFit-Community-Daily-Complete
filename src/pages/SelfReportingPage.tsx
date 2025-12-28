@@ -139,16 +139,19 @@ const SelfReportingPage: React.FC = () => {
   // Initialize speech recognition
   useEffect(() => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition =
-        (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
-      recognitionRef.current = new SpeechRecognition();
+      // Web Speech API types
+      type SpeechRecognitionConstructor = new () => SpeechRecognition;
+      const SpeechRecognitionClass =
+        ((window as unknown as { webkitSpeechRecognition?: SpeechRecognitionConstructor }).webkitSpeechRecognition ||
+        (window as unknown as { SpeechRecognition?: SpeechRecognitionConstructor }).SpeechRecognition) as SpeechRecognitionConstructor;
+      recognitionRef.current = new SpeechRecognitionClass();
 
       if (recognitionRef.current) {
         recognitionRef.current.continuous = false;
         recognitionRef.current.interimResults = false;
         recognitionRef.current.lang = 'en-US';
 
-        recognitionRef.current.onresult = (event: any) => {
+        recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
           const transcript = event.results[0][0].transcript;
 
           if (currentField === 'symptoms') {
@@ -206,7 +209,24 @@ const SelfReportingPage: React.FC = () => {
           return;
         }
 
-        const reports: SelfReportLog[] = (data ?? []).map((r: any) => ({
+        interface SelfReportDbRow {
+          id: string;
+          created_at: string;
+          user_id: string;
+          mood?: string;
+          symptoms?: string | null;
+          activity_description?: string | null;
+          bp_systolic?: number | null;
+          bp_diastolic?: number | null;
+          heart_rate?: number | null;
+          blood_sugar?: number | null;
+          blood_oxygen?: number | null;
+          weight?: number | null;
+          physical_activity?: string | null;
+          social_engagement?: string | null;
+          spo2?: number | null;
+        }
+        const reports: SelfReportLog[] = (data ?? []).map((r: SelfReportDbRow) => ({
           id: r.id,
           created_at: r.created_at,
           user_id: r.user_id,

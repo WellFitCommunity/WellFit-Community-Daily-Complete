@@ -143,9 +143,9 @@ const SetCaregiverPinPage: React.FC = () => {
 
       // Success! Continue to dashboard
       navigate('/dashboard');
-    } catch (e: any) {
-
-      setError(e?.message || 'Failed to set PIN. Please try again.');
+    } catch (e: unknown) {
+      const errMsg = e instanceof Error ? e.message : 'Failed to set PIN. Please try again.';
+      setError(errMsg);
     } finally {
       setLoading(false);
     }

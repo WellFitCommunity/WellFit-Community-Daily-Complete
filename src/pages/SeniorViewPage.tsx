@@ -81,7 +81,7 @@ const SeniorViewPage: React.FC = () => {
 
   // Session state
   const [session, setSession] = useState<CaregiverSession | null>(null);
-  const [sessionValid, setSessionValid] = useState(false);
+  const [_sessionValid, setSessionValid] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 

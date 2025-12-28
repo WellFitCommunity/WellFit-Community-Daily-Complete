@@ -44,7 +44,7 @@ function currency(n: number | null | undefined): string | null {
 
 function normalizeFromLocalById(id?: string | undefined): Recipe | null {
   if (!id) return null;
-  const r: any = allRecipes.find((x: any) => String(x.id) === String(id));
+  const r = allRecipes.find((x) => String(x.id) === String(id));
   if (!r) return null;
   return {
     id: String(r.id),
@@ -65,7 +65,7 @@ export default function MealDetailPage() {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const backTo = (location.state as any)?.from ?? '/dashboard';
+  const backTo = (location.state as { from?: string } | null)?.from ?? '/dashboard';
   const supabase = useSupabaseClient();
   const user = useUser();
 

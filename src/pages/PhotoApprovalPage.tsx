@@ -50,10 +50,10 @@ export default function PhotoApprovalPage() {
       if (error) throw error;
 
       // Transform the data to match our interface (profiles is returned as array from Supabase)
-      const transformedData = (data || []).map((moment: any) => ({
+      const transformedData = (data || []).map((moment) => ({
         ...moment,
         profiles: Array.isArray(moment.profiles) ? moment.profiles[0] : moment.profiles
-      }));
+      })) as CommunityMoment[];
 
       setPendingMoments(transformedData);
     } catch (error) {

@@ -120,8 +120,7 @@ const ReportsPrintPage: React.FC = () => {
         totalCheckIns: checkInCount ?? 0,
         activeUsers: totalUsersCount,
       }));
-    } catch (e: any) {
-
+    } catch (_e: unknown) {
       setError('Failed to load engagement stats.');
     }
   }, [supabase]);
@@ -150,7 +149,25 @@ const ReportsPrintPage: React.FC = () => {
 
       if (err) throw err;
 
-      const list: SelfReportRow[] = (data ?? []).map((r: any) => {
+      interface SelfReportDbRow {
+        id: string;
+        user_id: string;
+        created_at: string;
+        entry_type?: string;
+        mood?: string;
+        symptoms?: string | null;
+        activity_description?: string | null;
+        bp_systolic?: number | null;
+        bp_diastolic?: number | null;
+        heart_rate?: number | null;
+        blood_sugar?: number | null;
+        blood_oxygen?: number | null;
+        weight?: number | null;
+        physical_activity?: string | null;
+        social_engagement?: string | null;
+      }
+      const list: SelfReportRow[] = (data ?? []).map((r: SelfReportDbRow) => {
+        const entry_type = r.entry_type ?? '';
         // Direct column access from self_reports table
         const mood = (r.mood ?? '').toString();
         const symptoms = r.symptoms ?? null;
@@ -176,7 +193,7 @@ const ReportsPrintPage: React.FC = () => {
           id: r.id,
           user_id: r.user_id,
           created_at: r.created_at,
-          entry_type: r.entry_type,
+          entry_type,
           mood,
           symptoms,
           activity_description,
@@ -200,9 +217,9 @@ const ReportsPrintPage: React.FC = () => {
         setRows(list);
         setTruncated(false);
       }
-    } catch (e: any) {
-
-      setError(e?.message || 'Failed to load reports.');
+    } catch (e: unknown) {
+      const errMsg = e instanceof Error ? e.message : 'Failed to load reports.';
+      setError(errMsg);
       setRows([]);
       setTruncated(false);
     } finally {
@@ -224,7 +241,7 @@ const ReportsPrintPage: React.FC = () => {
     setExporting(true);
     try {
       // Helper function to escape CSV values
-      const escapeCsvValue = (value: any): string => {
+      const escapeCsvValue = (value: unknown): string => {
         if (value === null || value === undefined) return '';
         const str = String(value);
         // Escape quotes and wrap in quotes if contains comma, quote, or newline
@@ -235,7 +252,7 @@ const ReportsPrintPage: React.FC = () => {
       };
 
       // Helper function to convert array of objects to CSV
-      const arrayToCsv = (data: any[], headers: string[]): string => {
+      const arrayToCsv = (data: Record<string, unknown>[], headers: string[]): string => {
         const headerRow = headers.map(escapeCsvValue).join(',');
         const dataRows = data.map(row =>
           headers.map(header => escapeCsvValue(row[header])).join(',')
@@ -302,8 +319,8 @@ const ReportsPrintPage: React.FC = () => {
 
       const blob = new Blob([combinedCsv], { type: 'text/csv;charset=utf-8' });
       saveAs(blob, `wellfit_reports_${from}_to_${to}.csv`);
-    } catch (e: any) {
-      const msg = e?.message || String(e);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
       alert(`Failed to export CSV: ${msg}`);
     } finally {
       setExporting(false);

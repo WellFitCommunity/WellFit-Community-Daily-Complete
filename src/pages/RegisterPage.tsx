@@ -228,7 +228,7 @@ const RegisterPage: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      const data = await res.json().catch(() => ({} as any));
+      const data = await res.json().catch(() => ({} as Record<string, unknown>));
 
       if (!res.ok || data?.error) {
         // Handle "already registered" case - redirect to login
@@ -250,9 +250,10 @@ const RegisterPage: React.FC = () => {
       // success → freeze current submission; ignore late captcha timers
       completedRef.current = true;
       navigate('/verify', { state: { phone: normalizedPhone }, replace: true });
-    } catch (err: any) {
-      if (!completedRef.current) setError(err?.message || 'Registration failed. Please try again.');
-      try { if (!completedRef.current) hcaptchaRef.current?.reset?.(); } catch {}
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Registration failed. Please try again.';
+      if (!completedRef.current) setError(errMsg);
+      try { if (!completedRef.current) hcaptchaRef.current?.reset?.(); } catch { /* ignore */ }
       if (!completedRef.current) setHcaptchaToken('');
     } finally {
       setLoading(false);

@@ -145,8 +145,7 @@ const ProfilePage: React.FC = () => {
 
       setProfile({ ...profile, avatar_url: urlData.publicUrl });
       setMessage({ type: 'success', text: 'Profile photo updated successfully!' });
-    } catch (error: any) {
-
+    } catch (_error: unknown) {
       setMessage({ type: 'error', text: 'Failed to upload photo. Please try again.' });
     } finally {
       setUploading(false);

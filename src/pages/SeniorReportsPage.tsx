@@ -206,11 +206,11 @@ const SeniorReportsPage: React.FC = () => {
       };
     }
 
-    const heartRates = checkIns.filter(c => c.heart_rate).map(c => c.heart_rate!);
-    const bpSystolic = checkIns.filter(c => c.bp_systolic).map(c => c.bp_systolic!);
-    const bpDiastolic = checkIns.filter(c => c.bp_diastolic).map(c => c.bp_diastolic!);
-    const oxygen = checkIns.filter(c => c.pulse_oximeter).map(c => c.pulse_oximeter!);
-    const glucose = checkIns.filter(c => c.glucose_mg_dl).map(c => c.glucose_mg_dl!);
+    const heartRates = checkIns.filter(c => c.heart_rate != null).map(c => c.heart_rate as number);
+    const bpSystolic = checkIns.filter(c => c.bp_systolic != null).map(c => c.bp_systolic as number);
+    const bpDiastolic = checkIns.filter(c => c.bp_diastolic != null).map(c => c.bp_diastolic as number);
+    const oxygen = checkIns.filter(c => c.pulse_oximeter != null).map(c => c.pulse_oximeter as number);
+    const glucose = checkIns.filter(c => c.glucose_mg_dl != null).map(c => c.glucose_mg_dl as number);
 
     const moodBreakdown: Record<string, number> = {};
     checkIns.forEach(c => {

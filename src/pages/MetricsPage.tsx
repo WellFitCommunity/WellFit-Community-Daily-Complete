@@ -31,8 +31,9 @@ const MetricsPage: React.FC = () => {
           userId: null,
         });
         if (isMounted) setRows(data);
-      } catch (err: any) {
-        if (isMounted) setErrorMsg(err.message ?? String(err));
+      } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        if (isMounted) setErrorMsg(errMsg);
       } finally {
         if (isMounted) setLoading(false);
       }
