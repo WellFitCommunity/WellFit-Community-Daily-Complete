@@ -119,9 +119,21 @@ export interface CursorPaginationOptions {
   direction?: 'forward' | 'backward'; // Pagination direction
 }
 
+/**
+ * Type for Supabase query builders that support .range() and .select()
+ *
+ * Using a flexible interface that works with PostgrestFilterBuilder and
+ * PostgrestTransformBuilder from @supabase/postgrest-js. The builders
+ * are both chainable AND thenable (can be awaited directly).
+ *
+ * We use `unknown` return types to avoid version-specific type conflicts
+ * with the Supabase client library.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type RangeQueryable = {
-  select: (columns: string, options?: Record<string, unknown>) => Promise<{ count: number | null; error: { message: string } | null }>;
-  range: (from: number, to: number) => Promise<{ data: unknown[] | null; error: { message: string } | null }>;
+  select: (columns: string, options?: { count?: 'exact' | 'planned' | 'estimated'; head?: boolean }) => unknown;
+  range: (from: number, to: number) => unknown;
+  then?: (onfulfilled?: (value: unknown) => unknown) => unknown;
 };
 
 type CursorQueryable<TItem extends Record<string, unknown>> = {
@@ -181,31 +193,37 @@ export function buildPaginationMeta(
  * const result = await applyPagination(query, { page: 2, pageSize: 50 });
  */
 export async function applyPagination<T>(
-  query: RangeQueryable,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  query: any,
   options: PaginationOptions,
   defaultPageSize: number = PAGINATION_LIMITS.DEFAULT
 ): Promise<PaginatedResult<T>> {
   const { offset, limit, page, pageSize } = calculatePagination(options, defaultPageSize);
 
   // Get total count (expensive, consider caching)
-  const countQuery = query;
-  const { count, error: countError } = await countQuery.select('*', { count: 'exact', head: true });
+  const countResult = await query.select('*', { count: 'exact', head: true }) as {
+    count: number | null;
+    error: { message: string } | null;
+  };
 
-  if (countError) {
-    throw new Error(`Failed to get total count: ${countError.message}`);
+  if (countResult.error) {
+    throw new Error(`Failed to get total count: ${countResult.error.message}`);
   }
 
-  const total = count || 0;
+  const total = countResult.count || 0;
 
   // Get paginated data
-  const { data, error } = await query.range(offset, offset + limit - 1);
+  const dataResult = await query.range(offset, offset + limit - 1) as {
+    data: unknown[] | null;
+    error: { message: string } | null;
+  };
 
-  if (error) {
-    throw new Error(`Pagination query failed: ${error.message}`);
+  if (dataResult.error) {
+    throw new Error(`Pagination query failed: ${dataResult.error.message}`);
   }
 
   return {
-    data: (data as T[]) || [],
+    data: (dataResult.data as T[]) || [],
     meta: buildPaginationMeta(total, page, pageSize),
   };
 }
@@ -219,17 +237,21 @@ export async function applyPagination<T>(
  * const data = await applyLimit(query, PAGINATION_LIMITS.LABS);
  */
 export async function applyLimit<T>(
-  query: RangeQueryable,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  query: any,
   limit: number = PAGINATION_LIMITS.DEFAULT,
   offset: number = 0
 ): Promise<T[]> {
-  const { data, error } = await query.range(offset, offset + limit - 1);
+  const result = await query.range(offset, offset + limit - 1) as {
+    data: unknown[] | null;
+    error: { message: string } | null;
+  };
 
-  if (error) {
-    throw new Error(`Query with limit failed: ${error.message}`);
+  if (result.error) {
+    throw new Error(`Query with limit failed: ${result.error.message}`);
   }
 
-  return (data as T[]) || [];
+  return (result.data as T[]) || [];
 }
 
 /**
@@ -367,7 +389,8 @@ export async function applyCursorPagination<T extends Record<string, unknown>>(
  * Client-side code should not directly access PHI data.
  */
 export async function applyPHIPagination<T>(
-  query: RangeQueryable,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  query: any,
   options: PaginationOptions,
   auditContext: {
     userId: string;

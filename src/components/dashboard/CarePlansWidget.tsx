@@ -30,7 +30,7 @@ const CarePlansWidget: React.FC = () => {
         setCurrentPlan(currentResult.data);
       }
       if (activeResult.success && activeResult.data) {
-        setActivePlans(activeResult.data);
+        setActivePlans(activeResult.data as FHIRCarePlan[]);
       }
     } catch (error) {
 

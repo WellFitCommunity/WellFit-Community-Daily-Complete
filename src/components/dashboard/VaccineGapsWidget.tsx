@@ -30,7 +30,7 @@ const VaccineGapsWidget: React.FC = () => {
     try {
       const result = await FHIRService.Immunization.getVaccineGaps(user.id);
       if (result.success && Array.isArray(result.data)) {
-        setGaps(result.data.slice(0, 3)); // Show top 3 gaps
+        setGaps((result.data as unknown as VaccineGap[]).slice(0, 3)); // Show top 3 gaps
       }
     } catch (error) {
 

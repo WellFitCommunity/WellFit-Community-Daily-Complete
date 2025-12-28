@@ -72,14 +72,14 @@ export class CarePlanService {
    * @param patientId - FHIR Patient resource ID
    * @returns Active CarePlan resources
    */
-  static async getActive(patientId: string): Promise<FHIRApiResponse<RpcRow[]>> {
+  static async getActive(patientId: string): Promise<FHIRApiResponse<FHIRCarePlan[]>> {
     try {
       const { data, error } = await supabase.rpc('get_active_care_plans', {
         p_patient_id: patientId,
       });
 
       if (error) throw error;
-      return { success: true, data: (data as RpcRow[]) || [] };
+      return { success: true, data: (data as FHIRCarePlan[]) || [] };
     } catch (err: unknown) {
       return {
         success: false,
@@ -97,7 +97,7 @@ export class CarePlanService {
    * @param patientId - FHIR Patient resource ID
    * @returns Current CarePlan resource or null
    */
-  static async getCurrent(patientId: string): Promise<FHIRApiResponse<RpcRow | null>> {
+  static async getCurrent(patientId: string): Promise<FHIRApiResponse<FHIRCarePlan | null>> {
     try {
       const { data, error } = await supabase.rpc('get_current_care_plan', {
         p_patient_id: patientId,
@@ -105,7 +105,7 @@ export class CarePlanService {
 
       if (error) throw error;
 
-      const rows = (data as RpcRow[]) || [];
+      const rows = (data as FHIRCarePlan[]) || [];
       return { success: true, data: rows.length > 0 ? rows[0] : null };
     } catch (err: unknown) {
       return {
@@ -125,7 +125,7 @@ export class CarePlanService {
    * @param status - FHIR CarePlan status
    * @returns Filtered CarePlan resources
    */
-  static async getByStatus(patientId: string, status: string): Promise<FHIRApiResponse<RpcRow[]>> {
+  static async getByStatus(patientId: string, status: string): Promise<FHIRApiResponse<FHIRCarePlan[]>> {
     try {
       const { data, error } = await supabase.rpc('get_care_plans_by_status', {
         p_patient_id: patientId,
@@ -133,7 +133,7 @@ export class CarePlanService {
       });
 
       if (error) throw error;
-      return { success: true, data: (data as RpcRow[]) || [] };
+      return { success: true, data: (data as FHIRCarePlan[]) || [] };
     } catch (err: unknown) {
       return {
         success: false,
@@ -152,7 +152,7 @@ export class CarePlanService {
    * @param category - FHIR CarePlan category
    * @returns Filtered CarePlan resources
    */
-  static async getByCategory(patientId: string, category: string): Promise<FHIRApiResponse<RpcRow[]>> {
+  static async getByCategory(patientId: string, category: string): Promise<FHIRApiResponse<FHIRCarePlan[]>> {
     try {
       const { data, error } = await supabase.rpc('get_care_plans_by_category', {
         p_patient_id: patientId,
@@ -160,7 +160,7 @@ export class CarePlanService {
       });
 
       if (error) throw error;
-      return { success: true, data: (data as RpcRow[]) || [] };
+      return { success: true, data: (data as FHIRCarePlan[]) || [] };
     } catch (err: unknown) {
       return {
         success: false,

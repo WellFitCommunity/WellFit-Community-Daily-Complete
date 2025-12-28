@@ -46,8 +46,11 @@ describe('EMS Service - Utility Functions', () => {
     });
 
     it('should handle null/undefined vitals', () => {
-      const result1 = formatVitals(null);
-      const result2 = formatVitals(undefined);
+      // Testing defensive behavior with invalid inputs
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result1 = formatVitals(null as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result2 = formatVitals(undefined as any);
       const result3 = formatVitals({});
 
       expect(result1).toBe('No vitals recorded');
@@ -294,8 +297,11 @@ describe('EMS Service - Utility Functions', () => {
     });
 
     it('should handle null inputs without crashing', () => {
-      expect(() => formatVitals(null)).not.toThrow();
-      expect(() => formatVitals(undefined)).not.toThrow();
+      // Testing defensive behavior with invalid inputs
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect(() => formatVitals(null as any)).not.toThrow();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect(() => formatVitals(undefined as any)).not.toThrow();
       expect(() => formatVitals({})).not.toThrow();
     });
 

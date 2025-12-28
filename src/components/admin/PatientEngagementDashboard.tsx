@@ -51,7 +51,7 @@ const PatientEngagementDashboard: React.FC = () => {
         throw new Error(fetchError.message || 'Failed to load engagement data');
       }
 
-      setEngagementData(data || []);
+      setEngagementData((data as unknown as EngagementScore[]) || []);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load engagement data');
     } finally {

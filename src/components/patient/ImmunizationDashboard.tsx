@@ -28,7 +28,8 @@ const ImmunizationDashboard: React.FC<ImmunizationDashboardProps> = ({ userId, r
   // React Query hooks for automatic caching
   const { data: immunizations = [], isLoading: loading, error: queryError } = useImmunizations(userId);
   const { data: completedImmunizations = [] } = useCompletedImmunizations(userId);
-  const { data: vaccineGaps = [] } = useVaccineGaps(userId);
+  const { data: vaccineGapsData = [] } = useVaccineGaps(userId);
+  const vaccineGaps = vaccineGapsData as unknown as VaccineGap[];
 
   const error = queryError?.message || null;
 

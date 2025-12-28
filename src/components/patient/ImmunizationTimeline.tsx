@@ -24,7 +24,7 @@ const ImmunizationTimeline: React.FC<ImmunizationTimelineProps> = ({ userId, onB
     try {
       const result = await FHIRService.Immunization.getHistory(userId, timeRange);
       if (result.success && result.data) {
-        setImmunizations(result.data);
+        setImmunizations(result.data as unknown as FHIRImmunization[]);
       }
     } catch (error) {
 

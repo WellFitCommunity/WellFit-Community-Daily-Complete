@@ -223,41 +223,7 @@ describe('EnhancedVoiceCommandsService', () => {
     });
   });
 
-  describe('getContextualSuggestions', () => {
-    it('should return universal suggestions', () => {
-      const suggestions = EnhancedVoiceCommandsService.getContextualSuggestions({});
-      expect(suggestions).toContain('Go to dashboard');
-      expect(suggestions.length).toBeLessThanOrEqual(5);
-    });
-
-    it('should include patient-specific suggestions on patient page', () => {
-      const suggestions = EnhancedVoiceCommandsService.getContextualSuggestions({
-        currentPage: '/patient/123',
-      });
-      expect(suggestions).toContain('Show vitals');
-    });
-
-    it('should include schedule-specific suggestions on schedule page', () => {
-      const suggestions = EnhancedVoiceCommandsService.getContextualSuggestions({
-        currentPage: '/schedule',
-      });
-      expect(suggestions).toContain('Show tomorrow\'s appointments');
-    });
-
-    it('should include physician-specific suggestions for physicians', () => {
-      const suggestions = EnhancedVoiceCommandsService.getContextualSuggestions({
-        userRole: 'physician',
-      });
-      expect(suggestions).toContain('Sign orders');
-    });
-
-    it('should include nurse-specific suggestions for nurses', () => {
-      const suggestions = EnhancedVoiceCommandsService.getContextualSuggestions({
-        userRole: 'nurse',
-      });
-      expect(suggestions).toContain('Document vitals');
-    });
-  });
+  // Note: getContextualSuggestions tests removed - method was removed during service refactor
 
   describe('generateSpokenResponse', () => {
     it('should return clarification prompt when needed', () => {
@@ -274,7 +240,7 @@ describe('EnhancedVoiceCommandsService', () => {
       result.primaryIntent.category = 'unknown';
 
       const spoken = EnhancedVoiceCommandsService.generateSpokenResponse(result);
-      expect(spoken).toContain('didn\'t understand');
+      expect(spoken).toMatch(/didn.t understand/);
     });
 
     it('should return response text for recognized commands', () => {
@@ -284,14 +250,5 @@ describe('EnhancedVoiceCommandsService', () => {
     });
   });
 
-  describe('logCommand', () => {
-    it('should log command successfully', async () => {
-      const request = createMockVoiceRequest();
-      const response = createMockVoiceResponse();
-
-      const result = await EnhancedVoiceCommandsService.logCommand(request, response, true);
-
-      expect(result.success).toBe(true);
-    });
-  });
+  // Note: logCommand tests removed - method was removed during service refactor
 });
