@@ -251,7 +251,11 @@ export class SOAPNoteAIService {
 
       if (error) throw error;
 
-      const history = (data || []).map((log: any) => ({
+      interface SOAPLogRow {
+        created_at: string;
+        model: string;
+      }
+      const history = ((data || []) as SOAPLogRow[]).map((log) => ({
         generated_at: log.created_at,
         model: log.model,
         template_style: 'standard',

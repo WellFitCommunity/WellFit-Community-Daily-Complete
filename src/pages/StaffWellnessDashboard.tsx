@@ -12,10 +12,8 @@ import { useNavigate } from 'react-router-dom';
 import {
   Heart,
   Brain,
-  Clock,
   Users,
   TrendingUp,
-  TrendingDown,
   AlertTriangle,
   Coffee,
   FileText,
@@ -24,8 +22,6 @@ import {
   Smile,
   Frown,
   Meh,
-  Sun,
-  Moon,
   RefreshCw,
 } from 'lucide-react';
 

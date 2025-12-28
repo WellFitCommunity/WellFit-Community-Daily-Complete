@@ -48,7 +48,7 @@ export interface SharingPermissions {
   allowed_third_parties?: string[];
   data_types_allowed?: string[];
   data_types_restricted?: string[];
-  [key: string]: any;
+  [key: string]: boolean | string | string[] | undefined;
 }
 
 export interface Consent {
@@ -68,7 +68,7 @@ export interface Consent {
   withdrawal_reason?: string;
   sharing_permissions: SharingPermissions;
   witness_id?: string;
-  audit_trail: any[];
+  audit_trail: Array<{ action: string; timestamp: string; user_id?: string; details?: string }>;
   ip_address?: string;
   user_agent?: string;
   notes?: string;
@@ -97,7 +97,7 @@ export interface ConsentVerificationLog {
   consent_found: boolean;
   consent_expired: boolean;
   consent_withdrawn: boolean;
-  additional_metadata: any;
+  additional_metadata: Record<string, unknown>;
   verified_at: string;
 }
 
@@ -702,7 +702,7 @@ export class ConsentManagementService {
     consentFound: boolean;
     consentExpired: boolean;
     consentWithdrawn: boolean;
-    additionalMetadata?: any;
+    additionalMetadata?: Record<string, unknown>;
   }): Promise<void> {
     try {
       const { data: session } = await supabase.auth.getSession();

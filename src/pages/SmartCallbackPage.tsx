@@ -5,12 +5,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Alert, AlertDescription } from '../components/ui/alert';
 import SMARTClient from '../lib/smartOnFhir';
 
+// FHIR Patient resource structure (minimal for display)
+interface FHIRPatientData {
+  name?: Array<{
+    given?: string[];
+    family?: string;
+  }>;
+}
+
 const SmartCallbackPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
   const [message, setMessage] = useState('Connecting to EHR system...');
-  const [patientData, setPatientData] = useState<any>(null);
+  const [patientData, setPatientData] = useState<FHIRPatientData | null>(null);
 
   useEffect(() => {
     const handleSmartCallback = async () => {

@@ -19,7 +19,7 @@ export interface KioskSession {
   check_out_time?: string;
   language: 'en' | 'es';
   privacy_consent: boolean;
-  session_data: Record<string, any>;
+  session_data: Record<string, unknown>;
   created_at: string;
 }
 
@@ -771,7 +771,7 @@ export class CHWService {
     severity: 'low' | 'medium' | 'high' | 'critical';
     patient_id?: string;
     visit_id?: string;
-    details?: Record<string, any>;
+    details?: Record<string, unknown>;
     kiosk_id?: string;
   }): Promise<void> {
     try {

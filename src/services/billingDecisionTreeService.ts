@@ -4,7 +4,7 @@
 
 import { supabase } from '../lib/supabaseClient';
 import { auditLogger } from './auditLogger';
-import { BillingService } from './billingService';
+import type { BillingService as _BillingService } from './billingService';
 import { SDOHBillingService } from './sdohBillingService';
 import type {
   DecisionTreeInput,

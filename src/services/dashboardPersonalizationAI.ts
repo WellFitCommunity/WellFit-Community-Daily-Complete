@@ -167,7 +167,11 @@ Be concise and actionable. This powers real-time UI reorganization.`;
       const insights: PersonalizationInsight[] = [];
 
       // Extract predictions
-      parsed.predictions?.forEach((pred: any) => {
+      interface AIPrediction {
+        section: string;
+        confidence?: number;
+      }
+      (parsed.predictions as AIPrediction[] | undefined)?.forEach((pred) => {
         insights.push({
           type: 'pattern',
           message: `You usually start with: ${pred.section}`,

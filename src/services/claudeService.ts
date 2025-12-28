@@ -236,7 +236,7 @@ interface AnthropicClient {
     create: (params: {
       model: string;
       max_tokens: number;
-      messages: Array<{ role: string; content: string }>;
+      messages: Array<{ role: 'user' | 'assistant'; content: string }>;
       metadata?: { user_id: string };
     }) => Promise<{
       content: Array<{ type: string; text?: string }>;
@@ -303,7 +303,7 @@ class ClaudeService {
         timeout: env.VITE_CLAUDE_TIMEOUT,
         dangerouslyAllowBrowser: true, // Required for client-side usage
         maxRetries: 3
-      });
+      }) as unknown as AnthropicClient;
 
       // Test the connection with a minimal request
       const healthCheckResult = await this.healthCheck();

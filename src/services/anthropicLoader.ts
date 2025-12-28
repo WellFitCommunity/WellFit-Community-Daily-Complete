@@ -1,5 +1,8 @@
 // Lazy loader for Anthropic SDK - reduces initial bundle by ~400KB
-let AnthropicSDK: any = null;
+import type Anthropic from '@anthropic-ai/sdk';
+
+type AnthropicConstructor = typeof Anthropic;
+let AnthropicSDK: AnthropicConstructor | null = null;
 
 export async function loadAnthropicSDK() {
   if (AnthropicSDK) {

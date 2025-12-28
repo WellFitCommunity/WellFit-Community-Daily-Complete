@@ -64,7 +64,7 @@ class AuditLogger {
   /**
    * Core audit logging method
    */
-  private async log(entry: Partial<AuditLogEntry>, level: AuditLogLevel = 'info'): Promise<void> {
+  private async log(entry: Partial<AuditLogEntry>, _level: AuditLogLevel = 'info'): Promise<void> {
     // Development logging disabled for HIPAA compliance
     // All audit logs are stored in audit_logs table
 

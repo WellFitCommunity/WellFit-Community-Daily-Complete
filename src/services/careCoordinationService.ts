@@ -18,7 +18,7 @@ export interface CarePlan {
   goals: CarePlanGoal[];
   interventions: CarePlanIntervention[];
   barriers?: CarePlanBarrier[];
-  sdoh_factors?: Record<string, any>;
+  sdoh_factors?: Record<string, unknown>;
   sdoh_assessment_id?: string;
   care_team_members?: CarePlanTeamMember[];
   primary_coordinator_id?: string;
@@ -26,8 +26,8 @@ export interface CarePlan {
   end_date?: string;
   last_reviewed_date?: string;
   next_review_date?: string;
-  outcome_measures?: Record<string, any>;
-  success_metrics?: Record<string, any>;
+  outcome_measures?: Record<string, unknown>;
+  success_metrics?: Record<string, unknown>;
   clinical_notes?: string;
 }
 
@@ -71,10 +71,10 @@ export interface CareTeamAlert {
   priority: 'routine' | 'urgent' | 'emergency';
   title: string;
   description: string;
-  alert_data?: Record<string, any>;
+  alert_data?: Record<string, unknown>;
   assigned_to?: string;
   status: 'active' | 'acknowledged' | 'in_progress' | 'resolved' | 'dismissed';
-  actions_taken?: any[];
+  actions_taken?: Array<{ action: string; performed_at: string; performed_by?: string }>;
 }
 
 export class CareCoordinationService {
@@ -195,7 +195,7 @@ export class CareCoordinationService {
   static async completeCarePlan(
     planId: string,
     outcomeNotes: string,
-    successMetrics?: Record<string, any>
+    successMetrics?: Record<string, unknown>
   ): Promise<CarePlan> {
     return this.updateCarePlan(planId, {
       status: 'completed',
@@ -244,7 +244,7 @@ export class CareCoordinationService {
     actionNotes?: string
   ): Promise<CareTeamAlert> {
     try {
-      const updateData: any = { status };
+      const updateData: Record<string, unknown> = { status };
 
       if (status === 'acknowledged') {
         updateData.acknowledged_at = new Date().toISOString();
@@ -332,20 +332,20 @@ export class CareCoordinationService {
     planType: CarePlan['plan_type']
   ): Promise<Partial<CarePlan>> {
     try {
-      const { data: profile } = await supabase
+      const { data: _profile } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', patientId)
         .single();
 
-      const { data: readmissions } = await supabase
+      const { data: _readmissions } = await supabase
         .from('patient_readmissions')
         .select('*')
         .eq('patient_id', patientId)
         .order('admission_date', { ascending: false })
         .limit(5);
 
-      const { data: sdohAssessment } = await supabase
+      const { data: _sdohAssessment } = await supabase
         .from('sdoh_assessments')
         .select('*')
         .eq('patient_id', patientId)

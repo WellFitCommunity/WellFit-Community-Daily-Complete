@@ -1,8 +1,7 @@
 // src/services/authService.ts
 import { supabase } from '../lib/supabaseClient';
 import type { User, Session } from '@supabase/supabase-js';
-import type { ServiceResult } from './_base';
-import { success, failure, withServiceWrapper } from './_base';
+import { withServiceWrapper } from './_base';
 
 export function toE164(phone: string): string {
   const digits = phone.replace(/[^\d]/g, '');

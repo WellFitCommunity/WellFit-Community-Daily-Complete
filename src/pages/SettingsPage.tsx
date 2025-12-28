@@ -63,16 +63,22 @@ const SettingsPage: React.FC = () => {
         }
 
         if (profile) {
+          const fontSize = profile.font_size as UserSettings['font_size'] | null;
+          const timezone = profile.timezone as string | null;
+          const reminderTime = profile.daily_reminder_time as string | null;
+          const careTeamNotif = profile.care_team_notifications as boolean | null;
+          const communityNotif = profile.community_notifications as boolean | null;
+
           setSettings({
-            font_size: (profile.font_size as any) || 'medium',
+            font_size: fontSize || 'medium',
             notifications_enabled: profile.notifications_enabled ?? true,
             emergency_contact_name: profile.emergency_contact_name || '',
             emergency_contact_phone: profile.emergency_contact_phone || '',
             preferred_name: profile.first_name || '',
-            timezone: (profile.timezone as any) || 'America/New_York',
-            daily_reminder_time: (profile.daily_reminder_time as any) || '09:00',
-            care_team_notifications: (profile.care_team_notifications as any) ?? true,
-            community_notifications: (profile.community_notifications as any) ?? true,
+            timezone: timezone || 'America/New_York',
+            daily_reminder_time: reminderTime || '09:00',
+            care_team_notifications: careTeamNotif ?? true,
+            community_notifications: communityNotif ?? true,
           });
         }
       } catch (error) {
@@ -120,7 +126,7 @@ const SettingsPage: React.FC = () => {
         settings.font_size === 'large' ? '18px' :
         settings.font_size === 'extra-large' ? '22px' : '16px';
 
-    } catch (error: any) {
+    } catch (_error: unknown) {
 
       setMessage({ type: 'error', text: t.settings.saveFailed });
     } finally {
@@ -305,7 +311,7 @@ const SettingsPage: React.FC = () => {
                               key={option.value}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                const newSize = option.value as any;
+                                const newSize = option.value as UserSettings['font_size'];
                                 setSettings({ ...settings, font_size: newSize });
                                 // Apply immediately
                                 document.documentElement.style.fontSize =

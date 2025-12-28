@@ -21,7 +21,7 @@ export interface BehaviorEvent {
   sectionId?: string;
   actionId?: string;
   featureId?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   timestamp: Date;
   timeOfDay: 'morning' | 'afternoon' | 'evening' | 'night';
   dayOfWeek: number; // 0-6 (Sunday-Saturday)
@@ -168,7 +168,7 @@ function calculateBehaviorStats(events: BehaviorEvent[]): Omit<UserBehaviorProfi
     stats.timeOfDayMap.forEach((count, tod) => {
       if (count > maxCount) {
         maxCount = count;
-        preferredTimeOfDay = tod as any;
+        preferredTimeOfDay = tod as typeof preferredTimeOfDay;
       }
     });
 

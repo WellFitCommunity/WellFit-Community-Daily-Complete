@@ -20,7 +20,7 @@
  * No access to other tenants or platform-level settings.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../contexts/AuthContext';
 import RequireAdminAuth from '../components/auth/RequireAdminAuth';
@@ -1020,7 +1020,7 @@ const OverviewDashboard: React.FC = () => {
 
 const TenantITDashboard: React.FC = () => {
   const user = useUser();
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<ITTabKey>('overview');
 
   const tabs = [

@@ -192,7 +192,7 @@ export class CCMAutopilotService {
 
       // Check if any claim has CCM codes
       for (const claim of data) {
-        const lines = (claim as any).claim_lines || [];
+        const lines = (claim as { claim_lines?: Array<{ procedure_code: string }> }).claim_lines || [];
         for (const line of lines) {
           if (line.procedure_code === '99490' || line.procedure_code === '99439') {
             return true;

@@ -27,7 +27,7 @@ const WordFind: React.FC = () => {
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
   const supabase = useSupabaseClient();
-  const user = useUser();
+  const _user = useUser();
   const { branding } = useBranding();
 
   const todayIndex = useMemo(() => (new Date().getDate() - 1) % dailyThemes.length, []);
@@ -254,10 +254,18 @@ const WordFind: React.FC = () => {
             try {
               const today = new Date().toISOString().split('T')[0];
               const stored = localStorage.getItem(TIME_TRACKING_KEY);
-              let timeData: any = {};
+
+              interface TimeEntry {
+                timestamp: string;
+                completionTime: number;
+                wordsFound: number;
+                theme: string;
+              }
+              type TimeData = Record<string, TimeEntry[]>;
+              let timeData: TimeData = {};
 
               if (stored) {
-                timeData = JSON.parse(stored);
+                timeData = JSON.parse(stored) as TimeData;
               }
 
               if (!timeData[today]) {

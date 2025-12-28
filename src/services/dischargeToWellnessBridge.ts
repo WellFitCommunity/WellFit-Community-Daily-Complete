@@ -153,7 +153,7 @@ export class DischargeToWellnessBridgeService {
    */
   private static async sendWellnessInvitation(
     patientId: string,
-    profile: any,
+    profile: { first_name?: string; phone?: string; email?: string },
     accessCode: string,
     dischargePlan: DischargePlan,
     method: 'sms' | 'email' | 'app',
@@ -228,7 +228,7 @@ Questions? Call your care coordinator anytime.`;
    */
   static async analyzeCheckInForReadmissionRisk(
     checkIn: DailyCheckIn,
-    responses: Record<string, any>
+    responses: Record<string, unknown>
   ): Promise<DischargeToWellnessServiceResponse<EnhancedCheckInResponse>> {
     try {
       // Get discharge plan to understand diagnosis
@@ -377,7 +377,7 @@ Questions? Call your care coordinator anytime.`;
    */
   private static async calculateReadmissionRisk(
     checkIn: DailyCheckIn,
-    responses: Record<string, any>,
+    responses: Record<string, unknown>,
     dischargePlan: DischargePlan,
     warningSignsDetected: DiagnosisSpecificWarningSign[]
   ): Promise<ReadmissionRiskAnalysis> {
@@ -443,7 +443,7 @@ Questions? Call your care coordinator anytime.`;
    */
   private static async generateAIAnalysisSummary(
     checkIn: DailyCheckIn,
-    responses: Record<string, any>,
+    responses: Record<string, unknown>,
     dischargePlan: DischargePlan,
     riskAnalysis: ReadmissionRiskAnalysis
   ): Promise<string> {
@@ -554,9 +554,12 @@ Provide a 2-3 sentence clinical summary. Focus on:
       }
 
       // Check for low mood pattern
-      const moodScores = recentCheckIns
-        .map((c: any) => c.responses?.mood_rating || c.responses?.feeling)
-        .filter((score: any) => typeof score === 'number');
+      interface CheckInWithResponses {
+        responses?: { mood_rating?: number; feeling?: number; stress_level?: number };
+      }
+      const moodScores = (recentCheckIns as CheckInWithResponses[])
+        .map((c) => c.responses?.mood_rating || c.responses?.feeling)
+        .filter((score): score is number => typeof score === 'number');
 
       const consecutiveLowMoodDays = this.countConsecutiveLowScores(
         moodScores,
@@ -564,9 +567,9 @@ Provide a 2-3 sentence clinical summary. Focus on:
       );
 
       // Check for high stress pattern
-      const stressScores = recentCheckIns
-        .map((c: any) => c.responses?.stress_level)
-        .filter((score: any) => typeof score === 'number');
+      const stressScores = (recentCheckIns as CheckInWithResponses[])
+        .map((c) => c.responses?.stress_level)
+        .filter((score): score is number => typeof score === 'number');
 
       const consecutiveHighStressDays = this.countConsecutiveHighScores(
         stressScores,
@@ -753,24 +756,42 @@ Takes only 2 minutes. Your responses help your care team support you better.`;
       if (patientsError) throw new Error(`Dashboard query failed: ${patientsError.message}`);
 
       // Calculate metrics
+      interface DashboardPatient {
+        wellness_enrolled?: boolean;
+        needs_attention?: boolean;
+        readmission_risk_category?: string;
+        consecutive_missed_check_ins?: number;
+        active_alerts_count?: number;
+        highest_alert_severity?: string;
+        check_in_adherence_percentage?: number;
+        readmission_risk_score?: number;
+        discharge_diagnosis?: string;
+        mental_health_risk_level?: string;
+        has_recent_mental_health_screening?: boolean;
+        phq9_score_latest?: number | null;
+        gad7_score_latest?: number | null;
+        mood_trend?: string;
+        stress_trend?: string;
+      }
+      const typedPatients = patients as DashboardPatient[] | null;
       const metrics: CareTeamDashboardMetrics = {
-        total_discharged_patients: patients?.length || 0,
-        patients_enrolled_in_wellness: patients?.filter((p: any) => p.wellness_enrolled).length || 0,
-        enrollment_rate_percentage: patients?.length
-          ? Math.round((patients.filter((p: any) => p.wellness_enrolled).length / patients.length) * 100)
+        total_discharged_patients: typedPatients?.length || 0,
+        patients_enrolled_in_wellness: typedPatients?.filter((p) => p.wellness_enrolled).length || 0,
+        enrollment_rate_percentage: typedPatients?.length
+          ? Math.round((typedPatients.filter((p) => p.wellness_enrolled).length / typedPatients.length) * 100)
           : 0,
-        patients_needing_attention: patients?.filter((p: any) => p.needs_attention).length || 0,
-        high_risk_patients: patients?.filter((p: any) => ['high', 'very_high'].includes(p.readmission_risk_category)).length || 0,
-        missed_check_ins_count: patients?.filter((p: any) => p.consecutive_missed_check_ins >= 3).length || 0,
-        active_alerts: patients?.reduce((sum: number, p: any) => sum + (p.active_alerts_count || 0), 0) || 0,
-        critical_alerts: patients?.filter((p: any) => p.highest_alert_severity === 'critical').length || 0,
-        avg_check_in_adherence: patients?.length
-          ? Math.round(patients.reduce((sum: number, p: any) => sum + (p.check_in_adherence_percentage || 0), 0) / patients.length)
+        patients_needing_attention: typedPatients?.filter((p) => p.needs_attention).length || 0,
+        high_risk_patients: typedPatients?.filter((p) => ['high', 'very_high'].includes(p.readmission_risk_category || '')).length || 0,
+        missed_check_ins_count: typedPatients?.filter((p) => (p.consecutive_missed_check_ins || 0) >= 3).length || 0,
+        active_alerts: typedPatients?.reduce((sum, p) => sum + (p.active_alerts_count || 0), 0) || 0,
+        critical_alerts: typedPatients?.filter((p) => p.highest_alert_severity === 'critical').length || 0,
+        avg_check_in_adherence: typedPatients?.length
+          ? Math.round(typedPatients.reduce((sum, p) => sum + (p.check_in_adherence_percentage || 0), 0) / typedPatients.length)
           : 0,
-        avg_readmission_risk_score: patients?.length
-          ? Math.round(patients.reduce((sum: number, p: any) => sum + (p.readmission_risk_score || 0), 0) / patients.length)
+        avg_readmission_risk_score: typedPatients?.length
+          ? Math.round(typedPatients.reduce((sum, p) => sum + (p.readmission_risk_score || 0), 0) / typedPatients.length)
           : 0,
-        mental_health_screenings_pending: patients?.filter((p: any) => {
+        mental_health_screenings_pending: typedPatients?.filter((p) => {
           // A screening is pending if:
           // 1. Patient is enrolled in wellness and has risk indicators but no recent screening
           // 2. Patient has moderate/high mental health risk but missing PHQ-9/GAD-7 scores

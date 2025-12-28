@@ -31,8 +31,8 @@ export interface CoordinatedResponseStatus {
   ready_at?: string;
   response_time_seconds: number;
   acknowledged_by_name?: string;
-  required_actions: any;
-  completed_actions: any;
+  required_actions: string[];
+  completed_actions: string[];
 }
 
 /**
@@ -65,7 +65,7 @@ export async function acknowledgeDepartmentDispatch(
   userName?: string,
   userRole?: string,
   notes?: string
-): Promise<{ data: any; error: Error | null }> {
+): Promise<{ data: { acknowledged: boolean } | null; error: Error | null }> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -93,7 +93,7 @@ export async function acknowledgeDepartmentDispatch(
 export async function markDepartmentReady(
   dispatchId: string,
   completedActions: string[]
-): Promise<{ data: any; error: Error | null }> {
+): Promise<{ data: { ready: boolean } | null; error: Error | null }> {
   try {
     const { data, error } = await supabase.rpc('mark_department_ready', {
       p_dispatch_id: dispatchId,
@@ -115,7 +115,7 @@ export async function markDepartmentReady(
  */
 export function subscribeToDepartmentDispatches(
   handoffId: string,
-  callback: (payload: any) => void
+  callback: (payload: { new: CoordinatedResponseStatus }) => void
 ) {
   const subscription = supabase
     .channel(`department_dispatches_${handoffId}`)
@@ -127,7 +127,7 @@ export function subscribeToDepartmentDispatches(
         table: 'ems_department_dispatches',
         filter: `handoff_id=eq.${handoffId}`,
       },
-      callback
+      (payload) => callback(payload as unknown as { new: CoordinatedResponseStatus })
     )
     .subscribe();
 
@@ -150,7 +150,7 @@ export async function createProviderSignoff(signoff: {
   disposition?: string;
   admittedToService?: string;
   electronicSignature: string; // Provider's typed full name
-}): Promise<{ data: any; error: Error | null }> {
+}): Promise<{ data: Record<string, unknown> | null; error: Error | null }> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -188,7 +188,7 @@ export async function createProviderSignoff(signoff: {
  */
 export async function getProviderSignoffs(
   handoffId: string
-): Promise<{ data: any[] | null; error: Error | null }> {
+): Promise<{ data: Array<Record<string, unknown>> | null; error: Error | null }> {
   try {
     const { data, error } = await supabase
       .from('ems_provider_signoffs')
@@ -213,7 +213,7 @@ export async function sendDepartmentNotification(
   departmentCode: string,
   message: string,
   priority: 'routine' | 'urgent' | 'critical'
-): Promise<{ data: any; error: Error | null }> {
+): Promise<{ data: { sent: boolean } | null; error: Error | null }> {
   try {
     // This would call a Supabase Edge Function that sends:
     // - SMS to department pager
@@ -249,7 +249,7 @@ export function generateAlertMessage(
   alertType: string,
   eta: string,
   chiefComplaint: string,
-  vitals?: any
+  _vitals?: Record<string, unknown>
 ): string {
   const etaMinutes = Math.round((new Date(eta).getTime() - Date.now()) / 1000 / 60);
 

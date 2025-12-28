@@ -363,8 +363,11 @@ export async function searchMedications(query: string, limit: number = 10): Prom
     );
     const data = await response.json();
 
-    const suggestions = data?.drugGroup?.conceptGroup?.flatMap((group: any) =>
-      group.conceptProperties?.map((concept: any) => ({
+    interface RxNavConceptGroup {
+      conceptProperties?: Array<{ rxcui: string; name: string }>;
+    }
+    const suggestions = data?.drugGroup?.conceptGroup?.flatMap((group: RxNavConceptGroup) =>
+      group.conceptProperties?.map((concept) => ({
         rxcui: concept.rxcui,
         name: concept.name
       })) || []

@@ -38,7 +38,7 @@ export interface AnomalyDetection {
   aggregate_anomaly_score: number;
   risk_level: RiskLevel;
   anomaly_breakdown: AnomalyBreakdown;
-  context_snapshot: any;
+  context_snapshot: Record<string, unknown>;
   investigated: boolean;
   investigation_notes?: string;
   investigator_id?: string;
@@ -53,14 +53,14 @@ export interface AnomalyBreakdown {
   peer_deviation_score?: number;
   consecutive_access_score?: number;
   location_score?: number;
-  details?: any;
+  details?: Record<string, unknown>;
 }
 
 export interface UserBehaviorProfile {
   user_id: string;
   typical_login_hours: number[];
   avg_records_accessed_per_session: number;
-  most_common_locations: any[];
+  most_common_locations: Array<{ city?: string; country?: string; ip?: string }>;
   baseline_risk_score: number;
   profile_confidence: number;
   last_updated: string;
@@ -284,7 +284,7 @@ export class BehavioralAnalyticsService {
     aggregateScore: number;
     riskLevel: RiskLevel;
     anomalyBreakdown: AnomalyBreakdown;
-    contextSnapshot: any;
+    contextSnapshot: Record<string, unknown>;
   }): Promise<AnomalyDetection> {
     try {
       const { data, error } = await supabase

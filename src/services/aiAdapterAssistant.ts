@@ -21,8 +21,19 @@ interface AdapterAssistantResponse {
   questions?: string[];
 }
 
+// Internal type for the AI client to avoid strict SDK type checking
+interface AIClient {
+  messages: {
+    create: (params: {
+      model: string;
+      max_tokens: number;
+      messages: Array<{ role: 'user' | 'assistant'; content: string }>;
+    }) => Promise<{ content: Array<{ type: string; text?: string }> }>;
+  };
+}
+
 export class AIAdapterAssistant {
-  private client: any = null;
+  private client: AIClient | null = null;
   private conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }> = [];
 
   async initialize() {
@@ -39,7 +50,7 @@ export class AIAdapterAssistant {
     this.client = new Anthropic({
       apiKey: ANTHROPIC_API_KEY,
       dangerouslyAllowBrowser: true // dev/demo only
-    });
+    }) as unknown as AIClient;
   }
 
   /**
@@ -68,6 +79,9 @@ Your task:
 4. Provide step-by-step guidance`;
 
     try {
+      if (!this.client) {
+        throw new Error('AI client not initialized');
+      }
       const response = await this.client.messages.create({
         model: 'claude-haiku-4.5-20250514',
         max_tokens: 1024,
@@ -79,7 +93,7 @@ Your task:
 
       const assistantMessage =
         response.content[0].type === 'text'
-          ? response.content[0].text
+          ? (response.content[0].text ?? '')
           : '';
 
       this.conversationHistory.push(
@@ -116,6 +130,9 @@ Your task:
 Question: ${question}`;
 
     try {
+      if (!this.client) {
+        throw new Error('AI client not initialized');
+      }
       const response = await this.client.messages.create({
         model: 'claude-haiku-4.5-20250514',
         max_tokens: 512,
@@ -127,7 +144,7 @@ Question: ${question}`;
 
       const assistantMessage =
         response.content[0].type === 'text'
-          ? response.content[0].text
+          ? (response.content[0].text ?? 'I could not generate a response.')
           : 'I could not generate a response.';
 
       this.conversationHistory.push(
@@ -153,6 +170,9 @@ Question: ${question}`;
     const prompt = `Validate this FHIR endpoint URL: ${url}`;
 
     try {
+      if (!this.client) {
+        throw new Error('AI client not initialized');
+      }
       const response = await this.client.messages.create({
         model: 'claude-haiku-4.5-20250514',
         max_tokens: 512,
@@ -161,7 +181,7 @@ Question: ${question}`;
 
       const assistantMessage =
         response.content[0].type === 'text'
-          ? response.content[0].text
+          ? (response.content[0].text ?? '')
           : '';
 
       const jsonMatch = assistantMessage.match(/\{[\s\S]*\}/);
@@ -181,7 +201,7 @@ Question: ${question}`;
   /**
    * Troubleshoot connection errors
    */
-  async troubleshootError(error: string, config: any): Promise<{
+  async troubleshootError(error: string, _config: Record<string, unknown>): Promise<{
     diagnosis: string;
     possibleCauses: string[];
     solutions: string[];
@@ -190,6 +210,9 @@ Question: ${question}`;
     const prompt = `Troubleshoot this connection error: ${error}`;
 
     try {
+      if (!this.client) {
+        throw new Error('AI client not initialized');
+      }
       const response = await this.client.messages.create({
         model: 'claude-haiku-4.5-20250514',
         max_tokens: 1024,
@@ -198,7 +221,7 @@ Question: ${question}`;
 
       const assistantMessage =
         response.content[0].type === 'text'
-          ? response.content[0].text
+          ? (response.content[0].text ?? '')
           : '';
 
       const jsonMatch = assistantMessage.match(/\{[\s\S]*\}/);
@@ -225,7 +248,7 @@ Question: ${question}`;
   /**
    * Generate step-by-step setup guide
    */
-  async generateSetupGuide(adapterId: string, authType: string): Promise<{
+  async generateSetupGuide(adapterId: string, _authType: string): Promise<{
     title: string;
     steps: Array<{ step: number; title: string; description: string; tips?: string[] }>;
     estimatedTime: string;
@@ -234,6 +257,9 @@ Question: ${question}`;
     const prompt = `Generate a setup guide for adapter ${adapterId}`;
 
     try {
+      if (!this.client) {
+        throw new Error('AI client not initialized');
+      }
       const response = await this.client.messages.create({
         model: 'claude-haiku-4.5-20250514',
         max_tokens: 2048,
@@ -242,7 +268,7 @@ Question: ${question}`;
 
       const assistantMessage =
         response.content[0].type === 'text'
-          ? response.content[0].text
+          ? (response.content[0].text ?? '')
           : '';
 
       const jsonMatch = assistantMessage.match(/\{[\s\S]*\}/);

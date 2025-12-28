@@ -31,7 +31,7 @@ export class ClaudeCareError extends Error {
   constructor(
     message: string,
     public code: string,
-    public originalError?: any
+    public originalError?: unknown
   ) {
     super(message);
     this.name = 'ClaudeCareError';
@@ -461,7 +461,7 @@ CONFIDENCE: [0.0-1.0]
    */
   private static buildAdminTaskPrompt(
     template: AdminTaskTemplate,
-    inputData: Record<string, any>
+    inputData: Record<string, unknown>
   ): string {
     let prompt = template.promptTemplate;
 
@@ -486,7 +486,7 @@ CONFIDENCE: [0.0-1.0]
   /**
    * Save task execution to history
    */
-  private static async saveTaskHistory(history: any): Promise<string> {
+  private static async saveTaskHistory(history: Record<string, unknown>): Promise<string> {
     try {
       const { data, error } = await supabase
         .from('claude_admin_task_history')

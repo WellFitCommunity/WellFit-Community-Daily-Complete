@@ -76,8 +76,22 @@ const TelehealthAppointmentsPage: React.FC = () => {
 
         if (error) throw error;
 
-        // Format appointments
-        const formattedAppointments = (data || []).map((apt: any) => ({
+        // Format appointments - type the database row shape
+        interface AppointmentRow {
+          id: string;
+          appointment_time: string;
+          duration_minutes: number;
+          encounter_type: 'outpatient' | 'er' | 'urgent-care';
+          status: string;
+          reason_for_visit: string | null;
+          daily_room_url: string | null;
+          provider?: {
+            first_name?: string;
+            last_name?: string;
+            specialty?: string;
+          } | null;
+        }
+        const formattedAppointments = (data as AppointmentRow[] || []).map((apt) => ({
           id: apt.id,
           appointment_time: apt.appointment_time,
           duration_minutes: apt.duration_minutes,

@@ -12,7 +12,7 @@ export interface EMSIntegrationResult {
   patientId?: string;
   encounterId?: string;
   observationIds?: string[];
-  billingCodes?: any[];
+  billingCodes?: Array<{ code: string; code_type?: string; description: string; suggested_by?: string }>;
   error?: string;
 }
 
@@ -224,7 +224,7 @@ async function documentEMSVitals(
   ];
 
   for (const mapping of vitalMappings) {
-    const value = (handoff.vitals as any)[mapping.key];
+    const value = (handoff.vitals as Record<string, unknown>)[mapping.key];
     if (value !== undefined && value !== null) {
       try {
         const { data, error } = await supabase
@@ -268,8 +268,8 @@ async function generateBillingCodesFromHandoff(
   encounterId: string,
   handoff: PrehospitalHandoff,
   _providerId: string
-): Promise<any[]> {
-  const billingCodes: any[] = [];
+): Promise<Array<{ code: string; code_type?: string; description: string; suggested_by?: string }>> {
+  const billingCodes: Array<{ code: string; code_type?: string; description: string; suggested_by?: string }> = [];
 
   // Determine ER visit level based on severity
   let erVisitCode = '99283'; // Default: moderate severity

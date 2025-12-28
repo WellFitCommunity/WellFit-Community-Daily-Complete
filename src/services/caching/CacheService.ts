@@ -69,7 +69,7 @@ export interface ConnectionMetrics {
 // ============================================================================
 
 class MemoryCache {
-  private cache: Map<string, CacheEntry<any>>;
+  private cache: Map<string, CacheEntry<unknown>>;
   private maxSize: number;
 
   constructor(maxSize: number = 1000) {
@@ -274,7 +274,7 @@ export class CacheService {
           p_cache_key: fullKey,
           p_cache_namespace: namespace,
           p_query_hash: this.hashKey(key),
-          p_result_data: value as any,
+          p_result_data: value as unknown,
           p_ttl_seconds: ttl,
         });
 

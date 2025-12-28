@@ -1010,7 +1010,7 @@ Return response as strict JSON with this structure:
       const risk30 = raw.readmissionRisk30Day;
       const risk7 = raw.readmissionRisk7Day;
       const risk90 = raw.readmissionRisk90Day;
-      const category = raw.riskCategory;
+      const _category = raw.riskCategory;
 
       if (typeof risk30 !== 'number' || typeof risk7 !== 'number' || typeof risk90 !== 'number') {
         throw new Error('Invalid risk scores: expected numeric values');

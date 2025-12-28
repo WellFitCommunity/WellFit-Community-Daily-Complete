@@ -77,6 +77,30 @@ export interface OfficerAccessLog {
   reason: string;
 }
 
+// Internal data structure for senior assessment
+interface SeniorAssessmentData {
+  daysSinceLastCheckin: number;
+  checkinCount: number;
+  recentCheckinResponses: unknown[];
+  sdohBarriers: Array<{
+    sdoh_category: string;
+    risk_level: string;
+    status: string;
+  }>;
+  emergencyContactsCount: number;
+}
+
+// Analytics return type
+interface WelfareCheckAnalyticsResult {
+  analytics_date: string;
+  tenant_id: string;
+  total_seniors: number;
+  critical_count: number;
+  high_count: number;
+  elevated_count: number;
+  routine_count: number;
+}
+
 // ============================================================================
 // INPUT VALIDATION
 // ============================================================================
@@ -370,7 +394,7 @@ class WelfareCheckDispatcherService {
     tenantId: string,
     startDate: string,
     endDate: string
-  ): Promise<any> {
+  ): Promise<WelfareCheckAnalyticsResult[]> {
     WelfareCheckValidator.validateUUID(tenantId, 'tenantId');
     WelfareCheckValidator.validateDate(startDate, 'startDate');
     WelfareCheckValidator.validateDate(endDate, 'endDate');
@@ -417,10 +441,10 @@ class WelfareCheckDispatcherService {
   }
 
   private async gatherSeniorData(
-    tenantId: string,
+    _tenantId: string,
     seniorId: string,
     assessmentDate: string
-  ): Promise<any> {
+  ): Promise<SeniorAssessmentData> {
     const thirtyDaysAgo = new Date(assessmentDate);
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -463,7 +487,7 @@ class WelfareCheckDispatcherService {
     };
   }
 
-  private async performAIRiskAssessment(seniorData: any): Promise<{
+  private async performAIRiskAssessment(seniorData: SeniorAssessmentData): Promise<{
     priorityScore: number;
     mobilityRiskLevel: MobilityRiskLevel;
     recommendedAction: RecommendedAction;
@@ -541,7 +565,7 @@ Provide risk assessment.`;
     }
   }
 
-  private ruleBasedAssessment(seniorData: any): {
+  private ruleBasedAssessment(seniorData: SeniorAssessmentData): {
     priorityScore: number;
     mobilityRiskLevel: MobilityRiskLevel;
     recommendedAction: RecommendedAction;

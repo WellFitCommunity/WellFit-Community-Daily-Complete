@@ -166,7 +166,7 @@ export class BillingService {
     fromStatus: ClaimStatus,
     toStatus: ClaimStatus,
     note?: string,
-    payload?: Record<string, any>
+    payload?: Record<string, unknown>
   ): Promise<ClaimStatusHistory> {
     const { data, error } = await supabase
       .from('claim_status_history')

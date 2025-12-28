@@ -134,8 +134,8 @@ export default function VerifyCodePage() {
 
       // Post-verify flow you specified:
       navigate('/demographics', { replace: true });
-    } catch (e: any) {
-      setError(e?.message || 'Invalid or expired code. Please try again.');
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Invalid or expired code. Please try again.');
       // Focus code to re-try quickly
       codeInputRef.current?.focus();
     } finally {
@@ -159,8 +159,8 @@ export default function VerifyCodePage() {
       startCooldown();
       // Place cursor in code field for quick entry
       setTimeout(() => codeInputRef.current?.focus(), 0);
-    } catch (e: any) {
-      setError(e?.message || 'Could not resend code. Please wait a minute and try again.');
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Could not resend code. Please wait a minute and try again.');
     }
   };
 

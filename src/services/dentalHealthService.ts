@@ -202,7 +202,7 @@ export class DentalHealthService {
     request: CreateToothChartEntryRequest
   ): Promise<DentalApiResponse<ToothChartEntry>> {
     try {
-      const entryData: any = {
+      const entryData: Record<string, unknown> = {
         assessment_id: request.assessment_id,
         patient_id: request.patient_id,
         tooth_number: request.tooth_number,
@@ -721,9 +721,16 @@ export class DentalHealthService {
           let overdueCount = 0;
 
           // Count treatment plan phases with past start dates still pending
-          activePlans.forEach((plan: any) => {
+          interface TreatmentPhase {
+            status: string;
+            start_date?: string;
+          }
+          interface TreatmentPlan {
+            phases?: TreatmentPhase[];
+          }
+          (activePlans as TreatmentPlan[]).forEach((plan) => {
             if (plan.phases) {
-              plan.phases.forEach((phase: any) => {
+              plan.phases.forEach((phase) => {
                 if (phase.status === 'pending' && phase.start_date) {
                   const phaseDate = new Date(phase.start_date);
                   if (phaseDate < today) overdueCount++;
@@ -733,7 +740,11 @@ export class DentalHealthService {
           });
 
           // Count referrals with past scheduled appointments still pending
-          referrals?.forEach((referral: any) => {
+          interface DentalReferral {
+            status: string;
+            appointment_scheduled_date?: string;
+          }
+          (referrals as DentalReferral[] | null)?.forEach((referral) => {
             if (referral.status === 'pending' && referral.appointment_scheduled_date) {
               const apptDate = new Date(referral.appointment_scheduled_date);
               if (apptDate < today) overdueCount++;

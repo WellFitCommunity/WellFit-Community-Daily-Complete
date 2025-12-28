@@ -26,21 +26,21 @@ export interface ConfidenceScoreLog {
   model_used: string;
   processing_time_ms?: number;
   reasoning_explanation?: string;
-  supporting_evidence?: Record<string, any>;
+  supporting_evidence?: Record<string, unknown>;
 }
 
 export interface VoiceProfileUpdate {
   session_duration_seconds: number;
   corrections_made: number;
   medical_terms_learned: string[];
-  workflow_interactions: Record<string, any>;
+  workflow_interactions: Record<string, unknown>;
 }
 
 export interface PersonalizationEvent {
   feature_clicked: string;
   time_spent_seconds: number;
   workflow_pattern_detected?: string;
-  context_data?: Record<string, any>;
+  context_data?: Record<string, unknown>;
 }
 
 export interface GreetingData {
@@ -91,7 +91,7 @@ export const logConfidenceScore = async (
   logData: ConfidenceScoreLog
 ): Promise<{
   success: boolean;
-  log: any;
+  log: ConfidenceScoreLog | null;
   confidence_level: 'high' | 'medium' | 'low';
   error?: string;
 }> => {

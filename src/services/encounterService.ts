@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabaseClient';
 import { logPhiAccess, extractPatientId } from './phiAccessLogger';
 import { InputValidator } from './inputValidator';
 import { auditLogger } from './auditLogger';
-import { getErrorMessage } from '../lib/getErrorMessage';
+import { getErrorMessage as _getErrorMessage } from '../lib/getErrorMessage';
 import type {
   Encounter,
   EncounterProcedure,
