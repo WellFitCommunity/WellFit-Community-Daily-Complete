@@ -62,7 +62,7 @@ export interface SDOHDetection {
   riskLevel: 'low' | 'moderate' | 'high' | 'critical';
   urgency: 'routine' | 'soon' | 'urgent' | 'emergency';
   detectedKeywords: string[];
-  contextualEvidence: Record<string, any>;
+  contextualEvidence: Record<string, unknown>;
   zCodeMapping?: string; // ICD-10 Z-code
   aiSummary: string;
   aiRationale: string;
@@ -71,6 +71,8 @@ export interface SDOHDetection {
     priority: 'low' | 'medium' | 'high' | 'critical';
     timeframe: string;
   }>;
+  // Optional: some callers may attach cost metadata per-detection
+  aiCost?: number;
 }
 
 export interface PassiveDetectionResult {
@@ -84,9 +86,20 @@ export interface PassiveDetectionResult {
   processingTime: number;
 }
 
+interface TenantSDOHConfig {
+  sdoh_passive_detector_enabled: boolean;
+  sdoh_passive_detector_auto_create_indicators: boolean;
+  sdoh_passive_detector_confidence_threshold: number;
+  sdoh_passive_detector_model: string;
+}
+
 // =====================================================
 // INPUT VALIDATION
 // =====================================================
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
 
 class SDOHValidator {
   static validateUUID(value: string, fieldName: string): void {
@@ -288,7 +301,7 @@ export class SDOHPassiveDetector {
       patientId: content.patientId,
       detections,
       totalDetections: detections.length,
-      aiCost: detections.reduce((sum, d) => sum + (d as any).aiCost || 0, 0),
+      aiCost: detections.reduce((sum, d) => sum + (d.aiCost ?? 0), 0),
       aiModel: config.sdoh_passive_detector_model,
       processingTime
     };
@@ -299,7 +312,7 @@ export class SDOHPassiveDetector {
    */
   private async detectWithAI(
     content: SourceContent,
-    config: any
+    config: TenantSDOHConfig
   ): Promise<SDOHDetection[]> {
     // Build prompt for AI
     const prompt = this.buildDetectionPrompt(content);
@@ -393,8 +406,12 @@ Return empty array [] if no SDOH concerns detected.`;
         return []; // No detections
       }
 
-      const parsed = JSON.parse(jsonMatch[0]);
-      return Array.isArray(parsed) ? parsed : [];
+      const parsed: unknown = JSON.parse(jsonMatch[0]);
+      if (!Array.isArray(parsed)) return [];
+
+      // We intentionally trust AI output shape here and keep runtime safety at the boundary.
+      // Downstream code treats fields defensively (e.g., optional aiCost).
+      return parsed as SDOHDetection[];
     } catch (err: unknown) {
       throw new Error(`Failed to parse AI response: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
@@ -406,7 +423,7 @@ Return empty array [] if no SDOH concerns detected.`;
   private async trackDetection(
     content: SourceContent,
     detection: SDOHDetection,
-    config: any
+    config: TenantSDOHConfig
   ): Promise<string | null> {
     try {
       const result = await this.accuracyTracker.recordPrediction({
@@ -510,7 +527,7 @@ Return empty array [] if no SDOH concerns detected.`;
   /**
    * Get tenant configuration
    */
-  private async getTenantConfig(tenantId: string): Promise<any> {
+  private async getTenantConfig(tenantId: string): Promise<TenantSDOHConfig> {
     const { data, error } = await supabase.rpc('get_ai_skill_config', {
       p_tenant_id: tenantId
     });
@@ -519,11 +536,28 @@ Return empty array [] if no SDOH concerns detected.`;
       throw new Error(`Failed to get tenant config: ${error.message}`);
     }
 
-    return data || {
+    const fallback: TenantSDOHConfig = {
       sdoh_passive_detector_enabled: false,
       sdoh_passive_detector_auto_create_indicators: false,
       sdoh_passive_detector_confidence_threshold: 0.75,
       sdoh_passive_detector_model: 'claude-haiku-4-5-20250929'
+    };
+
+    if (!data || !isRecord(data)) return fallback;
+
+    return {
+      sdoh_passive_detector_enabled: typeof data.sdoh_passive_detector_enabled === 'boolean'
+        ? data.sdoh_passive_detector_enabled
+        : fallback.sdoh_passive_detector_enabled,
+      sdoh_passive_detector_auto_create_indicators: typeof data.sdoh_passive_detector_auto_create_indicators === 'boolean'
+        ? data.sdoh_passive_detector_auto_create_indicators
+        : fallback.sdoh_passive_detector_auto_create_indicators,
+      sdoh_passive_detector_confidence_threshold: typeof data.sdoh_passive_detector_confidence_threshold === 'number'
+        ? data.sdoh_passive_detector_confidence_threshold
+        : fallback.sdoh_passive_detector_confidence_threshold,
+      sdoh_passive_detector_model: typeof data.sdoh_passive_detector_model === 'string' && data.sdoh_passive_detector_model.trim().length > 0
+        ? data.sdoh_passive_detector_model
+        : fallback.sdoh_passive_detector_model
     };
   }
 
@@ -556,7 +590,7 @@ Return empty array [] if no SDOH concerns detected.`;
       for (const checkIn of checkIns) {
         try {
           // Extract text from responses
-          const text = this.extractTextFromResponses(checkIn.responses);
+          const text = this.extractTextFromResponses(checkIn.responses as unknown);
           if (!text) continue;
 
           const content: SourceContent = {
@@ -584,11 +618,11 @@ Return empty array [] if no SDOH concerns detected.`;
   /**
    * Extract text from check-in responses
    */
-  private extractTextFromResponses(responses: any): string {
-    if (!responses) return '';
+  private extractTextFromResponses(responses: unknown): string {
+    if (!responses || !isRecord(responses)) return '';
 
     let text = '';
-    for (const [key, value] of Object.entries(responses)) {
+    for (const [_key, value] of Object.entries(responses)) {
       if (typeof value === 'string') {
         text += value + ' ';
       }

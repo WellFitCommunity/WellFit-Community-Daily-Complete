@@ -8,7 +8,7 @@
  */
 
 import { supabase } from '../../lib/supabaseClient';
-import { ServiceResult, success, failure } from '../_base';
+import { ServiceResult, success, failure as _failure } from '../_base';
 
 export interface MetricData {
   name: string;
@@ -130,7 +130,7 @@ export class DashboardAnomalyService {
       const localAnomalies = detectThresholdAnomalies(request.metrics);
 
       // Then, get AI-powered insights
-      const { data, error } = await supabase.functions.invoke('claude-personalization', {
+      const { data, error: _error } = await supabase.functions.invoke('claude-personalization', {
         body: {
           model: 'claude-3-5-haiku-20241022',
           prompt: buildAnalysisPrompt(request, localAnomalies),
@@ -139,7 +139,7 @@ export class DashboardAnomalyService {
         },
       });
 
-      if (error) throw error;
+      if (_error) throw _error;
 
       // Parse AI response
       const aiContent = data?.content || '';
@@ -178,7 +178,7 @@ export class DashboardAnomalyService {
         },
       });
     } catch (err: unknown) {
-      const error = err instanceof Error ? err : new Error(String(err));
+      const _error = err instanceof Error ? err : new Error(String(err));
 
       // Return local-only analysis on AI failure
       const localAnomalies = detectThresholdAnomalies(request.metrics);
@@ -219,17 +219,19 @@ export class DashboardAnomalyService {
   } {
     const anomalies = detectThresholdAnomalies([metric]);
 
-    if (anomalies.some((a) => a.severity === 'critical')) {
+    const critical = anomalies.find((a) => a.severity === 'critical');
+    if (critical) {
       return {
         status: 'critical',
-        message: anomalies.find((a) => a.severity === 'critical')!.description,
+        message: critical.description,
       };
     }
 
-    if (anomalies.some((a) => a.severity === 'warning')) {
+    const warning = anomalies.find((a) => a.severity === 'warning');
+    if (warning) {
       return {
         status: 'warning',
-        message: anomalies.find((a) => a.severity === 'warning')!.description,
+        message: warning.description,
       };
     }
 

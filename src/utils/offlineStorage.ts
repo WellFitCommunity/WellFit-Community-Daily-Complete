@@ -22,6 +22,13 @@ interface PendingReport {
   permanentlyFailed?: boolean;
 }
 
+interface OfflineMeasurement {
+  id: string;
+  userId: string;
+  heartRate: number;
+  spo2: number;
+  timestamp: number;
+}
 
 class OfflineStorage {
   private db: IDBDatabase | null = null;
@@ -83,7 +90,7 @@ class OfflineStorage {
   }
 
   // Save a health report for later sync
-  async savePendingReport(userId: string, reportData: any): Promise<string> {
+  async savePendingReport(userId: string, reportData: Record<string, unknown>): Promise<string> {
     if (!this.db) await this.initialize();
 
     const report: PendingReport = {
@@ -96,8 +103,13 @@ class OfflineStorage {
     };
 
     return new Promise((resolve, reject) => {
-      // Safe: initialize() was called above if db was null
-      const transaction = this.db!.transaction([REPORTS_STORE], 'readwrite');
+      const db = this.db;
+      if (!db) {
+        reject(new Error('OfflineStorage database not initialized'));
+        return;
+      }
+
+      const transaction = db.transaction([REPORTS_STORE], 'readwrite');
       const store = transaction.objectStore(REPORTS_STORE);
       const request = store.add(report);
 
@@ -116,8 +128,13 @@ class OfflineStorage {
     if (!this.db) await this.initialize();
 
     return new Promise((resolve, reject) => {
-      // Safe: initialize() was called above if db was null
-      const transaction = this.db!.transaction([REPORTS_STORE], 'readonly');
+      const db = this.db;
+      if (!db) {
+        reject(new Error('OfflineStorage database not initialized'));
+        return;
+      }
+
+      const transaction = db.transaction([REPORTS_STORE], 'readonly');
       const store = transaction.objectStore(REPORTS_STORE);
       const request = store.getAll();
 
@@ -145,8 +162,13 @@ class OfflineStorage {
     if (!this.db) await this.initialize();
 
     return new Promise((resolve, reject) => {
-      // Safe: initialize() was called above if db was null
-      const transaction = this.db!.transaction([REPORTS_STORE], 'readwrite');
+      const db = this.db;
+      if (!db) {
+        reject(new Error('OfflineStorage database not initialized'));
+        return;
+      }
+
+      const transaction = db.transaction([REPORTS_STORE], 'readwrite');
       const store = transaction.objectStore(REPORTS_STORE);
       const getRequest = store.get(reportId);
 
@@ -175,8 +197,13 @@ class OfflineStorage {
     if (!this.db) await this.initialize();
 
     return new Promise((resolve, reject) => {
-      // Safe: initialize() was called above if db was null
-      const transaction = this.db!.transaction([REPORTS_STORE], 'readwrite');
+      const db = this.db;
+      if (!db) {
+        reject(new Error('OfflineStorage database not initialized'));
+        return;
+      }
+
+      const transaction = db.transaction([REPORTS_STORE], 'readwrite');
       const store = transaction.objectStore(REPORTS_STORE);
       const request = store.delete(reportId);
 
@@ -193,8 +220,13 @@ class OfflineStorage {
     if (!this.db) await this.initialize();
 
     return new Promise((resolve, reject) => {
-      // Safe: initialize() was called above if db was null
-      const transaction = this.db!.transaction([REPORTS_STORE], 'readwrite');
+      const db = this.db;
+      if (!db) {
+        reject(new Error('OfflineStorage database not initialized'));
+        return;
+      }
+
+      const transaction = db.transaction([REPORTS_STORE], 'readwrite');
       const store = transaction.objectStore(REPORTS_STORE);
       const getRequest = store.get(reportId);
 
@@ -273,7 +305,7 @@ class OfflineStorage {
             failed++;
           }
         }
-      } catch (err: unknown) {
+      } catch (_err: unknown) {
         const result = await this.incrementAttempts(report.id);
         if (result.permanentlyFailed) {
           permanentlyFailedCount++;
@@ -292,7 +324,7 @@ class OfflineStorage {
   async saveMeasurement(userId: string, heartRate: number, spo2: number): Promise<string> {
     if (!this.db) await this.initialize();
 
-    const measurement = {
+    const measurement: OfflineMeasurement = {
       id: `measurement_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
       userId,
       heartRate,
@@ -301,8 +333,13 @@ class OfflineStorage {
     };
 
     return new Promise((resolve, reject) => {
-      // Safe: initialize() was called above if db was null
-      const transaction = this.db!.transaction([MEASUREMENTS_STORE], 'readwrite');
+      const db = this.db;
+      if (!db) {
+        reject(new Error('OfflineStorage database not initialized'));
+        return;
+      }
+
+      const transaction = db.transaction([MEASUREMENTS_STORE], 'readwrite');
       const store = transaction.objectStore(MEASUREMENTS_STORE);
       const request = store.add(measurement);
 
@@ -315,18 +352,23 @@ class OfflineStorage {
   }
 
   // Get recent measurements
-  async getRecentMeasurements(userId: string, limit: number = 10): Promise<any[]> {
+  async getRecentMeasurements(userId: string, limit: number = 10): Promise<OfflineMeasurement[]> {
     if (!this.db) await this.initialize();
 
     return new Promise((resolve, reject) => {
-      // Safe: initialize() was called above if db was null
-      const transaction = this.db!.transaction([MEASUREMENTS_STORE], 'readonly');
+      const db = this.db;
+      if (!db) {
+        reject(new Error('OfflineStorage database not initialized'));
+        return;
+      }
+
+      const transaction = db.transaction([MEASUREMENTS_STORE], 'readonly');
       const store = transaction.objectStore(MEASUREMENTS_STORE);
       const index = store.index('userId');
       const request = index.getAll(userId);
 
       request.onsuccess = () => {
-        const measurements = request.result
+        const measurements = (request.result as OfflineMeasurement[])
           .sort((a, b) => b.timestamp - a.timestamp)
           .slice(0, limit);
         resolve(measurements);
@@ -341,7 +383,13 @@ class OfflineStorage {
     if (!this.db) await this.initialize();
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([REPORTS_STORE], 'readonly');
+      const db = this.db;
+      if (!db) {
+        reject(new Error('OfflineStorage database not initialized'));
+        return;
+      }
+
+      const transaction = db.transaction([REPORTS_STORE], 'readonly');
       const store = transaction.objectStore(REPORTS_STORE);
       const request = store.getAll();
 
@@ -371,7 +419,13 @@ class OfflineStorage {
     if (!this.db) await this.initialize();
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([REPORTS_STORE], 'readwrite');
+      const db = this.db;
+      if (!db) {
+        reject(new Error('OfflineStorage database not initialized'));
+        return;
+      }
+
+      const transaction = db.transaction([REPORTS_STORE], 'readwrite');
       const store = transaction.objectStore(REPORTS_STORE);
       const getRequest = store.get(reportId);
 
@@ -412,8 +466,13 @@ class OfflineStorage {
     if (!this.db) await this.initialize();
 
     return new Promise((resolve, reject) => {
-      // Safe: initialize() was called above if db was null
-      const transaction = this.db!.transaction([REPORTS_STORE, MEASUREMENTS_STORE], 'readwrite');
+      const db = this.db;
+      if (!db) {
+        reject(new Error('OfflineStorage database not initialized'));
+        return;
+      }
+
+      const transaction = db.transaction([REPORTS_STORE, MEASUREMENTS_STORE], 'readwrite');
 
       transaction.objectStore(REPORTS_STORE).clear();
       transaction.objectStore(MEASUREMENTS_STORE).clear();

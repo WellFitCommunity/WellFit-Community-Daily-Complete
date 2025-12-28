@@ -97,6 +97,9 @@ export interface BatchGenerationRequest {
   validityDays?: number; // How many days briefing is valid (default 7)
 }
 
+type JsonRecord = Record<string, unknown>;
+type UnknownRecord = Record<string, unknown>;
+
 // ============================================================================
 // INPUT VALIDATION
 // ============================================================================
@@ -301,7 +304,7 @@ class EmergencyAccessIntelligenceService {
     const accessReason = EmergencyIntelValidator.sanitizeText(request.accessReason, 500);
 
     // Retrieve pre-generated briefing
-    const { data: briefing, error } = await this.supabase
+    const { data: briefing, error: _error } = await this.supabase
       .from('emergency_response_briefings')
       .select('*')
       .eq('tenant_id', request.tenantId)
@@ -311,7 +314,7 @@ class EmergencyAccessIntelligenceService {
       .limit(1)
       .single();
 
-    if (error || !briefing) {
+    if (_error || !briefing) {
       throw new Error('No valid emergency briefing found. Briefing may be expired or not generated yet.');
     }
 
@@ -351,7 +354,7 @@ class EmergencyAccessIntelligenceService {
     tenantId: string,
     startDate: string,
     endDate: string
-  ): Promise<any> {
+  ): Promise<unknown> {
     EmergencyIntelValidator.validateUUID(tenantId, 'tenantId');
     EmergencyIntelValidator.validateDate(startDate, 'startDate');
     EmergencyIntelValidator.validateDate(endDate, 'endDate');
@@ -366,7 +369,7 @@ class EmergencyAccessIntelligenceService {
 
     if (error) throw error;
 
-    return data;
+    return data as unknown;
   }
 
   /**
@@ -377,7 +380,7 @@ class EmergencyAccessIntelligenceService {
     startDate: string,
     endDate: string,
     seniorId?: string
-  ): Promise<any> {
+  ): Promise<unknown> {
     EmergencyIntelValidator.validateUUID(tenantId, 'tenantId');
     EmergencyIntelValidator.validateDate(startDate, 'startDate');
     EmergencyIntelValidator.validateDate(endDate, 'endDate');
@@ -399,7 +402,7 @@ class EmergencyAccessIntelligenceService {
 
     if (error) throw error;
 
-    return data;
+    return data as unknown;
   }
 
   // ============================================================================
@@ -432,7 +435,12 @@ class EmergencyAccessIntelligenceService {
     };
   }
 
-  private async gatherEmergencyData(tenantId: string, seniorId: string): Promise<any> {
+  private async gatherEmergencyData(tenantId: string, seniorId: string): Promise<{
+    userProfile: UnknownRecord;
+    emergencyContacts: unknown[];
+    sdohIndicators: unknown[];
+    recentCheckins: unknown[];
+  }> {
     // Get user profile
     const { data: user } = await this.supabase
       .from('profiles')
@@ -463,15 +471,25 @@ class EmergencyAccessIntelligenceService {
       .order('created_at', { ascending: false })
       .limit(10);
 
+    const userProfile: UnknownRecord =
+      user && typeof user === 'object' && 'raw_user_meta_data' in user
+        ? ((user as UnknownRecord).raw_user_meta_data as UnknownRecord) || {}
+        : {};
+
     return {
-      userProfile: user?.raw_user_meta_data || {},
-      emergencyContacts: contacts || [],
-      sdohIndicators: sdoh || [],
-      recentCheckins: checkins || []
+      userProfile,
+      emergencyContacts: (contacts as unknown[]) || [],
+      sdohIndicators: (sdoh as unknown[]) || [],
+      recentCheckins: (checkins as unknown[]) || []
     };
   }
 
-  private async performAIBriefingGeneration(seniorData: any): Promise<{
+  private async performAIBriefingGeneration(seniorData: {
+    userProfile: UnknownRecord;
+    emergencyContacts: unknown[];
+    sdohIndicators: unknown[];
+    recentCheckins: unknown[];
+  }): Promise<{
     executiveSummary: string;
     medicalIntelligence: MedicalIntelligence;
     accessInformation: AccessInformation;
@@ -551,7 +569,7 @@ Provide complete emergency response briefing.`;
         throw new Error('Unexpected response type');
       }
 
-      const result = JSON.parse(content.text);
+      const parsed = JSON.parse(content.text) as JsonRecord;
 
       const cost = mcpOptimizer.calculateCost(
         response.usage.input_tokens,
@@ -560,12 +578,12 @@ Provide complete emergency response briefing.`;
       );
 
       return {
-        executiveSummary: result.executive_summary,
-        medicalIntelligence: result.medical_intelligence,
-        accessInformation: result.access_information,
-        emergencyContacts: result.emergency_contacts,
-        officerSafetyNotes: result.officer_safety_notes,
-        specialNeeds: result.special_needs,
+        executiveSummary: typeof parsed.executive_summary === 'string' ? parsed.executive_summary : '',
+        medicalIntelligence: (parsed.medical_intelligence as MedicalIntelligence) || ({} as MedicalIntelligence),
+        accessInformation: (parsed.access_information as AccessInformation) || ({} as AccessInformation),
+        emergencyContacts: (parsed.emergency_contacts as EmergencyContact[]) || [],
+        officerSafetyNotes: (parsed.officer_safety_notes as string[]) || [],
+        specialNeeds: (parsed.special_needs as string[]) || [],
         cost
       };
     } catch (error: unknown) {
@@ -574,7 +592,10 @@ Provide complete emergency response briefing.`;
     }
   }
 
-  private structuredDataExtraction(seniorData: any): {
+  private structuredDataExtraction(seniorData: {
+    userProfile: UnknownRecord;
+    emergencyContacts: unknown[];
+  }): {
     executiveSummary: string;
     medicalIntelligence: MedicalIntelligence;
     accessInformation: AccessInformation;
@@ -588,32 +609,35 @@ Provide complete emergency response briefing.`;
     return {
       executiveSummary: `Senior resident, ${seniorData.emergencyContacts.length} emergency contacts available.`,
       medicalIntelligence: {
-        age: profile.age || 75,
-        mobilityStatus: profile.mobility_status || 'ambulatory',
-        chronicConditions: profile.chronic_conditions || [],
-        allergies: profile.allergies || [],
-        currentMedications: profile.medications || [],
+        age: typeof profile.age === 'number' ? profile.age : 75,
+        mobilityStatus: (profile.mobility_status as MobilityStatus) || 'ambulatory',
+        chronicConditions: (profile.chronic_conditions as string[]) || [],
+        allergies: (profile.allergies as string[]) || [],
+        currentMedications: (profile.medications as string[]) || [],
         recentHospitalizations: 0,
         fallRisk: 'moderate',
         cognitiveConcerns: [],
-        dnrStatus: profile.dnr_status
+        dnrStatus: profile.dnr_status as MedicalIntelligence['dnrStatus']
       },
       accessInformation: {
-        primaryAddress: profile.address || 'Address not on file',
+        primaryAddress: typeof profile.address === 'string' ? profile.address : 'Address not on file',
         optimalEntryStrategy: profile.lockbox_code ? 'lockbox_code' : 'knock_announce',
-        lockboxCode: profile.lockbox_code,
-        lockboxLocation: profile.lockbox_location,
-        gateCode: profile.gate_code,
-        petWarnings: profile.pets || []
+        lockboxCode: typeof profile.lockbox_code === 'string' ? profile.lockbox_code : undefined,
+        lockboxLocation: typeof profile.lockbox_location === 'string' ? profile.lockbox_location : undefined,
+        gateCode: typeof profile.gate_code === 'string' ? profile.gate_code : undefined,
+        petWarnings: (profile.pets as string[]) || []
       },
-      emergencyContacts: seniorData.emergencyContacts.map((c: any, idx: number) => ({
-        name: c.name,
-        relationship: c.relationship,
-        phoneNumber: c.phone_number,
-        priority: idx + 1,
-        hasKey: c.has_key || false,
-        estimatedResponseTime: c.estimated_response_time
-      })),
+      emergencyContacts: (seniorData.emergencyContacts as unknown[]).map((c: unknown, idx: number) => {
+        const contact = (c && typeof c === 'object' ? (c as UnknownRecord) : {}) as UnknownRecord;
+        return {
+          name: typeof contact.name === 'string' ? contact.name : '',
+          relationship: typeof contact.relationship === 'string' ? contact.relationship : '',
+          phoneNumber: typeof contact.phone_number === 'string' ? contact.phone_number : '',
+          priority: idx + 1,
+          hasKey: typeof contact.has_key === 'boolean' ? contact.has_key : false,
+          estimatedResponseTime: typeof contact.estimated_response_time === 'string' ? contact.estimated_response_time : undefined
+        };
+      }),
       officerSafetyNotes: [],
       specialNeeds: [],
       cost: 0

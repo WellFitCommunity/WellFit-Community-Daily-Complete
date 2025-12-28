@@ -36,6 +36,8 @@ export interface FHIRMappingServiceConfig {
   apiEndpoint: string;
 }
 
+type UnknownRecord = Record<string, unknown>;
+
 export class FHIRMappingService {
   private config: FHIRMappingServiceConfig;
 
@@ -250,26 +252,35 @@ RESPONSE FORMAT - JSON ONLY:
 RESPOND WITH ONLY JSON - NO MARKDOWN:`;
   }
 
-  private validateMappingResult(mapping: any): void {
+  private validateMappingResult(mapping: unknown): void {
     if (!mapping || typeof mapping !== 'object') {
       throw new Error('Mapping result must be an object');
     }
 
+    const mappingObj = mapping as UnknownRecord;
+
     const requiredFields = ['id', 'sourceName', 'sourceType', 'fhirVersion', 'mappingRules'];
     for (const field of requiredFields) {
-      if (!(field in mapping)) {
+      if (!(field in mappingObj)) {
         throw new Error(`Missing required field: ${field}`);
       }
     }
 
-    if (!Array.isArray(mapping.mappingRules)) {
+    const mappingRules = mappingObj.mappingRules;
+    if (!Array.isArray(mappingRules)) {
       throw new Error('mappingRules must be an array');
     }
 
-    for (const rule of mapping.mappingRules) {
+    for (const rule of mappingRules) {
+      if (!rule || typeof rule !== 'object') {
+        throw new Error('Each mapping rule must be an object');
+      }
+
+      const ruleObj = rule as UnknownRecord;
+
       const requiredRuleFields = ['sourceField', 'sourceType', 'fhirResource', 'fhirPath', 'confidence'];
       for (const field of requiredRuleFields) {
-        if (!(field in rule)) {
+        if (!(field in ruleObj)) {
           throw new Error(`Missing required rule field: ${field}`);
         }
       }

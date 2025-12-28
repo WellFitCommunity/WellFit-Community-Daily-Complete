@@ -39,7 +39,7 @@ export interface ErrorStats {
   occurrences: number;
   firstSeen: Date;
   lastSeen: Date;
-  lastMetadata?: any;
+  lastMetadata?: Record<string, unknown>;
 }
 
 class ErrorReporter {
@@ -54,7 +54,7 @@ class ErrorReporter {
   report(
     category: ErrorCategory,
     error: Error | string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ): void {
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorKey = `${category}:${errorMessage}`;
@@ -94,7 +94,7 @@ class ErrorReporter {
   reportCritical(
     category: ErrorCategory,
     error: Error | string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ): void {
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorKey = `${category}:${errorMessage}`;
@@ -128,7 +128,7 @@ class ErrorReporter {
     _category: ErrorCategory,
     _error: Error | string,
     _occurrences: number,
-    _metadata?: Record<string, any>
+    _metadata?: Record<string, unknown>
   ): void {
     // Error tracking enabled - errors stored in stats
     // Console logging disabled for HIPAA compliance in all environments
@@ -215,14 +215,14 @@ class ErrorReporter {
 export const errorReporter = new ErrorReporter();
 
 // Convenience functions for common use cases
-export const reportAuditFailure = (error: Error | string, metadata?: Record<string, any>) =>
+export const reportAuditFailure = (error: Error | string, metadata?: Record<string, unknown>) =>
   errorReporter.report('AUDIT_LOG_FAILURE', error, metadata);
 
-export const reportPhiFailure = (error: Error | string, metadata?: Record<string, any>) =>
+export const reportPhiFailure = (error: Error | string, metadata?: Record<string, unknown>) =>
   errorReporter.reportCritical('PHI_ACCESS_LOG_FAILURE', error, metadata);
 
-export const reportRealtimeFailure = (error: Error | string, metadata?: Record<string, any>) =>
+export const reportRealtimeFailure = (error: Error | string, metadata?: Record<string, unknown>) =>
   errorReporter.report('REALTIME_SUBSCRIPTION_FAILURE', error, metadata);
 
-export const reportDatabaseFailure = (error: Error | string, metadata?: Record<string, any>) =>
+export const reportDatabaseFailure = (error: Error | string, metadata?: Record<string, unknown>) =>
   errorReporter.report('DATABASE_OPERATION_FAILURE', error, metadata);

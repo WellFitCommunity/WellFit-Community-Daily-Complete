@@ -9,10 +9,10 @@
  */
 
 import { supabase } from '../../lib/supabaseClient';
-import type {
-  FHIRCarePlan,
-  FHIRApiResponse,
-} from '../../types/fhir';
+import { getErrorMessage } from '../../lib/getErrorMessage';
+import type { FHIRCarePlan, FHIRApiResponse } from '../../types/fhir';
+
+type RpcRow = Record<string, unknown>;
 
 export class CarePlanService {
   /**
@@ -29,11 +29,11 @@ export class CarePlanService {
         .order('created', { ascending: false });
 
       if (error) throw error;
-      return { success: true, data: data || [] };
+      return { success: true, data: (data as FHIRCarePlan[]) || [] };
     } catch (err: unknown) {
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to fetch care plans',
+        error: getErrorMessage(err) || 'Failed to fetch care plans',
       };
     }
   }
@@ -46,11 +46,7 @@ export class CarePlanService {
    */
   static async getById(id: string): Promise<FHIRApiResponse<FHIRCarePlan | null>> {
     try {
-      const { data, error } = await supabase
-        .from('fhir_care_plans')
-        .select('*')
-        .eq('id', id)
-        .single();
+      const { data, error } = await supabase.from('fhir_care_plans').select('*').eq('id', id).single();
 
       if (error) {
         if (error.code === 'PGRST116') {
@@ -58,11 +54,11 @@ export class CarePlanService {
         }
         throw error;
       }
-      return { success: true, data };
+      return { success: true, data: data as FHIRCarePlan };
     } catch (err: unknown) {
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to fetch care plan',
+        error: getErrorMessage(err) || 'Failed to fetch care plan',
       };
     }
   }
@@ -76,18 +72,18 @@ export class CarePlanService {
    * @param patientId - FHIR Patient resource ID
    * @returns Active CarePlan resources
    */
-  static async getActive(patientId: string): Promise<FHIRApiResponse<any[]>> {
+  static async getActive(patientId: string): Promise<FHIRApiResponse<RpcRow[]>> {
     try {
       const { data, error } = await supabase.rpc('get_active_care_plans', {
         p_patient_id: patientId,
       });
 
       if (error) throw error;
-      return { success: true, data: data || [] };
+      return { success: true, data: (data as RpcRow[]) || [] };
     } catch (err: unknown) {
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to fetch active care plans',
+        error: getErrorMessage(err) || 'Failed to fetch active care plans',
       };
     }
   }
@@ -101,18 +97,20 @@ export class CarePlanService {
    * @param patientId - FHIR Patient resource ID
    * @returns Current CarePlan resource or null
    */
-  static async getCurrent(patientId: string): Promise<FHIRApiResponse<any | null>> {
+  static async getCurrent(patientId: string): Promise<FHIRApiResponse<RpcRow | null>> {
     try {
       const { data, error } = await supabase.rpc('get_current_care_plan', {
         p_patient_id: patientId,
       });
 
       if (error) throw error;
-      return { success: true, data: data && data.length > 0 ? data[0] : null };
+
+      const rows = (data as RpcRow[]) || [];
+      return { success: true, data: rows.length > 0 ? rows[0] : null };
     } catch (err: unknown) {
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to fetch current care plan',
+        error: getErrorMessage(err) || 'Failed to fetch current care plan',
       };
     }
   }
@@ -127,22 +125,19 @@ export class CarePlanService {
    * @param status - FHIR CarePlan status
    * @returns Filtered CarePlan resources
    */
-  static async getByStatus(
-    patientId: string,
-    status: string
-  ): Promise<FHIRApiResponse<any[]>> {
+  static async getByStatus(patientId: string, status: string): Promise<FHIRApiResponse<RpcRow[]>> {
     try {
-      const { data, error} = await supabase.rpc('get_care_plans_by_status', {
+      const { data, error } = await supabase.rpc('get_care_plans_by_status', {
         p_patient_id: patientId,
         p_status: status,
       });
 
       if (error) throw error;
-      return { success: true, data: data || [] };
+      return { success: true, data: (data as RpcRow[]) || [] };
     } catch (err: unknown) {
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to fetch care plans by status',
+        error: getErrorMessage(err) || 'Failed to fetch care plans by status',
       };
     }
   }
@@ -157,10 +152,7 @@ export class CarePlanService {
    * @param category - FHIR CarePlan category
    * @returns Filtered CarePlan resources
    */
-  static async getByCategory(
-    patientId: string,
-    category: string
-  ): Promise<FHIRApiResponse<any[]>> {
+  static async getByCategory(patientId: string, category: string): Promise<FHIRApiResponse<RpcRow[]>> {
     try {
       const { data, error } = await supabase.rpc('get_care_plans_by_category', {
         p_patient_id: patientId,
@@ -168,11 +160,11 @@ export class CarePlanService {
       });
 
       if (error) throw error;
-      return { success: true, data: data || [] };
+      return { success: true, data: (data as RpcRow[]) || [] };
     } catch (err: unknown) {
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to fetch care plans by category',
+        error: getErrorMessage(err) || 'Failed to fetch care plans by category',
       };
     }
   }
@@ -186,19 +178,20 @@ export class CarePlanService {
    * @param carePlanId - CarePlan resource ID
    * @returns Activity summary with counts and status
    */
-  static async getActivitiesSummary(carePlanId: string): Promise<FHIRApiResponse<any>> {
+  static async getActivitiesSummary(carePlanId: string): Promise<FHIRApiResponse<RpcRow | null>> {
     try {
       const { data, error } = await supabase.rpc('get_care_plan_activities_summary', {
         p_care_plan_id: carePlanId,
       });
 
       if (error) throw error;
-      return { success: true, data: data && data.length > 0 ? data[0] : null };
-    } catch (error) {
+
+      const rows = (data as RpcRow[]) || [];
+      return { success: true, data: rows.length > 0 ? rows[0] : null };
+    } catch (err: unknown) {
       return {
         success: false,
-        error:
-          error instanceof Error ? error.message : 'Failed to fetch care plan activities summary',
+        error: getErrorMessage(err) || 'Failed to fetch care plan activities summary',
       };
     }
   }
@@ -216,18 +209,14 @@ export class CarePlanService {
    */
   static async create(carePlan: Partial<FHIRCarePlan>): Promise<FHIRApiResponse<FHIRCarePlan>> {
     try {
-      const { data, error } = await supabase
-        .from('fhir_care_plans')
-        .insert([carePlan])
-        .select()
-        .single();
+      const { data, error } = await supabase.from('fhir_care_plans').insert([carePlan]).select().single();
 
       if (error) throw error;
-      return { success: true, data };
+      return { success: true, data: data as FHIRCarePlan };
     } catch (err: unknown) {
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to create care plan',
+        error: getErrorMessage(err) || 'Failed to create care plan',
       };
     }
   }
@@ -244,24 +233,16 @@ export class CarePlanService {
    * @param updates - Partial CarePlan fields to update
    * @returns Updated CarePlan resource
    */
-  static async update(
-    id: string,
-    updates: Partial<FHIRCarePlan>
-  ): Promise<FHIRApiResponse<FHIRCarePlan>> {
+  static async update(id: string, updates: Partial<FHIRCarePlan>): Promise<FHIRApiResponse<FHIRCarePlan>> {
     try {
-      const { data, error } = await supabase
-        .from('fhir_care_plans')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
+      const { data, error } = await supabase.from('fhir_care_plans').update(updates).eq('id', id).select().single();
 
       if (error) throw error;
-      return { success: true, data };
+      return { success: true, data: data as FHIRCarePlan };
     } catch (err: unknown) {
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to update care plan',
+        error: getErrorMessage(err) || 'Failed to update care plan',
       };
     }
   }
@@ -284,7 +265,7 @@ export class CarePlanService {
     } catch (err: unknown) {
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to delete care plan',
+        error: getErrorMessage(err) || 'Failed to delete care plan',
       };
     }
   }
@@ -327,11 +308,11 @@ export class CarePlanService {
 
       const { data, error } = await query;
       if (error) throw error;
-      return { success: true, data: data || [] };
+      return { success: true, data: (data as FHIRCarePlan[]) || [] };
     } catch (err: unknown) {
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to search care plans',
+        error: getErrorMessage(err) || 'Failed to search care plans',
       };
     }
   }

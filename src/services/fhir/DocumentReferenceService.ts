@@ -7,6 +7,10 @@
 
 import { supabase } from '../../lib/supabaseClient';
 
+type DocumentReferenceRow = Record<string, unknown>;
+type DocumentReferenceCreateInput = Record<string, unknown>;
+type DocumentReferenceUpdateInput = Record<string, unknown>;
+
 export const DocumentReferenceService = {
   // Get all documents for a patient
   async getAll(patientId: string, options: { type_code?: string; status?: string } = {}) {
@@ -26,7 +30,7 @@ export const DocumentReferenceService = {
 
     const { data, error } = await query;
     if (error) throw error;
-    return data || [];
+    return (data as DocumentReferenceRow[]) || [];
   },
 
   // Get by document type (clinical notes, discharge summaries, lab reports, etc.)
@@ -40,7 +44,7 @@ export const DocumentReferenceService = {
       .order('date', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return (data as DocumentReferenceRow[]) || [];
   },
 
   // Get clinical notes (LOINC codes: 11506-3, 34133-9, etc.)
@@ -62,7 +66,7 @@ export const DocumentReferenceService = {
       .order('date', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return (data as DocumentReferenceRow[]) || [];
   },
 
   // Get discharge summaries
@@ -76,7 +80,7 @@ export const DocumentReferenceService = {
       .order('date', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return (data as DocumentReferenceRow[]) || [];
   },
 
   // Get by encounter (documents associated with a specific encounter)
@@ -89,11 +93,11 @@ export const DocumentReferenceService = {
       .order('date', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return (data as DocumentReferenceRow[]) || [];
   },
 
   // Create document reference
-  async create(document: any) {
+  async create(document: DocumentReferenceCreateInput) {
     const { data, error } = await supabase
       .from('document_references')
       .insert([document])
@@ -101,11 +105,11 @@ export const DocumentReferenceService = {
       .single();
 
     if (error) throw error;
-    return data;
+    return data as DocumentReferenceRow;
   },
 
   // Update document reference
-  async update(id: string, updates: any) {
+  async update(id: string, updates: DocumentReferenceUpdateInput) {
     const { data, error } = await supabase
       .from('document_references')
       .update(updates)
@@ -114,28 +118,27 @@ export const DocumentReferenceService = {
       .single();
 
     if (error) throw error;
-    return data;
+    return data as DocumentReferenceRow;
   },
 
   // Supersede document (mark as superseded and create new version)
-  async supersede(id: string, newDocument: any) {
+  async supersede(id: string, newDocument: DocumentReferenceCreateInput) {
     // Mark old document as superseded
-    await supabase
-      .from('document_references')
-      .update({ status: 'superseded' })
-      .eq('id', id);
+    await supabase.from('document_references').update({ status: 'superseded' }).eq('id', id);
 
     // Create new version
     const { data, error } = await supabase
       .from('document_references')
-      .insert([{
-        ...newDocument,
-        related_to: [{ reference: id, display: 'Supersedes previous version' }]
-      }])
+      .insert([
+        {
+          ...newDocument,
+          related_to: [{ reference: id, display: 'Supersedes previous version' }]
+        }
+      ])
       .select()
       .single();
 
     if (error) throw error;
-    return data;
+    return data as DocumentReferenceRow;
   },
 };

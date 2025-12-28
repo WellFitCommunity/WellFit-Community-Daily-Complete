@@ -92,6 +92,82 @@ export interface HandoffSummary {
 }
 
 // =====================================================
+// INTERNAL SAFE BOUNDARY TYPES
+// =====================================================
+
+interface TenantConfig {
+  handoff_synthesizer_enabled: boolean;
+  handoff_synthesizer_auto_generate?: boolean;
+  handoff_synthesizer_model?: string;
+}
+
+interface PatientDataSources {
+  observations: boolean;
+  carePlans: boolean;
+  anomalies: boolean;
+  riskAssessments: boolean;
+}
+
+interface HandoffPatientData {
+  sources: PatientDataSources;
+  patients: unknown[];
+  observations?: ObservationRow[];
+  carePlans?: CarePlanRow[];
+  anomalies?: BehavioralAnomalyRow[];
+  riskAssessments?: RiskAssessmentRow[];
+}
+
+interface ObservationRow {
+  patient_id: string;
+  code: string;
+  value: string | number;
+  unit?: string | null;
+  effective_date_time: string;
+}
+
+interface CarePlanRow {
+  patient_id: string;
+  title?: string | null;
+  description?: string | null;
+  status?: string | null;
+  activity?: unknown;
+}
+
+interface BehavioralAnomalyRow {
+  user_id: string;
+  anomaly_type: string;
+  severity: string;
+  description?: string | null;
+  detected_at: string;
+}
+
+interface RiskAssessmentRow {
+  patient_id: string;
+  risk_category: string;
+  risk_level: string;
+  risk_score?: number | null;
+  risk_factors?: unknown;
+  assessed_at: string;
+}
+
+interface AIOptimizerResponse {
+  response: string;
+  model: string;
+  cost: number;
+}
+
+interface ParsedHandoffAIResponse {
+  executiveSummary: string;
+  criticalAlerts?: CriticalAlert[];
+  highRiskPatients?: HighRiskPatient[];
+  vitalsTrends?: VitalsTrends;
+  carePlanUpdates?: CarePlanUpdate[];
+  behavioralConcerns?: HandoffSummary['behavioralConcerns'];
+  pendingTasks?: HandoffSummary['pendingTasks'];
+  medicationAlerts?: HandoffSummary['medicationAlerts'];
+}
+
+// =====================================================
 // INPUT VALIDATION
 // =====================================================
 
@@ -178,8 +254,8 @@ export class HandoffRiskSynthesizer {
   /**
    * Gather patient data for handoff
    */
-  private async gatherPatientData(context: ShiftHandoffContext): Promise<any> {
-    const data: any = {
+  private async gatherPatientData(context: ShiftHandoffContext): Promise<HandoffPatientData> {
+    const data: HandoffPatientData = {
       sources: {
         observations: false,
         carePlans: false,
@@ -200,7 +276,7 @@ export class HandoffRiskSynthesizer {
         .limit(500);
 
       if (observations && observations.length > 0) {
-        data.observations = observations;
+        data.observations = observations as ObservationRow[];
         data.sources.observations = true;
       }
 
@@ -213,7 +289,7 @@ export class HandoffRiskSynthesizer {
         .limit(200);
 
       if (carePlans && carePlans.length > 0) {
-        data.carePlans = carePlans;
+        data.carePlans = carePlans as CarePlanRow[];
         data.sources.carePlans = true;
       }
 
@@ -227,7 +303,7 @@ export class HandoffRiskSynthesizer {
         .limit(100);
 
       if (anomalies && anomalies.length > 0) {
-        data.anomalies = anomalies;
+        data.anomalies = anomalies as BehavioralAnomalyRow[];
         data.sources.anomalies = true;
       }
 
@@ -241,7 +317,7 @@ export class HandoffRiskSynthesizer {
         .limit(100);
 
       if (riskAssessments && riskAssessments.length > 0) {
-        data.riskAssessments = riskAssessments;
+        data.riskAssessments = riskAssessments as RiskAssessmentRow[];
         data.sources.riskAssessments = true;
       }
 
@@ -256,8 +332,8 @@ export class HandoffRiskSynthesizer {
    */
   private async synthesizeWithAI(
     context: ShiftHandoffContext,
-    patientData: any,
-    config: any
+    patientData: HandoffPatientData,
+    config: TenantConfig
   ): Promise<Omit<HandoffSummary, 'synthesisDuration'>> {
     // Build comprehensive prompt
     const prompt = this.buildSynthesisPrompt(context, patientData);
@@ -290,7 +366,7 @@ Return response as strict JSON with this structure:
 }`;
 
     try {
-      const aiResponse = await this.optimizer.call({
+      const aiResponseUnknown = await this.optimizer.call({
         prompt,
         systemPrompt,
         model: config.handoff_synthesizer_model || 'claude-haiku-4-5-20250929',
@@ -301,6 +377,8 @@ Return response as strict JSON with this structure:
           patientCount: context.patientIds.length
         }
       });
+
+      const aiResponse = aiResponseUnknown as AIOptimizerResponse;
 
       // Parse AI response
       const parsed = this.parseAIResponse(aiResponse.response);
@@ -328,7 +406,7 @@ Return response as strict JSON with this structure:
   /**
    * Build synthesis prompt
    */
-  private buildSynthesisPrompt(context: ShiftHandoffContext, patientData: any): string {
+  private buildSynthesisPrompt(context: ShiftHandoffContext, patientData: HandoffPatientData): string {
     let prompt = `Generate shift handoff summary for ${context.fromShift} to ${context.toShift} shift on ${context.shiftDate}.\n\n`;
 
     if (context.unitName) {
@@ -349,8 +427,8 @@ Return response as strict JSON with this structure:
     // Add care plan summary
     if (patientData.carePlans && patientData.carePlans.length > 0) {
       prompt += `ACTIVE CARE PLANS: ${patientData.carePlans.length}\n`;
-      patientData.carePlans.slice(0, 5).forEach((plan: any) => {
-        prompt += `- ${plan.title}\n`;
+      patientData.carePlans.slice(0, 5).forEach((plan: CarePlanRow) => {
+        prompt += `- ${plan.title || ''}\n`;
       });
       prompt += `\n`;
     }
@@ -358,7 +436,7 @@ Return response as strict JSON with this structure:
     // Add behavioral anomalies
     if (patientData.anomalies && patientData.anomalies.length > 0) {
       prompt += `BEHAVIORAL ALERTS (Last 24 hours): ${patientData.anomalies.length}\n`;
-      patientData.anomalies.slice(0, 5).forEach((anomaly: any) => {
+      patientData.anomalies.slice(0, 5).forEach((anomaly: BehavioralAnomalyRow) => {
         prompt += `- ${anomaly.anomaly_type}: ${anomaly.severity} severity\n`;
       });
       prompt += `\n`;
@@ -366,7 +444,8 @@ Return response as strict JSON with this structure:
 
     // Add risk assessments
     if (patientData.riskAssessments && patientData.riskAssessments.length > 0) {
-      prompt += `HIGH-RISK PATIENTS: ${patientData.riskAssessments.filter((r: any) => r.risk_level in ['high', 'critical']).length}\n`;
+      const highRiskCount = patientData.riskAssessments.filter((r: RiskAssessmentRow) => r.risk_level === 'high' || r.risk_level === 'critical').length;
+      prompt += `HIGH-RISK PATIENTS: ${highRiskCount}\n`;
       prompt += `\n`;
     }
 
@@ -378,25 +457,25 @@ Return response as strict JSON with this structure:
   /**
    * Summarize vitals for prompt
    */
-  private summarizeVitals(observations: any[]): { critical: number; abnormal: number } {
+  private summarizeVitals(observations: ObservationRow[]): { critical: number; abnormal: number } {
     let critical = 0;
     let abnormal = 0;
 
     // Simple heuristics for demo - in production, would use proper clinical ranges
     observations.forEach(obs => {
-      const value = parseFloat(obs.value);
-      if (isNaN(value)) return;
+      const raw = typeof obs.value === 'number' ? obs.value : parseFloat(String(obs.value));
+      if (isNaN(raw)) return;
 
       // Blood pressure
-      if (obs.code === 'BP' && (value > 180 || value < 90)) {
+      if (obs.code === 'BP' && (raw > 180 || raw < 90)) {
         critical++;
       }
       // Heart rate
-      if (obs.code === 'HR' && (value > 120 || value < 50)) {
+      if (obs.code === 'HR' && (raw > 120 || raw < 50)) {
         critical++;
       }
       // Temperature
-      if (obs.code === 'TEMP' && (value > 101 || value < 96)) {
+      if (obs.code === 'TEMP' && (raw > 101 || raw < 96)) {
         abnormal++;
       }
     });
@@ -407,14 +486,14 @@ Return response as strict JSON with this structure:
   /**
    * Parse AI response
    */
-  private parseAIResponse(response: string): any {
+  private parseAIResponse(response: string): ParsedHandoffAIResponse {
     try {
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error('No JSON found in AI response');
       }
 
-      return JSON.parse(jsonMatch[0]);
+      return JSON.parse(jsonMatch[0]) as ParsedHandoffAIResponse;
     } catch (err: unknown) {
       throw new Error(`Failed to parse AI response: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
@@ -451,7 +530,7 @@ Return response as strict JSON with this structure:
   /**
    * Get tenant configuration
    */
-  private async getTenantConfig(tenantId: string): Promise<any> {
+  private async getTenantConfig(tenantId: string): Promise<TenantConfig> {
     const { data, error } = await supabase.rpc('get_ai_skill_config', {
       p_tenant_id: tenantId
     });
@@ -460,7 +539,7 @@ Return response as strict JSON with this structure:
       throw new Error(`Failed to get tenant config: ${error.message}`);
     }
 
-    return data || {
+    return (data as TenantConfig) || {
       handoff_synthesizer_enabled: false,
       handoff_synthesizer_auto_generate: false,
       handoff_synthesizer_model: 'claude-haiku-4-5-20250929'

@@ -6,7 +6,9 @@ import DOMPurify from 'dompurify';
 /**
  * Configuration profiles for different sanitization needs
  */
-const SANITIZE_CONFIGS: Record<string, any> = {
+type SanitizeConfig = Record<string, unknown>;
+
+const SANITIZE_CONFIGS: Record<string, SanitizeConfig> = {
   // Strictest - removes all HTML, only plain text
   PLAIN_TEXT: {
     ALLOWED_TAGS: [] as string[],
@@ -61,7 +63,7 @@ export function sanitize(
 ): string {
   if (!dirty) return '';
 
-  const configMap = {
+  const configMap: Record<'plain' | 'basic' | 'rich' | 'links', SanitizeConfig> = {
     plain: SANITIZE_CONFIGS.PLAIN_TEXT,
     basic: SANITIZE_CONFIGS.BASIC_FORMAT,
     rich: SANITIZE_CONFIGS.RICH_TEXT,
@@ -91,14 +93,14 @@ export function sanitize(
  * // { name: 'John', notes: 'Patient seems <strong>well</strong>' }
  * ```
  */
-export function sanitizeObject<T extends Record<string, any>>(
+export function sanitizeObject<T extends Record<string, unknown>>(
   obj: T,
   level: 'plain' | 'basic' | 'rich' | 'links' = 'plain',
   keys?: string[]
 ): T {
   if (!obj || typeof obj !== 'object') return obj;
 
-  const sanitized = { ...obj };
+  const sanitized: Record<string, unknown> = { ...obj };
 
   for (const key in sanitized) {
     // If keys array provided, only sanitize specified keys
@@ -107,17 +109,17 @@ export function sanitizeObject<T extends Record<string, any>>(
     const value = sanitized[key];
 
     if (typeof value === 'string') {
-      sanitized[key] = sanitize(value, level) as T[Extract<keyof T, string>];
+      sanitized[key] = sanitize(value, level);
     } else if (Array.isArray(value)) {
-      sanitized[key] = value.map((item: any) =>
+      sanitized[key] = value.map((item: unknown) =>
         typeof item === 'string' ? sanitize(item, level) : item
-      ) as T[Extract<keyof T, string>];
+      );
     } else if (typeof value === 'object' && value !== null) {
-      sanitized[key] = sanitizeObject(value, level, keys) as T[Extract<keyof T, string>];
+      sanitized[key] = sanitizeObject(value as Record<string, unknown>, level, keys);
     }
   }
 
-  return sanitized;
+  return sanitized as T;
 }
 
 /**
@@ -257,7 +259,7 @@ export function useSanitize(level: 'plain' | 'basic' | 'rich' | 'links' = 'plain
 
   return {
     sanitize: sanitizeInput,
-    sanitizeObject: <T extends Record<string, any>>(obj: T, keys?: string[]) =>
+    sanitizeObject: <T extends Record<string, unknown>>(obj: T, keys?: string[]) =>
       sanitizeObject(obj, level, keys)
   };
 }

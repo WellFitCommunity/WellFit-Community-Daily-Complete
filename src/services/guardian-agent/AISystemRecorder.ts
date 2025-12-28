@@ -340,7 +340,7 @@ export class AISystemRecorder {
   private capturePerformanceSnapshot() {
     if (!this.isRecording) return;
 
-    const performance = this.getPerformanceMetrics();
+    const performanceMetrics = this.getPerformanceMetrics();
 
     const snapshot: SystemSnapshot = {
       id: this.generateSnapshotId(),
@@ -349,7 +349,7 @@ export class AISystemRecorder {
       component: 'system',
       metadata: {
         ...this.getContextMetadata(),
-        performance,
+        performance: performanceMetrics,
       },
     };
 
@@ -409,11 +409,14 @@ export class AISystemRecorder {
     this.snapshotBuffer = [];
 
     try {
-      await supabase.from('system_recordings').upsert({
-        session_id: this.currentSession?.session_id,
-        snapshots: snapshots,
-        recorded_at: new Date().toISOString(),
-      }, { onConflict: 'session_id' });
+      await supabase.from('system_recordings').upsert(
+        {
+          session_id: this.currentSession?.session_id,
+          snapshots: snapshots,
+          recorded_at: new Date().toISOString(),
+        },
+        { onConflict: 'session_id' }
+      );
     } catch {
       // Snapshots will be retried on next flush
     }
@@ -480,7 +483,7 @@ export class AISystemRecorder {
     const performanceSnapshots = recording.snapshots.filter((s) => s.type === 'performance');
     const avgMemory =
       performanceSnapshots.reduce(
-        (sum, s) => sum + ((s.metadata.performance?.memory_used as number) || 0),
+        (sum, s) => sum + (typeof s.metadata.performance?.memory_used === 'number' ? s.metadata.performance.memory_used : 0),
         0
       ) / (performanceSnapshots.length || 1);
 
@@ -546,7 +549,9 @@ export class AISystemRecorder {
   }
 
   private getPerformanceMetrics() {
-    const memory = (performance as { memory?: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number } }).memory;
+    const memory = (performance as {
+      memory?: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number };
+    }).memory;
 
     return {
       memory_used: memory?.usedJSHeapSize,
@@ -624,12 +629,12 @@ export function useSystemRecording(autoStart = false) {
     }
 
     return () => {
-      if (isRecording) {
+      if (autoStart && isRecording) {
         aiSystemRecorder.stopRecording();
         setIsRecording(false);
       }
     };
-  }, [autoStart]);
+  }, [autoStart, isRecording]);
 
   React.useEffect(() => {
     const interval = setInterval(() => {

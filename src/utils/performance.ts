@@ -2,6 +2,13 @@
 import { supabase } from '../lib/supabaseClient';
 import { auditLogger } from '../services/auditLogger';
 
+type ComponentStats = {
+  avg: number;
+  max: number;
+  min: number;
+  samples: number;
+};
+
 export class PerformanceMonitor {
   private static instance: PerformanceMonitor;
   private metrics: Map<string, number[]> = new Map();
@@ -25,13 +32,14 @@ export class PerformanceMonitor {
         this.metrics.set(componentName, []);
       }
 
-      // Safe: just set above if it didn't exist
-      const times = this.metrics.get(componentName)!;
-      times.push(renderTime);
+      const _times = this.metrics.get(componentName);
+      if (!_times) return;
+
+      _times.push(renderTime);
 
       // Keep only last 100 measurements
-      if (times.length > 100) {
-        times.shift();
+      if (_times.length > 100) {
+        _times.shift();
       }
 
       // Track slow renders (>16ms for 60fps) - logged to monitoring service
@@ -40,7 +48,7 @@ export class PerformanceMonitor {
   }
 
   // Get performance stats for a component
-  getStats(componentName: string) {
+  getStats(componentName: string): ComponentStats | null {
     const times = this.metrics.get(componentName) || [];
     if (times.length === 0) return null;
 
@@ -52,9 +60,9 @@ export class PerformanceMonitor {
   }
 
   // Get all performance stats (for external monitoring service)
-  getAllStats() {
-    const allStats: Record<string, any> = {};
-    for (const [component, times] of this.metrics) {
+  getAllStats(): Record<string, ComponentStats> {
+    const allStats: Record<string, ComponentStats> = {};
+    for (const [component] of this.metrics) {
       const stats = this.getStats(component);
       if (stats) {
         allStats[component] = stats;
@@ -65,26 +73,34 @@ export class PerformanceMonitor {
   }
 
   // Web Vitals tracking
-  measureWebVitals() {
+  measureWebVitals(): void {
     // Core Web Vitals
     if ('PerformanceObserver' in window) {
       // Cumulative Layout Shift (CLS)
       const observer = new PerformanceObserver((list) => {
-        let cls = 0;
+        let _cls = 0;
         for (const entry of list.getEntries()) {
-          if (!(entry as any).hadRecentInput) {
-            cls += (entry as any).value;
+          const layoutShiftEntry = entry as PerformanceEntry & {
+            hadRecentInput?: boolean;
+            value?: number;
+          };
+
+          if (!layoutShiftEntry.hadRecentInput) {
+            _cls += layoutShiftEntry.value ?? 0;
           }
         }
         // High CLS tracked for monitoring service
+        void _cls;
       });
       observer.observe({ entryTypes: ['layout-shift'] });
 
       // First Input Delay (FID)
       const fidObserver = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
-          const fid = (entry as any).processingStart - entry.startTime;
+          const firstInputEntry = entry as PerformanceEntry & { processingStart?: number };
+          const _fid = (firstInputEntry.processingStart ?? 0) - entry.startTime;
           // High FID tracked for monitoring service
+          void _fid;
         }
       });
       fidObserver.observe({ entryTypes: ['first-input'] });
@@ -94,8 +110,10 @@ export class PerformanceMonitor {
     if ('LargestContentfulPaint' in window) {
       new PerformanceObserver((list) => {
         const entries = list.getEntries();
-        const lcp = entries[entries.length - 1];
+        const lastEntry = entries[entries.length - 1];
+        const _lcp = lastEntry ?? null;
         // Slow LCP tracked for monitoring service
+        void _lcp;
       }).observe({ entryTypes: ['largest-contentful-paint'] });
     }
   }
@@ -134,7 +152,7 @@ if (import.meta.env.MODE === 'production') {
 
       // Log summary to audit logger for compliance
       const slowComponents = Object.entries(stats)
-        .filter(([, s]) => s.average > 100) // Components averaging >100ms
+        .filter(([, s]) => s.avg > 100) // Components averaging >100ms
         .map(([name]) => name);
 
       if (slowComponents.length > 0) {

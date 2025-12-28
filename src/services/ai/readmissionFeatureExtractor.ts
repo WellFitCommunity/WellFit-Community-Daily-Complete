@@ -20,6 +20,10 @@ import type {
 } from '../../types/readmissionRiskFeatures';
 import type { DischargeContext } from './readmissionRiskPredictor';
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
 export class ReadmissionFeatureExtractor {
   /**
    * Extract all comprehensive features for a patient at discharge
@@ -96,7 +100,7 @@ export class ReadmissionFeatureExtractor {
     const losCategory = this.categorizeLengthOfStay(context.lengthOfStay);
 
     // Check if diagnosis is high-risk
-    const highRiskDiagnoses = ['CHF', 'COPD', 'diabetes', 'renal_failure'];
+    const _highRiskDiagnoses = ['CHF', 'COPD', 'diabetes', 'renal_failure'];
     const isHighRisk = context.primaryDiagnosisCode ?
       this.checkHighRiskDiagnosis(context.primaryDiagnosisCode) : false;
 
@@ -168,16 +172,16 @@ export class ReadmissionFeatureExtractor {
     };
 
     const hasAnticoagulants = activeMeds.some(m =>
-      this.medicationMatchesClass(m, highRiskClasses.anticoagulants)
+      this.medicationMatchesClass(m as unknown, highRiskClasses.anticoagulants)
     );
     const hasInsulin = activeMeds.some(m =>
-      this.medicationMatchesClass(m, highRiskClasses.insulin)
+      this.medicationMatchesClass(m as unknown, highRiskClasses.insulin)
     );
     const hasOpioids = activeMeds.some(m =>
-      this.medicationMatchesClass(m, highRiskClasses.opioids)
+      this.medicationMatchesClass(m as unknown, highRiskClasses.opioids)
     );
     const hasImmunosuppressants = activeMeds.some(m =>
-      this.medicationMatchesClass(m, highRiskClasses.immunosuppressants)
+      this.medicationMatchesClass(m as unknown, highRiskClasses.immunosuppressants)
     );
 
     const highRiskMedList: string[] = [];
@@ -297,8 +301,13 @@ export class ReadmissionFeatureExtractor {
     const ruralStatus = await this.checkRuralStatus(profile?.address_zip);
 
     // Calculate distance-to-care risk weight (for rural model weighting)
-    const distanceToHospital = transportation?.details?.distance_to_hospital;
-    const distanceToPcp = transportation?.details?.distance_to_pcp;
+    const distanceToHospital = isRecord(transportation?.details)
+      ? (transportation.details['distance_to_hospital'] as number | undefined)
+      : undefined;
+    const distanceToPcp = isRecord(transportation?.details)
+      ? (transportation.details['distance_to_pcp'] as number | undefined)
+      : undefined;
+
     const distanceToCareRiskWeight = this.calculateDistanceToCareRiskWeight(
       distanceToHospital,
       distanceToPcp,
@@ -314,39 +323,40 @@ export class ReadmissionFeatureExtractor {
       : undefined;
 
     return {
-      livesAlone: housing?.details?.lives_alone || false,
-      hasCaregiver: socialSupport?.details?.has_caregiver || false,
-      caregiverAvailable24Hours: socialSupport?.details?.caregiver_24hr || false,
-      caregiverReliable: socialSupport?.details?.caregiver_reliable || false,
+      livesAlone: (isRecord(housing?.details) ? (housing.details['lives_alone'] as boolean | undefined) : undefined) || false,
+      hasCaregiver: (isRecord(socialSupport?.details) ? (socialSupport.details['has_caregiver'] as boolean | undefined) : undefined) || false,
+      caregiverAvailable24Hours: (isRecord(socialSupport?.details) ? (socialSupport.details['caregiver_24hr'] as boolean | undefined) : undefined) || false,
+      caregiverReliable: (isRecord(socialSupport?.details) ? (socialSupport.details['caregiver_reliable'] as boolean | undefined) : undefined) || false,
 
       hasTransportationBarrier: transportation?.risk_level === 'high' || transportation?.risk_level === 'critical',
       distanceToNearestHospitalMiles: distanceToHospital,
       distanceToPcpMiles: distanceToPcp,
-      publicTransitAvailable: transportation?.details?.public_transit || false,
+      publicTransitAvailable: (isRecord(transportation?.details) ? (transportation.details['public_transit'] as boolean | undefined) : undefined) || false,
 
       // Enhanced rural classification
       isRuralLocation: ruralStatus.isRural,
-      ruralIsolationScore: this.calculateRuralIsolationScore(transportation, ruralStatus.isRural, ruralStatus.rucaCategory),
+      ruralIsolationScore: this.calculateRuralIsolationScore(transportation as unknown, ruralStatus.isRural, ruralStatus.rucaCategory),
       rucaCategory: ruralStatus.rucaCategory,
       distanceToCareRiskWeight,
       patientRurality: ruralStatus.patientRurality,
       isInHealthcareShortageArea: isInHPSA,
       minutesToNearestED: minutesToED,
 
-      insuranceType: this.categorizeInsurance(insurance?.details?.type),
-      hasMedicaid: insurance?.details?.type === 'medicaid' || insurance?.details?.type === 'dual_eligible',
+      insuranceType: this.categorizeInsurance(isRecord(insurance?.details) ? (insurance.details['type'] as string | undefined) : undefined),
+      hasMedicaid: (isRecord(insurance?.details) ? (insurance.details['type'] as string | undefined) : undefined) === 'medicaid'
+        || (isRecord(insurance?.details) ? (insurance.details['type'] as string | undefined) : undefined) === 'dual_eligible',
       hasInsuranceGaps: insurance?.risk_level === 'high' || insurance?.risk_level === 'critical',
-      financialBarriersToMedications: insurance?.details?.medication_cost_barrier || false,
-      financialBarriersToFollowUp: insurance?.details?.visit_cost_barrier || false,
+      financialBarriersToMedications: (isRecord(insurance?.details) ? (insurance.details['medication_cost_barrier'] as boolean | undefined) : undefined) || false,
+      financialBarriersToFollowUp: (isRecord(insurance?.details) ? (insurance.details['visit_cost_barrier'] as boolean | undefined) : undefined) || false,
 
-      healthLiteracyLevel: this.categorizeHealthLiteracy(healthLiteracy?.details?.level),
+      healthLiteracyLevel: this.categorizeHealthLiteracy(isRecord(healthLiteracy?.details) ? (healthLiteracy.details['level'] as string | undefined) : undefined),
       lowHealthLiteracy: healthLiteracy?.risk_level === 'high' || healthLiteracy?.risk_level === 'critical',
-      languageBarrier: healthLiteracy?.details?.language_barrier || false,
-      interpreterNeeded: healthLiteracy?.details?.interpreter_needed || false,
+      languageBarrier: (isRecord(healthLiteracy?.details) ? (healthLiteracy.details['language_barrier'] as boolean | undefined) : undefined) || false,
+      interpreterNeeded: (isRecord(healthLiteracy?.details) ? (healthLiteracy.details['interpreter_needed'] as boolean | undefined) : undefined) || false,
 
-      socialSupportScore: socialSupport?.score || 0,
-      hasFamilySupport: socialSupport?.details?.family_support || false,
-      hasCommunitySupport: socialSupport?.details?.community_support || false,
+      socialSupportScore: (socialSupport?.score as number | undefined) || 0,
+      hasFamilySupport: (isRecord(socialSupport?.details) ? (socialSupport.details['family_support'] as boolean | undefined) : undefined) || false,
+      hasCommunitySupport: (isRecord(socialSupport?.details) ? (socialSupport.details['community_support'] as boolean | undefined) : undefined) || false,
       sociallyIsolated: socialSupport?.risk_level === 'high' || socialSupport?.risk_level === 'critical'
     };
   }
@@ -411,33 +421,51 @@ export class ReadmissionFeatureExtractor {
 
     let adlDependencies = 0;
     adlFields.forEach(field => {
-      const value = riskAssessment?.[field];
-      if (value && (value.includes('needs_help') || value.includes('dependent'))) {
+      const value = isRecord(riskAssessment) ? (riskAssessment[field] as unknown) : undefined;
+      if (typeof value === 'string' && (value.includes('needs_help') || value.includes('dependent'))) {
         adlDependencies++;
       }
     });
 
+    const cognitiveRiskScore = isRecord(riskAssessment) ? (riskAssessment['cognitive_risk_score'] as number | undefined) : undefined;
+    const riskFactors = isRecord(riskAssessment) ? (riskAssessment['risk_factors'] as unknown) : undefined;
+
+    const hasRiskFactorsArray = Array.isArray(riskFactors);
+    const riskFactorsList = hasRiskFactorsArray ? (riskFactors as unknown[]).filter((x): x is string => typeof x === 'string') : [];
+
     return {
       adlDependencies,
-      needsHelpBathing: riskAssessment?.bathing_ability?.includes('needs_help') || false,
-      needsHelpDressing: riskAssessment?.dressing_ability?.includes('needs_help') || false,
-      needsHelpToileting: riskAssessment?.toilet_transfer?.includes('needs_help') || false,
-      needsHelpEating: riskAssessment?.eating_ability?.includes('needs_help') || false,
-      needsHelpTransferring: riskAssessment?.sitting_ability?.includes('needs_help') || false,
-      needsHelpWalking: riskAssessment?.walking_ability?.includes('needs_help') || false,
+      needsHelpBathing: (isRecord(riskAssessment) && typeof riskAssessment['bathing_ability'] === 'string')
+        ? (riskAssessment['bathing_ability'] as string).includes('needs_help')
+        : false,
+      needsHelpDressing: (isRecord(riskAssessment) && typeof riskAssessment['dressing_ability'] === 'string')
+        ? (riskAssessment['dressing_ability'] as string).includes('needs_help')
+        : false,
+      needsHelpToileting: (isRecord(riskAssessment) && typeof riskAssessment['toilet_transfer'] === 'string')
+        ? (riskAssessment['toilet_transfer'] as string).includes('needs_help')
+        : false,
+      needsHelpEating: (isRecord(riskAssessment) && typeof riskAssessment['eating_ability'] === 'string')
+        ? (riskAssessment['eating_ability'] as string).includes('needs_help')
+        : false,
+      needsHelpTransferring: (isRecord(riskAssessment) && typeof riskAssessment['sitting_ability'] === 'string')
+        ? (riskAssessment['sitting_ability'] as string).includes('needs_help')
+        : false,
+      needsHelpWalking: (isRecord(riskAssessment) && typeof riskAssessment['walking_ability'] === 'string')
+        ? (riskAssessment['walking_ability'] as string).includes('needs_help')
+        : false,
 
-      hasCognitiveImpairment: riskAssessment?.cognitive_risk_score > 6,
-      cognitiveImpairmentSeverity: this.categorizeCognitiveSeverity(riskAssessment?.cognitive_risk_score),
-      hasDementia: riskAssessment?.risk_factors?.includes('dementia') || false,
-      hasDelirium: riskAssessment?.risk_factors?.includes('delirium') || false,
+      hasCognitiveImpairment: typeof cognitiveRiskScore === 'number' ? cognitiveRiskScore > 6 : false,
+      cognitiveImpairmentSeverity: this.categorizeCognitiveSeverity(cognitiveRiskScore),
+      hasDementia: riskFactorsList.includes('dementia'),
+      hasDelirium: riskFactorsList.includes('delirium'),
 
       hasRecentFalls: fallsLast90Days > 0,
       fallsInPast30Days: fallsLast30Days,
       fallsInPast90Days: fallsLast90Days,
-      fallRiskScore: this.calculateFallRiskScore(fallsLast90Days, riskAssessment),
+      fallRiskScore: this.calculateFallRiskScore(fallsLast90Days, riskAssessment as unknown),
 
-      mobilityLevel: this.categorizeMobility(riskAssessment?.walking_ability),
-      requiresDurableMedicalEquipment: riskAssessment?.risk_factors?.includes('dme_needed') || false
+      mobilityLevel: this.categorizeMobility(isRecord(riskAssessment) ? (riskAssessment['walking_ability'] as string | undefined) : undefined),
+      requiresDurableMedicalEquipment: riskFactorsList.includes('dme_needed')
     };
   }
 
@@ -908,12 +936,15 @@ export class ReadmissionFeatureExtractor {
     return { allNormal, trendsConcerning, eGfr, hemoglobin, sodium, glucose };
   }
 
-  private medicationMatchesClass(med: any, classKeywords: string[]): boolean {
-    const medName = med.medication_display?.toLowerCase() || '';
+  private medicationMatchesClass(med: unknown, classKeywords: string[]): boolean {
+    const medName =
+      isRecord(med) && typeof med['medication_display'] === 'string'
+        ? (med['medication_display'] as string).toLowerCase()
+        : '';
     return classKeywords.some(keyword => medName.includes(keyword));
   }
 
-  private async getMedicationChanges(patientId: string, dischargeDate: string) {
+  private async getMedicationChanges(_patientId: string, _dischargeDate: string) {
     // This would compare medications before and after admission
     // For now, return placeholder data
     return {
@@ -925,7 +956,7 @@ export class ReadmissionFeatureExtractor {
     };
   }
 
-  private async getPrescriptionFillStatus(patientId: string, dischargeDate: string) {
+  private async getPrescriptionFillStatus(_patientId: string, _dischargeDate: string) {
     // This would integrate with pharmacy data
     // For now, return placeholder data
     return {
@@ -985,7 +1016,7 @@ export class ReadmissionFeatureExtractor {
     };
   }
 
-  private async getDischargeInstructions(patientId: string, dischargeDate: string) {
+  private async getDischargeInstructions(_patientId: string, _dischargeDate: string) {
     // This would check discharge documentation
     // For now, return placeholder data
     return {
@@ -1004,7 +1035,9 @@ export class ReadmissionFeatureExtractor {
       .eq('status', 'active')
       .single();
 
-    return data?.details?.has_caregiver || data?.details?.family_support || false;
+    return (isRecord(data?.details) ? (data.details['has_caregiver'] as boolean | undefined) : undefined)
+      || (isRecord(data?.details) ? (data.details['family_support'] as boolean | undefined) : undefined)
+      || false;
   }
 
   /**
@@ -1106,7 +1139,7 @@ export class ReadmissionFeatureExtractor {
   }
 
   private calculateRuralIsolationScore(
-    transportation: any,
+    transportation: unknown,
     isRural: boolean,
     rucaCategory?: string
   ): number {
@@ -1129,14 +1162,22 @@ export class ReadmissionFeatureExtractor {
         score = 3;
     }
 
-    // Distance factors
-    if (transportation?.details?.distance_to_hospital > 60) score += 2;
-    else if (transportation?.details?.distance_to_hospital > 30) score += 1;
+    const details = isRecord(transportation) ? transportation['details'] : undefined;
 
-    if (transportation?.details?.distance_to_pcp > 30) score += 1;
+    // Distance factors
+    const distanceToHospital = isRecord(details) ? (details['distance_to_hospital'] as number | undefined) : undefined;
+    const distanceToPcp = isRecord(details) ? (details['distance_to_pcp'] as number | undefined) : undefined;
+    const publicTransit = isRecord(details) ? (details['public_transit'] as boolean | undefined) : undefined;
+
+    if (typeof distanceToHospital === 'number') {
+      if (distanceToHospital > 60) score += 2;
+      else if (distanceToHospital > 30) score += 1;
+    }
+
+    if (typeof distanceToPcp === 'number' && distanceToPcp > 30) score += 1;
 
     // Infrastructure factors
-    if (!transportation?.details?.public_transit) score += 1;
+    if (publicTransit === false) score += 1;
 
     return Math.min(score, 10);
   }
@@ -1174,13 +1215,17 @@ export class ReadmissionFeatureExtractor {
     return 'independent';
   }
 
-  private calculateFallRiskScore(fallsCount: number, riskAssessment: any): number {
+  private calculateFallRiskScore(fallsCount: number, riskAssessment: unknown): number {
     let score = Math.min(fallsCount * 2, 6); // 2 points per fall, max 6
 
-    if (riskAssessment) {
-      if (riskAssessment.mobility_risk_score > 7) score += 2;
-      if (riskAssessment.cognitive_risk_score > 6) score += 1;
-      if (riskAssessment.walking_ability?.includes('walker') || riskAssessment.walking_ability?.includes('wheelchair')) score += 1;
+    if (isRecord(riskAssessment)) {
+      const mobilityRiskScore = riskAssessment['mobility_risk_score'];
+      const cognitiveRiskScore = riskAssessment['cognitive_risk_score'];
+      const walkingAbility = riskAssessment['walking_ability'];
+
+      if (typeof mobilityRiskScore === 'number' && mobilityRiskScore > 7) score += 2;
+      if (typeof cognitiveRiskScore === 'number' && cognitiveRiskScore > 6) score += 1;
+      if (typeof walkingAbility === 'string' && (walkingAbility.includes('walker') || walkingAbility.includes('wheelchair'))) score += 1;
     }
 
     return Math.min(score, 10);
@@ -1190,7 +1235,7 @@ export class ReadmissionFeatureExtractor {
    * Calculate data completeness score
    * Critical for prediction confidence
    */
-  private calculateDataCompleteness(features: any): { completeness: number; missingCritical: string[] } {
+  private calculateDataCompleteness(features: unknown): { completeness: number; missingCritical: string[] } {
     const critical = [
       { key: 'clinical.priorAdmissions30Day', weight: 5 },
       { key: 'clinical.comorbidityCount', weight: 5 },
@@ -1218,8 +1263,11 @@ export class ReadmissionFeatureExtractor {
     return { completeness, missingCritical: missing };
   }
 
-  private getNestedValue(obj: any, path: string): any {
-    return path.split('.').reduce((current, key) => current?.[key], obj);
+  private getNestedValue(obj: unknown, path: string): unknown {
+    return path.split('.').reduce<unknown>((current, key) => {
+      if (!isRecord(current)) return undefined;
+      return current[key];
+    }, obj);
   }
 }
 

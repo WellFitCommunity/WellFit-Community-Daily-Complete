@@ -72,7 +72,10 @@ export const MedicationAffordabilityService = {
   },
 
   // Add therapeutic alternatives
-  async addAlternatives(checkId: string, alternatives: any[]) {
+  async addAlternatives(
+    checkId: string,
+    alternatives: Record<string, unknown>[]
+  ) {
     const { data, error } = await supabase
       .from('medication_affordability_checks')
       .update({ alternatives })

@@ -146,6 +146,27 @@ const SAFETY_THRESHOLDS = {
 };
 
 // =====================================================
+// INTERNAL TYPES (lint-safe)
+// =====================================================
+
+type FhirCoding = {
+  display?: string;
+};
+
+type FhirCodeableConcept = {
+  coding?: FhirCoding[];
+  text?: string;
+};
+
+type ConditionRow = {
+  code?: FhirCodeableConcept | null;
+};
+
+type AllergyRow = {
+  code?: FhirCodeableConcept | null;
+};
+
+// =====================================================
 // SERVICE
 // =====================================================
 
@@ -220,7 +241,8 @@ export class TreatmentPathwayService {
 
     // SAFETY: Ensure disclaimer is present
     if (!pathway.disclaimer || pathway.disclaimer.length < 20) {
-      pathway.disclaimer = 'These recommendations are for clinical decision support only and require verification by a licensed healthcare provider. This is not a substitute for professional medical judgment.';
+      pathway.disclaimer =
+        'These recommendations are for clinical decision support only and require verification by a licensed healthcare provider. This is not a substitute for professional medical judgment.';
     }
 
     // SAFETY: Add review reason if confidence is low
@@ -530,8 +552,8 @@ export class TreatmentPathwayService {
 
         if (current) {
           updates.content = {
-            ...current.content,
-            ...modifications,
+            ...(current.content as Record<string, unknown>),
+            ...(modifications as unknown as Record<string, unknown>),
           };
         }
       }
@@ -660,8 +682,8 @@ export class TreatmentPathwayService {
       const warnings: string[] = [];
 
       // Check conditions for common contraindications
-      const conditionDisplays = (conditions || [])
-        .map((c: any) => c.code?.coding?.[0]?.display || '')
+      const conditionDisplays = ((conditions || []) as ConditionRow[])
+        .map((c) => c.code?.coding?.[0]?.display || '')
         .filter(Boolean)
         .join(' ')
         .toLowerCase();
@@ -683,8 +705,8 @@ export class TreatmentPathwayService {
       }
 
       // Check allergies
-      const allergyDisplays = (allergies || [])
-        .map((a: any) => a.code?.coding?.[0]?.display || a.code?.text || '')
+      const allergyDisplays = ((allergies || []) as AllergyRow[])
+        .map((a) => a.code?.coding?.[0]?.display || a.code?.text || '')
         .filter(Boolean);
 
       for (const allergy of allergyDisplays) {

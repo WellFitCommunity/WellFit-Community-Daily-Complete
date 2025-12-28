@@ -106,7 +106,7 @@ export class ImmunizationService {
   static async getHistory(
     patientId: string,
     days: number = 365
-  ): Promise<FHIRApiResponse<any[]>> {
+  ): Promise<FHIRApiResponse<Record<string, unknown>[]>> {
     try {
       const { data, error } = await supabase.rpc('get_patient_immunizations', {
         p_patient_id: patientId,
@@ -114,7 +114,7 @@ export class ImmunizationService {
       });
 
       if (error) throw error;
-      return { success: true, data: data || [] };
+      return { success: true, data: (data as Record<string, unknown>[]) || [] };
     } catch (err: unknown) {
       return {
         success: false,
@@ -136,7 +136,7 @@ export class ImmunizationService {
   static async getByVaccineCode(
     patientId: string,
     vaccineCode: string
-  ): Promise<FHIRApiResponse<any[]>> {
+  ): Promise<FHIRApiResponse<Record<string, unknown>[]>> {
     try {
       const { data, error } = await supabase.rpc('get_immunizations_by_vaccine', {
         p_patient_id: patientId,
@@ -144,7 +144,7 @@ export class ImmunizationService {
       });
 
       if (error) throw error;
-      return { success: true, data: data || [] };
+      return { success: true, data: (data as Record<string, unknown>[]) || [] };
     } catch (err: unknown) {
       return {
         success: false,
@@ -196,14 +196,14 @@ export class ImmunizationService {
    * @param patientId - FHIR Patient resource ID
    * @returns Array of vaccine gaps with recommendations
    */
-  static async getVaccineGaps(patientId: string): Promise<FHIRApiResponse<any[]>> {
+  static async getVaccineGaps(patientId: string): Promise<FHIRApiResponse<Record<string, unknown>[]>> {
     try {
       const { data, error } = await supabase.rpc('get_vaccine_gaps', {
         p_patient_id: patientId,
       });
 
       if (error) throw error;
-      return { success: true, data: data || [] };
+      return { success: true, data: (data as Record<string, unknown>[]) || [] };
     } catch (err: unknown) {
       return {
         success: false,

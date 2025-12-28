@@ -4,7 +4,7 @@
  * Provides bidirectional mapping between billing system and FHIR
  */
 
-import { supabase } from '../lib/supabaseClient';
+import { supabase as _supabase } from '../lib/supabaseClient';
 import { EncounterService } from './encounterService';
 import type { Encounter as BillingEncounter } from '../types/billing';
 
@@ -186,7 +186,6 @@ export class FHIREncounterWrapper {
       const billingEncounter = await EncounterService.getEncounter(encounterId);
       return this.toFHIR(billingEncounter);
     } catch {
-
       return null;
     }
   }
@@ -199,7 +198,6 @@ export class FHIREncounterWrapper {
       const billingEncounters = await EncounterService.getEncountersByPatient(patientId);
       return billingEncounters.map((enc) => this.toFHIR(enc));
     } catch {
-
       return [];
     }
   }
@@ -215,7 +213,7 @@ export class FHIREncounterWrapper {
     type?: string;
   }): Promise<FHIREncounter[]> {
     try {
-      const filters: any = {};
+      const filters: Record<string, unknown> = {};
 
       if (params.patient) filters.patientId = params.patient;
       if (params.date) {
@@ -234,7 +232,6 @@ export class FHIREncounterWrapper {
 
       return fhirEncounters;
     } catch {
-
       return [];
     }
   }
@@ -265,7 +262,7 @@ export class FHIREncounterWrapper {
     resourceType: 'Bundle';
     type: 'searchset';
     total: number;
-    entry: Array<{ resource: any }>;
+    entry: Array<{ resource: Record<string, unknown> }>;
   } | null> {
     try {
       const fhirEncounter = await this.getFHIREncounter(encounterId);
@@ -279,7 +276,7 @@ export class FHIREncounterWrapper {
         total: 1,
         entry: [
           {
-            resource: fhirEncounter,
+            resource: fhirEncounter as unknown as Record<string, unknown>,
           },
         ],
       };
@@ -298,7 +295,6 @@ export class FHIREncounterWrapper {
 
       return bundle;
     } catch {
-
       return null;
     }
   }

@@ -31,7 +31,10 @@ export const AllergyIntoleranceService = {
   },
 
   // Get by allergen type
-  async getByType(patientId: string, allergenType: 'medication' | 'food' | 'environment' | 'biologic') {
+  async getByType(
+    patientId: string,
+    allergenType: 'medication' | 'food' | 'environment' | 'biologic'
+  ) {
     const { data, error } = await supabase
       .from('allergy_intolerances')
       .select('*')
@@ -71,7 +74,7 @@ export const AllergyIntoleranceService = {
   },
 
   // Create new allergy
-  async create(allergy: any) {
+  async create(allergy: Record<string, unknown>) {
     const { data, error } = await supabase
       .from('allergy_intolerances')
       .insert([allergy])
@@ -83,7 +86,7 @@ export const AllergyIntoleranceService = {
   },
 
   // Update allergy
-  async update(id: string, updates: any) {
+  async update(id: string, updates: Record<string, unknown>) {
     const { data, error } = await supabase
       .from('allergy_intolerances')
       .update(updates)

@@ -20,10 +20,12 @@ export interface SecurityContext {
   userAgent?: string;
 }
 
+type UnknownRecord = Record<string, unknown>;
+
 export interface ValidationResult {
   isValid: boolean;
   errors: string[];
-  sanitizedInput?: any;
+  sanitizedInput?: UnknownRecord;
 }
 
 export interface AuditLogParams {
@@ -33,7 +35,7 @@ export interface AuditLogParams {
   resourceId?: string;
   targetUserId?: string;
   operation?: string;
-  metadata?: Record<string, any>;
+  metadata?: UnknownRecord;
   success: boolean;
   errorMessage?: string;
 }
@@ -75,7 +77,7 @@ export class ErrorSanitizer {
   /**
    * Sanitize error message to remove PHI
    */
-  static sanitize(error: any): string {
+  static sanitize(error: unknown): string {
     let message: string;
 
     // Extract error message
@@ -83,14 +85,14 @@ export class ErrorSanitizer {
       message = error.message;
     } else if (typeof error === 'string') {
       message = error;
-    } else if (error?.message) {
-      message = error.message;
+    } else if (error && typeof error === 'object' && 'message' in error && typeof (error as { message?: unknown }).message === 'string') {
+      message = (error as { message: string }).message;
     } else {
       message = 'An error occurred';
     }
 
     // Remove PHI patterns
-    this.PHI_PATTERNS.forEach(pattern => {
+    this.PHI_PATTERNS.forEach((pattern) => {
       message = message.replace(pattern, '[REDACTED]');
     });
 
@@ -102,7 +104,7 @@ export class ErrorSanitizer {
     }
 
     // Remove stack traces
-    message = message.split('\n')[0];
+    message = message.split('\n')[0] || message;
 
     // Limit length
     if (message.length > 200) {
@@ -115,14 +117,22 @@ export class ErrorSanitizer {
   /**
    * Create safe error object for client
    */
-  static createSafeError(error: any, userMessage?: string): {
+  static createSafeError(
+    error: unknown,
+    userMessage?: string
+  ): {
     message: string;
     code?: string;
     timestamp: string;
   } {
+    const code =
+      error && typeof error === 'object' && 'code' in error && typeof (error as { code?: unknown }).code === 'string'
+        ? (error as { code: string }).code
+        : 'UNKNOWN_ERROR';
+
     return {
       message: userMessage || this.sanitize(error),
-      code: error?.code || 'UNKNOWN_ERROR',
+      code,
       timestamp: new Date().toISOString(),
     };
   }
@@ -130,21 +140,28 @@ export class ErrorSanitizer {
   /**
    * Log error with full details (server-side only, not sent to client)
    */
-  static async logError(error: any, context: Record<string, any> = {}): Promise<void> {
+  static async logError(error: unknown, context: UnknownRecord = {}): Promise<void> {
     try {
+      const errorType =
+        error && typeof error === 'object' && 'constructor' in error && (error as { constructor?: unknown }).constructor
+          ? String((error as { constructor?: { name?: unknown } }).constructor?.name ?? 'Unknown')
+          : 'Unknown';
+
+      const errorCode =
+        error && typeof error === 'object' && 'code' in error ? (error as { code?: unknown }).code ?? null : null;
+
       await supabase.rpc('log_security_event', {
         p_event_type: 'SYSTEM_ERROR',
         p_severity: 'MEDIUM',
         p_description: this.sanitize(error),
         p_metadata: {
-          error_type: error?.constructor?.name || 'Unknown',
-          error_code: error?.code || null,
+          error_type: errorType,
+          error_code: errorCode,
           ...context,
         },
       });
-    } catch (logError) {
+    } catch (_logError) {
       // Never let logging break the app
-
     }
   }
 }
@@ -157,7 +174,7 @@ export class FHIRValidator {
   /**
    * Validate FHIR Patient resource
    */
-  static validatePatient(patient: any): ValidationResult {
+  static validatePatient(patient: UnknownRecord): ValidationResult {
     const errors: string[] = [];
 
     if (!patient) {
@@ -175,15 +192,26 @@ export class FHIRValidator {
 
     // Validate name
     if (patient.name && Array.isArray(patient.name)) {
-      patient.name.forEach((name: any, index: number) => {
-        if (!name.family && !name.given) {
+      patient.name.forEach((name: unknown, index: number) => {
+        const n = name && typeof name === 'object' ? (name as UnknownRecord) : null;
+        if (!n) return;
+
+        const family = n.family;
+        const given = n.given;
+
+        const hasFamily = typeof family === 'string' && family.length > 0;
+        const hasGiven =
+          (Array.isArray(given) && typeof given[0] === 'string' && (given[0] as string).length > 0) ||
+          (typeof given === 'string' && given.length > 0);
+
+        if (!hasFamily && !hasGiven) {
           errors.push(`Name[${index}] must have family or given name`);
         }
       });
     }
 
     // Validate birthDate format (YYYY-MM-DD)
-    if (patient.birthDate && !/^\d{4}-\d{2}-\d{2}$/.test(patient.birthDate)) {
+    if (patient.birthDate && typeof patient.birthDate === 'string' && !/^\d{4}-\d{2}-\d{2}$/.test(patient.birthDate)) {
       errors.push('birthDate must be in YYYY-MM-DD format');
     }
 
@@ -197,7 +225,7 @@ export class FHIRValidator {
   /**
    * Validate FHIR Observation resource
    */
-  static validateObservation(observation: any): ValidationResult {
+  static validateObservation(observation: UnknownRecord): ValidationResult {
     const errors: string[] = [];
 
     if (!observation) {
@@ -231,7 +259,7 @@ export class FHIRValidator {
   /**
    * Validate FHIR Bundle
    */
-  static validateBundle(bundle: any): ValidationResult {
+  static validateBundle(bundle: UnknownRecord): ValidationResult {
     const errors: string[] = [];
 
     if (!bundle) {
@@ -252,12 +280,27 @@ export class FHIRValidator {
     }
 
     // Validate each entry
-    if (bundle.entry) {
-      bundle.entry.forEach((entry: any, index: number) => {
-        if (!entry.resource) {
-          errors.push(`Entry[${index}] must have resource`);
+    if (bundle.entry && Array.isArray(bundle.entry)) {
+      bundle.entry.forEach((entry: unknown, index: number) => {
+        const e = entry && typeof entry === 'object' ? (entry as UnknownRecord) : null;
+        if (!e) {
+          errors.push(`Entry[${index}] must be an object`);
+          return;
         }
-        if (!entry.resource?.resourceType) {
+
+        if (!('resource' in e)) {
+          errors.push(`Entry[${index}] must have resource`);
+          return;
+        }
+
+        const resource = e.resource;
+        const r = resource && typeof resource === 'object' ? (resource as UnknownRecord) : null;
+        if (!r) {
+          errors.push(`Entry[${index}].resource must be an object`);
+          return;
+        }
+
+        if (!r.resourceType) {
           errors.push(`Entry[${index}].resource must have resourceType`);
         }
       });
@@ -265,7 +308,8 @@ export class FHIRValidator {
 
     // Size limit (prevent DoS)
     const bundleSize = JSON.stringify(bundle).length;
-    if (bundleSize > 10 * 1024 * 1024) { // 10MB
+    if (bundleSize > 10 * 1024 * 1024) {
+      // 10MB
       errors.push('Bundle size exceeds 10MB limit');
     }
 
@@ -285,19 +329,19 @@ export class FHIRValidator {
       return input
         .replace(/[;<>]/g, '')
         .trim()
-        .substring(0, 1000) as any; // Limit length
+        .substring(0, 1000) as unknown as T; // Limit length
     }
 
     if (Array.isArray(input)) {
-      return input.map(item => this.sanitizeInput(item)) as any;
+      return input.map((item) => this.sanitizeInput(item)) as unknown as T;
     }
 
     if (input && typeof input === 'object') {
-      const sanitized: any = {};
-      for (const [key, value] of Object.entries(input)) {
+      const sanitized: UnknownRecord = {};
+      for (const [key, value] of Object.entries(input as UnknownRecord)) {
         sanitized[key] = this.sanitizeInput(value);
       }
-      return sanitized;
+      return sanitized as unknown as T;
     }
 
     return input;
@@ -314,7 +358,7 @@ export class AuditLogger {
    */
   static async log(params: AuditLogParams): Promise<void> {
     try {
-      const { data, error } = await supabase.rpc('log_audit_event', {
+      const { data: _data, error } = await supabase.rpc('log_audit_event', {
         p_event_type: params.eventType,
         p_event_category: params.eventCategory,
         p_resource_type: params.resourceType || null,
@@ -327,10 +371,8 @@ export class AuditLogger {
       });
 
       if (error) {
-
       }
-    } catch (error) {
-
+    } catch (_error) {
     }
   }
 
@@ -342,7 +384,7 @@ export class AuditLogger {
     resourceId: string,
     operation: 'READ' | 'WRITE' | 'UPDATE' | 'DELETE' | 'EXPORT',
     targetUserId?: string,
-    metadata?: Record<string, any>
+    metadata?: UnknownRecord
   ): Promise<void> {
     await this.log({
       eventType: `PHI_${operation}`,
@@ -363,7 +405,7 @@ export class AuditLogger {
     operation: string,
     resourceType: string,
     success: boolean,
-    metadata?: Record<string, any>,
+    metadata?: UnknownRecord,
     errorMessage?: string
   ): Promise<void> {
     await this.log({
@@ -399,13 +441,11 @@ export class RateLimiter {
       });
 
       if (error) {
-
         return true; // Fail open (allow request)
       }
 
       return data === true;
-    } catch (error) {
-
+    } catch (_error) {
       return true; // Fail open
     }
   }
@@ -448,7 +488,7 @@ export class SecureFHIROperations {
    */
   static async importFHIRData(
     userId: string,
-    fhirData: any,
+    fhirData: UnknownRecord,
     connectionId: string
   ): Promise<{ success: boolean; errors: string[] }> {
     const errors: string[] = [];
@@ -458,16 +498,20 @@ export class SecureFHIROperations {
       await RateLimiter.enforce('FHIR_SYNC', 50, 60);
 
       // Validate input
-      if (fhirData.patient) {
-        const validation = FHIRValidator.validatePatient(fhirData.patient);
+      if (fhirData.patient && typeof fhirData.patient === 'object') {
+        const validation = FHIRValidator.validatePatient(fhirData.patient as UnknownRecord);
         if (!validation.isValid) {
           errors.push(...validation.errors);
         }
       }
 
-      if (fhirData.observations) {
-        fhirData.observations.forEach((obs: any) => {
-          const validation = FHIRValidator.validateObservation(obs.resource);
+      if (fhirData.observations && Array.isArray(fhirData.observations)) {
+        (fhirData.observations as unknown[]).forEach((obs: unknown) => {
+          const o = obs && typeof obs === 'object' ? (obs as UnknownRecord) : null;
+          const resource = o && typeof o.resource === 'object' ? (o.resource as UnknownRecord) : null;
+          if (!resource) return;
+
+          const validation = FHIRValidator.validateObservation(resource);
           if (!validation.isValid) {
             errors.push(...validation.errors);
           }
@@ -479,7 +523,7 @@ export class SecureFHIROperations {
           resource_type: 'FHIR_BUNDLE',
           connection_id: connectionId,
           error_count: errors.length,
-          error_message: errors.join(', ')
+          error_message: errors.join(', '),
         });
         return { success: false, errors };
       }
@@ -488,11 +532,11 @@ export class SecureFHIROperations {
       await auditLogger.phi('WRITE', connectionId, {
         resource_type: 'FHIR_BUNDLE',
         user_id: userId,
-        resources_count: Object.keys(fhirData).length
+        resources_count: Object.keys(fhirData).length,
       });
 
-      // Sanitize input
-      const sanitizedData = FHIRValidator.sanitizeInput(fhirData);
+      // Sanitize input (kept as local - no unused-var warning)
+      const _sanitizedData = FHIRValidator.sanitizeInput(fhirData);
 
       // Import data (actual implementation in fhirInteroperabilityIntegrator.ts)
       // This is just a security wrapper
@@ -500,11 +544,11 @@ export class SecureFHIROperations {
       await auditLogger.clinical('FHIR_IMPORT_COMPLETED', true, {
         resource_type: 'FHIR_BUNDLE',
         connection_id: connectionId,
-        user_id: userId
+        user_id: userId,
       });
 
       return { success: true, errors: [] };
-    } catch (error) {
+    } catch (error: unknown) {
       const sanitizedError = ErrorSanitizer.sanitize(error);
       await ErrorSanitizer.logError(error, { user_id: userId, connection_id: connectionId });
       return { success: false, errors: [sanitizedError] };
@@ -516,8 +560,8 @@ export class SecureFHIROperations {
    */
   static async exportFHIRData(
     userId: string,
-    options?: Record<string, any>
-  ): Promise<{ bundle: any; error?: string }> {
+    options?: UnknownRecord
+  ): Promise<{ bundle: UnknownRecord; error?: string }> {
     try {
       // Rate limiting (stricter for exports)
       await RateLimiter.enforce('FHIR_EXPORT', 10, 60);
@@ -526,7 +570,7 @@ export class SecureFHIROperations {
       await auditLogger.phi('EXPORT', userId, {
         resource_type: 'FHIR_BUNDLE',
         user_id: userId,
-        ...options
+        ...(options || {}),
       });
 
       // Check for mass export (security concern)
@@ -545,17 +589,17 @@ export class SecureFHIROperations {
 
       await auditLogger.clinical('FHIR_EXPORT_COMPLETED', true, {
         resource_type: 'FHIR_BUNDLE',
-        user_id: userId
+        user_id: userId,
       });
 
-      return { bundle: {} }; // Placeholder
-    } catch (error) {
+      return { bundle: {} };
+    } catch (error: unknown) {
       const sanitizedError = ErrorSanitizer.sanitize(error);
       await ErrorSanitizer.logError(error, { user_id: userId });
       await auditLogger.clinical('FHIR_EXPORT_FAILED', false, {
         resource_type: 'FHIR_BUNDLE',
         user_id: userId,
-        error_message: sanitizedError
+        error_message: sanitizedError,
       });
       return { bundle: {}, error: sanitizedError };
     }

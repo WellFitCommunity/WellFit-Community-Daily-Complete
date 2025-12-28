@@ -2,6 +2,7 @@
 // Purpose: Track all senior engagement activities for admin visibility and risk assessment
 
 import { SupabaseClient } from '@supabase/supabase-js';
+import { getErrorMessage } from '../lib/getErrorMessage';
 
 export interface TriviaGameResult {
   user_id: string;
@@ -41,7 +42,7 @@ export interface UserQuestion {
 export interface SelfReportSubmission {
   user_id: string;
   submission_date?: string;
-  report_data: Record<string, any>;
+  report_data: Record<string, unknown>;
   completion_percentage?: number;
   time_spent_seconds?: number;
 }
@@ -52,13 +53,17 @@ export interface QuestionResponse {
   responded_by: string;
 }
 
+type DbRow = Record<string, unknown>;
+type DbResult<T> = { data: T | null; error: Error | null };
+type DbListResult<T> = { data: T[]; error: Error | null };
+
 /**
  * Save trivia game results to database
  */
 export async function saveTriviaGameResult(
   supabase: SupabaseClient,
   result: TriviaGameResult
-): Promise<{ data: any; error: any }> {
+): Promise<DbResult<DbRow>> {
   try {
     const { data, error } = await supabase
       .from('trivia_game_results')
@@ -79,13 +84,12 @@ export async function saveTriviaGameResult(
       .single();
 
     if (error) {
-
+      return { data: null, error: new Error(error.message) };
     }
 
-    return { data, error };
-  } catch (err) {
-
-    return { data: null, error: err };
+    return { data: (data as DbRow) ?? null, error: null };
+  } catch (err: unknown) {
+    return { data: null, error: new Error(getErrorMessage(err)) };
   }
 }
 
@@ -95,7 +99,7 @@ export async function saveTriviaGameResult(
 export async function saveWordGameResult(
   supabase: SupabaseClient,
   result: WordGameResult
-): Promise<{ data: any; error: any }> {
+): Promise<DbResult<DbRow>> {
   try {
     const { data, error } = await supabase
       .from('word_game_results')
@@ -116,13 +120,12 @@ export async function saveWordGameResult(
       .single();
 
     if (error) {
-
+      return { data: null, error: new Error(error.message) };
     }
 
-    return { data, error };
-  } catch (err) {
-
-    return { data: null, error: err };
+    return { data: (data as DbRow) ?? null, error: null };
+  } catch (err: unknown) {
+    return { data: null, error: new Error(getErrorMessage(err)) };
   }
 }
 
@@ -132,7 +135,7 @@ export async function saveWordGameResult(
 export async function submitUserQuestion(
   supabase: SupabaseClient,
   question: UserQuestion
-): Promise<{ data: any; error: any }> {
+): Promise<DbResult<DbRow>> {
   try {
     const { data, error } = await supabase
       .from('user_questions')
@@ -147,13 +150,12 @@ export async function submitUserQuestion(
       .single();
 
     if (error) {
-
+      return { data: null, error: new Error(error.message) };
     }
 
-    return { data, error };
-  } catch (err) {
-
-    return { data: null, error: err };
+    return { data: (data as DbRow) ?? null, error: null };
+  } catch (err: unknown) {
+    return { data: null, error: new Error(getErrorMessage(err)) };
   }
 }
 
@@ -163,7 +165,7 @@ export async function submitUserQuestion(
 export async function respondToUserQuestion(
   supabase: SupabaseClient,
   response: QuestionResponse
-): Promise<{ data: any; error: any }> {
+): Promise<DbResult<DbRow>> {
   try {
     const { data, error } = await supabase
       .from('user_questions')
@@ -178,13 +180,12 @@ export async function respondToUserQuestion(
       .single();
 
     if (error) {
-
+      return { data: null, error: new Error(error.message) };
     }
 
-    return { data, error };
-  } catch (err) {
-
-    return { data: null, error: err };
+    return { data: (data as DbRow) ?? null, error: null };
+  } catch (err: unknown) {
+    return { data: null, error: new Error(getErrorMessage(err)) };
   }
 }
 
@@ -195,7 +196,7 @@ export async function loadUserQuestions(
   supabase: SupabaseClient,
   userId?: string,
   isAdmin: boolean = false
-): Promise<{ data: any[]; error: any }> {
+): Promise<DbListResult<DbRow>> {
   try {
     let query = supabase
       .from('user_questions')
@@ -217,13 +218,12 @@ export async function loadUserQuestions(
     const { data, error } = await query;
 
     if (error) {
-
+      return { data: [], error: new Error(error.message) };
     }
 
-    return { data: data || [], error };
-  } catch (err) {
-
-    return { data: [], error: err };
+    return { data: (data as DbRow[]) || [], error: null };
+  } catch (err: unknown) {
+    return { data: [], error: new Error(getErrorMessage(err)) };
   }
 }
 
@@ -233,7 +233,7 @@ export async function loadUserQuestions(
 export async function saveSelfReportSubmission(
   supabase: SupabaseClient,
   submission: SelfReportSubmission
-): Promise<{ data: any; error: any }> {
+): Promise<DbResult<DbRow>> {
   try {
     const { data, error } = await supabase
       .from('self_report_submissions')
@@ -249,13 +249,12 @@ export async function saveSelfReportSubmission(
       .single();
 
     if (error) {
-
+      return { data: null, error: new Error(error.message) };
     }
 
-    return { data, error };
-  } catch (err) {
-
-    return { data: null, error: err };
+    return { data: (data as DbRow) ?? null, error: null };
+  } catch (err: unknown) {
+    return { data: null, error: new Error(getErrorMessage(err)) };
   }
 }
 
@@ -265,7 +264,7 @@ export async function saveSelfReportSubmission(
 export async function getPatientEngagementScore(
   supabase: SupabaseClient,
   userId: string
-): Promise<{ data: any; error: any }> {
+): Promise<DbResult<DbRow>> {
   try {
     const { data, error } = await supabase
       .from('patient_engagement_scores')
@@ -274,13 +273,12 @@ export async function getPatientEngagementScore(
       .single();
 
     if (error) {
-
+      return { data: null, error: new Error(error.message) };
     }
 
-    return { data, error };
-  } catch (err) {
-
-    return { data: null, error: err };
+    return { data: (data as DbRow) ?? null, error: null };
+  } catch (err: unknown) {
+    return { data: null, error: new Error(getErrorMessage(err)) };
   }
 }
 
@@ -289,7 +287,7 @@ export async function getPatientEngagementScore(
  */
 export async function getAllPatientEngagementScores(
   supabase: SupabaseClient
-): Promise<{ data: any[]; error: any }> {
+): Promise<DbListResult<DbRow>> {
   try {
     const { data, error } = await supabase
       .from('patient_engagement_scores')
@@ -297,12 +295,11 @@ export async function getAllPatientEngagementScores(
       .order('engagement_score', { ascending: false });
 
     if (error) {
-
+      return { data: [], error: new Error(error.message) };
     }
 
-    return { data: data || [], error };
-  } catch (err) {
-
-    return { data: [], error: err };
+    return { data: (data as DbRow[]) || [], error: null };
+  } catch (err: unknown) {
+    return { data: [], error: new Error(getErrorMessage(err)) };
   }
 }

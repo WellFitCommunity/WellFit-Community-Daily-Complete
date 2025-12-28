@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabaseClient';
 import { logPhiAccess, extractPatientId } from './phiAccessLogger';
 import { InputValidator } from './inputValidator';
 import { auditLogger } from './auditLogger';
+import { getErrorMessage } from '../lib/getErrorMessage';
 import type {
   Encounter,
   EncounterProcedure,
@@ -12,6 +13,11 @@ import type {
   Patient,
   CreateEncounter,
 } from '../types/billing';
+
+type ClinicalNoteRecord = Record<string, unknown>;
+type ClinicalNotesQueryResult = ClinicalNoteRecord[];
+
+type EncounterRow = Record<string, unknown>;
 
 export class EncounterService {
   // Core Encounter Management
@@ -27,14 +33,14 @@ export class EncounterService {
     // HIPAA §164.312(b): Log PHI access
     await logPhiAccess({
       phiType: 'encounter',
-      phiResourceId: data.id,
+      phiResourceId: (data as { id?: string }).id ?? '',
       patientId: encounter.patient_id,
       accessType: 'create',
       accessMethod: 'API',
       purpose: 'treatment',
     });
 
-    return data;
+    return data as Encounter;
   }
 
   static async getEncounter(id: string): Promise<Encounter> {
@@ -53,7 +59,7 @@ export class EncounterService {
     if (error) throw new Error(`Failed to get encounter: ${error.message}`);
 
     // HIPAA §164.312(b): Log PHI access
-    const patientId = extractPatientId(data);
+    const patientId = extractPatientId(data as EncounterRow);
     if (patientId) {
       await logPhiAccess({
         phiType: 'encounter',
@@ -65,7 +71,7 @@ export class EncounterService {
       });
     }
 
-    return this.transformEncounterData(data);
+    return this.transformEncounterData(data as EncounterRow);
   }
 
   static async getEncountersByPatient(patientId: string): Promise<Encounter[]> {
@@ -95,7 +101,7 @@ export class EncounterService {
       });
     }
 
-    return (data || []).map(this.transformEncounterData);
+    return (data || []).map((row) => this.transformEncounterData(row as EncounterRow));
   }
 
   static async updateEncounter(id: string, updates: Partial<CreateEncounter>): Promise<Encounter> {
@@ -109,7 +115,7 @@ export class EncounterService {
     if (error) throw new Error(`Failed to update encounter: ${error.message}`);
 
     // HIPAA §164.312(b): Log PHI access
-    const patientId = extractPatientId(data);
+    const patientId = extractPatientId(data as EncounterRow);
     if (patientId) {
       await logPhiAccess({
         phiType: 'encounter',
@@ -121,7 +127,7 @@ export class EncounterService {
       });
     }
 
-    return data;
+    return data as Encounter;
   }
 
   // Encounter Procedures
@@ -139,7 +145,7 @@ export class EncounterService {
       .single();
 
     if (error) throw new Error(`Failed to add procedure: ${error.message}`);
-    return data;
+    return data as EncounterProcedure;
   }
 
   static async updateProcedure(
@@ -154,7 +160,7 @@ export class EncounterService {
       .single();
 
     if (error) throw new Error(`Failed to update procedure: ${error.message}`);
-    return data;
+    return data as EncounterProcedure;
   }
 
   static async removeProcedure(procedureId: string): Promise<void> {
@@ -174,7 +180,7 @@ export class EncounterService {
       .order('service_date');
 
     if (error) throw new Error(`Failed to get procedures: ${error.message}`);
-    return data || [];
+    return (data || []) as EncounterProcedure[];
   }
 
   // Encounter Diagnoses
@@ -192,7 +198,7 @@ export class EncounterService {
       .single();
 
     if (error) throw new Error(`Failed to add diagnosis: ${error.message}`);
-    return data;
+    return data as EncounterDiagnosis;
   }
 
   static async updateDiagnosis(
@@ -207,7 +213,7 @@ export class EncounterService {
       .single();
 
     if (error) throw new Error(`Failed to update diagnosis: ${error.message}`);
-    return data;
+    return data as EncounterDiagnosis;
   }
 
   static async removeDiagnosis(diagnosisId: string): Promise<void> {
@@ -227,7 +233,7 @@ export class EncounterService {
       .order('sequence');
 
     if (error) throw new Error(`Failed to get diagnoses: ${error.message}`);
-    return data || [];
+    return (data || []) as EncounterDiagnosis[];
   }
 
   // Patient Management
@@ -241,7 +247,7 @@ export class EncounterService {
       .single();
 
     if (error) throw new Error(`Failed to create patient: ${error.message}`);
-    return data;
+    return data as Patient;
   }
 
   static async getPatient(id: string): Promise<Patient> {
@@ -252,7 +258,7 @@ export class EncounterService {
       .single();
 
     if (error) throw new Error(`Failed to get patient: ${error.message}`);
-    return data;
+    return data as Patient;
   }
 
   static async updatePatient(id: string, updates: Partial<Patient>): Promise<Patient> {
@@ -264,7 +270,7 @@ export class EncounterService {
       .single();
 
     if (error) throw new Error(`Failed to update patient: ${error.message}`);
-    return data;
+    return data as Patient;
   }
 
   static async searchPatients(query: string): Promise<Patient[]> {
@@ -298,7 +304,7 @@ export class EncounterService {
       .limit(20);
 
     if (error) throw new Error(`Failed to search patients: ${error.message}`);
-    return data || [];
+    return (data || []) as Patient[];
   }
 
   // Clinical Documentation
@@ -309,7 +315,7 @@ export class EncounterService {
       content: string;
       author_id?: string;
     }
-  ): Promise<any> {
+  ): Promise<ClinicalNoteRecord> {
     const { data, error } = await supabase
       .from('clinical_notes')
       .insert({
@@ -320,10 +326,10 @@ export class EncounterService {
       .single();
 
     if (error) throw new Error(`Failed to add clinical note: ${error.message}`);
-    return data;
+    return (data || {}) as ClinicalNoteRecord;
   }
 
-  static async getClinicalNotes(encounterId: string): Promise<any[]> {
+  static async getClinicalNotes(encounterId: string): Promise<ClinicalNotesQueryResult> {
     const { data, error } = await supabase
       .from('clinical_notes')
       .select('*')
@@ -331,7 +337,7 @@ export class EncounterService {
       .order('created_at');
 
     if (error) throw new Error(`Failed to get clinical notes: ${error.message}`);
-    return data || [];
+    return (data || []) as ClinicalNotesQueryResult;
   }
 
   // Billing Integration Helper
@@ -423,16 +429,26 @@ export class EncounterService {
     return `${patientName} - ${serviceDate} (${procedureCount} procedures, ${diagnosisCount} diagnoses)`;
   }
 
-  // Private helper methods
-  private static transformEncounterData(rawData: any): Encounter {
-    return {
-      ...rawData,
-      patient: rawData.patient || null,
-      provider: rawData.provider || null,
-      procedures: rawData.procedures || [],
-      diagnoses: rawData.diagnoses || [],
-    };
-  }
+// Private helper methods
+private static transformEncounterData(rawData: EncounterRow): Encounter {
+  const patient = rawData.patient;
+  const provider = rawData.provider;
+  const procedures = rawData.procedures;
+  const diagnoses = rawData.diagnoses;
+
+  return {
+    ...(rawData as unknown as Encounter),
+    patient: patient as Encounter['patient'],
+    provider: provider as Encounter['provider'],
+    procedures: Array.isArray(procedures)
+      ? (procedures as unknown as EncounterProcedure[])
+      : [],
+    diagnoses: Array.isArray(diagnoses)
+      ? (diagnoses as unknown as EncounterDiagnosis[])
+      : [],
+  };
+}
+
 
   // Advanced Search and Filtering
   static async searchEncounters(filters: {
@@ -467,7 +483,7 @@ export class EncounterService {
     const { data, error } = await query;
 
     if (error) throw new Error(`Failed to search encounters: ${error.message}`);
-    return (data || []).map(this.transformEncounterData);
+    return (data || []).map((row) => this.transformEncounterData(row as EncounterRow));
   }
 }
 

@@ -6,13 +6,18 @@
  */
 
 import { supabase } from '../../lib/supabaseClient';
+import { getErrorMessage } from '../../lib/getErrorMessage';
 import type { FHIRApiResponse } from '../../types/fhir';
+
+type FHIRGoalRow = Record<string, unknown>;
+type FHIRGoalCreateInput = Record<string, unknown>;
+type FHIRGoalUpdateInput = Record<string, unknown>;
 
 export const GoalService = {
   /**
    * Get all goals for a patient
    */
-  async getAll(patientId: string): Promise<FHIRApiResponse<any[]>> {
+  async getAll(patientId: string): Promise<FHIRApiResponse<FHIRGoalRow[]>> {
     try {
       const { data, error } = await supabase
         .from('fhir_goals')
@@ -21,11 +26,11 @@ export const GoalService = {
         .order('start_date', { ascending: false });
 
       if (error) throw error;
-      return { success: true, data: data || [] };
+      return { success: true, data: (data as FHIRGoalRow[]) || [] };
     } catch (err: unknown) {
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to fetch goals',
+        error: getErrorMessage(err) || 'Failed to fetch goals',
       };
     }
   },
@@ -33,7 +38,7 @@ export const GoalService = {
   /**
    * Get active goals
    */
-  async getActive(patientId: string): Promise<FHIRApiResponse<any[]>> {
+  async getActive(patientId: string): Promise<FHIRApiResponse<FHIRGoalRow[]>> {
     try {
       const { data, error } = await supabase
         .from('fhir_goals')
@@ -44,11 +49,11 @@ export const GoalService = {
         .order('start_date', { ascending: false });
 
       if (error) throw error;
-      return { success: true, data: data || [] };
+      return { success: true, data: (data as FHIRGoalRow[]) || [] };
     } catch (err: unknown) {
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to fetch active goals',
+        error: getErrorMessage(err) || 'Failed to fetch active goals',
       };
     }
   },
@@ -56,7 +61,7 @@ export const GoalService = {
   /**
    * Get goals by category
    */
-  async getByCategory(patientId: string, category: string): Promise<FHIRApiResponse<any[]>> {
+  async getByCategory(patientId: string, category: string): Promise<FHIRApiResponse<FHIRGoalRow[]>> {
     try {
       const { data, error } = await supabase
         .from('fhir_goals')
@@ -66,11 +71,11 @@ export const GoalService = {
         .order('start_date', { ascending: false });
 
       if (error) throw error;
-      return { success: true, data: data || [] };
+      return { success: true, data: (data as FHIRGoalRow[]) || [] };
     } catch (err: unknown) {
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to fetch goals by category',
+        error: getErrorMessage(err) || 'Failed to fetch goals by category',
       };
     }
   },
@@ -78,20 +83,16 @@ export const GoalService = {
   /**
    * Create a new goal
    */
-  async create(goal: any): Promise<FHIRApiResponse<any>> {
+  async create(goal: FHIRGoalCreateInput): Promise<FHIRApiResponse<FHIRGoalRow>> {
     try {
-      const { data, error } = await supabase
-        .from('fhir_goals')
-        .insert([goal])
-        .select()
-        .single();
+      const { data, error } = await supabase.from('fhir_goals').insert([goal]).select().single();
 
       if (error) throw error;
-      return { success: true, data };
+      return { success: true, data: data as FHIRGoalRow };
     } catch (err: unknown) {
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to create goal',
+        error: getErrorMessage(err) || 'Failed to create goal',
       };
     }
   },
@@ -99,7 +100,7 @@ export const GoalService = {
   /**
    * Update goal
    */
-  async update(id: string, updates: any): Promise<FHIRApiResponse<any>> {
+  async update(id: string, updates: FHIRGoalUpdateInput): Promise<FHIRApiResponse<FHIRGoalRow>> {
     try {
       const { data, error } = await supabase
         .from('fhir_goals')
@@ -109,11 +110,11 @@ export const GoalService = {
         .single();
 
       if (error) throw error;
-      return { success: true, data };
+      return { success: true, data: data as FHIRGoalRow };
     } catch (err: unknown) {
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to update goal',
+        error: getErrorMessage(err) || 'Failed to update goal',
       };
     }
   },
@@ -121,7 +122,7 @@ export const GoalService = {
   /**
    * Complete goal
    */
-  async complete(id: string): Promise<FHIRApiResponse<any>> {
+  async complete(id: string): Promise<FHIRApiResponse<FHIRGoalRow>> {
     return this.update(id, {
       lifecycle_status: 'completed',
       status_date: new Date().toISOString(),

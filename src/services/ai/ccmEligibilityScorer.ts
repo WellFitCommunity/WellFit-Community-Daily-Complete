@@ -76,6 +76,85 @@ export interface CCMEligibilityResult {
 }
 
 // =====================================================
+// INTERNAL SHAPES (SAFE BOUNDARY TYPES)
+// =====================================================
+
+interface FhirConditionRow {
+  code: string;
+  display: string;
+  severity?: 'mild' | 'moderate' | 'severe' | string | null;
+  onset_date_time?: string | null;
+  clinical_status?: string | null;
+}
+
+interface CheckInRow {
+  status?: string | null;
+  check_in_date?: string | null;
+}
+
+interface SdohIndicatorRow {
+  category: string;
+  risk_level: 'low' | 'moderate' | 'high' | 'critical' | string;
+  description: string;
+}
+
+interface ProfileRow {
+  chronic_conditions?: unknown;
+}
+
+interface PatientData {
+  chronicConditions: ChronicCondition[];
+  checkIns: CheckInRow[];
+  appointments: unknown[];
+  medications: unknown[];
+  sdohIndicators: SdohIndicatorRow[];
+  profileConditions?: unknown;
+}
+
+interface TenantConfig {
+  ccm_eligibility_scorer_enabled: boolean;
+  ccm_eligibility_scorer_auto_enroll: boolean;
+  ccm_eligibility_scorer_minimum_score: number;
+  ccm_eligibility_scorer_model?: string;
+}
+
+interface AIOptimizerResponse {
+  response: string;
+  model: string;
+  cost: number;
+}
+
+interface ParsedCCMAIResponse {
+  overallEligibilityScore: number;
+  eligibilityCategory: CCMEligibilityResult['eligibilityCategory'];
+  predictedMonthlyReimbursement: number;
+  reimbursementTier: CCMEligibilityResult['reimbursementTier'];
+  recommendedCPTCodes: string[];
+  enrollmentRecommendation: CCMEligibilityResult['enrollmentRecommendation'];
+  recommendationRationale: string;
+  barriersToEnrollment?: CCMEligibilityResult['barriersToEnrollment'];
+  recommendedInterventions?: CCMEligibilityResult['recommendedInterventions'];
+}
+
+interface EnrollmentRecord {
+  chronic_conditions_count?: number | null;
+  chronic_conditions?: ChronicCondition[] | null;
+  check_in_completion_rate?: number | null;
+  appointment_adherence_rate?: number | null;
+  medication_adherence_rate?: number | null;
+  engagement_score?: number | null;
+  sdoh_risk_count?: number | null;
+  sdoh_barriers?: SDOHBarrier[] | null;
+  predicted_monthly_reimbursement?: number | null;
+  reimbursement_tier?: CCMEligibilityResult['reimbursementTier'] | string | null;
+  recommended_cpt_codes?: string[] | null;
+}
+
+interface PatientIdRow {
+  patient_id: string;
+}
+
+// =====================================================
 // INPUT VALIDATION
 // =====================================================
 
@@ -244,8 +323,8 @@ export class CCMEligibilityScorer {
   /**
    * Gather patient data for assessment
    */
-  private async gatherPatientData(context: CCMAssessmentContext): Promise<any> {
-    const data: any = {
+  private async gatherPatientData(context: CCMAssessmentContext): Promise<PatientData> {
+    const data: PatientData = {
       chronicConditions: [],
       checkIns: [],
       appointments: [],
@@ -262,12 +341,14 @@ export class CCMEligibilityScorer {
         .eq('clinical_status', 'active')
         .limit(50);
 
-      if (conditions && conditions.length > 0) {
-        data.chronicConditions = conditions.map((c: any) => ({
+      const typedConditions = (conditions as FhirConditionRow[] | null) ?? null;
+
+      if (typedConditions && typedConditions.length > 0) {
+        data.chronicConditions = typedConditions.map((c) => ({
           code: c.code,
           description: c.display,
-          severity: c.severity || 'moderate',
-          onsetDate: c.onset_date_time
+          severity: (c.severity === 'mild' || c.severity === 'moderate' || c.severity === 'severe') ? c.severity : 'moderate',
+          onsetDate: c.onset_date_time ?? undefined
         }));
       }
 
@@ -281,7 +362,7 @@ export class CCMEligibilityScorer {
         .limit(90);
 
       if (checkIns) {
-        data.checkIns = checkIns;
+        data.checkIns = checkIns as CheckInRow[];
       }
 
       // 3. SDOH risk factors
@@ -293,7 +374,7 @@ export class CCMEligibilityScorer {
         .limit(20);
 
       if (sdoh) {
-        data.sdohIndicators = sdoh;
+        data.sdohIndicators = sdoh as SdohIndicatorRow[];
       }
 
       // 4. Profile data (for chronic conditions count)
@@ -303,8 +384,8 @@ export class CCMEligibilityScorer {
         .eq('id', context.patientId)
         .single();
 
-      if (profile && profile.chronic_conditions) {
-        data.profileConditions = profile.chronic_conditions;
+      if (profile && (profile as ProfileRow).chronic_conditions) {
+        data.profileConditions = (profile as ProfileRow).chronic_conditions;
       }
 
       return data;
@@ -316,10 +397,10 @@ export class CCMEligibilityScorer {
   /**
    * Calculate engagement metrics
    */
-  private calculateEngagementMetrics(patientData: any): EngagementMetrics {
+  private calculateEngagementMetrics(patientData: PatientData): EngagementMetrics {
     let checkInRate = 0;
     if (patientData.checkIns && patientData.checkIns.length > 0) {
-      const completed = patientData.checkIns.filter((c: any) => c.status === 'completed').length;
+      const completed = patientData.checkIns.filter((c) => c.status === 'completed').length;
       checkInRate = completed / 90; // 90 day period
     }
 
@@ -342,9 +423,9 @@ export class CCMEligibilityScorer {
    */
   private async assessWithAI(
     context: CCMAssessmentContext,
-    patientData: any,
+    patientData: PatientData,
     engagementMetrics: EngagementMetrics,
-    config: any
+    config: TenantConfig
   ): Promise<CCMEligibilityResult> {
     // Fetch current CCM rates from database
     const rates = await this.getCCMRates();
@@ -387,7 +468,7 @@ Return response as strict JSON:
 }`;
 
     try {
-      const aiResponse = await this.optimizer.call({
+      const aiResponseUnknown = await this.optimizer.call({
         prompt,
         systemPrompt,
         model: config.ccm_eligibility_scorer_model || 'claude-haiku-4-5-20250929',
@@ -397,6 +478,8 @@ Return response as strict JSON:
           chronicConditionsCount: patientData.chronicConditions.length
         }
       });
+
+      const aiResponse = aiResponseUnknown as AIOptimizerResponse;
 
       // Parse AI response
       const parsed = this.parseAIResponse(aiResponse.response);
@@ -409,9 +492,9 @@ Return response as strict JSON:
         meetsCMSCriteria: patientData.chronicConditions.length >= 2,
         engagementMetrics,
         sdohRiskCount: patientData.sdohIndicators.length,
-        sdohBarriers: patientData.sdohIndicators.map((s: any) => ({
+        sdohBarriers: patientData.sdohIndicators.map((s) => ({
           category: s.category,
-          riskLevel: s.risk_level,
+          riskLevel: s.risk_level as SDOHBarrier['riskLevel'],
           description: s.description
         })),
         overallEligibilityScore: parsed.overallEligibilityScore,
@@ -434,7 +517,7 @@ Return response as strict JSON:
   /**
    * Build assessment prompt
    */
-  private buildAssessmentPrompt(patientData: any, engagementMetrics: EngagementMetrics): string {
+  private buildAssessmentPrompt(patientData: PatientData, engagementMetrics: EngagementMetrics): string {
     let prompt = `Assess this patient's eligibility for Chronic Care Management (CCM) services:\n\n`;
 
     prompt += `CHRONIC CONDITIONS (${patientData.chronicConditions.length}):\n`;
@@ -452,7 +535,7 @@ Return response as strict JSON:
 
     if (patientData.sdohIndicators && patientData.sdohIndicators.length > 0) {
       prompt += `SDOH RISK FACTORS (${patientData.sdohIndicators.length}):\n`;
-      patientData.sdohIndicators.slice(0, 5).forEach((sdoh: any) => {
+      patientData.sdohIndicators.slice(0, 5).forEach((sdoh: SdohIndicatorRow) => {
         prompt += `- ${sdoh.category}: ${sdoh.risk_level} risk\n`;
       });
       prompt += `\n`;
@@ -466,14 +549,14 @@ Return response as strict JSON:
   /**
    * Parse AI response
    */
-  private parseAIResponse(response: string): any {
+  private parseAIResponse(response: string): ParsedCCMAIResponse {
     try {
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error('No JSON found in AI response');
       }
 
-      return JSON.parse(jsonMatch[0]);
+      return JSON.parse(jsonMatch[0]) as ParsedCCMAIResponse;
     } catch (err: unknown) {
       throw new Error(`Failed to parse AI response: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
@@ -482,7 +565,7 @@ Return response as strict JSON:
   /**
    * Check if patient already enrolled
    */
-  private async checkExistingEnrollment(patientId: string): Promise<any> {
+  private async checkExistingEnrollment(patientId: string): Promise<EnrollmentRecord | null> {
     const { data } = await supabase
       .from('ccm_eligibility_assessments')
       .select('*')
@@ -491,13 +574,13 @@ Return response as strict JSON:
       .order('assessment_date', { ascending: false })
       .maybeSingle();
 
-    return data;
+    return (data as EnrollmentRecord | null) ?? null;
   }
 
   /**
    * Create result for already enrolled patient
    */
-  private createEnrolledResult(context: CCMAssessmentContext, enrollment: any): CCMEligibilityResult {
+  private createEnrolledResult(context: CCMAssessmentContext, enrollment: EnrollmentRecord): CCMEligibilityResult {
     return {
       patientId: context.patientId,
       assessmentDate: new Date().toISOString().split('T')[0],
@@ -515,7 +598,7 @@ Return response as strict JSON:
       overallEligibilityScore: 1.00,
       eligibilityCategory: 'enrolled',
       predictedMonthlyReimbursement: enrollment.predicted_monthly_reimbursement || 0,
-      reimbursementTier: enrollment.reimbursement_tier || 'basic',
+      reimbursementTier: (enrollment.reimbursement_tier as CCMEligibilityResult['reimbursementTier']) || 'basic',
       recommendedCPTCodes: enrollment.recommended_cpt_codes || [],
       enrollmentRecommendation: 'strongly_recommend',
       recommendationRationale: 'Patient already enrolled in CCM',
@@ -529,7 +612,7 @@ Return response as strict JSON:
   /**
    * Create result for not eligible patient
    */
-  private createNotEligibleResult(context: CCMAssessmentContext, patientData: any): CCMEligibilityResult {
+  private createNotEligibleResult(context: CCMAssessmentContext, patientData: PatientData): CCMEligibilityResult {
     return {
       patientId: context.patientId,
       assessmentDate: new Date().toISOString().split('T')[0],
@@ -615,7 +698,7 @@ Return response as strict JSON:
   /**
    * Get tenant configuration
    */
-  private async getTenantConfig(tenantId: string): Promise<any> {
+  private async getTenantConfig(tenantId: string): Promise<TenantConfig> {
     const { data, error } = await supabase.rpc('get_ai_skill_config', {
       p_tenant_id: tenantId
     });
@@ -624,7 +707,7 @@ Return response as strict JSON:
       throw new Error(`Failed to get tenant config: ${error.message}`);
     }
 
-    return data || {
+    return (data as TenantConfig) || {
       ccm_eligibility_scorer_enabled: false,
       ccm_eligibility_scorer_auto_enroll: false,
       ccm_eligibility_scorer_minimum_score: 0.70,
@@ -664,7 +747,7 @@ Return response as strict JSON:
 
     // Group by patient and count conditions
     const patientConditionCounts = new Map<string, number>();
-    patients.forEach((p: any) => {
+    (patients as PatientIdRow[]).forEach((p) => {
       const count = patientConditionCounts.get(p.patient_id) || 0;
       patientConditionCounts.set(p.patient_id, count + 1);
     });

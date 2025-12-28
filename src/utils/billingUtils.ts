@@ -4,7 +4,6 @@
 import type {
   BillingProvider,
   BillingPayer,
-  Claim,
   ClaimStatus,
   EncounterProcedure,
   EncounterDiagnosis,

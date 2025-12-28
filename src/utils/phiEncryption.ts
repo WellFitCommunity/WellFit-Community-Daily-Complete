@@ -148,7 +148,7 @@ async function getMasterEncryptionKey(): Promise<CryptoKey> {
  */
 async function derivePatientKey(
   masterKey: CryptoKey,
-  patientId: string
+  _patientId: string
 ): Promise<CryptoKey> {
   // Export master key to derive from it
   // Note: In production, use a KDF like PBKDF2 or HKDF with patient-specific salt

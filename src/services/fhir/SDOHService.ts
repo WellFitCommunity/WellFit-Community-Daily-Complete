@@ -11,13 +11,20 @@ import { supabase } from '../../lib/supabaseClient';
 
 export const SDOHService = {
   // Screen patient for social determinants of health
-  async screenPatient(patientId: string, screeningResponses: any[]) {
+  async screenPatient(
+    patientId: string,
+    screeningResponses: Record<string, unknown>[]
+  ) {
     const results = await Promise.all(
       screeningResponses.map((response) =>
-        supabase.from('sdoh_observations').insert([{
-          patient_id: patientId,
-          ...response,
-        }]).select().single()
+        supabase
+          .from('sdoh_observations')
+          .insert([{
+            patient_id: patientId,
+            ...response,
+          }])
+          .select()
+          .single()
       )
     );
 

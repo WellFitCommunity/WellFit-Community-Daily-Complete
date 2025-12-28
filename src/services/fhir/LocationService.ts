@@ -12,7 +12,7 @@ export const LocationService = {
   /**
    * Get all active locations
    */
-  async getAll(): Promise<FHIRApiResponse<any[]>> {
+  async getAll(): Promise<FHIRApiResponse<Record<string, unknown>[]>> {
     try {
       const { data, error } = await supabase
         .from('fhir_locations')
@@ -21,7 +21,7 @@ export const LocationService = {
         .order('name');
 
       if (error) throw error;
-      return { success: true, data: data || [] };
+      return { success: true, data: (data as Record<string, unknown>[]) || [] };
     } catch (err: unknown) {
       return {
         success: false,
@@ -33,7 +33,7 @@ export const LocationService = {
   /**
    * Get location by ID
    */
-  async getById(id: string): Promise<FHIRApiResponse<any>> {
+  async getById(id: string): Promise<FHIRApiResponse<Record<string, unknown>>> {
     try {
       const { data, error } = await supabase
         .from('fhir_locations')
@@ -42,7 +42,7 @@ export const LocationService = {
         .single();
 
       if (error) throw error;
-      return { success: true, data };
+      return { success: true, data: data as Record<string, unknown> };
     } catch (err: unknown) {
       return {
         success: false,
@@ -54,7 +54,7 @@ export const LocationService = {
   /**
    * Get locations by type
    */
-  async getByType(typeCode: string): Promise<FHIRApiResponse<any[]>> {
+  async getByType(typeCode: string): Promise<FHIRApiResponse<Record<string, unknown>[]>> {
     try {
       const { data, error } = await supabase
         .from('fhir_locations')
@@ -64,7 +64,7 @@ export const LocationService = {
         .order('name');
 
       if (error) throw error;
-      return { success: true, data: data || [] };
+      return { success: true, data: (data as Record<string, unknown>[]) || [] };
     } catch (err: unknown) {
       return {
         success: false,
@@ -76,7 +76,7 @@ export const LocationService = {
   /**
    * Create location
    */
-  async create(location: any): Promise<FHIRApiResponse<any>> {
+  async create(location: Record<string, unknown>): Promise<FHIRApiResponse<Record<string, unknown>>> {
     try {
       const { data, error } = await supabase
         .from('fhir_locations')
@@ -85,7 +85,7 @@ export const LocationService = {
         .single();
 
       if (error) throw error;
-      return { success: true, data };
+      return { success: true, data: data as Record<string, unknown> };
     } catch (err: unknown) {
       return {
         success: false,
@@ -97,7 +97,10 @@ export const LocationService = {
   /**
    * Update location
    */
-  async update(id: string, updates: any): Promise<FHIRApiResponse<any>> {
+  async update(
+    id: string,
+    updates: Record<string, unknown>
+  ): Promise<FHIRApiResponse<Record<string, unknown>>> {
     try {
       const { data, error } = await supabase
         .from('fhir_locations')
@@ -107,7 +110,7 @@ export const LocationService = {
         .single();
 
       if (error) throw error;
-      return { success: true, data };
+      return { success: true, data: data as Record<string, unknown> };
     } catch (err: unknown) {
       return {
         success: false,

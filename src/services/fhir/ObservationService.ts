@@ -60,7 +60,7 @@ export class ObservationService {
       });
 
       if (error) throw error;
-      return { success: true, data: data || [] };
+      return { success: true, data: (data as Observation[]) || [] };
     } catch (err: unknown) {
       return {
         success: false,
@@ -90,7 +90,7 @@ export class ObservationService {
       });
 
       if (error) throw error;
-      return { success: true, data: data || [] };
+      return { success: true, data: (data as Observation[]) || [] };
     } catch (err: unknown) {
       return {
         success: false,
@@ -115,7 +115,7 @@ export class ObservationService {
       });
 
       if (error) throw error;
-      return { success: true, data: data || [] };
+      return { success: true, data: (data as Observation[]) || [] };
     } catch (err: unknown) {
       return {
         success: false,
@@ -148,7 +148,7 @@ export class ObservationService {
       });
 
       if (error) throw error;
-      return { success: true, data: data || [] };
+      return { success: true, data: (data as Observation[]) || [] };
     } catch (err: unknown) {
       return {
         success: false,

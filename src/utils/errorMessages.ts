@@ -211,6 +211,12 @@ export const ERROR_MESSAGES = {
   },
 } as const;
 
+type HttpLikeError = {
+  status?: number;
+  statusCode?: number;
+  message?: string;
+};
+
 // Helper function to get error details from various error types
 export function getErrorDetails(error: unknown): ErrorDetails {
   // Handle AppError
@@ -263,10 +269,10 @@ export function getErrorDetails(error: unknown): ErrorDetails {
 
   // Handle HTTP response errors
   if (typeof error === 'object' && error !== null) {
-    const err = error as any;
+    const err = error as HttpLikeError;
 
     if (err.status || err.statusCode) {
-      const status = err.status || err.statusCode;
+      const status = err.status ?? err.statusCode;
 
       switch (status) {
         case 400:

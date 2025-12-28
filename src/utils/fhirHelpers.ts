@@ -3,7 +3,7 @@
  * Utilities for working with FHIR array-based fields in UI components
  */
 
-import type { Condition } from '../types/fhir';
+import type { Condition as _Condition } from '../types/fhir';
 
 /**
  * Get the primary category from a category array

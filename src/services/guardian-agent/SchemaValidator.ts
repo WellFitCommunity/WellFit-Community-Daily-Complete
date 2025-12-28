@@ -178,13 +178,16 @@ export class SQLInjectionDetector {
    */
   static sanitize(input: string): string {
     // Escape single quotes and other dangerous characters
+    // Note: Control character matching is intentional for SQL injection prevention
+    /* eslint-disable no-control-regex */
     return input
       .replace(/'/g, "''")
       .replace(/\\/g, '\\\\')
-      .replace(/\x00/g, '\\0')
+      .replace(/\u0000/g, '\\0')
       .replace(/\n/g, '\\n')
       .replace(/\r/g, '\\r')
-      .replace(/\x1a/g, '\\Z');
+      .replace(/\u001a/g, '\\Z');
+    /* eslint-enable no-control-regex */
   }
 }
 

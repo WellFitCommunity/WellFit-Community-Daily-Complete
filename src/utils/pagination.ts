@@ -1,5 +1,5 @@
 /**
- * Enterprise-Grade Pagination Utilities for WellFit Healthcare System
+ * Enterprise-Grade Pagination Utilities for Envision VirtualEdge Group System
  *
  * HIPAA-compliant pagination for healthcare data at scale
  * Supports both offset-based and cursor-based pagination strategies
@@ -8,7 +8,7 @@
  * @author WellFit Systems Architecture Team
  */
 
-import { SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient as _SupabaseClient } from '@supabase/supabase-js';
 import { auditLogger } from '../services/auditLogger';
 
 /**
@@ -119,6 +119,17 @@ export interface CursorPaginationOptions {
   direction?: 'forward' | 'backward'; // Pagination direction
 }
 
+type RangeQueryable = {
+  select: (columns: string, options?: Record<string, unknown>) => Promise<{ count: number | null; error: { message: string } | null }>;
+  range: (from: number, to: number) => Promise<{ data: unknown[] | null; error: { message: string } | null }>;
+};
+
+type CursorQueryable<TItem extends Record<string, unknown>> = {
+  or: (filters: string) => CursorQueryable<TItem>;
+  order: (column: string, options?: { ascending: boolean }) => CursorQueryable<TItem>;
+  limit: (count: number) => Promise<{ data: TItem[] | null; error: { message: string } | null }>;
+};
+
 /**
  * Calculate offset-based pagination parameters
  */
@@ -170,7 +181,7 @@ export function buildPaginationMeta(
  * const result = await applyPagination(query, { page: 2, pageSize: 50 });
  */
 export async function applyPagination<T>(
-  query: any,
+  query: RangeQueryable,
   options: PaginationOptions,
   defaultPageSize: number = PAGINATION_LIMITS.DEFAULT
 ): Promise<PaginatedResult<T>> {
@@ -194,7 +205,7 @@ export async function applyPagination<T>(
   }
 
   return {
-    data: data || [],
+    data: (data as T[]) || [],
     meta: buildPaginationMeta(total, page, pageSize),
   };
 }
@@ -208,7 +219,7 @@ export async function applyPagination<T>(
  * const data = await applyLimit(query, PAGINATION_LIMITS.LABS);
  */
 export async function applyLimit<T>(
-  query: any,
+  query: RangeQueryable,
   limit: number = PAGINATION_LIMITS.DEFAULT,
   offset: number = 0
 ): Promise<T[]> {
@@ -218,7 +229,7 @@ export async function applyLimit<T>(
     throw new Error(`Query with limit failed: ${error.message}`);
   }
 
-  return data || [];
+  return (data as T[]) || [];
 }
 
 /**
@@ -265,8 +276,8 @@ export function decodeCursor(cursor: string): { timestamp: string; id: string } 
  *   { cursor: nextCursor, pageSize: 500 }
  * );
  */
-export async function applyCursorPagination<T extends Record<string, any>>(
-  query: any,
+export async function applyCursorPagination<T extends Record<string, unknown>>(
+  query: CursorQueryable<T>,
   timestampField: string,
   idField: string,
   options: CursorPaginationOptions,
@@ -318,12 +329,22 @@ export async function applyCursorPagination<T extends Record<string, any>>(
 
   if (hasMore && pageData.length > 0) {
     const lastItem = pageData[pageData.length - 1];
-    nextCursor = encodeCursor(lastItem[timestampField], lastItem[idField]);
+    const lastTimestamp = lastItem[timestampField];
+    const lastId = lastItem[idField];
+
+    if (typeof lastTimestamp === 'string' && typeof lastId === 'string') {
+      nextCursor = encodeCursor(lastTimestamp, lastId);
+    }
   }
 
   if (pageData.length > 0) {
     const firstItem = pageData[0];
-    previousCursor = encodeCursor(firstItem[timestampField], firstItem[idField]);
+    const firstTimestamp = firstItem[timestampField];
+    const firstId = firstItem[idField];
+
+    if (typeof firstTimestamp === 'string' && typeof firstId === 'string') {
+      previousCursor = encodeCursor(firstTimestamp, firstId);
+    }
   }
 
   return {
@@ -346,7 +367,7 @@ export async function applyCursorPagination<T extends Record<string, any>>(
  * Client-side code should not directly access PHI data.
  */
 export async function applyPHIPagination<T>(
-  query: any,
+  query: RangeQueryable,
   options: PaginationOptions,
   auditContext: {
     userId: string;
@@ -406,8 +427,8 @@ export function validatePaginationOptions(options: PaginationOptions): void {
 /**
  * Smart pagination: automatically chooses between offset and cursor based on data characteristics
  */
-export async function smartPagination<T extends Record<string, any>>(
-  query: any,
+export async function smartPagination<T extends Record<string, unknown>>(
+  query: RangeQueryable | CursorQueryable<T>,
   options: {
     type: 'offset' | 'cursor' | 'auto';
     page?: number;
@@ -428,7 +449,7 @@ export async function smartPagination<T extends Record<string, any>>(
     }
 
     return applyCursorPagination<T>(
-      query,
+      query as CursorQueryable<T>,
       options.timestampField,
       options.idField,
       {
@@ -439,7 +460,7 @@ export async function smartPagination<T extends Record<string, any>>(
     );
   } else {
     return applyPagination<T>(
-      query,
+      query as RangeQueryable,
       {
         page: options.page,
         pageSize: options.pageSize,

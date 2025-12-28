@@ -12,7 +12,10 @@ export const ProvenanceService = {
   /**
    * Get provenance for a resource
    */
-  async getForResource(resourceId: string, resourceType?: string): Promise<FHIRApiResponse<any[]>> {
+  async getForResource(
+    resourceId: string,
+    resourceType?: string
+  ): Promise<FHIRApiResponse<Record<string, unknown>[]>> {
     try {
       let query = supabase
         .from('fhir_provenance')
@@ -27,7 +30,7 @@ export const ProvenanceService = {
       const { data, error } = await query;
 
       if (error) throw error;
-      return { success: true, data: data || [] };
+      return { success: true, data: (data as Record<string, unknown>[]) || [] };
     } catch (err: unknown) {
       return {
         success: false,
@@ -39,7 +42,7 @@ export const ProvenanceService = {
   /**
    * Get provenance by agent (who did it)
    */
-  async getByAgent(agentId: string): Promise<FHIRApiResponse<any[]>> {
+  async getByAgent(agentId: string): Promise<FHIRApiResponse<Record<string, unknown>[]>> {
     try {
       const { data, error } = await supabase
         .from('fhir_provenance')
@@ -48,7 +51,7 @@ export const ProvenanceService = {
         .order('recorded', { ascending: false });
 
       if (error) throw error;
-      return { success: true, data: data || [] };
+      return { success: true, data: (data as Record<string, unknown>[]) || [] };
     } catch (err: unknown) {
       return {
         success: false,
@@ -60,7 +63,10 @@ export const ProvenanceService = {
   /**
    * Get audit trail for patient
    */
-  async getAuditTrail(patientId: string, days: number = 90): Promise<FHIRApiResponse<any[]>> {
+  async getAuditTrail(
+    patientId: string,
+    days: number = 90
+  ): Promise<FHIRApiResponse<Record<string, unknown>[]>> {
     try {
       const since = new Date();
       since.setDate(since.getDate() - days);
@@ -73,7 +79,7 @@ export const ProvenanceService = {
         .order('recorded', { ascending: false });
 
       if (error) throw error;
-      return { success: true, data: data || [] };
+      return { success: true, data: (data as Record<string, unknown>[]) || [] };
     } catch (err: unknown) {
       return {
         success: false,
@@ -85,19 +91,19 @@ export const ProvenanceService = {
   /**
    * Create provenance record
    */
-  async create(provenance: any): Promise<FHIRApiResponse<any>> {
+  async create(provenance: Record<string, unknown>): Promise<FHIRApiResponse<Record<string, unknown>>> {
     try {
       const { data, error } = await supabase
         .from('fhir_provenance')
         .insert([{
           ...provenance,
-          recorded: provenance.recorded || new Date().toISOString(),
+          recorded: (provenance.recorded as string | undefined) || new Date().toISOString(),
         }])
         .select()
         .single();
 
       if (error) throw error;
-      return { success: true, data };
+      return { success: true, data: data as Record<string, unknown> };
     } catch (err: unknown) {
       return {
         success: false,
@@ -118,8 +124,8 @@ export const ProvenanceService = {
     agentRole?: string;
     onBehalfOfId?: string;
     reason?: string;
-  }): Promise<FHIRApiResponse<any>> {
-    const provenance = {
+  }): Promise<FHIRApiResponse<Record<string, unknown>>> {
+    const provenance: Record<string, unknown> = {
       target_references: params.targetReferences,
       target_types: params.targetTypes,
       recorded: new Date().toISOString(),

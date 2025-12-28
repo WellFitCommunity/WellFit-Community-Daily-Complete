@@ -1,12 +1,13 @@
 // Tenant Management Utilities
 // Provides helper functions for multi-tenant functionality
 
-import { tenantBrandings, defaultBranding, getCurrentBranding } from '../branding.config';
+import { tenantBrandings, defaultBranding as _defaultBranding, getCurrentBranding } from '../branding.config';
+import type { TenantBranding } from '../branding.config';
 
 export interface TenantInfo {
   subdomain: string;
   isActive: boolean;
-  branding: any;
+  branding: TenantBranding;
   databasePrefix?: string;
 }
 
@@ -89,7 +90,6 @@ export function validateTenantConfig(subdomain: string): boolean {
  */
 export function simulateTenant(subdomain: string): void {
   if (import.meta.env.MODE !== 'development') {
-
     return;
   }
 
@@ -110,6 +110,5 @@ export function simulateTenant(subdomain: string): void {
       value: originalHostname,
       writable: true
     });
-
   }, 10000);
 }

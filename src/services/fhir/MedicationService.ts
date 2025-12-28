@@ -12,7 +12,7 @@ export const MedicationService = {
   /**
    * Get medication by ID
    */
-  async getById(id: string): Promise<FHIRApiResponse<any>> {
+  async getById(id: string): Promise<FHIRApiResponse<Record<string, unknown>>> {
     try {
       const { data, error } = await supabase
         .from('fhir_medications')
@@ -21,7 +21,7 @@ export const MedicationService = {
         .single();
 
       if (error) throw error;
-      return { success: true, data };
+      return { success: true, data: data as Record<string, unknown> };
     } catch (err: unknown) {
       return {
         success: false,
@@ -33,7 +33,7 @@ export const MedicationService = {
   /**
    * Get medication by RxNorm code
    */
-  async getByRxNorm(rxnormCode: string): Promise<FHIRApiResponse<any>> {
+  async getByRxNorm(rxnormCode: string): Promise<FHIRApiResponse<Record<string, unknown>>> {
     try {
       const { data, error } = await supabase
         .from('fhir_medications')
@@ -43,7 +43,7 @@ export const MedicationService = {
         .single();
 
       if (error) throw error;
-      return { success: true, data };
+      return { success: true, data: data as Record<string, unknown> };
     } catch (err: unknown) {
       return {
         success: false,
@@ -55,7 +55,7 @@ export const MedicationService = {
   /**
    * Search medications by name
    */
-  async search(searchTerm: string): Promise<FHIRApiResponse<any[]>> {
+  async search(searchTerm: string): Promise<FHIRApiResponse<Record<string, unknown>[]>> {
     try {
       const { data, error } = await supabase
         .from('fhir_medications')
@@ -64,7 +64,7 @@ export const MedicationService = {
         .order('code_display');
 
       if (error) throw error;
-      return { success: true, data: data || [] };
+      return { success: true, data: (data as Record<string, unknown>[]) || [] };
     } catch (err: unknown) {
       return {
         success: false,
@@ -76,7 +76,9 @@ export const MedicationService = {
   /**
    * Create medication
    */
-  async create(medication: any): Promise<FHIRApiResponse<any>> {
+  async create(
+    medication: Record<string, unknown>
+  ): Promise<FHIRApiResponse<Record<string, unknown>>> {
     try {
       const { data, error } = await supabase
         .from('fhir_medications')
@@ -85,7 +87,7 @@ export const MedicationService = {
         .single();
 
       if (error) throw error;
-      return { success: true, data };
+      return { success: true, data: data as Record<string, unknown> };
     } catch (err: unknown) {
       return {
         success: false,
@@ -97,7 +99,10 @@ export const MedicationService = {
   /**
    * Update medication
    */
-  async update(id: string, updates: any): Promise<FHIRApiResponse<any>> {
+  async update(
+    id: string,
+    updates: Record<string, unknown>
+  ): Promise<FHIRApiResponse<Record<string, unknown>>> {
     try {
       const { data, error } = await supabase
         .from('fhir_medications')
@@ -107,7 +112,7 @@ export const MedicationService = {
         .single();
 
       if (error) throw error;
-      return { success: true, data };
+      return { success: true, data: data as Record<string, unknown> };
     } catch (err: unknown) {
       return {
         success: false,

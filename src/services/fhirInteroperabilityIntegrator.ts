@@ -7,11 +7,123 @@
 
 import { supabase } from '../lib/supabaseClient';
 import { FHIRIntegrationService } from '../components/admin/FhirIntegrationService';
-import SMARTClient, { EHR_CONFIGS } from '../lib/smartOnFhir';
+import SMARTClient, { EHR_CONFIGS as _EHR_CONFIGS } from '../lib/smartOnFhir';
 
 // ============================================================================
 // TYPE DEFINITIONS
 // ============================================================================
+
+type UnknownRecord = Record<string, unknown>;
+
+interface FHIRBundleEntry {
+  resource?: UnknownRecord;
+}
+
+interface FHIRTelecom {
+  system?: string;
+  value?: string;
+}
+
+interface FHIRHumanName {
+  given?: string[];
+  family?: string;
+}
+
+interface FHIRPatient extends UnknownRecord {
+  name?: FHIRHumanName[];
+  telecom?: FHIRTelecom[];
+  birthDate?: string;
+}
+
+interface FHIRObservationCodeCoding {
+  system?: string;
+  code?: string;
+}
+
+interface FHIRObservationComponent extends UnknownRecord {
+  code?: { coding?: Array<{ code?: string }> };
+  valueQuantity?: { value?: number };
+}
+
+interface FHIRObservationResource extends UnknownRecord {
+  effectiveDateTime?: string;
+  issued?: string;
+  code?: { coding?: FHIRObservationCodeCoding[] };
+  valueQuantity?: { value?: number };
+  component?: FHIRObservationComponent[];
+}
+
+interface FHIRImmunizationCoding {
+  system?: string;
+  code?: string;
+  display?: string;
+}
+
+interface FHIRImmunizationResource extends UnknownRecord {
+  resourceType?: string;
+  id?: string;
+  status?: string;
+  vaccineCode?: { coding?: FHIRImmunizationCoding[] };
+  occurrenceDateTime?: string;
+  primarySource?: boolean;
+  lotNumber?: string;
+  expirationDate?: string;
+  manufacturer?: { display?: string };
+  site?: { coding?: Array<{ code?: string; display?: string }> };
+  route?: { coding?: Array<{ code?: string; display?: string }> };
+  doseQuantity?: { value?: number; unit?: string };
+  performer?: Array<{ actor?: { display?: string } }>;
+  location?: { display?: string };
+  note?: Array<{ text?: string }>;
+  protocolApplied?: Array<{ doseNumberPositiveInt?: number; seriesDosesPositiveInt?: number }>;
+  reaction?: Array<{ date?: string; reported?: boolean }>;
+}
+
+interface FHIRCarePlanCategory extends UnknownRecord {
+  coding?: Array<{ code?: string; display?: string }>;
+}
+
+interface FHIRCarePlanActivity extends UnknownRecord {
+  detail?: {
+    kind?: string;
+    status?: string;
+    description?: string;
+    scheduledTiming?: {
+      repeat?: {
+        boundsPeriod?: {
+          start?: string;
+          end?: string;
+        };
+      };
+    };
+  };
+}
+
+interface FHIRCarePlanResource extends UnknownRecord {
+  resourceType?: string;
+  id?: string;
+  status?: string;
+  intent?: string;
+  category?: FHIRCarePlanCategory[];
+  title?: string;
+  description?: string;
+  subject?: { reference?: string; display?: string };
+  period?: { start?: string; end?: string };
+  created?: string;
+  author?: { reference?: string; display?: string };
+  careTeam?: Array<{ reference?: string; display?: string }>;
+  addresses?: Array<{ reference?: string; display?: string }>;
+  goal?: Array<{ reference?: string; display?: string }>;
+  activity?: FHIRCarePlanActivity[];
+  note?: Array<{ text?: string }>;
+}
+
+interface FHIRPatientData {
+  patient?: FHIRPatient;
+  observations: Array<{ resource?: FHIRObservationResource }>;
+  immunizations: Array<{ resource?: FHIRImmunizationResource }>;
+  carePlans: Array<{ resource?: FHIRCarePlanResource }>;
+}
 
 export interface FHIRConnection {
   id: string;
@@ -123,9 +235,8 @@ export class FHIRInteroperabilityIntegrator {
         await this.startAutoSync(data.id, connection.syncFrequency);
       }
 
-      return this.mapConnectionFromDB(data);
+      return this.mapConnectionFromDB(data as UnknownRecord);
     } catch (error) {
-
       throw new Error(`Failed to create connection: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -142,9 +253,8 @@ export class FHIRInteroperabilityIntegrator {
 
       if (error) throw error;
 
-      return (data || []).map(this.mapConnectionFromDB);
+      return (data || []).map((row) => this.mapConnectionFromDB(row as UnknownRecord));
     } catch (error) {
-
       return [];
     }
   }
@@ -162,7 +272,7 @@ export class FHIRInteroperabilityIntegrator {
   /**
    * Test FHIR connection
    */
-  async testConnection(connectionId: string): Promise<{ success: boolean; message: string; metadata?: any }> {
+  async testConnection(connectionId: string): Promise<{ success: boolean; message: string; metadata?: UnknownRecord }> {
     try {
       const { data: conn, error } = await supabase
         .from('fhir_connections')
@@ -193,16 +303,18 @@ export class FHIRInteroperabilityIntegrator {
         };
       }
 
-      const metadata = await response.json();
+      const metadataJson = (await response.json()) as UnknownRecord;
 
       await this.updateConnectionStatus(connectionId, 'active');
+
+      const software = metadataJson.software as UnknownRecord | undefined;
 
       return {
         success: true,
         message: 'Connection successful',
         metadata: {
-          fhirVersion: metadata.fhirVersion,
-          software: metadata.software?.name,
+          fhirVersion: metadataJson.fhirVersion,
+          software: software ? (software.name as unknown) : undefined,
           endpoints
         }
       };
@@ -270,7 +382,6 @@ export class FHIRInteroperabilityIntegrator {
       if (mapError) throw mapError;
 
       if (!mappings || mappings.length === 0) {
-
         result.endTime = new Date().toISOString();
         return result;
       }
@@ -375,24 +486,30 @@ export class FHIRInteroperabilityIntegrator {
         try {
           result.recordsProcessed++;
 
-          // Export patient data as FHIR bundle (with ALL resources including Immunization and CarePlan)
-          const bundle = await this.fhirService.exportPatientDataComplete(userId);
+        // Export patient data as FHIR bundle (with ALL resources including Immunization and CarePlan)
+const rawBundle: unknown = await this.fhirService.exportPatientDataComplete(userId);
 
-          // Get patient mapping
-          const { data: mapping } = await supabase
-            .from('fhir_patient_mappings')
-            .select('fhir_patient_id')
-            .eq('community_user_id', userId)
-            .eq('connection_id', connectionId)
-            .single();
+const bundle: UnknownRecord =
+  rawBundle && typeof rawBundle === 'object'
+    ? (rawBundle as UnknownRecord)
+    : {};
 
-          // Push to FHIR server
-          await this.pushBundleToFHIR(
-            conn.fhir_server_url,
-            bundle,
-            conn.access_token,
-            mapping?.fhir_patient_id
-          );
+// Get patient mapping
+const { data: mapping } = await supabase
+  .from('fhir_patient_mappings')
+  .select('fhir_patient_id')
+  .eq('community_user_id', userId)
+  .eq('connection_id', connectionId)
+  .single();
+
+// Push to FHIR server
+await this.pushBundleToFHIR(
+  conn.fhir_server_url,
+  bundle,
+  conn.access_token,
+  (mapping as UnknownRecord | null | undefined)?.fhir_patient_id as string | undefined
+);
+
 
           result.recordsSucceeded++;
           result.summary.patientsSync++;
@@ -512,7 +629,6 @@ export class FHIRInteroperabilityIntegrator {
 
     const interval = setInterval(async () => {
       try {
-
         await this.syncFromFHIR(connectionId);
       } catch (error) {
 
@@ -541,7 +657,7 @@ export class FHIRInteroperabilityIntegrator {
     fhirServerUrl: string,
     patientId: string,
     accessToken?: string
-  ): Promise<any> {
+  ): Promise<FHIRPatientData> {
     const headers: Record<string, string> = {
       'Accept': 'application/fhir+json'
     };
@@ -555,7 +671,7 @@ export class FHIRInteroperabilityIntegrator {
     if (!patientResponse.ok) {
       throw new Error(`Failed to fetch patient: ${patientResponse.statusText}`);
     }
-    const patient = await patientResponse.json();
+    const patient = (await patientResponse.json()) as FHIRPatient;
 
     // Fetch observations (last 30 days)
     const thirtyDaysAgo = new Date();
@@ -566,35 +682,34 @@ export class FHIRInteroperabilityIntegrator {
       `${fhirServerUrl}/Observation?patient=${patientId}&date=ge${dateParam}`,
       { headers }
     );
-    const observations = observationsResponse.ok ? await observationsResponse.json() : { entry: [] };
+    const observationsJson = observationsResponse.ok ? ((await observationsResponse.json()) as UnknownRecord) : { entry: [] };
+    const observations = (observationsJson.entry as unknown as FHIRBundleEntry[]) || [];
 
     // Fetch Immunizations
     const immunizationsResponse = await fetch(
       `${fhirServerUrl}/Immunization?patient=${patientId}`,
       { headers }
     );
-    const immunizations = immunizationsResponse.ok
-      ? await immunizationsResponse.json()
-      : { entry: [] };
+    const immunizationsJson = immunizationsResponse.ok ? ((await immunizationsResponse.json()) as UnknownRecord) : { entry: [] };
+    const immunizations = (immunizationsJson.entry as unknown as FHIRBundleEntry[]) || [];
 
     // Fetch CarePlans (only active and on-hold)
     const carePlansResponse = await fetch(
       `${fhirServerUrl}/CarePlan?patient=${patientId}&status=active,on-hold`,
       { headers }
     );
-    const carePlans = carePlansResponse.ok
-      ? await carePlansResponse.json()
-      : { entry: [] };
+    const carePlansJson = carePlansResponse.ok ? ((await carePlansResponse.json()) as UnknownRecord) : { entry: [] };
+    const carePlans = (carePlansJson.entry as unknown as FHIRBundleEntry[]) || [];
 
     return {
       patient,
-      observations: observations.entry || [],
-      immunizations: immunizations.entry || [],
-      carePlans: carePlans.entry || []
+      observations: observations as Array<{ resource?: FHIRObservationResource }>,
+      immunizations: immunizations as Array<{ resource?: FHIRImmunizationResource }>,
+      carePlans: carePlans as Array<{ resource?: FHIRCarePlanResource }>
     };
   }
 
-  private async importFHIRData(communityUserId: string, fhirData: any): Promise<void> {
+  private async importFHIRData(communityUserId: string, fhirData: FHIRPatientData): Promise<void> {
     const currentUser = (await supabase.auth.getUser()).data.user;
     const startTime = Date.now();
 
@@ -608,226 +723,226 @@ export class FHIRInteroperabilityIntegrator {
     try {
       // Import patient demographics
       if (fhirData.patient) {
-      const patient = fhirData.patient;
-      const name = patient.name?.[0];
-      const telecom = patient.telecom || [];
-      const email = telecom.find((t: any) => t.system === 'email')?.value;
-      const phone = telecom.find((t: any) => t.system === 'phone')?.value;
+        const patient = fhirData.patient;
+        const name = patient.name?.[0];
+        const telecom = patient.telecom || [];
+        const email = telecom.find((t) => t.system === 'email')?.value;
+        const phone = telecom.find((t) => t.system === 'phone')?.value;
 
-      await supabase
-        .from('profiles')
-        .update({
-          first_name: name?.given?.[0] || '',
-          last_name: name?.family || '',
-          email: email || '',
-          phone: phone || '',
-          dob: patient.birthDate || '',
-          updated_at: new Date().toISOString()
-        })
-        .eq('user_id', communityUserId);
-    }
-
-    // Import observations as check-ins
-    if (fhirData.observations && Array.isArray(fhirData.observations)) {
-      // Get tenant_id for check_ins (required NOT NULL field)
-      const { data: userProfile } = await supabase
-        .from('profiles')
-        .select('tenant_id')
-        .eq('user_id', communityUserId)
-        .maybeSingle();
-
-      const tenantId = userProfile?.tenant_id;
-
-      for (const entry of fhirData.observations) {
-        const obs = entry.resource;
-        if (!obs) continue;
-
-        const checkInData: Record<string, unknown> = {
-          user_id: communityUserId,
-          tenant_id: tenantId,
-          label: 'FHIR Import',
-          source: 'fhir_import',
-          created_at: obs.effectiveDateTime || obs.issued || new Date().toISOString(),
-          is_emergency: false
-        };
-
-        // Skip if no tenant_id (would fail insert anyway)
-        if (!tenantId) continue;
-
-        // Map based on LOINC code
-        const loincCode = obs.code?.coding?.find((c: { system: string }) => c.system === 'http://loinc.org')?.code;
-
-        switch (loincCode) {
-          case '8867-4': // Heart rate
-            checkInData.heart_rate = obs.valueQuantity?.value;
-            break;
-          case '2708-6': // Oxygen saturation
-            checkInData.pulse_oximeter = obs.valueQuantity?.value;
-            break;
-          case '85354-9': // Blood pressure panel
-            if (obs.component) {
-              const systolic = obs.component.find((c: { code?: { coding?: Array<{ code: string }> } }) =>
-                c.code?.coding?.find((cc) => cc.code === '8480-6'));
-              const diastolic = obs.component.find((c: { code?: { coding?: Array<{ code: string }> } }) =>
-                c.code?.coding?.find((cc) => cc.code === '8462-4'));
-              checkInData.bp_systolic = systolic?.valueQuantity?.value;
-              checkInData.bp_diastolic = diastolic?.valueQuantity?.value;
-            }
-            break;
-          case '33747-0': // Glucose
-            checkInData.glucose_mg_dl = obs.valueQuantity?.value;
-            break;
-        }
-
-        // Only insert if we have at least one vitals value
-        if (checkInData.heart_rate || checkInData.pulse_oximeter ||
-            checkInData.bp_systolic || checkInData.glucose_mg_dl) {
-          await supabase.from('check_ins').insert(checkInData);
-        }
+        await supabase
+          .from('profiles')
+          .update({
+            first_name: name?.given?.[0] || '',
+            last_name: name?.family || '',
+            email: email || '',
+            phone: phone || '',
+            dob: patient.birthDate || '',
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', communityUserId);
       }
-    }
 
-    // Import Immunizations
-    if (fhirData.immunizations && Array.isArray(fhirData.immunizations)) {
-      for (const entry of fhirData.immunizations) {
-        const imm = entry.resource;
-        if (!imm || imm.resourceType !== 'Immunization') continue;
-
-        const vaccineCode = imm.vaccineCode?.coding?.find((c: any) =>
-          c.system === 'http://hl7.org/fhir/sid/cvx'
-        );
-
-        if (!vaccineCode) continue;
-
-        // Check if immunization already exists from this external system
-        const { data: existing } = await supabase
-          .from('fhir_immunizations')
-          .select('id')
-          .eq('external_id', imm.id)
-          .eq('external_system', 'FHIR')
+      // Import observations as check-ins
+      if (fhirData.observations && Array.isArray(fhirData.observations)) {
+        // Get tenant_id for check_ins (required NOT NULL field)
+        const { data: userProfile } = await supabase
+          .from('profiles')
+          .select('tenant_id')
+          .eq('user_id', communityUserId)
           .maybeSingle();
 
-        const immunizationData = {
-          patient_id: communityUserId,
-          external_id: imm.id,
-          external_system: 'FHIR',
-          status: imm.status || 'completed',
-          vaccine_code: vaccineCode.code,
-          vaccine_display: vaccineCode.display || 'Unknown Vaccine',
-          occurrence_datetime: imm.occurrenceDateTime,
-          primary_source: imm.primarySource !== false,
-          lot_number: imm.lotNumber,
-          expiration_date: imm.expirationDate,
-          manufacturer: imm.manufacturer?.display,
-          site_code: imm.site?.coding?.[0]?.code,
-          site_display: imm.site?.coding?.[0]?.display,
-          route_code: imm.route?.coding?.[0]?.code,
-          route_display: imm.route?.coding?.[0]?.display,
-          dose_quantity_value: imm.doseQuantity?.value,
-          dose_quantity_unit: imm.doseQuantity?.unit,
-          performer_actor_display: imm.performer?.[0]?.actor?.display,
-          location_display: imm.location?.display,
-          note: imm.note?.[0]?.text,
-          protocol_dose_number_positive_int: imm.protocolApplied?.[0]?.doseNumberPositiveInt,
-          protocol_series_doses_positive_int: imm.protocolApplied?.[0]?.seriesDosesPositiveInt,
-          reaction_date: imm.reaction?.[0]?.date,
-          reaction_reported: imm.reaction?.[0]?.reported,
-          updated_at: new Date().toISOString()
-        };
+        const tenantId = (userProfile as UnknownRecord | null | undefined)?.tenant_id as string | undefined;
 
-        if (existing) {
-          await supabase
-            .from('fhir_immunizations')
-            .update(immunizationData)
-            .eq('id', existing.id);
-        } else {
-          await supabase
-            .from('fhir_immunizations')
-            .insert({ ...immunizationData, created_at: new Date().toISOString() });
+        for (const entry of fhirData.observations) {
+          const obs = entry.resource;
+          if (!obs) continue;
+
+          const checkInData: Record<string, unknown> = {
+            user_id: communityUserId,
+            tenant_id: tenantId,
+            label: 'FHIR Import',
+            source: 'fhir_import',
+            created_at: obs.effectiveDateTime || obs.issued || new Date().toISOString(),
+            is_emergency: false
+          };
+
+          // Skip if no tenant_id (would fail insert anyway)
+          if (!tenantId) continue;
+
+          // Map based on LOINC code
+          const loincCode = obs.code?.coding?.find((c) => c.system === 'http://loinc.org')?.code;
+
+          switch (loincCode) {
+            case '8867-4': // Heart rate
+              checkInData.heart_rate = obs.valueQuantity?.value;
+              break;
+            case '2708-6': // Oxygen saturation
+              checkInData.pulse_oximeter = obs.valueQuantity?.value;
+              break;
+            case '85354-9': // Blood pressure panel
+              if (obs.component) {
+                const systolic = obs.component.find((c) =>
+                  c.code?.coding?.find((cc) => cc.code === '8480-6'));
+                const diastolic = obs.component.find((c) =>
+                  c.code?.coding?.find((cc) => cc.code === '8462-4'));
+                checkInData.bp_systolic = systolic?.valueQuantity?.value;
+                checkInData.bp_diastolic = diastolic?.valueQuantity?.value;
+              }
+              break;
+            case '33747-0': // Glucose
+              checkInData.glucose_mg_dl = obs.valueQuantity?.value;
+              break;
+          }
+
+          // Only insert if we have at least one vitals value
+          if (checkInData.heart_rate || checkInData.pulse_oximeter ||
+              checkInData.bp_systolic || checkInData.glucose_mg_dl) {
+            await supabase.from('check_ins').insert(checkInData);
+          }
         }
       }
-    }
 
-    // Import CarePlans
-    if (fhirData.carePlans && Array.isArray(fhirData.carePlans)) {
-      for (const entry of fhirData.carePlans) {
-        const plan = entry.resource;
-        if (!plan || plan.resourceType !== 'CarePlan') continue;
+      // Import Immunizations
+      if (fhirData.immunizations && Array.isArray(fhirData.immunizations)) {
+        for (const entry of fhirData.immunizations) {
+          const imm = entry.resource;
+          if (!imm || imm.resourceType !== 'Immunization') continue;
 
-        // Extract categories
-        const categories = plan.category?.map((cat: any) => cat.coding?.[0]?.code).filter(Boolean) || [];
-        const categoryDisplays = plan.category?.map((cat: any) => cat.coding?.[0]?.display).filter(Boolean) || [];
+          const vaccineCode = imm.vaccineCode?.coding?.find((c) =>
+            c.system === 'http://hl7.org/fhir/sid/cvx'
+          );
 
-        // Extract activities from FHIR format
-        const activities = plan.activity?.map((a: any) => ({
-          kind: a.detail?.kind,
-          status: a.detail?.status,
-          detail: a.detail?.description,
-          scheduled_start: a.detail?.scheduledTiming?.repeat?.boundsPeriod?.start,
-          scheduled_end: a.detail?.scheduledTiming?.repeat?.boundsPeriod?.end
-        })) || [];
+          if (!vaccineCode) continue;
 
-        // Check if care plan already exists from this external system
-        const { data: existingPlan } = await supabase
-          .from('fhir_care_plans')
-          .select('id')
-          .eq('external_id', plan.id)
-          .eq('external_system', 'FHIR')
-          .maybeSingle();
+          // Check if immunization already exists from this external system
+          const { data: existing } = await supabase
+            .from('fhir_immunizations')
+            .select('id')
+            .eq('external_id', imm.id)
+            .eq('external_system', 'FHIR')
+            .maybeSingle();
 
-        const carePlanData = {
-          patient_id: communityUserId,
-          external_id: plan.id,
-          external_system: 'FHIR',
-          status: plan.status,
-          intent: plan.intent,
-          category: categories,
-          category_display: categoryDisplays,
-          title: plan.title,
-          description: plan.description,
-          subject_reference: plan.subject?.reference,
-          subject_display: plan.subject?.display,
-          period_start: plan.period?.start,
-          period_end: plan.period?.end,
-          created: plan.created,
-          author_reference: plan.author?.reference,
-          author_display: plan.author?.display,
-          care_team_reference: plan.careTeam?.[0]?.reference,
-          care_team_display: plan.careTeam?.[0]?.display,
-          addresses_condition_references: plan.addresses?.map((a: any) => a.reference),
-          addresses_condition_displays: plan.addresses?.map((a: any) => a.display),
-          goal_references: plan.goal?.map((g: any) => g.reference),
-          goal_displays: plan.goal?.map((g: any) => g.display),
-          activities: activities,
-          note: plan.note?.[0]?.text,
-          updated_at: new Date().toISOString()
-        };
+          const immunizationData = {
+            patient_id: communityUserId,
+            external_id: imm.id,
+            external_system: 'FHIR',
+            status: imm.status || 'completed',
+            vaccine_code: vaccineCode.code,
+            vaccine_display: vaccineCode.display || 'Unknown Vaccine',
+            occurrence_datetime: imm.occurrenceDateTime,
+            primary_source: imm.primarySource !== false,
+            lot_number: imm.lotNumber,
+            expiration_date: imm.expirationDate,
+            manufacturer: imm.manufacturer?.display,
+            site_code: imm.site?.coding?.[0]?.code,
+            site_display: imm.site?.coding?.[0]?.display,
+            route_code: imm.route?.coding?.[0]?.code,
+            route_display: imm.route?.coding?.[0]?.display,
+            dose_quantity_value: imm.doseQuantity?.value,
+            dose_quantity_unit: imm.doseQuantity?.unit,
+            performer_actor_display: imm.performer?.[0]?.actor?.display,
+            location_display: imm.location?.display,
+            note: imm.note?.[0]?.text,
+            protocol_dose_number_positive_int: imm.protocolApplied?.[0]?.doseNumberPositiveInt,
+            protocol_series_doses_positive_int: imm.protocolApplied?.[0]?.seriesDosesPositiveInt,
+            reaction_date: imm.reaction?.[0]?.date,
+            reaction_reported: imm.reaction?.[0]?.reported,
+            updated_at: new Date().toISOString()
+          };
 
-        if (existingPlan) {
-          await supabase
-            .from('fhir_care_plans')
-            .update(carePlanData)
-            .eq('id', existingPlan.id);
-        } else {
-          await supabase
-            .from('fhir_care_plans')
-            .insert({ ...carePlanData, created_at: new Date().toISOString() });
+          if (existing) {
+            await supabase
+              .from('fhir_immunizations')
+              .update(immunizationData)
+              .eq('id', (existing as UnknownRecord).id as string);
+          } else {
+            await supabase
+              .from('fhir_immunizations')
+              .insert({ ...immunizationData, created_at: new Date().toISOString() });
+          }
         }
       }
-    }
 
-    // SOC 2: Log successful import completion
-    const duration = Date.now() - startTime;
-    await this.logAuditEvent('FHIR_IMPORT_COMPLETED', {
-      actor_user_id: currentUser?.id,
-      target_user_id: communityUserId,
-      duration_ms: duration,
-      resources_imported: {
-        immunizations: fhirData.immunizations?.length || 0,
-        carePlans: fhirData.carePlans?.length || 0
-      },
-      timestamp: new Date().toISOString()
-    });
+      // Import CarePlans
+      if (fhirData.carePlans && Array.isArray(fhirData.carePlans)) {
+        for (const entry of fhirData.carePlans) {
+          const plan = entry.resource;
+          if (!plan || plan.resourceType !== 'CarePlan') continue;
+
+          // Extract categories
+          const categories = plan.category?.map((cat) => cat.coding?.[0]?.code).filter(Boolean) || [];
+          const categoryDisplays = plan.category?.map((cat) => cat.coding?.[0]?.display).filter(Boolean) || [];
+
+          // Extract activities from FHIR format
+          const activities = plan.activity?.map((a) => ({
+            kind: a.detail?.kind,
+            status: a.detail?.status,
+            detail: a.detail?.description,
+            scheduled_start: a.detail?.scheduledTiming?.repeat?.boundsPeriod?.start,
+            scheduled_end: a.detail?.scheduledTiming?.repeat?.boundsPeriod?.end
+          })) || [];
+
+          // Check if care plan already exists from this external system
+          const { data: existingPlan } = await supabase
+            .from('fhir_care_plans')
+            .select('id')
+            .eq('external_id', plan.id)
+            .eq('external_system', 'FHIR')
+            .maybeSingle();
+
+          const carePlanData = {
+            patient_id: communityUserId,
+            external_id: plan.id,
+            external_system: 'FHIR',
+            status: plan.status,
+            intent: plan.intent,
+            category: categories,
+            category_display: categoryDisplays,
+            title: plan.title,
+            description: plan.description,
+            subject_reference: plan.subject?.reference,
+            subject_display: plan.subject?.display,
+            period_start: plan.period?.start,
+            period_end: plan.period?.end,
+            created: plan.created,
+            author_reference: plan.author?.reference,
+            author_display: plan.author?.display,
+            care_team_reference: plan.careTeam?.[0]?.reference,
+            care_team_display: plan.careTeam?.[0]?.display,
+            addresses_condition_references: plan.addresses?.map((a) => a.reference),
+            addresses_condition_displays: plan.addresses?.map((a) => a.display),
+            goal_references: plan.goal?.map((g) => g.reference),
+            goal_displays: plan.goal?.map((g) => g.display),
+            activities: activities,
+            note: plan.note?.[0]?.text,
+            updated_at: new Date().toISOString()
+          };
+
+          if (existingPlan) {
+            await supabase
+              .from('fhir_care_plans')
+              .update(carePlanData)
+              .eq('id', (existingPlan as UnknownRecord).id as string);
+          } else {
+            await supabase
+              .from('fhir_care_plans')
+              .insert({ ...carePlanData, created_at: new Date().toISOString() });
+          }
+        }
+      }
+
+      // SOC 2: Log successful import completion
+      const duration = Date.now() - startTime;
+      await this.logAuditEvent('FHIR_IMPORT_COMPLETED', {
+        actor_user_id: currentUser?.id,
+        target_user_id: communityUserId,
+        duration_ms: duration,
+        resources_imported: {
+          immunizations: fhirData.immunizations?.length || 0,
+          carePlans: fhirData.carePlans?.length || 0
+        },
+        timestamp: new Date().toISOString()
+      });
 
     } catch (error) {
       // SOC 2: Log import failure (no PHI in logs)
@@ -843,7 +958,7 @@ export class FHIRInteroperabilityIntegrator {
   }
 
   // SOC 2: Audit logging helper
-  private async logAuditEvent(eventType: string, metadata: any): Promise<void> {
+  private async logAuditEvent(eventType: string, metadata: UnknownRecord): Promise<void> {
     try {
       await supabase.from('audit_logs').insert({
         event_type: eventType,
@@ -857,7 +972,7 @@ export class FHIRInteroperabilityIntegrator {
   }
 
   // SOC 2: Security event logging helper
-  private async logSecurityEvent(eventType: string, metadata: any): Promise<void> {
+  private async logSecurityEvent(eventType: string, metadata: UnknownRecord): Promise<void> {
     try {
       await supabase.from('security_events').insert({
         event_type: eventType,
@@ -872,7 +987,7 @@ export class FHIRInteroperabilityIntegrator {
 
   private async pushBundleToFHIR(
     fhirServerUrl: string,
-    bundle: any,
+    bundle: UnknownRecord,
     accessToken?: string,
     existingPatientId?: string
   ): Promise<void> {
@@ -885,14 +1000,18 @@ export class FHIRInteroperabilityIntegrator {
       headers['Authorization'] = `Bearer ${accessToken}`;
     }
 
+    const bundleEntry = bundle.entry as unknown as Array<{ resource?: UnknownRecord }> | undefined;
+
     // If we have an existing patient ID, update the bundle references
-    if (existingPatientId && bundle.entry) {
-      bundle.entry = bundle.entry.map((entry: any) => {
-        if (entry.resource.resourceType === 'Patient') {
-          entry.resource.id = existingPatientId;
+    if (existingPatientId && bundleEntry) {
+      bundle.entry = bundleEntry.map((entry) => {
+        const resource = entry.resource as UnknownRecord | undefined;
+        const resourceType = (resource?.resourceType as string | undefined) || '';
+        if (resource && resourceType === 'Patient') {
+          resource.id = existingPatientId;
         }
         return entry;
-      });
+      }) as unknown as UnknownRecord['entry'];
     }
 
     // POST bundle to FHIR server
@@ -934,22 +1053,22 @@ export class FHIRInteroperabilityIntegrator {
     }
   }
 
-  private mapConnectionFromDB(data: any): FHIRConnection {
+  private mapConnectionFromDB(data: UnknownRecord): FHIRConnection {
     return {
-      id: data.id,
-      name: data.name,
-      fhirServerUrl: data.fhir_server_url,
-      ehrSystem: data.ehr_system,
-      clientId: data.client_id,
-      status: data.status,
-      lastSync: data.last_sync,
-      syncFrequency: data.sync_frequency,
-      syncDirection: data.sync_direction,
-      accessToken: data.access_token,
-      refreshToken: data.refresh_token,
-      tokenExpiry: data.token_expiry,
-      createdAt: data.created_at,
-      updatedAt: data.updated_at
+      id: data.id as string,
+      name: data.name as string,
+      fhirServerUrl: data.fhir_server_url as string,
+      ehrSystem: data.ehr_system as FHIRConnection['ehrSystem'],
+      clientId: data.client_id as string,
+      status: data.status as FHIRConnection['status'],
+      lastSync: data.last_sync as string | undefined,
+      syncFrequency: data.sync_frequency as FHIRConnection['syncFrequency'],
+      syncDirection: data.sync_direction as FHIRConnection['syncDirection'],
+      accessToken: data.access_token as string | undefined,
+      refreshToken: data.refresh_token as string | undefined,
+      tokenExpiry: data.token_expiry as string | undefined,
+      createdAt: data.created_at as string,
+      updatedAt: data.updated_at as string
     };
   }
 }

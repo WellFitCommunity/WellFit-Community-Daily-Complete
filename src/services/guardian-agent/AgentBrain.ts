@@ -1,5 +1,5 @@
 /**
- * WellFit Guardian Agent Brain
+ * Envision Atlus Guardian Agent Brain
  * Core intelligence engine with adaptive learning and pattern recognition
  */
 
@@ -33,7 +33,7 @@ export class AgentBrain {
   private auditLogger: AuditLogger;
   private rateLimiter: RateLimiter;
   private sandbox: SandboxEnvironment;
-  private observationBuffer: any[] = [];
+  private observationBuffer: Record<string, unknown>[] = [];
   private patternCache: Map<string, KnowledgeEntry> = new Map();
 
   constructor(config: AgentConfig) {
@@ -68,7 +68,7 @@ export class AgentBrain {
   /**
    * Analyzes an error or anomaly and decides on action
    */
-  async analyze(error: Error | any, context: ErrorContext): Promise<DetectedIssue | null> {
+  async analyze(error: Error | unknown, context: ErrorContext): Promise<DetectedIssue | null> {
     const startTime = Date.now();
 
     // Extract error information
@@ -93,7 +93,7 @@ export class AgentBrain {
       context,
       severity: this.calculateSeverity(signature, context),
       affectedResources: this.identifyAffectedResources(context),
-      stackTrace: error.stack,
+      stackTrace: error instanceof Error ? error.stack : undefined,
       metadata: {
         ...errorInfo,
         detectionTime: Date.now() - startTime
@@ -121,9 +121,13 @@ export class AgentBrain {
   /**
    * Matches error against known signatures using pattern recognition
    */
-  private matchSignature(errorInfo: any, context: ErrorContext): ErrorSignature | null {
+  private matchSignature(errorInfo: Record<string, unknown>, context: ErrorContext): ErrorSignature | null {
+    const errorName = String(errorInfo.name ?? '');
+    const errorMessage = String(errorInfo.message ?? '');
+    const errorStack = String(errorInfo.stack ?? '');
+
     // Check cache first for performance
-    const cacheKey = `${errorInfo.name}-${errorInfo.message}`;
+    const cacheKey = `${errorName}-${errorMessage}`;
     const cached = this.patternCache.get(cacheKey);
 
     if (cached && cached.successRate > 0.8) {
@@ -138,16 +142,16 @@ export class AgentBrain {
 
       // Error message matching
       if (typeof signature.pattern === 'string') {
-        if (errorInfo.message.includes(signature.pattern)) {
+        if (errorMessage.includes(signature.pattern)) {
           matchScore += 0.4;
         }
-      } else if (signature.pattern.test(errorInfo.message)) {
+      } else if (signature.pattern.test(errorMessage)) {
         matchScore += 0.4;
       }
 
       // Stack trace matching
-      if (signature.stackTracePattern && errorInfo.stack) {
-        if (signature.stackTracePattern.test(errorInfo.stack)) {
+      if (signature.stackTracePattern && errorStack) {
+        if (signature.stackTracePattern.test(errorStack)) {
           matchScore += 0.3;
         }
       }
@@ -515,9 +519,14 @@ export class AgentBrain {
   }
 
   private getMemoryUsage(): number {
-    if ('memory' in performance) {
-      const memory = (performance as any).memory;
-      return Math.round(memory.usedJSHeapSize / (1024 * 1024)); // Convert to MB
+    if (
+      typeof performance === 'object' &&
+      'memory' in performance
+    ) {
+      const memory = (performance as { memory?: { usedJSHeapSize?: number } }).memory;
+      if (memory?.usedJSHeapSize) {
+        return Math.round(memory.usedJSHeapSize / (1024 * 1024)); // Convert to MB
+      }
     }
     return 0;
   }
@@ -531,14 +540,23 @@ export class AgentBrain {
   }
 
   // Helper methods
-  private extractErrorInfo(error: any): any {
+  private extractErrorInfo(error: unknown): Record<string, unknown> {
+    if (error instanceof Error) {
+      const errWithExtras = error as Error & Record<string, unknown>;
+      return {
+        name: errWithExtras.name || 'UnknownError',
+        message: errWithExtras.message || String(error),
+        stack: errWithExtras.stack || '',
+        code: errWithExtras.code,
+        statusCode: errWithExtras.statusCode,
+        cause: errWithExtras.cause
+      };
+    }
+
     return {
-      name: error.name || 'UnknownError',
-      message: error.message || String(error),
-      stack: error.stack || '',
-      code: error.code,
-      statusCode: error.statusCode,
-      cause: error.cause
+      name: 'UnknownError',
+      message: String(error),
+      stack: ''
     };
   }
 
@@ -659,7 +677,7 @@ export class AgentBrain {
   /**
    * Get audit logs for compliance review
    */
-  getAuditLogs(filters?: any) {
+  getAuditLogs(filters?: Record<string, unknown>) {
     return this.auditLogger.getAuditLogs(filters);
   }
 

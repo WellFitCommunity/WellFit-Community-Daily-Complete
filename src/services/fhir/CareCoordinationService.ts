@@ -10,7 +10,7 @@ import { supabase } from '../../lib/supabaseClient';
 
 export const CareCoordinationService = {
   // Log care coordination event
-  async logEvent(event: any) {
+  async logEvent(event: Record<string, unknown>) {
     const { data, error } = await supabase
       .from('care_coordination_events')
       .insert([event])

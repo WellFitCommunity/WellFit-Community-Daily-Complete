@@ -39,7 +39,7 @@ interface MockIDBDatabase {
 }
 
 // Create mock store
-function createMockStore(name: string, keyPath: string): MockIDBObjectStore {
+function _createMockStore(name: string, keyPath: string): MockIDBObjectStore {
   const data = new Map<string, unknown>();
   return {
     name,
@@ -81,7 +81,7 @@ function createMockStore(name: string, keyPath: string): MockIDBObjectStore {
     clear: () => {
       data.clear();
     },
-    createIndex: (indexName: string, indexKeyPath: string, options: { unique: boolean }) => {
+    createIndex: (_indexName: string, _indexKeyPath: string, _options: { unique: boolean }) => {
       // Mock index creation
     },
   };
@@ -170,13 +170,13 @@ describe('offlineStorage', () => {
   });
 
   describe('permanent failure detection', () => {
-    const MAX_SYNC_ATTEMPTS = 5;
+    const _MAX_SYNC_ATTEMPTS = 5;
 
     it('should not mark as permanently failed before max attempts', () => {
       const report = { attempts: 3, permanentlyFailed: false };
 
       report.attempts += 1;
-      if (report.attempts >= MAX_SYNC_ATTEMPTS) {
+      if (report.attempts >= _MAX_SYNC_ATTEMPTS) {
         report.permanentlyFailed = true;
       }
 
@@ -188,7 +188,7 @@ describe('offlineStorage', () => {
       const report = { attempts: 4, permanentlyFailed: false };
 
       report.attempts += 1;
-      if (report.attempts >= MAX_SYNC_ATTEMPTS) {
+      if (report.attempts >= _MAX_SYNC_ATTEMPTS) {
         report.permanentlyFailed = true;
       }
 
@@ -199,7 +199,7 @@ describe('offlineStorage', () => {
     it('should mark as permanently failed beyond max attempts', () => {
       const report = { attempts: 10, permanentlyFailed: false };
 
-      if (report.attempts >= MAX_SYNC_ATTEMPTS) {
+      if (report.attempts >= _MAX_SYNC_ATTEMPTS) {
         report.permanentlyFailed = true;
       }
 

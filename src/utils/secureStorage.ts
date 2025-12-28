@@ -176,6 +176,8 @@ function base64ToArrayBuffer(base64: string): ArrayBuffer {
   return bytes.buffer;
 }
 
+type SecureStorageValue = string | number | boolean | null | Record<string, unknown> | unknown[];
+
 /**
  * Secure Storage API
  * Drop-in replacement for sessionStorage/localStorage with automatic encryption
@@ -186,7 +188,7 @@ export const secureStorage = {
    * @param key Storage key
    * @param value Data to encrypt and store (will be JSON stringified)
    */
-  async setItem(key: string, value: any): Promise<void> {
+  async setItem(key: string, value: SecureStorageValue): Promise<void> {
     try {
       const plaintext = typeof value === 'string' ? value : JSON.stringify(value);
       const encrypted = await encrypt(plaintext);

@@ -14,7 +14,7 @@ import type {
   DentalObservation,
   DentalAssessment,
   DentalProcedure,
-  ToothChartEntry,
+  ToothChartEntry as _ToothChartEntry,
 } from '../../types/dentalHealth';
 
 // =====================================================
@@ -189,6 +189,7 @@ export const DENTAL_SNOMED_CODES = {
   DENTAL_RESTORATION: '234947003',
   TOOTH_EXTRACTION_PROCEDURE: '65546002',
   ROOT_CANAL_THERAPY: '234952001',
+  DENTAL_CLEANING: '234961009',
 };
 
 // =====================================================
@@ -389,7 +390,7 @@ export class DentalObservationService {
       }
 
       // Update procedure record with FHIR ID
-      const { data, error } = await supabase
+      const { data: _data, error } = await supabase
         .from('dental_procedures')
         .update({ fhir_procedure_id: fhirProcedure.id })
         .eq('id', procedure.id)

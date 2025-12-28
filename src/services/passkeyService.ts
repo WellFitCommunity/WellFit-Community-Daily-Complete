@@ -8,6 +8,7 @@
 
 import { supabase } from '../lib/supabaseClient';
 import { getErrorMessage } from '../lib/getErrorMessage';
+import type { Session, User } from '@supabase/supabase-js';
 
 // ─── Types ─────────────────────────────────────────────────────────
 
@@ -52,12 +53,29 @@ export interface AuthenticationOptions {
   rpId?: string;
   allowCredentials?: Array<{
     type: 'public-key';
-    id: BufferSource;
+    /**
+     * Some backends return credential IDs as base64url strings.
+     * WebAuthn expects a BufferSource at the browser API boundary.
+     */
+    id: BufferSource | string;
     transports?: string[];
   }>;
   timeout?: number;
   userVerification?: 'required' | 'preferred' | 'discouraged';
 }
+
+export interface PasskeyAuthResult {
+  session: Session;
+  user: User;
+}
+
+type AttestationResponseWithOptionalTransports = AuthenticatorAttestationResponse & {
+  getTransports?: () => AuthenticatorTransport[];
+};
+
+type CredentialWithOptionalAttachment = PublicKeyCredential & {
+  authenticatorAttachment?: AuthenticatorAttachment | null;
+};
 
 // ─── Helper Functions ─────────────────────────────────────────────────
 
@@ -195,15 +213,20 @@ export async function completePasskeyRegistration(
     };
 
     // Create credential via WebAuthn
-    const credential = await navigator.credentials.create({
+    const credential = (await navigator.credentials.create({
       publicKey: publicKeyOptions
-    }) as PublicKeyCredential;
+    })) as PublicKeyCredential;
 
     if (!credential) {
       throw new Error('Failed to create credential');
     }
 
     const response = credential.response as AuthenticatorAttestationResponse;
+    const responseWithTransports = response as AttestationResponseWithOptionalTransports;
+    const credentialWithAttachment = credential as CredentialWithOptionalAttachment;
+
+    const authenticatorAttachmentValue =
+      credentialWithAttachment.authenticatorAttachment ?? undefined;
 
     // Prepare credential data for server
     const credentialData = {
@@ -213,10 +236,10 @@ export async function completePasskeyRegistration(
       response: {
         clientDataJSON: uint8ArrayToBase64url(response.clientDataJSON),
         attestationObject: uint8ArrayToBase64url(response.attestationObject),
-        transports: (response as any).getTransports?.() || []
+        transports: responseWithTransports.getTransports?.() || []
       },
-      authenticatorAttachment: (credential as any).authenticatorAttachment,
-      device_name: deviceName || getAuthenticatorName((credential as any).authenticatorAttachment),
+      authenticatorAttachment: authenticatorAttachmentValue,
+      device_name: deviceName || getAuthenticatorName(authenticatorAttachmentValue),
       user_agent: navigator.userAgent
     };
 
@@ -227,7 +250,6 @@ export async function completePasskeyRegistration(
 
     if (error) throw new Error(error.message || 'Failed to save credential');
     return data;
-
   } catch (error: unknown) {
     const errorMessage = getErrorMessage(error);
 
@@ -249,9 +271,7 @@ export async function completePasskeyRegistration(
  * Start passkey authentication
  * Step 1: Get authentication challenge from server
  */
-export async function startPasskeyAuthentication(
-  userId?: string
-): Promise<AuthenticationOptions> {
+export async function startPasskeyAuthentication(userId?: string): Promise<AuthenticationOptions> {
   const { data, error } = await supabase.functions.invoke('passkey-auth-start', {
     body: { user_id: userId }
   });
@@ -264,9 +284,7 @@ export async function startPasskeyAuthentication(
  * Complete passkey authentication
  * Step 2: Sign challenge with WebAuthn and verify on server
  */
-export async function completePasskeyAuthentication(
-  options: AuthenticationOptions
-): Promise<{ session: any; user: any }> {
+export async function completePasskeyAuthentication(options: AuthenticationOptions): Promise<PasskeyAuthResult> {
   if (!isPasskeySupported()) {
     throw new Error('Passkeys are not supported in this browser');
   }
@@ -276,7 +294,7 @@ export async function completePasskeyAuthentication(
     const publicKeyOptions: PublicKeyCredentialRequestOptions = {
       challenge: base64urlToUint8Array(options.challenge) as BufferSource,
       rpId: options.rpId || getRelyingPartyId(),
-      allowCredentials: options.allowCredentials?.map(cred => ({
+      allowCredentials: options.allowCredentials?.map((cred) => ({
         type: 'public-key' as const,
         id: (typeof cred.id === 'string' ? base64urlToUint8Array(cred.id) : cred.id) as BufferSource,
         transports: (cred.transports || []) as AuthenticatorTransport[]
@@ -286,9 +304,9 @@ export async function completePasskeyAuthentication(
     };
 
     // Get credential via WebAuthn
-    const credential = await navigator.credentials.get({
+    const credential = (await navigator.credentials.get({
       publicKey: publicKeyOptions
-    }) as PublicKeyCredential;
+    })) as PublicKeyCredential;
 
     if (!credential) {
       throw new Error('Failed to authenticate');
@@ -318,11 +336,10 @@ export async function completePasskeyAuthentication(
 
     // Set the session in Supabase client
     if (data.session) {
-      await supabase.auth.setSession(data.session);
+      await supabase.auth.setSession(data.session as Session);
     }
 
-    return data;
-
+    return data as PasskeyAuthResult;
   } catch (error: unknown) {
     const errorMessage = getErrorMessage(error);
 
@@ -355,10 +372,7 @@ export async function getUserPasskeys(): Promise<PasskeyCredential[]> {
  * Delete a passkey
  */
 export async function deletePasskey(credentialId: string): Promise<void> {
-  const { error } = await supabase
-    .from('passkey_credentials')
-    .delete()
-    .eq('credential_id', credentialId);
+  const { error } = await supabase.from('passkey_credentials').delete().eq('credential_id', credentialId);
 
   if (error) throw error;
 
@@ -376,9 +390,7 @@ export async function deletePasskey(credentialId: string): Promise<void> {
  * Check if user has any passkeys registered
  */
 export async function hasPasskeys(userId?: string): Promise<boolean> {
-  const query = supabase
-    .from('passkey_credentials')
-    .select('id', { count: 'exact', head: true });
+  const query = supabase.from('passkey_credentials').select('id', { count: 'exact', head: true });
 
   if (userId) {
     query.eq('user_id', userId);
@@ -406,7 +418,7 @@ export async function registerPasskey(
 /**
  * Authenticate with passkey (convenience wrapper for both steps)
  */
-export async function authenticateWithPasskey(userId?: string): Promise<{ session: any; user: any }> {
+export async function authenticateWithPasskey(userId?: string): Promise<PasskeyAuthResult> {
   const options = await startPasskeyAuthentication(userId);
   return await completePasskeyAuthentication(options);
 }

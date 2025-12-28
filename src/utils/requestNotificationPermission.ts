@@ -69,12 +69,10 @@ export const requestNotificationPermission = async (): Promise<void> => {
     alert('Notifications enabled!');
 
     // Optional: show foreground messages as console or toast
-    onMessage(messaging, (payload) => {
-
+    onMessage(messaging, (_payload) => {
       // You can show a toast here with react-toastify if you want
     });
   } catch (err) {
-
     alert('Push notification setup failed.');
   }
 };

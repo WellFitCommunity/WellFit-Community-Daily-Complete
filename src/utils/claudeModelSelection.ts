@@ -105,7 +105,7 @@ export class WellFitModelSelector implements ModelSelectionStrategy {
     complexity: 'simple' | 'moderate' | 'complex',
     budgetTier: 'standard' | 'premium'
   ): ClaudeModel {
-    const usePremium = budgetTier === 'premium';
+    const _usePremium = budgetTier === 'premium';
 
     switch (requestType) {
       case RequestType.RISK_ASSESSMENT:
@@ -240,12 +240,12 @@ export function createModelCriteria(
   content: string,
   budgetTier: 'standard' | 'premium' = 'standard'
 ): ModelSelectionCriteria {
-  const complexity = modelSelector.analyzeRequestComplexity(content, requestType);
+  const _complexity = modelSelector.analyzeRequestComplexity(content, requestType);
 
   return {
     userRole,
     requestType,
-    complexity,
+    complexity: _complexity,
     budgetTier
   };
 }

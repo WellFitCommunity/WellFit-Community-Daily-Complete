@@ -76,6 +76,12 @@ export interface EngagementMetrics {
   feedback?: string;
 }
 
+// Minimal boundary types to remove explicit `any` without changing behavior.
+type DeliveryMetadata = Record<string, unknown>;
+type EngagementUpdateData = Record<string, unknown>;
+type AnalyticsRow = Record<string, unknown>;
+type CachedContentRow = Record<string, unknown>;
+
 // ============================================================================
 // INPUT VALIDATION
 // ============================================================================
@@ -257,20 +263,20 @@ class CulturalHealthCoachService {
    */
   async deliverContent(
     tenantId: string,
-    patientId: string,
+    _patientId: string,
     cacheId: string,
     deliveryChannel: 'sms' | 'email' | 'app' | 'portal',
-    metadata?: Record<string, any>
+    metadata?: DeliveryMetadata
   ): Promise<string> {
     CulturalCoachValidator.validateUUID(tenantId, 'tenantId');
-    CulturalCoachValidator.validateUUID(patientId, 'patientId');
+    CulturalCoachValidator.validateUUID(_patientId, 'patientId');
     CulturalCoachValidator.validateUUID(cacheId, 'cacheId');
 
     const { data, error } = await this.supabase
       .from('personalized_content_delivery')
       .insert({
         tenant_id: tenantId,
-        patient_id: patientId,
+        patient_id: _patientId,
         cached_content_id: cacheId,
         delivery_channel: deliveryChannel,
         delivery_metadata: metadata
@@ -290,7 +296,7 @@ class CulturalHealthCoachService {
     CulturalCoachValidator.validateUUID(metrics.deliveryId, 'deliveryId');
     CulturalCoachValidator.validateUUID(metrics.patientId, 'patientId');
 
-    const updateData: any = {
+    const updateData: EngagementUpdateData = {
       was_read: metrics.wasRead,
       read_at: metrics.wasRead ? new Date().toISOString() : null
     };
@@ -378,7 +384,7 @@ class CulturalHealthCoachService {
     tenantId: string,
     startDate: string,
     endDate: string
-  ): Promise<any> {
+  ): Promise<AnalyticsRow[]> {
     CulturalCoachValidator.validateUUID(tenantId, 'tenantId');
 
     const { data, error } = await this.supabase
@@ -391,7 +397,7 @@ class CulturalHealthCoachService {
 
     if (error) throw error;
 
-    return data;
+    return (data as AnalyticsRow[]) || [];
   }
 
   // ============================================================================
@@ -413,7 +419,7 @@ class CulturalHealthCoachService {
   private async checkCache(
     tenantId: string,
     cacheKey: string
-  ): Promise<any> {
+  ): Promise<CachedContentRow | null> {
     const { data } = await this.supabase
       .from('cultural_content_cache')
       .select('*')
@@ -422,10 +428,10 @@ class CulturalHealthCoachService {
       .gte('translation_quality_score', 0.85) // Only use high-quality cached content
       .single();
 
-    return data;
+    return (data as CachedContentRow) || null;
   }
 
-  private async recordCacheHit(cacheId: string, patientId?: string): Promise<void> {
+  private async recordCacheHit(cacheId: string, _patientId?: string): Promise<void> {
     await this.supabase.rpc('increment_cultural_cache_hit', {
       p_cache_id: cacheId
     });
@@ -474,7 +480,7 @@ class CulturalHealthCoachService {
         throw new Error('Unexpected response type from Claude');
       }
 
-      const result = JSON.parse(content.text);
+      const result = JSON.parse(content.text) as Record<string, unknown>;
 
       const tokensUsed = response.usage.input_tokens + response.usage.output_tokens;
       const cost = mcpOptimizer.calculateCost(
@@ -484,14 +490,15 @@ class CulturalHealthCoachService {
       );
 
       return {
-        translatedText: result.translated_text,
-        adaptations: result.cultural_adaptations || [],
-        confidence: result.confidence_score || 0.9,
+        translatedText: String(result.translated_text ?? ''),
+        adaptations: (result.cultural_adaptations as string[]) || [],
+        confidence: Number(result.confidence_score ?? 0.9),
         tokensUsed,
         cost
       };
     } catch (error: unknown) {
-      throw new Error(`Translation failed: ${error.message}`);
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Translation failed: ${message}`);
     }
   }
 

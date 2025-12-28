@@ -226,7 +226,7 @@ export const FHIRSemanticMapperService = {
       return failure(result.error?.code || 'UNKNOWN_ERROR', result.error?.message || 'Quick mapping failed');
     }
 
-    return success(result.data!.result);
+    return success(result.data ? result.data.result : ({} as MappingResult));
   },
 
   /**

@@ -7,6 +7,7 @@
  */
 
 import { supabase } from '../lib/supabaseClient';
+import { getErrorMessage } from '../lib/getErrorMessage';
 
 /**
  * Encrypts PHI data using server-side encryption
@@ -44,8 +45,8 @@ export async function encryptPHI(
     }
 
     return data.result;
-  } catch (error: any) {
-    throw new Error(`Failed to encrypt PHI data: ${error.message}`);
+  } catch (err: unknown) {
+    throw new Error(`Failed to encrypt PHI data: ${getErrorMessage(err)}`);
   }
 }
 
@@ -85,8 +86,8 @@ export async function decryptPHI(
     }
 
     return data.result;
-  } catch (error: any) {
-    throw new Error(`Failed to decrypt PHI data: ${error.message}`);
+  } catch (err: unknown) {
+    throw new Error(`Failed to decrypt PHI data: ${getErrorMessage(err)}`);
   }
 }
 
@@ -103,7 +104,7 @@ export async function validateEncryption(): Promise<boolean> {
     const decrypted = await decryptPHI(encrypted, testPatientId);
 
     return decrypted === testData;
-  } catch (error) {
+  } catch {
     return false;
   }
 }

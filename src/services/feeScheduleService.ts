@@ -35,6 +35,17 @@ export interface CodeRate {
   feeScheduleName?: string;
 }
 
+type FeeScheduleDbRow = {
+  id: string;
+  name: string;
+  payer_type: FeeSchedule['payerType'];
+  effective_date: string;
+  end_date?: string | null;
+  is_active: boolean;
+  locality?: string | null;
+  notes?: string | null;
+};
+
 /**
  * Service for managing and retrieving fee schedule data
  */
@@ -57,11 +68,10 @@ export class FeeScheduleService {
       .single();
 
     if (error) {
-
       return null;
     }
 
-    return data ? this.mapFeeScheduleFromDb(data) : null;
+    return data ? this.mapFeeScheduleFromDb(data as unknown as FeeScheduleDbRow) : null;
   }
 
   /**
@@ -75,7 +85,6 @@ export class FeeScheduleService {
     // Get active fee schedule
     const feeSchedule = await this.getActiveFeeSchedule(payerType);
     if (!feeSchedule) {
-
       return null;
     }
 
@@ -89,15 +98,21 @@ export class FeeScheduleService {
       .single();
 
     if (error) {
-
       return null;
     }
 
+    const row = data as unknown as Record<string, unknown>;
+
     return {
-      code: data.code,
-      rate: parseFloat(data.rate),
-      description: data.description,
-      timeRequired: data.time_required_minutes,
+      code: String(row.code ?? ''),
+      rate: parseFloat(String(row.rate ?? '0')),
+      description: typeof row.description === 'string' ? row.description : undefined,
+      timeRequired:
+        typeof row.time_required_minutes === 'number'
+          ? row.time_required_minutes
+          : typeof row.time_required_minutes === 'string'
+            ? parseFloat(row.time_required_minutes)
+            : undefined,
       feeScheduleName: feeSchedule.name
     };
   }
@@ -115,7 +130,6 @@ export class FeeScheduleService {
     // Get active fee schedule
     const feeSchedule = await this.getActiveFeeSchedule(payerType);
     if (!feeSchedule) {
-
       return ratesMap;
     }
 
@@ -128,16 +142,22 @@ export class FeeScheduleService {
       .in('code', codes);
 
     if (error) {
-
       return ratesMap;
     }
 
-    data?.forEach(rate => {
-      ratesMap.set(rate.code, {
-        code: rate.code,
-        rate: parseFloat(rate.rate),
-        description: rate.description,
-        timeRequired: rate.time_required_minutes,
+    data?.forEach((rateRow) => {
+      const rate = rateRow as unknown as Record<string, unknown>;
+      const codeValue = String(rate.code ?? '');
+      ratesMap.set(codeValue, {
+        code: codeValue,
+        rate: parseFloat(String(rate.rate ?? '0')),
+        description: typeof rate.description === 'string' ? rate.description : undefined,
+        timeRequired:
+          typeof rate.time_required_minutes === 'number'
+            ? rate.time_required_minutes
+            : typeof rate.time_required_minutes === 'string'
+              ? parseFloat(rate.time_required_minutes)
+              : undefined,
         feeScheduleName: feeSchedule.name
       });
     });
@@ -281,7 +301,7 @@ export class FeeScheduleService {
         return rate.rate;
       }
     } catch {
-
+      // Ignore and fallback
     }
 
     // Fallback to hardcoded rates
@@ -308,11 +328,10 @@ export class FeeScheduleService {
       .single();
 
     if (error) {
-
       return null;
     }
 
-    return this.mapFeeScheduleFromDb(data);
+    return this.mapFeeScheduleFromDb(data as unknown as FeeScheduleDbRow);
   }
 
   /**
@@ -339,7 +358,6 @@ export class FeeScheduleService {
       .upsert(ratesToInsert, { onConflict: 'fee_schedule_id,code_type,code' });
 
     if (error) {
-
       return false;
     }
 
@@ -349,16 +367,16 @@ export class FeeScheduleService {
   /**
    * Map database row to FeeSchedule type
    */
-  private static mapFeeScheduleFromDb(data: any): FeeSchedule {
+  private static mapFeeScheduleFromDb(data: FeeScheduleDbRow): FeeSchedule {
     return {
       id: data.id,
       name: data.name,
       payerType: data.payer_type,
       effectiveDate: data.effective_date,
-      endDate: data.end_date,
+      endDate: data.end_date ?? undefined,
       isActive: data.is_active,
-      locality: data.locality,
-      notes: data.notes
+      locality: data.locality ?? undefined,
+      notes: data.notes ?? undefined
     };
   }
 }

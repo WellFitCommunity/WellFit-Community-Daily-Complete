@@ -3,6 +3,7 @@
 // Handles ambulance → ER communication
 
 import { supabase } from '../lib/supabaseClient';
+import { getErrorMessage } from '../lib/getErrorMessage';
 
 export interface PrehospitalHandoff {
   id?: string;
@@ -50,6 +51,8 @@ export interface PrehospitalHandoff {
   status?: 'dispatched' | 'on_scene' | 'en_route' | 'arrived' | 'transferred' | 'cancelled';
 }
 
+type VitalsPayload = Record<string, unknown>;
+
 export interface IncomingPatient {
   id: string;
   patient_age?: number;
@@ -57,7 +60,7 @@ export interface IncomingPatient {
   chief_complaint: string;
   eta_hospital: string;
   minutes_until_arrival: number;
-  vitals: any;
+  vitals: VitalsPayload;
   stroke_alert: boolean;
   stemi_alert: boolean;
   trauma_alert: boolean;
@@ -71,12 +74,16 @@ export interface IncomingPatient {
   created_at: string;
 }
 
+type DbRow = Record<string, unknown>;
+
+type DbResult<T> = { data: T | null; error: Error | null };
+
 /**
  * Create a new prehospital handoff (paramedic submits from field)
  */
 export async function createPrehospitalHandoff(
   handoff: PrehospitalHandoff
-): Promise<{ data: any; error: Error | null }> {
+): Promise<DbResult<DbRow>> {
   try {
     const { data, error } = await supabase
       .from('prehospital_handoffs')
@@ -90,10 +97,9 @@ export async function createPrehospitalHandoff(
 
     if (error) throw error;
 
-    return { data, error: null };
-  } catch (err) {
-
-    return { data: null, error: err as Error };
+    return { data: data as DbRow, error: null };
+  } catch (err: unknown) {
+    return { data: null, error: new Error(getErrorMessage(err)) };
   }
 }
 
@@ -103,7 +109,7 @@ export async function createPrehospitalHandoff(
 export async function updatePrehospitalHandoff(
   id: string,
   updates: Partial<PrehospitalHandoff>
-): Promise<{ data: any; error: Error | null }> {
+): Promise<DbResult<DbRow>> {
   try {
     const { data, error } = await supabase
       .from('prehospital_handoffs')
@@ -114,10 +120,9 @@ export async function updatePrehospitalHandoff(
 
     if (error) throw error;
 
-    return { data, error: null };
-  } catch (err) {
-
-    return { data: null, error: err as Error };
+    return { data: data as DbRow, error: null };
+  } catch (err: unknown) {
+    return { data: null, error: new Error(getErrorMessage(err)) };
   }
 }
 
@@ -135,9 +140,8 @@ export async function getIncomingPatients(
     if (error) throw error;
 
     return { data: data as IncomingPatient[], error: null };
-  } catch (err) {
-
-    return { data: null, error: err as Error };
+  } catch (err: unknown) {
+    return { data: null, error: new Error(getErrorMessage(err)) };
   }
 }
 
@@ -147,7 +151,7 @@ export async function getIncomingPatients(
 export async function acknowledgeHandoff(
   handoffId: string,
   notes?: string
-): Promise<{ data: any; error: Error | null }> {
+): Promise<DbResult<DbRow>> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -164,10 +168,9 @@ export async function acknowledgeHandoff(
 
     if (error) throw error;
 
-    return { data, error: null };
-  } catch (err) {
-
-    return { data: null, error: err as Error };
+    return { data: data as DbRow, error: null };
+  } catch (err: unknown) {
+    return { data: null, error: new Error(getErrorMessage(err)) };
   }
 }
 
@@ -176,7 +179,7 @@ export async function acknowledgeHandoff(
  */
 export async function markPatientArrived(
   handoffId: string
-): Promise<{ data: any; error: Error | null }> {
+): Promise<DbResult<DbRow>> {
   try {
     const { data, error } = await supabase
       .from('prehospital_handoffs')
@@ -190,10 +193,9 @@ export async function markPatientArrived(
 
     if (error) throw error;
 
-    return { data, error: null };
-  } catch (err) {
-
-    return { data: null, error: err as Error };
+    return { data: data as DbRow, error: null };
+  } catch (err: unknown) {
+    return { data: null, error: new Error(getErrorMessage(err)) };
   }
 }
 
@@ -203,7 +205,7 @@ export async function markPatientArrived(
 export async function transferPatientToER(
   handoffId: string,
   receivingNurseId?: string
-): Promise<{ data: any; error: Error | null }> {
+): Promise<DbResult<DbRow>> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -221,19 +223,20 @@ export async function transferPatientToER(
 
     if (error) throw error;
 
-    return { data, error: null };
-  } catch (err) {
-
-    return { data: null, error: err as Error };
+    return { data: data as DbRow, error: null };
+  } catch (err: unknown) {
+    return { data: null, error: new Error(getErrorMessage(err)) };
   }
 }
+
+type RealtimePayload = Record<string, unknown>;
 
 /**
  * Subscribe to incoming patients (real-time updates)
  */
 export function subscribeToIncomingPatients(
   hospitalName: string,
-  callback: (payload: any) => void
+  callback: (payload: RealtimePayload) => void
 ) {
   const subscription = supabase
     .channel('prehospital_handoffs_channel')
@@ -255,7 +258,7 @@ export function subscribeToIncomingPatients(
 /**
  * Format vital signs for display
  */
-export function formatVitals(vitals: any): string {
+export function formatVitals(vitals: VitalsPayload): string {
   if (!vitals) {
     return 'No vitals recorded';
   }

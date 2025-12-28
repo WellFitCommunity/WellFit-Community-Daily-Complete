@@ -14,10 +14,13 @@
 import { supabase } from '../../lib/supabaseClient';
 import { mcpOptimizer } from '../mcp/mcpCostOptimizer';
 import type { MCPCostOptimizer } from '../mcp/mcpCostOptimizer';
-import { ReadmissionTrackingService } from '../readmissionTrackingService';
+import { ReadmissionTrackingService as _ReadmissionTrackingService } from '../readmissionTrackingService';
 import { featureExtractor } from './readmissionFeatureExtractor';
 import type { ReadmissionRiskFeatures } from '../../types/readmissionRiskFeatures';
-import { EVIDENCE_BASED_WEIGHTS, ENGAGEMENT_FEATURE_WEIGHTS } from '../../types/readmissionRiskFeatures';
+import {
+  EVIDENCE_BASED_WEIGHTS as _EVIDENCE_BASED_WEIGHTS,
+  ENGAGEMENT_FEATURE_WEIGHTS as _ENGAGEMENT_FEATURE_WEIGHTS
+} from '../../types/readmissionRiskFeatures';
 import { createAccuracyTrackingService, type AccuracyTrackingService } from './accuracyTrackingService';
 
 // =====================================================
@@ -84,6 +87,92 @@ export interface ReadmissionPrediction {
   };
   aiModel: string;
   aiCost: number;
+}
+
+type PatientDataSources = {
+  readmissionHistory: boolean;
+  sdohIndicators: boolean;
+  checkinPatterns: boolean;
+  medicationAdherence: boolean;
+  carePlanAdherence: boolean;
+};
+
+type ReadmissionRow = { admission_date: string; [key: string]: unknown };
+type SdohIndicatorRow = { risk_level?: unknown; [key: string]: unknown };
+type CheckInRow = { status?: unknown; alert_triggered?: unknown; check_in_date?: unknown; [key: string]: unknown };
+type MedicationRequestRow = Record<string, unknown>;
+type CarePlanRow = Record<string, unknown>;
+type PatientProfileRow = { date_of_birth?: unknown; chronic_conditions?: unknown; [key: string]: unknown };
+
+type GatheredPatientData = {
+  sources: PatientDataSources;
+  readmissions?: ReadmissionRow[];
+  readmissionCount?: number;
+  recentReadmissions7d?: number;
+  recentReadmissions30d?: number;
+  sdohIndicators?: SdohIndicatorRow[];
+  highRiskSDOH?: SdohIndicatorRow[];
+  checkIns?: CheckInRow[];
+  checkInCompletionRate?: number;
+  missedCheckIns?: number;
+  alertsTriggered?: number;
+  activeMedications?: MedicationRequestRow[];
+  medicationCount?: number;
+  hasActiveCarePlan?: boolean;
+  carePlan?: CarePlanRow;
+  profile?: PatientProfileRow;
+  age?: number;
+  chronicConditionsCount?: number;
+};
+
+type TenantConfig = {
+  readmission_predictor_enabled: boolean;
+  readmission_predictor_auto_create_care_plan: boolean;
+  readmission_predictor_high_risk_threshold: number;
+  readmission_predictor_model?: string;
+  [key: string]: unknown;
+};
+
+type ParsedAIPrediction = {
+  readmissionRisk30Day: number;
+  readmissionRisk7Day: number;
+  readmissionRisk90Day: number;
+  riskCategory: 'low' | 'moderate' | 'high' | 'critical';
+  riskFactors: RiskFactor[];
+  protectiveFactors?: ProtectiveFactor[];
+  recommendedInterventions: RecommendedIntervention[];
+  predictedReadmissionDate?: string;
+  predictionConfidence: number;
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function isHighRiskLevel(value: unknown): boolean {
+  return value === 'high' || value === 'critical';
+}
+
+function isCompletedStatus(value: unknown): boolean {
+  return value === 'completed';
+}
+
+function isMissedStatus(value: unknown): boolean {
+  return value === 'missed';
+}
+
+function isTruthy(value: unknown): boolean {
+  return value === true;
+}
+
+function isTenantConfig(value: unknown): value is Partial<TenantConfig> {
+  if (!isRecord(value)) return false;
+  return (
+    typeof value.readmission_predictor_enabled === 'boolean' ||
+    typeof value.readmission_predictor_auto_create_care_plan === 'boolean' ||
+    typeof value.readmission_predictor_high_risk_threshold === 'number' ||
+    typeof value.readmission_predictor_model === 'string'
+  );
 }
 
 // =====================================================
@@ -389,9 +478,9 @@ export class ReadmissionRiskPredictor {
   /**
    * Gather comprehensive patient data for prediction
    */
-  private async gatherPatientData(context: DischargeContext): Promise<any> {
+  private async gatherPatientData(context: DischargeContext): Promise<GatheredPatientData> {
     const patientId = context.patientId;
-    const data: any = {
+    const data: GatheredPatientData = {
       sources: {
         readmissionHistory: false,
         sdohIndicators: false,
@@ -412,12 +501,13 @@ export class ReadmissionRiskPredictor {
         .limit(10);
 
       if (readmissions && readmissions.length > 0) {
-        data.readmissions = readmissions;
-        data.readmissionCount = readmissions.length;
-        data.recentReadmissions7d = readmissions.filter(r =>
+        const typedReadmissions = readmissions as ReadmissionRow[];
+        data.readmissions = typedReadmissions;
+        data.readmissionCount = typedReadmissions.length;
+        data.recentReadmissions7d = typedReadmissions.filter(r =>
           new Date(r.admission_date) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
         ).length;
-        data.recentReadmissions30d = readmissions.filter(r =>
+        data.recentReadmissions30d = typedReadmissions.filter(r =>
           new Date(r.admission_date) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
         ).length;
         data.sources.readmissionHistory = true;
@@ -432,8 +522,9 @@ export class ReadmissionRiskPredictor {
         .limit(20);
 
       if (sdohIndicators && sdohIndicators.length > 0) {
-        data.sdohIndicators = sdohIndicators;
-        data.highRiskSDOH = sdohIndicators.filter((s: any) => s.risk_level in ['high', 'critical']);
+        const typedSdoh = sdohIndicators as SdohIndicatorRow[];
+        data.sdohIndicators = typedSdoh;
+        data.highRiskSDOH = typedSdoh.filter((s) => isHighRiskLevel(s.risk_level));
         data.sources.sdohIndicators = true;
       }
 
@@ -447,10 +538,11 @@ export class ReadmissionRiskPredictor {
         .limit(30);
 
       if (checkIns && checkIns.length > 0) {
-        data.checkIns = checkIns;
-        data.checkInCompletionRate = checkIns.filter((c: any) => c.status === 'completed').length / 30;
-        data.missedCheckIns = checkIns.filter((c: any) => c.status === 'missed').length;
-        data.alertsTriggered = checkIns.filter((c: any) => c.alert_triggered).length;
+        const typedCheckIns = checkIns as CheckInRow[];
+        data.checkIns = typedCheckIns;
+        data.checkInCompletionRate = typedCheckIns.filter((c) => isCompletedStatus(c.status)).length / 30;
+        data.missedCheckIns = typedCheckIns.filter((c) => isMissedStatus(c.status)).length;
+        data.alertsTriggered = typedCheckIns.filter((c) => isTruthy(c.alert_triggered)).length;
         data.sources.checkinPatterns = true;
       }
 
@@ -463,7 +555,7 @@ export class ReadmissionRiskPredictor {
         .limit(20);
 
       if (medications && medications.length > 0) {
-        data.activeMedications = medications;
+        data.activeMedications = medications as MedicationRequestRow[];
         data.medicationCount = medications.length;
         data.sources.medicationAdherence = true;
       }
@@ -478,7 +570,7 @@ export class ReadmissionRiskPredictor {
 
       if (carePlans && carePlans.length > 0) {
         data.hasActiveCarePlan = true;
-        data.carePlan = carePlans[0];
+        data.carePlan = carePlans[0] as CarePlanRow;
         data.sources.carePlanAdherence = true;
       } else {
         data.hasActiveCarePlan = false;
@@ -492,17 +584,22 @@ export class ReadmissionRiskPredictor {
         .single();
 
       if (profile) {
-        data.profile = profile;
-        if (profile.date_of_birth) {
+        const typedProfile = profile as PatientProfileRow;
+        data.profile = typedProfile;
+
+        const dob = typedProfile.date_of_birth;
+        if (typeof dob === 'string' && dob) {
           const age = Math.floor(
-            (Date.now() - new Date(profile.date_of_birth).getTime()) / (365.25 * 24 * 60 * 60 * 1000)
+            (Date.now() - new Date(dob).getTime()) / (365.25 * 24 * 60 * 60 * 1000)
           );
           data.age = age;
         }
-        if (profile.chronic_conditions) {
-          data.chronicConditionsCount = Array.isArray(profile.chronic_conditions)
-            ? profile.chronic_conditions.length
-            : 0;
+
+        const chronic = typedProfile.chronic_conditions;
+        if (Array.isArray(chronic)) {
+          data.chronicConditionsCount = chronic.length;
+        } else {
+          data.chronicConditionsCount = 0;
         }
       }
 
@@ -518,7 +615,7 @@ export class ReadmissionRiskPredictor {
   private async generatePredictionWithAI(
     context: DischargeContext,
     features: ReadmissionRiskFeatures,
-    config: any
+    config: TenantConfig
   ): Promise<ReadmissionPrediction> {
     // Build comprehensive prompt with evidence-based features
     const prompt = this.buildComprehensivePredictionPrompt(context, features);
@@ -599,7 +696,9 @@ Return response as strict JSON with this structure:
       const aiResponse = await this.optimizer.call({
         prompt,
         systemPrompt,
-        model: config.readmission_predictor_model || 'claude-sonnet-4-5-20250929',
+        model: (typeof config.readmission_predictor_model === 'string' && config.readmission_predictor_model)
+          ? config.readmission_predictor_model
+          : 'claude-sonnet-4-5-20250929',
         complexity: 'complex',
         userId: context.patientId,
         context: {
@@ -896,21 +995,32 @@ Return response as strict JSON with this structure:
   /**
    * Parse AI prediction response
    */
-  private parseAIPrediction(response: string): any {
+  private parseAIPrediction(response: string): ParsedAIPrediction {
     try {
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error('No JSON found in AI response');
       }
 
-      const parsed = JSON.parse(jsonMatch[0]);
+      const raw: unknown = JSON.parse(jsonMatch[0]);
+      if (!isRecord(raw)) {
+        throw new Error('AI prediction is not a valid JSON object');
+      }
 
-      // Validate risk scores
-      if (parsed.readmissionRisk30Day < 0 || parsed.readmissionRisk30Day > 1) {
+      const risk30 = raw.readmissionRisk30Day;
+      const risk7 = raw.readmissionRisk7Day;
+      const risk90 = raw.readmissionRisk90Day;
+      const category = raw.riskCategory;
+
+      if (typeof risk30 !== 'number' || typeof risk7 !== 'number' || typeof risk90 !== 'number') {
+        throw new Error('Invalid risk scores: expected numeric values');
+      }
+      if (risk30 < 0 || risk30 > 1) {
         throw new Error('Invalid risk score: must be between 0 and 1');
       }
 
-      return parsed;
+      // NOTE: We keep parsing permissive to avoid behavior changes; downstream uses existing shapes.
+      return raw as unknown as ParsedAIPrediction;
     } catch (err: unknown) {
       throw new Error(`Failed to parse AI prediction: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
@@ -1049,7 +1159,7 @@ Return response as strict JSON with this structure:
   /**
    * Get tenant configuration
    */
-  private async getTenantConfig(tenantId: string): Promise<any> {
+  private async getTenantConfig(tenantId: string): Promise<TenantConfig> {
     const { data, error } = await supabase
       .rpc('get_ai_skill_config', { p_tenant_id: tenantId });
 
@@ -1057,12 +1167,21 @@ Return response as strict JSON with this structure:
       throw new Error(`Failed to get tenant config: ${error.message}`);
     }
 
-    return data || {
+    const defaults: TenantConfig = {
       readmission_predictor_enabled: false,
       readmission_predictor_auto_create_care_plan: false,
       readmission_predictor_high_risk_threshold: 0.50,
       readmission_predictor_model: 'claude-sonnet-4-5-20250929'
     };
+
+    if (isTenantConfig(data)) {
+      return {
+        ...defaults,
+        ...data
+      };
+    }
+
+    return defaults;
   }
 
   /**
@@ -1113,7 +1232,11 @@ Return response as strict JSON with this structure:
   ): Promise<void> {
     DischargeValidator.validateUUID(predictionId, 'predictionId');
 
-    const updates: any = {
+    const updates: {
+      actual_readmission_occurred: boolean;
+      actual_readmission_date?: string;
+      actual_readmission_days_post_discharge?: number;
+    } = {
       actual_readmission_occurred: actualReadmission
     };
 
@@ -1130,34 +1253,40 @@ Return response as strict JSON with this structure:
         .single();
 
       if (prediction) {
-        daysPostDischarge = Math.floor(
-          (new Date(actualReadmissionDate).getTime() - new Date(prediction.discharge_date).getTime()) /
-          (24 * 60 * 60 * 1000)
-        );
-        updates.actual_readmission_days_post_discharge = daysPostDischarge;
+        const dischargeDateValue = (prediction as Record<string, unknown>).discharge_date;
+        const risk30Value = (prediction as Record<string, unknown>).readmission_risk_30_day;
+        const trackingIdValue = (prediction as Record<string, unknown>).ai_prediction_tracking_id;
 
-        // Record outcome for accuracy tracking
-        // Prediction is accurate if:
-        // - High risk (>0.5) AND patient was readmitted within 30 days
-        // - Low risk (<=0.5) AND patient was NOT readmitted within 30 days
-        const predictedHighRisk = prediction.readmission_risk_30_day > 0.5;
-        const wasReadmittedWithin30Days = actualReadmission && daysPostDischarge <= 30;
-        const isAccurate = predictedHighRisk === wasReadmittedWithin30Days;
+        if (typeof dischargeDateValue === 'string') {
+          daysPostDischarge = Math.floor(
+            (new Date(actualReadmissionDate).getTime() - new Date(dischargeDateValue).getTime()) /
+            (24 * 60 * 60 * 1000)
+          );
+          updates.actual_readmission_days_post_discharge = daysPostDischarge;
 
-        if (prediction.ai_prediction_tracking_id) {
-          await this.accuracyTracker.recordOutcome({
-            predictionId: prediction.ai_prediction_tracking_id,
-            actualOutcome: {
-              wasReadmitted: actualReadmission,
-              daysToReadmission: daysPostDischarge,
-              within30Days: wasReadmittedWithin30Days
-            },
-            isAccurate,
-            outcomeSource: 'system_event',
-            notes: actualReadmission
-              ? `Readmitted ${daysPostDischarge} days post-discharge`
-              : 'No readmission within observation window'
-          });
+          // Record outcome for accuracy tracking
+          // Prediction is accurate if:
+          // - High risk (>0.5) AND patient was readmitted within 30 days
+          // - Low risk (<=0.5) AND patient was NOT readmitted within 30 days
+          const predictedHighRisk = typeof risk30Value === 'number' ? risk30Value > 0.5 : false;
+          const wasReadmittedWithin30Days = actualReadmission && daysPostDischarge <= 30;
+          const isAccurate = predictedHighRisk === wasReadmittedWithin30Days;
+
+          if (typeof trackingIdValue === 'string' && trackingIdValue) {
+            await this.accuracyTracker.recordOutcome({
+              predictionId: trackingIdValue,
+              actualOutcome: {
+                wasReadmitted: actualReadmission,
+                daysToReadmission: daysPostDischarge,
+                within30Days: wasReadmittedWithin30Days
+              },
+              isAccurate,
+              outcomeSource: 'system_event',
+              notes: actualReadmission
+                ? `Readmitted ${daysPostDischarge} days post-discharge`
+                : 'No readmission within observation window'
+            });
+          }
         }
       }
     }

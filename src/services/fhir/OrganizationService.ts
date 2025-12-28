@@ -6,13 +6,16 @@
  */
 
 import { supabase } from '../../lib/supabaseClient';
+import { getErrorMessage } from '../../lib/getErrorMessage';
 import type { FHIRApiResponse } from '../../types/fhir';
+
+type OrganizationRecord = Record<string, unknown>;
 
 export const OrganizationService = {
   /**
    * Get all active organizations
    */
-  async getAll(): Promise<FHIRApiResponse<any[]>> {
+  async getAll(): Promise<FHIRApiResponse<OrganizationRecord[]>> {
     try {
       const { data, error } = await supabase
         .from('fhir_organizations')
@@ -25,7 +28,7 @@ export const OrganizationService = {
     } catch (err: unknown) {
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to fetch organizations',
+        error: getErrorMessage(err) || 'Failed to fetch organizations',
       };
     }
   },
@@ -33,7 +36,7 @@ export const OrganizationService = {
   /**
    * Get organization by ID
    */
-  async getById(id: string): Promise<FHIRApiResponse<any>> {
+  async getById(id: string): Promise<FHIRApiResponse<OrganizationRecord>> {
     try {
       const { data, error } = await supabase
         .from('fhir_organizations')
@@ -42,11 +45,11 @@ export const OrganizationService = {
         .single();
 
       if (error) throw error;
-      return { success: true, data };
+      return { success: true, data: (data || {}) as OrganizationRecord };
     } catch (err: unknown) {
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to fetch organization',
+        error: getErrorMessage(err) || 'Failed to fetch organization',
       };
     }
   },
@@ -54,7 +57,7 @@ export const OrganizationService = {
   /**
    * Get organization by NPI
    */
-  async getByNPI(npi: string): Promise<FHIRApiResponse<any>> {
+  async getByNPI(npi: string): Promise<FHIRApiResponse<OrganizationRecord>> {
     try {
       const { data, error } = await supabase
         .from('fhir_organizations')
@@ -63,11 +66,11 @@ export const OrganizationService = {
         .single();
 
       if (error) throw error;
-      return { success: true, data };
+      return { success: true, data: (data || {}) as OrganizationRecord };
     } catch (err: unknown) {
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to fetch organization by NPI',
+        error: getErrorMessage(err) || 'Failed to fetch organization by NPI',
       };
     }
   },
@@ -75,7 +78,7 @@ export const OrganizationService = {
   /**
    * Search organizations by name
    */
-  async search(searchTerm: string): Promise<FHIRApiResponse<any[]>> {
+  async search(searchTerm: string): Promise<FHIRApiResponse<OrganizationRecord[]>> {
     try {
       const { data, error } = await supabase
         .from('fhir_organizations')
@@ -89,7 +92,7 @@ export const OrganizationService = {
     } catch (err: unknown) {
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to search organizations',
+        error: getErrorMessage(err) || 'Failed to search organizations',
       };
     }
   },
@@ -97,7 +100,7 @@ export const OrganizationService = {
   /**
    * Create organization
    */
-  async create(organization: any): Promise<FHIRApiResponse<any>> {
+  async create(organization: OrganizationRecord): Promise<FHIRApiResponse<OrganizationRecord>> {
     try {
       const { data, error } = await supabase
         .from('fhir_organizations')
@@ -106,11 +109,11 @@ export const OrganizationService = {
         .single();
 
       if (error) throw error;
-      return { success: true, data };
+      return { success: true, data: (data || {}) as OrganizationRecord };
     } catch (err: unknown) {
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to create organization',
+        error: getErrorMessage(err) || 'Failed to create organization',
       };
     }
   },
@@ -118,7 +121,7 @@ export const OrganizationService = {
   /**
    * Update organization
    */
-  async update(id: string, updates: any): Promise<FHIRApiResponse<any>> {
+  async update(id: string, updates: OrganizationRecord): Promise<FHIRApiResponse<OrganizationRecord>> {
     try {
       const { data, error } = await supabase
         .from('fhir_organizations')
@@ -128,11 +131,11 @@ export const OrganizationService = {
         .single();
 
       if (error) throw error;
-      return { success: true, data };
+      return { success: true, data: (data || {}) as OrganizationRecord };
     } catch (err: unknown) {
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to update organization',
+        error: getErrorMessage(err) || 'Failed to update organization',
       };
     }
   },

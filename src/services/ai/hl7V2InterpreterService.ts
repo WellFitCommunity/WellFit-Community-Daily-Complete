@@ -209,7 +209,7 @@ export class HL7V2InterpreterService {
    */
   static async validateStructure(
     message: string,
-    version?: HL7Version
+    _version?: HL7Version
   ): Promise<ServiceResult<{ valid: boolean; issues: string[] }>> {
     try {
       const result = await this.interpretMessage({

@@ -36,13 +36,13 @@ export interface FHIRQuestionnaireRecord {
   natural_language_prompt?: string;
   has_scoring: boolean;
   scoring_algorithm?: string;
-  scoring_rules?: any;
+  scoring_rules?: Array<{ condition: string; score: number; interpretation: string }>;
   total_responses: number;
   is_template: boolean;
   tags: string[];
   deployed_to_wellfit: boolean;
   deployed_to_ehr: boolean;
-  deployment_config?: any;
+  deployment_config?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
   published_at?: string;
@@ -53,7 +53,15 @@ export interface QuestionnaireTemplate {
   id: number;
   name: string;
   description: string;
-  category: 'MENTAL_HEALTH' | 'PHYSICAL_HEALTH' | 'FUNCTIONAL_ASSESSMENT' | 'PAIN_ASSESSMENT' | 'MEDICATION_ADHERENCE' | 'QUALITY_OF_LIFE' | 'SCREENING' | 'CUSTOM';
+  category:
+    | 'MENTAL_HEALTH'
+    | 'PHYSICAL_HEALTH'
+    | 'FUNCTIONAL_ASSESSMENT'
+    | 'PAIN_ASSESSMENT'
+    | 'MEDICATION_ADHERENCE'
+    | 'QUALITY_OF_LIFE'
+    | 'SCREENING'
+    | 'CUSTOM';
   ai_prompt: string;
   estimated_questions: number;
   estimated_time_minutes: number;
@@ -68,10 +76,12 @@ export interface QuestionnaireTemplate {
   updated_at: string;
 }
 
+type UnknownRecord = Record<string, unknown>;
+
 export class FHIRQuestionnaireService {
   constructor(private supabase: SupabaseClient) {}
 
-  async generateQuestionnaire(prompt: string, templateName?: string): Promise<FHIRQuestionnaire> {
+  async generateQuestionnaire(prompt: string, _templateName?: string): Promise<FHIRQuestionnaire> {
     const response = await fetch('/api/anthropic-chats', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -122,25 +132,35 @@ RESPOND WITH ONLY JSON - NO OTHER TEXT:`
       throw new Error(`API request failed: ${response.status}`);
     }
 
-    const data = await response.json();
+    const data: UnknownRecord = (await response.json()) as UnknownRecord;
 
-    if (!data.content?.[0]) {
+    const content = Array.isArray(data.content) ? (data.content as unknown[]) : null;
+    const first = content && content.length > 0 && content[0] && typeof content[0] === 'object' ? (content[0] as UnknownRecord) : null;
+    const text = first && typeof first.text === 'string' ? first.text : null;
+
+    if (!text) {
       throw new Error('No response from AI service');
     }
 
-    const jsonText = data.content[0].text
+    const jsonText = text
       .replace(/```json\n?/g, '')
       .replace(/```\n?/g, '')
       .trim();
 
     try {
-      const questionnaire = JSON.parse(jsonText);
+      const questionnaire: unknown = JSON.parse(jsonText);
 
-      if (questionnaire.resourceType !== 'Questionnaire') {
+      if (!questionnaire || typeof questionnaire !== 'object') {
+        throw new Error('Generated resource is not a valid object');
+      }
+
+      const q = questionnaire as UnknownRecord;
+
+      if (q.resourceType !== 'Questionnaire') {
         throw new Error('Generated resource is not a FHIR Questionnaire');
       }
 
-      return questionnaire;
+      return q as unknown as FHIRQuestionnaire;
     } catch (parseError) {
       throw new Error('Failed to generate valid FHIR questionnaire. Please try rephrasing your request.');
     }
@@ -183,7 +203,7 @@ RESPOND WITH ONLY JSON - NO OTHER TEXT:`
       throw new Error(`Failed to save questionnaire: ${error.message}`);
     }
 
-    return data;
+    return data as FHIRQuestionnaireRecord;
   }
 
   async getQuestionnaires(): Promise<FHIRQuestionnaireRecord[]> {
@@ -196,7 +216,7 @@ RESPOND WITH ONLY JSON - NO OTHER TEXT:`
       throw new Error(`Failed to fetch questionnaires: ${error.message}`);
     }
 
-    return data || [];
+    return (data as FHIRQuestionnaireRecord[]) || [];
   }
 
   async getTemplates(): Promise<QuestionnaireTemplate[]> {
@@ -210,7 +230,7 @@ RESPOND WITH ONLY JSON - NO OTHER TEXT:`
       throw new Error(`Failed to fetch templates: ${error.message}`);
     }
 
-    return data || [];
+    return (data as QuestionnaireTemplate[]) || [];
   }
 
   async incrementTemplateUsage(templateId: number): Promise<void> {
@@ -231,14 +251,14 @@ RESPOND WITH ONLY JSON - NO OTHER TEXT:`
       throw new Error(`Failed to deploy questionnaire: ${error.message}`);
     }
 
-    return data;
+    return Boolean(data);
   }
 
   async updateQuestionnaireStatus(
     questionnaireId: number,
     status: 'draft' | 'active' | 'retired'
   ): Promise<void> {
-    const updates: any = { status };
+    const updates: Record<string, unknown> = { status };
 
     if (status === 'active') {
       updates.published_at = new Date().toISOString();
@@ -267,7 +287,7 @@ RESPOND WITH ONLY JSON - NO OTHER TEXT:`
     }
   }
 
-  async getQuestionnaireStats(questionnaireId: number): Promise<any> {
+  async getQuestionnaireStats(questionnaireId: number): Promise<UnknownRecord> {
     const { data, error } = await this.supabase
       .rpc('get_questionnaire_stats', { questionnaire_uuid: questionnaireId });
 
@@ -275,6 +295,10 @@ RESPOND WITH ONLY JSON - NO OTHER TEXT:`
       throw new Error(`Failed to get questionnaire stats: ${error.message}`);
     }
 
-    return data;
+    if (data && typeof data === 'object') {
+      return data as UnknownRecord;
+    }
+
+    return {};
   }
 }

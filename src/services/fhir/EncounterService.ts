@@ -7,9 +7,16 @@
 
 import { supabase } from '../../lib/supabaseClient';
 
+type EncounterRow = Record<string, unknown>;
+type EncounterCreateInput = Record<string, unknown>;
+type EncounterUpdateInput = Record<string, unknown>;
+
 export const EncounterService = {
   // Get encounters for a patient
-  async getAll(patientId: string, options: { status?: string; class_code?: string } = {}) {
+  async getAll(
+    patientId: string,
+    options: { status?: string; class_code?: string } = {}
+  ): Promise<EncounterRow[]> {
     let query = supabase
       .from('encounters')
       .select('*')
@@ -26,11 +33,11 @@ export const EncounterService = {
 
     const { data, error } = await query;
     if (error) throw error;
-    return data || [];
+    return (data as EncounterRow[]) || [];
   },
 
   // Get active encounters (status = 'in-progress')
-  async getActive(patientId: string) {
+  async getActive(patientId: string): Promise<EncounterRow[]> {
     const { data, error } = await supabase
       .from('encounters')
       .select('*')
@@ -39,11 +46,11 @@ export const EncounterService = {
       .order('period_start', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return (data as EncounterRow[]) || [];
   },
 
   // Get by encounter class (inpatient, outpatient, emergency)
-  async getByClass(patientId: string, classCode: string) {
+  async getByClass(patientId: string, classCode: string): Promise<EncounterRow[]> {
     const { data, error } = await supabase
       .from('encounters')
       .select('*')
@@ -52,11 +59,11 @@ export const EncounterService = {
       .order('period_start', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return (data as EncounterRow[]) || [];
   },
 
-  // Get recent encounters (last 30 days)
-  async getRecent(patientId: string, days: number = 30) {
+  // Get recent encounters (last N days)
+  async getRecent(patientId: string, days = 30): Promise<EncounterRow[]> {
     const since = new Date();
     since.setDate(since.getDate() - days);
 
@@ -68,11 +75,11 @@ export const EncounterService = {
       .order('period_start', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return (data as EncounterRow[]) || [];
   },
 
   // Create encounter
-  async create(encounter: any) {
+  async create(encounter: EncounterCreateInput): Promise<EncounterRow> {
     const { data, error } = await supabase
       .from('encounters')
       .insert([encounter])
@@ -80,11 +87,11 @@ export const EncounterService = {
       .single();
 
     if (error) throw error;
-    return data;
+    return data as EncounterRow;
   },
 
   // Update encounter
-  async update(id: string, updates: any) {
+  async update(id: string, updates: EncounterUpdateInput): Promise<EncounterRow> {
     const { data, error } = await supabase
       .from('encounters')
       .update(updates)
@@ -93,11 +100,11 @@ export const EncounterService = {
       .single();
 
     if (error) throw error;
-    return data;
+    return data as EncounterRow;
   },
 
   // Complete encounter (set status to 'finished' and period_end)
-  async complete(id: string) {
+  async complete(id: string): Promise<EncounterRow> {
     const { data, error } = await supabase
       .from('encounters')
       .update({
@@ -109,6 +116,6 @@ export const EncounterService = {
       .single();
 
     if (error) throw error;
-    return data;
+    return data as EncounterRow;
   },
 };

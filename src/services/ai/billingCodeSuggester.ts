@@ -62,6 +62,34 @@ export interface BillingSuggestionResult {
   aiModel: string;
 }
 
+interface TenantBillingConfig {
+  billing_suggester_enabled: boolean;
+  billing_suggester_confidence_threshold: number;
+  billing_suggester_model?: string;
+}
+
+interface SuggestedCodesPayload {
+  cpt?: Array<{ code: string }>;
+  hcpcs?: Array<{ code: string }>;
+  icd10?: Array<{ code: string }>;
+}
+
+type FinalCodeEntry = { code?: string } | string;
+
+interface ModifiedCodesPayload {
+  cpt?: FinalCodeEntry[];
+  hcpcs?: FinalCodeEntry[];
+  icd10?: FinalCodeEntry[];
+}
+
+interface BillingCodeCacheRow {
+  id: string;
+  model_used: string;
+  suggested_cpt_codes?: BillingCodeSuggestion[];
+  suggested_hcpcs_codes?: BillingCodeSuggestion[];
+  suggested_icd10_codes?: BillingCodeSuggestion[];
+}
+
 // =====================================================
 // INPUT VALIDATION (Security: Prevent injection attacks)
 // =====================================================
@@ -216,7 +244,7 @@ export class BillingCodeSuggester {
    */
   private async generateWithAI(
     context: EncounterContext,
-    config: any
+    config: TenantBillingConfig
   ): Promise<BillingSuggestionResult> {
     // Build prompt for AI
     const prompt = this.buildBillingPrompt(context);
@@ -370,7 +398,7 @@ Return response as strict JSON with this structure:
   /**
    * Get tenant configuration
    */
-  private async getTenantConfig(tenantId: string): Promise<any> {
+  private async getTenantConfig(tenantId: string): Promise<TenantBillingConfig> {
     const { data, error } = await supabase
       .rpc('get_ai_skill_config', { p_tenant_id: tenantId });
 
@@ -378,10 +406,12 @@ Return response as strict JSON with this structure:
       throw new Error(`Failed to get tenant config: ${error.message}`);
     }
 
-    return data || {
-      billing_suggester_enabled: false,
-      billing_suggester_confidence_threshold: 0.85,
-      billing_suggester_model: 'claude-haiku-4-5-20250929'
+    const cfg = (data as Partial<TenantBillingConfig> | null) || null;
+
+    return {
+      billing_suggester_enabled: cfg?.billing_suggester_enabled ?? false,
+      billing_suggester_confidence_threshold: cfg?.billing_suggester_confidence_threshold ?? 0.85,
+      billing_suggester_model: cfg?.billing_suggester_model ?? 'claude-haiku-4-5-20250929'
     };
   }
 
@@ -392,7 +422,7 @@ Return response as strict JSON with this structure:
     tenantId: string,
     diagnosisCodes: string[],
     encounterType: string
-  ): Promise<any | null> {
+  ): Promise<BillingCodeCacheRow | null> {
     // Sort diagnosis codes for consistent cache key
     const sortedCodes = [...diagnosisCodes].sort();
 
@@ -408,16 +438,18 @@ Return response as strict JSON with this structure:
       return null;
     }
 
-    // Increment cache hit count
-    await supabase.rpc('increment_billing_cache_hit', { p_cache_id: data.id });
+    const row = data as BillingCodeCacheRow;
 
-    return data;
+    // Increment cache hit count
+    await supabase.rpc('increment_billing_cache_hit', { p_cache_id: row.id });
+
+    return row;
   }
 
   /**
    * Format cached result
    */
-  private formatCachedResult(encounterId: string, cached: any): BillingSuggestionResult {
+  private formatCachedResult(encounterId: string, cached: BillingCodeCacheRow): BillingSuggestionResult {
     return {
       encounterId,
       suggestedCodes: {
@@ -567,21 +599,27 @@ Return response as strict JSON with this structure:
         status: 'accepted',
         provider_id: providerId,
         provider_accepted_at: new Date().toISOString(),
-        final_codes_used: suggestion.suggested_codes
+        final_codes_used: (suggestion as { suggested_codes: unknown }).suggested_codes
       })
       .eq('id', suggestionId);
 
     // Record accuracy outcome (100% acceptance = accurate)
-    if (suggestion.ai_prediction_tracking_id) {
+    const suggestionTyped = suggestion as {
+      suggested_codes: SuggestedCodesPayload;
+      ai_prediction_tracking_id?: string | null;
+      encounter_id: string;
+    };
+
+    if (suggestionTyped.ai_prediction_tracking_id) {
       const allCodes = [
-        ...(suggestion.suggested_codes.cpt || []).map((c: any) => ({ code: c.code, type: 'CPT' })),
-        ...(suggestion.suggested_codes.hcpcs || []).map((c: any) => ({ code: c.code, type: 'HCPCS' })),
-        ...(suggestion.suggested_codes.icd10 || []).map((c: any) => ({ code: c.code, type: 'ICD10' }))
+        ...(suggestionTyped.suggested_codes.cpt || []).map((c) => ({ code: c.code, type: 'CPT' })),
+        ...(suggestionTyped.suggested_codes.hcpcs || []).map((c) => ({ code: c.code, type: 'HCPCS' })),
+        ...(suggestionTyped.suggested_codes.icd10 || []).map((c) => ({ code: c.code, type: 'ICD10' }))
       ];
 
       await this.accuracyTracker.recordBillingCodeAccuracy(
-        suggestion.ai_prediction_tracking_id,
-        suggestion.encounter_id,
+        suggestionTyped.ai_prediction_tracking_id,
+        suggestionTyped.encounter_id,
         allCodes,
         allCodes, // Same codes = 100% acceptance
         providerId
@@ -595,11 +633,16 @@ Return response as strict JSON with this structure:
   async modifySuggestion(
     suggestionId: string,
     providerId: string,
-    modifiedCodes: any,
-    modifications: any
+    modifiedCodes: ModifiedCodesPayload,
+    modifications: Record<string, unknown>
   ): Promise<void> {
     InputValidator.validateUUID(suggestionId, 'suggestionId');
     InputValidator.validateUUID(providerId, 'providerId');
+
+    const getFinalCode = (entry: FinalCodeEntry): string => {
+      if (typeof entry === 'string') return entry;
+      return entry.code ?? '';
+    };
 
     // Get the original suggestion
     const { data: suggestion } = await supabase
@@ -620,22 +663,28 @@ Return response as strict JSON with this structure:
       .eq('id', suggestionId);
 
     // Record accuracy outcome with modifications
-    if (suggestion?.ai_prediction_tracking_id) {
+    const suggestionTyped = (suggestion as {
+      suggested_codes?: SuggestedCodesPayload;
+      ai_prediction_tracking_id?: string | null;
+      encounter_id?: string;
+    }) || {};
+
+    if (suggestionTyped.ai_prediction_tracking_id && suggestionTyped.encounter_id && suggestionTyped.suggested_codes) {
       const suggestedCodes = [
-        ...(suggestion.suggested_codes.cpt || []).map((c: any) => ({ code: c.code, type: 'CPT' })),
-        ...(suggestion.suggested_codes.hcpcs || []).map((c: any) => ({ code: c.code, type: 'HCPCS' })),
-        ...(suggestion.suggested_codes.icd10 || []).map((c: any) => ({ code: c.code, type: 'ICD10' }))
+        ...(suggestionTyped.suggested_codes.cpt || []).map((c) => ({ code: c.code, type: 'CPT' })),
+        ...(suggestionTyped.suggested_codes.hcpcs || []).map((c) => ({ code: c.code, type: 'HCPCS' })),
+        ...(suggestionTyped.suggested_codes.icd10 || []).map((c) => ({ code: c.code, type: 'ICD10' }))
       ];
 
       const finalCodes = [
-        ...(modifiedCodes.cpt || []).map((c: any) => ({ code: c.code || c, type: 'CPT' })),
-        ...(modifiedCodes.hcpcs || []).map((c: any) => ({ code: c.code || c, type: 'HCPCS' })),
-        ...(modifiedCodes.icd10 || []).map((c: any) => ({ code: c.code || c, type: 'ICD10' }))
+        ...(modifiedCodes.cpt || []).map((c) => ({ code: getFinalCode(c), type: 'CPT' })),
+        ...(modifiedCodes.hcpcs || []).map((c) => ({ code: getFinalCode(c), type: 'HCPCS' })),
+        ...(modifiedCodes.icd10 || []).map((c) => ({ code: getFinalCode(c), type: 'ICD10' }))
       ];
 
       await this.accuracyTracker.recordBillingCodeAccuracy(
-        suggestion.ai_prediction_tracking_id,
-        suggestion.encounter_id,
+        suggestionTyped.ai_prediction_tracking_id,
+        suggestionTyped.encounter_id,
         suggestedCodes,
         finalCodes,
         providerId
@@ -667,16 +716,22 @@ Return response as strict JSON with this structure:
       .eq('id', suggestionId);
 
     // Record rejection as inaccurate (0% of codes used)
-    if (suggestion?.ai_prediction_tracking_id) {
+    const suggestionTyped = (suggestion as {
+      suggested_codes?: SuggestedCodesPayload;
+      ai_prediction_tracking_id?: string | null;
+      encounter_id?: string;
+    }) || {};
+
+    if (suggestionTyped.ai_prediction_tracking_id && suggestionTyped.encounter_id && suggestionTyped.suggested_codes) {
       const suggestedCodes = [
-        ...(suggestion.suggested_codes.cpt || []).map((c: any) => ({ code: c.code, type: 'CPT' })),
-        ...(suggestion.suggested_codes.hcpcs || []).map((c: any) => ({ code: c.code, type: 'HCPCS' })),
-        ...(suggestion.suggested_codes.icd10 || []).map((c: any) => ({ code: c.code, type: 'ICD10' }))
+        ...(suggestionTyped.suggested_codes.cpt || []).map((c) => ({ code: c.code, type: 'CPT' })),
+        ...(suggestionTyped.suggested_codes.hcpcs || []).map((c) => ({ code: c.code, type: 'HCPCS' })),
+        ...(suggestionTyped.suggested_codes.icd10 || []).map((c) => ({ code: c.code, type: 'ICD10' }))
       ];
 
       await this.accuracyTracker.recordBillingCodeAccuracy(
-        suggestion.ai_prediction_tracking_id,
-        suggestion.encounter_id,
+        suggestionTyped.ai_prediction_tracking_id,
+        suggestionTyped.encounter_id,
         suggestedCodes,
         [], // No codes used = 0% acceptance
         providerId
