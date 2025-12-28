@@ -16,7 +16,7 @@ interface WearableConnectCardProps {
 }
 
 export const WearableConnectCard: React.FC<WearableConnectCardProps> = ({
-  userId,
+  userId: _userId,
   onConnect,
   onDisconnect,
 }) => {

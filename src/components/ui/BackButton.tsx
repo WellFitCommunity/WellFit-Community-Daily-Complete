@@ -19,8 +19,9 @@ const BackButton: React.FC<BackButtonProps> = ({
 
   const handleBack = () => {
     // Check if we have explicit "from" state passed during navigation
-    if (location.state && (location.state as any).from) {
-      navigate((location.state as any).from);
+    const state = location.state as { from?: string } | null;
+    if (state?.from) {
+      navigate(state.from);
       return;
     }
 

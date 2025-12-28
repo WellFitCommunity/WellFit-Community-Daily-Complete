@@ -14,23 +14,24 @@ interface SmartBackButtonProps {
  * Helper to check if user has admin privileges
  * Checks both app_metadata.role (string) and app_metadata.roles (array) for compatibility
  */
-const checkIsAdmin = (user: any): boolean => {
+const checkIsAdmin = (user: { app_metadata?: Record<string, unknown> } | null): boolean => {
   if (!user) return false;
 
+  const metadata = user?.app_metadata;
   // Check single role (app_metadata.role)
-  const role = user?.app_metadata?.role;
+  const role = metadata?.role as string | undefined;
   if (role === 'admin' || role === 'super_admin' || role === 'it_admin') {
     return true;
   }
 
   // Check roles array for backwards compatibility
-  const roles = user?.app_metadata?.roles || [];
+  const roles = metadata?.roles as string[] | undefined;
   if (Array.isArray(roles) && (roles.includes('admin') || roles.includes('super_admin'))) {
     return true;
   }
 
   // Check is_admin flag
-  if (user?.app_metadata?.is_admin === true) {
+  if (metadata?.is_admin === true) {
     return true;
   }
 
@@ -52,7 +53,7 @@ const SmartBackButton: React.FC<SmartBackButtonProps> = ({
 }) => {
   const location = useLocation();
   const { user } = useAuth();
-  const { goBack, canGoBack, getPreviousRoute } = useNavigationHistory();
+  const { goBack, getPreviousRoute } = useNavigationHistory();
 
   const getDefaultLabel = (): string => {
     if (label) return label;

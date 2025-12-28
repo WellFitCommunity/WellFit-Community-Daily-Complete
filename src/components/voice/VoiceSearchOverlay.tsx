@@ -26,7 +26,7 @@ import {
   LogIn,
   LogOut,
 } from 'lucide-react';
-import { useVoiceActionSafe, SearchResult, EntityType } from '../../contexts/VoiceActionContext';
+import { useVoiceActionSafe, EntityType } from '../../contexts/VoiceActionContext';
 
 const ENTITY_ICONS: Record<EntityType, React.ReactNode> = {
   patient: <User className="w-5 h-5" />,

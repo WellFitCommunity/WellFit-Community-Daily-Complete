@@ -29,7 +29,6 @@ import {
   Bluetooth,
   AlertTriangle,
   Check,
-  X,
   Edit2,
   Loader2,
   Info,

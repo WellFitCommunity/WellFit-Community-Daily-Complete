@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { History, CheckCircle, Clock, Calendar, Download } from 'lucide-react';
+import { History, CheckCircle, Calendar, Download } from 'lucide-react';
 import { EACard, EACardHeader, EACardContent } from '../envision-atlus';
 import { TimeClockService } from '../../services/timeClockService';
 import type { TimeClockEntry } from '../../types/timeClock';

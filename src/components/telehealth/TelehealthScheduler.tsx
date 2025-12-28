@@ -134,18 +134,36 @@ const TelehealthScheduler: React.FC = () => {
 
         if (error) throw error;
 
-        const formattedAppointments = (data || []).map((apt: any) => ({
-          id: apt.id,
-          patient_name:
-            `${apt.patient?.first_name || ''} ${apt.patient?.last_name || ''}`.trim() ||
-            'Unknown Patient',
-          patient_phone: apt.patient?.phone || '',
-          appointment_time: apt.appointment_time,
-          duration_minutes: apt.duration_minutes,
-          encounter_type: apt.encounter_type,
-          status: apt.status,
-          reason_for_visit: apt.reason_for_visit || '',
-        }));
+        interface PatientInfo {
+          first_name?: string;
+          last_name?: string;
+          phone?: string;
+        }
+        interface AppointmentRow {
+          id: string;
+          appointment_time: string;
+          duration_minutes: number;
+          encounter_type: string;
+          status: string;
+          reason_for_visit?: string;
+          patient?: PatientInfo | PatientInfo[];
+        }
+        const formattedAppointments = ((data || []) as AppointmentRow[]).map((apt) => {
+          // Supabase returns related data as array or object depending on relationship
+          const patient = Array.isArray(apt.patient) ? apt.patient[0] : apt.patient;
+          return {
+            id: apt.id,
+            patient_name:
+              `${patient?.first_name || ''} ${patient?.last_name || ''}`.trim() ||
+              'Unknown Patient',
+            patient_phone: patient?.phone || '',
+            appointment_time: apt.appointment_time,
+            duration_minutes: apt.duration_minutes,
+            encounter_type: apt.encounter_type,
+            status: apt.status,
+            reason_for_visit: apt.reason_for_visit || '',
+          };
+        });
 
         setAppointments(formattedAppointments);
       } catch (error) {
@@ -252,11 +270,11 @@ const TelehealthScheduler: React.FC = () => {
       setDuration(30);
       setEncounterType('outpatient');
       setReasonForVisit('');
-    } catch (error: any) {
-
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       setMessage({
         type: 'error',
-        text: `Failed to schedule appointment: ${error.message}`,
+        text: `Failed to schedule appointment: ${errorMessage}`,
       });
     } finally {
       setLoading(false);
@@ -279,8 +297,9 @@ const TelehealthScheduler: React.FC = () => {
       if (error) throw error;
 
       setMessage({ type: 'success', text: 'Appointment cancelled successfully' });
-    } catch (error: any) {
-      setMessage({ type: 'error', text: `Failed to cancel: ${error.message}` });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setMessage({ type: 'error', text: `Failed to cancel: ${errorMessage}` });
     }
   };
 

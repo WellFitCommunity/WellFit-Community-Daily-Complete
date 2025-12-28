@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { render, screen, act, waitFor } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import { CelebrationOverlay } from '../CelebrationOverlay';
 
 // Mock react-confetti - must return object with default for default export

@@ -7,7 +7,7 @@
 
 import React from 'react';
 import { Clock, LogOut, X } from 'lucide-react';
-import { EACard, EACardContent, EAButton } from '../envision-atlus';
+import { EACard, EACardContent } from '../envision-atlus';
 
 interface ClockOutConfirmDialogProps {
   isOpen: boolean;
