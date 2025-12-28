@@ -13,6 +13,7 @@ We do NOT accept:
 - Ignoring CLAUDE.md rules to save time
 - Sub-agent work that isn't verified before completion
 - ANY pattern that prioritizes speed over correctness
+- **The `any` type - it is a LAST RESORT (see TypeScript Standards below)**
 
 We REQUIRE:
 - **Seasoned, stable, careful coding** that Anthropic is known for
@@ -73,6 +74,63 @@ These are not suggestions. They are requirements.
 - Refactor when necessary to maintain code quality
 - "We can fix it later" is not acceptable
 - Every shortcut creates future problems during enterprise deployments
+
+---
+
+### TypeScript Standards - `any` IS A LAST RESORT
+
+**The `any` type should only be used as a last resort when no other option exists.**
+
+Using `any` is:
+- Technical debt that costs time and money to fix later
+- A runtime bug waiting to happen that TypeScript can't catch
+- A violation of the "do it right the first time" principle
+
+**Instead of `any`, use:**
+
+| Situation | Wrong | Right |
+|-----------|-------|-------|
+| Unknown object shape | `any` | `unknown` then narrow with type guards |
+| Database query results | `data: any[]` | Define interface, cast: `data as MyInterface[]` |
+| JSON parsing | `JSON.parse(str) as any` | Generic: `parseJSON<T>(str): T` |
+| Function parameters | `(data: any)` | `(data: unknown)` or proper interface |
+| Third-party data | `response: any` | Define expected interface |
+
+**Proper patterns:**
+
+```typescript
+// Database results - define interfaces FIRST
+interface PatientRecord {
+  id: string;
+  name: string;
+  admission_date: string;
+}
+const { data } = await supabase.from('patients').select('*');
+const patients = (data || []) as PatientRecord[];
+
+// JSON parsing - use generics
+function parseJSON<T>(str: string): T | null {
+  try {
+    return JSON.parse(str) as T;
+  } catch {
+    return null;
+  }
+}
+
+// Unknown data - narrow with type guards
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+```
+
+**Before using `any`:**
+1. STOP - try to define proper types first
+2. Create an interface for the data structure
+3. Use `unknown` with type guards if truly dynamic
+4. If `any` is genuinely the only option, add a comment explaining why
+5. Ask Maria if unsure
+
+**Current lint warning count: 1,261** (down from 1,605) - mostly `any` types that must be eliminated.
 
 ---
 
