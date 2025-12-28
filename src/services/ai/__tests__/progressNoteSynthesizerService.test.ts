@@ -380,7 +380,7 @@ describe('ProgressNoteSynthesizerService', () => {
   });
 
   describe('saveNote', () => {
-    const mockSavedNote: SavedProgressNote = {
+    const _mockSavedNote: SavedProgressNote = {
       ...mockProgressNote,
       id: 'db-id-123',
       status: 'pending_review',

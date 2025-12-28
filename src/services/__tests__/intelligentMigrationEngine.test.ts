@@ -7,9 +7,9 @@
 import {
   PatternDetector,
   DataDNAGenerator,
-  DataPattern,
+  DataPattern as _DataPattern,
   SourceDNA,
-  ColumnDNA
+  ColumnDNA as _ColumnDNA
 } from '../intelligentMigrationEngine';
 
 describe('PatternDetector', () => {

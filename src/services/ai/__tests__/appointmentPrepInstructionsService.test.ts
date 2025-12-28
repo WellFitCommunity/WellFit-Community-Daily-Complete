@@ -11,7 +11,7 @@ import type {
   AppointmentPrepResult,
   AppointmentDetails,
   PatientPrepContext,
-  SavedAppointmentPrep,
+  SavedAppointmentPrep as _SavedAppointmentPrep,
   AppointmentType,
 } from '../appointmentPrepInstructionsService';
 

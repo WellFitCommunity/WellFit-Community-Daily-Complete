@@ -14,6 +14,29 @@ import * as LazyComponents from './lazyComponents';
 import { useSupabaseClient } from '../contexts/AuthContext';
 import type { StaffRole } from '../types/roles';
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function getStringProperty(obj: unknown, key: string): string | undefined {
+  if (!isRecord(obj)) return undefined;
+  const value = obj[key];
+  return typeof value === 'string' ? value : undefined;
+}
+
+function getUserIdFromAuthContext(ctx: unknown): string | null {
+  if (!isRecord(ctx)) return null;
+  const user = ctx.user;
+  if (!isRecord(user)) return null;
+  const id = user.id;
+  return typeof id === 'string' ? id : null;
+}
+
+function getProfileFromAuthContext(ctx: unknown): unknown {
+  if (!isRecord(ctx)) return null;
+  return ctx.profile ?? null;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // WRAPPER COMPONENTS (for routes that need special handling)
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -23,9 +46,10 @@ import type { StaffRole } from '../types/roles';
  */
 export const SpecialistDashboardWrapper: React.FC = () => {
   const { specialistType } = useParams<{ specialistType: string }>();
-  const { user } = useSupabaseClient() as any;
+  const authContext = useSupabaseClient() as unknown;
+  const userId = getUserIdFromAuthContext(authContext);
 
-  if (!specialistType || !user?.id) {
+  if (!specialistType || !userId) {
     return (
       <div className="flex items-center justify-center h-screen">
         <p className="text-gray-500">Invalid specialist configuration</p>
@@ -35,7 +59,7 @@ export const SpecialistDashboardWrapper: React.FC = () => {
 
   return (
     <LazyComponents.SpecialistDashboard
-      specialistId={user.id}
+      specialistId={userId}
       specialistType={specialistType}
     />
   );
@@ -115,10 +139,14 @@ export const CoordinatedResponseDashboardWrapper: React.FC = () => {
  * Wrapper for ReceivingDashboard to provide facility name from user's tenant
  */
 export const ReceivingDashboardWrapper: React.FC = () => {
-  const { user, profile } = useSupabaseClient() as any;
+  const authContext = useSupabaseClient() as unknown;
+  const profile = getProfileFromAuthContext(authContext);
 
   // Use tenant name or facility name from profile
-  const facilityName = profile?.tenant_name || profile?.facility_name || 'Default Facility';
+  const facilityName =
+    getStringProperty(profile, 'tenant_name') ||
+    getStringProperty(profile, 'facility_name') ||
+    'Default Facility';
 
   return (
     <Suspense fallback={<div className="flex justify-center items-center h-screen">Loading Receiving Dashboard...</div>}>
@@ -194,18 +222,24 @@ const wrapperComponentMap: Record<string, React.FC> = {
   ReceivingDashboardWrapper,
 };
 
+type NoPropsComponent = React.ComponentType<Record<string, never>>;
+
 /**
  * Get the component for a route
  */
-const getRouteComponent = (componentName: string): React.ComponentType<any> | null => {
+const getRouteComponent = (componentName: string): NoPropsComponent | null => {
   // Check wrapper components first
-  if (wrapperComponentMap[componentName]) {
-    return wrapperComponentMap[componentName];
-  }
+  const wrapper = wrapperComponentMap[componentName];
+  if (wrapper) return wrapper;
 
   // Then check lazy components
-  const Component = (LazyComponents as any)[componentName];
-  return Component || null;
+  const lazyRegistry = LazyComponents as unknown as Record<string, unknown>;
+  const maybeComponent = lazyRegistry[componentName];
+
+  if (!maybeComponent) return null;
+
+  // We intentionally accept any valid React component type here (function, memo, forwardRef, etc.)
+  return maybeComponent as NoPropsComponent;
 };
 
 /**
@@ -213,7 +247,9 @@ const getRouteComponent = (componentName: string): React.ComponentType<any> | nu
  */
 const shouldRenderRoute = (route: RouteConfig): boolean => {
   if (!route.featureFlag) return true;
-  return (featureFlags as any)[route.featureFlag] === true;
+
+  const flags = featureFlags as unknown as Record<string, boolean>;
+  return flags[route.featureFlag] === true;
 };
 
 /**

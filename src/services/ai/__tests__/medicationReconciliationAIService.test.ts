@@ -10,7 +10,7 @@ import type {
   MedicationReconciliationResponse,
   MedicationReconciliationAIResult,
   MedicationSource,
-  SavedReconciliation,
+  SavedReconciliation as _SavedReconciliation,
 } from '../medicationReconciliationAIService';
 
 // Mock supabase client

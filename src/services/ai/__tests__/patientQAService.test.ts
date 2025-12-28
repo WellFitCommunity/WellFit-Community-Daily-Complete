@@ -214,7 +214,7 @@ describe('PatientQAService', () => {
 
       expect(result.success).toBe(true);
       expect(Array.isArray(result.data)).toBe(true);
-      expect(result.data!.length).toBeGreaterThan(0);
+      expect((result.data ?? []).length).toBeGreaterThan(0);
     });
   });
 

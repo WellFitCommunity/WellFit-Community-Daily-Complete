@@ -3,7 +3,7 @@
  * Tests for Medicare/payer modifier adjustments in billing calculations
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach as _beforeEach } from 'vitest';
 
 // Create chainable mock
 const createChainableMock = () => {

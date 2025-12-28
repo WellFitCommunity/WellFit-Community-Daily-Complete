@@ -225,7 +225,7 @@ describe('offlineStorage', () => {
       };
 
       let success = 0;
-      let failed = 0;
+      const failed = 0;
       let skipped = 0;
       let permanentlyFailed = 0;
 

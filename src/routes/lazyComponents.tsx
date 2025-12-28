@@ -220,7 +220,8 @@ export const SmartBackButton = React.lazy(() => import('../components/ui/SmartBa
 // ═══════════════════════════════════════════════════════════════════════════════
 // COMPONENT MAP (for dynamic route rendering)
 // ═══════════════════════════════════════════════════════════════════════════════
-export const componentMap: Record<string, React.LazyExoticComponent<any>> = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Component registry accepts varied prop types
+export const componentMap: Record<string, React.LazyExoticComponent<React.ComponentType<any>>> = {
   // Public
   WelcomePage,
   RegisterPage,

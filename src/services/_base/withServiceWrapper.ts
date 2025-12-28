@@ -143,7 +143,7 @@ export function withRetry<TArgs extends unknown[], TResult>(
   const { maxRetries, delayMs, retryOn = ['NETWORK_ERROR', 'TIMEOUT'] } = options;
 
   return async (...args: TArgs): Promise<ServiceResult<TResult>> => {
-    let lastResult: ServiceResult<TResult>;
+    let lastResult: ServiceResult<TResult> | undefined;
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       lastResult = await operation(...args);
@@ -163,6 +163,7 @@ export function withRetry<TArgs extends unknown[], TResult>(
       }
     }
 
-    return lastResult!;
+    // lastResult is guaranteed to be assigned since maxRetries >= 0
+    return lastResult as ServiceResult<TResult>;
   };
 }

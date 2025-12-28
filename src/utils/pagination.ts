@@ -129,7 +129,7 @@ export interface CursorPaginationOptions {
  * We use `unknown` return types to avoid version-specific type conflicts
  * with the Supabase client library.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 type RangeQueryable = {
   select: (columns: string, options?: { count?: 'exact' | 'planned' | 'estimated'; head?: boolean }) => unknown;
   range: (from: number, to: number) => unknown;

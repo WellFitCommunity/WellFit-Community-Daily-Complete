@@ -393,7 +393,7 @@ describe('Optimized Prompts', () => {
   });
 
   it('should include structured output format in all prompts', () => {
-    for (const [skillName, prompt] of Object.entries(PROMPT_REGISTRY)) {
+    for (const [_skillName, prompt] of Object.entries(PROMPT_REGISTRY)) {
       const p = prompt as { systemPrompt: string; expectedOutputFormat: string };
       expect(p.systemPrompt).toContain('JSON');
       expect(p.expectedOutputFormat).toBe('json');

@@ -17,14 +17,14 @@ import { ReadmissionRiskPredictor } from '../readmissionRiskPredictor';
 import { ReadmissionFeatureExtractor } from '../readmissionFeatureExtractor';
 import type { DischargeContext } from '../readmissionRiskPredictor';
 import type {
-  ReadmissionRiskFeatures,
-  ClinicalFactors,
-  MedicationFactors,
-  PostDischargeFactors,
-  SocialDeterminants,
-  FunctionalStatus,
-  EngagementFactors,
-  SelfReportedHealth
+  ReadmissionRiskFeatures as _ReadmissionRiskFeatures,
+  ClinicalFactors as _ClinicalFactors,
+  MedicationFactors as _MedicationFactors,
+  PostDischargeFactors as _PostDischargeFactors,
+  SocialDeterminants as _SocialDeterminants,
+  FunctionalStatus as _FunctionalStatus,
+  EngagementFactors as _EngagementFactors,
+  SelfReportedHealth as _SelfReportedHealth
 } from '../../../types/readmissionRiskFeatures';
 
 // =====================================================
@@ -95,7 +95,7 @@ const GOLDEN_READMISSIONS_DATA = [
 ];
 
 // ED visits data
-const GOLDEN_ED_VISITS_DATA = [
+const _GOLDEN_ED_VISITS_DATA = [
   { admission_date: '2025-01-05T00:00:00.000Z', facility_type: 'er' },
   { admission_date: '2024-12-01T00:00:00.000Z', facility_type: 'er' }
 ];
@@ -241,7 +241,7 @@ const GOLDEN_RISK_ASSESSMENT_DATA = {
 };
 
 // Falls data
-const GOLDEN_FALLS_DATA = [
+const _GOLDEN_FALLS_DATA = [
   { check_in_date: '2025-01-10T00:00:00.000Z', concern_flags: ['fall'] },
   { check_in_date: '2024-12-15T00:00:00.000Z', concern_flags: ['fall'] }
 ];

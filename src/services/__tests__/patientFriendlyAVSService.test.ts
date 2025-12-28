@@ -5,7 +5,7 @@
  */
 
 import type {
-  AVSInput,
+  AVSInput as _AVSInput,
   AVSGenerationRequest,
   PatientFriendlyAVS,
 } from '../../types/patientFriendlyAVS';
@@ -66,7 +66,7 @@ vi.mock('../auditLogger', () => ({
 import { PatientFriendlyAVSService } from '../patientFriendlyAVSService';
 import { supabase } from '../../lib/supabaseClient';
 
-const mockSupabaseClient = supabase as typeof supabase;
+const _mockSupabaseClient = supabase as typeof supabase;
 
 describe('PatientFriendlyAVSService', () => {
   beforeEach(() => {
