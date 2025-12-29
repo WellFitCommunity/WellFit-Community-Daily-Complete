@@ -530,6 +530,63 @@ async function getData(id: string): Promise<ServiceResult<Data>> {
 - Use the audit logger service for all application logging
 - **NEVER use console.log, console.error, etc. in production code**
 
+### Canonical Patient Context Spine - ATLUS Unity + Accountability
+
+**DO NOT QUERY PATIENT TABLES DIRECTLY FROM SERVICES.**
+
+Use `patientContextService.getPatientContext()` as the single canonical entry point for patient data.
+
+#### Files
+| File | Purpose |
+|------|---------|
+| `src/types/patientContext.ts` | Canonical type definitions |
+| `src/services/patientContextService.ts` | Canonical fetch function |
+| `src/contexts/PatientContext.tsx` | UI state (selected patient) |
+
+#### Identity Standard (patient_id vs user_id)
+The codebase has two naming conventions for the SAME UUID:
+- `user_id` in `profiles` table (legacy)
+- `patient_id` in clinical tables (newer)
+
+**CANONICAL STANDARD: Use `patient_id` in all new code.**
+Both refer to `auth.users.id` - they are identical values.
+
+#### Usage Pattern
+```typescript
+import { patientContextService } from '@/services/patientContextService';
+import type { PatientContext } from '@/types/patientContext';
+
+// Full context (default options)
+const result = await patientContextService.getPatientContext(patientId);
+if (result.success) {
+  const { demographics, contacts, timeline, context_meta } = result.data;
+  // context_meta provides traceability (ATLUS Accountability)
+}
+
+// Minimal context (demographics only)
+const minResult = await patientContextService.getMinimalContext(patientId);
+
+// Selective fetch
+const customResult = await patientContextService.getPatientContext(patientId, {
+  includeContacts: true,
+  includeTimeline: false,
+  includeRisk: true,
+});
+```
+
+#### ATLUS Requirements
+- **Unity**: Single source of truth - all modules use the same context
+- **Accountability**: Every context includes `context_meta` with data sources, timestamps, and freshness
+
+#### Forbidden Patterns
+```typescript
+// ❌ BAD - Direct table query in service
+const { data } = await supabase.from('profiles').select('*').eq('user_id', id);
+
+// ✅ GOOD - Use canonical service
+const result = await patientContextService.getPatientContext(id);
+```
+
 ---
 
 ## Security Requirements
@@ -605,6 +662,7 @@ Detailed documentation for specific features is in the `docs/` folder:
 | [docs/FEATURE_DASHBOARDS.md](docs/FEATURE_DASHBOARDS.md) | Feature dashboard routes & config |
 | [docs/VOICE_COMMANDS.md](docs/VOICE_COMMANDS.md) | Voice command infrastructure |
 | [docs/PATIENT_AVATAR.md](docs/PATIENT_AVATAR.md) | Patient avatar visualization system |
+| [docs/PATIENT_CONTEXT_SPINE.md](docs/PATIENT_CONTEXT_SPINE.md) | Canonical patient data access |
 | [DEVELOPMENT_STATUS.md](DEVELOPMENT_STATUS.md) | Current dev status & ATLUS alignment |
 
 ---

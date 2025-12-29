@@ -27,3 +27,6 @@ export * from './employee';
 
 // Hospital Workforce Migration types
 export * from './hospitalWorkforce';
+
+// Patient Context types (Canonical Patient Data Spine - ATLUS Unity + Accountability)
+export * from './patientContext';
