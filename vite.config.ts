@@ -53,10 +53,19 @@ export default defineConfig({
     rollupOptions: {
       output: {
         // Vendor splitting for optimal caching and reduced initial bundle
+        // IMPORTANT: Order matters! More specific checks must come BEFORE general ones.
         manualChunks(id: string) {
           if (id.includes('node_modules')) {
+            // Daily.co - telehealth video (large, only needed for video calls)
+            // MUST check @daily-co BEFORE /react/ because @daily-co packages may contain 'react' in paths
+            if (id.includes('@daily-co')) {
+              return 'vendor-daily';
+            }
             // Core React - changes rarely, cache long-term
-            if (id.includes('react-dom') || id.includes('/react/')) {
+            // Use more specific patterns to avoid matching 'react' substring in other packages
+            if (id.includes('/node_modules/react-dom/') ||
+                id.includes('/node_modules/react/') ||
+                id.includes('/node_modules/scheduler/')) {
               return 'vendor-react';
             }
             // Router - separate from React core
@@ -70,10 +79,6 @@ export default defineConfig({
             // TanStack Query - data fetching layer
             if (id.includes('@tanstack')) {
               return 'vendor-tanstack';
-            }
-            // Daily.co - telehealth video (large, only needed for video calls)
-            if (id.includes('@daily-co')) {
-              return 'vendor-daily';
             }
             // Form libraries - validation and form handling
             if (id.includes('react-hook-form') || id.includes('@hookform') ||
