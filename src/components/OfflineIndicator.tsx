@@ -42,6 +42,36 @@ const OfflineIndicator: React.FC = () => {
     };
   }, []);
 
+  // Listen for SYNC_REQUESTED messages from service worker (background sync delegation)
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+
+    const handleSWMessage = (event: MessageEvent) => {
+      const data = event.data;
+      if (typeof data === 'object' && data !== null) {
+        // SW is requesting we perform the sync (we have auth context)
+        if (data.type === 'SYNC_REQUESTED' && data.count > 0) {
+          auditLogger.info('Background sync requested by service worker', {
+            pendingCount: data.count,
+            reports: data.reports,
+            measurements: data.measurements
+          });
+          // Trigger sync if not already syncing
+          if (!syncing && isOnline()) {
+            handleSync();
+          }
+        }
+      }
+    };
+
+    navigator.serviceWorker.addEventListener('message', handleSWMessage);
+
+    return () => {
+      navigator.serviceWorker.removeEventListener('message', handleSWMessage);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [syncing]);
+
   // Check pending count and permanently failed count
   useEffect(() => {
     const checkPending = async () => {
@@ -146,6 +176,14 @@ const OfflineIndicator: React.FC = () => {
           skipped: result.skipped,
           permanentlyFailed: result.permanentlyFailed,
         });
+
+        // Notify service worker that sync is complete (clears any pending notifications)
+        try {
+          const registration = await navigator.serviceWorker?.ready;
+          registration?.active?.postMessage({ type: 'SYNC_COMPLETE_ACK' });
+        } catch {
+          // SW not available - ignore
+        }
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown error';

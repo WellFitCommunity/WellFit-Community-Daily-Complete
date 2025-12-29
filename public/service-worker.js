@@ -190,111 +190,217 @@ async function networkFirstRuntime(request) {
 // ---------- Messaging (optional ops) ----------
 self.addEventListener('message', (event) => {
   const msg = event.data;
-  if (msg === 'SKIP_WAITING') self.skipWaiting();
+
+  // String messages (legacy)
+  if (msg === 'SKIP_WAITING') {
+    self.skipWaiting();
+    return;
+  }
   if (msg === 'CLEAR_CACHE') {
     event.waitUntil((async () => {
       const keys = await caches.keys();
       await Promise.all(keys.map(k => caches.delete(k)));
     })());
+    return;
+  }
+
+  // Object messages (structured)
+  if (typeof msg === 'object' && msg !== null) {
+    // SYNC_NOW: Client requests immediate sync check
+    if (msg.type === 'SYNC_NOW') {
+      event.waitUntil(syncPendingData());
+      return;
+    }
+
+    // SYNC_COMPLETE_ACK: Client acknowledges sync completion
+    if (msg.type === 'SYNC_COMPLETE_ACK') {
+      // Clear any pending sync notification
+      if (self.registration.getNotifications) {
+        self.registration.getNotifications({ tag: 'offline-sync-pending' })
+          .then(notifications => {
+            notifications.forEach(n => n.close());
+          })
+          .catch(() => {});
+      }
+      return;
+    }
+
+    // SYNC_SPECIALIST_NOW: Client requests immediate specialist sync
+    if (msg.type === 'SYNC_SPECIALIST_NOW') {
+      event.waitUntil(syncSpecialistData());
+      return;
+    }
+
+    // SPECIALIST_SYNC_COMPLETE_ACK: Client acknowledges specialist sync completion
+    if (msg.type === 'SPECIALIST_SYNC_COMPLETE_ACK') {
+      if (self.registration.getNotifications) {
+        self.registration.getNotifications({ tag: 'specialist-sync-pending' })
+          .then(notifications => {
+            notifications.forEach(n => n.close());
+          })
+          .catch(() => {});
+      }
+      return;
+    }
   }
 });
 
 // ---------- Background Sync (for offline data) ----------
 // Syncs pending health reports, check-ins, and vitals when connection returns
+// Strategy: Delegate to client windows (which have auth context) when available
 self.addEventListener('sync', (event) => {
-  if (event.tag === 'sync-pending-data') {
+  // WellFit community data (health reports, vitals)
+  if (event.tag === 'sync-pending-data' || event.tag === 'sync-pending-reports') {
     event.waitUntil(syncPendingData());
   }
-  if (event.tag === 'sync-pending-reports') {
-    event.waitUntil(syncPendingData());
+  // Envision Atlus specialist data (visits, assessments, photos, alerts)
+  if (event.tag === 'sync-specialist-data') {
+    event.waitUntil(syncSpecialistData());
   }
 });
 
 async function syncPendingData() {
-  // Open IndexedDB to get pending items
+  // Open IndexedDB to check if there's pending data
   const db = await openOfflineDB();
   if (!db) return;
 
   try {
     const pendingReports = await getAllPending(db, 'pendingReports');
     const pendingMeasurements = await getAllPending(db, 'measurements');
+    const totalPending = pendingReports.length + pendingMeasurements.length;
 
-    // Notify clients that sync is starting
-    const clients = await self.clients.matchAll();
-    clients.forEach(client => {
-      client.postMessage({ type: 'SYNC_STARTED', count: pendingReports.length + pendingMeasurements.length });
-    });
-
-    let synced = 0;
-    let failed = 0;
-
-    // Sync reports
-    for (const report of pendingReports) {
-      try {
-        const response = await fetch('/api/health-reports', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(report.data),
-          credentials: 'include'
-        });
-        if (response.ok) {
-          await markSynced(db, 'pendingReports', report.id);
-          synced++;
-        } else {
-          failed++;
-        }
-      } catch {
-        failed++;
-      }
+    if (totalPending === 0) {
+      db.close();
+      return; // Nothing to sync
     }
 
-    // Sync measurements
-    for (const measurement of pendingMeasurements) {
-      try {
-        const response = await fetch('/api/vitals', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(measurement.data),
-          credentials: 'include'
+    // Find all client windows
+    const allClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+
+    if (allClients.length > 0) {
+      // Delegate sync to client windows - they have Supabase auth context
+      // The client's OfflineIndicator will handle the actual sync
+      allClients.forEach(client => {
+        client.postMessage({
+          type: 'SYNC_REQUESTED',
+          count: totalPending,
+          reports: pendingReports.length,
+          measurements: pendingMeasurements.length
         });
-        if (response.ok) {
-          await markSynced(db, 'measurements', measurement.id);
-          synced++;
-        } else {
-          failed++;
-        }
-      } catch {
-        failed++;
-      }
+      });
+
+      // Client will handle the sync and mark items as synced
+      // We don't need to do anything else here
+      db.close();
+      return;
     }
 
-    // Notify clients of completion
-    clients.forEach(client => {
-      client.postMessage({ type: 'SYNC_COMPLETE', synced, failed });
-    });
-
+    // No client windows available - this is a true background sync
+    // We can't use Supabase auth, so we'll leave items pending
+    // and notify when a client window opens
     db.close();
+
+    // Queue a notification to remind user (if notifications are enabled)
+    if (self.registration.showNotification) {
+      try {
+        await self.registration.showNotification('WellFit Health Data Pending', {
+          body: `${totalPending} health report(s) waiting to sync. Open the app to sync.`,
+          icon: '/favicon.ico',
+          badge: '/favicon.ico',
+          tag: 'offline-sync-pending',
+          requireInteraction: false,
+          silent: true
+        });
+      } catch {
+        // Notifications not permitted - that's okay
+      }
+    }
   } catch (err) {
     db.close();
     throw err; // Re-throw to trigger retry
   }
 }
 
+/**
+ * Sync specialist data (Envision Atlus - visits, assessments, photos, alerts)
+ * Strategy: Delegate to client windows which have Supabase auth context
+ */
+async function syncSpecialistData() {
+  const db = await openSpecialistDB();
+  if (!db) return;
+
+  try {
+    const stores = ['visits', 'assessments', 'photos', 'alerts'];
+    let totalPending = 0;
+
+    for (const storeName of stores) {
+      const pending = await getSpecialistPending(db, storeName);
+      totalPending += pending.length;
+    }
+
+    if (totalPending === 0) {
+      db.close();
+      return;
+    }
+
+    // Find client windows to delegate sync
+    const allClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+
+    if (allClients.length > 0) {
+      // Delegate to clients with auth context
+      allClients.forEach(client => {
+        client.postMessage({
+          type: 'SPECIALIST_SYNC_REQUESTED',
+          count: totalPending
+        });
+      });
+      db.close();
+      return;
+    }
+
+    // No clients - show notification
+    db.close();
+    if (self.registration.showNotification) {
+      try {
+        await self.registration.showNotification('Specialist Data Pending', {
+          body: `${totalPending} record(s) waiting to sync. Open the app to sync.`,
+          icon: '/favicon.ico',
+          badge: '/favicon.ico',
+          tag: 'specialist-sync-pending',
+          requireInteraction: false,
+          silent: true
+        });
+      } catch {
+        // Notifications not permitted
+      }
+    }
+  } catch (err) {
+    db.close();
+    throw err;
+  }
+}
+
 // IndexedDB helpers for background sync
+// MUST match client-side DB in src/utils/offlineStorage.ts
 function openOfflineDB() {
   return new Promise((resolve) => {
-    const request = indexedDB.open('wellfit-offline', 1);
+    const request = indexedDB.open('WellFitOfflineDB', 3);
     request.onerror = () => resolve(null);
     request.onsuccess = () => resolve(request.result);
     request.onupgradeneeded = (event) => {
       const db = event.target.result;
+      // Schema must match src/utils/offlineStorage.ts exactly
       if (!db.objectStoreNames.contains('pendingReports')) {
-        const store = db.createObjectStore('pendingReports', { keyPath: 'id', autoIncrement: true });
+        const store = db.createObjectStore('pendingReports', { keyPath: 'id' });
+        store.createIndex('userId', 'userId', { unique: false });
         store.createIndex('synced', 'synced', { unique: false });
+        store.createIndex('timestamp', 'timestamp', { unique: false });
       }
       if (!db.objectStoreNames.contains('measurements')) {
-        const store = db.createObjectStore('measurements', { keyPath: 'id', autoIncrement: true });
+        const store = db.createObjectStore('measurements', { keyPath: 'id' });
+        store.createIndex('userId', 'userId', { unique: false });
         store.createIndex('synced', 'synced', { unique: false });
+        store.createIndex('timestamp', 'timestamp', { unique: false });
       }
     };
   });
@@ -333,6 +439,46 @@ function markSynced(db, storeName, id) {
       getReq.onerror = () => resolve();
     } catch {
       resolve();
+    }
+  });
+}
+
+// Specialist (Envision Atlus) IndexedDB helpers
+// MUST match client-side DB in src/services/specialist-workflow-engine/OfflineDataSync.ts
+function openSpecialistDB() {
+  return new Promise((resolve) => {
+    const request = indexedDB.open('WellFitSpecialistOffline', 1);
+    request.onerror = () => resolve(null);
+    request.onsuccess = () => resolve(request.result);
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      const stores = ['visits', 'assessments', 'photos', 'alerts'];
+      for (const storeName of stores) {
+        if (!db.objectStoreNames.contains(storeName)) {
+          const store = db.createObjectStore(storeName, { keyPath: 'id' });
+          store.createIndex('synced', 'synced', { unique: false });
+          store.createIndex('timestamp', 'timestamp', { unique: false });
+          if (storeName !== 'visits') {
+            store.createIndex('visit_id', 'visit_id', { unique: false });
+          }
+        }
+      }
+    };
+  });
+}
+
+function getSpecialistPending(db, storeName) {
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(storeName, 'readonly');
+      const store = tx.objectStore(storeName);
+      const index = store.index('synced');
+      // Note: specialist DB uses boolean false, not 0
+      const request = index.getAll(IDBKeyRange.only(false));
+      request.onsuccess = () => resolve(request.result || []);
+      request.onerror = () => resolve([]);
+    } catch {
+      resolve([]);
     }
   });
 }

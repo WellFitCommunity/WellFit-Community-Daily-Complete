@@ -4,6 +4,87 @@
  */
 
 import { supabase } from '../../lib/supabaseClient';
+import { auditLogger } from '../auditLogger';
+
+// Background sync tag for Envision Atlus specialist workflows
+const SYNC_TAG_SPECIALIST = 'sync-specialist-data';
+
+/**
+ * Base interface for all offline-stored records
+ */
+interface OfflineRecord {
+  id: string;
+  synced: boolean;
+  timestamp: number;
+  offline_captured: boolean;
+  synced_at?: number;
+}
+
+/**
+ * Field visit record stored offline
+ */
+export interface OfflineVisit extends OfflineRecord {
+  patient_id: string;
+  specialist_id: string;
+  visit_type: string;
+  scheduled_date: string;
+  status: string;
+  notes?: string;
+  location?: {
+    latitude: number;
+    longitude: number;
+    address?: string;
+  };
+}
+
+/**
+ * Assessment record stored offline
+ */
+export interface OfflineAssessment extends OfflineRecord {
+  visit_id: string;
+  assessment_type: string;
+  findings: Record<string, unknown>;
+  recommendations?: string;
+  severity?: 'low' | 'medium' | 'high' | 'critical';
+}
+
+/**
+ * Photo record stored offline
+ */
+export interface OfflinePhoto extends OfflineRecord {
+  visit_id: string;
+  data: string | Blob;
+  type?: string;
+  contentType?: string;
+  description?: string;
+}
+
+/**
+ * Alert record stored offline
+ */
+export interface OfflineAlert extends OfflineRecord {
+  visit_id: string;
+  alert_type: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  message: string;
+  acknowledged: boolean;
+}
+
+/**
+ * Union type for all offline record types
+ */
+type OfflineData = OfflineVisit | OfflineAssessment | OfflinePhoto | OfflineAlert;
+
+/**
+ * Input data type (before offline enrichment)
+ * Accepts any object at the system boundary; id is validated at runtime
+ * This is intentionally permissive as existing code passes various typed objects
+ *
+ * NOTE: Using object type here as a system boundary cast - the runtime validation
+ * ensures the id property exists before storing to IndexedDB
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type OfflineInputData = { id?: string } & Record<string, any>;
 
 export class OfflineDataSync {
   private db: IDBDatabase | null = null;
@@ -59,16 +140,24 @@ export class OfflineDataSync {
   }
 
   /**
-   * Saves data offline
+   * Saves data offline with background sync registration
+   * @param storeName - The IndexedDB store to write to
+   * @param data - Data object with required 'id' field; structure varies by store type
    */
   async saveOffline(
     storeName: 'visits' | 'assessments' | 'photos' | 'alerts',
-    data: any
+    data: OfflineInputData
   ): Promise<void> {
     if (!this.db) {
       throw new Error('IndexedDB not initialized');
     }
 
+    // Validate id exists at runtime (required for IndexedDB keyPath)
+    if (typeof data.id !== 'string' || !data.id) {
+      throw new Error('Data must have a valid string id property');
+    }
+
+    // Enrich with sync metadata at system boundary
     const enrichedData = {
       ...data,
       synced: false,
@@ -86,7 +175,12 @@ export class OfflineDataSync {
       const request = store.put(enrichedData);
 
       request.onsuccess = () => {
-
+        // Register for background sync so data syncs even if tab closes
+        void this.triggerBackgroundSync();
+        auditLogger.info('Specialist data saved offline', {
+          storeName,
+          recordId: data.id
+        });
         resolve();
       };
       request.onerror = () => reject(request.error);
@@ -94,11 +188,36 @@ export class OfflineDataSync {
   }
 
   /**
+   * Trigger background sync registration for specialist data
+   */
+  private async triggerBackgroundSync(): Promise<void> {
+    if (!('serviceWorker' in navigator)) {
+      return;
+    }
+
+    try {
+      const registration = await navigator.serviceWorker.ready;
+
+      if ('sync' in registration) {
+        const syncManager = registration as ServiceWorkerRegistration & {
+          sync: { register: (tag: string) => Promise<void> };
+        };
+        await syncManager.sync.register(SYNC_TAG_SPECIALIST);
+      }
+    } catch (err: unknown) {
+      // Background Sync registration failed - not critical
+      auditLogger.warn('Background sync registration failed', {
+        error: err instanceof Error ? err.message : 'Unknown error'
+      });
+    }
+  }
+
+  /**
    * Gets all unsynced data from a store
    */
-  async getUnsynced(
+  async getUnsynced<T extends OfflineData = OfflineData>(
     storeName: 'visits' | 'assessments' | 'photos' | 'alerts'
-  ): Promise<any[]> {
+  ): Promise<T[]> {
     if (!this.db) {
       throw new Error('IndexedDB not initialized');
     }
@@ -113,7 +232,7 @@ export class OfflineDataSync {
       const index = store.index('synced');
       const request = index.getAll(IDBKeyRange.only(0)); // 0 = false/unsynced
 
-      request.onsuccess = () => resolve(request.result);
+      request.onsuccess = () => resolve(request.result as T[]);
       request.onerror = () => reject(request.error);
     });
   }
@@ -269,13 +388,13 @@ export class OfflineDataSync {
    * Syncs photos (requires special handling for file upload)
    */
   private async syncPhotos(): Promise<number> {
-    const unsynced = await this.getUnsynced('photos');
+    const unsynced = await this.getUnsynced<OfflinePhoto>('photos');
     let syncedCount = 0;
 
     for (const photo of unsynced) {
       try {
         // Convert base64 to blob if needed
-        let fileData = photo.data;
+        let fileData: string | Blob = photo.data;
         if (typeof photo.data === 'string' && photo.data.startsWith('data:')) {
           const response = await fetch(photo.data);
           fileData = await response.blob();
@@ -291,7 +410,7 @@ export class OfflineDataSync {
           });
 
         if (uploadError) {
-
+          auditLogger.warn('Photo upload failed', { photoId: photo.id, error: uploadError.message });
           continue;
         }
 
@@ -307,13 +426,14 @@ export class OfflineDataSync {
         });
 
         if (updateError) {
-
+          auditLogger.warn('Photo visit update failed', { photoId: photo.id, error: updateError.message });
           continue;
         }
 
         await this.markAsSynced('photos', photo.id);
         syncedCount++;
-      } catch (error) {
+      } catch (err: unknown) {
+        auditLogger.error('Photo sync error', err instanceof Error ? err.message : 'Unknown error', { photoId: photo.id });
 
       }
     }
@@ -401,8 +521,8 @@ export class OfflineDataSync {
       const store = transaction.objectStore(storeName);
       const request = store.getAll();
 
-      const items = await new Promise<any[]>((resolve, reject) => {
-        request.onsuccess = () => resolve(request.result);
+      const items = await new Promise<OfflineData[]>((resolve, reject) => {
+        request.onsuccess = () => resolve(request.result as OfflineData[]);
         request.onerror = () => reject(request.error);
       });
 
@@ -410,6 +530,24 @@ export class OfflineDataSync {
     }
 
     return totalSize;
+  }
+
+  /**
+   * Request immediate sync via service worker message
+   */
+  async requestImmediateSync(): Promise<void> {
+    if (!('serviceWorker' in navigator)) {
+      return;
+    }
+
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      registration.active?.postMessage({ type: 'SYNC_SPECIALIST_NOW' });
+    } catch (err: unknown) {
+      auditLogger.warn('Failed to request immediate sync', {
+        error: err instanceof Error ? err.message : 'Unknown error'
+      });
+    }
   }
 }
 

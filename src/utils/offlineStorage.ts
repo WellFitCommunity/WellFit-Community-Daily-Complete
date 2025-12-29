@@ -2,7 +2,7 @@
 // Stores health reports locally when offline, syncs when online
 
 const DB_NAME = 'WellFitOfflineDB';
-const DB_VERSION = 2; // Bumped for new fields
+const DB_VERSION = 3; // v3: Added synced index to measurements for background sync
 const REPORTS_STORE = 'pendingReports';
 const MEASUREMENTS_STORE = 'measurements';
 
@@ -28,6 +28,8 @@ interface OfflineMeasurement {
   heartRate: number;
   spo2: number;
   timestamp: number;
+  synced: boolean;
+  syncedAt?: string;
 }
 
 class OfflineStorage {
@@ -83,6 +85,16 @@ class OfflineStorage {
           const measurementsStore = db.createObjectStore(MEASUREMENTS_STORE, { keyPath: 'id' });
           measurementsStore.createIndex('userId', 'userId', { unique: false });
           measurementsStore.createIndex('timestamp', 'timestamp', { unique: false });
+          measurementsStore.createIndex('synced', 'synced', { unique: false });
+        } else {
+          // Migration: add synced index if upgrading from v2
+          const transaction = (event.target as IDBOpenDBRequest).transaction;
+          if (transaction) {
+            const measurementsStore = transaction.objectStore(MEASUREMENTS_STORE);
+            if (!measurementsStore.indexNames.contains('synced')) {
+              measurementsStore.createIndex('synced', 'synced', { unique: false });
+            }
+          }
         }
 
       };
@@ -114,6 +126,9 @@ class OfflineStorage {
       const request = store.add(report);
 
       request.onsuccess = () => {
+        // Register for background sync so data syncs even if tab closes
+        // This is fire-and-forget - we don't block on it
+        void this.triggerBackgroundSync();
         resolve(report.id);
       };
 
@@ -121,6 +136,32 @@ class OfflineStorage {
         reject(request.error);
       };
     });
+  }
+
+  /**
+   * Trigger background sync registration.
+   * Called internally after saving offline data.
+   */
+  private async triggerBackgroundSync(): Promise<void> {
+    // Check if Background Sync API is supported
+    if (!('serviceWorker' in navigator)) {
+      return;
+    }
+
+    try {
+      const registration = await navigator.serviceWorker.ready;
+
+      // Check if sync is supported
+      if ('sync' in registration) {
+        const syncManager = registration as ServiceWorkerRegistration & {
+          sync: { register: (tag: string) => Promise<void> };
+        };
+        await syncManager.sync.register('sync-pending-data');
+      }
+    } catch {
+      // Background Sync registration failed - not critical
+      // Data will sync when user returns online via OfflineIndicator
+    }
   }
 
   // Get all pending (unsynced) reports
@@ -329,7 +370,8 @@ class OfflineStorage {
       userId,
       heartRate,
       spo2,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      synced: false
     };
 
     return new Promise((resolve, reject) => {
@@ -344,6 +386,8 @@ class OfflineStorage {
       const request = store.add(measurement);
 
       request.onsuccess = () => {
+        // Register for background sync so measurement syncs even if tab closes
+        void this.triggerBackgroundSync();
         resolve(measurement.id);
       };
 
@@ -507,4 +551,90 @@ export const waitForOnline = (): Promise<void> => {
       window.addEventListener('online', handleOnline);
     }
   });
+};
+
+// Background Sync registration tags - must match service-worker.js
+const SYNC_TAG_DATA = 'sync-pending-data';
+const SYNC_TAG_REPORTS = 'sync-pending-reports';
+
+/**
+ * Register for Background Sync to sync pending data when connection returns.
+ * This enables sync even if the tab is closed (browser permitting).
+ *
+ * @param tag - The sync tag to register ('data' for all, 'reports' for reports only)
+ * @returns Promise resolving to true if registration succeeded, false otherwise
+ */
+export const registerBackgroundSync = async (
+  tag: 'data' | 'reports' = 'data'
+): Promise<boolean> => {
+  // Check if Background Sync API is supported
+  if (!('serviceWorker' in navigator)) {
+    return false;
+  }
+
+  try {
+    const registration = await navigator.serviceWorker.ready;
+
+    // Check if sync is supported (it's not in all browsers)
+    if (!('sync' in registration)) {
+      // Fallback: try to sync immediately if online
+      if (isOnline()) {
+        // Post message to SW to trigger sync
+        registration.active?.postMessage({ type: 'SYNC_NOW' });
+      }
+      return false;
+    }
+
+    // Register the sync event
+    const syncTag = tag === 'reports' ? SYNC_TAG_REPORTS : SYNC_TAG_DATA;
+    await (registration as ServiceWorkerRegistration & { sync: { register: (tag: string) => Promise<void> } }).sync.register(syncTag);
+
+    return true;
+  } catch (err: unknown) {
+    // Background Sync may be blocked by user or not supported
+    // This is not an error - we'll fall back to online sync
+    return false;
+  }
+};
+
+/**
+ * Request an immediate sync by posting a message to the service worker.
+ * Use this when the user explicitly taps "Sync Now" in the UI.
+ */
+export const requestImmediateSync = async (): Promise<void> => {
+  if (!('serviceWorker' in navigator)) {
+    return;
+  }
+
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    registration.active?.postMessage({ type: 'SYNC_NOW' });
+  } catch {
+    // Ignore - SW not available
+  }
+};
+
+/**
+ * Listen for sync completion messages from the service worker.
+ *
+ * @param callback - Function to call when sync completes
+ * @returns Cleanup function to remove the listener
+ */
+export const onSyncComplete = (
+  callback: (result: { synced: number; failed: number }) => void
+): (() => void) => {
+  const handler = (event: MessageEvent) => {
+    if (event.data?.type === 'SYNC_COMPLETE') {
+      callback({
+        synced: event.data.synced ?? 0,
+        failed: event.data.failed ?? 0
+      });
+    }
+  };
+
+  navigator.serviceWorker?.addEventListener('message', handler);
+
+  return () => {
+    navigator.serviceWorker?.removeEventListener('message', handler);
+  };
 };
