@@ -64,7 +64,10 @@ import {
 
 /**
  * Internal profile row shape (from profiles table)
- * Note: profiles uses `user_id`, but this IS the patient_id (same UUID)
+ *
+ * Note: Currently (Phase 1), profiles.user_id === patient_id (same UUID).
+ * This mapping is abstracted here so when caregiver/proxy access is added,
+ * only this service needs to change - not consumers.
  */
 interface ProfileRow {
   user_id: string;

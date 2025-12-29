@@ -46,23 +46,35 @@ The codebase has two naming conventions for the same UUID:
 | `encounters` | `patient_id` | `auth.users(id)` |
 | (all other clinical tables) | `patient_id` | `auth.users(id)` |
 
-**They are the SAME value** - just named differently.
+### Current State (Phase 1)
+
+Today, `patient_id` and `user_id` are **1:1** - they refer to the same auth.users.id UUID. The authenticated user IS the patient.
+
+### Future State (Caregiver/Proxy Support)
+
+**DO NOT ASSUME THIS IS PERMANENT.**
+
+When caregiver/proxy access is added:
+- One user (caregiver) can access multiple patients
+- One patient can be accessed by multiple users
+- A mapping table (e.g., `user_patient_access`) will resolve patient_id from user context
+- **Only `patientContextService` needs to change** - consumers stay the same
 
 ### Canonical Standard
 
-**Use `patient_id` in all new code.**
+**Use `patient_id` in all new code.** The service abstracts identity resolution.
 
-When interfacing with legacy code:
 ```typescript
-// profiles.user_id === patient_id (same UUID)
-const patientId = profileRow.user_id; // This IS the patient_id
-
 // The canonical type uses patient_id
 interface PatientDemographics {
   patient_id: string;  // ← Always use patient_id
   first_name: string | null;
   // ...
 }
+
+// The service handles the mapping internally
+// When proxy support is added, this line doesn't change:
+const result = await patientContextService.getPatientContext(patientId);
 ```
 
 ---
@@ -250,26 +262,44 @@ if (result.success) {
 
 ## Guardrails
 
+### When to Use Canonical Service vs Direct Query
+
+| Use Case | Recommended Approach |
+|----------|----------------------|
+| AI/clinical decisions needing traceability | `getPatientContext()` - use `context_meta` |
+| Dashboard displaying patient summary | `getPatientContext()` with selective options |
+| Contact graph, timeline, risk aggregation | `getPatientContext()` (centralizes joins) |
+| Single-field lookup (e.g., just patient name) | Direct query is OK (performance) |
+| Checking if patient exists | `patientExists()` or direct query |
+
 ### Code Review Checklist
 
 When reviewing PRs that touch patient data:
 
-1. **Direct table queries?** - If PR queries `profiles`, `patient_admissions`, etc. directly, it should use `patientContextService` instead
-2. **Missing traceability?** - If patient data is used without logging `context_meta`, add it
-3. **Inconsistent identity?** - If using `user_id` where `patient_id` should be, fix it
+1. **Aggregating patient context?** - Use `patientContextService`, not scattered queries
+2. **Re-implementing "latest" logic?** - The service defines "latest" deterministically
+3. **Missing traceability on AI/clinical code?** - Should use `context_meta`
+4. **Using `user_id` in new code?** - Should use `patient_id`
+5. **Over-fetching?** - For single fields, direct query is acceptable
 
-### Lint Rule (Future)
+### What the Guardrail Prevents
 
-Consider adding an ESLint rule:
+The guardrail is NOT "never query patient tables directly."
 
-```javascript
-// eslint-plugin-patient-context (future implementation)
-{
-  "rules": {
-    "patient-context/no-direct-query": "error",
-    "patient-context/use-canonical-service": "error"
-  }
-}
+The guardrail IS: "Don't re-implement identity resolution, contact graphs, or 'latest' definitions ad-hoc across services."
+
+```typescript
+// ❌ BAD - Scattering patient context assembly across services
+const profile = await supabase.from('profiles').select('*').eq('user_id', id);
+const contacts = await supabase.from('caregiver_access').select('*').eq('senior_id', id);
+const lastCheckIn = await supabase.from('daily_check_ins').select('*').order('date', {ascending: false}).limit(1);
+// Each service defines its own "patient context" - leads to drift
+
+// ✅ GOOD - Centralized context with traceability
+const result = await patientContextService.getPatientContext(id);
+
+// ✅ ALSO OK - Single field for performance
+const { data } = await supabase.from('profiles').select('first_name').eq('user_id', id).single();
 ```
 
 ---

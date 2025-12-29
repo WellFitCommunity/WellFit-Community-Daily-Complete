@@ -13,16 +13,24 @@
  *
  * ## IDENTITY STANDARD
  *
- * The codebase has two naming conventions for the same ID:
+ * The codebase has two naming conventions:
  * - `user_id` in `profiles` table (legacy, references auth.users.id)
  * - `patient_id` in clinical tables (newer, also references auth.users.id)
  *
- * CANONICAL STANDARD: Use `patient_id` in all new code.
- * Both refer to auth.users.id - they are IDENTICAL values.
+ * ### Current State (Phase 1)
+ * Today, `patient_id` and `user_id` are 1:1 - they refer to the same
+ * auth.users.id UUID. The authenticated user IS the patient.
  *
- * When interfacing with legacy code:
- * - profiles.user_id === patient_id (same UUID)
- * - patientService returns user_id but it IS the patient_id
+ * ### Future State (Caregiver/Proxy Support)
+ * DO NOT ASSUME THIS IS PERMANENT. The architecture is designed so that:
+ * - One user (caregiver) can access multiple patients
+ * - One patient can be accessed by multiple users
+ * - A mapping table (e.g., `user_patient_access`) would resolve this
+ *
+ * ### What This Means for Code
+ * - Use `patient_id` in all new code (not `user_id`)
+ * - The `patientContextService` abstracts the resolution
+ * - When proxy access is added, only the service changes - not consumers
  *
  * Copyright 2025 Envision VirtualEdge Group LLC. All rights reserved.
  */
@@ -34,10 +42,11 @@
 /**
  * Canonical patient identifier
  *
- * This is the UUID from auth.users table.
- * - In profiles table: stored as `user_id`
- * - In clinical tables: stored as `patient_id`
- * - They are the SAME value
+ * Currently (Phase 1): This equals auth.users.id (1:1 mapping)
+ * Future (Phase 2+): May be a separate patient chart ID with user mapping
+ *
+ * The service layer abstracts this - consumers should not assume
+ * patient_id === authenticated user's ID.
  */
 export type PatientId = string;
 

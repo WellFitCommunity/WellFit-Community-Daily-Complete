@@ -532,9 +532,7 @@ async function getData(id: string): Promise<ServiceResult<Data>> {
 
 ### Canonical Patient Context Spine - ATLUS Unity + Accountability
 
-**DO NOT QUERY PATIENT TABLES DIRECTLY FROM SERVICES.**
-
-Use `patientContextService.getPatientContext()` as the single canonical entry point for patient data.
+**Use `patientContextService.getPatientContext()` for patient context aggregation.**
 
 #### Files
 | File | Purpose |
@@ -544,12 +542,23 @@ Use `patientContextService.getPatientContext()` as the single canonical entry po
 | `src/contexts/PatientContext.tsx` | UI state (selected patient) |
 
 #### Identity Standard (patient_id vs user_id)
-The codebase has two naming conventions for the SAME UUID:
+The codebase has two naming conventions:
 - `user_id` in `profiles` table (legacy)
 - `patient_id` in clinical tables (newer)
 
-**CANONICAL STANDARD: Use `patient_id` in all new code.**
-Both refer to `auth.users.id` - they are identical values.
+**Current State:** Both refer to `auth.users.id` (1:1 mapping).
+**Future State:** Do NOT assume permanent 1:1. Caregiver/proxy support will add mapping.
+
+**CANONICAL STANDARD: Use `patient_id` in all new code.** The service abstracts the resolution.
+
+#### When to Use the Canonical Service
+| Use Case | Approach |
+|----------|----------|
+| AI/clinical decisions needing traceability | `getPatientContext()` with `context_meta` |
+| Dashboard displaying patient summary | `getPatientContext()` with selective options |
+| Contact graph, timeline, risk aggregation | `getPatientContext()` (centralizes joins) |
+| Single-field lookup (e.g., just name) | Direct query is OK (avoid over-fetch) |
+| Checking if patient exists | `patientContextService.patientExists()` or direct |
 
 #### Usage Pattern
 ```typescript
@@ -563,10 +572,10 @@ if (result.success) {
   // context_meta provides traceability (ATLUS Accountability)
 }
 
-// Minimal context (demographics only)
+// Minimal context (demographics only - fast)
 const minResult = await patientContextService.getMinimalContext(patientId);
 
-// Selective fetch
+// Selective fetch (avoid over-fetching)
 const customResult = await patientContextService.getPatientContext(patientId, {
   includeContacts: true,
   includeTimeline: false,
@@ -578,13 +587,19 @@ const customResult = await patientContextService.getPatientContext(patientId, {
 - **Unity**: Single source of truth - all modules use the same context
 - **Accountability**: Every context includes `context_meta` with data sources, timestamps, and freshness
 
-#### Forbidden Patterns
+#### What NOT to Do
 ```typescript
-// ❌ BAD - Direct table query in service
+// ❌ BAD - Re-implementing identity resolution or "latest" logic ad-hoc
 const { data } = await supabase.from('profiles').select('*').eq('user_id', id);
+const contacts = await supabase.from('caregiver_access').select('*')...
+const lastCheckIn = await supabase.from('daily_check_ins').select('*')...
+// ^ This scatters the "patient context" definition across services
 
-// ✅ GOOD - Use canonical service
+// ✅ GOOD - Use canonical service for context
 const result = await patientContextService.getPatientContext(id);
+
+// ✅ ALSO OK - Direct query for single field (performance)
+const { data } = await supabase.from('profiles').select('first_name').eq('user_id', id).single();
 ```
 
 ---
