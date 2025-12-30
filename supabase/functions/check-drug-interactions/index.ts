@@ -141,7 +141,10 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Checking ${medication_rxcui} against ${activeRxcuis.length} active medications`);
+    logger.info("Checking medication interactions", {
+      rxcui: medication_rxcui,
+      activeCount: activeRxcuis.length
+    });
 
     // Step 2: Check cache first
     const interactions: Array<{
@@ -181,7 +184,9 @@ serve(async (req) => {
 
     // Step 3: Check RxNorm API for uncached medications
     if (uncachedRxcuis.length > 0) {
-      console.log(`Checking RxNorm API for ${uncachedRxcuis.length} uncached medications`);
+      logger.info("Checking RxNorm API for uncached medications", {
+        count: uncachedRxcuis.length
+      });
 
       // RxNorm API can check multiple RxCUIs at once
       const rxcuiList = uncachedRxcuis.join("+");
@@ -323,8 +328,10 @@ serve(async (req) => {
         headers: corsHeaders,
       }
     );
-  } catch (error) {
-    console.error("Drug interaction check error:", error);
+  } catch (error: unknown) {
+    const logger = createLogger("check-drug-interactions", req);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error("Drug interaction check error", { error: errorMessage });
     const { headers: corsHeaders } = corsFromRequest(req);
     return new Response(
       JSON.stringify({

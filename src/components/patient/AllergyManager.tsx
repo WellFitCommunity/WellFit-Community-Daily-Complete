@@ -6,6 +6,7 @@ import {
   useDeleteAllergy,
 } from '../../hooks/useFhirData';
 import type { AllergyIntolerance } from '../../api/allergies';
+import { useToast } from '../../hooks/useToast';
 
 interface AllergyManagerProps {
   userId: string;
@@ -18,6 +19,7 @@ const AllergyManager: React.FC<AllergyManagerProps> = ({ userId, readOnly = fals
   const createMutation = useCreateAllergy();
   const updateMutation = useUpdateAllergy();
   const deleteMutation = useDeleteAllergy();
+  const { showToast, ToastContainer } = useToast();
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -55,12 +57,14 @@ const AllergyManager: React.FC<AllergyManagerProps> = ({ userId, readOnly = fals
     try {
       if (editingId) {
         await updateMutation.mutateAsync({ id: editingId, updates: allergyData });
+        showToast('success', 'Allergy updated successfully');
       } else {
         await createMutation.mutateAsync(allergyData);
+        showToast('success', 'Allergy added successfully');
       }
       resetForm();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'An unexpected error occurred');
+      showToast('error', err instanceof Error ? err.message : 'An unexpected error occurred');
     }
   };
 
@@ -83,8 +87,9 @@ const AllergyManager: React.FC<AllergyManagerProps> = ({ userId, readOnly = fals
     if (window.confirm('Are you sure you want to delete this allergy?')) {
       try {
         await deleteMutation.mutateAsync(id);
+        showToast('success', 'Allergy removed');
       } catch (err) {
-        alert(err instanceof Error ? err.message : 'Failed to delete allergy');
+        showToast('error', err instanceof Error ? err.message : 'Failed to delete allergy');
       }
     }
   };
@@ -121,6 +126,7 @@ const AllergyManager: React.FC<AllergyManagerProps> = ({ userId, readOnly = fals
 
   return (
     <div className="bg-white rounded-lg shadow-xs border border-gray-200 p-6">
+      <ToastContainer />
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-xl font-bold text-gray-900">Allergy & Intolerance Management</h2>

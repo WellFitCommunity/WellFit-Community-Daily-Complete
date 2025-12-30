@@ -29,10 +29,12 @@ import type {
   WearableDeviceType,
 } from '../../types/neuroSuite';
 import { auditLogger } from '../../services/auditLogger';
+import { useToast } from '../../hooks/useToast';
 
 export const WearableDashboard: React.FC = () => {
   const { user } = useAuth();
   const supabase = useSupabaseClient();
+  const { showToast, ToastContainer } = useToast();
   const userId = user?.id || '';
   const [activeTab, setActiveTab] = useState<'overview' | 'vitals' | 'activity' | 'falls' | 'devices'>('overview');
   const [emergencyLoading, setEmergencyLoading] = useState(false);
@@ -76,9 +78,9 @@ export const WearableDashboard: React.FC = () => {
         auth_code: authCode,
       });
 
-      alert('Device connected successfully!');
+      showToast('success', 'Device connected successfully!');
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'Failed to connect device');
+      showToast('error', error instanceof Error ? error.message : 'Failed to connect device');
     }
   };
 
@@ -87,9 +89,9 @@ export const WearableDashboard: React.FC = () => {
 
     try {
       await disconnectMutation.mutateAsync(connectionId);
-      alert('Device disconnected successfully');
+      showToast('success', 'Device disconnected successfully');
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'Failed to disconnect device');
+      showToast('error', error instanceof Error ? error.message : 'Failed to disconnect device');
     }
   };
 
@@ -108,7 +110,7 @@ export const WearableDashboard: React.FC = () => {
     }
 
     if (!userId) {
-      alert('Unable to send alert: User not authenticated');
+      showToast('error', 'Unable to send alert: User not authenticated');
       return;
     }
 
@@ -208,13 +210,7 @@ export const WearableDashboard: React.FC = () => {
       setEmergencyStatus('sent');
 
       // Show success message
-      alert(
-        '✅ Emergency alert sent successfully!\n\n' +
-        '• Your emergency contacts have been notified via email\n' +
-        (profile?.caregiver_phone ? '• SMS notification sent to caregiver\n' : '') +
-        (location ? `• Your location (${location}) was included\n` : '') +
-        '\nStay calm. Help is being notified.'
-      );
+      showToast('success', 'Emergency alert sent! Your contacts have been notified. Stay calm - help is on the way.');
 
       await auditLogger.info('EMERGENCY_SOS_COMPLETED', {
         userId,
@@ -226,13 +222,7 @@ export const WearableDashboard: React.FC = () => {
       setEmergencyStatus('error');
       await auditLogger.error('EMERGENCY_SOS_FAILED', error as Error);
 
-      alert(
-        '⚠️ Emergency alert may have partially failed.\n\n' +
-        'Please also:\n' +
-        '• Call 911 directly if this is a medical emergency\n' +
-        '• Contact your caregiver directly\n\n' +
-        `Error: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
+      showToast('warning', 'Alert may have partially failed. Please call 911 directly if this is a medical emergency.');
     } finally {
       setEmergencyLoading(false);
       // Reset status after 10 seconds
@@ -247,9 +237,9 @@ export const WearableDashboard: React.FC = () => {
         responded: true,
         responseTimeSeconds: 10,
       });
-      alert('Response recorded. Stay safe!');
+      showToast('success', 'Response recorded. Stay safe!');
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'Failed to record response');
+      showToast('error', error instanceof Error ? error.message : 'Failed to record response');
     }
   };
 
@@ -263,6 +253,7 @@ export const WearableDashboard: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">
+      <ToastContainer />
       {/* Header with Emergency SOS */}
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Health Monitoring Dashboard</h1>

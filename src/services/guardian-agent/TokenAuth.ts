@@ -95,19 +95,24 @@ class KeyManager {
 
   /**
    * Initialize keys - generates new pair or loads from environment
+   *
+   * NOTE: In production, token minting should occur server-side (Edge Functions).
+   * Client-side key generation is for development/testing only.
+   * JWT private keys should NEVER be exposed to browser environments.
    */
   async initialize(): Promise<void> {
     if (this.initialized) return;
 
-    // Check for environment-provided keys first (production)
-    const envPrivateKey = process.env.GUARDIAN_JWT_PRIVATE_KEY;
-    const envPublicKey = process.env.GUARDIAN_JWT_PUBLIC_KEY;
+    // Check for environment-provided keys (Vite client-side)
+    // SECURITY: Private keys should only be used server-side in production
+    const envPrivateKey = import.meta.env.VITE_GUARDIAN_JWT_PRIVATE_KEY;
+    const envPublicKey = import.meta.env.VITE_GUARDIAN_JWT_PUBLIC_KEY;
 
     if (envPrivateKey && envPublicKey) {
       try {
         this.privateKey = await jose.importPKCS8(envPrivateKey, 'RS256');
         this.publicKey = await jose.importSPKI(envPublicKey, 'RS256');
-        this.keyId = process.env.GUARDIAN_JWT_KEY_ID || this.keyId;
+        this.keyId = import.meta.env.VITE_GUARDIAN_JWT_KEY_ID || this.keyId;
         this.initialized = true;
         await auditLogger.info('TOKEN_AUTH_KEYS_LOADED', {
           keyId: this.keyId,

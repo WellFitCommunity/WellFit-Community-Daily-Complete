@@ -5,10 +5,11 @@
  * and usage pattern analysis
  */
 
-import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
+import { SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createLogger } from "../_shared/auditLogger.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 const SUPABASE_SERVICE_KEY = SB_SECRET_KEY;
@@ -113,7 +114,8 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Claude API error:', {
+      const logger = createLogger('claude-personalization', req);
+      logger.error('Claude API error', {
         status: response.status,
         statusText: response.statusText,
         error: errorText
@@ -149,7 +151,8 @@ serve(async (req) => {
     });
 
     if (logError) {
-      console.error('Failed to log Claude usage:', logError);
+      const logger = createLogger('claude-personalization', req);
+      logger.warn('Failed to log Claude usage', { error: logError.message });
       // Don't fail the request if logging fails
     }
 
@@ -167,15 +170,15 @@ serve(async (req) => {
         },
       }
     );
-  } catch (error) {
-    console.error('Personalization error:', error);
+  } catch (error: unknown) {
+    const logger = createLogger('claude-personalization', req);
 
     // More detailed error response for debugging
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     const errorStack = error instanceof Error ? error.stack : undefined;
 
-    // Log to help debug (Deno-compatible)
-    console.error('Error details:', {
+    // Log to help debug
+    logger.error('Personalization error', {
       message: errorMessage,
       stack: errorStack,
       hasAnthropicKey: !!ANTHROPIC_API_KEY,
