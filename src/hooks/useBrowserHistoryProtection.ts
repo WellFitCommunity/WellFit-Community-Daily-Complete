@@ -1,22 +1,35 @@
 /**
  * useBrowserHistoryProtection
  *
- * Prevents browser back button from navigating to auth routes when user is authenticated.
- * This solves the issue where pressing back button takes users to /login from browser history,
- * causing race conditions with session management and stale token errors.
+ * Enterprise-grade browser history protection for authenticated users.
  *
- * How it works:
- * 1. Listens to popstate events (browser back/forward)
- * 2. If navigating to an auth route while authenticated, pushes state back to prevent it
- * 3. Prevents multiple components from racing to handle expired sessions
+ * Problem Solved:
+ * In SPAs, the browser's physical back button can navigate to:
+ * - Auth routes (login, register) from browser history
+ * - Pages visited before the current session
+ * - External sites if the user entered via a link
+ *
+ * This causes:
+ * - Race conditions with session management
+ * - Stale token errors requiring re-authentication
+ * - Disrupted user experience in admin panels
+ *
+ * Solution:
+ * 1. Intercept ALL popstate events when user is authenticated
+ * 2. Use in-app NavigationHistoryContext instead of browser history
+ * 3. Push protective state entries to prevent browser from leaving the app
+ * 4. Provide context-aware fallback navigation based on user role
+ *
+ * Copyright (c) 2025 Envision VirtualEdge Group LLC. All rights reserved.
  */
 
 import { useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useSession } from '../contexts/AuthContext';
+import { useSession, useAuth } from '../contexts/AuthContext';
+import { useNavigationHistory } from '../contexts/NavigationHistoryContext';
 import { auditLogger } from '../services/auditLogger';
 
-// Routes that authenticated users should not navigate back to
+// Routes that authenticated users should never navigate back to via browser history
 const AUTH_ROUTES = [
   '/login',
   '/register',
@@ -24,9 +37,10 @@ const AUTH_ROUTES = [
   '/reset-password',
   '/phone-reset',
   '/welcome',
+  '/',
 ];
 
-// Routes that are acceptable to be on while authenticated (e.g., admin login for 2FA)
+// Routes where back button protection is allowed but handled differently
 const ALLOWED_AUTH_ROUTES = [
   '/admin-login',
   '/envision/login',
@@ -35,20 +49,81 @@ const ALLOWED_AUTH_ROUTES = [
   '/change-password',
 ];
 
+// Admin/clinical routes that need enhanced protection
+const PROTECTED_ROUTE_PREFIXES = [
+  '/admin',
+  '/super-admin',
+  '/envision',
+  '/billing',
+  '/it-admin',
+  '/nurse-',
+  '/physician-',
+  '/clinical-',
+  '/care-',
+];
+
 /**
- * Hook that protects against browser back button navigating to auth pages
- * when the user is already authenticated.
+ * Check if a path is within protected admin/clinical routes
+ */
+function isProtectedRoute(path: string): boolean {
+  return PROTECTED_ROUTE_PREFIXES.some(prefix => path.startsWith(prefix));
+}
+
+/**
+ * Get fallback route based on current location and user role
+ */
+function getFallbackRoute(currentPath: string, isAdmin: boolean): string {
+  if (currentPath.startsWith('/super-admin') || currentPath.startsWith('/envision')) {
+    return '/super-admin';
+  }
+  if (currentPath.startsWith('/admin') || currentPath.startsWith('/billing') || currentPath.startsWith('/it-admin')) {
+    return '/admin';
+  }
+  if (currentPath.startsWith('/nurse-')) {
+    return '/nurse-dashboard';
+  }
+  if (currentPath.startsWith('/physician-')) {
+    return '/physician-dashboard';
+  }
+  if (currentPath.startsWith('/clinical-') || currentPath.startsWith('/care-')) {
+    return '/clinical-dashboard';
+  }
+
+  // Role-based fallback
+  return isAdmin ? '/admin' : '/dashboard';
+}
+
+/**
+ * Hook that provides enterprise-grade browser history protection.
+ *
+ * For authenticated users, especially in admin/clinical contexts:
+ * - Intercepts browser back button
+ * - Uses in-app navigation history instead
+ * - Prevents navigation outside the application
+ * - Provides audit logging for security compliance
  */
 export function useBrowserHistoryProtection(): void {
   const session = useSession();
+  const { isAdmin } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Get navigation history context (if available)
+  let navHistory: ReturnType<typeof useNavigationHistory> | null = null;
+  try {
+    navHistory = useNavigationHistory();
+  } catch {
+    // NavigationHistoryContext not available - fall back to basic protection
+  }
 
   // Track if we're currently handling a popstate to prevent loops
   const isHandlingPopstate = useRef(false);
 
-  // Track the last valid (non-auth) path for fallback
+  // Track the last valid path for fallback
   const lastValidPath = useRef<string | null>(null);
+
+  // Track if we've pushed our protective state
+  const hasProtectiveState = useRef(false);
 
   // Update last valid path when on non-auth routes
   useEffect(() => {
@@ -62,7 +137,38 @@ export function useBrowserHistoryProtection(): void {
     }
   }, [location.pathname, session]);
 
-  // Handle popstate (browser back/forward)
+  // Push protective state when user is authenticated
+  // This creates a "barrier" in browser history that prevents accidental exit
+  useEffect(() => {
+    if (session && !hasProtectiveState.current) {
+      const currentPath = location.pathname;
+
+      // Only add protection for non-auth routes
+      if (!AUTH_ROUTES.includes(currentPath)) {
+        // Push a state marker that we can detect in popstate
+        window.history.pushState(
+          { protected: true, timestamp: Date.now() },
+          '',
+          currentPath
+        );
+        hasProtectiveState.current = true;
+
+        auditLogger.debug('BROWSER_HISTORY_PROTECTION_ENABLED', {
+          path: currentPath,
+          isAdmin,
+        });
+      }
+    }
+  }, [session, location.pathname, isAdmin]);
+
+  // Reset protective state flag on logout
+  useEffect(() => {
+    if (!session) {
+      hasProtectiveState.current = false;
+    }
+  }, [session]);
+
+  // Handle popstate (browser back/forward button)
   const handlePopstate = useCallback((event: PopStateEvent) => {
     // Prevent handling if we're already in a handler
     if (isHandlingPopstate.current) {
@@ -75,42 +181,79 @@ export function useBrowserHistoryProtection(): void {
     }
 
     const currentPath = window.location.pathname;
+    const previousPath = lastValidPath.current || location.pathname;
 
     // Check if we've navigated to an auth route
     const isAuthRoute = AUTH_ROUTES.some(route =>
       currentPath === route || currentPath.startsWith(route + '/')
     );
 
-    // Check if it's an allowed auth route (like admin-login for 2FA)
+    // Check if it's an allowed auth route
     const isAllowedRoute = ALLOWED_AUTH_ROUTES.some(route =>
       currentPath === route || currentPath.startsWith(route + '/')
     );
 
-    if (isAuthRoute && !isAllowedRoute) {
+    // Check if we're in a protected context (admin, clinical, etc.)
+    const wasInProtectedRoute = isProtectedRoute(previousPath);
+    const isNowOutsideProtected = !isProtectedRoute(currentPath);
+
+    // Determine if we need to intercept this navigation
+    const shouldIntercept =
+      (isAuthRoute && !isAllowedRoute) ||
+      (wasInProtectedRoute && isNowOutsideProtected && !isAllowedRoute);
+
+    if (shouldIntercept) {
       isHandlingPopstate.current = true;
 
-      auditLogger.info('BROWSER_BACK_TO_AUTH_PREVENTED', {
+      auditLogger.info('BROWSER_BACK_INTERCEPTED', {
         attemptedPath: currentPath,
-        redirectTo: lastValidPath.current || '/dashboard',
-        hasSession: true,
+        previousPath,
+        wasInProtectedRoute,
+        hasNavHistory: !!navHistory,
       });
 
-      // Determine where to redirect
-      const redirectPath = lastValidPath.current || '/dashboard';
+      // Use NavigationHistoryContext if available for smart back navigation
+      if (navHistory && navHistory.canGoBack) {
+        // Let the navigation history handle it properly
+        const targetPath = navHistory.getPreviousRoute() || getFallbackRoute(previousPath, isAdmin);
 
-      // Use history.pushState to add a new entry, effectively "forward" navigating
-      // This prevents the back button from working repeatedly
-      window.history.pushState(null, '', redirectPath);
+        // Push state to prevent browser from completing its navigation
+        window.history.pushState(
+          { protected: true, intercepted: true },
+          '',
+          targetPath
+        );
 
-      // Use React Router to update the component tree
-      navigate(redirectPath, { replace: true });
+        // Navigate using React Router
+        navigate(targetPath, { replace: true });
+      } else {
+        // No navigation history - use fallback
+        const fallbackPath = lastValidPath.current || getFallbackRoute(previousPath, isAdmin);
 
-      // Reset the flag after a brief delay
+        // Push state to prevent browser navigation
+        window.history.pushState(
+          { protected: true, fallback: true },
+          '',
+          fallbackPath
+        );
+
+        // Navigate using React Router
+        navigate(fallbackPath, { replace: true });
+      }
+
+      // Reset the handling flag after a brief delay
       setTimeout(() => {
         isHandlingPopstate.current = false;
-      }, 100);
+      }, 150);
+
+      return;
     }
-  }, [session, navigate]);
+
+    // For non-intercepted navigation within the app, update our last valid path
+    if (!isAuthRoute) {
+      lastValidPath.current = currentPath;
+    }
+  }, [session, navigate, location.pathname, navHistory, isAdmin]);
 
   // Set up popstate listener
   useEffect(() => {
@@ -121,17 +264,28 @@ export function useBrowserHistoryProtection(): void {
     };
   }, [handlePopstate]);
 
-  // When user logs in successfully, push state to prevent back navigation
+  // Handle beforeunload for additional protection
+  // This warns users if they try to leave via refresh or close while in protected routes
   useEffect(() => {
-    if (session && location.pathname !== '/login') {
-      // Push a null state to create a new history entry
-      // This helps prevent the immediate back button from going to login
-      const currentPath = location.pathname;
-      if (!AUTH_ROUTES.includes(currentPath)) {
-        // Add current path to history to "bury" the login page
-        window.history.replaceState({ protected: true }, '', currentPath);
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      // Only warn in protected routes with active session
+      if (session && isProtectedRoute(location.pathname)) {
+        // Modern browsers ignore custom messages, but we need to set returnValue
+        event.preventDefault();
+        // Chrome requires returnValue to be set
+        event.returnValue = '';
+        return '';
       }
+    };
+
+    // Note: We only add this for admin/clinical routes to avoid annoying regular users
+    if (session && isProtectedRoute(location.pathname)) {
+      window.addEventListener('beforeunload', handleBeforeUnload);
     }
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
   }, [session, location.pathname]);
 }
 
