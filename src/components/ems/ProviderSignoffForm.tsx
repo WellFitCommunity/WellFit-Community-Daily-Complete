@@ -5,6 +5,10 @@
 import React, { useState } from 'react';
 import { createProviderSignoff } from '../../services/emsNotificationService';
 import type { IncomingPatient } from '../../services/emsService';
+import { auditLogger } from '../../services/auditLogger';
+
+type ProviderRole = 'physician' | 'pa' | 'np' | 'resident';
+type SignoffType = 'acceptance' | 'acknowledgement' | 'treatment_plan' | 'final_signoff';
 
 interface ProviderSignoffFormProps {
   handoff: IncomingPatient;
@@ -21,11 +25,11 @@ const ProviderSignoffForm: React.FC<ProviderSignoffFormProps> = ({
 
   // Provider Info
   const [providerName, setProviderName] = useState('');
-  const [providerRole, setProviderRole] = useState<'physician' | 'pa' | 'np' | 'resident'>('physician');
+  const [providerRole, setProviderRole] = useState<ProviderRole>('physician');
   const [providerCredentials, setProviderCredentials] = useState('MD');
 
   // Signoff Type
-  const [signoffType, setSignoffType] = useState<'acceptance' | 'acknowledgement' | 'treatment_plan' | 'final_signoff'>('acceptance');
+  const [signoffType, setSignoffType] = useState<SignoffType>('acceptance');
 
   // Clinical Assessment
   const [patientCondition, setPatientCondition] = useState('');
@@ -79,9 +83,15 @@ const ProviderSignoffForm: React.FC<ProviderSignoffFormProps> = ({
           onSignoffComplete();
         }
       }, 2000);
-    } catch (err: any) {
-
-      setError(err.message || 'Failed to submit sign-off');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to submit sign-off';
+      auditLogger.error('ProviderSignoffForm: Failed to submit sign-off', errorMessage, {
+        handoffId: handoff.id,
+        providerName,
+        providerRole,
+        signoffType
+      });
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -193,7 +203,7 @@ const ProviderSignoffForm: React.FC<ProviderSignoffFormProps> = ({
               </label>
               <select
                 value={providerRole}
-                onChange={(e) => setProviderRole(e.target.value as any)}
+                onChange={(e) => setProviderRole(e.target.value as ProviderRole)}
                 required
                 style={{
                   width: '100%',
@@ -242,7 +252,7 @@ const ProviderSignoffForm: React.FC<ProviderSignoffFormProps> = ({
           </label>
           <select
             value={signoffType}
-            onChange={(e) => setSignoffType(e.target.value as any)}
+            onChange={(e) => setSignoffType(e.target.value as SignoffType)}
             required
             style={{
               width: '100%',

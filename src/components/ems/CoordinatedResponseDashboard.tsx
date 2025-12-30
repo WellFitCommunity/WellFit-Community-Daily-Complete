@@ -11,6 +11,7 @@ import {
   type CoordinatedResponseStatus,
 } from '../../services/emsNotificationService';
 import useRealtimeSubscription from '../../hooks/useRealtimeSubscription';
+import { auditLogger } from '../../services/auditLogger';
 
 interface CoordinatedResponseDashboardProps {
   handoffId: string;
@@ -47,15 +48,25 @@ const CoordinatedResponseDashboard: React.FC<CoordinatedResponseDashboardProps> 
     const { error: err } = await acknowledgeDepartmentDispatch(dispatchId, userName, role ?? undefined);
 
     if (err) {
+      auditLogger.error('CoordinatedResponseDashboard: Failed to acknowledge dispatch', err.message, {
+        dispatchId,
+        departmentName,
+        userName
+      });
       alert(`Error: ${err.message}`);
     } else {
+      auditLogger.info('CoordinatedResponseDashboard: Department acknowledged dispatch', {
+        dispatchId,
+        departmentName,
+        userName
+      });
       alert(`✅ ${departmentName} acknowledged!`);
       refresh();
     }
   };
 
-  const handleMarkReady = async (dispatchId: string, departmentName: string, requiredActions: any) => {
-    const actions = requiredActions || [];
+  const handleMarkReady = async (dispatchId: string, departmentName: string, requiredActions: string[] | null | undefined) => {
+    const actions: string[] = requiredActions || [];
     const completedActions: string[] = [];
 
     // Ask user to confirm each action
@@ -74,8 +85,18 @@ const CoordinatedResponseDashboard: React.FC<CoordinatedResponseDashboardProps> 
     const { error: err } = await markDepartmentReady(dispatchId, completedActions);
 
     if (err) {
+      auditLogger.error('CoordinatedResponseDashboard: Failed to mark department ready', err.message, {
+        dispatchId,
+        departmentName,
+        completedActions
+      });
       alert(`Error: ${err.message}`);
     } else {
+      auditLogger.info('CoordinatedResponseDashboard: Department marked ready', {
+        dispatchId,
+        departmentName,
+        completedActions
+      });
       alert(`✅ ${departmentName} is READY!`);
       refresh();
     }

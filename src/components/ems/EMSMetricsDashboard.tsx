@@ -4,6 +4,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
+import { auditLogger } from '../../services/auditLogger';
+
+type DateRangeOption = '7d' | '30d' | '90d' | 'all';
 
 interface MetricsData {
   totalHandoffs: number;
@@ -30,7 +33,7 @@ interface MetricsData {
 const EMSMetricsDashboard: React.FC = () => {
   const [metrics, setMetrics] = useState<MetricsData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
+  const [dateRange, setDateRange] = useState<DateRangeOption>('30d');
 
   useEffect(() => {
     loadMetrics();
@@ -104,8 +107,9 @@ const EMSMetricsDashboard: React.FC = () => {
         departmentResponseTimes,
         handoffsOverTime,
       });
-    } catch (err) {
-
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error loading metrics';
+      auditLogger.error('EMS Metrics: Failed to load metrics', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -242,7 +246,7 @@ const EMSMetricsDashboard: React.FC = () => {
         </h1>
         <select
           value={dateRange}
-          onChange={(e) => setDateRange(e.target.value as any)}
+          onChange={(e) => setDateRange(e.target.value as DateRangeOption)}
           style={{
             padding: '0.5rem 1rem',
             fontSize: '1rem',

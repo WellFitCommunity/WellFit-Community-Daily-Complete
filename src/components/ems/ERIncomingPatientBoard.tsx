@@ -16,6 +16,7 @@ import {
   type IncomingPatient,
 } from '../../services/emsService';
 import { integrateEMSHandoff } from '../../services/emsIntegrationService';
+import { auditLogger } from '../../services/auditLogger';
 import CoordinatedResponseDashboard from './CoordinatedResponseDashboard';
 import ProviderSignoffForm from './ProviderSignoffForm';
 
@@ -74,9 +75,12 @@ const ERIncomingPatientBoard: React.FC<ERIncomingPatientBoardProps> = ({ hospita
 
       setPatients(data || []);
       setError(null);
-    } catch (err: any) {
-
-      setError(err.message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load patients';
+      auditLogger.error('ERIncomingPatientBoard: Failed to load patients', errorMessage, {
+        hospitalName
+      });
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -86,9 +90,12 @@ const ERIncomingPatientBoard: React.FC<ERIncomingPatientBoardProps> = ({ hospita
     try {
       await acknowledgeHandoff(patientId, 'ER notified, preparing for arrival');
       loadPatients(); // Refresh
-    } catch (err: any) {
-
-      alert('Failed to acknowledge: ' + err.message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      auditLogger.error('ERIncomingPatientBoard: Failed to acknowledge handoff', errorMessage, {
+        patientId
+      });
+      alert('Failed to acknowledge: ' + errorMessage);
     }
   };
 
@@ -96,9 +103,12 @@ const ERIncomingPatientBoard: React.FC<ERIncomingPatientBoardProps> = ({ hospita
     try {
       await markPatientArrived(patientId);
       loadPatients(); // Refresh
-    } catch (err: any) {
-
-      alert('Failed to mark arrived: ' + err.message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      auditLogger.error('ERIncomingPatientBoard: Failed to mark patient arrived', errorMessage, {
+        patientId
+      });
+      alert('Failed to mark arrived: ' + errorMessage);
     }
   };
 
@@ -169,7 +179,8 @@ Lives depend on complete, accurate handoffs.
 
       // Step 2: Integrate handoff into patient chart (creates patient, encounter, vitals)
 
-      const integrationResult = await integrateEMSHandoff(patientId, patient as any);
+      // Type assertion at service boundary - IncomingPatient is a database row transform of PrehospitalHandoff
+      const integrationResult = await integrateEMSHandoff(patientId, patient as unknown as Parameters<typeof integrateEMSHandoff>[1]);
 
       if (integrationResult.success) {
         // Integration complete
@@ -196,8 +207,17 @@ Lives depend on complete, accurate handoffs.
       }, 4000);
 
       loadPatients(); // Refresh
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      const errorCode = err instanceof Error && 'code' in err ? String((err as Error & { code?: string }).code) : 'UNKNOWN';
 
+      // Log the critical error for audit purposes
+      auditLogger.error('ERIncomingPatientBoard: CRITICAL - Handoff completion failed', errorMessage, {
+        errorCode,
+        patientId,
+        patientName,
+        timestamp: new Date().toISOString()
+      });
 
       // Database/network error - different from validation error
       const technicalErrorMessage = `
@@ -205,7 +225,7 @@ Lives depend on complete, accurate handoffs.
 
 The handoff could not be saved due to a system error.
 
-Error Details: ${err.message}
+Error Details: ${errorMessage}
 
 ACTION REQUIRED:
 1. Note the current time: ${new Date().toLocaleTimeString()}
@@ -214,7 +234,7 @@ ACTION REQUIRED:
 4. Do not retry until issue is resolved
 
 Patient: ${patientName}
-Error Code: ${err.code || 'UNKNOWN'}
+Error Code: ${errorCode}
       `.trim();
 
       alert(technicalErrorMessage);

@@ -4,6 +4,7 @@
 
 import React, { useState } from 'react';
 import { createPrehospitalHandoff, type PrehospitalHandoff } from '../../services/emsService';
+import { auditLogger } from '../../services/auditLogger';
 
 const ParamedicHandoffForm: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -86,9 +87,14 @@ const ParamedicHandoffForm: React.FC = () => {
       setTimeout(() => {
         resetForm();
       }, 3000);
-    } catch (err: any) {
-
-      setError(err.message || 'Failed to send handoff');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to send handoff';
+      auditLogger.error('ParamedicHandoffForm: Failed to submit handoff', errorMessage, {
+        chiefComplaint,
+        paramedicName,
+        unitNumber
+      });
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
