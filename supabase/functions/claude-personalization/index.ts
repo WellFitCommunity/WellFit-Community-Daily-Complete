@@ -174,7 +174,7 @@ serve(async (req) => {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     const errorStack = error instanceof Error ? error.stack : undefined;
 
-    // Log to help debug
+    // Log to help debug (Deno-compatible)
     console.error('Error details:', {
       message: errorMessage,
       stack: errorStack,
@@ -182,10 +182,14 @@ serve(async (req) => {
       keyPrefix: ANTHROPIC_API_KEY ? ANTHROPIC_API_KEY.substring(0, 10) + '...' : 'MISSING'
     });
 
+    // Check if running in development mode (Deno-compatible)
+    const isDevelopment = Deno.env.get('DENO_ENV') === 'development' ||
+                          Deno.env.get('SUPABASE_ENV') === 'local';
+
     return new Response(
       JSON.stringify({
         error: errorMessage,
-        details: process.env.NODE_ENV === 'development' ? errorStack : undefined,
+        details: isDevelopment ? errorStack : undefined,
         timestamp: new Date().toISOString(),
         hint: 'Check Edge Function logs for more details'
       }),

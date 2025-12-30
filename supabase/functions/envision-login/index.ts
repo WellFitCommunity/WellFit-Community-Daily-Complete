@@ -380,9 +380,26 @@ Deno.serve(async (req: Request): Promise<Response> => {
     }
 
     // Determine 2FA method
+    // IMPORTANT: A user is "TOTP enabled" only if BOTH totp_enabled AND totp_secret are set
+    // If totp_enabled is true but totp_secret is missing, this is a partial/broken state
     const totpEnabled = Boolean(superAdmin.totp_enabled && superAdmin.totp_secret);
+    const totpPartialSetup = Boolean(superAdmin.totp_enabled && !superAdmin.totp_secret);
     const pinConfigured = Boolean(superAdmin.pin_hash);
-    const needs2FASetup = !totpEnabled && !pinConfigured;
+
+    // User needs 2FA setup if:
+    // 1. No TOTP fully configured AND no PIN configured, OR
+    // 2. TOTP is in a partial/broken state (enabled but no secret)
+    const needs2FASetup = (!totpEnabled && !pinConfigured) || totpPartialSetup;
+
+    // Log if partial TOTP state detected
+    if (totpPartialSetup) {
+      logger.warn("TOTP in partial state for super admin - will redirect to setup", {
+        superAdminId: superAdmin.id,
+        email,
+        totpEnabled: superAdmin.totp_enabled,
+        hasSecret: !!superAdmin.totp_secret,
+      });
+    }
 
     // Return session token for 2FA verification step
     return new Response(
@@ -394,10 +411,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
         totp_enabled: totpEnabled,
         pin_configured: pinConfigured,
         requires_2fa_setup: needs2FASetup,
+        // Allow users with PIN to optionally switch to TOTP
+        can_setup_totp: !totpEnabled,
         // Legacy field for backwards compatibility
-        requires_pin: !totpEnabled && pinConfigured,
+        requires_pin: !totpEnabled && pinConfigured && !totpPartialSetup,
         message: totpEnabled
           ? "Password verified. Please enter your authenticator code."
+          : needs2FASetup
+          ? "Password verified. Please set up two-factor authentication."
           : pinConfigured
           ? "Password verified. Please enter your PIN to complete login."
           : "Password verified. Please set up two-factor authentication.",

@@ -25,39 +25,54 @@ const EnrollSeniorPage: React.FC = () => {
   const [isTestPatient, setIsTestPatient] = useState(false);
   const [testTag, setTestTag] = useState('');
 
+
+  /**
+   * Generate a senior-friendly password using common words
+   * Format: {Word}{2-digit number}{Symbol}
+   * Example: Sunshine42!, Rainbow17#, Garden85$
+   *
+   * This format is:
+   * - Easy to communicate verbally: "Sunshine forty-two exclamation point"
+   * - Easy to write down
+   * - Still meets password requirements (upper, lower, number, symbol)
+   * - Seniors should change it on first login
+   */
   const generateSecurePassword = (): string => {
-    const lowercase = 'abcdefghijklmnopqrstuvwxyz';
-    const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const numbers = '0123456789';
-    const symbols = '!@#$%^&*';
-    const all = lowercase + uppercase + numbers + symbols;
-
-    const pick = (pool: string) => {
-      const array = new Uint32Array(1);
-      crypto.getRandomValues(array);
-      return pool[array[0] % pool.length];
-    };
-
-    // Ensure at least one character from each category
-    const password = [
-      pick(lowercase),
-      pick(uppercase),
-      pick(numbers),
-      pick(symbols)
+    // Common, easy-to-pronounce words (all start with capital)
+    const words = [
+      'Sunshine', 'Rainbow', 'Garden', 'Flower', 'Morning',
+      'Butterfly', 'Mountain', 'Ocean', 'Meadow', 'Sunset',
+      'Starlight', 'Breeze', 'Harvest', 'Autumn', 'Spring',
+      'Summer', 'Winter', 'Golden', 'Silver', 'Crystal',
+      'Harmony', 'Blessing', 'Peaceful', 'Joyful', 'Gentle',
+      'Willow', 'Maple', 'Birdsong', 'Rosebud', 'Daisy',
+      'Lavender', 'Magnolia', 'Bluebell', 'Tulip', 'Jasmine',
+      'Sunflower', 'Honeybee', 'Cardinal', 'Bluebird', 'Sparrow',
+      'Dragonfly', 'Firefly', 'Pebble', 'Raindrop', 'Dewdrop',
+      'Cherish', 'Comfort', 'Welcome', 'Kindness', 'Grateful'
     ];
 
-    // Fill remaining length with random characters
-    for (let i = 4; i < 12; i++) {
-      password.push(pick(all));
-    }
+    // Simple symbols that are easy to say
+    const symbols = ['!', '#', '$', '@', '*'];
 
-    // Shuffle array
-    for (let i = password.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [password[i], password[j]] = [password[j], password[i]];
-    }
+    // Cryptographically secure random selection
+    const randomIndex = (max: number): number => {
+      const array = new Uint32Array(1);
+      crypto.getRandomValues(array);
+      return array[0] % max;
+    };
 
-    return password.join('');
+    // Pick a random word
+    const word = words[randomIndex(words.length)];
+
+    // Pick a 2-digit number (10-99) - easier to say than single digits
+    const number = 10 + randomIndex(90); // 10-99
+
+    // Pick a symbol
+    const symbol = symbols[randomIndex(symbols.length)];
+
+    // Format: Word + Number + Symbol (e.g., "Sunshine42!")
+    return `${word}${number}${symbol}`;
   };
 
   const handleEnroll = async (e: React.FormEvent) => {
@@ -79,6 +94,7 @@ const EnrollSeniorPage: React.FC = () => {
     setMessage(null);
 
     try {
+      // Generate password at enrollment time (not before - avoids waste if enrollment fails)
       const tempPassword = generateSecurePassword();
 
       const enrollmentBody: Record<string, string | undefined> = {
@@ -170,6 +186,18 @@ const EnrollSeniorPage: React.FC = () => {
     setMessage(null);
   };
 
+  // Get phonetic description of password for verbal communication
+  const getPhoneticPassword = (pwd: string): string => {
+    return pwd
+      .replace(/(\d+)/, ' $1 ')
+      .replace('!', 'exclamation point')
+      .replace('#', 'pound sign')
+      .replace('$', 'dollar sign')
+      .replace('@', 'at sign')
+      .replace('*', 'star')
+      .trim();
+  };
+
   const handleCompleteDemographics = () => {
     if (!newUserId) {
       alert('No user ID found. Please enroll a senior first.');
@@ -234,22 +262,28 @@ const EnrollSeniorPage: React.FC = () => {
                     <div className="mt-4 p-5 bg-yellow-100 rounded-lg border-3 border-yellow-400 shadow-md">
                       <p className="text-lg font-bold text-gray-900 mb-3 flex items-center">
                         <span className="text-2xl mr-2">🔑</span>
-                        TEMPORARY PASSWORD - SAVE THIS NOW!
+                        TEMPORARY PASSWORD - SHARE WITH PATIENT
                       </p>
                       <div className="bg-white p-4 rounded-lg border-2 border-blue-500 mb-3">
                         <code className="text-3xl font-mono font-bold text-blue-700 block text-center tracking-wider">
                           {generatedPassword}
                         </code>
+                        {/* Phonetic guide for easy verbal communication */}
+                        <p className="text-sm text-gray-600 mt-2 text-center italic">
+                          📢 Say it as: "{getPhoneticPassword(generatedPassword)}"
+                        </p>
                       </div>
                       <div className="flex flex-col gap-3">
                         <div className="flex gap-3">
                           <button
+                            type="button"
                             onClick={() => copyToClipboard(generatedPassword)}
                             className="flex-1 px-4 py-3 bg-blue-600 text-white text-lg font-bold rounded-lg hover:bg-blue-700 shadow-md transition-colors"
                           >
                             📋 Copy Password
                           </button>
                           <button
+                            type="button"
                             onClick={handleCompleteDemographics}
                             className="flex-1 px-4 py-3 bg-purple-600 text-white text-lg font-bold rounded-lg hover:bg-purple-700 shadow-md transition-colors"
                           >
@@ -257,14 +291,15 @@ const EnrollSeniorPage: React.FC = () => {
                           </button>
                         </div>
                         <button
+                          type="button"
                           onClick={clearForm}
                           className="w-full px-4 py-3 bg-green-600 text-white text-lg font-bold rounded-lg hover:bg-green-700 shadow-md transition-colors"
                         >
                           ➕ Enroll Another Senior
                         </button>
                       </div>
-                      <p className="text-sm text-red-700 font-semibold mt-3 text-center">
-                        ⚠️ This password will only be shown once. Write it down or copy it now!
+                      <p className="text-sm text-orange-700 font-semibold mt-3 text-center">
+                        ⚠️ Patient should change this password on first login
                       </p>
                     </div>
                   )}

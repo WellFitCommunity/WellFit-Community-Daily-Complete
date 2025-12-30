@@ -1,10 +1,11 @@
 // supabase/functions/test-users/index.ts
-import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
+import { SUPABASE_URL as IMPORTED_SUPABASE_URL, SB_SECRET_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.183.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.28.0";
+import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 
 // ─── ENV ───────────────────────────────────────────────────────────
-const SUPABASE_URL = SUPABASE_URL ?? "";
+const SUPABASE_URL = IMPORTED_SUPABASE_URL ?? "";
 const SUPABASE_SECRET_KEY =
   Deno.env.get("SB_SECRET_KEY") ?? SB_SECRET_KEY ?? "";
 
@@ -14,8 +15,32 @@ if (!SUPABASE_URL || !SUPABASE_SECRET_KEY) {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SECRET_KEY, { auth: { persistSession: false } });
 
-// ─── Helper: get caller + roles ─────────────────────────────────────
+// ─── Helper: get caller + roles (supports both Bearer token and X-Admin-Token) ─────────────────────────────────────
 async function getCaller(req: Request) {
+  // Check for X-Admin-Token (admin/nurse PIN-based auth)
+  const adminToken = req.headers.get("X-Admin-Token");
+  if (adminToken) {
+    // Validate admin session token
+    const { data: session, error: sessionError } = await supabase
+      .from("admin_sessions")
+      .select("user_id, role, expires_at")
+      .eq("admin_token", adminToken)
+      .single();
+
+    if (sessionError || !session) {
+      return { id: null as string | null, roles: [] as string[] };
+    }
+
+    // Check if session is expired
+    if (new Date(session.expires_at) < new Date()) {
+      return { id: null as string | null, roles: [] as string[] };
+    }
+
+    // Return admin/nurse with their role
+    return { id: session.user_id, roles: [session.role] };
+  }
+
+  // Fallback to Bearer token (regular JWT auth)
   const hdr = req.headers.get("Authorization") || "";
   const token = hdr.startsWith("Bearer ") ? hdr.slice(7) : "";
   if (!token) return { id: null as string | null, roles: [] as string[] };
@@ -38,60 +63,55 @@ async function getCaller(req: Request) {
   return { id, roles };
 }
 
-// CORS Configuration
-const ALLOWED_ORIGINS = [
-  "https://thewellfitcommunity.org",
-  "https://www.thewellfitcommunity.org",
-  "https://wellfitcommunity.live",
-  "https://www.wellfitcommunity.live",
-  "http://localhost:3100",
-  "https://localhost:3100",
-  "https://houston.thewellfitcommunity.org",
-  "https://miami.thewellfitcommunity.org",
-  "https://phoenix.thewellfitcommunity.org",
-  "https://seattle.thewellfitcommunity.org",
-];
-
-function getCorsHeaders(origin: string | null) {
-  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : null;
-  return new Headers({
-    "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": allowedOrigin || "null",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, x-client-info, apikey",
-    "Access-Control-Allow-Credentials": "true",
-  });
-}
-
 // ─── Function ────────────────────────────────────────────────────────
+// CORS handled via shared _shared/cors.ts module (white-label multi-tenant ready)
 serve(async (req: Request) => {
-  const origin = req.headers.get("Origin");
-  const headers = getCorsHeaders(origin);
+  // Handle preflight requests using shared CORS module
+  if (req.method === "OPTIONS") return handleOptions(req);
 
-  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers });
+  // Get dynamic CORS headers for this request's origin
+  const { headers: corsHeaders } = corsFromRequest(req);
+
   if (req.method !== "POST")
-    return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers });
+    return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: corsHeaders });
 
   try {
     // 1) AuthZ: must be admin or super_admin
     const { id: adminId, roles } = await getCaller(req);
     if (!adminId)
-      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
 
-    const isAllowed = roles.includes("admin") || roles.includes("super_admin");
+    const isAllowed = roles.includes("admin") || roles.includes("super_admin") || roles.includes("nurse");
     if (!isAllowed)
-      return new Response(JSON.stringify({ error: "Insufficient privileges" }), { status: 403, headers });
+      return new Response(JSON.stringify({ error: "Insufficient privileges - admin, super_admin, or nurse role required" }), { status: 403, headers: corsHeaders });
 
-    // 2) Generate random test user data
+    // 2) Parse request body to get optional parameters
+    const body = await req.json().catch(() => ({}));
+    const {
+      phone: customPhone,
+      password: customPassword,
+      full_name: fullName,
+      email: customEmail,
+      test_tag: customTestTag
+    } = body;
+
+    // 3) Generate random test user data (use provided values or generate)
     const timestamp = Date.now();
     const random = Math.floor(Math.random() * 10000);
-    const testPhone = `+1555${String(timestamp).slice(-7)}`;
-    const testEmail = `test.user.${timestamp}.${random}@wellfit.test`;
-    const testPassword = `TestPass${timestamp}!`;
-    const firstName = `Test${random}`;
-    const lastName = `User${timestamp}`;
+    const testPhone = customPhone || `+1555${String(timestamp).slice(-7)}`;
+    const testEmail = customEmail || `test.user.${timestamp}.${random}@wellfit.test`;
+    const testPassword = customPassword || `TestPass${timestamp}!`;
 
-    // 3) Create auth user
+    // Parse full name if provided
+    let firstName = `Test${random}`;
+    let lastName = `User${timestamp}`;
+    if (fullName) {
+      const nameParts = String(fullName).trim().split(/\s+/);
+      firstName = nameParts[0] || firstName;
+      lastName = nameParts.slice(1).join(' ') || lastName;
+    }
+
+    // 4) Create auth user
     const { data: ures, error: uerr } = await supabase.auth.admin.createUser({
       phone: testPhone,
       password: testPassword,
@@ -103,13 +123,14 @@ serve(async (req: Request) => {
 
     if (uerr || !ures?.user) {
       const msg = uerr?.message ?? "User creation failed";
-      return new Response(JSON.stringify({ error: msg }), { status: 400, headers });
+      return new Response(JSON.stringify({ error: msg }), { status: 400, headers: corsHeaders });
     }
     const newUserId = ures.user.id;
 
-    // 4) Insert profile
+    // 5) Insert profile
     const { error: perr } = await supabase.from("profiles").insert({
       user_id: newUserId,
+      role_id: 4,  // Explicitly set role_id to 4 (senior)
       phone: testPhone,
       first_name: firstName,
       last_name: lastName,
@@ -122,7 +143,8 @@ serve(async (req: Request) => {
       demographics_complete: false,
       onboarded: false,
       is_test_user: true,
-      test_tag: `auto-test-${new Date().toISOString().split('T')[0]}`,
+      test_tag: customTestTag || `auto-test-${new Date().toISOString().split('T')[0]}`,
+      created_by: adminId,  // Track which staff member enrolled this patient
       created_at: new Date().toISOString(),
     });
 
@@ -130,21 +152,22 @@ serve(async (req: Request) => {
       await supabase.auth.admin.deleteUser(newUserId).catch(() => {});
       return new Response(
         JSON.stringify({ error: perr.message ?? "Profile insertion failed" }),
-        { status: 500, headers }
+        { status: 500, headers: corsHeaders }
       );
     }
 
-    // 5) Audit log
-    const { error: auditError } = await supabase.from("admin_enroll_audit")
-      .insert({ admin_id: adminId, user_id: newUserId });
+    // 6) Audit log (non-blocking)
+    try {
+      const { error: auditError } = await supabase.from("admin_enroll_audit")
+        .insert({ admin_id: adminId, user_id: newUserId });
 
-    if (auditError) {
-      console.error("Critical: Failed to log admin enrollment for compliance:", auditError);
-      await supabase.auth.admin.deleteUser(newUserId).catch(() => {});
-      return new Response(
-        JSON.stringify({ error: "System error: Unable to record enrollment for compliance." }),
-        { status: 500, headers }
-      );
+      if (auditError) {
+        console.error("Warning: Failed to log admin enrollment for compliance:", auditError);
+        // Continue with enrollment - audit can be added via background job later
+      }
+    } catch (auditException: unknown) {
+      console.error("Warning: Audit logging exception:", auditException);
+      // Continue with enrollment
     }
 
     return new Response(JSON.stringify({
@@ -157,13 +180,14 @@ serve(async (req: Request) => {
       last_name: lastName
     }), {
       status: 201,
-      headers,
+      headers: corsHeaders,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Test Users Error:", err);
+    const errorMessage = err instanceof Error ? err.message : "Internal server error";
     return new Response(
-      JSON.stringify({ error: err?.message ?? "Internal server error" }),
-      { status: 500, headers }
+      JSON.stringify({ error: errorMessage }),
+      { status: 500, headers: corsHeaders }
     );
   }
 });

@@ -237,13 +237,29 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const label = String(superAdmin.email || "admin").toLowerCase();
 
     if (action === "begin") {
-      // If already configured, don't generate new QR
-      if (superAdmin.totp_enabled && superAdmin.totp_secret) {
+      // Check for "force" flag to allow re-setup even if partially configured
+      const forceSetup = body?.force === true;
+
+      // If already fully configured AND not forcing re-setup, don't generate new QR
+      // A user is "fully configured" only if BOTH totp_enabled AND totp_secret are set
+      if (!forceSetup && superAdmin.totp_enabled && superAdmin.totp_secret) {
         return json(corsHeaders, 200, {
           success: true,
           already_configured: true,
           message: "Authenticator is already set up.",
         });
+      }
+
+      // If totp_enabled is true but no secret, this is a partial/broken state - allow setup
+      if (superAdmin.totp_enabled && !superAdmin.totp_secret) {
+        logger.warn("TOTP in partial state - totp_enabled=true but no secret, allowing re-setup", {
+          superAdminId,
+        });
+        // Reset the totp_enabled flag since setup wasn't completed
+        await supabase
+          .from("super_admin_users")
+          .update({ totp_enabled: false })
+          .eq("id", superAdminId);
       }
 
       // Idempotent behavior: if a pending secret already exists for this session and isn't expired, reuse it.
@@ -368,12 +384,30 @@ Deno.serve(async (req: Request): Promise<Response> => {
         });
       }
 
-      // Persist: enable totp, store secret, and remove PIN so the system stops asking for PIN
+      // Generate backup codes using database function
+      const { data: backupCodes, error: genErr } = await supabase.rpc("generate_totp_backup_codes");
+
+      if (genErr) {
+        logger.error("Failed to generate backup codes", { error: genErr.message });
+        return json(corsHeaders, 500, { error: "Failed to generate backup codes" });
+      }
+
+      // Hash backup codes for secure storage
+      const hashedCodes: string[] = [];
+      for (const code of backupCodes as string[]) {
+        const { data: hashed } = await supabase.rpc("hash_backup_code", { code });
+        if (hashed) hashedCodes.push(hashed as string);
+      }
+
+      // Persist: enable totp, store secret, store hashed backup codes, remove PIN
       const { error: updErr } = await supabase
         .from("super_admin_users")
         .update({
           totp_enabled: true,
           totp_secret: String(pending.totp_secret),
+          totp_setup_at: new Date().toISOString(),
+          totp_backup_codes: hashedCodes,
+          totp_backup_codes_generated_at: new Date().toISOString(),
           pin_hash: null,
         })
         .eq("id", superAdminId);
@@ -391,7 +425,17 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
       await supabase.from("envision_totp_pending").delete().eq("session_token", sessionToken);
 
-      return json(corsHeaders, 200, { success: true, message: "Authenticator setup complete." });
+      logger.info("TOTP setup completed with backup codes", {
+        superAdminId,
+        backupCodesGenerated: (backupCodes as string[]).length,
+      });
+
+      // Return success with backup codes (these are shown ONCE to the user)
+      return json(corsHeaders, 200, {
+        success: true,
+        message: "Authenticator setup complete. Save your backup codes!",
+        backup_codes: backupCodes,
+      });
     }
 
     return json(corsHeaders, 400, { error: "Invalid action. Use action='begin' or action='confirm'." });
