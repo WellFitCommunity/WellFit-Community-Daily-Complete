@@ -15,6 +15,9 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
 import { checkMCPRateLimit, getRequestIdentifier, createRateLimitResponse, MCP_RATE_LIMITS } from '../_shared/mcpRateLimiter.ts';
+import { createLogger } from '../_shared/auditLogger.ts';
+
+const logger = createLogger('mcp-clearinghouse-server');
 
 // =====================================================
 // Types
@@ -973,8 +976,11 @@ serve(async (req: Request) => {
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
     }
-  } catch (error) {
-    console.error('Clearinghouse MCP error:', error);
+  } catch (error: unknown) {
+    logger.error("Clearinghouse MCP error", {
+      errorMessage: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined
+    });
     return new Response(
       JSON.stringify({
         jsonrpc: '2.0',

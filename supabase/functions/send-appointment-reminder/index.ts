@@ -3,6 +3,9 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4?dts";
 import { z, ZodIssue } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { withCORS, requireUser, requireRole } from "../_shared/auth.ts";
+import { createLogger } from "../_shared/auditLogger.ts";
+
+const logger = createLogger("send-appointment-reminder");
 
 // -------------- Utils --------------
 const getEnv = (k: string, ...alts: string[]) => {
@@ -129,14 +132,14 @@ const handler = async (req: Request): Promise<Response> => {
   }
   if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
     // We can still send SMS; just skip DB log
-    console.warn("Supabase envs missing (will send SMS but skip logging).");
+    logger.warn("Supabase envs missing (will send SMS but skip logging)", { SUPABASE_URL: !!SUPABASE_URL, SUPABASE_SERVICE_KEY: !!SUPABASE_SERVICE_KEY });
   }
 
   // Build + send
   const message = buildMessage(data);
   const sms = await sendSMS(data.phone, message);
   if (!sms.ok) {
-    console.error("Appointment reminder SMS failed:", sms.error);
+    logger.error("Appointment reminder SMS failed", { error: sms.error, twilioCode: sms.twilio_code });
     return json({ error: "TWILIO_ERROR", details: sms.error, twilio_code: sms.twilio_code }, 502);
   }
 
@@ -157,10 +160,11 @@ const handler = async (req: Request): Promise<Response> => {
         sent_by: user.id,
         sent_at: new Date().toISOString(),
       });
-      if (logErr) console.warn("Failed to log appointment reminder:", logErr);
+      if (logErr) logger.warn("Failed to log appointment reminder", { error: logErr.message });
     }
-  } catch (e) {
-    console.warn("Logging skipped/failed:", e instanceof Error ? e.message : String(e));
+  } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : String(e);
+    logger.warn("Logging skipped/failed", { error: errorMessage });
   }
 
   return json({ success: true, sid: sms.sid, status: sms.status ?? "queued" }, 200);

@@ -19,6 +19,9 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
 import { SUPABASE_URL, SB_SECRET_KEY } from '../_shared/env.ts';
+import { createLogger } from '../_shared/auditLogger.ts';
+
+const logger = createLogger('smart-mood-suggestions');
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 const HAIKU_MODEL = 'claude-3-5-haiku-20241022';
@@ -418,9 +421,10 @@ serve(async (req) => {
           recentHistory
         );
         source = 'generated';
-      } catch (genError) {
+      } catch (genError: unknown) {
         // Fall back to selection
-        console.error('Generation failed, falling back to selection:', genError);
+        const errorMessage = genError instanceof Error ? genError.message : String(genError);
+        logger.error('Generation failed, falling back to selection', { error: errorMessage });
         suggestions = await selectFromPool(category, symptoms, notes, timeContext);
         source = 'selected';
       }
@@ -443,8 +447,9 @@ serve(async (req) => {
     return new Response(JSON.stringify(response), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-  } catch (error) {
-    console.error('Smart suggestions error:', error);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error('Smart suggestions error', { error: errorMessage });
 
     // Ultimate fallback
     return new Response(

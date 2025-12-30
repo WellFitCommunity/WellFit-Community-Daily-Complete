@@ -15,6 +15,9 @@ import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
+import { createLogger } from "../_shared/auditLogger.ts";
+
+const logger = createLogger("daily-backup-verification");
 
 serve(async (req) => {
   // Handle CORS preflight
@@ -45,14 +48,14 @@ serve(async (req) => {
       }
     });
 
-    console.log('[Daily Backup Verification] Starting automated verification...');
+    logger.info("Starting automated verification");
 
     // Call the verify_database_backup() function
     const { data: verificationResult, error: verificationError } = await supabase
       .rpc('verify_database_backup');
 
     if (verificationError) {
-      console.error('[Daily Backup Verification] Error during verification:', verificationError);
+      logger.error("Error during verification", { error: verificationError.message, details: verificationError });
 
       // Log failure as security event
       await supabase.rpc('log_security_event', {
@@ -77,7 +80,7 @@ serve(async (req) => {
       );
     }
 
-    console.log('[Daily Backup Verification] Verification completed successfully:', verificationResult);
+    logger.info("Verification completed successfully", { result: verificationResult });
 
     // Check if verification passed or has warnings
     const status = verificationResult?.status || 'unknown';
@@ -112,13 +115,14 @@ serve(async (req) => {
       }
     );
 
-  } catch (error) {
-    console.error('[Daily Backup Verification] Unexpected error:', error);
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    logger.error("Unexpected error", { error: errorMessage });
 
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message,
+        error: errorMessage,
         timestamp: new Date().toISOString()
       }),
       {

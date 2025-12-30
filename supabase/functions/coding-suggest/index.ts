@@ -10,6 +10,9 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Anthropic from "npm:@anthropic-ai/sdk@0.63.1";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
+import { createLogger } from "../_shared/auditLogger.ts";
+
+const logger = createLogger('coding-suggest');
 
 // Flip to true only when you need extra response diagnostics
 const DEBUG = false;
@@ -137,8 +140,9 @@ serve(async (req) => {
       const token = authHeader.replace(/^Bearer /, "");
       const { data } = await sb.auth.getUser(token);
       userId = data?.user?.id || null;
-    } catch (e) {
-      console.warn("Failed to get user from token:", e);
+    } catch (e: unknown) {
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      logger.warn("Failed to get user from token", { error: errorMessage });
     }
   }
 
@@ -227,8 +231,9 @@ serve(async (req) => {
           has_icd10: !!parsed.icd10?.length
         }
       });
-    } catch (logError) {
-      console.error('[Audit Log Error]:', logError);
+    } catch (logError: unknown) {
+      const errorMessage = logError instanceof Error ? logError.message : String(logError);
+      logger.error('Audit Log Error', { error: errorMessage });
     }
 
     // PHI: User/Encounter IDs not logged per HIPAA - data stored in claude_api_audit table
@@ -241,13 +246,15 @@ serve(async (req) => {
       confidence: parsed.confidence ?? null,
       created_at: new Date().toISOString(),
     });
-    if (auditErr) console.error("coding_audits insert failed:", auditErr.message);
+    if (auditErr) logger.error("coding_audits insert failed", { error: auditErr.message });
 
     const resp = DEBUG ? { ...parsed, _debug: { raw_len: text.length } } : parsed;
     return new Response(JSON.stringify(resp), { headers, status: 200 });
 
-  } catch (err: any) {
-    console.error("coding-suggest error:", err);
+  } catch (err: unknown) {
+    const errMessage = err instanceof Error ? err.message : String(err);
+    const errName = err instanceof Error ? err.name : 'UNKNOWN_ERROR';
+    logger.error("coding-suggest error", { error: errMessage });
 
     // HIPAA AUDIT LOGGING: Log failure to database
     try {
@@ -262,15 +269,16 @@ serve(async (req) => {
         cost: 0,
         response_time_ms: 0,
         success: false,
-        error_code: err?.name || 'UNKNOWN_ERROR',
-        error_message: err?.message || err?.toString(),
+        error_code: errName,
+        error_message: errMessage,
         phi_scrubbed: true,
         metadata: {
-          error_type: err?.constructor?.name
+          error_type: err instanceof Error ? err.constructor.name : 'unknown'
         }
       });
-    } catch (logError) {
-      console.error('[Audit Log Error]:', logError);
+    } catch (logError: unknown) {
+      const logErrorMessage = logError instanceof Error ? logError.message : String(logError);
+      logger.error('Audit Log Error', { error: logErrorMessage });
     }
 
     // best-effort failure audit (keep existing for backward compatibility)
@@ -282,10 +290,12 @@ serve(async (req) => {
         confidence: null,
         created_at: new Date().toISOString(),
       });
-    } catch {}
+    } catch {
+      // Ignore error in fallback audit log
+    }
 
-    const payload: any = { error: err?.message || "Server error" };
-    if (DEBUG) payload._diag = { stack: String(err?.stack || "") };
+    const payload: Record<string, unknown> = { error: errMessage || "Server error" };
+    if (DEBUG) payload._diag = { stack: err instanceof Error ? String(err.stack || "") : "" };
     return new Response(JSON.stringify(payload), { headers, status: 400 });
   }
 });

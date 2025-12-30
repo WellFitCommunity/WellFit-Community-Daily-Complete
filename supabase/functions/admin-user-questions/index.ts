@@ -6,6 +6,9 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4?dts";
 import { z, type ZodIssue } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
+import { createLogger } from "../_shared/auditLogger.ts";
+
+const logger = createLogger("admin-user-questions");
 
 // ---------- ENVIRONMENT VARIABLES ----------
 const SB_URL = Deno.env.get("SB_URL") || SUPABASE_URL || "";
@@ -133,7 +136,10 @@ serve(async (req: Request) => {
         .single();
 
       if (insertError) {
-        console.error("[question] insert failed:", insertError);
+        logger.error("Question insert failed", {
+          code: insertError.code,
+          message: insertError.message
+        });
         return jsonResponse({ error: "Failed to submit question" }, 500, headers);
       }
 
@@ -188,7 +194,10 @@ serve(async (req: Request) => {
       const { data: questions, error } = await query.range(offset, offset + limit - 1);
 
       if (error) {
-        console.error("[questions] fetch failed:", error);
+        logger.error("Questions fetch failed", {
+          code: error.code,
+          message: error.message
+        });
         return jsonResponse({ error: "Failed to fetch questions" }, 500, headers);
       }
 
@@ -265,7 +274,10 @@ serve(async (req: Request) => {
         .single();
 
       if (updateError) {
-        console.error("[question] update failed:", updateError);
+        logger.error("Question update failed", {
+          code: updateError.code,
+          message: updateError.message
+        });
         return jsonResponse({ error: "Failed to update question" }, 500, headers);
       }
 
@@ -291,7 +303,10 @@ serve(async (req: Request) => {
         .order("created_at", { ascending: false });
 
       if (error) {
-        console.error("[my-questions] fetch failed:", error);
+        logger.error("My questions fetch failed", {
+          code: error.code,
+          message: error.message
+        });
         return jsonResponse({ error: "Failed to fetch questions" }, 500, headers);
       }
 
@@ -307,15 +322,14 @@ serve(async (req: Request) => {
 
     // ---------- DEFAULT: METHOD NOT ALLOWED ----------
     return jsonResponse({ error: "Method not allowed" }, 405, headers);
-  } catch (error) {
-    console.error("[user-questions] unexpected error:", error);
-
+  } catch (err: unknown) {
     // Handle thrown Response objects (from auth functions)
-    if (error instanceof Response) {
-      return error;
+    if (err instanceof Response) {
+      return err;
     }
 
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    logger.error("Unexpected error", { message: errorMessage });
     return jsonResponse({ error: "Internal server error", details: errorMessage }, 500, headers);
   }
 });

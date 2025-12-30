@@ -3,6 +3,9 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4?dts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { parsePhoneNumber, isValidPhoneNumber } from "https://esm.sh/libphonenumber-js@1.12.9?target=deno";
+import { createLogger } from "../_shared/auditLogger.ts";
+
+const logger = createLogger("admin_register");
 
 // Allowed country codes for phone numbers
 const ALLOWED_COUNTRIES = ['US', 'CA', 'GB', 'AU'] as const;
@@ -44,7 +47,8 @@ const Payload = z.object({
       try {
         if (!isValidPhoneNumber(phone, 'US')) return false;
         const phoneNumber = parsePhoneNumber(phone, 'US');
-        return ALLOWED_COUNTRIES.includes(phoneNumber.country as any);
+        const country = phoneNumber.country;
+        return country !== undefined && (ALLOWED_COUNTRIES as readonly string[]).includes(country);
       } catch {
         return false;
       }
@@ -181,7 +185,7 @@ serve(async (req: Request) => {
       created_by: null, // (optional) fill from callerId if you want an audit trail
     };
     const { error: upErr } = await supabase.from("profiles").upsert(profile, { onConflict: "id" });
-    if (upErr) console.error("[admin_register] profiles upsert error:", upErr.message);
+    if (upErr) logger.error("profiles upsert error", { error: upErr.message, code: upErr.code });
 
     // Delivery (stub): you can wire MailerSend/Twilio here later.
     // For now, return the credentials decision so your admin UI can send externally if desired.
@@ -195,8 +199,9 @@ serve(async (req: Request) => {
       info: input.delivery === "none" ? "No credentials sent." : "Send credentials via your chosen channel.",
     }, 201);
 
-  } catch (e: any) {
-    console.error("[admin_register] unhandled:", e?.message || e);
-    return jsonResponse({ error: "Internal server error", details: String(e?.message || e) }, 500, origin);
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    logger.error("unhandled error", { error: errorMessage, stack: err instanceof Error ? err.stack : undefined });
+    return jsonResponse({ error: "Internal server error", details: errorMessage }, 500, origin);
   }
 });

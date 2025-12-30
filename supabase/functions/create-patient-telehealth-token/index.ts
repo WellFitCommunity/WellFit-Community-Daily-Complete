@@ -5,6 +5,9 @@ import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createLogger } from "../_shared/auditLogger.ts";
+
+const logger = createLogger("create-patient-telehealth-token");
 
 const DAILY_API_KEY = Deno.env.get("DAILY_API_KEY");
 const DAILY_API_URL = "https://api.daily.co/v1";
@@ -98,7 +101,7 @@ serve(async (req: Request) => {
 
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
-      console.error("Daily.co token error:", errorText);
+      logger.error("Daily.co token error", { errorText, status: tokenResponse.status });
       throw new Error("Failed to create patient token");
     }
 
@@ -124,10 +127,11 @@ serve(async (req: Request) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
-  } catch (error: any) {
-    console.error("Error in create-patient-telehealth-token:", error);
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    logger.error("Error in create-patient-telehealth-token", { error: errorMessage });
     return new Response(
-      JSON.stringify({ error: error.message || "Internal server error" }),
+      JSON.stringify({ error: errorMessage || "Internal server error" }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

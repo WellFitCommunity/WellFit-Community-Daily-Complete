@@ -3,6 +3,9 @@ import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/
 import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
+import { createLogger } from "../_shared/auditLogger.ts";
+
+const logger = createLogger("generate-api-key");
 
 // ---- Env (supports Postgres 17 names w/ fallbacks) -------------------------
 const SB_PUBLISHABLE_API_KEY =
@@ -18,7 +21,7 @@ async function checkUserRole(supabaseClient: SupabaseClient, requiredRoles: stri
   const { data: ok, error: rpcErr } = await supabaseClient
     .rpc("check_user_has_role", { role_names: requiredRoles });
   if (rpcErr) {
-    console.error("RPC role check failed:", rpcErr.message);
+    logger.error("RPC role check failed", { message: rpcErr.message });
     return false;
   }
   return ok === true;
@@ -94,15 +97,16 @@ serve(async (req) => {
       .insert([{ org_name: org_name.trim(), api_key_hash: apiKeyHash, active: true, created_by: user?.id ?? null }]);
 
     if (insertErr) {
-      console.error("Insert api_keys failed:", insertErr.message);
+      logger.error("Insert api_keys failed", { message: insertErr.message });
       return new Response(JSON.stringify({ error: "Failed to save API key" }), { status: 500, headers });
     }
 
     // Return plain key once (client must store it)
     return new Response(JSON.stringify({ api_key: apiKeyPlain }), { status: 200, headers });
 
-  } catch (e: any) {
-    console.error("generate-api-key error:", e?.message ?? e);
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    logger.error("generate-api-key error", { message: errorMessage });
     return new Response(JSON.stringify({ error: "Internal server error" }), { status: 500, headers });
   }
 });

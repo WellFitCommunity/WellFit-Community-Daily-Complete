@@ -6,6 +6,9 @@ import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createAdminClient, batchQueries } from '../_shared/supabaseClient.ts'
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts'
+import { createLogger } from "../_shared/auditLogger.ts";
+
+const logger = createLogger("guardian-agent");
 
 interface GuardianEyesSnapshot {
   timestamp: string;
@@ -80,8 +83,10 @@ serve(async (req) => {
       default:
         throw new Error(`Unknown action: ${action}`)
     }
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    logger.error("Guardian agent error", { message: errorMessage });
+    return new Response(JSON.stringify({ error: errorMessage }), {
       status: 400,
       headers: corsHeaders,
     })
@@ -210,7 +215,7 @@ async function sendAlertEmail(supabase: any, alerts: SecurityAlert[]) {
     const SUPABASE_SERVICE_ROLE_KEY = SB_SECRET_KEY;
 
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      console.error('[Guardian] Cannot send email: Missing Supabase credentials');
+      logger.error("Cannot send email: Missing Supabase credentials", {});
       return;
     }
 
@@ -251,12 +256,14 @@ This is an automated alert from Guardian monitoring system.
     });
 
     if (!response.ok) {
-      console.error('[Guardian] Email send failed:', await response.text());
+      const responseText = await response.text();
+      logger.error("Email send failed", { responseText });
     } else {
-      console.log(`[Guardian] Alert email sent to ${adminEmail}`);
+      logger.info("Alert email sent", { recipient: adminEmail });
     }
-  } catch (error) {
-    console.error('[Guardian] Email notification error:', error);
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    logger.error("Email notification error", { message: errorMessage });
     // Don't throw - email failure shouldn't break monitoring
   }
 }

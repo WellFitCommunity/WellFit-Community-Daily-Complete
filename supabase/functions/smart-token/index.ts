@@ -13,6 +13,9 @@
 import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
+import { createLogger } from "../_shared/auditLogger.ts";
+
+const logger = createLogger('smart-token');
 
 // Get environment variables
 function getEnv(name: string, ...fallbacks: string[]): string {
@@ -243,7 +246,7 @@ serve(async (req: Request): Promise<Response> => {
         });
 
       if (tokenError) {
-        console.error("Failed to store tokens:", tokenError);
+        logger.error("Failed to store tokens", { error: tokenError.message || String(tokenError) });
         return new Response(JSON.stringify({
           error: "server_error",
           error_description: "Failed to issue tokens",
@@ -379,8 +382,8 @@ serve(async (req: Request): Promise<Response> => {
     }), { status: 400, headers: corsHeaders });
 
   } catch (err: unknown) {
-    console.error("Token error:", err);
     const message = err instanceof Error ? err.message : "Internal server error";
+    logger.error("Token error", { error: message });
     return new Response(JSON.stringify({
       error: "server_error",
       error_description: message,

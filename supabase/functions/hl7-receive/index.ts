@@ -21,6 +21,9 @@ import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsFromRequest, handleOptions } from '../_shared/cors.ts';
+import { createLogger } from "../_shared/auditLogger.ts";
+
+const logger = createLogger("hl7-receive");
 
 // MLLP framing characters
 const MLLP_START = '\x0B';
@@ -121,7 +124,7 @@ serve(async (req: Request) => {
     const supabaseServiceKey = SB_SECRET_KEY!;
 
     if (!supabaseUrl || !supabaseServiceKey) {
-      console.error('Missing Supabase configuration');
+      logger.error("Missing Supabase configuration", {});
       return new Response(
         generateNAK(msh.messageControlId, 'AE', 'Server configuration error'),
         {
@@ -206,7 +209,10 @@ serve(async (req: Request) => {
     });
 
     if (logError) {
-      console.error('Failed to log HL7 message:', logError);
+      logger.error("Failed to log HL7 message", {
+        code: logError.code,
+        message: logError.message
+      });
       // Continue processing even if logging fails
     }
 
@@ -223,7 +229,10 @@ serve(async (req: Request) => {
         });
 
       if (queueError) {
-        console.error('Failed to queue message:', queueError);
+        logger.error("Failed to queue message", {
+          code: queueError.code,
+          message: queueError.message
+        });
       }
     }
 
@@ -253,10 +262,9 @@ serve(async (req: Request) => {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/hl7-v2' },
     });
-  } catch (error) {
-    console.error('HL7 receive error:', error);
-
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    logger.error("HL7 receive error", { message: errorMessage });
 
     return new Response(
       generateNAK('', 'AE', `Processing error: ${errorMessage}`),

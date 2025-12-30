@@ -3,6 +3,9 @@
 // Zero tech debt - leverages existing rate_limit_attempts table
 
 import { supabaseAdmin } from "./auth.ts";
+import { createLogger } from "./auditLogger.ts";
+
+const logger = createLogger("rateLimiter");
 
 interface RateLimitConfig {
   maxAttempts: number;
@@ -43,7 +46,7 @@ export async function checkRateLimit(
       .order('attempted_at', { ascending: false });
 
     if (countError) {
-      console.error('Rate limit check error:', countError);
+      logger.error("Rate limit check error", { error: countError.message });
       // Fail open - allow request but log error
       return {
         allowed: true,
@@ -87,7 +90,7 @@ export async function checkRateLimit(
       });
 
     if (insertError) {
-      console.error('Failed to record rate limit attempt:', insertError);
+      logger.warn("Failed to record rate limit attempt", { error: insertError.message });
     }
 
     return {
@@ -96,8 +99,9 @@ export async function checkRateLimit(
       resetAt
     };
 
-  } catch (error) {
-    console.error('Rate limit exception:', error);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error("Rate limit exception", { error: errorMessage });
     // Fail open on errors
     return {
       allowed: true,
@@ -120,7 +124,7 @@ export async function cleanupRateLimitAttempts(): Promise<void> {
     .lt('attempted_at', cutoff.toISOString());
 
   if (error) {
-    console.error('Failed to cleanup rate limit attempts:', error);
+    logger.error("Failed to cleanup rate limit attempts", { error: error.message });
   }
 }
 
@@ -146,7 +150,7 @@ export function withRateLimit(
 
     if (!identifier || identifier === 'unknown') {
       // No identifier - allow but log warning
-      console.warn('Rate limit: No identifier found, allowing request');
+      logger.warn("Rate limit: No identifier found, allowing request");
       return handler(req);
     }
 

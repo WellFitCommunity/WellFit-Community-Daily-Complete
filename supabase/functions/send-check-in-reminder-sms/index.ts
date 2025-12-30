@@ -4,6 +4,9 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
+import { createLogger } from "../_shared/auditLogger.ts";
+
+const logger = createLogger("send-check-in-reminder-sms");
 
 const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
 const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
@@ -82,7 +85,7 @@ serve(async (req) => {
     const responseText = await response.text();
 
     if (!response.ok) {
-      console.error(`[send-check-in-reminder-sms] Twilio error: ${response.status} ${responseText}`);
+      logger.error("Twilio error", { status: response.status, response: responseText });
       const { headers } = corsFromRequest(req);
       return new Response(
         JSON.stringify({
@@ -110,11 +113,12 @@ serve(async (req) => {
       }
     );
 
-  } catch (error) {
-    console.error("[send-check-in-reminder-sms] Error:", error);
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    logger.error("Error sending SMS", { error: errorMessage });
     const { headers } = corsFromRequest(req);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       { status: 500, headers }
     );
   }

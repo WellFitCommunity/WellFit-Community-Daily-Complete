@@ -9,6 +9,9 @@ import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Anthropic from "npm:@anthropic-ai/sdk@0.63.1";
 import { checkMCPRateLimit, getRequestIdentifier, createRateLimitResponse, MCP_RATE_LIMITS } from "../_shared/mcpRateLimiter.ts";
+import { createLogger } from "../_shared/auditLogger.ts";
+
+const logger = createLogger("mcp-claude-server");
 
 // Environment
 const SERVICE_KEY = SB_SECRET_KEY;
@@ -117,8 +120,10 @@ async function logMCPRequest(params: {
       error_message: params.errorMessage,
       created_at: new Date().toISOString()
     });
-  } catch (err) {
-    console.error("[MCP Audit Log Error]:", err);
+  } catch (err: unknown) {
+    logger.error("Audit log insert failed", {
+      errorMessage: err instanceof Error ? err.message : String(err)
+    });
   }
 }
 

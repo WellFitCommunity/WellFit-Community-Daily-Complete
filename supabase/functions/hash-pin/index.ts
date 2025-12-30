@@ -28,6 +28,9 @@
 // ==============================================================================
 
 import { serve } from "https://deno.land/std@0.183.0/http/server.ts";
+import { createLogger } from "../_shared/auditLogger.ts";
+
+const logger = createLogger("hash-pin");
 
 // CORS Configuration - Explicit allowlist for security
 const ALLOWED_ORIGINS = [
@@ -149,8 +152,10 @@ async function verifyPin(pin: string, storedHash: string): Promise<boolean> {
     const computedHashBase64 = btoa(String.fromCharCode(...hashArray));
 
     return computedHashBase64 === expectedHashBase64;
-  } catch (error) {
-    console.error("PIN verification error:", error);
+  } catch (err: unknown) {
+    logger.error("PIN verification failed", {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return false;
   }
 }
@@ -209,10 +214,13 @@ serve(async (req: Request) => {
         { status: 200, headers }
       );
     }
-  } catch (error: any) {
-    console.error("hash-pin error:", error);
+  } catch (err: unknown) {
+    logger.error("Hash PIN request failed", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+    const errorMessage = err instanceof Error ? err.message : "Internal server error";
     return new Response(
-      JSON.stringify({ error: error.message || "Internal server error" }),
+      JSON.stringify({ error: errorMessage }),
       { status: 500, headers }
     );
   }

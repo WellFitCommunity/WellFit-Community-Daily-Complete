@@ -3,6 +3,9 @@ import { SUPABASE_URL as IMPORTED_SUPABASE_URL, SB_SECRET_KEY } from "../_shared
 import { serve } from "https://deno.land/std@0.183.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.28.0";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
+import { createLogger } from "../_shared/auditLogger.ts";
+
+const logger = createLogger("test-users");
 
 // ─── ENV ───────────────────────────────────────────────────────────
 const SUPABASE_URL = IMPORTED_SUPABASE_URL ?? "";
@@ -162,11 +165,12 @@ serve(async (req: Request) => {
         .insert({ admin_id: adminId, user_id: newUserId });
 
       if (auditError) {
-        console.error("Warning: Failed to log admin enrollment for compliance:", auditError);
+        logger.warn("Failed to log admin enrollment for compliance", { error: auditError.message, code: auditError.code });
         // Continue with enrollment - audit can be added via background job later
       }
     } catch (auditException: unknown) {
-      console.error("Warning: Audit logging exception:", auditException);
+      const auditErrorMessage = auditException instanceof Error ? auditException.message : String(auditException);
+      logger.warn("Audit logging exception", { error: auditErrorMessage });
       // Continue with enrollment
     }
 
@@ -183,8 +187,8 @@ serve(async (req: Request) => {
       headers: corsHeaders,
     });
   } catch (err: unknown) {
-    console.error("Test Users Error:", err);
     const errorMessage = err instanceof Error ? err.message : "Internal server error";
+    logger.error("Test Users Error", { error: errorMessage, stack: err instanceof Error ? err.stack : undefined });
     return new Response(
       JSON.stringify({ error: errorMessage }),
       { status: 500, headers: corsHeaders }

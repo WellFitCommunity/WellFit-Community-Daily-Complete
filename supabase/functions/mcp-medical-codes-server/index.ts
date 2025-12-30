@@ -9,6 +9,9 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkMCPRateLimit, getRequestIdentifier, createRateLimitResponse, MCP_RATE_LIMITS } from "../_shared/mcpRateLimiter.ts";
+import { createLogger } from "../_shared/auditLogger.ts";
+
+const logger = createLogger("mcp-medical-codes-server");
 
 // Environment
 const SERVICE_KEY = SB_SECRET_KEY;
@@ -254,8 +257,11 @@ async function logCodeLookup(params: {
         success: true,
         created_at: new Date().toISOString()
       });
-    } catch {
-      console.error("[MCP Medical Codes Audit Log Error]:", err);
+    } catch (innerErr: unknown) {
+      logger.error("Audit log fallback failed", {
+        originalError: err instanceof Error ? err.message : String(err),
+        fallbackError: innerErr instanceof Error ? innerErr.message : String(innerErr)
+      });
     }
   }
 }

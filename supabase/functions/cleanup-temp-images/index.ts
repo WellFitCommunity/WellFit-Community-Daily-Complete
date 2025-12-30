@@ -6,6 +6,9 @@ import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
+import { createLogger } from "../_shared/auditLogger.ts";
+
+const logger = createLogger("cleanup-temp-images");
 
 interface CleanupResult {
   success: boolean;
@@ -57,7 +60,7 @@ serve(async (req: Request) => {
       );
     }
 
-    console.log("[cleanup-temp-images] Starting cleanup...");
+    logger.info("Starting cleanup");
 
     // Step 1: Get expired jobs with storage paths
     const { data: expiredJobs, error: selectErr } = await supabase
@@ -70,7 +73,7 @@ serve(async (req: Request) => {
     }
 
     const jobCount = expiredJobs?.length || 0;
-    console.log(`[cleanup-temp-images] Found ${jobCount} expired jobs`);
+    logger.info("Found expired jobs", { count: jobCount });
 
     if (jobCount === 0) {
       const result: CleanupResult = {
@@ -102,7 +105,7 @@ serve(async (req: Request) => {
         .remove(batch);
 
       if (deleteErr) {
-        console.error(`[cleanup-temp-images] Storage delete error:`, deleteErr);
+        logger.error("Storage delete error", { error: deleteErr.message, batch });
         failedDeletions.push(...batch);
       } else {
         deletedFiles += deleteResult?.length || batch.length;
@@ -117,11 +120,11 @@ serve(async (req: Request) => {
       .in("id", jobIds);
 
     if (dbDeleteErr) {
-      console.error(`[cleanup-temp-images] DB delete error:`, dbDeleteErr);
+      logger.error("Database delete error", { error: dbDeleteErr.message });
       throw new Error(`Failed to delete job records: ${dbDeleteErr.message}`);
     }
 
-    console.log(`[cleanup-temp-images] Deleted ${jobCount} jobs, ${deletedFiles} files`);
+    logger.info("Cleanup completed", { deletedJobs: jobCount, deletedFiles });
 
     // Step 4: Also clean up any orphaned files older than 25 hours
     // (in case DB records were deleted but files weren't)
@@ -139,7 +142,7 @@ serve(async (req: Request) => {
         });
 
         if (orphanedFiles.length > 0) {
-          console.log(`[cleanup-temp-images] Found ${orphanedFiles.length} orphaned files`);
+          logger.info("Found orphaned files", { count: orphanedFiles.length });
           const orphanPaths = orphanedFiles.map(f => f.name);
 
           const { error: orphanDeleteErr } = await supabase
@@ -152,9 +155,10 @@ serve(async (req: Request) => {
           }
         }
       }
-    } catch (orphanErr) {
+    } catch (orphanErr: unknown) {
       // Non-critical - log but don't fail
-      console.warn("[cleanup-temp-images] Orphan cleanup warning:", orphanErr);
+      const errorMessage = orphanErr instanceof Error ? orphanErr.message : String(orphanErr);
+      logger.warn("Orphan cleanup warning", { error: errorMessage });
     }
 
     const result: CleanupResult = {
@@ -167,8 +171,9 @@ serve(async (req: Request) => {
 
     return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders });
 
-  } catch (error: any) {
-    console.error("[cleanup-temp-images] Error:", error);
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    logger.error("Cleanup failed", { error: errorMessage });
 
     const result: CleanupResult = {
       success: false,
@@ -179,7 +184,7 @@ serve(async (req: Request) => {
     };
 
     return new Response(
-      JSON.stringify({ ...result, error: error?.message || "Cleanup failed" }),
+      JSON.stringify({ ...result, error: errorMessage || "Cleanup failed" }),
       { status: 500, headers: corsFromRequest(req).headers }
     );
   }

@@ -155,9 +155,8 @@ export function cors(
         headers["Access-Control-Allow-Credentials"] = "true";
         allowed = true;
       }
-    } catch (e) {
-      // Invalid Origin — keep allowed=false
-      console.warn("[CORS] Invalid origin:", origin, e);
+    } catch (_e) {
+      // Invalid Origin — keep allowed=false (logged silently for security)
     }
   }
 

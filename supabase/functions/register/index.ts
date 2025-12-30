@@ -7,6 +7,9 @@ import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { parsePhoneNumber, isValidPhoneNumber } from "https://esm.sh/libphonenumber-js@1.12.9?target=deno";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { hashPassword } from "../_shared/crypto.ts";
+import { createLogger } from "../_shared/auditLogger.ts";
+
+const logger = createLogger("register");
 
 // Allowed country codes for phone numbers
 const ALLOWED_COUNTRIES = ['US', 'CA', 'GB', 'AU'] as const;
@@ -78,7 +81,7 @@ function normalizePhone(phone: string): string {
 async function verifyHcaptcha(token: string): Promise<boolean> {
   try {
     if (!HCAPTCHA_SECRET) {
-      console.error("[verifyHcaptcha] HCAPTCHA_SECRET is not set!");
+      logger.error("HCAPTCHA_SECRET is not set");
       return false;
     }
 
@@ -94,16 +97,16 @@ async function verifyHcaptcha(token: string): Promise<boolean> {
     const result = await response.json();
 
     if (!result.success) {
-      console.error("[verifyHcaptcha] Verification failed:", {
-        success: result.success,
+      logger.security("hCaptcha verification failed", {
         errorCodes: result["error-codes"],
         tokenPrefix: token?.substring(0, 20)
       });
     }
 
     return result.success === true;
-  } catch (err) {
-    console.error("[verifyHcaptcha] Exception:", err);
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    logger.error("hCaptcha exception", { error: errorMessage });
     return false;
   }
 }
@@ -138,7 +141,7 @@ serve(async (req: Request) => {
 
   try {
     if (!SB_URL || !SERVICE_KEY || !HCAPTCHA_SECRET) {
-      console.error("[register] misconfig env", { hasUrl: !!SB_URL, hasKey: !!SERVICE_KEY, hasHC: !!HCAPTCHA_SECRET });
+      logger.error("Server misconfigured", { hasUrl: !!SB_URL, hasKey: !!SERVICE_KEY, hasHC: !!HCAPTCHA_SECRET });
       return jsonResponse({ error: "Server misconfigured" }, 500);
     }
 
@@ -187,7 +190,7 @@ resource_type: 'auth_event',
           metadata: { phone: phoneNumber }
         });
       } catch (logError) {
-        console.error('[Audit Log Error]:', logError);
+        logger.warn("Audit log insert failed", { error: logError instanceof Error ? logError.message : String(logError) });
       }
 
       return jsonResponse({ error: "Captcha verification failed. Please try again." }, 401);
@@ -226,7 +229,7 @@ resource_type: 'auth_event',
           metadata: { phone: phoneNumber }
         });
       } catch (logError) {
-        console.error('[Audit Log Error]:', logError);
+        logger.warn("Audit log insert failed", { error: logError instanceof Error ? logError.message : String(logError) });
       }
 
       return jsonResponse({
@@ -254,7 +257,7 @@ resource_type: 'auth_event',
         .rpc('encrypt_pending_password', { plaintext_password: payload.password });
 
       if (encryptErrorUpdate || !encryptedDataUpdate) {
-        console.error('[register] Password encryption failed on update:', encryptErrorUpdate);
+        logger.error("Password encryption failed on update", { error: encryptErrorUpdate?.message });
         return jsonResponse({ error: "Failed to process registration" }, 500);
       }
 
@@ -274,7 +277,7 @@ resource_type: 'auth_event',
         .eq("phone", phoneNumber);
 
       if (updateError) {
-        console.error("[register] Failed to update pending registration:", updateError);
+        logger.error("Failed to update pending registration", { error: updateError.message });
         return jsonResponse({ error: "Failed to update registration" }, 500);
       }
 
@@ -294,7 +297,7 @@ resource_type: 'auth_event',
           metadata: { phone: phoneNumber, role: enforced.role_slug }
         });
       } catch (logError) {
-        console.error('[Audit Log Error]:', logError);
+        logger.warn("Audit log insert failed", { error: logError instanceof Error ? logError.message : String(logError) });
       }
 
       // Resend SMS code with timeout
@@ -302,9 +305,8 @@ resource_type: 'auth_event',
       let resendErrorDetails = "";
       try {
         const functionsUrl = `${SB_URL}/functions/v1`;
-        console.log("[register] Resending SMS for pending registration:", {
+        logger.info("Resending SMS for pending registration", {
           phone: phoneNumber,
-          url: `${functionsUrl}/sms-send-code`,
           hasAnonKey: !!SB_ANON_KEY
         });
 
@@ -326,10 +328,9 @@ resource_type: 'auth_event',
         }, 60000); // 60 second timeout
 
         const responseText = await smsResponse.text();
-        console.log("[register] SMS resend response:", {
+        logger.debug("SMS resend response", {
           status: smsResponse.status,
-          ok: smsResponse.ok,
-          body: responseText
+          ok: smsResponse.ok
         });
         resendErrorDetails = responseText;
 
@@ -340,15 +341,14 @@ resource_type: 'auth_event',
             .eq("phone", phoneNumber);
           smsSent = true;
         } else {
-          console.error("[register] SMS resend failed:", {
+          logger.error("SMS resend failed", {
             status: smsResponse.status,
-            response: responseText,
             phone: phoneNumber
           });
         }
-      } catch (smsError) {
+      } catch (smsError: unknown) {
         const errorMessage = smsError instanceof Error ? smsError.message : String(smsError);
-        console.error("[register] SMS resend error:", {
+        logger.error("SMS resend error", {
           error: errorMessage,
           phone: phoneNumber,
           errorType: smsError instanceof Error ? smsError.name : typeof smsError
@@ -381,7 +381,7 @@ resource_type: 'auth_event',
       .rpc('encrypt_pending_password', { plaintext_password: plaintextPassword });
 
     if (encryptError || !encryptedData) {
-      console.error('[register] Password encryption failed:', encryptError);
+      logger.error("Password encryption failed", { error: encryptError?.message });
       return jsonResponse({ error: "Failed to process registration" }, 500);
     }
 
@@ -402,7 +402,7 @@ resource_type: 'auth_event',
       });
 
     if (pendingError) {
-      console.error("[register] Database error code:", pendingError.code);
+      logger.error("Database error during registration", { code: pendingError.code, message: pendingError.message });
 
       // HIPAA AUDIT LOGGING: Log failed registration database error
       try {
@@ -420,7 +420,7 @@ resource_type: 'auth_event',
           metadata: { phone: phoneNumber, role: enforced.role_slug }
         });
       } catch (logError) {
-        console.error('[Audit Log Error]:', logError);
+        logger.warn("Audit log insert failed", { error: logError instanceof Error ? logError.message : String(logError) });
       }
 
       return jsonResponse({ error: "Failed to process registration" }, 500);
@@ -432,9 +432,8 @@ resource_type: 'auth_event',
     try {
       // Correct Edge Functions URL format (not .functions.supabase.co subdomain)
       const functionsUrl = `${SB_URL}/functions/v1`;
-      console.log("[register] Sending SMS for new registration:", {
+      logger.info("Sending SMS for new registration", {
         phone: phoneNumber,
-        url: `${functionsUrl}/sms-send-code`,
         hasAnonKey: !!SB_ANON_KEY
       });
 
@@ -459,10 +458,9 @@ resource_type: 'auth_event',
       }, 60000); // 60 second timeout to allow for retries
 
       const responseText = await smsResponse.text();
-      console.log("[register] SMS send response:", {
+      logger.debug("SMS send response", {
         status: smsResponse.status,
-        ok: smsResponse.ok,
-        body: responseText
+        ok: smsResponse.ok
       });
 
       smsErrorDetails = responseText;
@@ -488,9 +486,8 @@ resource_type: 'auth_event',
           metadata: { phone: phoneNumber }
         });
       } else {
-        console.error("[register] SMS send failed:", {
+        logger.error("SMS send failed", {
           status: smsResponse.status,
-          response: responseText,
           phone: phoneNumber
         });
         smsErrorDetails = responseText;
@@ -513,9 +510,9 @@ resource_type: 'auth_event',
           }
         });
       }
-    } catch (smsError) {
+    } catch (smsError: unknown) {
       const errorMessage = smsError instanceof Error ? smsError.message : String(smsError);
-      console.error("[register] SMS send error:", {
+      logger.error("SMS send error", {
         error: errorMessage,
         phone: phoneNumber,
         errorType: smsError instanceof Error ? smsError.name : typeof smsError
@@ -561,7 +558,7 @@ resource_type: 'auth_event',
         }
       });
     } catch (logError) {
-      console.error('[Audit Log Error]:', logError);
+      logger.warn("Audit log insert failed", { error: logError instanceof Error ? logError.message : String(logError) });
     }
 
     // Return success with appropriate message based on SMS status
@@ -578,8 +575,9 @@ resource_type: 'auth_event',
       ...(smsErrorDetails && !smsSent ? { sms_error: smsErrorDetails } : {})
     }, 201);
 
-  } catch (e) {
-    console.error("[register] Unhandled error:", e instanceof Error ? e.name : "Unknown");
+  } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : String(e);
+    logger.error("Unhandled error", { error: errorMessage, type: e instanceof Error ? e.name : "Unknown" });
     return jsonResponse({ error: "Internal server error" }, 500);
   }
 });

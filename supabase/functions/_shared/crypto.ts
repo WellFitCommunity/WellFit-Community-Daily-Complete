@@ -9,6 +9,9 @@
 // This prevents plaintext PINs from appearing in logs, dev tools, or memory dumps
 // The server applies PBKDF2 to the client hash for storage security
 
+import { createLogger } from "./auditLogger.ts";
+
+const logger = createLogger("crypto");
 const ITERATIONS = 100000; // PBKDF2 iterations for security (OWASP recommended minimum)
 const SALT_LENGTH = 16; // 16 bytes = 128 bits
 
@@ -84,7 +87,7 @@ export async function verifyPin(pin: string, storedHash: string): Promise<boolea
     // Split stored hash into salt and hash
     const [saltBase64, expectedHashBase64] = storedHash.split(":");
     if (!saltBase64 || !expectedHashBase64) {
-      console.error('Invalid hash format - missing salt or hash');
+      logger.security("Invalid PIN hash format - missing salt or hash");
       return false;
     }
 
@@ -121,8 +124,9 @@ export async function verifyPin(pin: string, storedHash: string): Promise<boolea
     const computedHashBase64 = btoa(String.fromCharCode(...hashArray));
 
     return computedHashBase64 === expectedHashBase64;
-  } catch (error) {
-    console.error('PIN verification error:', error);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.security("PIN verification error", { error: errorMessage });
     return false;
   }
 }
@@ -181,7 +185,7 @@ export async function verifyPassword(password: string, storedHash: string): Prom
     // Split stored hash into salt and hash
     const [saltBase64, expectedHashBase64] = storedHash.split(":");
     if (!saltBase64 || !expectedHashBase64) {
-      console.error('Invalid hash format - missing salt or hash');
+      logger.security("Invalid password hash format - missing salt or hash");
       return false;
     }
 
@@ -218,8 +222,9 @@ export async function verifyPassword(password: string, storedHash: string): Prom
     const computedHashBase64 = btoa(String.fromCharCode(...hashArray));
 
     return computedHashBase64 === expectedHashBase64;
-  } catch (error) {
-    console.error('Password verification error:', error);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.security("Password verification error", { error: errorMessage });
     return false;
   }
 }

@@ -5,6 +5,9 @@ import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createLogger } from "../_shared/auditLogger.ts";
+
+const logger = createLogger('sdoh-coding-suggest');
 
 interface SDOHCodingRequest {
   encounterId: string
@@ -40,8 +43,9 @@ serve(async (req) => {
         const token = authHeader.replace(/^Bearer /, "");
         const { data } = await supabaseClient.auth.getUser(token);
         userId = data?.user?.id || null;
-      } catch (e) {
-        console.warn("Failed to get user from token:", e);
+      } catch (e: unknown) {
+        const errorMessage = e instanceof Error ? e.message : String(e);
+        logger.warn("Failed to get user from token", { error: errorMessage });
       }
     }
 
@@ -135,12 +139,13 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
 
-  } catch (error) {
-    console.error('SDOH Coding Suggest Error:', error)
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error('SDOH Coding Suggest Error', { error: errorMessage })
 
     return new Response(JSON.stringify({
       error: 'Internal server error',
-      details: error.message
+      details: errorMessage
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -305,8 +310,9 @@ Format as JSON with this structure:
             sdoh_factors_count: analysis.sdohAssessment?.identifiedFactors?.length || 0
           }
         });
-      } catch (logError) {
-        console.error('[Audit Log Error]:', logError);
+      } catch (logError: unknown) {
+        const logErrorMessage = logError instanceof Error ? logError.message : String(logError);
+        logger.error('Audit Log Error', { error: logErrorMessage });
       }
 
       // PHI: User/Encounter IDs not logged per HIPAA - data stored in claude_api_audit table
@@ -318,9 +324,9 @@ Format as JSON with this structure:
         timestamp: new Date().toISOString(),
         model: 'claude-sonnet-4-5-20250929'
       }
-    } catch (parseError) {
-      console.error('JSON parse error:', parseError)
-      console.error('Claude response:', content)
+    } catch (parseError: unknown) {
+      const parseErrorMessage = parseError instanceof Error ? parseError.message : String(parseError);
+      logger.error('JSON parse error', { error: parseErrorMessage, responsePreview: content?.substring(0, 200) })
 
       // HIPAA AUDIT LOGGING: Log parse error
       try {
@@ -339,8 +345,9 @@ Format as JSON with this structure:
           phi_scrubbed: true,
           metadata: { encounter_id: encounterId }
         });
-      } catch (logError) {
-        console.error('[Audit Log Error]:', logError);
+      } catch (logError: unknown) {
+        const logErrorMsg = logError instanceof Error ? logError.message : String(logError);
+        logger.error('Audit Log Error', { error: logErrorMsg });
       }
 
       // Fallback response if JSON parsing fails
@@ -370,8 +377,9 @@ Format as JSON with this structure:
         error: 'JSON_PARSE_ERROR'
       }
     }
-  } catch (apiError) {
-    console.error('Claude API error:', apiError)
+  } catch (apiError: unknown) {
+    const apiErrorMsg = apiError instanceof Error ? apiError.message : String(apiError);
+    logger.error('Claude API error', { error: apiErrorMsg });
 
     // HIPAA AUDIT LOGGING: Log API error
     try {
@@ -385,13 +393,14 @@ Format as JSON with this structure:
         cost: 0,
         response_time_ms: Date.now() - startTime,
         success: false,
-        error_code: apiError.name || 'CLAUDE_API_ERROR',
-        error_message: apiError.message,
+        error_code: apiError instanceof Error ? apiError.name : 'CLAUDE_API_ERROR',
+        error_message: apiErrorMsg,
         phi_scrubbed: true,
         metadata: { encounter_id: encounterId }
       });
-    } catch (logError) {
-      console.error('[Audit Log Error]:', logError);
+    } catch (logError: unknown) {
+      const logErrorMsg2 = logError instanceof Error ? logError.message : String(logError);
+      logger.error('Audit Log Error', { error: logErrorMsg2 });
     }
 
     // Fallback response for API errors
@@ -417,7 +426,7 @@ Format as JSON with this structure:
         recommendations: ['Manual review required']
       },
       confidence: 0,
-      notes: `API Error: ${apiError.message}`,
+      notes: `API Error: ${apiErrorMsg}`,
       error: 'CLAUDE_API_ERROR'
     }
   }

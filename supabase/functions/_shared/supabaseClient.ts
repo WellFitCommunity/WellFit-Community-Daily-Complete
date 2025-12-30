@@ -13,6 +13,9 @@
  */
 
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createLogger } from "./auditLogger.ts";
+
+const defaultLogger = createLogger("supabaseClient");
 
 /**
  * Supabase client configuration with connection pooling
@@ -211,8 +214,8 @@ export async function withQueryMetrics<T>(
         // HIPAA-compliant logging
         await Promise.resolve(logger.warn('SLOW_QUERY_DETECTED', metadata));
       } else {
-        // Backward compatible console logging (non-PHI only)
-        console.warn(`[SLOW QUERY] ${queryName} took ${duration.toFixed(2)}ms`);
+        // Default audit logger (enterprise-grade)
+        defaultLogger.warn(`Slow query: ${queryName}`, { duration: duration.toFixed(2), threshold: 500 });
       }
     }
 
@@ -228,8 +231,9 @@ export async function withQueryMetrics<T>(
       // HIPAA-compliant error logging
       await Promise.resolve(logger.error('DATABASE_QUERY_FAILED', error, metadata));
     } else {
-      // Backward compatible console logging (non-PHI only)
-      console.error(`[QUERY ERROR] ${queryName} failed after ${duration.toFixed(2)}ms:`, error);
+      // Default audit logger (enterprise-grade)
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      defaultLogger.error(`Query failed: ${queryName}`, { duration: duration.toFixed(2), error: errorMessage });
     }
 
     throw error;

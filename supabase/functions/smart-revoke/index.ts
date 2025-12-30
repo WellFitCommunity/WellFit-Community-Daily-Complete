@@ -14,6 +14,9 @@
 import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
+import { createLogger } from "../_shared/auditLogger.ts";
+
+const logger = createLogger('smart-revoke');
 
 // Get environment variables
 function getEnv(name: string, ...fallbacks: string[]): string {
@@ -100,7 +103,7 @@ serve(async (req: Request): Promise<Response> => {
         .eq("revoked", false);
 
       if (tokenError) {
-        console.error("Failed to revoke tokens:", tokenError);
+        logger.error("Failed to revoke tokens", { error: tokenError.message || String(tokenError) });
       }
 
       // Update authorization status
@@ -115,7 +118,7 @@ serve(async (req: Request): Promise<Response> => {
         .eq("patient_id", patient_id);
 
       if (authError) {
-        console.error("Failed to revoke authorization:", authError);
+        logger.error("Failed to revoke authorization", { error: authError.message || String(authError) });
         return new Response(JSON.stringify({
           error: "server_error",
           error_description: "Failed to revoke authorization",
@@ -245,7 +248,7 @@ serve(async (req: Request): Promise<Response> => {
       .eq("id", tokenRecord.id);
 
     if (revokeError) {
-      console.error("Failed to revoke token:", revokeError);
+      logger.error("Failed to revoke token", { error: revokeError.message || String(revokeError) });
       return new Response(JSON.stringify({
         error: "server_error",
         error_description: "Failed to revoke token",
@@ -271,8 +274,8 @@ serve(async (req: Request): Promise<Response> => {
     }), { headers: corsHeaders });
 
   } catch (err: unknown) {
-    console.error("Revocation error:", err);
     const message = err instanceof Error ? err.message : "Internal server error";
+    logger.error("Revocation error", { error: message });
     return new Response(JSON.stringify({
       error: "server_error",
       error_description: message,

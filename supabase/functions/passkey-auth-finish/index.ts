@@ -1,11 +1,12 @@
 // supabase/functions/passkey-auth-finish/index.ts
-import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
+import { SUPABASE_URL as IMPORTED_SUPABASE_URL, SB_SECRET_KEY as IMPORTED_SB_SECRET_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.183.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.28.0";
 import { verifyAuthenticationResponse } from "https://deno.land/x/simplewebauthn@v10.0.1/deno/server.ts";
+import { createLogger } from "../_shared/auditLogger.ts";
 
-const SUPABASE_URL = SUPABASE_URL ?? "";
-const SUPABASE_SECRET_KEY = Deno.env.get("SB_SECRET_KEY") ?? SB_SECRET_KEY ?? "";
+const SUPABASE_URL = IMPORTED_SUPABASE_URL ?? "";
+const SUPABASE_SECRET_KEY = Deno.env.get("SB_SECRET_KEY") ?? IMPORTED_SB_SECRET_KEY ?? "";
 
 if (!SUPABASE_URL || !SUPABASE_SECRET_KEY) {
   throw new Error("Missing SUPABASE_URL or SB_SECRET_KEY");
@@ -38,6 +39,7 @@ function getCorsHeaders(origin: string | null) {
 }
 
 serve(async (req: Request) => {
+  const logger = createLogger('passkey-auth-finish', req);
   const origin = req.headers.get("Origin");
   const headers = getCorsHeaders(origin);
 
@@ -86,8 +88,9 @@ resource_type: 'auth_event',
           error_message: 'Invalid or expired challenge',
           metadata: { credential_id: rawId }
         });
-      } catch (logError) {
-        console.error('[Audit Log Error]:', logError);
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        logger.error('Audit log insertion failed', { error: errorMessage });
       }
 
       return new Response(
@@ -134,8 +137,9 @@ resource_type: 'auth_event',
           error_message: 'Credential not found',
           metadata: { credential_id: rawId }
         });
-      } catch (logError) {
-        console.error('[Audit Log Error]:', logError);
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        logger.error('Audit log insertion failed', { error: errorMessage });
       }
 
       return new Response(
@@ -181,7 +185,9 @@ resource_type: 'auth_event',
         },
         requireUserVerification: true,  // Enforce biometric/PIN
       });
-    } catch (error: any) {
+    } catch (verifyErr: unknown) {
+      const verifyErrorMessage = verifyErr instanceof Error ? verifyErr.message : String(verifyErr);
+      const verifyErrorName = verifyErr instanceof Error ? verifyErr.name : 'UnknownError';
       // HIPAA AUDIT LOGGING: Log signature verification failure
       try {
         await supabase.from('audit_logs').insert({
@@ -194,14 +200,15 @@ resource_type: 'auth_event',
           resource_type: 'auth_event',
           success: false,
           error_code: 'SIGNATURE_VERIFICATION_FAILED',
-          error_message: error.message || 'Cryptographic signature verification failed',
+          error_message: verifyErrorMessage || 'Cryptographic signature verification failed',
           metadata: {
             credential_id: rawId,
-            error_type: error.name,
+            error_type: verifyErrorName,
           }
         });
-      } catch (logError) {
-        console.error('[Audit Log Error]:', logError);
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        logger.error('Audit log insertion failed', { error: errorMessage });
       }
 
       return new Response(
@@ -226,8 +233,9 @@ resource_type: 'auth_event',
           error_message: 'Cryptographic signature verification failed',
           metadata: { credential_id: rawId }
         });
-      } catch (logError) {
-        console.error('[Audit Log Error]:', logError);
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        logger.error('Audit log insertion failed', { error: errorMessage });
       }
 
       return new Response(
@@ -271,7 +279,7 @@ resource_type: 'auth_event',
     });
 
     if (sessionError || !sessionData) {
-      console.error('Session generation error:', sessionError);
+      logger.error('Session generation failed', { error: sessionError?.message, code: sessionError?.code });
       return new Response(
         JSON.stringify({ error: 'Failed to create session' }),
         { status: 500, headers }
@@ -317,8 +325,9 @@ resource_type: 'auth_event',
           signature_verified: true
         }
       });
-    } catch (logError) {
-      console.error('[Audit Log Error]:', logError);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      logger.error('Audit log insertion failed', { error: errorMessage });
     }
 
     return new Response(
@@ -330,19 +339,20 @@ resource_type: 'auth_event',
       { status: 200, headers }
     );
 
-  } catch (error: any) {
-    console.error('Error:', error);
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    logger.error('Unhandled error in passkey-auth-finish', { error: errorMessage });
 
     // Log failed authentication
     await supabase.from('passkey_audit_log').insert({
       operation: 'failed_auth',
 resource_type: 'auth_event',
       success: false,
-      error_message: error?.message || 'Unknown error'
+      error_message: errorMessage || 'Unknown error'
     }).catch(() => {});
 
     return new Response(
-      JSON.stringify({ error: error?.message ?? "Internal server error" }),
+      JSON.stringify({ error: errorMessage || "Internal server error" }),
       { status: 500, headers }
     );
   }

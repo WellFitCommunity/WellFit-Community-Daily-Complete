@@ -1,10 +1,11 @@
 // supabase/functions/passkey-register-finish/index.ts
-import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/env.ts";
+import { SUPABASE_URL as IMPORTED_SUPABASE_URL, SB_SECRET_KEY as IMPORTED_SB_SECRET_KEY } from "../_shared/env.ts";
 import { serve } from "https://deno.land/std@0.183.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.28.0";
+import { createLogger } from "../_shared/auditLogger.ts";
 
-const SUPABASE_URL = SUPABASE_URL ?? "";
-const SUPABASE_SECRET_KEY = Deno.env.get("SB_SECRET_KEY") ?? SB_SECRET_KEY ?? "";
+const SUPABASE_URL = IMPORTED_SUPABASE_URL ?? "";
+const SUPABASE_SECRET_KEY = Deno.env.get("SB_SECRET_KEY") ?? IMPORTED_SB_SECRET_KEY ?? "";
 
 if (!SUPABASE_URL || !SUPABASE_SECRET_KEY) {
   throw new Error("Missing SUPABASE_URL or SB_SECRET_KEY");
@@ -36,6 +37,7 @@ function getCorsHeaders(origin: string | null) {
 }
 
 serve(async (req: Request) => {
+  const logger = createLogger('passkey-register-finish', req);
   const origin = req.headers.get("Origin");
   const headers = getCorsHeaders(origin);
 
@@ -121,7 +123,7 @@ serve(async (req: Request) => {
       .single();
 
     if (credError) {
-      console.error('Failed to store credential:', credError);
+      logger.error('Failed to store credential', { error: credError.message, code: credError.code });
       return new Response(
         JSON.stringify({ error: 'Failed to store credential' }),
         { status: 500, headers }
@@ -139,10 +141,11 @@ serve(async (req: Request) => {
 
     return new Response(JSON.stringify(credential), { status: 201, headers });
 
-  } catch (error: any) {
-    console.error('Error:', error);
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    logger.error('Unhandled error in passkey-register-finish', { error: errorMessage });
     return new Response(
-      JSON.stringify({ error: error?.message ?? "Internal server error" }),
+      JSON.stringify({ error: errorMessage || "Internal server error" }),
       { status: 500, headers }
     );
   }

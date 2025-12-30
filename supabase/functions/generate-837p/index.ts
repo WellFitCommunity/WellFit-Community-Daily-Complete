@@ -5,6 +5,9 @@ import { SUPABASE_URL, SB_SECRET_KEY, SB_PUBLISHABLE_API_KEY } from "../_shared/
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, type User } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
+import { createLogger } from "../_shared/auditLogger.ts";
+
+const logger = createLogger("generate-837p");
 
 /* ------------------------- CORS helpers (using shared module) ------------------------- */
 function corsHeaders(req: Request, extra: HeadersInit = {}): HeadersInit {
@@ -383,7 +386,11 @@ serve(async (req: Request) => {
     });
 
     if (insertErr) {
-      console.error("Failed to store claim:", insertErr);
+      logger.error("Failed to store claim", {
+        code: insertErr.code,
+        message: insertErr.message,
+        encounterId: enc.id
+      });
 
       // HIPAA AUDIT LOGGING: Log failed claim generation
       try {
@@ -406,8 +413,9 @@ resource_type: 'auth_event',
             segment_count: segCount
           }
         });
-      } catch (logError) {
-        console.error('[Audit Log Error]:', logError);
+      } catch (logErr: unknown) {
+        const errorMessage = logErr instanceof Error ? logErr.message : String(logErr);
+        logger.error("Audit log insert failed", { message: errorMessage });
       }
 
       // Multi-status: return payload but include storage error context
@@ -443,8 +451,9 @@ resource_type: 'auth_event',
           diagnosis_count: enc.diagnoses?.length || 0
         }
       });
-    } catch (logError) {
-      console.error('[Audit Log Error]:', logError);
+    } catch (logErr: unknown) {
+      const errorMessage = logErr instanceof Error ? logErr.message : String(logErr);
+      logger.error("Audit log insert failed", { message: errorMessage });
     }
 
     // PHI: User/Encounter IDs not logged per HIPAA - data stored in audit_logs table
@@ -454,9 +463,10 @@ resource_type: 'auth_event',
       status: 200,
       headers: corsHeaders(req, { "content-type": "text/plain; charset=utf-8" }),
     });
-  } catch (err: any) {
-    console.error(err);
-    return new Response(JSON.stringify({ error: err.message ?? String(err) }), {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    logger.error("generate-837p error", { message: errorMessage });
+    return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
       headers: corsHeaders(req, { "content-type": "application/json" }),
     });

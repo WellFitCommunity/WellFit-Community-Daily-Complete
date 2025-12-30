@@ -9,6 +9,9 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { corsFromRequest, handleOptions } from "../_shared/cors.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkMCPRateLimit, getRequestIdentifier, createRateLimitResponse, createRateLimitHeaders, MCP_RATE_LIMITS } from "../_shared/mcpRateLimiter.ts";
+import { createLogger } from "../_shared/auditLogger.ts";
+
+const logger = createLogger("mcp-postgres-server");
 
 // Environment
 const SERVICE_KEY = SB_SECRET_KEY;
@@ -373,8 +376,11 @@ async function logMCPRequest(params: {
         error_message: params.errorMessage,
         created_at: new Date().toISOString()
       });
-    } catch {
-      console.error("[MCP Postgres Audit Log Error]:", err);
+    } catch (innerErr: unknown) {
+      logger.error("Audit log fallback failed", {
+        originalError: err instanceof Error ? err.message : String(err),
+        fallbackError: innerErr instanceof Error ? innerErr.message : String(innerErr)
+      });
     }
   }
 }
@@ -438,7 +444,12 @@ serve(async (req: Request) => {
 
           if (error) {
             // Log detailed error for debugging
-            console.error(`[MCP Postgres] Query '${query_name}' failed:`, error);
+            logger.error("Query execution failed", {
+              queryName: query_name,
+              errorCode: error.code,
+              errorMessage: error.message,
+              hint: error.hint
+            });
             throw new Error(`Query '${query_name}' failed: ${error.message}`);
           }
 
