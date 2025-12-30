@@ -156,7 +156,7 @@ describe('useBrowserHistoryProtection', () => {
       expect(mockPushState).not.toHaveBeenCalled();
     });
 
-    it('should NOT push protective state on auth routes', () => {
+    it('should push registration flow protection on auth routes (for back button support)', () => {
       mockedUseLocation.mockReturnValue({
         pathname: '/login',
         search: '',
@@ -169,7 +169,12 @@ describe('useBrowserHistoryProtection', () => {
         wrapper: createWrapper('/login'),
       });
 
-      expect(mockPushState).not.toHaveBeenCalled();
+      // Should push registration flow protection (not authenticated user protection)
+      expect(mockPushState).toHaveBeenCalledWith(
+        expect.objectContaining({ registrationFlow: true }),
+        '',
+        '/login'
+      );
     });
   });
 
@@ -344,6 +349,92 @@ describe('useBrowserHistoryProtection', () => {
 
       // The hook should be initialized and ready to use fallback
       expect(mockedUseAuth).toHaveBeenCalled();
+    });
+  });
+
+  describe('Registration Flow Protection', () => {
+    it('should push protective state on registration page', () => {
+      mockedUseSession.mockReturnValue(null); // Not authenticated
+      mockedUseLocation.mockReturnValue({
+        pathname: '/register',
+        search: '',
+        hash: '',
+        state: null,
+        key: 'default',
+      });
+
+      renderHook(() => useBrowserHistoryProtection(), {
+        wrapper: createWrapper('/register'),
+      });
+
+      expect(mockPushState).toHaveBeenCalledWith(
+        expect.objectContaining({ registrationFlow: true, path: '/register' }),
+        '',
+        '/register'
+      );
+    });
+
+    it('should push protective state on login page', () => {
+      mockedUseSession.mockReturnValue(null);
+      mockedUseLocation.mockReturnValue({
+        pathname: '/login',
+        search: '',
+        hash: '',
+        state: null,
+        key: 'default',
+      });
+
+      renderHook(() => useBrowserHistoryProtection(), {
+        wrapper: createWrapper('/login'),
+      });
+
+      expect(mockPushState).toHaveBeenCalledWith(
+        expect.objectContaining({ registrationFlow: true, path: '/login' }),
+        '',
+        '/login'
+      );
+    });
+
+    it('should push protective state on verify-code page', () => {
+      mockedUseSession.mockReturnValue(null);
+      mockedUseLocation.mockReturnValue({
+        pathname: '/verify-code',
+        search: '',
+        hash: '',
+        state: null,
+        key: 'default',
+      });
+
+      renderHook(() => useBrowserHistoryProtection(), {
+        wrapper: createWrapper('/verify-code'),
+      });
+
+      expect(mockPushState).toHaveBeenCalledWith(
+        expect.objectContaining({ registrationFlow: true, path: '/verify-code' }),
+        '',
+        '/verify-code'
+      );
+    });
+
+    it('should NOT push protective state on dashboard (not registration flow)', () => {
+      mockedUseSession.mockReturnValue(null);
+      mockedUseLocation.mockReturnValue({
+        pathname: '/dashboard',
+        search: '',
+        hash: '',
+        state: null,
+        key: 'default',
+      });
+
+      renderHook(() => useBrowserHistoryProtection(), {
+        wrapper: createWrapper('/dashboard'),
+      });
+
+      // Should not have been called with registrationFlow
+      const registrationFlowCalls = mockPushState.mock.calls.filter(
+        call => call[0]?.registrationFlow === true
+      );
+      expect(registrationFlowCalls.length).toBe(0);
     });
   });
 

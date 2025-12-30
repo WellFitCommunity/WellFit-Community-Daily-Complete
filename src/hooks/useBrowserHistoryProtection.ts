@@ -1,7 +1,7 @@
 /**
  * useBrowserHistoryProtection
  *
- * Enterprise-grade browser history protection for authenticated users.
+ * Enterprise-grade browser history protection for all users.
  *
  * Problem Solved:
  * In SPAs, the browser's physical back button can navigate to:
@@ -13,12 +13,14 @@
  * - Race conditions with session management
  * - Stale token errors requiring re-authentication
  * - Disrupted user experience in admin panels
+ * - Users exiting the app during registration flow
  *
  * Solution:
- * 1. Intercept ALL popstate events when user is authenticated
- * 2. Use in-app NavigationHistoryContext instead of browser history
- * 3. Push protective state entries to prevent browser from leaving the app
- * 4. Provide context-aware fallback navigation based on user role
+ * 1. Intercept popstate events for authenticated users in protected routes
+ * 2. Intercept popstate events for registration/login flow (all users)
+ * 3. Use in-app NavigationHistoryContext instead of browser history
+ * 4. Push protective state entries to prevent browser from leaving the app
+ * 5. Provide context-aware fallback navigation based on user role
  *
  * Copyright (c) 2025 Envision VirtualEdge Group LLC. All rights reserved.
  */
@@ -62,11 +64,39 @@ const PROTECTED_ROUTE_PREFIXES = [
   '/care-',
 ];
 
+// Registration flow routes - need back button protection for ALL users (even unauthenticated)
+// Maps current route to where back button should go
+const REGISTRATION_FLOW_BACK_MAP: Record<string, string> = {
+  '/register': '/',           // Register -> Welcome
+  '/verify-code': '/register', // Verify -> Register
+  '/verify': '/register',      // Verify (alt) -> Register
+  '/login': '/',              // Login -> Welcome
+  '/reset-password': '/login', // Reset Password -> Login
+  '/phone-reset': '/login',    // Phone Reset -> Login
+  '/admin-login': '/',        // Admin Login -> Welcome
+  '/envision/login': '/',     // Envision Login -> Welcome
+  '/envision': '/',           // Envision -> Welcome
+};
+
 /**
  * Check if a path is within protected admin/clinical routes
  */
 function isProtectedRoute(path: string): boolean {
   return PROTECTED_ROUTE_PREFIXES.some(prefix => path.startsWith(prefix));
+}
+
+/**
+ * Check if a path is part of the registration/login flow
+ */
+function isRegistrationFlowRoute(path: string): boolean {
+  return Object.keys(REGISTRATION_FLOW_BACK_MAP).includes(path);
+}
+
+/**
+ * Get the back destination for registration flow routes
+ */
+function getRegistrationFlowBackRoute(path: string): string | null {
+  return REGISTRATION_FLOW_BACK_MAP[path] || null;
 }
 
 /**
@@ -95,6 +125,9 @@ function getFallbackRoute(currentPath: string, isAdmin: boolean): string {
 
 /**
  * Hook that provides enterprise-grade browser history protection.
+ *
+ * For ALL users:
+ * - Protects registration/login flow from exiting to external sites
  *
  * For authenticated users, especially in admin/clinical contexts:
  * - Intercepts browser back button
@@ -125,6 +158,9 @@ export function useBrowserHistoryProtection(): void {
   // Track if we've pushed our protective state
   const hasProtectiveState = useRef(false);
 
+  // Track if we've pushed registration flow protective state
+  const hasRegistrationProtection = useRef(false);
+
   // Update last valid path when on non-auth routes
   useEffect(() => {
     const currentPath = location.pathname;
@@ -136,6 +172,29 @@ export function useBrowserHistoryProtection(): void {
       lastValidPath.current = currentPath;
     }
   }, [location.pathname, session]);
+
+  // Push protective state for registration flow (works for ALL users)
+  // This ensures back button on /register goes to / instead of external site
+  useEffect(() => {
+    const currentPath = location.pathname;
+
+    if (isRegistrationFlowRoute(currentPath) && !hasRegistrationProtection.current) {
+      // Push a protective state for registration flow
+      window.history.pushState(
+        { registrationFlow: true, path: currentPath, timestamp: Date.now() },
+        '',
+        currentPath
+      );
+      hasRegistrationProtection.current = true;
+
+      auditLogger.debug('REGISTRATION_FLOW_PROTECTION_ENABLED', {
+        path: currentPath,
+      });
+    } else if (!isRegistrationFlowRoute(currentPath)) {
+      // Reset when leaving registration flow
+      hasRegistrationProtection.current = false;
+    }
+  }, [location.pathname]);
 
   // Push protective state when user is authenticated
   // This creates a "barrier" in browser history that prevents accidental exit
@@ -169,19 +228,65 @@ export function useBrowserHistoryProtection(): void {
   }, [session]);
 
   // Handle popstate (browser back/forward button)
-  const handlePopstate = useCallback((event: PopStateEvent) => {
+  const handlePopstate = useCallback(() => {
     // Prevent handling if we're already in a handler
     if (isHandlingPopstate.current) {
       return;
     }
 
-    // Only act if user is authenticated
+    const currentPath = window.location.pathname;
+    const previousPath = lastValidPath.current || location.pathname;
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // REGISTRATION FLOW PROTECTION (works for ALL users, even unauthenticated)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // Check if we WERE on a registration flow route (before back was pressed)
+    // The previousPath (from React state) tells us where we were
+    const wasOnRegistrationRoute = isRegistrationFlowRoute(previousPath);
+
+    // If we were on a registration route and now we're somewhere unexpected,
+    // or if currentPath is empty/external indicator, intercept
+    if (wasOnRegistrationRoute) {
+      const expectedBackRoute = getRegistrationFlowBackRoute(previousPath);
+
+      // If the browser went somewhere other than our expected back route,
+      // or if it looks like we're leaving the app, intercept
+      if (expectedBackRoute && currentPath !== expectedBackRoute) {
+        isHandlingPopstate.current = true;
+
+        auditLogger.info('REGISTRATION_FLOW_BACK_INTERCEPTED', {
+          from: previousPath,
+          attemptedPath: currentPath,
+          redirectTo: expectedBackRoute,
+        });
+
+        // Push state to stay in app
+        window.history.pushState(
+          { registrationFlow: true, intercepted: true },
+          '',
+          expectedBackRoute
+        );
+
+        // Navigate using React Router
+        navigate(expectedBackRoute, { replace: true });
+
+        setTimeout(() => {
+          isHandlingPopstate.current = false;
+        }, 150);
+
+        return;
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // AUTHENTICATED USER PROTECTION
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // Only continue with authenticated protection if user is logged in
     if (!session) {
       return;
     }
-
-    const currentPath = window.location.pathname;
-    const previousPath = lastValidPath.current || location.pathname;
 
     // Check if we've navigated to an auth route
     const isAuthRoute = AUTH_ROUTES.some(route =>
