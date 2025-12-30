@@ -20,6 +20,7 @@ import { LiveTranscript } from './LiveTranscript';
 import { BillingCodesList } from './BillingCodesList';
 import { SOAPNote } from './SOAPNote';
 import { VoiceCorrectionModal } from './VoiceCorrectionModal';
+import { ProactiveCorrectionList } from './ProactiveCorrection';
 
 /**
  * Scribe Mode:
@@ -62,6 +63,8 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = (props) => {
     correctionsAppliedCount,
     assistanceSettings,
     isDemoMode,
+    // Proactive confirmation - "Did I understand you to say XYZ?"
+    pendingConfirmations,
     setShowCorrectionModal,
     setCorrectionHeard,
     setCorrectionCorrect,
@@ -70,6 +73,10 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = (props) => {
     startRecording,
     stopRecording,
     handleAssistanceLevelChange,
+    // Proactive confirmation handlers
+    handleConfirmCorrect,
+    handleProactiveCorrection,
+    handleDismissConfirmation,
   } = useSmartScribe({ ...props, forceDemoMode: globalDemoMode || undefined });
 
   // Handler for saving voice corrections
@@ -188,6 +195,17 @@ const RealTimeSmartScribe: React.FC<RealTimeSmartScribeProps> = (props) => {
         correctionsAppliedCount={correctionsAppliedCount}
         onOpenCorrectionModal={handleOpenCorrectionModal}
       />
+
+      {/* Proactive Confirmation - "Did I hear correctly?" */}
+      {pendingConfirmations.length > 0 && (
+        <ProactiveCorrectionList
+          confirmations={pendingConfirmations}
+          onConfirm={handleConfirmCorrect}
+          onCorrect={handleProactiveCorrection}
+          onDismiss={handleDismissConfirmation}
+          maxVisible={2}
+        />
+      )}
 
       {/* Billing Codes - Only for Compass Riley (physicians), NOT for SmartScribe (nurses) */}
       {!isSmartScribeMode && (

@@ -10,6 +10,8 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { supabase } from '../../../lib/supabaseClient';
 import { auditLogger } from '../../../services/auditLogger';
 import { VoiceLearningService, ProviderVoiceProfile } from '../../../services/voiceLearningService';
+import { PendingConfirmation } from '../ProactiveCorrection';
+import { TranscriptResult } from '../utils/audioProcessor';
 
 // Check if demo mode is enabled
 const DEMO_MODE = import.meta.env.VITE_COMPASS_DEMO === 'true';
@@ -189,6 +191,13 @@ export function useSmartScribe(props: UseSmartScribeProps) {
   const [selectedTextForCorrection, setSelectedTextForCorrection] = useState('');
   const [correctionsAppliedCount, setCorrectionsAppliedCount] = useState(0);
 
+  // Proactive confirmation state - "Did I understand you to say XYZ?"
+  const [pendingConfirmations, setPendingConfirmations] = useState<PendingConfirmation[]>([]);
+  const confirmationIdCounter = useRef(0);
+
+  // Queue of uncertain words from transcription that need verification
+  const uncertainWordsQueue = useRef<Array<{ word: string; confidence: number }>>([]);
+
   // Refs for audio resources (will be set by audioProcessor)
   const wsRef = useRef<WebSocket | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -279,6 +288,170 @@ export function useSmartScribe(props: UseSmartScribeProps) {
   const assistanceSettings = getAssistanceSettings(assistanceLevel);
 
   // ============================================================================
+  // PROACTIVE CONFIRMATION HELPERS
+  // ============================================================================
+
+  /**
+   * Medical terms and patterns that often get misheard and should trigger confirmation.
+   * These are terms where transcription errors can have clinical impact.
+   */
+  const UNCERTAIN_PATTERNS = [
+    // Common transcription confusions with clinical significance
+    /\bhyper\s*glycemia\b/i,
+    /\bhypo\s*glycemia\b/i,
+    /\bhyper\s*tension\b/i,
+    /\bhypo\s*tension\b/i,
+    /\bbrady\s*cardia\b/i,
+    /\btachy\s*cardia\b/i,
+    /\bdys\s*pnea\b/i,
+    /\bapnea\b/i,
+    // Drug names that sound similar
+    /\bmetformin\b/i,
+    /\bmetoprolol\b/i,
+    /\blomustine\b/i,
+    /\bcarmustine\b/i,
+    /\bprednisone\b/i,
+    /\bprednisolone\b/i,
+    // Numbers that matter (dosages, vitals)
+    /\b\d{2,3}\s*(over|\/)\s*\d{2,3}\b/, // Blood pressure
+    /\b\d+\s*(mg|mcg|ml|units?)\b/i, // Dosages
+    // Unusual words that might be misheard
+    /\b[a-z]{10,}\b/i, // Long words are often misheard
+  ];
+
+  /**
+   * Check if a transcript segment contains patterns that warrant confirmation
+   */
+  const shouldTriggerConfirmation = useCallback((text: string): string | null => {
+    // Skip if text is too short
+    if (text.length < 5) return null;
+
+    // Check for uncertain patterns
+    for (const pattern of UNCERTAIN_PATTERNS) {
+      const match = text.match(pattern);
+      if (match) {
+        return match[0];
+      }
+    }
+
+    // Check for words we've corrected before (known problem areas)
+    if (voiceProfile?.corrections) {
+      for (const correction of voiceProfile.corrections) {
+        if (text.toLowerCase().includes(correction.heard.toLowerCase())) {
+          // We've seen this error before - proactively ask
+          return correction.heard;
+        }
+      }
+    }
+
+    return null;
+  }, [voiceProfile]);
+
+  /**
+   * Add a pending confirmation for user review
+   */
+  const addPendingConfirmation = useCallback((heardText: string, context?: string) => {
+    const id = `confirm-${Date.now()}-${confirmationIdCounter.current++}`;
+    const newConfirmation: PendingConfirmation = {
+      id,
+      heardText,
+      timestamp: new Date(),
+      confidence: 0.7, // Could be enhanced with actual confidence from transcription service
+      context,
+    };
+
+    setPendingConfirmations(prev => [...prev, newConfirmation]);
+
+    auditLogger.info('PROACTIVE_CONFIRMATION_TRIGGERED', {
+      id,
+      heardText,
+      context,
+    });
+  }, []);
+
+  /**
+   * Handle user confirming the transcription is correct
+   */
+  const handleConfirmCorrect = useCallback(async (id: string) => {
+    const confirmation = pendingConfirmations.find(c => c.id === id);
+    if (!confirmation) return;
+
+    // Remove from pending list
+    setPendingConfirmations(prev => prev.filter(c => c.id !== id));
+
+    // If we had a previous correction for this that the user is now saying is correct,
+    // we might want to reduce confidence of that correction
+    if (voiceProfile) {
+      const existingCorrection = voiceProfile.corrections.find(
+        c => c.correct.toLowerCase() === confirmation.heardText.toLowerCase()
+      );
+      if (existingCorrection) {
+        // Reinforce that this transcription is correct
+        await VoiceLearningService.reinforceCorrection(voiceProfile.providerId, confirmation.heardText);
+      }
+    }
+
+    auditLogger.info('PROACTIVE_CONFIRMATION_ACCEPTED', {
+      id,
+      heardText: confirmation.heardText,
+    });
+  }, [pendingConfirmations, voiceProfile]);
+
+  /**
+   * Handle user providing a correction
+   */
+  const handleProactiveCorrection = useCallback(async (id: string, heardText: string, correctText: string) => {
+    const confirmation = pendingConfirmations.find(c => c.id === id);
+    if (!confirmation) return;
+
+    // Remove from pending list
+    setPendingConfirmations(prev => prev.filter(c => c.id !== id));
+
+    // Get current user to save correction
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    try {
+      // Add to voice learning service
+      await VoiceLearningService.addCorrection(user.id, heardText, correctText);
+
+      // Reload voice profile to get updated corrections
+      const updated = await VoiceLearningService.loadVoiceProfile(user.id);
+      setVoiceProfile(updated);
+
+      auditLogger.clinical('PROACTIVE_CORRECTION_LEARNED', true, {
+        id,
+        heardText,
+        correctText,
+        providerId: user.id,
+      });
+
+      // Update transcript with the correction
+      setTranscript(prev => {
+        const regex = new RegExp(`\\b${heardText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+        return prev.replace(regex, correctText);
+      });
+
+      setCorrectionsAppliedCount(prev => prev + 1);
+    } catch (err) {
+      auditLogger.error('PROACTIVE_CORRECTION_FAILED', err instanceof Error ? err : new Error('Correction failed'), {
+        id,
+        heardText,
+        correctText,
+      });
+    }
+  }, [pendingConfirmations, setVoiceProfile, setTranscript, setCorrectionsAppliedCount]);
+
+  /**
+   * Handle dismissing a confirmation (timeout or user action)
+   */
+  const handleDismissConfirmation = useCallback((id: string) => {
+    setPendingConfirmations(prev => prev.filter(c => c.id !== id));
+
+    auditLogger.info('PROACTIVE_CONFIRMATION_DISMISSED', { id });
+  }, []);
+
+  // ============================================================================
   // EFFECTS
   // ============================================================================
 
@@ -351,6 +524,75 @@ export function useSmartScribe(props: UseSmartScribeProps) {
 
     loadProfile();
   }, []);
+
+  /**
+   * Proactive confirmation trigger - process uncertain words from transcription
+   * Only triggers when the transcription service reports low confidence,
+   * making it genuinely useful rather than spammy.
+   */
+  useEffect(() => {
+    // Only process while recording
+    if (!isRecording) {
+      uncertainWordsQueue.current = [];
+      return;
+    }
+
+    // Process uncertain words queue
+    const processQueue = () => {
+      if (uncertainWordsQueue.current.length === 0) return;
+
+      // Don't spam confirmations - limit to one every 8 seconds
+      const recentConfirmation = pendingConfirmations.find(
+        c => Date.now() - c.timestamp.getTime() < 8000
+      );
+      if (recentConfirmation) return;
+
+      // Get the most uncertain word (lowest confidence)
+      const sortedByConfidence = [...uncertainWordsQueue.current].sort(
+        (a, b) => a.confidence - b.confidence
+      );
+
+      // Only show confirmation for words with very low confidence (< 0.6)
+      // or words we've seen errors with before
+      const mostUncertain = sortedByConfidence[0];
+      if (!mostUncertain) return;
+
+      const isKnownProblem = voiceProfile?.corrections.some(
+        c => c.heard.toLowerCase().includes(mostUncertain.word.toLowerCase())
+      );
+
+      // Trigger if confidence is very low OR it's a known problem area
+      if (mostUncertain.confidence < 0.6 || isKnownProblem) {
+        // Find context in current transcript
+        const transcriptLower = transcript.toLowerCase();
+        const wordLower = mostUncertain.word.toLowerCase();
+        const wordIndex = transcriptLower.lastIndexOf(wordLower);
+
+        let context: string | undefined;
+        if (wordIndex !== -1) {
+          const start = Math.max(0, wordIndex - 20);
+          const end = Math.min(transcript.length, wordIndex + wordLower.length + 20);
+          context = transcript.slice(start, end).trim();
+          if (start > 0) context = '...' + context;
+          if (end < transcript.length) context = context + '...';
+        }
+
+        addPendingConfirmation(mostUncertain.word, context);
+
+        // Remove processed word from queue
+        uncertainWordsQueue.current = uncertainWordsQueue.current.filter(
+          w => w.word !== mostUncertain.word
+        );
+      } else {
+        // Clear queue if nothing is uncertain enough
+        uncertainWordsQueue.current = [];
+      }
+    };
+
+    // Check queue periodically (every 2 seconds)
+    const interval = setInterval(processQueue, 2000);
+    return () => clearInterval(interval);
+  }, [isRecording, pendingConfirmations, voiceProfile, transcript, addPendingConfirmation]);
 
   /**
    * Timer effect - updates every second during recording
@@ -442,6 +684,12 @@ export function useSmartScribe(props: UseSmartScribeProps) {
       }
     });
 
+    // Demo proactive confirmation at 7 seconds - show "Did I hear correctly?"
+    const proactiveConfirmationTimeout = setTimeout(() => {
+      addPendingConfirmation('140 to 150', 'fasting glucose around 140 to 150');
+    }, 7000);
+    demoTimeoutsRef.current.push(proactiveConfirmationTimeout);
+
     // Add suggestions at 12 seconds
     const suggestionsTimeout = setTimeout(() => {
       setScribeSuggestions(DEMO_SUGGESTIONS);
@@ -454,7 +702,7 @@ export function useSmartScribe(props: UseSmartScribeProps) {
       setStatus('Demo Mode - Documentation complete');
     }, 25000);
     demoTimeoutsRef.current.push(soapTimeout);
-  }, []);
+  }, [addPendingConfirmation]);
 
   /**
    * Start demo mode simulation
@@ -538,41 +786,50 @@ export function useSmartScribe(props: UseSmartScribeProps) {
       const result = await initializeAudioRecording({
         wsUrl,
         voiceProfile,
-        onTranscript: (text: string, appliedCorrections: number) => {
-          setTranscript(prev => (prev ? `${prev} ${text}` : text));
-          if (appliedCorrections > 0) {
-            setCorrectionsAppliedCount(prev => prev + appliedCorrections);
+        onTranscript: (transcriptResult: TranscriptResult) => {
+          setTranscript(prev => (prev ? `${prev} ${transcriptResult.text}` : transcriptResult.text));
+          if (transcriptResult.appliedCorrections > 0) {
+            setCorrectionsAppliedCount(prev => prev + transcriptResult.appliedCorrections);
+          }
+
+          // Queue uncertain words for proactive confirmation
+          if (transcriptResult.uncertainWords.length > 0) {
+            uncertainWordsQueue.current.push(...transcriptResult.uncertainWords);
           }
         },
-        onCodeSuggestion: (data: any) => {
-          setSuggestedCodes(Array.isArray(data.codes) ? data.codes : []);
-          setRevenueImpact(Number(data.revenueIncrease || 0));
+        onCodeSuggestion: (data: unknown) => {
+          const suggestion = data as Record<string, unknown>;
+          const codes = suggestion.codes;
+          setSuggestedCodes(Array.isArray(codes) ? codes as CodeSuggestion[] : []);
+          setRevenueImpact(Number(suggestion.revenueIncrease || 0));
 
-          if (data.soapNote) {
+          const soapNote = suggestion.soapNote as Record<string, string> | undefined;
+          if (soapNote) {
             setSoapNote({
-              subjective: data.soapNote.subjective || '',
-              objective: data.soapNote.objective || '',
-              assessment: data.soapNote.assessment || '',
-              plan: data.soapNote.plan || '',
-              hpi: data.soapNote.hpi || '',
-              ros: data.soapNote.ros || '',
+              subjective: soapNote.subjective || '',
+              objective: soapNote.objective || '',
+              assessment: soapNote.assessment || '',
+              plan: soapNote.plan || '',
+              hpi: soapNote.hpi || '',
+              ros: soapNote.ros || '',
             });
           }
 
-          if (data.conversational_note) {
+          if (suggestion.conversational_note) {
             setConversationalMessages(prev => [
               ...prev,
               {
                 type: 'scribe',
-                message: data.conversational_note,
+                message: suggestion.conversational_note as string,
                 timestamp: new Date(),
                 context: 'code',
               },
             ]);
           }
 
-          if (data.suggestions && Array.isArray(data.suggestions)) {
-            setScribeSuggestions(data.suggestions);
+          const suggestions = suggestion.suggestions;
+          if (suggestions && Array.isArray(suggestions)) {
+            setScribeSuggestions(suggestions as string[]);
           }
         },
         onReady: () => {
@@ -832,6 +1089,9 @@ export function useSmartScribe(props: UseSmartScribeProps) {
     assistanceSettings,
     isDemoMode,
 
+    // Proactive confirmation state - "Did I understand you to say XYZ?"
+    pendingConfirmations,
+
     // Setters
     setTranscript,
     setSuggestedCodes,
@@ -846,7 +1106,14 @@ export function useSmartScribe(props: UseSmartScribeProps) {
     stopRecording,
     handleAssistanceLevelChange,
 
+    // Proactive confirmation actions
+    addPendingConfirmation,
+    handleConfirmCorrect,
+    handleProactiveCorrection,
+    handleDismissConfirmation,
+
     // Helpers
     getAssistanceSettings,
+    shouldTriggerConfirmation,
   };
 }

@@ -7,11 +7,19 @@
 import { ProviderVoiceProfile, VoiceLearningService } from '../../../services/voiceLearningService';
 import { auditLogger } from '../../../services/auditLogger';
 
+export interface TranscriptResult {
+  text: string;
+  appliedCorrections: number;
+  confidence: number;
+  /** Words with low confidence that might need verification */
+  uncertainWords: Array<{ word: string; confidence: number }>;
+}
+
 export interface AudioProcessorConfig {
   wsUrl: string;
   voiceProfile: ProviderVoiceProfile | null;
-  onTranscript: (text: string, appliedCorrections: number) => void;
-  onCodeSuggestion: (data: any) => void;
+  onTranscript: (result: TranscriptResult) => void;
+  onCodeSuggestion: (data: unknown) => void;
   onReady: () => void;
   onStatusChange: (status: string) => void;
   onRecordingStateChange: (isRecording: boolean) => void;
@@ -57,11 +65,27 @@ export async function initializeAudioRecording(
 
     ws.onmessage = (event) => {
       try {
-        const data = JSON.parse(event.data);
+        const data = JSON.parse(event.data) as Record<string, unknown>;
 
         if (data.type === 'transcript' && data.isFinal) {
-          let text = data.text;
+          let text = data.text as string;
           let appliedCount = 0;
+
+          // Extract confidence from transcription service (Deepgram format)
+          const overallConfidence = typeof data.confidence === 'number' ? data.confidence : 0.9;
+
+          // Extract words with low confidence (Deepgram provides word-level confidence)
+          const uncertainWords: Array<{ word: string; confidence: number }> = [];
+          const words = data.words as Array<{ word: string; confidence: number }> | undefined;
+
+          if (Array.isArray(words)) {
+            for (const w of words) {
+              // Flag words with confidence below 0.75 as uncertain
+              if (w.confidence < 0.75) {
+                uncertainWords.push({ word: w.word, confidence: w.confidence });
+              }
+            }
+          }
 
           // Apply learned voice corrections if voice profile exists
           if (config.voiceProfile) {
@@ -70,7 +94,12 @@ export async function initializeAudioRecording(
             appliedCount = result.appliedCount;
           }
 
-          config.onTranscript(text, appliedCount);
+          config.onTranscript({
+            text,
+            appliedCorrections: appliedCount,
+            confidence: overallConfidence,
+            uncertainWords,
+          });
         } else if (data.type === 'code_suggestion') {
           config.onCodeSuggestion(data);
         } else if (data.type === 'ready') {
